@@ -257,5 +257,110 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffJobControllerTest
         }
 
         #endregion
+
+        #region Index Tests
+
+        [Fact]
+        public void Index_ReturnsViewResult()
+        {
+            // Act
+            var result = _controller.Index();
+
+            // Assert
+            Assert.IsType<ViewResult>(result);
+        }
+
+        #endregion
+
+        #region IsDuplicateError via Create — null Code and null Message branch coverage
+
+        [Fact]
+        public async Task Create_WhenErrorCodeIsNullButMessageContainsAlreadyExists_ReturnsFriendlyDuplicateMessage()
+        {
+            // Arrange — Code is null; IsDuplicateError must fall through to Message.Contains("already exists")
+            var viewModel = new Apha.FPSApps.Web.Areas.FPS.Models.StaffJobItemViewModel
+            {
+                StaffID = "STAFF001",
+                JobCode = "JOB001",
+                PlannedHours = 8
+            };
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Code = null, Message = "A record already exists for this staff member." }
+            };
+            var serviceResponse = ApiResponseDto<StaffJobDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _staffJobService.CreateStaffJobAsync(Arg.Any<StaffJobDto>()).Returns(serviceResponse);
+
+            // Act
+            var result = await _controller.Create(viewModel);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            const string expectedMessage = "This staff member has already been added to this project. Please update the existing entry instead.";
+            Assert.Equal(expectedMessage, value.GetProperty("message").GetString());
+            var errorsArray = value.GetProperty("errors");
+            Assert.Equal(string.Empty, errorsArray[0].GetProperty("field").GetString());
+        }
+
+        [Fact]
+        public async Task Create_WhenErrorCodeIsNullAndMessageDoesNotContainAlreadyExists_ReturnsGenericFailure()
+        {
+            // Arrange — Code is null AND Message does not contain "already exists" → not a duplicate
+            var viewModel = new Apha.FPSApps.Web.Areas.FPS.Models.StaffJobItemViewModel
+            {
+                StaffID = "STAFF001",
+                JobCode = "JOB001",
+                PlannedHours = 8
+            };
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Code = null, Message = "Unexpected server failure." }
+            };
+            var serviceResponse = ApiResponseDto<StaffJobDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _staffJobService.CreateStaffJobAsync(Arg.Any<StaffJobDto>()).Returns(serviceResponse);
+
+            // Act
+            var result = await _controller.Create(viewModel);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("Unexpected server failure.", value.GetProperty("message").GetString());
+        }
+
+        [Fact]
+        public async Task Create_WhenErrorCodeIsNullAndMessageIsNull_ReturnsGenericFailureWithFallbackMessage()
+        {
+            // Arrange — both Code and Message are null → IsDuplicateError null-coalescing branches both hit
+            var viewModel = new Apha.FPSApps.Web.Areas.FPS.Models.StaffJobItemViewModel
+            {
+                StaffID = "STAFF001",
+                JobCode = "JOB001",
+                PlannedHours = 8
+            };
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Code = null, Message = null }
+            };
+            var serviceResponse = ApiResponseDto<StaffJobDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _staffJobService.CreateStaffJobAsync(Arg.Any<StaffJobDto>()).Returns(serviceResponse);
+
+            // Act
+            var result = await _controller.Create(viewModel);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("Failed to create Staff cost planned hours.", value.GetProperty("message").GetString());
+        }
+
+        #endregion
     }
 }

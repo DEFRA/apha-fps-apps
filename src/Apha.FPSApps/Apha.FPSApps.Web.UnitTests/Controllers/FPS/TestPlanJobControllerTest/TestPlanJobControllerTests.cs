@@ -256,10 +256,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanJobControllerTest
             Assert.False(value.GetProperty("success").GetBoolean());
             const string expectedMessage = "This test code has already been added to this project. Please update the existing entry instead.";
             Assert.Equal(expectedMessage, value.GetProperty("message").GetString());
-            // errors array must contain field="TestCode" so the modal highlights the dropdown inline
+            // errors array must contain field="" so the error renders in the summary banner, not inline
             var errorsArray = value.GetProperty("errors");
             Assert.Equal(1, errorsArray.GetArrayLength());
-            Assert.Equal("TestCode", errorsArray[0].GetProperty("field").GetString());
+            Assert.Equal(string.Empty, errorsArray[0].GetProperty("field").GetString());
             Assert.Equal(expectedMessage, errorsArray[0].GetProperty("message").GetString());
         }
 
@@ -664,6 +664,57 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanJobControllerTest
             var value = GetJsonResultElement(jsonResult);
             Assert.True(value.GetProperty("success").GetBoolean());
             Assert.Equal(0m, value.GetProperty("totalTestCost").GetDecimal());
+        }
+
+        #endregion
+
+        #region IsDuplicateError — null Code and null Message branch coverage
+
+        [Fact]
+        public async Task Create_Post_WhenErrorCodeIsNullAndMessageContainsAlreadyExists_ReturnsFriendlyDuplicateMessage()
+        {
+            // Arrange — Code is null; IsDuplicateError must fall through to Message.Contains("already exists")
+            var item = new TestPlanItem { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var errors = new List<ApiErrorDto> { new() { Code = null, Message = "A record already exists for this test code." } };
+            var serviceResponse = ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _mapper.Map<TestRequirementDto>(item).Returns(dto);
+            _testRequirementService.CreateTestReqmtAsync(dto).Returns(serviceResponse);
+
+            // Act
+            var result = await _controller.Create(item);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            const string expectedMessage = "This test code has already been added to this project. Please update the existing entry instead.";
+            Assert.Equal(expectedMessage, value.GetProperty("message").GetString());
+            var errorsArray = value.GetProperty("errors");
+            Assert.Equal(string.Empty, errorsArray[0].GetProperty("field").GetString());
+        }
+
+        [Fact]
+        public async Task Create_Post_WhenErrorCodeIsNullAndMessageIsNull_ReturnsGenericFailureWithFallbackMessage()
+        {
+            // Arrange — both Code and Message are null → IsDuplicateError null-coalescing branches both exercised
+            var item = new TestPlanItem { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var errors = new List<ApiErrorDto> { new() { Code = null, Message = null } };
+            var serviceResponse = ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _mapper.Map<TestRequirementDto>(item).Returns(dto);
+            _testRequirementService.CreateTestReqmtAsync(dto).Returns(serviceResponse);
+
+            // Act
+            var result = await _controller.Create(item);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("Failed to create test plan item.", value.GetProperty("message").GetString());
         }
 
         #endregion
