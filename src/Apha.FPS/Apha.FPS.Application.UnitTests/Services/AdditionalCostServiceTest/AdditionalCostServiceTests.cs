@@ -305,7 +305,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
 
             _mockRepository.GetByIdAsync("JOB001", "ACC1", "Desc1").Returns(existing);
             _mockMapper.Map<AdditionalCost>(dto).Returns(entity);
-            _mockRepository.UpdateAsync(entity).Returns(entity);
+            _mockRepository.UpdateAsync(entity, "Desc1").Returns(entity);
             _mockMapper.Map<AdditionalCostDto>(entity).Returns(dto);
 
             // Act
@@ -314,7 +314,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
             // Assert
             result.Should().NotBeNull();
             result.ItemCost.Should().Be(200m);
-            await _mockRepository.Received(1).UpdateAsync(entity);
+            await _mockRepository.Received(1).UpdateAsync(entity, "Desc1");
         }
 
         [Fact]
@@ -329,7 +329,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
                 .Should().ThrowAsync<InvalidOperationException>()
                 .WithMessage("*JOB001*ACC1*Ghost*");
 
-            await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<AdditionalCost>());
+            await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<AdditionalCost>(), Arg.Any<string>());
         }
 
         [Fact]

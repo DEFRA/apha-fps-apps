@@ -84,11 +84,11 @@ function editAdditionalCost(btn) {
 
 function updateAdditionalCost() {
     var jobCode = AdditionalCostConfig.getJobCode();    
-    var originalAccount = $('#OriginalAccount').val();
     var data = {
         JobCode: jobCode,
         Description: $('#Description').val(),
-        Account: $('#Account').val() || $('#OriginalAccount').val(),
+        OriginalDescription: $('#OriginalDescription').val(),
+        Account: $('#Account').val(),
         ItemCost: parseFloat($('#ItemCost').val()) || 0,
         Freq: $('#Freq').val(),
         Supplier: $('#Supplier').val()
