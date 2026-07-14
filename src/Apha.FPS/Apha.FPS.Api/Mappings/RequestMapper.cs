@@ -3,18 +3,23 @@
 /*
  * TRANSFORMENGINE MIGRATION — RequestMapper.cs
  * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-06-11
+ * Migrated : 2026-07-10
  *
  * CHANGED:
- *   - No new mapping entries required for WorkGroupEmployee in this phase.
- *     WorkGroupEmployeeDto <-> WorkGroupEmployeeReq and WorkGroupEmployeeDto <-> WorkGroupEmployeeRes
- *     were already registered (lines 77-78). AutoMapper resolves the new fields
- *     (TimeRecorder, StartDate, EndDate, HoursPerWeek) by name convention without explicit
- *     ForMember configuration, because field names are identical across Req, Res, and Dto.
+ *   - Phase 5 (DepartmentIncome): Added 6 new DTO<->Res mappings for the DepartmentIncome resource family:
+ *       DepartmentIncomeTimeDto     <-> DepartmentIncomeTimeRes
+ *       DepartmentIncomeTestDto     <-> DepartmentIncomeTestRes
+ *       DepartmentIncomeAnimalDto   <-> DepartmentIncomeAnimalRes
+ *       DepartmentIncomeAdditionalDto <-> DepartmentIncomeAdditionalRes
+ *       DepartmentIncomeTotalsDto   <-> DepartmentIncomeTotalsRes
+ *       PeriodLookupDto             <-> PeriodLookupRes
+ *   - All six mappings use .ReverseMap() — all property names are identical across Dto and Res contracts.
+ *     No ForMember configuration is required.
  *
  * PRESERVED:
- *   - All existing CreateMap entries for StaffJob, Animal, Project, Division, WorkGroupEmployee,
- *     ProfitCentre, PaginationReq/Res, and all other FPS domain mappings unchanged.
+ *   - All existing CreateMap entries from prior phases (WorkGroupEmployee, StaffJob, Animal, Project,
+ *     Division, ProfitCentre, PaginationReq/Res, and all other FPS domain mappings) unchanged.
+ *   - Prior WorkGroupEmployee migration annotation preserved.
  *
  * DEFERRED / REQUIRES HUMAN REVIEW:
  *   - TRANSFORMENGINE TODO: Run AutoMapper configuration validation (AssertConfigurationIsValid)
@@ -161,6 +166,15 @@ namespace Apha.FPS.Api.Mappings
             // MaintTotalBusinessOverheads
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
+
+            // TRANSFORMENGINE: DepartmentIncome — 6 DTO<->Res mappings for GET /api/v1/department-income/* reporting endpoints
+            // All property names are identical across Dto and Res; .ReverseMap() covers both directions.
+            CreateMap<DepartmentIncomeTimeDto, DepartmentIncomeTimeRes>().ReverseMap();
+            CreateMap<DepartmentIncomeTestDto, DepartmentIncomeTestRes>().ReverseMap();
+            CreateMap<DepartmentIncomeAnimalDto, DepartmentIncomeAnimalRes>().ReverseMap();
+            CreateMap<DepartmentIncomeAdditionalDto, DepartmentIncomeAdditionalRes>().ReverseMap();
+            CreateMap<DepartmentIncomeTotalsDto, DepartmentIncomeTotalsRes>().ReverseMap();
+            CreateMap<PeriodLookupDto, PeriodLookupRes>().ReverseMap();
         }
     }
 }

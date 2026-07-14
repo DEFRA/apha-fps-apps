@@ -1,3 +1,23 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
+ * Migrated : 2026-07-10
+ *
+ * CHANGED:
+ *   - Phase 5 (DepartmentIncome): Registered two new scoped pairs for the DepartmentIncome resource family:
+ *       AddServices:      IDepartmentIncomeService  → DepartmentIncomeService
+ *       AddRepositories:  IDepartmentIncomeRepository → DepartmentIncomeRepository
+ *
+ * PRESERVED:
+ *   - All existing service and repository registrations from prior phases unchanged.
+ *   - Scoped lifetime used for all entries (consistent with existing project pattern).
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: DepartmentIncomeRepository.GetPeriodsAsync relies on the PeriodLookup EF
+ *     keyless entity; confirm the DbSet<PeriodLookup> view mapping in FpsDbContext targets the
+ *     correct PostgreSQL view name before deploying.
+ */
+
 using Apha.Common.Utilities.StateManagement;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Interfaces;
@@ -55,6 +75,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
+            // TRANSFORMENGINE: DepartmentIncome service registration — supports GET /api/v1/department-income/* reporting endpoints
+            services.AddScoped<IDepartmentIncomeService, DepartmentIncomeService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -95,6 +117,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProjectAuditTrailRepository, ProjectAuditTrailRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
+            // TRANSFORMENGINE: DepartmentIncome repository registration — LINQ-first reporting queries via EF Core keyless views
+            services.AddScoped<IDepartmentIncomeRepository, DepartmentIncomeRepository>();
             return services;
 
         }

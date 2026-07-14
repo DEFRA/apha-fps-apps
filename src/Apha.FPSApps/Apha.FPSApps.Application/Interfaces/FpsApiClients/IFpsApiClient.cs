@@ -31,5 +31,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsGradeApiClient FpsGrade { get; }
         IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
         IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
+        // TRANSFORMENGINE: Phase 7 — new sub-client for DepartmentIncome read-only report resource
+        IFpsDepartmentIncomeApiClient FpsDepartmentIncome { get; }
     }
 }

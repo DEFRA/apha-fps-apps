@@ -1,3 +1,25 @@
+/*
+ * TRANSFORMENGINE MIGRATION — EntityMapper.cs (updated)
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
+ * Migrated : 2026-07-10
+ *
+ * CHANGED:
+ *   - Added CreateMap registrations for all six new DepartmentIncome entity <-> DTO pairs:
+ *       DepartmentIncomeTime       <-> DepartmentIncomeTimeDto
+ *       DepartmentIncomeTest       <-> DepartmentIncomeTestDto
+ *       DepartmentIncomeAnimal     <-> DepartmentIncomeAnimalDto
+ *       DepartmentIncomeAdditional <-> DepartmentIncomeAdditionalDto
+ *       DepartmentIncomeTotals     <-> DepartmentIncomeTotalsDto
+ *       PeriodLookup               <-> PeriodLookupDto
+ *   - All properties are name-matched between entity and DTO; no ForMember overrides required
+ *
+ * PRESERVED:
+ *   - All existing CreateMap registrations unchanged
+ *   - Existing ForMember overrides (Grade, PactProjectView, TotalBusinessOverheads, etc.) preserved exactly
+ *
+ * DEFERRED: none — fully automated.
+ */
+
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
@@ -99,6 +121,16 @@ namespace Apha.FPS.Application.Mappings
                 .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
                 .ReverseMap()
                 .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
+
+            // TRANSFORMENGINE: DepartmentIncome entity <-> DTO mappings (Phase 3)
+            // All six pairs are property-name aligned between entity and DTO; no ForMember overrides required.
+            // Covers all query types from frmDeptIncome: Time, Tests, Animals, Additional, Totals, plus PeriodLookup.
+            CreateMap<DepartmentIncomeTime,       DepartmentIncomeTimeDto>().ReverseMap();
+            CreateMap<DepartmentIncomeTest,       DepartmentIncomeTestDto>().ReverseMap();
+            CreateMap<DepartmentIncomeAnimal,     DepartmentIncomeAnimalDto>().ReverseMap();
+            CreateMap<DepartmentIncomeAdditional, DepartmentIncomeAdditionalDto>().ReverseMap();
+            CreateMap<DepartmentIncomeTotals,     DepartmentIncomeTotalsDto>().ReverseMap();
+            CreateMap<PeriodLookup,               PeriodLookupDto>().ReverseMap();
         }
     }
 }

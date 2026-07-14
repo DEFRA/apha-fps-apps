@@ -1,3 +1,22 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-07-10
+ *
+ * CHANGED:
+ *   - AddServices(): added AddScoped<IDepartmentIncomeService, DepartmentIncomeService>()
+ *   - AddRepositories(): added AddScoped<IFpsDepartmentIncomeApiClient, FpsDepartmentIncomeApiClient>()
+ *   - Both registrations follow existing alphabetical/pattern conventions
+ *
+ * PRESERVED:
+ *   - All existing service and repository registrations unchanged
+ *   - AddScoped lifetime used for both (frontend services hold request-scoped API client references)
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: FpsDepartmentIncomeApiClient uses IFpsHttpExecutor — confirm FPS HttpClient
+ *     pipeline is configured in ApiClientExtension.AddApiClient() before this service is resolved
+ */
+
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
@@ -53,6 +72,8 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
             services.AddScoped<IMonthService, MonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
+            // TRANSFORMENGINE: DepartmentIncome frontend service — delegates to IFpsDepartmentIncomeApiClient
+            services.AddScoped<IDepartmentIncomeService, DepartmentIncomeService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
             services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
@@ -102,6 +123,8 @@ namespace Apha.FPSApps.Web.Extensions
         {
             //   used by IFpsProfitCentreApiClient and other IFps*ApiClient registrations (see ApiClientExtension.cs).
             services.AddScoped<IFpsProjectAuditTrailApiClient, FpsProjectAuditTrailApiClient>();
+            // TRANSFORMENGINE: DepartmentIncome API client — HTTP client calling /api/v1/department-income/* endpoints
+            services.AddScoped<IFpsDepartmentIncomeApiClient, FpsDepartmentIncomeApiClient>();
             return services;
         }
     }

@@ -1,3 +1,27 @@
+/*
+ * TRANSFORMENGINE MIGRATION — FpsDbContext.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository (Steps 7-7a)
+ * Migrated : 2026-07-10
+ *
+ * CHANGED:
+ *   - Added DbSet<DepartmentIncomeTime> DepartmentIncomeTimes
+ *   - Added DbSet<DepartmentIncomeTest> DepartmentIncomeTests
+ *   - Added DbSet<DepartmentIncomeAnimal> DepartmentIncomeAnimals
+ *   - Added DbSet<DepartmentIncomeAdditional> DepartmentIncomeAdditionals
+ *   - Added DbSet<DepartmentIncomeTotals> DepartmentIncomeTotals
+ *   - Added DbSet<PeriodLookup> PeriodLookups
+ *   - Added ApplyConfiguration calls for all six new maps in OnModelCreating
+ *
+ * PRESERVED:
+ *   - All existing DbSet declarations and ApplyConfiguration calls
+ *   - All HasQueryFilter registrations (year-scoped entities)
+ *   - IFpsRequestContext injection and FilterFpsYear property
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: DepartmentIncome keyless entities do not support HasQueryFilter;
+ *     year scoping is enforced per-query in DepartmentIncomeRepository via joins to year-filtered entities
+ */
+
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -106,6 +130,14 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<BidView> BidViews { get; set; }
         public virtual DbSet<Purchase> Purchases { get; set; }
         public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; }
+
+        // TRANSFORMENGINE: DepartmentIncome reporting entities — keyless LINQ-projection DbSets
+        public virtual DbSet<DepartmentIncomeTime> DepartmentIncomeTimes { get; set; }
+        public virtual DbSet<DepartmentIncomeTest> DepartmentIncomeTests { get; set; }
+        public virtual DbSet<DepartmentIncomeAnimal> DepartmentIncomeAnimals { get; set; }
+        public virtual DbSet<DepartmentIncomeAdditional> DepartmentIncomeAdditionals { get; set; }
+        public virtual DbSet<DepartmentIncomeTotals> DepartmentIncomeTotals { get; set; }
+        public virtual DbSet<PeriodLookup> PeriodLookups { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -329,6 +361,15 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new TotalBusinessOverheadsMap());
             modelBuilder.Entity<TotalBusinessOverheads>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            // TRANSFORMENGINE: DepartmentIncome keyless view maps — no HasQueryFilter (keyless entities do not support it)
+            // Repository methods apply year-scoped joins via the underlying entity DbSets (TimeCostCalcs, ProjectSubContract, etc.)
+            modelBuilder.ApplyConfiguration(new DepartmentIncomeTimeMap());
+            modelBuilder.ApplyConfiguration(new DepartmentIncomeTestMap());
+            modelBuilder.ApplyConfiguration(new DepartmentIncomeAnimalMap());
+            modelBuilder.ApplyConfiguration(new DepartmentIncomeAdditionalMap());
+            modelBuilder.ApplyConfiguration(new DepartmentIncomeTotalsMap());
+            modelBuilder.ApplyConfiguration(new PeriodLookupMap());
         }
     }
 }

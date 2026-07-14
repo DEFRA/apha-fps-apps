@@ -41,6 +41,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
 
+        // TRANSFORMENGINE: Phase 7 — DepartmentIncome read-only report sub-client (stub; full impl Phase 8)
+        public IFpsDepartmentIncomeApiClient FpsDepartmentIncome { get; }
+
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             FpsStaffJob = new FpsStaffJobApiClient(http, mapper);
@@ -73,6 +76,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsGrade = new FpsGradeApiClient(http, mapper);
             FpsProjectAuditTrail = new FpsProjectAuditTrailApiClient(http, mapper);
             FpsTotalBusinessOverheads = new FpsTotalBusinessOverheadsApiClient(http, mapper);
+            // TRANSFORMENGINE: Phase 7 — stub client; full implementation deferred to Phase 8
+            FpsDepartmentIncome = new FpsDepartmentIncomeApiClient(http, mapper);
         }
     }
 }
