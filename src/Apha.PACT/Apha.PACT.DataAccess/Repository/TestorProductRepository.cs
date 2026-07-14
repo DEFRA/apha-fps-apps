@@ -291,7 +291,6 @@ namespace Apha.PACT.DataAccess.Repository
             return query;
         }
 
-
-            }
-        }
+    }
+}
 
