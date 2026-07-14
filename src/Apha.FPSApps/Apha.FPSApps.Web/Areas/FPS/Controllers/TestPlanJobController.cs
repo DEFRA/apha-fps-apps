@@ -306,7 +306,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     .Select(t => new SelectListItem
                     {
                         Value = t.ItemCode,
-                        Text = t.ItemDescription ?? string.Empty,
+                        Text  = $"{t.ItemCode}|{t.ItemDescription ?? string.Empty}|{t.UnitPriceVla?.ToString("F2") ?? "0.00"}",
                         Selected = string.Equals(model.TestCode, t.ItemCode, StringComparison.OrdinalIgnoreCase)
                     })
                     .ToList();

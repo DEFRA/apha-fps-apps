@@ -172,7 +172,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanJobControllerTest
             Assert.Equal(0, model.NoRequired);
             Assert.Equal(2, model.TestCodeOptions.Count);
             Assert.Equal("BLOOD", model.TestCodeOptions[0].Value);
-            Assert.Equal("Blood Test", model.TestCodeOptions[0].Text);
+            Assert.Equal("BLOOD|Blood Test|0.00", model.TestCodeOptions[0].Text);
         }
 
         [Fact]
