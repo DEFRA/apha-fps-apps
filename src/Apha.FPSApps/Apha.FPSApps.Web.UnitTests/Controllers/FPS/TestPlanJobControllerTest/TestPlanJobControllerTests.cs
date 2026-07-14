@@ -236,7 +236,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanJobControllerTest
         }
 
         [Fact]
-        public async Task Create_Post_WhenServiceFails_ReturnsFailureJson()
+        public async Task Create_Post_WhenServiceReturnsDuplicateErrorCode_ReturnsFriendlyDuplicateMessage()
         {
             // Arrange
             var item = new TestPlanItem { TestCode = "BLOOD", Buyer = "PRJ1" };
@@ -254,7 +254,85 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanJobControllerTest
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
-            Assert.Equal("Duplicate test code", value.GetProperty("message").GetString());
+            const string expectedMessage = "This test code has already been added to this project. Please update the existing entry instead.";
+            Assert.Equal(expectedMessage, value.GetProperty("message").GetString());
+            // errors array must contain field="TestCode" so the modal highlights the dropdown inline
+            var errorsArray = value.GetProperty("errors");
+            Assert.Equal(1, errorsArray.GetArrayLength());
+            Assert.Equal("TestCode", errorsArray[0].GetProperty("field").GetString());
+            Assert.Equal(expectedMessage, errorsArray[0].GetProperty("message").GetString());
+        }
+
+        [Theory]
+        [InlineData("CONFLICT")]
+        [InlineData("BUSINESS_RULE_VIOLATION")]
+        public async Task Create_Post_WhenServiceReturnsDuplicateVariantErrorCode_ReturnsFriendlyDuplicateMessage(string errorCode)
+        {
+            // Arrange
+            var item = new TestPlanItem { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var errors = new List<ApiErrorDto> { new() { Message = "Some conflict message", Code = errorCode } };
+            var serviceResponse = ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _mapper.Map<TestRequirementDto>(item).Returns(dto);
+            _testRequirementService.CreateTestReqmtAsync(dto).Returns(serviceResponse);
+
+            // Act
+            var result = await _controller.Create(item);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal(
+                "This test code has already been added to this project. Please update the existing entry instead.",
+                value.GetProperty("message").GetString());
+        }
+
+        [Fact]
+        public async Task Create_Post_WhenServiceErrorMessageContainsAlreadyExists_ReturnsFriendlyDuplicateMessage()
+        {
+            // Arrange – mirrors the exact message thrown by TestRequirementService.cs:97
+            var item = new TestPlanItem { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var errors = new List<ApiErrorDto> { new() { Message = "A record with the same TestCode and Buyer already exists.", Code = "UNKNOWN" } };
+            var serviceResponse = ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _mapper.Map<TestRequirementDto>(item).Returns(dto);
+            _testRequirementService.CreateTestReqmtAsync(dto).Returns(serviceResponse);
+
+            // Act
+            var result = await _controller.Create(item);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal(
+                "This test code has already been added to this project. Please update the existing entry instead.",
+                value.GetProperty("message").GetString());
+        }
+
+        [Fact]
+        public async Task Create_Post_WhenServiceFailsWithNonDuplicateError_ReturnsRawErrorMessage()
+        {
+            // Arrange
+            var item = new TestPlanItem { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var errors = new List<ApiErrorDto> { new() { Message = "This workgroup is not setup to do this test.", Code = "VALIDATION_ERROR" } };
+            var serviceResponse = ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _mapper.Map<TestRequirementDto>(item).Returns(dto);
+            _testRequirementService.CreateTestReqmtAsync(dto).Returns(serviceResponse);
+
+            // Act
+            var result = await _controller.Create(item);
+
+            // Assert – non-duplicate errors fall through to the generic handler
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("This workgroup is not setup to do this test.", value.GetProperty("message").GetString());
         }
 
         #endregion
