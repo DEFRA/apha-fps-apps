@@ -256,5 +256,5 @@ namespace Apha.PACT.Application.Services
         public async Task<bool> UpdateTestPriceCheckAsync(string testCode, string jobCode, TestPriceCheckDto dto)
             => await _repository.UpdateTestPriceCheckAsync(testCode, jobCode, dto.IsDefraProject, dto.TestPrice, dto.DefraUnitPrice);
 
-    }
         }
+}
