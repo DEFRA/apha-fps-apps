@@ -172,11 +172,11 @@ namespace Apha.PACT.Application.Services
         {
             var hasReqmts = await _testReqmtRepository.ExistsByTestBuyerCodeAsync(testCode + workGroup);
             if (hasReqmts)
-                throw new InvalidOperationException("Cannot delete, test requirements are dependant on this.");
+                throw new InvalidOperationException("Cannot delete, It is referenced by test requirements.");
 
             var hasMonthlyOutputs = await _monthlyOutputRepository.ExistsByTestCodeAndWorkGroupAsync(testCode, workGroup);
             if (hasMonthlyOutputs)
-                throw new InvalidOperationException("Cannot delete, monthly outputs are dependant on this.");
+                throw new InvalidOperationException("Cannot delete, It is referenced by monthly outputs.");
 
             return await _testCapabilityRepository.DeleteAsync(testCode, workGroup);
         }
