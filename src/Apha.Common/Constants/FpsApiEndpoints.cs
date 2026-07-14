@@ -223,6 +223,9 @@ namespace Apha.Common.Constants
         public const string DeleteBudgetBid = "api/v1/budgetbids?WorkGroupName={0}&account={1}";
         public const string GetBudgetBidsAccounts = "api/v1/budgetbids/accounts";
 
+        // Income/Contribution from Time Sales (frmTimeSellerPC)
+        public const string GetContributionSummaryRows   = "api/v1/timeseller/{0}/rows";
+        public const string GetContributionSummaryTotals = "api/v1/timeseller/{0}/totals";
         // Project Audit Trail (frmProjectChangesLog → api/v1/projectaudittrail)
         public const string GetProjectLogs = "api/v1/projectaudittrail/projectlogs";
         public const string GetStaffJobLogs = "api/v1/projectaudittrail/staffjoblogs";
