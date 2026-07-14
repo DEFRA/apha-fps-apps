@@ -332,24 +332,6 @@ namespace Apha.FPS.DataAccess.Repositories
             return sorted.ToList();
         }
 
-        private static IQueryable<StaffJobView> ApplySortingByProperty(IQueryable<StaffJobView> query, string property, bool descending)
-        {
-            return property switch
-            {
-                "name" => ApplyOrder(query, i => i.Name, descending),
-                "chargerate" => ApplyOrder(query, i => i.ChargeRate, descending),
-                "plannedhours" => ApplyOrder(query, i => i.PlannedHours, descending),
-                "days" => ApplyOrder(query, i => i.Days, descending),
-                "staffcost" => ApplyOrder(query, i => i.StaffCost, descending),
-                _ => query
-            };
-        }
-
-        private static IOrderedQueryable<StaffJobView> ApplyOrder<T>(IQueryable<StaffJobView> query, Expression<Func<StaffJobView, T>> keySelector, bool descending)
-        {
-            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
-        }
-
         private static List<StaffJobView> ApplyStaffJobFilterInMemory(List<StaffJobView> list, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
