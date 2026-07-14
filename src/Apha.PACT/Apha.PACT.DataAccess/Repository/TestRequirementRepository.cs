@@ -4,7 +4,6 @@ using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using System.Dynamic;
 
 namespace Apha.PACT.DataAccess.Repository
 {
@@ -488,24 +487,22 @@ namespace Apha.PACT.DataAccess.Repository
                         if (string.IsNullOrWhiteSpace(filter))
                             return query;
 
-                        dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
-                        if (filterModel == null)
+                        var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filter);
+                        if (filters is null)
                             return query;
 
-                        var dict = (IDictionary<string, object>)filterModel;
-
-                        if (dict.TryGetValue("TestCode", out var testCode) && testCode != null)
+                        if (filters.TryGetValue("TestCode", out var testCode) && !string.IsNullOrWhiteSpace(testCode))
                             query = query.Where(x => EF.Functions.ILike(x.TestCode, $"%{testCode}%"));
-                        if (dict.TryGetValue("ShortDescription", out var shortDescription) && shortDescription != null)
-                            query = query.Where(x => x.ShortDescription != null && EF.Functions.ILike(x.ShortDescription, $"%{shortDescription}%"));
-                        if (dict.TryGetValue("Program", out var program) && program != null)
+                        if (filters.TryGetValue("ShortDescription", out var shortDesc) && !string.IsNullOrWhiteSpace(shortDesc))
+                            query = query.Where(x => x.ShortDescription != null && EF.Functions.ILike(x.ShortDescription, $"%{shortDesc}%"));
+                        if (filters.TryGetValue("Program", out var program) && !string.IsNullOrWhiteSpace(program))
                             query = query.Where(x => x.Program != null && EF.Functions.ILike(x.Program, $"%{program}%"));
-                        if (dict.TryGetValue("Project", out var project) && project != null)
+                        if (filters.TryGetValue("Project", out var project) && !string.IsNullOrWhiteSpace(project))
                             query = query.Where(x => EF.Functions.ILike(x.Project, $"%{project}%"));
-                        if (dict.TryGetValue("Pc", out var pc) && pc != null)
+                        if (filters.TryGetValue("PC", out var pc) && !string.IsNullOrWhiteSpace(pc))
                             query = query.Where(x => x.Pc != null && EF.Functions.ILike(x.Pc, $"%{pc}%"));
-                        if (dict.TryGetValue("WorkG", out var workg) && workg != null)
-                            query = query.Where(x => x.WorkG != null && EF.Functions.ILike(x.WorkG, $"%{workg}%"));
+                        if (filters.TryGetValue("WorkG", out var workG) && !string.IsNullOrWhiteSpace(workG))
+                            query = query.Where(x => x.WorkG != null && EF.Functions.ILike(x.WorkG, $"%{workG}%"));
 
                         return query;
                     }
