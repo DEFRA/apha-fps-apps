@@ -1,31 +1,32 @@
 using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
-using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.FPS
 {
     /// <summary>
     /// Frontend service delegate for TestOrProduct VLA list view operations.
-    /// Forwards read calls to IFpsApiClient.FpsTestListVla — contains NO business logic.
+    /// Forwards calls to IPactApiClient.PactTestList — FpsYear filter is applied
+    /// automatically by the PACT DbContext global query filter; no explicit year needed.
     /// </summary>
     public class TestListVlaService : ITestListVlaService
     {
-        private readonly IFpsApiClient _client;
+        private readonly IPactApiClient _client;
 
-        public TestListVlaService(IFpsApiClient client)
+        public TestListVlaService(IPactApiClient client)
         {
             _client = client;
         }
 
-        public async Task<ApiResponseDto<List<TestListVlaDto>>> GetAllAsync(QueryParameters<string> query, int fpsYear)
-            => await _client.FpsTestListVla.GetAllAsync(query, fpsYear);
+        public async Task<ApiResponseDto<List<TestorProductDto>>> GetAllAsync(QueryParameters<string> query)
+            => await _client.PactTestList.GetPagedTestOrProductsAsync(query);
 
-        public async Task<ApiResponseDto<List<TestListVlaDto>>> GetAllByYearAsync(int fpsYear)
-            => await _client.FpsTestListVla.GetAllByYearAsync(fpsYear);
+        public async Task<ApiResponseDto<List<TestorProductDto>>> GetAllByYearAsync()
+            => await _client.PactTestList.GetAllTestorProductsAsync();
 
-        public async Task<ApiResponseDto<TestListVlaDto>> GetByIdAsync(string itemCode, int fpsYear)
-            => await _client.FpsTestListVla.GetByIdAsync(itemCode, fpsYear);
+        public async Task<ApiResponseDto<TestorProductDto>> GetByIdAsync(string itemCode)
+            => await _client.PactTestList.GetTestOrProductByIdAsync(itemCode);
     }
 }

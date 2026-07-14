@@ -162,13 +162,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
             // Arrange
             SetupGridMapper();
             var query = new QueryParameters<string>();
-            var response = ApiResponseDto<List<TestListVlaDto>>.SuccessResponse(
-                new List<TestListVlaDto> { new() { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear } },
+            var response = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(
+                new List<TestorProductDto> { new() { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear } },
                 new PaginationDto { TotalRecords = 1 });
 
-            _testListVlaService.GetAllAsync(Arg.Any<QueryParameters<string>>(), DefaultFpsYear)
+            _testListVlaService.GetAllAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(response);
-            _mapper.Map<List<TestListVlaItem>>(Arg.Any<List<TestListVlaDto>>())
+            _mapper.Map<List<TestListVlaItem>>(Arg.Any<List<TestorProductDto>>())
                 .Returns(new List<TestListVlaItem> { new() { ItemCode = DefaultItemCode } });
 
             // Act
@@ -184,13 +184,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         {
             // Arrange
             SetupGridMapper();
-            var response = ApiResponseDto<List<TestListVlaDto>>.SuccessResponse(
-                new List<TestListVlaDto>(),
+            var response = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(
+                new List<TestorProductDto>(),
                 new PaginationDto { TotalRecords = 0 });
 
-            _testListVlaService.GetAllAsync(Arg.Any<QueryParameters<string>>(), DefaultFpsYear)
+            _testListVlaService.GetAllAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(response);
-            _mapper.Map<List<TestListVlaItem>>(Arg.Any<List<TestListVlaDto>>())
+            _mapper.Map<List<TestListVlaItem>>(Arg.Any<List<TestorProductDto>>())
                 .Returns(new List<TestListVlaItem>());
 
             // Act
@@ -386,11 +386,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         {
             // Arrange
             SetupGridMapper();
-            var response = ApiResponseDto<List<TestListVlaDto>>.FailureResponse(
+            var response = ApiResponseDto<List<TestorProductDto>>.FailureResponse(
                 new List<ApiErrorDto> { new() { Message = "Service error" } },
                 new ApiMetaDto());
 
-            _testListVlaService.GetAllAsync(Arg.Any<QueryParameters<string>>(), DefaultFpsYear)
+            _testListVlaService.GetAllAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(response);
 
             // Act
@@ -545,7 +545,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
             var mapper = config.CreateMapper();
 
             var item = new TestListVlaItem { ItemCode = "VLA01" };
-            var dto = mapper.Map<TestListVlaDto>(item);
+            var dto = mapper.Map<TestorProductDto>(item);
             Assert.Equal(item.ItemCode, dto.ItemCode);
         }
 

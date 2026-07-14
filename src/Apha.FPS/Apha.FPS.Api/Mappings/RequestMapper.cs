@@ -121,11 +121,6 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<ContributionSummaryRowDto, ContributionSummaryRowRes>().ReverseMap();
             CreateMap<ContributionSummaryTotalsDto, ContributionSummaryTotalsRes>().ReverseMap();
 
-            //   TestListVlaReq and TestListVlaRes both map bidirectionally to TestListVlaDto.
-            //   PaginatedResult<TestListVlaDto> -> PaginationRes<TestListVlaRes> for paged list endpoint.
-            CreateMap<TestListVlaReq, TestListVlaDto>().ReverseMap();
-            CreateMap<TestListVlaRes, TestListVlaDto>().ReverseMap();
-            CreateMap<PaginatedResult<TestListVlaDto>, PaginationRes<TestListVlaRes>>();
 
             //   TestRCCostReq and TestRCCostRes both map bidirectionally to TestRCCostDto.
             //   PaginatedResult<TestRCCostDto> -> PaginationRes<TestRCCostRes> for paged list endpoint.

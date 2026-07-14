@@ -29,7 +29,6 @@
         IFpsPurchasesApiClient FpsPurchases { get; }
         IFpsUserApiClient FpsUserPermission { get; }
         IFpsGradeApiClient FpsGrade { get; }
-        IFpsTestListVlaApiClient FpsTestListVla { get; }
         IFpsTestRCCostApiClient FpsTestRCCost { get; }
         IFpsTestRequirementRCCostApiClient FpsTestRequirementRCCost { get; }
         IFpsContributionSummaryApiClient FpsContributionSummary { get; }

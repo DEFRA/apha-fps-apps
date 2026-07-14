@@ -119,7 +119,7 @@ namespace Apha.FPSApps.Web.Mappings
 // All four types created in Phase 11; ReverseMap is convention-based (property names match Dto).
 
 // TestListVla grid row ↔ DTO (frmTestList / fsubTest_MainList):
-CreateMap<TestListVlaItem, TestListVlaDto>().ReverseMap();
+CreateMap<TestorProductDto, TestListVlaItem>().ReverseMap();
 
 // TestRCCost grid row ↔ DTO (fsubTestRCPrice / Component Charges general tab):
 CreateMap<TestRCCostItem, TestRCCostDto>().ReverseMap();

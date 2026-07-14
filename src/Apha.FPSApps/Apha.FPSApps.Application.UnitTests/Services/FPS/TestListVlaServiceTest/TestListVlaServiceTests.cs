@@ -1,6 +1,6 @@
 using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.FPS;
 using NSubstitute;
@@ -13,16 +13,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.TestListVlaServiceTest
         private const string DefaultItemCode = "TEST001";
         private const int DefaultFpsYear = 2025;
 
-        private readonly IFpsApiClient _fpsClient;
-        private readonly IFpsTestListVlaApiClient _testListVlaClient;
+        private readonly IPactApiClient _pactClient;
+        private readonly IPactTestorProductApiClient _testListVlaClient;
         private readonly TestListVlaService _service;
 
         public TestListVlaServiceTests()
         {
-            _fpsClient = Substitute.For<IFpsApiClient>();
-            _testListVlaClient = Substitute.For<IFpsTestListVlaApiClient>();
-            _fpsClient.FpsTestListVla.Returns(_testListVlaClient);
-            _service = new TestListVlaService(_fpsClient);
+            _pactClient = Substitute.For<IPactApiClient>();
+            _testListVlaClient = Substitute.For<IPactTestorProductApiClient>();
+            _pactClient.PactTestList.Returns(_testListVlaClient);
+            _service = new TestListVlaService(_pactClient);
         }
 
         #region GetAllAsync
@@ -32,18 +32,18 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.TestListVlaServiceTest
         {
             // Arrange
             var query = new QueryParameters<string>();
-            var expected = ApiResponseDto<List<TestListVlaDto>>.SuccessResponse(
-                new List<TestListVlaDto> { new() { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear } },
+            var expected = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(
+                new List<TestorProductDto> { new() { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear } },
                 new PaginationDto { TotalRecords = 1 });
-            _testListVlaClient.GetAllAsync(query, DefaultFpsYear).Returns(expected);
+            _testListVlaClient.GetPagedTestOrProductsAsync(query).Returns(expected);
 
             // Act
-            var result = await _service.GetAllAsync(query, DefaultFpsYear);
+            var result = await _service.GetAllAsync(query);
 
             // Assert
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _testListVlaClient.Received(1).GetAllAsync(query, DefaultFpsYear);
+            await _testListVlaClient.Received(1).GetPagedTestOrProductsAsync(query);
         }
 
         [Fact]
@@ -51,12 +51,12 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.TestListVlaServiceTest
         {
             // Arrange
             var query = new QueryParameters<string>();
-            var expected = ApiResponseDto<List<TestListVlaDto>>.SuccessResponse(
-                new List<TestListVlaDto>(), new PaginationDto { TotalRecords = 0 });
-            _testListVlaClient.GetAllAsync(query, DefaultFpsYear).Returns(expected);
+            var expected = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(
+                new List<TestorProductDto>(), new PaginationDto { TotalRecords = 0 });
+            _testListVlaClient.GetPagedTestOrProductsAsync(query).Returns(expected);
 
             // Act
-            var result = await _service.GetAllAsync(query, DefaultFpsYear);
+            var result = await _service.GetAllAsync(query);
 
             // Assert
             Assert.True(result.Success);
@@ -68,17 +68,17 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.TestListVlaServiceTest
         {
             // Arrange
             var query = new QueryParameters<string>();
-            var expected = ApiResponseDto<List<TestListVlaDto>>.FailureResponse(
+            var expected = ApiResponseDto<List<TestorProductDto>>.FailureResponse(
                 new List<ApiErrorDto> { new() { Code = "SERVER_ERROR", Message = "Server error" } },
                 new ApiMetaDto());
-            _testListVlaClient.GetAllAsync(query, DefaultFpsYear).Returns(expected);
+            _testListVlaClient.GetPagedTestOrProductsAsync(query).Returns(expected);
 
             // Act
-            var result = await _service.GetAllAsync(query, DefaultFpsYear);
+            var result = await _service.GetAllAsync(query);
 
             // Assert
             Assert.False(result.Success);
-            await _testListVlaClient.Received(1).GetAllAsync(query, DefaultFpsYear);
+            await _testListVlaClient.Received(1).GetPagedTestOrProductsAsync(query);
         }
 
         #endregion
@@ -89,28 +89,28 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.TestListVlaServiceTest
         public async Task GetAllByYearAsync_ApiClientReturnsSuccess_ReturnsDelegatedSuccessResponse()
         {
             // Arrange
-            var expected = ApiResponseDto<List<TestListVlaDto>>.SuccessResponse(
-                new List<TestListVlaDto> { new() { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear } });
-            _testListVlaClient.GetAllByYearAsync(DefaultFpsYear).Returns(expected);
+            var expected = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(
+                new List<TestorProductDto> { new() { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear } });
+            _testListVlaClient.GetAllTestorProductsAsync().Returns(expected);
 
             // Act
-            var result = await _service.GetAllByYearAsync(DefaultFpsYear);
+            var result = await _service.GetAllByYearAsync();
 
             // Assert
             Assert.True(result.Success);
-            await _testListVlaClient.Received(1).GetAllByYearAsync(DefaultFpsYear);
+            await _testListVlaClient.Received(1).GetAllTestorProductsAsync();
         }
 
         [Fact]
         public async Task GetAllByYearAsync_ApiClientReturnsFailure_ReturnsDelegatedFailureResponse()
         {
             // Arrange
-            var expected = ApiResponseDto<List<TestListVlaDto>>.FailureResponse(
+            var expected = ApiResponseDto<List<TestorProductDto>>.FailureResponse(
                 new List<ApiErrorDto> { new() { Message = "Not found" } }, new ApiMetaDto());
-            _testListVlaClient.GetAllByYearAsync(DefaultFpsYear).Returns(expected);
+            _testListVlaClient.GetAllTestorProductsAsync().Returns(expected);
 
             // Act
-            var result = await _service.GetAllByYearAsync(DefaultFpsYear);
+            var result = await _service.GetAllByYearAsync();
 
             // Assert
             Assert.False(result.Success);
@@ -124,29 +124,29 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.TestListVlaServiceTest
         public async Task GetByIdAsync_ApiClientReturnsSuccess_ReturnsDelegatedSuccessResponse()
         {
             // Arrange
-            var dto = new TestListVlaDto { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear };
-            var expected = ApiResponseDto<TestListVlaDto>.SuccessResponse(dto);
-            _testListVlaClient.GetByIdAsync(DefaultItemCode, DefaultFpsYear).Returns(expected);
+            var dto = new TestorProductDto { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear };
+            var expected = ApiResponseDto<TestorProductDto>.SuccessResponse(dto);
+            _testListVlaClient.GetTestOrProductByIdAsync(DefaultItemCode).Returns(expected);
 
             // Act
-            var result = await _service.GetByIdAsync(DefaultItemCode, DefaultFpsYear);
+            var result = await _service.GetByIdAsync(DefaultItemCode);
 
             // Assert
             Assert.True(result.Success);
             Assert.Equal(DefaultItemCode, result.Data!.ItemCode);
-            await _testListVlaClient.Received(1).GetByIdAsync(DefaultItemCode, DefaultFpsYear);
+            await _testListVlaClient.Received(1).GetTestOrProductByIdAsync(DefaultItemCode);
         }
 
         [Fact]
         public async Task GetByIdAsync_ApiClientReturnsFailure_ReturnsDelegatedFailureResponse()
         {
             // Arrange
-            var expected = ApiResponseDto<TestListVlaDto>.FailureResponse(
+            var expected = ApiResponseDto<TestorProductDto>.FailureResponse(
                 new List<ApiErrorDto> { new() { Message = "Not found" } }, new ApiMetaDto());
-            _testListVlaClient.GetByIdAsync("NOTEXIST", DefaultFpsYear).Returns(expected);
+            _testListVlaClient.GetTestOrProductByIdAsync("NOTEXIST").Returns(expected);
 
             // Act
-            var result = await _service.GetByIdAsync("NOTEXIST", DefaultFpsYear);
+            var result = await _service.GetByIdAsync("NOTEXIST");
 
             // Assert
             Assert.False(result.Success);

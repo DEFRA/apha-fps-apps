@@ -176,7 +176,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var fpsYear = _fpsYearContext.Year;
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _testListVlaService.GetAllAsync(query, fpsYear);
+            var response = await _testListVlaService.GetAllAsync(query);
 
             var items = response.Success && response.Data != null
                 ? _mapper.Map<List<TestListVlaItem>>(response.Data)

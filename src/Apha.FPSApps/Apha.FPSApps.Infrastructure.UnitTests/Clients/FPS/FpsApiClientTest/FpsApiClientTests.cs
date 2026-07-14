@@ -21,13 +21,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsApiClientTest
         }
 
         [Fact]
-        public void Constructor_Always_WiresFpsTestListVlaProperty()
-        {
-            Assert.NotNull(_client.FpsTestListVla);
-            Assert.IsType<FpsTestListVlaApiClient>(_client.FpsTestListVla);
-        }
-
-        [Fact]
         public void Constructor_Always_WiresFpsTestRCCostProperty()
         {
             Assert.NotNull(_client.FpsTestRCCost);
@@ -51,12 +44,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsApiClientTest
         public void Constructor_Always_WiresFpsTotalBusinessOverheadsProperty()
         {
             Assert.NotNull(_client.FpsTotalBusinessOverheads);
-        }
-
-        [Fact]
-        public void FpsTestListVla_ImplementsExpectedInterface()
-        {
-            Assert.IsAssignableFrom<IFpsTestListVlaApiClient>(_client.FpsTestListVla);
         }
 
         [Fact]

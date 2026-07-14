@@ -89,31 +89,22 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
-//   TestOrProduct <-> TestListVlaDto: all property names aligned; no ForMember overrides needed.
-//   Covers composite PK (ItemCode, FpsYear) plus all VLA pricing and descriptor fields.
-CreateMap<TestOrProduct, TestListVlaDto>().ReverseMap();
-
-//   TestRCCost <-> TestRCCostDto: all property names aligned; no ForMember overrides needed.
-//   Covers composite PK (TestCode, ProfitCentre, FpsYear) and Price.
-CreateMap<TestRCCost, TestRCCostDto>().ReverseMap();
-
-//   TestRequirementRCCost <-> TestRequirementRCCostDto: all property names aligned; no ForMember overrides needed.
-//   Covers composite PK (TestCode, Buyer, ProfitCentre, FpsYear) and Price.
-CreateMap<TestRequirementRCCost, TestRequirementRCCostDto>().ReverseMap();
-
-//   All 5 log entities from fps schema partitioned tables.
-//   Property names are fully aligned between entity and DTO; no ForMember overrides needed.
-//   Covers all columns: sequenceno, parentproject/jobcode/testcode, date range, user tracking fields, fpsyear.
-CreateMap<ProjectLog, ProjectLogDto>().ReverseMap();
-CreateMap<StaffJobLog, StaffJobLogDto>().ReverseMap();
-CreateMap<TestRequirementLog, TestRequirementLogDto>().ReverseMap();
-CreateMap<AnimalRequestLog, AnimalRequestLogDto>().ReverseMap();
-CreateMap<AdditionalCostLog, AdditionalCostLogDto>().ReverseMap();
-// MaintTotalBusinessOverheads
-CreateMap<TotalBusinessOverheads, TotalBusinessOverheadsDto>()
-    .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
-    .ReverseMap()
-    .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
+            //   All 5 log entities from fps schema partitioned tables.
+            //   Property names are fully aligned between entity and DTO; no ForMember overrides needed.
+            //   Covers all columns: sequenceno, parentproject/jobcode/testcode, date range, user tracking fields, fpsyear.
+            CreateMap<ProjectLog, ProjectLogDto>().ReverseMap();
+            CreateMap<StaffJobLog, StaffJobLogDto>().ReverseMap();
+            CreateMap<TestRequirementLog, TestRequirementLogDto>().ReverseMap();
+            CreateMap<AnimalRequestLog, AnimalRequestLogDto>().ReverseMap();
+            CreateMap<AdditionalCostLog, AdditionalCostLogDto>().ReverseMap();
+            // MaintTotalBusinessOverheads
+            CreateMap<TotalBusinessOverheads, TotalBusinessOverheadsDto>()
+            .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
+            .ReverseMap()
+            .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
+            //TestListVLA
+            CreateMap<TestRCCost, TestRCCostDto>().ReverseMap();
+            CreateMap<TestRequirementRCCost, TestRequirementRCCostDto>().ReverseMap();
         }
     }
 }

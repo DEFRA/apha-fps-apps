@@ -54,7 +54,6 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IContributionSummaryService, ContributionSummaryService>();
             services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
             services.AddScoped<IUserService, UserService>();
-services.AddScoped<ITestListVlaService, TestListVlaService>();
 services.AddScoped<ITestRCCostService, TestRCCostService>();
 services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();
 services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
@@ -98,7 +97,6 @@ services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService
             services.AddScoped<IContributionSummaryRepository, ContributionSummaryRepository>();
             services.AddScoped<IProjectAuditTrailRepository, ProjectAuditTrailRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
-services.AddScoped<ITestListVlaRepository, TestListVlaRepository>();
 services.AddScoped<ITestRCCostRepository, TestRCCostRepository>();
 services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
 services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();

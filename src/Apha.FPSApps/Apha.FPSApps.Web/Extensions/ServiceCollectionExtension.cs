@@ -55,9 +55,8 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
-            //   TestListVlaService is a thin delegate injecting IFpsApiClient (already registered
-            //   in ApiClientExtension.AddApiClient()). AddScoped matches the request-scoped lifetime
-            //   of the IFpsApiClient aggregate client it depends on.
+            //   TestListVlaService delegates to IPactApiClient.PactTestList (PACT API).
+            //   FpsYear filtering is handled by the PACT DbContext global query filter.
             services.AddScoped<ITestListVlaService, TestListVlaService>();
             services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();

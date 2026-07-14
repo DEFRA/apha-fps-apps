@@ -42,7 +42,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsContributionSummaryApiClient FpsContributionSummary { get; }
         public IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
 
-        public IFpsTestListVlaApiClient FpsTestListVla { get; }
         public IFpsTestRCCostApiClient FpsTestRCCost { get; }
         public IFpsTestRequirementRCCostApiClient FpsTestRequirementRCCost { get; }
 
@@ -76,7 +75,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsPurchases = new FpsPurchasesApiClient(http, mapper);
             FpsUserPermission = new FpsUserApiClient(http, mapper);
             FpsGrade = new FpsGradeApiClient(http, mapper);
-            FpsTestListVla = new FpsTestListVlaApiClient(http, mapper);
             FpsTestRCCost = new FpsTestRCCostApiClient(http, mapper);
             FpsTestRequirementRCCost = new FpsTestRequirementRCCostApiClient(http, mapper);
             FpsContributionSummary = new FpsContributionSummaryApiClient(http, mapper);
