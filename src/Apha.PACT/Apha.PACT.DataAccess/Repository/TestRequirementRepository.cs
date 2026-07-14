@@ -491,19 +491,33 @@ namespace Apha.PACT.DataAccess.Repository
                         if (filters is null)
                             return query;
 
+                        query = ApplyBreakdownTextFilters(query, filters);
+                        query = ApplyBreakdownCodeFilters(query, filters);
+
+                        return query;
+                    }
+
+                    private static IQueryable<TestReqBreakdownView> ApplyBreakdownTextFilters(
+                        IQueryable<TestReqBreakdownView> query, Dictionary<string, string> filters)
+                    {
                         if (filters.TryGetValue("TestCode", out var testCode) && !string.IsNullOrWhiteSpace(testCode))
                             query = query.Where(x => EF.Functions.ILike(x.TestCode, $"%{testCode}%"));
                         if (filters.TryGetValue("ShortDescription", out var shortDesc) && !string.IsNullOrWhiteSpace(shortDesc))
                             query = query.Where(x => x.ShortDescription != null && EF.Functions.ILike(x.ShortDescription, $"%{shortDesc}%"));
                         if (filters.TryGetValue("Program", out var program) && !string.IsNullOrWhiteSpace(program))
                             query = query.Where(x => x.Program != null && EF.Functions.ILike(x.Program, $"%{program}%"));
+                        return query;
+                    }
+
+                    private static IQueryable<TestReqBreakdownView> ApplyBreakdownCodeFilters(
+                        IQueryable<TestReqBreakdownView> query, Dictionary<string, string> filters)
+                    {
                         if (filters.TryGetValue("Project", out var project) && !string.IsNullOrWhiteSpace(project))
                             query = query.Where(x => EF.Functions.ILike(x.Project, $"%{project}%"));
                         if (filters.TryGetValue("PC", out var pc) && !string.IsNullOrWhiteSpace(pc))
                             query = query.Where(x => x.Pc != null && EF.Functions.ILike(x.Pc, $"%{pc}%"));
                         if (filters.TryGetValue("WorkG", out var workG) && !string.IsNullOrWhiteSpace(workG))
                             query = query.Where(x => x.WorkG != null && EF.Functions.ILike(x.WorkG, $"%{workG}%"));
-
                         return query;
                     }
 
