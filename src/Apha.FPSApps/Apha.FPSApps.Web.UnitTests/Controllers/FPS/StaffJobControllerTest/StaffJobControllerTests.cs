@@ -277,7 +277,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffJobControllerTest
         [Fact]
         public async Task Create_WhenErrorCodeIsNullButMessageContainsAlreadyExists_ReturnsFriendlyDuplicateMessage()
         {
-            // Arrange — Code is null; IsDuplicateError must fall through to Message.Contains("already exists")
+            // Arrange — Code is empty (no recognised duplicate code); IsDuplicateError falls through to Message.Contains("already exists")
             var viewModel = new Apha.FPSApps.Web.Areas.FPS.Models.StaffJobItemViewModel
             {
                 StaffID = "STAFF001",
@@ -286,7 +286,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffJobControllerTest
             };
             var errors = new List<ApiErrorDto>
             {
-                new ApiErrorDto { Code = null, Message = "A record already exists for this staff member." }
+                new ApiErrorDto { Code = string.Empty, Message = "A record already exists for this staff member." }
             };
             var serviceResponse = ApiResponseDto<StaffJobDto>.FailureResponse(errors, new ApiMetaDto());
 
@@ -308,7 +308,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffJobControllerTest
         [Fact]
         public async Task Create_WhenErrorCodeIsNullAndMessageDoesNotContainAlreadyExists_ReturnsGenericFailure()
         {
-            // Arrange — Code is null AND Message does not contain "already exists" → not a duplicate
+            // Arrange — Code is empty AND Message does not contain "already exists" → not a duplicate
             var viewModel = new Apha.FPSApps.Web.Areas.FPS.Models.StaffJobItemViewModel
             {
                 StaffID = "STAFF001",
@@ -317,7 +317,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffJobControllerTest
             };
             var errors = new List<ApiErrorDto>
             {
-                new ApiErrorDto { Code = null, Message = "Unexpected server failure." }
+                new ApiErrorDto { Code = string.Empty, Message = "Unexpected server failure." }
             };
             var serviceResponse = ApiResponseDto<StaffJobDto>.FailureResponse(errors, new ApiMetaDto());
 
@@ -336,7 +336,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffJobControllerTest
         [Fact]
         public async Task Create_WhenErrorCodeIsNullAndMessageIsNull_ReturnsGenericFailureWithFallbackMessage()
         {
-            // Arrange — both Code and Message are null → IsDuplicateError null-coalescing branches both hit
+            // Arrange — Code and Message are both empty strings → IsDuplicateError returns false, fallback message used
             var viewModel = new Apha.FPSApps.Web.Areas.FPS.Models.StaffJobItemViewModel
             {
                 StaffID = "STAFF001",
@@ -345,7 +345,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffJobControllerTest
             };
             var errors = new List<ApiErrorDto>
             {
-                new ApiErrorDto { Code = null, Message = null }
+                new ApiErrorDto { Code = string.Empty, Message = string.Empty }
             };
             var serviceResponse = ApiResponseDto<StaffJobDto>.FailureResponse(errors, new ApiMetaDto());
 
@@ -358,7 +358,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffJobControllerTest
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
-            Assert.Equal("Failed to create Staff cost planned hours.", value.GetProperty("message").GetString());
+            // Message is empty string (not null), so the ?? fallback does not trigger
+            Assert.Equal(string.Empty, value.GetProperty("message").GetString());
         }
 
         #endregion

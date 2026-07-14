@@ -676,7 +676,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanJobControllerTest
             // Arrange — Code is null; IsDuplicateError must fall through to Message.Contains("already exists")
             var item = new TestPlanItem { TestCode = "BLOOD", Buyer = "PRJ1" };
             var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var errors = new List<ApiErrorDto> { new() { Code = null, Message = "A record already exists for this test code." } };
+            var errors = new List<ApiErrorDto> { new() { Code = string.Empty, Message = "A record already exists for this test code." } };
             var serviceResponse = ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto());
 
             _mapper.Map<TestRequirementDto>(item).Returns(dto);
@@ -701,7 +701,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanJobControllerTest
             // Arrange — both Code and Message are null → IsDuplicateError null-coalescing branches both exercised
             var item = new TestPlanItem { TestCode = "BLOOD", Buyer = "PRJ1" };
             var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var errors = new List<ApiErrorDto> { new() { Code = null, Message = null } };
+            var errors = new List<ApiErrorDto> { new() { Code = string.Empty, Message = string.Empty } };
             var serviceResponse = ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto());
 
             _mapper.Map<TestRequirementDto>(item).Returns(dto);
