@@ -575,20 +575,19 @@ function initializeProgramDropdown() {
         data: programListData,
         displayField: 'Text',
         valueField: 'Value',
-        clearButtonClearsSelection: false,
+        clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem, dropdown) {
                 $('#Project_Program').val(selectedItem.Value);
             },
             onClear: function (dropdown) {
                 $('#Project_Program').val('');
+                programDropdown.clear();
             }
         }
     });
     // Set initial value if exists
-   // programDropdown.updateData(programListData);
     if (selectedProgramValue && selectedProgramValue !== '') {
-      //  programDropdown.setValue(selectedProgramValue);
         programDropdown.setValue(selectedProgramValue);
     }
 }
@@ -609,19 +608,18 @@ function initializeContractDropdown() {
         data: contractListData,
         displayField: 'Text',
         valueField: 'Value',
-        clearButtonClearsSelection: false,
+        clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem, dropdown) {
                 $('#Project_Contract').val(selectedItem.Value);
             },
             onClear: function (dropdown) {
                 $('#Project_Contract').val('');
+                contractDropdown.clear();
             }
         }
     });
-    console.log('✓ Dropdown created successfully:', contractDropdown);
-
-    //contractDropdown.updateData(contractListData);
+   
     // Set initial value if exists
     if (selectedContractValue && selectedContractValue !== '') {
         contractDropdown.setValue(selectedContractValue);
@@ -633,34 +631,38 @@ function initializeJobCodeWorkGroupDropdown(config) {
     var workGroupData = config.workGroupData || [];
     var selectedWorkGroup = config.selectedWorkGroup || '';
 
-    window.jobCodeWorkGroupDropdown = new MultiColumnDropdownComponent({
-        dropdownId: 'workGroupDropdown',
-        containerSelector: '#workGroupMultiDropdown',
-        placeholder: 'Select a Work Group',
-        showSerialNumber: false,
-        searchPlaceholder: 'Search by work group',
-        labelText: 'Work Group',
-        required: false,
-        columns: [
-            { field: 'Value', header: 'Code', width: '100px' },
-            { field: 'Text', header: 'Work Group', width: '250px' }
-        ],
-        data: workGroupData,
-        displayField: 'Text',
-        valueField: 'Value',
-        clearButtonClearsSelection: true,
-        callbacks: {
-            onSelect: function (selectedItem, dropdown) {
-                $('#JobCodeWorkGroup').val(selectedItem.Value);
-            },
-            onClear: function (dropdown) {
-                $('#JobCodeWorkGroup').val('');
+    // setTimeout(function() {
+    //     window.
+            jobCodeWorkGroupDropdown = new MultiColumnDropdownComponent({
+            dropdownId: 'workGroupDropdown',
+            containerSelector: '#workGroupMultiDropdown',
+            placeholder: 'Select a Work Group',
+            showSerialNumber: false,
+            searchPlaceholder: 'Search by work group',
+            labelText: 'Work Group',
+            required: false,
+            columns: [
+                { field: 'Value', header: 'Code', width: '100px' },
+                { field: 'Text', header: 'Work Group', width: '250px' }
+            ],
+            data: workGroupData,
+            displayField: 'Text',
+            valueField: 'Value',
+            clearButtonClearsSelection: true,
+            callbacks: {
+                onSelect: function (selectedItem, dropdown) {
+                    $('#JobCodeWorkGroup').val(selectedItem.Value);
+                },
+                onClear: function (dropdown) {
+                    $('#JobCodeWorkGroup').val('');
+                    window.jobCodeWorkGroupDropdown.clear();
+                }
             }
-        }
-    });
+        });
 
-    // Set initial value if exists
-    if (selectedWorkGroup && selectedWorkGroup !== '') {
-        window.jobCodeWorkGroupDropdown.setValue(selectedWorkGroup);
-    }
+        // Set initial value if exists
+        if (selectedWorkGroup && selectedWorkGroup !== '') {
+            window.jobCodeWorkGroupDropdown.setValue(selectedWorkGroup);
+        }
+    // }, 100);
 }
