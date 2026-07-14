@@ -23,6 +23,10 @@
     </div>
     <form class="row" id="@formId">
         <input type="hidden" asp-for="JobCode" id="JobCode" />
+        @if (isEditMode)
+        {
+            <input type="hidden" name="OriginalDescription" id="OriginalDescription" value="@Model.Description" />
+        }
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label for="JobCode" class="govuk-label p-0">Job Code</label>

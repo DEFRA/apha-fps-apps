@@ -12,14 +12,13 @@
     <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
 </div>
 <div class="modal-body" style="overflow-y: auto; max-height: calc(80vh - 120px);">
-    <div asp-validation-summary="ModelOnly" class="govuk-error-summary" role="alert"
-         aria-labelledby="tp-error-summary-title" tabindex="-1" style="display:none;">
-        <h2 class="govuk-error-summary__title" id="tp-error-summary-title">
+    <div class="govuk-error-summary" role="alert"
+         aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">
             There is a problem
         </h2>
         <div class="govuk-error-summary__body">
-            <ul class="govuk-list govuk-error-summary__list">
-            </ul>
+            <ul class="govuk-list govuk-error-summary__list" id="modalErrorList"></ul>
         </div>
     </div>
     <form class="row" id="@formId">
