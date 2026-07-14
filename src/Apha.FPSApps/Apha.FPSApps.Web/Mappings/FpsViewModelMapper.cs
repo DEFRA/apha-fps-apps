@@ -17,6 +17,12 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<TestPriceCheckDto, TestPriceCheckItem>()
                 .ForMember(d => d.IsDefraProjectList, o => o.Ignore());
             CreateMap<TestPriceCheckItem, TestPriceCheckDto>();
+            CreateMap<TestReqBreakdownItem, TestReqBreakdownDto>()
+                .ForMember(d => d.Pc, o => o.MapFrom(s => s.PC))
+                .ForMember(d => d.WgPrice, o => o.MapFrom(s => s.WGPrice))
+                .ReverseMap()
+                .ForMember(d => d.PC, o => o.MapFrom(s => s.Pc))
+                .ForMember(d => d.WGPrice, o => o.MapFrom(s => s.WgPrice));
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
             CreateMap<AnimalMaintenanceViewModel, AnimalDto>().ReverseMap();
             CreateMap<UserPermissionViewModel, UserDto>().ReverseMap();
@@ -102,6 +108,8 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
                 .ReverseMap();
 
+            // Contribution Summary — row grid item
+            CreateMap<ContributionSummaryRowDto, ContributionSummaryRowItem>().ReverseMap();
             // Total Business Overheads
             CreateMap<TotalBusinessOverheadsViewModel, TotalBusinessOverheadsDto>().ReverseMap();
 
