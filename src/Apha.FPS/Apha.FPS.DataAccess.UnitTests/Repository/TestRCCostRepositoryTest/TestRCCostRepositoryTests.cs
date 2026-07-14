@@ -76,21 +76,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
         }
 
         [Fact]
-        public async Task GetPagedByTestCodeAsync_WithNonMatchingFpsYear_ReturnsEmpty()
-        {
-            // Arrange
-            var entities = new List<TestRCCost> { CreateEntity(DefaultTestCode, "PC001") };
-            var repo = CreateRepository(entities, 9999);
-            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-
-            // Act — repo context has year 9999, entities have year 2025
-            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
-
-            // Assert
-            Assert.Empty(result.Data);
-        }
-
-        [Fact]
         public async Task GetPagedByTestCodeAsync_WithPaging_ReturnsCorrectPage()
         {
             // Arrange — repository enforces Math.Max(pageSize, 10), so use pageSize=10 with 15 items
@@ -144,20 +129,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
 
             // Act
             var result = await repo.GetByTestCodeAsync("NOTEXIST");
-
-            // Assert
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public async Task GetByTestCodeAsync_WithNonMatchingFpsYear_ReturnsEmpty()
-        {
-            // Arrange
-            var entities = new List<TestRCCost> { CreateEntity(DefaultTestCode, DefaultProfitCentre) };
-            var repo = CreateRepository(entities, 9999);
-
-            // Act
-            var result = await repo.GetByTestCodeAsync(DefaultTestCode);
 
             // Assert
             Assert.Empty(result);

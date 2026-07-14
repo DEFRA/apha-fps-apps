@@ -19,9 +19,7 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<PagedData<TestCapability>> GetPagedByWorkGroupAsync(
             PaginationParameters<string> query, string? workGroup)
         {
-            var fpsYear = _fpsRequestContext.FpsYear;
-            var baseQuery = _context.TestCapabilities.AsNoTracking().AsQueryable()
-                .Where(t => t.FpsYear == fpsYear);
+            var baseQuery = _context.TestCapabilities.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(workGroup))
                 baseQuery = baseQuery.Where(t => t.WorkGroup == workGroup);
@@ -41,9 +39,7 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<PagedData<TestCapability>> GetPagedByTestCodeAsync(
             PaginationParameters<string> query, string? testCode)
          {
-            var fpsYear = _fpsRequestContext.FpsYear;
-            var baseQuery = _context.TestCapabilities.AsNoTracking().AsQueryable()
-                .Where(t => t.FpsYear == fpsYear);
+            var baseQuery = _context.TestCapabilities.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(testCode))
                 baseQuery = baseQuery.Where(t => t.TestCode == testCode);
@@ -62,9 +58,7 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<PagedData<TestCapability>> GetPagedTestCapabilityByPortfolioAsync(
             PaginationParameters<string> query, string? portfolio)
         {
-            var fpsYear = _fpsRequestContext.FpsYear;
-            var baseQuery = _context.TestCapabilities.AsNoTracking().AsQueryable()
-                .Where(t => t.FpsYear == fpsYear);
+            var baseQuery = _context.TestCapabilities.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(portfolio))
                 baseQuery = baseQuery.Where(t => t.PlanPortfolio == portfolio);
@@ -83,10 +77,9 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<TestCapability?> GetByIdAsync(string testCode, string workGroup)
         {
-            var fpsYear = _fpsRequestContext.FpsYear;
             return await _context.TestCapabilities
                 .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.TestCode == testCode && t.WorkGroup == workGroup && t.FpsYear == fpsYear);
+                .FirstOrDefaultAsync(t => t.TestCode == testCode && t.WorkGroup == workGroup);
         }
 
         public async Task<TestCapability> AddAsync(TestCapability entity)
@@ -110,8 +103,7 @@ namespace Apha.PACT.DataAccess.Repository
             var entity = await _context.TestCapabilities
                 .FirstOrDefaultAsync(t =>
                     t.TestCode == testCode &&
-                    t.WorkGroup == workGroup &&
-                    t.FpsYear == _fpsRequestContext.FpsYear);
+                    t.WorkGroup == workGroup);
 
             if (entity is null) return false;
 

@@ -22,11 +22,9 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<TestRCCost>> GetPagedByTestCodeAsync(
             PaginationParameters<string> query, string testCode)
         {
-            var fpsYear = _requestContext.FpsYear;
-
             var q = _dbContext.TestRCCosts
                 .AsNoTracking()
-                .Where(e => e.TestCode == testCode && e.FpsYear == fpsYear);
+                .Where(e => e.TestCode == testCode);
 
             q = ApplyFilter(q, query.Filter);
             q = ApplySort(q, query.SortBy, query.Descending);
@@ -42,34 +40,26 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<IEnumerable<TestRCCost>> GetByTestCodeAsync(string testCode)
         {
-            var fpsYear = _requestContext.FpsYear;
-
             return await _dbContext.TestRCCosts
                 .AsNoTracking()
-                .Where(e => e.TestCode == testCode && e.FpsYear == fpsYear)
+                .Where(e => e.TestCode == testCode)
                 .OrderBy(e => e.ProfitCentre)
                 .ToListAsync();
         }
 
         public async Task<TestRCCost?> GetByKeyAsync(string testCode, string profitCentre)
         {
-            var fpsYear = _requestContext.FpsYear;
-
             return await _dbContext.TestRCCosts
                 .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.TestCode == testCode
-                                       && e.ProfitCentre == profitCentre
-                                       && e.FpsYear == fpsYear);
+                                       && e.ProfitCentre == profitCentre);
         }
 
         public async Task<bool> ExistsAsync(string testCode, string profitCentre)
         {
-            var fpsYear = _requestContext.FpsYear;
-
             return await _dbContext.TestRCCosts
                 .AnyAsync(e => e.TestCode == testCode
-                            && e.ProfitCentre == profitCentre
-                            && e.FpsYear == fpsYear);
+                            && e.ProfitCentre == profitCentre);
         }
 
         public async Task<TestRCCost> AddAsync(TestRCCost testRCCost)
@@ -127,12 +117,9 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> DeleteAsync(string testCode, string profitCentre)
         {
-            var fpsYear = _requestContext.FpsYear;
-
             var entity = await _dbContext.TestRCCosts
                 .FirstOrDefaultAsync(e => e.TestCode == testCode
-                                       && e.ProfitCentre == profitCentre
-                                       && e.FpsYear == fpsYear);
+                                       && e.ProfitCentre == profitCentre);
 
             if (entity == null)
                 return false;
