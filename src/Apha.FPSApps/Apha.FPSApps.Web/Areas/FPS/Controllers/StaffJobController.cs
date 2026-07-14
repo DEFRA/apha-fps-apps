@@ -132,7 +132,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 {
                     success = false,
                     message = friendlyMessage,
-                    errors = new[] { new { field = "Name", message = friendlyMessage } }
+                    errors = new[] { new { field = string.Empty, message = friendlyMessage } }
                 });
             }
 
