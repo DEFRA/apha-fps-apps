@@ -37,20 +37,22 @@
                 }
                 else
                 {
-                    <div class="mcd-wrapper">
+                    <div style="position: relative;">
                         <input type="text" id="StaffDisplay" placeholder="Select Staff" autocomplete="off"
-                               class="govuk-input down-arrow-img mcd-trigger" readonly
+                               class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly
                                onclick="toggleStaffPanel()" />
-                        <div id="StaffDropdownPanel" class="mcd-panel">
+                        <div id="StaffDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
+                                max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
+                                box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
                             <input type="text" id="StaffSearchBox" placeholder="Type to search staff..."
-                                   class="mcd-search"
+                                   style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;"
                                    oninput="filterStaffPanel(this.value)" />
-                            <table class="mcd-table">
-                                <thead>
+                            <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                                <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
                                     <tr>
-                                        <th>Name</th>
-                                        <th>Grade</th>
-                                        <th>Hrs Avail</th>
+                                        <th style="padding:6px 8px; text-align:left;">Name</th>
+                                        <th style="padding:6px 8px; text-align:left;">Grade</th>
+                                        <th style="padding:6px 8px; text-align:left;">Hrs Avail</th>
                                     </tr>
                                 </thead>
                                 <tbody id="StaffDropdownBody">
@@ -63,10 +65,11 @@
                                             var sGrade = parts.Length > 1 ? parts[1].Trim() : string.Empty;
                                             var sHrsAvail = parts.Length > 2 ? parts[2].Trim() : string.Empty;
                                             <tr data-staffid="@staff.Value" data-name="@sName"
-                                                onclick="selectStaff('@staff.Value', '@Html.Raw(sName.Replace("'", "\\'"))', this)">
-                                                <td>@sName</td>
-                                                <td>@sGrade</td>
-                                                <td>@sHrsAvail</td>
+                                                onclick="selectStaff('@staff.Value', '@Html.Raw(sName.Replace("'", "\\'"))', this)"
+                                                style="cursor:pointer;">
+                                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@sName</td>
+                                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@sGrade</td>
+                                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@sHrsAvail</td>
                                             </tr>
                                         }
                                     }
