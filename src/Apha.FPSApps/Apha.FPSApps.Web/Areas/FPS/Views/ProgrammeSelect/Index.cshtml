@@ -60,9 +60,10 @@
         function filterProgramme() {
             var programNo = document.getElementById('programmeDropdown').value;
             var projectName = document.getElementById('projectNameInput')?.value ?? '';
-            if (programNo) {
-                fpsNavigateTo('@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })?programNo=' + encodeURIComponent(programNo) + '&projectName=' + encodeURIComponent(projectName));
-            }
+            // Navigate for both a selected programme and the empty "-- Select Programme --" option
+            // so the grid is refreshed and cleared when the selection is reset.
+            var url = '@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })?programNo=' + encodeURIComponent(programNo) + '&projectName=' + encodeURIComponent(projectName);
+            fpsNavigateTo(url);
         }
 
         function getProjectsExtraFilters() {
