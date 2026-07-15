@@ -1,24 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsDbContext.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - Added DbSet<CostCentre> CostCentres property for fps.costcentre table
- *   - Registered ApplyConfiguration(new CostCentreMap()) in OnModelCreating
- *   - Added HasQueryFilter for CostCentre scoped to FilterFpsYear (FpsYear == FilterFpsYear)
- *
- * PRESERVED:
- *   - All existing DbSet properties and ApplyConfiguration registrations unchanged
- *   - IFpsRequestContext injection and FilterFpsYear property unchanged
- *   - All existing HasQueryFilter registrations unchanged
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: fps.costcentre is a PostgreSQL partitioned table (PARTITION BY LIST fpsyear).
- *     The HasQueryFilter on FpsYear aligns with the partition key, which is correct — but verify
- *     that insert/update operations through EF Core correctly route to the active year partition.
- */
-
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -64,6 +43,9 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<AccountCode> AccountCodes { get; set; }
         public virtual DbSet<SubAccount> SubAccounts { get; set; }
         public virtual DbSet<UserCategory> UserCategories { get; set; }
+        public virtual DbSet<Category> Categories { get; set; }
+        public virtual DbSet<UserTestOwner> UserTestOwners { get; set; }
+        public virtual DbSet<UserProjectGroup> UserProjectGroups { get; set; }
         public virtual DbSet<StaffActiveView> StaffActiveView { get; set; }
         public virtual DbSet<WorkgroupGradeGeneralView> WorkgroupGradeGeneralViews { get; set; }
 
@@ -113,18 +95,17 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<WorkGroupEmployeeView> WorkGroupEmployeeViews { get; set; }
         public virtual DbSet<PactStaff> PactStaffs { get; set; }
 
-
         public virtual DbSet<ProjectStaffPlanView> ProjectStaffPlanViews { get; set; }
         public virtual DbSet<ProjectGroupStaffPlanView> ProjectGroupStaffPlanViews { get; set; }
 
         public virtual DbSet<ProjectProfitabilityVlaView> ProjectProfitabilityVlaViews { get; set; }
 
-
         public virtual DbSet<Bid> Bids { get; set; }
         public virtual DbSet<BidView> BidViews { get; set; }
         public virtual DbSet<Purchase> Purchases { get; set; }
+        public virtual DbSet<ContributionSummaryView> VQryFrmTimeSellerPcViews { get; set; }
+        public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; }
 
-        // TRANSFORMENGINE: Added for frmMaintCostCentres migration — fps.costcentre table
         public virtual DbSet<CostCentre> CostCentres { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -142,7 +123,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new StaffJobMap());
             modelBuilder.Entity<StaffJob>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-            modelBuilder.ApplyConfiguration(new WgEmployeeMap());
+            modelBuilder.ApplyConfiguration(new WorkGroupEmployeeMap());
             modelBuilder.Entity<WorkGroupEmployee>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new EmployeeMap());
@@ -165,6 +146,7 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
             modelBuilder.ApplyConfiguration(new ProfitCentreViewMap());
+            modelBuilder.Entity<ProfitCentreView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new ProfitCentreGradeViewMap());
             modelBuilder.Entity<ProfitCentreGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new WorkGroupGradeViewMap());
@@ -200,6 +182,14 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new UserCategoryMap());
             modelBuilder.Entity<UserCategory>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new CategoryMap());
+
+            modelBuilder.ApplyConfiguration(new UserTestOwnerMap());
+            modelBuilder.Entity<UserTestOwner>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new UserProjectGroupMap());
+            modelBuilder.Entity<UserProjectGroup>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new StaffActiveViewMap());
             modelBuilder.Entity<StaffActiveView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -249,7 +239,6 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new AdditionalCostLogMap());
             modelBuilder.Entity<AdditionalCostLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-
             modelBuilder.ApplyConfiguration(new SurvFFSubmissionMap());
             modelBuilder.Entity<SurvFFSubmission>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -289,7 +278,6 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new ProjectMonthFinalMap());
 
-
             modelBuilder.ApplyConfiguration(new TimeCostCalcsViewMap());
             modelBuilder.Entity<TimeCostCalcsView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -327,6 +315,9 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new PurchaseMap());
             modelBuilder.Entity<Purchase>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new ContributionSummaryViewMap());
+            modelBuilder.Entity<ContributionSummaryView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
             modelBuilder.Entity<MonthlyTime>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -338,7 +329,9 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new GradeMap());
             modelBuilder.Entity<Grade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-            // TRANSFORMENGINE: CostCentre map + year-scoped query filter — frmMaintCostCentres migration
+            modelBuilder.ApplyConfiguration(new TotalBusinessOverheadsMap());
+            modelBuilder.Entity<TotalBusinessOverheads>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new CostCentreMap());
             modelBuilder.Entity<CostCentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }

@@ -22,7 +22,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsAccountCategoryApiClient FpsAccountCategory { get; }
         public IFpsDivisionGradeApiClient FpsMaintDG { get; }
         public IFpsAnimalApiClient FpsAnimalMaster { get; }
-
         public IFpsProfitCentreApiClient FpsProfitCentre { get; }
         public IFpsProfitCentreGradeApiClient FpsProfitCentreGrade { get; }
         public IFpsWorkGroupGradeApiClient FpsWorkGroupGrade { get; }
@@ -30,15 +29,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsProjectStaffPlanApiClient FpsProjectStaffPlan { get; }
         public IFpsProjectGroupStaffPlanApiClient FpsProjectGroupStaffPlan { get; }
         public IFpsProjectGroupApiClient FpsProjectGroup { get; }
-
         public IFpsWorkGroupGradeApiClient FpsWorkgroupGrade { get; }
         public IFpsBudgetBidsApiClient FpsBudgetBids { get; }
         public IFpsPurchasesApiClient FpsPurchases { get; }
+        public IFpsUserApiClient FpsUserPermission { get; }
 
-        // TRANSFORMENGINE: FpsGrade added � Phase 9 (FpsGradeApiClient for frmMaintGrade ? api/v1/Grade)
         public IFpsGradeApiClient FpsGrade { get; }
-        // TRANSFORMENGINE: FpsCostCentre added — Phase 7 (FpsCostCentreApiClient for frmMaintCostCentres → api/v1/costcentre)
+        public IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
         public IFpsCostCentreApiClient FpsCostCentre { get; }
+
+        public IFpsContributionSummaryApiClient FpsContributionSummary { get; }
+        public IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -56,21 +57,28 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsAgency = new FpsAgencyApiClient(http, mapper);
             FpsAdditionalCost = new FpsAdditionalCostApiClient(http, mapper);
             FpsAccountCategory = new FpsAccountCategoryApiClient(http, mapper);
+
             FpsProfitCentre = new FpsProfitCentreApiClient(http, mapper);
             FpsProfitCentreGrade = new FpsProfitCentreGradeApiClient(http, mapper);
+
             FpsWorkGroupGrade = new FpsWorkGroupGradeApiClient(http, mapper);
+
             FpsWorkGroupEmployee = new FpsWorkGroupEmployeeApiClient(http, mapper);
             FpsMaintDG = new FpsDivisionGradeApiClient(http, mapper);
             FpsProjectStaffPlan = new FpsProjectStaffPlanApiClient(http, mapper);
             FpsProjectGroupStaffPlan = new FpsProjectGroupStaffPlanApiClient(http, mapper);
             FpsAnimalMaster = new FpsAnimalApiClient(http, mapper);
             FpsProjectGroup = new FpsProjectGroupApiClient(http, mapper);
+
             FpsWorkgroupGrade = new FpsWorkGroupGradeApiClient(http, mapper);
             FpsBudgetBids = new FpsBudgetBidsApiClient(http, mapper);
             FpsPurchases = new FpsPurchasesApiClient(http, mapper);
-            // TRANSFORMENGINE: FpsGrade wired
+            FpsUserPermission = new FpsUserApiClient(http, mapper);
+
             FpsGrade = new FpsGradeApiClient(http, mapper);
-            // TRANSFORMENGINE: FpsCostCentre wired
+            FpsContributionSummary = new FpsContributionSummaryApiClient(http, mapper);
+            FpsProjectAuditTrail = new FpsProjectAuditTrailApiClient(http, mapper);
+            FpsTotalBusinessOverheads = new FpsTotalBusinessOverheadsApiClient(http, mapper);
             FpsCostCentre = new FpsCostCentreApiClient(http, mapper);
         }
     }

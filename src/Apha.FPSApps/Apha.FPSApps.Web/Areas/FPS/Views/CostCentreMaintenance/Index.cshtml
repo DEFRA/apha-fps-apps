@@ -1,40 +1,13 @@
-<!-- TRANSFORMENGINE MIGRATION — CostCentreMaintenance/Index.cshtml
-     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
-     Migrated : 2026-06-22
-     CHANGED:
-       - New Razor Index view replacing MS Access frmMaintCostCentres form UI
-       - Title and H1 taken from fps_costcenter_maintenance.html prototype
-       - _DataGrid partial bound to Model.CostCentreGrid (DataGridConfig<CostCentreItem>)
-       - _MaintenanceSideNav partial included with active token "CostCentreMaintenance"
-       - addCostCentre / editCostCentre / deleteCostCentre JS functions — derived from JS
-         costcenter_maintenance.js DataGridComponent: showAddButton:true, edit + delete action buttons
-       - saveCostCentre / updateCostCentre split (Add vs Edit) matches Create POST / Edit POST controller
-       - Delete uses showGovukConfirm (govuk-alert pattern, matches other FPS maintenance views)
-       - reloadCostCentreGrid uses gm.reloadGrid({ page: 1 }) — NOT gm.reload()
-     PRESERVED:
-       - No page-level filter dropdowns — HTML prototype has no <select> outside modal;
-         both modal-cc-number and modal-cc-profit are inside the CRUD modal only
-       - Shared modal host (#modalPopup / #modaPopupBody) — no inline modal markup copied
-       - Grid container ID derived from DataGridConfig.GridId = "costcenterGrid"
-     DEFERRED / REQUIRES HUMAN REVIEW:
-       - TRANSFORMENGINE TODO: _MaintenanceSideNav currently has "Maintain Cost Centres" as a plain
-         href="#" anchor (line 97-99 of _MaintenanceSideNav.cshtml); update to a live asp-controller
-         link with active token "CostCentreMaintenance" once the sidenav is updated.
-       - TRANSFORMENGINE TODO: CostCentreNo is a double PK — saveCostCentre() must pass the value
-         culture-invariantly; verify parseFloat().toString() does not introduce a locale separator
-         on client machines with non-UK locale settings. -->
 @using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.FPS.Models.CostCentreMaintenanceViewModel
 
 @{
-    @* TRANSFORMENGINE: Title from HTML prototype <title>2025-2026 : Cost Centre Maintenance</title> *@
     ViewData["Title"] = "2025-2026 : Cost Centre Maintenance";
 }
 
 <main id="main-content">
     <div class="container-fluid">
 
-        @* TRANSFORMENGINE: H1 from HTML prototype govuk-heading-s: "Cost Centre / Profit Centre" *@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
                 <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
@@ -51,9 +24,6 @@
                             <div class="container-fluid" style="padding-left:0px;">
                                 <div style="display: flex; flex-direction: row; align-items: flex-start;">
 
-                                    @* TRANSFORMENGINE: _MaintenanceSideNav partial — active token "CostCentreMaintenance"
-                                       NOTE: sidenav currently has "Maintain Cost Centres" as href="#";
-                                       the active highlight will not render until the sidenav link is wired up. *@
                                     @await Html.PartialAsync("_MaintenanceSideNav", "CostCentreMaintenance")
 
                                     <div style="display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; margin: 0 0px 5px 8px;">
@@ -61,9 +31,6 @@
                                         @* DataGrid section *@
                                         <div class="govuk-grid-row">
                                             <div class="govuk-grid-column-full mt-2">
-                                                @* TRANSFORMENGINE: grid container ID = gridContainer_costcenterGrid
-                                                     matching JS: gridId:'costcenterGrid' in DataGridComponent config.
-                                                     DataGridConfig.GridId = "costcenterGrid"; AllowAdd/Edit/Delete all true. *@
                                                 <div id="@($"gridContainer_{Model.CostCentreGrid.GridId}")">
                                                     @await Html.PartialAsync("_DataGrid", Model.CostCentreGrid)
                                                 </div>
@@ -86,13 +53,11 @@
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
 
-        // TRANSFORMENGINE: reloadCostCentreGrid — uses gm.reloadGrid({ page: 1 }) (NOT gm.reload())
         function reloadCostCentreGrid() {
             var gm = window['gridManager_costcenterGrid'];
             if (gm) { gm.reloadGrid({ page: 1 }); }
         }
 
-        // TRANSFORMENGINE: addCostCentre — AllowAdd:true from JS showAddButton:true
         // Loads _AddEditCostCentre partial (empty CostCentreItem) into shared modal host
         function addCostCentre() {
             $.get('/FPS/CostCentreMaintenance/Create', function (html) {
@@ -103,7 +68,6 @@
             });
         }
 
-        // TRANSFORMENGINE: editCostCentre — AllowEdit:true from JS openTblCostCentreEditModal button
         // $(btn).data('id') reads data-id attribute emitted by _DataGrid EditFunction
         // CostCentreNo is double PK — encoded as culture-invariant string in data-id
         function editCostCentre(btn) {
@@ -116,7 +80,6 @@
             });
         }
 
-        // TRANSFORMENGINE: deleteCostCentre — AllowDelete:true from JS handleTblCostCentreDelete button
         // JS prototype used window.confirm(); MVC equivalent uses showGovukConfirm (govuk-alert pattern)
         // CostCentreNo is double PK — passed culture-invariantly via encodeURIComponent
         function deleteCostCentre(btn) {
@@ -142,7 +105,6 @@
             });
         }
 
-        // TRANSFORMENGINE: saveCostCentre — called from _AddEditCostCentre.cshtml when isEditMode=false
         // Collects CostCentreNo (double, culture-invariant) and ProfitCentre from modal inputs
         // POST to /FPS/CostCentreMaintenance/Create with JSON body (CostCentreDto)
         function saveCostCentre() {
@@ -155,7 +117,6 @@
             }
 
             var ccNoRaw = $('#CostCentreNo').val();
-            // TRANSFORMENGINE TODO: CostCentreNo is double — parseFloat may lose precision on
             // locale-formatted strings. Verify culture-invariant round-trip on non-UK clients.
             var ccNo = parseFloat(ccNoRaw);
             if (isNaN(ccNo)) {
@@ -192,7 +153,6 @@
             });
         }
 
-        // TRANSFORMENGINE: updateCostCentre — called from _AddEditCostCentre.cshtml when isEditMode=true
         // CostCentreNo is the original double key (read-only on edit); taken from hdnOriginalCostCentreNo
         // POST to /FPS/CostCentreMaintenance/Edit?id=<original> with JSON body (CostCentreDto)
         function updateCostCentre() {

@@ -11,11 +11,13 @@ namespace Apha.PACT.Application.Services
     public class TestorProductService : ITestorProductService
     {
         private readonly ITestorProductRepository _repository;
+        private readonly ITestCapabilityRepository _testCapabilityRepository;
         private readonly IMapper _mapper;
 
-        public TestorProductService(ITestorProductRepository repository, IMapper mapper)
+        public TestorProductService(ITestorProductRepository repository, ITestCapabilityRepository testCapabilityRepository, IMapper mapper)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _testCapabilityRepository = testCapabilityRepository ?? throw new ArgumentNullException(nameof(testCapabilityRepository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
@@ -66,7 +68,7 @@ namespace Apha.PACT.Application.Services
             // Validate required fields
             if (string.IsNullOrWhiteSpace(dto.ItemCode))
             {
-                throw new ArgumentException("Item Code is required.", nameof(dto.ItemCode));
+                throw new ArgumentException("Item Code is required.");
             }
 
             // Check for duplicate primary key
@@ -100,7 +102,7 @@ namespace Apha.PACT.Application.Services
             // Validate required fields
             if (string.IsNullOrWhiteSpace(dto.ItemCode))
             {
-                throw new ArgumentException("Item Code is required for update.", nameof(dto.ItemCode));
+                throw new ArgumentException("Item Code is required for update.");
             }
 
             // Verify entity exists before update
@@ -130,7 +132,11 @@ namespace Apha.PACT.Application.Services
             {
                 throw new ArgumentException("Item Code cannot be null or empty.", nameof(itemCode));
             }
-
+            var existingTestCapEntity = await _testCapabilityRepository.HasRelatedTestCapabilitiesValidRecordsAsync(itemCode);
+            if(existingTestCapEntity != null)
+            {
+                throw new InvalidOperationException($"Cannot delete Test/Product with Item Code '{itemCode}' because it is referenced by a Test Capability.");
+            }
             // Verify entity exists before deletion
             var existingEntity = await _repository.GetTestOrProductByIdAsync(itemCode);
             if (existingEntity == null)
@@ -229,10 +235,32 @@ namespace Apha.PACT.Application.Services
             }
 
             // Throw exception if any validation errors found
-            if (validationErrors.Any())
+            if (validationErrors.Count != 0)
             {
                 throw new ArgumentException($"Validation failed: {string.Join(" ", validationErrors)}");
             }
         }
-    }
+
+        // ── TestPriceCheck (frmTestPriceCheck — qryTestPriceZero) ──────────────────────────────
+
+        public async Task<PaginatedResult<TestPriceCheckDto>> GetTestPriceCheckPagedAsync(
+            QueryParameters<string> query,
+            string priceFilter,
+            string? owner)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetTestPriceCheckPagedAsync(parameters, priceFilter, owner);
+            return _mapper.Map<PaginatedResult<TestPriceCheckDto>>(pagedData);
+        }
+
+        public async Task<TestPriceCheckDto?> GetTestPriceCheckByKeyAsync(string testCode, string jobCode)
+        {
+            var entity = await _repository.GetTestPriceCheckByKeyAsync(testCode, jobCode);
+            return entity == null ? null : _mapper.Map<TestPriceCheckDto>(entity);
+        }
+
+        public async Task<bool> UpdateTestPriceCheckAsync(string testCode, string jobCode, TestPriceCheckDto dto)
+            => await _repository.UpdateTestPriceCheckAsync(testCode, jobCode, dto.IsDefraProject, dto.TestPrice, dto.DefraUnitPrice);
+
+        }
 }

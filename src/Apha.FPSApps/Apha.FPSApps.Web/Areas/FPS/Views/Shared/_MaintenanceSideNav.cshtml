@@ -46,7 +46,8 @@
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="#">
+             <a class="dropdown-item@(Model == "TotalBusinessOverheadsMaintenance" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="TotalBusinessOverheadsMaintenance" asp-action="Index">
                 Maintain Total Buisness Overheads
             </a>
         </li>
@@ -76,9 +77,11 @@
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="#">
+            <a class="dropdown-item@(Model == "WorkGroupStaffMaintenance" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="WorkGroupStaffMaintenance" asp-action="Index">
                 Maintain WG Staff
             </a>
+          
         </li>
         <li>
             <a class="dropdown-item@(Model == "StaffMaintenance" ? " sidenav-title" : "")"
@@ -93,7 +96,8 @@
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="#">
+            <a class="dropdown-item@(Model == "CostCentreMaintenance" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="CostCentreMaintenance" asp-action="Index">
                 Maintain Cost Centres
             </a>
         </li>
@@ -110,7 +114,8 @@
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="#">
+            <a class="dropdown-item@(Model == "UserPermission" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="UserPermission" asp-action="Index">
                 Maintain User Permissions
             </a>
         </li>

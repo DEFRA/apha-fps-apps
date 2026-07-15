@@ -1,43 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — CostCentreMaintenanceController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 11 — ViewModels + MVC Controller (Steps 16-17)
- *            Phase 14 — Pre-Build Security Review Gate
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New ASP.NET Core MVC controller replacing MS Access frmMaintCostCentres form behaviour
- *   - [Area("FPS")] + [Authorize(Roles="FPSAdmin")] + [AuthorizeForScopes] — FPS area convention
- *   - Index() builds DataGridConfig<CostCentreItem> explicitly (never left as new())
- *   - LoadCostCentreGrid() handles DataGrid AJAX pagination/filter/sort reloads via HTTP POST
- *   - Create GET/POST, Edit GET/POST, Delete [HttpDelete] — all three CRUD ops from JS prototype
- *     (showAddButton:true, edit button in actions column, delete button in actions column)
- *   - ProfitCentreList populated from ICostCentreService.GetAllCostCentresAsync() (workgroup lookup)
- *     for the modal dropdown; CRUD operations use GetAllCostCentresPagedAsync / GetCostCentreByIdAsync
- *   - double key (costCentreNo) passed as query string — culture-invariant formatting via
- *     ToString("G", CultureInfo.InvariantCulture) to avoid decimal separator issues
- *   - Phase 14 security fix: Create GET and Edit GET now call PopulatePartialDropdownsAsync()
- *     so that ViewBag.ProfitCentreList is populated before returning the _AddEditCostCentre partial;
- *     previously the dropdown was always empty in both Add and Edit modal modes
- *   - Added PopulatePartialDropdownsAsync() private helper that sets ViewBag.ProfitCentreList
- *     directly (distinct from PopulateDropdownsAsync which populates the Index ViewModel property)
- *   - Create() GET signature changed to async Task<IActionResult> to support await
- *
- * PRESERVED:
- *   - All CRUD flow logic mirrors GradeMaintenanceController.cs pattern exactly
- *   - ModelState validation on POST endpoints before calling service
- *   - Error response shape consistent with other FPS controllers: { success, message, errors[] }
- *   - No [ValidateAntiForgeryToken] on [FromBody] JSON endpoints (anti-forgery applies to form posts only)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: DI registration — ensure ICostCentreService/CostCentreService is
- *     registered in Apha.FPSApps.Web/Extensions/ServiceCollectionExtension.cs before build
- *   - TRANSFORMENGINE TODO: CostCentreNo is double (composite PK); when passed as query param
- *     in Edit GET/Delete, the route binder must parse culture-invariantly — verify routing in
- *     Phase 12 view JS calls and confirm no precision loss on round-trip
- *   - TRANSFORMENGINE TODO: modal-cc-number (Add modal cost-centre-number select) may need a
- *     dedicated lookup list — PopulateDropdownsAsync currently only populates ProfitCentreList;
- *     confirm whether CostCentreNo is free-typed or lookup-driven (see Phase 12 partial view)
- */
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -54,7 +14,6 @@ using System.Globalization;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
-    // TRANSFORMENGINE: [Area] + [Authorize] + [AuthorizeForScopes] — matches FPS area controller convention
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
@@ -62,7 +21,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     {
         private readonly IMapper _mapper;
 
-        // TRANSFORMENGINE: only ICostCentreService injected — no API clients, no repositories per layer boundary rule
         // Correct chain: Controller → ICostCentreService → IFpsApiClient → IFpsCostCentreApiClient → HTTP
         private readonly ICostCentreService _costCentreService;
 
@@ -78,7 +36,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var viewModel = new CostCentreMaintenanceViewModel();
 
-            // TRANSFORMENGINE: DataGridConfig built explicitly — leaving as new() would render
             // an empty grid with default Add button regardless of JS-derived operations profile.
             // AllowAdd:true from JS showAddButton:true; AllowEdit+AllowDelete:true from JS
             // actions column containing both edit and delete buttons (costcenter_maintenance.js).
@@ -90,7 +47,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             };
             viewModel.CostCentreGrid = await GetCostCentreGridConfigAsync(defaultRequest);
 
-            // TRANSFORMENGINE: populate ProfitCentreList for modal dropdown from workgroup lookup
             await PopulateDropdownsAsync(viewModel);
 
             return View(viewModel);
@@ -98,7 +54,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── Dropdown Population ───────────────────────────────────────────────
 
-        // TRANSFORMENGINE: PopulateDropdownsAsync — uses LOOKUP method GetAllCostCentresAsync()
         // (returns CostCentreWorkgroupDto), NOT the CRUD paged method; keeps CRUD vs lookup separation.
         // Populates the Index ViewModel's ProfitCentreList property (used by Index view).
         private async Task PopulateDropdownsAsync(CostCentreMaintenanceViewModel model)
@@ -106,7 +61,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var lookupResult = await _costCentreService.GetAllCostCentresAsync();
             if (lookupResult.Success && lookupResult.Data != null)
             {
-                // TRANSFORMENGINE: extract distinct ProfitCentre values from workgroup lookup DTOs
                 // CostCentreWorkgroupDto.ProfitCentre → SelectListItem.Value and .Text
                 model.ProfitCentreList = lookupResult.Data
                     .Where(item => !string.IsNullOrWhiteSpace(item.ProfitCentre))
@@ -118,7 +72,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
         }
 
-        // TRANSFORMENGINE: Phase 14 security fix — PopulatePartialDropdownsAsync sets ViewBag.ProfitCentreList
         // directly so that Create GET and Edit GET return the _AddEditCostCentre partial with a populated
         // ProfitCentre dropdown.  Without this call the dropdown was always empty in both Add and Edit modes.
         private async Task PopulatePartialDropdownsAsync()
@@ -140,7 +93,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── DataGrid AJAX Reload ──────────────────────────────────────────────
 
-        // TRANSFORMENGINE: HTTP POST — DataGrid sends pagination + filter payload to this endpoint
         [HttpPost]
         public async Task<IActionResult> LoadCostCentreGrid(PaginationFilter<string> request)
         {
@@ -158,7 +110,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return PartialView("_DataGrid", gridConfig);
         }
 
-        // TRANSFORMENGINE: private grid config builder — called from Index() and LoadCostCentreGrid()
         private async Task<DataGridConfig<CostCentreItem>> GetCostCentreGridConfigAsync(
             PaginationFilter<string> request)
         {
@@ -167,7 +118,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
 
-            // TRANSFORMENGINE: paged CRUD list — delegates to IFpsCostCentreApiClient.GetAllCostCentresPagedAsync
             var pagedData = await _costCentreService.GetAllCostCentresPagedAsync(queryParameters);
 
             var items = new List<CostCentreItem>();
@@ -184,23 +134,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             return new DataGridConfig<CostCentreItem>
             {
-                // TRANSFORMENGINE: GridId from JS costcenterGrid; Title from JS DataGridComponent title
                 GridId             = "costcenterGrid",
                 Title              = "Cost Centres Maintenance",
                 ShowCheckboxColumn = false,
                 ShowPagination     = true,
-                // TRANSFORMENGINE: KeyProperty = CostCentreNo (double PK — visible JS column and row discriminator)
                 KeyProperty        = "CostCentreNo",
-                // TRANSFORMENGINE: AllowAdd=true from JS showAddButton:true
                 AllowAdd           = true,
                 AddFunction        = "addCostCentre",
-                // TRANSFORMENGINE: AllowEdit=true — edit button present in JS actions column render function
                 AllowEdit          = true,
                 EditFunction       = "editCostCentre",
-                // TRANSFORMENGINE: AllowDelete=true — delete button present in JS actions column render function
                 AllowDelete        = true,
                 DeleteFunction     = "deleteCostCentre",
-                // TRANSFORMENGINE: no ExtraFilterMethod — no page-level filter controls in HTML prototype
                 BindGridUrl        = "/FPS/CostCentreMaintenance/LoadCostCentreGrid",
                 Data               = items,
                 Columns            = GridDataProvider.GetColumnsDefination<CostCentreItem>(null),
@@ -211,7 +155,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── CRUD — Create ─────────────────────────────────────────────────────
 
-        // TRANSFORMENGINE: GET Create — returns empty CostCentreItem to _AddEditCostCentre partial
         // Phase 14 fix: await PopulatePartialDropdownsAsync() so ViewBag.ProfitCentreList is set
         // before the partial is rendered; previously the ProfitCentre dropdown was always empty.
         [HttpGet]
@@ -221,7 +164,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return PartialView("_AddEditCostCentre", new CostCentreItem());
         }
 
-        // TRANSFORMENGINE: POST Create — accepts CostCentreDto [FromBody] (JSON from modal form submit)
         // No [ValidateAntiForgeryToken] — endpoint receives JSON body, not form post
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CostCentreDto dto)
@@ -269,7 +211,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── CRUD — Edit ───────────────────────────────────────────────────────
 
-        // TRANSFORMENGINE: GET Edit — loads existing cost centre by costCentreNo (double)
         // id supplied as query string; culture-invariant parse prevents decimal separator issues
         // Phase 14 fix: await PopulatePartialDropdownsAsync() so ViewBag.ProfitCentreList is set
         // before the partial is rendered; previously the ProfitCentre dropdown was always empty.
@@ -298,7 +239,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new { success = false, message = $"Cost Centre '{id}' not found." });
         }
 
-        // TRANSFORMENGINE: POST Edit — id = original costCentreNo (culture-invariant string);
         // ICostCentreService.UpdateCostCentreAsync(double costCentreNo, CostCentreDto dto) signature
         [HttpPost]
         public async Task<IActionResult> Edit(string id, [FromBody] CostCentreDto dto)
@@ -329,7 +269,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            // TRANSFORMENGINE: pass original costCentreNo as the identity discriminator;
             // dto.CostCentreNo may differ if user edits the number (matches UpdateCostCentreAsync signature)
             var result = await _costCentreService.UpdateCostCentreAsync(costCentreNo, dto);
 
@@ -353,7 +292,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── CRUD — Delete ─────────────────────────────────────────────────────
 
-        // TRANSFORMENGINE: [HttpDelete] — JS confirm() in grid action handler; no modal partial needed
         // id supplied as query string from DataGrid delete button; culture-invariant parse
         [HttpDelete]
         public async Task<IActionResult> Delete(string id)
@@ -376,7 +314,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             var firstError = result.Errors?.FirstOrDefault();
-            // TRANSFORMENGINE: DB_POSTGRES_ERROR = FK constraint violation — cost centre is referenced
             var errorMessage = firstError?.Code == "DB_POSTGRES_ERROR"
                 ? "This cost centre cannot be deleted because it is referenced by other records."
                 : firstError?.Message ?? "Unable to delete the cost centre as it may be in use.";

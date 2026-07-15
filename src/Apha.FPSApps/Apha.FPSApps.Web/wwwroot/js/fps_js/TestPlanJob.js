@@ -14,7 +14,7 @@ var TestPlanJobConfig = {
 
 function addTestPlan(btn) {
     if (TestPlanJobConfig.requireJobCodeForAdd && !TestPlanJobConfig.getJobCode()) {
-        showGovukAlert('Please select a project first.');
+        showAlertMessage('Please select a project first.', AlertType.INFO);
         return;
     }
     $.ajax({
@@ -30,7 +30,7 @@ function addTestPlan(btn) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while opening the form.');
+                showAlertMessage('An error occurred while opening the form.', AlertType.ERROR);
             }
         }
     });
@@ -59,7 +59,7 @@ function saveTestPlan() {
         success: function (result) {
             if (result.success) {
                 closeModal();
-                showGovukAlert(result.message).then(function () {                   
+                showAlertMessage(result.message, AlertType.SUCCESS).then(function () {                   
                     TestPlanJobConfig.onSaved();
                 });
             } else {
@@ -70,7 +70,7 @@ function saveTestPlan() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
@@ -91,7 +91,7 @@ function editTestPlan(btn) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while fetching the record.');
+                showAlertMessage('An error occurred while fetching the record.', AlertType.ERROR);
             }
         }
     });
@@ -120,7 +120,7 @@ function updateTestPlan() {
         success: function (result) {
             if (result.success) {
                 closeModal();
-                showGovukAlert(result.message).then(function () {                  
+                showAlertMessage(result.message, AlertType.SUCCESS).then(function () {                  
                     TestPlanJobConfig.onUpdated();
                 });
             } else {
@@ -131,7 +131,7 @@ function updateTestPlan() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
@@ -148,15 +148,15 @@ function deleteTestPlan(btn) {
             data: { testCode: testCode, buyer: buyer },
             success: function (response) {
                 if (response.success) {
-                    showGovukAlert('Deleted successfully.').then(function () {
+                    showAlertMessage('Deleted successfully.', AlertType.SUCCESS).then(function () {
                         TestPlanJobConfig.onDeleted();
                     });
                 } else {
-                    showGovukAlert(response.message);
+                    showAlertMessage(response.message, AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting.');
+                showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
     });
@@ -165,6 +165,57 @@ function deleteTestPlan(btn) {
 function getTestPlanExtraFilters() {
     return { jobCode: TestPlanJobConfig.getJobCode() };
 }
+
+// ---- Test Code panel dropdown ----
+
+function toggleTestCodePanel() {
+    var panel = document.getElementById('TestCodeDropdownPanel');
+    if (!panel) return;
+    var isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+        var searchBox = document.getElementById('TestCodeSearchBox');
+        if (searchBox) { searchBox.value = ''; filterTestCodePanel(''); searchBox.focus(); }
+    }
+}
+
+function filterTestCodePanel(query) {
+    var rows = document.querySelectorAll('#TestCodeDropdownBody tr');
+    var q = (query || '').toLowerCase();
+    rows.forEach(function (row) {
+        var code = (row.cells[0] ? row.cells[0].textContent : '').toLowerCase();
+        var desc = (row.cells[1] ? row.cells[1].textContent : '').toLowerCase();
+        row.style.display = (!q || code.indexOf(q) !== -1 || desc.indexOf(q) !== -1) ? '' : 'none';
+    });
+}
+
+function selectTestCode(value, displayCode, description, unitPrice, rowEl) {
+    // Update visible display input
+    var display = document.getElementById('TestCodeDisplay');
+    if (display) display.value = displayCode;
+
+    // Update hidden select and fire onTestCodeSelected
+    var select = document.getElementById('TestCode');
+    if (select) {
+        select.value = value;
+        // Ensure the selected option has the description data attribute set
+        var opt = select.querySelector('option[value="' + value + '"]');
+        if (opt) opt.setAttribute('data-description', description);
+        $(select).trigger('change');
+    }
+
+    // Close panel
+    var panel = document.getElementById('TestCodeDropdownPanel');
+    if (panel) panel.style.display = 'none';
+}
+
+// Close panel when clicking outside
+$(document).on('click', function (e) {
+    if (!$(e.target).closest('#TestCodeDropdownPanel, #TestCodeDisplay').length) {
+        var panel = document.getElementById('TestCodeDropdownPanel');
+        if (panel) panel.style.display = 'none';
+    }
+});
 
 // ---- Pricing and cost calculation ----
 

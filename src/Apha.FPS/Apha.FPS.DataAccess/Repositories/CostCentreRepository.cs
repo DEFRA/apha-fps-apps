@@ -1,36 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — CostCentreRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - MS Access frmMaintCostCentres CRUD (saveTblCostCentre, updateTblCostCentre, handleTblCostCentreDelete)
- *     → LINQ-first EF Core repository implementing ICostCentreRepository
- *   - RecordSource "SELECT CostCentre.CostCentre, CostCentre.ProfitCentre FROM CostCentre ORDER BY CostCentre.CostCentre"
- *     → GetAllPagedAsync: AsNoTracking LINQ query ordered by CostCentreNo, with optional filter/sort/paging
- *   - Single-record lookup for Edit modal → GetByIdAsync(costCentreNo, fpsYear) via composite key
- *   - saveTblCostCentre() → CreateAsync: adds entity, saves, returns persisted entity
- *   - updateTblCostCentre() → UpdateAsync: fetches tracked entity, updates fields, saves, returns updated entity
- *   - handleTblCostCentreDelete() → DeleteAsync: fetches tracked entity, removes, saves, returns bool
- *   - Duplicate-key guard → ExistsAsync using AnyAsync
- *   - Filter/sort helpers preserved as private static methods (ApplyCostCentreFilter, ApplyCostCentreSorting)
- *   - IFpsRequestContext injected for year scoping (aligns with DbContext HasQueryFilter)
- *   - No stored procedures referenced for this form — pure LINQ operations
- *
- * PRESERVED:
- *   - Composite PK semantics (CostCentreNo, FpsYear) in all key-based methods
- *   - AsNoTracking for read-only queries; tracked entities for write operations
- *   - ExecutionStrategy + transaction pattern for write operations (consistent with ProfitCentreRepository)
- *   - All public ICostCentreRepository method signatures unchanged
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: fps.costcentre is partitioned by fpsyear. EF Core routes writes to partitions
- *     automatically via the parent table. Verify at integration time that SaveChangesAsync succeeds for
- *     the active year partition (e.g. costcentre_y2026).
- *   - TRANSFORMENGINE TODO: No FK child-reference guard is implemented for DeleteAsync (e.g. if other tables
- *     reference this cost centre). Add a HasLinkedXxxAsync guard if required by business rules.
- */
-
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -41,7 +8,6 @@ using System.Dynamic;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
-    // TRANSFORMENGINE: frmMaintCostCentres → ICostCentreRepository LINQ implementation against fps.costcentre
     public class CostCentreRepository : BaseRepository, ICostCentreRepository
     {
         private readonly FpsDbContext _dbContext;
@@ -53,7 +19,6 @@ namespace Apha.FPS.DataAccess.Repositories
             _requestContext = requestContext;
         }
 
-        // TRANSFORMENGINE: GET paged — drives DataGrid in frmMaintCostCentres / fps_costcenter_maintenance.html (#gridContainer_costcenterList)
         // Source RecordSource: SELECT CostCentre.CostCentre, CostCentre.ProfitCentre FROM CostCentre ORDER BY CostCentre.CostCentre
         public async Task<PagedData<CostCentre>> GetAllPagedAsync(PaginationParameters<string> query)
         {
@@ -70,7 +35,6 @@ namespace Apha.FPS.DataAccess.Repositories
             return ApplyPaging(costCentres, query.Page, query.PageSize);
         }
 
-        // TRANSFORMENGINE: GET by composite key — populates Edit modal fields (modal-cc-number, modal-cc-profit)
         public async Task<CostCentre?> GetByIdAsync(double costCentreNo, int fpsYear)
         {
             return await _dbContext.CostCentres
@@ -78,7 +42,6 @@ namespace Apha.FPS.DataAccess.Repositories
                 .FirstOrDefaultAsync(c => c.CostCentreNo == costCentreNo && c.FpsYear == fpsYear);
         }
 
-        // TRANSFORMENGINE: POST create — maps to saveTblCostCentre() in costcenter_maintenance.js
         public async Task<CostCentre> CreateAsync(CostCentre entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
@@ -102,7 +65,6 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        // TRANSFORMENGINE: PUT update — maps to updateTblCostCentre() in costcenter_maintenance.js
         // originalCostCentreNo identifies the row to update; entity carries the new values
         public async Task<CostCentre> UpdateAsync(double originalCostCentreNo, int fpsYear, CostCentre entity)
         {
@@ -114,14 +76,12 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _dbContext.Database.BeginTransactionAsync();
                 try
                 {
-                    // TRANSFORMENGINE: Fetch tracked entity for update; IgnoreQueryFilters not needed — year filter matches
                     var existing = await _dbContext.CostCentres
                         .FirstOrDefaultAsync(c => c.CostCentreNo == originalCostCentreNo && c.FpsYear == fpsYear);
 
                     if (existing == null)
                         return entity;
 
-                    // TRANSFORMENGINE: Update mutable fields — CostCentreNo and FpsYear are composite PK, ProfitCentre is the only editable field
                     existing.ProfitCentre = entity.ProfitCentre;
 
                     await _dbContext.SaveChangesAsync();
@@ -136,7 +96,6 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        // TRANSFORMENGINE: DELETE — maps to handleTblCostCentreDelete() in costcenter_maintenance.js
         public async Task<bool> DeleteAsync(double costCentreNo, int fpsYear)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
@@ -164,7 +123,6 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        // TRANSFORMENGINE: Existence check — prevents duplicate-key insert at the service layer before persisting
         public async Task<bool> ExistsAsync(double costCentreNo, int fpsYear)
         {
             return await _dbContext.CostCentres
@@ -172,7 +130,6 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(c => c.CostCentreNo == costCentreNo && c.FpsYear == fpsYear);
         }
 
-        // TRANSFORMENGINE: Filter helper — translates JSON filter model to LINQ predicates (CostCentreNo, ProfitCentre)
         private static IQueryable<CostCentre> ApplyCostCentreFilter(IQueryable<CostCentre> query, string? filter)
         {
             if (string.IsNullOrWhiteSpace(filter))
@@ -201,11 +158,9 @@ namespace Apha.FPS.DataAccess.Repositories
             return query;
         }
 
-        // TRANSFORMENGINE: Sort helper — maps SortBy field name to EF Core OrderBy/OrderByDescending
         private static IQueryable<CostCentre> ApplyCostCentreSorting(IQueryable<CostCentre> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrWhiteSpace(sortBy))
-                // TRANSFORMENGINE: Default sort matches source RecordSource: ORDER BY CostCentre.CostCentre
                 return query.OrderBy(c => c.CostCentreNo);
 
             return sortBy switch

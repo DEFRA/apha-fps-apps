@@ -27,9 +27,11 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsProjectGroupApiClient FpsProjectGroup { get; }
         IFpsBudgetBidsApiClient FpsBudgetBids { get; }
         IFpsPurchasesApiClient FpsPurchases { get; }
-        // TRANSFORMENGINE: FpsGrade added
+        IFpsUserApiClient FpsUserPermission { get; }
         IFpsGradeApiClient FpsGrade { get; }
-        // TRANSFORMENGINE: FpsCostCentre added — Phase 7 frontend API client interface for cost centre maintenance
+        IFpsContributionSummaryApiClient FpsContributionSummary { get; }
+        IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
+        IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
         IFpsCostCentreApiClient FpsCostCentre { get; }
     }
 }

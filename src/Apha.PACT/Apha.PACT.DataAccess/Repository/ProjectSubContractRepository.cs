@@ -24,7 +24,7 @@ namespace Apha.PACT.DataAccess.Repository
 
             if (!string.IsNullOrEmpty(project))
             {
-                querySubContracts = querySubContracts.Where(s => s.Project == project);
+                querySubContracts = querySubContracts.Where(s => s.Project.ToLower() == project.ToLower());
             }
 
             querySubContracts = ApplySubContractFilter(querySubContracts, query.Filter);

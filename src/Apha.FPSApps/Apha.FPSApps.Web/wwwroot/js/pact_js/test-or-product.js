@@ -76,7 +76,7 @@
         $('#isEdit').val('false');
         $('#originalItemCode').val('');
         $('#testForm')[0].reset();
-        $('#itemCode').prop('readonly', false);
+        $('#itemCode').prop('disabled', false);
 
         setRequiredFields();
         populateOwnerDropdown();
@@ -88,7 +88,7 @@
         var itemCode = $(btn).data('id');
 
         if (!itemCode) {
-            showNotification('Error', 'Item code not found', 'error');
+            showAlertMessage('Item code not found', AlertType.ERROR);
             return;
         }
 
@@ -111,7 +111,7 @@
                     $('#originalItemCode').val(itemCode);
 
                     // Populate form fields — support both PascalCase and camelCase
-                    $('#itemCode').val(data.ItemCode || data.itemCode || '').prop('readonly', true);
+                    $('#itemCode').val(data.ItemCode || data.itemCode || '').prop('disabled', true);
                     $('#shortDescription').val(data.ShortDescription || data.shortDescription || '');
                     $('#itemDescription').val(data.ItemDescription || data.itemDescription || '');
                     $('#testManager').val(data.TestManager || data.testManager || '');
@@ -146,12 +146,13 @@
                     }, 50);
                 } else {
                     setRequiredFields();
-                    showNotification('Error', response.message, 'error');
+                    showAlertMessage('Error: '+ response.message, AlertType.ERROR);
                 }
             },
             error: function () {
                 setRequiredFields();
-                showNotification('Error', 'Failed to load test/product details', 'error');
+                showAlertMessage('Error: ' + 'Failed to load test/product details', AlertType.ERROR);
+
             }
         });
     }
@@ -205,13 +206,13 @@
             success: function (response) {
                 if (response.success) {
                     closeTestModal();
-                    showNotification('Success', response.message, 'success');
                     reloadGrid('testGrid');
+                    showAlertMessage(response.message, AlertType.SUCCESS);
                 } else {
                     if (response.errors) {
                         displayServerValidationErrors(response.errors, response.message, '#testModal');
                     } else {
-                        showNotification('Error', response.message, 'error');
+                        showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                     }
                 }
             },
@@ -220,7 +221,7 @@
                     displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message || 'There is a problem', '#testModal');
                 } else {
                     var message = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred while saving';
-                    showNotification('Error', message || 'An error occurred while saving', 'error');
+                    showAlertMessage('Error: ' + message || 'An error occurred while saving', AlertType.ERROR);
                 }
             }
         });
@@ -230,39 +231,33 @@
         var itemCode = $(btn).data('id');
 
         if (!itemCode) {
-            showNotification('Error', 'Item code not found', 'error');
+            showAlertMessage('Error: ' + 'Item code not found', AlertType.ERROR);
             return;
         }
+        showGovukConfirm('Are you sure you want to delete test/product ' + itemCode + '?').then(function (confirmed) {
+            if (!confirmed) return;
 
-        if (!confirm('Are you sure you want to delete test/product ' + itemCode + '?')) {
-            return;
-        }
-
-        $.ajax({
-            url: urls.delete,
-            type: 'POST',
-            data: { itemCode: itemCode },
-            success: function (response) {
-                if (response.success) {
-                    showNotification('Success', response.message, 'success');
-                    reloadGrid('testGrid');
-                } else {
-                    showNotification('Error', response.message, 'error');
+            $.ajax({
+                url: urls.delete,
+                type: 'POST',
+                data: { itemCode: itemCode },
+                success: function (response) {
+                    if (response.success) {
+                        reloadGrid('testGrid');
+                        showAlertMessage(response.message, AlertType.SUCCESS);
+                    } else {
+                        showAlertMessage('Error: ' + response.message, AlertType.ERROR);
+                    }
+                },
+                error: function (xhr) {
+                    var message = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred while deleting';
+                    showAlertMessage('Error: ' + message || 'An error occurred while deleting', AlertType.ERROR);
                 }
-            },
-            error: function (xhr) {
-                var message = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred while deleting';
-                showNotification('Error', message || 'An error occurred while deleting', 'error');
-            }
+            });
         });
     }
 
     // ── Utilities ─────────────────────────────────────────────────────────────
-
-    function showNotification(title, message, type) {
-        var icon = type === 'success' ? '✓' : '✗';
-        alert(icon + ' ' + title + ': ' + message);
-    }
 
     function reloadGrid(gridId) {
         var gridManager = window['gridManager_' + gridId];

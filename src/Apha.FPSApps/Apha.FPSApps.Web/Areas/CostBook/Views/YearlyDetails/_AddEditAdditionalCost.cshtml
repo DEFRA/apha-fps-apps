@@ -10,7 +10,7 @@
     <h5 class="modal-title">@(Model.AcIdentity == 0 ? "Add" : "Edit") Additional Cost</h5>
     <button type="button" class="close project-close-btn" aria-label="Close" onclick="closeModal()">×</button>
 </div>
-<div class="modal-body">
+<div class="modal-body sup_overflow_y_400">
     <form id="additionalCostForm">
         @Html.AntiForgeryToken()
         <input asp-for="AcIdentity" type="hidden" />
@@ -23,17 +23,17 @@
             </div>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
-            <label class="govuk-label">
+            <label for="accountCatSelect" class="govuk-label">
                 Account Cat <span class="sup_color_red">*</span>
             </label>
             <div style="position: relative; z-index: 50;">
-                <input type="text" id="accountCatSelect" placeholder="-- Select Account Category --" autocomplete="off"
+                <input type="text" id="accountCatSelect" placeholder="-- Select Account Category --" aria-label="Search Account Category" autocomplete="off"
                        class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width: 100%; cursor: pointer;"
                        value="@Model.AccountCat" readonly />
                 <div id="accountCatDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
                         max-height:220px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
                         box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
-                    <input type="text" id="accountCatSearchBox" placeholder="Type to search category"
+                    <input type="text" id="accountCatSearchBox" placeholder="Type to search category" aria-label="Search Account Category"
                            style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
                     <table style="width:100%; border-collapse:collapse; font-size:14px;">
                         <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
@@ -67,17 +67,24 @@
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="CostEntered" class="govuk-label">
-                Cost No <span class="sup_color_red">*</span>
+                Cost No
             </label>
-            <input asp-for="CostEntered" type="number" step="0.01" class="govuk-input"
-                   value="@(Model.CostEntered != 0 ? Model.CostEntered.ToString() : "0")" />
+            <div class="govuk-input__wrapper">
+                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                <input asp-for="CostEntered" type="number" step="0.01" class="govuk-input"
+                       value="@(Model.CostEntered != 0 ? Model.CostEntered.ToString() : "0")"
+                       onblur="if(this.value==='')this.value='0';" />
+            </div>           
             <span asp-validation-for="CostEntered" class="govuk-error-message" style="display:none;"></span>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="ItemCost" class="govuk-label">Cost(inf)
-                <span class="sup_color_red">*</span>
+                
             </label>
-            <input asp-for="ItemCost" type="text" readonly class="govuk-input" />
+            <div class="govuk-input__wrapper">
+                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                <input asp-for="ItemCost" type="text" readonly class="govuk-input" />
+            </div>           
         </div>
     </form>
 </div>

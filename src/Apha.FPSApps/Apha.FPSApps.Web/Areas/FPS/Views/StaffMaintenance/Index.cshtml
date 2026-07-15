@@ -172,15 +172,15 @@
                     data: { spNumber: spNumber },
                     success: function (response) {
                         if (response.success) {
-                            showGovukAlert('Employee deleted successfully').then(function () {
+                            showAlertMessage('Employee deleted successfully', AlertType.SUCCESS).then(function () {
                                 getGridManager().reloadGrid({ page: 1 });
                             });
                         } else {
-                            showGovukAlert('Error: ' + response.message);
+                            showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting');
+                        showAlertMessage('An error occurred while deleting', AlertType.ERROR);
                     }
                 });
             });
@@ -215,7 +215,7 @@
                 contentType: 'application/json',
                 success: function(response) {
                     if (response.success) {
-                        showGovukAlert(response.message);
+                        showAlertMessage(response.message, AlertType.SUCCESS);
                         closeModal();
                         getGridManager().reloadGrid({ page: 1 });
                     } else {
@@ -227,7 +227,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving.');
+                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
                     }
                 }
             });

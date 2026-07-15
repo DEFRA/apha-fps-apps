@@ -12,6 +12,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsAsync(QueryParameters<string> query);
         Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsByUserAsync(QueryParameters<string> query);
         Task<ApiResponseDto<List<ProjectDto>>> GetPagedPactProjectsAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<List<ProjectDto>>> GetPagedPactProjectsByProgramAsync(QueryParameters<string> query, string programNo);
         Task<ApiResponseDto<ProjectDto>> GetProjectByIdAsync(string parentProject);
         Task<ApiResponseDto<ProjectDto>> CreateProjectAsync(ProjectDto project);
         Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(ProjectDto project);
@@ -24,6 +25,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<bool>> ChangeProjectCodeAsync(string oldCode, string newCode);
         Task<ApiResponseDto<bool>> CheckProjectExistsAsync(string code);
         Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo);
+        Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramProjectProfitabilityVLAAsync(QueryParameters<string> query, string programNo);
         Task<ApiResponseDto<List<ManagerDto>>> GetManagersAsync();
         Task<ApiResponseDto<List<CostCentreWorkgroupDto>>> GetCostCentresAsync();
         Task<ApiResponseDto<List<ContractDto>>> GetContractsByUserAsync();
@@ -32,7 +34,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
 
-        // TRANSFORMENGINE: new method — maps to GET /api/v1/project/profitability-vla (Phase 5 backend endpoint)
         // All four filter params are optional; each maps to a filter dropdown on the VLA page
         // (filterProjectStatus, filterProgram, filterManager, filterCustomer in projectprofitability_vla.js).
         // QueryParameters<string> carries page + pageSize for server-side DataGrid pagination.

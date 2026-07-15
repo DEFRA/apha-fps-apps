@@ -53,5 +53,33 @@ namespace Apha.FPSApps.Application.Services.PIMS
 
         public async Task<ApiResponseDto<List<LogMilestoneDto>>> GetLogMilestonesAsync(QueryParameters<string> parameters,string? project,string? numberPart1,string? numberPart2)
             => await _client.PimsMilestone.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2);
+
+        // Staging / Import
+        public async Task<ApiResponseDto<List<StagingMilestoneDto>>> GetAllStagingRowsAsync(QueryParameters<string> parameters)
+             => await _client.PimsMilestone.GetAllStagingRowsAsync(parameters);
+        public async Task<ApiResponseDto<List<StagingMilestoneDto>>> GetStagingRowsAsync(string? project)
+            => await _client.PimsMilestone.GetStagingRowsAsync(project);
+
+        public async Task<ApiResponseDto<StagingMilestoneDto>> AddStagingRowAsync(StagingMilestoneDto dto, int year)
+            => await _client.PimsMilestone.AddStagingRowAsync(dto, year);
+
+        public async Task<ApiResponseDto<StagingMilestoneDto>> UpdateStagingRowAsync(int id, StagingMilestoneDto dto)
+            => await _client.PimsMilestone.UpdateStagingRowAsync(id, dto);
+
+        public async Task<ApiResponseDto<object>> DeleteStagingRowAsync(int id)
+            => await _client.PimsMilestone.DeleteStagingRowAsync(id);
+
+        public async Task<ApiResponseDto<object>> ClearStagingAsync(string project)
+            => await _client.PimsMilestone.ClearStagingAsync(project);
+
+        public async Task<ApiResponseDto<List<StagingMilestoneDto>>> ValidateStagingAsync(string project, string? typeId, bool isDeliverableMode)
+            => await _client.PimsMilestone.ValidateStagingAsync(project, typeId, isDeliverableMode);
+
+        public async Task<ApiResponseDto<object>> ImportStagingAsync(string project)
+            => await _client.PimsMilestone.ImportStagingAsync(project);
+
+        public async Task<ApiResponseDto<object>> ImportWithOverwriteAsync(string project)
+            => await _client.PimsMilestone.ImportWithOverwriteAsync(project);
+        
     }
 }

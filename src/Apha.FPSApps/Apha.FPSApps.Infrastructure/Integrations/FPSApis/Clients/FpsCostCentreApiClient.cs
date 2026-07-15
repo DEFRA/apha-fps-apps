@@ -1,25 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsCostCentreApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New infrastructure implementation of IFpsCostCentreApiClient
- *   - Delegates to IFpsHttpExecutor for all HTTP calls (consistent with other FpsApiClient implementations)
- *   - Maps backend CostCentreRes / CostCentreWorkgroupRes ↔ frontend CostCentreDto / CostCentreWorkgroupDto via AutoMapper
- *   - Maps frontend CostCentreDto → backend CostCentreReq for create/update request bodies
- *   - BaseUrl/endpoints defined via FpsApiEndpoints constants (api/v1/costcentre)
- *
- * PRESERVED:
- *   - Error-handling pattern consistent with other FpsApiClient implementations (try/catch → FailureResponse)
- *   - double route param formatted culture-invariant (ToString("G", CultureInfo.InvariantCulture)) to avoid locale issues
- *   - Workgroup lookup (GetAllCostCentresAsync) preserved from original GET / endpoint (stored-proc backed)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: FpsYear is supplied server-side via X-FPS-Year header; confirm IFpsHttpExecutor adds this header automatically from the current session context.
- *   - TRANSFORMENGINE TODO: Verify AutoMapper profile includes CostCentreRes → CostCentreDto, CostCentreWorkgroupRes → CostCentreWorkgroupDto, and CostCentreDto → CostCentreReq mappings.
- */
-
 using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
@@ -38,7 +16,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        // TRANSFORMENGINE: InternalCodeError — Sonar S1192 compliance
         private const string InternalCodeError = "INTERNAL_ERROR";
 
         public FpsCostCentreApiClient(IFpsHttpExecutor http, IMapper mapper)
@@ -47,7 +24,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        // TRANSFORMENGINE: GET api/v1/costcentre → CostCentreController.GetAllCostCentresAsync (stored-proc workgroup lookup)
         public async Task<ApiResponseDto<List<CostCentreWorkgroupDto>>> GetAllCostCentresAsync()
         {
             try
@@ -67,7 +43,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET api/v1/costcentre/paged → CostCentreController.GetAllCostCentresPagedAsync (DataGrid source)
         public async Task<ApiResponseDto<List<CostCentreDto>>> GetAllCostCentresPagedAsync(QueryParameters<string> query)
         {
             try
@@ -88,7 +63,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET api/v1/costcentre/{costCentreNo} → CostCentreController.GetCostCentreByIdAsync
         //   double formatted culture-invariant to avoid locale-dependent decimal separators in URL path
         public async Task<ApiResponseDto<CostCentreDto>> GetCostCentreByIdAsync(double costCentreNo)
         {
@@ -110,7 +84,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST api/v1/costcentre → CostCentreController.CreateCostCentreAsync
         //   CostCentreDto mapped to CostCentreReq (FpsYear excluded from Req — set server-side by request context)
         public async Task<ApiResponseDto<CostCentreDto>> CreateCostCentreAsync(CostCentreDto costCentreDto)
         {
@@ -132,7 +105,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PUT api/v1/costcentre/{costCentreNo} → CostCentreController.UpdateCostCentreAsync
         //   costCentreNo (original) placed in path to identify existing record; CostCentreDto.CostCentreNo may differ (rename scenario)
         public async Task<ApiResponseDto<CostCentreDto>> UpdateCostCentreAsync(double costCentreNo, CostCentreDto costCentreDto)
         {
@@ -155,7 +127,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE api/v1/costcentre/{costCentreNo} → CostCentreController.DeleteCostCentreAsync
         //   bool? used as generic arg (nullable response body); return type is ApiResponseDto<bool>
         public async Task<ApiResponseDto<bool>> DeleteCostCentreAsync(double costCentreNo)
         {

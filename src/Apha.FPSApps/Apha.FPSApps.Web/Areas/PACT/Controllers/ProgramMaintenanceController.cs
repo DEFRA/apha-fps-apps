@@ -31,7 +31,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         public async Task<IActionResult> Index(string? programNo = null)
         {
-            var programList = await GetProgramListAsync();
+            TempData["NavigationSource"] = "ProgramMaintenance";
+            var programList = await GetProgramListInternalAsync();
 
             var isValid = !string.IsNullOrWhiteSpace(programNo)
                           && programList.Any(p => p.Value == programNo);
@@ -134,10 +135,30 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_DataGrid", gridConfig);
         }
 
-
-        private async Task<List<SelectListItem>> GetProgramListAsync()
+        /// <summary>
+        /// Method to fetch list of programs. Method invoke from AJAX
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [ActionName("GetProgramListAsync")]
+        public async Task<IActionResult> GetProgramListAsync()
         {
-            var response = await _programService.GetAllProgramsAsync();
+            var programList = await GetProgramListInternalAsync();
+
+            // Use Newtonsoft.Json to serialize with the same settings as the view
+            // This ensures property names match (Value, Text) not (value, text)
+            var jsonSettings = new JsonSerializerSettings
+            {
+                ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver()
+            };
+
+            var json = JsonConvert.SerializeObject(new { success = true, data = programList }, jsonSettings);
+            return Content(json, "application/json");
+        }
+
+        private async Task<List<SelectListItem>> GetProgramListInternalAsync()
+        {
+            var response = await _programService.GetAllProgramsForAllUsersAsync();
             if (!response.Success || response.Data == null)
                 return [];
 
@@ -156,7 +177,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                              ?? new Dictionary<string, string>();
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _projectService.GetProjectsByProgramAsync(query, programNo);
+            var response = await _projectService.GetPagedPactProjectsByProgramAsync(query, programNo);
 
             var items = response.Data != null
                 ? _mapper.Map<List<ProgramProjectItem>>(response.Data)

@@ -1,4 +1,4 @@
-﻿using Apha.Common.Constants;
+using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -77,6 +77,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedPactProjectsAsync(QueryParameters<string> query)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedPactProjects, query);
+            var response = await _http.GetAsync<List<ProjectRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedPactProjectsByProgramAsync(QueryParameters<string> query, string programNo)
+        {
+            var url = QueryStringHelper.AddQueryString(string.Format(FpsApiEndpoints.GetPagedPactProjectsByProgram, Uri.EscapeDataString(programNo)), query);
             var response = await _http.GetAsync<List<ProjectRes>>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
@@ -165,6 +176,23 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             var url = QueryStringHelper.AddQueryString(
                 string.Format(FpsApiEndpoints.GetProjectsByProgram, Uri.EscapeDataString(programNo)), query);
+
+            var response = await _http.GetAsync<List<ProjectRes>>(url);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            }
+
+            var responseDto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramProjectProfitabilityVLAAsync(
+            QueryParameters<string> query, string programNo)
+        {
+            var url = QueryStringHelper.AddQueryString(
+                string.Format(FpsApiEndpoints.GetProjectsByProgramVla, Uri.EscapeDataString(programNo)), query);
 
             var response = await _http.GetAsync<List<ProjectRes>>(url);
 
@@ -302,7 +330,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<ProjectProfitabilityDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        // TRANSFORMENGINE: new method — Phase 9 implementation of IFpsProjectApiClient.GetProjectProfitabilityVlaAsync
         //   HTTP GET api/v1/project/profitability-vla (backend Phase 5 controller route [HttpGet("profitability-vla")])
         //   All four filter params are optional flat query-string params; pagination via QueryParameters<string>.
         public async Task<ApiResponseDto<List<ProjectProfitabilityVlaDto>>> GetProjectProfitabilityVlaAsync(
@@ -314,8 +341,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                // TRANSFORMENGINE: base URL matches backend [Route("api/v{version:apiVersion}/project")]
-                //   + [HttpGet("profitability-vla")] → "api/v1/project/profitability-vla"
+                //   + [HttpGet("profitability-vla")] ? "api/v1/project/profitability-vla"
                 var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetProjectProfitabilityVla, query);
 
                 if (!string.IsNullOrEmpty(projectStatus))
@@ -336,7 +362,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
             catch (Exception)
             {
-                // TRANSFORMENGINE: catch block returns FailureResponse per Phase 9 error-handling pattern (Sonar S2139)
                 return ApiResponseDto<List<ProjectProfitabilityVlaDto>>.FailureResponse(
                     new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve Project Profitability VLA data", Code = InternalCodeError } },
                     new ApiMetaDto());

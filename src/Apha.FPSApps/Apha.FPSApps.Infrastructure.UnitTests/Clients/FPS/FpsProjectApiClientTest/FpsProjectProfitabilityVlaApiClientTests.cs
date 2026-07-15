@@ -34,7 +34,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 15 };
-            // TRANSFORMENGINE: ProjectProfitabilityVlaRes uses 'Project' (not 'JobCode') as the display name field;
             // the frontend DTO uses 'JobCode' as the natural key — Phase 15 build fix.
             var responseItems = new List<ProjectProfitabilityVlaRes>
             {
@@ -301,6 +300,141 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
                     !url.Contains("Filter.ProgramNo=") &&
                     !url.Contains("Filter.Manager=") &&
                     !url.Contains("Filter.Customer=")));
+        }
+
+        #endregion
+
+        #region GetProjectsByProgramProjectProfitabilityVLAAsync
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_WithSuccessResponse_ReturnsMappedSuccessDto()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            var projectList = new List<ProjectRes>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta Project" }
+            };
+            var apiResponse = new ApiResponse<List<ProjectRes>>
+            {
+                Success = true,
+                Data = projectList,
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
+            };
+            var expectedDto = ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                new List<ProjectDto>
+                {
+                    new() { ParentProject = "PP001", ProjectTitle = "Alpha Project" },
+                    new() { ParentProject = "PP002", ProjectTitle = "Beta Project" }
+                },
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 });
+
+            _httpExecutor.GetAsync<List<ProjectRes>>(
+                    Arg.Is<string>(url => url.Contains("paged-vla") && url.Contains("programNo=P001")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _httpExecutor.Received(1).GetAsync<List<ProjectRes>>(
+                Arg.Is<string>(url => url.Contains("paged-vla") && url.Contains("programNo=P001")));
+            _mapper.Received(1).Map<ApiResponseDto<List<ProjectDto>>>(apiResponse);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_WithFailureResponse_ReturnsFailureDto()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            var apiResponse = new ApiResponse<List<ProjectRes>>
+            {
+                Success = false,
+                Errors = new List<ApiError> { new() { Message = "Not Found", Code = "NOT_FOUND" } }
+            };
+            var mappedDto = new ApiResponseDto<List<ProjectDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Not Found", Code = "NOT_FOUND" } }
+            };
+
+            _httpExecutor.GetAsync<List<ProjectRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_UsesVlaEndpointUrl()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            var apiResponse = new ApiResponse<List<ProjectRes>> { Success = true, Data = new List<ProjectRes>() };
+            var expectedDto = ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>());
+
+            _httpExecutor.GetAsync<List<ProjectRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            await _client.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo);
+
+            // Assert — URL must use the VLA endpoint, not the standard paged endpoint
+            await _httpExecutor.Received(1).GetAsync<List<ProjectRes>>(
+                Arg.Is<string>(url => url.Contains("paged-vla") && url.Contains("programNo=P001")));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_EncodesSpecialCharactersInProgramNo()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001 & Test";
+            var apiResponse = new ApiResponse<List<ProjectRes>> { Success = true, Data = new List<ProjectRes>() };
+            var expectedDto = ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>());
+
+            _httpExecutor.GetAsync<List<ProjectRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            await _client.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo);
+
+            // Assert — raw ampersand must not appear unencoded in the programNo path segment
+            await _httpExecutor.Received(1).GetAsync<List<ProjectRes>>(
+                Arg.Is<string>(url => !url.Contains("P001 & Test")));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_PassesPaginationQueryParameters()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 3, PageSize = 5, SortBy = "parentproject", Descending = true };
+            var programNo = "P001";
+            var apiResponse = new ApiResponse<List<ProjectRes>> { Success = true, Data = new List<ProjectRes>() };
+            var expectedDto = ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>());
+
+            _httpExecutor.GetAsync<List<ProjectRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            await _client.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo);
+
+            // Assert
+            await _httpExecutor.Received(1).GetAsync<List<ProjectRes>>(
+                Arg.Is<string>(url => url.Contains("Page=3") || url.Contains("page=3")));
         }
 
         #endregion

@@ -30,7 +30,8 @@
                     <a class="govuk-back-link"
                        asp-area="PACT"
                        asp-controller="PortfolioMaintenance"
-                       asp-action="Index">Back</a>
+                       asp-action="Index"
+                    asp-route-portfolio="@Model.ParentProject">Back</a>
                 }
                 else
                 {
@@ -141,12 +142,12 @@
                     success: function (response) {
                         if (response.success) {
                             getGridManager()?.reloadGrid({ page: 1 });
-                            showGovukAlert('Test purchase requirement deleted successfully.');
+                            showAlertMessage('Test purchase requirement deleted successfully.', AlertType.SUCCESS);
                         } else {
-                            showGovukAlert('Error: ' + response.message);
+                            showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                         }
                     },
-                    error: function () { showGovukAlert('An error occurred while deleting.'); }
+                    error: function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                 });
             });
         }
@@ -167,6 +168,31 @@
                 if (data[f] === '' || data[f] === undefined) data[f] = null;
             });
 
+            // Validate UnitPrice against PostgreSQL money limits
+            if (data.UnitPrice !== null && data.UnitPrice !== undefined) {
+                var unitPrice = parseFloat(data.UnitPrice);
+                var maxMoney = 92233720368547758.07;
+
+                if (isNaN(unitPrice)) {
+        showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
+                    return;
+                }
+                if (unitPrice < 0 || unitPrice > maxMoney) {
+                    showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
+                    return;
+                }
+
+                // Check decimal places
+                var decimalPart = unitPrice.toString().split('.')[1];
+                if (decimalPart && decimalPart.length > 2) {
+                    showAlertMessage('Unit Price must have at most 2 decimal places.', AlertType.INFO);
+                    return;
+                }
+
+                // Ensure we send a proper decimal, not scientific notation
+                data.UnitPrice = unitPrice;
+            }
+
             clearValidationErrors('#testPurchaseReqForm');
             $.ajax({
                 url: '/PACT/TestPurchaseRequirement/SaveTestPurchaseReq',
@@ -176,13 +202,13 @@
                 success: function (response) {
                     if (response.success) {
                         $('#modalPopup').removeClass('show');
-                        showGovukAlert(response.message);
+                        showAlertMessage(response.message, AlertType.SUCCESS);
                         getGridManager()?.reloadGrid({ page: 1 });
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#testPurchaseReqForm');
                     }
                 },
-                error: function () { showGovukAlert('An error occurred while saving.'); }
+                error: function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
             });
         }
     </script>

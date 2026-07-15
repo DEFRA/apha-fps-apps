@@ -1,26 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsCostCentreApiClientTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New xUnit test class for Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients.FpsCostCentreApiClient
- *   - Uses NSubstitute for IFpsHttpExecutor and IMapper mocks
- *   - Covers: constructor null-guards, GetAllCostCentresAsync, GetAllCostCentresPagedAsync,
- *     GetCostCentreByIdAsync, CreateCostCentreAsync, UpdateCostCentreAsync, DeleteCostCentreAsync
- *   - Each HTTP method: happy path + failure path + exception path (catch-block coverage)
- *   - URL construction assertions verify culture-invariant double formatting in route params
- *   - Mapper.Received(1) verifications on success paths
- *
- * PRESERVED:
- *   - NSubstitute mocking pattern consistent with FpsProjectApiClientTests
- *   - ApiResponse<T> → ApiResponseDto<T> mapping assertion style
- *   - InternalCodeError = "INTERNAL_ERROR" expected in exception-catch tests
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
@@ -48,7 +25,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsCostCentreApiClie
             _client = new FpsCostCentreApiClient(_http, _mapper);
         }
 
-        // TRANSFORMENGINE: static helpers for test setup
         private static ApiResponse<List<CostCentreWorkgroupRes>> BuildWorkgroupResponse(bool success = true) =>
             new()
             {
@@ -294,7 +270,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsCostCentreApiClie
             var httpResponse = BuildSingleResponse(true);
             var expectedDto  = ApiResponseDto<CostCentreDto>.SuccessResponse(new CostCentreDto());
 
-            // TRANSFORMENGINE: URL must contain "100.5" (dot decimal separator), not "100,5" (comma locale)
             _http.GetAsync<CostCentreRes>(Arg.Is<string>(url =>
                     url.Contains("100.5")))
                 .Returns(httpResponse);
@@ -463,7 +438,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsCostCentreApiClie
             var httpResponse = BuildSingleResponse(true);
             var expectedDto  = ApiResponseDto<CostCentreDto>.SuccessResponse(dto);
 
-            // TRANSFORMENGINE: URL must contain "100.5" (dot) not "100,5" (comma locale)
             _mapper.Map<CostCentreReq>(dto).Returns(req);
             _http.PutAsync<CostCentreReq, CostCentreRes>(
                 Arg.Is<string>(url => url.Contains("100.5")), req)
@@ -548,7 +522,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsCostCentreApiClie
             var httpResponse = BuildDeleteResponse(true);
             var expectedDto  = ApiResponseDto<bool>.SuccessResponse(true);
 
-            // TRANSFORMENGINE: URL must contain "100.5" (dot) not locale-dependent separator
             _http.DeleteAsync<bool?>(Arg.Is<string>(url => url.Contains("100.5")))
                 .Returns(httpResponse);
             _mapper.Map<ApiResponseDto<bool>>(httpResponse).Returns(expectedDto);

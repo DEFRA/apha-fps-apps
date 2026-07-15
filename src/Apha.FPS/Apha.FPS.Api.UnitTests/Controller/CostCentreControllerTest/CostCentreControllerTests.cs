@@ -1,21 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — CostCentreControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - Phase 13 update: added constructor null-guard tests and additional edge-case coverage
- *   - Phase 5 baseline: CRUD endpoint tests (GetAllCostCentresPagedAsync, GetCostCentreByIdAsync,
- *     CreateCostCentreAsync, UpdateCostCentreAsync, DeleteCostCentreAsync) preserved unchanged
- *
- * PRESERVED:
- *   - All four existing workgroup-lookup tests (GetAllCostCentresAsync) unchanged in behaviour
- *   - All CRUD endpoint tests from Phase 5 baseline
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
@@ -34,7 +16,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.CostCentreControllerTest
 {
     public class CostCentreControllerTests
     {
-        // TRANSFORMENGINE: updated constructor — added ICostCentreService and IFpsRequestContext mocks for CRUD endpoint tests
         private readonly ICostCentreService _costCentreServiceMock;
         private readonly IStoredProcRepository _repositoryMock;
         private readonly IFpsRequestContext _fpsRequestContextMock;
@@ -47,7 +28,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.CostCentreControllerTest
             _repositoryMock = Substitute.For<IStoredProcRepository>();
             _fpsRequestContextMock = Substitute.For<IFpsRequestContext>();
             _mapperMock = Substitute.For<IMapper>();
-            // TRANSFORMENGINE: IFpsRequestContext default FpsYear = 2024 for all tests
             _fpsRequestContextMock.FpsYear.Returns(2024);
             _controller = new CostCentreController(
                 _costCentreServiceMock,
@@ -58,7 +38,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.CostCentreControllerTest
 
         // ─── Constructor Null-Guard Tests ──────────────────────────────────────────
 
-        // TRANSFORMENGINE: Phase 13 — constructor null-guard coverage
         [Fact]
         public void Constructor_WithNullCostCentreService_ThrowsArgumentNullException()
         {
@@ -140,7 +119,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.CostCentreControllerTest
 
         // ─── CRUD Endpoint Tests ────────────────────────────────────────────────────
 
-        // TRANSFORMENGINE: GET paged — drives DataGrid in fps_costcenter_maintenance.html
         [Fact]
         public async Task GetAllCostCentresPagedAsync_HappyPath_ReturnsOk()
         {
@@ -172,7 +150,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.CostCentreControllerTest
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetAllCostCentresPagedAsync(query));
         }
 
-        // TRANSFORMENGINE: GET by composite key — populates Edit modal
         [Fact]
         public async Task GetCostCentreByIdAsync_HappyPath_ReturnsOk()
         {
@@ -199,7 +176,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.CostCentreControllerTest
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetCostCentreByIdAsync(costCentreNo));
         }
 
-        // TRANSFORMENGINE: POST create — maps to saveTblCostCentre()
         [Fact]
         public async Task CreateCostCentreAsync_HappyPath_ReturnsOk()
         {
@@ -218,7 +194,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.CostCentreControllerTest
             Assert.Equal(res, okResult.Value);
         }
 
-        // TRANSFORMENGINE: PUT update — maps to updateTblCostCentre()
         [Fact]
         public async Task UpdateCostCentreAsync_HappyPath_ReturnsOk()
         {
@@ -238,7 +213,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.CostCentreControllerTest
             Assert.Equal(res, okResult.Value);
         }
 
-        // TRANSFORMENGINE: DELETE — maps to handleTblCostCentreDelete()
         [Fact]
         public async Task DeleteCostCentreAsync_HappyPath_ReturnsOkTrue()
         {

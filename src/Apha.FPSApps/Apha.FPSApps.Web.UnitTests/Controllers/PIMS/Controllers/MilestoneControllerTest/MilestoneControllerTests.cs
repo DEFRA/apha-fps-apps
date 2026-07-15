@@ -906,16 +906,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
         #region GetFormRequired
 
         [Fact]
-        public async Task GetFormRequired_ReturnsJsonWithFormRequired_WhenProjectFound()
+        public async Task GetFormRequired_ReturnsJsonWithFormRequiredAndTypeLookUp_WhenProjectFound()
         {
             // Arrange
-            var projects = new List<ProjectListMilestoneDto>
-            {
-                new() { Parentproject = "PP001", Formrequired = true },
-                new() { Parentproject = "PP002", Formrequired = false }
-            };
-            _projectListService.GetAllProjectsForMilestoneAsync()
-                .Returns(new ApiResponseDto<List<ProjectListMilestoneDto>> { Success = true, Data = projects });
+            _projectListService.GetProjectsDetailsForMilestoneAsync("PP001")
+                .Returns(new ApiResponseDto<ProjectDetailsMilestoneDto>
+                {
+                    Success = true,
+                    Data = new ProjectDetailsMilestoneDto
+                    {
+                        Parentproject = "PP001",
+                        Formrequired = true,
+                        Program = "animalsurv"
+                    }
+                });
 
             // Act
             var result = await _controller.GetFormRequired("PP001");
@@ -923,21 +927,35 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             Assert.NotNull(jsonResult.Value);
-            await _projectListService.Received(1).GetAllProjectsForMilestoneAsync();
+
+            var formRequired = (bool)jsonResult.Value.GetType().GetProperty("formRequired")!.GetValue(jsonResult.Value)!;
+            var typeLookUp = (char)jsonResult.Value.GetType().GetProperty("typeLookUp")!.GetValue(jsonResult.Value)!;
+
+            Assert.True(formRequired);
+            Assert.Equal('D', typeLookUp);
+            await _projectListService.Received(1).GetProjectsDetailsForMilestoneAsync("PP001");
         }
 
         [Fact]
-        public async Task GetFormRequired_ReturnsFalse_WhenProjectNotFound()
+        public async Task GetFormRequired_ReturnsDefaults_WhenProjectNotFound()
         {
             // Arrange
-            _projectListService.GetAllProjectsForMilestoneAsync()
-                .Returns(new ApiResponseDto<List<ProjectListMilestoneDto>> { Success = true, Data = [] });
+            _projectListService.GetProjectsDetailsForMilestoneAsync("UNKNOWN")
+                .Returns(new ApiResponseDto<ProjectDetailsMilestoneDto> { Success = true, Data = null });
 
             // Act
             var result = await _controller.GetFormRequired("UNKNOWN");
 
             // Assert
-            Assert.IsType<JsonResult>(result);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            Assert.NotNull(jsonResult.Value);
+
+            var formRequired = (bool)jsonResult.Value.GetType().GetProperty("formRequired")!.GetValue(jsonResult.Value)!;
+            var typeLookUp = (char)jsonResult.Value.GetType().GetProperty("typeLookUp")!.GetValue(jsonResult.Value)!;
+
+            Assert.False(formRequired);
+            Assert.Equal('M', typeLookUp);
+            await _projectListService.Received(1).GetProjectsDetailsForMilestoneAsync("UNKNOWN");
         }
 
         #endregion

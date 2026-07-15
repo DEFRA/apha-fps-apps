@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — CostCentreRepositoryTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New xUnit test class for Apha.FPS.DataAccess.Repositories.CostCentreRepository
- *   - Uses RepositoryTestHelper.CreateMockDbContext<FpsDbContext> + CreateMockDbSet<T> (Moq pattern consistent with existing repo tests)
- *   - Tests cover: GetAllPagedAsync (paged, filter, sort), GetByIdAsync, ExistsAsync, CreateAsync, UpdateAsync, DeleteAsync
- *   - Composite key (CostCentreNo: double, FpsYear: int) used throughout
- *
- * PRESERVED:
- *   - RepositoryTestHelper + Moq pattern (not NSubstitute) for DbContext/DbSet mocking — project convention
- *   - IFpsRequestContext.FpsYear = 2024 default for all tests
- *   - Transaction setup via RepositoryTestHelper.SetupTransaction
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
@@ -31,7 +11,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.CostCentreRepositoryTest
 {
     public class CostCentreRepositoryTests
     {
-        // TRANSFORMENGINE: factory method — creates repository with the minimum DbSets needed per test
         private static CostCentreRepository CreateRepository(IEnumerable<CostCentre>? costCentres = null)
         {
             var requestContext = Substitute.For<IFpsRequestContext>();
@@ -342,7 +321,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.CostCentreRepositoryTest
         [Fact]
         public async Task UpdateAsync_ReturnsPassedEntity_WhenRecordNotFound()
         {
-            // TRANSFORMENGINE: UpdateAsync returns the supplied entity unchanged when original key not found
             var entity = BuildEntity(100.0, "PC01", 2024);
             var repo   = CreateRepository([]);
 

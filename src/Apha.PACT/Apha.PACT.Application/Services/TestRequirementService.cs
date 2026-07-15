@@ -72,7 +72,7 @@ namespace Apha.PACT.Application.Services
         public async Task<TestRequirementtDto> AddTestReqmtAsync(TestRequirementtDto dto)
         {
             // ITrig: both fields null
-            if (string.IsNullOrWhiteSpace(dto.ProjectBuyerCode) && string.IsNullOrWhiteSpace(dto.TestBuyerCode))
+            if (string.IsNullOrWhiteSpace(dto.Buyer) && string.IsNullOrWhiteSpace(dto.TestCode))
                 throw new InvalidOperationException("Must fill in Project Buyer or Test Buyer");
 
             // ITrig: project must exist when ProjectBuyerCode is provided
@@ -141,6 +141,15 @@ namespace Apha.PACT.Application.Services
                 throw new InvalidOperationException("Cannot delete, existing data in MonthlyOutput.");
 
             return await _testReqmtRepository.DeleteAsync(testCode, buyer);
+        }
+
+        // ── TestReqBreakdown (fps.vtestreqbreakdown) ──────────────────────────────
+
+        public async Task<PaginatedResult<TestReqBreakdownDto>> GetPlannedTestsByWorkgroupAsync(QueryParameters<string> query)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _testReqmtRepository.GetPlannedTestsByWorkgroupAsync(parameters);
+            return _mapper.Map<PaginatedResult<TestReqBreakdownDto>>(pagedData);
         }
     }
 }

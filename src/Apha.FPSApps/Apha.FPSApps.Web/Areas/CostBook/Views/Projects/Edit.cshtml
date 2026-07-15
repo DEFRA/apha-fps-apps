@@ -1,4 +1,4 @@
-﻿@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectCreateEditViewModel
+@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectCreateEditViewModel
 
 @{
     ViewData["Title"] = "Project Edit";
@@ -12,7 +12,7 @@
         }
     }
 
-    function syncDateToText(pickerId, displayId, hiddenId) {
+    function syncDateToText(pickerId, displayId, hiddenId, errorId) {
         var picker = document.getElementById(pickerId);
         if (picker.value) {
             var parts = picker.value.split('-');
@@ -23,25 +23,91 @@
             document.getElementById(hiddenId).value = '';
         }
 
+        if (errorId) {
+            var err = document.getElementById(errorId);
+            if (err) { err.style.display = 'none'; err.textContent = ''; }
+        }
+
         // Auto-calculate StartFYear when StartDate changes
         if (pickerId === 'StartdatePicker') {
             calculateStartFYear();
         }
     }
 
+    function formatDateInput(input) {
+        var val = input.value.replace(/[^\d\/\-]/g, '');
+        if (val.length > 10) val = val.substring(0, 10);
+        input.value = val;
+    }
+
+    function validateAndSyncDate(displayId, hiddenId, errorId) {
+        var display = document.getElementById(displayId);
+        var hidden  = document.getElementById(hiddenId);
+        var errorEl = document.getElementById(errorId);
+        var val = display.value.trim();
+
+        if (!val) {
+            hidden.value = '';
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+            return;
+        }
+
+        if (/^\d{4}[\/\-]\d{2}[\/\-]\d{2}$/.test(val)) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format, not yyyy/mm/dd';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var usMatch = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (usMatch && parseInt(usMatch[2], 10) > 12) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format, not mm/dd/yyyy';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (!match) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var day   = parseInt(match[1], 10);
+        var month = parseInt(match[2], 10);
+        var year  = parseInt(match[3], 10);
+        var date  = new Date(year, month - 1, day);
+
+        if (date.getFullYear() !== year || date.getMonth() !== (month - 1) || date.getDate() !== day) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter a valid date in dd/mm/yyyy format';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var mm = String(month).padStart(2, '0');
+        var dd = String(day).padStart(2, '0');
+        hidden.value = year + '-' + mm + '-' + dd;
+        errorEl.style.display = 'none';
+        errorEl.textContent = '';
+    }
+
     function calculateStartFYear() {
-        var picker = document.getElementById('StartdatePicker');
+        var binding = document.getElementById('StartdateBinding');
         var startFYearInput = document.getElementById('StartFYear');
         var financialYearsSelect = document.getElementById('FinancialYears');
 
-        if (!picker || !startFYearInput || !financialYearsSelect) return;
+        if (!binding || !startFYearInput || !financialYearsSelect) return;
 
-        if (!picker.value) {
+        if (!binding.value) {
             startFYearInput.value = '';
             return;
         }
 
-        var parts = picker.value.split('-');
+        var parts = binding.value.split('-');
         var year = parseInt(parts[0], 10);
         var month = parseInt(parts[1], 10);
         var financialYears = financialYearsSelect.value;
@@ -162,16 +228,21 @@
                             <!-- Start Date + Is Defra Project -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label for="StartdateDisplay" class="govuk-label label_width mb-0 pt-1">Start Date:</label>
-                                <div class="me-4">
-                                    <div class="margin_left_5" style="position:relative; display:inline-block;">
+                                <div >
+                                    <div class="margin_left_5" style="position:relative; display:flex; align-items:center;">
                                         <input type="text"
                                                id="StartdateDisplay"
-                                               class="govuk-input width-200 "
+                                               class="govuk-input width-200"
                                                value="@Model.StartDate?.ToString("dd/MM/yyyy")"
+                                               placeholder="dd/mm/yyyy"
+                                               maxlength="10"
                                                autocomplete="off"
-                                               onclick="openDatePicker('StartdatePicker')"
-                                               style="cursor:pointer;"
-                                               readonly>
+                                               oninput="formatDateInput(this)"
+                                               onblur="validateAndSyncDate('StartdateDisplay', 'StartdateBinding', 'StartdateError'); calculateStartFYear();">
+                                        <button type="button"
+                                                onclick="openDatePicker('StartdatePicker')"
+                                                style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                                aria-label="Open date picker for Start Date">&#128197;</button>
                                         <input type="hidden"
                                                name="Startdate"
                                                id="StartdateBinding"
@@ -179,13 +250,21 @@
                                         <input type="date"
                                                id="StartdatePicker"
                                                value="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                                               tabindex="-1"
+                                               aria-hidden="true"
+                                               aria-label="Start date calendar picker"
                                                style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                               onchange="syncDateToText('StartdatePicker', 'StartdateDisplay', 'StartdateBinding')">
+                                               onchange="syncDateToText('StartdatePicker', 'StartdateDisplay', 'StartdateBinding', 'StartdateError')">
                                     </div>
+                                    <span id="StartdateError" class="govuk-error-message" style="display:none;"></span>
                                     <span asp-validation-for="StartDate" class="govuk-error-message"></span>
                                 </div>
-                                        <label asp-for="IsDefraProject" class="govuk-label label_width mb-0 pt-1">Is Defra Project?:</label>
+                                    
                                 <div class="d-flex align-items-center gap-2 margin_left_5">
+                                    <label asp-for="IsDefraProject" class="govuk-label  mb-0 pt-1" style="
+                                    min-width: 160px;
+                                    text-align: right;
+                                    ">Is Defra Project?:</label>
                                             <select asp-for="IsDefraProject" asp-items="Model.AvailableDefraProjectOptions" class="govuk-select" style="min-width: 80px;"></select>
                                             <span class="warning-text" style="font-size:13px; width:217px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
                                                 Changing this option will recost existing projects with current rates.
@@ -210,7 +289,7 @@
 
                             <!-- Submitted By Firstname + Prepared By -->
                             <div class="govuk-form-group d-flex align-items-start mb-2" >
-                                                <label asp-for="SubmittedByFName" class="govuk-label label_width mb-0 pt-1" style="overflow-wrap: break-word; margin-left: -16px;">Submitted By - Firstname:</label>
+                                                <label asp-for="SubmittedByFName" class="govuk-label label_width mb-0 pt-1" style="overflow-wrap: break-word; ">Submitted By - Firstname:</label>
                                 <div class="me-4">
                                     <input asp-for="SubmittedByFName" class="govuk-input width-200 margin_left_5">
                                                         <span asp-validation-for="SubmittedByFName" class="govuk-error-message"></span>
@@ -232,7 +311,7 @@
                                     <input asp-for="SubmittedByLName" class="govuk-input width-200 margin_left_5">
                                                             <span asp-validation-for="SubmittedByLName" class="govuk-error-message"></span>
                                 </div>
-                                <label for="chkInflation" class="govuk-label label_width mb-0 pt-1">Include Inflation?:</label>
+                                <label class="govuk-label label_width mb-0 pt-1" >Include Inflation?:</label>
                                 <div class="d-flex align-items-center gap-2 margin_left_5">
                       
                                     <div class="govuk-checkboxes govuk-checkboxes--small">
@@ -243,7 +322,9 @@
                                                    value="-1"
                                                    class="govuk-checkboxes__input"
                                             @(Model.Inflation.HasValue && Model.Inflation.Value == -1 ? "checked=\"checked\"" : "") />
-                                            <label class="govuk-checkboxes__label" for="chkInflation"></label>
+                                            <label class="govuk-checkboxes__label" for="chkInflation">
+                                                <span class="govuk-visually-hidden">Include Inflation</span>
+                                            </label>
                                         </div>
                                     </div>
                                     <span class="warning-text" style="font-size:13px; width:286px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
@@ -256,15 +337,20 @@
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label for="DateOfSubmissionDisplay" class="govuk-label label_width mb-0 pt-1">Date of Submission:</label>
                                 <div>
-                                    <div style="position:relative; display:inline-block; ">
+                                    <div style="position:relative; display:flex; align-items:center;">
                                         <input type="text"
                                                id="DateOfSubmissionDisplay"
                                                class="govuk-input width-200 margin_left_5"
                                                value="@Model.DateOfSubmission?.ToString("dd/MM/yyyy")"
+                                               placeholder="dd/mm/yyyy"
+                                               maxlength="10"
                                                autocomplete="off"
-                                               onclick="openDatePicker('DateOfSubmissionPicker')"
-                                               style="cursor:pointer;"
-                                               readonly>
+                                               oninput="formatDateInput(this)"
+                                               onblur="validateAndSyncDate('DateOfSubmissionDisplay', 'DateOfSubmissionBinding', 'DateOfSubmissionError')">
+                                        <button type="button"
+                                                onclick="openDatePicker('DateOfSubmissionPicker')"
+                                                style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                                aria-label="Open date picker for Date of Submission">&#128197;</button>
                                         <input type="hidden"
                                                name="DateOfSubmission"
                                                id="DateOfSubmissionBinding"
@@ -272,9 +358,13 @@
                                         <input type="date"
                                                id="DateOfSubmissionPicker"
                                                value="@Model.DateOfSubmission?.ToString("yyyy-MM-dd")"
+                                               tabindex="-1"
+                                               aria-hidden="true"
+                                               aria-label="Date of submission calendar picker"
                                                style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                               onchange="syncDateToText('DateOfSubmissionPicker', 'DateOfSubmissionDisplay', 'DateOfSubmissionBinding')">
+                                               onchange="syncDateToText('DateOfSubmissionPicker', 'DateOfSubmissionDisplay', 'DateOfSubmissionBinding', 'DateOfSubmissionError')">
                                     </div>
+                                    <span id="DateOfSubmissionError" class="govuk-error-message" style="display:none;"></span>
                                     <span asp-validation-for="DateOfSubmission" class="govuk-error-message"></span>
                                 </div>
                             </div>
@@ -307,11 +397,11 @@
          $(document).ready(function () {
             @if (TempData["Success"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Success"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["Success"])', AlertType.SUCCESS);</text>
             }
             @if (TempData["Error"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Error"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["Error"])', AlertType.ERROR);</text>
             }
 
         });
@@ -326,7 +416,7 @@
 
                 var projectId = '@Html.Raw(Model.ProjectId)';
                 if (!projectId || projectId === '') {
-                    showGovukAlert('Project ID is missing. Cannot delete project.');
+                    showAlertMessage('Project ID is missing. Cannot delete project.', AlertType.INFO);
                     if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
                     document.body.style.cursor = 'default';
                     return;
@@ -341,17 +431,17 @@
                     },
                     success: function (response) {
                         if (response.success) {
-                            showGovukAlert('Project deleted successfully.').then(function () {
+                            showAlertMessage('Project deleted successfully.', AlertType.SUCCESS).then(function () {
                                 window.location.href = '@Url.Action("Index", "Projects", new { area = "CostBook" })';
                             });
                         } else {
-                            showGovukAlert('Failed to delete project: ' + (response.message || 'Unknown error'));
+                            showAlertMessage('Failed to delete project: ' + (response.message || 'Unknown error'), AlertType.ERROR);
                             if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
                             document.body.style.cursor = 'default';
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting the project.');
+                        showAlertMessage('An error occurred while deleting the project.', AlertType.ERROR);
                         if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
                         document.body.style.cursor = 'default';
                     }
@@ -398,7 +488,7 @@
                                             editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
                                             window.location.href = editUrl;
                                         } else {
-                                            showGovukAlert('Failed to recost project. Redirecting to edit page.').then(function () {
+                                            showAlertMessage('Failed to recost project. Redirecting to edit page.', AlertType.ERROR).then(function () {
                                                 var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
                                                 editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
                                                 window.location.href = editUrl;
@@ -406,7 +496,7 @@
                                         }
                                     },
                                     error: function () {
-                                        showGovukAlert('Error occurred during recost. Redirecting to edit page.').then(function () {
+                                        showAlertMessage('Error occurred during recost. Redirecting to edit page.', AlertType.ERROR).then(function () {
                                             var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
                                             editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
                                             window.location.href = editUrl;
@@ -421,12 +511,12 @@
                             }
                         });
                     } else {
-                        showGovukAlert('Failed to copy project: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'));
+                        showAlertMessage('Failed to copy project: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'), AlertType.ERROR);
                         if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
                     }
                 },
                 error: function () {
-                    showGovukAlert('Failed to copy project. Please try again.');
+                    showAlertMessage('Failed to copy project. Please try again.', AlertType.ERROR);
                     if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
                 }
             });

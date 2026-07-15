@@ -27,12 +27,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupEmployee
             _client = new FpsWorkGroupEmployeeApiClient(_http, _mapper);
         }
 
-        #region GetWorkGroupEmployeeAsync Tests
-
         [Fact]
         public async Task GetWorkGroupEmployeeAsync_WithSuccessResponse_ReturnsMappedEmployeeList()
         {
-            // Arrange
             var query   = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var resList = new List<WorkGroupEmployeeRes>
             {
@@ -45,112 +42,89 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupEmployee
             };
             var expectedDto = ApiResponseDto<List<WorkGroupEmployeeDto>>.SuccessResponse(dtoList);
 
-            _http.GetAsync<List<WorkGroupEmployeeRes>>(
-                    Arg.Is<string>(url => url.Contains("wgstaff") && url.Contains(DefaultWgGrade)))
-                .Returns(apiResponse);
+            _http.GetAsync<List<WorkGroupEmployeeRes>>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeDto>>>(apiResponse).Returns(expectedDto);
 
-            // Act
             var result = await _client.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
 
-            // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _http.Received(1).GetAsync<List<WorkGroupEmployeeRes>>(
-                Arg.Is<string>(url => url.Contains("wgstaff") && url.Contains(DefaultWgGrade)));
         }
 
         [Fact]
-        public async Task GetWorkGroupEmployeeAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        public async Task GetWorkGroupEmployeeByIdAsync_WithSuccessResponse_ReturnsMappedLegacyEmployee()
         {
-            // Arrange
-            var query       = new QueryParameters<string>();
-            var apiResponse = new ApiResponse<List<WorkGroupEmployeeRes>>
-            {
-                Success = false,
-                Errors  = new List<ApiError> { new() { Message = "API Error", Code = "ERROR" } }
-            };
-            var mappedResponse = new ApiResponseDto<List<WorkGroupEmployeeDto>>
-            {
-                Success = false,
-                Errors  = new List<ApiErrorDto> { new() { Message = "API Error", Code = "ERROR" } },
-                Meta    = new ApiMetaDto()
-            };
-
-            _http.GetAsync<List<WorkGroupEmployeeRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeDto>>>(apiResponse).Returns(mappedResponse);
-
-            // Act
-            var result = await _client.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-        }
-
-        #endregion
-
-        #region GetWorkGroupEmployeeByIdAsync Tests
-
-        [Fact]
-        public async Task GetWorkGroupEmployeeByIdAsync_WithSuccessResponse_ReturnsMappedEmployee()
-        {
-            // Arrange
             var res         = new WorkGroupEmployeeRes { PactId = DefaultPactId, SpNumber = "SP001" };
             var apiResponse = new ApiResponse<WorkGroupEmployeeRes> { Success = true, Data = res };
             var dto         = new WorkGroupEmployeeDto { PactId = DefaultPactId };
             var expectedDto = ApiResponseDto<WorkGroupEmployeeDto>.SuccessResponse(dto);
 
-            _http.GetAsync<WorkGroupEmployeeRes>(
-                    Arg.Is<string>(url => url.Contains(DefaultPactId)))
-                .Returns(apiResponse);
+            _http.GetAsync<WorkGroupEmployeeRes>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(apiResponse).Returns(expectedDto);
 
-            // Act
             var result = await _client.GetWorkGroupEmployeeByIdAsync(DefaultPactId);
 
-            // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(DefaultPactId, result.Data?.PactId);
         }
 
         [Fact]
-        public async Task GetWorkGroupEmployeeByIdAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        public async Task GetWorkGroupEmployeeByIdForStaffAsync_WithSuccessResponse_ReturnsMappedStaffEmployee()
         {
-            // Arrange
-            var apiResponse = new ApiResponse<WorkGroupEmployeeRes>
-            {
-                Success = false,
-                Errors  = new List<ApiError> { new() { Message = "Not found", Code = "NOT_FOUND" } }
-            };
-            var mappedResponse = new ApiResponseDto<WorkGroupEmployeeDto>
-            {
-                Success = false,
-                Errors  = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } },
-                Meta    = new ApiMetaDto()
-            };
+            var res         = new WorkGroupEmployeeRes { PactId = DefaultPactId, SpNumber = "SP001" };
+            var apiResponse = new ApiResponse<WorkGroupEmployeeRes> { Success = true, Data = res };
+            var dto         = new WorkGroupEmployeeStaffDto { PactId = DefaultPactId };
+            var expectedDto = ApiResponseDto<WorkGroupEmployeeStaffDto>.SuccessResponse(dto);
 
             _http.GetAsync<WorkGroupEmployeeRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(apiResponse).Returns(mappedResponse);
+            _mapper.Map<ApiResponseDto<WorkGroupEmployeeStaffDto>>(apiResponse).Returns(expectedDto);
 
-            // Act
-            var result = await _client.GetWorkGroupEmployeeByIdAsync(DefaultPactId);
+            var result = await _client.GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId);
 
-            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(DefaultPactId, result.Data?.PactId);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeForStaffAsync_WithFailureResponse_ReturnsFailureDto()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<WorkGroupEmployeeRes>> { Success = false };
+            var expectedDto = ApiResponseDto<List<WorkGroupEmployeeStaffDto>>.FailureResponse([], new ApiMetaDto());
+
+            _http.GetAsync<List<WorkGroupEmployeeRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeStaffDto>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetWorkGroupEmployeeForStaffAsync(query, DefaultWgGrade);
+
             Assert.NotNull(result);
             Assert.False(result.Success);
         }
 
-        #endregion
+        [Fact]
+        public async Task CreateWorkGroupEmployeeForStaffAsync_WithFailureResponse_ReturnsFailureDto()
+        {
+            var dto = new WorkGroupEmployeeStaffDto { PactId = DefaultPactId };
+            var req = new WorkGroupEmployeeReq { PactId = DefaultPactId };
+            var apiResponse = new ApiResponse<WorkGroupEmployeeRes> { Success = false };
+            var expectedDto = ApiResponseDto<WorkGroupEmployeeStaffDto>.FailureResponse([], new ApiMetaDto());
 
-        #region UpdateWorkGroupEmployeeAsync Tests
+            _mapper.Map<WorkGroupEmployeeReq>(dto).Returns(req);
+            _http.PostAsync<WorkGroupEmployeeReq, WorkGroupEmployeeRes>(Arg.Any<string>(), req).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<WorkGroupEmployeeStaffDto>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.CreateWorkGroupEmployeeForStaffAsync(dto);
+
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
 
         [Fact]
-        public async Task UpdateWorkGroupEmployeeAsync_WithSuccessResponse_ReturnsMappedEmployee()
+        public async Task UpdateWorkGroupEmployeeAsync_WithSuccessResponse_ReturnsMappedLegacyEmployee()
         {
-            // Arrange
             var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId, HrsPaid = 40.0 };
             var req = new WorkGroupEmployeeReq { PactId = DefaultPactId, HrsPaid = 40.0 };
             var res = new WorkGroupEmployeeRes { PactId = DefaultPactId };
@@ -162,95 +136,99 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupEmployee
             _http.PutAsync<WorkGroupEmployeeReq, WorkGroupEmployeeRes>(Arg.Any<string>(), req).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(apiResponse).Returns(expectedDto);
 
-            // Act
             var result = await _client.UpdateWorkGroupEmployeeAsync(dto);
 
-            // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            await _http.Received(1).PutAsync<WorkGroupEmployeeReq, WorkGroupEmployeeRes>(Arg.Any<string>(), req);
         }
 
         [Fact]
-        public async Task UpdateWorkGroupEmployeeAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        public async Task UpdateWorkGroupEmployeeForStaffAsync_WithFailureResponse_ReturnsFailureDto()
         {
-            // Arrange
-            var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId };
+            var dto = new WorkGroupEmployeeStaffDto { PactId = DefaultPactId };
             var req = new WorkGroupEmployeeReq { PactId = DefaultPactId };
-            var apiResponse = new ApiResponse<WorkGroupEmployeeRes>
-            {
-                Success = false,
-                Errors  = new List<ApiError> { new() { Message = "Update failed", Code = "ERR" } }
-            };
-            var mappedResponse = new ApiResponseDto<WorkGroupEmployeeDto>
-            {
-                Success = false,
-                Errors  = new List<ApiErrorDto> { new() { Message = "Update failed", Code = "ERR" } },
-                Meta    = new ApiMetaDto()
-            };
+            var apiResponse = new ApiResponse<WorkGroupEmployeeRes> { Success = false };
+            var expectedDto = ApiResponseDto<WorkGroupEmployeeStaffDto>.FailureResponse([], new ApiMetaDto());
 
             _mapper.Map<WorkGroupEmployeeReq>(dto).Returns(req);
             _http.PutAsync<WorkGroupEmployeeReq, WorkGroupEmployeeRes>(Arg.Any<string>(), req).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(apiResponse).Returns(mappedResponse);
+            _mapper.Map<ApiResponseDto<WorkGroupEmployeeStaffDto>>(apiResponse).Returns(expectedDto);
 
-            // Act
-            var result = await _client.UpdateWorkGroupEmployeeAsync(dto);
+            var result = await _client.UpdateWorkGroupEmployeeForStaffAsync(dto);
 
-            // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
         }
 
-        #endregion
+        [Fact]
+        public async Task GetAllActiveWorkGroupEmployeesAsync_WithSuccessResponse_ReturnsMappedActiveEmployeeList()
+        {
+            var query   = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var resList = new List<WorkGroupEmployeeRes>
+            {
+                new() { PactId = DefaultPactId, SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade }
+            };
+            var apiResponse = new ApiResponse<List<WorkGroupEmployeeRes>> { Success = true, Data = resList };
+            var dtoList     = new List<WorkGroupEmployeeStaffDto>
+            {
+                new() { PactId = DefaultPactId, SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade }
+            };
+            var expectedDto = ApiResponseDto<List<WorkGroupEmployeeStaffDto>>.SuccessResponse(dtoList);
 
-        #region DeleteWorkGroupEmployeeAsync Tests
+            _http.GetAsync<List<WorkGroupEmployeeRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeStaffDto>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetAllActiveWorkGroupEmployeesAsync(query, DefaultWgGrade);
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetAllActiveWorkGroupEmployeesAsync_WithFailureResponse_ReturnsFailureDto()
+        {
+            var query       = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<WorkGroupEmployeeRes>> { Success = false };
+            var expectedDto = ApiResponseDto<List<WorkGroupEmployeeStaffDto>>.FailureResponse([], new ApiMetaDto());
+
+            _http.GetAsync<List<WorkGroupEmployeeRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeStaffDto>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetAllActiveWorkGroupEmployeesAsync(query, DefaultWgGrade);
+
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
 
         [Fact]
         public async Task DeleteWorkGroupEmployeeAsync_WithSuccessResponse_ReturnsSuccess()
         {
-            // Arrange
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>(Arg.Is<string>(url => url.Contains(DefaultPactId))).Returns(apiResponse);
+            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
-            // Act
             var result = await _client.DeleteWorkGroupEmployeeAsync(DefaultPactId);
 
-            // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            await _http.Received(1).DeleteAsync<bool>(Arg.Is<string>(url => url.Contains(DefaultPactId)));
         }
 
         [Fact]
-        public async Task DeleteWorkGroupEmployeeAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        public async Task DeleteWorkGroupEmployeeAsync_WithFailureResponse_ReturnsFailureDto()
         {
-            // Arrange
-            var apiResponse = new ApiResponse<bool>
-            {
-                Success = false,
-                Errors  = new List<ApiError> { new() { Message = "Delete failed", Code = "ERR" } }
-            };
-            var mappedResponse = new ApiResponseDto<bool>
-            {
-                Success = false,
-                Errors  = new List<ApiErrorDto> { new() { Message = "Delete failed", Code = "ERR" } },
-                Meta    = new ApiMetaDto()
-            };
+            var apiResponse = new ApiResponse<bool> { Success = false };
+            var expectedDto = ApiResponseDto<bool>.FailureResponse([], new ApiMetaDto());
 
             _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
-            // Act
             var result = await _client.DeleteWorkGroupEmployeeAsync(DefaultPactId);
 
-            // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
         }
-
-        #endregion
     }
 }

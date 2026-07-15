@@ -1,28 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — CostCentreMaintenanceControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- *            Phase 14 — Pre-Build Security Review Gate (test fixes)
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New xUnit test class for Apha.FPSApps.Web.Areas.FPS.Controllers.CostCentreMaintenanceController
- *   - Uses NSubstitute for IMapper and ICostCentreService (frontend) mocks
- *   - Covers: constructor null-guards, Index, LoadCostCentreGrid, Create GET/POST, Edit GET/POST, Delete
- *   - Culture-invariant double parsing verified for Edit GET, Edit POST, Delete
- *   - JsonResult helper pattern matches GradeMaintenanceControllerTests convention
- *   - Phase 14 fix: Create_Get test made async (Create() is now async Task<IActionResult>);
- *     GetAllCostCentresAsync() mock added to Create_Get and Edit_Get_ServiceReturnsSuccess tests
- *     because PopulatePartialDropdownsAsync() is now called in both GET actions before the partial
- *     is returned (security fix — ensures ProfitCentre dropdown is never empty in the modal)
- *
- * PRESERVED:
- *   - JsonResponse inner class shape consistent with GradeMaintenanceControllerTests
- *   - NSubstitute mocking (not Moq) per frontend test project convention
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -51,14 +26,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
             _controller         = new CostCentreMaintenanceController(_mapper, _costCentreService);
         }
 
-        // TRANSFORMENGINE: JSON result deserialization helper — matches GradeMaintenanceControllerTests pattern
         private static T? GetJsonResultValue<T>(JsonResult jsonResult)
         {
             var json = JsonSerializer.Serialize(jsonResult.Value);
             return JsonSerializer.Deserialize<T>(json);
         }
 
-        // TRANSFORMENGINE: helper — builds a minimal success ApiResponseDto for paged list
         private static ApiResponseDto<List<CostCentreDto>> BuildPagedSuccess(int count = 1) =>
             ApiResponseDto<List<CostCentreDto>>.SuccessResponse(
                 Enumerable.Range(0, count)
@@ -198,7 +171,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
 
         #region Create GET Tests
 
-        // TRANSFORMENGINE: Phase 14 fix — Create() is now async; GetAllCostCentresAsync must be mocked
         // because PopulatePartialDropdownsAsync() is called before returning the partial view
         [Fact]
         public async Task Create_Get_ReturnsPartialViewWithEmptyCostCentreItem()
@@ -338,7 +310,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
 
             _costCentreService.GetCostCentreByIdAsync(100.0).Returns(apiResponse);
             _mapper.Map<CostCentreItem>(dto).Returns(item);
-            // TRANSFORMENGINE: Phase 14 fix — GetAllCostCentresAsync must be mocked because
             // PopulatePartialDropdownsAsync() is now called inside Edit GET before returning partial
             _costCentreService.GetAllCostCentresAsync().Returns(BuildWorkgroupSuccess());
 
@@ -572,7 +543,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
 
         #endregion
 
-        // TRANSFORMENGINE: inner class for JSON response deserialization — matches GradeMaintenanceControllerTests pattern
         private class JsonResponse
         {
             public bool success { get; set; }

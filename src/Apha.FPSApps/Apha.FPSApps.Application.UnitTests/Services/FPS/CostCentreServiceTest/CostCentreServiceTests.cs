@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — CostCentreServiceTests.cs (frontend)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New xUnit test class for Apha.FPSApps.Application.Services.FPS.CostCentreService (thin delegate)
- *   - Uses NSubstitute for IFpsApiClient (aggregate) and IFpsCostCentreApiClient sub-client mocks
- *   - Wires _fpsClient.FpsCostCentre.Returns(_fpsCostCentreApiClient) to mirror aggregate pattern
- *   - Verifies thin delegation via Received(1) — no business logic in service under test
- *   - Covers: constructor null-guard, all 6 service methods (happy path, failure, delegation verification)
- *
- * PRESERVED:
- *   - NSubstitute mocking pattern consistent with GradeServiceTests (frontend)
- *   - ApiResponseDto<T>.SuccessResponse / FailureResponse assertion style
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
@@ -38,12 +18,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.CostCentreServiceTest
         {
             _mockFpsClient             = Substitute.For<IFpsApiClient>();
             _mockCostCentreApiClient   = Substitute.For<IFpsCostCentreApiClient>();
-            // TRANSFORMENGINE: wire sub-client so _fpsClient.FpsCostCentre returns mock
             _mockFpsClient.FpsCostCentre.Returns(_mockCostCentreApiClient);
             _sut = new CostCentreService(_mockFpsClient);
         }
 
-        // TRANSFORMENGINE: static helper for concise DTO construction
         private static CostCentreDto BuildDto(double no = 100.0, string pc = "PC01") =>
             new() { CostCentreNo = no, ProfitCentre = pc, FpsYear = 2024 };
 
@@ -262,7 +240,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.CostCentreServiceTest
             var dto         = BuildDto(200.0, "PC01");   // renaming 100 → 200
             var apiResponse = ApiResponseDto<CostCentreDto>.SuccessResponse(dto);
 
-            // TRANSFORMENGINE: original costCentreNo 100.0 must be forwarded to API client unchanged
             _mockCostCentreApiClient.UpdateCostCentreAsync(100.0, dto).Returns(apiResponse);
 
             // Act

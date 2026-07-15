@@ -15,5 +15,6 @@ namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
         Task<ApiResponseDto<ProposedProjectDto>> GetProposedProjectByIdAsync(string parentproject);
         Task<ApiResponseDto<List<ProjectsDto>>> GetYearlyDetailsByProjectAsync(string parentproject);
         Task<ApiResponseDto<List<ProjectListMilestoneDto>>> GetAllProjectsForMilestoneAsync();
+        Task<ApiResponseDto<ProjectDetailsMilestoneDto>> GetProjectsDetailsForMilestoneAsync(string parentproject);
     }
 }

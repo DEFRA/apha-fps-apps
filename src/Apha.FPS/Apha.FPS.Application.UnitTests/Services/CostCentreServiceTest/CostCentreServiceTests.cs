@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — CostCentreServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New xUnit test class for Apha.FPS.Application.Services.CostCentreService
- *   - Tests cover all 5 public service methods with happy path, guard-failure, and delegation scenarios
- *   - Uses NSubstitute for ICostCentreRepository, IProfitCentreRepository, IMapper mocks
- *   - Validates duplicate-key guard (InvalidOperationException), FK validation (InvalidOperationException),
- *     existence guards (KeyNotFoundException), and null-input guards (ArgumentNullException)
- *
- * PRESERVED:
- *   - All business guard semantics from CostCentreService (duplicate prevention, ProfitCentre FK check, existence check)
- *   - Composite PK pattern: (CostCentreNo: double, FpsYear: int)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
@@ -48,7 +28,6 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
             _sut = new CostCentreService(_mockRepository, _mockProfitCentreRepository, _mockMapper);
         }
 
-        // TRANSFORMENGINE: static helpers — minimal valid objects for test setup
         private static CostCentreDto BuildDto(double no = 100.0, string pc = "PC01", int year = 2024) =>
             new() { CostCentreNo = no, ProfitCentre = pc, FpsYear = year };
 
@@ -60,7 +39,6 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
         [Fact]
         public void Constructor_WithValidDependencies_CreatesInstance()
         {
-            // TRANSFORMENGINE: CostCentreService constructor accepts all three dependencies without throwing
             var service = new CostCentreService(_mockRepository, _mockProfitCentreRepository, _mockMapper);
             Assert.NotNull(service);
         }
@@ -199,7 +177,6 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
         {
             // Arrange
             var dto = BuildDto(100.0, "PC01", 2024);
-            // TRANSFORMENGINE: duplicate-key guard — ExistsAsync returns true → service throws InvalidOperationException
             _mockRepository.ExistsAsync(100.0, 2024).Returns(true);
 
             // Act & Assert
@@ -212,7 +189,6 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
         {
             // Arrange
             var dto = BuildDto(100.0, "PC_INVALID", 2024);
-            // TRANSFORMENGINE: ProfitCentre FK guard — ExistsAsync false + ProfitCentreExistsAsync false → InvalidOperationException
             _mockRepository.ExistsAsync(100.0, 2024).Returns(false);
             _mockProfitCentreRepository.ProfitCentreExistsAsync("PC_INVALID").Returns(false);
 
@@ -267,7 +243,6 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
         {
             // Arrange
             var dto = BuildDto(100.0, "PC01", 2024);
-            // TRANSFORMENGINE: existence guard — original record not in DB → KeyNotFoundException
             _mockRepository.ExistsAsync(999.0, 2024).Returns(false);
 
             // Act & Assert
@@ -280,7 +255,6 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
         {
             // Arrange
             var dto = BuildDto(100.0, "PC_INVALID", 2024);
-            // TRANSFORMENGINE: existence check passes; ProfitCentre FK check fails → InvalidOperationException
             _mockRepository.ExistsAsync(100.0, 2024).Returns(true);
             _mockProfitCentreRepository.ProfitCentreExistsAsync("PC_INVALID").Returns(false);
 
@@ -319,7 +293,6 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
         public async Task DeleteCostCentreAsync_ThrowsKeyNotFoundException_WhenRecordDoesNotExist()
         {
             // Arrange
-            // TRANSFORMENGINE: existence guard — record must exist before delete; throws KeyNotFoundException if absent
             _mockRepository.ExistsAsync(999.0, 2024).Returns(false);
 
             // Act & Assert

@@ -1,4 +1,4 @@
-﻿@* Single unified view for both Add and Edit operations *@
+@* Single unified view for both Add and Edit operations *@
 @model Apha.FPSApps.Web.Areas.FPS.Models.ProgrammeNewProjectViewModel
 @{
     var isEditMode = ViewBag.IsEditMode ?? !string.IsNullOrEmpty(Model.ParentProject);
@@ -10,27 +10,15 @@
 
 <main id="main-content">
     <div class="container-fluid">
-        <!-- Breadcrumb section -->
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
-                    <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
-                        <div class="col-md-6">
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Title section -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
                 <div class="row" style="display:flex; align-items: center;">
                     <div class="col-sm-12" style="padding:0px;">
-                        <div style="border-bottom: 2px solid #1d70b8; height:48px;">
-                            <h1 style="padding: 15px 0 5px 17px; font-size:16px; width: 50%; font-weight: 700; float:left; margin: 0;">
-                                2025-2026 : @(isEditMode ? $"Edit Project - {Model.ParentProject}" : "Set Up New Project")
+                        <div style="border-bottom: 2px solid #1d70b8; min-height:42px;">
+                            <h1 style="padding: 0 17px; height:42px; font-size:16px; font-weight: 700; margin: 0; display:flex; align-items:center; justify-content:space-between;">
+                                <span>2025-2026 : @(isEditMode ? $"Edit Project - {Model.ParentProject}" : "Set Up New Project")</span>
+                                <a href="@(Context.Request.Query.ContainsKey("returnUrl") ? Context.Request.Query["returnUrl"].ToString() : "javascript:history.back()")" class="govuk-back-link sup_align_right sup_back_link_center_right">Back</a>
                             </h1>
                         </div>
                     </div>
@@ -441,7 +429,7 @@
                 submitForm(formId, isEdit, parentProject);
             } catch (e) {
                 console.error('submitProject error:', e);
-                showGovukAlert('An error occurred: ' + e.message);
+                showAlertMessage('An error occurred: ' + e.message, AlertType.ERROR);
             }
         };
 
@@ -468,7 +456,7 @@
                 .then(function (r) { return r.json(); })
                 .then(function (result) {
                     if (result.success) {
-                        showGovukAlert(result.message || 'Project deleted successfully.').then(function () {
+                        showAlertMessage(result.message || 'Project deleted successfully.', AlertType.SUCCESS).then(function () {
                             window.location.href = result.redirectUrl;
                         });
                     } else {
@@ -480,7 +468,7 @@
 
         window.changeProjectCode = function (oldCode, newCode) {
             if (!oldCode || !newCode) {
-                showGovukAlert('Both old and new project codes are required.');
+                showAlertMessage('Both old and new project codes are required.', AlertType.INFO);
                 return;
             }
             showGovukConfirm('Are you sure you want to change project code from "' + oldCode + '" to "' + newCode + '"? This will update all related records.').then(function (confirmed) {
@@ -493,7 +481,7 @@
                 .then(function (r) { return r.json(); })
                 .then(function (result) {
                     if (result.success) {
-                        showGovukAlert(result.message || 'Project code changed successfully.').then(function () {
+                        showAlertMessage(result.message || 'Project code changed successfully.', AlertType.SUCCESS).then(function () {
                             window.location.href = result.redirectUrl;
                         });
                     } else {
@@ -502,12 +490,13 @@
                 })
                 .catch(function (err) {
                     console.error('Error:', err);
-                    showGovukAlert('An error occurred while changing project code.');
+                    showAlertMessage('An error occurred while changing project code.', AlertType.ERROR);
                 });
             });
         };
 
         function submitForm(formId, isEdit, parentProject) {
+            showLoader();
             clearValidationErrors('#main-content');
             var form = document.getElementById(formId);
             var formData = new FormData(form);
@@ -544,12 +533,14 @@
                 body: JSON.stringify(data)
             })
             .then(function (r) {
+                hideLoader();
                 if (!r.ok) {
                     return r.text().then(function (t) { throw new Error('Server returned ' + r.status + ': ' + t); });
                 }
                 return r.json();
             })
             .then(function (result) {
+                hideLoader();
                 if (result.success) {
                     currencyFieldNames.forEach(function (name) {
                         var $field = $('[name="' + name + '"]');
@@ -559,19 +550,20 @@
                         }
                     });
                     if (!isEdit && result.data && result.data.parentProject) {
-                        showGovukAlert(result.message || 'Project created successfully.').then(function () {
+                        showAlertMessage(result.message || 'Project created successfully.', AlertType.SUCCESS).then(function () {
                             window.location.href = '@Url.Action("Edit", "Project", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(result.data.parentProject);
                         });
                     } else {
-                        showGovukAlert(result.message || 'Project updated successfully.');
+                        showAlertMessage(result.message || 'Project updated successfully.', AlertType.SUCCESS);
                     }
                 } else {
                     displayServerValidationErrors(result.errors, result.message, '#main-content');
                 }
             })
             .catch(function (err) {
+                hideLoader();
                 console.error('Error:', err);
-                showGovukAlert('An error occurred while submitting the form.');
+                showAlertMessage('An error occurred while submitting the form.', AlertType.ERROR);
             });
         }
 

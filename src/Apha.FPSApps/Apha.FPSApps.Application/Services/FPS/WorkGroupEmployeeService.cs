@@ -30,6 +30,31 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsClient.FpsWorkGroupEmployee.UpdateWorkGroupEmployeeAsync(dto);
         }
 
+        public async Task<ApiResponseDto<List<WorkGroupEmployeeStaffDto>>> GetWorkGroupEmployeeForStaffAsync(QueryParameters<string> query, string wgGrade)
+        {
+            return await _fpsClient.FpsWorkGroupEmployee.GetWorkGroupEmployeeForStaffAsync(query, wgGrade);
+        }
+
+        public async Task<ApiResponseDto<List<WorkGroupEmployeeStaffDto>>> GetAllActiveWorkGroupEmployeesAsync(QueryParameters<string> query, string wgGrade)
+        {
+            return await _fpsClient.FpsWorkGroupEmployee.GetAllActiveWorkGroupEmployeesAsync(query, wgGrade);
+        }
+
+        public async Task<ApiResponseDto<WorkGroupEmployeeStaffDto>> GetWorkGroupEmployeeByIdForStaffAsync(string pactId)
+        {
+            return await _fpsClient.FpsWorkGroupEmployee.GetWorkGroupEmployeeByIdForStaffAsync(pactId);
+        }
+
+        public async Task<ApiResponseDto<WorkGroupEmployeeStaffDto>> CreateWorkGroupEmployeeForStaffAsync(WorkGroupEmployeeStaffDto dto)
+        {
+            return await _fpsClient.FpsWorkGroupEmployee.CreateWorkGroupEmployeeForStaffAsync(dto);
+        }
+
+        public async Task<ApiResponseDto<WorkGroupEmployeeStaffDto>> UpdateWorkGroupEmployeeForStaffAsync(WorkGroupEmployeeStaffDto dto)
+        {
+            return await _fpsClient.FpsWorkGroupEmployee.UpdateWorkGroupEmployeeForStaffAsync(dto);
+        }
+
         public async Task<ApiResponseDto<bool>> DeleteWorkGroupEmployeeAsync(string pactId)
         {
             return await _fpsClient.FpsWorkGroupEmployee.DeleteWorkGroupEmployeeAsync(pactId);

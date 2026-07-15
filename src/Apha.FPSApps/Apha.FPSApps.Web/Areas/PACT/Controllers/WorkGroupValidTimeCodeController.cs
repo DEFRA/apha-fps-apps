@@ -38,6 +38,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <returns>A <see cref="ViewResult"/> containing a <see cref="WorkGroupValidTimeCodeViewModel"/> with dropdown options and the initial grid.</returns>
         public async Task<IActionResult> Index(string workGroup = "")
         {
+            TempData["NavigationSource"] = "WorkGroupValidTimeCode";
+            TempData["SelectedWorkGroup"] = workGroup;
             var workGroupOptions = await GetWorkGroupsAsync();
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
             var validTimeCodesGrid = await BuildValidTimeCodesGridAsync(defaultRequest, workGroup);

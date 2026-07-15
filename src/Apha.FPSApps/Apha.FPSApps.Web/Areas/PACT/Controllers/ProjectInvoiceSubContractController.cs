@@ -52,7 +52,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return View(new ProjectInvoiceSubContractViewModel
             {
                 ParentProject = parentProject ?? string.Empty,
-                FromPortfolio = TempData.Peek("PactOrigin") as string == "Portfolio",
+                FromPortfolio = TempData.Peek("PactOrigin") as string == "PortfolioMaintenance",
                 InvoicesGrid = invoicesGridTask.Result,
                 SubContractsGrid = subContractsGridTask.Result,
                 TotalInvoiceAmount = invoiceTotalTask.Result.Data,

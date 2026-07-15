@@ -17,8 +17,7 @@ public class AdditionalCostItem
     [GridColumn(Order = 2, Width = 110, Type = GridColumnType.GbpValue)]
     public double CostEntered { get; set; }
 
-    [Display(Name = "Cost(inf)")]
-    [Required(ErrorMessage = "Cost(inf) is required.")]
+    [Display(Name = "Cost(inf)")]    
     [GridColumn(Order = 3, Width = 110, Type = GridColumnType.GbpValue)]
     public double? ItemCost { get; set; }
 

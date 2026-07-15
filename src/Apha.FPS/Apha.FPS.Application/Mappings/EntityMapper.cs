@@ -41,8 +41,6 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<YearMaster, YearMasterDto>().ReverseMap();
             CreateMap<Division, DivisionDto>().ReverseMap();
             CreateMap<DivisionGrade, DivisionGradeDto>().ReverseMap();
-
-            // TRANSFORMENGINE: Grade <-> GradeDto — ForMember required: Grade.DescLong <-> GradeDto.Description (field rename)
             CreateMap<Grade, GradeDto>()
                 .ForMember(d => d.Description, o => o.MapFrom(s => s.DescLong))
                 .ReverseMap()
@@ -71,20 +69,17 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<ProfitCentreGrade, ProfitCentreGradeDto>().ReverseMap();
             CreateMap<WorkgroupGrade, WorkgroupGradeDto>().ReverseMap();
             CreateMap<WorkGroupGradeView, WorkgroupGradeDto>().ReverseMap();
+           
             CreateMap<WorkGroupEmployee, WorkGroupEmployeeDto>().ReverseMap();
             CreateMap<WorkGroupEmployeeView, WorkGroupEmployeeDto>().ReverseMap();
             CreateMap<PactStaff, PactStaffDto>().ReverseMap();
             CreateMap<ProjectProfitabilityView, ProjectProfitabilityDto>().ReverseMap();
             CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
-
-            // TRANSFORMENGINE: new mapping â€” frmJobcodeTotalsVLA migration (Phase 3)
-            //   Property names are aligned between entity and DTO; no ForMember overrides needed.
-            //   Covers: Id, JobCode, Program, Customer, Manager, Status, StaffCosts, TestCost,
-            //   AnimalCosts, AdditionalCosts, TotalCosts, Budget, Profit, TargetProfit, OffTarget.
+            //ProjectProfitabilityVlaView
             CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap();
-              
 
-            // TRANSFORMENGINE: CostCentre <-> CostCentreDto — frmMaintCostCentres migration (Phase 3)
+            CreateMap<User, UserDto>().ReverseMap();
+
             //   Property names are aligned between entity and DTO; no ForMember overrides needed.
             //   Covers: CostCentreNo (double), ProfitCentre (string), FpsYear (int).
             CreateMap<CostCentre, CostCentreDto>().ReverseMap();
@@ -93,6 +88,19 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
+            //   All 5 log entities from fps schema partitioned tables.
+            //   Property names are fully aligned between entity and DTO; no ForMember overrides needed.
+            //   Covers all columns: sequenceno, parentproject/jobcode/testcode, date range, user tracking fields, fpsyear.
+            CreateMap<ProjectLog, ProjectLogDto>().ReverseMap();
+            CreateMap<StaffJobLog, StaffJobLogDto>().ReverseMap();
+            CreateMap<TestRequirementLog, TestRequirementLogDto>().ReverseMap();
+            CreateMap<AnimalRequestLog, AnimalRequestLogDto>().ReverseMap();
+            CreateMap<AdditionalCostLog, AdditionalCostLogDto>().ReverseMap();
+            // MaintTotalBusinessOverheads
+            CreateMap<TotalBusinessOverheads, TotalBusinessOverheadsDto>()
+                .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
+                .ReverseMap()
+                .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
         }
     }
 }

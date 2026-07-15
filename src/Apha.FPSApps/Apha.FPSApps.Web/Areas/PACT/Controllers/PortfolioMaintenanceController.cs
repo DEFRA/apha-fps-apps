@@ -300,6 +300,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 pagination = new PaginationModel();
             }
 
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? [];
 
             return new DataGridConfig<PortfolioTimeCodeViewModel>
@@ -341,6 +344,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> CreatePortfolioTimeCode([FromBody] PortfolioTimeCodeViewModel model)
         {
+            if (!model.Active)
+                ModelState.AddModelError(
+                       nameof(model.Active),
+                       "The time code must be active.");
+
             if (!ModelState.IsValid)
                 return Json(new
                 {
