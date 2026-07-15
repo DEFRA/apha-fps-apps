@@ -222,7 +222,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var programGridConfig = new DataGridConfig<ProgramViewModel>
             {
                 GridId = "programGrid",
-                Title = "Programs",
+                Title = "Program Maintenance",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "ProgramNo",
