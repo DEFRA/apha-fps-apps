@@ -1,4 +1,4 @@
-/*
+﻿/*
  * TRANSFORMENGINE MIGRATION — FpsApiDtoMapper.cs
  * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 4 — AutoMapper Profiles + DI Registration (Step 15)
  * Migrated : 2026-07-07
@@ -168,6 +168,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Job Code (ZT lookup) - now served from PACT API
             CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
                       
+
+            // Income/Contribution from Time Sales (frmTimeSellerPC)
+            CreateMap<ContributionSummaryRowDto, ContributionSummaryRowRes>().ReverseMap();
+            CreateMap<ContributionSummaryTotalsDto, ContributionSummaryTotalsRes>().ReverseMap();
 
             // BudgetResourceLevel
             CreateMap<BidDto, BidReq>().ReverseMap();

@@ -3791,6 +3791,7 @@ body,
     }
 }
 
+
 /* ===== Maintain User Permissions ===== */
 .fps-mup-page {
     padding: 0 8px 8px 8px;
@@ -4234,3 +4235,6 @@ body,
     }
 }
 
+.text-AlignRight {
+    text-align: right;
+}

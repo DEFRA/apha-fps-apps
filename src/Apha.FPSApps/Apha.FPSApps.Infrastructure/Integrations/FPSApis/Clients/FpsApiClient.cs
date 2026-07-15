@@ -68,6 +68,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsGradeApiClient FpsGrade { get; }
         public IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
 
+        public IFpsContributionSummaryApiClient FpsContributionSummary { get; }
         public IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
@@ -110,6 +111,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
             // TRANSFORMENGINE: FpsGrade wired — preserved from prior batch
             FpsGrade = new FpsGradeApiClient(http, mapper);
+            FpsContributionSummary = new FpsContributionSummaryApiClient(http, mapper);
             FpsProjectAuditTrail = new FpsProjectAuditTrailApiClient(http, mapper);
             FpsTotalBusinessOverheads = new FpsTotalBusinessOverheadsApiClient(http, mapper);
         }

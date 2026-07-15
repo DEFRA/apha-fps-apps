@@ -16,9 +16,19 @@
                 <a asp-area="PACT" asp-controller="WorkGroupValidTimeCode" asp-action="Index" asp-route-workGroup="@TempData["SelectedWorkGroup"]"
                    class="govuk-back-link sup_align_right">Back</a>
             }
-            else
+            else if (ViewBag.NavigationSource == "ProjectMaintenance")
+            {
+                <a asp-area="PACT" asp-controller="ProjectMaintenance" asp-action="Index" 
+                   class="govuk-back-link sup_align_right">Back</a>
+            }
+            else if (ViewBag.NavigationSource == "ProgramMaintenance")
             {
                 <a asp-area="PACT" asp-controller="ProgramMaintenance" asp-action="Index"
+                   class="govuk-back-link sup_align_right">Back</a>
+            }
+            else
+            {
+                <a asp-area="PACT" asp-controller="ProjectMaintenance" asp-action="Index"
                    class="govuk-back-link sup_align_right">Back</a>
             }
         </h1>

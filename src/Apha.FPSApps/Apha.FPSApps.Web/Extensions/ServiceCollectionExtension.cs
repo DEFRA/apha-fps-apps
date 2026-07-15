@@ -120,6 +120,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService, Apha.FPSApps.Application.Services.PACT.WorkGroupService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
+            services.AddScoped<ITestReqBreakdownService, TestReqBreakdownService>();
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();
@@ -130,6 +131,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             services.AddScoped<IReleaseSummaryService, ReleaseSummaryService>();
             services.AddScoped<IPlanStaffZTCodeService, PlanStaffZTCodeService>();
+            services.AddScoped<IContributionSummaryService, ContributionSummaryService>();
             services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
             services.AddScoped<IBosworthInterfaceService, BosworthInterfaceService>();
             return services;
