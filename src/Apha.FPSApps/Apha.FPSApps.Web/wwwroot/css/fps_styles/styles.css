@@ -4071,3 +4071,9 @@ body,
     opacity: 1;
     font-size: 14px !important;
 }
+.isInfoSec {
+    border: 1px solid #b1b4b6;
+    background-color: #f8f8f8;
+    text-align: center;
+    font-weight: 700;
+}
