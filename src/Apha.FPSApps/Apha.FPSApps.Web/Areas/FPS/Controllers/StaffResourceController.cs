@@ -131,7 +131,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 GridId = "ruvWorkgroupGrid",
                 Title = "Workgroup",
                 ShowCheckboxColumn = false,
-                ShowPagination = true,
+                ShowPagination = false,
                 KeyProperty = "WorkGroupName",
                 AllowAdd = false,
                 AllowEdit = false,

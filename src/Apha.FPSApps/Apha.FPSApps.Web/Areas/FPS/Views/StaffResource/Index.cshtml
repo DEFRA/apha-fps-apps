@@ -71,7 +71,6 @@
             <div id="gridContainer_@Model.StaffGrid.GridId">
                 @await Html.PartialAsync("_DataGrid", Model.StaffGrid)
             </div>
-            <div id="ruvStaffTotals" class="ruv-staff-totals" aria-label="Staff totals"></div>
             <div class="ruv-filter-actions govuk-!-margin-top-2">
                 <button type="button"
                         class="govuk-button govuk-!-margin-bottom-0"
@@ -122,21 +121,17 @@
         if (staffMgr) staffMgr.reloadGrid({ page: 1 });
     });
 
-    // ─── Totals row — rendered as a mirror table below the scroll area ──────
-    // Placed outside .grid-scroll-container so it never scrolls vertically.
-    // Column widths are read from rendered <td> cells; horizontal scroll is
-    // synced so the totals always align with the grid columns.
+    // ─── Totals row — rendered as a <tfoot> inside the grid table ──────────
+    // Rendering the totals inside the actual table lets the browser's own
+    // table layout keep every total aligned under its column, so the cells
+    // can never overlap or drift out of sync with the grid columns.
     function buildRuvTotalsRow() {
         var table = document.getElementById('tbl_@Model.StaffGrid.GridId');
         if (!table) return;
 
-        // Remove any legacy tfoot that may exist from a previous approach
+        // Clear any previously rendered totals tfoot before rebuilding it.
         var existingFoot = table.querySelector('tfoot');
         if (existingFoot) existingFoot.remove();
-
-        var totalsDiv = document.getElementById('ruvStaffTotals');
-        if (!totalsDiv) return;
-        totalsDiv.innerHTML = '';
 
         var rows = table.querySelectorAll('tbody tr');
         if (!rows.length) return;
@@ -169,28 +164,9 @@
             });
         });
 
-        // ── Mirror scroll wrapper (hidden overflow, synced with grid) ──────────
-        var scrollMirror = document.createElement('div');
-        scrollMirror.style.overflow = 'hidden';
-
-        // ── Mirror table — column widths pinned to actual rendered td widths ──
-        var mirrorTable = document.createElement('table');
-        mirrorTable.className = table.className;
-        mirrorTable.style.cssText = 'margin:0; border-top:0; table-layout:fixed;';
-        mirrorTable.style.width    = table.offsetWidth + 'px';
-        mirrorTable.style.minWidth = table.offsetWidth + 'px';
-
-        var cg = document.createElement('colgroup');
-        for (var c = 0; c < colCount; c++) {
-            var col = document.createElement('col');
-            if (refCells[c]) col.style.width = refCells[c].offsetWidth + 'px';
-            cg.appendChild(col);
-        }
-        mirrorTable.appendChild(cg);
-
-        var tbody = document.createElement('tbody');
+        var tfoot = document.createElement('tfoot');
         var tr    = document.createElement('tr');
-        tr.className = 'ruv-totals-row';
+        tr.className = 'ruv-totals-row govuk-table__row';
 
         for (var i = 0; i < colCount; i++) {
             var td = document.createElement('td');
@@ -207,27 +183,11 @@
             tr.appendChild(td);
         }
 
-        tbody.appendChild(tr);
-        mirrorTable.appendChild(tbody);
-        scrollMirror.appendChild(mirrorTable);
-
-        // Align mirror left edge with the table's left edge
-        var tableLeft  = table.getBoundingClientRect().left;
-        var totalsLeft = totalsDiv.getBoundingClientRect().left;
-        var offsetPx   = tableLeft - totalsLeft;
-        if (offsetPx > 0) scrollMirror.style.paddingLeft = offsetPx + 'px';
-
-        totalsDiv.appendChild(scrollMirror);
-
-        // Sync horizontal scroll from grid → mirror (wire up once per container)
-        var gridScroll = table.closest('.grid-scroll-container');
-        if (gridScroll && !gridScroll._ruvTotalsSynced) {
-            gridScroll._ruvTotalsSynced = true;
-            gridScroll.addEventListener('scroll', function () {
-                var wrap = document.querySelector('#ruvStaffTotals div');
-                if (wrap) wrap.scrollLeft = gridScroll.scrollLeft;
-            });
-        }
+        // Render the totals inside the grid table as a <tfoot>. Living in the
+        // same table lets the browser align each total under its column, so the
+        // cells can never overlap or drift out of sync with the grid columns.
+        tfoot.appendChild(tr);
+        table.appendChild(tfoot);
     }
 
     // ─── Grouped header row for staff grid (Approved / Not Approved / Total) ─

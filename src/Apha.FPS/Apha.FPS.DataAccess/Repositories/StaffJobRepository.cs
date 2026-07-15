@@ -368,7 +368,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 list = list.Where(x => x.Name != null && x.Name.Contains(nameStr, StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
-            return queryStaffJob;
+            return list;
         }        
 
         public async Task<PagedData<StaffResourceUtilisationView>> GetStaffResourceUtilisationAsync(
