@@ -4037,3 +4037,12 @@ body,
 .text-AlignRight {
     text-align: right;
 }
+
+.modal-content & .modal-header .btn-close,
+.modal-header .btn-close {
+    padding: .3rem .3rem;
+    margin: -.5rem -.5rem -.5rem auto;
+    background: #ff4239;
+    opacity: 1;
+    font-size: 14px !important;
+}
