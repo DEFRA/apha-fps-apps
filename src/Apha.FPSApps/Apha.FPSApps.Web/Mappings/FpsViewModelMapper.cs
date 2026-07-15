@@ -1,4 +1,4 @@
-using Apha.FPSApps.Application.Dtos;
+﻿using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Pagination;
@@ -152,6 +152,10 @@ namespace Apha.FPSApps.Web.Mappings
             // UserEmail is NOT in AdditionalCostLogDto (requires UserId→email resolution); Ignore() it.
             CreateMap<AdditionalCostLogDto, AdditionalCostLogItem>()
                 .ForMember(d => d.UserEmail, o => o.Ignore());
+
+            // ResourceMain2 - Stage 2 Check Resource Allocation
+            CreateMap<ResourceStaffAllocationDto, ResourceStaffAllocationItem>().ReverseMap();
+            CreateMap<ResourceStaffJobDto, ResourceStaffJobItem>().ReverseMap();
         }
     }
 }

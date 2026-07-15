@@ -254,5 +254,9 @@ namespace Apha.Common.Constants
         public const string GetUserPermissions = "api/v1/user/{0}/permissions";
         public const string SaveUserPermissions = "api/v1/user/{0}/permissions";
         public const string GetPermissionOptions = "api/v1/user/options";
+
+        // ResourceMain2 — Stage 2 Check Resource Allocation
+        public const string GetResourceStaffAllocations = "api/v1/resourcemain2/staffallocations?workGroupGrade={0}";
+        public const string GetResourceStaffJobs = "api/v1/resourcemain2/staffjobs?staffId={0}";
     }
 }

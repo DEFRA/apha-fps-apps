@@ -1,0 +1,269 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.ResourceMain2ViewModel
+@{
+    ViewData["Title"] = "Stage 2 Check Resource Allocation";
+}
+
+<main class="govuk-main-wrapper govuk-!-padding-top-0" id="main-content" role="main">
+    <div class="container-fluid">
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="s2cra-heading-row">
+                    <h1 class="govuk-heading-s sup_border-bottom s2cra-main-title">Stage 2 Check Resource Allocation</h1>
+                    <div class="s2cra-heading-controls" aria-label="Stage 2 filter controls">
+                        <a asp-area="FPS" asp-controller="SetUpStaffResources" asp-action="Index" class="govuk-back-link govuk-!-margin-0">Back</a>
+                        <div class="s2cra-filter-block">
+                            <label for="stage2ResourceCenterSelect" class="govuk-label govuk-!-margin-bottom-0">
+                                Select a Resource Center: <span class="s2cra-required">*</span>
+                            </label>
+                            <select class="govuk-select s2cra-resource-select"
+                                    id="stage2ResourceCenterSelect"
+                                    asp-for="SelectedResourceCentre"
+                                    asp-items="Model.ResourceCentres"
+                                    aria-label="Select a Resource Center"
+                                    onchange="rm2OnResourceCenterChange()">
+                                <option value="">-- Select a Resource Center --</option>
+                            </select>
+                        </div>
+                        <div class="s2cra-filter-block">
+                            <label for="stage2WorkgroupGradeSelect" class="govuk-label govuk-!-margin-bottom-0">Pick a Workgroup Grade</label>
+                            <select class="govuk-select s2cra-workgroup-select"
+                                    id="stage2WorkgroupGradeSelect"
+                                    aria-label="Pick a Workgroup Grade"
+                                    disabled
+                                    onchange="rm2OnWorkgroupGradeChange()">
+                                <option value="">-- Select a Workgroup Grade --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            <div class="cc-container-fluid">
+                <div class="cc-layout-row">
+
+                    <nav class="sidenav flex-column flex-shrink-0 govuk-!-padding-left-2 isStage_2_sideNav"
+                         id="shortnav"
+                         aria-label="WorkGroup Resources navigation"></nav>
+
+                    <div class="cc-content-column">
+                        <div class="govuk-grid-row">
+                            <div class="govuk-grid-column-full">
+                                <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                                    <div class="govuk-grid-column-full sup_p_0">
+
+                                        <section class="s2cra-section sup_border" aria-labelledby="s2craSectionHeading">
+                                            <h2 class="govuk-heading-s s2cra-section-heading" id="s2craSectionHeading">
+                                                Resource Allocation / Utilisation for: <span id="stage2SelectedCenterName">@Model.SelectedResourceCentre</span>
+                                            </h2>
+
+                                            <div class="s2cra-main-layout">
+                                                <div class="s2cra-grids-column">
+
+                                                    <h3 class="govuk-heading-s s2cra-staff-title">
+                                                        Staff of this Grade: <span id="stage2SelectedGradeName"></span>
+                                                        (<span id="stage2SelectedCenterNameInline">@Model.SelectedResourceCentre</span>)
+                                                    </h3>
+                                                    <div id="gridContainer_rm2StaffAllocationGrid" class="s2cra-grid-host">
+                                                        @await Html.PartialAsync("_DataGrid", Model.StaffAllocationGrid)
+                                                    </div>
+
+                                                    <h3 class="govuk-heading-s s2cra-jobs-title">
+                                                        Jobs for staff — <span id="stage2SelectedStaffName">@Model.SelectedPersonName</span>
+                                                    </h3>
+                                                    <div id="gridContainer_rm2StaffJobsGrid" class="s2cra-grid-host s2cra-jobs-grid-host">
+                                                        @await Html.PartialAsync("_DataGrid", Model.StaffJobsGrid)
+                                                    </div>
+                                                    <div class="s2cra-jobs-footer-highlight" aria-label="Selected staff hours highlight">
+                                                        <input class="govuk-input s2cra-selected-hours-input"
+                                                               id="stage2SelectedStaffHoursInput"
+                                                               type="text"
+                                                               readonly
+                                                               aria-label="Selected staff planned hours" />
+                                                    </div>
+
+                                                </div>
+
+                                                <aside class="s2cra-summary-panel" aria-label="Overall position for the grade">
+                                                    <h3 class="govuk-heading-s s2cra-summary-title">Overall Position for the Grade</h3>
+
+                                                    <div class="govuk-form-group s2cra-summary-field">
+                                                        <label class="govuk-label" for="stage2HoursAvailInput">Hours Avail</label>
+                                                        <input class="govuk-input" id="stage2HoursAvailInput" type="text" readonly aria-label="Hours available" />
+                                                    </div>
+                                                    <div class="govuk-form-group s2cra-summary-field">
+                                                        <label class="govuk-label" for="stage2PlannedHrsInput">Planned Hrs</label>
+                                                        <input class="govuk-input" id="stage2PlannedHrsInput" type="text" readonly aria-label="Planned hours" />
+                                                    </div>
+                                                    <div class="govuk-form-group s2cra-summary-field">
+                                                        <label class="govuk-label" for="stage2AllocationPctInput">Allocation %</label>
+                                                        <input class="govuk-input" id="stage2AllocationPctInput" type="text" readonly aria-label="Allocation percentage" />
+                                                    </div>
+                                                    <div class="govuk-form-group s2cra-summary-field">
+                                                        <label class="govuk-label" for="stage2AssuredChargeInput">Assured Charge Hrs</label>
+                                                        <input class="govuk-input" id="stage2AssuredChargeInput" type="text" readonly aria-label="Assured charge hours" />
+                                                    </div>
+                                                    <div class="govuk-form-group s2cra-summary-field">
+                                                        <label class="govuk-label" for="stage2AssuredUtilInput">Assured Utilisation %</label>
+                                                        <input class="govuk-input" id="stage2AssuredUtilInput" type="text" readonly aria-label="Assured utilisation percentage" />
+                                                    </div>
+                                                    <div class="govuk-form-group s2cra-summary-field">
+                                                        <label class="govuk-label" for="stage2TotalChargeInput">Total Charge Hrs</label>
+                                                        <input class="govuk-input" id="stage2TotalChargeInput" type="text" readonly aria-label="Total charge hours" />
+                                                    </div>
+                                                    <div class="govuk-form-group s2cra-summary-field govuk-!-margin-bottom-0">
+                                                        <label class="govuk-label" for="stage2TotalUtilInput">Total Utilisation %</label>
+                                                        <input class="govuk-input" id="stage2TotalUtilInput" type="text" readonly aria-label="Total utilisation percentage" />
+                                                    </div>
+
+                                                    <div class="s2cra-person-highlight" aria-label="Person selected highlight">
+                                                        <div class="s2cra-person-box">
+                                                            <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Person Selected</h3>
+                                                            <input class="govuk-input s2cra-person-input"
+                                                                   id="stage2PersonSelectedInput"
+                                                                   type="text"
+                                                                   readonly
+                                                                   value="@Model.SelectedPersonName"
+                                                                   aria-label="Selected person name" />
+                                                            <a asp-area="FPS"
+                                                               asp-controller="PlanStaffZTCode"
+                                                               asp-action="Index"
+                                                               class="govuk-button govuk-button--start govuk-!-margin-top-2"
+                                                               id="stage2PlanPersonBtn"
+                                                               data-module="govuk-button"
+                                                               role="button">
+                                                                Plan Person onto ZT Codes
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </aside>
+                                            </div>
+                                        </section>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+@section Scripts {
+<script>
+    // ─── Constants ───────────────────────────────────────────────────────────────
+    const RM2_GRADES_URL      = '@Url.Action("GetGradesByResourceCentre", "ResourceMain2", new { area = "FPS" })';
+    const RM2_STAFF_GRID_URL  = '@Url.Action("LoadStaffAllocationGrid", "ResourceMain2", new { area = "FPS" })';
+    const RM2_JOBS_GRID_URL   = '@Url.Action("LoadStaffJobsGrid", "ResourceMain2", new { area = "FPS" })';
+
+    // ─── Resource Centre change ──────────────────────────────────────────────────
+    async function rm2OnResourceCenterChange() {
+        const centre = document.getElementById('stage2ResourceCenterSelect').value;
+        const gradeSelect = document.getElementById('stage2WorkgroupGradeSelect');
+
+        document.getElementById('stage2SelectedCenterName').textContent = centre;
+        document.getElementById('stage2SelectedCenterNameInline').textContent = centre;
+
+        gradeSelect.disabled = true;
+        gradeSelect.innerHTML = '<option value="">-- Select a Workgroup Grade --</option>';
+        rm2ClearGrids();
+
+        if (!centre) return;
+
+        try {
+            const resp = await fetch(`${RM2_GRADES_URL}?resourceCentre=${encodeURIComponent(centre)}`);
+            const json = await resp.json();
+            if (json.success && json.data) {
+                json.data.forEach(g => {
+                    const opt = document.createElement('option');
+                    opt.value = g.value;
+                    opt.textContent = g.text;
+                    gradeSelect.appendChild(opt);
+                });
+                gradeSelect.disabled = false;
+            }
+        } catch (e) {
+            console.error('rm2OnResourceCenterChange:', e);
+        }
+    }
+
+    // ─── Grade change ────────────────────────────────────────────────────────────
+    async function rm2OnWorkgroupGradeChange() {
+        const grade = document.getElementById('stage2WorkgroupGradeSelect').value;
+        document.getElementById('stage2SelectedGradeName').textContent = grade;
+        rm2ClearJobsGrid();
+
+        if (!grade) { rm2ClearStaffGrid(); return; }
+
+        try {
+            const resp = await fetch(`${RM2_STAFF_GRID_URL}?workGroupGrade=${encodeURIComponent(grade)}`);
+            const html = await resp.text();
+            document.getElementById('gridContainer_rm2StaffAllocationGrid').innerHTML = html;
+        } catch (e) {
+            console.error('rm2OnWorkgroupGradeChange:', e);
+        }
+    }
+
+    // ─── Staff row selection → load jobs grid ────────────────────────────────────
+    async function rm2OnStaffRowSelect(rowData) {
+        if (!rowData) return;
+
+        const staffId    = rowData.staffId   ?? rowData.StaffId;
+        const staffName  = rowData.name      ?? rowData.Name ?? '';
+        const planHrs    = rowData.plannedHours ?? rowData.PlannedHours ?? '';
+        const hrsAvail   = rowData.hoursAvailable ?? rowData.HoursAvailable ?? '';
+        const alocPct    = rowData.allocationPct  ?? rowData.AllocationPct ?? '';
+        const appCh      = rowData.assuredChargeHours    ?? rowData.AssuredChargeHours ?? '';
+        const appUti     = rowData.assuredUtilisationPct ?? rowData.AssuredUtilisationPct ?? '';
+        const crgHr      = rowData.chargeHours   ?? rowData.ChargeHours ?? '';
+        const utiPct     = rowData.utilisationPct ?? rowData.UtilisationPct ?? '';
+
+        document.getElementById('stage2SelectedStaffName').textContent        = staffName;
+        document.getElementById('stage2PersonSelectedInput').value             = staffName;
+        document.getElementById('stage2SelectedStaffHoursInput').value        = planHrs;
+        document.getElementById('stage2HoursAvailInput').value                = hrsAvail;
+        document.getElementById('stage2PlannedHrsInput').value                = planHrs;
+        document.getElementById('stage2AllocationPctInput').value             = alocPct ? `${(parseFloat(alocPct) * 100).toFixed(2)}%` : '';
+        document.getElementById('stage2AssuredChargeInput').value             = appCh;
+        document.getElementById('stage2AssuredUtilInput').value               = appUti ? `${(parseFloat(appUti) * 100).toFixed(2)}%` : '';
+        document.getElementById('stage2TotalChargeInput').value               = crgHr;
+        document.getElementById('stage2TotalUtilInput').value                 = utiPct ? `${(parseFloat(utiPct) * 100).toFixed(2)}%` : '';
+
+        if (!staffId) return;
+        try {
+            const resp = await fetch(`${RM2_JOBS_GRID_URL}?staffId=${staffId}`);
+            const html = await resp.text();
+            document.getElementById('gridContainer_rm2StaffJobsGrid').innerHTML = html;
+        } catch (e) {
+            console.error('rm2OnStaffRowSelect:', e);
+        }
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────────────────────
+    function rm2ClearStaffGrid() {
+        document.getElementById('gridContainer_rm2StaffAllocationGrid').innerHTML = '';
+    }
+    function rm2ClearJobsGrid() {
+        document.getElementById('gridContainer_rm2StaffJobsGrid').innerHTML = '';
+        document.getElementById('stage2PersonSelectedInput').value  = '';
+        document.getElementById('stage2SelectedStaffName').textContent = '';
+        document.getElementById('stage2SelectedStaffHoursInput').value = '';
+    }
+    function rm2ClearGrids() {
+        rm2ClearStaffGrid();
+        rm2ClearJobsGrid();
+        ['stage2HoursAvailInput','stage2PlannedHrsInput','stage2AllocationPctInput',
+         'stage2AssuredChargeInput','stage2AssuredUtilInput',
+         'stage2TotalChargeInput','stage2TotalUtilInput'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+    }
+</script>
+}

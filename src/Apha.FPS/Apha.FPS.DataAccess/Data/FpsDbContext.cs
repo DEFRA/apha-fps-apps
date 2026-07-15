@@ -107,6 +107,8 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Purchase> Purchases { get; set; }
         public virtual DbSet<ContributionSummaryView> VQryFrmTimeSellerPcViews { get; set; }
         public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; }
+        public virtual DbSet<ResourceStaffAllocationView> ResourceStaffAllocationViews { get; set; }
+        public virtual DbSet<ResourceStaffJobView> ResourceStaffJobViews { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -333,6 +335,9 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new TotalBusinessOverheadsMap());
             modelBuilder.Entity<TotalBusinessOverheads>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ResourceStaffAllocationViewMap());
+            modelBuilder.ApplyConfiguration(new ResourceStaffJobViewMap());
         }
     }
 }

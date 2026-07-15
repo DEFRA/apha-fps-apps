@@ -99,6 +99,10 @@ namespace Apha.FPS.Application.Mappings
                 .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
                 .ReverseMap()
                 .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
+
+            // ResourceMain2 — Stage 2 Check Resource Allocation
+            CreateMap<ResourceStaffAllocationView, ResourceStaffAllocationDto>().ReverseMap();
+            CreateMap<ResourceStaffJobView, ResourceStaffJobDto>().ReverseMap();
         }
     }
 }
