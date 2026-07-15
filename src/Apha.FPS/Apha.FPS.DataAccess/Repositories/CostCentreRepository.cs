@@ -82,6 +82,21 @@ namespace Apha.FPS.DataAccess.Repositories
                     if (existing == null)
                         return entity;
 
+                    // CostCentreNo is part of the composite PK (costcentre, fpsyear);
+                    // changing it requires delete-old + insert-new rather than an in-place update.
+                    if (existing.CostCentreNo != entity.CostCentreNo)
+                    {
+                        entity.FpsYear = fpsYear;
+
+                        _dbContext.CostCentres.Remove(existing);
+                        await _dbContext.SaveChangesAsync();
+
+                        _dbContext.CostCentres.Add(entity);
+                        await _dbContext.SaveChangesAsync();
+                        await transaction.CommitAsync();
+                        return entity;
+                    }
+
                     existing.ProfitCentre = entity.ProfitCentre;
 
                     await _dbContext.SaveChangesAsync();

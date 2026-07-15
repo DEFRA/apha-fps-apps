@@ -64,7 +64,7 @@
                 $('#modaPopupBody').html(html);
                 $('#modalPopup').addClass('show');
             }).fail(function () {
-                showGovukAlert('An error occurred while loading the form');
+                showAlertMessage('An error occurred while loading the form', AlertType.ERROR);
             });
         }
 
@@ -76,7 +76,7 @@
                 $('#modaPopupBody').html(html);
                 $('#modalPopup').addClass('show');
             }).fail(function () {
-                showGovukAlert('An error occurred while loading the edit form');
+                showAlertMessage('An error occurred while loading the edit form', AlertType.ERROR);
             });
         }
 
@@ -91,15 +91,15 @@
                     type: 'DELETE',
                     success: function (response) {
                         if (response.success) {
-                            showGovukAlert('Cost Centre deleted successfully').then(function () {
+                            showAlertMessage('Cost Centre deleted successfully', AlertType.SUCCESS).then(function () {
                                 reloadCostCentreGrid();
                             });
                         } else {
-                            showGovukAlert('Error: ' + (response.message || 'Delete failed.'));
+                            showAlertMessage('Error: ' + (response.message || 'Delete failed.'), AlertType.ERROR);
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting.');
+                        showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
                     }
                 });
             });
@@ -116,17 +116,17 @@
                 return;
             }
 
-            var ccNoRaw = $('#CostCentreNo').val();
+            var ccNoRaw = $('#modal-cc-number').val();
             // locale-formatted strings. Verify culture-invariant round-trip on non-UK clients.
             var ccNo = parseFloat(ccNoRaw);
             if (isNaN(ccNo)) {
-                showGovukAlert('Please enter a valid Cost Centre number.');
+                showAlertMessage('Please enter a valid Cost Centre number.', AlertType.ERROR);
                 return;
             }
 
             var dto = {
                 CostCentreNo: ccNo,
-                ProfitCentre: $('#ProfitCentre').val()
+                ProfitCentre: $('#modal-cc-profit').val()
             };
 
             $.ajax({
@@ -136,7 +136,7 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     if (data.success) {
-                        showGovukAlert(data.message || 'Cost Centre created successfully.');
+                        showAlertMessage(data.message || 'Cost Centre created successfully.', AlertType.SUCCESS);
                         closeModal();
                         reloadCostCentreGrid();
                     } else {
@@ -147,13 +147,14 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving.');
+                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
                     }
                 }
             });
         }
 
-        // CostCentreNo is the original double key (read-only on edit); taken from hdnOriginalCostCentreNo
+        // hdnOriginalCostCentreNo holds the original key so the update targets the correct row,
+        // even when the user changes the Cost Centre number. New value taken from #modal-cc-number.
         // POST to /FPS/CostCentreMaintenance/Edit?id=<original> with JSON body (CostCentreDto)
         function updateCostCentre() {
             clearValidationErrors('#modaPopupBody');
@@ -166,9 +167,16 @@
 
             var originalId = $('#hdnOriginalCostCentreNo').val();
 
+            var ccNoRaw = $('#modal-cc-number').val();
+            var ccNo = parseFloat(ccNoRaw);
+            if (isNaN(ccNo)) {
+                showAlertMessage('Please enter a valid Cost Centre number.', AlertType.ERROR);
+                return;
+            }
+
             var dto = {
-                CostCentreNo: parseFloat(originalId),
-                ProfitCentre: $('#ProfitCentre').val()
+                CostCentreNo: ccNo,
+                ProfitCentre: $('#modal-cc-profit').val()
             };
 
             $.ajax({
@@ -178,7 +186,7 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     if (data.success) {
-                        showGovukAlert(data.message || 'Cost Centre updated successfully.');
+                        showAlertMessage(data.message || 'Cost Centre updated successfully.', AlertType.SUCCESS);
                         closeModal();
                         reloadCostCentreGrid();
                     } else {
@@ -189,7 +197,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving.');
+                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
                     }
                 }
             });

@@ -74,6 +74,12 @@ namespace Apha.FPS.Application.Services
                 throw new KeyNotFoundException(
                     $"Cost centre '{originalCostCentreNo}' for FPS year '{fpsYear}' was not found.");
 
+            //   Guard: if the cost centre number is being changed, the new number must not already exist
+            if (originalCostCentreNo != costCentreDto.CostCentreNo
+                && await _repository.ExistsAsync(costCentreDto.CostCentreNo, fpsYear))
+                throw new InvalidOperationException(
+                    $"A cost centre with number '{costCentreDto.CostCentreNo}' already exists for FPS year '{fpsYear}'.");
+
             var profitCentreExists = await _profitCentreRepository.ProfitCentreExistsAsync(costCentreDto.ProfitCentre);
             if (!profitCentreExists)
                 throw new InvalidOperationException(
