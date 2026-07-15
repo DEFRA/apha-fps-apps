@@ -1,29 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsProfitCentreApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 3 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-07
- *
- * CHANGED:
- *   - Added TRANSFORMENGINE migration header (PB-14 annotation policy)
- *   - Added private const InternalCodeError = "INTERNAL_ERROR" (Sonar S1192)
- *   - Wrapped all 8 HTTP calls in try/catch(Exception) with FailureResponse fallback
- *   - Preserved all URL composition via FpsApiEndpoints constants
- *
- * PRESERVED:
- *   - All 8 interface methods: GetProfitCentresAsync, GetAllProfitCentresAsync,
- *     GetAllProfitCentresPagedAsync, GetProfitCentreByIdAsync, CreateProfitCentreAsync,
- *     UpdateProfitCentreAsync, DeleteProfitCentreAsync, UpdateProfitCentreSettingsAsync,
- *     GetPagedProfitCenterCostSummaryAsync
- *   - private readonly _http and _mapper fields (Sonar S2933)
- *   - Mapper used for success response mapping; FailureResponse used for error path
- *   - UpdateProfitCentreSettingsAsync uses PatchAsync with UpdateProfitCentreSettingsReq
- *   - GetPagedProfitCenterCostSummaryAsync monthNumber query-string append preserved
- *   - DeleteProfitCentreAsync uses DeleteAsync<bool?> (nullable response body)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify backend profitcentres route paths match FpsApiEndpoints values exactly
- */
-
 using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
@@ -41,7 +15,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        // TRANSFORMENGINE: InternalCodeError as private const — Sonar S1192 compliance
         private const string InternalCodeError = "INTERNAL_ERROR";
 
         public FpsProfitCentreApiClient(IFpsHttpExecutor http, IMapper mapper)
@@ -50,7 +23,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET api/v1/profitcentres → ProfitCentresController.GetProfitCentresAsync (dropdown source)
         public async Task<ApiResponseDto<List<ProfitCentreDto>>> GetProfitCentresAsync()
         {
             try
@@ -69,8 +41,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new ApiMetaDto());
             }
         }
-
-        // TRANSFORMENGINE: GET api/v1/profitcentres/all → ProfitCentresController.GetAllProfitCentresAsync
         public async Task<ApiResponseDto<IEnumerable<ProfitCentreDto>>> GetAllProfitCentresAsync()
         {
             try
@@ -89,8 +59,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new ApiMetaDto());
             }
         }
-
-        // TRANSFORMENGINE: GET api/v1/profitcentres/paged → ProfitCentresController.GetAllProfitCentresPagedAsync
         public async Task<ApiResponseDto<List<ProfitCentreDto>>> GetAllProfitCentresPagedAsync(QueryParameters<string> query)
         {
             try
@@ -110,8 +78,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new ApiMetaDto());
             }
         }
-
-        // TRANSFORMENGINE: GET api/v1/profitcentres/{profitCentreId} → ProfitCentresController.GetProfitCentreByIdAsync
         public async Task<ApiResponseDto<ProfitCentreDto>> GetProfitCentreByIdAsync(string profitCentreId)
         {
             try
@@ -131,7 +97,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST api/v1/profitcentres → ProfitCentresController.CreateProfitCentreAsync
         public async Task<ApiResponseDto<ProfitCentreDto>> CreateProfitCentreAsync(ProfitCentreDto profitCentreDto)
         {
             try
@@ -152,7 +117,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PUT api/v1/profitcentres/{profitCentreId} → ProfitCentresController.UpdateProfitCentreAsync
         public async Task<ApiResponseDto<ProfitCentreDto>> UpdateProfitCentreAsync(string profitCentreId, ProfitCentreDto profitCentreDto)
         {
             try
@@ -173,8 +137,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE api/v1/profitcentres/{profitCentreId} → ProfitCentresController.DeleteProfitCentreAsync
-        //   bool? used as generic arg (nullable response body); return type is ApiResponseDto<bool>
         public async Task<ApiResponseDto<bool>> DeleteProfitCentreAsync(string profitCentreId)
         {
             try
@@ -194,8 +156,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PATCH api/v1/profitcentres/settings → ProfitCentresController.UpdateProfitCentreSettingsAsync
-        //   Uses PatchAsync with UpdateProfitCentreSettingsReq compound request body
         public async Task<ApiResponseDto<bool>> UpdateProfitCentreSettingsAsync(
             string profitCentre, int timesheet, int outputsheet, short timesheetLayout)
         {
@@ -224,8 +184,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET api/v1/profitcentres/paged/costsummary → ProfitCentresController.GetPagedProfitCenterCostSummaryAsync
-        //   monthNumber appended as additional query-string parameter after QueryStringHelper
         public async Task<ApiResponseDto<List<ProfitCentreCostDto>>> GetPagedProfitCenterCostSummaryAsync(
             QueryParameters<string> query, double monthNumber)
         {

@@ -98,8 +98,6 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<WorkGroupPersonDto, WorkGroupPersonRes>().ReverseMap();
 
             // Resource Set-Up
-            // TRANSFORMENGINE: Phase 4 VERIFIED — ProfitCentreDto, WorkgroupGradeDto, WorkGroupEmployeeDto,
-            //   WorkGroupEmployeeStaffDto Res/Req mappings all present for SetUpStaffResources feature.
             CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
             CreateMap<ProfitCentreDto, ProfitCentreReq>().ReverseMap();
             CreateMap<ProfitCentreCostDto, ProfitCentreCostRes>().ReverseMap();
@@ -134,7 +132,6 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
 
             // WorkgroupGrade
-            // TRANSFORMENGINE: Phase 4 VERIFIED — WorkgroupGradeReq mapping present for grade lookups in SetUpStaffResources.
             CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
 
             // Job Code (ZT lookup) - now served from PACT API

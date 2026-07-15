@@ -1,31 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsViewModelMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 4 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-07-07
- *
- * CHANGED:
- *   - Added TRANSFORMENGINE migration header (Phase 4 update pass)
- *   - Verified WorkGroupEmployeeStaffItem <-> WorkGroupEmployeeStaffDto entry present (line ~51)
- *   - Verified WorkGroupEmployeeItem <-> WorkGroupEmployeeDto entry present (line ~53)
- *   - SetUpStaffResources Phase 5 ViewModel/Item entries deferred (models not yet created)
- *   - Inline TRANSFORMENGINE comment added to SetUpStaffResources section for Phase 5 follow-up
- *   - Phase 6 (2026-07-07): CreateMap<SetUpStaffResourcesItem, WorkGroupEmployeeStaffDto>().ReverseMap() added
- *     now that SetUpStaffResourcesItem model exists (created in Phase 6 as prerequisite for views)
- *
- * PRESERVED:
- *   - All existing CreateMap entries (StaffJob, Program, AnimalMaintenance, UserPermission,
- *     Employee, Project, AnimalPlan, CompareStaff2, ActualProjectCost, Division, DivisionGrade,
- *     Grade, ResourceCentreMaintenance, TestPlan, AdditionalCost, AccountCategory,
- *     ProgrammeNewProject, PortfolioNew, WorkGroupEmployee, ProfitCentreGradeMaint,
- *     BudgetResourceLevel, Purchase, WorkGroup, ProjectProfitability,
- *     ProjectProfitabilityVla, StaffPlanView, ProjectGroupStaffPlanView,
- *     TestSupplier, MaintWGGrade, TestCapability, PlanStaffZTCode, ProjectMisc mappings)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: SetUpStaffResourcesViewModel has no direct Dto mirror (it is a composite view model);
- *     controller maps via SetUpStaffResourcesItem <-> WorkGroupEmployeeStaffDto for grid rows only.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -82,17 +54,8 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ProjectDto, PortfolioNewViewModel>().ReverseMap();
 
             // Work Group Staff Maintenance
-            // TRANSFORMENGINE: Phase 4 VERIFIED — WorkGroupEmployeeStaffItem <-> WorkGroupEmployeeStaffDto
-            //   present; covers SetUpStaffResources staff-grid row shape (PactId, SpNumber, WorkGroupGrade,
-            //   Name, PersonStatus, PersonClass, HrsPaid, Leave, SickSpecial, HrsAvail, MakeAvailable,
-            //   TimeRecorder, StartDate, EndDate, HoursPerWeek).
             CreateMap<WorkGroupEmployeeStaffItem, WorkGroupEmployeeStaffDto>().ReverseMap();
             // Resource Set-Up
-            // TRANSFORMENGINE: Phase 4 VERIFIED — WorkGroupEmployeeItem <-> WorkGroupEmployeeDto present.
-            // TRANSFORMENGINE: Phase 6 — SetUpStaffResourcesItem <-> WorkGroupEmployeeStaffDto added now that model exists.
-            //   Subset mapping: SetUpStaffResourcesItem carries only the 7 staff-grid fields from the HTML prototype.
-            //   Fields not in SetUpStaffResourcesItem (PersonStatus, PersonClass, TimeRecorder, StartDate, EndDate,
-            //   HoursPerWeek) are ignored on the Item→Dto direction; preserved from Dto source on Dto→Item direction.
             CreateMap<SetUpStaffResourcesItem, WorkGroupEmployeeStaffDto>()
                 .ForMember(d => d.PersonStatus,   o => o.Ignore())
                 .ForMember(d => d.PersonClass,     o => o.Ignore())

@@ -1,14 +1,3 @@
-/**
- * SetUpStaffResources.js
- * Client-side logic for the Set Up Staff Resources page.
- *
- * Requires window.ssrConfig to be populated by the Razor view before this script runs:
- *   window.ssrConfig = {
- *     currentCentre : '<razor-encoded value>',
- *     currentGrade  : '<razor-encoded value>',
- *     ztCodeUrl     : '<razor Url.Action result>'
- *   };
- */
 (function (cfg) {
     'use strict';
 

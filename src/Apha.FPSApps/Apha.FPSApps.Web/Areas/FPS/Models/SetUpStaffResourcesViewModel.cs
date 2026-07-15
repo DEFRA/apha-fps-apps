@@ -1,25 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — SetUpStaffResourcesViewModel.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 5 — ViewModels + MVC Controller
- * Migrated : 2026-07-07
- *
- * CHANGED:
- *   - New ViewModel created for Set Up Staff Resources page (distinct from WorkGroupStaffMaintenanceViewModel)
- *   - Carries Resource Centre dropdown data (from IProfitCentreService)
- *   - Carries Grade/WorkGroup list data (from IWorkGroupGradeService, filtered by SelectedResourceCentre)
- *   - Carries Staff DataGrid config (from IWorkGroupEmployeeService, filtered by SelectedResourceCentre + SelectedGrade)
- *   - Carries summary display fields (SummaryGrade, SummaryWorkHrs, SelectedPersonName)
- *   - ResourceCentres exposed as SelectListItem list for asp-items binding
- *
- * PRESERVED:
- *   - Field names match HTML prototype IDs (resourceCentreSelect, ssrGradeList, ssrStaffGrid,
- *     ssrSummaryGrade, ssrWorkHrs, ssrPersonSelected, ssrSelectedWorkgroup)
- *   - DataGridConfig<SetUpStaffResourcesItem> typed grid replaces HTML DataGridComponent
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Phase 6 controller must call PopulateDropdownsAsync before returning View()
- */
-
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Microsoft.AspNetCore.Mvc.Rendering;
 

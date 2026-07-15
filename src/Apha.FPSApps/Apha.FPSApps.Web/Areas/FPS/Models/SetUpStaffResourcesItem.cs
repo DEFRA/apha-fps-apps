@@ -1,29 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — SetUpStaffResourcesItem.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 5 — ViewModels + MVC Controller
- * Migrated : 2026-07-07
- *
- * CHANGED:
- *   - New grid item model created for the staff data-grid in Set Up Staff Resources
- *   - Maps JS DataGridComponent columns: spNo, name, hrsPaid, leave, sickSp, atWork, planable
- *   - Grid Operations Profile: Edit-only (no Add, no Delete — JS showAddButton:false, no delete button)
- *   - WorkGroupGrade + SpNumber: ReadOnly (read-only in .frm and locked in HTML modal prototype)
- *   - HrsAvail (AtWork): ReadOnly + computed (HrsPaid - Leave - SickSpecial)
- *   - MakeAvailable (Planable): Checkbox
- *   - Name, HrsPaid, Leave, SickSpecial: Editable in Edit modal
- *   - PactId: hidden key field for edit operations
- *
- * PRESERVED:
- *   - Property names match WorkGroupEmployeeStaffDto (PactId, SpNumber, WorkGroupGrade, Name,
- *     HrsPaid, Leave, SickSpecial, HrsAvail, MakeAvailable)
- *   - JS grid column order preserved: spNo, name, hrsPaid, leave, sickSp, atWork, planable
- *   - GridColumn widths match JS column widths exactly
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Add CreateMap<SetUpStaffResourcesItem, WorkGroupEmployeeStaffDto>().ReverseMap()
- *     to FpsViewModelMapper.cs once this file is registered in the build.
- */
-
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using System.ComponentModel.DataAnnotations;
 
