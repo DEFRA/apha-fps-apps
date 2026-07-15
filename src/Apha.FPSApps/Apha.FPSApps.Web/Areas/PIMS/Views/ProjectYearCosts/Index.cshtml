@@ -33,7 +33,7 @@
                          style="margin: 8px; display: flex; align-items: flex-end;">
 
                         <div style="margin: 0 7px; flex: 1;">
-                            <label for="dpprojectSelect" class="govuk-label tab-font-size">
+                            <label for="dpprojectSelect" class="govuk-label govuk-!-font-weight-bold tab-font-size">
                                 Select a Project
                             </label>
                             <select id="dpprojectSelect"
@@ -55,7 +55,7 @@
                         </div>
 
                         <div style="margin: 0 5px; flex: 1;">
-                            <label for="dpyear" class="govuk-label tab-font-size">Year</label>
+                            <label for="dpyear" class="govuk-label govuk-!-font-weight-bold tab-font-size">Year</label>
                             <select id="dpyear"
                                     class="govuk-select project-dropdown tab-font-size"
                                     style="width: 100%;">
@@ -157,16 +157,16 @@
                                         id="monthly-data-totals" style="width: 100%;">
                                         <thead style="visibility: collapse;">
                                             <tr>
-                                                <th style="width: 80px;"></th>
-                                                <th style="width: 100px;"></th>
-                                                <th style="width: 110px;"></th>
-                                                <th style="width: 90px;"></th>
-                                                <th style="width: 110px;"></th>
-                                                <th style="width: 90px;"></th>
-                                                <th style="width: 110px;"></th>
-                                                <th style="width: 90px;"></th>
-                                                <th style="width: 90px;"></th>
-                                                <th style="width: 80px;"></th>
+                                                <th style="width: 80px;" aria-label="Column 1"></th>
+                                                <th style="width: 100px;" aria-label="Column 2"></th>
+                                                <th style="width: 110px;" aria-label="Column 3"></th>
+                                                <th style="width: 90px;" aria-label="Column 4"></th>
+                                                <th style="width: 110px;" aria-label="Column 5"></th>
+                                                <th style="width: 90px;" aria-label="Column 6"></th>
+                                                <th style="width: 110px;" aria-label="Column 7"></th>
+                                                <th style="width: 90px;" aria-label="Column 8"></th>
+                                                <th style="width: 90px;" aria-label="Column 9"></th>
+                                                <th style="width: 80px;" aria-label="Column 10"></th>
                                             </tr>
                                         </thead>
                                         <tbody class="govuk-table__body tab-font-size">
@@ -207,7 +207,7 @@
                                             <th class="govuk-table__header govuk-!-text-align-right">Test Costs</th>
                                             <th class="govuk-table__header govuk-!-text-align-right">Exceptional Costs</th>
                                             <th class="govuk-table__header govuk-!-text-align-right">Animal Costs</th>
-                                            <th class="govuk-table__header govuk-!-text-align-right">Total Costs</th>
+                                            <th class="govuk-table__header govuk-!-text-align-right">Total Cost</th>
                                             <th class="govuk-table__header govuk-!-text-align-right">Cust Income</th>
                                             <th class="govuk-table__header govuk-!-text-align-right">Total Income</th>
                                             <th class="govuk-table__header govuk-!-text-align-right">Budget VLA</th>
@@ -259,10 +259,10 @@
                                         <col style="width: 17.4%;" />
                                         <col style="width: 20.3%;" />
                                     </colgroup>
-                                    <thead class="govuk-visually-hidden">
-                                        <tr>
-                                            <th scope="col" class="govuk-table__header"></th>
-                                            <th scope="col" class="govuk-table__header"></th>
+                                    <thead class="govuk-visually-hidden" aria-label="Project year costs table headers">
++                                        <tr>
+                                            <th scope="col" class="govuk-table__header" aria-label="payPact-Col1"></th>
+                                            <th scope="col" class="govuk-table__header" aria-label="payPact-Col1"></th>
                                             <th scope="col" class="govuk-table__header">Pay</th>
                                             <th scope="col" class="govuk-table__header">Non-Pay</th>
                                             <th scope="col" class="govuk-table__header">Overhead</th>
