@@ -16,6 +16,8 @@ namespace Apha.Common.Constants
 
         // Time Code Valid
         public const string GetTimeCodesByJobCode = "api/v1/timecodevalid/jobcode/{0}/project/{1}";
+        public const string GetTimeCodesByWorkGroup = "api/v1/timecodevalid/workgroup/{0}";
+        public const string GetTimeCodesProjectsByWorkGroupAndTimeCode = "api/v1/timecodevalid/projects/workgroup/{0}/timecode/{1}";
         public const string GetTimeCodeValidById = "api/v1/timecodevalid/{0}/{1}/{2}";
         public const string GetPagedTimeCodes = "api/v1/timecodevalid/paged";
         public const string GetPagedTimeCodesByJobCode = "api/v1/timecodevalid/paged?jobCode={0}";
@@ -134,6 +136,21 @@ namespace Apha.Common.Constants
 
         // Monthly Output Log
         public const string SearchMonthlyOutputLog = "api/v1/monthlyoutput/log/search";
+
+        // Monthly Time
+        public const string GetPagedMonthlyTimeLive = "api/v1/monthlytime/live";
+        public const string GetMonthlyTimeLiveByKey = "api/v1/monthlytime/live/key?pactStaffId={0}&timeCode={1}&month={2}&parentProject={3}";
+        public const string UpdateMonthlyTimeLive = "api/v1/monthlytime/live";
+        public const string DeleteMonthlyTimeLive = "api/v1/monthlytime/live?pactStaffId={0}&timeCode={1}&month={2}&parentProject={3}";
+        public const string GetPagedStagingMonthlyTime = "api/v1/monthlytime/staging";
+        public const string GetStagingMonthlyTimeById = "api/v1/monthlytime/staging/{0}";
+        public const string CreateStagingMonthlyTime = "api/v1/monthlytime/staging";
+        public const string UpdateStagingMonthlyTime = "api/v1/monthlytime/staging/{0}";
+        public const string DeleteStagingMonthlyTime = "api/v1/monthlytime/staging/{0}";
+        public const string DeleteAllStagingMonthlyTimeByUser = "api/v1/monthlytime/staging/user";
+        public const string ImportStagingMonthlyTime = "api/v1/monthlytime/staging/import";
+        public const string ValidateStagingMonthlyTime = "api/v1/monthlytime/staging/validate";
+        public const string MakeLiveMonthlyTime = "api/v1/monthlytime/staging/makelive";
 
         // Monthly Time Log (MT_LOG)
         public const string SearchMonthlyTimeLog = "api/v1/monthlytime/log/search";

@@ -4,6 +4,7 @@ using Apha.PACT.Api.Controllers;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
+using Apha.PACT.Core.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -15,13 +16,16 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthlyTimeControllerTest
     {
         private readonly IMonthlyTimeService _serviceMock;
         private readonly IMapper _mapperMock;
+        private readonly ICurrentUserContext _currentUserContextMock;
         private readonly MonthlyTimeController _controller;
 
         public MonthlyTimeControllerTests()
         {
             _serviceMock = Substitute.For<IMonthlyTimeService>();
             _mapperMock = Substitute.For<IMapper>();
-            _controller = new MonthlyTimeController(_serviceMock, _mapperMock);
+            _currentUserContextMock = Substitute.For<ICurrentUserContext>();
+            _currentUserContextMock.UserId.Returns("test-user-id");
+            _controller = new MonthlyTimeController(_serviceMock, _mapperMock, _currentUserContextMock);
         }
 
         #region SearchAsync

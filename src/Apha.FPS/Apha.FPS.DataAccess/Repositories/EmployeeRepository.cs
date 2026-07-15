@@ -243,7 +243,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<PagedData<PactStaff>> GetWorkGroupStaffAsync(PaginationParameters<string> query, string? workGroup = null)
+        public async Task<PagedData<PactStaff>> GetPagedWorkGroupStaffAsync(PaginationParameters<string> query, string? workGroup = null)
         {
             IQueryable<PactStaff> queryStaff;
 
@@ -281,6 +281,27 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsNoTracking()
                 .OrderBy(s => s.Name)
                 .ToListAsync();
+        }
+
+        public async Task<IEnumerable<PactStaff>> GetPactWorkGroupStaffAsync(string workGroup)
+        {
+            var pactWorkgroupStaff = await _dbContext.Workgroups
+                    .AsNoTracking()
+                    .Join(_dbContext.PactWorkGroupGradeViews.AsNoTracking(),
+                        wg => wg.WorkGroupName,
+                        grade => grade.WorkGroup,
+                        (wg, grade) => new { wg, grade })
+                    .Join(_dbContext.PactStaffs.AsNoTracking(),
+                        wgGrade => wgGrade.grade.WgGrade,
+                        staff => staff.WorkGroupGrade,
+                        (wgGrade, staff) => new { wgGrade.wg, staff })
+                    .Where(x => x.wg.WorkGroupName == workGroup)
+                    .Select(x => x.staff)
+                    .OrderBy(x => x.Name)
+                    .ThenBy(x => x.WorkGroupGrade)
+                    .ToListAsync();
+
+            return pactWorkgroupStaff;
         }
 
         private static IQueryable<PactStaff> ApplyWorkGroupStaffFilter(IQueryable<PactStaff> query, string? filter)

@@ -42,6 +42,31 @@ namespace Apha.PACT.DataAccess.Repository
                 .ToListAsync();
         }
 
+        public async Task<List<string>> GetValidWorkGroupsAsync()
+        {
+            return await _context.WorkGroups
+                .AsNoTracking()
+                .Select(x => x.WorkGroupName)
+                .ToListAsync();
+        }
+
+        public async Task<List<WorkGroupStaffItem>> GetStaffByWorkGroupAsync()
+        {
+            return await (
+                from grade in _context.PactWorkGroupGradeViews.AsNoTracking()
+                join staff in _context.WorkGroupStaffViews.AsNoTracking()
+                    on grade.WgGrade equals staff.WorkGroupGrade
+                where staff.PersonStatus == null || staff.PersonStatus == "A"
+                select new WorkGroupStaffItem
+                {
+                    WorkGroup = grade.WorkGroup,
+                    PactId = staff.PactId,
+                    SpNumber = staff.SpNumber,
+                    Name = staff.Name
+                })
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<SummarisedWgTimeView>> GetSummarisedWorkgroupTimeAsync(
             string workGroup)
         {

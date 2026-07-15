@@ -54,6 +54,14 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<WorkGroupDto, WorkGroup>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPerson>().ReverseMap();
             CreateMap<MonthlyOutputLogDto, MonthlyOutputLogItem>().ReverseMap();
+            CreateMap<MonthlyTimeDto, MonthlyTimeLiveItem>()
+                .ForMember(dest => dest.CompositeKey, opt => opt.MapFrom(src => $"{src.PactStaffId}|{src.TimeCode}|{src.Month}|{src.ParentProject}"));
+            CreateMap<StagingMonthlyTimeDto, StagingMonthlyTimeItem>()
+                .ForMember(dest => dest.Passed, opt => opt.MapFrom(src => src.Passed ?? false));
+            CreateMap<MonthlyTimeLiveItem, MonthlyTimeDto>()
+                .ForMember(dest => dest.FpsYear, opt => opt.MapFrom(src => src.FpsYear ?? 0));
+            CreateMap<StagingMonthlyTimeItem, StagingMonthlyTimeDto>()
+                .ForMember(dest => dest.Passed, opt => opt.MapFrom(src => (bool?)src.Passed));
             CreateMap<MonthlyTimeLogDto, MonthlyTimeLogItem>().ReverseMap();
             CreateMap<CalenderMonthDto, CalenderMonth>().ReverseMap();
             CreateMap<WorkGroupTimeCodeDto, WorkGroupTimeCodeItem>().ReverseMap();

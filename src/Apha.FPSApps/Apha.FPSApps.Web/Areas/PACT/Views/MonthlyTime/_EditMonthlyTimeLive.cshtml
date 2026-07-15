@@ -1,0 +1,44 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.MonthlyTimeLiveItem
+
+<div class="modal-header flex-space-center">
+    <h3 class="govuk-heading-s sup_margin_0">Edit Monthly Time</h3>
+    <button type="button" class="btn-close" onclick="$('#modalPopup').removeClass('show')">×</button>
+</div>
+<div class="modal-body" style="overflow:hidden; padding:8px 16px 0 16px;">
+    <form id="monthlyTimeLiveForm" class="govuk-grid-column-full">
+        <input type="hidden" asp-for="CompositeKey" />
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label" asp-for="WorkGroup">Work Group</label>
+            <input class="govuk-input govuk-!-font-size-16" asp-for="WorkGroup" readonly />
+        </div>
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label" asp-for="PactStaffId">PACT Staff Id</label>
+            <input class="govuk-input govuk-!-font-size-16" asp-for="PactStaffId" readonly />
+        </div>
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label" asp-for="Name">Name</label>
+            <input class="govuk-input govuk-!-font-size-16" asp-for="Name" readonly />
+        </div>
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label" asp-for="TimeCode">Time Code</label>
+            <input class="govuk-input govuk-!-font-size-16" asp-for="TimeCode" readonly />
+        </div>
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label" asp-for="ParentProject">Parent Project</label>
+            <input class="govuk-input govuk-!-font-size-16" asp-for="ParentProject" readonly />
+        </div>
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label" asp-for="Month">Period</label>
+            <input class="govuk-input govuk-!-font-size-16" asp-for="Month" readonly />
+        </div>
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label" asp-for="Hours">Hours</label>
+            <input class="govuk-input govuk-!-font-size-16" asp-for="Hours" type="number" step="0.01" name="Hours" required />
+            <span data-valmsg-for="Hours" class="govuk-error-message"></span>
+        </div>
+    </form>
+</div>
+<div class="modal-footer sup_flex_space_center">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" onclick="$('#modalPopup').removeClass('show')">Cancel</button>
+    <button type="button" class="govuk-button sup_margin_0" onclick="saveMonthlyTimeLive()" allow-edit="true">Save</button>
+</div>

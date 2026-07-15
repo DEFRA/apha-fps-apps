@@ -29,7 +29,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             RepositoryTestHelper.SetupDbSetOperations(logMockSet);
             mockContext.Setup(x => x.MonthlyTimeLogs).Returns(logMockSet.Object);
 
-            return new MonthlyTimeRepository(mockContext.Object);
+            return new MonthlyTimeRepository(mockContext.Object, fpsRequestContext);
         }
 
         // Shared log data used across SearchAsync tests

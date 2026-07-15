@@ -31,6 +31,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<MonthlyOutputLog> MonthlyOutputLogs { get; set; }
         public virtual DbSet<MonthlyTimeLog> MonthlyTimeLogs { get; set; }
         public virtual DbSet<MonthlyTime> MonthlyTimes { get; set; }
+        public virtual DbSet<StagingMonthlyTime> StagingMonthlyTimes { get; set; }
         public virtual DbSet<MonthlyInvoicesSummary> MonthlyInvoicesSummary { get; set; }
         public virtual DbSet<MonthlySubContractsSummary> MonthlySubContractsSummary { get; set; }
         public virtual DbSet<ProjectMonth> ProjectMonths { get; set; }
@@ -96,6 +97,8 @@ namespace Apha.PACT.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
             modelBuilder.Entity<MonthlyTime>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new StagingMonthlyTimeMap());
 
             modelBuilder.ApplyConfiguration(new MonthMap());
 

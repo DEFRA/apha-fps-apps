@@ -531,7 +531,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
             var mappedRes = new PaginationRes<PactStaffRes>();
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
-            _serviceMock.GetWorkGroupStaffAsync(mappedQuery, null).Returns(pagedResult);
+            _serviceMock.GetPagedWorkGroupStaffAsync(mappedQuery, null).Returns(pagedResult);
             _mapperMock.Map<PaginationRes<PactStaffRes>>(pagedResult).Returns(mappedRes);
 
             // Act
@@ -552,7 +552,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
             var mappedRes = new PaginationRes<PactStaffRes>();
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
-            _serviceMock.GetWorkGroupStaffAsync(mappedQuery, "WG1").Returns(pagedResult);
+            _serviceMock.GetPagedWorkGroupStaffAsync(mappedQuery, "WG1").Returns(pagedResult);
             _mapperMock.Map<PaginationRes<PactStaffRes>>(pagedResult).Returns(mappedRes);
 
             // Act
@@ -560,7 +560,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
-            await _serviceMock.Received(1).GetWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), "WG1");
+            await _serviceMock.Received(1).GetPagedWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), "WG1");
         }
 
         [Fact]
@@ -573,7 +573,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
             var mappedRes = new PaginationRes<PactStaffRes>();
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
-            _serviceMock.GetWorkGroupStaffAsync(mappedQuery, null).Returns(pagedResult);
+            _serviceMock.GetPagedWorkGroupStaffAsync(mappedQuery, null).Returns(pagedResult);
             _mapperMock.Map<PaginationRes<PactStaffRes>>(pagedResult).Returns(mappedRes);
 
             // Act
@@ -589,7 +589,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
             // Arrange
             var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
             _mapperMock.Map<QueryParameters<string>>(query).Returns(new QueryParameters<string>());
-            _serviceMock.GetWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
+            _serviceMock.GetPagedWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
                 .Throws(new Exception("Service error"));
 
             // Act & Assert

@@ -32,6 +32,20 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<IEnumerable<TimeCodeValidRes>>(items));
         }
 
+        [HttpGet("workgroup/{workGroup}")]
+        public async Task<IActionResult> GetTimeCodeValidsByWorkGroupAsync(string workGroup)
+        {
+            var items = await _service.GetTimeCodeValidsByWorkGroupAsync(workGroup);
+            return Ok(_mapper.Map<IEnumerable<TimeCodeValidRes>>(items));
+        }
+
+        [HttpGet("projects/workgroup/{workGroup}/timecode/{timeCode}")]
+        public async Task<IActionResult> GetTimeCodeValidProjectsByWorkGroupAndTimeCodeAsync(string workGroup, string timeCode)
+        {
+            var items = await _service.GetTimeCodeValidProjectsByWorkGroupAndTimeCodeAsync(workGroup, timeCode);
+            return Ok(items);
+        }
+
         [HttpGet("paged")]
         public async Task<IActionResult> GetPaged([FromQuery] QueryParameters<string> query, [FromQuery] string? jobCode, [FromQuery] string? parentProject)
         {

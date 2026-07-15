@@ -55,7 +55,7 @@
                     <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12" /></span>
                 </button>
                 <div class="dropdown-menu" id="time-data">
-                    <a class="dropdown-item" href="#">Time record data entry</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="MonthlyTime" asp-action="Index">Time record data entry</a>
                     <a class="dropdown-item" href="#">Output record data entry</a>
                     <a class="dropdown-item" asp-area="PACT" asp-controller="WorkGroupReport" asp-action="Index">Create &amp; email time &amp; output summaries</a>
                     <a class="dropdown-item" href="#">Create &amp; print individual COS90s</a>

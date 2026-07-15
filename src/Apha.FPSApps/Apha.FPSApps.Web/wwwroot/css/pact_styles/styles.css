@@ -1114,7 +1114,7 @@ svg          { width: 100%; height: auto; background: #fff; }
 .sup_min_width_232 { min-width: 232px; }
 .resizer { position: absolute; top: 8px; right: 0; width: 5px; height: 100%; cursor: col-resize; user-select: none; }
 
-.time_record_div_wrapper { font-size: 16px; background: #fff; margin: 0; width: 17%; display: flex; padding: 0px 0px 4px 4px; border-radius: 10px 10px 0 0; }
+.time_record_div_wrapper { font-size: 16px; background: #fff; margin: 0; width: 11%; display: flex; padding: 0px 0px 4px 0px; border-radius: 10px 10px 0 0; }
 .time_record_btn_wrapper { flex-direction: column; display: flex; color: #333; width: 100%; align-items: flex-start; gap: 14px; padding: 0; justify-content: flex-start; }
 
 /* ============================================================
@@ -1504,3 +1504,157 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
     font-size: 1.6rem;
     line-height: 1.2;
 }
+
+/* ============================================================
+   INLINE STYLES EXTRACTED FROM TIMERECORDING.HTML
+   ============================================================ */
+
+/* Page Title */
+.page-title {
+    padding: 10px 0 10px 10px;
+}
+
+/* Total Hours Section */
+.total-hours-label {
+    width: 600px;
+    margin-right: 4px;
+    text-align: right;
+}
+
+.make-live-hours-input {
+    text-align: right;
+    margin-right: 9px;
+    width: 80px;
+}
+
+/* Grid and Layout */
+.grid-buttons-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.grids-column-wrapper {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.bottom-grid-wrapper {
+    width: 100%;
+}
+
+.button-align-right {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+.add-button-center {
+    justify-content: center;
+}
+
+.buttons-side-wrapper {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.make-live-button {
+    padding: 8px 9px;
+}
+
+/* Error Textarea */
+.error-textarea {
+    min-height: 40px;
+    color: red;
+}
+
+/* Modal Styles */
+.import-type-modal {
+    display: none;
+}
+
+.modal-heading-text {
+    color: #0b0c0c;
+}
+
+.radio-label-nowrap {
+    white-space: nowrap;
+}
+
+.test-modal {
+    display: none;
+}
+
+.modal-body-custom {
+    padding: 8px 16px 0 0px;
+    overflow-y: auto;
+    max-height: 450px;
+}
+
+.modal-dropdown-container {
+    padding: 0;
+}
+
+.modal-form-row {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-form-col {
+    flex: 1;
+    min-width: 0;
+}
+
+.modal-footer-custom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+}
+
+.failed-msg-container {
+    padding: 8px;
+    border: 1px solid rgb(29 112 184);
+    background: rgb(255, 255, 255);
+    display: block;
+    margin-top: 10px;
+    border-radius: 10px;
+}
+
+#tbl_timerecordingGrid th[data-column="actions"],
+#tbl_timerecordingGrid td[data-property="actions"] {
+    width: 56px !important;
+    min-width: 56px !important;
+    max-width: 56px !important;
+    text-align: center;
+}
+
+    #tbl_timerecordingGrid td[data-property="actions"] .edit-btn {
+        padding: 0 !important;
+        margin: 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+#tbl_timerecordingImportDataGrid th[data-column="actions"],
+#tbl_timerecordingImportDataGrid td[data-property="actions"] {
+    width: 56px !important;
+    min-width: 56px !important;
+    max-width: 56px !important;
+    text-align: center;
+}
+
+    #tbl_timerecordingImportDataGrid td[data-property="actions"] .edit-btn {
+        padding: 0 !important;
+        margin: 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
