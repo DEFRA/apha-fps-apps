@@ -631,8 +631,6 @@ function initializeJobCodeWorkGroupDropdown(config) {
     var workGroupData = config.workGroupData || [];
     var selectedWorkGroup = config.selectedWorkGroup || '';
 
-    // setTimeout(function() {
-    //     window.
             jobCodeWorkGroupDropdown = new MultiColumnDropdownComponent({
             dropdownId: 'workGroupDropdown',
             containerSelector: '#workGroupMultiDropdown',
@@ -655,14 +653,13 @@ function initializeJobCodeWorkGroupDropdown(config) {
                 },
                 onClear: function (dropdown) {
                     $('#JobCodeWorkGroup').val('');
-                    window.jobCodeWorkGroupDropdown.clear();
+                    jobCodeWorkGroupDropdown.clear();
                 }
             }
         });
 
         // Set initial value if exists
         if (selectedWorkGroup && selectedWorkGroup !== '') {
-            window.jobCodeWorkGroupDropdown.setValue(selectedWorkGroup);
+            jobCodeWorkGroupDropdown.setValue(selectedWorkGroup);
         }
-    // }, 100);
 }
