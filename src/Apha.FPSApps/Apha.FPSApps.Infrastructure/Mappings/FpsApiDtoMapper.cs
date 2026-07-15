@@ -1,36 +1,8 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — FpsApiDtoMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 4 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-07-07
- *
- * CHANGED:
- *   - Added TRANSFORMENGINE migration header (Phase 4 verification pass)
- *   - Verified WorkGroupEmployeeDto <-> WorkGroupEmployeeReq/Res entries present (lines ~108-111)
- *   - Verified WorkGroupEmployeeStaffDto <-> WorkGroupEmployeeReq/Res entries present (lines ~110-111)
- *   - Verified ProfitCentreDto <-> ProfitCentreRes/Req entries present (lines ~102-103)
- *   - Verified WorkgroupGradeDto <-> WorkgroupGradeRes/Req entries present (lines ~107, ~134)
- *   - All required SetUpStaffResources API DTO mappings confirmed present from prior phases
- *
- * PRESERVED:
- *   - All existing CreateMap entries (StaffJob, Program, Employee, Project, Lookups,
- *     AnimalPlan, AnimalMaster, YearMaster, TestorProduct, TimeCostCalcs, Division,
- *     DivisionGrade, Grade, Agency, AdditionalCost, AccountCategory, MonthlyOutput,
- *     ProgrammeNewProject sub-types, Resource Set-Up, ProjectProfitability,
- *     StaffPlanView, ProjectGroupStaffPlanView, WorkgroupGrade, BudgetResourceLevel,
- *     UserPermission mappings)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: IWorkGroupGradeService is registered twice in ServiceCollectionExtension —
- *     no mapper impact, but flag for cleanup in DI registration review.
- */
-
-using Apha.Common.Contracts;
+﻿using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
-using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
-
 using Apha.FPSApps.Application.Pagination;
 using AutoMapper;
 namespace Apha.FPSApps.Infrastructure.Mappings

@@ -1,29 +1,4 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsWorkGroupEmployeeApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 3 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-07
- *
- * CHANGED:
- *   - Added TRANSFORMENGINE migration header (PB-14 annotation policy)
- *   - Added private const InternalCodeError = "INTERNAL_ERROR" (Sonar S1192)
- *   - Wrapped all 8 HTTP calls in try/catch(Exception) with FailureResponse fallback
- *   - Preserved all URL composition via FpsApiEndpoints constants and Uri.EscapeDataString
- *
- * PRESERVED:
- *   - All 8 interface methods: GetWorkGroupEmployeeAsync, GetWorkGroupEmployeeForStaffAsync,
- *     GetWorkGroupEmployeeByIdAsync, GetWorkGroupEmployeeByIdForStaffAsync,
- *     CreateWorkGroupEmployeeForStaffAsync, UpdateWorkGroupEmployeeAsync,
- *     UpdateWorkGroupEmployeeForStaffAsync, DeleteWorkGroupEmployeeAsync
- *   - private readonly _http and _mapper fields (Sonar S2933)
- *   - Mapper used for success response mapping; FailureResponse used for error path
- *   - FpsApiEndpoints constants for all URL paths
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify backend wgstaff route paths match FpsApiEndpoints values exactly
- */
-
 using Apha.Common.Constants;
-using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -40,7 +15,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        // TRANSFORMENGINE: InternalCodeError as private const — Sonar S1192 compliance
         private const string InternalCodeError = "INTERNAL_ERROR";
 
         public FpsWorkGroupEmployeeApiClient(IFpsHttpExecutor http, IMapper mapper)
@@ -49,7 +23,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET api/v1/wgstaff?wgGrade={0} → WgStaffController.GetWorkGroupEmployeeAsync
         public async Task<ApiResponseDto<List<WorkGroupEmployeeDto>>> GetWorkGroupEmployeeAsync(QueryParameters<string> query, string wgGrade)
         {
             try
@@ -71,7 +44,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET api/v1/wgstaff/staff?wgGrade={0} → WgStaffController.GetWorkGroupEmployeeForStaffAsync
         public async Task<ApiResponseDto<List<WorkGroupEmployeeStaffDto>>> GetWorkGroupEmployeeForStaffAsync(QueryParameters<string> query, string wgGrade)
         {
             try
@@ -93,7 +65,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET api/v1/wgstaff/activestaff?wgGrade={0} → WgStaffController.GetAllActiveWorkGroupEmployeesAsync
         public async Task<ApiResponseDto<List<WorkGroupEmployeeStaffDto>>> GetAllActiveWorkGroupEmployeesAsync(QueryParameters<string> query, string wgGrade)
         {
             try
@@ -115,7 +86,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET api/v1/wgstaff/{pactId} → WgStaffController.GetWorkGroupEmployeeByIdAsync
         public async Task<ApiResponseDto<WorkGroupEmployeeDto>> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
             try
@@ -136,7 +106,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET api/v1/wgstaff/{pactId} → WgStaffController.GetWorkGroupEmployeeByIdAsync (staff variant)
         public async Task<ApiResponseDto<WorkGroupEmployeeStaffDto>> GetWorkGroupEmployeeByIdForStaffAsync(string pactId)
         {
             try
@@ -157,7 +126,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST api/v1/wgstaff/staff → WgStaffController.CreateWorkGroupEmployeeForStaffAsync
         public async Task<ApiResponseDto<WorkGroupEmployeeStaffDto>> CreateWorkGroupEmployeeForStaffAsync(WorkGroupEmployeeStaffDto dto)
         {
             try
@@ -178,7 +146,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PUT api/v1/wgstaff → WgStaffController.UpdateWorkGroupEmployeeAsync
         public async Task<ApiResponseDto<WorkGroupEmployeeDto>> UpdateWorkGroupEmployeeAsync(WorkGroupEmployeeDto dto)
         {
             try
@@ -199,7 +166,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PUT api/v1/wgstaff/staff → WgStaffController.UpdateWorkGroupEmployeeForStaffAsync
         public async Task<ApiResponseDto<WorkGroupEmployeeStaffDto>> UpdateWorkGroupEmployeeForStaffAsync(WorkGroupEmployeeStaffDto dto)
         {
             try
@@ -220,7 +186,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE api/v1/wgstaff/{pactId} → WgStaffController.DeleteWorkGroupEmployeeAsync
         public async Task<ApiResponseDto<bool>> DeleteWorkGroupEmployeeAsync(string pactId)
         {
             try

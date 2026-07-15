@@ -1,33 +1,3 @@
-@* TRANSFORMENGINE MIGRATION — _EditStaffModal.cshtml (SetUpStaffResources)
-   Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 6 + Phase 8 Security Review
-   Migrated : 2026-07-07
-   CHANGED (Phase 6 — original migration):
-     - Inline HTML modal (#ssrEditModal) extracted to shared _Layout #modalPopup pattern
-     - @model directive added: SetUpStaffResourcesItem
-     - asp-for Tag Helpers replace manual id="ssrEditXxx" inputs
-     - @Html.AntiForgeryToken() added for CSRF protection
-     - GradeCode (ssrEditGradeCode) → asp-for="WorkGroupGrade" disabled (read-only in HTML prototype)
-     - SpNo (ssrEditSpNo) → asp-for="SpNumber" disabled (read-only in HTML prototype)
-     - Name (ssrEditName) → asp-for="Name" editable text input
-     - HrsPaid (ssrEditHrsPaid) → asp-for="HrsPaid" number input (editable)
-     - Leave (ssrEditLeave) → asp-for="Leave" number input (editable)
-     - SickSp (ssrEditSickSp) → asp-for="SickSpecial" number input (editable)
-     - AtWork (ssrEditAtWork) → asp-for="HrsAvail" number input (disabled + JS recalc)
-     - Planable (ssrEditPlanable) → asp-for="MakeAvailable" checkbox
-     - PactId hidden input added for save routing
-     - JS recalculateAtWork() listener for HrsPaid / Leave / SickSp changes
-   CHANGED (Phase 8 — security fix):
-     - onsubmit="return false;" added to form element: prevents Enter-key native GET submission
-       that would expose the @Html.AntiForgeryToken() value as a URL query parameter
-       (token leakage into server access logs / browser history)
-   PRESERVED:
-     - All govuk-grid-column-one-half two-column layout from HTML prototype modal body
-     - All govuk-form-group, govuk-label, govuk-input, govuk-checkboxes CSS classes
-     - Label text from HTML prototype verbatim: Grade Code, SP No, Name, Hrs Paid, Leave, Sick Sp, At Work, Planable
-     - Modal header, modal body, modal footer button layout
-     - saveSetUpStaffResources() / closeModal() JS function names
-   DEFERRED: none — fully automated. *@
-
 @model Apha.FPSApps.Web.Areas.FPS.Models.SetUpStaffResourcesItem
 
 <div class="modal-header flex-space-center">
@@ -36,20 +6,13 @@
 </div>
 
 <div class="modal-body" style="padding-top: 5px;">
-    @* TRANSFORMENGINE (Phase 8 security fix): onsubmit="return false;" prevents Enter-key native
-       browser form GET submission which would expose the anti-forgery token value as a URL
-       query parameter (token leakage into server access logs / browser history). All saving
-       goes through saveSetUpStaffResources() AJAX in Index.cshtml — no native submit needed. *@
     <form class="row" id="ssrEditForm" onsubmit="return false;">
         @Html.AntiForgeryToken()
 
-        @* TRANSFORMENGINE: PactId hidden — key for edit POST routing; not visible in modal *@
         <input type="hidden" id="hdnPactId" asp-for="PactId" />
 
-        @* ── Row 1: Grade Code (readonly) + SP No (readonly) ─────────────────── *@
         <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group sup_margin_bottom_10">
-                @* TRANSFORMENGINE: GradeCode — maps to WorkGroupGrade; disabled matches HTML 'readonly' *@
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="WorkGroupGrade">Grade Code</label>
                 <input class="govuk-input govuk-!-font-size-16"
                        asp-for="WorkGroupGrade"
@@ -60,7 +23,6 @@
         </div>
         <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group sup_margin_bottom_10">
-                @* TRANSFORMENGINE: SpNo — maps to SpNumber; disabled matches HTML 'readonly' *@
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="SpNumber">SP No</label>
                 <input class="govuk-input govuk-!-font-size-16"
                        asp-for="SpNumber"
@@ -73,7 +35,6 @@
         @* ── Row 2: Name (editable) + Hrs Paid (number) ──────────────────────── *@
         <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group sup_margin_bottom_10">
-                @* TRANSFORMENGINE: Name — editable text field (ssrEditName in HTML prototype) *@
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Name">Name</label>
                 <input class="govuk-input govuk-!-font-size-16"
                        asp-for="Name"
@@ -84,7 +45,6 @@
         </div>
         <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group sup_margin_bottom_10">
-                @* TRANSFORMENGINE: HrsPaid — editable number (ssrEditHrsPaid, min=0) *@
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="HrsPaid">Hrs Paid</label>
                 <input class="govuk-input govuk-!-font-size-16"
                        asp-for="HrsPaid"
@@ -99,7 +59,6 @@
         @* ── Row 3: Leave (number) + Sick Sp (number) ────────────────────────── *@
         <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group sup_margin_bottom_10">
-                @* TRANSFORMENGINE: Leave — editable number (ssrEditLeave, min=0) *@
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Leave">Leave</label>
                 <input class="govuk-input govuk-!-font-size-16"
                        asp-for="Leave"
@@ -112,7 +71,6 @@
         </div>
         <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group sup_margin_bottom_10">
-                @* TRANSFORMENGINE: SickSpecial — editable number (ssrEditSickSp, min=0) *@
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="SickSpecial">Sick Sp</label>
                 <input class="govuk-input govuk-!-font-size-16"
                        asp-for="SickSpecial"
@@ -127,9 +85,6 @@
         @* ── Row 4: At Work (disabled + JS recalc) + Planable (checkbox) ─────── *@
         <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group sup_margin_bottom_10">
-                @* TRANSFORMENGINE: HrsAvail (AtWork) — computed = HrsPaid - Leave - SickSpecial.
-                   disabled (not readonly) per GOV.UK styling for non-editable inputs.
-                   JS listener recalculates on HrsPaid/Leave/SickSp input events. *@
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="HrsAvail">At Work</label>
                 <input class="govuk-input govuk-!-font-size-16"
                        asp-for="HrsAvail"
@@ -142,8 +97,6 @@
         </div>
         <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group sup_margin_bottom_10">
-                @* TRANSFORMENGINE: MakeAvailable (Planable) — checkbox (ssrEditPlanable in HTML prototype)
-                   int type (0/1) from WorkGroupEmployeeStaffDto; rendered as checkbox *@
                 <div class="govuk-checkboxes govuk-checkboxes--small govuk-!-margin-top-5" data-module="govuk-checkboxes">
                     <div class="govuk-checkboxes__item">
                         <input class="govuk-checkboxes__input"
@@ -174,8 +127,6 @@
 </div>
 
 <script>
-    // TRANSFORMENGINE: recalculateAtWork() — HrsPaid - Leave - SickSpecial → AtWork (disabled field)
-    //   Mirrors JS prototype's ssrSaveEdit() inline recalc logic, surfaced as a live update on input.
     function recalculateAtWork() {
         var hrsPaid  = parseFloat(document.getElementById('ssrEditHrsPaid')?.value || '0') || 0;
         var leave    = parseFloat(document.getElementById('ssrEditLeave')?.value   || '0') || 0;

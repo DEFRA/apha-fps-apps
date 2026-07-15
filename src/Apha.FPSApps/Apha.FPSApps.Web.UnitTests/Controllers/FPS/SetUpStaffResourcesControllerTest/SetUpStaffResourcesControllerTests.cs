@@ -1,24 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — SetUpStaffResourcesControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 7 — Frontend XUnit Tests
- * Migrated : 2026-07-07
- *
- * CHANGED:
- *   - xUnit test class created for SetUpStaffResourcesController (Phase 5 output)
- *   - Mocks: IMapper, IWorkGroupEmployeeService, IProfitCentreService, IWorkGroupGradeService (NSubstitute)
- *   - Covers: Index, LoadStaffGrid, GetGradesByResourceCentre, Edit (GET + POST) actions
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - Grouped by #region per action method
- *
- * PRESERVED:
- *   - All assertion patterns match existing ResourceSetUpControllerTests conventions
- *   - GetJsonResultElement helper preserved verbatim from project pattern
- *   - NSubstitute-style Received(1) delegation checks on each write path
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Expand coverage once _EditStaffModal partial is created in Phase 6
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -30,10 +9,8 @@ using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using NSubstitute;
 using System.Text.Json;
-using Xunit;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControllerTest
 {
@@ -66,7 +43,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
                 _workGroupService);
         }
 
-        // TRANSFORMENGINE: Helper — serialise JsonResult.Value → JsonElement for property assertions
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
         {
             var json = JsonSerializer.Serialize(jsonResult.Value);

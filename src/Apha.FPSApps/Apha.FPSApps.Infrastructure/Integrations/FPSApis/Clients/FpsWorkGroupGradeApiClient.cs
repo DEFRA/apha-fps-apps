@@ -1,30 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsWorkGroupGradeApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 3 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-07
- *
- * CHANGED:
- *   - Added TRANSFORMENGINE migration header (PB-14 annotation policy)
- *   - Added private const InternalCodeError = "INTERNAL_ERROR" (Sonar S1192)
- *   - Wrapped all 7 HTTP calls in try/catch(Exception) with FailureResponse fallback
- *   - Removed ArgumentNullException guards from constructor (not required by pattern; _http/_mapper are private readonly)
- *   - Preserved all URL composition via FpsApiEndpoints constants and Uri.EscapeDataString
- *
- * PRESERVED:
- *   - All 7 interface methods: GetWorkGroupGradeAsync, DeleteWorkGroupGradeAsync,
- *     GetAllWorkgroupGradesPagedAsync, GetByWgGradeAsync, CreateAsync, UpdateAsync,
- *     DeleteAsync, GetAllGradeCodesAsync
- *   - private readonly _http and _mapper fields (Sonar S2933)
- *   - Mapper used for success response mapping; FailureResponse used for error path
- *   - FpsApiEndpoints constants for all URL paths
- *   - DeleteWorkGroupGradeAsync and DeleteAsync use distinct endpoint constants
- *     (DeleteWgGrade vs DeleteWorkgroupGrade) as separate legacy and maintenance endpoints
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm DeleteWorkGroupGradeAsync (api/v1/wggrades/{0}) vs
- *     DeleteAsync (api/v1/wggrades/maintain/{0}) are distinct backend endpoints — not duplicates
- */
-
 using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
@@ -42,7 +15,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        // TRANSFORMENGINE: InternalCodeError as private const — Sonar S1192 compliance
         private const string InternalCodeError = "INTERNAL_ERROR";
 
         public FpsWorkGroupGradeApiClient(IFpsHttpExecutor http, IMapper mapper)
@@ -50,9 +22,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _http = http ?? throw new ArgumentNullException(nameof(http));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
-
-        // TRANSFORMENGINE: GET api/v1/wggrades?pcGrade={0} → WgGradesController.GetWorkGroupGradeAsync
-        //   profitCentre parameter URI-escaped and embedded in URL format string
         public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetWorkGroupGradeAsync(QueryParameters<string> query, string profitCentre)
         {
             try
@@ -73,7 +42,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE api/v1/wggrades/{wgGrade} → WgGradesController.DeleteWorkGroupGradeAsync (legacy endpoint)
         public async Task<ApiResponseDto<bool>> DeleteWorkGroupGradeAsync(string wgGrade)
         {
             try
@@ -94,7 +62,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET api/v1/wggrades/paged → WgGradesController.GetAllWorkgroupGradesPagedAsync
         public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetAllWorkgroupGradesPagedAsync(QueryParameters<string> query)
         {
             try
@@ -115,7 +82,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET api/v1/wggrades/{wgGrade} → WgGradesController.GetByWgGradeAsync
         public async Task<ApiResponseDto<WorkgroupGradeDto>> GetByWgGradeAsync(string wgGrade)
         {
             try
@@ -135,7 +101,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST api/v1/wggrades → WgGradesController.CreateAsync
         public async Task<ApiResponseDto<WorkgroupGradeDto>> CreateAsync(WorkgroupGradeDto dto)
         {
             try
@@ -156,7 +121,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PUT api/v1/wggrades/{wgGrade} → WgGradesController.UpdateAsync
         public async Task<ApiResponseDto<WorkgroupGradeDto>> UpdateAsync(string wgGrade, WorkgroupGradeDto dto)
         {
             try
@@ -177,7 +141,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE api/v1/wggrades/maintain/{wgGrade} → WgGradesController.DeleteAsync (maintenance endpoint)
         public async Task<ApiResponseDto<bool>> DeleteAsync(string wgGrade)
         {
             try
@@ -197,7 +160,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET api/v1/wggrades/gradecodes → WgGradesController.GetAllGradeCodesAsync
         public async Task<ApiResponseDto<List<string>>> GetAllGradeCodesAsync()
         {
             try
@@ -217,7 +179,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET api/v1/wggrades/byworkgroup?workGroup={0} → WgGradesController.GetWorkgroupGradesByWorkGroupAsync
         public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetWorkgroupGradesByWorkGroupAsync(string workGroup)
         {
             try
