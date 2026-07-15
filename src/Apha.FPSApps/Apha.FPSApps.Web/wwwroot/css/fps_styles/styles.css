@@ -2826,6 +2826,16 @@ table.custom-table th {
     margin-bottom: 2px;
 }
 
+.isBlue {
+    color: #1d70b8 !important;
+    font-weight: 400 !important;
+}
+
+.isRed {
+    color: #d4351c !important;
+    font-weight: 700 !important;
+}
+
 .ppf-worktype-radios-row .govuk-radios__label {
     white-space: nowrap;
     word-break: keep-all;
@@ -2972,6 +2982,21 @@ table.custom-table th {
 
 .ac-hidden {
     display: none;
+}
+
+.isBlue {
+    color: #1d70b8 !important;
+    font-weight: 400 !important;
+}
+
+.isRed {
+    color: #d4351c !important;
+    font-weight: 700 !important;
+}
+
+.project-profitability-grid td[data-property="OffTarget"] span {
+    color: #1d70b8 !important;
+    font-weight: 400 !important;
 }
 
 .ac-table-checkboxes .govuk-checkboxes__item {
