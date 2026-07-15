@@ -1,4 +1,4 @@
-﻿namespace Apha.FPSApps.Web.Models.Components.DataGrid
+namespace Apha.FPSApps.Web.Models.Components.DataGrid
 {
     public class PaginationModel
     {
@@ -13,14 +13,14 @@
         {
             get
             {
-                var blockIndex = (PageNumber - 1) / WindowSize;
-                var start = blockIndex * WindowSize + 1;
+                int half = WindowSize / 2;
+                int start = PageNumber - half;
 
-                // If we’re in the last block and it’s smaller than WindowSize, shift it
-                if (TotalPages - start + 1 < WindowSize)
-                {
+                if (start < 1)
+                    start = 1;
+
+                if (start + WindowSize - 1 > TotalPages)
                     start = Math.Max(1, TotalPages - WindowSize + 1);
-                }
 
                 return start;
             }

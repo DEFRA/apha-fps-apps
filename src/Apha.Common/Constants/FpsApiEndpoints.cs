@@ -37,6 +37,7 @@ namespace Apha.Common.Constants
         public const string GetAllDiseases = "api/v1/disease";
         public const string GetAllCustomers = "api/v1/customer";
         public const string GetAllContracts = "api/v1/contract";
+        public const string GetAllPactContracts = "api/v1/contract/pact";
         public const string GetContractsByUser = "api/v1/contract/by-user";
 
         // Division
@@ -48,12 +49,15 @@ namespace Apha.Common.Constants
         public const string DeleteDivision = "api/v1/division/{0}";
 
         // Grade Maintenance (frmMaintGrade → api/v1/Grade) — added Phase 14
-        // TRANSFORMENGINE: Grade endpoint constants added — FpsGradeApiClient should switch to these from inline literals
         public const string GetPagedGrades = "api/v1/Grade/paged";
         public const string GetGradeById = "api/v1/Grade/{0}";
         public const string CreateGrade = "api/v1/Grade";
         public const string UpdateGrade = "api/v1/Grade/{0}";
         public const string DeleteGrade = "api/v1/Grade/{0}";
+
+        // Total Business Overheads (frmMaintTotalBusinessOverheads)
+        public const string GetTotalBusinessOverheads = "api/v1/totalbusinessoverheads";
+        public const string UpdateTotalBusinessOverheads = "api/v1/totalbusinessoverheads";
 
         // Division Grade
         public const string GetPagedDivisionGrades = "api/v1/DivisionGrade/paged";
@@ -81,6 +85,7 @@ namespace Apha.Common.Constants
         public const string GetAllProjectsPaged = "api/v1/project/paged/all";
         public const string GetAllPactProjects = "api/v1/project/pactview/all";
         public const string GetPagedPactProjects = "api/v1/project/pactview";
+        public const string GetPagedPactProjectsByProgram = "api/v1/project/pactview/by-program?programNo={0}";
         public const string GetProjectById = "api/v1/project/{0}";
         public const string CreateProject = "api/v1/project";
         public const string UpdateProject = "api/v1/project";
@@ -189,15 +194,17 @@ namespace Apha.Common.Constants
 
         // Resource Set-Up — WG Staff
         public const string GetWgStaff = "api/v1/wgstaff?wgGrade={0}";
+        public const string GetWgStaffForStaff = "api/v1/wgstaff/staff?wgGrade={0}";
         public const string GetWgEmployeeById = "api/v1/wgstaff/{0}";
         public const string UpdateWgEmployee = "api/v1/wgstaff";
+        public const string CreateWgEmployeeForStaff = "api/v1/wgstaff/staff";
+        public const string UpdateWgEmployeeForStaff = "api/v1/wgstaff/staff";
         public const string DeleteWgEmployee = "api/v1/wgstaff/{0}";
         public const string DeleteWgGrade = "api/v1/wggrades/{0}";
 
         // Project profitability (merged into project route)
         public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
         public const string GetProjectGroupProfitability = "api/v1/project/profitability/by-project-group/{0}";
-        // TRANSFORMENGINE: new endpoint — Phase 9 API client binds to backend GET api/v1/project/profitability-vla
         public const string GetProjectProfitabilityVla = "api/v1/project/profitability-vla";
 
         // WorkgroupGrade Maintainence
@@ -216,6 +223,16 @@ namespace Apha.Common.Constants
         public const string UpdateBudgetBid = "api/v1/budgetbids";
         public const string DeleteBudgetBid = "api/v1/budgetbids?WorkGroupName={0}&account={1}";
         public const string GetBudgetBidsAccounts = "api/v1/budgetbids/accounts";
+
+        // Income/Contribution from Time Sales (frmTimeSellerPC)
+        public const string GetContributionSummaryRows   = "api/v1/timeseller/{0}/rows";
+        public const string GetContributionSummaryTotals = "api/v1/timeseller/{0}/totals";
+        // Project Audit Trail (frmProjectChangesLog → api/v1/projectaudittrail)
+        public const string GetProjectLogs = "api/v1/projectaudittrail/projectlogs";
+        public const string GetStaffJobLogs = "api/v1/projectaudittrail/staffjoblogs";
+        public const string GetTestRequirementLogs = "api/v1/projectaudittrail/testrequirementlogs";
+        public const string GetAnimalRequestLogs = "api/v1/projectaudittrail/animalrequestlogs";
+        public const string GetAdditionalCostLogs = "api/v1/projectaudittrail/additionalcostlogs";
 
         // Generic Bid — Purchases
         public const string GetGenericPurchases = "api/v1/purchases?WorkGroupName={0}&account={1}";

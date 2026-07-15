@@ -642,6 +642,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             var model = new ValidTimeCodeViewModel
             {
                 WorkGroup = "WG1",
+                Active= true,
                 TimeCode = "TC1",
                 ParentProject = "PRJ001",
                 Project = "PRJ001"

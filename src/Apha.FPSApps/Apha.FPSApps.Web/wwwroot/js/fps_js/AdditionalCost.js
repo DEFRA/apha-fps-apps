@@ -9,7 +9,7 @@ var AdditionalCostConfig = {
 function addAdditionalCost() {
     var jobCode = AdditionalCostConfig.getJobCode();
     if (AdditionalCostConfig.requireJobCodeForAdd && !jobCode) {
-        showGovukAlert('Please select a project first.');
+        showAlertMessage('Please select a project first.', AlertType.INFO);
         return;
     }
 
@@ -21,7 +21,7 @@ function addAdditionalCost() {
             $('#modalPopup').addClass('show');
         },
         error: function () {
-            showGovukAlert('An error occurred while loading the form.');
+            showAlertMessage('An error occurred while loading the form.', AlertType.ERROR);
         }
     });
 }
@@ -44,7 +44,7 @@ function saveAdditionalCost() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
-                showGovukAlert(result.message).then(function () {
+                showAlertMessage(result.message, AlertType.SUCCESS).then(function () {
                     closeModal();
                     AdditionalCostConfig.onSaved();
                 });
@@ -56,7 +56,7 @@ function saveAdditionalCost() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
@@ -77,18 +77,18 @@ function editAdditionalCost(btn) {
             $('#modalPopup').addClass('show');
         },
         error: function () {
-            showGovukAlert('An error occurred while loading the form.');
+            showAlertMessage('An error occurred while loading the form.', AlertType.ERROR);
         }
     });
 }
 
 function updateAdditionalCost() {
     var jobCode = AdditionalCostConfig.getJobCode();    
-    var originalAccount = $('#OriginalAccount').val();
     var data = {
         JobCode: jobCode,
         Description: $('#Description').val(),
-        Account: $('#Account').val() || $('#OriginalAccount').val(),
+        OriginalDescription: $('#OriginalDescription').val(),
+        Account: $('#Account').val(),
         ItemCost: parseFloat($('#ItemCost').val()) || 0,
         Freq: $('#Freq').val(),
         Supplier: $('#Supplier').val()
@@ -101,7 +101,7 @@ function updateAdditionalCost() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
-                showGovukAlert(result.message).then(function () {
+                showAlertMessage(result.message, AlertType.SUCCESS).then(function () {
                     closeModal();
                     AdditionalCostConfig.onUpdated();
                 });
@@ -113,7 +113,7 @@ function updateAdditionalCost() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while updating.');
+                showAlertMessage('An error occurred while updating.', AlertType.ERROR);
             }
         }
     });
@@ -133,15 +133,15 @@ function deleteAdditionalCost(btn) {
             data: { jobCode: jobCode, account: account, description: description },
             success: function (response) {
                 if (response.success) {
-                    showGovukAlert('Deleted successfully.').then(function () {
+                    showAlertMessage('Deleted successfully.', AlertType.SUCCESS).then(function () {
                         AdditionalCostConfig.onDeleted();
                     });
                 } else {
-                    showGovukAlert(response.message);
+                    showAlertMessage(response.message, AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting.');
+                showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
     });
@@ -156,3 +156,46 @@ function closeModal() {
     $('#modaPopupBody').html('');
     $('#modalPopup').removeClass('show');
 }
+
+// ---- Account multi-column dropdown ----
+
+function toggleAccountPanel() {
+    var panel = document.getElementById('AccountDropdownPanel');
+    if (!panel) return;
+    var isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+        var searchBox = document.getElementById('AccountSearchBox');
+        if (searchBox) { searchBox.value = ''; filterAccountPanel(''); searchBox.focus(); }
+    }
+}
+
+function filterAccountPanel(query) {
+    var rows = document.querySelectorAll('#AccountDropdownBody tr');
+    var q = (query || '').toLowerCase();
+    rows.forEach(function (row) {
+        row.style.display = (!q || row.textContent.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
+    });
+}
+
+function selectAccount(value, displayName, rowEl) {
+    var display = document.getElementById('AccountDisplay');
+    if (display) display.value = displayName;
+
+    var select = document.getElementById('Account');
+    if (select) {
+        select.value = value;
+        $(select).trigger('change');
+    }
+
+    var panel = document.getElementById('AccountDropdownPanel');
+    if (panel) panel.style.display = 'none';
+}
+
+// Close panel when clicking outside
+$(document).on('click', function (e) {
+    if (!$(e.target).closest('#AccountDropdownPanel, #AccountDisplay').length) {
+        var panel = document.getElementById('AccountDropdownPanel');
+        if (panel) panel.style.display = 'none';
+    }
+});

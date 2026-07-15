@@ -1,4 +1,3 @@
-
 namespace Apha.FPS.Core.Entities
 {
     public partial class WorkGroupEmployee

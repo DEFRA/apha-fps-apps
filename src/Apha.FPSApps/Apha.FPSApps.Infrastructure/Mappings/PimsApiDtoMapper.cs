@@ -20,6 +20,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Project List
             CreateMap<ProjectListRes, ProjectListViewDto>().ReverseMap();
             CreateMap<ProjectListMilestoneRes, ProjectListMilestoneDto>().ReverseMap();
+            CreateMap<ProjectDetailsMilestoneRes, ProjectDetailsMilestoneDto>().ReverseMap();
 
             // FPS Project Details (read-only)
             CreateMap<ProjectRes, ProjectDto>().ReverseMap();
@@ -83,6 +84,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<LogMilestoneRes, LogMilestoneDto>().ReverseMap();
             CreateMap<RadTrackInvoiceRes, RadTrackInvoiceDto>().ReverseMap();
             CreateMap<RadTrackInvoiceDto, RadTrackInvoiceReq>().ReverseMap();
+
+            // Staging Milestone
+            CreateMap<StagingMilestoneRes, StagingMilestoneDto>().ReverseMap();
+            CreateMap<StagingMilestoneDto, StagingMilestoneReq>().ReverseMap();
         }
     }
 }

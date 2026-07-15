@@ -24,10 +24,6 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<StaffJobView>> GetJobStaffCostAsync(PaginationParameters<string> query, string jobCode)
         {
             var queryStaffJob = await BuildJobStaffCostQueryAsync(jobCode);
-            // Apply filtering
-            queryStaffJob = ApplyStaffJobFilter(queryStaffJob, query.Filter);
-
-            queryStaffJob = ApplySorting(queryStaffJob, query.SortBy, query.Descending);
 
             var result = (await queryStaffJob.ToListAsync())
                 .Select(ComputeStaffCost)
@@ -43,6 +39,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 if (item.StaffID != null && staffNameMap.TryGetValue(item.StaffID, out var name))
                     item.Name = name;
             }
+
+            result = ApplySorting(result, query.SortBy, query.Descending);
+            result = ApplyStaffJobFilterInMemory(result, query.Filter);
 
             return base.ApplyPaging(result, query.Page, query.PageSize);
         }
@@ -316,14 +315,22 @@ namespace Apha.FPS.DataAccess.Repositories
                     }).Distinct().OrderBy(e => e.Name).AsQueryable();
         }
 
-        private static IQueryable<StaffJobView> ApplySorting(IQueryable<StaffJobView> query, string? sortBy, bool descending)
+        private static List<StaffJobView> ApplySorting(List<StaffJobView> list, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
-            {
-                return query;
-            }
+                return list;
 
-            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
+            IEnumerable<StaffJobView> sorted = sortBy.ToLower() switch
+            {
+                "name"         => descending ? list.OrderByDescending(i => i.Name)         : list.OrderBy(i => i.Name),
+                "chargerate"   => descending ? list.OrderByDescending(i => i.ChargeRate)   : list.OrderBy(i => i.ChargeRate),
+                "plannedhours" => descending ? list.OrderByDescending(i => i.PlannedHours) : list.OrderBy(i => i.PlannedHours),
+                "days"         => descending ? list.OrderByDescending(i => i.Days)         : list.OrderBy(i => i.Days),
+                "staffcost"    => descending ? list.OrderByDescending(i => i.StaffCost)    : list.OrderBy(i => i.StaffCost),
+                _              => list
+            };
+
+            return sorted.ToList();
         }
 
         private static IQueryable<StaffJobView> ApplySortingByProperty(IQueryable<StaffJobView> query, string property, bool descending)
@@ -344,29 +351,21 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-        private static IQueryable<StaffJobView> ApplyStaffJobFilter(IQueryable<StaffJobView> queryStaffJob, string? filter)
+        private static List<StaffJobView> ApplyStaffJobFilterInMemory(List<StaffJobView> list, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
-            {
-                return queryStaffJob;
-            }
+                return list;
 
             dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
             if (filterModel == null)
-            {
-                return queryStaffJob;
-            }
+                return list;
 
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("Name", out var name) && name != null)
             {
-                queryStaffJob = queryStaffJob.Where(x => EF.Functions.ILike(x.Name!, $"%{name}%"));
-            }
-
-            if (dict.TryGetValue("PlannedHours", out var plannedHours) && plannedHours != null)
-            {
-                queryStaffJob = queryStaffJob.Where(x => EF.Functions.ILike(x.PlannedHours.ToString(), $"%{plannedHours}%"));
+                var nameStr = name.ToString()!;
+                list = list.Where(x => x.Name != null && x.Name.Contains(nameStr, StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
             return queryStaffJob;

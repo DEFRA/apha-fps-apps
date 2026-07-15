@@ -39,7 +39,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// <summary>
         /// Displays the Programme Manager - a read-only project selection interface
         /// </summary>
-        public async Task<IActionResult> Index(string? programNo = null)
+        public async Task<IActionResult> Index(string? programNo = null, string? projectName = null)
         {
             var programmeList = await GetProgrammeListAsync();
 
@@ -53,11 +53,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 await _appStateService.SetSessionAsync(SessionKeys.SelectedProgramNo, selectedProgramNo);
 
             var defaultRequest = new PaginationFilter<string>();
-            var grid = await BuildProjectsGridAsync(defaultRequest, selectedProgramNo);
+            var grid = await BuildProjectsGridAsync(defaultRequest, selectedProgramNo, projectName);
 
             var model = new ProgrammeSelectViewModel
             {
                 SelectedProgramNo = selectedProgramNo,
+                ProjectName = projectName ?? string.Empty,
                 ProgrammeList = programmeList,
                 ProjectsGrid = grid
             };
@@ -76,19 +77,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadProjectsGrid(PaginationFilter<string> request, string programNo, string? projectSearch = null)
+        public async Task<IActionResult> LoadProjectsGrid(PaginationFilter<string> request, string programNo, string? projectName = null)
         {
             if (!ModelState.IsValid || string.IsNullOrWhiteSpace(programNo))
                 return BadRequest(ModelState);
 
-            // projectSearch may arrive as a standalone param or inside request.Filter as JSON
-            if (string.IsNullOrWhiteSpace(projectSearch) && !string.IsNullOrWhiteSpace(request.Filter))
+            // projectName may arrive as a standalone param or inside request.Filter as JSON
+            if (string.IsNullOrWhiteSpace(projectName) && !string.IsNullOrWhiteSpace(request.Filter))
             {
                 var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter);
-                filterDict?.TryGetValue("projectSearch", out projectSearch);
+                filterDict?.TryGetValue("projectName", out projectName);
             }
 
-            var gridConfig = await BuildProjectsGridAsync(request, programNo, projectSearch);
+            var gridConfig = await BuildProjectsGridAsync(request, programNo, projectName);
 
             return PartialView("_DataGrid", gridConfig);
         }
@@ -113,13 +114,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         private async Task<DataGridConfig<ProgrammeSelectProjectItem>> BuildProjectsGridAsync(
-            PaginationFilter<string> request, string programNo, string? projectSearch = null)
+            PaginationFilter<string> request, string programNo, string? projectName = null)
         {
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
 
-            // Pass projectSearch as a server-side filter so the API filters before paging
-            if (!string.IsNullOrWhiteSpace(projectSearch))
-                queryParameters.Filter = JsonConvert.SerializeObject(new { ParentProject = projectSearch });
+            // Pass projectName as a server-side filter so the API filters before paging
+            if (!string.IsNullOrWhiteSpace(projectName))
+                queryParameters.Filter = JsonConvert.SerializeObject(new { ParentProject = projectName });
 
             var response = !string.IsNullOrWhiteSpace(programNo)
                 ? await _projectService.GetProjectsByProgramAsync(queryParameters, programNo)

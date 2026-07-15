@@ -58,42 +58,26 @@ $(document).ready(function () {
         }
     });
 
-    // ── Check for portfolio parameter and auto-select ─────────────────────
-    var urlParams = new URLSearchParams(window.location.search);
-    var portfolioParam = urlParams.get('portfolio');
+    // ── Check for preselected value (ViewBag) or URL parameter and auto-select ──
+    var selectedFromViewBag = (typeof preselectedPortfolio !== 'undefined' && preselectedPortfolio)
+        ? String(preselectedPortfolio)
+        : '';
 
-    if (portfolioParam) {
-        // Use a slight delay to ensure all event handlers are fully bound
-        setTimeout(function() {
-            // Find the matching row in the dropdown
-            var $matchingRow = $rows.filter(function() {
-                return $(this).data('value') === portfolioParam;
-            });
+    if (selectedFromViewBag && portfolioSelectDropdown) {
+        portfolioSelectDropdown.setValue(selectedFromViewBag);
+    } else {
+        var urlParams = new URLSearchParams(window.location.search);
+        var portfolioParam = urlParams.get('portfolio');
 
-            if ($matchingRow.length > 0) {
-                // Manually simulate the row click behavior
-                var value = $matchingRow.data('value');
-                var label = $matchingRow.data('label');
-
-                // Update the input display value
-                $input.val(label || value);
-
-                // Close the panel
-                $panel.removeClass('open');
-
-                // Clear search
-                $('#portfolioDropdownPanel .select-search-box').val('');
-                $rows.show();
-
-                // Load the portfolio data
-                loadPortfolioData(value);
-            }
-        }, 100);
+        if (portfolioParam && portfolioSelectDropdown) {
+            portfolioSelectDropdown.setValue(portfolioParam);
+        }
     }
 
     // ── Save portfolio form ───────────────────────────────────────────────────
     $('#btnSavePortfolio').on('click', function () {
         clearValidationErrors('#portfolioDetailForm');
+
         var payload = {
             parentProject: $('#hdnParentProject').val(),
             projectTitle: $('#txtProjectTitle').val(),
@@ -113,11 +97,15 @@ $(document).ready(function () {
         }).done(function (res) {
             if (res.success) {
                 clearValidationErrors('#portfolioDetailForm');
-                alert(res.message || 'Saved successfully.');
+                showAlertMessage(res.message || 'Portfolio saved successfully.', AlertType.SUCCESS)
+                    .then(function () {
+                        let selectedparentProject = $('#hdnParentProject').val();
+                        loadPortfolioData(selectedparentProject);
+                    });
             } else {
                 displayServerValidationErrors(res.errors, res.message, '#portfolioDetailForm');
             }
-        }).fail(function () { alert('An error occurred while saving.'); });
+        }).fail(function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); });
     });
 
     // ── Portfolio Time Codes button ───────────────────────────────────────────
@@ -126,7 +114,7 @@ $(document).ready(function () {
         e.stopPropagation(); // Stop event bubbling
 
         if (!currentParentProject) {
-            alert('Please select a portfolio first.');
+            showAlertMessage('Please select a portfolio first.', AlertType.INFO);
             return;
         }
 
@@ -169,6 +157,18 @@ $(document).ready(function () {
 // ── Wrap a plain message string into the errors-array format ─────────────
 function errMsg(msg) { return [{ field: '', message: msg }]; }
 
+function formatToTwoDecimals(value) {
+    if (value === null || value === undefined) return '';
+
+    var text = String(value).trim();
+    if (!text) return '';
+
+    var numberValue = Number(text);
+    if (Number.isNaN(numberValue)) return text;
+
+    return numberValue.toFixed(2);
+}
+
 // ── Update a nav link href, preserving existing query params ─────────────
 function updateNavHref(id, parentProject) {
     var current = $(id).attr('href') || '';
@@ -198,8 +198,8 @@ function loadPortfolioData(parentProject) {
                 $('#chkFinished').prop('checked', d.finished === -1 || d.finished === true);
                 $('#dpProgramme').val(d.program || '');
                 $('#dpManager').val(d.manager || '');
-                $('#txtBudgetCvl').val(d.budgetCvl || '');
-                $('#txtTransferIncome').val(d.transferIncome || '');
+                $('#txtBudgetCvl').val(formatToTwoDecimals(d.budgetCvl || '0'));
+                $('#txtTransferIncome').val(formatToTwoDecimals(d.transferIncome || '0'));
                 $('#txtComments').val(d.comments || '');
 
                 // Update sidebar nav links — preserves existing query params (e.g. year)
@@ -210,10 +210,10 @@ function loadPortfolioData(parentProject) {
                 resetFormButtons(true);
                 loadConstituentTestGrid(parentProject);
             } else {
-                showGovukAlert(res.message || 'Portfolio not found.');
+                showAlertMessage(res.message || 'Portfolio not found.', AlertType.ERROR);
             }
         })
-        .fail(function () { alert('An error occurred while loading portfolio data.'); });
+        .fail(function () { showAlertMessage('An error occurred while loading portfolio data.', AlertType.ERROR); });
 }
 
 // ── Enable/disable buttons ───────────────────────────────────────────────
@@ -251,7 +251,7 @@ function loadConstituentTestGrid(parentProject, page, pageSize, sortBy, desc) {
             $('#txtSelectedPortfolioTest').val('');
             loadTimeCodeGrid(parentProject, '');
         }
-    }).fail(function () { alert('An error occurred while loading constituent tests.'); });
+    }).fail(function () {showAlertMessage('An error occurred while loading constituent tests.', AlertType.ERROR); });
 }
 
 function addConstituentTest() {
@@ -283,11 +283,11 @@ function saveConstituentTest() {
         if (res.success) {
             $('#modalPopup').removeClass('show');
             loadConstituentTestGrid(currentParentProject);
-            alert(res.message || 'Test added.');
+            showAlertMessage(res.message || 'Test added successfully.', AlertType.SUCCESS);
         } else {
             displayServerValidationErrors(res.errors, res.message, '#formAddTest');
         }
-    }).fail(function () { alert('An error occurred while saving.'); });
+    }).fail(function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); });
 }
 
 function deleteConstituentTest(btn) {
@@ -307,11 +307,11 @@ function deleteConstituentTest(btn) {
                     $('#txtSelectedPortfolioTest').val('');
                     loadTimeCodeGrid(currentParentProject, '');
                 }
-                showGovukAlert(res.message || 'Deleted.');
+                showAlertMessage(res.message || 'Test deleted successfully.', AlertType.SUCCESS);
             } else {
-                showGovukAlert('Error: ' + (res.message || 'Delete failed.'));
+                showAlertMessage('Error: ' + (res.message || 'Delete failed.'), AlertType.ERROR);
             }
-        }).fail(function () { showGovukAlert('An error occurred while deleting.'); });
+        }).fail(function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); });
     });
 }
 
@@ -353,7 +353,7 @@ function loadTimeCodeGrid(parentProject, testCode, page, pageSize) {
         data: payload
     }).done(function (html) {
         $('#gridContainer_portfolioTimeCodeGrid').html(html);
-    }).fail(function () { alert('An error occurred while loading work groups.'); });
+    }).fail(function () { showAlertMessage('An error occurred while loading work groups.', AlertType.ERROR); });
 }
 
 function addPortfolioTimeCode() {
@@ -388,11 +388,11 @@ function savePortfolioTimeCode() {
         if (res.success) {
             $('#modalPopup').removeClass('show');
             loadTimeCodeGrid(currentParentProject, currentTestCode);
-            alert(res.message || 'Work group added.');
+            showAlertMessage(res.message || 'Work group added successfully.', AlertType.SUCCESS);
         } else {
             displayServerValidationErrors(res.errors, res.message, '#timeCodeForm');
         }
-    }).fail(function () { alert('An error occurred while saving.'); });
+    }).fail(function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); });
 }
 
 function editPortfolioTimeCode(btn) {
@@ -429,11 +429,11 @@ function updatePortfolioTimeCode() {
         if (res.success) {
             $('#modalPopup').removeClass('show');
             loadTimeCodeGrid(currentParentProject, currentTestCode);
-            alert(res.message || 'Work group updated.');
+            showAlertMessage(res.message || 'Work group updated successfully.', AlertType.SUCCESS);
         } else {
             displayServerValidationErrors(res.errors, res.message, '#timeCodeForm');
         }
-    }).fail(function () { alert('An error occurred while saving.'); });
+    }).fail(function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); });
 }
 
 function deletePortfolioTimeCode(btn) {
@@ -448,11 +448,11 @@ function deletePortfolioTimeCode(btn) {
         }).done(function (res) {
             if (res.success) {
                 loadTimeCodeGrid(currentParentProject, currentTestCode);
-                showGovukAlert(res.message || 'Deleted.');
+                showAlertMessage(res.message || 'Time Code deleted successfully.', AlertType.SUCCESS);
             } else {
-                showGovukAlert('Error: ' + (res.message || 'Delete failed.'));
+                showAlertMessage('Error: ' + (res.message || 'Delete failed.'), AlertType.ERROR);
             }
-        }).fail(function () { showGovukAlert('An error occurred while deleting.'); });
+        }).fail(function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); });
     });
 }
 

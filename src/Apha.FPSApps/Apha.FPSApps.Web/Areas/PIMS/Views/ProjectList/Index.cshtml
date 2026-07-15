@@ -1,4 +1,4 @@
-﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.PIMS.Models.ProjectListViewModel
 
 @{
@@ -26,6 +26,7 @@
                                 </div>
                                 <div>
                                     <div class="govuk-radios govuk-radios--inline govuk-radios govuk-radios--small" data-module="govuk-radios">
+                                        <div class="govuk-!-padding-top-2 govuk-!-padding-right-5">Show Which Project?</div>
                                         <div class="govuk-radios__item">
                                             <input class="govuk-radios__input"
                                                    type="radio"
@@ -57,7 +58,7 @@
                         </div>
 
                         <!-- Grid Container -->
-                        <div id="@($"gridContainer_{Model.ProjectGrid.GridId}")">
+                        <div class = "isProjectList" id="@($"gridContainer_{Model.ProjectGrid.GridId}")">
                             @await Html.PartialAsync("_DataGrid", Model.ProjectGrid)
                         </div>
 
@@ -75,11 +76,11 @@
         $(document).ready(function () {
             @if (TempData["SuccessMessage"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["SuccessMessage"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["SuccessMessage"])', AlertType.SUCCESS);</text>
             }
             @if (TempData["Error"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Error"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["Error"])', AlertType.ERROR);</text>
             }
 
             $('#addBtn').on('click', function () {
