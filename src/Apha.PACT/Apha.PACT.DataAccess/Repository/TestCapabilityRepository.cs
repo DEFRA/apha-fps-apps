@@ -108,8 +108,7 @@ namespace Apha.PACT.DataAccess.Repository
             var entity = await _context.TestCapabilities
                 .FirstOrDefaultAsync(t =>
                     t.TestCode == testCode &&
-                    t.WorkGroup == workGroup &&
-                    t.FpsYear == _fpsRequestContext.FpsYear);
+                    t.WorkGroup == workGroup);
 
             if (entity is null) return false;
 

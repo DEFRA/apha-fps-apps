@@ -72,7 +72,6 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
 
             // Grade CRUD: maps frontend GradeDto to/from backend GradeReq (POST/PUT) and GradeRes (GET/POST/PUT responses)
-            // Grade Mappings
             CreateMap<GradeDto, GradeReq>().ReverseMap();
             CreateMap<GradeDto, GradeRes>().ReverseMap();
 
@@ -136,7 +135,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Job Code (ZT lookup) - now served from PACT API
             CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
-                      
+
 
             // Income/Contribution from Time Sales (frmTimeSellerPC)
             CreateMap<ContributionSummaryRowDto, ContributionSummaryRowRes>().ReverseMap();
@@ -174,10 +173,16 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<UserPermissionDataDto, UserPermissionRes>().ReverseMap();
             CreateMap<UserPermissionDataDto, UserPermissionReq>().ReverseMap();
             CreateMap<PermissionOptionsDto, PermissionOptionsRes>().ReverseMap();
-
+            
             // Total Business Overheads
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
+
+            //  TestListVLA
+            CreateMap<TestRCCostDto, TestRCCostRes>().ReverseMap();
+            CreateMap<TestRCCostDto, TestRCCostReq>().ReverseMap();
+            CreateMap<TestRequirementRCCostDto, TestRequirementRCCostRes>().ReverseMap();
+            CreateMap<TestRequirementRCCostDto, TestRequirementRCCostReq>().ReverseMap();
 
         }
     }

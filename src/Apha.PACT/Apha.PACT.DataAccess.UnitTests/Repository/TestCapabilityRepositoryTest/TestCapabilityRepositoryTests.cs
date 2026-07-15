@@ -1403,5 +1403,6 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
         }
 
         #endregion
-    }
-}
+
+            }
+        }
