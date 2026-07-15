@@ -81,7 +81,12 @@ namespace Apha.PACT.DataAccess.Repository
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.TestCode == testCode && t.WorkGroup == workGroup);
         }
-
+        public async Task<TestCapability?> HasRelatedTestCapabilitiesValidRecordsAsync(string testCode)
+        {
+            return await _context.TestCapabilities
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.TestCode.ToLower() == testCode.ToLower());
+        }
         public async Task<TestCapability> AddAsync(TestCapability entity)
         {
             entity.FpsYear = _fpsRequestContext.FpsYear;

@@ -138,7 +138,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.Projects
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.ParentProject == parentProject);
+                .FirstOrDefaultAsync(p => p.ParentProject.ToLower() == parentProject.ToLower());
         }
 
         public async Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query)
@@ -864,7 +864,7 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 TestCode        = tr.TestCode,
                 Buyer           = tr.Buyer,
-                UnitPrice       = tr.UnitPrice,
+                UnitPrice       = (double?)tr.UnitPrice,
                 NoRequired      = tr.NoRequired,
                 ProjectBuyerCode = tr.ProjectBuyerCode,
                 TestBuyerCode   = tr.TestBuyerCode,
@@ -1097,7 +1097,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 {
                     TestCode        = tr.TestCode,
                     Buyer           = tr.Buyer,
-                    UnitPrice       = tr.UnitPrice,
+                    UnitPrice       = (double?)tr.UnitPrice,
                     NoRequired      = tr.NoRequired,
                     ProjectBuyerCode = tr.ProjectBuyerCode,
                     TestBuyerCode   = tr.TestBuyerCode,
@@ -1211,7 +1211,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 {
                     TestCode         = tr.TestCode,
                     Buyer            = tr.Buyer,
-                    UnitPrice        = tr.UnitPrice,
+                    UnitPrice        = (double?)tr.UnitPrice,
                     NoRequired       = tr.NoRequired,
                     ProjectBuyerCode = tr.ProjectBuyerCode,
                     TestBuyerCode    = tr.TestBuyerCode,

@@ -1,10 +1,8 @@
-using Apha.Common.Contracts;
+﻿using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
-using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
-
 using Apha.FPSApps.Application.Pagination;
 using AutoMapper;
 namespace Apha.FPSApps.Infrastructure.Mappings
@@ -73,6 +71,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
             CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
 
+            // Grade CRUD: maps frontend GradeDto to/from backend GradeReq (POST/PUT) and GradeRes (GET/POST/PUT responses)
             // Grade Mappings
             CreateMap<GradeDto, GradeReq>().ReverseMap();
             CreateMap<GradeDto, GradeRes>().ReverseMap();
@@ -114,6 +113,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
 
             // ProjectProfitabilityVla
+            //   ForMember(Id) handles int->int? coercion: Id=GetValueOrDefault(0) on reverse.
+            //   TotalCount is on Res only; silently ignored in Res->Dto direction (see DEFERRED note above).
             CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaRes>()
                 .ForMember(d => d.Project, o => o.MapFrom(s => s.JobCode))
                 .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.GetValueOrDefault(0)))
@@ -130,12 +131,16 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
 
-            // WorkgroupGrade  
+            // WorkgroupGrade
             CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
 
             // Job Code (ZT lookup) - now served from PACT API
             CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
                       
+
+            // Income/Contribution from Time Sales (frmTimeSellerPC)
+            CreateMap<ContributionSummaryRowDto, ContributionSummaryRowRes>().ReverseMap();
+            CreateMap<ContributionSummaryTotalsDto, ContributionSummaryTotalsRes>().ReverseMap();
 
             // BudgetResourceLevel
             CreateMap<BidDto, BidReq>().ReverseMap();
@@ -144,6 +149,25 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
+            // Audit logs are read-only so no .ReverseMap() — frontend never writes back to backend audit tables.
+            CreateMap<ProjectLogRes, ProjectLogDto>()
+                .ForMember(d => d.CaseWorkSub, o => o.MapFrom(s => s.CaseworkSub))
+                .ForMember(d => d.PlanCaseWorkDebit, o => o.MapFrom(s => s.PlanCaseworkDebit));
+
+            // StaffJobLog: Res.Name (staff display name resolved server-side) maps to Dto.Name by convention.
+            CreateMap<StaffJobLogRes, StaffJobLogDto>();
+
+            // TestRequirementLog: type-coercion — Res.UnitPrice is double? but Dto.UnitPrice is decimal?;
+            //   Res.NoRequired is int? but Dto.NoRequired is double?. Explicit ForMember casts applied.
+            CreateMap<TestRequirementLogRes, TestRequirementLogDto>()
+                .ForMember(d => d.UnitPrice, o => o.MapFrom(s => s.UnitPrice.HasValue ? (decimal?)Convert.ToDecimal(s.UnitPrice.Value) : null))
+                .ForMember(d => d.NoRequired, o => o.MapFrom(s => s.NoRequired.HasValue ? (double?)Convert.ToDouble(s.NoRequired.Value) : null));
+
+            // AnimalRequestLog: all property names and types align — convention mapping suffices.
+            CreateMap<AnimalRequestLogRes, AnimalRequestLogDto>();
+
+            // AdditionalCostLog: all property names and types align — convention mapping suffices.
+            CreateMap<AdditionalCostLogRes, AdditionalCostLogDto>();
             // UserPermission
             CreateMap<UserDto, UserRes>().ReverseMap();
             CreateMap<UserDto, UserReq>().ReverseMap();
