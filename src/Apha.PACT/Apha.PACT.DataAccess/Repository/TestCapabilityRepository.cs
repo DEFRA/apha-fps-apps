@@ -38,7 +38,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<PagedData<TestCapability>> GetPagedByTestCodeAsync(
             PaginationParameters<string> query, string? testCode)
-         {
+        {
             var baseQuery = _context.TestCapabilities.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(testCode))
@@ -81,12 +81,14 @@ namespace Apha.PACT.DataAccess.Repository
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.TestCode == testCode && t.WorkGroup == workGroup);
         }
+
         public async Task<TestCapability?> HasRelatedTestCapabilitiesValidRecordsAsync(string testCode)
         {
             return await _context.TestCapabilities
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.TestCode.ToLower() == testCode.ToLower());
         }
+
         public async Task<TestCapability> AddAsync(TestCapability entity)
         {
             entity.FpsYear = _fpsRequestContext.FpsYear;
@@ -108,7 +110,8 @@ namespace Apha.PACT.DataAccess.Repository
             var entity = await _context.TestCapabilities
                 .FirstOrDefaultAsync(t =>
                     t.TestCode == testCode &&
-                    t.WorkGroup == workGroup);
+                    t.WorkGroup == workGroup &&
+                    t.FpsYear == _fpsRequestContext.FpsYear);
 
             if (entity is null) return false;
 
