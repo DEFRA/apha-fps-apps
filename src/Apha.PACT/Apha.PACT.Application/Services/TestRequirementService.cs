@@ -142,5 +142,14 @@ namespace Apha.PACT.Application.Services
 
             return await _testReqmtRepository.DeleteAsync(testCode, buyer);
         }
+
+        // ── TestReqBreakdown (fps.vtestreqbreakdown) ──────────────────────────────
+
+        public async Task<PaginatedResult<TestReqBreakdownDto>> GetPlannedTestsByWorkgroupAsync(QueryParameters<string> query)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _testReqmtRepository.GetPlannedTestsByWorkgroupAsync(parameters);
+            return _mapper.Map<PaginatedResult<TestReqBreakdownDto>>(pagedData);
+        }
     }
 }
