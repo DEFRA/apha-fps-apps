@@ -253,9 +253,19 @@
                                     else
                                     {
                                         <td data-property="@column.PropertyName" data-type="@column.ColumnType" class="govuk-table__cell">
-                                            <span name="@column.PropertyName"
-                                                  id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")"
-                                                  class="@GridHelpers.GetTypeCssClass(column)">@GridHelpers.FormatValue(value, column)</span>
+                                            @if (column.CssClass.Contains("grid-column-truncate-tooltip"))
+                                            {
+                                                <span name="@column.PropertyName"
+                                                      id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")"
+                                                      class="@GridHelpers.GetTypeCssClass(column) @column.CssClass"
+                                                      title="@GridHelpers.FormatValue(value, column)">@GridHelpers.FormatValue(value, column)</span>
+                                            }
+                                            else
+                                            {
+                                                <span name="@column.PropertyName"
+                                                      id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")"
+                                                      class="@GridHelpers.GetTypeCssClass(column) @column.CssClass">@GridHelpers.FormatValue(value, column)</span>
+                                            }
                                         </td>
                                     }
                                 }

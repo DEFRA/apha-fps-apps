@@ -90,6 +90,12 @@ namespace Apha.Common.Constants
         public const string GetFpsProjectSubContracts = "api/v1/projectsubcontract/animals";
         public const string GetFpsProjectSubContractTotalAmount = "api/v1/projectsubcontract/animals/total";
         public const string GetMonthlySubContractsSummary = "api/v1/projectsubcontract/monthly-summary";
+        public const string GetFailedProjectSubContractRms = "api/v1/projectsubcontract/rms/failed";
+        public const string GetFailedProjectSubContractRmsById = "api/v1/projectsubcontract/rms/failed/{id}";
+        public const string SaveFailedProjectSubContractRms = "api/v1/projectsubcontract/rms/failed/{id}";
+        public const string DeleteFailedProjectSubContractRmsById = "api/v1/projectsubcontract/rms/failed/{id}";
+        public const string DeleteFailedProjectSubContractRmsByUser = "api/v1/projectsubcontract/rms/failed/user";
+        public const string ImportProjectSubContractRms = "api/v1/projectsubcontract/rms/import";
 
         // WorkGroup Test Capability
         public const string GetPagedTestCapabilityByWorkGroup = "api/v1/testcapability/paged/workgroup";

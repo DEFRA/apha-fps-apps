@@ -52,6 +52,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
         public virtual DbSet<Program> Programs { get; set; }
         public virtual DbSet<TestReqBreakdownView> TestReqBreakdownViews { get; set; }
+        public virtual DbSet<ProjectSubcontractStaging> ProjectSubcontractStagings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -156,6 +157,7 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new TestReqBreakdownViewMap());
             modelBuilder.Entity<TestReqBreakdownView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new ProjectSubcontractStagingMap());
         }
     }
 }
