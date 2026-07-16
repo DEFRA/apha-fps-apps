@@ -21,5 +21,6 @@
         IPactRecreateAndReleaseSummaryLogApiClient PactRecreateSummaryLog { get; }
         IPactReleaseSummaryApiClient PactReleaseSummary { get; }
         IPactBosworthInterfaceApiClient PactBosworthInterface { get; }
+        IPactTestActualBreakdownApiClient PactTestActualBreakdown { get; }
     }
 }

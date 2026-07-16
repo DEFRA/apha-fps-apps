@@ -104,6 +104,9 @@ namespace Apha.Common.Constants
         // Test Requirement Breakdown
         public const string GetPagedTestReqBreakdown = "api/v1/testrequirement/testreqbreakdown";
 
+        // Test Actual Breakdown
+        public const string GetPagedTestActualBreakdown = "api/v1/testactualbreakdown/paged";
+
         // Test Requirement
         public const string GetPagedTestReqmt = "api/v1/testrequirement/paged/{0}";
         public const string GetPagedBySupplierTestCode = "api/v1/testrequirement/supplier/paged/{0}";

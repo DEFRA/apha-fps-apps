@@ -40,6 +40,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IMonthlyTimeService, MonthlyTimeService>();
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
             services.AddScoped<IBosworthInterfaceService, BosworthInterfaceService>();
+            services.AddScoped<ITestActualBreakdownService, TestActualBreakdownService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -63,6 +64,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();
             services.AddScoped<IRecreateAndReleaseSummaryRepository, RecreateAndReleaseSummaryRepository>();
             services.AddScoped<IBosworthInterfaceRepository, BosworthInterfaceRepository>();
+            services.AddScoped<ITestActualBreakdownRepository, TestActualBreakdownRepository>();
 
             return services;
         }

@@ -66,6 +66,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TestSaleBuyingProjectDto, TestSaleBuyingProjectRes>().ReverseMap();
             CreateMap<WgTestCapabilitiesWithDescriptionDto, WgTestCapabilitiesWithDescriptionRes>().ReverseMap();
             CreateMap<TestReqBreakdownRes, TestReqBreakdownDto>().ReverseMap();
+            CreateMap<TestActualBreakdownRes, TestActualBreakdownDto>().ReverseMap();
         }
     }
 }

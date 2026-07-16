@@ -71,6 +71,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<TestSaleBuyingProjectDto, TestSaleBuyingProjectRes>();
             CreateMap<WgTestCapabilitiesWithDescriptionDto, WgTestCapabilitiesWithDescriptionRes>();
             CreateMap<TestReqBreakdownDto, TestReqBreakdownRes>().ReverseMap();
+            CreateMap<TestActualBreakdownDto, TestActualBreakdownRes>().ReverseMap();
         }
     }
 }

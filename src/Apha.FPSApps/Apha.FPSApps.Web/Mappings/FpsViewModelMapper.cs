@@ -23,6 +23,7 @@ namespace Apha.FPSApps.Web.Mappings
                 .ReverseMap()
                 .ForMember(d => d.PC, o => o.MapFrom(s => s.Pc))
                 .ForMember(d => d.WGPrice, o => o.MapFrom(s => s.WgPrice));
+            CreateMap<TestActualBreakdownItem, TestActualBreakdownDto>().ReverseMap();
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
             CreateMap<AnimalMaintenanceViewModel, AnimalDto>().ReverseMap();
             CreateMap<UserPermissionViewModel, UserDto>().ReverseMap();
