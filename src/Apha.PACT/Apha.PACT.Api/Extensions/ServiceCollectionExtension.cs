@@ -1,4 +1,5 @@
 ﻿using Apha.Common.Utilities.Email;
+using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.ExcelImport;
 using Apha.Common.Utilities.StateManagement;
@@ -42,6 +43,9 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IMonthlyTimeService, MonthlyTimeService>();
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
             services.AddScoped<IBosworthInterfaceService, BosworthInterfaceService>();
+            services.AddScoped<IBatchJobService, BatchJobService>();
+            services.AddSingleton<IEventPublisherService, EventBridgePublisherService>();
+
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -65,6 +69,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();
             services.AddScoped<IRecreateAndReleaseSummaryRepository, RecreateAndReleaseSummaryRepository>();
             services.AddScoped<IBosworthInterfaceRepository, BosworthInterfaceRepository>();
+            services.AddScoped<IBatchJobRepository, BatchJobRepository>();
 
             return services;
         }

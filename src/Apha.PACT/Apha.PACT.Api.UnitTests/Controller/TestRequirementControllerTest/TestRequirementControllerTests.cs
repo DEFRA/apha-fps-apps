@@ -428,5 +428,90 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestRequirementControllerTest
         }
 
         #endregion
+
+        #region GetPlannedTestsByWorkgroup
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroup_HappyPath_ReturnsOkWithMappedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<TestReqBreakdownDto>(
+                [new TestReqBreakdownDto { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01" }],
+                new PaginationDto());
+            var mapped = new PaginationRes<TestReqBreakdownRes>();
+
+            _service.GetPlannedTestsByWorkgroupAsync(query).Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestReqBreakdownRes>>(serviceResult).Returns(mapped);
+
+            var result = await _controller.GetPlannedTestsByWorkgroup(query);
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            ok.Value.Should().Be(mapped);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroup_EmptyResult_ReturnsOkWithEmptyResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<TestReqBreakdownDto>([], new PaginationDto());
+            var mapped = new PaginationRes<TestReqBreakdownRes>();
+
+            _service.GetPlannedTestsByWorkgroupAsync(query).Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestReqBreakdownRes>>(serviceResult).Returns(mapped);
+
+            var result = await _controller.GetPlannedTestsByWorkgroup(query);
+
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroup_CallsServiceWithCorrectQuery()
+        {
+            var query = new QueryParameters<string> { Page = 2, PageSize = 20 };
+            var serviceResult = new PaginatedResult<TestReqBreakdownDto>([], new PaginationDto());
+            var mapped = new PaginationRes<TestReqBreakdownRes>();
+
+            _service.GetPlannedTestsByWorkgroupAsync(query).Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestReqBreakdownRes>>(serviceResult).Returns(mapped);
+
+            await _controller.GetPlannedTestsByWorkgroup(query);
+
+            await _service.Received(1).GetPlannedTestsByWorkgroupAsync(query);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroup_ServiceThrows_PropagatesException()
+        {
+            var query = new QueryParameters<string>();
+            _service.GetPlannedTestsByWorkgroupAsync(query)
+                .ThrowsAsync(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() =>
+                _controller.GetPlannedTestsByWorkgroup(query));
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroup_WithMultipleItems_ReturnsMappedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dtos = new List<TestReqBreakdownDto>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", WgPrice = 10m, TotalCost = 50m },
+                new() { TestCode = "URINE", Project = "PRJ002", WorkG = "WG02", WgPrice = 5m,  TotalCost = 25m }
+            };
+            var serviceResult = new PaginatedResult<TestReqBreakdownDto>(dtos, new PaginationDto());
+            var mapped = new PaginationRes<TestReqBreakdownRes>();
+
+            _service.GetPlannedTestsByWorkgroupAsync(query).Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestReqBreakdownRes>>(serviceResult).Returns(mapped);
+
+            var result = await _controller.GetPlannedTestsByWorkgroup(query);
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            ok.Value.Should().Be(mapped);
+            await _service.Received(1).GetPlannedTestsByWorkgroupAsync(query);
+        }
+
+        #endregion
     }
 }

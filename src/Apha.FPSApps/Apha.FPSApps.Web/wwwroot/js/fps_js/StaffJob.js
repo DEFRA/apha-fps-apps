@@ -19,14 +19,17 @@ function addStaffJob(btn) {
         showAlertMessage('Please select a project first.', AlertType.INFO);
         return;
     }
+    showLoader();
     $.ajax({
         url: '/FPS/StaffJob/Create',
         type: 'GET',
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            hideLoader();
         },
         error: function (xhr) {
+            hideLoader();
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
@@ -42,6 +45,7 @@ function saveStaffJob() {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;
     }
+    showLoader();
     var staffId = $('#StaffID').val();
     var staffName = $('#Name').val();
     var data = {
@@ -59,6 +63,7 @@ function saveStaffJob() {
         data: JSON.stringify(data),
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
+            hideLoader();
             if (result.success) {
                 closeModal();
                 showAlertMessage(result.message, AlertType.SUCCESS).then(function () {                    
@@ -69,6 +74,7 @@ function saveStaffJob() {
             }
         },
         error: function (xhr) {
+            hideLoader();
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
@@ -79,6 +85,7 @@ function saveStaffJob() {
 }
 
 function editStaffJob(btn) {
+    showLoader();
     var staffJobId = $(btn).data('id');
     $.ajax({
         url: '/FPS/StaffJob/Edit',
@@ -87,8 +94,10 @@ function editStaffJob(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            hideLoader();
         },
         error: function (xhr) {
+            hideLoader();
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
@@ -104,6 +113,7 @@ function updateStaffJob() {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;
     }
+    showLoader();
     var staffId = $('#StaffID').val();
     var jobCode = form.find('[name="JobCode"]').val();
     var staffName = $('#Name').val();
@@ -122,6 +132,7 @@ function updateStaffJob() {
         data: JSON.stringify(data),
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
+            hideLoader();
             if (result.success) {
                 closeModal();
                 showAlertMessage(result.message, AlertType.SUCCESS).then(function () {                   
@@ -132,6 +143,7 @@ function updateStaffJob() {
             }
         },
         error: function (xhr) {
+            hideLoader();
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
@@ -142,14 +154,17 @@ function updateStaffJob() {
 }
 
 function deleteStaffJob(btn) {
+
     var staffJobId = $(btn).data('id');
     showGovukConfirm('Are you sure you want to delete this record?').then(function (confirmed) {
         if (!confirmed) { return; }
+        showLoader();
         $.ajax({
             url: '/FPS/StaffJob/Delete',
             type: 'DELETE',
             data: { staffId: staffJobId, jobCode: StaffJobConfig.getJobCode() },
             success: function (response) {
+                hideLoader();
                 if (response.success) {
                     showAlertMessage('Deleted successfully.', AlertType.SUCCESS).then(function () {
                         StaffJobConfig.onDeleted();
@@ -159,6 +174,7 @@ function deleteStaffJob(btn) {
                 }
             },
             error: function () {
+                hideLoader();
                 showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
@@ -169,13 +185,58 @@ function getStaffJobExtraFilters() {
     return { jobCode: StaffJobConfig.getJobCode() };
 }
 
+// ---- Staff panel dropdown ----
+
+function toggleStaffPanel() {
+    var panel = document.getElementById('StaffDropdownPanel');
+    if (!panel) return;
+    var isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+        var searchBox = document.getElementById('StaffSearchBox');
+        if (searchBox) { searchBox.value = ''; filterStaffPanel(''); searchBox.focus(); }
+    }
+}
+
+function filterStaffPanel(query) {
+    var rows = document.querySelectorAll('#StaffDropdownBody tr');
+    var q = (query || '').toLowerCase();
+    rows.forEach(function (row) {
+        var name  = (row.getAttribute('data-name') || '').toLowerCase();
+        row.style.display = (!q || name.indexOf(q) !== -1) ? '' : 'none';
+    });
+}
+
+function selectStaff(staffId, staffName, rowEl) {
+    // Update display input
+    var display = document.getElementById('StaffDisplay');
+    if (display) display.value = staffName;
+
+    // Update hidden select so onStaffSelected fires with the correct value
+    var select = document.getElementById('Name');
+    if (select) {
+        select.value = staffId;
+        $(select).trigger('change');
+    }
+
+    // Close panel
+    var panel = document.getElementById('StaffDropdownPanel');
+    if (panel) panel.style.display = 'none';
+}
+
+// Close panel when clicking outside
+$(document).on('click', function (e) {
+    if (!$(e.target).closest('#StaffDropdownPanel, #StaffDisplay').length) {
+        var panel = document.getElementById('StaffDropdownPanel');
+        if (panel) panel.style.display = 'none';
+    }
+});
+
 // ---- Charge rate calculation ----
 
 function onStaffSelected(selectElement) {
     var staffId = $(selectElement).val();
-    var staffName = $(selectElement).find('option:selected').data('name');
     $('#StaffID').val(staffId);
-   
     if (staffId) {
         fetchChargeRate(staffId);
     }

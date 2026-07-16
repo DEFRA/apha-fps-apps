@@ -58,6 +58,13 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<TestSaleSellingWorkgroup, TestSaleSellingWorkgroupDto>();
             CreateMap<TestSaleBuyingProject, TestSaleBuyingProjectDto>();
             CreateMap<WgTestCapabilitiesWithDescription, WgTestCapabilitiesWithDescriptionDto>();
+            CreateMap<TestReqBreakdownView, TestReqBreakdownDto>().ReverseMap();
+            CreateMap<BatchJobHistory, BatchJobHistoryDto>().ReverseMap();
+            CreateMap<BatchJobQueue, BatchJobQueueDto>().ReverseMap();
+            CreateMap<BatchJobQueue, BatchJobQueueRes>().ReverseMap();
+            CreateMap<BatchJobQueue, BatchJobEventTriggerDto>()
+                .ForMember(dest => dest.Jobqueue, opt => opt.MapFrom(src => src))
+                .ForMember(dest => dest.EventId, opt => opt.Ignore());
         }
     }
 }

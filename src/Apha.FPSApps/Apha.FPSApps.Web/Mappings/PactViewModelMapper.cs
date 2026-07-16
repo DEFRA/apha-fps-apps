@@ -152,6 +152,8 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<RecreateSummaryLogDto, RecreateSummaryLogItem>()
                 .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.Comments));
 
+            CreateMap<BatchJobHistoryDto, BatchJobHistoryItem>();
+
             CreateMap<ProfitCentreCostDto, ProfitCenterCostItem>().ReverseMap();
 
             CreateMap<ReleasePeriodDto, PeriodMonth>().ReverseMap();

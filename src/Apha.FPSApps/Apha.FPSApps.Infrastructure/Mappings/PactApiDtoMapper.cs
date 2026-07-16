@@ -79,6 +79,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TestSaleSellingWorkgroupDto, TestSaleSellingWorkgroupRes>().ReverseMap();
             CreateMap<TestSaleBuyingProjectDto, TestSaleBuyingProjectRes>().ReverseMap();
             CreateMap<WgTestCapabilitiesWithDescriptionDto, WgTestCapabilitiesWithDescriptionRes>().ReverseMap();
+            CreateMap<TestReqBreakdownRes, TestReqBreakdownDto>().ReverseMap();
+            CreateMap<BatchJobQueueDto, BatchJobQueueRes>().ReverseMap();
+            CreateMap<BatchJobHistoryDto, BatchJobHistoryRes>().ReverseMap();
+            CreateMap<BatchJobEventTriggerDto, BatchJobEventTriggerRes>().ReverseMap();
         }
     }
 }
