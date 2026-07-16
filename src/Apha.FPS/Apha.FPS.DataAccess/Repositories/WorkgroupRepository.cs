@@ -25,8 +25,6 @@ namespace Apha.FPS.DataAccess.Repositories
             _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
-        // TRANSFORMENGINE: GetPagedAsync — paged list scoped to active FPS year via DbContext HasQueryFilter;
-        // filter covers WorkGroupName, ProfitCentre, and Description (matches planned route surface)
         /// <inheritdoc/>
         public async Task<PagedData<Workgroup>> GetPagedAsync(PaginationParameters<string> query)
         {
@@ -36,18 +34,14 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsNoTracking()
                 .AsQueryable();
 
-            // TRANSFORMENGINE: Apply JSON filter model (WorkGroupName, ProfitCentre, Description)
             baseQuery = ApplyWorkgroupFilter(baseQuery, query.Filter);
 
-            // TRANSFORMENGINE: Apply sort; default to WorkGroupName ascending
             baseQuery = ApplyWorkgroupSorting(baseQuery, query.SortBy, query.Descending);
 
             var result = await baseQuery.ToListAsync();
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        // TRANSFORMENGINE: GetByKeyAsync — look up single workgroup by WorkGroupName;
-        // FpsYear resolved automatically via DbContext HasQueryFilter
         /// <inheritdoc/>
         public async Task<Workgroup?> GetByKeyAsync(string workGroupName)
         {
@@ -59,13 +53,11 @@ namespace Apha.FPS.DataAccess.Repositories
                 .FirstOrDefaultAsync(w => w.WorkGroupName == workGroupName);
         }
 
-        // TRANSFORMENGINE: CreateAsync — stamps FpsYear from IFpsRequestContext before insert
         /// <inheritdoc/>
         public async Task<Workgroup> CreateAsync(Workgroup workgroup)
         {
             ArgumentNullException.ThrowIfNull(workgroup);
 
-            // TRANSFORMENGINE: FpsYear must match the active planning year for the HasQueryFilter to include this row
             workgroup.FpsYear = _requestContext.FpsYear;
 
             _dbContext.Workgroups.Add(workgroup);
@@ -73,8 +65,6 @@ namespace Apha.FPS.DataAccess.Repositories
             return workgroup;
         }
 
-        // TRANSFORMENGINE: UpdateAsync — supports PK rename (originalWorkGroupName → workgroup.WorkGroupName);
-        // loads tracked entity, updates all mutable fields, saves
         /// <inheritdoc/>
         public async Task<Workgroup> UpdateAsync(string originalWorkGroupName, Workgroup workgroup)
         {
@@ -88,7 +78,6 @@ namespace Apha.FPS.DataAccess.Repositories
             if (existing is null)
                 throw new KeyNotFoundException($"Workgroup '{originalWorkGroupName}' not found for the active FPS year.");
 
-            // TRANSFORMENGINE: Apply all mutable field updates; WorkGroupName rename supported (PK value change)
             existing.WorkGroupName    = workgroup.WorkGroupName;
             existing.ProfitCentre     = workgroup.ProfitCentre;
             existing.CostCentre       = workgroup.CostCentre;
@@ -99,7 +88,6 @@ namespace Apha.FPS.DataAccess.Repositories
             existing.SendEmail        = workgroup.SendEmail;
             existing.Cos90            = workgroup.Cos90;
             existing.EmailRecipient   = workgroup.EmailRecipient;
-            // TRANSFORMENGINE: FpsYear is the partition key — do not overwrite from caller; keep active year
             existing.FpsYear          = _requestContext.FpsYear;
 
             await _dbContext.SaveChangesAsync();
@@ -130,9 +118,6 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(w => w.WorkGroupName == workGroupName);
         }
 
-        // TRANSFORMENGINE: GetAllProfitCentresAsync — returns distinct ProfitCentreId values from
-        // fps.tblkpprofitcentre (ProfitCentres DbSet); ProfitCentre entity is not year-filtered so
-        // all active profit centres are available regardless of FpsYear
         /// <inheritdoc/>
         public async Task<IEnumerable<string>> GetAllProfitCentresAsync()
         {
@@ -144,20 +129,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        // TRANSFORMENGINE: GetOwnersAsync — LINQ translation of fps/qryManager named query:
-        //   SELECT DISTINCTROW tblStaffActive.Name, WorkGroupGrade_General.WorkGroup,
-        //          WorkGroupGrade_General.GradeCode, Left([gradecode],1) AS Expr1
-        //   FROM tblStaffActive
-        //   INNER JOIN WorkGroupGrade_General ON tblStaffActive.WorkGroupGrade = WorkGroupGrade_General.WGGrade
-        //   WHERE Name Not Like "*general*" And Name Not Like "*vacancy*"
-        //     AND Left([gradecode],1) <> "G"
-        //   ORDER BY tblStaffActive.Name
         /// <inheritdoc/>
         public async Task<IEnumerable<Manager>> GetOwnersAsync()
         {
-            // TRANSFORMENGINE: Join vtblstaffactive (StaffActiveView) with vworkgroupgrade_general
-            // (WorkgroupGradeGeneralViews) on WorkgroupGrade = WgGrade; FpsYear filter applied by
-            // DbContext HasQueryFilter on WorkgroupGradeGeneralViews; StaffActiveView is also year-filtered
             var result = await _dbContext.StaffActiveView
                 .AsNoTracking()
                 .Join(
@@ -170,11 +144,9 @@ namespace Apha.FPS.DataAccess.Repositories
                         wggg.WorkGroup,
                         wggg.GradeCode
                     })
-                // TRANSFORMENGINE: WHERE Name Not Like "*general*" And Name Not Like "*vacancy*"
                 .Where(x => x.Name != null
                          && !x.Name.ToLower().Contains("general")
                          && !x.Name.ToLower().Contains("vacancy"))
-                // TRANSFORMENGINE: AND Left([gradecode],1) <> "G"
                 .Where(x => x.GradeCode != null && !x.GradeCode.StartsWith("G"))
                 .Distinct()
                 .OrderBy(x => x.Name)
@@ -183,8 +155,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     Name      = x.Name,
                     WorkGroup = x.WorkGroup,
                     GradeCode = x.GradeCode,
-                    // TRANSFORMENGINE: Left([gradecode],1) AS Expr1 — first character of GradeCode
-                    Expr1     = x.GradeCode != null && x.GradeCode.Length > 0
+                    Expr1     = x.GradeCode != null
                                     ? x.GradeCode.Substring(0, 1)
                                     : null
                 })
@@ -210,8 +181,6 @@ namespace Apha.FPS.DataAccess.Repositories
 
         // ─── Private helpers ──────────────────────────────────────────────────────
 
-        // TRANSFORMENGINE: ApplyWorkgroupFilter — JSON-deserialized filter supports WorkGroupName,
-        // ProfitCentre, and Description field-level contains searches
         private static IQueryable<Workgroup> ApplyWorkgroupFilter(
             IQueryable<Workgroup> query, string? filter)
         {
@@ -236,8 +205,6 @@ namespace Apha.FPS.DataAccess.Repositories
             return query;
         }
 
-        // TRANSFORMENGINE: ApplyWorkgroupSorting — sort by WorkGroupName, ProfitCentre, Description,
-        // Owner, or CentralOverhead; default is WorkGroupName ascending
         private static IQueryable<Workgroup> ApplyWorkgroupSorting(
             IQueryable<Workgroup> query, string? sortBy, bool descending)
         {
