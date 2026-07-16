@@ -123,8 +123,7 @@ namespace Apha.PACT.DataAccess.Repository
         }
 
         public async Task<StagingMonthlyTime> CreateStagingAsync(StagingMonthlyTime stagingMonthlyTime)
-        {
-            stagingMonthlyTime.ImportedBy = stagingMonthlyTime.ImportedBy;            
+        {                      
             await _context.StagingMonthlyTimes.AddAsync(stagingMonthlyTime);
             await _context.SaveChangesAsync();
             return stagingMonthlyTime;
@@ -190,8 +189,9 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<List<StagingMonthlyTime>> GetStagingRecordsForValidationAsync(string importedBy)
         {
             return await _context.StagingMonthlyTimes
-                .Where(x => x.ImportedBy == importedBy)
+                .Where(x => x.ImportedBy == importedBy && x.Passed == false)
                 .OrderBy(x => x.Id)
+                .Distinct()
                 .ToListAsync();
         }
 

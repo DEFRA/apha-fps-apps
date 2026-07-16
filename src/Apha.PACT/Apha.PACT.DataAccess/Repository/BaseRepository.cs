@@ -16,10 +16,11 @@ namespace Apha.PACT.DataAccess.Repository
         protected static async Task<PagedData<T>> ApplyPaging<T>(IQueryable<T> source, int page, int pageSize)
         {
             var totalRecords = await source.CountAsync();
-            var result = await source
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            
+            var result = page == -1
+            ? await source.ToListAsync() : await source.Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
 
             var pagination = new PaginationData
             {

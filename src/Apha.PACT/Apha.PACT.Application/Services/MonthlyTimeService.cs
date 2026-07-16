@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.ExcelImport;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
@@ -116,11 +117,11 @@ namespace Apha.PACT.Application.Services
                 PactStaffId = row.PactStaffId,
                 TimeCode = row.TimeCode,
                 ParentProject = row.ParentProject,
-                Month = TryParseMonth(row.Month),
+                Month = ExcelParseHelper.TryParseDouble(row.Month),
                 WorkGroup = row.WorkGroup,
-                Hours = TryParseHours(row.Hours),
-                FailureComments = row.FailureComments,
-                Passed = row.Passed,
+                Hours = ExcelParseHelper.TryParseDouble(row.Hours),
+                FailureComments = string.Empty,
+                Passed = false,
                 PactId = row.PactId,
                 Name = row.Name,
                 Filename = request.FileName,
@@ -140,7 +141,7 @@ namespace Apha.PACT.Application.Services
 
         public async Task<MonthlyTimeValidateResultDto> ValidateStagingAsync(string importedBy)
         {
-            // Remove records with zero or null hours (matching VB6 preprocessing behavior)
+            // Remove records with zero or null hours
             await _repository.RemoveZeroAndNullHourRecordsAsync(importedBy);
 
             var records = await _repository.GetStagingRecordsForValidationAsync(importedBy);
@@ -210,7 +211,7 @@ namespace Apha.PACT.Application.Services
             };
         }
 
-        private List<string> ValidateRecord(
+        private static List<string> ValidateRecord(
             StagingMonthlyTime record,
             ValidationContext context,
             HashSet<string> stagingKeys)
@@ -398,21 +399,7 @@ namespace Apha.PACT.Application.Services
 
             var result = await _repository.SearchAsync(filter, logFilter);
             return _mapper.Map<PaginatedResult<MonthlyTimeLogDto>>(result);
-        }
-
-        private static double? TryParseMonth(string? value)
-        {
-            return double.TryParse(value, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var month)
-                ? month
-                : null;
-        }
-
-        private static double? TryParseHours(string? value)
-        {
-            return double.TryParse(value, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var hours)
-                ? hours
-                : null;
-        }
+        }        
     }
 
     /// <summary>

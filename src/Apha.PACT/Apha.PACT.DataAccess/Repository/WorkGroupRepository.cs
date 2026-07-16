@@ -56,11 +56,13 @@ namespace Apha.PACT.DataAccess.Repository
                 from grade in _context.PactWorkGroupGradeViews.AsNoTracking()
                 join staff in _context.WorkGroupStaffViews.AsNoTracking()
                     on grade.WgGrade equals staff.WorkGroupGrade
+                join wg in _context.WorkGroups.AsNoTracking()
+                    on grade.WorkGroup equals wg.WorkGroupName
                 where staff.PersonStatus == null || staff.PersonStatus == "A"
                 select new WorkGroupStaffItem
                 {
-                    WorkGroup = grade.WorkGroup,
-                    PactId = staff.PactId,
+                    WorkGroup = wg.WorkGroupName,
+                    PactId = staff.PactId,  
                     SpNumber = staff.SpNumber,
                     Name = staff.Name
                 })

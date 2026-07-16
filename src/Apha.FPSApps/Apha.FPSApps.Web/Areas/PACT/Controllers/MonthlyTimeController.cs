@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.ExcelExport;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -20,6 +21,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class MonthlyTimeController : Controller
     {
+        private const string ExcelContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
         private readonly IMapper _mapper;
         private readonly IPactMonthlyTimeService _monthlyTimeService;
         private readonly IWorkGroupService _workGroupService;
@@ -27,6 +30,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly IPactTimeCodeValidService _timeCodeValidService;
         private readonly IProjectService _projectService;
         private readonly IMonthService _monthService;
+        private readonly IExcelExportService _excelExportService;
 
         public MonthlyTimeController(
             IMapper mapper,
@@ -35,7 +39,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             IEmployeeService employeeService,
             IPactTimeCodeValidService timeCodeValidService,
             IProjectService projectService,
-            IMonthService monthService)
+            IMonthService monthService,
+            IExcelExportService excelExportService)
         {
             _mapper = mapper;
             _monthlyTimeService = monthlyTimeService;
@@ -44,6 +49,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             _timeCodeValidService = timeCodeValidService;
             _projectService = projectService;
             _monthService = monthService;
+            _excelExportService = excelExportService;
         }
 
         [HttpGet]
@@ -273,43 +279,18 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportStaging(bool? passed)
         {
-            var query = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
-            var response = await _monthlyTimeService.GetStagingAsync(query, passed);
+            var response = await _monthlyTimeService.GetStagingAsync(new QueryParameters<string> { Page = -1 }, passed);
             if (!response.Success || response.Data == null)
                 return NotFound();
 
-            var rows = response.Data.Select(x => new
-            {
-                x.WorkGroup,
-                x.PactStaffId,
-                x.Name,
-                x.TimeCode,
-                x.ParentProject,
-                x.Month,
-                x.Hours,
-                x.Passed,
-                x.PactId,
-                x.FailureComments
-            }).ToList();
+            var rows = _mapper.Map<List<StagingMonthlyTimeExportItem>>(response.Data);
+            var excelBytes = _excelExportService.ExportToExcel(rows, "MonthlyTime");
 
-            using var workbook = new ClosedXML.Excel.XLWorkbook();
-            var worksheet = workbook.Worksheets.Add("MonthlyTime");
-            if (rows.Count > 0)
-            {
-                var properties = rows[0].GetType().GetProperties();
-                for (var i = 0; i < properties.Length; i++)
-                    worksheet.Cell(1, i + 1).Value = properties[i].Name;
+            var fileName = rows.FirstOrDefault()?.Filename;
+            if (string.IsNullOrWhiteSpace(fileName))
+                fileName = $"MonthlyTime_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
 
-                for (var row = 0; row < rows.Count; row++)
-                {
-                    for (var col = 0; col < properties.Length; col++)
-                        worksheet.Cell(row + 2, col + 1).Value = properties[col].GetValue(rows[row])?.ToString();
-                }
-            }
-
-            using var stream = new MemoryStream();
-            workbook.SaveAs(stream);
-            return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"MonthlyTime_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
+            return File(excelBytes, ExcelContentType, fileName);
         }
 
         private async Task<DataGridConfig<MonthlyTimeLiveItem>> BuildLiveGridAsync(
@@ -362,10 +343,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             {
                 GridId = "monthlyTimeStagingGrid",
                 Title = "Imported Time Records",
-                AllowExport = true,
-                ExportUrl = "/PACT/MonthlyTime/ExportStaging",
+                AllowExport = false,
                 ShowCheckboxColumn = false,
-                KeyProperty = "Id",
+                KeyProperty = "Id", 
                 AddFunction = "addStagingMonthlyTime",
                 EditFunction = "editStagingMonthlyTime",
                 DeleteFunction = "deleteStagingMonthlyTime",
