@@ -3,12 +3,10 @@ using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
-using Apha.FPS.Application.Validation;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Npgsql;
 
 namespace Apha.FPS.Api.Controllers
 {
@@ -83,15 +81,8 @@ namespace Apha.FPS.Api.Controllers
         public async Task<ActionResult<WorkgroupMaintenanceRes>> CreateAsync([FromBody] WorkgroupMaintenanceReq request)
         {
             var dto = _mapper.Map<WorkgroupDto>(request);
-            try
-            {
-                var created = await _workgroupService.CreateAsync(dto);
-                return Ok(_mapper.Map<WorkgroupMaintenanceRes>(created));
-            }
-            catch (Exception ex) when (IsCostCentreForeignKeyViolation(ex))
-            {
-                throw BuildCostCentreValidationException();
-            }
+            var created = await _workgroupService.CreateAsync(dto);
+            return Ok(_mapper.Map<WorkgroupMaintenanceRes>(created));
         }
 
         /// <summary>
@@ -113,15 +104,8 @@ namespace Apha.FPS.Api.Controllers
             }
 
             var dto = _mapper.Map<WorkgroupDto>(request);
-            try
-            {
-                var updated = await _workgroupService.UpdateAsync(workGroupName, dto);
-                return Ok(_mapper.Map<WorkgroupMaintenanceRes>(updated));
-            }
-            catch (Exception ex) when (IsCostCentreForeignKeyViolation(ex))
-            {
-                throw BuildCostCentreValidationException();
-            }
+            var updated = await _workgroupService.UpdateAsync(workGroupName, dto);
+            return Ok(_mapper.Map<WorkgroupMaintenanceRes>(updated));
         }
 
         /// <summary>
@@ -137,29 +121,12 @@ namespace Apha.FPS.Api.Controllers
                 throw new ArgumentException("WorkGroupName cannot be null or empty.", nameof(workGroupName));
             }
 
-            var deleted = await DeleteWorkgroupAsync(workGroupName);
+            var deleted = await _workgroupService.DeleteAsync(workGroupName);
             if (!deleted)
             {
                 throw new KeyNotFoundException($"Workgroup '{workGroupName}' not found.");
             }
             return Ok(true);
-        }
-
-        private async Task<bool> DeleteWorkgroupAsync(string workGroupName)
-        {
-            try
-            {
-                return await _workgroupService.DeleteAsync(workGroupName);
-            }
-            catch (Exception ex) when (IsForeignKeyViolation(ex, "fk_workgroupgrade_workgroup"))
-            {
-                throw new BusinessValidationErrorException(new List<BusinessValidationError>
-                {
-                    new BusinessValidationError(
-                        "There are associated records in the WorkgroupGrade table so this record cannot be deleted.",
-                        "WORKGROUPGRADE_FK_VIOLATION")
-                });
-            }
         }
 
         /// <summary>
@@ -201,38 +168,6 @@ namespace Apha.FPS.Api.Controllers
 
             var result = await _workgroupService.GetCostCentresByProfitCentreAsync(profitCentre);
             return Ok(result);
-        }
-
-        // Screen-specific handling for the Maintain Workgroups foreign key constraints.
-        // Kept in this controller (not the shared ExceptionMiddleware) because the friendly messages
-        // only apply to the Workgroup Maintenance screen. The violation surfaces as a
-        // PostgresException (SqlState 23503) usually wrapped inside a DbUpdateException.
-        private static bool IsCostCentreForeignKeyViolation(Exception? ex)
-            => IsForeignKeyViolation(ex, "fk_workgroup_costcentre");
-
-        private static bool IsForeignKeyViolation(Exception? ex, string constraintName)
-        {
-            for (var current = ex; current is not null; current = current.InnerException)
-            {
-                if (current is PostgresException pgEx
-                    && pgEx.SqlState == PostgresErrorCodes.ForeignKeyViolation
-                    && pgEx.ConstraintName?.Contains(constraintName, StringComparison.OrdinalIgnoreCase) == true)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static BusinessValidationErrorException BuildCostCentreValidationException()
-        {
-            return new BusinessValidationErrorException(new List<BusinessValidationError>
-            {
-                new BusinessValidationError(
-                    "The Cost center is not present in the Cost Center table. Please input Cost center which is already present in CostCenter table.",
-                    "COSTCENTRE_FK_VIOLATION")
-            });
         }
     }
 }

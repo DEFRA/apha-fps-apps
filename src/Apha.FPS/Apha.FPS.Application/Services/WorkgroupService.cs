@@ -40,6 +40,7 @@ using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
+using Npgsql;
 
 namespace Apha.FPS.Application.Services
 {
@@ -136,8 +137,15 @@ namespace Apha.FPS.Application.Services
             }
 
             var entity = _mapper.Map<Workgroup>(dto);
-            var created = await _repository.CreateAsync(entity);
-            return _mapper.Map<WorkgroupDto>(created);
+            try
+            {
+                var created = await _repository.CreateAsync(entity);
+                return _mapper.Map<WorkgroupDto>(created);
+            }
+            catch (Exception ex) when (IsCostCentreForeignKeyViolation(ex))
+            {
+                throw BuildCostCentreValidationException();
+            }
         }
 
         // TRANSFORMENGINE: UpdateAsync — VBA Form_BeforeUpdate guard: WorkGroupName + ProfitCentre required
@@ -188,8 +196,15 @@ namespace Apha.FPS.Application.Services
             }
 
             var entity = _mapper.Map<Workgroup>(dto);
-            var updated = await _repository.UpdateAsync(originalWorkGroupName, entity);
-            return _mapper.Map<WorkgroupDto>(updated);
+            try
+            {
+                var updated = await _repository.UpdateAsync(originalWorkGroupName, entity);
+                return _mapper.Map<WorkgroupDto>(updated);
+            }
+            catch (Exception ex) when (IsCostCentreForeignKeyViolation(ex))
+            {
+                throw BuildCostCentreValidationException();
+            }
         }
 
         // TRANSFORMENGINE: DeleteAsync — no VBA-level cascade guard found; repository handles FK constraint errors
@@ -204,7 +219,19 @@ namespace Apha.FPS.Application.Services
                 ]);
             }
 
-            return await _repository.DeleteAsync(workGroupName);
+            try
+            {
+                return await _repository.DeleteAsync(workGroupName);
+            }
+            catch (Exception ex) when (IsForeignKeyViolation(ex, "fk_workgroupgrade_workgroup"))
+            {
+                throw new BusinessValidationErrorException(new List<BusinessValidationError>
+                {
+                    new BusinessValidationError(
+                        "There are associated records in the WorkgroupGrade table so this record cannot be deleted.",
+                        "WORKGROUPGRADE_FK_VIOLATION")
+                });
+            }
         }
 
         // TRANSFORMENGINE: GetAllProfitCentresAsync — lookup dropdown; delegates directly to repository
@@ -234,6 +261,36 @@ namespace Apha.FPS.Application.Services
             }
 
             return await _repository.GetCostCentresByProfitCentreAsync(profitCentre);
+        }
+
+        // Screen-specific handling for the Maintain Workgroups foreign key constraints.
+        // The violation surfaces as a PostgresException (SqlState 23503) usually wrapped inside a DbUpdateException.
+        private static bool IsCostCentreForeignKeyViolation(Exception? ex)
+            => IsForeignKeyViolation(ex, "fk_workgroup_costcentre");
+
+        private static bool IsForeignKeyViolation(Exception? ex, string constraintName)
+        {
+            for (var current = ex; current is not null; current = current.InnerException)
+            {
+                if (current is PostgresException pgEx
+                    && pgEx.SqlState == PostgresErrorCodes.ForeignKeyViolation
+                    && pgEx.ConstraintName?.Contains(constraintName, StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static BusinessValidationErrorException BuildCostCentreValidationException()
+        {
+            return new BusinessValidationErrorException(new List<BusinessValidationError>
+            {
+                new BusinessValidationError(
+                    "The Cost center is not present in the Cost Center table. Please input Cost center which is already present in CostCenter table.",
+                    "COSTCENTRE_FK_VIOLATION")
+            });
         }
     }
 }

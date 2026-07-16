@@ -4,10 +4,8 @@ using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
-using Apha.FPS.Application.Validation;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Npgsql;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
@@ -41,26 +39,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkgroupControllerTest
 
         private static ManagerRes BuildManagerRes(string managerName = "John Smith") =>
             new() { Name = managerName };
-
-        // Builds a PostgresException carrying a foreign-key violation (SqlState 23503) for the
-        // given constraint name, mimicking how Npgsql surfaces DB FK violations.
-        private static PostgresException BuildFkViolation(string constraintName) =>
-            new(
-                messageText: "foreign key violation",
-                severity: "ERROR",
-                invariantSeverity: "ERROR",
-                sqlState: PostgresErrorCodes.ForeignKeyViolation,
-                detail: null,
-                hint: null,
-                position: 0,
-                internalPosition: 0,
-                internalQuery: null,
-                where: null,
-                schemaName: null,
-                tableName: null,
-                columnName: null,
-                dataTypeName: null,
-                constraintName: constraintName);
 
         #region Constructor Tests
 
@@ -266,41 +244,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkgroupControllerTest
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.CreateAsync(req));
         }
 
-        [Fact]
-        public async Task CreateAsync_WhenCostCentreFkViolation_ThrowsBusinessValidationError()
-        {
-            // Arrange
-            var req = BuildReq("WG001");
-            var dto = BuildDto("WG001");
-
-            _mapperMock.Map<WorkgroupDto>(req).Returns(dto);
-            _serviceMock.CreateAsync(dto)
-                .ThrowsAsync(new Exception("db error", BuildFkViolation("fk_workgroup_costcentre")));
-
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _controller.CreateAsync(req));
-            var error = Assert.Single(ex.Errors);
-            Assert.Equal("COSTCENTRE_FK_VIOLATION", error.Code);
-            Assert.Contains("Cost Center table", error.Message);
-        }
-
-        [Fact]
-        public async Task CreateAsync_WhenUnrelatedFkViolation_PropagatesOriginalException()
-        {
-            // Arrange
-            var req = BuildReq("WG001");
-            var dto = BuildDto("WG001");
-            var original = new Exception("db error", BuildFkViolation("fk_some_other_constraint"));
-
-            _mapperMock.Map<WorkgroupDto>(req).Returns(dto);
-            _serviceMock.CreateAsync(dto).ThrowsAsync(original);
-
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<Exception>(() => _controller.CreateAsync(req));
-            Assert.Same(original, ex);
-        }
-
         #endregion
 
         #region UpdateAsync Tests
@@ -373,25 +316,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkgroupControllerTest
             await _serviceMock.Received(1).UpdateAsync("WG_ORIGINAL", dto);
         }
 
-        [Fact]
-        public async Task UpdateAsync_WhenCostCentreFkViolation_ThrowsBusinessValidationError()
-        {
-            // Arrange
-            var req = BuildReq("WG001");
-            var dto = BuildDto("WG001");
-
-            _mapperMock.Map<WorkgroupDto>(req).Returns(dto);
-            _serviceMock.UpdateAsync("WG001", dto)
-                .ThrowsAsync(new Exception("db error", BuildFkViolation("fk_workgroup_costcentre")));
-
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _controller.UpdateAsync("WG001", req));
-            var error = Assert.Single(ex.Errors);
-            Assert.Equal("COSTCENTRE_FK_VIOLATION", error.Code);
-            Assert.Contains("Cost Center table", error.Message);
-        }
-
         #endregion
 
         #region DeleteAsync Tests
@@ -439,33 +363,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkgroupControllerTest
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.DeleteAsync("WG001"));
-        }
-
-        [Fact]
-        public async Task DeleteAsync_WhenWorkgroupGradeFkViolation_ThrowsBusinessValidationError()
-        {
-            // Arrange
-            _serviceMock.DeleteAsync("WG001")
-                .ThrowsAsync(new Exception("db error", BuildFkViolation("fk_workgroupgrade_workgroup_10")));
-
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _controller.DeleteAsync("WG001"));
-            var error = Assert.Single(ex.Errors);
-            Assert.Equal("WORKGROUPGRADE_FK_VIOLATION", error.Code);
-            Assert.Contains("WorkgroupGrade table", error.Message);
-        }
-
-        [Fact]
-        public async Task DeleteAsync_WhenUnrelatedFkViolation_PropagatesOriginalException()
-        {
-            // Arrange
-            var original = new Exception("db error", BuildFkViolation("fk_some_other_constraint"));
-            _serviceMock.DeleteAsync("WG001").ThrowsAsync(original);
-
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<Exception>(() => _controller.DeleteAsync("WG001"));
-            Assert.Same(original, ex);
         }
 
         #endregion

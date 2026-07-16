@@ -33,6 +33,7 @@ using AutoMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using Npgsql;
 using Xunit;
 
 namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
@@ -62,6 +63,26 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
 
         private static Manager BuildManagerEntity(string name = "Alice Smith") =>
             new() { Name = name, GradeCode = "A1" };
+
+        // Builds a PostgresException carrying a foreign-key violation (SqlState 23503) for the
+        // given constraint name, mimicking how Npgsql surfaces DB FK violations.
+        private static PostgresException BuildFkViolation(string constraintName) =>
+            new(
+                messageText: "foreign key violation",
+                severity: "ERROR",
+                invariantSeverity: "ERROR",
+                sqlState: PostgresErrorCodes.ForeignKeyViolation,
+                detail: null,
+                hint: null,
+                position: 0,
+                internalPosition: 0,
+                internalQuery: null,
+                where: null,
+                schemaName: null,
+                tableName: null,
+                columnName: null,
+                dataTypeName: null,
+                constraintName: constraintName);
 
         #region Constructor Tests
 
@@ -256,6 +277,42 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
             await _mockRepository.Received(1).CreateAsync(entity);
         }
 
+        [Fact]
+        public async Task CreateAsync_WhenCostCentreFkViolation_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            var dto    = BuildDto("WG001");
+            var entity = BuildEntity("WG001");
+
+            _mockRepository.ExistsAsync("WG001").Returns(false);
+            _mockMapper.Map<Workgroup>(dto).Returns(entity);
+            _mockRepository.CreateAsync(entity)
+                .ThrowsAsync(new Exception("db error", BuildFkViolation("fk_workgroup_costcentre")));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CreateAsync(dto));
+            var error = Assert.Single(ex.Errors);
+            Assert.Equal("COSTCENTRE_FK_VIOLATION", error.Code);
+            Assert.Contains("Cost Center table", error.Message);
+        }
+
+        [Fact]
+        public async Task CreateAsync_WhenUnrelatedFkViolation_PropagatesOriginalException()
+        {
+            // Arrange
+            var dto      = BuildDto("WG001");
+            var entity   = BuildEntity("WG001");
+            var original = new Exception("db error", BuildFkViolation("fk_some_other_constraint"));
+
+            _mockRepository.ExistsAsync("WG001").Returns(false);
+            _mockMapper.Map<Workgroup>(dto).Returns(entity);
+            _mockRepository.CreateAsync(entity).ThrowsAsync(original);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _sut.CreateAsync(dto));
+            Assert.Same(original, ex);
+        }
+
         #endregion
 
         #region UpdateAsync Tests
@@ -350,6 +407,42 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
             await _mockRepository.Received(1).UpdateAsync("WG_ORIGINAL", entity);
         }
 
+        [Fact]
+        public async Task UpdateAsync_WhenCostCentreFkViolation_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            var dto    = BuildDto("WG001");
+            var entity = BuildEntity("WG001");
+
+            _mockRepository.ExistsAsync("WG001").Returns(true);
+            _mockMapper.Map<Workgroup>(dto).Returns(entity);
+            _mockRepository.UpdateAsync("WG001", entity)
+                .ThrowsAsync(new Exception("db error", BuildFkViolation("fk_workgroup_costcentre")));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAsync("WG001", dto));
+            var error = Assert.Single(ex.Errors);
+            Assert.Equal("COSTCENTRE_FK_VIOLATION", error.Code);
+            Assert.Contains("Cost Center table", error.Message);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WhenUnrelatedFkViolation_PropagatesOriginalException()
+        {
+            // Arrange
+            var dto      = BuildDto("WG001");
+            var entity   = BuildEntity("WG001");
+            var original = new Exception("db error", BuildFkViolation("fk_some_other_constraint"));
+
+            _mockRepository.ExistsAsync("WG001").Returns(true);
+            _mockMapper.Map<Workgroup>(dto).Returns(entity);
+            _mockRepository.UpdateAsync("WG001", entity).ThrowsAsync(original);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _sut.UpdateAsync("WG001", dto));
+            Assert.Same(original, ex);
+        }
+
         #endregion
 
         #region DeleteAsync Tests
@@ -393,6 +486,32 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
 
             // Assert
             Assert.False(result);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_WhenWorkgroupGradeFkViolation_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _mockRepository.DeleteAsync("WG001")
+                .ThrowsAsync(new Exception("db error", BuildFkViolation("fk_workgroupgrade_workgroup_10")));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.DeleteAsync("WG001"));
+            var error = Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUPGRADE_FK_VIOLATION", error.Code);
+            Assert.Contains("WorkgroupGrade table", error.Message);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_WhenUnrelatedFkViolation_PropagatesOriginalException()
+        {
+            // Arrange
+            var original = new Exception("db error", BuildFkViolation("fk_some_other_constraint"));
+            _mockRepository.DeleteAsync("WG001").ThrowsAsync(original);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _sut.DeleteAsync("WG001"));
+            Assert.Same(original, ex);
         }
 
         #endregion
