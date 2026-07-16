@@ -51,6 +51,8 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<ProjectView> ProjectViews { get; set; }
         public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
         public virtual DbSet<Program> Programs { get; set; }
+        public virtual DbSet<TestReqBreakdownView> TestReqBreakdownViews { get; set; }
+        public virtual DbSet<ProjectSubcontractStaging> ProjectSubcontractStagings { get; set; }
 
         public virtual DbSet<BatchJobMaster> BatchJobs { get; set; }
         public virtual DbSet<BatchJobQueue> BatchJobQueues { get; set; }
@@ -157,6 +159,10 @@ namespace Apha.PACT.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new ProgramMap());
             modelBuilder.Entity<Program>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new TestReqBreakdownViewMap());
+            modelBuilder.Entity<TestReqBreakdownView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProjectSubcontractStagingMap());
             modelBuilder.ApplyConfiguration(new BatchJobMasterMap());
             modelBuilder.ApplyConfiguration(new BatchJobQueueMap());
             modelBuilder.Entity<BatchJobQueue>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);

@@ -4,6 +4,8 @@ using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
 
+
+
 namespace Apha.FPS.Application.Mappings
 {
     public class EntityMapper : Profile
@@ -41,7 +43,6 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<YearMaster, YearMasterDto>().ReverseMap();
             CreateMap<Division, DivisionDto>().ReverseMap();
             CreateMap<DivisionGrade, DivisionGradeDto>().ReverseMap();
-          
             CreateMap<Grade, GradeDto>()
                 .ForMember(d => d.Description, o => o.MapFrom(s => s.DescLong))
                 .ReverseMap()
@@ -76,9 +77,11 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<PactStaff, PactStaffDto>().ReverseMap();
             CreateMap<ProjectProfitabilityView, ProjectProfitabilityDto>().ReverseMap();
             CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
-
-            //ProjectProfitabilityVlaView
-            CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap();
+// ProjectProfitabilityVlaView
+//   Property names are aligned between entity and DTO; no ForMember overrides needed.
+//   Covers: Id, JobCode, Program, Customer, Manager, Status, StaffCosts, TestCost,
+//   AnimalCosts, AdditionalCosts, TotalCosts, Budget, Profit, TargetProfit, OffTarget.
+CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap();
 
             CreateMap<User, UserDto>().ReverseMap();
 
@@ -86,12 +89,22 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
-
+            //   All 5 log entities from fps schema partitioned tables.
+            //   Property names are fully aligned between entity and DTO; no ForMember overrides needed.
+            //   Covers all columns: sequenceno, parentproject/jobcode/testcode, date range, user tracking fields, fpsyear.
+            CreateMap<ProjectLog, ProjectLogDto>().ReverseMap();
+            CreateMap<StaffJobLog, StaffJobLogDto>().ReverseMap();
+            CreateMap<TestRequirementLog, TestRequirementLogDto>().ReverseMap();
+            CreateMap<AnimalRequestLog, AnimalRequestLogDto>().ReverseMap();
+            CreateMap<AdditionalCostLog, AdditionalCostLogDto>().ReverseMap();
             // MaintTotalBusinessOverheads
             CreateMap<TotalBusinessOverheads, TotalBusinessOverheadsDto>()
-                .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
-                .ReverseMap()
-                .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
+            .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
+            .ReverseMap()
+            .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
+            //TestListVLA
+            CreateMap<TestRCCost, TestRCCostDto>().ReverseMap();
+            CreateMap<TestRequirementRCCost, TestRequirementRCCostDto>().ReverseMap();
         }
     }
 }

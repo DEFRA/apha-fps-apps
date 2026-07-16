@@ -1,6 +1,7 @@
 ﻿using Apha.Common.Utilities.Email;
 using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.ExcelImport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.PACT.Api.Context;
 using Apha.PACT.Application.Interfaces;
@@ -23,6 +24,7 @@ namespace Apha.PACT.Api.Extensions
         {
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IExcelImportService, ExcelImportService>();
             services.AddScoped<IJobCodeService, JobCodeService>();
             services.AddScoped<ITimeCodeValidService, TimeCodeValidService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();            
