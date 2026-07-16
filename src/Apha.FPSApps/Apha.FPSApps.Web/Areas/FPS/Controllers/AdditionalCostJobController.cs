@@ -238,9 +238,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     .Select(a => new SelectListItem
                     {
                         Value = a.AccShortName,
-                        Text = string.IsNullOrWhiteSpace(a.AccountDescription)
-                            ? a.AccShortName
-                            : $"{a.AccShortName} - {a.AccountDescription}",
+                        Text = $"{a.AccShortName}|{a.AccountDescription ?? string.Empty}|{a.ConstituentAccountCodes ?? string.Empty}",
                         Selected = string.Equals(model.Account, a.AccShortName, StringComparison.OrdinalIgnoreCase)
                     })
                     .ToList();
