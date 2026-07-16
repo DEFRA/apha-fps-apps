@@ -144,12 +144,29 @@ namespace Apha.FPS.Api.Controllers
                 throw new ArgumentException("WorkGroupName cannot be null or empty.", nameof(workGroupName));
             }
 
-            var deleted = await _workgroupService.DeleteAsync(workGroupName);
+            var deleted = await DeleteWorkgroupAsync(workGroupName);
             if (!deleted)
             {
                 throw new KeyNotFoundException($"Workgroup '{workGroupName}' not found.");
             }
             return Ok(true);
+        }
+
+        private async Task<bool> DeleteWorkgroupAsync(string workGroupName)
+        {
+            try
+            {
+                return await _workgroupService.DeleteAsync(workGroupName);
+            }
+            catch (Exception ex) when (IsForeignKeyViolation(ex, "fk_workgroupgrade_workgroup"))
+            {
+                throw new BusinessValidationErrorException(new List<BusinessValidationError>
+                {
+                    new BusinessValidationError(
+                        "There are associated records in the WorkgroupGrade table so this record cannot be deleted.",
+                        "WORKGROUPGRADE_FK_VIOLATION")
+                });
+            }
         }
 
         // TRANSFORMENGINE: GET profitcentres — ResourceCentre dropdown in the add/edit modal;
@@ -200,17 +217,20 @@ namespace Apha.FPS.Api.Controllers
             return Ok(result);
         }
 
-        // Screen-specific handling for the Maintain Workgroups cost-centre foreign key constraint.
-        // Kept in this controller (not the shared ExceptionMiddleware) because the friendly message
-        // only applies to the Workgroup Maintenance screen. The violation surfaces as a
+        // Screen-specific handling for the Maintain Workgroups foreign key constraints.
+        // Kept in this controller (not the shared ExceptionMiddleware) because the friendly messages
+        // only apply to the Workgroup Maintenance screen. The violation surfaces as a
         // PostgresException (SqlState 23503) usually wrapped inside a DbUpdateException.
         private static bool IsCostCentreForeignKeyViolation(Exception? ex)
+            => IsForeignKeyViolation(ex, "fk_workgroup_costcentre");
+
+        private static bool IsForeignKeyViolation(Exception? ex, string constraintName)
         {
             for (var current = ex; current is not null; current = current.InnerException)
             {
                 if (current is PostgresException pgEx
                     && pgEx.SqlState == PostgresErrorCodes.ForeignKeyViolation
-                    && string.Equals(pgEx.ConstraintName, "fk_workgroup_costcentre", StringComparison.OrdinalIgnoreCase))
+                    && pgEx.ConstraintName?.Contains(constraintName, StringComparison.OrdinalIgnoreCase) == true)
                 {
                     return true;
                 }
