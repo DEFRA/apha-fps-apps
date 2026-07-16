@@ -3,13 +3,11 @@ using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
-using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Interfaces;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Npgsql;
 
 namespace Apha.FPS.Api.Controllers
 {
@@ -118,20 +116,8 @@ namespace Apha.FPS.Api.Controllers
         {
             var dto = _mapper.Map<CostCentreDto>(request);
             dto.FpsYear = _fpsRequestContext.FpsYear;
-            try
-            {
-                var updated = await _costCentreService.UpdateCostCentreAsync(costCentreNo, _fpsRequestContext.FpsYear, dto);
-                return Ok(_mapper.Map<CostCentreRes>(updated));
-            }
-            catch (Exception ex) when (IsWorkgroupForeignKeyViolation(ex))
-            {
-                throw new BusinessValidationErrorException(new List<BusinessValidationError>
-                {
-                    new BusinessValidationError(
-                        "There are associated records in the workgroup table so this record cannot be edited. Please update to a cost center which does not have any associated records in the workgorup table.",
-                        "WORKGROUP_FK_VIOLATION")
-                });
-            }
+            var updated = await _costCentreService.UpdateCostCentreAsync(costCentreNo, _fpsRequestContext.FpsYear, dto);
+            return Ok(_mapper.Map<CostCentreRes>(updated));
         }
 
         /// <summary>
@@ -143,44 +129,12 @@ namespace Apha.FPS.Api.Controllers
         [HttpDelete("{costCentreNo}")]
         public async Task<IActionResult> DeleteCostCentreAsync(double costCentreNo)
         {
-            bool deleted;
-            try
-            {
-                deleted = await _costCentreService.DeleteCostCentreAsync(costCentreNo, _fpsRequestContext.FpsYear);
-            }
-            catch (Exception ex) when (IsWorkgroupForeignKeyViolation(ex))
-            {
-                throw new BusinessValidationErrorException(new List<BusinessValidationError>
-                {
-                    new BusinessValidationError(
-                        "There are associated records in the workgroup table so this record cannot be deleted.",
-                        "WORKGROUP_FK_VIOLATION")
-                });
-            }
+            var deleted = await _costCentreService.DeleteCostCentreAsync(costCentreNo, _fpsRequestContext.FpsYear);
 
             if (!deleted)
                 throw new ArgumentException($"Cost centre record '{costCentreNo}' for FPS year '{_fpsRequestContext.FpsYear}' not found for deletion");
 
             return Ok(true);
-        }
-
-        // Screen-specific handling for the Maintain Cost Centres workgroup foreign key constraint.
-        // Kept in this controller (not the shared ExceptionMiddleware) because the friendly messages
-        // only apply to the Cost Centre Maintenance screen. The violation surfaces as a
-        // PostgresException (SqlState 23503) usually wrapped inside a DbUpdateException.
-        private static bool IsWorkgroupForeignKeyViolation(Exception? ex)
-        {
-            for (var current = ex; current is not null; current = current.InnerException)
-            {
-                if (current is PostgresException pgEx
-                    && pgEx.SqlState == PostgresErrorCodes.ForeignKeyViolation
-                    && pgEx.ConstraintName?.Contains("fk_workgroup_costcentre", StringComparison.OrdinalIgnoreCase) == true)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
     }
 }

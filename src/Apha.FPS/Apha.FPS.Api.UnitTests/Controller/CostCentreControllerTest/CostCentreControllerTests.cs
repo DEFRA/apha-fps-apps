@@ -4,12 +4,10 @@ using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
-using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Npgsql;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
@@ -236,84 +234,5 @@ namespace Apha.FPS.Api.UnitTests.Controller.CostCentreControllerTest
 
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.DeleteCostCentreAsync(costCentreNo));
         }
-
-        [Fact]
-        public async Task UpdateCostCentreAsync_WhenWorkgroupFkViolation_ThrowsBusinessValidationError()
-        {
-            const double costCentreNo = 100.0;
-            var request = new CostCentreReq { CostCentreNo = 100, ProfitCentre = "PC3" };
-            var dto = new CostCentreDto { CostCentreNo = 100, ProfitCentre = "PC3", FpsYear = 2024 };
-
-            _mapperMock.Map<CostCentreDto>(request).Returns(dto);
-            _costCentreServiceMock.UpdateCostCentreAsync(costCentreNo, 2024, Arg.Any<CostCentreDto>())
-                .ThrowsAsync(new Exception("db error", BuildFkViolation("fk_workgroup_costcentre_10")));
-
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _controller.UpdateCostCentreAsync(costCentreNo, request));
-            var error = Assert.Single(ex.Errors);
-            Assert.Equal("WORKGROUP_FK_VIOLATION", error.Code);
-            Assert.Contains("cannot be edited", error.Message);
-        }
-
-        [Fact]
-        public async Task UpdateCostCentreAsync_WhenUnrelatedFkViolation_PropagatesOriginalException()
-        {
-            const double costCentreNo = 100.0;
-            var request = new CostCentreReq { CostCentreNo = 100, ProfitCentre = "PC3" };
-            var dto = new CostCentreDto { CostCentreNo = 100, ProfitCentre = "PC3", FpsYear = 2024 };
-            var original = new Exception("db error", BuildFkViolation("fk_some_other_constraint"));
-
-            _mapperMock.Map<CostCentreDto>(request).Returns(dto);
-            _costCentreServiceMock.UpdateCostCentreAsync(costCentreNo, 2024, Arg.Any<CostCentreDto>())
-                .ThrowsAsync(original);
-
-            var ex = await Assert.ThrowsAsync<Exception>(() => _controller.UpdateCostCentreAsync(costCentreNo, request));
-            Assert.Same(original, ex);
-        }
-
-        [Fact]
-        public async Task DeleteCostCentreAsync_WhenWorkgroupFkViolation_ThrowsBusinessValidationError()
-        {
-            const double costCentreNo = 100.0;
-            _costCentreServiceMock.DeleteCostCentreAsync(costCentreNo, 2024)
-                .ThrowsAsync(new Exception("db error", BuildFkViolation("fk_workgroup_costcentre_10")));
-
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _controller.DeleteCostCentreAsync(costCentreNo));
-            var error = Assert.Single(ex.Errors);
-            Assert.Equal("WORKGROUP_FK_VIOLATION", error.Code);
-            Assert.Contains("cannot be deleted", error.Message);
-        }
-
-        [Fact]
-        public async Task DeleteCostCentreAsync_WhenUnrelatedFkViolation_PropagatesOriginalException()
-        {
-            const double costCentreNo = 100.0;
-            var original = new Exception("db error", BuildFkViolation("fk_some_other_constraint"));
-            _costCentreServiceMock.DeleteCostCentreAsync(costCentreNo, 2024).ThrowsAsync(original);
-
-            var ex = await Assert.ThrowsAsync<Exception>(() => _controller.DeleteCostCentreAsync(costCentreNo));
-            Assert.Same(original, ex);
-        }
-
-        // Builds a PostgresException carrying a foreign-key violation (SqlState 23503) for the
-        // given constraint name, mimicking how Npgsql surfaces DB FK violations.
-        private static PostgresException BuildFkViolation(string constraintName) =>
-            new(
-                messageText: "foreign key violation",
-                severity: "ERROR",
-                invariantSeverity: "ERROR",
-                sqlState: PostgresErrorCodes.ForeignKeyViolation,
-                detail: null,
-                hint: null,
-                position: 0,
-                internalPosition: 0,
-                internalQuery: null,
-                where: null,
-                schemaName: null,
-                tableName: null,
-                columnName: null,
-                dataTypeName: null,
-                constraintName: constraintName);
     }
 }

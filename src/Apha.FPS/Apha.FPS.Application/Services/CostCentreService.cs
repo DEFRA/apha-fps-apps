@@ -1,10 +1,12 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
+using Npgsql;
 
 namespace Apha.FPS.Application.Services
 {
@@ -86,8 +88,20 @@ namespace Apha.FPS.Application.Services
                     $"Profit centre '{costCentreDto.ProfitCentre}' does not exist. Select a valid profit centre.");
 
             var entity = _mapper.Map<CostCentre>(costCentreDto);
-            var updated = await _repository.UpdateAsync(originalCostCentreNo, fpsYear, entity);
-            return _mapper.Map<CostCentreDto>(updated);
+            try
+            {
+                var updated = await _repository.UpdateAsync(originalCostCentreNo, fpsYear, entity);
+                return _mapper.Map<CostCentreDto>(updated);
+            }
+            catch (Exception ex) when (IsWorkgroupForeignKeyViolation(ex))
+            {
+                throw new BusinessValidationErrorException(new List<BusinessValidationError>
+                {
+                    new BusinessValidationError(
+                        "There are associated records in the workgroup table so this record cannot be edited. Please update to a cost center which does not have any associated records in the workgorup table.",
+                        "WORKGROUP_FK_VIOLATION")
+                });
+            }
         }
 
         //   Guard: KeyNotFoundException if record does not exist before attempting delete
@@ -97,7 +111,36 @@ namespace Apha.FPS.Application.Services
                 throw new KeyNotFoundException(
                     $"Cost centre '{costCentreNo}' for FPS year '{fpsYear}' was not found.");
 
-            return await _repository.DeleteAsync(costCentreNo, fpsYear);
+            try
+            {
+                return await _repository.DeleteAsync(costCentreNo, fpsYear);
+            }
+            catch (Exception ex) when (IsWorkgroupForeignKeyViolation(ex))
+            {
+                throw new BusinessValidationErrorException(new List<BusinessValidationError>
+                {
+                    new BusinessValidationError(
+                        "There are associated records in the workgroup table so this record cannot be deleted.",
+                        "WORKGROUP_FK_VIOLATION")
+                });
+            }
+        }
+
+        // Screen-specific handling for the Maintain Cost Centres workgroup foreign key constraint.
+        // The violation surfaces as a PostgresException (SqlState 23503) usually wrapped inside a DbUpdateException.
+        private static bool IsWorkgroupForeignKeyViolation(Exception? ex)
+        {
+            for (var current = ex; current is not null; current = current.InnerException)
+            {
+                if (current is PostgresException pgEx
+                    && pgEx.SqlState == PostgresErrorCodes.ForeignKeyViolation
+                    && pgEx.ConstraintName?.Contains("fk_workgroup_costcentre", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

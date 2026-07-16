@@ -2,6 +2,7 @@ using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -9,6 +10,7 @@ using AutoMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using Npgsql;
 using Xunit;
 
 namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
@@ -285,6 +287,45 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
             await _mockRepository.Received(1).UpdateAsync(100.0, 2024, entity);
         }
 
+        [Fact]
+        public async Task UpdateCostCentreAsync_ThrowsBusinessValidationError_WhenWorkgroupFkViolation()
+        {
+            // Arrange
+            var dto    = BuildDto(100.0, "PC02", 2024);
+            var entity = BuildEntity(100.0, "PC02", 2024);
+
+            _mockRepository.ExistsAsync(100.0, 2024).Returns(true);
+            _mockProfitCentreRepository.ProfitCentreExistsAsync("PC02").Returns(true);
+            _mockMapper.Map<CostCentre>(dto).Returns(entity);
+            _mockRepository.UpdateAsync(100.0, 2024, entity)
+                .ThrowsAsync(new Exception("db error", BuildFkViolation("fk_workgroup_costcentre_10")));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.UpdateCostCentreAsync(100.0, 2024, dto));
+            var error = Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_FK_VIOLATION", error.Code);
+            Assert.Contains("cannot be edited", error.Message);
+        }
+
+        [Fact]
+        public async Task UpdateCostCentreAsync_PropagatesOriginalException_WhenUnrelatedFkViolation()
+        {
+            // Arrange
+            var dto      = BuildDto(100.0, "PC02", 2024);
+            var entity   = BuildEntity(100.0, "PC02", 2024);
+            var original = new Exception("db error", BuildFkViolation("fk_some_other_constraint"));
+
+            _mockRepository.ExistsAsync(100.0, 2024).Returns(true);
+            _mockProfitCentreRepository.ProfitCentreExistsAsync("PC02").Returns(true);
+            _mockMapper.Map<CostCentre>(dto).Returns(entity);
+            _mockRepository.UpdateAsync(100.0, 2024, entity).ThrowsAsync(original);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _sut.UpdateCostCentreAsync(100.0, 2024, dto));
+            Assert.Same(original, ex);
+        }
+
         #endregion
 
         #region DeleteCostCentreAsync Tests
@@ -329,6 +370,55 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
             result.Should().BeFalse();
         }
 
+        [Fact]
+        public async Task DeleteCostCentreAsync_ThrowsBusinessValidationError_WhenWorkgroupFkViolation()
+        {
+            // Arrange
+            _mockRepository.ExistsAsync(100.0, 2024).Returns(true);
+            _mockRepository.DeleteAsync(100.0, 2024)
+                .ThrowsAsync(new Exception("db error", BuildFkViolation("fk_workgroup_costcentre_10")));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.DeleteCostCentreAsync(100.0, 2024));
+            var error = Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_FK_VIOLATION", error.Code);
+            Assert.Contains("cannot be deleted", error.Message);
+        }
+
+        [Fact]
+        public async Task DeleteCostCentreAsync_PropagatesOriginalException_WhenUnrelatedFkViolation()
+        {
+            // Arrange
+            var original = new Exception("db error", BuildFkViolation("fk_some_other_constraint"));
+            _mockRepository.ExistsAsync(100.0, 2024).Returns(true);
+            _mockRepository.DeleteAsync(100.0, 2024).ThrowsAsync(original);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _sut.DeleteCostCentreAsync(100.0, 2024));
+            Assert.Same(original, ex);
+        }
+
         #endregion
+
+        // Builds a PostgresException carrying a foreign-key violation (SqlState 23503) for the
+        // given constraint name, mimicking how Npgsql surfaces DB FK violations.
+        private static PostgresException BuildFkViolation(string constraintName) =>
+            new(
+                messageText: "foreign key violation",
+                severity: "ERROR",
+                invariantSeverity: "ERROR",
+                sqlState: PostgresErrorCodes.ForeignKeyViolation,
+                detail: null,
+                hint: null,
+                position: 0,
+                internalPosition: 0,
+                internalQuery: null,
+                where: null,
+                schemaName: null,
+                tableName: null,
+                columnName: null,
+                dataTypeName: null,
+                constraintName: constraintName);
     }
 }
