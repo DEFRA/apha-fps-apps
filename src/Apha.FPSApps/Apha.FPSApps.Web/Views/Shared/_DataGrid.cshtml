@@ -336,20 +336,13 @@
                              </option>
                          }
                      </select>
+                      <span class="record-info ">
+                         Record: @(Model.Pagination.TotalRecords > 0 ? ((Model.Pagination.PageSize * (Model.Pagination.PageNumber - 1)) + 1) : 0) of @Model.Pagination.TotalRecords
+                      </span>
                  </div>
 
                  @await Component.InvokeAsync("Pagination", Model.Pagination)
-                     @* <span class="record-info ">
-                         Page @Model.Pagination.PageNumber of @Model.Pagination.TotalPages
-                         &nbsp;|&nbsp;
-                         Showing @((Model.Pagination.PageSize * (Model.Pagination.PageNumber - 1)) + 1)
-                         -
-                         @(Math.Min(Model.Pagination.PageSize * Model.Pagination.PageNumber, Model.Pagination.TotalRecords))
-                         of @Model.Pagination.TotalRecords
-                     </span> *@
-                      @*  <span class="record-info">
-                          Total records: @Model.Pagination.TotalRecords
-                      </span> *@
+
 
              </div>
         </div>
