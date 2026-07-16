@@ -241,8 +241,6 @@ namespace Apha.FPS.DataAccess.Repositories
             return result;
         }
 
-        // TRANSFORMENGINE: GetCostCentresByProfitCentreAsync — distinct CostCentre (double?) values
-        // from fps.workgroup for a given ProfitCentre; FpsYear resolved via DbContext HasQueryFilter
         /// <inheritdoc/>
         public async Task<IEnumerable<double?>> GetCostCentresByProfitCentreAsync(string profitCentre)
         {
