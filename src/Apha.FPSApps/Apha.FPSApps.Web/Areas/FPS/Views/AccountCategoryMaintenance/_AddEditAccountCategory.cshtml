@@ -9,7 +9,7 @@
 
 <div class="modal-header">
     <h5 class="modal-title govuk-heading-s" id="accountCategoryModalTitle">@title</h5>
-    <button type="button" class="btn-close btn-red" onclick="closeAccountCategoryModal()" data-bs-dismiss="modal">X</button>
+    <button type="button" class="btn-close btn-red" style="background:#6f0a13;color:#ffffff;" onclick="closeAccountCategoryModal()" data-bs-dismiss="modal">X</button>
 </div>
 <div class="modal-body">
     <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
@@ -35,23 +35,23 @@
                     @if (isEditMode)
                     {
                         <input type="text" 
-                               asp-for="AccShortName" 
                                id="AccShortName"
                                name="AccShortName"
+                               value="@Model?.AccShortName"
                                class="govuk-input govuk-!-font-size-16" 
                                required 
                                maxlength="50"
                                readonly
                                disabled
-                               style="background-color: #f3f2f1; cursor: not-allowed;"
+                               style="background-color: #f3f2f1; cursor: not-allowed; color:#0b0c0c; -webkit-text-fill-color:#0b0c0c; opacity:1;"
                                aria-required="true">
                     }
                     else
                     {
                         <input type="text" 
-                               asp-for="AccShortName" 
                                id="AccShortName"
                                name="AccShortName"
+                               value="@Model?.AccShortName"
                                class="govuk-input govuk-!-font-size-16" 
                                required 
                                maxlength="50"
@@ -67,9 +67,9 @@
                         AccountDescription
                     </label>
                     <input type="text" 
-                           asp-for="AccountDescription" 
                            id="AccountDescription"
                            name="AccountDescription"
+                           value="@Model?.AccountDescription"
                            class="govuk-input govuk-!-font-size-16" 
                            maxlength="50">
                     <span data-valmsg-for="AccountDescription" class="field-validation-valid govuk-error-message" style="display:none;"></span>
@@ -82,9 +82,9 @@
                         ConstituentAccountCodes
                     </label>
                     <input type="text" 
-                           asp-for="ConstituentAccountCodes" 
                            id="ConstituentAccountCodes"
                            name="ConstituentAccountCodes"
+                           value="@Model?.ConstituentAccountCodes"
                            class="govuk-input govuk-!-font-size-16" 
                            maxlength="100">
                     <span data-valmsg-for="ConstituentAccountCodes" class="field-validation-valid govuk-error-message" style="display:none;"></span>
@@ -97,55 +97,80 @@
                         AccountType <span class="sup_color_red">*</span>
                     </label>
                     <input type="text" 
-                           asp-for="AccountType" 
                            id="AccountType"
                            name="AccountType"
+                           value="@Model?.AccountType"
                            class="govuk-input govuk-!-font-size-16" 
                            required 
                            maxlength="10"
-                           aria-required="true"
-                           aria-describedby="AccountType-hint">
+                           aria-required="true">
                     <span data-valmsg-for="AccountType" class="field-validation-valid govuk-error-message" style="display:none;"></span>
                 </div>
             </div>
 
-            <div class="col-md-6">
-                <div class="govuk-form-group sup_margin_bottom_10">
-                    <div class="govuk-checkboxes govuk-checkboxes--small">
-                        <div class="govuk-checkboxes__item">
-                            <input type="checkbox" 
-                                   id="ProjectSpecific"
-                                   name="ProjectSpecific"
-                                   value="-1"
-                                   @(Model?.ProjectSpecific == -1 ? "checked" : "")
-                                   class="govuk-checkboxes__input">
-                            <label class="govuk-label govuk-checkboxes__label sup_label_auto_width govuk-!-font-size-16 govuk-!-margin-top-0" for="ProjectSpecific">
-                                For Project Specific Costs?
-                            </label>
-                        </div>
-                    </div>
-                    <span data-valmsg-for="ProjectSpecific" class="field-validation-valid govuk-error-message" style="display:none;"></span>
-                </div>
-            </div>
+            <fieldset class="govuk-fieldset col-md-12">
+                <legend class="govuk-fieldset__legend govuk-visually-hidden">Account category options</legend>
 
-            <div class="col-md-6">
-                <div class="govuk-form-group sup_margin_bottom_10">
-                    <div class="govuk-checkboxes govuk-checkboxes--small">
-                        <div class="govuk-checkboxes__item">
-                            <input type="checkbox" 
-                                   id="RcSpecific"
-                                   name="RcSpecific"
-                                   value="-1"
-                                   @(Model?.RcSpecific == -1 ? "checked" : "")
-                                   class="govuk-checkboxes__input">
-                            <label class="govuk-label govuk-checkboxes__label sup_label_auto_width govuk-!-font-size-16 govuk-!-margin-top-0" for="RcSpecific">
-                                For Resource Centres?
-                            </label>
+                <div class="col-md-6">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <div class="govuk-checkboxes govuk-checkboxes--small">
+                            <div class="govuk-checkboxes__item">
+                                @if (Model?.ProjectSpecific == -1)
+                                {
+                                    <input type="checkbox"
+                                           id="ProjectSpecific"
+                                           name="ProjectSpecific"
+                                           value="-1"
+                                           checked
+                                           class="govuk-checkboxes__input">
+                                }
+                                else
+                                {
+                                    <input type="checkbox"
+                                           id="ProjectSpecific"
+                                           name="ProjectSpecific"
+                                           value="-1"
+                                           class="govuk-checkboxes__input">
+                                }
+                                <label class="govuk-label govuk-checkboxes__label sup_label_auto_width govuk-!-font-size-16 govuk-!-margin-top-0" for="ProjectSpecific">
+                                    For Project Specific Costs?
+                                </label>
+                            </div>
                         </div>
+                        <span data-valmsg-for="ProjectSpecific" class="field-validation-valid govuk-error-message" style="display:none;"></span>
                     </div>
-                    <span data-valmsg-for="RcSpecific" class="field-validation-valid govuk-error-message" style="display:none;"></span>
                 </div>
-            </div>
+
+                <div class="col-md-6">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <div class="govuk-checkboxes govuk-checkboxes--small">
+                            <div class="govuk-checkboxes__item">
+                                @if (Model?.RcSpecific == -1)
+                                {
+                                    <input type="checkbox"
+                                           id="RcSpecific"
+                                           name="RcSpecific"
+                                           value="-1"
+                                           checked
+                                           class="govuk-checkboxes__input">
+                                }
+                                else
+                                {
+                                    <input type="checkbox"
+                                           id="RcSpecific"
+                                           name="RcSpecific"
+                                           value="-1"
+                                           class="govuk-checkboxes__input">
+                                }
+                                <label class="govuk-label govuk-checkboxes__label sup_label_auto_width govuk-!-font-size-16 govuk-!-margin-top-0" for="RcSpecific">
+                                    For Resource Centres?
+                                </label>
+                            </div>
+                        </div>
+                        <span data-valmsg-for="RcSpecific" class="field-validation-valid govuk-error-message" style="display:none;"></span>
+                    </div>
+                </div>
+            </fieldset>
         </div>
     </form>
 </div>
