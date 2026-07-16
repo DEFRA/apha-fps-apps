@@ -865,9 +865,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
                 new() { WorkGroup = workgroup, Name = "John Doe", WgGrade = "GR1", HrsAvail = 37.5 },
                 new() { WorkGroup = workgroup, Name = "Jane Smith", WgGrade = "GR2", HrsAvail = 30.0 }
             };
+            var mappedResponse = ApiResponseDto<List<StaffResourceUtilisationDto>>.SuccessResponse(mappedDtos);
+            mappedResponse.Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 };
 
             _http.GetAsync<List<StaffResourceUtilisationRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<List<StaffResourceUtilisationDto>>(resList).Returns(mappedDtos);
+            _mapper.Map<ApiResponseDto<List<StaffResourceUtilisationDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
             var result = await _client.GetStaffResourceUtilisationAsync(query, workgroup);
@@ -877,6 +879,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result.Data);
             Assert.Equal(2, result.Data.Count);
             Assert.Equal("John Doe", result.Data[0].Name);
+            Assert.NotNull(result.Pagination);
+            Assert.Equal(2, result.Pagination!.TotalRecords);
         }
 
         [Fact]
@@ -911,10 +915,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var emptyList = new List<StaffResourceUtilisationRes>();
             var apiResponse = new ApiResponse<List<StaffResourceUtilisationRes>> { Success = true, Data = emptyList };
+            var mappedResponse = ApiResponseDto<List<StaffResourceUtilisationDto>>.SuccessResponse(new List<StaffResourceUtilisationDto>());
 
             _http.GetAsync<List<StaffResourceUtilisationRes>>(Arg.Any<string>()).Returns(apiResponse);
-            // Data is non-null but empty — implementation calls mapper; return empty mapped list
-            _mapper.Map<List<StaffResourceUtilisationDto>>(emptyList).Returns(new List<StaffResourceUtilisationDto>());
+            _mapper.Map<ApiResponseDto<List<StaffResourceUtilisationDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
             var result = await _client.GetStaffResourceUtilisationAsync(query, workgroup);

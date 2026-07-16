@@ -202,8 +202,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var response = await _http.GetAsync<List<StaffResourceUtilisationRes>>(url);
 
             if (response.Success)
-                return ApiResponseDto<List<StaffResourceUtilisationDto>>.SuccessResponse(
-                    response.Data != null ? _mapper.Map<List<StaffResourceUtilisationDto>>(response.Data) : new List<StaffResourceUtilisationDto>());
+                return _mapper.Map<ApiResponseDto<List<StaffResourceUtilisationDto>>>(response);
 
             var responseDto = _mapper.Map<ApiResponseDto<List<StaffResourceUtilisationDto>>>(response);
             return ApiResponseDto<List<StaffResourceUtilisationDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);

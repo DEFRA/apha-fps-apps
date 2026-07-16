@@ -12,7 +12,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     {
         // ── Baseline columns (colspan 6 in grouped header) ──────────────────
 
-        [Display(Name = "WG Grade")]
+        [Display(Name = "WGGrade")]
         [GridColumn(Order = 1, Width = 90, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? WgGrade { get; set; }
 
@@ -20,7 +20,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Order = 2, Width = 160, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? Name { get; set; }
 
-        [Display(Name = "Tot h")]
+        [Display(Name = "Tot H")]
         [GridColumn(Order = 3, Width = 70, Type = GridColumnType.DecimalNumber)]
         public double? TotalH { get; set; }
 
