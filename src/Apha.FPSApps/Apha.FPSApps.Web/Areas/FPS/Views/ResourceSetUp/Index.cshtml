@@ -48,36 +48,22 @@
 
 <main id="main-content">
     <div class="container-fluid">
-        <!-- Breadcrumb -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-                <div class="row fps-sr-breadcrumb-row align-items-center">
-                        <div class="col-md-6">
-                            <nav class="govuk-breadcrumbs govuk-!-padding-left-3" aria-label="Breadcrumb">
-                                <ol class="govuk-breadcrumbs__list">
-                                    <li class="govuk-breadcrumbs__list-item">
-                                        <a class="govuk-breadcrumbs__link" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a>
-                                    </li>
-                                    <li class="govuk-breadcrumbs__list-item">Resource Management</li>
-                                    <li class="govuk-breadcrumbs__list-item" aria-current="page">Setup Resource</li>
-                                </ol>
-                            </nav>
-                        </div>
-                        <div style="display: flex; justify-content: flex-end;" class="col-md-6">
-                            <form asp-action="Index" asp-controller="ResourceSetUp" asp-area="FPS" method="get" style="display: flex; align-items: center;">
-                                <input type="hidden" name="year" value="@FpsYearContext.Year" />
-                                <label class="fw-bold mt-2" for="profitCentreSelect">Resource Centre:</label>
-                                <select id="profitCentreSelect"
-                                        name="profitCentre"
-                                        asp-items="Model.ProfitCentreList"
-                                        class="govuk-select govuk-!-font-size-16"
-                                        style="width: auto; min-width: 260px;"
-                                        onchange="this.form.submit()">
-                                    <option value="">-- Select Resource Centre --</option>
-                                </select>
-                            </form>
-                        </div>
-                    </div>
+                <form asp-action="Index" asp-controller="ResourceSetUp" asp-area="FPS" method="get"
+                      class="govuk-!-padding-right-4 govuk-!-padding-top-2 govuk-!-padding-bottom-2"
+                      style="display: flex; align-items: center; justify-content: flex-end;">
+                    <input type="hidden" name="year" value="@FpsYearContext.Year" />
+                    <label class="fw-bold mt-2 me-2" for="profitCentreSelect">Resource Centre: </label>
+                    <select id="profitCentreSelect"
+                            name="profitCentre"
+                            asp-items="Model.ProfitCentreList"
+                            class="govuk-select govuk-!-font-size-16"
+                            style="width: auto; min-width: 260px;"
+                            onchange="this.form.submit()">
+                        <option value="">-- Select Resource Centre --</option>
+                    </select>
+                </form>
             </div>
         </div>
 
@@ -378,7 +364,7 @@
         function planPersonOntoZTCodes() {
             var pactId = document.getElementById('fpsSrSelectedPactId').value;
             if (!pactId) {
-                showGovukAlert('Please select a person first.');
+                showAlertMessage('Please select a person first.', AlertType.INFO);
                 return;
             }
             window.location.href = '/FPS/PlanStaffZTCode/Index?staffId=' + encodeURIComponent(pactId);
@@ -413,7 +399,7 @@
                 success: function (response) {
                     if (response.success) {
                         closeModal();
-                        showGovukAlert('Staff record updated successfully.').then(function () {
+                        showAlertMessage('Staff record updated successfully.', AlertType.SUCCESS).then(function () {
                             getWgStaffGridManager().reloadGrid({ page: 1 });
                             updateStaffTotals();
                         });
@@ -422,7 +408,7 @@
                     }
                 },
                 error: function (xhr) {
-                    showGovukAlert('An unexpected error occurred. Please try again.');
+                    showAlertMessage('An unexpected error occurred. Please try again.', AlertType.ERROR);
                 }
             });
         }

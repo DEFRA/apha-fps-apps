@@ -1543,3 +1543,198 @@ textarea {
 .isListWidth {
     width: 15vw;
 }
+
+.govuk-body.isInfo {
+    background: #fff !important;
+    border: 3px solid #1d70b8 !important;
+    padding: 0 !important;
+
+    h2 {
+        background: #1d70b8 !important;
+        color: #fff !important;
+        font-size: 1.1875rem;
+        margin: 0 !important;
+        padding: 10px !important;
+    }
+
+    p {
+        padding: 10px !important;
+    }
+
+    .govuk-button:first-child {
+        background: #1d70b8 !important;
+        border: 1px solid #1d70b8 !important;
+        color: #fff !important;
+    }
+}
+
+.govuk-body.isSuccess {
+    background: #fff !important;
+    border: 3px solid #00703c !important;
+    padding: 0 !important;
+
+    h2 {
+        background: #00703c !important;
+        color: #fff !important;
+        font-size: 1.1875rem;
+        margin: 0 !important;
+        padding: 10px !important;
+    }
+
+    p {
+        padding: 10px !important;
+    }
+
+    .govuk-button {
+        background: #00703c !important;
+        border: 1px solid #00703c !important;
+        color: #fff !important;
+    }
+}
+
+.govuk-body.isDanger {
+    background: #fff !important;
+    border: 3px solid #d4351c !important;
+    padding: 0 !important;
+
+    h2 {
+        background: #d4351c !important;
+        color: #fff !important;
+        font-size: 1.1875rem;
+        margin: 0 !important;
+        padding: 10px !important;
+    }
+
+    p {
+        padding: 10px !important;
+    }
+
+    .govuk-button:first-child {
+        background: #d4351c !important;
+        border: 1px solid #d4351c !important;
+        color: #fff !important;
+    }
+}
+
+.govuk-body.isWarning {
+    background: #fff !important;
+    border: 3px solid #f47738 !important;
+    padding: 0 !important;
+
+    h2 {
+        background: #f47738 !important;
+        color: #0b0c0c !important;
+        font-size: 1.1875rem;
+        margin: 0 !important;
+        padding: 10px !important;
+    }
+
+    p {
+        padding: 10px !important;
+    }
+
+    .govuk-button:first-child {
+        background: #f47738 !important;
+        border: 1px solid #f47738 !important;
+        color: #0b0c0c !important;
+    }
+}
+
+#loader {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 9999;
+}
+
+.spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120px;
+    height: 120px;
+    margin: -50px;
+}
+
+    .spinner i {
+        position: absolute;
+        left: 31px;
+        top: 2px;
+        width: 10px;
+        height: 40px;
+        border-radius: 20px;
+        background: #ff1f1f;
+        transform-origin: 5px 48px;
+        animation: fade 1.2s linear infinite;
+    }
+
+        .spinner i:nth-child(1) {
+            transform: rotate(0deg);
+            animation-delay: -1.1s;
+        }
+
+        .spinner i:nth-child(2) {
+            transform: rotate(30deg);
+            animation-delay: -1.0s;
+        }
+
+        .spinner i:nth-child(3) {
+            transform: rotate(60deg);
+            animation-delay: -0.9s;
+        }
+
+        .spinner i:nth-child(4) {
+            transform: rotate(90deg);
+            animation-delay: -0.8s;
+        }
+
+        .spinner i:nth-child(5) {
+            transform: rotate(120deg);
+            animation-delay: -0.7s;
+        }
+
+        .spinner i:nth-child(6) {
+            transform: rotate(150deg);
+            animation-delay: -0.6s;
+        }
+
+        .spinner i:nth-child(7) {
+            transform: rotate(180deg);
+            animation-delay: -0.5s;
+        }
+
+        .spinner i:nth-child(8) {
+            transform: rotate(210deg);
+            animation-delay: -0.4s;
+        }
+
+        .spinner i:nth-child(9) {
+            transform: rotate(240deg);
+            animation-delay: -0.3s;
+        }
+
+        .spinner i:nth-child(10) {
+            transform: rotate(270deg);
+            animation-delay: -0.2s;
+        }
+
+        .spinner i:nth-child(11) {
+            transform: rotate(300deg);
+            animation-delay: -0.1s;
+        }
+
+        .spinner i:nth-child(12) {
+            transform: rotate(330deg);
+            animation-delay: 0s;
+        }
+
+@keyframes fade {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: .15;
+    }
+}

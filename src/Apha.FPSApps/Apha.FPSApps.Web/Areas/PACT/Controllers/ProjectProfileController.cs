@@ -259,7 +259,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return new DataGridConfig<ProjectMonthItem>
             {
                 GridId = "costProfileGrid",
-                Title = "",
+                Title = "Cost Profile",
                 KeyProperty = "MonthNo",
                 AllowAdd= false,
                 AllowEdit = true,

@@ -5,7 +5,6 @@
     ViewData["Title"] = Model.IsProjectGroupMode ? "Project Group Profitability" : "Project Profitability";
 }
 
-<!-- Breadcrumb + Programme selector -->
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
         <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
@@ -289,7 +288,7 @@
                         updateTotals(result);
                     })
                     .fail(function () {
-                        window.showGovukAlert('Failed to load summary data.');
+                        window.showAlertMessage('Failed to load summary data.', AlertType.ERROR);
                     });
                 }
 
@@ -324,11 +323,11 @@
                 }
 
                 function previewProfitabilityReport() {
-                    window.showGovukAlert('Report preview is not yet implemented.');
+                    window.showAlertMessage('Report preview is not yet implemented.', AlertType.INFO);
                 }
 
                 function planThisProject() {
-                    if (!selectedJobCode) { window.showGovukAlert('Please select a project first.'); return; }
+                    if (!selectedJobCode) { window.showAlertMessage('Please select a project first.', AlertType.INFO); return; }
                     var returnUrl = isProjectGroupMode
                         ? '/FPS/ProjectProfitability?source=projectgroup'
                         : '/FPS/ProjectProfitability?programNo=' + encodeURIComponent(currentProgramNo);

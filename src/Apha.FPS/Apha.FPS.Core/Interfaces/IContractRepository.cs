@@ -6,5 +6,6 @@ namespace Apha.FPS.Core.Interfaces
     {
         Task<IEnumerable<Contract>> GetAllContractsAsync();
         Task<IEnumerable<Contract>> GetAllContractsByUserAsync();
+        Task<IEnumerable<Contract>> GetAllPactContractsAsync();
     }
 }

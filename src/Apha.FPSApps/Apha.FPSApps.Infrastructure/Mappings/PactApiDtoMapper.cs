@@ -25,6 +25,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<MonthlyInvoicesPivotDto, MonthlyInvoicesPivotRes>().ReverseMap();
             CreateMap<ProjectSubContractDto, ProjectSubContractReq>().ReverseMap();
             CreateMap<ProjectSubContractDto, ProjectSubContractRes>().ReverseMap();
+            CreateMap<SubContractRmsImportRowDto, SubContractRmsImportRowReq>().ReverseMap();
+            CreateMap<SubContractRmsImportRowDto, SubContractRmsImportRowRes>().ReverseMap();
+            CreateMap<SubContractRmsImportReqDto, SubContractRmsImportReq>().ReverseMap();
+            CreateMap<SubContractRmsImportResultDto, SubContractRmsImportRes>().ReverseMap();
             CreateMap<TestCapabilityDto, TestCapabilityReq>().ReverseMap();
             CreateMap<TestCapabilityDto, TestCapabilityRes>().ReverseMap();
             CreateMap<TestRequirementDto, TestRequirementReq>().ReverseMap();
@@ -60,6 +64,12 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ReleaseSummaryRes, ReleaseSummaryDto>();
             CreateMap<TestPriceCheckDto, TestPriceCheckRes>().ReverseMap();
             CreateMap<TestPriceCheckDto, TestPriceCheckReq>();
+            CreateMap<TimePurchaseProjectDto, TimePurchaseProjectRes>().ReverseMap();
+            CreateMap<TimeSaleProfitCentreDto, TimeSaleProfitCentreRes>().ReverseMap();
+            CreateMap<TestSaleSellingWorkgroupDto, TestSaleSellingWorkgroupRes>().ReverseMap();
+            CreateMap<TestSaleBuyingProjectDto, TestSaleBuyingProjectRes>().ReverseMap();
+            CreateMap<WgTestCapabilitiesWithDescriptionDto, WgTestCapabilitiesWithDescriptionRes>().ReverseMap();
+            CreateMap<TestReqBreakdownRes, TestReqBreakdownDto>().ReverseMap();
         }
     }
 }

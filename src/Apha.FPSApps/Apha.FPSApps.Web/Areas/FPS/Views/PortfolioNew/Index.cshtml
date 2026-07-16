@@ -333,7 +333,7 @@
                 data: JSON.stringify(formData),
                 success: function (result) {
                     if (result.success) {
-                        showGovukAlert(result.message || 'Portfolio details saved successfully.');
+                        showAlertMessage(result.message || 'Portfolio details saved successfully.', AlertType.SUCCESS);
                         if (typeof onSuccess === 'function') onSuccess();
                     } else {
                         displayServerValidationErrors(result.errors, result.message, 'body');
@@ -343,7 +343,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, 'body');
                     } else {
-                        showGovukAlert('An error occurred while saving portfolio details.');
+                        showAlertMessage('An error occurred while saving portfolio details.', AlertType.ERROR);
                     }
                 }
             });

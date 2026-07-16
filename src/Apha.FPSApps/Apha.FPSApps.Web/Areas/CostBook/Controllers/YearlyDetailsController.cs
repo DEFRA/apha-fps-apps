@@ -228,10 +228,11 @@ public class YearlyDetailsController : Controller
         var dto = _mapper.Map<StaffRequirementDto>(item);
         dto.Project = decodedProjectId;
         dto.Year = year;
+        if (item.StaffCost == null) dto.StaffCost = 0;
         var response = await _service.AddStaffRequirementAsync(decodedProjectId, year, dto);
         if (!response.Success)
             return Json(new { success = false, errors = MapApiErrors(response.Errors) });
-        return Json(new { success = true });
+        return Json(new { success = true, message = "Staff Record Added Successfully" });
     }
 
     [HttpGet]
@@ -259,17 +260,20 @@ public class YearlyDetailsController : Controller
         dto.Project = decodedProjectId;
         dto.Year = year;
         dto.SrIdentity = srIdentity;
+        if (item.StaffCost == null) dto.StaffCost = 0;
         var response = await _service.UpdateStaffRequirementAsync(decodedProjectId, year, srIdentity, dto);
         if (!response.Success)
             return Json(new { success = false, errors = MapApiErrors(response.Errors) });
-        return Json(new { success = true });
+        return Json(new { success = true, message = "Staff Record Updated Successfully" });
     }
 
     [HttpDelete]
     public async Task<IActionResult> DeleteStaff(string projectId, int year, int srIdentity)
     {
         var response = await _service.DeleteStaffRequirementAsync(HttpUtility.UrlDecode(projectId), year, srIdentity);
-        return Json(new { success = response.Success && response.Data });
+        if (!response.Success || !response.Data)
+            return Json(new { success = false, message = "Failed to delete Staff record entry." });
+        return Json(new { success = true, message = "Staff Record Deleted Successfully" });
     }
 
     // ── TEST CRUD ─────────────────────────────────────────────────────────
@@ -291,10 +295,11 @@ public class YearlyDetailsController : Controller
         var dto = _mapper.Map<TestRequirementDto>(item);
         dto.Project = decodedProjectId;
         dto.Year = year;
+        if (item.TestCost == null) dto.TestCost = 0;
         var response = await _service.AddTestRequirementAsync(decodedProjectId, year, dto);
         if (!response.Success)
             return Json(new { success = false, errors = MapApiErrors(response.Errors) });
-        return Json(new { success = true });
+        return Json(new { success = true, message = "Test Record Added Successfully" });        
     }
 
     [HttpGet]
@@ -319,17 +324,20 @@ public class YearlyDetailsController : Controller
         dto.Project = decodedProjectId;
         dto.Year = year;
         dto.TestCode = testCode;
+        if (item.TestCost == null) dto.TestCost = 0;
         var response = await _service.UpdateTestRequirementAsync(decodedProjectId, year, testCode, dto);
         if (!response.Success)
             return Json(new { success = false, errors = MapApiErrors(response.Errors) });
-        return Json(new { success = true });
+        return Json(new { success = true, message = "Test Record Updated Successfully" });
     }
 
     [HttpDelete]
     public async Task<IActionResult> DeleteTest(string projectId, int year, string testCode)
     {
         var response = await _service.DeleteTestRequirementAsync(HttpUtility.UrlDecode(projectId), year, testCode);
-        return Json(new { success = response.Success && response.Data });
+        if (!response.Success || !response.Data)
+            return Json(new { success = false, message = "Failed to delete Test entry." });
+        return Json(new { success = true, message = "Test Record Deleted Successfully" });
     }
 
     // ── ANIMAL CRUD ───────────────────────────────────────────────────────
@@ -352,10 +360,11 @@ public class YearlyDetailsController : Controller
         var dto = _mapper.Map<AnimalRequirementDto>(item);
         dto.Project = decodedProjectId;
         dto.Year = year;
+        if(item.AnimalCost == null) dto.AnimalCost = 0;
         var response = await _service.AddAnimalRequirementAsync(decodedProjectId, year, dto);
         if (!response.Success)
             return Json(new { success = false, errors = MapApiErrors(response.Errors) });
-        return Json(new { success = true });
+        return Json(new { success = true, message = "Animal Record Added Successfully" });
     }
 
     [HttpGet]
@@ -381,17 +390,20 @@ public class YearlyDetailsController : Controller
         dto.Project = decodedProjectId;
         dto.Year = year;
         dto.ArIdentity = arIdentity;
+        if (item.AnimalCost == null) dto.AnimalCost = 0;
         var response = await _service.UpdateAnimalRequirementAsync(decodedProjectId, year, arIdentity, dto);
         if (!response.Success)
             return Json(new { success = false, errors = MapApiErrors(response.Errors) });
-        return Json(new { success = true });
+        return Json(new { success = true, message = "Animal Record Updated Successfully" });
     }
 
     [HttpDelete]
     public async Task<IActionResult> DeleteAnimal(string projectId, int year, int arIdentity)
     {
         var response = await _service.DeleteAnimalRequirementAsync(HttpUtility.UrlDecode(projectId), year, arIdentity);
-        return Json(new { success = response.Success && response.Data });
+        if (!response.Success || !response.Data)
+            return Json(new { success = false, message = "Failed to delete animal entry." });
+        return Json(new { success = true, message = "Animal Record Deleted Successfully" });
     }
 
     // ── ADDITIONAL COST CRUD ──────────────────────────────────────────────
@@ -413,10 +425,11 @@ public class YearlyDetailsController : Controller
         var dto = _mapper.Map<AdditionalCostDto>(item);
         dto.Project = decodedProjectId;
         dto.Year = year;
+        if(item.ItemCost==null) dto.ItemCost = 0;
         var response = await _service.AddAdditionalCostAsync(decodedProjectId, year, dto);
         if (!response.Success)
             return Json(new { success = false, errors = MapApiErrors(response.Errors) });
-        return Json(new { success = true });
+        return Json(new { success = true, message = "Additional Cost Record Added Successfully" });
     }
 
     [HttpGet]
@@ -440,17 +453,21 @@ public class YearlyDetailsController : Controller
         dto.Project = decodedProjectId;
         dto.Year = year;
         dto.AcIdentity = acIdentity;
+        if (item.ItemCost == null) dto.ItemCost = 0;
         var response = await _service.UpdateAdditionalCostAsync(decodedProjectId, year, acIdentity, dto);
         if (!response.Success)
             return Json(new { success = false, errors = MapApiErrors(response.Errors) });
-        return Json(new { success = true });
+        return Json(new { success = true, message = "Additional Cost Record Updated Successfully" });
     }
 
     [HttpDelete]
     public async Task<IActionResult> DeleteAdditionalCost(string projectId, int year, int acIdentity)
     {
         var response = await _service.DeleteAdditionalCostAsync(HttpUtility.UrlDecode(projectId), year, acIdentity);
-        return Json(new { success = response.Success && response.Data });
+        if (!response.Success || !response.Data)
+            return Json(new { success = false, message = "Failed to delete Additional Cost entry." });
+        return Json(new { success = true, message = "Additional Cost Record Deleted Successfully" });
+      
     }
 
     // ── MARKUP/PROFIT UPDATE ──────────────────────────────────────────────

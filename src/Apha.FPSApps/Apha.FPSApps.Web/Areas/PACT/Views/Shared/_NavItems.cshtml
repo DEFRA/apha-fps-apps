@@ -3,7 +3,7 @@
             <!-- Project & Programme -->
             <div class="nav-item dropdown">
                 <button class="nav-button dropdown-toggle" data-dropdown="project-management" allow-edit="true">
-                    <div class="align-menu-text"><span>Project &amp; Programme</span></div>
+                    <div class="align-menu-text"><span>Project &amp; Program</span></div>
                     <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12" /></span>
                 </button>
                 <div class="dropdown-menu" id="project-management">
@@ -21,11 +21,9 @@
                 </button>
                 <div class="dropdown-menu" id="monthly-data">
                     <a class="dropdown-item" asp-area="PACT" asp-controller="Invoice" asp-action="Index">Project Invoices (Manual)</a>
-                    <a class="dropdown-item" href="#">OM, OG, FT &amp; UT Invoices (Batch Mode from RMS)</a>
                     <a class="dropdown-item" asp-area="PACT" asp-controller="InvoiceByMonth" asp-action="Index">Invoices by Month</a>
-                    <a class="dropdown-item" href="#">FT &amp; UT Project Work In Progress (WIP Over-ride)</a>
                     <a class="dropdown-item" asp-area="PACT" asp-controller="SubContract" asp-action="Index">SubContracts (Exceptional Costs) (Manual)</a>
-                    <a class="dropdown-item" href="#">SubContracts (Exceptional Costs) (Batch mode from RMS)</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="SubContractRms" asp-action="Index">SubContracts (Exceptional Costs) (Batch mode from RMS)</a>
                     <a class="dropdown-item" asp-area="PACT" asp-controller="SubContractByMonth" asp-action="Index">SubContracts By Month</a>
                 </div>
             </div>
@@ -44,17 +42,10 @@
             </div>
 
             <!-- Bosworth Interface -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="bosworth-interface" allow-edit="true">
+            <div class="nav-item">
+                <a class="nav-button" asp-area="PACT" asp-controller="BosworthInterface" asp-action="Index">
                     <div class="align-menu-text"><span>Bosworth Interface</span></div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12" /></span>
-                </button>
-                <div class="dropdown-menu" id="bosworth-interface">
-                    <a class="dropdown-item" href="#">Resource Management</a>
-                    <a class="dropdown-item" href="#">Time Purchase Pivot Wizard</a>
-                    <a class="dropdown-item" href="#">Time Sales Pivot Wizard</a>
-                    <a class="dropdown-item" href="#">Test Sale Pivot Wizard</a>
-                </div>
+                </a>
             </div>
 
             <!-- Time & Output Data -->
@@ -76,14 +67,15 @@
             <!-- Reports -->
             <div class="nav-item dropdown">
                 <button class="nav-button dropdown-toggle" data-dropdown="report" allow-edit="true">
-                    <div class="align-menu-text"><span>Reports</span>
+                    <div class="align-menu-text"><span>Report & Summaries</span>
                         <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12" /></span>
                     </div>
                 </button>
                 <div class="dropdown-menu" id="report">
                     <a class="dropdown-item" asp-area="PACT" asp-controller="ReleaseSummary" asp-action="Index">Release Summaries</a>
                     <a class="dropdown-item" href="#">Recreate Summaries</a>
-        <a class="dropdown-item" asp-area="PACT" asp-controller="RecreateSummaryLog" asp-action="Index">Log of Releases</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="RecreateSummaryLog" asp-action="Index">Log of Releases</a>
                     <a class="dropdown-item" asp-area="PACT" asp-controller="ProfitCenterCostSummary" asp-action="Index">PC SOCT query</a>
+                    <a class="dropdown-item" href="#">Report</a>
                 </div>
             </div>

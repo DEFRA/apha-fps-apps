@@ -178,6 +178,12 @@ a {
     float: right;
 }
 
+.sup_back_link_center_right {
+    float: none;
+    align-self: center;
+    margin: 0 12px 0 0;
+}
+
 .sup_margin_right_0 {
     margin-right: 0 !important;
 }
@@ -750,6 +756,14 @@ a {
     font-weight: 500;
 }
 
+.govuk-pagination .govuk-pagination__link[disabled] {
+    pointer-events: none;
+    cursor: default;
+    opacity: 0.4;
+    color: #505a5f;
+    text-decoration: none;
+}
+
 .govuk-select,
 .govuk-input,
 .govuk-input__prefix {
@@ -760,6 +774,11 @@ a {
 .govuk-input--width-3 {
     max-width: 3.75em !important;
     min-width: 3.75em !important;
+}
+
+.sup_width_55px {
+    width: 55px !important;
+    min-width: 55px !important;
 }
 
 
@@ -1179,7 +1198,7 @@ table#tblMonthPeriod > tbody > tr > td {
 }
 
 .sup_color_red {
-    color: red;
+    color: #ca3535;
 }
 
 .sup_position_relative {
@@ -1551,7 +1570,7 @@ table#tblMonthPeriod > tbody > tr > td {
 }
 
 .sup_color_red {
-    color: red;
+    color: #ca3535;
 }
 
 .sup_position_relative {
@@ -1689,4 +1708,11 @@ table#tblMonthPeriod > tbody > tr > td {
 #columnStandardHoursContainer,
 #columnStndHrsAllocatedContainer {
     display: inline-flex; /* Make containers only as wide as content */
+}
+
+.sup_font_weight_700 {
+    font-weight: 700 !important;
+}
+.sup-margin-left-3-percent {
+     margin-left: 3% !important;
 }

@@ -1,6 +1,7 @@
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Services;
+using Apha.PACT.Application.Validation;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
@@ -16,6 +17,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
         private readonly ITestCapabilityRepository _testCapabilityRepo;
         private readonly ITestRequirementRepository _testReqmtRepo;
         private readonly ITestorProductRepository _testorProductRepo;
+        private readonly IMonthlyOutputRepository _monthlyOutputRepo;
         private readonly IMapper _mapper;
         private readonly TestCapabilityService _sut;
 
@@ -24,9 +26,10 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             _testCapabilityRepo = Substitute.For<ITestCapabilityRepository>();
             _testReqmtRepo = Substitute.For<ITestRequirementRepository>();
             _testorProductRepo = Substitute.For<ITestorProductRepository>();
+            _monthlyOutputRepo = Substitute.For<IMonthlyOutputRepository>();
             _mapper = Substitute.For<IMapper>();
             _sut = new TestCapabilityService(
-                _testCapabilityRepo, _testReqmtRepo, _testorProductRepo, _mapper);
+                _testCapabilityRepo, _testReqmtRepo, _testorProductRepo, _monthlyOutputRepo, _mapper);
         }
 
         #region GetPagedTestCapabilityByPortfolioAsync
@@ -296,6 +299,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
         public async Task DeleteTestCapabilityAsync_NoReqmtsDependency_DeletesAndReturnsTrue()
         {
             _testReqmtRepo.ExistsByTestBuyerCodeAsync("TC1WG1").Returns(false);
+            _monthlyOutputRepo.ExistsByTestCodeAndWorkGroupAsync("TC1", "WG1").Returns(false);
             _testCapabilityRepo.DeleteAsync("TC1", "WG1").Returns(true);
 
             var result = await _sut.DeleteTestCapabilityAsync("TC1", "WG1");
@@ -313,8 +317,425 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             await _testCapabilityRepo.DidNotReceive().DeleteAsync(Arg.Any<string>(), Arg.Any<string>());
         }
 
+        [Fact]
+        public async Task DeleteTestCapabilityAsync_HasReqmtsDependency_DoesNotCheckMonthlyOutputs()
+        {
+            _testReqmtRepo.ExistsByTestBuyerCodeAsync("TC1WG1").Returns(true);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteTestCapabilityAsync("TC1", "WG1"));
+            await _monthlyOutputRepo.DidNotReceive().ExistsByTestCodeAndWorkGroupAsync(Arg.Any<string>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteTestCapabilityAsync_HasMonthlyOutputDependency_ThrowsInvalidOperationException()
+        {
+            _testReqmtRepo.ExistsByTestBuyerCodeAsync("TC1WG1").Returns(false);
+            _monthlyOutputRepo.ExistsByTestCodeAndWorkGroupAsync("TC1", "WG1").Returns(true);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteTestCapabilityAsync("TC1", "WG1"));
+            await _testCapabilityRepo.DidNotReceive().DeleteAsync(Arg.Any<string>(), Arg.Any<string>());
+        }
+
         #endregion
 
-        
+        #region GetPagedWgTestCapabilitiesWithDescriptionAsync
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_ValidInput_ReturnsMappedPaginatedResultWithDtoProperties()
+        {
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "TestCode", Descending = true, Filter = "{\"TestCode\":\"TC\"}" };
+            var mappedParams = new PaginationParameters<string> { Page = 2, PageSize = 5, SortBy = "TestCode", Descending = true, Filter = "{\"TestCode\":\"TC\"}" };
+
+            var entities = new List<WgTestCapabilitiesWithDescription>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC001", ItemDescription = "Item 1" },
+                new() { WorkGroup = "WG1", TestCode = "TC002", ItemDescription = "Item 2" }
+            };
+            var pagedData = new PagedData<WgTestCapabilitiesWithDescription>(entities, new PaginationData
+            {
+                PageNumber = 2,
+                PageSize = 5,
+                TotalPages = 3,
+                TotalRecords = 12
+            });
+
+            var expected = new PaginatedResult<WgTestCapabilitiesWithDescriptionDto>
+            {
+                Data = new List<WgTestCapabilitiesWithDescriptionDto>
+                {
+                    new() { WorkGroup = "WG1", TestCode = "TC001", ItemDescription = "Item 1" },
+                    new() { WorkGroup = "WG1", TestCode = "TC002", ItemDescription = "Item 2" }
+                },
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 2,
+                    PageSize = 5,
+                    TotalPages = 3,
+                    TotalRecords = 12
+                }
+            };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedWgTestCapabilitiesWithDescriptionAsync(mappedParams, "WG1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<WgTestCapabilitiesWithDescriptionDto>>(pagedData).Returns(expected);
+
+            var result = await _sut.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            result.Should().Be(expected);
+            result.Data.Should().HaveCount(2);
+            result.Data!.First().WorkGroup.Should().Be("WG1");
+            result.Data.First().TestCode.Should().Be("TC001");
+            result.Data.First().ItemDescription.Should().Be("Item 1");
+            result.PaginationData.PageNumber.Should().Be(2);
+            result.PaginationData.PageSize.Should().Be(5);
+            result.PaginationData.TotalPages.Should().Be(3);
+            result.PaginationData.TotalRecords.Should().Be(12);
+
+            _mapper.Received(1).Map<PaginationParameters<string>>(query);
+            await _testCapabilityRepo.Received(1).GetPagedWgTestCapabilitiesWithDescriptionAsync(mappedParams, "WG1");
+            _mapper.Received(1).Map<PaginatedResult<WgTestCapabilitiesWithDescriptionDto>>(pagedData);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_InvalidWorkGroup_ThrowsBusinessValidationErrorException(string? workGroup)
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, workGroup!));
+
+            ex.Errors.Should().ContainSingle();
+            ex.Errors[0].Code.Should().Be("WORKGROUP_REQUIRED");
+            ex.Errors[0].Message.Should().Be("Work Group is required");
+
+            await _testCapabilityRepo.DidNotReceive()
+                .GetPagedWgTestCapabilitiesWithDescriptionAsync(Arg.Any<PaginationParameters<string>>(), Arg.Any<string>());
+        }
+
+        #endregion
+
+        #region GetPagedTestCapabilityByPortfolioAsync — ItemDescription Filter and Sort
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_FilterByItemDescription_ReturnsOnlyMatchingRecords()
+        {
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = """{"ItemDescription":"Alpha"}"""
+            };
+            var mappedParams = new PaginationParameters<string>();
+            var entities = new List<TestCapability>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
+            var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 3 });
+            var dtos = new List<TestCapabilityDto>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1" }
+     };
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
+            var descriptions = new Dictionary<string, string?>
+            {
+                ["TC1"] = "Alpha Test",
+                ["TC2"] = "Beta Test",
+                ["TC3"] = "Alpha Beta"
+            };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+            _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            result.Data.Should().HaveCount(2);
+            result.Data.Should().OnlyContain(d => d.ItemDescription!.Contains("Alpha", StringComparison.OrdinalIgnoreCase));
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_FilterByItemDescription_CaseInsensitive()
+        {
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = """{"ItemDescription":"alpha"}"""
+            };
+            var mappedParams = new PaginationParameters<string>();
+            var entities = new List<TestCapability>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
+            var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 1 });
+            var dtos = new List<TestCapabilityDto>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" }
+     };
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
+            var descriptions = new Dictionary<string, string?> { ["TC1"] = "ALPHA Test" };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+            _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            result.Data.Should().HaveCount(1);
+            result.Data.First().ItemDescription.Should().Be("ALPHA Test");
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_FilterByItemDescription_NoMatch_ReturnsEmpty()
+        {
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = """{"ItemDescription":"NoMatch"}"""
+            };
+            var mappedParams = new PaginationParameters<string>();
+            var entities = new List<TestCapability>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
+            var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 1 });
+            var dtos = new List<TestCapabilityDto>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" }
+     };
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
+            var descriptions = new Dictionary<string, string?> { ["TC1"] = "Alpha Test" };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+            _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            result.Data.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_SortByItemDescriptionAscending_ReturnsSortedData()
+        {
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "ItemDescription",
+                Descending = false
+            };
+            var mappedParams = new PaginationParameters<string>();
+            var entities = new List<TestCapability>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
+            var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 3 });
+            var dtos = new List<TestCapabilityDto>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1" }
+     };
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
+            var descriptions = new Dictionary<string, string?>
+            {
+                ["TC1"] = "Charlie",
+                ["TC2"] = "Alpha",
+                ["TC3"] = "Bravo"
+            };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+            _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            result.Data.Select(d => d.ItemDescription).Should().BeInAscendingOrder();
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_SortByItemDescriptionDescending_ReturnsSortedData()
+        {
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "ItemDescription",
+                Descending = true
+            };
+            var mappedParams = new PaginationParameters<string>();
+            var entities = new List<TestCapability>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
+            var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 3 });
+            var dtos = new List<TestCapabilityDto>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1" }
+     };
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
+            var descriptions = new Dictionary<string, string?>
+            {
+                ["TC1"] = "Charlie",
+                ["TC2"] = "Alpha",
+                ["TC3"] = "Bravo"
+            };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+            _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            result.Data.Select(d => d.ItemDescription).Should().BeInDescendingOrder();
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_NoItemDescriptionFilterOrSort_DataUnchanged()
+        {
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = """{"WorkGroup":"WG1"}""",
+                SortBy = "TestCode"
+            };
+            var mappedParams = new PaginationParameters<string>();
+            var entities = new List<TestCapability>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
+            var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 2 });
+            var dtos = new List<TestCapabilityDto>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1" }
+     };
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
+            var descriptions = new Dictionary<string, string?>
+            {
+                ["TC1"] = "Alpha",
+                ["TC2"] = "Beta"
+            };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+            _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            result.Data.Should().HaveCount(2);
+            result.Data.First().ItemDescription.Should().Be("Alpha");
+            result.Data.Last().ItemDescription.Should().Be("Beta");
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_FilterAndSortByItemDescription_AppliesBoth()
+        {
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = """{"ItemDescription":"a"}""",
+                SortBy = "ItemDescription",
+                Descending = false
+            };
+            var mappedParams = new PaginationParameters<string>();
+            var entities = new List<TestCapability>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
+            var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 3 });
+            var dtos = new List<TestCapabilityDto>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1" }
+     };
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
+            var descriptions = new Dictionary<string, string?>
+            {
+                ["TC1"] = "Charlie",
+                ["TC2"] = "Alpha",
+                ["TC3"] = "Bravo"
+            };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+            _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            // All contain "a" (case-insensitive): Alpha, Bravo, Charlie
+            result.Data.Should().HaveCount(3);
+            result.Data.Select(d => d.ItemDescription).Should().BeInAscendingOrder();
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_EmptyItemDescriptionFilter_DoesNotFilter()
+        {
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = """{"ItemDescription":""}"""
+            };
+            var mappedParams = new PaginationParameters<string>();
+            var entities = new List<TestCapability>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
+            var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 2 });
+            var dtos = new List<TestCapabilityDto>
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1" }
+     };
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
+            var descriptions = new Dictionary<string, string?>
+            {
+                ["TC1"] = "Alpha",
+                ["TC2"] = "Beta"
+            };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+            _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            result.Data.Should().HaveCount(2);
+        }
+
+        #endregion
+
+
     }
 }

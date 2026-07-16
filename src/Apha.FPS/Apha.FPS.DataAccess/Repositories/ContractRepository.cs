@@ -50,5 +50,10 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<Contract>> GetAllPactContractsAsync()
+        {
+            return await _dbContext.Contracts.ToListAsync();
+        }
     }
 }

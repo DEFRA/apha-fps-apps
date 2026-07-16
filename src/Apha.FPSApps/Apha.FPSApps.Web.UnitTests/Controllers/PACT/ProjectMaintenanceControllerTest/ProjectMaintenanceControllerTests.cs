@@ -94,7 +94,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
                 .Returns(ApiResponseDto<List<DiseaseDto>>.SuccessResponse([]));
             _projectService.GetAllCustomersAsync()
                 .Returns(ApiResponseDto<List<CustomerDto>>.SuccessResponse([]));
-            _projectService.GetAllContractsAsync()
+            _projectService.GetAllPactContractsAsync()
                 .Returns(ApiResponseDto<List<ContractDto>>.SuccessResponse([]));
             _employeeService.GetAllPactManagersAsync()
                 .Returns(ApiResponseDto<List<ManagerDto>>.SuccessResponse([]));

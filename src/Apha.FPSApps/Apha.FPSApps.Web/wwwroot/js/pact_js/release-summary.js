@@ -66,7 +66,7 @@ function saveFinalSummaryRun(periodName, finalSummariesRun, $row, $checkbox, isC
             updateCheckboxStates();
         },
         error: function () {
-            showGovukAlert('Failed to update Final Summaries Run for period: ' + periodName);
+            showAlertMessage('Failed to update Final Summaries Run for period: ' + periodName, AlertType.ERROR);
             $checkbox.prop('checked', !isChecked);
             updateCheckboxStates();
         }
@@ -83,7 +83,7 @@ function onSendEmailChange() {
         type: 'POST',
         data: { periodName: '', finalSummariesRun: 0, sendEmail: sendEmail },
         error: function () {
-            showGovukAlert('Failed to update Send Report Emails setting.');
+            showAlertMessage('Failed to update Send Report Emails setting.', AlertType.ERROR);
             $('#cbSendEmail').prop('checked', !$('#cbSendEmail').is(':checked'));
         }
     });
@@ -97,7 +97,7 @@ function onCheckboxChange() {
     var currentIndex = getGridRows().index($row);
 
     if (isChecked && !isSequentialCheckAllowed(currentIndex)) {
-        showGovukAlert('Please check checkboxes sequentially. You cannot skip rows.');
+        showAlertMessage('Please check checkboxes sequentially. You cannot skip rows.', AlertType.INFO);
         $checkbox.prop('checked', false);
         updateCheckboxStates();
         return;

@@ -1,5 +1,6 @@
 ﻿using Apha.Common.Utilities.Email;
 using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.ExcelImport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.PACT.Api.Context;
 using Apha.PACT.Application.Interfaces;
@@ -22,6 +23,7 @@ namespace Apha.PACT.Api.Extensions
         {
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IExcelImportService, ExcelImportService>();
             services.AddScoped<IJobCodeService, JobCodeService>();
             services.AddScoped<ITimeCodeValidService, TimeCodeValidService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();            
@@ -39,6 +41,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddSingleton<IGraphEmailService, GraphEmailService>();
             services.AddScoped<IMonthlyTimeService, MonthlyTimeService>();
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
+            services.AddScoped<IBosworthInterfaceService, BosworthInterfaceService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -61,6 +64,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IProjectProfileRepository, ProjectProfileRepository>();
             services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();
             services.AddScoped<IRecreateAndReleaseSummaryRepository, RecreateAndReleaseSummaryRepository>();
+            services.AddScoped<IBosworthInterfaceRepository, BosworthInterfaceRepository>();
 
             return services;
         }

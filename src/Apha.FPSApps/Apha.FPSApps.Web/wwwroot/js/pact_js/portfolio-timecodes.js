@@ -14,6 +14,10 @@ function initPortfolioTimeCodes(selectedPortfolio, jobCodeGrid, timeCodeGrid) {
     timeCodeGridId = timeCodeGrid;
 }
 
+function toggleSidebar() {
+    document.querySelector('.sidenav').classList.toggle('collapsed');
+}
+
 function getJobCodeGridManager() {
     return window['gridManager_' + jobCodeGridId];
 }
@@ -37,7 +41,7 @@ function onPortfolioChange(parentProject) {
 
 function addJobCode() {
     if (!currentParentProject) {
-        alert('Please select a portfolio first.');
+        showAlertMessage('Please select a portfolio first.', AlertType.INFO);
         return;
     }
 
@@ -47,7 +51,7 @@ function addJobCode() {
             $('#modalPopup').addClass('show');
         })
         .fail(function (xhr, status, error) {
-            alert('Failed to load add job code form.');
+            showAlertMessage('Failed to load add job code form.', AlertType.ERROR);
         });
 }
 
@@ -59,39 +63,42 @@ function editJobCode(btn) {
             $('#modalPopup').addClass('show');
         })
         .fail(function () {
-            alert('Failed to load edit job code form.');
+            showAlertMessage('Failed to load edit job code form.', AlertType.ERROR);
         });
 }
 
 function deleteJobCode(btn) {
     var jobCodeId = $(btn).data('id');
-    if (!confirm('Are you sure you want to delete this job code?')) return;
+    showGovukConfirm('Are you sure you want to delete this job code?').then(function (confirmed) {
+        if (!confirmed) return;
 
-    $.ajax({
-        url: '/PACT/PortfolioTimeCodes/DeleteJobCode',
-        type: 'DELETE',
-        data: { jobCodeId: jobCodeId, parentProject: currentParentProject },
-        success: function (response) {
-            if (response.success) {
-                refreshJobCodeGrid();
+        $.ajax({
+            url: '/PACT/PortfolioTimeCodes/DeleteJobCode',
+            type: 'DELETE',
+            data: { jobCodeId: jobCodeId, parentProject: currentParentProject },
+            success: function (response) {
+                if (response.success) {
+                    refreshJobCodeGrid();
+                    showAlertMessage(response.message || 'Job code deleted successfully.', AlertType.SUCCESS);
 
-                // If the deleted job code was selected, clear the time code grid
-                if (currentJobCodeId === jobCodeId) {
-                    currentJobCodeId = '';
-                    const gridManager = getTimeCodeGridManager();
-                    if (gridManager) {
-                        gridManager.clearGrid();
-                    } else {
-                        $('#gridContainer_' + timeCodeGridId).html('<p class="sup_p_8">Select a job code to view time codes.</p>');
+                    // If the deleted job code was selected, clear the time code grid
+                    if (currentJobCodeId === jobCodeId) {
+                        currentJobCodeId = '';
+                        const gridManager = getTimeCodeGridManager();
+                        if (gridManager) {
+                            gridManager.clearGrid();
+                        } else {
+                            $('#gridContainer_' + timeCodeGridId).html('<p class="sup_p_8">Select a job code to view time codes.</p>');
+                        }
                     }
+                } else {
+                    showAlertMessage('Error: ' + (response.message || 'Failed to delete job code'), AlertType.ERROR);
                 }
-            } else {
-                alert('Error: ' + (response.message || 'Failed to delete job code'));
+            },
+            error: function () {
+                showAlertMessage('An error occurred while deleting job code.', AlertType.ERROR);
             }
-        },
-        error: function () {
-            alert('Failed to delete job code.');
-        }
+        });
     });
 }
 
@@ -117,12 +124,17 @@ function saveJobCode() {
             if (response.success) {
                 $('#modalPopup').removeClass('show');
                 refreshJobCodeGrid();
+                if (isEdit) {
+                    showAlertMessage(response.message || 'Job code updated successfully.', AlertType.SUCCESS);
+                } else {
+                    showAlertMessage(response.message || 'Job code saved successfully.', AlertType.SUCCESS);
+                }
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#jobCodeForm');
             }
         },
         error: function () {
-            alert('Failed to save job code.');
+            showAlertMessage('Failed to save job code.', AlertType.ERROR);
         }
     });
 }
@@ -131,7 +143,7 @@ function selectJobCode(row) {
     var jobCodeId = $(row).data('id');
 
     if (!jobCodeId) {
-        alert('Error: Could not get Job Code ID from selected row');
+        showAlertMessage('Error: Could not get Job Code ID from selected row', AlertType.ERROR);
         return;
     }
 
@@ -154,7 +166,7 @@ function selectTimeCode(row) {
 
 function addTimeCode() {
     if (!currentParentProject) {
-        alert('Please select a portfolio first.');
+        showAlertMessage('Please select a portfolio first.', AlertType.INFO);
         return;
     }
 
@@ -167,7 +179,7 @@ function addTimeCode() {
             $('#modalPopup').addClass('show');
         })
         .fail(function () {
-            alert('Failed to load add time code form.');
+            showAlertMessage('Failed to load add time code form.', AlertType.ERROR);
         });
 }
 
@@ -177,17 +189,17 @@ function editTimeCode(btn) {
     var workGroup = $row.find('[data-property="WorkGroup"]').text().trim();
 
     if (!timeCode) {
-        alert('Error: Could not get Time Code from button');
+        showAlertMessage('Error: Time Code is not set', AlertType.ERROR);
         return;
     }
 
     if (!workGroup) {
-        alert('Error: Could not get Work Group from row. Please ensure the grid has loaded correctly.');
+        showAlertMessage('Error: Work Group is not set.', AlertType.ERROR);
         return;
     }
 
     if (!currentParentProject) {
-        alert('Error: Parent project is not set.');
+        showAlertMessage('Error: Parent project is not set.', AlertType.ERROR);
         return;
     }
 
@@ -216,33 +228,36 @@ function editTimeCode(btn) {
                 errorMessage = 'Error: ' + xhr.responseText;
             }
 
-            alert(errorMessage);
+            showAlertMessage(errorMessage, AlertType.ERROR);
         });
 }
 
 function deleteTimeCode(btn) {
     var timeCode = $(btn).data('id');
     var workGroup = $(btn).closest('tr').find('[data-property="WorkGroup"] span').text().trim();
-    if (!confirm('Are you sure you want to delete this time code?')) return;
+    showGovukConfirm('Are you sure you want to delete this time code?').then(function (confirmed) {
+        if (!confirmed) return;
 
-    $.ajax({
-        url: '/PACT/PortfolioTimeCodes/DeleteTimeCode',
-        type: 'DELETE',
-        data: {
-            workGroup: workGroup,
-            timeCode: timeCode,
-            parentProject: currentParentProject
-        },
-        success: function (response) {
-            if (response.success) {
-                refreshTimeCodeGrid();
-            } else {
-                alert('Error: ' + (response.message || 'Failed to delete time code'));
+        $.ajax({
+            url: '/PACT/PortfolioTimeCodes/DeleteTimeCode',
+            type: 'DELETE',
+            data: {
+                workGroup: workGroup,
+                timeCode: timeCode,
+                parentProject: currentParentProject
+            },
+            success: function (response) {
+                if (response.success) {
+                    refreshTimeCodeGrid();
+                    showAlertMessage(response.message || 'Time code deleted successfully.', AlertType.SUCCESS);
+                } else {
+                    showAlertMessage('Error: ' + (response.message || 'Failed to delete time code'), AlertType.ERROR);
+                }
+            },
+            error: function () {
+                showAlertMessage('An error occurred while deleting time code.', AlertType.ERROR);
             }
-        },
-        error: function () {
-            alert('Failed to delete time code.');
-        }
+        });
     });
 }
 
@@ -284,12 +299,17 @@ function saveTimeCode() {
             if (response.success) {
                 $('#modalPopup').removeClass('show');
                 refreshTimeCodeGrid();
+                if (isEdit) {
+                    showAlertMessage(response.message || 'Time code updated successfully.', AlertType.SUCCESS);
+                } else { 
+                    showAlertMessage(response.message || 'Time code saved successfully.', AlertType.SUCCESS);
+                }
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#timeCodeForm');
             }
         },
         error: function () {
-            alert('Failed to save time code.');
+            showAlertMessage('Failed to save time code.', AlertType.ERROR);
         }
     });
 }
@@ -328,14 +348,14 @@ function refreshJobCodeGrid() {
                 $('#gridContainer_' + jobCodeGridId).html(html);
             })
             .fail(function () {
-                alert('Failed to refresh job code grid.');
+                showAlertMessage('Failed to refresh job code grid.', AlertType.ERROR);
             });
     }
 }
 
 function refreshTimeCodeGrid() {
     if (!currentParentProject) {
-        alert('Cannot refresh: Missing parent project');
+        showAlertMessage('Cannot refresh: Missing parent project', AlertType.INFO);
         return;
     }
 
@@ -365,7 +385,7 @@ function refreshTimeCodeGrid() {
                 $('#gridContainer_' + timeCodeGridId).html(html);
             })
             .fail(function (xhr, status, error) {
-                alert('Failed to refresh time code grid.');
+                showAlertMessage('Failed to refresh time code grid.', AlertType.ERROR);
             });
     }
 }

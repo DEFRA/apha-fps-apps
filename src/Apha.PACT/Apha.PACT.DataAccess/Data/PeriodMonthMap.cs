@@ -12,6 +12,7 @@ namespace Apha.PACT.DataAccess.Data
                 .HasNoKey()
                 .ToView("tblkperiodmonth", "fps");
 
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.EndMonth).HasColumnName("endmonth");
             entity.Property(e => e.MonthNo).HasColumnName("monthno");
             entity.Property(e => e.PeriodName)

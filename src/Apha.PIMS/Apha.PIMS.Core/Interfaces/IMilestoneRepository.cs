@@ -26,5 +26,17 @@ namespace Apha.PIMS.Core.Interfaces
 
         // Log Milestone operations
         Task<PagedData<LogMilestone>> GetLogMilestonesAsync(PaginationParameters<string> parameters, string? project, string? numberPart1, string? numberPart2);
+        // Staging / Import operations
+        Task<List<StagingMilestone>> GetStagingRowsAsync(string? project);
+
+        Task<PagedData<StagingMilestone>> GetAllStagingRowsAsync(PaginationParameters<string> parameters);
+        Task<StagingMilestone> AddStagingRowAsync(StagingMilestone entity);
+        Task<StagingMilestone> UpdateStagingRowAsync(StagingMilestone entity);
+        Task<bool> DeleteStagingRowAsync(int id);
+        Task<int> ClearStagingAsync(string project);
+        Task ValidateStagingAsync(string project, string? typeId, bool isDeliverableMode);
+        Task<int> ImportStagingAsync(string project, string? changedBy);
+        Task<int> ImportWithOverwriteAsync(string project, string? changedBy);
+        Task<string> GetNextMilestoneNumberAsync(string project, int year);
     }
 }
