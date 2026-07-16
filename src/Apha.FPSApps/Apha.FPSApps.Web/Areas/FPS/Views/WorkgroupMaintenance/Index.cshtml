@@ -74,11 +74,11 @@
                 $('#modaPopupBody').html(html);
                 $('#modalPopup').addClass('show');
             }).fail(function () {
-                showGovukAlert('An error occurred while loading the form');
+                showAlertMessage('An error occurred while loading the form', AlertType.ERROR);
             });
         }
 
-        // TRANSFORMENGINE: editWorkgroupMaintenance — AllowEdit:true from JS openTblWGEditModal button
+        // TRANSFORMENGINE: editWorkgroupMaintenance
         // $(btn).data('id') reads data-id attribute emitted by _DataGrid EditFunction (WorkGroupName = KeyProperty)
         function editWorkgroupMaintenance(btn) {
             var id = $(btn).data('id');
@@ -86,7 +86,7 @@
                 $('#modaPopupBody').html(html);
                 $('#modalPopup').addClass('show');
             }).fail(function () {
-                showGovukAlert('An error occurred while loading the edit form');
+                showAlertMessage('An error occurred while loading the edit form', AlertType.ERROR);
             });
         }
 
@@ -102,15 +102,15 @@
                     type: 'DELETE',
                     success: function (response) {
                         if (response.success) {
-                            showGovukAlert(response.message || 'WorkGroup deleted successfully').then(function () {
+                            showAlertMessage(response.message || 'WorkGroup deleted successfully', AlertType.SUCCESS).then(function () {
                                 reloadWorkgroupMaintenanceGrid();
                             });
                         } else {
-                            showGovukAlert('Error: ' + (response.message || 'Delete failed.'));
+                            showAlertMessage('Error: ' + (response.message || 'Delete failed.'), AlertType.ERROR);
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting.');
+                        showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
                     }
                 });
             });
@@ -144,9 +144,10 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     if (data.success) {
-                        showGovukAlert(data.message || 'WorkGroup created successfully.');
-                        closeModal();
-                        reloadWorkgroupMaintenanceGrid();
+                        showAlertMessage(data.message || 'WorkGroup created successfully.', AlertType.SUCCESS).then(function () {
+                            closeModal();
+                            reloadWorkgroupMaintenanceGrid();
+                        });
                     } else {
                         displayServerValidationErrors(data.errors, data.message, '#modaPopupBody');
                     }
@@ -155,7 +156,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving.');
+                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
                     }
                 }
             });
@@ -191,9 +192,10 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     if (data.success) {
-                        showGovukAlert(data.message || 'WorkGroup updated successfully.');
-                        closeModal();
-                        reloadWorkgroupMaintenanceGrid();
+                        showAlertMessage(data.message || 'WorkGroup updated successfully.', AlertType.SUCCESS).then(function () {
+                            closeModal();
+                            reloadWorkgroupMaintenanceGrid();
+                        });
                     } else {
                         displayServerValidationErrors(data.errors, data.message, '#modaPopupBody');
                     }
@@ -202,7 +204,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving.');
+                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
                     }
                 }
             });
