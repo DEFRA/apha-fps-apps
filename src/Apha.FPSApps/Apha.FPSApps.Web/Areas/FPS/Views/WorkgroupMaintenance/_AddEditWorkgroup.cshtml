@@ -57,6 +57,7 @@
                                    maxlength="100"
                                    aria-required="true"
                                    aria-describedby="err-modal-wg-name"
+                                   @(isEditMode ? "readonly" : "")
                                    value="@(Model?.WorkGroupName ?? string.Empty)" />
                             <span data-valmsg-for="WorkGroupName" class="govuk-error-message field-validation-valid" id="err-modal-wg-name" style="display:none;"></span>
                         </div>

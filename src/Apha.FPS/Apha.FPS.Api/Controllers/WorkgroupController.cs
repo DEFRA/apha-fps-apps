@@ -1,82 +1,14 @@
-/*
- * TRANSFORMENGINE MIGRATION — WorkgroupController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-06-23
- * Phase 6 verified  : 2026-06-23
- * Phase 14 security : 2026-06-23 — PASS (see Security Review section in transform-review-checklist.md)
- *
- * CHANGED:
- *   - New [ApiController] created; no prior WorkgroupController existed in this codebase
- *   - Source form: frmMaintWorkGroup2 (RecordSource: WorkGroup_MAP → fps.workgroup table)
- *   - All CRUD operations mapped to versioned REST routes under api/v1/workgroup:
- *       GET    api/v1/workgroup/paged          → GetPagedAsync      (paged grid list)
- *       GET    api/v1/workgroup/{workGroupName} → GetByKeyAsync      (single record fetch for edit modal)
- *       POST   api/v1/workgroup               → CreateAsync        (add new workgroup)
- *       PUT    api/v1/workgroup/{workGroupName} → UpdateAsync        (save edit; PK rename supported)
- *       DELETE api/v1/workgroup/{workGroupName} → DeleteAsync        (remove workgroup row)
- *   - Three lookup endpoints added for modal dropdown population (SEPARATE from CRUD resource family):
- *       GET    api/v1/workgroup/profitcentres  → GetProfitCentresAsync   (ResourceCentre select)
- *       GET    api/v1/workgroup/owners         → GetOwnersAsync          (Owner select, from qryManager)
- *       GET    api/v1/workgroup/costcentres    → GetCostCentresAsync     (cascading CostCentre select)
- *   - WorkgroupMaintenanceReq → WorkgroupDto via IMapper; WorkgroupDto → WorkgroupMaintenanceRes via IMapper
- *   - Exception-driven flow: throws ArgumentException / KeyNotFoundException; ExceptionMiddleware maps status codes
- *   - [Authorize] applied with FPS role set consistent with all other FPS API controllers
- *
- * PHASE 6 GATE — ROUTE + CONTRACT + MAPPER CONFIRMATION:
- *   - Routes confirmed against FpsApiEndpoints constants (GetPagedWorkgroups, GetWorkgroupByName,
- *     CreateWorkgroup, UpdateWorkgroup, DeleteWorkgroup, GetWorkgroupProfitCentres,
- *     GetWorkgroupOwners, GetWorkgroupCostCentres) — added to FpsApiEndpoints.cs Phase 6
- *   - CRUD routes verified: all 5 CRUD actions match transform-plan handoff notes exactly
- *   - Lookup routes verified: 3 lookup endpoints confirmed SEPARATE from main CRUD resource family
- *   - Required action parameters confirmed:
- *       {workGroupName} (GET/PUT/DELETE) — required business context (PK component); sourced from
- *         grid row selection / route state in the frontend
- *       profitCentre (GET costcentres) — required business filter; sourced from modal dropdown
- *         ProfitCentre selection change event
- *   - WorkgroupMaintenanceReq, WorkgroupMaintenanceRes, WorkgroupDto, RequestMapper all verified
- *   - ManagerRes (owners lookup) and IEnumerable<double?> (costcentres lookup) parameter shapes noted
- *
- * PHASE 14 SECURITY REVIEW RESULTS:
- *   - [Authorize] role set: "API-FPSUser,API-FPSAdmin, API-FPSShared" — PASS (consistent with all
- *     30+ other FPS API controllers; codebase-wide convention)
- *   - Input validation guards (null/empty checks): PASS — present on GetByKeyAsync, UpdateAsync,
- *     DeleteAsync, GetCostCentresAsync
- *   - Model-state validation: PASS — [ApiController] auto-validates CreateAsync and UpdateAsync
- *   - Exception disclosure: PASS — ArgumentException/KeyNotFoundException delegated to ExceptionMiddleware;
- *     no stack traces or connection strings in responses
- *   - Anti-forgery: N/A for [ApiController] API-only endpoints
- *   - CORS: PASS — no per-controller override; inherits global policy from Program.cs
- *   - Secrets: PASS — no hardcoded credentials, tokens, or connection strings
- *   - Raw SQL: PASS — all data access via IWorkgroupService (LINQ); no concatenated SQL
- *   - FpsYear: PASS — resolved server-side via FpsRequestContext query filter; not in request body
- *
- * PRESERVED:
- *   - Service-only injection (no repository injected directly into controller)
- *   - Async-only action signatures consistent with GradeController, DivisionController, etc.
- *   - XML summary doc on every public action
- *   - Route casing: lowercase "workgroup" matching the FpsApiEndpoints constants convention
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm [Authorize] role set matches the target environment's
- *     FPS API role configuration (currently mirrors GradeController/DivisionController);
- *     note: the space before "API-FPSShared" in the comma-delimited string is a codebase-wide
- *     convention — verify ASP.NET Core role-splitting trims whitespace in the target runtime
- *   - TRANSFORMENGINE TODO: GetCostCentresAsync returns IEnumerable<double?> — if the frontend
- *     needs a labelled projection (value + display text), update service + response type
- *   - TRANSFORMENGINE TODO: GetOwnersAsync returns ManagerRes — confirm qryManager result set
- *     is equivalent to the existing EmployeeController /managers endpoint before deciding whether
- *     the two can be merged
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 
 namespace Apha.FPS.Api.Controllers
 {
@@ -155,8 +87,15 @@ namespace Apha.FPS.Api.Controllers
         public async Task<ActionResult<WorkgroupMaintenanceRes>> CreateAsync([FromBody] WorkgroupMaintenanceReq request)
         {
             var dto = _mapper.Map<WorkgroupDto>(request);
-            var created = await _workgroupService.CreateAsync(dto);
-            return Ok(_mapper.Map<WorkgroupMaintenanceRes>(created));
+            try
+            {
+                var created = await _workgroupService.CreateAsync(dto);
+                return Ok(_mapper.Map<WorkgroupMaintenanceRes>(created));
+            }
+            catch (Exception ex) when (IsCostCentreForeignKeyViolation(ex))
+            {
+                throw BuildCostCentreValidationException();
+            }
         }
 
         // TRANSFORMENGINE: PUT update — frmMaintWorkGroup2 save-edit path; workGroupName route param is the original key
@@ -180,8 +119,15 @@ namespace Apha.FPS.Api.Controllers
             }
 
             var dto = _mapper.Map<WorkgroupDto>(request);
-            var updated = await _workgroupService.UpdateAsync(workGroupName, dto);
-            return Ok(_mapper.Map<WorkgroupMaintenanceRes>(updated));
+            try
+            {
+                var updated = await _workgroupService.UpdateAsync(workGroupName, dto);
+                return Ok(_mapper.Map<WorkgroupMaintenanceRes>(updated));
+            }
+            catch (Exception ex) when (IsCostCentreForeignKeyViolation(ex))
+            {
+                throw BuildCostCentreValidationException();
+            }
         }
 
         // TRANSFORMENGINE: DELETE — frmMaintWorkGroup2 delete-row path; delegates to IWorkgroupService.DeleteAsync
@@ -252,6 +198,35 @@ namespace Apha.FPS.Api.Controllers
 
             var result = await _workgroupService.GetCostCentresByProfitCentreAsync(profitCentre);
             return Ok(result);
+        }
+
+        // Screen-specific handling for the Maintain Workgroups cost-centre foreign key constraint.
+        // Kept in this controller (not the shared ExceptionMiddleware) because the friendly message
+        // only applies to the Workgroup Maintenance screen. The violation surfaces as a
+        // PostgresException (SqlState 23503) usually wrapped inside a DbUpdateException.
+        private static bool IsCostCentreForeignKeyViolation(Exception? ex)
+        {
+            for (var current = ex; current is not null; current = current.InnerException)
+            {
+                if (current is PostgresException pgEx
+                    && pgEx.SqlState == PostgresErrorCodes.ForeignKeyViolation
+                    && string.Equals(pgEx.ConstraintName, "fk_workgroup_costcentre", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static BusinessValidationErrorException BuildCostCentreValidationException()
+        {
+            return new BusinessValidationErrorException(new List<BusinessValidationError>
+            {
+                new BusinessValidationError(
+                    "The Cost center is not present in the Cost Center table. Please input Cost center which is already present in CostCenter table.",
+                    "COSTCENTRE_FK_VIOLATION")
+            });
         }
     }
 }
