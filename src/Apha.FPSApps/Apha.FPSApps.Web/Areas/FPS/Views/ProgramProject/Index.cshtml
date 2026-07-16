@@ -7,7 +7,6 @@
 
 <main id="main-content">
     <div class="container-fluid">
-        <!-- Breadcrumb section -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
                 <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
@@ -264,7 +263,7 @@
         }
 
         function planThisProject() {                           
-            if (!currentProjectCode) { window.showGovukAlert('Please select a project first.'); return; }
+            if (!currentProjectCode) { window.showAlertMessage('Please select a project first.', AlertType.INFO); return; }
             var returnUrl = isProjectGroupMode
                 ? '/FPS/ProgramProject?source=projectgroup'
                 : '/FPS/ProgramProject?programNo=' + encodeURIComponent(currentProgramNo);
@@ -282,7 +281,7 @@
                     $('#modalPopup').addClass('show');
                 },
                 error: function () {
-                    showGovukAlert('An error occurred while loading the edit form.');
+                    showAlertMessage('An error occurred while loading the edit form.', AlertType.ERROR);
                 }
             });
         }
@@ -320,7 +319,7 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (result) {
                     if (result.success) {
-                        showGovukAlert(result.message).then(function () {
+                        showAlertMessage(result.message, AlertType.SUCCESS).then(function () {
                             closeModal();
                             window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
                             loadProjectTotals();
@@ -333,7 +332,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving.');
+                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
                     }
                 }
             });
@@ -349,16 +348,16 @@
                     data: { parentProject: id },
                     success: function (response) {
                         if (response.success) {
-                            showGovukAlert('Deleted successfully').then(function () {
+                            showAlertMessage('Deleted successfully', AlertType.SUCCESS).then(function () {
                                 window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
                                 loadProjectTotals();
                             });
                         } else {
-                            showGovukAlert('Error: ' + response.message);
+                            showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting.');
+                        showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
                     }
                 });
             });

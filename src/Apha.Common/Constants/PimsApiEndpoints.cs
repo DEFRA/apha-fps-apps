@@ -56,6 +56,7 @@ namespace Apha.Common.Constants
         public const string DeleteMilestone = "api/v1/milestone/{0}/milestones/{1}";
         public const string UpdateFormRequired = "api/v1/milestone/{0}/formrequired";
         public const string GetAllProjectsForMilestone = "api/v1/projectlist/AllProjectsMilestone";
+        public const string GetProjectsDetailsForMilestone = "api/v1/projectlist/ProjectDetailsMilestone/{0}";
 
         // Milestone Types
         public const string GetMilestoneTypes = "api/v1/milestone/milestonetypes";
@@ -68,5 +69,29 @@ namespace Apha.Common.Constants
 
         // Log Milestone
         public const string GetLogMilestones = "api/v1/milestone/log";
+
+        // RadTrack Invoice
+        public const string GetAllRadTrackInvoices = "api/v1/radtrackinvoice";
+        public const string GetRadTrackInvoiceTotals = "api/v1/radtrackinvoice/totals";
+        public const string GetRadTrackInvoiceById = "api/v1/radtrackinvoice/{0}";
+        public const string CreateRadTrackInvoice = "api/v1/radtrackinvoice";
+        public const string UpdateRadTrackInvoice = "api/v1/radtrackinvoice/{0}";
+        public const string DeleteRadTrackInvoice = "api/v1/radtrackinvoice/{0}";
+        public const string GetRadTrackInvoiceProjects = "api/v1/radtrackinvoice/lookups/projects";
+        public const string GetRadTrackInvoiceYears = "api/v1/radtrackinvoice/lookups/years";
+        public const string GetRadTrackInvoiceContracts = "api/v1/radtrackinvoice/lookups/contracts";
+        public const string GetRadTrackInvoicePrograms = "api/v1/radtrackinvoice/lookups/programs";
+
+        // Staging / Import
+        public const string GetStagingMilestones = "api/v1/milestone/staging";
+        public const string GetAllStagingMilestones = "api/v1/milestone/allstaging";
+        public const string AddStagingMilestone = "api/v1/milestone/staging/{0}";
+        public const string UpdateStagingMilestone = "api/v1/milestone/staging/{0}";
+        public const string DeleteStagingMilestone = "api/v1/milestone/staging/{0}";
+        public const string ClearStagingMilestones = "api/v1/milestone/{0}/staging";
+        public const string ValidateStagingMilestones = "api/v1/milestone/{0}/staging/validate";
+        public const string ImportStagingMilestones = "api/v1/milestone/{0}/staging/import";
+        public const string ImportOverwriteStagingMilestones = "api/v1/milestone/{0}/staging/import-overwrite";
+        public const string GetNextStagingMilestoneNumber = "api/v1/milestone/{0}/staging/nextnumber";
     }
 }

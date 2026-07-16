@@ -2,7 +2,6 @@
 using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
-using Apha.PACT.Core.Entities;
 using AutoMapper;
 
 namespace Apha.PACT.Api.Mappings
@@ -29,6 +28,10 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<ProjectInvoiceRes, ProjectInvoiceDto>().ReverseMap();
             CreateMap<ProjectSubContractReq, ProjectSubContractDto>().ReverseMap();
             CreateMap<ProjectSubContractRes, ProjectSubContractDto>().ReverseMap();
+            CreateMap<SubContractRmsImportRowReq, SubContractRmsImportRowDto>().ReverseMap();
+            CreateMap<SubContractRmsImportRowRes, SubContractRmsImportRowDto>().ReverseMap();
+            CreateMap<SubContractRmsImportReq, SubContractRmsImportDto>().ReverseMap();
+            CreateMap<SubContractRmsImportRes, SubContractRmsImportResultDto>().ReverseMap();
             CreateMap<TestCapabilityReq, TestCapabilityDto>().ReverseMap();
             CreateMap<TestCapabilityRes, TestCapabilityDto>().ReverseMap();
             CreateMap<TestRequirementReq, TestRequirementtDto>().ReverseMap();
@@ -65,6 +68,15 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<ReleaseSummaryDto, ReleaseSummaryRes>();
             CreateMap<TestPriceCheckDto, TestPriceCheckRes>().ReverseMap();            
             CreateMap<TestPriceCheckReq, TestPriceCheckDto>().ReverseMap();
+            CreateMap<TimePurchaseProjectDto, TimePurchaseProjectRes>();
+            CreateMap<TimeSaleProfitCentreDto, TimeSaleProfitCentreRes>();
+            CreateMap<TestSaleSellingWorkgroupDto, TestSaleSellingWorkgroupRes>();
+            CreateMap<TestSaleBuyingProjectDto, TestSaleBuyingProjectRes>();
+            CreateMap<WgTestCapabilitiesWithDescriptionDto, WgTestCapabilitiesWithDescriptionRes>();
+            CreateMap<TestReqBreakdownDto, TestReqBreakdownRes>().ReverseMap();
+            CreateMap<BatchJobHistoryRes, BatchJobHistoryDto>().ReverseMap();
+            CreateMap<BatchJobQueueRes, BatchJobQueueDto>().ReverseMap();
+            CreateMap<BatchJobEventTriggerRes, BatchJobEventTriggerDto>().ReverseMap();
         }
     }
 }

@@ -443,7 +443,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         [Fact]
-        public async Task GetProjectByIdAsync_IsCaseSensitive()
+        public async Task GetProjectByIdAsync_IsCaseInsensitive()
         {
             // Arrange â€” match is on exact ParentProject string
             var projects = new List<Project>
@@ -456,7 +456,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var result = await repo.GetProjectByIdAsync("pp001");
 
             // Assert
-            Assert.Null(result);
+            Assert.NotNull(result);
+            Assert.Equal("PP001", result.ParentProject);
+            Assert.Equal("Project One", result.ProjectTitle);
         }
 
         [Fact]
@@ -1914,6 +1916,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
         #endregion
 
+        #region UpdateFpsPortfolioDetailsAsync Tests
         [Fact]
         public async Task UpdateFpsPortfolioDetailsAsync_EmptyRepository_ReturnsNull()
         {
@@ -1999,6 +2002,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal("PRESERVED", result.IncomeAccountCode);
             Assert.Equal(999m, result.BudgetCvl);
         }
+        #endregion
 
         #region CreateProjectAsync Tests
 
@@ -2778,6 +2782,628 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal("AA001", items[0].ParentProject);
             Assert.Equal("BB002", items[1].ParentProject);
             Assert.Equal("CC003", items[2].ParentProject);
+        }
+
+        #endregion
+
+        #region GetPagedPactProjectsByProgramAsync Tests
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_ReturnsEmpty_WhenNoProgramMatches()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P001" }
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P999");
+
+            // Assert
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }        
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_MapsFieldsCorrectly()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project", Program = "P001", BudgetCvl = 1500m, IsDefraProject = 1 }
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            var project = Assert.Single(result.Data);
+            Assert.Equal("PP001", project.ParentProject);
+            Assert.Equal("Alpha Project", project.ProjectTitle);
+            Assert.Equal("P001", project.Program);
+            Assert.Equal(1500m, project.BudgetCvl);
+            Assert.Equal((short)1, project.IsDefraProject);
+        }        
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_FilterByJobCode_ReturnsMatchingProjects()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P001" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta",  Program = "P001" },
+                new() { ParentProject = "XY003", ProjectTitle = "Gamma", Program = "P001" },
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                Filter = "{\"ParentProject\":\"PP\"}"
+            };
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Contains("PP", p.ParentProject));
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_FilterByJobDescription_ReturnsMatchingProjects()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "FMD Survey",     Program = "P001" },
+                new() { ParentProject = "PP002", ProjectTitle = "TB Eradication", Program = "P001" },
+                new() { ParentProject = "PP003", ProjectTitle = "FMD Outbreak",   Program = "P001" },
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                Filter = "{\"ProjectTitle\":\"FMD\"}"
+            };
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Contains("FMD", p.ProjectTitle));
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_SortsByParentProjectAscending_ByDefault()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "CC003", ProjectTitle = "Gamma", Program = "P001" },
+                new() { ParentProject = "AA001", ProjectTitle = "Alpha", Program = "P001" },
+                new() { ParentProject = "BB002", ProjectTitle = "Beta",  Program = "P001" },
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10); // SortBy = "" by default
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            var items = result.Data.ToList();
+            Assert.Equal("AA001", items[0].ParentProject);
+            Assert.Equal("BB002", items[1].ParentProject);
+            Assert.Equal("CC003", items[2].ParentProject);
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_SortsByParentProjectDescending_WhenDescendingIsTrue()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "AA001", ProjectTitle = "Alpha", Program = "P001" },
+                new() { ParentProject = "CC003", ProjectTitle = "Gamma", Program = "P001" },
+                new() { ParentProject = "BB002", ProjectTitle = "Beta",  Program = "P001" },
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(sortBy: "parentproject", descending: true, page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            var items = result.Data.ToList();
+            Assert.Equal("CC003", items[0].ParentProject);
+            Assert.Equal("BB002", items[1].ParentProject);
+            Assert.Equal("AA001", items[2].ParentProject);
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_SortsByProjectTitleAscending()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "PP003", ProjectTitle = "Gamma Survey", Program = "P001" },
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Survey", Program = "P001" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta Survey",  Program = "P001" },
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(sortBy: "projecttitle", descending: false, page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            var items = result.Data.ToList();
+            Assert.Equal("PP001", items[0].ParentProject); // Alpha
+            Assert.Equal("PP002", items[1].ParentProject); // Beta
+            Assert.Equal("PP003", items[2].ParentProject); // Gamma
+        }        
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_AppliesPaging_ReturnsCorrectPage()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "AA001", Program = "P001" },
+                new() { ParentProject = "BB002", Program = "P001" },
+                new() { ParentProject = "CC003", Program = "P001" },
+                new() { ParentProject = "DD004", Program = "P001" },
+                new() { ParentProject = "EE005", Program = "P001" },
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 2, pageSize: 2);
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(5, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.PaginationData.PageNumber);
+            Assert.Equal(2, result.PaginationData.PageSize);
+            Assert.Equal(3, result.PaginationData.TotalPages);
+            Assert.Equal("CC003", result.Data.First().ParentProject);
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_ReturnsPaginationMetadata_Correctly()
+        {
+            // Arrange
+            var pactProjectViews = Enumerable.Range(1, 15)
+                .Select(i => new PactProjectView
+                {
+                    ParentProject = $"PP{i:D3}",
+                    ProjectTitle = $"Project {i}",
+                    Program = "P001"
+                }).ToList();
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            Assert.Equal(15, result.PaginationData.TotalRecords);
+            Assert.Equal(10, result.Data.Count());
+            Assert.Equal(2, result.PaginationData.TotalPages);
+        }
+
+
+        #endregion
+
+        #region ApplySortingByProperty – new sort keys (branch coverage)
+
+        private static ProjectView MakeSortView(
+            string parentProject,
+            string? projectGroup = null,
+            string? customer     = null,
+            string? contract     = null,
+            string? disease      = null,
+            string? projectStatus = null,
+            decimal? budgetCvl   = null,
+            decimal? custIncome  = null,
+            decimal? transferIncome    = null,
+            decimal? planCaseWorkDebit = null) => new()
+        {
+            ParentProject     = parentProject,
+            Program           = "P001",
+            ProjectGroup      = projectGroup,
+            Customer          = customer,
+            Contract          = contract,
+            Disease           = disease,
+            ProjectStatus     = projectStatus,
+            BudgetCvl         = budgetCvl,
+            CustIncome        = custIncome,
+            TransferIncome    = transferIncome,
+            PlanCaseWorkDebit = planCaseWorkDebit,
+            IsDefraProject    = 0,
+            UserEmail         = "test@example.com"
+        };
+
+        // ?? projectgroup ???????????????????????????????????????????????????????
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByProjectGroup_Ascending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP003", projectGroup: "GroupC"),
+                MakeSortView("PP001", projectGroup: "GroupA"),
+                MakeSortView("PP002", projectGroup: "GroupB"),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "projectgroup", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal("GroupA", items[0].ProjectGroup);
+            Assert.Equal("GroupB", items[1].ProjectGroup);
+            Assert.Equal("GroupC", items[2].ProjectGroup);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByProjectGroup_Descending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", projectGroup: "GroupA"),
+                MakeSortView("PP003", projectGroup: "GroupC"),
+                MakeSortView("PP002", projectGroup: "GroupB"),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "projectgroup", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal("GroupC", items[0].ProjectGroup);
+            Assert.Equal("GroupB", items[1].ProjectGroup);
+            Assert.Equal("GroupA", items[2].ProjectGroup);
+        }
+
+        // ?? customer ???????????????????????????????????????????????????????????
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByCustomer_Ascending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP003", customer: "CustomerC"),
+                MakeSortView("PP001", customer: "CustomerA"),
+                MakeSortView("PP002", customer: "CustomerB"),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "customer", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal("CustomerA", items[0].Customer);
+            Assert.Equal("CustomerB", items[1].Customer);
+            Assert.Equal("CustomerC", items[2].Customer);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByCustomer_Descending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", customer: "CustomerA"),
+                MakeSortView("PP002", customer: "CustomerB"),
+                MakeSortView("PP003", customer: "CustomerC"),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "customer", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal("CustomerC", items[0].Customer);
+            Assert.Equal("CustomerB", items[1].Customer);
+            Assert.Equal("CustomerA", items[2].Customer);
+        }
+
+        // ?? contract ???????????????????????????????????????????????????????????
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByContract_Ascending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP002", contract: "ContractB"),
+                MakeSortView("PP003", contract: "ContractC"),
+                MakeSortView("PP001", contract: "ContractA"),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "contract", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal("ContractA", items[0].Contract);
+            Assert.Equal("ContractB", items[1].Contract);
+            Assert.Equal("ContractC", items[2].Contract);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByContract_Descending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", contract: "ContractA"),
+                MakeSortView("PP002", contract: "ContractB"),
+                MakeSortView("PP003", contract: "ContractC"),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "contract", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal("ContractC", items[0].Contract);
+            Assert.Equal("ContractB", items[1].Contract);
+            Assert.Equal("ContractA", items[2].Contract);
+        }
+
+        // ?? disease ????????????????????????????????????????????????????????????
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByDisease_Ascending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP003", disease: "DiseaseC"),
+                MakeSortView("PP001", disease: "DiseaseA"),
+                MakeSortView("PP002", disease: "DiseaseB"),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "disease", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal("DiseaseA", items[0].Disease);
+            Assert.Equal("DiseaseB", items[1].Disease);
+            Assert.Equal("DiseaseC", items[2].Disease);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByDisease_Descending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", disease: "DiseaseA"),
+                MakeSortView("PP002", disease: "DiseaseB"),
+                MakeSortView("PP003", disease: "DiseaseC"),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "disease", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal("DiseaseC", items[0].Disease);
+            Assert.Equal("DiseaseB", items[1].Disease);
+            Assert.Equal("DiseaseA", items[2].Disease);
+        }
+
+        // ?? projectstatus ??????????????????????????????????????????????????????
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByProjectStatus_Ascending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP003", projectStatus: "StatusC"),
+                MakeSortView("PP001", projectStatus: "StatusA"),
+                MakeSortView("PP002", projectStatus: "StatusB"),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "projectstatus", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal("StatusA", items[0].ProjectStatus);
+            Assert.Equal("StatusB", items[1].ProjectStatus);
+            Assert.Equal("StatusC", items[2].ProjectStatus);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByProjectStatus_Descending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", projectStatus: "StatusA"),
+                MakeSortView("PP002", projectStatus: "StatusB"),
+                MakeSortView("PP003", projectStatus: "StatusC"),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "projectstatus", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal("StatusC", items[0].ProjectStatus);
+            Assert.Equal("StatusB", items[1].ProjectStatus);
+            Assert.Equal("StatusA", items[2].ProjectStatus);
+        }
+
+        // ?? budgetcvl ??????????????????????????????????????????????????????????
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByBudgetCvl_Ascending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP002", budgetCvl: 200m),
+                MakeSortView("PP003", budgetCvl: 300m),
+                MakeSortView("PP001", budgetCvl: 100m),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "budgetcvl", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(100m, items[0].BudgetCvl);
+            Assert.Equal(200m, items[1].BudgetCvl);
+            Assert.Equal(300m, items[2].BudgetCvl);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByBudgetCvl_Descending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", budgetCvl: 100m),
+                MakeSortView("PP002", budgetCvl: 200m),
+                MakeSortView("PP003", budgetCvl: 300m),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "budgetcvl", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(300m, items[0].BudgetCvl);
+            Assert.Equal(200m, items[1].BudgetCvl);
+            Assert.Equal(100m, items[2].BudgetCvl);
+        }
+
+        // ?? budgetext (maps to CustIncome) ?????????????????????????????????????
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByBudgetExt_Ascending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP003", custIncome: 3000m),
+                MakeSortView("PP001", custIncome: 1000m),
+                MakeSortView("PP002", custIncome: 2000m),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "budgetext", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(1000m, items[0].CustIncome);
+            Assert.Equal(2000m, items[1].CustIncome);
+            Assert.Equal(3000m, items[2].CustIncome);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByBudgetExt_Descending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", custIncome: 1000m),
+                MakeSortView("PP002", custIncome: 2000m),
+                MakeSortView("PP003", custIncome: 3000m),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "budgetext", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(3000m, items[0].CustIncome);
+            Assert.Equal(2000m, items[1].CustIncome);
+            Assert.Equal(1000m, items[2].CustIncome);
+        }
+
+        // ?? transferincome ?????????????????????????????????????????????????????
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByTransferIncome_Ascending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP002", transferIncome: 200m),
+                MakeSortView("PP001", transferIncome: 100m),
+                MakeSortView("PP003", transferIncome: 300m),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "transferincome", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(100m, items[0].TransferIncome);
+            Assert.Equal(200m, items[1].TransferIncome);
+            Assert.Equal(300m, items[2].TransferIncome);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByTransferIncome_Descending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", transferIncome: 100m),
+                MakeSortView("PP003", transferIncome: 300m),
+                MakeSortView("PP002", transferIncome: 200m),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "transferincome", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(300m, items[0].TransferIncome);
+            Assert.Equal(200m, items[1].TransferIncome);
+            Assert.Equal(100m, items[2].TransferIncome);
+        }
+
+        // ?? plancaseworkdebit ??????????????????????????????????????????????????
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByPlanCaseWorkDebit_Ascending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP003", planCaseWorkDebit: 30m),
+                MakeSortView("PP002", planCaseWorkDebit: 20m),
+                MakeSortView("PP001", planCaseWorkDebit: 10m),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "plancaseworkdebit", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(10m, items[0].PlanCaseWorkDebit);
+            Assert.Equal(20m, items[1].PlanCaseWorkDebit);
+            Assert.Equal(30m, items[2].PlanCaseWorkDebit);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByPlanCaseWorkDebit_Descending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", planCaseWorkDebit: 10m),
+                MakeSortView("PP002", planCaseWorkDebit: 20m),
+                MakeSortView("PP003", planCaseWorkDebit: 30m),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "plancaseworkdebit", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(30m, items[0].PlanCaseWorkDebit);
+            Assert.Equal(20m, items[1].PlanCaseWorkDebit);
+            Assert.Equal(10m, items[2].PlanCaseWorkDebit);
         }
 
         #endregion

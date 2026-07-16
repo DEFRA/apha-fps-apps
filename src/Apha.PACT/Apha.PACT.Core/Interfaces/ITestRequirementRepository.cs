@@ -20,5 +20,8 @@ namespace Apha.PACT.Core.Interfaces
         Task<TestRequirement> AddAsync(TestRequirement entity);
         Task<TestRequirement> UpdateAsync(TestRequirement entity);
         Task<bool> DeleteAsync(string testCode, string buyer);
+
+        // TestReqBreakdown (fps.vtestreqbreakdown)
+        Task<PagedData<TestReqBreakdownView>> GetPlannedTestsByWorkgroupAsync(PaginationParameters<string> query);
     }
 }

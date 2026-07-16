@@ -16,6 +16,7 @@ namespace Apha.PIMS.Application.Mappings
 
             CreateMap<ProjectListView, ProjectListViewDto>().ReverseMap();
             CreateMap<ProjectListMilestone, ProjectListMilestoneDto>().ReverseMap();
+            CreateMap<ProjectDetailsMilestone, ProjectDetailsMilestoneDto>().ReverseMap();
             CreateMap<Project, ProjectDto>().ReverseMap();
             CreateMap<ProposedProject, ProposedProjectDto>().ReverseMap();
             CreateMap<Projects, ProjectsDto>().ReverseMap();
@@ -46,6 +47,9 @@ namespace Apha.PIMS.Application.Mappings
             CreateMap<MilestoneFormDates, MilestoneFormDatesDto>().ReverseMap();
 
             CreateMap<LogMilestone, LogMilestoneDto>().ReverseMap();
+            CreateMap<RadTrackInvoice, RadTrackInvoiceDto>().ReverseMap();
+            CreateMap<RadTrackInvoiceTotals, RadTrackInvoiceTotalsDto>().ReverseMap();
+            CreateMap<StagingMilestone, StagingMilestoneDto>().ReverseMap();
         }
     }
 }

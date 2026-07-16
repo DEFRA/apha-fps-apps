@@ -41,7 +41,7 @@
 
         <!-- Work Group — editable dropdown for add, disabled for edit -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="WorkGroup"><span class="sup_color_red">* </span>Work Group</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="WorkGroup">Work Group<span class="sup_color_red">* </span></label>
             @if (isEdit)
             {
                 <input type="hidden" asp-for="WorkGroup" />
@@ -59,7 +59,13 @@
 
         <!-- Active -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" for="Active"><span class="sup_color_red">* </span>Active</label>
+            <label class="govuk-label govuk-!-font-weight-bold" for="Active">
+                Active
+                @if (!isEdit)
+                {
+                    <span class="sup_color_red">* </span>
+                }
+            </label>
             <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes">
                 <div class="govuk-checkboxes__item">
                     <input class="govuk-checkboxes__input govuk-!-font-size-16"
@@ -75,7 +81,7 @@
 
         <!-- Time Code (Editable for add, disabled for edit) -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="TimeCode"><span class="sup_color_red">* </span>Time Code</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="TimeCode">Time Code<span class="sup_color_red">* </span></label>
             @if (isEdit)
             {
                 <input class="govuk-input govuk-!-font-size-16" value="@Model.TimeCode" disabled />
@@ -89,7 +95,7 @@
 
         <!-- Project Dropdown (Editable for add, disabled for edit) -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project"><span class="sup_color_red">* </span>Project</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project">Project<span class="sup_color_red">* </span></label>
             @if (isEdit)
             {
                 <input type="hidden" asp-for="Project" />
@@ -132,7 +138,9 @@
 
 <div class="modal-footer sup_flex_space_center">
     <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
-            onclick="$('#modalPopup').removeClass('show')">Cancel</button>
+            onclick="$('#modalPopup').removeClass('show')">
+        Cancel
+    </button>
     <button type="button" class="govuk-button sup_margin_0" onclick="saveTimeCode()" allow-edit="true">
         @(isEdit ? "Update" : "Save")
     </button>
@@ -147,7 +155,7 @@
             var portfolioValue = $('#Portfolio').val();
 
             var hasJobCode = jobCodeValue && jobCodeValue.trim() !== '';
-            var hasTestCodeOrPortfolio = (testCodeValue && testCodeValue.trim() !== '') || 
+            var hasTestCodeOrPortfolio = (testCodeValue && testCodeValue.trim() !== '') ||
                                          (portfolioValue && portfolioValue.trim() !== '');
 
             if (hasJobCode) {

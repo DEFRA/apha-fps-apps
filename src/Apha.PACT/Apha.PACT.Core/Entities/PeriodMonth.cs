@@ -8,5 +8,6 @@
 
         public string? PeriodName { get; set; }
 
+        public int? FpsYear { get; set; }
     }
 }

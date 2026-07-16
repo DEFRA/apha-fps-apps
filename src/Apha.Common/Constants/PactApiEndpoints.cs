@@ -65,6 +65,11 @@ namespace Apha.Common.Constants
         // Recreate Summaries Log
         public const string GetRecreateSummaryLog = "api/v1/recreatereleasesummary/recreatesummary/log";
 
+        // Batch Job
+        public const string GetRecreateSummaryBatchJobHistory = "api/v1/recreatesummary/batchjob/history";
+        public const string CanRunRecreateSummaryBatchJob = "api/v1/recreatesummary/batchjob/canrun";
+        public const string TriggerRecreateSummariesBatchJob = "api/v1/recreatesummary/trigger";
+
         // Release Summaries
         public const string GetReleaseSummaries = "api/v1/recreatereleasesummary/releasesummary";
         public const string GetReleasePeriods = "api/v1/recreatereleasesummary/releaseperiods";
@@ -90,6 +95,12 @@ namespace Apha.Common.Constants
         public const string GetFpsProjectSubContracts = "api/v1/projectsubcontract/animals";
         public const string GetFpsProjectSubContractTotalAmount = "api/v1/projectsubcontract/animals/total";
         public const string GetMonthlySubContractsSummary = "api/v1/projectsubcontract/monthly-summary";
+        public const string GetFailedProjectSubContractRms = "api/v1/projectsubcontract/rms/failed";
+        public const string GetFailedProjectSubContractRmsById = "api/v1/projectsubcontract/rms/failed/{id}";
+        public const string SaveFailedProjectSubContractRms = "api/v1/projectsubcontract/rms/failed/{id}";
+        public const string DeleteFailedProjectSubContractRmsById = "api/v1/projectsubcontract/rms/failed/{id}";
+        public const string DeleteFailedProjectSubContractRmsByUser = "api/v1/projectsubcontract/rms/failed/user";
+        public const string ImportProjectSubContractRms = "api/v1/projectsubcontract/rms/import";
 
         // WorkGroup Test Capability
         public const string GetPagedTestCapabilityByWorkGroup = "api/v1/testcapability/paged/workgroup";
@@ -99,6 +110,10 @@ namespace Apha.Common.Constants
         public const string CreateTestCapability = "api/v1/testcapability/testcapability";
         public const string UpdateTestCapability = "api/v1/testcapability/testcapability";
         public const string DeleteTestCapability = "api/v1/testcapability/testcapability/{0}/{1}";
+        public const string GetPagedWgTestCapabilitiesWithDescription = "api/v1/testcapability/paged/wg-test-capabilities";
+
+        // Test Requirement Breakdown
+        public const string GetPagedTestReqBreakdown = "api/v1/testrequirement/testreqbreakdown";
 
         // Test Requirement
         public const string GetPagedTestReqmt = "api/v1/testrequirement/paged/{0}";
@@ -133,5 +148,11 @@ namespace Apha.Common.Constants
 
         // Work Group Report Email
         public const string SendEmails = "api/v1/workgroupreport/send";
+
+        // Bosworth Interface
+        public const string GetTimePurchaseProject = "api/v1/bosworth-interface/time-purchase-project";
+        public const string GetTimeSaleProfitCentre = "api/v1/bosworth-interface/time-sale-profit-centre";
+        public const string GetTestSaleSellingWorkgroup = "api/v1/bosworth-interface/test-sale-selling-workgroup";
+        public const string GetTestSaleBuyingProject = "api/v1/bosworth-interface/test-sale-buying-project";
     }
 }

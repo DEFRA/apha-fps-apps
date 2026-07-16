@@ -124,9 +124,10 @@
         var programMaintenanceConfig = {
             getProgramUrl: '@Url.Action("GetProgram", "ProgramMaintenance", new { area = "PACT" })',
             saveProgramUrl: '@Url.Action("Save", "ProgramMaintenance", new { area = "PACT" })',
+            getProgramListUrl: '@Url.Action("GetProgramListAsync", "ProgramMaintenance", new { area = "PACT" })',
             projectMaintenanceUrl: '@Url.Action("Details", "ProjectMaintenance", new { area = "PACT" })'
         };
-         const programListData =   @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ProgramList));
+         var programListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ProgramList));
     </script>
     <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script src="~/js/pact_js/program-maintenance.js"></script>

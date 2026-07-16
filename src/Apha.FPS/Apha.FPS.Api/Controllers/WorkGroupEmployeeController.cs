@@ -3,7 +3,6 @@ using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
-using Apha.FPS.Application.Services;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -11,76 +10,102 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
 {
-    /// <summary>
-    /// API controller for WG Staff (employees) within a given WG grade.
-    /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin,API-FPSShared")]
+    [Route("api/v{version:apiVersion}/wgstaff")]
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/wgstaff")]
     public class WorkGroupEmployeeController : ControllerBase
     {
-        private readonly IWorkGroupEmployeeService _WorkGroupEmployeeService;
+        private readonly IWorkGroupEmployeeService _workGroupEmployeeService;
         private readonly IMapper _mapper;
 
-        public WorkGroupEmployeeController(IWorkGroupEmployeeService WorkGroupEmployeeService, IMapper mapper)
+        public WorkGroupEmployeeController(
+            IWorkGroupEmployeeService workGroupEmployeeService,
+            IMapper mapper)
         {
-            _WorkGroupEmployeeService = WorkGroupEmployeeService ?? throw new ArgumentNullException(nameof(WorkGroupEmployeeService));
+            _workGroupEmployeeService = workGroupEmployeeService ?? throw new ArgumentNullException(nameof(workGroupEmployeeService));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        /// <summary>
-        /// Returns a paginated list of staff for the given WG grade.
-        /// </summary>
-        /// <param name="query">Pagination and filter parameters.</param>
-        /// <param name="wgGrade">The WG grade code.</param>
         [HttpGet]
-        public async Task<IActionResult> GetWorkGroupEmployeeAsync([FromQuery] PaginationReq<string> query, [FromQuery] string wgGrade)
+        public async Task<ActionResult> GetWorkGroupEmployeeAsync(
+            [FromQuery] PaginationReq<string> query,
+            [FromQuery] string? wgGrade)
         {
             var filter = _mapper.Map<QueryParameters<string>>(query);
-            var result = await _WorkGroupEmployeeService.GetWorkGroupEmployeeAsync(filter, wgGrade);
+            var result = await _workGroupEmployeeService.GetWorkGroupEmployeeAsync(filter, wgGrade ?? string.Empty);
             return Ok(_mapper.Map<PaginationRes<WorkGroupEmployeeRes>>(result));
         }
 
-        /// <summary>
-        /// Returns a single WG employee by PACTid.
-        /// </summary>
-        /// <param name="pactId">The PACTid of the employee.</param>
+        [HttpGet("staff")]
+        public async Task<ActionResult> GetWorkGroupEmployeeForStaffAsync(
+            [FromQuery] PaginationReq<string> query,
+            [FromQuery] string? wgGrade)
+        {
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(filter, wgGrade ?? string.Empty);
+            return Ok(_mapper.Map<PaginationRes<WorkGroupEmployeeRes>>(result));
+        }
+
+        [HttpGet("activestaff")]
+        public async Task<ActionResult> GetAllActiveWorkGroupEmployeesAsync(
+            [FromQuery] PaginationReq<string> query,
+            [FromQuery] string? wgGrade)
+        {
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _workGroupEmployeeService.GetAllActiveWorkGroupEmployeesAsync(filter, wgGrade ?? string.Empty);
+            return Ok(_mapper.Map<PaginationRes<WorkGroupEmployeeRes>>(result));
+        }
+
         [HttpGet("{pactId}")]
-        public async Task<IActionResult> GetWorkGroupEmployeeByIdAsync(string pactId)
+        public async Task<ActionResult<WorkGroupEmployeeRes>> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
-            var result = await _WorkGroupEmployeeService.GetWorkGroupEmployeeByIdAsync(pactId);
+            var result = await _workGroupEmployeeService.GetWorkGroupEmployeeByIdAsync(pactId);
             if (result == null)
-                throw new KeyNotFoundException("WorkGroupEmployee not found.");
+            {
+                throw new KeyNotFoundException($"WorkGroupEmployee with PACT Id '{pactId}' not found.");
+            }
+
             return Ok(_mapper.Map<WorkGroupEmployeeRes>(result));
         }
 
-        /// <summary>
-        /// Updates an existing WG employee record. HrsAvail is computed server-side as HrsPaid - (Leave + SickSpecial).
-        /// </summary>
-        /// <param name="req">The WG employee update request.</param>
-        [HttpPut]
-        public async Task<IActionResult> UpdateWorkGroupEmployeeAsync([FromBody] WorkGroupEmployeeReq req)
+        [HttpPost("staff")]
+        public async Task<ActionResult<WorkGroupEmployeeRes>> CreateWorkGroupEmployeeForStaffAsync([FromBody] WorkGroupEmployeeReq req)
         {
-            var dto = _mapper.Map<WorkGroupEmployeeDto>(req);
-            var result = await _WorkGroupEmployeeService.UpdateWorkGroupEmployeeAsync(dto);
-            return Ok(_mapper.Map<WorkGroupEmployeeRes>(result));
+            var mappedDto = _mapper.Map<WorkGroupEmployeeDto>(req);
+            var createdDto = await _workGroupEmployeeService.CreateWorkGroupEmployeeForStaffAsync(mappedDto);
+            return Ok(_mapper.Map<WorkGroupEmployeeRes>(createdDto));
         }
 
-        /// <summary>
-        /// Deletes a WG employee by PACTid.
-        /// </summary>
-        /// <param name="pactId">The PACTid of the employee to delete.</param>
+        [HttpPut]
+        public async Task<ActionResult<WorkGroupEmployeeRes>> UpdateWorkGroupEmployeeAsync([FromBody] WorkGroupEmployeeReq req)
+        {
+            var mappedDto = _mapper.Map<WorkGroupEmployeeDto>(req);
+            var updatedDto = await _workGroupEmployeeService.UpdateWorkGroupEmployeeAsync(mappedDto);
+            return Ok(_mapper.Map<WorkGroupEmployeeRes>(updatedDto));
+        }
+
+        [HttpPut("staff")]
+        public async Task<ActionResult<WorkGroupEmployeeRes>> UpdateWorkGroupEmployeeForStaffAsync([FromBody] WorkGroupEmployeeReq req)
+        {
+            var mappedDto = _mapper.Map<WorkGroupEmployeeDto>(req);
+            var updatedDto = await _workGroupEmployeeService.UpdateWorkGroupEmployeeForStaffAsync(mappedDto);
+            return Ok(_mapper.Map<WorkGroupEmployeeRes>(updatedDto));
+        }
+
         [HttpDelete("{pactId}")]
         public async Task<IActionResult> DeleteWorkGroupEmployeeAsync(string pactId)
         {
-            var isDeleted = await _WorkGroupEmployeeService.DeleteWorkGroupEmployeeAsync(pactId);
+            if (string.IsNullOrWhiteSpace(pactId))
+                throw new ArgumentException("PACT Id cannot be null or empty.", nameof(pactId));
+
+            var isDeleted = await _workGroupEmployeeService.DeleteWorkGroupEmployeeAsync(pactId);
             if (!isDeleted)
-                throw new KeyNotFoundException("WorkGroupEmployee not found.");
+            {
+                throw new KeyNotFoundException($"WorkGroupEmployee with PACT Id '{pactId}' not found.");
+            }
+
             return Ok(isDeleted);
         }
-
-  
-
     }
 }

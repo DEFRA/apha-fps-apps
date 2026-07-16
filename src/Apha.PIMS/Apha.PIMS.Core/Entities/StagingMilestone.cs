@@ -6,7 +6,7 @@ namespace Apha.PIMS.Core.Entities
 {
     public class StagingMilestone
     {
-        public int? Id { get; set; }
+        public int Id { get; set; }
 
         public string? Project { get; set; }
 

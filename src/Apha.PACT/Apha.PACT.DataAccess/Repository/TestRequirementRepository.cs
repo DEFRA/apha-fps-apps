@@ -147,7 +147,7 @@ namespace Apha.PACT.DataAccess.Repository
             var baseQuery = (from t in _context.TestRequirements
                              join tp in _context.TestorProducts on t.TestCode equals tp.ItemCode
                              join p in _context.Projects on t.Buyer equals p.ParentProject
-                             where t.Buyer == parentProject
+                             where t.Buyer != null && parentProject != null && t.Buyer.ToLower() == parentProject.ToLower()
                              select new TestRequirementDetail
                              {
                                  TestCode = t.TestCode,
@@ -448,8 +448,81 @@ namespace Apha.PACT.DataAccess.Repository
                 log.Active           = entity.Active;
             }
 
-            await _context.TestRequirementLogs.AddAsync(log);
-            await _context.SaveChangesAsync();
-        }
-    }
-}
+                    await _context.TestRequirementLogs.AddAsync(log);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // ── TestReqBreakdown (fps.vtestreqbreakdown) ──────────────────────────────
+
+                    public async Task<PagedData<TestReqBreakdownView>> GetPlannedTestsByWorkgroupAsync(PaginationParameters<string> query)
+                    {
+                        var baseQuery = _context.TestReqBreakdownViews.AsNoTracking();
+
+                        baseQuery = ApplyPlannedTestsByWorkgroupFilter(baseQuery, query.Filter);
+                        var sorted = ApplyPlannedTestsByWorkgroupSorting(baseQuery, query.SortBy, query.Descending);
+
+                        return await ApplyPaging(sorted, query.Page, query.PageSize);
+                    }
+
+                    private static IQueryable<TestReqBreakdownView> ApplyPlannedTestsByWorkgroupSorting(
+                        IQueryable<TestReqBreakdownView> source, string? sortBy, bool descending)
+                    {
+                        return sortBy?.ToLower() switch
+                        {
+                            "testcode"         => ApplyOrder(source, x => x.TestCode,         descending),
+                            "shortdescription" => ApplyOrder(source, x => x.ShortDescription, descending),
+                            "program"          => ApplyOrder(source, x => x.Program,          descending),
+                            "project"          => ApplyOrder(source, x => x.Project,          descending),
+                            "pc"               => ApplyOrder(source, x => x.Pc,               descending),
+                            "workg"            => ApplyOrder(source, x => x.WorkG,            descending),
+                            "wgprice"          => ApplyOrder(source, x => x.WgPrice,          descending),
+                            "totalcost"        => ApplyOrder(source, x => x.TotalCost,        descending),
+                            _                  => ApplyOrder(source, x => x.TestCode,         descending)
+                        };
+                    }
+
+                    private static IQueryable<TestReqBreakdownView> ApplyPlannedTestsByWorkgroupFilter(
+                        IQueryable<TestReqBreakdownView> query, string? filter)
+                    {
+                        if (string.IsNullOrWhiteSpace(filter))
+                            return query;
+
+                        var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filter);
+                        if (filters is null)
+                            return query;
+
+                        query = ApplyBreakdownTextFilters(query, filters);
+                        query = ApplyBreakdownCodeFilters(query, filters);
+
+                        return query;
+                    }
+
+                    private static IQueryable<TestReqBreakdownView> ApplyBreakdownTextFilters(
+                        IQueryable<TestReqBreakdownView> query, Dictionary<string, string> filters)
+                    {
+                        if (filters.TryGetValue("TestCode", out var testCode) && !string.IsNullOrWhiteSpace(testCode))
+                            query = query.Where(x => EF.Functions.ILike(x.TestCode, $"%{testCode}%"));
+                        if (filters.TryGetValue("ShortDescription", out var shortDesc) && !string.IsNullOrWhiteSpace(shortDesc))
+                            query = query.Where(x => x.ShortDescription != null && EF.Functions.ILike(x.ShortDescription, $"%{shortDesc}%"));
+                        if (filters.TryGetValue("Program", out var program) && !string.IsNullOrWhiteSpace(program))
+                            query = query.Where(x => x.Program != null && EF.Functions.ILike(x.Program, $"%{program}%"));
+                        return query;
+                    }
+
+                    private static IQueryable<TestReqBreakdownView> ApplyBreakdownCodeFilters(
+                        IQueryable<TestReqBreakdownView> query, Dictionary<string, string> filters)
+                    {
+                        if (filters.TryGetValue("Project", out var project) && !string.IsNullOrWhiteSpace(project))
+                            query = query.Where(x => EF.Functions.ILike(x.Project, $"%{project}%"));
+                        if (filters.TryGetValue("PC", out var pc) && !string.IsNullOrWhiteSpace(pc))
+                            query = query.Where(x => x.Pc != null && EF.Functions.ILike(x.Pc, $"%{pc}%"));
+                        if (filters.TryGetValue("WorkG", out var workG) && !string.IsNullOrWhiteSpace(workG))
+                            query = query.Where(x => x.WorkG != null && EF.Functions.ILike(x.WorkG, $"%{workG}%"));
+                        return query;
+                    }
+
+                    private static IQueryable<T> ApplyOrder<T, TKey>(
+                        IQueryable<T> source, System.Linq.Expressions.Expression<Func<T, TKey>> keySelector, bool descending)
+                        => descending ? source.OrderByDescending(keySelector) : source.OrderBy(keySelector);
+                }
+            }

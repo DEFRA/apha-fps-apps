@@ -136,5 +136,95 @@ namespace Apha.PIMS.Api.Controllers
             PaginatedResult<LogMilestoneDto> result = await _service.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2);
             return Ok(_mapper.Map<PaginationRes<LogMilestoneRes>>(result));
         }
+        // ── Staging / Import ─────────────────────────────────────────────────
+        /// <summary>Get staging milestone rows, optionally filtered by project.</summary>
+        [HttpGet("allstaging")]
+        public async Task<IActionResult> GetAllStagingRows([FromQuery] QueryParameters<string> parameters)
+        {
+            PaginatedResult<StagingMilestoneDto> result = await _service.GetAllStagingRowsAsync(parameters);
+            return Ok(_mapper.Map<PaginationRes<StagingMilestoneRes>>(result));
+        }
+
+        /// <summary>Get staging milestone rows, optionally filtered by project.</summary>
+        [HttpGet("staging")]
+        public async Task<IActionResult> GetStagingRows([FromQuery] string? project = null)
+        {
+            List<StagingMilestoneDto> result = await _service.GetStagingRowsAsync(project);
+            return Ok(_mapper.Map<List<StagingMilestoneRes>>(result));
+        }
+
+        /// <summary>Add a staging milestone row.</summary>
+        [HttpPost("staging/{year:int}")]
+        public async Task<IActionResult> AddStagingRow(int year, [FromBody] StagingMilestoneReq request)
+        {
+            StagingMilestoneDto dto = _mapper.Map<StagingMilestoneDto>(request);
+            StagingMilestoneDto result = await _service.AddStagingRowAsync(dto, year);
+            return Ok(_mapper.Map<StagingMilestoneRes>(result));
+        }
+
+        /// <summary>Update a staging milestone row.</summary>
+        [HttpPut("staging/{id:int}")]
+        public async Task<IActionResult> UpdateStagingRow(int id, [FromBody] StagingMilestoneReq request)
+        {
+            StagingMilestoneDto dto = _mapper.Map<StagingMilestoneDto>(request);
+            dto.Id = id;
+            StagingMilestoneDto result = await _service.UpdateStagingRowAsync(dto);
+            return Ok(_mapper.Map<StagingMilestoneRes>(result));
+        }
+
+        /// <summary>Delete a single staging milestone row by id.</summary>
+        [HttpDelete("staging/{id:int}")]
+        public async Task<IActionResult> DeleteStagingRow(int id)
+        {
+            bool deleted = await _service.DeleteStagingRowAsync(id);
+            return Ok(new { success = deleted });
+        }
+
+        /// <summary>Clear all staging rows for a project.</summary>
+        [HttpDelete("{project}/staging")]
+        public async Task<IActionResult> ClearStaging(string project)
+        {
+            int rows = await _service.ClearStagingAsync(project);
+            return Ok(new { deleted = rows });
+        }
+
+        /// <summary>Validate staging rows — checks dates, number format and duplicate detection.</summary>
+        [HttpPost("{project}/staging/validate")]
+        public async Task<IActionResult> ValidateStaging(
+            string project,
+            [FromQuery] string? typeId = null,
+            [FromQuery] bool isDeliverableMode = false
+            )
+        {
+            await _service.ValidateStagingAsync(project, typeId, isDeliverableMode);
+            List<StagingMilestoneDto> rows = await _service.GetStagingRowsAsync(project);
+            return Ok(_mapper.Map<List<StagingMilestoneRes>>(rows));
+        }
+
+        /// <summary>Import validated staging rows (Note IS NULL) into tblMilestone.</summary>
+        [HttpPost("{project}/staging/import")]
+        public async Task<IActionResult> ImportStaging(string project)
+        {
+            string? changedBy = User.Identity?.Name is { } name ? name[..Math.Min(10, name.Length)] : null;
+            int imported = await _service.ImportStagingAsync(project, changedBy);
+            return Ok(new { imported });
+        }
+
+        /// <summary>Import with overwrite — updates existing milestones from staging then clears matched rows.</summary>
+        [HttpPost("{project}/staging/import-overwrite")]
+        public async Task<IActionResult> ImportWithOverwrite(string project)
+        {
+            string? changedBy = User.Identity?.Name is { } name ? name[..Math.Min(10, name.Length)] : null;
+            int updated = await _service.ImportWithOverwriteAsync(project, changedBy);
+            return Ok(new { updated });
+        }
+
+        /// <summary>Get the next available milestone number for a project and year.</summary>
+        [HttpGet("{project}/staging/nextnumber")]
+        public async Task<IActionResult> GetNextMilestoneNumber(string project, [FromQuery] int year)
+        {
+            string next = await _service.GetNextMilestoneNumberAsync(project, year);
+            return Ok(new { next });
+        }
     }
 }

@@ -23,6 +23,10 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<Month, MonthDto>().ReverseMap();
             CreateMap<ProjectInvoice, ProjectInvoiceDto>().ReverseMap();
             CreateMap<ProjectSubContract, ProjectSubContractDto>().ReverseMap();
+            CreateMap<SubContractRmsImportRow, SubContractRmsImportRowDto>().ReverseMap();
+            CreateMap<ProjectSubcontractStaging, SubContractRmsImportRowDto>();
+            CreateMap<SubContractRmsImport, SubContractRmsImportDto>().ReverseMap();
+            CreateMap<SubContractRmsImportResult, SubContractRmsImportResultDto>().ReverseMap();
             CreateMap<TestCapability, TestCapabilityDto>().ReverseMap();
             CreateMap<TestRequirement, TestRequirementtDto>().ReverseMap();
             CreateMap<TestRequirementDetail, TestRequirementtDto>();
@@ -46,6 +50,18 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<ReleaseSummary, ReleaseSummaryDto>();
             CreateMap<JobCodeZtLookup, JobCodeZtDto>().ReverseMap();
             CreateMap<TestPriceCheckView, TestPriceCheckDto>().ReverseMap();
+            CreateMap<TimePurchaseProject, TimePurchaseProjectDto>();
+            CreateMap<TimeSaleProfitCentre, TimeSaleProfitCentreDto>();
+            CreateMap<TestSaleSellingWorkgroup, TestSaleSellingWorkgroupDto>();
+            CreateMap<TestSaleBuyingProject, TestSaleBuyingProjectDto>();
+            CreateMap<WgTestCapabilitiesWithDescription, WgTestCapabilitiesWithDescriptionDto>();
+            CreateMap<TestReqBreakdownView, TestReqBreakdownDto>().ReverseMap();
+            CreateMap<BatchJobHistory, BatchJobHistoryDto>().ReverseMap();
+            CreateMap<BatchJobQueue, BatchJobQueueDto>().ReverseMap();
+            CreateMap<BatchJobQueue, BatchJobQueueRes>().ReverseMap();
+            CreateMap<BatchJobQueue, BatchJobEventTriggerDto>()
+                .ForMember(dest => dest.Jobqueue, opt => opt.MapFrom(src => src))
+                .ForMember(dest => dest.EventId, opt => opt.Ignore());
         }
     }
 }

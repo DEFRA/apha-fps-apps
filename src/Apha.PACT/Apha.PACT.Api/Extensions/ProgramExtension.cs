@@ -1,4 +1,7 @@
-﻿using Apha.Common.Contracts.Email;
+﻿using Amazon;
+using Amazon.EventBridge;
+using Apha.Common.Contracts.Email;
+using Apha.Common.Utilities.EventPublisher;
 using Apha.PACT.Api.Filters;
 using Apha.PACT.Api.Mappings;
 using Apha.PACT.Api.Middleware;
@@ -107,7 +110,14 @@ namespace Apha.PACT.Api.Extensions
             services.AddOptions<WorkGroupReportEmailSettings>()
                 .Bind(configuration.GetRequiredSection(WorkGroupReportEmailSettings.SectionName))
                 .ValidateOnStart();
+            
             services.AddApplicationServices();
+
+            builder.Services.AddSingleton<IAmazonEventBridge>(_ =>
+            new AmazonEventBridgeClient(
+                RegionEndpoint.GetBySystemName(configuration.GetValue<string>("EventBridge:Region"))));
+
+            builder.Services.AddScoped<IEventPublisherService, EventBridgePublisherService>();
 
             // Authentication
             services.AddAuthenticationServices(configuration);
@@ -163,15 +173,15 @@ namespace Apha.PACT.Api.Extensions
                 });
             }
 
+            app.UseMiddleware<ExceptionMiddleware>();
+
             app.UseHsts();
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-            app.UseRouting();
-
-            app.UseMiddleware<ExceptionMiddleware>();
-            app.UseMiddleware<RequestContextMiddleware>();
+            app.UseRouting();                 
 
             app.UseAuthentication();
+            app.UseMiddleware<RequestContextMiddleware>();
             app.UseAuthorization();
 
             // Default route

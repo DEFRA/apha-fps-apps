@@ -16,21 +16,24 @@ var StaffJobConfig = {
 
 function addStaffJob(btn) {
     if (StaffJobConfig.requireJobCodeForAdd && !StaffJobConfig.getJobCode()) {
-        showGovukAlert('Please select a project first.');
+        showAlertMessage('Please select a project first.', AlertType.INFO);
         return;
     }
+    showLoader();
     $.ajax({
         url: '/FPS/StaffJob/Create',
         type: 'GET',
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            hideLoader();
         },
         error: function (xhr) {
+            hideLoader();
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while opening the form.');
+                showAlertMessage('An error occurred while opening the form.', AlertType.ERROR);
             }
         }
     });
@@ -42,6 +45,7 @@ function saveStaffJob() {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;
     }
+    showLoader();
     var staffId = $('#StaffID').val();
     var staffName = $('#Name').val();
     var data = {
@@ -59,9 +63,10 @@ function saveStaffJob() {
         data: JSON.stringify(data),
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
+            hideLoader();
             if (result.success) {
                 closeModal();
-                showGovukAlert(result.message).then(function () {                    
+                showAlertMessage(result.message, AlertType.SUCCESS).then(function () {                    
                     StaffJobConfig.onSaved();
                 });
             } else {
@@ -69,16 +74,18 @@ function saveStaffJob() {
             }
         },
         error: function (xhr) {
+            hideLoader();
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
 }
 
 function editStaffJob(btn) {
+    showLoader();
     var staffJobId = $(btn).data('id');
     $.ajax({
         url: '/FPS/StaffJob/Edit',
@@ -87,12 +94,14 @@ function editStaffJob(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            hideLoader();
         },
         error: function (xhr) {
+            hideLoader();
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while fetching the record.');
+                showAlertMessage('An error occurred while fetching the record.', AlertType.ERROR);
             }
         }
     });
@@ -104,6 +113,7 @@ function updateStaffJob() {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;
     }
+    showLoader();
     var staffId = $('#StaffID').val();
     var jobCode = form.find('[name="JobCode"]').val();
     var staffName = $('#Name').val();
@@ -122,9 +132,10 @@ function updateStaffJob() {
         data: JSON.stringify(data),
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
+            hideLoader();
             if (result.success) {
                 closeModal();
-                showGovukAlert(result.message).then(function () {                   
+                showAlertMessage(result.message, AlertType.SUCCESS).then(function () {                   
                     StaffJobConfig.onUpdated();
                 });
             } else {
@@ -132,34 +143,39 @@ function updateStaffJob() {
             }
         },
         error: function (xhr) {
+            hideLoader();
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
 }
 
 function deleteStaffJob(btn) {
+
     var staffJobId = $(btn).data('id');
     showGovukConfirm('Are you sure you want to delete this record?').then(function (confirmed) {
         if (!confirmed) { return; }
+        showLoader();
         $.ajax({
             url: '/FPS/StaffJob/Delete',
             type: 'DELETE',
             data: { staffId: staffJobId, jobCode: StaffJobConfig.getJobCode() },
             success: function (response) {
+                hideLoader();
                 if (response.success) {
-                    showGovukAlert('Deleted successfully.').then(function () {
+                    showAlertMessage('Deleted successfully.', AlertType.SUCCESS).then(function () {
                         StaffJobConfig.onDeleted();
                     });
                 } else {
-                    showGovukAlert(response.message);
+                    showAlertMessage(response.message, AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting.');
+                hideLoader();
+                showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
     });
@@ -169,13 +185,58 @@ function getStaffJobExtraFilters() {
     return { jobCode: StaffJobConfig.getJobCode() };
 }
 
+// ---- Staff panel dropdown ----
+
+function toggleStaffPanel() {
+    var panel = document.getElementById('StaffDropdownPanel');
+    if (!panel) return;
+    var isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+        var searchBox = document.getElementById('StaffSearchBox');
+        if (searchBox) { searchBox.value = ''; filterStaffPanel(''); searchBox.focus(); }
+    }
+}
+
+function filterStaffPanel(query) {
+    var rows = document.querySelectorAll('#StaffDropdownBody tr');
+    var q = (query || '').toLowerCase();
+    rows.forEach(function (row) {
+        var name  = (row.getAttribute('data-name') || '').toLowerCase();
+        row.style.display = (!q || name.indexOf(q) !== -1) ? '' : 'none';
+    });
+}
+
+function selectStaff(staffId, staffName, rowEl) {
+    // Update display input
+    var display = document.getElementById('StaffDisplay');
+    if (display) display.value = staffName;
+
+    // Update hidden select so onStaffSelected fires with the correct value
+    var select = document.getElementById('Name');
+    if (select) {
+        select.value = staffId;
+        $(select).trigger('change');
+    }
+
+    // Close panel
+    var panel = document.getElementById('StaffDropdownPanel');
+    if (panel) panel.style.display = 'none';
+}
+
+// Close panel when clicking outside
+$(document).on('click', function (e) {
+    if (!$(e.target).closest('#StaffDropdownPanel, #StaffDisplay').length) {
+        var panel = document.getElementById('StaffDropdownPanel');
+        if (panel) panel.style.display = 'none';
+    }
+});
+
 // ---- Charge rate calculation ----
 
 function onStaffSelected(selectElement) {
     var staffId = $(selectElement).val();
-    var staffName = $(selectElement).find('option:selected').data('name');
     $('#StaffID').val(staffId);
-   
     if (staffId) {
         fetchChargeRate(staffId);
     }
@@ -234,6 +295,42 @@ $(document).on('change', '#PlannedHours, #ChargeRate', function () {
 
 $(document).on('change', '#Days', function () {
     calculateHoursFromDays();
+});
+
+// Prevent non-numeric input on Hrs and Days fields using keypress event
+$(document).on('keypress', '#PlannedHours, #Days', function (e) {
+    var char = String.fromCharCode(e.which || e.keyCode);
+    // Allow only digits (0-9) and decimal point (.)
+    if (!/[\d.]/.test(char)) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// Allow special keys like backspace, delete, arrows, tab, enter, ctrl shortcuts
+$(document).on('keydown', '#PlannedHours, #Days', function (e) {
+    var allowedKeys = [8, 9, 27, 13, 35, 36, 37, 38, 39, 40, 46]; // Backspace, Tab, Escape, Enter, End, Home, Arrow keys, Delete
+    if (allowedKeys.indexOf(e.keyCode) !== -1) {
+        return true;
+    }
+    // Allow Ctrl+A, Ctrl+C, Ctrl+X, Ctrl+V (copy/paste)
+    if ((e.keyCode === 65 || e.keyCode === 67 || e.keyCode === 86 || e.keyCode === 88) && (e.ctrlKey || e.metaKey)) {
+        return true;
+    }
+});
+
+// Additional cleanup on input event to handle paste and other edge cases
+$(document).on('input', '#PlannedHours, #Days', function () {
+    var value = $(this).val();
+    var filtered = value.replace(/[^\d.]/g, '');
+    // Prevent multiple decimal points - keep only the first one
+    var parts = filtered.split('.');
+    if (parts.length > 2) {
+        filtered = parts[0] + '.' + parts.slice(1).join('');
+    }
+    if (value !== filtered) {
+        $(this).val(filtered);
+    }
 });
 
 $(document).ready(function () {
