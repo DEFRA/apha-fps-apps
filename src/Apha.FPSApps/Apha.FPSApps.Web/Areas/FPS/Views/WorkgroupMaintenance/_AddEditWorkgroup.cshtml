@@ -1,7 +1,6 @@
 @model Apha.FPSApps.Web.Areas.FPS.Models.WorkgroupMaintenanceItem
 
 @{
-    // TRANSFORMENGINE: isEditMode based on string PK WorkGroupName (non-null/non-empty = edit)
     var isEditMode = !string.IsNullOrWhiteSpace(Model?.WorkGroupName);
     var title = isEditMode ? "Edit WorkGroup" : "Add WorkGroup";
     var formId = isEditMode ? "editWorkgroupForm" : "addWorkgroupForm";
@@ -31,8 +30,6 @@
         <form id="@formId">
             @Html.AntiForgeryToken()
 
-            @* TRANSFORMENGINE: hidden fields — original WorkGroupName preserved for Edit rename detection;
-               hdnOriginalWorkGroupName used by updateWorkgroup() in Index.cshtml @section Scripts *@
             <input type="hidden" id="hdnOriginalWorkGroupName" value="@(Model?.WorkGroupName ?? string.Empty)" />
             <input type="hidden" id="hdnIsEdit" value="@isEditMode.ToString().ToLower()" />
 
@@ -43,9 +40,6 @@
 
                     <div class="govuk-grid-column-one-half">
                         <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-wg-name">
-                            @* TRANSFORMENGINE: WorkGroupName — editable in both Add and Edit modes
-                               (rename is supported; original name tracked by hdnOriginalWorkGroupName)
-                               Required validation matches JS wgValidationFields[0] *@
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="WorkGroupName">
                                 WorkGroup:<span class="app-required sup_color_red" aria-hidden="true">*</span>
                             </label>
@@ -64,9 +58,6 @@
                     </div>
 
                     <div class="govuk-grid-column-one-half">
-                        @* TRANSFORMENGINE: ProfitCentre — labelled "ResourceCentre" in HTML prototype (field mapping confirmed)
-                           Required validation matches JS wgValidationFields[1] (type:'select')
-                           Options loaded via AJAX GET /FPS/WorkgroupMaintenance/GetProfitCentres on modal open *@
                         <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-wg-rc">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ProfitCentre">
                                 ResourceCentre:<span class="app-required sup_color_red" aria-hidden="true">*</span>
@@ -90,8 +81,6 @@
                 <div class="govuk-grid-row sup_padding_right_left_10">
 
                     <div class="govuk-grid-column-one-half">
-                        @* TRANSFORMENGINE: CostCentre (double?, optional) — numeric text box,
-                           max 10 digits, integers only (no decimals) *@
                         <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-wg-cc">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="CostCentre">
                                 CostCentre:
@@ -111,8 +100,6 @@
                     </div>
 
                     <div class="govuk-grid-column-one-half">
-                        @* TRANSFORMENGINE: Owner (string?, optional) — select; options loaded via AJAX
-                           GET /FPS/WorkgroupMaintenance/GetOwners → ManagerDto.Name *@
                         <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-wg-owner">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="Owner">
                                 Owner:
@@ -135,7 +122,6 @@
                 <div class="govuk-grid-row sup_padding_right_left_10">
 
                     <div class="govuk-grid-column-one-half">
-                        @* TRANSFORMENGINE: Description (string?, optional, max 45 chars per DB schema) *@
                         <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-wg-desc">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="Description">
                                 Description:
@@ -152,10 +138,6 @@
                     </div>
 
                     <div class="govuk-grid-column-one-half">
-                        @* TRANSFORMENGINE: CentralOverhead (decimal?, optional) — £-prefixed input
-                           Matches HTML prototype govuk-input__wrapper with govuk-input__prefix "£"
-                           and class "wg-overhead-input"; inputmode="decimal" preserved from prototype
-                           Value rendered as numeric string (strip £ prefix on POST in updateWorkgroup/saveWorkgroup) *@
                         <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-wg-overhead">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="CentralOverhead">
                                 CentralOverhead:
@@ -227,8 +209,6 @@
             }
         })();
 
-        // TRANSFORMENGINE: loadProfitCentreOptions — AJAX GET /FPS/WorkgroupMaintenance/GetProfitCentres
-        // Returns { success: true, data: string[] }; selectedValue restored after load
         function loadProfitCentreOptions(selectedValue, callback) {
             $.getJSON('/FPS/WorkgroupMaintenance/GetProfitCentres', function (response) {
                 var select = document.getElementById('ProfitCentre');
@@ -251,8 +231,6 @@
             });
         }
 
-        // TRANSFORMENGINE: loadOwnerOptions — AJAX GET /FPS/WorkgroupMaintenance/GetOwners
-        // Returns { success: true, data: [{ name: string }] }; ordered by name server-side
         function loadOwnerOptions(selectedValue) {
             $.getJSON('/FPS/WorkgroupMaintenance/GetOwners', function (response) {
                 var select = document.getElementById('Owner');

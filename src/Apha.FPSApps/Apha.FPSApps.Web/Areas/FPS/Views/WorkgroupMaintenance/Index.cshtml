@@ -2,7 +2,6 @@
 @model Apha.FPSApps.Web.Areas.FPS.Models.WorkgroupMaintenanceViewModel
 
 @{
-    // TRANSFORMENGINE: Title from HTML prototype <title>2025-2026 : WorkGroup Maintenance</title>
     ViewData["Title"] = "2025-2026 : WorkGroup Maintenance";
 }
 
@@ -26,7 +25,6 @@
                             <div class="container-fluid" style="padding-left:0px;">
                                 <div style="display: flex; flex-direction: row; align-items: flex-start;">
 
-                                    <!-- TRANSFORMENGINE: _MaintenanceSideNav partial — active token "WorkgroupMaintenance" -->
                                     @await Html.PartialAsync("_MaintenanceSideNav", "WorkgroupMaintenance")
 
                                     <div style="display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; margin: 0 0px 5px 8px;">
@@ -34,10 +32,6 @@
                                         <!-- DataGrid section -->
                                         <div class="govuk-grid-row">
                                             <div class="govuk-grid-column-full mt-2">
-                                                <!-- TRANSFORMENGINE: grid container ID = gridContainer_workgroupGrid
-                                                     matching DataGridConfig.GridId = "workgroupGrid"
-                                                     No page-level filter dropdowns — HTML prototype has no <select>
-                                                     outside the modal; all selects are modal-only AJAX lookups -->
                                                 <div id="@($"gridContainer_{Model.WorkgroupGrid.GridId}")">
                                                     @await Html.PartialAsync("_DataGrid", Model.WorkgroupGrid)
                                                 </div>
@@ -60,15 +54,11 @@
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
 
-        // TRANSFORMENGINE: reloadWorkgroupMaintenanceGrid — uses gm.reloadGrid({ page: 1 }) (NOT gm.reload())
-        // GridId = "workgroupGrid" so window key is gridManager_workgroupGrid
         function reloadWorkgroupMaintenanceGrid() {
             var gm = window['gridManager_workgroupGrid'];
             if (gm) { gm.reloadGrid({ page: 1 }); }
         }
 
-        // TRANSFORMENGINE: addWorkgroupMaintenance — AllowAdd:true from JS showAddButton:true
-        // Loads _AddEditWorkgroup partial (empty WorkgroupMaintenanceItem) into shared modal host
         function addWorkgroupMaintenance() {
             $.get('/FPS/WorkgroupMaintenance/Create', function (html) {
                 $('#modaPopupBody').html(html);
@@ -78,8 +68,6 @@
             });
         }
 
-        // TRANSFORMENGINE: editWorkgroupMaintenance
-        // $(btn).data('id') reads data-id attribute emitted by _DataGrid EditFunction (WorkGroupName = KeyProperty)
         function editWorkgroupMaintenance(btn) {
             var id = $(btn).data('id');
             $.get('/FPS/WorkgroupMaintenance/Edit', { workGroupName: id }, function (html) {
@@ -90,9 +78,6 @@
             });
         }
 
-        // TRANSFORMENGINE: deleteWorkgroupMaintenance — AllowDelete:true from JS handleTblWGDelete button
-        // JS prototype used window.confirm(); MVC equivalent uses showGovukConfirm (govuk-alert pattern)
-        // KeyProperty = "WorkGroupName" so id is the workGroupName string value
         function deleteWorkgroupMaintenance(btn) {
             var id = $(btn).data('id');
             showGovukConfirm('Are you sure you want to delete this record?').then(function (result) {
@@ -116,9 +101,6 @@
             });
         }
 
-        // TRANSFORMENGINE: saveWorkgroup — called from _AddEditWorkgroup.cshtml when isEditMode=false
-        // Collects WorkGroupName, ProfitCentre, CostCentre, Owner, Description, CentralOverhead from modal inputs
-        // CentralOverhead: strip £ prefix + non-numeric chars client-side before POST (matches JS parseWGOverheadAmount)
         function saveWorkgroup() {
             clearValidationErrors('#modaPopupBody');
             var form = $('#addWorkgroupForm');
@@ -162,9 +144,6 @@
             });
         }
 
-        // TRANSFORMENGINE: updateWorkgroup — called from _AddEditWorkgroup.cshtml when isEditMode=true
-        // WorkGroupName may be changed (rename); original name taken from hdnOriginalWorkGroupName hidden field
-        // Edit POST route: /FPS/WorkgroupMaintenance/Edit?originalWorkGroupName={original}
         function updateWorkgroup() {
             clearValidationErrors('#modaPopupBody');
             var form = $('#editWorkgroupForm');
@@ -215,8 +194,6 @@
             $('#modalPopup').removeClass('show');
         }
 
-        // TRANSFORMENGINE: parseDecimalOrNull — strip £ prefix and non-numeric chars before parsing
-        // Matches JS parseWGOverheadAmount() behaviour for CentralOverhead field
         function parseDecimalOrNull(val) {
             if (val === null || val === undefined || val.toString().trim() === '') return null;
             var cleaned = val.toString().replace(/[^0-9.-]/g, '');
@@ -224,7 +201,6 @@
             return isNaN(parsed) ? null : parsed;
         }
 
-        // TRANSFORMENGINE: parseDoubleOrNull — numeric parsing helper for CostCentre (double?)
         function parseDoubleOrNull(val) {
             if (val === null || val === undefined || val.toString().trim() === '') return null;
             var parsed = parseFloat(val);

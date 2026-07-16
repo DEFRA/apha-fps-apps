@@ -1,25 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — WorkgroupControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - NEW FILE: xUnit tests for WorkgroupController (frmMaintWorkGroup2 backend API layer)
- *   - Tests cover all 8 public actions: GetPagedAsync, GetByKeyAsync, CreateAsync, UpdateAsync,
- *     DeleteAsync, GetProfitCentresAsync, GetOwnersAsync, GetCostCentresAsync
- *   - Uses NSubstitute for IWorkgroupService and IMapper mocks
- *   - Covers success, validation-guard, null-result, service-exception, and lookup paths
- *
- * PRESERVED:
- *   - Naming convention [MethodName]_[StateUnderTest]_[ExpectedResult] throughout
- *   - #region grouping per action, consistent with GradeControllerTests pattern
- *   - All static builder helpers (BuildDto, BuildReq, BuildRes) for minimal valid test objects
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify PaginationRes<WorkgroupMaintenanceRes> mapper path when integration
- *     testing the controller against a real AutoMapper profile
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
@@ -49,7 +27,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkgroupControllerTest
             _controller  = new WorkgroupController(_serviceMock, _mapperMock);
         }
 
-        // TRANSFORMENGINE: static helpers — minimal valid objects for test setup
         private static WorkgroupDto BuildDto(string name = "WG001") =>
             new() { WorkGroupName = name, ProfitCentre = "PC01", FpsYear = 2025 };
 

@@ -25,7 +25,6 @@ namespace Apha.FPS.Api.Controllers
         private readonly IWorkgroupService _workgroupService;
         private readonly IMapper _mapper;
 
-        // TRANSFORMENGINE: constructor — inject IWorkgroupService only (no direct repository); matches GradeController pattern
         /// <summary>
         /// Initialises the <see cref="WorkgroupController"/> with its required dependencies.
         /// </summary>
@@ -35,7 +34,6 @@ namespace Apha.FPS.Api.Controllers
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        // TRANSFORMENGINE: GET paged — frmMaintWorkGroup2 grid list; delegates to IWorkgroupService.GetPagedAsync
         /// <summary>
         /// Returns a paginated, optionally filtered and sorted list of workgroups for the active FPS year.
         /// </summary>
@@ -53,7 +51,6 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<WorkgroupMaintenanceRes>>(result));
         }
 
-        // TRANSFORMENGINE: GET by key — single workgroup load for the edit modal; delegates to IWorkgroupService.GetByKeyAsync
         /// <summary>
         /// Returns a single workgroup by its WorkGroupName for the active FPS year.
         /// </summary>
@@ -75,7 +72,6 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<WorkgroupMaintenanceRes>(dto));
         }
 
-        // TRANSFORMENGINE: POST create — frmMaintWorkGroup2 add-new path; WorkgroupMaintenanceReq → WorkgroupDto → entity
         /// <summary>
         /// Creates a new workgroup record.
         /// Throws <see cref="ArgumentException"/> if WorkGroupName or ProfitCentre is missing.
@@ -98,10 +94,8 @@ namespace Apha.FPS.Api.Controllers
             }
         }
 
-        // TRANSFORMENGINE: PUT update — frmMaintWorkGroup2 save-edit path; workGroupName route param is the original key
-        //   supports PK rename: if request.WorkGroupName differs from {workGroupName}, the service/repository renames the record
         /// <summary>
-        /// Updates an existing workgroup identified by <paramref name="workGroupName"/>.
+        /// Updates an existing workgroup identified by
         /// Pass the original WorkGroupName in the route; use <c>request.WorkGroupName</c> to rename.
         /// Throws <see cref="KeyNotFoundException"/> if the workgroup does not exist.
         /// </summary>
@@ -130,7 +124,6 @@ namespace Apha.FPS.Api.Controllers
             }
         }
 
-        // TRANSFORMENGINE: DELETE — frmMaintWorkGroup2 delete-row path; delegates to IWorkgroupService.DeleteAsync
         /// <summary>
         /// Deletes the workgroup with the given WorkGroupName in the active FPS year.
         /// </summary>
@@ -169,8 +162,6 @@ namespace Apha.FPS.Api.Controllers
             }
         }
 
-        // TRANSFORMENGINE: GET profitcentres — ResourceCentre dropdown in the add/edit modal;
-        //   returns distinct ProfitCentreId values from fps.tblkpprofitcentre (not year-filtered)
         /// <summary>
         /// Returns all available profit centre identifiers for the ResourceCentre dropdown.
         /// </summary>
@@ -182,8 +173,6 @@ namespace Apha.FPS.Api.Controllers
             return Ok(result);
         }
 
-        // TRANSFORMENGINE: GET owners — Owner dropdown in the add/edit modal;
-        //   maps to qryManager named query result (Manager entity → ManagerDto → ManagerRes via IMapper)
         /// <summary>
         /// Returns all manager records for the Owner dropdown.
         /// Sourced from the fps/qryManager named query (vtblstaffactive JOIN vworkgroupgrade_general).
@@ -196,9 +185,6 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<IEnumerable<ManagerRes>>(managerDtos));
         }
 
-        // TRANSFORMENGINE: GET costcentres — cascading CostCentre dropdown in the add/edit modal;
-        //   triggered when ProfitCentre selection changes (VBA Form_Current: Requery CostCentre combo)
-        //   returns distinct CostCentre (double?) values for the given profitCentre
         /// <summary>
         /// Returns cost centre values linked to the given <paramref name="profitCentre"/>,
         /// for use in the cascading CostCentre dropdown.
