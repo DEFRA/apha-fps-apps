@@ -253,7 +253,7 @@ button a {
 
 .btn-close {
 
-    background: #ff4239;
+    background: #b10e1e;
     border: none;
     font-size: 14px;
     padding: 9px 7px 10px 7px;
@@ -266,7 +266,7 @@ button a {
 
 .btn-close:hover {
     color: #fff;
-    background: #ff4239;
+    background: #8f0b18;
 }
 
 .form-control:focus {
