@@ -58,22 +58,8 @@
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
                     <label class="govuk-label govuk-!-font-weight-bold" for="ProjectBuyerCode">Project <span class="sup_color_red">*</span></label>
-                    <select class="govuk-select govuk-!-font-size-16" id="ProjectBuyerCode" 
-                            name="ProjectBuyerCode" style="width:100%;" @(isEdit ? "disabled" : "required")
-                            onchange="onTestReqmtProjectChange(this, @isEdit.ToString().ToLower())">
-                        <option value="">-- Select Project --</option>
-                        @foreach (var p in projects)
-                        {
-                            if (Model.ProjectBuyerCode == p.ParentProject)
-                            {
-                                <option value="@p.ParentProject" data-isdefra="@p.IsDefraProject" selected>@p.ParentProject</option>
-                            }
-                            else
-                            {
-                                <option value="@p.ParentProject" data-isdefra="@p.IsDefraProject">@p.ParentProject</option>
-                            }
-                        }
-                    </select>
+                    <div id="projectBuyerCodeSelectMultiDropdown"></div>
+                    <input type="hidden" id="ProjectBuyerCode" name="ProjectBuyerCode" value="@Model.ProjectBuyerCode" @(!isEdit ? "required" : null) />
                     <span data-valmsg-for="ProjectBuyerCode"
                           class="govuk-error-message field-validation-valid" style="display:none;"></span>
                 </div>
@@ -87,7 +73,7 @@
                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="Buyer">Buyer</label>
                     <input type="hidden" name="Buyer" id="BuyerHidden" value="@Model.Buyer" />
                     <input class="govuk-input govuk-!-font-size-16" id="BuyerDisplay"
-                           value="@Model.Buyer" @(isEdit ? "disabled" : "required") />
+                           value="@Model.Buyer" disabled />
                     @if (!isEdit)
                     {
                         <span data-valmsg-for="Buyer"
@@ -171,6 +157,51 @@
 </div>
 
 <script>
+    var testReqmtProjectOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(projects));
+    var testReqmtProjectSelectDropdown = null;
+
+    (function initializeTestReqmtProjectMultiColumnDropdown() {
+        const isEditMode = @isEdit.ToString().ToLower();
+
+        testReqmtProjectSelectDropdown = new MultiColumnDropdownComponent({
+            dropdownId: 'testReqmtProjectBuyerCodeDropdown',
+            containerSelector: '#projectBuyerCodeSelectMultiDropdown',
+            placeholder: 'Select a Project',
+            showSerialNumber: false,
+            searchPlaceholder: 'Search by Project',
+            labelText: '',
+            columns: [
+                { field: 'ParentProject', header: 'Project', width: '120px' },
+                { field: 'ProjectTitle', header: 'Project Title', width: '120px' }
+            ],
+            data: testReqmtProjectOptionsListData,
+            displayField: 'ParentProject',
+            valueField: 'ParentProject',
+            clearButtonClearsSelection: true,
+            disabled: isEditMode,
+            callbacks: {
+                onSelect: function (selectedItem) {
+                    const selectedProject = selectedItem && selectedItem.ParentProject ? selectedItem.ParentProject : '';
+                    $('#ProjectBuyerCode').val(selectedProject);
+                    onTestReqmtProjectChange(selectedProject, isEditMode);
+                },
+                onClear: function () {
+                    if (isEditMode) {
+                        return;
+                    }
+
+                    $('#ProjectBuyerCode').val('');
+                    onTestReqmtProjectChange('', isEditMode);
+                }
+            }
+        });
+
+        const initialProjectBuyerCode = $('#ProjectBuyerCode').val();
+        if (initialProjectBuyerCode) {
+            testReqmtProjectSelectDropdown.setValue(initialProjectBuyerCode);
+        }
+    })();
+
     function fetchTestReqmtPricing() {
         var testCode = $('#TestCode').val();
         var projectCode = $('#ProjectBuyerCode').val();
@@ -202,8 +233,10 @@
             });
     }
 
-    function onTestReqmtProjectChange(select, isEdit) {
-        var val = select.value;
+    function onTestReqmtProjectChange(projectValueOrElement, isEdit) {
+        var val = typeof projectValueOrElement === 'string'
+            ? projectValueOrElement
+            : (projectValueOrElement && projectValueOrElement.value ? projectValueOrElement.value : '');
 
         if (!isEdit) {
             $('#BuyerHidden').val(val);
