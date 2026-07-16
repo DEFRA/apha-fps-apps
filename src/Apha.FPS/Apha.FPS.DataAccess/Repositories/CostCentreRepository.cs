@@ -10,13 +10,15 @@ namespace Apha.FPS.DataAccess.Repositories
 {
     public class CostCentreRepository : BaseRepository, ICostCentreRepository
     {
+        // CostCentreNo is a floating-point value, so matches are performed within a small
+        // tolerance rather than exact equality to avoid precision issues.
+        private const double CostCentreNoTolerance = 1e-9;
+
         private readonly FpsDbContext _dbContext;
-        private readonly IFpsRequestContext _requestContext;
 
         public CostCentreRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
             _dbContext = dbContext;
-            _requestContext = requestContext;
         }
 
         // Source RecordSource: SELECT CostCentre.CostCentre, CostCentre.ProfitCentre FROM CostCentre ORDER BY CostCentre.CostCentre
@@ -39,7 +41,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.CostCentres
                 .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.CostCentreNo == costCentreNo && c.FpsYear == fpsYear);
+                .FirstOrDefaultAsync(c => Math.Abs(c.CostCentreNo - costCentreNo) < CostCentreNoTolerance && c.FpsYear == fpsYear);
         }
 
         public async Task<CostCentre> CreateAsync(CostCentre entity)
@@ -77,14 +79,12 @@ namespace Apha.FPS.DataAccess.Repositories
                 try
                 {
                     var existing = await _dbContext.CostCentres
-                        .FirstOrDefaultAsync(c => c.CostCentreNo == originalCostCentreNo && c.FpsYear == fpsYear);
+                        .FirstOrDefaultAsync(c => Math.Abs(c.CostCentreNo - originalCostCentreNo) < CostCentreNoTolerance && c.FpsYear == fpsYear);
 
                     if (existing == null)
                         return entity;
 
-                    // CostCentreNo is part of the composite PK (costcentre, fpsyear);
-                    // changing it requires delete-old + insert-new rather than an in-place update.
-                    if (existing.CostCentreNo != entity.CostCentreNo)
+                    if (Math.Abs(existing.CostCentreNo - entity.CostCentreNo) >= CostCentreNoTolerance)
                     {
                         entity.FpsYear = fpsYear;
 
@@ -120,7 +120,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 try
                 {
                     var existing = await _dbContext.CostCentres
-                        .FirstOrDefaultAsync(c => c.CostCentreNo == costCentreNo && c.FpsYear == fpsYear);
+                        .FirstOrDefaultAsync(c => Math.Abs(c.CostCentreNo - costCentreNo) < CostCentreNoTolerance && c.FpsYear == fpsYear);
 
                     if (existing == null)
                         return false;
@@ -142,7 +142,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.CostCentres
                 .AsNoTracking()
-                .AnyAsync(c => c.CostCentreNo == costCentreNo && c.FpsYear == fpsYear);
+                .AnyAsync(c => Math.Abs(c.CostCentreNo - costCentreNo) < CostCentreNoTolerance && c.FpsYear == fpsYear);
         }
 
         private static IQueryable<CostCentre> ApplyCostCentreFilter(IQueryable<CostCentre> query, string? filter)
@@ -160,7 +160,7 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 var filterValue = costCentreNo.ToString();
                 if (!string.IsNullOrWhiteSpace(filterValue) && double.TryParse(filterValue, out var parsed))
-                    query = query.Where(c => c.CostCentreNo == parsed);
+                    query = query.Where(c => Math.Abs(c.CostCentreNo - parsed) < CostCentreNoTolerance);
             }
 
             if (dict.TryGetValue("ProfitCentre", out var profitCentre) && profitCentre != null)

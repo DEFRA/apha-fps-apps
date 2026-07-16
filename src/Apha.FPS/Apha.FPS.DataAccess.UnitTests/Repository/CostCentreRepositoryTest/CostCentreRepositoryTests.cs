@@ -212,6 +212,49 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.CostCentreRepositoryTest
             Assert.Equal(secondExpected, list[1].CostCentreNo);
         }
 
+        [Fact]
+        public async Task GetAllPagedAsync_ReturnsAll_WhenFilterIsInvalidJson()
+        {
+            var entities = new List<CostCentre> { BuildEntity(100.0), BuildEntity(200.0) };
+            var repo  = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "null" };
+
+            var result = await repo.GetAllPagedAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetAllPagedAsync_IgnoresCostCentreNoFilter_WhenValueIsNonNumeric()
+        {
+            var entities = new List<CostCentre> { BuildEntity(100.0), BuildEntity(200.0) };
+            var repo   = CreateRepository(entities);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { "CostCentreNo", "abc" } });
+            var query  = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+
+            var result = await repo.GetAllPagedAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetAllPagedAsync_IgnoresProfitCentreFilter_WhenValueIsWhitespace()
+        {
+            var entities = new List<CostCentre>
+            {
+                BuildEntity(100.0, "PC01"), BuildEntity(200.0, "PC02")
+            };
+            var repo   = CreateRepository(entities);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { "ProfitCentre", "   " } });
+            var query  = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+
+            var result = await repo.GetAllPagedAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+        }
+
         #endregion
 
         #region GetByIdAsync Tests
@@ -244,6 +287,31 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.CostCentreRepositoryTest
             var repo     = CreateRepository(entities);
 
             // Searching for fpsYear 2024 but entity has 2023
+            var result = await repo.GetByIdAsync(100.0, 2024);
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetByIdAsync_ReturnsRecord_WhenCostCentreNoDiffersWithinTolerance()
+        {
+            // Stored value differs from the lookup value by less than the matching tolerance (1e-9)
+            var entities = new List<CostCentre> { BuildEntity(100.0000000001, "PC01", 2024) };
+            var repo     = CreateRepository(entities);
+
+            var result = await repo.GetByIdAsync(100.0, 2024);
+
+            Assert.NotNull(result);
+            Assert.Equal("PC01", result.ProfitCentre);
+        }
+
+        [Fact]
+        public async Task GetByIdAsync_ReturnsNull_WhenCostCentreNoDiffersBeyondTolerance()
+        {
+            // Stored value differs from the lookup value by more than the matching tolerance
+            var entities = new List<CostCentre> { BuildEntity(100.001, "PC01", 2024) };
+            var repo     = CreateRepository(entities);
+
             var result = await repo.GetByIdAsync(100.0, 2024);
 
             Assert.Null(result);
@@ -343,6 +411,24 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.CostCentreRepositoryTest
             // Assert
             Assert.NotNull(result);
             Assert.Equal("PC02", result.ProfitCentre);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_DeletesAndInserts_WhenCostCentreNoChanges()
+        {
+            // Arrange: changing CostCentreNo (part of composite PK) triggers delete-old + insert-new
+            var existing = BuildEntity(100.0, "PC01", 2024);
+            var updated  = BuildEntity(200.0, "PC02");
+            var repo     = CreateRepository([existing]);
+
+            // Act
+            var result = await repo.UpdateAsync(100.0, 2024, updated);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(200.0, result.CostCentreNo);
+            Assert.Equal("PC02", result.ProfitCentre);
+            Assert.Equal(2024, result.FpsYear);
         }
 
         #endregion

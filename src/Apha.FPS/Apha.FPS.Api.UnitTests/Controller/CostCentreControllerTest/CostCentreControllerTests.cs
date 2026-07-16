@@ -147,7 +147,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.CostCentreControllerTest
         public async Task GetAllCostCentresPagedAsync_NullResult_ThrowsArgumentException()
         {
             var query = new QueryParameters<string>();
-            _costCentreServiceMock.GetAllCostCentresPagedAsync(query).Returns((PaginatedResult<CostCentreDto>?)null);
+            _costCentreServiceMock.GetAllCostCentresPagedAsync(query).Returns(Task.FromResult<PaginatedResult<CostCentreDto>>(null!));
 
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetAllCostCentresPagedAsync(query));
         }
@@ -225,7 +225,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.CostCentreControllerTest
 
             Assert.NotNull(result);
             Assert.Equal(200, result.StatusCode);
-            Assert.Equal(true, result.Value);
+            Assert.True(Assert.IsType<bool>(result.Value));
         }
 
         [Fact]
