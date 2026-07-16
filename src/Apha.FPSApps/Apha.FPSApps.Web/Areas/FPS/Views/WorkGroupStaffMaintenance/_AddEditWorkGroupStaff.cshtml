@@ -75,6 +75,7 @@
                         <input type="text"
                                class="search-box govuk-input govuk-!-font-size-16"
                                id="staff-name-search"
+                               aria-label="Search staff name"
                                placeholder="Type to search staff"
                                oninput="filterWgStaffNameTable(this.value)" />
                         <table class="period-dropdown__table govuk-table govuk-!-font-size-16" style="table-layout:fixed; margin-bottom:0;">
@@ -225,30 +226,30 @@
 
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="MakeAvailable">
-                    Available?:
-                </label>
-                <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
-                    <div class="govuk-checkboxes__item">
-                        <input class="govuk-checkboxes__input" id="MakeAvailable" asp-for="MakeAvailable" type="checkbox" />
-                        <label class="govuk-label govuk-checkboxes__label" for="MakeAvailable">Yes</label>
+                <fieldset class="govuk-fieldset">
+                    <legend class="govuk-fieldset__legend govuk-label govuk-!-font-weight-bold govuk-!-font-size-16">Available?</legend>
+                    <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                        <div class="govuk-checkboxes__item">
+                            <input class="govuk-checkboxes__input" id="MakeAvailable" asp-for="MakeAvailable" type="checkbox" />
+                            <label class="govuk-label govuk-checkboxes__label" for="MakeAvailable">Yes</label>
+                        </div>
                     </div>
-                </div>
+                </fieldset>
                 <span asp-validation-for="MakeAvailable" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
 
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="TimeRecorder">
-                    Time recorder?:
-                </label>
-                <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
-                    <div class="govuk-checkboxes__item">
-                        <input class="govuk-checkboxes__input" id="TimeRecorder" asp-for="TimeRecorder" type="checkbox" />
-                        <label class="govuk-label govuk-checkboxes__label" for="TimeRecorder">Yes</label>
+                <fieldset class="govuk-fieldset">
+                    <legend class="govuk-fieldset__legend govuk-label govuk-!-font-weight-bold govuk-!-font-size-16">Time recorder?</legend>
+                    <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                        <div class="govuk-checkboxes__item">
+                            <input class="govuk-checkboxes__input" id="TimeRecorder" asp-for="TimeRecorder" type="checkbox" />
+                            <label class="govuk-label govuk-checkboxes__label" for="TimeRecorder">Yes</label>
+                        </div>
                     </div>
-                </div>
+                </fieldset>
                 <span asp-validation-for="TimeRecorder" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
