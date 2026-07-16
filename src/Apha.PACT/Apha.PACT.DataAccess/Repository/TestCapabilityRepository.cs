@@ -122,7 +122,7 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return await _context.TestCapabilities
                 .AsNoTracking()
-                .AnyAsync(t => t.TestCode == testCode && t.PlanPortfolio == portfolio);
+                .AnyAsync(t => t.TestCode.ToLower() == testCode.Trim().ToLower() && t.PlanPortfolio.ToLower() == portfolio.Trim().ToLower());
         }
 
         public async Task<PagedData<WgTestCapabilitiesWithDescription>> GetPagedWgTestCapabilitiesWithDescriptionAsync(PaginationParameters<string> query, string workGroup)
