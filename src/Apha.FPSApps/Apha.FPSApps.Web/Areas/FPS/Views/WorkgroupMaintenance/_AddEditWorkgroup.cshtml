@@ -89,21 +89,22 @@
                 <div class="govuk-grid-row sup_padding_right_left_10">
 
                     <div class="govuk-grid-column-one-half">
-                        @* TRANSFORMENGINE: CostCentre (double?, optional) — cascading select filtered by ProfitCentre
-                           Options loaded via AJAX GET /FPS/WorkgroupMaintenance/GetCostCentres?profitCentre={val}
-                           triggered by ProfitCentre change event *@
+                        @* TRANSFORMENGINE: CostCentre (double?, optional) — numeric text box,
+                           max 10 digits, integers only (no decimals) *@
                         <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-wg-cc">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="CostCentre">
                                 CostCentre:
                             </label>
-                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
-                                    id="CostCentre"
-                                    name="CostCentre"
-                                    aria-label="Select cost centre"
-                                    aria-describedby="err-modal-wg-cc">
-                                <option value="">-- Select --</option>
-                                @* Options populated by AJAX loadCostCentreOptions() below after ProfitCentre selected *@
-                            </select>
+                            <input class="govuk-input govuk-!-font-size-16"
+                                   id="CostCentre"
+                                   name="CostCentre"
+                                   type="text"
+                                   inputmode="numeric"
+                                   pattern="[0-9]*"
+                                   maxlength="10"
+                                   aria-label="Cost centre"
+                                   aria-describedby="err-modal-wg-cc"
+                                   value="@(Model?.CostCentre.HasValue == true ? ((long)Model.CostCentre.Value).ToString() : string.Empty)" />
                             <span data-valmsg-for="CostCentre" class="govuk-error-message field-validation-valid" id="err-modal-wg-cc" style="display:none;"></span>
                         </div>
                     </div>
@@ -202,22 +203,27 @@
 <script>
         (function initWorkgroupModal() {
             var currentProfitCentre = @Json.Serialize(Model?.ProfitCentre ?? string.Empty);
-            var currentCostCentre = @Json.Serialize(Model?.CostCentre.HasValue == true ? Model.CostCentre.Value.ToString() : string.Empty);
             var currentOwner = @Json.Serialize(Model?.Owner ?? string.Empty);
 
-            // Load ProfitCentres (ResourceCentres) first, then cascade CostCentres if editing
-            loadProfitCentreOptions(currentProfitCentre, function () {
-                if (currentProfitCentre) {
-                    loadCostCentreOptions(currentProfitCentre, currentCostCentre);
-                }
-            });
+            // Load ProfitCentres (ResourceCentres) and Owners
+            loadProfitCentreOptions(currentProfitCentre);
 
             loadOwnerOptions(currentOwner);
 
-            // TRANSFORMENGINE: ProfitCentre change triggers CostCentre cascade reload
-            document.getElementById('ProfitCentre').addEventListener('change', function () {
-                loadCostCentreOptions(this.value, '');
-            });
+            // CostCentre is a numeric-only text box (max 10 digits, no decimals)
+            var costCentreInput = document.getElementById('CostCentre');
+            if (costCentreInput) {
+                costCentreInput.addEventListener('input', function () {
+                    // Strip any non-digit characters and enforce max length of 10
+                    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+                });
+                costCentreInput.addEventListener('keypress', function (e) {
+                    // Block non-numeric key presses (including '.' to disallow decimals)
+                    if (e.key.length === 1 && (e.key < '0' || e.key > '9')) {
+                        e.preventDefault();
+                    }
+                });
+            }
         })();
 
         // TRANSFORMENGINE: loadProfitCentreOptions — AJAX GET /FPS/WorkgroupMaintenance/GetProfitCentres
@@ -241,30 +247,6 @@
                 if (typeof callback === 'function') { callback(); }
             }).fail(function () {
                 console.warn('Failed to load profit centres for WorkGroup modal');
-            });
-        }
-
-        // TRANSFORMENGINE: loadCostCentreOptions — AJAX GET /FPS/WorkgroupMaintenance/GetCostCentres?profitCentre={pc}
-        // Returns { success: true, data: [{ value: double, display: string }] }
-        // selectedValue is a string representation of the numeric cost centre value
-        function loadCostCentreOptions(profitCentre, selectedValue) {
-            var select = document.getElementById('CostCentre');
-            select.innerHTML = '<option value="">-- Select --</option>';
-
-            if (!profitCentre) { return; }
-
-            $.getJSON('/FPS/WorkgroupMaintenance/GetCostCentres', { profitCentre: profitCentre }, function (response) {
-                if (response.success && response.data) {
-                    response.data.forEach(function (item) {
-                        var opt = document.createElement('option');
-                        opt.value = item.value;
-                        opt.textContent = item.display;
-                        if (String(item.value) === String(selectedValue)) { opt.selected = true; }
-                        select.appendChild(opt);
-                    });
-                }
-            }).fail(function () {
-                console.warn('Failed to load cost centres for WorkGroup modal');
             });
         }
 

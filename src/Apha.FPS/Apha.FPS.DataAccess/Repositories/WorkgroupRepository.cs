@@ -1,48 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — WorkgroupRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - New repository created; no prior WorkgroupRepository existed in this codebase
- *   - Implements IWorkgroupRepository (9 async methods) backed by FpsDbContext
- *   - GetPagedAsync: LINQ filter/sort over fps.workgroup (DbContext HasQueryFilter scopes
- *     results to the active FPS year automatically)
- *   - GetByKeyAsync: AsNoTracking FirstOrDefaultAsync on WorkGroupName
- *   - CreateAsync: FpsYear stamped from IFpsRequestContext before Add + SaveChangesAsync
- *   - UpdateAsync: supports PK rename (originalWorkGroupName param); applies field-by-field
- *     update including WorkGroupName rename; preserves FpsYear via DbContext filter
- *   - DeleteAsync: ExecuteDeleteAsync for set-based remove (no entity load required)
- *   - ExistsAsync: AnyAsync guard for duplicate-name validation before Create
- *   - GetAllProfitCentresAsync: distinct ProfitCentreId values from fps.tblkpprofitcentre
- *     (ProfitCentres DbSet) ordered alphabetically
- *   - GetOwnersAsync: LINQ translation of fps/qryManager MS Access named query —
- *     joins vtblstaffactive (StaffActiveView) with vworkgroupgrade_general
- *     (WorkgroupGradeGeneralViews) on WorkgroupGrade == WgGrade; filters out
- *     name like "general"/"vacancy" and GradeCode starting with "G";
- *     projects to Manager { Name, WorkGroup, GradeCode, Expr1 = GradeCode[0] }
- *   - GetCostCentresByProfitCentreAsync: distinct CostCentre values from fps.workgroup
- *     for a given ProfitCentre (FpsYear-filtered by DbContext)
- *
- * PRESERVED:
- *   - FpsYear scoping via DbContext HasQueryFilter (no manual year filter in repository)
- *   - All conditional null guards and ArgumentNullException patterns consistent with
- *     other FPS repositories in this project
- *   - AsNoTracking for all read-only queries
- *   - AnyAsync for existence checks
- *   - ApplyPaging helper inherited from BaseRepository
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: GetOwnersAsync — qryManager uses DISTINCTROW (Access dialect);
- *     Distinct() in LINQ should be equivalent but verify result set matches expected
- *     Manager dropdown in the UI
- *   - TRANSFORMENGINE TODO: UpdateAsync supports WorkGroupName rename; verify whether the
- *     legacy frmMaintWorkGroup2 form actually allowed renaming the primary key — if not,
- *     the originalWorkGroupName parameter can be collapsed to a single entity param
- *   - TRANSFORMENGINE TODO: GetCostCentresByProfitCentreAsync — CostCentre is double? in
- *     the DDL; confirm that returning IEnumerable<double?> is sufficient for the UI dropdown
- *     or whether a labelled projection (value + display text) is needed
- */
 using System.Dynamic;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
@@ -151,14 +106,12 @@ namespace Apha.FPS.DataAccess.Repositories
             return existing;
         }
 
-        // TRANSFORMENGINE: DeleteAsync — ExecuteDeleteAsync for efficient set-based delete without entity load
         /// <inheritdoc/>
         public async Task<bool> DeleteAsync(string workGroupName)
         {
             if (string.IsNullOrWhiteSpace(workGroupName))
                 return false;
 
-            // TRANSFORMENGINE: HasQueryFilter on DbContext ensures only the active-year row is deleted
             var deleted = await _dbContext.Workgroups
                 .Where(w => w.WorkGroupName == workGroupName)
                 .ExecuteDeleteAsync();
@@ -166,7 +119,6 @@ namespace Apha.FPS.DataAccess.Repositories
             return deleted > 0;
         }
 
-        // TRANSFORMENGINE: ExistsAsync — AnyAsync guard used before CreateAsync to prevent duplicates
         /// <inheritdoc/>
         public async Task<bool> ExistsAsync(string workGroupName)
         {
