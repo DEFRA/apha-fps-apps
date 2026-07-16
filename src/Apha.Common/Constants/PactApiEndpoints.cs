@@ -65,6 +65,11 @@ namespace Apha.Common.Constants
         // Recreate Summaries Log
         public const string GetRecreateSummaryLog = "api/v1/recreatereleasesummary/recreatesummary/log";
 
+        // Batch Job
+        public const string GetRecreateSummaryBatchJobHistory = "api/v1/recreatesummary/batchjob/history";
+        public const string CanRunRecreateSummaryBatchJob = "api/v1/recreatesummary/batchjob/canrun";
+        public const string TriggerRecreateSummariesBatchJob = "api/v1/recreatesummary/trigger";
+
         // Release Summaries
         public const string GetReleaseSummaries = "api/v1/recreatereleasesummary/releasesummary";
         public const string GetReleasePeriods = "api/v1/recreatereleasesummary/releaseperiods";
