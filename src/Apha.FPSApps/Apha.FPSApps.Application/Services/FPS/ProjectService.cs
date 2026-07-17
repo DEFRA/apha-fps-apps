@@ -132,7 +132,6 @@ namespace Apha.FPSApps.Application.Services.FPS
             QueryParameters<string> query, string projectGroup, string workTypeFilter)
             => _fpsClient.FpsProject.GetProjectGroupProfitabilityAsync(query, projectGroup, workTypeFilter);
 
-        // TRANSFORMENGINE: new method — Phase 8 addition; thin delegate forwarding to
         // _fpsClient.FpsProject.GetProjectProfitabilityVlaAsync() — NO business logic.
         // All five params passed through unchanged; four filter params default to null when
         // not supplied by the MVC controller (optional filters on the VLA DataGrid page).
