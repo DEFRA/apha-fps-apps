@@ -1,4 +1,4 @@
-using Apha.FPS.Application.Dtos;
+﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
@@ -100,9 +100,10 @@ namespace Apha.FPS.Application.Mappings
                 .ReverseMap()
                 .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
 
-            // ResourceMain2 — Stage 2 Check Resource Allocation
-            CreateMap<ResourceStaffAllocationView, ResourceStaffAllocationDto>().ReverseMap();
+            // ResourceAllocation — Stage 2 Check Resource Allocation
+            CreateMap<ResourceStaffGeneralSummaryRow, ResourceStaffAllocationDto>().ReverseMap();
             CreateMap<ResourceStaffJobView, ResourceStaffJobDto>().ReverseMap();
+            CreateMap<ResourceStaffJobDetailRow, ResourceStaffJobDetailDto>().ReverseMap();
         }
     }
 }

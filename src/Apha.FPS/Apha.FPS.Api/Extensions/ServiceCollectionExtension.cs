@@ -1,4 +1,4 @@
-using Apha.Common.Utilities.StateManagement;
+﻿using Apha.Common.Utilities.StateManagement;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Services;
@@ -55,7 +55,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
-            services.AddScoped<IResourceMain2Service, ResourceMain2Service>();
+            services.AddScoped<IResourceAllocationService, ResourceAllocationService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -97,7 +97,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProjectAuditTrailRepository, ProjectAuditTrailRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
-            services.AddScoped<IResourceMain2Repository, ResourceMain2Repository>();
+            services.AddScoped<IResourceAllocationRepository, ResourceAllocationRepository>();
             return services;
 
         }

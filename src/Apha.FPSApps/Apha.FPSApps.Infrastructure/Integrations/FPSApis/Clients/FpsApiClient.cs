@@ -1,4 +1,4 @@
-using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+﻿using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
@@ -38,7 +38,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public IFpsContributionSummaryApiClient FpsContributionSummary { get; }
         public IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
-        public IFpsResourceMain2ApiClient FpsResourceMain2 { get; }
+        public IFpsResourceAllocationApiClient FpsResourceAllocation { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -78,7 +78,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsContributionSummary = new FpsContributionSummaryApiClient(http, mapper);
             FpsProjectAuditTrail = new FpsProjectAuditTrailApiClient(http, mapper);
             FpsTotalBusinessOverheads = new FpsTotalBusinessOverheadsApiClient(http, mapper);
-            FpsResourceMain2 = new FpsResourceMain2ApiClient(http, mapper);
+            FpsResourceAllocation = new FpsResourceAllocationApiClient(http, mapper);
         }
     }
 }

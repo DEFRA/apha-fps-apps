@@ -1,12 +1,12 @@
-using Apha.FPSApps.Web.Models.Components.DataGrid;
+﻿using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
     /// <summary>
-    /// ViewModel for the Stage 2 Check Resource Allocation page (frmResourceMain2).
+    /// ViewModel for the Stage 2 Check Resource Allocation page (frmResourceAllocation).
     /// </summary>
-    public class ResourceMain2ViewModel
+    public class ResourceAllocationViewModel
     {
         /// <summary>Resource Centre / WorkGroup dropdown list.</summary>
         public List<SelectListItem> ResourceCentres { get; set; } = new();

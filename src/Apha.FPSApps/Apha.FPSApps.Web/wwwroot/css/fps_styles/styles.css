@@ -4238,3 +4238,271 @@ body,
 .text-AlignRight {
     text-align: right;
 }
+
+/* ============================================================
+   Stage 2 Check Resource Allocation (s2cra-)
+   ============================================================ */
+
+.s2cra-heading-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 2px;
+    padding-bottom: 2px;
+}
+
+.s2cra-main-title {
+    flex: 1 1 auto;
+    margin: 0 !important;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #b1b4b6;
+}
+
+.s2cra-heading-controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.s2cra-filter-block {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+    .s2cra-filter-block .govuk-label {
+        margin-bottom: 0;
+        white-space: nowrap;
+        font-size: 16px !important;
+    }
+
+.s2cra-required {
+    color: #d4351c;
+}
+
+.s2cra-resource-select,
+.s2cra-workgroup-select {
+    min-width: 132px;
+    height: 30px;
+    font-size: 16px !important;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.s2cra-resource-select {
+    border: 2px solid #d4351c;
+}
+
+.s2cra-workgroup-select {
+    border: 2px solid #0b0c0c;
+}
+
+.s2cra-section {
+    padding: 10px;
+    margin-bottom: 0;
+    background-color: #f8f8f8;
+}
+
+.s2cra-section-heading {
+    margin-bottom: 10px;
+}
+
+.s2cra-main-layout {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.s2cra-grids-column {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.s2cra-staff-title,
+.s2cra-jobs-title {
+    margin: 0;
+    padding: 6px 8px;
+    background: #e7eaed;
+    border: 1px solid #c8cdd3;
+    border-bottom: 0;
+}
+
+.s2cra-staff-title {
+    margin-top: 0;
+}
+
+.s2cra-jobs-title {
+    margin-top: 8px;
+}
+
+.s2cra-grid-host {
+    border: 1px solid #c8cdd3;
+    border-top: 0;
+}
+
+.s2cra-jobs-grid-host {
+    margin-top: 0;
+}
+
+.s2cra-jobs-footer-highlight {
+    margin-top: 6px;
+    margin-left: auto;
+    width: 132px;
+    border: 1px solid #c8cdd3;
+    padding: 8px;
+    background: #fff;
+}
+
+.s2cra-selected-hours-input {
+    text-align: right;
+    height: 28px;
+    border: 2px solid #0b0c0c;
+    font-weight: 700;
+}
+
+.s2cra-summary-panel {
+    width: 250px;
+    border: 1px solid #c8cdd3;
+    background: #eef1f4;
+    padding: 8px;
+    flex: 0 0 250px;
+}
+
+.s2cra-summary-title {
+    margin: 0 0 6px;
+}
+
+.s2cra-summary-field {
+    margin-bottom: 8px;
+}
+
+    .s2cra-summary-field .govuk-label {
+        margin-bottom: 2px;
+        font-weight: 700;
+    }
+
+    .s2cra-summary-field .govuk-input {
+        height: 28px;
+        font-size: 16px;
+        border: 2px solid #0b0c0c;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+.s2cra-person-highlight {
+    margin-top: 10px;
+    border: 1px solid #c8cdd3;
+    padding: 12px;
+    background: #fff;
+}
+
+.s2cra-person-box {
+    border: 1px solid #b1b4b6;
+    background: #f3f2f1;
+    padding: 10px;
+}
+
+.s2cra-person-input {
+    margin-bottom: 8px;
+    font-weight: 700;
+    height: 28px;
+    border: 2px solid #0b0c0c;
+}
+
+/* DataGrid overrides scoped to Stage 2 page */
+#stage2StaffAllocationGridContainer .editable-grid-container,
+#stage2StaffAllocationGridContainer .editable-grid-table,
+#stage2StaffAllocationGridContainer .grid-scroll-container,
+#stage2StaffJobsGridContainer .editable-grid-container,
+#stage2StaffJobsGridContainer .editable-grid-table,
+#stage2StaffJobsGridContainer .grid-scroll-container {
+    border-radius: 0;
+}
+
+#stage2StaffAllocationGridContainer .editable-grid-container,
+#stage2StaffJobsGridContainer .editable-grid-container {
+    border: 0;
+}
+
+#stage2StaffAllocationGridContainer .sup_heading_bg_color,
+#stage2StaffJobsGridContainer .sup_heading_bg_color {
+    display: none;
+}
+
+#stage2StaffAllocationGridContainer .grid-scroll-container {
+    max-height: 255px !important;
+    height: 255px !important;
+    border-top: 1px solid #c8cdd3;
+}
+
+#stage2StaffJobsGridContainer .grid-scroll-container {
+    max-height: 148px !important;
+    height: 148px !important;
+    border-top: 1px solid #c8cdd3;
+}
+
+#stage2StaffAllocationGridContainer .editable-grid-table th,
+#stage2StaffAllocationGridContainer .editable-grid-table td,
+#stage2StaffJobsGridContainer .editable-grid-table th,
+#stage2StaffJobsGridContainer .editable-grid-table td {
+    border: 1px solid #c8cdd3;
+    padding: 4px 8px;
+    font-size: 16px;
+}
+
+#stage2StaffAllocationGridContainer .editable-grid-table thead th,
+#stage2StaffJobsGridContainer .editable-grid-table thead th {
+    background: #e7eaed;
+    text-align: center;
+    font-weight: 700;
+}
+
+#stage2StaffAllocationGridContainer .s2cra-group-header-row th {
+    background: #e7eaed;
+    text-align: center;
+    font-weight: 700;
+}
+
+#stage2StaffAllocationGridContainer .sup_pagination_wrapper,
+#stage2StaffJobsGridContainer .sup_pagination_wrapper {
+    background: #f3f2f1;
+    border-top: 1px solid #c8cdd3;
+}
+
+#stage2StaffAllocationGridContainer .govuk-pagination__link,
+#stage2StaffJobsGridContainer .govuk-pagination__link {
+    color: #4c2c92;
+}
+
+#stage2StaffAllocationGridContainer .govuk-pagination__item--current .govuk-pagination__link,
+#stage2StaffJobsGridContainer .govuk-pagination__item--current .govuk-pagination__link {
+    background: #1d70b8;
+    border-color: #1d70b8;
+    color: #fff;
+}
+
+#stage2StaffAllocationGridContainer tbody tr.is-selected td {
+    background: #9ebce4 !important;
+}
+
+@media (max-width: 1200px) {
+    .s2cra-main-layout {
+        flex-direction: column;
+    }
+
+    .s2cra-summary-panel {
+        width: 100%;
+        flex: 1 1 auto;
+    }
+
+    .s2cra-heading-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .s2cra-heading-controls {
+        flex-wrap: wrap;
+    }
+}

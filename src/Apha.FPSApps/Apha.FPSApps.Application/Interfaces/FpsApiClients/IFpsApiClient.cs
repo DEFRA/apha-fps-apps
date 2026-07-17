@@ -1,4 +1,4 @@
-namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
+﻿namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
 {
     public interface IFpsApiClient
     {
@@ -32,6 +32,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsContributionSummaryApiClient FpsContributionSummary { get; }
         IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
         IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
-        IFpsResourceMain2ApiClient FpsResourceMain2 { get; }
+        IFpsResourceAllocationApiClient FpsResourceAllocation { get; }
     }
 }

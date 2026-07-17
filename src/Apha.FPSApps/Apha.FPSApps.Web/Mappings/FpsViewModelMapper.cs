@@ -57,12 +57,12 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<WorkGroupEmployeeStaffItem, WorkGroupEmployeeStaffDto>().ReverseMap();
             // Resource Set-Up
             CreateMap<SetUpStaffResourcesItem, WorkGroupEmployeeStaffDto>()
-                .ForMember(d => d.PersonStatus,   o => o.Ignore())
-                .ForMember(d => d.PersonClass,     o => o.Ignore())
-                .ForMember(d => d.TimeRecorder,    o => o.Ignore())
-                .ForMember(d => d.StartDate,       o => o.Ignore())
-                .ForMember(d => d.EndDate,         o => o.Ignore())
-                .ForMember(d => d.HoursPerWeek,    o => o.Ignore())
+                .ForMember(d => d.PersonStatus, o => o.Ignore())
+                .ForMember(d => d.PersonClass, o => o.Ignore())
+                .ForMember(d => d.TimeRecorder, o => o.Ignore())
+                .ForMember(d => d.StartDate, o => o.Ignore())
+                .ForMember(d => d.EndDate, o => o.Ignore())
+                .ForMember(d => d.HoursPerWeek, o => o.Ignore())
                 .ReverseMap();
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
 
@@ -116,6 +116,14 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
                 .ReverseMap();
 
+            // Resource Allocation — Staff Jobs grid
+            CreateMap<ResourceStaffJobDetailDto, ResourceStaffJobItem>()
+                .ForMember(d => d.Project, o => o.MapFrom(s => s.JobCode))
+                .ForMember(d => d.Description, o => o.MapFrom(s => s.JobDescription))
+                .ForMember(d => d.Hour, o => o.MapFrom(s => s.PlannedHours))
+                .ForMember(d => d.Status, o => o.MapFrom(s => s.ProjectStatus))
+                .ForMember(d => d.StaffId, o => o.Ignore());
+
             // Contribution Summary — row grid item
             CreateMap<ContributionSummaryRowDto, ContributionSummaryRowItem>().ReverseMap();
             // Total Business Overheads
@@ -153,7 +161,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<AdditionalCostLogDto, AdditionalCostLogItem>()
                 .ForMember(d => d.UserEmail, o => o.Ignore());
 
-            // ResourceMain2 - Stage 2 Check Resource Allocation
+            // ResourceAllocation - Stage 2 Check Resource Allocation
             CreateMap<ResourceStaffAllocationDto, ResourceStaffAllocationItem>().ReverseMap();
             CreateMap<ResourceStaffJobDto, ResourceStaffJobItem>().ReverseMap();
         }

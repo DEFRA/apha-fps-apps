@@ -11,8 +11,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(IsVisible = false)]
         public string? WorkGroupGrade { get; set; }
 
-        [GridColumn(IsVisible = false)]
-        public int? StaffId { get; set; }
+        [GridColumn(IsVisible = true)]
+        public string? StaffId { get; set; }
 
         [Display(Name = "Name")]
         [GridColumn(Width = 210, Type = GridColumnType.ReadOnly, IsFilterable = true)]
@@ -20,30 +20,25 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "Hrs Avail")]
         [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
-        public double? HoursAvailable { get; set; }
+        public double? HrsAvail { get; set; }
 
-        [Display(Name = "Plan Hr")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
-        public double? PlannedHours { get; set; }
+        [GridColumn(IsVisible = false)]
+        public double ZtHours { get; set; }
 
-        [Display(Name = "Aloc")]
+        [Display(Name = "App Plan Hrs")]
         [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
-        public double? AllocationPct { get; set; }
+        public double AppPlannedHours { get; set; }
 
-        [Display(Name = "App Chrg Hrs")]
+        [Display(Name = "Plan Hrs")]
         [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
-        public double? AssuredChargeHours { get; set; }
-
-        [Display(Name = "App Util")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
-        public double? AssuredUtilisationPct { get; set; }
+        public double PlannedHours { get; set; }
 
         [Display(Name = "Chrg Hrs")]
         [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
-        public double? ChargeHours { get; set; }
+        public double ChargeHours { get; set; }
 
-        [Display(Name = "Util")]
+        [Display(Name = "App Chrg Hrs")]
         [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
-        public double? UtilisationPct { get; set; }
+        public double AppChargeHours { get; set; }
     }
 }
