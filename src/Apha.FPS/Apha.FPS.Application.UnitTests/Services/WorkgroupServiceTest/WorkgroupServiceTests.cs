@@ -84,6 +84,26 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
                 dataTypeName: null,
                 constraintName: constraintName);
 
+        // Builds a PostgresException that is NOT a foreign-key violation (e.g. a unique/other
+        // violation), used to assert that unrelated DB errors are propagated unchanged.
+        private static PostgresException BuildNonForeignKeyError() =>
+            new(
+                messageText: "unique violation",
+                severity: "ERROR",
+                invariantSeverity: "ERROR",
+                sqlState: PostgresErrorCodes.UniqueViolation,
+                detail: null,
+                hint: null,
+                position: 0,
+                internalPosition: 0,
+                internalQuery: null,
+                where: null,
+                schemaName: null,
+                tableName: null,
+                columnName: null,
+                dataTypeName: null,
+                constraintName: "uq_some_other_constraint");
+
         #region Constructor Tests
 
         [Fact]
@@ -297,12 +317,14 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
         }
 
         [Fact]
-        public async Task CreateAsync_WhenUnrelatedFkViolation_PropagatesOriginalException()
+        public async Task CreateAsync_WhenUnrelatedDbError_PropagatesOriginalException()
         {
             // Arrange
+            // WorkgroupService only special-cases foreign-key violations (SqlState 23503);
+            // any other DB error must propagate unchanged.
             var dto      = BuildDto("WG001");
             var entity   = BuildEntity("WG001");
-            var original = new Exception("db error", BuildFkViolation("fk_some_other_constraint"));
+            var original = new Exception("db error", BuildNonForeignKeyError());
 
             _mockRepository.ExistsAsync("WG001").Returns(false);
             _mockMapper.Map<Workgroup>(dto).Returns(entity);
@@ -503,10 +525,12 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
         }
 
         [Fact]
-        public async Task DeleteAsync_WhenUnrelatedFkViolation_PropagatesOriginalException()
+        public async Task DeleteAsync_WhenUnrelatedDbError_PropagatesOriginalException()
         {
             // Arrange
-            var original = new Exception("db error", BuildFkViolation("fk_some_other_constraint"));
+            // WorkgroupService only special-cases foreign-key violations (SqlState 23503);
+            // any other DB error must propagate unchanged.
+            var original = new Exception("db error", BuildNonForeignKeyError());
             _mockRepository.DeleteAsync("WG001").ThrowsAsync(original);
 
             // Act & Assert

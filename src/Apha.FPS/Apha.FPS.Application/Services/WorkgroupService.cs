@@ -189,7 +189,7 @@ namespace Apha.FPS.Application.Services
             {
                 return await _repository.DeleteAsync(workGroupName);
             }
-            catch (Exception ex) when (IsForeignKeyViolation(ex, "fk_workgroupgrade_workgroup"))
+            catch (Exception ex) when (IsForeignKeyViolation(ex))
             {
                 throw new BusinessValidationErrorException(new List<BusinessValidationError>
                 {
@@ -232,15 +232,14 @@ namespace Apha.FPS.Application.Services
         // Screen-specific handling for the Maintain Workgroups foreign key constraints.
         // The violation surfaces as a PostgresException (SqlState 23503) usually wrapped inside a DbUpdateException.
         private static bool IsCostCentreForeignKeyViolation(Exception? ex)
-            => IsForeignKeyViolation(ex, "fk_workgroup_costcentre");
+            => IsForeignKeyViolation(ex);
 
-        private static bool IsForeignKeyViolation(Exception? ex, string constraintName)
+        private static bool IsForeignKeyViolation(Exception? ex)
         {
             for (var current = ex; current is not null; current = current.InnerException)
             {
                 if (current is PostgresException pgEx
-                    && pgEx.SqlState == PostgresErrorCodes.ForeignKeyViolation
-                    && pgEx.ConstraintName?.Contains(constraintName, StringComparison.OrdinalIgnoreCase) == true)
+                    && pgEx.SqlState == PostgresErrorCodes.ForeignKeyViolation)
                 {
                     return true;
                 }
