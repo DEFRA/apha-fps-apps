@@ -1243,6 +1243,7 @@ label.required::after {
 
 
         .btn-close {
+            color: #fff !important;
             float: right;
             padding: .3rem .3rem;
             margin: -.5rem -.5rem -.5rem auto;
