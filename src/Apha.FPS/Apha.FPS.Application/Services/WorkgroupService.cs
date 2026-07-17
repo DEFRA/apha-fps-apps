@@ -1,37 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — WorkgroupService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - New service implementation created; no prior WorkgroupService existed in this codebase
- *   - Business logic extracted from frmMaintWorkGroup2 VBA and fps.workgroup SQL triggers:
- *       tI_WorkGroup: prevents duplicate WorkGroupName insert within active FpsYear
- *       tU_WorkGroup: no payload restriction but supports rename (originalWorkGroupName param)
- *       VBA Form_BeforeUpdate: required-field check on WorkGroupName + ProfitCentre
- *   - Validation guards mapped to domain exceptions for consistent HTTP error responses:
- *       ArgumentException       — null/empty input parameters
- *       InvalidOperationException — duplicate WorkGroupName on Create
- *       KeyNotFoundException    — entity not found on Update
- *   - Repository pattern: all DB operations delegated via IWorkgroupRepository; no DbContext direct access
- *   - AutoMapper used for all entity <-> DTO conversions
- *
- * PRESERVED:
- *   - All guard checks extracted from VBA and stored-procedure analysis
- *   - Async end-to-end throughout; all methods are async Task<T>
- *   - Null input validated before first await (consistent with WorkGroupGradeService pattern)
- *   - GetOwnersAsync returns IEnumerable<ManagerDto> — shape confirmed from ManagerDto.cs
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: GetCostCentresByProfitCentreAsync returns raw double? values —
- *     if the frontend needs formatted cost centre labels, introduce a CostCentreLookupDto
- *   - TRANSFORMENGINE TODO: Rename path in UpdateAsync uses originalWorkGroupName —
- *     verify whether the legacy form allowed renaming the PK; if not, remove the rename param
- *   - TRANSFORMENGINE TODO: tI_WorkGroup trigger guard (duplicate check) implemented as
- *     ExistsAsync pre-check; confirm this is race-safe for the target concurrency level
- *     or whether the DB unique constraint alone is sufficient
- */
-
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;

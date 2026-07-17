@@ -499,7 +499,7 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.DeleteAsync("WG001"));
             var error = Assert.Single(ex.Errors);
             Assert.Equal("WORKGROUPGRADE_FK_VIOLATION", error.Code);
-            Assert.Contains("WorkgroupGrade table", error.Message);
+            Assert.Contains("associated records in the system", error.Message);
         }
 
         [Fact]
