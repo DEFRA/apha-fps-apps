@@ -113,8 +113,8 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Returns a single test price check row by testCode and jobCode.</summary>
-        [HttpGet("testpricecheck/{testCode}/{jobCode}")]
-        public async Task<IActionResult> GetTestPriceCheckByKey(string testCode, string jobCode)
+        [HttpGet("testpricechecktestCodejobCode")]
+        public async Task<IActionResult> GetTestPriceCheckByKey([FromQuery] string testCode, [FromQuery] string jobCode)
         {
             var result = await _service.GetTestPriceCheckByKeyAsync(testCode, jobCode);
             if (result == null)
@@ -123,9 +123,10 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Updates IsDefraProject, TestPrice and DefraUnitPrice across their respective tables.</summary>
-        [HttpPut("testpricecheck/{testCode}/{jobCode}")]
+        [HttpPut("testpricecheck")]
         public async Task<IActionResult> UpdateTestPriceCheck(
-            string testCode, string jobCode,
+            [FromQuery] string testCode,
+            [FromQuery] string jobCode,
             [FromBody] TestPriceCheckReq request)
         {
             var dto = _mapper.Map<TestPriceCheckDto>(request);
