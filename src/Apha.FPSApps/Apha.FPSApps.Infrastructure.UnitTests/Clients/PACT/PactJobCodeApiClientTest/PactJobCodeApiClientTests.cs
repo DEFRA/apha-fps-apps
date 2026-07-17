@@ -238,7 +238,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
                 new JobCodeDto { JobCodeId = jobCodeId, JobCodeName = "Test Job Code" }
             );
 
-            _http.GetAsync<JobCodeRes>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}").Returns(apiResponse);
+            _http.GetAsync<JobCodeRes>($"api/v1/jobcode/jobCodeId?jobCodeId={Uri.EscapeDataString(jobCodeId)}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<JobCodeDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -248,7 +248,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(jobCodeId, result.Data?.JobCodeId);
-            await _http.Received(1).GetAsync<JobCodeRes>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}");
+            await _http.Received(1).GetAsync<JobCodeRes>($"api/v1/jobcode/jobCodeId?jobCodeId={Uri.EscapeDataString(jobCodeId)}");
         }
 
         [Fact]
@@ -450,7 +450,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool?>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}").Returns(apiResponse);
+            _http.DeleteAsync<bool?>($"api/v1/jobcode/jobCodeId?jobCodeId={Uri.EscapeDataString(jobCodeId)}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -460,7 +460,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool?>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}");
+            await _http.Received(1).DeleteAsync<bool?>($"api/v1/jobcode/jobCodeId?jobCodeId={Uri.EscapeDataString(jobCodeId)}");
         }
 
         [Fact]
