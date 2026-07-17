@@ -1,44 +1,56 @@
 ﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
 @model dynamic
 
+@{
+    var hasHeaderContent = !string.IsNullOrWhiteSpace(Convert.ToString(Model.Title))
+        || Model.AllowExport
+        || Model.AllowAdd
+        || Model.AllowBulkCopy
+        || Model.AllowBulkDelete;
+}
+
 <div class="editable-grid-container sup_border">
+
     <div class="sup_border_bottom_0">
-        <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading " aria-label="@Model.Title || Datagrid Title">
-            <div class="sup_flex_space_between ">
-                    @Model.Title
-                    <div>
-                        @if (Model.AllowExport)
-                        {
-                            <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_p_8"
-                                    id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl" allow-edit ="true">
-                                <i class="fa fa-file-excel-o"></i> Excel Export
-                            </button>
-                        }
-                        @if (Model.AllowAdd)
-                        {
-                            <button type="button" class="govuk-button sup_margin_0 sup_p_8"
-                                                  id="@($"{Model.GridId}_addRowBtn")" data-add-function="@Model.AddFunction">
-                                <i class="fa fa-plus"></i> Add
-                            </button>
-                        }
-                        @if (Model.AllowBulkCopy)
-                        {
-                            <button type="button" class="govuk-button sup_margin_0 sup_p_8"
-                                                  id="@($"{Model.GridId}_bulkCopyBtn")" data-bulkcopy-function="@Model.BulkCopyFunction">
-                                <i class="fa fa-copy"></i> @Model.BulkCopyButtonText
-                            </button>
-                        }
-                        @if (Model.AllowBulkDelete)
-                        {
-                            <button type="button" class="govuk-button govuk-button--warning sup_margin_0 sup_p_8"
-                                                  id="@($"{Model.GridId}_bulkDeleteBtn")" data-bulkdelete-function="@Model.BulkDeleteFunction">
-                                <i class="fa fa-trash"></i> Delete All
-                            </button>
-                        }                    
+        @if (hasHeaderContent)
+        {
+            <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading " aria-label="@Model.Title || Datagrid Title">
+                <div class="sup_flex_space_between">
+                        @Model.Title
+                        <div>
+                            @if (Model.AllowExport)
+                            {
+                                <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_p_8"
+                                        id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl" allow-edit ="true">
+                                    <i class="fa fa-file-excel-o"></i> Excel Export
+                                </button>
+                            }
+                            @if (Model.AllowAdd)
+                            {
+                                <button type="button" class="govuk-button sup_margin_0 sup_p_8"
+                                                      id="@($"{Model.GridId}_addRowBtn")" data-add-function="@Model.AddFunction">
+                                    <i class="fa fa-plus"></i> Add
+                                </button>
+                            }
+                            @if (Model.AllowBulkCopy)
+                            {
+                                <button type="button" class="govuk-button sup_margin_0 sup_p_8"
+                                                      id="@($"{Model.GridId}_bulkCopyBtn")" data-bulkcopy-function="@Model.BulkCopyFunction">
+                                    <i class="fa fa-copy"></i> @Model.BulkCopyButtonText
+                                </button>
+                            }
+                            @if (Model.AllowBulkDelete)
+                            {
+                                <button type="button" class="govuk-button govuk-button--warning sup_margin_0 sup_p_8"
+                                                      id="@($"{Model.GridId}_bulkDeleteBtn")" data-bulkdelete-function="@Model.BulkDeleteFunction">
+                                    <i class="fa fa-trash"></i> Delete All
+                                </button>
+                            }
+                        </div>
                     </div>
-                </div>
-            </h2>
-        <div class="grid-toolbar">
+                </h2>
+        }
+       <div class="grid-toolbar">
             <div class="sup_flex_center_gap_0">
                 <!-- Page Size Dropdown START -->
                 @*  <select id="@($"{Model.GridId}_pageSize")" class="form-control form-control-sm" style="width: 90px;">
