@@ -77,8 +77,11 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<PactStaff, PactStaffDto>().ReverseMap();
             CreateMap<ProjectProfitabilityView, ProjectProfitabilityDto>().ReverseMap();
             CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
-            //ProjectProfitabilityVlaView
-            CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap();
+// ProjectProfitabilityVlaView
+//   Property names are aligned between entity and DTO; no ForMember overrides needed.
+//   Covers: Id, JobCode, Program, Customer, Manager, Status, StaffCosts, TestCost,
+//   AnimalCosts, AdditionalCosts, TotalCosts, Budget, Profit, TargetProfit, OffTarget.
+CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap();
 
             CreateMap<User, UserDto>().ReverseMap();
 
@@ -96,9 +99,12 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<AdditionalCostLog, AdditionalCostLogDto>().ReverseMap();
             // MaintTotalBusinessOverheads
             CreateMap<TotalBusinessOverheads, TotalBusinessOverheadsDto>()
-                .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
-                .ReverseMap()
-                .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
+            .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
+            .ReverseMap()
+            .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
+            //TestListVLA
+            CreateMap<TestRCCost, TestRCCostDto>().ReverseMap();
+            CreateMap<TestRequirementRCCost, TestRequirementRCCostDto>().ReverseMap();
         }
     }
 }

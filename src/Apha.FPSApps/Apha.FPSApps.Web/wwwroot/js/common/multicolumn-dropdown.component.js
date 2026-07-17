@@ -121,6 +121,7 @@
                 <input 
                     type="text" 
                     id="${dropdownId}_input" 
+                    name="${dropdownId}_input" 
                     placeholder="${config.placeholder}" 
                     class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16" 
                     ${config.disabled ? 'disabled' : ''}
