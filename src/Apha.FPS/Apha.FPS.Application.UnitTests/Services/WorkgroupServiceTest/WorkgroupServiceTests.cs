@@ -449,12 +449,14 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_WhenUnrelatedFkViolation_PropagatesOriginalException()
+        public async Task UpdateAsync_WhenUnrelatedDbError_PropagatesOriginalException()
         {
             // Arrange
+            // WorkgroupService only special-cases foreign-key violations (SqlState 23503);
+            // any other DB error must propagate unchanged.
             var dto      = BuildDto("WG001");
             var entity   = BuildEntity("WG001");
-            var original = new Exception("db error", BuildFkViolation("fk_some_other_constraint"));
+            var original = new Exception("db error", BuildNonForeignKeyError());
 
             _mockRepository.ExistsAsync("WG001").Returns(true);
             _mockMapper.Map<Workgroup>(dto).Returns(entity);
