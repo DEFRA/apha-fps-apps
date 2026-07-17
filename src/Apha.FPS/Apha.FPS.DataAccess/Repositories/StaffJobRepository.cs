@@ -50,7 +50,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var query = await BuildJobStaffCostQueryAsync(jobCode);
             var result = (await query.ToListAsync()).Select(ComputeStaffCost).ToList();
-            return result != null ? ((result.Sum(x => x.StaffCost)) ?? 0m) : 0m;
+            return result.Sum(x => x.StaffCost) ?? 0m;
         }
 
         public async Task<List<StaffWorkgroupLookup>> GetStaffWorkgroupLookup()
@@ -333,24 +333,6 @@ namespace Apha.FPS.DataAccess.Repositories
             return sorted.ToList();
         }
 
-        private static IQueryable<StaffJobView> ApplySortingByProperty(IQueryable<StaffJobView> query, string property, bool descending)
-        {
-            return property switch
-            {
-                "name" => ApplyOrder(query, i => i.Name, descending),
-                "chargerate" => ApplyOrder(query, i => i.ChargeRate, descending),
-                "plannedhours" => ApplyOrder(query, i => i.PlannedHours, descending),
-                "days" => ApplyOrder(query, i => i.Days, descending),
-                "staffcost" => ApplyOrder(query, i => i.StaffCost, descending),
-                _ => query
-            };
-        }
-
-        private static IOrderedQueryable<StaffJobView> ApplyOrder<T>(IQueryable<StaffJobView> query, Expression<Func<StaffJobView, T>> keySelector, bool descending)
-        {
-            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
-        }
-
         private static List<StaffJobView> ApplyStaffJobFilterInMemory(List<StaffJobView> list, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
@@ -432,7 +414,7 @@ namespace Apha.FPS.DataAccess.Repositories
             result = result.Where(e => e.WorkGroup == workgroup).AsQueryable();
             result = ApplyStaffResourceUtilisationFilter(result, query.Filter);
             result = ApplyStaffResourceUtilisationSorting(result, query.SortBy, query.Descending);
-            return base.ApplyPaging(result.ToList(), query.Page, query.PageSize);
+            return base.ApplyPaging(result.AsEnumerable().ToList(), query.Page, query.PageSize);
         }
 
         private static StaffResourceUtilisationView BuildUtilisationView(
