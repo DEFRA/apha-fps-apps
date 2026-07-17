@@ -8,6 +8,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using Microsoft.AspNetCore.WebUtilities;
+using FpsDtos = Apha.FPSApps.Application.Dtos.FPS;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 {
@@ -223,6 +224,136 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             {
                 var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
                 return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
+        // ── WorkGroup Maintenance (CRUD + lookups) ────────────────────────────────
+
+        public async Task<ApiResponseDto<List<FpsDtos.WorkgroupMaintenanceDto>>> GetPagedAsync(QueryParameters<string> query)
+        {
+            var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedWorkGroupMaintenance, query);
+            var response = await _http.GetAsync<List<WorkGroupMaintenanceRes>>(url);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<FpsDtos.WorkgroupMaintenanceDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<FpsDtos.WorkgroupMaintenanceDto>>>(response);
+                return ApiResponseDto<List<FpsDtos.WorkgroupMaintenanceDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
+        public async Task<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>> GetByWorkGroupNameAsync(string workGroupName)
+        {
+            var url = string.Format(PactApiEndpoints.GetWorkGroupMaintenanceByName, Uri.EscapeDataString(workGroupName));
+            var response = await _http.GetAsync<WorkGroupMaintenanceRes>(url);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>>(response);
+                return ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
+        public async Task<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>> CreateAsync(FpsDtos.WorkgroupMaintenanceDto dto)
+        {
+            var request = _mapper.Map<WorkGroupMaintenanceReq>(dto);
+            var response = await _http.PostAsync<WorkGroupMaintenanceReq, WorkGroupMaintenanceRes>(
+                PactApiEndpoints.CreateWorkGroupMaintenance, request);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>>(response);
+                return ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
+        public async Task<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>> UpdateAsync(string workGroupName, FpsDtos.WorkgroupMaintenanceDto dto)
+        {
+            var url = string.Format(PactApiEndpoints.UpdateWorkGroupMaintenance, Uri.EscapeDataString(workGroupName));
+            var request = _mapper.Map<WorkGroupMaintenanceReq>(dto);
+            var response = await _http.PutAsync<WorkGroupMaintenanceReq, WorkGroupMaintenanceRes>(url, request);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>>(response);
+                return ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
+        public async Task<ApiResponseDto<bool>> DeleteAsync(string workGroupName)
+        {
+            var url = string.Format(PactApiEndpoints.DeleteWorkGroupMaintenance, Uri.EscapeDataString(workGroupName));
+            var response = await _http.DeleteAsync<bool?>(url);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+                return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
+        public async Task<ApiResponseDto<List<string>>> GetProfitCentresAsync()
+        {
+            var response = await _http.GetAsync<List<string>>(PactApiEndpoints.GetWorkGroupProfitCentres);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<string>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+                return ApiResponseDto<List<string>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
+        public async Task<ApiResponseDto<List<FpsDtos.ManagerDto>>> GetOwnersAsync()
+        {
+            var response = await _http.GetAsync<List<ManagerRes>>(PactApiEndpoints.GetWorkGroupOwners);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<FpsDtos.ManagerDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<FpsDtos.ManagerDto>>>(response);
+                return ApiResponseDto<List<FpsDtos.ManagerDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
+        public async Task<ApiResponseDto<List<double?>>> GetCostCentresAsync(string profitCentre)
+        {
+            var url = QueryHelpers.AddQueryString(PactApiEndpoints.GetWorkGroupCostCentres, "profitCentre", profitCentre);
+            var response = await _http.GetAsync<List<double?>>(url);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<double?>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<double?>>>(response);
+                return ApiResponseDto<List<double?>>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
     }

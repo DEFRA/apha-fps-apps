@@ -63,9 +63,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsTestRCCostApiClient FpsTestRCCost { get; }
         public IFpsTestRequirementRCCostApiClient FpsTestRequirementRCCost { get; }
 
-        // TRANSFORMENGINE: FpsWorkgroupMaintenance wired — Phase 9 (FpsWorkgroupApiClient for frmMaintWorkGroup2 → api/v1/workgroup)
-        public IFpsWorkgroupApiClient FpsWorkgroupMaintenance { get; }
-
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             FpsStaffJob = new FpsStaffJobApiClient(http, mapper);
@@ -106,8 +103,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsContributionSummary = new FpsContributionSummaryApiClient(http, mapper);
             FpsProjectAuditTrail = new FpsProjectAuditTrailApiClient(http, mapper);
             FpsTotalBusinessOverheads = new FpsTotalBusinessOverheadsApiClient(http, mapper);
-            // TRANSFORMENGINE: FpsWorkgroupMaintenance wired — Phase 9 (replaces null! stub added in Phase 7)
-            FpsWorkgroupMaintenance = new FpsWorkgroupApiClient(http, mapper);
         }
     }
 }

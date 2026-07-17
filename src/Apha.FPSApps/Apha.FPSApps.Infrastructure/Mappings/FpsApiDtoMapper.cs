@@ -118,11 +118,6 @@ namespace Apha.FPSApps.Infrastructure.Mappings
                 .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccount)).ReverseMap();
             CreateMap<CostCentreWorkgroupDto, CostCentreWorkgroupRes>().ReverseMap();
 
-            // Workgroup Maintenance (frmMaintWorkGroup2) — CRUD list/detail + create/update round-trip.
-            // Res.Id is synthetic (no counterpart on Dto) and is ignored by convention on Res->Dto.
-            CreateMap<WorkgroupMaintenanceDto, WorkgroupMaintenanceRes>().ReverseMap();
-            CreateMap<WorkgroupMaintenanceDto, WorkgroupMaintenanceReq>().ReverseMap();
-
             CreateMap<PactStaffDto, PactStaffRes>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPersonRes>().ReverseMap();
 

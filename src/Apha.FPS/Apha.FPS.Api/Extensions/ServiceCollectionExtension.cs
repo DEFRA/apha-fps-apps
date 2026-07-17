@@ -75,8 +75,6 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITestRCCostService, TestRCCostService>();
             services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
-            // TRANSFORMENGINE: IWorkgroupService/WorkgroupService registered — Phase 5 frmMaintWorkGroup2 migration
-            services.AddScoped<IWorkgroupService, WorkgroupService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -120,8 +118,6 @@ namespace Apha.FPS.Api.Extensions
 services.AddScoped<ITestRCCostRepository, TestRCCostRepository>();
 services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
 services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
-            // TRANSFORMENGINE: IWorkgroupRepository/WorkgroupRepository registered — Phase 5 frmMaintWorkGroup2 migration
-            services.AddScoped<IWorkgroupRepository, WorkgroupRepository>();
             return services;
 
         }

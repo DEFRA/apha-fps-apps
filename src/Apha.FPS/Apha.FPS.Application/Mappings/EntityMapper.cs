@@ -69,12 +69,6 @@ namespace Apha.FPS.Application.Mappings
                 .ForMember(d => d.EmailRecipient, o => o.MapFrom(s => s.EmailRecipient));
             CreateMap<ProfitCentreCostSummary, ProfitCentreCostDto>().ReverseMap();
             CreateMap<ProfitCentreGrade, ProfitCentreGradeDto>().ReverseMap();
-            // TRANSFORMENGINE: Workgroup <-> WorkgroupDto — new mapping added for frmMaintWorkGroup2 migration (Phase 3)
-            //   All Workgroup entity fields map directly by name to WorkgroupDto; no ForMember overrides needed.
-            //   Covers: WorkGroupName, ProfitCentre, CostCentre, Owner, Description, CentralOverhead,
-            //   SendEmail, Cos90, CostCentreOld, EmailRecipient, FpsYear.
-            //   SysTimestamp intentionally omitted from WorkgroupDto (server-managed).
-            CreateMap<Workgroup, WorkgroupDto>().ReverseMap();
 
             CreateMap<WorkgroupGrade, WorkgroupGradeDto>().ReverseMap();
             CreateMap<WorkGroupGradeView, WorkgroupGradeDto>().ReverseMap();

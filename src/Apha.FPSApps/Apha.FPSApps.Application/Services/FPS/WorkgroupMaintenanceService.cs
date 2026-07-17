@@ -26,7 +26,7 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
-using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.FPS
@@ -38,10 +38,10 @@ namespace Apha.FPSApps.Application.Services.FPS
     /// </summary>
     public class WorkgroupMaintenanceService : IWorkgroupMaintenanceService
     {
-        // TRANSFORMENGINE: _client is private readonly — S2933 compliance
-        private readonly IFpsApiClient _client;
+        // Repointed to PACT API client
+        private readonly IPactApiClient _client;
 
-        public WorkgroupMaintenanceService(IFpsApiClient client)
+        public WorkgroupMaintenanceService(IPactApiClient client)
         {
             _client = client ?? throw new ArgumentNullException(nameof(client));
         }
@@ -51,32 +51,32 @@ namespace Apha.FPSApps.Application.Services.FPS
         // TRANSFORMENGINE: thin delegate → IFpsApiClient.FpsWorkgroupMaintenance.GetPagedAsync
         public async Task<ApiResponseDto<List<WorkgroupMaintenanceDto>>> GetPagedAsync(QueryParameters<string> query)
         {
-            return await _client.FpsWorkgroupMaintenance.GetPagedAsync(query);
+            return await _client.PactWorkGroup.GetPagedAsync(query);
         }
 
         // TRANSFORMENGINE: thin delegate → IFpsApiClient.FpsWorkgroupMaintenance.GetByWorkGroupNameAsync
         public async Task<ApiResponseDto<WorkgroupMaintenanceDto>> GetByWorkGroupNameAsync(string workGroupName)
         {
-            return await _client.FpsWorkgroupMaintenance.GetByWorkGroupNameAsync(workGroupName);
+            return await _client.PactWorkGroup.GetByWorkGroupNameAsync(workGroupName);
         }
 
         // TRANSFORMENGINE: thin delegate → IFpsApiClient.FpsWorkgroupMaintenance.CreateAsync
         public async Task<ApiResponseDto<WorkgroupMaintenanceDto>> CreateAsync(WorkgroupMaintenanceDto dto)
         {
-            return await _client.FpsWorkgroupMaintenance.CreateAsync(dto);
+            return await _client.PactWorkGroup.CreateAsync(dto);
         }
 
         // TRANSFORMENGINE: thin delegate → IFpsApiClient.FpsWorkgroupMaintenance.UpdateAsync
         //   workGroupName is the original key (before any rename); dto.WorkGroupName may differ
         public async Task<ApiResponseDto<WorkgroupMaintenanceDto>> UpdateAsync(string workGroupName, WorkgroupMaintenanceDto dto)
         {
-            return await _client.FpsWorkgroupMaintenance.UpdateAsync(workGroupName, dto);
+            return await _client.PactWorkGroup.UpdateAsync(workGroupName, dto);
         }
 
         // TRANSFORMENGINE: thin delegate → IFpsApiClient.FpsWorkgroupMaintenance.DeleteAsync
         public async Task<ApiResponseDto<bool>> DeleteAsync(string workGroupName)
         {
-            return await _client.FpsWorkgroupMaintenance.DeleteAsync(workGroupName);
+            return await _client.PactWorkGroup.DeleteAsync(workGroupName);
         }
 
         // ── Lookup endpoints (SEPARATE from CRUD resource family) ────────────────
@@ -84,20 +84,20 @@ namespace Apha.FPSApps.Application.Services.FPS
         // TRANSFORMENGINE: thin delegate → IFpsApiClient.FpsWorkgroupMaintenance.GetProfitCentresAsync
         public async Task<ApiResponseDto<List<string>>> GetProfitCentresAsync()
         {
-            return await _client.FpsWorkgroupMaintenance.GetProfitCentresAsync();
+            return await _client.PactWorkGroup.GetProfitCentresAsync();
         }
 
         // TRANSFORMENGINE: thin delegate → IFpsApiClient.FpsWorkgroupMaintenance.GetOwnersAsync
         public async Task<ApiResponseDto<List<ManagerDto>>> GetOwnersAsync()
         {
-            return await _client.FpsWorkgroupMaintenance.GetOwnersAsync();
+            return await _client.PactWorkGroup.GetOwnersAsync();
         }
 
         // TRANSFORMENGINE: thin delegate → IFpsApiClient.FpsWorkgroupMaintenance.GetCostCentresAsync
         //   profitCentre sourced from modal ProfitCentre change event (confirmed page-sourced)
         public async Task<ApiResponseDto<List<double?>>> GetCostCentresAsync(string profitCentre)
         {
-            return await _client.FpsWorkgroupMaintenance.GetCostCentresAsync(profitCentre);
+            return await _client.PactWorkGroup.GetCostCentresAsync(profitCentre);
         }
     }
 }

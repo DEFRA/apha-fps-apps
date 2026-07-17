@@ -23,7 +23,7 @@
 
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.FPS;
 using NSubstitute;
@@ -33,16 +33,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkgroupMaintenanceSe
 {
     public class WorkgroupMaintenanceServiceTests
     {
-        private readonly IFpsApiClient _fpsClient;
-        private readonly IFpsWorkgroupApiClient _fpsWorkgroupApiClient;
+        private readonly IPactApiClient _fpsClient;
+        private readonly IPactWorkGroupApiClient _fpsWorkgroupApiClient;
         private readonly WorkgroupMaintenanceService _service;
 
         public WorkgroupMaintenanceServiceTests()
         {
-            _fpsClient             = Substitute.For<IFpsApiClient>();
-            _fpsWorkgroupApiClient = Substitute.For<IFpsWorkgroupApiClient>();
-            // TRANSFORMENGINE: wire aggregate client → sub-client (IFpsApiClient.FpsWorkgroupMaintenance property)
-            _fpsClient.FpsWorkgroupMaintenance.Returns(_fpsWorkgroupApiClient);
+            _fpsClient             = Substitute.For<IPactApiClient>();
+            _fpsWorkgroupApiClient = Substitute.For<IPactWorkGroupApiClient>();
+            // wire aggregate client → sub-client (IPactApiClient.PactWorkGroup property)
+            _fpsClient.PactWorkGroup.Returns(_fpsWorkgroupApiClient);
             _service = new WorkgroupMaintenanceService(_fpsClient);
         }
 

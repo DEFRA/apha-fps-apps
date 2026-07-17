@@ -184,13 +184,6 @@ namespace Apha.FPS.Api.Mappings
             // MaintTotalBusinessOverheads
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
-            // TRANSFORMENGINE: WorkgroupMaintenance mappings — frmMaintWorkGroup2 Phase 5
-            //   WorkgroupMaintenanceReq → WorkgroupDto (Create/Update inbound path)
-            //   WorkgroupDto → WorkgroupMaintenanceRes (outbound response for all CRUD actions)
-            //   PaginatedResult<WorkgroupDto> → PaginationRes<WorkgroupMaintenanceRes> (paged list)
-            CreateMap<WorkgroupMaintenanceReq, WorkgroupDto>().ReverseMap();
-            CreateMap<WorkgroupDto, WorkgroupMaintenanceRes>().ReverseMap();
-            CreateMap<PaginatedResult<WorkgroupDto>, PaginationRes<WorkgroupMaintenanceRes>>();
 
         }
     }

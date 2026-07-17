@@ -34,7 +34,5 @@
         IFpsContributionSummaryApiClient FpsContributionSummary { get; }
         IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
         IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
-        // TRANSFORMENGINE: FpsWorkgroupMaintenance added — Phase 7; WorkGroup Maintenance CRUD + lookups (frmMaintWorkGroup2)
-        IFpsWorkgroupApiClient FpsWorkgroupMaintenance { get; }
     }
 }

@@ -3,6 +3,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using AutoMapper;
+using FpsDtos = Apha.FPSApps.Application.Dtos.FPS;
 namespace Apha.FPSApps.Infrastructure.Mappings
 {
     public class PactApiDtoMapper : Profile
@@ -16,6 +17,12 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TimeCodeValidDto, TimeCodeValidRes>().ReverseMap();
             CreateMap<WorkGroupDto, WorkGroupRes>().ReverseMap();
             CreateMap<WorkGroupViewDto, WorkGroupViewRes>().ReverseMap();
+
+            // WorkGroup Maintenance (CRUD + lookups)
+            CreateMap<FpsDtos.WorkgroupMaintenanceDto, WorkGroupMaintenanceRes>().ReverseMap();
+            CreateMap<FpsDtos.WorkgroupMaintenanceDto, WorkGroupMaintenanceReq>().ReverseMap();
+            CreateMap<FpsDtos.ManagerDto, ManagerRes>().ReverseMap();
+
             CreateMap<MonthDto, MonthRes>().ReverseMap();
             CreateMap<CalenderMonthDto, CalenderMonthRes>().ReverseMap();
             CreateMap<ProjectInvoiceDto, ProjectInvoiceReq>().ReverseMap();
