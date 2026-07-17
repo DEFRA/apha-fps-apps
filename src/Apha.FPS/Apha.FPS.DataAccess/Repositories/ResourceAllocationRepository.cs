@@ -215,12 +215,12 @@ namespace Apha.FPS.DataAccess.Repositories
                     WorkGroupGrade = row.WorkGroupGrade,
                     StaffId = row.StaffId,
                     Name = row.Name,
-                    HrsAvail = row.HrsAvail,
-                    ZtHours = ztHrs,
-                    AppPlannedHours = row.AppPlannedHours,
-                    PlannedHours = row.PlannedHours,
-                    ChargeHours = row.PlannedHours - ztHrs,
-                    AppChargeHours = row.AppPlannedHours - ztHrs
+                    HrsAvail = Math.Round(row.HrsAvail, 2),
+                    ZtHours = Math.Round(ztHrs, 2),
+                    AppPlannedHours = Math.Round(row.AppPlannedHours, 2),
+                    PlannedHours = Math.Round(row.PlannedHours, 2),
+                    ChargeHours = Math.Round(row.PlannedHours - ztHrs, 2),
+                    AppChargeHours = Math.Round(row.AppPlannedHours - ztHrs, 2)
                 };
             }).ToList();
         }

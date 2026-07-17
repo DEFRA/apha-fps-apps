@@ -171,7 +171,8 @@
         window.raConfig = {
             gradesUrl:    '@Url.Action("GetGradesByResourceCentre", "ResourceAllocation", new { area = "FPS" })',
             staffGridUrl: '@Url.Action("LoadStaffAllocationGrid",   "ResourceAllocation", new { area = "FPS" })',
-            jobsGridUrl:  '@Url.Action("LoadStaffJobsGrid",         "ResourceAllocation", new { area = "FPS" })'
+            jobsGridUrl:  '@Url.Action("LoadStaffJobsGrid",         "ResourceAllocation", new { area = "FPS" })',
+            totalsUrl:    '@Url.Action("GetStaffAllocationTotals",  "ResourceAllocation", new { area = "FPS" })'
         };
     </script>
     <script src="~/js/fps_js/ResourceAllocation.js"></script>

@@ -114,6 +114,7 @@
     var gradesUrl = cfg.gradesUrl || '';
     var staffGridUrl = cfg.staffGridUrl || '';
     var jobsGridUrl = cfg.jobsGridUrl || '';
+    var totalsUrl = cfg.totalsUrl || '';
 
     var currentGrade = '';
     var currentStaffId = '';
@@ -122,9 +123,6 @@
     async function OnResourceCenterChange() {
         const centre = document.getElementById('resourceCentreSelect').value;
         const gradeSelect = document.getElementById('workGroupGradeSelect');
-
-        //document.getElementById('stage2SelectedCenterName').textContent = centre;
-        //document.getElementById('stage2SelectedCenterNameInline').textContent = centre;
 
         gradeSelect.disabled = true;
         gradeSelect.innerHTML = '<option value="">-- Select a Workgroup Grade --</option>';
@@ -166,8 +164,9 @@
             showLoader();
             $.post(staffGridUrl, { workGroupGrade: grade, page: 1, pageSize: 10 }, function (html) {
                 document.getElementById('gridContainer_StaffAllocationGrid').innerHTML = html;
-                hideLoader();
                 SelectFirstStaffRow();
+                loadStaffAllocationTotals(grade);
+
             }).fail(function () {
                 hideLoader();
                 showAlertMessage('Error loading staff allocation grid.', AlertType.ERROR);
@@ -176,6 +175,38 @@
             hideLoader();
             showAlertMessage("Error, In WorkgroupGradeChange", AlertType.ERROR);
         }
+    }
+
+    /* ── Load grade-level column totals into the summary panel ─────────── */
+    function loadStaffAllocationTotals(grade) {
+        if (!totalsUrl || !grade) { clearSummaryPanel(); return; }
+        $.get(totalsUrl, { workGroupGrade: grade }, function (data) {
+            if (data && data.success) {
+                document.getElementById('stage2HoursAvailInput').value = data.hrsAvail;
+                document.getElementById('stage2PlannedHrsInput').value = data.plannedHrs;
+                document.getElementById('stage2AllocationPctInput').value = data.allocationPct;
+                document.getElementById('stage2AssuredChargeInput').value = data.assuredChargeHrs;
+                document.getElementById('stage2AssuredUtilInput').value = data.assuredUtilPct;
+                document.getElementById('stage2TotalChargeInput').value = data.totalChargeHrs;
+                document.getElementById('stage2TotalUtilInput').value = data.totalUtilPct;
+                hideLoader();
+            } else {
+                clearSummaryPanel();
+                hideLoader();
+            }
+        }).fail(function () {
+            hideLoader();
+            clearSummaryPanel();
+        });
+    }
+
+    function clearSummaryPanel() {
+        ['stage2HoursAvailInput', 'stage2PlannedHrsInput', 'stage2AllocationPctInput',
+            'stage2AssuredChargeInput', 'stage2AssuredUtilInput',
+            'stage2TotalChargeInput', 'stage2TotalUtilInput'].forEach(function (id) {
+                var inp = document.getElementById(id);
+                if (inp) inp.value = '';
+            });
     }
 
     /* ── Staff row selection → load jobs grid ───────────────────────────── */
@@ -197,13 +228,6 @@
         document.getElementById('stage2SelectedStaffName').textContent = staffName;
         document.getElementById('stage2PersonSelectedInput').value = staffName;
         document.getElementById('stage2SelectedStaffHoursInput').value = planHrs;
-        document.getElementById('stage2HoursAvailInput').value = hrsAvail;
-        document.getElementById('stage2PlannedHrsInput').value = planHrs;
-        document.getElementById('stage2AllocationPctInput').value = alocPct;
-        document.getElementById('stage2AssuredChargeInput').value = appCh;
-        document.getElementById('stage2AssuredUtilInput').value = appUti;
-        document.getElementById('stage2TotalChargeInput').value = crgHr;
-        document.getElementById('stage2TotalUtilInput').value = utiPct;
 
         if (!staffId) return;
 
@@ -239,6 +263,7 @@
         $.post(staffGridUrl, { workGroupGrade: '' }, function (html) {
             document.getElementById('gridContainer_StaffAllocationGrid').innerHTML = html;
         });
+        clearSummaryPanel();
     }
 
     function clearJobsGrid() {
@@ -253,12 +278,6 @@
     function clearGrids() {
         clearStaffGrid();
         clearJobsGrid();
-        ['stage2HoursAvailInput', 'stage2PlannedHrsInput', 'stage2AllocationPctInput',
-            'stage2AssuredChargeInput', 'stage2AssuredUtilInput',
-            'stage2TotalChargeInput', 'stage2TotalUtilInput'].forEach(function (id) {
-                var el = document.getElementById(id);
-                if (el) el.value = '';
-            });
     }
 
     /* ── ExtraFilterMethod callbacks (used by DataGrid reloadGrid) ─────── */

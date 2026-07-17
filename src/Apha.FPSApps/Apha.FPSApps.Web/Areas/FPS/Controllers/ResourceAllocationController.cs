@@ -119,6 +119,48 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         /// <summary>
+        /// Returns column totals for all staff in a workgroup grade for the "Overall Position for the Grade" panel.
+        /// Formulas mirror fsubResourceTotals2 in the original Access form.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetStaffAllocationTotals(string workGroupGrade)
+        {
+            if (string.IsNullOrWhiteSpace(workGroupGrade))
+                return Json(new { success = false, message = "WorkGroup Grade is required." });
+
+            var query = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
+            var response = await _ResourceAllocationService.GetPagedStaffAllocationsByWorkGroupGradeAsync(workGroupGrade, query);
+            if (!response.Success)
+                return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load staff allocations." });
+
+            var items = response.Data ?? new List<ResourceStaffAllocationDto>();
+
+            double totalHrsAvail = items.Sum(i => i.HrsAvail ?? 0);
+            double totalPlannedHours = items.Sum(i => i.PlannedHours);
+            double totalAppChargeHours = items.Sum(i => i.AppChargeHours);
+            double totalChargeHours = items.Sum(i => i.ChargeHours);
+
+            string allocationPct = totalHrsAvail == 0 ? "" : FormatPct(totalPlannedHours / totalHrsAvail);
+            string assuredUtilPct = totalHrsAvail == 0 ? "" : FormatPct(totalAppChargeHours / totalHrsAvail);
+            string totalUtilPct = totalHrsAvail == 0 ? "" : FormatPct(totalChargeHours / totalHrsAvail);
+
+            return Json(new
+            {
+                success = true,
+                hrsAvail = totalHrsAvail,
+                plannedHrs = totalPlannedHours,
+                allocationPct,
+                assuredChargeHrs = totalAppChargeHours,
+                assuredUtilPct,
+                totalChargeHrs = totalChargeHours,
+                totalUtilPct
+            });
+        }
+
+        private static string FormatPct(double value) =>
+            (value * 100).ToString("0.##") + "%";
+
+        /// <summary>
         /// Loads the jobs DataGrid for a given staff member (supports pagination, sorting, filtering).
         /// </summary>
         [HttpPost]
