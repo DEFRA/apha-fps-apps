@@ -465,5 +465,91 @@ namespace Apha.PACT.Application.UnitTests.Services.TestRequirementServiceTest
         }
 
         #endregion
+
+        #region GetPlannedTestsByWorkgroupAsync
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_ValidQuery_ReturnsMappedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var pagedData = new PagedData<TestReqBreakdownView>(
+                [new TestReqBreakdownView { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01" }],
+                new PaginationData { TotalRecords = 1 });
+            var expectedResult = new PaginatedResult<TestReqBreakdownDto>(
+                [new TestReqBreakdownDto { TestCode = "BLOOD", Project = "PRJ001" }],
+                new PaginationDto { TotalRecords = 1 });
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testReqmtRepo.GetPlannedTestsByWorkgroupAsync(mappedParams).Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestReqBreakdownDto>>(pagedData).Returns(expectedResult);
+
+            var result = await _sut.GetPlannedTestsByWorkgroupAsync(query);
+
+            result.Should().Be(expectedResult);
+            await _testReqmtRepo.Received(1).GetPlannedTestsByWorkgroupAsync(mappedParams);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_EmptyResult_ReturnsEmptyPaginatedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var pagedData = new PagedData<TestReqBreakdownView>([], new PaginationData());
+            var expectedResult = new PaginatedResult<TestReqBreakdownDto>([], new PaginationDto());
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testReqmtRepo.GetPlannedTestsByWorkgroupAsync(mappedParams).Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestReqBreakdownDto>>(pagedData).Returns(expectedResult);
+
+            var result = await _sut.GetPlannedTestsByWorkgroupAsync(query);
+
+            result.Should().NotBeNull();
+            result.Data.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_WithMultipleItems_ReturnsMappedDtos()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", WgPrice = 10m, TotalCost = 50m },
+                new() { TestCode = "URINE", Project = "PRJ002", WorkG = "WG02", WgPrice = 5m,  TotalCost = 25m }
+            };
+            var pagedData = new PagedData<TestReqBreakdownView>(views, new PaginationData { TotalRecords = 2 });
+            var dtos = new List<TestReqBreakdownDto>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", WgPrice = 10m, TotalCost = 50m },
+                new() { TestCode = "URINE", Project = "PRJ002", WorkG = "WG02", WgPrice = 5m,  TotalCost = 25m }
+            };
+            var expectedResult = new PaginatedResult<TestReqBreakdownDto>(dtos, new PaginationDto { TotalRecords = 2 });
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testReqmtRepo.GetPlannedTestsByWorkgroupAsync(mappedParams).Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestReqBreakdownDto>>(pagedData).Returns(expectedResult);
+
+            var result = await _sut.GetPlannedTestsByWorkgroupAsync(query);
+
+            result.Data.Should().HaveCount(2);
+            result.Data.ElementAt(0).TestCode.Should().Be("BLOOD");
+            result.Data.ElementAt(1).TestCode.Should().Be("URINE");
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_RepositoryThrows_PropagatesException()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testReqmtRepo.GetPlannedTestsByWorkgroupAsync(mappedParams)
+                .ThrowsAsync(new Exception("DB error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _sut.GetPlannedTestsByWorkgroupAsync(query));
+        }
+
+        #endregion
     }
 }

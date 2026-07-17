@@ -49,7 +49,6 @@ namespace Apha.Common.Constants
         public const string DeleteDivision = "api/v1/division/{0}";
 
         // Grade Maintenance (frmMaintGrade → api/v1/Grade) — added Phase 14
-        // TRANSFORMENGINE: Grade endpoint constants added — FpsGradeApiClient should switch to these from inline literals
         public const string GetPagedGrades = "api/v1/Grade/paged";
         public const string GetGradeById = "api/v1/Grade/{0}";
         public const string CreateGrade = "api/v1/Grade";
@@ -139,6 +138,7 @@ namespace Apha.Common.Constants
         public const string GetZtTotalHoursByStaffId = "api/v1/staffjob/zttotalhours?staffId={0}";
         public const string GetZtStaffJobsByStaffIdPaged = "api/v1/staffjob/ztstaffjobs/paged";
         public const string GetZtStaffJobDetailsById = "api/v1/staffjob/ztstaffjob/{0}/{1}";
+        public const string GetStaffResourceUtilisation = "api/v1/staffjob/resourceutilisation";
 
         // View Project Plan vs Actual Staff
         public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
@@ -195,6 +195,7 @@ namespace Apha.Common.Constants
         // Resource Set-Up — WG Staff
         public const string GetWgStaff = "api/v1/wgstaff?wgGrade={0}";
         public const string GetWgStaffForStaff = "api/v1/wgstaff/staff?wgGrade={0}";
+        public const string GetActiveWgStaffForStaff = "api/v1/wgstaff/activestaff?wgGrade={0}";
         public const string GetWgEmployeeById = "api/v1/wgstaff/{0}";
         public const string UpdateWgEmployee = "api/v1/wgstaff";
         public const string CreateWgEmployeeForStaff = "api/v1/wgstaff/staff";
@@ -205,7 +206,6 @@ namespace Apha.Common.Constants
         // Project profitability (merged into project route)
         public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
         public const string GetProjectGroupProfitability = "api/v1/project/profitability/by-project-group/{0}";
-        // TRANSFORMENGINE: new endpoint — Phase 9 API client binds to backend GET api/v1/project/profitability-vla
         public const string GetProjectProfitabilityVla = "api/v1/project/profitability-vla";
 
         // WorkgroupGrade Maintainence
@@ -215,6 +215,7 @@ namespace Apha.Common.Constants
         public const string UpdateWorkgroupGrade = "api/v1/wggrades/{0}";
         public const string DeleteWorkgroupGrade = "api/v1/wggrades/maintain/{0}";
         public const string GetAllGradeCodes = "api/v1/wggrades/gradecodes";
+        public const string GetWgGradesByWorkGroup = "api/v1/wggrades/byworkgroup?workGroup={0}";
 
         // Generic Bid — Budget Bids
         public const string GetBids = "api/v1/budgetbids?workgroup={0}";
@@ -224,6 +225,16 @@ namespace Apha.Common.Constants
         public const string UpdateBudgetBid = "api/v1/budgetbids";
         public const string DeleteBudgetBid = "api/v1/budgetbids?WorkGroupName={0}&account={1}";
         public const string GetBudgetBidsAccounts = "api/v1/budgetbids/accounts";
+
+        // Income/Contribution from Time Sales (frmTimeSellerPC)
+        public const string GetContributionSummaryRows   = "api/v1/timeseller/{0}/rows";
+        public const string GetContributionSummaryTotals = "api/v1/timeseller/{0}/totals";
+        // Project Audit Trail (frmProjectChangesLog → api/v1/projectaudittrail)
+        public const string GetProjectLogs = "api/v1/projectaudittrail/projectlogs";
+        public const string GetStaffJobLogs = "api/v1/projectaudittrail/staffjoblogs";
+        public const string GetTestRequirementLogs = "api/v1/projectaudittrail/testrequirementlogs";
+        public const string GetAnimalRequestLogs = "api/v1/projectaudittrail/animalrequestlogs";
+        public const string GetAdditionalCostLogs = "api/v1/projectaudittrail/additionalcostlogs";
 
         // Generic Bid — Purchases
         public const string GetGenericPurchases = "api/v1/purchases?WorkGroupName={0}&account={1}";
@@ -244,5 +255,13 @@ namespace Apha.Common.Constants
         public const string GetUserPermissions = "api/v1/user/{0}/permissions";
         public const string SaveUserPermissions = "api/v1/user/{0}/permissions";
         public const string GetPermissionOptions = "api/v1/user/options";
+
+        // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
+        public const string GetAllCostCentres = "api/v1/costcentre";
+        public const string GetPagedCostCentres = "api/v1/costcentre/paged";
+        public const string GetCostCentreById = "api/v1/costcentre/{0}";
+        public const string CreateCostCentre = "api/v1/costcentre";
+        public const string UpdateCostCentre = "api/v1/costcentre/{0}";
+        public const string DeleteCostCentre = "api/v1/costcentre/{0}";
     }
 }

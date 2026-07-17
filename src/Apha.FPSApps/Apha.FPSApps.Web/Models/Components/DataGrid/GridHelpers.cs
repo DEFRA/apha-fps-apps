@@ -49,7 +49,7 @@
                     break;
                 case GridColumnType.DateTime:
                     if (value is DateTime dateTimeValue)
-                        return dateTimeValue.ToString(column.DateFormat ?? "yyyy-MM-dd HH:mm");
+                        return dateTimeValue.ToString(column.DateTimeFormatHhMm ?? "yyyy-MM-dd HH:mm");
                     break;
                 case GridColumnType.UsdValue:
                     if (value is decimal usdValue)
@@ -70,6 +70,14 @@
                 case GridColumnType.DoubleNumber:
                     if (value is double doubleValue)
                         return doubleValue.ToString("F2");
+                    break;
+                case GridColumnType.Percentage:
+                    if (value is double pctDouble)
+                        return pctDouble.ToString("F2") + "%";
+                    if (value is decimal pctDecimal)
+                        return pctDecimal.ToString("F2") + "%";
+                    if (value is float pctFloat)
+                        return ((double)pctFloat).ToString("F2") + "%";
                     break;
             }
 

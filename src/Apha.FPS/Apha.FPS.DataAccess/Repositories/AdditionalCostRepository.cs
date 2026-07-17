@@ -83,7 +83,7 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        public async Task<AdditionalCost> UpdateAsync(AdditionalCost additionalCost)
+        public async Task<AdditionalCost> UpdateAsync(AdditionalCost additionalCost, string originalDescription)
         {
             ArgumentNullException.ThrowIfNull(additionalCost);
 
@@ -96,24 +96,59 @@ namespace Apha.FPS.DataAccess.Repositories
                     var existing = await _context.AdditionalCosts
                         .FirstOrDefaultAsync(a => a.JobCode == additionalCost.JobCode
                                                && a.Account == additionalCost.Account
-                                               && a.Description == additionalCost.Description);
+                                               && a.Description == originalDescription);
 
                     if (existing == null)
                         throw new InvalidOperationException(
-                            $"Additional cost with JobCode {additionalCost.JobCode}, Account {additionalCost.Account}, Description {additionalCost.Description} not found");
+                            $"Additional cost with JobCode {additionalCost.JobCode}, Account {additionalCost.Account}, Description {originalDescription} not found");
 
-                    existing.ItemCost = additionalCost.ItemCost;
-                    existing.Freq = additionalCost.Freq;
-                    existing.Supplier = additionalCost.Supplier;
-                    existing.FpsYear = _requestContext.FpsYear;
+                    var descriptionChanged = !string.Equals(
+                        existing.Description, additionalCost.Description, StringComparison.OrdinalIgnoreCase);
 
-                    var logEntry = CreateAdditionalCostLogEntry(existing, "U");
+                    AdditionalCost result;
 
-                    _context.AdditionalCostLogs.Add(logEntry);
+                    if (descriptionChanged)
+                    {
+                        // Description is part of the primary key, so the row must be
+                        // recreated rather than updated in place.
+                        var replacement = new AdditionalCost
+                        {
+                            JobCode = additionalCost.JobCode,
+                            Account = additionalCost.Account,
+                            Description = additionalCost.Description,
+                            ItemCost = additionalCost.ItemCost,
+                            Freq = additionalCost.Freq,
+                            Supplier = additionalCost.Supplier,
+                            FpsYear = _requestContext.FpsYear
+                        };
+
+                        var deleteLog = CreateAdditionalCostLogEntry(existing, "D");
+                        var insertLog = CreateAdditionalCostLogEntry(replacement, "I");
+
+                        _context.AdditionalCosts.Remove(existing);
+                        _context.AdditionalCosts.Add(replacement);
+                        _context.AdditionalCostLogs.Add(deleteLog);
+                        _context.AdditionalCostLogs.Add(insertLog);
+
+                        result = replacement;
+                    }
+                    else
+                    {
+                        existing.ItemCost = additionalCost.ItemCost;
+                        existing.Freq = additionalCost.Freq;
+                        existing.Supplier = additionalCost.Supplier;
+                        existing.FpsYear = _requestContext.FpsYear;
+
+                        var logEntry = CreateAdditionalCostLogEntry(existing, "U");
+                        _context.AdditionalCostLogs.Add(logEntry);
+
+                        result = existing;
+                    }
+
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
 
-                    return existing;
+                    return result;
                 }
                 catch
                 {

@@ -142,6 +142,25 @@
                     calculateAdditionalCost();
                 }).observe(costGridContainer, { childList: true });
             }
+
+            document.addEventListener('gridReloaded', function (e) {
+                if (e.detail.gridId === '@Model.ProjectsGrid.GridId') {
+                    var firstRow = $('#tbl_@Model.ProjectsGrid.GridId tbody tr.selectable-row:first');
+                    if (firstRow.length) {
+                        firstRow.trigger('click');
+                    }
+                }
+            });
+
+            var costGridEl = document.getElementById('gridContainer_@Model.AdditionalCostGrid.GridId');
+            if (costGridEl) {
+                costGridEl.addEventListener('click', function (e) {
+                    if (!currentJobCode && (e.target.closest('.sortable-header') || e.target.closest('.pagination a'))) {
+                        e.stopImmediatePropagation();
+                        e.preventDefault();
+                    }
+                }, true);
+            }
         });
 
         $('#programmeSelect').on('change', function () {

@@ -225,6 +225,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 AllowExport = false,
                 AllowEdit = false,
                 AllowDelete = false,
+                AllowAdd=false,
 
                 // JavaScript callback functions
                 RowSelectFunction = "onTestCapabilityRowSelect",
