@@ -326,7 +326,6 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             };
         }
 
-        // TRANSFORMENGINE: Tab 3 — Create CSG7 Group GET
         [HttpGet]
         public IActionResult CreateCsg7Group()
         {
@@ -542,7 +541,6 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                 : Json(new { success = false, errors = result.Errors });
         }
 
-        // TRANSFORMENGINE: Tab 5 — Delete CapsStaff → DELETE /api/v1/capsstaff/{mNumber}
         [HttpDelete]
         public async Task<IActionResult> DeleteCapsStaff(string mNumber)
         {

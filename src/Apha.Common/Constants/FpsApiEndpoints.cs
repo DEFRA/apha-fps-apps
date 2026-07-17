@@ -138,6 +138,7 @@ namespace Apha.Common.Constants
         public const string GetZtTotalHoursByStaffId = "api/v1/staffjob/zttotalhours?staffId={0}";
         public const string GetZtStaffJobsByStaffIdPaged = "api/v1/staffjob/ztstaffjobs/paged";
         public const string GetZtStaffJobDetailsById = "api/v1/staffjob/ztstaffjob/{0}/{1}";
+        public const string GetStaffResourceUtilisation = "api/v1/staffjob/resourceutilisation";
 
         // View Project Plan vs Actual Staff
         public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
@@ -266,5 +267,12 @@ namespace Apha.Common.Constants
         public const string GetWorkgroupProfitCentres = "api/v1/workgroup/profitcentres";
         public const string GetWorkgroupOwners = "api/v1/workgroup/owners";
         public const string GetWorkgroupCostCentres = "api/v1/workgroup/costcentres?profitCentre={0}";
+        // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
+        public const string GetAllCostCentres = "api/v1/costcentre";
+        public const string GetPagedCostCentres = "api/v1/costcentre/paged";
+        public const string GetCostCentreById = "api/v1/costcentre/{0}";
+        public const string CreateCostCentre = "api/v1/costcentre";
+        public const string UpdateCostCentre = "api/v1/costcentre/{0}";
+        public const string DeleteCostCentre = "api/v1/costcentre/{0}";
     }
 }

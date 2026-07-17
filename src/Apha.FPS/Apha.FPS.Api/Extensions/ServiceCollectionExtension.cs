@@ -72,6 +72,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IContributionSummaryService, ContributionSummaryService>();
             services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
+            services.AddScoped<ICostCentreService, CostCentreService>();
             services.AddScoped<ITestRCCostService, TestRCCostService>();
             services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
@@ -115,9 +117,11 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IContributionSummaryRepository, ContributionSummaryRepository>();
             services.AddScoped<IProjectAuditTrailRepository, ProjectAuditTrailRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
-services.AddScoped<ITestRCCostRepository, TestRCCostRepository>();
-services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
-services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
+            services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
+            services.AddScoped<ICostCentreRepository, CostCentreRepository>();
+            services.AddScoped<ITestRCCostRepository, TestRCCostRepository>();
+            services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
+            services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
             return services;
 
         }

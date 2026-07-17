@@ -205,10 +205,8 @@
                                 <label class="govuk-label govuk-!-font-weight-bold" asp-for="CurrentPortfolio.Program">
                                     Programme <span class="sup_color_red">*</span>
                                 </label>
-                                <select class="govuk-select govuk-!-font-size-16" asp-for="CurrentPortfolio.Program"
-                                        id="dpProgramme" asp-items="Model.Programs" style="width:100%;">
-                                    <option value="">--select--</option>
-                                </select>
+                                <div id="programSelectMultiDropdown" class="govuk-grid-column-two-thirds sup_p_0" style="width:100%;"></div>
+                                <input type="hidden" asp-for="CurrentPortfolio.Program" class="govuk-select govuk-!-font-size-16" id="dpProgramme" />
                                 <span asp-validation-for="CurrentPortfolio.Program" class="govuk-error-message"></span>
                             </div>
                             <div class="govuk-form-group" style="flex:1; margin-bottom:0;">
@@ -319,6 +317,8 @@
      <script>
         const portfolioOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.PortfolioOptions));
         const preselectedPortfolio = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.SelectedPortfolio as string ?? string.Empty));
+        const programOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Programs));
+        const testCodeOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TestorProducts));
     </script>
     <script src="~/js/ajax-form-validation.js"></script>
     <script src="~/js/common/multicolumn-dropdown.component.js"></script>
