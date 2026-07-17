@@ -228,7 +228,7 @@ namespace Apha.FPS.Application.Services
                 throw new BusinessValidationErrorException(new List<BusinessValidationError>
                 {
                     new BusinessValidationError(
-                        "There are associated records in the WorkgroupGrade table so this record cannot be deleted.",
+                        "There are associated records in the system so this record cannot be deleted.",
                         "WORKGROUPGRADE_FK_VIOLATION")
                 });
             }
