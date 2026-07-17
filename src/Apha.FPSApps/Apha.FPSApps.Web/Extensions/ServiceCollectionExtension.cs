@@ -1,4 +1,5 @@
 using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.ExcelImport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -57,8 +58,12 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
+            //   TestListVlaService delegates to IPactApiClient.PactTestList (PACT API).
+            //   FpsYear filtering is handled by the PACT DbContext global query filter.
+            services.AddScoped<ITestListVlaService, TestListVlaService>();
             services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IExcelImportService, ExcelImportService>();
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IAdditionalCostService, AdditionalCostService>();
             services.AddScoped<IAccountCategoryService, AccountCategoryService>();
@@ -94,7 +99,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();
             services.AddScoped<Apha.FPSApps.Application.Interfaces.FPS.IUserService, Apha.FPSApps.Application.Services.FPS.UserService>();
-            services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
+            services.AddScoped<IRecreateSummaryService, RecreateSummaryService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
