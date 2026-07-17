@@ -40,6 +40,10 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<DivisionViewModel, DivisionDto>().ReverseMap();
             CreateMap<DivisionGradeItem, DivisionGradeDto>().ReverseMap();
             CreateMap<GradeItem, GradeDto>().ReverseMap();
+
+            // Maps CostCentreItem (DataGrid row: CostCentreNo double, ProfitCentre string) <-> CostCentreDto
+            CreateMap<CostCentreItem, CostCentreDto>().ReverseMap();
+
             CreateMap<ResourceCentreMaintenanceItem, ProfitCentreDto>().ReverseMap();
             CreateMap<TestPlanItem, TestRequirementDto>().ReverseMap();
             CreateMap<AdditionalCostItemViewModel, AdditionalCostDto>().ReverseMap();
@@ -53,9 +57,17 @@ namespace Apha.FPSApps.Web.Mappings
             // PortfolioNew
             CreateMap<ProjectDto, PortfolioNewViewModel>().ReverseMap();
 
-            //Work Group Staff Maintenance
+            // Work Group Staff Maintenance
             CreateMap<WorkGroupEmployeeStaffItem, WorkGroupEmployeeStaffDto>().ReverseMap();
             // Resource Set-Up
+            CreateMap<SetUpStaffResourcesItem, WorkGroupEmployeeStaffDto>()
+                .ForMember(d => d.PersonStatus,   o => o.Ignore())
+                .ForMember(d => d.PersonClass,     o => o.Ignore())
+                .ForMember(d => d.TimeRecorder,    o => o.Ignore())
+                .ForMember(d => d.StartDate,       o => o.Ignore())
+                .ForMember(d => d.EndDate,         o => o.Ignore())
+                .ForMember(d => d.HoursPerWeek,    o => o.Ignore())
+                .ReverseMap();
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
 
             // ProfitCentreGradeMaint
@@ -144,6 +156,19 @@ namespace Apha.FPSApps.Web.Mappings
             // UserEmail is NOT in AdditionalCostLogDto (requires UserId→email resolution); Ignore() it.
             CreateMap<AdditionalCostLogDto, AdditionalCostLogItem>()
                 .ForMember(d => d.UserEmail, o => o.Ignore());
+
+            // TestListVla grid row ↔ DTO (frmTestList / fsubTest_MainList):
+            CreateMap<TestorProductDto, TestListVlaItem>().ReverseMap();
+
+            // TestRCCost grid row ↔ DTO (fsubTestRCPrice / Component Charges general tab):
+            CreateMap<TestRCCostItem, TestRCCostDto>().ReverseMap();
+
+            // TestRequirementRCCost grid row ↔ DTO (fsubTestRequirementRCPrice / Component Charges project tab):
+            CreateMap<TestRequirementRCCostItem, TestRequirementRCCostDto>().ReverseMap();
+
+            // TestRequirementItem grid row ↔ DTO (Test Requirements tab — stage2TestRequirementsGrid):
+            // Convention ReverseMap: Buyer, NoRequired, UnitPrice, TestCode, FpsYear all match DTO names.
+            CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
         }
     }
 }

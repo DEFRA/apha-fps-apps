@@ -1,4 +1,4 @@
-using Apha.FPS.Core.Entities;
+﻿using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -96,18 +96,21 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<WorkGroupEmployeeView> WorkGroupEmployeeViews { get; set; }
         public virtual DbSet<PactStaff> PactStaffs { get; set; }
 
-
         public virtual DbSet<ProjectStaffPlanView> ProjectStaffPlanViews { get; set; }
         public virtual DbSet<ProjectGroupStaffPlanView> ProjectGroupStaffPlanViews { get; set; }
 
         public virtual DbSet<ProjectProfitabilityVlaView> ProjectProfitabilityVlaViews { get; set; }
 
-
         public virtual DbSet<Bid> Bids { get; set; }
         public virtual DbSet<BidView> BidViews { get; set; }
         public virtual DbSet<Purchase> Purchases { get; set; }
+        public virtual DbSet<TestOrProduct> TestOrProducts { get; set; }
+        public virtual DbSet<TestRCCost> TestRCCosts { get; set; }
+        public virtual DbSet<TestRequirementRCCost> TestRequirementRCCosts { get; set; }
         public virtual DbSet<ContributionSummaryView> VQryFrmTimeSellerPcViews { get; set; }
         public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; }
+
+        public virtual DbSet<CostCentre> CostCentres { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -242,7 +245,6 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new AdditionalCostLogMap());
             modelBuilder.Entity<AdditionalCostLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-
             modelBuilder.ApplyConfiguration(new SurvFFSubmissionMap());
             modelBuilder.Entity<SurvFFSubmission>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -281,7 +283,6 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new MilestoneMap());
 
             modelBuilder.ApplyConfiguration(new ProjectMonthFinalMap());
-
 
             modelBuilder.ApplyConfiguration(new TimeCostCalcsViewMap());
             modelBuilder.Entity<TimeCostCalcsView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -333,9 +334,20 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new GradeMap());
             modelBuilder.Entity<Grade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new TestOrProductMap());
+            modelBuilder.Entity<TestOrProduct>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TestRCCostMap());
+            modelBuilder.Entity<TestRCCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TestRequirementRCCostMap());
+            modelBuilder.Entity<TestRequirementRCCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new TotalBusinessOverheadsMap());
             modelBuilder.Entity<TotalBusinessOverheads>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new CostCentreMap());
+            modelBuilder.Entity<CostCentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }
