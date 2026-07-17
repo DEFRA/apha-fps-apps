@@ -57,6 +57,8 @@ namespace Apha.Common.Constants
         public const string UpdateFormRequired = "api/v1/milestone/{0}/formrequired";
         public const string GetAllProjectsForMilestone = "api/v1/projectlist/AllProjectsMilestone";
         public const string GetProjectsDetailsForMilestone = "api/v1/projectlist/ProjectDetailsMilestone/{0}";
+        public const string GetProjectYearManagers = "api/v1/pmd/projectyearmanagers/{0}";
+        public const string GetPMDMilestones = "api/v1/pmd/milestones";
 
         // Milestone Types
         public const string GetMilestoneTypes = "api/v1/milestone/milestonetypes";

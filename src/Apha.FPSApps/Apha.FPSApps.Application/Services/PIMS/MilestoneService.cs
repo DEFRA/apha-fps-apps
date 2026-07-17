@@ -18,7 +18,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
         }
 
         public async Task<ApiResponseDto<List<MilestoneDto>>> GetAllMilestonesAsync(QueryParameters<string> parameters, string project)
-            => await _client.PimsMilestone.GetAllMilestonesAsync(parameters, project);
+            => await _client.PimsMilestone.GetAllMilestonesAsync(parameters, project);      
 
         public async Task<ApiResponseDto<MilestoneDto>> GetMilestoneAsync(string project, string number)
             => await _client.PimsMilestone.GetMilestoneAsync(project, number);
@@ -80,6 +80,10 @@ namespace Apha.FPSApps.Application.Services.PIMS
 
         public async Task<ApiResponseDto<object>> ImportWithOverwriteAsync(string project)
             => await _client.PimsMilestone.ImportWithOverwriteAsync(project);
-        
+
+        public async Task<ApiResponseDto<List<ProjectYearManagerDto>>> GetProjectYearManagersAsync(int year)
+            => await _client.PimsMilestone.GetProjectYearManagersAsync(year);
+        public async Task<ApiResponseDto<List<MilestoneDto>>> GetPMDMilestonesAsync(QueryParameters<string> parameters, string project)
+           => await _client.PimsMilestone.GetPMDMilestonesAsync(parameters, project);
     }
 }

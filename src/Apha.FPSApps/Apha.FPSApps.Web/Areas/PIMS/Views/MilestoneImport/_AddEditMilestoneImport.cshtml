@@ -1,0 +1,136 @@
+@model Apha.FPSApps.Web.Areas.PIMS.Models.StagingMilestoneItem
+
+<div id="importEditModal" class="govuk-edit-modal">
+    <div class="govuk-edit-modal-dialog">
+
+        <div class="govuk-edit-modal__header">
+            <h3 class="govuk-heading-s sup_margin_0">
+                @(ViewBag.IsAddingNew == true ? "Add Milestone Import Record" : "Edit Milestone Import Record")
+            </h3>
+            <button type="button" class="govuk-edit-modal__close-btn"
+                    onclick="closeImportEditModal()" aria-label="Close">&#x2715;</button>
+        </div>
+
+        <div class="govuk-edit-modal__body">
+            <div class="sup_flex_between_center sup_margin_bottom_10">
+                <div></div>
+              @*   <span class="app-mandatory-note">
+                    <span class="app-required" aria-hidden="true">*</span> Mandatory Fields
+                </span> *@
+            </div>
+
+            <form id="formImportEdit" class="app-form" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="Project" />
+                <input type="hidden" asp-for="IsAddingNew" value="@(ViewBag.IsAddingNew == true ? "true" : "false")" />
+                <input type="hidden" asp-for="TypeId" />
+                <input type="hidden" id="hdnModalTypeLookUp" name="TypeLookUp" value="@ViewBag.TypeLookUp" />
+               
+
+                <div class="govuk-error-summary" role="alert"
+                     aria-labelledby="importEditForm-error-title" tabindex="-1" style="display: none;">
+                    <h2 class="govuk-error-summary__title" id="importEditForm-error-title">There is a problem</h2>
+                    <div class="govuk-error-summary__body">
+                        <ul class="govuk-list govuk-error-summary__list"></ul>
+                    </div>
+                </div>
+
+                <fieldset class="govuk-fieldset">
+                    <legend class="govuk-visually-hidden">Milestone Import Record</legend>
+
+                    <div class="govuk-grid-row">
+                        <div class="govuk-grid-column-one-half">
+                            <div class="govuk-form-group sup_margin_bottom_10">
+                                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Number">
+                                    Number
+                                    @if(ViewBag.TypeLookUp == 'M')
+                                    {
+                                        <span class="app-required" aria-hidden="true">*</span>
+                                    }
+                                </label>
+                                <input class="govuk-input govuk-!-font-size-16 govuk-!-width-full"
+                                       asp-for="Number" type="text"
+                                       autocomplete="off" aria-required="true" />
+                                <span asp-validation-for="Number" class="govuk-error-message"></span>
+                            </div>
+                        </div>
+                        <div class="govuk-grid-column-one-half">
+                            <div class="govuk-form-group sup_margin_bottom_10">
+                                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="DateDue">
+                                    Date Due <span class="app-required" aria-hidden="true">*</span>
+                                </label>
+                                <div style="position:relative; display:inline-block; width:stretch;">
+                                    <input type="text"
+                                           id="ImportDateDueDisplay"
+                                           class="govuk-input govuk-!-font-size-16 govuk-!-width-full"
+                                           value="@(Model.DateDue != default ? Model.DateDue.ToString("dd/MM/yyyy") : string.Empty)"
+                                           autocomplete="off"
+                                           onclick="openImportDatePicker('ImportDateDuePicker')"
+                                           style="cursor:pointer;"
+                                           readonly>
+                                    <input type="hidden"
+                                           name="DateDue"
+                                           id="ImportDateDueBinding"
+                                           value="@(Model.DateDue != default ? Model.DateDue.ToString("yyyy-MM-dd") : string.Empty)">
+                                    <input type="date"
+                                           id="ImportDateDuePicker"
+                                           value="@(Model.DateDue != default ? Model.DateDue.ToString("yyyy-MM-dd") : string.Empty)"
+                                           style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                           onchange="syncImportDateToText('ImportDateDuePicker', 'ImportDateDueDisplay', 'ImportDateDueBinding')">
+                                </div>
+                                <span asp-validation-for="DateDue" class="govuk-error-message"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="govuk-grid-row">
+                        <div class="govuk-grid-column-full">
+                            <div class="govuk-form-group sup_margin_bottom_10">
+                                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Description">
+                                    Description <span class="app-required" aria-hidden="true">*</span>
+                                </label>
+                                <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
+                                          asp-for="Description" rows="3"
+                                          aria-required="true"></textarea>
+                                <span asp-validation-for="Description" class="govuk-error-message"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                </fieldset>
+            </form>
+        </div>
+
+        <div class="govuk-edit-modal__footer">
+            <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+                    data-module="govuk-button" onclick="closeImportEditModal()">Cancel</button>
+            <button type="button" class="govuk-button sup_margin_0"
+                    data-module="govuk-button" onclick="saveImport()">
+                @(ViewBag.IsAddingNew == true ? "Save" : "Update")
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function openImportDatePicker(pickerId) {
+        var picker = document.getElementById(pickerId);
+        if (picker) {
+            try { picker.showPicker(); } catch (e) { picker.click(); }
+        }
+    }
+
+    function syncImportDateToText(pickerId, displayId, hiddenId) {
+        var picker = document.getElementById(pickerId);
+        if (picker.value) {
+            var parts = picker.value.split('-');
+            document.getElementById(displayId).value = parts[2] + '/' + parts[1] + '/' + parts[0];
+            document.getElementById(hiddenId).value = picker.value;
+        } else {
+            document.getElementById(displayId).value = '';
+            document.getElementById(hiddenId).value = '';
+        }
+    }
+</script>

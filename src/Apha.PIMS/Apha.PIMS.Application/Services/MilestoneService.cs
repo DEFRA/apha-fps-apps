@@ -34,6 +34,21 @@ namespace Apha.PIMS.Application.Services
             };
         }
 
+        public async Task<PaginatedResult<MilestoneDto>> GetPMDMilestonesAsync(QueryParameters<string> parameters, string project)
+        {
+            PaginationParameters<string> paginationParams = _mapper.Map<PaginationParameters<string>>(parameters);
+            PagedData<Milestone> pagedData = await _repository.GetPMDMilestonesAsync(paginationParams, project);
+            List<MilestoneDto> dtos = _mapper.Map<List<MilestoneDto>>(pagedData.Data);
+            foreach (MilestoneDto dto in dtos)
+                dto.IsLate = dto.DateDue != default && dto.DateCompleted is null && dto.DateDue.Date < DateTime.Today;
+
+            return new PaginatedResult<MilestoneDto>
+            {
+                Data = dtos,
+                PaginationData = _mapper.Map<PaginationDto>(pagedData.PaginationData)
+            };
+        }
+
         public async Task<MilestoneDto?> GetMilestoneAsync(string project, string number)
         {
             Milestone? entity = await _repository.GetMilestoneAsync(project, number);
@@ -269,5 +284,11 @@ namespace Apha.PIMS.Application.Services
 
         public async Task<string> GetNextMilestoneNumberAsync(string project, int year)
             => await _repository.GetNextMilestoneNumberAsync(project, year);
+
+        public async Task<List<ProjectYearManagerDto>> GetProjectYearManagersAsync(int year)
+        {
+            List<ProjectYearManager> entities = await _repository.GetProjectYearManagersAsync(year);
+            return _mapper.Map<List<ProjectYearManagerDto>>(entities);
+        }
     }
 }

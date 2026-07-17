@@ -29,7 +29,7 @@ namespace Apha.PIMS.DataAccess.Repository
 
            
             return await ApplyPaging(query, parameters.Page, parameters.PageSize);
-        }
+        }               
 
         public async Task<Milestone?> GetMilestoneAsync(string project, string number)
             => await _dbContext.Milestones
@@ -467,6 +467,72 @@ namespace Apha.PIMS.DataAccess.Repository
             int slash = number.IndexOf('/');
             if (slash < 0 || slash >= number.Length - 1) return 0;
             return int.TryParse(number[(slash + 1)..], out int seq) ? seq : 0;
+        }
+
+        // ── Project Year Manager ─────────────────────────────────────────────────
+
+        /// <summary>
+        /// Gets project year manager details by filtering projects by year and joining with manager information
+        /// </summary>
+        /// <param name="year">The year to filter projects</param>
+        /// <returns>List of project year manager details</returns>
+        public async Task<List<ProjectYearManager>> GetProjectYearManagersAsync(int year)
+        {
+            var query = from project in _dbContext.MyTlkpProjects.AsNoTracking()
+                        join manager in _dbContext.ProjectManagers.AsNoTracking()
+                            on project.Manager equals manager.Projectmanager into managerGroup
+                        from manager in managerGroup.DefaultIfEmpty()
+                        where project.Year == year
+                        select new ProjectYearManager
+                        {
+                            ProjectYear = project.Year,
+                            ParentProject = project.Parentproject,
+                            Manager = project.Manager,
+                            ManagerNumber = manager != null ? manager.Mnumber : null
+                        };
+
+            return await query.ToListAsync();
+        }
+        public async Task<PagedData<Milestone>> GetPMDMilestonesAsync(PaginationParameters<string> parameters, string project)
+        {
+            DateTime fyStart = GetFYStart();
+            DateTime fyEnd = fyStart.AddYears(1).AddDays(-1);
+
+            IQueryable<Milestone> query =
+                from milestone in _dbContext.Milestones.AsNoTracking()
+                join milestoneType in _dbContext.MilestoneTypes.AsNoTracking()
+                    on milestone.IdType equals milestoneType.IdType.ToString()
+                where milestone.Project == project
+                      && milestone.DateDue >= fyStart
+                      && milestone.DateDue <= fyEnd
+                select new Milestone
+                {
+                    Project = milestone.Project,
+                    Number = milestone.Number,
+                    Description = milestone.Description,
+                    DateDue = milestone.DateDue,
+                    DateCompleted = milestone.DateCompleted,
+                    UnderSdReview = milestone.UnderSdReview,
+                    OnTarget = milestone.OnTarget,
+                    ProjectLeaderComment = milestone.ProjectLeaderComment,
+                    IdType = milestoneType.MilestoneDeliverable.HasValue
+                        ? milestoneType.MilestoneDeliverable.Value.ToString()
+                        : null
+                };
+
+            query = ApplyFilter(query, parameters.Filter);
+            query = ApplySorting(query, parameters.SortBy, parameters.Descending);
+
+            return await ApplyPaging(query, parameters.Page, parameters.PageSize);
+        }
+
+        private static DateTime GetFYStart()
+        {
+            int currentYear = DateTime.Today.Year;
+            int currentMonth = DateTime.Today.Month;
+
+            int fyYear = currentMonth < 6 ? currentYear - 1 : currentYear;
+            return new DateTime(fyYear, 4, 1);
         }
     }
 }

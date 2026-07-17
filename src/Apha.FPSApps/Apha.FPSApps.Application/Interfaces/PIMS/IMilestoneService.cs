@@ -35,6 +35,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<List<StagingMilestoneDto>>> ValidateStagingAsync(string project, string? typeId, bool isDeliverableMode);
         Task<ApiResponseDto<object>> ImportStagingAsync(string project);
         Task<ApiResponseDto<object>> ImportWithOverwriteAsync(string project);
-        
+        Task<ApiResponseDto<List<ProjectYearManagerDto>>> GetProjectYearManagersAsync(int year);
+        Task<ApiResponseDto<List<MilestoneDto>>> GetPMDMilestonesAsync(QueryParameters<string> parameters, string project);
     }
 }

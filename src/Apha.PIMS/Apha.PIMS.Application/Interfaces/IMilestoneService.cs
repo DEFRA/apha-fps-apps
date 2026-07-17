@@ -9,6 +9,7 @@ namespace Apha.PIMS.Application.Interfaces
     public interface IMilestoneService
     {
         Task<PaginatedResult<MilestoneDto>> GetAllMilestonesAsync(QueryParameters<string> parameters, string project);
+        Task<PaginatedResult<MilestoneDto>> GetPMDMilestonesAsync(QueryParameters<string> parameters, string project);
         Task<MilestoneDto?> GetMilestoneAsync(string project, string number);
         Task<MilestoneDto> SaveMilestoneAsync(MilestoneDto dto, string? changedBy = null);
         Task<MilestoneDto> UpdateMilestoneAsync(MilestoneDto dto, string? changedBy = null);
@@ -37,5 +38,7 @@ namespace Apha.PIMS.Application.Interfaces
         Task<int> ImportStagingAsync(string project, string? changedBy = null);
         Task<int> ImportWithOverwriteAsync(string project, string? changedBy = null);
         Task<string> GetNextMilestoneNumberAsync(string project, int year);
+
+        Task<List<ProjectYearManagerDto>> GetProjectYearManagersAsync(int year);
     }
 }
