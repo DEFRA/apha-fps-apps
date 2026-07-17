@@ -107,9 +107,6 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
 
             // StaffResourceUtilisation
             CreateMap<StaffResourceUtilisationView, StaffResourceUtilisationDto>().ReverseMap();
-            .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
-            .ReverseMap()
-            .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
             //TestListVLA
             CreateMap<TestRCCost, TestRCCostDto>().ReverseMap();
             CreateMap<TestRequirementRCCost, TestRequirementRCCostDto>().ReverseMap();
