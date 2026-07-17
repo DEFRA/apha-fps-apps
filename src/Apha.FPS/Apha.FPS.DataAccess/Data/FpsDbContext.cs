@@ -55,6 +55,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<StaffGeneralView> StaffGeneralViews { get; set; }
         public virtual DbSet<StaffView> StaffViews { get; set; }
         public virtual DbSet<StaffPickView> StaffPickViews { get; set; }
+        public virtual DbSet<StaffJobRmView> StaffJobRmViews { get; set; }
         public virtual DbSet<AnimalRequestView> AnimalRequestViews { get; set; }
         public virtual DbSet<PactProjectView> PactProjectViews { get; set; }
         public virtual DbSet<PactWorkGroupGradeView> PactWorkGroupGradeViews { get; set; }
@@ -217,6 +218,8 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new StaffPickViewMap());
             modelBuilder.Entity<StaffPickView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new StaffJobRmViewMap());
 
             modelBuilder.ApplyConfiguration(new AnimalRequestViewMap());
             modelBuilder.Entity<AnimalRequestView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);

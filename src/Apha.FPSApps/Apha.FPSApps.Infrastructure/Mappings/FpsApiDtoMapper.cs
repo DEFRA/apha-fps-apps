@@ -181,6 +181,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Total Business Overheads
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
+            // StaffResourceUtilisation
+            CreateMap<StaffResourceUtilisationDto, StaffResourceUtilisationRes>().ReverseMap();
 
             //  TestListVLA
             CreateMap<TestRCCostDto, TestRCCostRes>().ReverseMap();

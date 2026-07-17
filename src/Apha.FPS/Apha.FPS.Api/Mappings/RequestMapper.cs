@@ -156,6 +156,10 @@ namespace Apha.FPS.Api.Mappings
             // MaintTotalBusinessOverheads
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
+            // StaffResourceUtilisation
+            CreateMap<StaffResourceUtilisationDto, StaffResourceUtilisationRes>().ReverseMap();
+
+
         }
     }
 }
