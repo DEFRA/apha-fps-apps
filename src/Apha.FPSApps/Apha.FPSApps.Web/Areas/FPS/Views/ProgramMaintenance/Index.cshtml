@@ -2,14 +2,14 @@
 @using Apha.FPSApps.Web.Models.Components.DataGrid
 @model DataGridConfig<ProgramViewModel>
 @{
-    ViewData["Title"] = "Maintain Program";
+    ViewData["Title"] = "Program Maintenance";
 }
 <main id="main-content">
     <div class="container-fluid">
         <!-- Title section -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2">Maintain Program</h1>
+                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">Program Maintenance</h1>
             </div>
         </div>
 
@@ -47,9 +47,9 @@
 
 
 @section Scripts {
-    <script src="~/js/ajax-form-validation.js"></script>   
+    <script src="~/js/ajax-form-validation.js"></script>
     <script>
-        function addProgram(btn) {            
+        function addProgram(btn) {
             $.ajax({
                 url: '/FPS/ProgramMaintenance/Create',
                 type: 'GET',
@@ -208,7 +208,7 @@
                 }
             });
             return isValid;
-        } 
+        }
     </script>
 
     @{

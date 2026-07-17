@@ -78,7 +78,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         // POST: Create
-        [HttpPost]        
+        [HttpPost]
         public async Task<IActionResult> Create([FromBody] ProgramViewModel model)
         {
 
@@ -97,7 +97,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                         }))
                 });
             }
-            
+
             // Ensure Target is always stored as a positive value
             if (model.Target.HasValue)
                 model.Target = Math.Abs(model.Target.Value);
@@ -133,7 +133,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         // POST: Edit
-        [HttpPost]        
+        [HttpPost]
         public async Task<IActionResult> Edit([FromBody]ProgramViewModel model)
         {
             if (!ModelState.IsValid)
@@ -222,7 +222,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var programGridConfig = new DataGridConfig<ProgramViewModel>
             {
                 GridId = "programGrid",
-                Title = "Program Maintenance",
+                Title = "Programs",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "ProgramNo",
