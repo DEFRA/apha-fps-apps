@@ -254,5 +254,13 @@ namespace Apha.Common.Constants
         public const string GetUserPermissions = "api/v1/user/{0}/permissions";
         public const string SaveUserPermissions = "api/v1/user/{0}/permissions";
         public const string GetPermissionOptions = "api/v1/user/options";
+
+        // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
+        public const string GetAllCostCentres = "api/v1/costcentre";
+        public const string GetPagedCostCentres = "api/v1/costcentre/paged";
+        public const string GetCostCentreById = "api/v1/costcentre/{0}";
+        public const string CreateCostCentre = "api/v1/costcentre";
+        public const string UpdateCostCentre = "api/v1/costcentre/{0}";
+        public const string DeleteCostCentre = "api/v1/costcentre/{0}";
     }
 }

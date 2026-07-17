@@ -4,8 +4,6 @@ using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
 
-
-
 namespace Apha.FPS.Application.Mappings
 {
     public class EntityMapper : Profile
@@ -84,6 +82,10 @@ namespace Apha.FPS.Application.Mappings
 CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap();
 
             CreateMap<User, UserDto>().ReverseMap();
+
+            //   Property names are aligned between entity and DTO; no ForMember overrides needed.
+            //   Covers: CostCentreNo (double), ProfitCentre (string), FpsYear (int).
+            CreateMap<CostCentre, CostCentreDto>().ReverseMap();
 
             // BudgetResourceLevel
             CreateMap<Bid, BidDto>().ReverseMap();

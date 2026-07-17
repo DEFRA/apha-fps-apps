@@ -5,13 +5,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
     public class SetUpStaffResourcesViewModel
     {
-        // TRANSFORMENGINE: Resource Centre dropdown — populated from IProfitCentreService.GetAllProfitCentresAsync()
         public List<SelectListItem> ResourceCentres { get; set; } = new List<SelectListItem>();
 
         /// <summary>Currently selected Resource Centre (profit centre ID).</summary>
         public string SelectedResourceCentre { get; set; } = string.Empty;
 
-        // TRANSFORMENGINE: Grade/WorkGroup list — populated from IWorkGroupGradeService.GetWorkGroupGradeAsync(profitCentre)
         //   Each entry is a WgGrade code shown in the left-panel listbox (ssrGradeList)
         public List<string> GradeList { get; set; } = new List<string>();
 
@@ -24,10 +22,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// <summary>Selected WorkGroup display text (ssrSelectedWorkgroup input).</summary>
         public string SelectedWorkgroup { get; set; } = string.Empty;
 
-        // TRANSFORMENGINE: Staff DataGrid — populated from IWorkGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync()
         public DataGridConfig<SetUpStaffResourcesItem> StaffGrid { get; set; } = new DataGridConfig<SetUpStaffResourcesItem>();
 
-        // TRANSFORMENGINE: Summary panel fields — computed server-side from staff grid data
         /// <summary>Grade code shown in summary box (ssrSummaryGrade).</summary>
         public string SummaryGrade { get; set; } = string.Empty;
 
