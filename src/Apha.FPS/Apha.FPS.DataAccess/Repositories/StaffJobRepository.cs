@@ -401,14 +401,14 @@ namespace Apha.FPS.DataAccess.Repositories
                       && EF.Functions.ILike(s.UserEmail!, _requestContext.UserEmailId)
                       && wg.Workgroup == workgroup
 
-                select new
+                select new RawUtilisationRow
                 {
-                    pc.ProfitCentre,
-                    wg.Workgroup,
-                    wg.WgGrade,
-                    s.StaffId,
-                    s.Name,
-                    s.HrsAvail,
+                    ProfitCentre  = pc.ProfitCentre,
+                    Workgroup     = wg.Workgroup,
+                    WgGrade       = wg.WgGrade,
+                    StaffId       = s.StaffId,
+                    Name          = s.Name,
+                    HrsAvail      = s.HrsAvail,
                     Program       = p  != null ? p.Program       : null,
                     ProjectStatus = p  != null ? p.ProjectStatus : null,
                     PlannedHours  = sj != null ? sj.PlannedHours : (double?)null
@@ -426,41 +426,61 @@ namespace Apha.FPS.DataAccess.Repositories
                     x.Name,
                     x.HrsAvail
                 })
-                .Select(g =>
-                {
-                    double hrsAvail     = g.Key.HrsAvail ?? 0d;
-                    double plannedZt    = g.Sum(x => x.Program       == "zt_prog"      ? (x.PlannedHours ?? 0d) : 0d);
-                    double nApproved    = g.Sum(x => x.ProjectStatus == "Not Approved" ? (x.PlannedHours ?? 0d) : 0d);
-                    double approvedRaw  = g.Sum(x => x.ProjectStatus == "Approved"     ? (x.PlannedHours ?? 0d) : 0d);
-
-                    double approvedSoct = Math.Round(approvedRaw - plannedZt,              2);
-                    double availSoct    = Math.Round(hrsAvail    - plannedZt,              2);
-                    double left         = Math.Round(availSoct   - approvedSoct - nApproved, 2);
-
-                    return new StaffResourceUtilisationView
-                    {
-                        ProfitCentre       = g.Key.ProfitCentre,
-                        WorkGroup          = g.Key.Workgroup,
-                        WgGrade            = g.Key.WgGrade,
-                        StaffId            = g.Key.StaffId,
-                        Name               = g.Key.Name,
-                        HrsAvail           = hrsAvail,
-                        PlannedZt          = plannedZt,
-                        AvailSoct          = availSoct,
-                        NotApprovedSoct    = nApproved,
-                        ApprovedSoct       = approvedSoct,
-                        Left               = left,
-                        ApprovedUtilPct    = hrsAvail == 0d ? null : Math.Round(approvedSoct              * 100d / hrsAvail, 2),
-                        NotApprovedUtilPct = hrsAvail == 0d ? null : Math.Round(nApproved                 * 100d / hrsAvail, 2),
-                        TotalUtilPct       = hrsAvail == 0d ? null : Math.Round((approvedSoct + nApproved) * 100d / hrsAvail, 2)
-                    };
-                })
+                .Select(g => BuildUtilisationView(g))
                 .AsQueryable();
 
             result = result.Where(e => e.WorkGroup == workgroup).AsQueryable();
             result = ApplyStaffResourceUtilisationFilter(result, query.Filter);
             result = ApplyStaffResourceUtilisationSorting(result, query.SortBy, query.Descending);
             return base.ApplyPaging(result.ToList(), query.Page, query.PageSize);
+        }
+
+        private static StaffResourceUtilisationView BuildUtilisationView(
+            IEnumerable<RawUtilisationRow> group)
+        {
+            var first = group.First();
+
+            double hrsAvail     = first.HrsAvail ?? 0d;
+            double plannedZt    = group.Sum(x => x.Program       == "zt_prog"      ? (x.PlannedHours ?? 0d) : 0d);
+            double nApproved    = group.Sum(x => x.ProjectStatus == "Not Approved" ? (x.PlannedHours ?? 0d) : 0d);
+            double approvedRaw  = group.Sum(x => x.ProjectStatus == "Approved"     ? (x.PlannedHours ?? 0d) : 0d);
+
+            double approvedSoct = Math.Round(approvedRaw - plannedZt,               2);
+            double availSoct    = Math.Round(hrsAvail    - plannedZt,               2);
+            double left         = Math.Round(availSoct   - approvedSoct - nApproved, 2);
+
+            bool hasHrs = hrsAvail != 0d;
+
+            return new StaffResourceUtilisationView
+            {
+                ProfitCentre       = first.ProfitCentre,
+                WorkGroup          = first.Workgroup,
+                WgGrade            = first.WgGrade,
+                StaffId            = first.StaffId,
+                Name               = first.Name,
+                HrsAvail           = hrsAvail,
+                PlannedZt          = plannedZt,
+                AvailSoct          = availSoct,
+                NotApprovedSoct    = nApproved,
+                ApprovedSoct       = approvedSoct,
+                Left               = left,
+                ApprovedUtilPct    = hasHrs ? Math.Round(approvedSoct              * 100d / hrsAvail, 2) : null,
+                NotApprovedUtilPct = hasHrs ? Math.Round(nApproved                 * 100d / hrsAvail, 2) : null,
+                TotalUtilPct       = hasHrs ? Math.Round((approvedSoct + nApproved) * 100d / hrsAvail, 2) : null
+            };
+        }
+
+        private sealed class RawUtilisationRow
+        {
+            public string? ProfitCentre { get; set; }
+            public string? Workgroup { get; set; }
+            public string? WgGrade { get; set; }
+            public string? StaffId { get; set; }
+            public string? Name { get; set; }
+            public double? HrsAvail { get; set; }
+            public string? Program { get; set; }
+            public string? ProjectStatus { get; set; }
+            public double? PlannedHours { get; set; }
         }
 
         private static IQueryable<StaffResourceUtilisationView> ApplyStaffResourceUtilisationFilter(
@@ -489,24 +509,25 @@ namespace Apha.FPS.DataAccess.Repositories
         private static IQueryable<StaffResourceUtilisationView> ApplyStaffResourceUtilisationSorting(
             IQueryable<StaffResourceUtilisationView> query, string? sortBy, bool descending)
         {
-            if (string.IsNullOrEmpty(sortBy))
-                return query.OrderBy(x => x.WgGrade);
-
-            return sortBy.ToLower() switch
+            Expression<Func<StaffResourceUtilisationView, object?>> keySelector = (sortBy?.ToLower()) switch
             {
-                "wggrade" => descending ? query.OrderByDescending(x => x.WgGrade) : query.OrderBy(x => x.WgGrade),
-                "name" => descending ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name),
-                "hrsavail" => descending ? query.OrderByDescending(x => x.HrsAvail) : query.OrderBy(x => x.HrsAvail),
-                "plannedzt" => descending ? query.OrderByDescending(x => x.PlannedZt) : query.OrderBy(x => x.PlannedZt),
-                "availsoct" => descending ? query.OrderByDescending(x => x.AvailSoct) : query.OrderBy(x => x.AvailSoct),
-                "notapprovedsoct" => descending ? query.OrderByDescending(x => x.NotApprovedSoct) : query.OrderBy(x => x.NotApprovedSoct),
-                "approvedsoct" => descending ? query.OrderByDescending(x => x.ApprovedSoct) : query.OrderBy(x => x.ApprovedSoct),
-                "left" => descending ? query.OrderByDescending(x => x.Left) : query.OrderBy(x => x.Left),
-                "approvedutilpct" => descending ? query.OrderByDescending(x => x.ApprovedUtilPct) : query.OrderBy(x => x.ApprovedUtilPct),
-                "notapprovedutilpct" => descending ? query.OrderByDescending(x => x.NotApprovedUtilPct) : query.OrderBy(x => x.NotApprovedUtilPct),
-                "totalutilpct" => descending ? query.OrderByDescending(x => x.TotalUtilPct) : query.OrderBy(x => x.TotalUtilPct),
-                _ => query.OrderBy(x => x.WgGrade)
+                "name" => x => x.Name,
+                "hrsavail" => x => x.HrsAvail,
+                "plannedzt" => x => x.PlannedZt,
+                "availsoct" => x => x.AvailSoct,
+                "notapprovedsoct" => x => x.NotApprovedSoct,
+                "approvedsoct" => x => x.ApprovedSoct,
+                "left" => x => x.Left,
+                "approvedutilpct" => x => x.ApprovedUtilPct,
+                "notapprovedutilpct" => x => x.NotApprovedUtilPct,
+                "totalutilpct" => x => x.TotalUtilPct,
+                _ => x => x.WgGrade
             };
+
+            bool applyDescending = descending && !string.IsNullOrEmpty(sortBy);
+            return applyDescending
+                ? query.OrderByDescending(keySelector)
+                : query.OrderBy(keySelector);
         }
 
         public async Task<double> GetZtTotalHoursByStaffIdAsync(string staffId)
