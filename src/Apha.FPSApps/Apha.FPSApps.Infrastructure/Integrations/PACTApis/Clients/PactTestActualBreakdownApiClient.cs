@@ -21,7 +21,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<List<TestActualBreakdownDto>>> GetPagedAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<List<TestActualBreakdownDto>>> GetActualsTestsWithPlannedDataByWorkgroupAsync(QueryParameters<string> query)
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedTestActualBreakdown, query);
             var response = await _http.GetAsync<List<TestActualBreakdownRes>>(url);

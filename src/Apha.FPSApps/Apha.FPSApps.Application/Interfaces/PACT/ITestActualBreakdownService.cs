@@ -6,6 +6,6 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
 {
     public interface ITestActualBreakdownService
     {
-        Task<ApiResponseDto<List<TestActualBreakdownDto>>> GetPagedAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<List<TestActualBreakdownDto>>> GetActualsTestsWithPlannedDataByWorkgroupAsync(QueryParameters<string> query);
     }
 }

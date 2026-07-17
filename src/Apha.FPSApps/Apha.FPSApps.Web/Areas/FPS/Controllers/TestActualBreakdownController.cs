@@ -46,7 +46,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                              ?? new Dictionary<string, string>();
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _testActualBreakdownService.GetPagedAsync(query);
+            var response = await _testActualBreakdownService.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
 
             var rows = new List<TestActualBreakdownItem>();
             PaginationModel pagination = new();

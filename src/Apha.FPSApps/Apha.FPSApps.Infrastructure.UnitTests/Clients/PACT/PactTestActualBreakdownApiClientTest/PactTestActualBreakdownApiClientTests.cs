@@ -48,7 +48,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestActualBreak
             _mapper.Map<ApiResponseDto<List<TestActualBreakdownDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetPagedAsync(query);
+            var result = await _client.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -99,7 +99,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestActualBreak
             _mapper.Map<ApiResponseDto<List<TestActualBreakdownDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetPagedAsync(query);
+            var result = await _client.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
 
             // Assert
             var item = result.Data!.Single();
@@ -127,7 +127,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestActualBreak
             _mapper.Map<ApiResponseDto<List<TestActualBreakdownDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetPagedAsync(query);
+            var result = await _client.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -158,7 +158,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestActualBreak
             _mapper.Map<ApiResponseDto<List<TestActualBreakdownDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetPagedAsync(query);
+            var result = await _client.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -184,7 +184,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestActualBreak
             _mapper.Map<ApiResponseDto<List<TestActualBreakdownDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetPagedAsync(query);
+            var result = await _client.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -209,7 +209,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestActualBreak
             _mapper.Map<ApiResponseDto<List<TestActualBreakdownDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetPagedAsync(query);
+            var result = await _client.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
 
             // Assert
             Assert.False(result.Success);
@@ -230,7 +230,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestActualBreak
             _mapper.Map<ApiResponseDto<List<TestActualBreakdownDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.GetPagedAsync(query);
+            await _client.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
 
             // Assert
             await _http.Received(1).GetAsync<List<TestActualBreakdownRes>>(Arg.Any<string>());
@@ -248,7 +248,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestActualBreak
             _mapper.Map<ApiResponseDto<List<TestActualBreakdownDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.GetPagedAsync(query);
+            await _client.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
 
             // Assert
             _mapper.Received(1).Map<ApiResponseDto<List<TestActualBreakdownDto>>>(apiResponse);
@@ -272,7 +272,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestActualBreak
             _mapper.Map<ApiResponseDto<List<TestActualBreakdownDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            await _client.GetPagedAsync(query);
+            await _client.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
 
             // Assert
             _mapper.Received(1).Map<ApiResponseDto<List<TestActualBreakdownDto>>>(apiResponse);
@@ -290,7 +290,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestActualBreak
             _mapper.Map<ApiResponseDto<List<TestActualBreakdownDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.GetPagedAsync(query);
+            await _client.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
 
             // Assert — URL passed to http executor must carry paging params
             await _http.Received(1).GetAsync<List<TestActualBreakdownRes>>(
@@ -318,7 +318,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestActualBreak
             _mapper.Map<ApiResponseDto<List<TestActualBreakdownDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetPagedAsync(query);
+            var result = await _client.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
 
             // Assert
             Assert.False(result.Success);

@@ -15,7 +15,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             _pactClient = pactClient;
         }
 
-        public async Task<ApiResponseDto<List<TestActualBreakdownDto>>> GetPagedAsync(QueryParameters<string> query)
-            => await _pactClient.PactTestActualBreakdown.GetPagedAsync(query);
+        public async Task<ApiResponseDto<List<TestActualBreakdownDto>>> GetActualsTestsWithPlannedDataByWorkgroupAsync(QueryParameters<string> query)
+            => await _pactClient.PactTestActualBreakdown.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
     }
 }

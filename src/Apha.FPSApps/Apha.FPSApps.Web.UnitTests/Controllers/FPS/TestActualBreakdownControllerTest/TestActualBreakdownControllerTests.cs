@@ -48,7 +48,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
             var items    = new List<TestActualBreakdownItem> { new() { TestCode = "PT0047" } };
             var pagedRes = ApiResponseDto<List<TestActualBreakdownDto>>.SuccessResponse(dtos, new PaginationDto());
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
             SetupItemMapper(dtos, items);
 
@@ -64,7 +64,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
         {
             var pagedRes = ApiResponseDto<List<TestActualBreakdownDto>>.SuccessResponse([], new PaginationDto());
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
             _mapper.Map<List<TestActualBreakdownItem>>(Arg.Any<List<TestActualBreakdownDto>>()).Returns([]);
 
@@ -89,7 +89,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
             };
             var pagedRes = ApiResponseDto<List<TestActualBreakdownDto>>.SuccessResponse(dtos, new PaginationDto());
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
             SetupItemMapper(dtos, items);
 
@@ -104,7 +104,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
         {
             var pagedRes = ApiResponseDto<List<TestActualBreakdownDto>>.SuccessResponse([], new PaginationDto());
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
             _mapper.Map<List<TestActualBreakdownItem>>(Arg.Any<List<TestActualBreakdownDto>>()).Returns([]);
 
@@ -120,7 +120,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
             var errors   = new List<ApiErrorDto> { new() { Code = "API_ERROR" } };
             var pagedRes = ApiResponseDto<List<TestActualBreakdownDto>>.FailureResponse(errors, new ApiMetaDto());
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
 
             var result = await _controller.Index();
@@ -134,7 +134,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
         {
             var pagedRes = ApiResponseDto<List<TestActualBreakdownDto>>.SuccessResponse([], new PaginationDto());
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
             _mapper.Map<List<TestActualBreakdownItem>>(Arg.Any<List<TestActualBreakdownDto>>()).Returns([]);
 
@@ -156,7 +156,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
             var pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 4030 };
             var pagedRes   = ApiResponseDto<List<TestActualBreakdownDto>>.SuccessResponse([], pagination);
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
             _mapper.Map<List<TestActualBreakdownItem>>(Arg.Any<List<TestActualBreakdownDto>>()).Returns([]);
 
@@ -180,7 +180,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
             var items    = new List<TestActualBreakdownItem> { new() { TestCode = "PT0047" } };
             var pagedRes = ApiResponseDto<List<TestActualBreakdownDto>>.SuccessResponse(dtos, new PaginationDto());
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
             SetupItemMapper(dtos, items);
 
@@ -217,7 +217,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
             };
             var pagedRes = ApiResponseDto<List<TestActualBreakdownDto>>.SuccessResponse(dtos, new PaginationDto());
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
             SetupItemMapper(dtos, items);
 
@@ -234,7 +234,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
             var request  = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
             var pagedRes = ApiResponseDto<List<TestActualBreakdownDto>>.SuccessResponse([], new PaginationDto());
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
             _mapper.Map<List<TestActualBreakdownItem>>(Arg.Any<List<TestActualBreakdownDto>>()).Returns([]);
 
@@ -252,7 +252,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
             var errors   = new List<ApiErrorDto> { new() { Code = "API_ERROR" } };
             var pagedRes = ApiResponseDto<List<TestActualBreakdownDto>>.FailureResponse(errors, new ApiMetaDto());
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
 
             var result  = await _controller.LoadGrid(request);
@@ -269,13 +269,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
             var request  = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = filter };
             var pagedRes = ApiResponseDto<List<TestActualBreakdownDto>>.SuccessResponse([], new PaginationDto());
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
             _mapper.Map<List<TestActualBreakdownItem>>(Arg.Any<List<TestActualBreakdownDto>>()).Returns([]);
 
             await _controller.LoadGrid(request);
 
-            await _service.Received(1).GetPagedAsync(
+            await _service.Received(1).GetActualsTestsWithPlannedDataByWorkgroupAsync(
                 Arg.Is<QueryParameters<string>>(q => q.Filter == filter));
         }
 
@@ -285,7 +285,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
             var request  = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = null };
             var pagedRes = ApiResponseDto<List<TestActualBreakdownDto>>.SuccessResponse([], new PaginationDto());
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
             _mapper.Map<List<TestActualBreakdownItem>>(Arg.Any<List<TestActualBreakdownDto>>()).Returns([]);
 
@@ -301,7 +301,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
             var pagination = new PaginationDto { PageNumber = 2, PageSize = 10, TotalRecords = 4030 };
             var pagedRes   = ApiResponseDto<List<TestActualBreakdownDto>>.SuccessResponse([], pagination);
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
             _mapper.Map<List<TestActualBreakdownItem>>(Arg.Any<List<TestActualBreakdownDto>>()).Returns([]);
 
@@ -320,7 +320,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestActualBreakdownControll
             var request  = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}", SortBy = "buyer", Descending = true };
             var pagedRes = ApiResponseDto<List<TestActualBreakdownDto>>.SuccessResponse([], new PaginationDto());
 
-            _service.GetPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
+            _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedRes);
             SetupQueryParamMapper();
             _mapper.Map<List<TestActualBreakdownItem>>(Arg.Any<List<TestActualBreakdownDto>>()).Returns([]);
 
