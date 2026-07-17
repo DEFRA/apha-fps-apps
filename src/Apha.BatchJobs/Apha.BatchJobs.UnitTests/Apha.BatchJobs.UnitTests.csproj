@@ -29,11 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Apha.BatchJobs.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="Unit\BatchJobTriggerControllerValidationTests.cs" />
-    <Compile Remove="Unit\TriggerAttemptStoreTests.cs" />
+    <ProjectReference Include="..\..\Apha.Common\Apha.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

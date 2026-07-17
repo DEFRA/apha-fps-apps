@@ -42,8 +42,7 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
                 q.fpsyear,
                 q.requestedby,
                 q.approved_by,
-                q.approved_at_utc,
-                q.configuration_json
+                q.approved_at_utc
             FROM fps.job_queue q
             JOIN fps.job_master m ON m.jobid = q.jobid
             JOIN fps.job_status s ON s.statusid = q.statusid AND s.jobid = q.jobid
@@ -63,8 +62,7 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
             FpsYear:          reader.IsDBNull(5) ? 0 : reader.GetInt32(5),
             RequestedBy:      reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
             ApprovedBy:       reader.IsDBNull(7) ? null : reader.GetString(7),
-            ApprovedAtUtc:    reader.IsDBNull(8) ? null : reader.GetDateTime(8),
-            ConfigurationJson: reader.IsDBNull(9) ? null : reader.GetString(9));
+            ApprovedAtUtc:    reader.IsDBNull(8) ? null : reader.GetDateTime(8));
     }
 
     /// <inheritdoc />
@@ -323,5 +321,46 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
         cmd.Parameters.AddWithValue("approvedby",     (object?)row.ApprovedBy  ?? DBNull.Value);
         cmd.Parameters.AddWithValue("appliedatutc",   row.AppliedAtUtc);
         await cmd.ExecuteNonQueryAsync(ct);
+    }
+
+    // ── Audit log ────────────────────────────────────────────────────────────
+
+    /// <inheritdoc />
+    public async Task WriteJobQueueLogAsync(
+        Guid jobQueueId,
+        string note,
+        string? actor,
+        CancellationToken cancellationToken = default)
+    {
+        await using var dbContext = _dbContextFactory.CreateDbContext();
+        await dbContext.Database.OpenConnectionAsync(cancellationToken);
+        var conn = (NpgsqlConnection)dbContext.Database.GetDbConnection();
+
+        // Resolve current statusid (required by fps.job_queue_log FK)
+        int? statusId = null;
+        await using (var statusCmd = conn.CreateCommand())
+        {
+            statusCmd.CommandText = "SELECT statusid FROM fps.job_queue WHERE jobqueueid = @jqid;";
+            statusCmd.Parameters.AddWithValue("jqid", jobQueueId);
+            var result = await statusCmd.ExecuteScalarAsync(cancellationToken);
+            statusId = result is null or DBNull ? null : (int?)Convert.ToInt32(result);
+        }
+
+        if (statusId is null)
+        {
+            _logger.LogWarning(
+                "WriteJobQueueLogAsync: jobqueueid {JobQueueId} not found; log entry skipped.", jobQueueId);
+            return;
+        }
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            INSERT INTO fps.job_queue_log (jobqueueid, statusid, performedby, logtime, note)
+            VALUES (@jobqueueid, @statusid, @performedby, NOW(), @note);";
+        cmd.Parameters.AddWithValue("jobqueueid",  jobQueueId);
+        cmd.Parameters.AddWithValue("statusid",    statusId.Value);
+        cmd.Parameters.AddWithValue("performedby", (object?)actor ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("note",        (object?)note ?? DBNull.Value);
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 }

@@ -53,6 +53,15 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
         var approvedBy    = entry.ApprovedBy;
         var appliedAt     = DateTime.UtcNow;
 
+        // ── US-XC-02: Log execution start ─────────────────────────────
+        await _repository.WriteJobQueueLogAsync(
+            jobQueueId,
+            $"Worker execution starting (FPS year {fpsYear}).",
+            approvedBy, cancellationToken);
+        _logger.LogInformation(
+            "[BulkRates.ExecutionStarted] JobQueueId={JobQueueId} | JobName={JobName} | FpsYear={FpsYear}",
+            jobQueueId, entry.JobName, fpsYear);
+
         // ── 2. Load staging rows ──────────────────────────────────────────
         var fecRows   = await _repository.GetFecStagingRowsAsync(jobQueueId, cancellationToken);
         var agrupRows = await _repository.GetAgrupStagingRowsAsync(jobQueueId, cancellationToken);
@@ -112,7 +121,7 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
                     continue;
                 }
 
-                var existsAgrup = await AgrupRowExistsAsync(conn, tx, row.TestCode, row.Buyer, fpsYear, cancellationToken);
+                var (existsAgrup, currentUnitPrice) = await GetAgrupCurrentRowAsync(conn, tx, row.TestCode, row.Buyer, fpsYear, cancellationToken);
 
                 if (!existsAgrup)
                 {
@@ -120,11 +129,15 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
                     historyRows.AddRange(BuildAgrupInsertHistory(row, entry, appliedAt));
                     agrupInserted++;
                 }
-                else
+                else if (row.AgrupNew != currentUnitPrice)
                 {
                     await UpdateAgrupRowAsync(conn, tx, row.TestCode, row.Buyer, fpsYear, row.AgrupNew.Value, cancellationToken);
-                    historyRows.AddRange(BuildAgrupUpdateHistory(row, entry, appliedAt));
+                    historyRows.AddRange(BuildAgrupUpdateHistory(row, currentUnitPrice, entry, appliedAt));
                     agrupUpdated++;
+                }
+                else
+                {
+                    agrupUnchanged++;
                 }
             }
 
@@ -136,6 +149,12 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
             _logger.LogInformation(
                 "BulkTestRatesUpdate committed | JobQueueId={JobQueueId} | FecInserted={FI} | FecUpdated={FU} | FecUnchanged={FC} | AgrupInserted={AI} | AgrupUpdated={AU} | AgrupUnchanged={AC}",
                 jobQueueId, fecInserted, fecUpdated, fecUnchanged, agrupInserted, agrupUpdated, agrupUnchanged);
+
+            // ── US-XC-02: Log commit summary ──────────────────────────────
+            await _repository.WriteJobQueueLogAsync(
+                jobQueueId,
+                $"Rate changes committed: FEC inserted={fecInserted}, updated={fecUpdated}, unchanged={fecUnchanged}; AGRUP inserted={agrupInserted}, updated={agrupUpdated}, unchanged={agrupUnchanged}.",
+                approvedBy, cancellationToken);
         }
 
         // ── 5. Delete staging rows AFTER successful commit (spec §10.6) ──
@@ -150,10 +169,13 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
 
     private static void ValidatePreconditions(BulkRatesJobQueueEntry entry, BulkRatesExecutionContext context)
     {
-        if (!string.Equals(entry.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+        // The orchestrator transitions Approved -> Running before invoking ExecuteAsync
+        // (see JobOrchestrator.RunAsync), so by the time this runs the persisted status
+        // is always 'Running' — checking for 'Approved' here would always fail.
+        if (!string.Equals(entry.Status, "Running", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(
-                $"BulkTestRatesUpdate: request {entry.JobQueueId:D} is in status '{entry.Status}', expected 'Approved'.");
+                $"BulkTestRatesUpdate: request {entry.JobQueueId:D} is in status '{entry.Status}', expected 'Running'.");
         }
 
         if (!string.Equals(entry.JobName, BatchJobNames.BulkTestRatesUpdate, StringComparison.OrdinalIgnoreCase))
@@ -244,7 +266,7 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
 
     // ── AGRUP helpers ────────────────────────────────────────────────────────
 
-    private static async Task<bool> AgrupRowExistsAsync(
+    private static async Task<(bool Exists, decimal? UnitPrice)> GetAgrupCurrentRowAsync(
         NpgsqlConnection conn, NpgsqlTransaction tx,
         string testCode, string buyer, int fpsYear,
         CancellationToken ct)
@@ -252,13 +274,17 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
         await using var cmd = conn.CreateCommand();
         cmd.Transaction = tx;
         cmd.CommandText = @"
-            SELECT 1 FROM fps.tlkptestreqmt
+            SELECT unitprice::numeric
+            FROM fps.tlkptestreqmt
             WHERE testcode = @testcode AND buyer = @buyer AND fpsyear = @fpsyear;";
         cmd.Parameters.AddWithValue("testcode", testCode);
         cmd.Parameters.AddWithValue("buyer",    buyer);
         cmd.Parameters.AddWithValue("fpsyear",  fpsYear);
-        var result = await cmd.ExecuteScalarAsync(ct);
-        return result is not null;
+
+        await using var r = await cmd.ExecuteReaderAsync(ct);
+        if (!await r.ReadAsync(ct))
+            return (false, null);
+        return (true, r.IsDBNull(0) ? null : r.GetDecimal(0));
     }
 
     private static async Task InsertAgrupRowAsync(
@@ -339,13 +365,13 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
     }
 
     private static IEnumerable<RateChangeHistoryRow> BuildAgrupUpdateHistory(
-        AgrupStagingRow row, BulkRatesJobQueueEntry entry, DateTime appliedAt)
+        AgrupStagingRow row, decimal? currentUnitPrice, BulkRatesJobQueueEntry entry, DateTime appliedAt)
     {
         var key = JsonSerializer.Serialize(new { testCode = row.TestCode, buyer = row.Buyer });
         var common = (entry.JobQueueId, entry.JobExecutionId, entry.JobId, entry.FpsYear,
                       "AGRUP", key, entry.RequestedBy, entry.ApprovedBy, appliedAt);
 
-        yield return MakeHistoryRow(common, "unitprice", row.Agrup?.ToString(), row.AgrupNew?.ToString(), "Update");
+        yield return MakeHistoryRow(common, "unitprice", currentUnitPrice?.ToString(), row.AgrupNew?.ToString(), "Update");
     }
 
     private static RateChangeHistoryRow MakeHistoryRow(
