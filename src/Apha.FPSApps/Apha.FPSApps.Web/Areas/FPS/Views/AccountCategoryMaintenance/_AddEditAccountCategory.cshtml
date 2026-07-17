@@ -34,122 +34,122 @@
                     </label>
                     @if (isEditMode)
                     {
-                        <input type="text"
-                               asp-for="AccShortName"
+                        <input type="text" 
+                               asp-for="AccShortName" 
                                id="AccShortName"
                                name="AccShortName"
-                               class="govuk-input govuk-!-font-size-16"
-                               required
+                               class="govuk-input govuk-!-font-size-16" 
+                               required 
                                maxlength="50"
                                readonly
                                disabled
                                style="background-color: #f3f2f1; cursor: not-allowed;"
                                aria-required="true">
-                        }
+                    }
                     else
-                        {
-                            <input type="text"
-                                   asp-for="AccShortName"
-                                   id="AccShortName"
-                                   name="AccShortName"
-                                   class="govuk-input govuk-!-font-size-16"
-                                   required
-                                   maxlength="50"
-                                   aria-required="true">
-                            }
-                            <span data-valmsg-for="AccShortName" class="field-validation-valid govuk-error-message" style="display:none;"></span>
-                        </div>
-                    </div>
+                    {
+                        <input type="text" 
+                               asp-for="AccShortName" 
+                               id="AccShortName"
+                               name="AccShortName"
+                               class="govuk-input govuk-!-font-size-16" 
+                               required 
+                               maxlength="50"
+                               aria-required="true">
+                    }
+                    <span data-valmsg-for="AccShortName" class="field-validation-valid govuk-error-message" style="display:none;"></span>
+                </div>
+            </div>
 
-                    <div class="col-md-6">
-                        <div class="govuk-form-group sup_margin_bottom_10">
-                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="AccountDescription">
-                                AccountDescription
+            <div class="col-md-6">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="AccountDescription">
+                        AccountDescription
+                    </label>
+                    <input type="text" 
+                           asp-for="AccountDescription" 
+                           id="AccountDescription"
+                           name="AccountDescription"
+                           class="govuk-input govuk-!-font-size-16" 
+                           maxlength="50">
+                    <span data-valmsg-for="AccountDescription" class="field-validation-valid govuk-error-message" style="display:none;"></span>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ConstituentAccountCodes">
+                        ConstituentAccountCodes
+                    </label>
+                    <input type="text" 
+                           asp-for="ConstituentAccountCodes" 
+                           id="ConstituentAccountCodes"
+                           name="ConstituentAccountCodes"
+                           class="govuk-input govuk-!-font-size-16" 
+                           maxlength="100">
+                    <span data-valmsg-for="ConstituentAccountCodes" class="field-validation-valid govuk-error-message" style="display:none;"></span>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="AccountType">
+                        AccountType <span class="sup_color_red">*</span>
+                    </label>
+                    <input type="text" 
+                           asp-for="AccountType" 
+                           id="AccountType"
+                           name="AccountType"
+                           class="govuk-input govuk-!-font-size-16" 
+                           required 
+                           maxlength="10"
+                           aria-required="true"
+                           aria-describedby="AccountType-hint">
+                    <span data-valmsg-for="AccountType" class="field-validation-valid govuk-error-message" style="display:none;"></span>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <div class="govuk-checkboxes govuk-checkboxes--small">
+                        <div class="govuk-checkboxes__item">
+                            <input type="checkbox" 
+                                   id="ProjectSpecific"
+                                   name="ProjectSpecific"
+                                   value="-1"
+                                   @(Model?.ProjectSpecific == -1 ? "checked" : "")
+                                   class="govuk-checkboxes__input">
+                            <label class="govuk-label govuk-checkboxes__label sup_label_auto_width govuk-!-font-size-16 govuk-!-margin-top-0" for="ProjectSpecific">
+                                For Project Specific Costs?
                             </label>
-                            <input type="text"
-                                   asp-for="AccountDescription"
-                                   id="AccountDescription"
-                                   name="AccountDescription"
-                                   class="govuk-input govuk-!-font-size-16"
-                                   maxlength="50">
-                                <span data-valmsg-for="AccountDescription" class="field-validation-valid govuk-error-message" style="display:none;"></span>
-                            </div>
                         </div>
-
-                        <div class="col-md-6">
-                            <div class="govuk-form-group sup_margin_bottom_10">
-                                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ConstituentAccountCodes">
-                                    ConstituentAccountCodes
-                                </label>
-                                <input type="text"
-                                       asp-for="ConstituentAccountCodes"
-                                       id="ConstituentAccountCodes"
-                                       name="ConstituentAccountCodes"
-                                       class="govuk-input govuk-!-font-size-16"
-                                       maxlength="100">
-                                    <span data-valmsg-for="ConstituentAccountCodes" class="field-validation-valid govuk-error-message" style="display:none;"></span>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="govuk-form-group sup_margin_bottom_10">
-                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="AccountType">
-                                        AccountType <span class="sup_color_red">*</span>
-                                    </label>
-                                    <input type="text"
-                                           asp-for="AccountType"
-                                           id="AccountType"
-                                           name="AccountType"
-                                           class="govuk-input govuk-!-font-size-16"
-                                           required
-                                           maxlength="10"
-                                           aria-required="true"
-                                           aria-describedby="AccountType-hint">
-                                        <span data-valmsg-for="AccountType" class="field-validation-valid govuk-error-message" style="display:none;"></span>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <div class="govuk-form-group sup_margin_bottom_10">
-                                        <div class="govuk-checkboxes govuk-checkboxes--small">
-                                            <div class="govuk-checkboxes__item">
-                                                <input type="checkbox"
-                                                       id="ProjectSpecific"
-                                                       name="ProjectSpecific"
-                                                       value="-1"
-                                                @(Model?.ProjectSpecific == -1 ? "checked" : "")
-                                                       class="govuk-checkboxes__input">
-                                                <label class="govuk-label govuk-checkboxes__label sup_label_auto_width govuk-!-font-size-16 govuk-!-margin-top-0" for="ProjectSpecific">
-                                                    For Project Specific Costs?
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <span data-valmsg-for="ProjectSpecific" class="field-validation-valid govuk-error-message" style="display:none;"></span>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <div class="govuk-form-group sup_margin_bottom_10">
-                                        <div class="govuk-checkboxes govuk-checkboxes--small">
-                                            <div class="govuk-checkboxes__item">
-                                                <input type="checkbox"
-                                                       id="RcSpecific"
-                                                       name="RcSpecific"
-                                                       value="-1"
-                                                @(Model?.RcSpecific == -1 ? "checked" : "")
-                                                       class="govuk-checkboxes__input">
-                                                <label class="govuk-label govuk-checkboxes__label sup_label_auto_width govuk-!-font-size-16 govuk-!-margin-top-0" for="RcSpecific">
-                                                    For Resource Centres?
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <span data-valmsg-for="RcSpecific" class="field-validation-valid govuk-error-message" style="display:none;"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
                     </div>
-                    <div class="modal-footer sup_flex_space_center">
-                        <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeAccountCategoryModal()">Cancel</button>
-                        <button type="button" class="govuk-button sup_margin_0" data-module="govuk-button" onclick="@saveAction">@saveLabel</button>
+                    <span data-valmsg-for="ProjectSpecific" class="field-validation-valid govuk-error-message" style="display:none;"></span>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <div class="govuk-checkboxes govuk-checkboxes--small">
+                        <div class="govuk-checkboxes__item">
+                            <input type="checkbox" 
+                                   id="RcSpecific"
+                                   name="RcSpecific"
+                                   value="-1"
+                                   @(Model?.RcSpecific == -1 ? "checked" : "")
+                                   class="govuk-checkboxes__input">
+                            <label class="govuk-label govuk-checkboxes__label sup_label_auto_width govuk-!-font-size-16 govuk-!-margin-top-0" for="RcSpecific">
+                                For Resource Centres?
+                            </label>
+                        </div>
                     </div>
+                    <span data-valmsg-for="RcSpecific" class="field-validation-valid govuk-error-message" style="display:none;"></span>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="modal-footer sup_flex_space_center">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeAccountCategoryModal()">Cancel</button>
+    <button type="button" class="govuk-button sup_margin_0" data-module="govuk-button" onclick="@saveAction">@saveLabel</button>
+</div>
