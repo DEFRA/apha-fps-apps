@@ -111,6 +111,11 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; }
 
         public virtual DbSet<CostCentre> CostCentres { get; set; }
+
+        public virtual DbSet<BatchJobMaster> BatchJobs { get; set; }
+        public virtual DbSet<BatchJobQueue> BatchJobQueues { get; set; }
+        public virtual DbSet<BatchJobQueueLog> BatchJobQueueLogs { get; set; }
+        public virtual DbSet<BatchJobStatus> BatchJobStatuses { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -348,6 +353,12 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new CostCentreMap());
             modelBuilder.Entity<CostCentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new BatchJobMasterMap());
+            modelBuilder.ApplyConfiguration(new BatchJobQueueMap());
+            modelBuilder.Entity<BatchJobQueue>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new BatchJobQueueLogMap());
+            modelBuilder.ApplyConfiguration(new BatchJobStatusMap());
         }
     }
 }

@@ -159,7 +159,9 @@ namespace Apha.FPS.Api.Mappings
             // StaffResourceUtilisation
             CreateMap<StaffResourceUtilisationDto, StaffResourceUtilisationRes>().ReverseMap();
 
-
+            CreateMap<BatchJobHistoryRes, BatchJobHistoryDto>().ReverseMap();
+            CreateMap<BatchJobQueueRes, BatchJobQueueDto>().ReverseMap();
+            CreateMap<BatchJobEventTriggerRes, BatchJobEventTriggerDto>().ReverseMap();
         }
     }
 }

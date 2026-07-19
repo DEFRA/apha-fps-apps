@@ -1,5 +1,6 @@
-using Apha.Common.Utilities.StateManagement;
+using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Interfaces;
@@ -59,6 +60,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITestRCCostService, TestRCCostService>();
             services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
+            services.AddScoped<IYearEndService, YearEndService>();
+            services.AddSingleton<IEventPublisherService, EventBridgePublisherService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -104,6 +107,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITestRCCostRepository, TestRCCostRepository>();
             services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
             services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
+            services.AddScoped<IYearEndRepository, YearEndRepository>();
             return services;
 
         }

@@ -1,3 +1,4 @@
+using Apha.Common.Contracts.PACT;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
@@ -110,6 +111,12 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             //TestListVLA
             CreateMap<TestRCCost, TestRCCostDto>().ReverseMap();
             CreateMap<TestRequirementRCCost, TestRequirementRCCostDto>().ReverseMap();
+            CreateMap<BatchJobHistory, BatchJobHistoryDto>().ReverseMap();
+            CreateMap<BatchJobQueue, BatchJobQueueDto>().ReverseMap();
+            CreateMap<BatchJobQueue, BatchJobQueueRes>().ReverseMap();
+            CreateMap<BatchJobQueue, BatchJobEventTriggerDto>()
+                .ForMember(dest => dest.Jobqueue, opt => opt.MapFrom(src => src))
+                .ForMember(dest => dest.EventId, opt => opt.Ignore());
         }
     }
 }
