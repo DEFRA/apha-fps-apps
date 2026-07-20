@@ -23,6 +23,7 @@ namespace Apha.FPSApps.Web.Mappings
                 .ReverseMap()
                 .ForMember(d => d.PC, o => o.MapFrom(s => s.Pc))
                 .ForMember(d => d.WGPrice, o => o.MapFrom(s => s.WgPrice));
+            CreateMap<TestActualBreakdownItem, TestActualBreakdownDto>().ReverseMap();
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
             CreateMap<AnimalMaintenanceViewModel, AnimalDto>().ReverseMap();
             CreateMap<UserPermissionViewModel, UserDto>().ReverseMap();
@@ -40,6 +41,10 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<DivisionViewModel, DivisionDto>().ReverseMap();
             CreateMap<DivisionGradeItem, DivisionGradeDto>().ReverseMap();
             CreateMap<GradeItem, GradeDto>().ReverseMap();
+
+            // Maps CostCentreItem (DataGrid row: CostCentreNo double, ProfitCentre string) <-> CostCentreDto
+            CreateMap<CostCentreItem, CostCentreDto>().ReverseMap();
+
             CreateMap<ResourceCentreMaintenanceItem, ProfitCentreDto>().ReverseMap();
             CreateMap<TestPlanItem, TestRequirementDto>().ReverseMap();
             CreateMap<AdditionalCostItemViewModel, AdditionalCostDto>().ReverseMap();

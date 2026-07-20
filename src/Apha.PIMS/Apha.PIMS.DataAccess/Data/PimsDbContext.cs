@@ -1,4 +1,4 @@
-﻿using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -46,7 +46,7 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<StagingMilestone> StagingMilestones { get; set; }
         public virtual DbSet<RadTrackInvoice> RadTrackInvoices { get; set; }
 
-        // Lookup: tblradtrackcontract — used by RadTrackInvoice contract dropdown.
+        // Lookup: tblradtrackcontract � used by RadTrackInvoice contract dropdown.
         public virtual DbSet<RadTrackContract> RadTrackContracts { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -79,7 +79,6 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new LogMilestoneMap());
             modelBuilder.ApplyConfiguration(new ProjectManagerMap());
             modelBuilder.ApplyConfiguration(new StagingMilestoneMap());
-            // TRANSFORMENGINE: Added Phase 4 — register RadTrackInvoiceMap for mabarchive.tblradtrackinvoice.
             modelBuilder.ApplyConfiguration(new RadTrackInvoiceMap());
             modelBuilder.ApplyConfiguration(new RadTrackContractMap());
         }

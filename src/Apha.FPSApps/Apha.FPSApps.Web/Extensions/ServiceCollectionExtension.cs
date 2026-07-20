@@ -46,6 +46,8 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICostBookYearlyDetailsService, CostBookYearlyDetailsService>();
             services.AddScoped<ICostBookProjectSummaryService, CostBookProjectSummaryService>();
             services.AddScoped<ICostBookSettingsService, CostBookSettingsService>();
+            // frmMaintCostCentres frontend CRUD service; AddScoped follows request-scoped API client pattern
+            services.AddScoped<ICostCentreService, CostCentreService>();
             services.AddScoped<IGradeService, GradeService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IDivisionService, DivisionService>();
@@ -93,6 +95,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
             services.AddScoped<ITestReqBreakdownService, TestReqBreakdownService>();
+            services.AddScoped<ITestActualBreakdownService, TestActualBreakdownService>();
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();

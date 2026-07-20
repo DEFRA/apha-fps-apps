@@ -77,6 +77,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<BatchJobHistoryRes, BatchJobHistoryDto>().ReverseMap();
             CreateMap<BatchJobQueueRes, BatchJobQueueDto>().ReverseMap();
             CreateMap<BatchJobEventTriggerRes, BatchJobEventTriggerDto>().ReverseMap();
+            CreateMap<TestActualBreakdownDto, TestActualBreakdownRes>().ReverseMap();
         }
     }
 }

@@ -62,6 +62,7 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<BatchJobQueue, BatchJobEventTriggerDto>()
                 .ForMember(dest => dest.Jobqueue, opt => opt.MapFrom(src => src))
                 .ForMember(dest => dest.EventId, opt => opt.Ignore());
+            CreateMap<TestActualBreakdownView, TestActualBreakdownDto>().ReverseMap();
         }
     }
 }
