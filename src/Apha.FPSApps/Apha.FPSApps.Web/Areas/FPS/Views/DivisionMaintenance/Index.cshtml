@@ -92,7 +92,7 @@
                 SortBy: sort.column,
                 Descending: sort.descending
             };
-
+            
             $.ajax({
                 url: '@Url.Action("LoadDivisionGrid", "DivisionMaintenance", new { area = "FPS" })',
                 type: 'POST',
@@ -204,13 +204,14 @@
                 AgencyId: parseInt(form.find('[name="AgencyId"]').val()),
                 CentOverhead: centOverhead
             };
-
+            showLoader();
             $.ajax({
                 url: '@Url.Action("Create", "DivisionMaintenance", new { area = "FPS" })',
                 type: 'POST',
                 data: JSON.stringify(data),
                 contentType: 'application/json; charset=utf-8',
                 success: function (result) {
+                    hideLoader();
                     if (result.success) {
                         showAlertMessage(result.message, AlertType.SUCCESS).then(function () {
                             closeModal();
@@ -221,6 +222,7 @@
                     }
                 },
                 error: function (xhr) {
+                    hideLoader();
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
@@ -257,12 +259,14 @@
             };
 
             // Use original DivName in the URL to identify the record to update
+            showLoader();
             $.ajax({
                 url: '@Url.Action("Edit", "DivisionMaintenance", new { area = "FPS" })?originalDivName=' + encodeURIComponent(originalDivName),
                 type: 'POST',
                 data: JSON.stringify(data),
                 contentType: 'application/json; charset=utf-8',
                 success: function (result) {
+                    hideLoader();
                     if (result.success) {
                         showAlertMessage(result.message, AlertType.SUCCESS).then(function () {
                             closeModal();
@@ -273,6 +277,7 @@
                     }
                 },
                 error: function (xhr) {
+                    hideLoader();
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
@@ -304,11 +309,13 @@
             var divName = $(btn).data('id');
             showGovukConfirm('Are you sure you want to delete this record?').then(function (result) {
                 if (!result) return;
+                showLoader();
                 $.ajax({
                     url: '@Url.Action("Delete", "DivisionMaintenance", new { area = "FPS" })',
                     type: 'DELETE',
                     data: { divName: divName },
                     success: function (response) {
+                        hideLoader();
                         if (response.success) {
                                 showAlertMessage('Deleted successfully', AlertType.SUCCESS).then(function () {
                                     window['gridManager_divisionGrid'].reloadGrid({ page: 1 });
@@ -319,6 +326,7 @@
                         }
                     },
                     error: function () {
+                        hideLoader();
                         showAlertMessage('An error occurred while deleting', AlertType.ERROR);
                     }
                 });
