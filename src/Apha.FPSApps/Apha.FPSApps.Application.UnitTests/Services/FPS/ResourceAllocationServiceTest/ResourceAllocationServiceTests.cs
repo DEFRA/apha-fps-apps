@@ -11,15 +11,15 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ResourceAllocationServ
     public class ResourceAllocationServiceTests
     {
         private const string DefaultWorkGroupGrade = "WG01";
-        private const string DefaultStaffId        = "PACT001";
+        private const string DefaultStaffId = "PACT001";
 
-        private readonly IFpsApiClient                    _fpsClient;
-        private readonly IFpsResourceAllocationApiClient  _fpsResourceAllocationApiClient;
-        private readonly ResourceAllocationService        _sut;
+        private readonly IFpsApiClient _fpsClient;
+        private readonly IFpsResourceAllocationApiClient _fpsResourceAllocationApiClient;
+        private readonly ResourceAllocationService _sut;
 
         public ResourceAllocationServiceTests()
         {
-            _fpsClient                    = Substitute.For<IFpsApiClient>();
+            _fpsClient = Substitute.For<IFpsApiClient>();
             _fpsResourceAllocationApiClient = Substitute.For<IFpsResourceAllocationApiClient>();
             _fpsClient.FpsResourceAllocation.Returns(_fpsResourceAllocationApiClient);
             _sut = new ResourceAllocationService(_fpsClient);

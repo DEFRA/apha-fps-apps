@@ -44,4 +44,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Dtos\FPS\ResourceAllocationDtoTest\" />
+  </ItemGroup>
+
 </Project>
