@@ -1,28 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — WorkgroupMaintenanceService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 8 — Frontend Service Interface + Implementation (Steps 12-13)
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - NEW FILE: Thin frontend service delegate for WorkGroup Maintenance operations
- *   - Source form: frmMaintWorkGroup2 (RecordSource: WorkGroup_MAP → fps.workgroup)
- *   - Implements IWorkgroupMaintenanceService; all 8 methods delegate to IFpsApiClient.FpsWorkgroupMaintenance
- *   - Constructor injects IFpsApiClient (aggregate API client) with null-guard
- *   - NO business logic — every method body is a single return await delegation
- *   - Dependency graph: MVC Controller → IWorkgroupMaintenanceService → WorkgroupMaintenanceService
- *       → IFpsApiClient.FpsWorkgroupMaintenance → HTTP → backend api/v1/workgroup
- *
- * PRESERVED:
- *   - Method naming mirrors IWorkgroupMaintenanceService exactly
- *   - All return types match interface signatures (ApiResponseDto<T>)
- *   - _client field is private readonly (S2933 compliance)
- *   - Thin-delegate pattern: no if/switch/throw/foreach/for in service methods (S4144 safe)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: GetCostCentresAsync delegates List<double?> — if labelled projection
- *     needed, update IFpsWorkgroupApiClient and IWorkgroupMaintenanceService together
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;

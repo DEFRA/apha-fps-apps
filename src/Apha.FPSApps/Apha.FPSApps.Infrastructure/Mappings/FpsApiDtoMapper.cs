@@ -1,27 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsApiDtoMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - Added WorkgroupMaintenanceDto <-> WorkgroupMaintenanceReq mapping (POST/PUT request bodies)
- *   - Added WorkgroupMaintenanceDto <-> WorkgroupMaintenanceRes mapping (GET/POST/PUT responses)
- *   - Mappings support FpsWorkgroupApiClient CRUD + lookup flows for frmMaintWorkGroup2
- *   - WorkgroupMaintenanceRes.Id (synthetic) is unmapped on reverse (auto-ignored by convention)
- *   - WorkgroupMaintenanceDto.CostCentreOld is unmapped on forward (not present in Req/Res contracts)
- *   - ManagerRes <-> ManagerDto (used by GetOwnersAsync lookup) was already present — no duplicate added
- *
- * PRESERVED:
- *   - All existing CreateMap entries unchanged
- *   - Namespace and using directives unchanged
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: WorkgroupMaintenanceRes.Id is synthetic (int); AutoMapper ignores it on
- *     Res->Dto reverse map. Confirm service layer populates Id before grid renders.
- *   - TRANSFORMENGINE TODO: WorkgroupMaintenanceDto.CostCentreOld has no mapping to Req or Res;
- *     confirm it is intentionally excluded from the CRUD surface.
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;

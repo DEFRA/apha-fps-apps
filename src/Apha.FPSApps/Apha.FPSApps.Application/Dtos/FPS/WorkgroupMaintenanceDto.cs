@@ -1,32 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — WorkgroupMaintenanceDto.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 7 — Frontend DTOs + API Client Interfaces (Steps 10-11)
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - NEW FILE: Frontend DTO mirroring Apha.FPS.Application.Dtos.WorkgroupDto in the FPSApps
- *     Application layer (different namespace, same shape)
- *   - Source form: frmMaintWorkGroup2 (RecordSource: WorkGroup_MAP → fps.workgroup)
- *   - All properties align exactly with backend WorkgroupDto property names and nullability
- *   - WorkGroupName and ProfitCentre are required (null!) — matches VBA form validation and
- *     WorkgroupMaintenanceReq required fields
- *   - CostCentre typed as double? matching fps.workgroup.costcentre (double precision, nullable)
- *   - CentralOverhead typed as decimal? matching fps.workgroup.centraloverhead (money → decimal)
- *   - SendEmail, Cos90 carried as short? matching DB smallint columns
- *   - FpsYear carried as int? for audit display; auto-resolved server-side by FpsRequestContext
- *
- * PRESERVED:
- *   - All nullable annotations aligned with backend WorkgroupDto and WorkgroupMaintenanceRes
- *   - Property order follows backend DTO (WorkGroupName, ProfitCentre, then remaining fields)
- *   - No Lk_ prefixes used — clean property names from entity surface
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm whether SendEmail and Cos90 (short?) should be surfaced as
- *     bool on the ViewModel/frontend binding layer (see backend WorkgroupDto same TODO)
- *   - TRANSFORMENGINE TODO: CostCentre is double precision in the DB; verify whether the frontend
- *     DataGrid display requires string formatting at the MVC controller level
- */
-
 namespace Apha.FPSApps.Application.Dtos.FPS
 {
     /// <summary>

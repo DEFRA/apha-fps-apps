@@ -1,24 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — WorkgroupMap.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - Annotation header added for Phase 4 batch verification pass
- *
- * PRESERVED:
- *   - Composite PK (WorkGroupName + FpsYear) with constraint name pk_workgroup
- *   - ToTable("workgroup", "fps") — lowercase per project convention
- *   - HasIndex on ProfitCentre ("workgroup_profitcentre")
- *   - All 11 column mappings (workgroup, centraloverhead, cos90, costcentre, costcentreold,
- *     description, email_recipient, fpsyear, owner, profitcentre, sendemail) — all lowercase
- *   - HasMaxLength and HasColumnType constraints preserved from DDL
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: SysTimestamp property on Workgroup entity has no matching column
- *     in the fps.workgroup DDL and is intentionally unmapped here — confirm the property
- *     can be removed from the entity or document why it is kept unmapped
- */
 using Apha.FPS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

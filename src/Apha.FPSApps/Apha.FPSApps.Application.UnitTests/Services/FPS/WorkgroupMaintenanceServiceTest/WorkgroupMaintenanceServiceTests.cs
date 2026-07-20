@@ -1,26 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — WorkgroupMaintenanceServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - NEW FILE: xUnit tests for WorkgroupMaintenanceService (frmMaintWorkGroup2 frontend application layer)
- *   - Tests verify thin-delegate pattern: each method passes through to IFpsApiClient.FpsWorkgroupMaintenance
- *   - Uses NSubstitute for IFpsApiClient aggregate and IFpsWorkgroupApiClient sub-client mocks
- *   - IFpsApiClient.FpsWorkgroupMaintenance.Returns(_fpsWorkgroupApiClient) wires the aggregate client
- *   - Covers 8 public methods: GetPagedAsync, GetByWorkGroupNameAsync, CreateAsync, UpdateAsync,
- *     DeleteAsync, GetProfitCentresAsync, GetOwnersAsync, GetCostCentresAsync
- *
- * PRESERVED:
- *   - Pattern matches YearMasterServiceTests.cs — aggregate client + sub-client substitution approach
- *   - Naming convention [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - #region grouping per method
- *   - Each test verifies Received(1) delegation to the API client method (thin-delegate contract)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: None — thin-delegate service has no business logic to test beyond delegation
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;

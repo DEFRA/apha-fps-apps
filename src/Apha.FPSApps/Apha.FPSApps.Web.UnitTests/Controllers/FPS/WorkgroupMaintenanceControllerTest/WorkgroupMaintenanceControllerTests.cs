@@ -1,27 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — WorkgroupMaintenanceControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - NEW FILE: xUnit tests for WorkgroupMaintenanceController (frmMaintWorkGroup2 MVC frontend layer)
- *   - Tests cover all 9 public actions:
- *       Index, LoadWorkgroupGrid, Create (GET + POST), Edit (GET + POST), Delete,
- *       GetProfitCentres, GetOwners, GetCostCentres
- *   - Uses NSubstitute for IMapper and IWorkgroupMaintenanceService mocks
- *   - Covers success, invalid ModelState, null-input, service-failure, and lookup paths
- *
- * PRESERVED:
- *   - Naming convention [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - GetJsonResultValue<T> helper for deserializing anonymous JsonResult shapes
- *   - #region grouping per action, consistent with AccountCategoryMaintenanceControllerTests
- *   - WorkgroupMaintenanceItem used as the ViewModel/modal model (not WorkgroupMaintenanceDto)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Index test stubs GetPagedAsync via mocked IWorkgroupMaintenanceService —
- *     DataGridConfig column definitions require GridDataProvider which is not exercised in unit tests
- */
-
 using System.Text.Json;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;

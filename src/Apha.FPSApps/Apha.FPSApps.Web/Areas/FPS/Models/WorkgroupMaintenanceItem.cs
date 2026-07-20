@@ -1,35 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — WorkgroupMaintenanceItem.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 11 — ViewModels + MVC Controller (Steps 16-17)
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - NEW FILE: Extracted from Phase 10 stub WorkgroupMaintenanceViewModel.cs into dedicated file
- *   - Source form: frmMaintWorkGroup2 (RecordSource: WorkGroup_MAP -> fps.workgroup)
- *   - [GridColumn] attributes derived from JS fps_workgroup_maintenance.js initializeWGTable() columns array:
- *       workGroup (150), resourceCentre (170), costCentre (150), owner (180), description (260),
- *       centralOverhead (170) — actions column is rendered by DataGrid infrastructure, not a C# property
- *   - AllowAdd = true  (showAddButton: true in JS DataGridComponent)
- *   - AllowEdit = true  (edit button present in JS actions column render)
- *   - AllowDelete = true  (delete button present in JS actions column render)
- *   - KeyProperty = "WorkGroupName" — maps to JS grid row.id (workGroup is the natural PK; WorkGroupName
- *     is visible in the grid per JS columns[0] { field:'workGroup' }, so it stays visible — NOT hidden)
- *   - Required validation on WorkGroupName and ProfitCentre only (matches JS wgValidationFields)
- *   - CentralOverhead typed as decimal? (GBP money column in DB; £ prefix shown in JS prototype)
- *   - CostCentre typed as double? (fps.workgroup.costcentre double precision, nullable)
- *   - Audit-only fields (SendEmail, Cos90, CostCentreOld, EmailRecipient, FpsYear) carried for modal
- *     round-trip but not shown in the main grid (IsVisible = false)
- *
- * PRESERVED:
- *   - Property names mirror WorkgroupMaintenanceDto exactly for AutoMapper convention-based mapping
- *   - Nullable annotations aligned with WorkgroupMaintenanceDto and WorkgroupMaintenanceRes
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: CostCentre is double? — verify whether the DataGrid display requires string
- *     formatting or a dedicated display-only string field at the MVC controller level
- *   - TRANSFORMENGINE TODO: SendEmail and Cos90 are short? — confirm if bool binding is needed in view layer
- */
-
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using System.ComponentModel.DataAnnotations;
 

@@ -1,25 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsViewModelMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - Added WorkgroupMaintenanceItem <-> WorkgroupMaintenanceDto mapping (DataGrid row <-> frontend DTO)
- *   - Added WorkgroupMaintenanceViewModel <-> WorkgroupMaintenanceDto mapping (modal form <-> frontend DTO)
- *   - WorkgroupMaintenanceViewModel.cs and WorkgroupMaintenanceItem stub created in Phase 10 to
- *     satisfy compilation; full [DataGridColumn] attributes added in Phase 11.
- *   - All property names on WorkgroupMaintenanceItem match WorkgroupMaintenanceDto exactly —
- *     convention-based mapping, no ForMember overrides required.
- *
- * PRESERVED:
- *   - All existing CreateMap entries unchanged
- *   - Namespace and using directives unchanged
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: WorkgroupMaintenanceViewModel stub extended in Phase 11 with DataGridConfig
- *     wiring and [DataGridColumn] attributes. Verify mapper coverage once Phase 11 adds full fields.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;

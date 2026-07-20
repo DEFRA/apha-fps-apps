@@ -1,21 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - Registered IWorkgroupService / WorkgroupService (scoped) in AddServices()
- *   - Registered IWorkgroupRepository / WorkgroupRepository (scoped) in AddRepositories()
- *   - Both registrations required for WorkgroupController (frmMaintWorkGroup2 migration)
- *
- * PRESERVED:
- *   - All pre-existing service and repository registrations unchanged
- *   - Extension method signatures and return types unchanged
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated for this phase
- */
-
 using Apha.Common.Utilities.StateManagement;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Interfaces;

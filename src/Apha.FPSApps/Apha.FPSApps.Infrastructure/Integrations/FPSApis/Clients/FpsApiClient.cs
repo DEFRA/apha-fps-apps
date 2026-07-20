@@ -1,22 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - UPDATED FILE: FpsWorkgroupMaintenance property null! stub replaced with real FpsWorkgroupApiClient instance
- *   - FpsWorkgroupMaintenance constructor assignment added (FpsWorkgroupApiClient for frmMaintWorkGroup2 → api/v1/workgroup)
- *   - TODO STUB comment removed; property no longer carries = null! initializer
- *
- * PRESERVED:
- *   - All existing property declarations and constructor assignments unchanged
- *   - Aggregate client pattern: single IFpsHttpExecutor + IMapper passed to every sub-client
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: FpsWorkgroupGrade and FpsWorkGroupGrade both assigned FpsWorkGroupGradeApiClient —
- *     confirm this duplication is intentional (two interface properties, same implementation) and not a copy-paste error
- */
-
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;

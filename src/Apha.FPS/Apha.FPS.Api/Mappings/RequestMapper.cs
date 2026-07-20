@@ -1,35 +1,4 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — RequestMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-06-23
- * Phase 6 verified : 2026-06-23
- *
- * CHANGED:
- *   - Added WorkgroupMaintenance mappings for frmMaintWorkGroup2:
- *       WorkgroupMaintenanceReq <-> WorkgroupDto  (Create/Update inbound path; ReverseMap present)
- *       WorkgroupDto <-> WorkgroupMaintenanceRes   (outbound response for all CRUD actions; ReverseMap present)
- *       PaginatedResult<WorkgroupDto> -> PaginationRes<WorkgroupMaintenanceRes>  (paged list; one-way)
- *
- * PHASE 6 GATE — MAPPER COVERAGE CONFIRMATION:
- *   - WorkgroupMaintenanceReq -> WorkgroupDto: VERIFIED (Create/Update inbound path)
- *   - WorkgroupDto -> WorkgroupMaintenanceRes: VERIFIED (all CRUD response paths)
- *   - PaginatedResult<WorkgroupDto> -> PaginationRes<WorkgroupMaintenanceRes>: VERIFIED (paged grid list)
- *   - ManagerDto -> ManagerRes: VERIFIED (pre-existing, used by GetOwnersAsync lookup)
- *   - WorkgroupDto.CostCentreOld NOT in WorkgroupMaintenanceReq: AutoMapper ignores unmapped source
- *     members in reverse maps by default — no runtime error; gap is intentional
- *   - Lookup responses (IEnumerable<string>, IEnumerable<double?>) returned as primitive collections —
- *     no mapping profile required
- *
- * PRESERVED:
- *   - All pre-existing CreateMap registrations unchanged
- *   - Profile inheritance, namespace, and AutoMapper version unchanged
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: WorkgroupDto.CostCentreOld has no matching field on WorkgroupMaintenanceReq —
- *     confirm that it should be excluded from the Req mapping or added as a hidden field
- */
-
-using Apha.Common.Contracts;
+﻿using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
