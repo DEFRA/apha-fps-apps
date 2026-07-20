@@ -18,5 +18,7 @@ namespace Apha.FPS.Core.Interfaces
         Task<StaffJob> AddAsync(StaffJob staffJob);
         Task<StaffJob> UpdateAsync(StaffJob staffJob);
         Task<bool> DeleteAsync(string staffId, string jobCode);
+        Task<PagedData<StaffResourceUtilisationView>> GetStaffResourceUtilisationAsync(
+            PaginationParameters<string> query, string workgroup);        
     }
 }

@@ -14,6 +14,6 @@
         GbpValue, // £0.00
         GbpValueRounded, // £0 (rounded, no decimals)
         DoubleNumber,
-        Percentage // e.g. 0.75 → "75.00%"
+        Percentage // 0.00%
     }
 }
