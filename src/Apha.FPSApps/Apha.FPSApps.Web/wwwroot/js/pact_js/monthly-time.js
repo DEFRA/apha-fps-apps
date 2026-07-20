@@ -26,6 +26,7 @@ function reloadLiveGrid() {
     const gm = getLiveGridManager();
     if (gm) {
         gm.reloadGrid({ page: 1, sortBy: 'WorkGroup', descending: false });
+        scheduleAlignTotalHoursFields();
     }
 }
 
@@ -33,6 +34,7 @@ function reloadStagingGrid() {
     const gm = getStagingGridManager();
     if (gm) {
         gm.reloadGrid({ page: 1, sortBy: 'Id', descending: false });
+        scheduleAlignTotalHoursFields();
     }
 }
 
@@ -49,6 +51,57 @@ function clearLiveSearch() {
 
     resetTimeCodeOptions();
     resetParentProjectOptions();
+}
+
+function alignTotalHoursBox(gridId, rowContainerId, inputId, labelSelector) {
+    const hoursTh = document.querySelector('#tbl_' + gridId + ' [data-column="Hours"]');
+    const gridContainer = document.getElementById('gridContainer_' + gridId);
+    const rowContainer = document.getElementById(rowContainerId);
+    const input = document.getElementById(inputId);
+    const label = document.querySelector(labelSelector);
+
+    if (!hoursTh || !gridContainer || !rowContainer || !input || !label) return;
+
+    const thRect = hoursTh.getBoundingClientRect();
+    const leftOffset = thRect.left - gridContainer.getBoundingClientRect().left;
+
+    rowContainer.style.display = 'flex';
+    rowContainer.style.alignItems = 'center';
+
+    label.style.whiteSpace = 'nowrap';
+    label.style.marginLeft = Math.max(0, leftOffset - label.offsetWidth - 8) + 'px';
+    label.style.marginRight = '8px';
+
+    input.style.width = thRect.width + 'px';
+    input.style.flexShrink = '0';
+}
+
+function alignTotalHoursFields() {
+    alignTotalHoursBox(monthlyTimeLiveGridId, 'divMakeliveTotalhours', 'txtMakeliveTotalhours', '#divMakeliveTotalhours .total-hours-label');
+    alignTotalHoursBox(monthlyTimeStagingGridId, 'divStagingTotalhours', 'txtTotalhours', '#lbltotalhours');
+}
+
+function updateTotalHoursValues() {
+    const liveTotal = parseFloat($('#gridContainer_' + monthlyTimeLiveGridId + ' .editable-grid-container').data('grid-total'));
+    const stagingTotal = parseFloat($('#gridContainer_' + monthlyTimeStagingGridId + ' .editable-grid-container').data('grid-total'));
+
+    $('#txtMakeliveTotalhours').val(Number.isFinite(liveTotal) ? liveTotal.toFixed(2) : '0.00');
+    $('#txtTotalhours').val(Number.isFinite(stagingTotal) ? stagingTotal.toFixed(2) : '0.00');
+}
+
+function scheduleAlignTotalHoursFields() {
+    window.requestAnimationFrame(function () {
+        alignTotalHoursFields();
+        updateTotalHoursValues();
+        setTimeout(function () {
+            alignTotalHoursFields();
+            updateTotalHoursValues();
+        }, 120);
+        setTimeout(function () {
+            alignTotalHoursFields();
+            updateTotalHoursValues();
+        }, 350);
+    });
 }
 
 function resetTimeCodeOptions() {
@@ -209,11 +262,13 @@ function initLiveModalDropdowns(existingWorkGroup, existingName, existingPactId)
         displayField: function (row) { return row.text || ''; },
         valueField: function (row) { return row.value || ''; },
         enableSearch: true,
+        disabled: true,
         showSerialNumber: false,
         callbacks: {
             onSelect: function (selectedItem) {
-                $('#LiveWorkGroup').val(selectedItem?.value || '');
-                loadLiveModalStaffByWorkGroup('');
+                const selectedWorkGroup = selectedItem?.value || '';
+                $('#LiveWorkGroup').val(selectedWorkGroup);
+                loadLiveModalStaffByWorkGroup(selectedWorkGroup);
             },
             onClear: function () {
                 $('#LiveWorkGroup').val('');
@@ -326,6 +381,8 @@ function saveMonthlyTimeLive() {
                 $('#modalPopup').removeClass('show');
                 reloadLiveGrid();
                 showAlertMessage(response.message, AlertType.SUCCESS);
+            } else if (response.errors) {
+                displayServerValidationErrors(response.errors, response.message || 'Validation failed.', form);
             } else {
                 showAlertMessage(response.message || 'Update failed.', AlertType.ERROR);
             }
@@ -360,11 +417,12 @@ function editStagingMonthlyTime(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-            const workGroup  = $('#StagingWorkGroup').val();
-            const existingName      = $('#StagingName').val();
-            const existingPactId    = $('#StagingPactStaffId').val();
-            const existingTimeCode  = $('#StagingTimeCode').val();
-            initStagingModalDropdowns(workGroup, existingName, existingPactId, existingTimeCode);
+            const workGroup = $('#StagingWorkGroup').val();
+            const existingName = $('#StagingName').val();
+            const existingPactId = $('#StagingPactStaffId').val();
+            const existingTimeCode = $('#StagingTimeCode').val();
+            const existingParentProject = $('#StagingParentProject').val();
+            initStagingModalDropdowns(workGroup, existingName, existingPactId, existingTimeCode, existingParentProject);
         },
         error: function () {
             showAlertMessage('Failed to load staging record.', AlertType.ERROR);
@@ -372,7 +430,7 @@ function editStagingMonthlyTime(btn) {
     });
 }
 
-function initStagingModalDropdowns(existingWorkGroup, existingName, existingPactId, existingTimeCode) {
+function initStagingModalDropdowns(existingWorkGroup, existingName, existingPactId, existingTimeCode, existingParentProject) {
     // Read work-group list from the JSON block embedded by the partial
     var wgData = [];
     var $wgJson = $('#staging-modal-workgroups-data');
@@ -396,14 +454,22 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
         showSerialNumber: false,
         callbacks: {
             onSelect: function (selectedItem) {
-                $('#StagingWorkGroup').val(selectedItem?.value || '');
-                //loadStagingModalStaffByWorkGroup(selectedItem?.value || '');
-                //loadStagingModalTimeCodesByWorkGroup(selectedItem?.value || '');
+                const selectedWorkGroup = selectedItem?.value || '';
+                $('#StagingWorkGroup').val(selectedWorkGroup);
+                $('#StagingPactId').val('');
+
+                const isInitialRestore = existingWorkGroup && selectedWorkGroup === existingWorkGroup;
+                if (isInitialRestore) {
+                    return;
+                }
+
+                loadStagingModalStaffByWorkGroup(selectedWorkGroup);
+                loadStagingModalTimeCodesByWorkGroup(selectedWorkGroup);
             },
             onClear: function () {
                 $('#StagingWorkGroup').val('');
-                // Reload all-data lists so the user can still pick freely without a WG
-                loadAllStagingModalStaff();
+                $('#StagingPactId').val('');
+                loadStagingModalStaffByWorkGroup('');
                 loadAllStagingModalTimeCodes();
                 loadAllStagingModalProjects();
             }
@@ -428,12 +494,15 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
         showSerialNumber: false,
         callbacks: {
             onSelect: function (selectedItem) {
+                const selectedPactId = selectedItem?.pactId || '';
                 $('#StagingName').val(selectedItem?.name || '');
-                $('#StagingPactStaffId').val(selectedItem?.pactId || '');
+                $('#StagingPactStaffId').val(selectedPactId);
+                $('#StagingPactId').val(selectedPactId);
             },
             onClear: function () {
                 $('#StagingName').val('');
                 $('#StagingPactStaffId').val('');
+                $('#StagingPactId').val('');
             }
         }
     });
@@ -445,13 +514,14 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
         // Load staff so Name dropdown is populated, then restore the selected name display
         loadStagingModalStaffByWorkGroup(existingWorkGroup, existingName, existingPactId);
 
-        // Only reload time codes when NOT already pre-populated by the server
-        if (!existingTimeCode) {
-            loadStagingModalTimeCodesByWorkGroup(existingWorkGroup);
-        }
+        // Load full time code list in edit mode (same as add mode) and restore selected time code
+        loadAllStagingModalTimeCodes(existingTimeCode);
+
+        // Load full project list in edit mode (same as add mode) and restore selected project
+        loadAllStagingModalProjects(existingParentProject);
     } else {
-        // ADD mode: load all available data so user can pick without selecting WG first
-        loadAllStagingModalStaff();
+        // ADD mode: keep Name dropdown WG-scoped; no staff until WG selected
+        loadStagingModalStaffByWorkGroup($('#StagingWorkGroup').val());
         loadAllStagingModalTimeCodes();
         loadAllStagingModalProjects();
     }
@@ -473,6 +543,7 @@ function loadStagingModalStaffByWorkGroup(workGroup, restoreName, restorePactId)
     window.stagingNameDropdown.clear();
     $('#StagingName').val('');
     $('#StagingPactStaffId').val('');
+    $('#StagingPactId').val('');
 
     if (!workGroup) {
         window.stagingNameDropdown.updateData([]);
@@ -496,10 +567,12 @@ function loadStagingModalStaffByWorkGroup(workGroup, restoreName, restorePactId)
                     // Set hidden inputs explicitly in case setValue does not fire onSelect
                     $('#StagingName').val(match.name);
                     $('#StagingPactStaffId').val(match.pactId);
+                    $('#StagingPactId').val(match.pactId);
                 } else {
                     // Employee not in list (e.g. inactive) — show stored text directly
                     $('#StagingName').val(restoreName || '');
                     $('#StagingPactStaffId').val(restorePactId || '');
+                    $('#StagingPactId').val(restorePactId || '');
                 }
             }
         },
@@ -510,7 +583,7 @@ function loadStagingModalStaffByWorkGroup(workGroup, restoreName, restorePactId)
     });
 }
 
-function loadStagingModalTimeCodesByWorkGroup(workGroup) {
+function loadStagingModalTimeCodesByWorkGroup(workGroup, restoreTimeCode, loadProjectsOnRestore = true) {
     resetStagingModalTimeCodeOptions();
     resetStagingModalParentProjectOptions();
 
@@ -526,6 +599,13 @@ function loadStagingModalTimeCodesByWorkGroup(workGroup) {
             items.forEach(function (item) {
                 $timeCode.append($('<option>', { value: item.value, text: item.text }));
             });
+
+            if (restoreTimeCode && items.some(function (item) { return item.value === restoreTimeCode; })) {
+                $timeCode.val(restoreTimeCode);
+                if (loadProjectsOnRestore) {
+                    loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, restoreTimeCode);
+                }
+            }
         },
         error: function () {
             showAlertMessage('Failed to load timecode options.', AlertType.ERROR);
@@ -577,7 +657,7 @@ function loadAllStagingModalStaff() {
     });
 }
 
-function loadAllStagingModalTimeCodes() {
+function loadAllStagingModalTimeCodes(restoreTimeCode) {
     resetStagingModalTimeCodeOptions();
     $.ajax({
         url: '/PACT/MonthlyTime/GetAllTimeCodes',
@@ -588,6 +668,10 @@ function loadAllStagingModalTimeCodes() {
             items.forEach(function (item) {
                 $timeCode.append($('<option>', { value: item.value, text: item.text }));
             });
+
+            if (restoreTimeCode && items.some(function (item) { return item.value === restoreTimeCode; })) {
+                $timeCode.val(restoreTimeCode);
+            }
         },
         error: function () {
             showAlertMessage('Failed to load timecode options.', AlertType.ERROR);
@@ -595,7 +679,7 @@ function loadAllStagingModalTimeCodes() {
     });
 }
 
-function loadAllStagingModalProjects() {
+function loadAllStagingModalProjects(restoreParentProject) {
     resetStagingModalParentProjectOptions();
     $.ajax({
         url: '/PACT/MonthlyTime/GetAllProjects',
@@ -606,6 +690,10 @@ function loadAllStagingModalProjects() {
             items.forEach(function (item) {
                 $parentProject.append($('<option>', { value: item.value, text: item.text }));
             });
+
+            if (restoreParentProject && items.some(function (item) { return item.value === restoreParentProject; })) {
+                $parentProject.val(restoreParentProject);
+            }
         },
         error: function () {
             showAlertMessage('Failed to load parent project options.', AlertType.ERROR);
@@ -626,11 +714,13 @@ function saveStagingMonthlyTime() {
         Id: $('#Id').val(),
         WorkGroup: $('#StagingWorkGroup').val(),
         PactStaffId: $('#StagingPactStaffId').val(),
+        PactId: $('#StagingPactId').val(),
         Name: $('#StagingName').val(),
         TimeCode: $('#StagingTimeCode').val(),
         ParentProject: $('#StagingParentProject').val(),
         Month: $('#StagingMonth').val(),
-        Hours: $('#StagingHours').val()
+        Hours: $('#StagingHours').val(),
+        NameUpdating: $('#chkNameupdating').is(':checked')
     };
 
     $.ajax({
@@ -710,6 +800,7 @@ function importMonthlyTime(file) {
         contentType: false,
         success: function (response) {
             if (response.success) {
+                window.monthlyTimePassedFilter = null;
                 reloadStagingGrid();
                 showAlertMessage(response.message || 'Import completed.', AlertType.SUCCESS);
             } else {
@@ -824,6 +915,14 @@ $(function () {
     window.monthlyTimePassedFilter = null;
 
     initStaffDropdown();
+    scheduleAlignTotalHoursFields();
+    $(window).on('resize', scheduleAlignTotalHoursFields);
+
+    document.addEventListener('gridReloaded', function (e) {
+        if (e?.detail?.gridId === monthlyTimeLiveGridId || e?.detail?.gridId === monthlyTimeStagingGridId) {
+            scheduleAlignTotalHoursFields();
+        }
+    });
 
     $('#ddWorkGroup').on('change', function () {
         const workGroup = $(this).val();

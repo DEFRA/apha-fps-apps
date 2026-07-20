@@ -51,6 +51,8 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<MonthlyTimeDto, MonthlyTimeRes>().ReverseMap();
             CreateMap<StagingMonthlyTimeDto, StagingMonthlyTimeReq>().ReverseMap();
             CreateMap<StagingMonthlyTimeDto, StagingMonthlyTimeRes>().ReverseMap();
+            CreateMap<BulkUpdateStagingMonthlyTimeNamesDto, BulkUpdateStagingMonthlyTimeNamesReq>().ReverseMap();
+            CreateMap<BulkUpdateStagingMonthlyTimeNamesResultDto, BulkUpdateStagingMonthlyTimeNamesRes>().ReverseMap();
             CreateMap<MonthlyTimeImportRowDto, MonthlyTimeImportRowReq>().ReverseMap();
             CreateMap<MonthlyTimeImportRowDto, MonthlyTimeImportRowRes>().ReverseMap();
             CreateMap<MonthlyTimeImportDto, MonthlyTimeImportReq>().ReverseMap();

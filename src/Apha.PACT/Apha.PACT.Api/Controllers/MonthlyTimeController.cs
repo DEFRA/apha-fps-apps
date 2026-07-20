@@ -115,6 +115,15 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<StagingMonthlyTimeRes>(updated));
         }
 
+        [HttpPost("staging/bulk-name-update")]
+        public async Task<IActionResult> BulkUpdateStagingNames([FromBody] BulkUpdateStagingMonthlyTimeNamesReq request)
+        {
+            var importedBy = _currentUserContext.UserId;
+            var dto = _mapper.Map<BulkUpdateStagingMonthlyTimeNamesDto>(request);
+            var result = await _service.BulkUpdateStagingNamesAsync(dto, importedBy);
+            return Ok(_mapper.Map<BulkUpdateStagingMonthlyTimeNamesRes>(result));
+        }
+
         [HttpDelete("staging/{id:int}")]
         public async Task<IActionResult> DeleteStaging(int id)
         {

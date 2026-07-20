@@ -25,6 +25,7 @@ namespace Apha.PACT.Application.Interfaces
         Task<StagingMonthlyTimeDto?> GetStagingByIdAsync(int id, string importedBy);
         Task<StagingMonthlyTimeDto> CreateStagingAsync(StagingMonthlyTimeDto stagingMonthlyTime, string importedBy);
         Task<StagingMonthlyTimeDto> UpdateStagingAsync(StagingMonthlyTimeDto stagingMonthlyTime, string importedBy);
+        Task<BulkUpdateStagingMonthlyTimeNamesResultDto> BulkUpdateStagingNamesAsync(BulkUpdateStagingMonthlyTimeNamesDto request, string importedBy);
         Task<bool> DeleteStagingAsync(int id, string importedBy);
         Task<int> DeleteAllStagingByUserAsync(string importedBy);
         Task<int> DeleteFailedStagingByUserAsync(string importedBy);

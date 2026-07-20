@@ -16,7 +16,7 @@ namespace Apha.PACT.Core.Interfaces
             double? month);
 
         Task<MonthlyTime?> GetLiveByKeyAsync(string pactStaffId, string timeCode, double month, string parentProject);
-        Task<MonthlyTime> UpdateLiveAsync(MonthlyTime monthlyTime);
+        Task<MonthlyTime> UpdateLiveAsync(MonthlyTime monthlyTime, string originalPactStaffId);
         Task<bool> DeleteLiveAsync(string pactStaffId, string timeCode, double month, string parentProject);
         Task<bool> ExistsAsync(string pactStaffId, string timeCode, double month, string parentProject);
 
@@ -28,6 +28,14 @@ namespace Apha.PACT.Core.Interfaces
         Task<StagingMonthlyTime?> GetStagingByIdAsync(int id, string importedBy);
         Task<StagingMonthlyTime> CreateStagingAsync(StagingMonthlyTime stagingMonthlyTime);
         Task<StagingMonthlyTime> UpdateStagingAsync(StagingMonthlyTime stagingMonthlyTime, string importedBy);
+        Task<int> BulkUpdateStagingNamesAsync(
+            string importedBy,
+            string originalWorkGroup,
+            string originalPactStaffId,
+            string? newName,
+            string? newPactStaffId,
+            string? newPactId,
+            int? excludeId);
         Task<bool> DeleteStagingAsync(int id, string importedBy);
         Task<int> DeleteAllStagingByUserAsync(string importedBy);
         Task<int> DeleteFailedStagingByUserAsync(string importedBy);

@@ -54,7 +54,12 @@ namespace Apha.PACT.Application.Services
         public async Task<MonthlyTimeDto> UpdateLiveAsync(MonthlyTimeDto monthlyTime)
         {
             var entity = _mapper.Map<MonthlyTime>(monthlyTime);
-            var updated = await _repository.UpdateLiveAsync(entity);
+
+            var originalPactStaffId = string.IsNullOrWhiteSpace(monthlyTime.OriginalPactStaffId)
+                ? monthlyTime.PactStaffId
+                : monthlyTime.OriginalPactStaffId;
+
+            var updated = await _repository.UpdateLiveAsync(entity, originalPactStaffId);
             return _mapper.Map<MonthlyTimeDto>(updated);
         }
 
@@ -95,6 +100,25 @@ namespace Apha.PACT.Application.Services
             await ValidateSingleRecordAsync(entity);
             var updated = await _repository.UpdateStagingAsync(entity, importedBy);
             return _mapper.Map<StagingMonthlyTimeDto>(updated);
+        }
+
+        public async Task<BulkUpdateStagingMonthlyTimeNamesResultDto> BulkUpdateStagingNamesAsync(BulkUpdateStagingMonthlyTimeNamesDto request, string importedBy)
+        {
+            if (string.IsNullOrWhiteSpace(request.OriginalWorkGroup) || string.IsNullOrWhiteSpace(request.OriginalPactStaffId))
+            {
+                return new BulkUpdateStagingMonthlyTimeNamesResultDto { UpdatedCount = 0 };
+            }
+
+            var updatedCount = await _repository.BulkUpdateStagingNamesAsync(
+                importedBy,
+                request.OriginalWorkGroup,
+                request.OriginalPactStaffId,
+                request.NewName,
+                request.NewPactStaffId,
+                request.NewPactId,
+                request.ExcludeId);
+
+            return new BulkUpdateStagingMonthlyTimeNamesResultDto { UpdatedCount = updatedCount };
         }
 
         private async Task ValidateSingleRecordAsync(StagingMonthlyTime entity)

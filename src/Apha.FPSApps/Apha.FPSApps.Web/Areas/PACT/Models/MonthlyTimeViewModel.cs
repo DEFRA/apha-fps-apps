@@ -12,6 +12,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public List<SelectListItem> TimeCodeOptions { get; set; } = new();
         public List<SelectListItem> ProjectOptions { get; set; } = new();
         public List<SelectListItem> MonthOptions { get; set; } = new();
+        public decimal LiveTotalHours { get; set; }
+        public decimal StagingTotalHours { get; set; }
         public bool NameUpdating { get; set; }
     }
 }

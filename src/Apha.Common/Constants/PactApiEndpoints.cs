@@ -156,6 +156,7 @@ namespace Apha.Common.Constants
         public const string GetStagingMonthlyTimeById = "api/v1/monthlytime/staging/{0}";
         public const string CreateStagingMonthlyTime = "api/v1/monthlytime/staging";
         public const string UpdateStagingMonthlyTime = "api/v1/monthlytime/staging/{0}";
+        public const string BulkUpdateStagingMonthlyTimeNames = "api/v1/monthlytime/staging/bulk-name-update";
         public const string DeleteStagingMonthlyTime = "api/v1/monthlytime/staging/{0}";
         public const string DeleteAllStagingMonthlyTimeByUser = "api/v1/monthlytime/staging/user";
         public const string DeleteFailedStagingMonthlyTimeByUser = "api/v1/monthlytime/staging/user/failed";

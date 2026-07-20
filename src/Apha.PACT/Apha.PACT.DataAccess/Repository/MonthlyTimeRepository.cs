@@ -48,9 +48,11 @@ namespace Apha.PACT.DataAccess.Repository
             if (month.HasValue)
                 monthlyTimes = monthlyTimes.Where(x => (int)x.Month == (int)month.Value);
             
-            monthlyTimes = (IQueryable<MonthlyTime>)ApplySorting(monthlyTimes, query.SortBy, query.Descending);
+            monthlyTimes = (IQueryable<MonthlyTime>)ApplySorting(monthlyTimes, query.SortBy, query.Descending);            
 
-            return await ApplyPaging(monthlyTimes, query.Page, query.PageSize);
+            var pagedLiveData = await ApplyPaging(monthlyTimes, query.Page, query.PageSize);            
+            pagedLiveData.Total = await monthlyTimes.SumAsync(x => (decimal)(x.Hours ?? 0));   
+            return pagedLiveData;
         }
 
         public async Task<MonthlyTime?> GetLiveByKeyAsync(string pactStaffId, string timeCode, double month, string parentProject)
@@ -63,12 +65,48 @@ namespace Apha.PACT.DataAccess.Repository
                     && x.FpsYear == _fpsRequestContext.FpsYear);
         }
 
-        public async Task<MonthlyTime> UpdateLiveAsync(MonthlyTime monthlyTime)
+        public async Task<MonthlyTime> UpdateLiveAsync(MonthlyTime monthlyTime, string originalPactStaffId)
         {
-            monthlyTime.FpsYear = _fpsRequestContext.FpsYear;
-            _context.Entry(monthlyTime).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return monthlyTime;
+            var fpsYear = _fpsRequestContext.FpsYear;
+            monthlyTime.FpsYear = fpsYear;
+
+            var targetKeyExists = await _context.MonthlyTimes
+                .AsNoTracking()
+                .AnyAsync(x => x.PactStaffId == monthlyTime.PactStaffId
+                    && x.TimeCode == monthlyTime.TimeCode
+                    && x.Month == monthlyTime.Month
+                    && x.ParentProject == monthlyTime.ParentProject
+                    && x.FpsYear == fpsYear
+                    && x.PactStaffId != originalPactStaffId);
+
+            if (targetKeyExists)
+                throw new InvalidOperationException("A record with the target key already exists in MonthlyTime.");
+
+            var updatedCount = await _context.MonthlyTimes
+                .Where(x => x.PactStaffId == originalPactStaffId
+                    && x.TimeCode == monthlyTime.TimeCode
+                    && x.Month == monthlyTime.Month
+                    && x.ParentProject == monthlyTime.ParentProject
+                    && x.FpsYear == fpsYear)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(x => x.PactStaffId, monthlyTime.PactStaffId)
+                    .SetProperty(x => x.TimeCode, monthlyTime.TimeCode)
+                    .SetProperty(x => x.Month, monthlyTime.Month)
+                    .SetProperty(x => x.ParentProject, monthlyTime.ParentProject)
+                    .SetProperty(x => x.WorkGroup, monthlyTime.WorkGroup)
+                    .SetProperty(x => x.Hours, monthlyTime.Hours));
+
+            if (updatedCount == 0)
+                throw new InvalidOperationException("MonthlyTime record not found for update.");
+
+            var updated = await _context.MonthlyTimes
+                .FirstOrDefaultAsync(x => x.PactStaffId == monthlyTime.PactStaffId
+                    && x.TimeCode == monthlyTime.TimeCode
+                    && x.Month == monthlyTime.Month
+                    && x.ParentProject == monthlyTime.ParentProject
+                    && x.FpsYear == fpsYear);
+
+            return updated ?? throw new InvalidOperationException("MonthlyTime record updated but could not be reloaded.");
         }
 
         public async Task<bool> DeleteLiveAsync(string pactStaffId, string timeCode, double month, string parentProject)
@@ -113,7 +151,9 @@ namespace Apha.PACT.DataAccess.Repository
                 .ThenBy(x => x.Month)
                 .ThenBy(x => x.Id);
 
-            return await ApplyPaging(stagingQuery, query.Page, query.PageSize);
+            var pagedStagingData = await ApplyPaging(stagingQuery, query.Page, query.PageSize);
+            pagedStagingData.Total = await stagingQuery.SumAsync(x => (decimal)(x.Hours ?? 0));
+            return pagedStagingData;
         }
 
         public async Task<StagingMonthlyTime?> GetStagingByIdAsync(int id, string importedBy)
@@ -143,10 +183,35 @@ namespace Apha.PACT.DataAccess.Repository
             existing.PactId = stagingMonthlyTime.PactId;
             existing.Name = stagingMonthlyTime.Name;
             existing.Passed = false;
-            existing.FailureComments = "This record has been edited since being validated. Needs re-validating.";           
+            existing.FailureComments = "This record has been edited since being validated. Needs re-validating.";
 
             await _context.SaveChangesAsync();
             return existing;
+        }
+
+        public async Task<int> BulkUpdateStagingNamesAsync(
+            string importedBy,
+            string originalWorkGroup,
+            string originalPactStaffId,
+            string? newName,
+            string? newPactStaffId,
+            string? newPactId,
+            int? excludeId)
+        {
+            var query = _context.StagingMonthlyTimes
+                .Where(x => x.ImportedBy == importedBy
+                    && x.WorkGroup == originalWorkGroup
+                    && x.PactStaffId == originalPactStaffId);
+
+            if (excludeId.HasValue)
+                query = query.Where(x => x.Id != excludeId.Value);
+
+            return await query.ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.Name, newName)
+                .SetProperty(x => x.PactStaffId, newPactStaffId)
+                .SetProperty(x => x.PactId, newPactId)
+                .SetProperty(x => x.Passed, false)
+                .SetProperty(x => x.FailureComments, "This record has been edited since being validated. Needs re-validating."));
         }
 
         public async Task<bool> DeleteStagingAsync(int id, string importedBy)

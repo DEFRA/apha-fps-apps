@@ -1297,8 +1297,9 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
 /* ============================================================
    39. MAKE LIVE HOURS
    ============================================================ */
-.wrapper-makelivehours { width: 100%; display: flex; flex-direction: row; justify-content: flex-end; border-top: 1px solid #005ae0; background: #edf4ff; }
-#divMakeliveTotalhours { display: flex; margin-right: 0; padding: 3px 4px 3px 0; align-items: center; justify-content: flex-end; }
+.wrapper-makelivehours { width: 100%; display: flex; flex-direction: row; justify-content: flex-start; border-top: 1px solid #005ae0; background: #edf4ff; }
+#divMakeliveTotalhours { display: flex; margin-right: 0; padding: 3px 4px 3px 0; align-items: center; justify-content: flex-start; }
+#divStagingTotalhours { display: flex; margin-right: 0; padding: 3px 4px 3px 0; align-items: center; justify-content: flex-start; }
 #hoursBoxContainer { position: relative; min-height: 45px; border-top: 1px solid var(--govuk-border-colour); width: 100%; }
 
 /* ============================================================
@@ -1524,9 +1525,15 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
 
 /* Total Hours Section */
 .total-hours-label {
-    width: 600px;
+    width: auto;
     margin-right: 4px;
     text-align: right;
+}
+
+#lbltotalhours {
+    width: auto;
+    margin-bottom: 0;
+    margin-right: 4px;
 }
 
 .make-live-hours-input {

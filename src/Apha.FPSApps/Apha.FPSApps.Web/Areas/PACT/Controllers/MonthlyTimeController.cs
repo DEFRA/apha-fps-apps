@@ -54,6 +54,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            DataGridConfig<MonthlyTimeLiveItem> liveGrid = await BuildLiveGridAsync(new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 }, null, null, null, null, null);
+            DataGridConfig<StagingMonthlyTimeItem> stagingGrid = await BuildStagingGridAsync(new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 }, null);
             var viewModel = new MonthlyTimeViewModel
             {
                 WorkGroupOptions = await GetWorkGroupOptionsAsync(),
@@ -61,8 +63,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 TimeCodeOptions = new List<SelectListItem>(),
                 ProjectOptions = new List<SelectListItem>(),
                 MonthOptions = await GetMonthOptionsAsync(),
-                LiveGrid = await BuildLiveGridAsync(new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 }, null, null, null, null, null),
-                StagingGrid = await BuildStagingGridAsync(new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 }, null)
+                LiveGrid = liveGrid,
+                StagingGrid = stagingGrid,
+                LiveTotalHours = liveGrid.Total,
+                StagingTotalHours = stagingGrid.Total
             };
 
             return View(viewModel);
@@ -177,12 +181,32 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data." });
 
+            var validationErrors = await ValidateLiveRecordAsync(model);
+            if (validationErrors.Count > 0)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Validation failed.",
+                    errors = validationErrors
+                });
+            }
+
             var dto = _mapper.Map<MonthlyTimeDto>(model);
+
+            var keyParts = (model.CompositeKey ?? string.Empty).Split('|');
+            dto.OriginalPactStaffId = keyParts.ElementAtOrDefault(0);
+
             var response = await _monthlyTimeService.UpdateLiveAsync(dto);
             if (response.Success)
                 return Json(new { success = true, message = "Monthly time record updated successfully." });
 
-            return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to update monthly time record." });
+            return Json(new
+            {
+                success = false,
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to update monthly time record.",
+                errors = response.Errors?.Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "Validation error" })
+            });
         }
 
         [HttpGet]
@@ -220,15 +244,54 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data." });
 
+            StagingMonthlyTimeDto? existingRecord = null;
+            if (model.Id != 0)
+            {
+                var existingResponse = await _monthlyTimeService.GetStagingByIdAsync(model.Id);
+                if (existingResponse.Success)
+                    existingRecord = existingResponse.Data;
+            }
+
             var dto = _mapper.Map<StagingMonthlyTimeDto>(model);
             ApiResponseDto<StagingMonthlyTimeDto> response = model.Id == 0
                 ? await _monthlyTimeService.CreateStagingAsync(dto)
                 : await _monthlyTimeService.UpdateStagingAsync(model.Id, dto);
 
-            if (response.Success)
+            if (!response.Success)
+                return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to save staging record." });
+
+            var shouldApplyNameUpdating = model.Id != 0
+                && model.NameUpdating
+                && existingRecord != null
+                && !string.IsNullOrWhiteSpace(existingRecord.WorkGroup)
+                && !string.IsNullOrWhiteSpace(existingRecord.PactStaffId)
+                && (!string.Equals(existingRecord.Name, model.Name, StringComparison.OrdinalIgnoreCase)
+                    || !string.Equals(existingRecord.PactStaffId, model.PactStaffId, StringComparison.OrdinalIgnoreCase));
+
+            if (!shouldApplyNameUpdating)
                 return Json(new { success = true, message = model.Id == 0 ? "Staging record added successfully." : "Staging record updated successfully." });
 
-            return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to save staging record." });
+            var bulkUpdateResponse = await _monthlyTimeService.BulkUpdateStagingNamesAsync(new BulkUpdateStagingMonthlyTimeNamesDto
+            {
+                ExcludeId = model.Id,
+                OriginalWorkGroup = existingRecord.WorkGroup,
+                OriginalPactStaffId = existingRecord.PactStaffId,
+                NewName = model.Name,
+                NewPactStaffId = model.PactStaffId,
+                NewPactId = model.PactId
+            });
+
+            if (!bulkUpdateResponse.Success)
+                return Json(new { success = false, message = bulkUpdateResponse.Errors?.FirstOrDefault()?.Message ?? "Failed to apply name updates to related records." });
+
+            var updatedCount = bulkUpdateResponse.Data?.UpdatedCount ?? 0;
+            return Json(new
+            {
+                success = true,
+                message = updatedCount > 0
+                    ? $"Staging record updated successfully. Name updates applied to {updatedCount} related record(s)."
+                    : "Staging record updated successfully."
+            });
         }
 
         [HttpDelete]
@@ -343,6 +406,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var query = _mapper.Map<QueryParameters<string>>(request);
             var response = await _monthlyTimeService.GetLiveAsync(query, workGroup, timeCode, pactStaffId, parentProject, month);
             var items = response.Success && response.Data != null ? _mapper.Map<List<MonthlyTimeLiveItem>>(response.Data) : [];
+            var total = response.Total;
             var pagination = response.Pagination != null
                 ? _mapper.Map<PaginationModel>(response.Pagination)
                 : new PaginationModel();
@@ -361,6 +425,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 BindGridUrl = "/PACT/MonthlyTime/LoadLiveGrid",
                 ExtraFilterMethod = "getMonthlyTimeLiveFilters",
                 Data = items,
+                Total = total,
                 Columns = GridDataProvider.GetColumnsDefination<MonthlyTimeLiveItem>(null),
                 Pagination = pagination,
                 CurrentFilters = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? []
@@ -372,6 +437,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var query = _mapper.Map<QueryParameters<string>>(request);
             var response = await _monthlyTimeService.GetStagingAsync(query, passed);
             var items = response.Success && response.Data != null ? _mapper.Map<List<StagingMonthlyTimeItem>>(response.Data) : [];
+            var total = response.Total;
             var pagination = response.Pagination != null
                 ? _mapper.Map<PaginationModel>(response.Pagination)
                 : new PaginationModel();
@@ -391,6 +457,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 BindGridUrl = "/PACT/MonthlyTime/LoadStagingGrid",
                 ExtraFilterMethod = "getMonthlyTimeStagingFilters",
                 Data = items,
+                Total = total,
                 Columns = GridDataProvider.GetColumnsDefination<StagingMonthlyTimeItem>(null),
                 Pagination = pagination,
                 CurrentFilters = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? []
@@ -444,6 +511,62 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x.Monthnumber).Select(x => new SelectListItem(x.Monthname, x.Monthnumber.ToString())).ToList()
                 : [];
+        }
+
+        private async Task<List<object>> ValidateLiveRecordAsync(MonthlyTimeLiveItem model)
+        {
+            var errors = new List<object>();
+
+            var workGroup = model.WorkGroup?.Trim();
+            var staffId = model.PactStaffId?.Trim();
+            var timeCode = model.TimeCode?.Trim();
+            var parentProject = model.ParentProject?.Trim();
+
+            if (model.Hours is null || model.Hours <= 0)
+                errors.Add(new { field = "Hours", message = "The hours field must be greater than zero." });
+
+            if (string.IsNullOrWhiteSpace(workGroup))
+            {
+                errors.Add(new { field = "WorkGroup", message = "The work group name is blank." });
+            }
+            else
+            {
+                var workGroups = await GetWorkGroupOptionsAsync();
+                if (!workGroups.Any(x => string.Equals(x.Value, workGroup, StringComparison.OrdinalIgnoreCase)))
+                    errors.Add(new { field = "WorkGroup", message = $"The work group name is invalid: {workGroup}" });
+            }
+
+            if (string.IsNullOrWhiteSpace(staffId))
+                errors.Add(new { field = "PactStaffId", message = "Staff ID blank." });
+
+            if (string.IsNullOrWhiteSpace(timeCode))
+            {
+                errors.Add(new { field = "TimeCode", message = "The Timecode is blank." });
+            }
+            else if (!string.IsNullOrWhiteSpace(workGroup))
+            {
+                var validTimeCodes = await GetTimeCodeOptionsAsync(workGroup);
+                if (!validTimeCodes.Any(x => string.Equals(x.Value, timeCode, StringComparison.OrdinalIgnoreCase)))
+                    errors.Add(new { field = "TimeCode", message = $"Timecode not valid for this WG or invalid timecode: {timeCode}, {workGroup}" });
+            }
+
+            if (string.IsNullOrWhiteSpace(parentProject))
+            {
+                errors.Add(new { field = "ParentProject", message = "The Project is blank." });
+            }
+            else if (!string.IsNullOrWhiteSpace(workGroup) && !string.IsNullOrWhiteSpace(timeCode))
+            {
+                var validProjects = await GetProjectOptionsAsync(workGroup, timeCode);
+                if (!validProjects.Any(x => string.Equals(x.Value, parentProject, StringComparison.OrdinalIgnoreCase)))
+                    errors.Add(new { field = "ParentProject", message = $"Not valid timecode/Project/WG combination: {parentProject}, {timeCode}, {workGroup}" });
+            }
+
+            var validMonths = await GetMonthOptionsAsync();
+            var monthValue = model.Month.ToString("0");
+            if (!validMonths.Any(x => string.Equals(x.Value, monthValue, StringComparison.OrdinalIgnoreCase)))
+                errors.Add(new { field = "Month", message = $"The month No. invalid: {model.Month}" });
+
+            return errors;
         }
     }
 }

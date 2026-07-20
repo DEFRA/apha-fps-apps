@@ -53,6 +53,9 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<StagingMonthlyTimeDto>> UpdateStagingAsync(int id, StagingMonthlyTimeDto dto)
             => await _pactApiClient.PactMonthlyTime.UpdateStagingAsync(id, dto);
 
+        public async Task<ApiResponseDto<BulkUpdateStagingMonthlyTimeNamesResultDto>> BulkUpdateStagingNamesAsync(BulkUpdateStagingMonthlyTimeNamesDto dto)
+            => await _pactApiClient.PactMonthlyTime.BulkUpdateStagingNamesAsync(dto);
+
         public async Task<ApiResponseDto<bool>> DeleteStagingAsync(int id)
             => await _pactApiClient.PactMonthlyTime.DeleteStagingAsync(id);
 

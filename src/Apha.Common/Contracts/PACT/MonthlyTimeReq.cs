@@ -8,5 +8,7 @@ namespace Apha.Common.Contracts.PACT
         public string ParentProject { get; set; } = null!;
         public string? WorkGroup { get; set; }
         public double? Hours { get; set; }
+
+        public string? OriginalPactStaffId { get; set; }
     }
 }

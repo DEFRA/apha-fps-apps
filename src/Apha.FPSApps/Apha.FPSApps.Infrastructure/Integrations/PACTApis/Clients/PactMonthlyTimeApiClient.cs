@@ -121,6 +121,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<StagingMonthlyTimeDto>.FailureResponse(responseDto.Errors, responseDto.Meta ?? new ApiMetaDto());
         }
 
+        public async Task<ApiResponseDto<BulkUpdateStagingMonthlyTimeNamesResultDto>> BulkUpdateStagingNamesAsync(BulkUpdateStagingMonthlyTimeNamesDto dto)
+        {
+            var request = _mapper.Map<BulkUpdateStagingMonthlyTimeNamesReq>(dto);
+            var response = await _http.PostAsync<BulkUpdateStagingMonthlyTimeNamesReq, BulkUpdateStagingMonthlyTimeNamesRes>(PactApiEndpoints.BulkUpdateStagingMonthlyTimeNames, request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<BulkUpdateStagingMonthlyTimeNamesResultDto>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<BulkUpdateStagingMonthlyTimeNamesResultDto>>(response);
+            return ApiResponseDto<BulkUpdateStagingMonthlyTimeNamesResultDto>.FailureResponse(responseDto.Errors, responseDto.Meta ?? new ApiMetaDto());
+        }
+
         public async Task<ApiResponseDto<bool>> DeleteStagingAsync(int id)
         {
             var response = await _http.DeleteAsync<bool?>(string.Format(PactApiEndpoints.DeleteStagingMonthlyTime, id));

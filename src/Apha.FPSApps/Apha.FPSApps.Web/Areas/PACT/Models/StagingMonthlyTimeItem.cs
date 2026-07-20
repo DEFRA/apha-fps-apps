@@ -56,5 +56,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 
         [GridColumn(IsVisible = false)]
         public DateTime? ImportedDate { get; set; }
+
+        [GridColumn(IsVisible = false)]
+        public bool NameUpdating { get; set; }
     }
 }

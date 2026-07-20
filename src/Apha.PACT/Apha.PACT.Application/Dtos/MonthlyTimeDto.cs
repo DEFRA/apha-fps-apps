@@ -10,5 +10,7 @@ namespace Apha.PACT.Application.Dtos
         public double? Hours { get; set; }
         public string? Name { get; set; }
         public int FpsYear { get; set; }
+
+        public string? OriginalPactStaffId { get; set; }
     }
 }
