@@ -39,84 +39,67 @@ namespace Apha.FPS.DataAccess.Repositories
         private static List<ResourceStaffGeneralSummaryRow> ApplyStaffAllocationFilterAndSort(
             List<ResourceStaffGeneralSummaryRow> rows, PaginationParameters<string> query)
         {
-            // Column filters
             if (!string.IsNullOrWhiteSpace(query.Filter))
             {
                 var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(query.Filter) ?? [];
 
                 if (filters.TryGetValue("Name", out var nameFilter) && !string.IsNullOrWhiteSpace(nameFilter))
-                    rows = rows.Where(r => r.Name != null && r.Name.Contains(nameFilter, StringComparison.OrdinalIgnoreCase)).ToList();
-
-                if (filters.TryGetValue("StaffId", out var staffIdFilter) && !string.IsNullOrWhiteSpace(staffIdFilter))
-                    rows = rows.Where(r => r.StaffId != null && r.StaffId.Contains(staffIdFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+                    rows = rows.Where(r => ContainsIgnoreCase(r.Name, nameFilter)).ToList();
             }
 
-            // Global search
-            if (!string.IsNullOrWhiteSpace(query.Search))
-                rows = rows.Where(r => r.Name != null && r.Name.Contains(query.Search, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            // Sorting
-            rows = (query.SortBy, query.Descending) switch
+            IOrderedEnumerable<ResourceStaffGeneralSummaryRow> ordered = query.SortBy switch
             {
-                ("Name", true) => rows.OrderByDescending(r => r.Name).ToList(),
-                ("Name", false) => rows.OrderBy(r => r.Name).ToList(),
-                ("StaffId", true) => rows.OrderByDescending(r => r.StaffId).ToList(),
-                ("StaffId", false) => rows.OrderBy(r => r.StaffId).ToList(),
-                ("HrsAvail", true) => rows.OrderByDescending(r => r.HrsAvail).ToList(),
-                ("HrsAvail", false) => rows.OrderBy(r => r.HrsAvail).ToList(),
-                ("PlannedHours", true) => rows.OrderByDescending(r => r.PlannedHours).ToList(),
-                ("PlannedHours", false) => rows.OrderBy(r => r.PlannedHours).ToList(),
-                ("ChargeHours", true) => rows.OrderByDescending(r => r.ChargeHours).ToList(),
-                ("ChargeHours", false) => rows.OrderBy(r => r.ChargeHours).ToList(),
-                ("AppPlannedHours", true) => rows.OrderByDescending(r => r.AppPlannedHours).ToList(),
-                ("AppPlannedHours", false) => rows.OrderBy(r => r.AppPlannedHours).ToList(),
-                ("AppChargeHours", true) => rows.OrderByDescending(r => r.AppChargeHours).ToList(),
-                ("AppChargeHours", false) => rows.OrderBy(r => r.AppChargeHours).ToList(),
-                _ => rows   // default: WorkGroupGrade, Name from FetchStaffAllocationsAsync
+                "StaffId" => rows.OrderBy(r => r.StaffId),
+                "HrsAvail" => rows.OrderBy(r => r.HrsAvail),
+                "PlannedHours" => rows.OrderBy(r => r.PlannedHours),
+                "ChargeHours" => rows.OrderBy(r => r.ChargeHours),
+                "AppPlannedHours" => rows.OrderBy(r => r.AppPlannedHours),
+                "AppChargeHours" => rows.OrderBy(r => r.AppChargeHours),
+                "Allocation" => rows.OrderBy(r => r.Allocation),
+                "Utilization" => rows.OrderBy(r => r.Utilization),
+                "AppUtilization" => rows.OrderBy(r => r.AppUtilization),
+                _ => rows.OrderBy(r => r.Name),
             };
 
-            return rows;
+            return query.Descending ? ordered.Reverse().ToList() : ordered.ToList();
         }
-       
+
         private static List<ResourceStaffJobDetailRow> ApplyStaffJobDetailFilterAndSort(
             List<ResourceStaffJobDetailRow> rows, PaginationParameters<string> query)
         {
-            // Column filters
             if (!string.IsNullOrWhiteSpace(query.Filter))
             {
                 var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(query.Filter) ?? [];
 
                 if (filters.TryGetValue("Project", out var projectFilter) && !string.IsNullOrWhiteSpace(projectFilter))
-                    rows = rows.Where(r => r.JobCode != null && r.JobCode.Contains(projectFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+                    rows = rows.Where(r => ContainsIgnoreCase(r.JobCode, projectFilter)).ToList();
 
                 if (filters.TryGetValue("Description", out var descFilter) && !string.IsNullOrWhiteSpace(descFilter))
-                    rows = rows.Where(r => r.JobDescription != null && r.JobDescription.Contains(descFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+                    rows = rows.Where(r => ContainsIgnoreCase(r.JobDescription, descFilter)).ToList();
 
                 if (filters.TryGetValue("Status", out var statusFilter) && !string.IsNullOrWhiteSpace(statusFilter))
-                    rows = rows.Where(r => r.ProjectStatus != null && r.ProjectStatus.Contains(statusFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+                    rows = rows.Where(r => ContainsIgnoreCase(r.ProjectStatus, statusFilter)).ToList();
             }
 
-            // Global search
             if (!string.IsNullOrWhiteSpace(query.Search))
-                rows = rows.Where(r => (r.JobCode != null && r.JobCode.Contains(query.Search, StringComparison.OrdinalIgnoreCase))
-                                    || (r.JobDescription != null && r.JobDescription.Contains(query.Search, StringComparison.OrdinalIgnoreCase))).ToList();
+                rows = rows.Where(r => ContainsIgnoreCase(r.JobCode, query.Search)
+                                    || ContainsIgnoreCase(r.JobDescription, query.Search)).ToList();
 
-            // Sorting
-            rows = (query.SortBy, query.Descending) switch
+            IOrderedEnumerable<ResourceStaffJobDetailRow> ordered = query.SortBy switch
             {
-                ("Project", true) => rows.OrderByDescending(r => r.JobCode).ToList(),
-                ("Project", false) => rows.OrderBy(r => r.JobCode).ToList(),
-                ("Description", true) => rows.OrderByDescending(r => r.JobDescription).ToList(),
-                ("Description", false) => rows.OrderBy(r => r.JobDescription).ToList(),
-                ("Hour", true) => rows.OrderByDescending(r => r.PlannedHours).ToList(),
-                ("Hour", false) => rows.OrderBy(r => r.PlannedHours).ToList(),
-                ("Status", true) => rows.OrderByDescending(r => r.ProjectStatus).ToList(),
-                ("Status", false) => rows.OrderBy(r => r.ProjectStatus).ToList(),
-                _ => rows
+                "Project" => rows.OrderBy(r => r.JobCode),
+                "Description" => rows.OrderBy(r => r.JobDescription),
+                "Hour" => rows.OrderBy(r => r.PlannedHours),
+                "Status" => rows.OrderBy(r => r.ProjectStatus),
+                _ => rows.OrderBy(r => r.JobCode),
             };
 
-            return rows;
+            return query.Descending ? ordered.Reverse().ToList() : ordered.ToList();
         }
+
+        /// <summary>Null-safe case-insensitive contains check.</summary>
+        private static bool ContainsIgnoreCase(string? value, string filter) =>
+            value != null && value.Contains(filter, StringComparison.OrdinalIgnoreCase);
 
         private async Task<List<ResourceStaffJobDetailRow>> GetStaffJobDetailsByStaffIdAsync(string staffId)
         {
@@ -167,13 +150,13 @@ namespace Apha.FPS.DataAccess.Repositories
             // WHERE name LIKE '%General' AND WorkGroupGrade = @workGroupGrade
             var grouped = await (
                 from wg in _dbContext.WorkGroupEmployees.AsNoTracking()
-                // WorkGroupGrade IN (SELECT WGGrade FROM WorkGroupGrade)
+                    // WorkGroupGrade IN (SELECT WGGrade FROM WorkGroupGrade)
                 join wgg in _dbContext.WorkgroupGrades.AsNoTracking()
                     on wg.WorkGroupGrade equals wgg.WgGrade
                 // tblEmployee join (CROSS JOIN + WHERE SPNumber matches = INNER JOIN)
                 join e in _dbContext.Employees.AsNoTracking()
                     on wg.SpNumber equals e.SPNumber
-                where //wg.WorkGroupGrade == workGroupGrade && 
+                where wg.WorkGroupGrade == workGroupGrade &&
                     ((e.LastName ?? "") + ", " + (e.FirstName ?? "")).EndsWith("General")
                 // LEFT JOIN tblStaffJob on s.StaffID = sj.StaffID
                 join sj in _dbContext.StaffJobs.AsNoTracking()
@@ -220,7 +203,10 @@ namespace Apha.FPS.DataAccess.Repositories
                     AppPlannedHours = Math.Round(row.AppPlannedHours, 2),
                     PlannedHours = Math.Round(row.PlannedHours, 2),
                     ChargeHours = Math.Round(row.PlannedHours - ztHrs, 2),
-                    AppChargeHours = Math.Round(row.AppPlannedHours - ztHrs, 2)
+                    AppChargeHours = Math.Round(row.AppPlannedHours - ztHrs, 2),
+                    Allocation = (row.HrsAvail == 0) ? (double?)null : Math.Round((row.PlannedHours / row.HrsAvail), 4),
+                    Utilization = (row.HrsAvail == 0) ? (double?)null : Math.Round(((row.PlannedHours - ztHrs) / row.HrsAvail), 4),
+                    AppUtilization = (row.HrsAvail == 0) ? (double?)null : Math.Round(((row.AppPlannedHours - ztHrs) / row.HrsAvail), 4)
                 };
             }).ToList();
         }

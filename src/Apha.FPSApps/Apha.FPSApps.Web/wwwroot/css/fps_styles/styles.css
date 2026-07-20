@@ -823,6 +823,52 @@ button a {
     transform: rotate(180deg);
 }
 
+/* ── Side-nav parent/child group ── */
+
+/* Chevron icon — rotates when group is collapsed */
+.sidenav-toggle-icon {
+    display: inline-block;
+    font-size: 11px;
+    margin-left: 6px;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+.sidenav > ul > li > a[aria-expanded="false"] .sidenav-toggle-icon {
+    transform: rotate(-90deg);
+}
+
+/* Child list — slides open/closed via max-height transition */
+.sidenav-children {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    max-height: 300px;
+    opacity: 1;
+    transition: max-height 0.35s ease, opacity 0.25s ease;
+}
+
+.sidenav-children--hidden {
+    max-height: 0 !important;
+    opacity: 0;
+}
+
+/* Child list items — slightly darker to distinguish from parent */
+.sidenav-children > li {
+    background-color: #1558a0;
+    border-radius: 0 8px 8px 0;
+}
+
+/* Child links — indented relative to the parent */
+.sidenav-children > li > a.sidenav-child {
+    padding-left: 15px !important;
+}
+
+.sidenav-children > li > a.sidenav-child:hover {
+    background-color: #003078;
+}
+
 @media (max-width: 991px) {
     .dropdown-menu .dropdown-menu {
         position: static;

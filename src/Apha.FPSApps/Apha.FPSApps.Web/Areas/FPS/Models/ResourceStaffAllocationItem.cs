@@ -11,7 +11,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(IsVisible = false)]
         public string? WorkGroupGrade { get; set; }
 
-        [GridColumn(IsVisible = true)]
+        [GridColumn(IsVisible = false)]
         public string? StaffId { get; set; }
 
         [Display(Name = "Name")]
@@ -22,23 +22,31 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
         public double? HrsAvail { get; set; }
 
-        [GridColumn(IsVisible = false)]
-        public double ZtHours { get; set; }
-
-        [Display(Name = "App Plan Hrs")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
-        public double AppPlannedHours { get; set; }
-
         [Display(Name = "Plan Hrs")]
         [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
         public double PlannedHours { get; set; }
+
+        [Display(Name = "Allocation")]
+        [GridColumn(Width = 100, Type = GridColumnType.Percentage)]
+        public double? Allocation { get; set; }
+
+        [Display(Name = "App Chrg Hrs")]
+        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
+        public double AppChargeHours { get; set; }
+
+        [Display(Name = "App Utilization")]
+        [GridColumn(Width = 110, Type = GridColumnType.Percentage)]
+        public double? AppUtilization { get; set; }
 
         [Display(Name = "Chrg Hrs")]
         [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
         public double ChargeHours { get; set; }
 
-        [Display(Name = "App Chrg Hrs")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
-        public double AppChargeHours { get; set; }
+        [Display(Name = "Utilization")]
+        [GridColumn(Width = 110, Type = GridColumnType.Percentage)]
+        public double? Utilization { get; set; }
+
+        [GridColumn(IsVisible = false)]
+        public double ZtHours { get; set; }
     }
 }

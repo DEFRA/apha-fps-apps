@@ -36,5 +36,14 @@ namespace Apha.FPS.Core.Entities
 
         /// <summary>AppPlannedHours minus ZtHours ([AppPlanHrs] - [ZThrs]).</summary>
         public double AppChargeHours { get; set; }
+
+        /// <summary>IIf([HrsAvail]=0, "", [PlannedHours]/[HrsAvail]). Null when HrsAvail is 0 or null.</summary>
+        public double? Allocation { get; set; }
+
+        /// <summary>IIf([HrsAvail]=0, "", [AppChargeHours]/[HrsAvail]). Null when HrsAvail is 0 or null.</summary>
+        public double? Utilization { get; set; }
+
+        /// <summary>IIf([HrsAvail]=0, "", [ChargeHours]/[HrsAvail]). Null when HrsAvail is 0 or null.</summary>
+        public double? AppUtilization { get; set; }
     }
 }

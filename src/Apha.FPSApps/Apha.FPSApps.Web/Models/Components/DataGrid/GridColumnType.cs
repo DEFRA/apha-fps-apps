@@ -13,6 +13,7 @@
         UsdValue, // $0.00
         GbpValue, // £0.00
         GbpValueRounded, // £0 (rounded, no decimals)
-        DoubleNumber
+        DoubleNumber,
+        Percentage // e.g. 0.75 → "75.00%"
     }
 }

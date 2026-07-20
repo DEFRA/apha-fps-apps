@@ -22,18 +22,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class ResourceAllocationController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IResourceAllocationService _ResourceAllocationService;
+        private readonly IResourceAllocationService _resourceAllocationService;
         private readonly IProfitCentreService _profitCentreService;
         private readonly IWorkGroupGradeService _workGroupGradeService;
 
         public ResourceAllocationController(
             IMapper mapper,
-            IResourceAllocationService ResourceAllocationService,
+            IResourceAllocationService resourceAllocationService,
             IProfitCentreService profitCentreService,
             IWorkGroupGradeService workGroupGradeService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-            _ResourceAllocationService = ResourceAllocationService ?? throw new ArgumentNullException(nameof(ResourceAllocationService));
+            _resourceAllocationService = resourceAllocationService ?? throw new ArgumentNullException(nameof(resourceAllocationService));
             _profitCentreService = profitCentreService ?? throw new ArgumentNullException(nameof(profitCentreService));
             _workGroupGradeService = workGroupGradeService ?? throw new ArgumentNullException(nameof(workGroupGradeService));
         }
@@ -64,24 +64,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (!response.Success)
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load grades." });
 
-            var grades = (response.Data ?? new List<WorkgroupGradeDto>())
-                .Select(g => new { value = g.WgGrade, text = g.WgGrade })
-                .ToList();
-
-            return Json(new { success = true, data = grades });
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetGroupByResourceCentre(string resourceCentre)
-        {
-            if (string.IsNullOrWhiteSpace(resourceCentre))
-                return Json(new { success = false, message = "Resource Centre is required." });
-
-            var response = await _workGroupGradeService.GetWorkgroupGradesByWorkGroupAsync(resourceCentre);
-            if (!response.Success)
-                return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load grades." });
-
-            var grades = (response.Data ?? new List<WorkgroupGradeDto>())
+            var grades = (response.Data ?? [])
                 .Select(g => new { value = g.WgGrade, text = g.WgGrade })
                 .ToList();
 
@@ -96,32 +79,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> LoadStaffAllocationGrid(PaginationFilter<string> request, [FromForm] string? workGroupGrade)
         {
             if (string.IsNullOrWhiteSpace(workGroupGrade))
-                return PartialView("_DataGrid", BuildStaffAllocationGridConfig(new List<ResourceStaffAllocationItem>()));
-
-            var filterDict = !string.IsNullOrEmpty(request.Filter)
-                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
-                : null;
+                return PartialView("_DataGrid", BuildStaffAllocationGridConfig([]));
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _ResourceAllocationService.GetPagedStaffAllocationsByWorkGroupGradeAsync(workGroupGrade, query);
+            var response = await _resourceAllocationService.GetPagedStaffAllocationsByWorkGroupGradeAsync(workGroupGrade, query);
             if (!response.Success)
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load staff allocations." });
 
-            var items = (response.Data ?? new List<ResourceStaffAllocationDto>())
-                .Select(d => _mapper.Map<ResourceStaffAllocationItem>(d))
-                .ToList();
+            var items = (response.Data ?? []).Select(d => _mapper.Map<ResourceStaffAllocationItem>(d)).ToList();
+            var pagination = BuildPaginationModel(response.Pagination, request);
+            var filters = ParseFilters(request.Filter);
 
-            var paginationModel = _mapper.Map<PaginationModel>(response.Pagination) ?? new PaginationModel();
-            paginationModel.SortColumn = request.SortBy;
-            paginationModel.SortDirection = request.Descending;
-
-            return PartialView("_DataGrid", BuildStaffAllocationGridConfig(items, paginationModel, filterDict));
+            return PartialView("_DataGrid", BuildStaffAllocationGridConfig(items, pagination, filters));
         }
 
-        /// <summary>
-        /// Returns column totals for all staff in a workgroup grade for the "Overall Position for the Grade" panel.
-        /// Formulas mirror fsubResourceTotals2 in the original Access form.
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetStaffAllocationTotals(string workGroupGrade)
         {
@@ -129,16 +100,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = "WorkGroup Grade is required." });
 
             var query = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
-            var response = await _ResourceAllocationService.GetPagedStaffAllocationsByWorkGroupGradeAsync(workGroupGrade, query);
+            var response = await _resourceAllocationService.GetPagedStaffAllocationsByWorkGroupGradeAsync(workGroupGrade, query);
             if (!response.Success)
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load staff allocations." });
 
-            var items = response.Data ?? new List<ResourceStaffAllocationDto>();
+            var items = response.Data ?? [];
 
-            double totalHrsAvail = items.Sum(i => i.HrsAvail ?? 0);
-            double totalPlannedHours = items.Sum(i => i.PlannedHours);
-            double totalAppChargeHours = items.Sum(i => i.AppChargeHours);
-            double totalChargeHours = items.Sum(i => i.ChargeHours);
+            double totalHrsAvail = Math.Round(items.Sum(i => i.HrsAvail ?? 0), 2);
+            double totalPlannedHours = Math.Round(items.Sum(i => i.PlannedHours), 2);
+            double totalAppChargeHours = Math.Round(items.Sum(i => i.AppChargeHours), 2);
+            double totalChargeHours = Math.Round(items.Sum(i => i.ChargeHours), 2);
 
             string allocationPct = totalHrsAvail == 0 ? "" : FormatPct(totalPlannedHours / totalHrsAvail);
             string assuredUtilPct = totalHrsAvail == 0 ? "" : FormatPct(totalAppChargeHours / totalHrsAvail);
@@ -157,40 +128,41 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             });
         }
 
-        private static string FormatPct(double value) =>
-            (value * 100).ToString("0.##") + "%";
+        private static string FormatPct(double value) => (value * 100).ToString("0.##") + "%";
 
-        /// <summary>
-        /// Loads the jobs DataGrid for a given staff member (supports pagination, sorting, filtering).
-        /// </summary>
         [HttpPost]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> LoadStaffJobsGrid(PaginationFilter<string> request, [FromForm] string? staffId)
         {
             if (string.IsNullOrWhiteSpace(staffId))
-                return PartialView("_DataGrid", BuildStaffJobsGridConfig(new List<ResourceStaffJobItem>()));
-
-            var filterDict = !string.IsNullOrEmpty(request.Filter)
-                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
-                : null;
+                return PartialView("_DataGrid", BuildStaffJobsGridConfig([]));
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _ResourceAllocationService.GetPagedStaffJobDetailsByStaffIdAsync(staffId, query);
+            var response = await _resourceAllocationService.GetPagedStaffJobDetailsByStaffIdAsync(staffId, query);
             if (!response.Success)
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load staff jobs." });
 
-            var items = (response.Data ?? new List<ResourceStaffJobDetailDto>())
-                .Select(d => _mapper.Map<ResourceStaffJobItem>(d))
-                .ToList();
+            var items = (response.Data ?? []).Select(d => _mapper.Map<ResourceStaffJobItem>(d)).ToList();
+            var pagination = BuildPaginationModel(response.Pagination, request);
+            var filters = ParseFilters(request.Filter);
 
-            var paginationModel = _mapper.Map<PaginationModel>(response.Pagination) ?? new PaginationModel();
-            paginationModel.SortColumn = request.SortBy;
-            paginationModel.SortDirection = request.Descending;
-
-            return PartialView("_DataGrid", BuildStaffJobsGridConfig(items, paginationModel, filterDict));
+            return PartialView("_DataGrid", BuildStaffJobsGridConfig(items, pagination, filters));
         }
 
         // ─── Private helpers ─────────────────────────────────────────────────────
+
+        private PaginationModel BuildPaginationModel(object? pagination, PaginationFilter<string> request)
+        {
+            var model = _mapper.Map<PaginationModel>(pagination) ?? new PaginationModel();
+            model.SortColumn = request.SortBy;
+            model.SortDirection = request.Descending;
+            return model;
+        }
+
+        private static Dictionary<string, string>? ParseFilters(string? filter) =>
+            !string.IsNullOrEmpty(filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(filter)
+                : null;
 
         private static DataGridConfig<ResourceStaffAllocationItem> BuildStaffAllocationGridConfig(
             List<ResourceStaffAllocationItem> data,
@@ -212,6 +184,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod = "GetStaffAllocationExtraFilters",
                 Data = data,
                 Columns = GridDataProvider.GetColumnsDefination<ResourceStaffAllocationItem>(),
+                ColumnGroups =
+                [
+                    new() { Label = "", Span = 4 },
+                    new() { Label = "Assured Work", Span = 2 },
+                    new() { Label = "Total Work", Span = 2 },
+                ],
                 Pagination = pagination ?? new PaginationModel(),
                 CurrentFilters = filters ?? new Dictionary<string, string>()
             };
@@ -242,17 +220,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private async Task<List<SelectListItem>> PopulateResourceCentresAsync()
         {
             var result = await _profitCentreService.GetProfitCentresAsync();
-            if (result.Success && result.Data != null)
-            {
-                return result.Data
-                    .Select(p => new SelectListItem
-                    {
-                        Value = p.ProfitCentreId,
-                        Text = p.ProfitCentreId
-                    })
-                    .ToList();
-            }
-            return new List<SelectListItem>();
+            return result.Success && result.Data != null
+                ? result.Data.Select(p => new SelectListItem { Value = p.ProfitCentreId, Text = p.ProfitCentreId }).ToList()
+                : new List<SelectListItem>();
         }
     }
 }

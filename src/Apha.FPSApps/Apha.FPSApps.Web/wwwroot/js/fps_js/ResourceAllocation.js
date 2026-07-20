@@ -1,131 +1,126 @@
-(function (cfg) {
+/* ── Shared helpers (used by both modules below) ────────────────────────── */
+function buildSelectOptions(select, items, valueFn, textFn) {
+    const frag = document.createDocumentFragment();
+    (items || []).forEach(item => {
+        const opt = document.createElement('option');
+        opt.value       = valueFn(item);
+        opt.textContent = textFn(item);
+        frag.appendChild(opt);
+    });
+    select.appendChild(frag);
+}
+
+function resetSelect(select, placeholder) {
+    if (select) select.innerHTML = `<option value="">${placeholder}</option>`;
+}
+
+function ajaxGet(url, params) {
+    return new Promise((resolve, reject) => $.get(url, params, resolve).fail(reject));
+}
+
+function ajaxPost(url, params) {
+    return new Promise((resolve, reject) => $.post(url, params, resolve).fail(reject));
+}
+
+
+/* ── SSR cascade (workgroup / grade dropdowns) ──────────────────────────── */
+(function () {
     'use strict';
 
-    /* ── Module-level state ─────────────────────────────────────────── */
-    let currentCentre = cfg.currentCentre || '';
-    let currentWorkGroup = cfg.currentWorkGroup || '';
-    let currentGrade = cfg.currentGrade || '';
+    const el = id => document.getElementById(id);
 
-    /* ── Utility helpers ────────────────────────────────────────────── */
-    function el(id) { return document.getElementById(id); }
+    const WG_PLACEHOLDER    = '-- Select a Work Group --';
+    const GRADE_PLACEHOLDER = '-- Select a WorkGroup Grade--';
 
-    function setVal(id, value) {
-        const input = el(id);
-        if (input) input.value = value;
-    }
+    const WG_URL    = '/FPS/SetUpStaffResources/GetGroupsByResourceCentre';
+    const GRADE_URL = '/FPS/SetUpStaffResources/GetGradesByGroups';
 
-    /* ── Resource-centre cascade ────────────────────────────────────── */
     function LoadGroupsByResourceCentre() {
-        const sel = el('resourceCentreSelect');
+        const centre = el('resourceCentreSelect')?.value || '';
         const nameEl = el('ssrSelectedCentreName');
-        currentCentre = sel ? sel.value : '';
 
-        if (!currentCentre) {
+        if (!centre) {
             if (nameEl) nameEl.textContent = '';
-            currentGrade = '';
             const list = el('ssrGradeList');
             if (list) list.innerHTML = '';
             ssrClearAll();
             return;
         }
 
-        if (nameEl) nameEl.textContent = currentCentre;
-        currentWorkGroup = '';
-        currentGrade = '';
-        bindGroupDropdownList([]);
+        if (nameEl) nameEl.textContent = centre;
+        resetSelect(el('workGroupSelect'), WG_PLACEHOLDER);
         showLoader();
-        $.get('/FPS/SetUpStaffResources/GetGroupsByResourceCentre',
-            { resourceCentre: currentCentre },
-            function (response) {
+
+        $.get(WG_URL, { resourceCentre: centre })
+            .done(r => {
                 hideLoader();
-                if (response && response.success) {
-                    bindGroupDropdownList(response.data);
+                if (r?.success) {
+                    buildSelectOptions(el('workGroupSelect'), r.data, wg => wg, wg => wg);
                 } else {
-                    showAlertMessage('Could not load work groups for \'' + currentCentre + '\': ' + (response && response.message || 'Unknown error.'), AlertType.ERROR);
+                    showAlertMessage(`Could not load work groups for '${centre}': ${r?.message || 'Unknown error.'}`, AlertType.ERROR);
                 }
-            }
-        ).fail(function () {
-            hideLoader();
-            showAlertMessage('Could not load work groups for \'' + currentCentre + '\'. Please try selecting the Resource Centre again.', AlertType.ERROR);
-        });
-    }
-
-    function bindGroupDropdownList(workgroups) {
-        const select = el('workGroupSelect');
-        if (!select) return;
-
-        select.innerHTML = '<option value="">-- Select a Work Group --</option>';
-        (workgroups || []).forEach(function (wg) {
-            const opt = document.createElement('option');
-            opt.value = wg;
-            opt.textContent = wg;
-            select.appendChild(opt);
-        });
+            })
+            .fail(() => {
+                hideLoader();
+                showAlertMessage(`Could not load work groups for '${centre}'. Please try selecting the Resource Centre again.`, AlertType.ERROR);
+            });
     }
 
     function LoadGradeByGroup() {
-        const sel = el('workGroupSelect');
-        const selectedGroup = sel ? sel.value : '';
-        currentWorkGroup = selectedGroup;
+        const selectedGroup = el('workGroupSelect')?.value || '';
 
         if (!selectedGroup) {
-            bindGradeList([]);
+            resetSelect(el('workGroupGradeSelect'), GRADE_PLACEHOLDER);
             return;
         }
+
         showLoader();
-        $.get('/FPS/SetUpStaffResources/GetGradesByGroups',
-            { workGroup: selectedGroup },
-            function (response) {
+        $.get(GRADE_URL, { workGroup: selectedGroup })
+            .done(r => {
                 hideLoader();
-                if (response && response.success) {
-                    bindGradeDropdownList(response.data);
+                if (r?.success) {
+                    resetSelect(el('workGroupGradeSelect'), GRADE_PLACEHOLDER);
+                    buildSelectOptions(el('workGroupGradeSelect'), r.data, wg => wg.wgGrade, wg => wg.wgGrade);
                 } else {
-                    showAlertMessage('Could not load grades for work group \'' + selectedGroup + '\': ' + (response && response.message || 'Unknown error.'), AlertType.ERROR);
+                    showAlertMessage(`Could not load grades for work group '${selectedGroup}': ${r?.message || 'Unknown error.'}`, AlertType.ERROR);
                 }
-            }
-        ).fail(function () {
-            hideLoader();
-            showAlertMessage('Could not load grades for work group \'' + selectedGroup + '\'. Please try selecting the work group again.', AlertType.ERROR);
-        });
+            })
+            .fail(() => {
+                hideLoader();
+                showAlertMessage(`Could not load grades for work group '${selectedGroup}'. Please try selecting the work group again.`, AlertType.ERROR);
+            });
     }
 
-    function bindGradeDropdownList(workgroups) {
-        const select = el('workGroupGradeSelect');
-        if (!select) return;
-
-        select.innerHTML = '<option value="">-- Select a WorkGroup Grade--</option>';
-        (workgroups || []).forEach(function (wg) {
-            const opt = document.createElement('option');
-            opt.value = wg.wgGrade;
-            opt.textContent = wg.wgGrade;
-            select.appendChild(opt);
-        });
-    }
     window.LoadGroupsByResourceCentre = LoadGroupsByResourceCentre;
-    window.LoadGradeByGroup = LoadGradeByGroup;
+    window.LoadGradeByGroup           = LoadGradeByGroup;
 
-}(window.ssrConfig || {}));
+}());
 
 
 /* ── Resource Allocation (Stage 2) module ───────────────────────────────── */
 (function (cfg) {
     'use strict';
 
-    var gradesUrl = cfg.gradesUrl || '';
-    var staffGridUrl = cfg.staffGridUrl || '';
-    var jobsGridUrl = cfg.jobsGridUrl || '';
-    var totalsUrl = cfg.totalsUrl || '';
+    const { gradesUrl = '', staffGridUrl = '', jobsGridUrl = '', totalsUrl = '', ztCodeUrl = '' } = cfg;
 
-    var currentGrade = '';
-    var currentStaffId = '';
+    let currentGrade = '';
+    let currentStaffId = '';
+
+    const el = id => document.getElementById(id);
+    const setText = (id, v) => { const e = el(id); if (e) e.textContent = v; };
+    const setVal = (id, v) => { const e = el(id); if (e) e.value = v; };
+
+    const GRADE_PLACEHOLDER = '-- Select a WorkGroup Grade--';
+    const WG_URL = '/FPS/SetUpStaffResources/GetGroupsByResourceCentre';
+    const GRADE_URL = '/FPS/SetUpStaffResources/GetGradesByGroups';
 
     /* ── Resource Centre change ─────────────────────────────────────────── */
     async function OnResourceCenterChange() {
-        const centre = document.getElementById('resourceCentreSelect').value;
-        const gradeSelect = document.getElementById('workGroupGradeSelect');
+        const centre = el('resourceCentreSelect').value;
+        const gradeSelect = el('workGroupGradeSelect');
 
+        resetSelect(gradeSelect, '-- Select a Workgroup Grade --');
         gradeSelect.disabled = true;
-        gradeSelect.innerHTML = '<option value="">-- Select a Workgroup Grade --</option>';
         clearGrids();
 
         if (!centre) return;
@@ -133,26 +128,22 @@
         try {
             const resp = await fetch(`${gradesUrl}?resourceCentre=${encodeURIComponent(centre)}`);
             const json = await resp.json();
-            if (json.success && json.data) {
-                json.data.forEach(g => {
-                    const opt = document.createElement('option');
-                    opt.value = g.value;
-                    opt.textContent = g.text;
-                    gradeSelect.appendChild(opt);
-                });
+            if (json.success && json.data?.length) {
+                buildSelectOptions(gradeSelect, json.data, g => g.value, g => g.text);
                 gradeSelect.disabled = false;
             }
-        } catch (e) {
-            showAlertMessage("Error, In OnResourceCenterChange", AlertType.ERROR);
+        } catch {
+            showAlertMessage('Error loading workgroup grades.', AlertType.ERROR);
         }
     }
 
     /* ── Grade change → load staff allocation grid ──────────────────────── */
     async function WorkgroupGradeChange() {
-        const grade = document.getElementById('workGroupGradeSelect').value;
-        document.getElementById('stage2SelectedWorkGroupGrade').textContent = grade;
-        const group = document.getElementById('workGroupSelect').value;
-        document.getElementById('stage2SelectedWorkGroup').textContent = group;
+        const grade = el('workGroupGradeSelect').value;
+        const group = el('workGroupSelect').value;
+
+        setText('stage2SelectedWorkGroupGrade', grade);
+        setText('stage2SelectedWorkGroup', group);
         clearJobsGrid();
 
         if (!grade) { clearStaffGrid(); return; }
@@ -160,119 +151,106 @@
         currentGrade = grade;
         currentStaffId = '';
 
+        showLoader();
         try {
-            showLoader();
-            $.post(staffGridUrl, { workGroupGrade: grade, page: 1, pageSize: 10 }, function (html) {
-                document.getElementById('gridContainer_StaffAllocationGrid').innerHTML = html;
-                SelectFirstStaffRow();
-                loadStaffAllocationTotals(grade);
-
-            }).fail(function () {
-                hideLoader();
-                showAlertMessage('Error loading staff allocation grid.', AlertType.ERROR);
-            });
-        } catch (e) {
+            const html = await ajaxPost(staffGridUrl, { workGroupGrade: grade, page: 1, pageSize: 10 });
+            el('gridContainer_StaffAllocationGrid').innerHTML = html;
+            SelectFirstStaffRow();
+            await loadStaffAllocationTotals(grade);
+        } catch {
             hideLoader();
-            showAlertMessage("Error, In WorkgroupGradeChange", AlertType.ERROR);
+            showAlertMessage('Error loading staff allocation grid.', AlertType.ERROR);
         }
     }
 
-    /* ── Load grade-level column totals into the summary panel ─────────── */
-    function loadStaffAllocationTotals(grade) {
+    /* ── Load grade-level totals into the summary panel ─────────────────── */
+    async function loadStaffAllocationTotals(grade) {
         if (!totalsUrl || !grade) { clearSummaryPanel(); return; }
-        $.get(totalsUrl, { workGroupGrade: grade }, function (data) {
-            if (data && data.success) {
-                document.getElementById('stage2HoursAvailInput').value = data.hrsAvail;
-                document.getElementById('stage2PlannedHrsInput').value = data.plannedHrs;
-                document.getElementById('stage2AllocationPctInput').value = data.allocationPct;
-                document.getElementById('stage2AssuredChargeInput').value = data.assuredChargeHrs;
-                document.getElementById('stage2AssuredUtilInput').value = data.assuredUtilPct;
-                document.getElementById('stage2TotalChargeInput').value = data.totalChargeHrs;
-                document.getElementById('stage2TotalUtilInput').value = data.totalUtilPct;
-                hideLoader();
+
+        try {
+            const data = await ajaxGet(totalsUrl, { workGroupGrade: grade });
+            if (data?.success) {
+                setVal('stage2HoursAvailInput', data.hrsAvail);
+                setVal('stage2PlannedHrsInput', data.plannedHrs);
+                setVal('stage2AllocationPctInput', data.allocationPct);
+                setVal('stage2AssuredChargeInput', data.assuredChargeHrs);
+                setVal('stage2AssuredUtilInput', data.assuredUtilPct);
+                setVal('stage2TotalChargeInput', data.totalChargeHrs);
+                setVal('stage2TotalUtilInput', data.totalUtilPct);
             } else {
                 clearSummaryPanel();
-                hideLoader();
             }
-        }).fail(function () {
-            hideLoader();
+        } catch {
             clearSummaryPanel();
-        });
+        } finally {
+            hideLoader();
+        }
     }
 
     function clearSummaryPanel() {
         ['stage2HoursAvailInput', 'stage2PlannedHrsInput', 'stage2AllocationPctInput',
             'stage2AssuredChargeInput', 'stage2AssuredUtilInput',
-            'stage2TotalChargeInput', 'stage2TotalUtilInput'].forEach(function (id) {
-                var inp = document.getElementById(id);
-                if (inp) inp.value = '';
-            });
+            'stage2TotalChargeInput', 'stage2TotalUtilInput'].forEach(id => setVal(id, ''));
     }
 
     /* ── Staff row selection → load jobs grid ───────────────────────────── */
-    // rowData is the <tr> DOM element passed by the DataGrid row-click handler.
     async function OnStaffRowSelect(rowData) {
         if (!rowData) return;
 
         const $row = $(rowData);
         const staffId = $row.data('id');
-        const staffName = $row.find('td[data-property="Name"] span, td[data-property="Name"]').first().text().trim();
-        const hrsAvail = $row.find('td[data-property="HoursAvailable"] span, td[data-property="HoursAvailable"]').first().text().trim();
-        const planHrs = $row.find('td[data-property="PlannedHours"] span, td[data-property="PlannedHours"]').first().text().trim();
-        const alocPct = $row.find('td[data-property="AllocationPct"] span, td[data-property="AllocationPct"]').first().text().trim();
-        const appCh = $row.find('td[data-property="AssuredChargeHours"] span, td[data-property="AssuredChargeHours"]').first().text().trim();
-        const appUti = $row.find('td[data-property="AssuredUtilisationPct"] span, td[data-property="AssuredUtilisationPct"]').first().text().trim();
-        const crgHr = $row.find('td[data-property="ChargeHours"] span, td[data-property="ChargeHours"]').first().text().trim();
-        const utiPct = $row.find('td[data-property="UtilisationPct"] span, td[data-property="UtilisationPct"]').first().text().trim();
+        const staffName = cellText($row, 'Name');
+        const planHrs = cellText($row, 'PlannedHours');
 
-        document.getElementById('stage2SelectedStaffName').textContent = staffName;
-        document.getElementById('stage2PersonSelectedInput').value = staffName;
-        document.getElementById('stage2SelectedStaffHoursInput').value = planHrs;
+        setText('stage2SelectedStaffName', staffName);
+        setVal('stage2PersonSelectedInput', staffName);
+        setVal('stage2SelectedStaffHoursInput', planHrs);
 
         if (!staffId) return;
-
         currentStaffId = staffId;
 
+        showLoader();
         try {
-            showLoader();
-            $.post(jobsGridUrl, { staffId: staffId, page: 1, pageSize: 10 }, function (html) {
-                document.getElementById('gridContainer_StaffJobsGrid').innerHTML = html;
-                hideLoader();
-            }).fail(function () {
-                hideLoader();
-                showAlertMessage('Error loading staff jobs grid.', AlertType.ERROR);
-            });
-        } catch (e) {
+            const html = await ajaxPost(jobsGridUrl, { staffId, page: 1, pageSize: 10 });
+            el('gridContainer_StaffJobsGrid').innerHTML = html;
+        } catch {
+            showAlertMessage('Error loading staff jobs grid.', AlertType.ERROR);
+        } finally {
             hideLoader();
-            showAlertMessage("Error, In OnStaffRowSelect", AlertType.ERROR);
         }
+    }
+
+    function cellText($row, property) {
+        return $row
+            .find(`td[data-property="${property}"] span, td[data-property="${property}"]`)
+            .first().text().trim();
     }
 
     /* ── Auto-select first staff row after grid reload ──────────────────── */
     function SelectFirstStaffRow() {
-        var $firstRow = $('#gridContainer_StaffAllocationGrid table tbody tr.selectable-row:first');
-        if ($firstRow.length && $firstRow.data('id')) {
+        const $first = $('#gridContainer_StaffAllocationGrid table tbody tr.selectable-row:first');
+        if ($first.length && $first.data('id')) {
             $('#gridContainer_StaffAllocationGrid table tbody tr').removeClass('selected-row');
-            $firstRow.addClass('selected-row');
-            OnStaffRowSelect($firstRow[0]);
+            $first.addClass('selected-row');
+            OnStaffRowSelect($first[0]);
         }
     }
 
-    /* ── Helpers ────────────────────────────────────────────────────────── */
+    /* ── Grid clear helpers ─────────────────────────────────────────────── */
     function clearStaffGrid() {
-        $.post(staffGridUrl, { workGroupGrade: '' }, function (html) {
-            document.getElementById('gridContainer_StaffAllocationGrid').innerHTML = html;
+        $.post(staffGridUrl, { workGroupGrade: '' }, html => {
+            el('gridContainer_StaffAllocationGrid').innerHTML = html;
         });
         clearSummaryPanel();
     }
 
     function clearJobsGrid() {
-        $.post(jobsGridUrl, { staffId: '' }, function (html) {
-            document.getElementById('gridContainer_StaffJobsGrid').innerHTML = html;
+        $.post(jobsGridUrl, { staffId: '' }, html => {
+            el('gridContainer_StaffJobsGrid').innerHTML = html;
         });
-        document.getElementById('stage2PersonSelectedInput').value = '';
-        document.getElementById('stage2SelectedStaffName').textContent = '';
-        document.getElementById('stage2SelectedStaffHoursInput').value = '';
+        setVal('stage2PersonSelectedInput', '');
+        setText('stage2SelectedStaffName', '');
+        setVal('stage2SelectedStaffHoursInput', '');
     }
 
     function clearGrids() {
@@ -280,23 +258,119 @@
         clearJobsGrid();
     }
 
-    /* ── ExtraFilterMethod callbacks (used by DataGrid reloadGrid) ─────── */
-    function GetStaffAllocationExtraFilters() {
-        return { workGroupGrade: currentGrade };
+    /* ── ExtraFilter callbacks (used by DataGrid reloadGrid) ────────────── */
+    const GetStaffAllocationExtraFilters = () => ({ workGroupGrade: currentGrade });
+    const GetStaffJobsExtraFilters = () => ({ staffId: currentStaffId });
+
+    /* ── Navigate to PlanStaffZTCode ────────────────────────────────────── */
+    function ssrPlanPersonOntoZT() {
+        if (!el('stage2PersonSelectedInput')?.value) {
+            showAlertMessage('Please select a person first.', AlertType.INFO);
+            return;
+        }
+
+        try {
+            sessionStorage.setItem('raReturnState', JSON.stringify({
+                centre: el('resourceCentreSelect')?.value || '',
+                workGroup: el('workGroupSelect')?.value || '',
+                grade: currentGrade,
+                staffId: currentStaffId
+            }));
+        } catch { /* non-critical — page still navigates */ }
+
+        const url = currentStaffId
+            ? `${ztCodeUrl}?staffId=${encodeURIComponent(currentStaffId)}&source=ra`
+            : ztCodeUrl;
+        window.location.href = url;
     }
 
-    function GetStaffJobsExtraFilters() {
-        return { staffId: currentStaffId };
+    /* ── Restore state saved before navigating to PlanStaffZTCode ────────── */
+    async function restoreReturnState() {
+        let saved;
+        try {
+            const raw = sessionStorage.getItem('raReturnState');
+            if (!raw) return;
+            sessionStorage.removeItem('raReturnState');
+            saved = JSON.parse(raw);
+        } catch { return; }
+
+        if (!saved?.centre) return;
+
+        const rcSelect = el('resourceCentreSelect');
+        if (!rcSelect || !Array.from(rcSelect.options).some(o => o.value === saved.centre)) return;
+        rcSelect.value = saved.centre;
+
+        showLoader();
+        try {
+            // ── 1. Restore workgroup dropdown ─────────────────────────────
+            const wgResp = await ajaxGet(WG_URL, { resourceCentre: saved.centre });
+            if (!wgResp?.success) return;
+
+            const wgSelect = el('workGroupSelect');
+            if (!wgSelect) return;
+            resetSelect(wgSelect, '-- Select a Work Group --');
+            buildSelectOptions(wgSelect, wgResp.data, wg => wg, wg => wg);
+
+            if (!saved.workGroup || !Array.from(wgSelect.options).some(o => o.value === saved.workGroup)) return;
+            wgSelect.value = saved.workGroup;
+
+            // ── 2. Restore grade dropdown ─────────────────────────────────
+            const grResp = await ajaxGet(GRADE_URL, { workGroup: saved.workGroup });
+            if (!grResp?.success) return;
+
+            const gradeSelect = el('workGroupGradeSelect');
+            if (!gradeSelect) return;
+            resetSelect(gradeSelect, GRADE_PLACEHOLDER);
+            buildSelectOptions(gradeSelect, grResp.data, wg => wg.wgGrade, wg => wg.wgGrade);
+            gradeSelect.disabled = false;
+
+            if (!saved.grade || !Array.from(gradeSelect.options).some(o => o.value === saved.grade)) return;
+            gradeSelect.value = saved.grade;
+            currentGrade = saved.grade;
+
+            // ── 3. Restore heading labels ─────────────────────────────────
+            setText('stage2SelectedWorkGroup', saved.workGroup);
+            setText('stage2SelectedWorkGroupGrade', saved.grade);
+            clearJobsGrid();
+
+            // ── 4. Reload staff grid and re-select saved staff row ────────
+            const html = await ajaxPost(staffGridUrl, { workGroupGrade: saved.grade, page: 1, pageSize: 10 });
+            el('gridContainer_StaffAllocationGrid').innerHTML = html;
+            await loadStaffAllocationTotals(saved.grade);
+
+            if (saved.staffId) {
+                currentStaffId = saved.staffId;
+                const $savedRow = $(`#gridContainer_StaffAllocationGrid table tbody tr[data-id="${saved.staffId}"]`);
+                if ($savedRow.length) {
+                    $('#gridContainer_StaffAllocationGrid table tbody tr').removeClass('selected-row');
+                    $savedRow.addClass('selected-row');
+                    await OnStaffRowSelect($savedRow[0]);
+                    return;
+                }
+            }
+            SelectFirstStaffRow();
+        } catch {
+            showAlertMessage('Could not restore selections. Please re-select the Resource Centre manually.', AlertType.INFO);
+        } finally {
+            hideLoader();
+        }
     }
 
-    /* ── Expose functions called from HTML attributes and DataGrid ───────── */
-    window.OnResourceCenterChange = OnResourceCenterChange;
-    window.WorkgroupGradeChange = WorkgroupGradeChange;
-    window.GetStaffAllocationExtraFilters = GetStaffAllocationExtraFilters;
-    window.GetStaffJobsExtraFilters = GetStaffJobsExtraFilters;
-    window.OnStaffRowSelect = OnStaffRowSelect;
-    window.SelectFirstStaffRow = SelectFirstStaffRow;
-    window.clearJobsGrid = clearJobsGrid;
-    window.clearStaffGrid = clearStaffGrid;
-    window.clearGrids = clearGrids;
+    // pageshow fires on both normal page load and bfcache restore
+    window.addEventListener('pageshow', restoreReturnState);
+
+    /* ── Public API ─────────────────────────────────────────────────────── */
+    Object.assign(window, {
+        OnResourceCenterChange,
+        WorkgroupGradeChange,
+        GetStaffAllocationExtraFilters,
+        GetStaffJobsExtraFilters,
+        OnStaffRowSelect,
+        SelectFirstStaffRow,
+        clearJobsGrid,
+        clearStaffGrid,
+        clearGrids,
+        ssrPlanPersonOntoZT
+    });
+
 }(window.raConfig || {}));

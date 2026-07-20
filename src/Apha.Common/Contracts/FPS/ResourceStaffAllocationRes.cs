@@ -15,5 +15,8 @@ namespace Apha.Common.Contracts.FPS
         public double PlannedHours { get; set; }
         public double ChargeHours { get; set; }
         public double AppChargeHours { get; set; }
+        public double? Allocation { get; set; }
+        public double? Utilization { get; set; }
+        public double? AppUtilization { get; set; }
     }
 }
