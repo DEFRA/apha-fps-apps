@@ -23,6 +23,8 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<StaffJobDto, StaffJobRes>().ReverseMap();
 
             CreateMap<FpsSettingRes, FpsSettingDto>().ReverseMap();
+            CreateMap<FpsSettingReq, FpsSettingDto>().ReverseMap();
+            CreateMap<FpsYearEndSettingRes, FpsYearEndSettingDto>().ReverseMap();
 
             CreateMap<AnimalCostViewDto, AnimalCostViewRes>().ReverseMap();
             CreateMap<AnimalDto, AnimalRes>().ReverseMap();

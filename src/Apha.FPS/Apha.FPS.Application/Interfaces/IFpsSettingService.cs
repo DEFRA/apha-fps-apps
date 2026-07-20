@@ -6,5 +6,8 @@ namespace Apha.FPS.Application.Interfaces
     {
         Task<List<FpsSettingDto>> GetAllSettingsAsync();
         Task<decimal> GetHoursPerDayAsync();
+        Task<List<FpsYearEndSettingDto>> GetYearEndSettingsAsync();
+        Task<FpsSettingDto> AddSettingAsync(FpsSettingDto dto);
+        Task<FpsSettingDto> UpdateSettingAsync(FpsSettingDto dto);
     }
 }

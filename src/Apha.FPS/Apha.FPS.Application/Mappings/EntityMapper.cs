@@ -117,6 +117,9 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             CreateMap<BatchJobQueue, BatchJobEventTriggerDto>()
                 .ForMember(dest => dest.Jobqueue, opt => opt.MapFrom(src => src))
                 .ForMember(dest => dest.EventId, opt => opt.Ignore());
+
+            CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
+            CreateMap<FpsYearEndSetting, FpsYearEndSettingDto>().ReverseMap();
         }
     }
 }
