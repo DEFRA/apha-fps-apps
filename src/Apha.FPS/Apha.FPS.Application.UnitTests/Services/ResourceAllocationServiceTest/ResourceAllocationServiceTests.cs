@@ -14,17 +14,17 @@ namespace Apha.FPS.Application.UnitTests.Services.ResourceAllocationServiceTest
     public class ResourceAllocationServiceTests
     {
         private const string DefaultWorkGroupGrade = "WG01";
-        private const string DefaultStaffId        = "PACT001";
+        private const string DefaultStaffId = "PACT001";
 
         private readonly IResourceAllocationRepository _mockRepository;
-        private readonly IMapper                       _mockMapper;
-        private readonly ResourceAllocationService     _sut;
+        private readonly IMapper _mockMapper;
+        private readonly ResourceAllocationService _sut;
 
         public ResourceAllocationServiceTests()
         {
             _mockRepository = Substitute.For<IResourceAllocationRepository>();
-            _mockMapper     = Substitute.For<IMapper>();
-            _sut            = new ResourceAllocationService(_mockRepository, _mockMapper);
+            _mockMapper = Substitute.For<IMapper>();
+            _sut = new ResourceAllocationService(_mockRepository, _mockMapper);
         }
 
         // ── Constructor Tests ─────────────────────────────────────────────────
@@ -57,10 +57,10 @@ namespace Apha.FPS.Application.UnitTests.Services.ResourceAllocationServiceTest
         public async Task GetPagedStaffAllocationsByWorkGroupGradeAsync_WithValidInput_ReturnsMappedResult()
         {
             // Arrange
-            var query        = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedFilter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var pagedData    = new PagedData<ResourceStaffGeneralSummaryRow>();
-            var expected     = new PaginatedResult<ResourceStaffAllocationDto>();
+            var pagedData = new PagedData<ResourceStaffGeneralSummaryRow>();
+            var expected = new PaginatedResult<ResourceStaffAllocationDto>();
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedFilter);
             _mockRepository.GetPagedStaffAllocationsByWorkGroupGradeAsync(DefaultWorkGroupGrade, mappedFilter)
@@ -112,7 +112,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ResourceAllocationServiceTest
         public async Task GetPagedStaffAllocationsByWorkGroupGradeAsync_WhenRepositoryThrows_PropagatesException()
         {
             // Arrange
-            var query        = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedFilter = new PaginationParameters<string>();
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedFilter);
@@ -129,9 +129,9 @@ namespace Apha.FPS.Application.UnitTests.Services.ResourceAllocationServiceTest
         public async Task GetPagedStaffAllocationsByWorkGroupGradeAsync_MapsQueryBeforeCallingRepository()
         {
             // Arrange
-            var query        = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "Name" };
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "Name" };
             var mappedFilter = new PaginationParameters<string> { Page = 2, PageSize = 5, SortBy = "Name" };
-            var pagedData    = new PagedData<ResourceStaffGeneralSummaryRow>();
+            var pagedData = new PagedData<ResourceStaffGeneralSummaryRow>();
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedFilter);
             _mockRepository.GetPagedStaffAllocationsByWorkGroupGradeAsync(
@@ -158,10 +158,10 @@ namespace Apha.FPS.Application.UnitTests.Services.ResourceAllocationServiceTest
         public async Task GetPagedStaffJobDetailsByStaffIdAsync_WithValidInput_ReturnsMappedResult()
         {
             // Arrange
-            var query        = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedFilter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var pagedData    = new PagedData<ResourceStaffJobDetailRow>();
-            var expected     = new PaginatedResult<ResourceStaffJobDetailDto>();
+            var pagedData = new PagedData<ResourceStaffJobDetailRow>();
+            var expected = new PaginatedResult<ResourceStaffJobDetailDto>();
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedFilter);
             _mockRepository.GetPagedStaffJobDetailsByStaffIdAsync(DefaultStaffId, mappedFilter)
@@ -213,7 +213,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ResourceAllocationServiceTest
         public async Task GetPagedStaffJobDetailsByStaffIdAsync_WhenRepositoryThrows_PropagatesException()
         {
             // Arrange
-            var query        = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedFilter = new PaginationParameters<string>();
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedFilter);
@@ -229,9 +229,9 @@ namespace Apha.FPS.Application.UnitTests.Services.ResourceAllocationServiceTest
         public async Task GetPagedStaffJobDetailsByStaffIdAsync_MapsQueryBeforeCallingRepository()
         {
             // Arrange
-            var query        = new QueryParameters<string> { Page = 1, PageSize = 20, SortBy = "Hour" };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 20, SortBy = "Hour" };
             var mappedFilter = new PaginationParameters<string> { Page = 1, PageSize = 20, SortBy = "Hour" };
-            var pagedData    = new PagedData<ResourceStaffJobDetailRow>();
+            var pagedData = new PagedData<ResourceStaffJobDetailRow>();
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedFilter);
             _mockRepository.GetPagedStaffJobDetailsByStaffIdAsync(DefaultStaffId, mappedFilter)

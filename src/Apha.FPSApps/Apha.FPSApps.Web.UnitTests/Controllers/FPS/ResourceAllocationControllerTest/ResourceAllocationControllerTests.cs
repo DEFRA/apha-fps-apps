@@ -15,8 +15,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
     public class ResourceAllocationControllerTests
     {
         private const string DefaultResourceCentre = "RC01";
-        private const string DefaultWgGrade        = "WG01";
-        private const string DefaultStaffId        = "PACT001";
+        private const string DefaultWgGrade = "WG01";
+        private const string DefaultStaffId = "PACT001";
 
         private readonly IMapper _mapper;
         private readonly IResourceAllocationService _resourceAllocationService;
@@ -26,10 +26,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
 
         public ResourceAllocationControllerTests()
         {
-            _mapper                    = Substitute.For<IMapper>();
+            _mapper = Substitute.For<IMapper>();
             _resourceAllocationService = Substitute.For<IResourceAllocationService>();
-            _profitCentreService       = Substitute.For<IProfitCentreService>();
-            _workGroupGradeService     = Substitute.For<IWorkGroupGradeService>();
+            _profitCentreService = Substitute.For<IProfitCentreService>();
+            _workGroupGradeService = Substitute.For<IWorkGroupGradeService>();
 
             _controller = new ResourceAllocationController(
                 _mapper,
@@ -119,7 +119,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model      = Assert.IsType<ResourceAllocationViewModel>(viewResult.Model);
+            var model = Assert.IsType<ResourceAllocationViewModel>(viewResult.Model);
 
             Assert.Equal(2, model.ResourceCentres.Count);
             Assert.NotNull(model.StaffAllocationGrid);
@@ -141,7 +141,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model      = Assert.IsType<ResourceAllocationViewModel>(viewResult.Model);
+            var model = Assert.IsType<ResourceAllocationViewModel>(viewResult.Model);
             Assert.Empty(model.ResourceCentres);
         }
 
@@ -164,7 +164,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
+            var element = GetJsonResultElement(jsonResult);
 
             Assert.True(element.GetProperty("success").GetBoolean());
             Assert.Equal(2, element.GetProperty("data").GetArrayLength());
@@ -181,7 +181,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
+            var element = GetJsonResultElement(jsonResult);
 
             Assert.False(element.GetProperty("success").GetBoolean());
             await _workGroupGradeService.DidNotReceive()
@@ -201,7 +201,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
+            var element = GetJsonResultElement(jsonResult);
 
             Assert.False(element.GetProperty("success").GetBoolean());
             Assert.Equal("Grade load error", element.GetProperty("message").GetString());
@@ -233,9 +233,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
         public async Task LoadStaffAllocationGrid_WithValidGrade_ReturnsPopulatedGrid()
         {
             // Arrange
-            var request  = new PaginationFilter<string> { Page = 1, PageSize = 10 };
-            var query    = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var data     = BuildAllocationList();
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var data = BuildAllocationList();
             var response = ApiResponseDto<List<ResourceStaffAllocationDto>>.SuccessResponse(data);
 
             _mapper.Map<QueryParameters<string>>(request).Returns(query);
@@ -260,9 +260,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
         public async Task LoadStaffAllocationGrid_WhenServiceFails_ReturnsFailureJson()
         {
             // Arrange
-            var request  = new PaginationFilter<string> { Page = 1, PageSize = 10 };
-            var query    = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var errors   = new List<ApiErrorDto> { new() { Message = "Alloc error", Code = "ERR" } };
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Message = "Alloc error", Code = "ERR" } };
             var response = ApiResponseDto<List<ResourceStaffAllocationDto>>.FailureResponse(errors, new ApiMetaDto());
 
             _mapper.Map<QueryParameters<string>>(request).Returns(query);
@@ -274,7 +274,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
+            var element = GetJsonResultElement(jsonResult);
             Assert.False(element.GetProperty("success").GetBoolean());
             Assert.Equal("Alloc error", element.GetProperty("message").GetString());
         }
@@ -293,7 +293,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
+            var element = GetJsonResultElement(jsonResult);
             Assert.False(element.GetProperty("success").GetBoolean());
         }
 
@@ -301,8 +301,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
         public async Task GetStaffAllocationTotals_WithValidGrade_ReturnsTotalsJson()
         {
             // Arrange
-            var data     = BuildAllocationList(); // both have HrsAvail = 37.0
-            var query    = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
+            var data = BuildAllocationList(); // both have HrsAvail = 37.0
+            var query = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
             var response = ApiResponseDto<List<ResourceStaffAllocationDto>>.SuccessResponse(data);
 
             _resourceAllocationService.GetPagedStaffAllocationsByWorkGroupGradeAsync(
@@ -314,7 +314,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
+            var element = GetJsonResultElement(jsonResult);
 
             Assert.True(element.GetProperty("success").GetBoolean());
             Assert.True(element.TryGetProperty("hrsAvail", out _));
@@ -330,7 +330,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
         public async Task GetStaffAllocationTotals_WithZeroHrsAvail_ReturnsEmptyPercentages()
         {
             // Arrange
-            var data     = new List<ResourceStaffAllocationDto> { new() { HrsAvail = 0 } };
+            var data = new List<ResourceStaffAllocationDto> { new() { HrsAvail = 0 } };
             var response = ApiResponseDto<List<ResourceStaffAllocationDto>>.SuccessResponse(data);
 
             _resourceAllocationService.GetPagedStaffAllocationsByWorkGroupGradeAsync(
@@ -342,7 +342,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
+            var element = GetJsonResultElement(jsonResult);
 
             Assert.True(element.GetProperty("success").GetBoolean());
             Assert.Equal(string.Empty, element.GetProperty("allocationPct").GetString());
@@ -354,7 +354,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
         public async Task GetStaffAllocationTotals_WhenServiceFails_ReturnsFailureJson()
         {
             // Arrange
-            var errors   = new List<ApiErrorDto> { new() { Message = "Totals error", Code = "ERR" } };
+            var errors = new List<ApiErrorDto> { new() { Message = "Totals error", Code = "ERR" } };
             var response = ApiResponseDto<List<ResourceStaffAllocationDto>>.FailureResponse(errors, new ApiMetaDto());
 
             _resourceAllocationService.GetPagedStaffAllocationsByWorkGroupGradeAsync(
@@ -366,7 +366,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
+            var element = GetJsonResultElement(jsonResult);
             Assert.False(element.GetProperty("success").GetBoolean());
         }
 
@@ -396,9 +396,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
         public async Task LoadStaffJobsGrid_WithValidStaffId_ReturnsPopulatedGrid()
         {
             // Arrange
-            var request  = new PaginationFilter<string> { Page = 1, PageSize = 10 };
-            var query    = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var data     = BuildJobDetailList();
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var data = BuildJobDetailList();
             var response = ApiResponseDto<List<ResourceStaffJobDetailDto>>.SuccessResponse(data);
 
             _mapper.Map<QueryParameters<string>>(request).Returns(query);
@@ -423,9 +423,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
         public async Task LoadStaffJobsGrid_WhenServiceFails_ReturnsFailureJson()
         {
             // Arrange
-            var request  = new PaginationFilter<string> { Page = 1, PageSize = 10 };
-            var query    = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var errors   = new List<ApiErrorDto> { new() { Message = "Jobs error", Code = "ERR" } };
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Message = "Jobs error", Code = "ERR" } };
             var response = ApiResponseDto<List<ResourceStaffJobDetailDto>>.FailureResponse(errors, new ApiMetaDto());
 
             _mapper.Map<QueryParameters<string>>(request).Returns(query);
@@ -437,7 +437,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceAllocationControlle
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
+            var element = GetJsonResultElement(jsonResult);
             Assert.False(element.GetProperty("success").GetBoolean());
             Assert.Equal("Jobs error", element.GetProperty("message").GetString());
         }

@@ -11,20 +11,20 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
     public class ResourceAllocationRepositoryTests
     {
         private const string DefaultWorkGroupGrade = "WG01";
-        private const string DefaultStaffId        = "PACT001";
-        private const int    DefaultFpsYear        = 2024;
-        private const string DefaultUserEmail      = "test@example.com";
+        private const string DefaultStaffId = "PACT001";
+        private const int DefaultFpsYear = 2024;
+        private const string DefaultUserEmail = "test@example.com";
 
         // ── Factory ──────────────────────────────────────────────────────────
 
         private static ResourceAllocationRepository CreateRepository(
-            IEnumerable<WorkGroupEmployee>?   workGroupEmployees = null,
-            IEnumerable<Employee>?            employees          = null,
-            IEnumerable<WorkgroupGrade>?      workgroupGrades    = null,
-            IEnumerable<StaffJob>?            staffJobs          = null,
-            IEnumerable<Project>?             projects           = null,
-            IEnumerable<StaffJobTblView>?     staffJobTblViews   = null,
-            IEnumerable<ProjectView>?         projectViews       = null)
+            IEnumerable<WorkGroupEmployee>? workGroupEmployees = null,
+            IEnumerable<Employee>? employees = null,
+            IEnumerable<WorkgroupGrade>? workgroupGrades = null,
+            IEnumerable<StaffJob>? staffJobs = null,
+            IEnumerable<Project>? projects = null,
+            IEnumerable<StaffJobTblView>? staffJobTblViews = null,
+            IEnumerable<ProjectView>? projectViews = null)
         {
             var requestContext = Substitute.For<IFpsRequestContext>();
             requestContext.FpsYear.Returns(DefaultFpsYear);
@@ -61,29 +61,29 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
         // ── Builder helpers ───────────────────────────────────────────────────
 
         private static WorkGroupEmployee BuildWorkGroupEmployee(
-            string pactId        = DefaultStaffId,
+            string pactId = DefaultStaffId,
             string workGroupGrade = DefaultWorkGroupGrade,
-            string spNumber      = "SP001",
-            double hrsAvail      = 37.0) =>
+            string spNumber = "SP001",
+            double hrsAvail = 37.0) =>
             new()
             {
-                PactId        = pactId,
+                PactId = pactId,
                 WorkGroupGrade = workGroupGrade,
-                SpNumber      = spNumber,
-                HrsAvail      = hrsAvail,
-                FpsYear       = DefaultFpsYear
+                SpNumber = spNumber,
+                HrsAvail = hrsAvail,
+                FpsYear = DefaultFpsYear
             };
 
         private static Employee BuildEmployee(
-            string spNumber   = "SP001",
-            string lastName   = "General",
-            string firstName  = "Staff") =>
+            string spNumber = "SP001",
+            string lastName = "General",
+            string firstName = "Staff") =>
             new()
             {
-                SPNumber  = spNumber,
-                LastName  = lastName,
+                SPNumber = spNumber,
+                LastName = lastName,
                 FirstName = firstName,
-                FpsYear   = DefaultFpsYear
+                FpsYear = DefaultFpsYear
             };
 
         private static WorkgroupGrade BuildWorkgroupGrade(
@@ -95,47 +95,47 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
             };
 
         private static StaffJob BuildStaffJob(
-            string staffId     = DefaultStaffId,
-            string jobCode     = "J001",
+            string staffId = DefaultStaffId,
+            string jobCode = "J001",
             double plannedHours = 10.0) =>
             new()
             {
-                StaffId      = staffId,
-                JobCode      = jobCode,
+                StaffId = staffId,
+                JobCode = jobCode,
                 PlannedHours = plannedHours,
-                FpsYear      = DefaultFpsYear
+                FpsYear = DefaultFpsYear
             };
 
         private static Project BuildProject(
             string parentProject = "J001",
-            string program       = "GP",
+            string program = "GP",
             string projectStatus = "approved") =>
             new()
             {
                 ParentProject = parentProject,
-                Program       = program,
+                Program = program,
                 ProjectStatus = projectStatus
             };
 
         private static StaffJobTblView BuildStaffJobTblView(
-            string staffId     = DefaultStaffId,
-            string jobCode     = "J001",
+            string staffId = DefaultStaffId,
+            string jobCode = "J001",
             double plannedHours = 10.0) =>
             new()
             {
-                StaffId      = staffId,
-                JobCode      = jobCode,
+                StaffId = staffId,
+                JobCode = jobCode,
                 PlannedHours = plannedHours
             };
 
         private static ProjectView BuildProjectView(
             string parentProject = "J001",
-            string program       = "GP",
+            string program = "GP",
             string projectStatus = "approved") =>
             new()
             {
                 ParentProject = parentProject,
-                Program       = program,
+                Program = program,
                 ProjectStatus = projectStatus
             };
 
@@ -174,13 +174,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
         public async Task GetPagedStaffAllocationsByWorkGroupGradeAsync_WithMatchingData_ReturnsPagedRows()
         {
             // Arrange
-            var employees        = new[] { BuildEmployee() };
+            var employees = new[] { BuildEmployee() };
             var workGroupEmployees = new[] { BuildWorkGroupEmployee() };
-            var workgroupGrades  = new[] { BuildWorkgroupGrade() };
-            var staffJobs        = new[] { BuildStaffJob() };
-            var projects         = new[] { BuildProject() };
+            var workgroupGrades = new[] { BuildWorkgroupGrade() };
+            var staffJobs = new[] { BuildStaffJob() };
+            var projects = new[] { BuildProject() };
 
-            var repo  = CreateRepository(workGroupEmployees, employees, workgroupGrades, staffJobs, projects);
+            var repo = CreateRepository(workGroupEmployees, employees, workgroupGrades, staffJobs, projects);
             var query = DefaultQuery();
 
             // Act
@@ -195,7 +195,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
         public async Task GetPagedStaffAllocationsByWorkGroupGradeAsync_WithNoMatchingGrade_ReturnsEmptyData()
         {
             // Arrange
-            var repo  = CreateRepository();
+            var repo = CreateRepository();
             var query = DefaultQuery();
 
             // Act
@@ -218,7 +218,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
                 .Select(i => BuildWorkGroupEmployee($"PACT{i:D3}", DefaultWorkGroupGrade, $"SP{i:D3}"))
                 .ToArray();
 
-            var repo  = CreateRepository(workGroupEmployees, employees, workgroupGrades);
+            var repo = CreateRepository(workGroupEmployees, employees, workgroupGrades);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 2 };
 
             // Act
@@ -233,8 +233,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
         public async Task GetPagedStaffAllocationsByWorkGroupGradeAsync_NameFilterIsApplied()
         {
             // Arrange
-            var workgroupGrades    = new[] { BuildWorkgroupGrade() };
-            var employees          = new[]
+            var workgroupGrades = new[] { BuildWorkgroupGrade() };
+            var employees = new[]
             {
                 BuildEmployee("SP001", "General", "Alpha"),
                 BuildEmployee("SP002", "General", "Beta")
@@ -245,12 +245,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
                 BuildWorkGroupEmployee("PACT002", DefaultWorkGroupGrade, "SP002")
             };
 
-            var repo  = CreateRepository(workGroupEmployees, employees, workgroupGrades);
+            var repo = CreateRepository(workGroupEmployees, employees, workgroupGrades);
             var query = new PaginationParameters<string>
             {
-                Page     = 1,
+                Page = 1,
                 PageSize = 10,
-                Filter   = "{\"Name\":\"Alpha\"}"
+                Filter = "{\"Name\":\"Alpha\"}"
             };
 
             // Act
@@ -265,8 +265,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
         public async Task GetPagedStaffAllocationsByWorkGroupGradeAsync_SortDescending_ReturnsReverseOrder()
         {
             // Arrange
-            var workgroupGrades    = new[] { BuildWorkgroupGrade() };
-            var employees          = new[]
+            var workgroupGrades = new[] { BuildWorkgroupGrade() };
+            var employees = new[]
             {
                 BuildEmployee("SP001", "General", "Alpha"),
                 BuildEmployee("SP002", "General", "Zeta")
@@ -277,12 +277,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
                 BuildWorkGroupEmployee("PACT002", DefaultWorkGroupGrade, "SP002")
             };
 
-            var repo  = CreateRepository(workGroupEmployees, employees, workgroupGrades);
+            var repo = CreateRepository(workGroupEmployees, employees, workgroupGrades);
             var query = new PaginationParameters<string>
             {
-                Page       = 1,
-                PageSize   = 10,
-                SortBy     = "Name",
+                Page = 1,
+                PageSize = 10,
+                SortBy = "Name",
                 Descending = true
             };
 
@@ -299,17 +299,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
         public async Task GetPagedStaffAllocationsByWorkGroupGradeAsync_ZtHoursComputedCorrectly()
         {
             // Arrange
-            var workgroupGrades    = new[] { BuildWorkgroupGrade() };
-            var employees          = new[] { BuildEmployee("SP001", "General", "Staff") };
+            var workgroupGrades = new[] { BuildWorkgroupGrade() };
+            var employees = new[] { BuildEmployee("SP001", "General", "Staff") };
             var workGroupEmployees = new[] { BuildWorkGroupEmployee("PACT001", DefaultWorkGroupGrade, "SP001", 40.0) };
-            var staffJobs          = new[] { BuildStaffJob("PACT001", "ZT_J001", 8.0) };
-            var projects           = new[]
+            var staffJobs = new[] { BuildStaffJob("PACT001", "ZT_J001", 8.0) };
+            var projects = new[]
             {
                 BuildProject("ZT_J001", "ZT_Prog", "approved"),
                 BuildProject("ZT_J001", "ZT_Prog", "approved")
             };
 
-            var repo  = CreateRepository(workGroupEmployees, employees, workgroupGrades, staffJobs, projects);
+            var repo = CreateRepository(workGroupEmployees, employees, workgroupGrades, staffJobs, projects);
             var query = DefaultQuery();
 
             // Act
@@ -323,11 +323,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
         public async Task GetPagedStaffAllocationsByWorkGroupGradeAsync_AllocationIsNullWhenHrsAvailIsZero()
         {
             // Arrange
-            var workgroupGrades    = new[] { BuildWorkgroupGrade() };
-            var employees          = new[] { BuildEmployee("SP001", "General", "Staff") };
+            var workgroupGrades = new[] { BuildWorkgroupGrade() };
+            var employees = new[] { BuildEmployee("SP001", "General", "Staff") };
             var workGroupEmployees = new[] { BuildWorkGroupEmployee("PACT001", DefaultWorkGroupGrade, "SP001", 0.0) };
 
-            var repo  = CreateRepository(workGroupEmployees, employees, workgroupGrades);
+            var repo = CreateRepository(workGroupEmployees, employees, workgroupGrades);
             var query = DefaultQuery();
 
             // Act
@@ -343,13 +343,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
         public async Task GetPagedStaffAllocationsByWorkGroupGradeAsync_AllocationIsComputedWhenHrsAvailIsNonZero()
         {
             // Arrange
-            var workgroupGrades    = new[] { BuildWorkgroupGrade() };
-            var employees          = new[] { BuildEmployee("SP001", "General", "Staff") };
+            var workgroupGrades = new[] { BuildWorkgroupGrade() };
+            var employees = new[] { BuildEmployee("SP001", "General", "Staff") };
             var workGroupEmployees = new[] { BuildWorkGroupEmployee("PACT001", DefaultWorkGroupGrade, "SP001", 40.0) };
-            var staffJobs          = new[] { BuildStaffJob("PACT001", "J001", 20.0) };
-            var projects           = new[] { BuildProject("J001", "GP", "approved") };
+            var staffJobs = new[] { BuildStaffJob("PACT001", "J001", 20.0) };
+            var projects = new[] { BuildProject("J001", "GP", "approved") };
 
-            var repo  = CreateRepository(workGroupEmployees, employees, workgroupGrades, staffJobs, projects);
+            var repo = CreateRepository(workGroupEmployees, employees, workgroupGrades, staffJobs, projects);
             var query = DefaultQuery();
 
             // Act
@@ -374,13 +374,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
                 BuildStaffJobTblView(DefaultStaffId, "J001", 10.0),
                 BuildStaffJobTblView(DefaultStaffId, "J002", 5.0)
             };
-            var projectViews  = new[]
+            var projectViews = new[]
             {
                 BuildProjectView("J001", "GP", "approved"),
                 BuildProjectView("J002", "GP", "draft")
             };
 
-            var repo  = CreateRepository(staffJobTblViews: staffJobViews, projectViews: projectViews);
+            var repo = CreateRepository(staffJobTblViews: staffJobViews, projectViews: projectViews);
             var query = DefaultQuery();
 
             // Act
@@ -396,7 +396,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
         public async Task GetPagedStaffJobDetailsByStaffIdAsync_WithNoMatchingStaffId_ReturnsEmptyData()
         {
             // Arrange
-            var repo  = CreateRepository();
+            var repo = CreateRepository();
             var query = DefaultQuery();
 
             // Act
@@ -422,12 +422,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
                 BuildProjectView("BETA002",  "GP", "approved")
             };
 
-            var repo  = CreateRepository(staffJobTblViews: staffJobViews, projectViews: projectViews);
+            var repo = CreateRepository(staffJobTblViews: staffJobViews, projectViews: projectViews);
             var query = new PaginationParameters<string>
             {
-                Page     = 1,
+                Page = 1,
                 PageSize = 10,
-                Filter   = "{\"Project\":\"ALPHA\"}"
+                Filter = "{\"Project\":\"ALPHA\"}"
             };
 
             // Act
@@ -452,12 +452,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
                 BuildProjectView("J002", "GP", "draft")
             };
 
-            var repo  = CreateRepository(staffJobTblViews: staffJobViews, projectViews: projectViews);
+            var repo = CreateRepository(staffJobTblViews: staffJobViews, projectViews: projectViews);
             var query = new PaginationParameters<string>
             {
-                Page     = 1,
+                Page = 1,
                 PageSize = 10,
-                Filter   = "{\"Status\":\"approved\"}"
+                Filter = "{\"Status\":\"approved\"}"
             };
 
             // Act
@@ -482,12 +482,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
                 BuildProjectView("OTHER002",  "GP", "approved")
             };
 
-            var repo  = CreateRepository(staffJobTblViews: staffJobViews, projectViews: projectViews);
+            var repo = CreateRepository(staffJobTblViews: staffJobViews, projectViews: projectViews);
             var query = new PaginationParameters<string>
             {
-                Page     = 1,
+                Page = 1,
                 PageSize = 10,
-                Search   = "SEARCH"
+                Search = "SEARCH"
             };
 
             // Act
@@ -517,12 +517,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
                 BuildProjectView("J003", "GP", "approved")
             };
 
-            var repo  = CreateRepository(staffJobTblViews: staffJobViews, projectViews: projectViews);
+            var repo = CreateRepository(staffJobTblViews: staffJobViews, projectViews: projectViews);
             var query = new PaginationParameters<string>
             {
-                Page       = 1,
-                PageSize   = 10,
-                SortBy     = "Hour",
+                Page = 1,
+                PageSize = 10,
+                SortBy = "Hour",
                 Descending = true
             };
 
@@ -530,7 +530,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
             var result = await repo.GetPagedStaffJobDetailsByStaffIdAsync(DefaultStaffId, query);
 
             // Assert
-            var hours  = result.Data.Select(r => r.PlannedHours).ToList();
+            var hours = result.Data.Select(r => r.PlannedHours).ToList();
             var sorted = hours.OrderByDescending(h => h).ToList();
             Assert.Equal(sorted, hours);
         }
@@ -546,7 +546,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ResourceAllocationRepositoryT
                 .Select(i => BuildProjectView($"J{i:D3}"))
                 .ToArray();
 
-            var repo  = CreateRepository(staffJobTblViews: staffJobViews, projectViews: projectViews);
+            var repo = CreateRepository(staffJobTblViews: staffJobViews, projectViews: projectViews);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 2 };
 
             // Act
