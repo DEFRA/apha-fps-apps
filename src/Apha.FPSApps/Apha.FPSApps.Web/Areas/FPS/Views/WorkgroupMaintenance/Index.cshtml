@@ -101,16 +101,8 @@
             });
         }
 
-        function saveWorkgroup() {
-            clearValidationErrors('#modaPopupBody');
-            var form = $('#addWorkgroupForm');
-
-            if (!isFormValid(form)) {
-                displayClientValidationErrors(form, '#modaPopupBody');
-                return;
-            }
-
-            var dto = {
+        function buildWorkgroupDto() {
+            return {
                 WorkGroupName: $('#WorkGroupName').val(),
                 ProfitCentre: $('#ProfitCentre').val() || null,
                 CostCentre: parseDoubleOrNull($('#CostCentre').val()),
@@ -118,15 +110,25 @@
                 Description: $('#Description').val() || null,
                 CentralOverhead: parseDecimalOrNull($('#CentralOverhead').val())
             };
+        }
+
+        function submitWorkgroup(options) {
+            clearValidationErrors('#modaPopupBody');
+            var form = $(options.formSelector);
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
 
             $.ajax({
-                url: '/FPS/WorkgroupMaintenance/Create',
+                url: options.url,
                 type: 'POST',
-                data: JSON.stringify(dto),
+                data: JSON.stringify(buildWorkgroupDto()),
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     if (data.success) {
-                        showAlertMessage(data.message || 'WorkGroup created successfully.', AlertType.SUCCESS).then(function () {
+                        showAlertMessage(data.message || options.successMessage, AlertType.SUCCESS).then(function () {
                             closeModal();
                             reloadWorkgroupMaintenanceGrid();
                         });
@@ -144,48 +146,20 @@
             });
         }
 
+        function saveWorkgroup() {
+            submitWorkgroup({
+                formSelector: '#addWorkgroupForm',
+                url: '/FPS/WorkgroupMaintenance/Create',
+                successMessage: 'WorkGroup created successfully.'
+            });
+        }
+
         function updateWorkgroup() {
-            clearValidationErrors('#modaPopupBody');
-            var form = $('#editWorkgroupForm');
-
-            if (!isFormValid(form)) {
-                displayClientValidationErrors(form, '#modaPopupBody');
-                return;
-            }
-
             var originalName = $('#hdnOriginalWorkGroupName').val();
-
-            var dto = {
-                WorkGroupName: $('#WorkGroupName').val(),
-                ProfitCentre: $('#ProfitCentre').val() || null,
-                CostCentre: parseDoubleOrNull($('#CostCentre').val()),
-                Owner: $('#Owner').val() || null,
-                Description: $('#Description').val() || null,
-                CentralOverhead: parseDecimalOrNull($('#CentralOverhead').val())
-            };
-
-            $.ajax({
+            submitWorkgroup({
+                formSelector: '#editWorkgroupForm',
                 url: '/FPS/WorkgroupMaintenance/Edit?originalWorkGroupName=' + encodeURIComponent(originalName),
-                type: 'POST',
-                data: JSON.stringify(dto),
-                contentType: 'application/json; charset=utf-8',
-                success: function (data) {
-                    if (data.success) {
-                        showAlertMessage(data.message || 'WorkGroup updated successfully.', AlertType.SUCCESS).then(function () {
-                            closeModal();
-                            reloadWorkgroupMaintenanceGrid();
-                        });
-                    } else {
-                        displayServerValidationErrors(data.errors, data.message, '#modaPopupBody');
-                    }
-                },
-                error: function (xhr) {
-                    if (xhr.status === 400 && xhr.responseJSON) {
-                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
-                    } else {
-                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
-                    }
-                }
+                successMessage: 'WorkGroup updated successfully.'
             });
         }
 

@@ -732,6 +732,47 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             // Ascending: null sorts before a populated value
             Assert.Equal(new[] { "WG_NULL", "WG_VALUE" }, result.Data.Select(w => w.WorkGroupName).ToList());
         }
+
+        // Covers every branch of ApplyFpsWorkGroupSorting (asc/desc for each sortable column + default).
+        // Seed values are aligned so the alphabetically-"A" row is always first ascending
+        // and the "C" row is always first descending, regardless of which column drives the sort.
+        [Theory]
+        [InlineData("WorkGroupName", false, "A")]
+        [InlineData("WorkGroupName", true, "C")]
+        [InlineData("ProfitCentre", false, "A")]
+        [InlineData("ProfitCentre", true, "C")]
+        [InlineData("CostCentre", false, "A")]
+        [InlineData("CostCentre", true, "C")]
+        [InlineData("Description", false, "A")]
+        [InlineData("Description", true, "C")]
+        [InlineData("Owner", false, "A")]
+        [InlineData("Owner", true, "C")]
+        [InlineData("CentralOverhead", false, "A")]
+        [InlineData("CentralOverhead", true, "C")]
+        [InlineData("UnknownColumn", false, "A")] // default arm → OrderBy(WorkGroupName)
+        [InlineData(null, false, "A")]            // null SortBy → default arm
+        public async Task GetPagedAsync_AppliesFpsWorkGroupSorting_ForEachColumn(
+            string? sortBy, bool descending, string expectedFirstWorkGroupName)
+        {
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "B", ProfitCentre = "PB", CostCentre = 200.0, Description = "DescB", Owner = "OwnerB", CentralOverhead = 20m },
+                new() { WorkGroupName = "A", ProfitCentre = "PA", CostCentre = 100.0, Description = "DescA", Owner = "OwnerA", CentralOverhead = 10m },
+                new() { WorkGroupName = "C", ProfitCentre = "PC", CostCentre = 300.0, Description = "DescC", Owner = "OwnerC", CentralOverhead = 30m }
+            };
+            var repo = CreateRepository(workGroups);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = sortBy,
+                Descending = descending
+            };
+
+            var result = await repo.GetPagedAsync(query);
+
+            Assert.Equal(expectedFirstWorkGroupName, result.Data.First().WorkGroupName);
+        }
         #endregion
     }
 }

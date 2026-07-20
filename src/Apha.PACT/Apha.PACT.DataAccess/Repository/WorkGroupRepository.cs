@@ -208,20 +208,6 @@ namespace Apha.PACT.DataAccess.Repository
             return query;
         }
 
-        private static IQueryable<WorkGroup> ApplyWorkGroupSorting(IQueryable<WorkGroup> query, string? sortBy, bool descending)
-        {
-            return sortBy?.ToLower() switch
-            {
-                "workgroupname"   => descending ? query.OrderByDescending(w => w.WorkGroupName)   : query.OrderBy(w => w.WorkGroupName),
-                "profitcentre"    => descending ? query.OrderByDescending(w => w.ProfitCentre)    : query.OrderBy(w => w.ProfitCentre),
-                "description"     => descending ? query.OrderByDescending(w => w.Description)     : query.OrderBy(w => w.Description),
-                "owner"           => descending ? query.OrderByDescending(w => w.Owner)           : query.OrderBy(w => w.Owner),
-                "centraloverhead" => descending ? query.OrderByDescending(w => w.CentralOverhead) : query.OrderBy(w => w.CentralOverhead),
-                _                 => query.OrderBy(w => w.WorkGroupName)
-            };
-        }
-
-
         public async Task<IEnumerable<SummarisedWgTimeView>> GetSummarisedWorkgroupTimeAsync(
             string workGroup)
         {
