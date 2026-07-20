@@ -4,8 +4,6 @@ using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
 
-
-
 namespace Apha.FPS.Application.Mappings
 {
     public class EntityMapper : Profile
@@ -85,6 +83,10 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
 
             CreateMap<User, UserDto>().ReverseMap();
 
+            //   Property names are aligned between entity and DTO; no ForMember overrides needed.
+            //   Covers: CostCentreNo (double), ProfitCentre (string), FpsYear (int).
+            CreateMap<CostCentre, CostCentreDto>().ReverseMap();
+
             // BudgetResourceLevel
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
@@ -99,9 +101,12 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             CreateMap<AdditionalCostLog, AdditionalCostLogDto>().ReverseMap();
             // MaintTotalBusinessOverheads
             CreateMap<TotalBusinessOverheads, TotalBusinessOverheadsDto>()
-            .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
-            .ReverseMap()
-            .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
+                .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
+                .ReverseMap()
+                .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
+
+            // StaffResourceUtilisation
+            CreateMap<StaffResourceUtilisationView, StaffResourceUtilisationDto>().ReverseMap();
             //TestListVLA
             CreateMap<TestRCCost, TestRCCostDto>().ReverseMap();
             CreateMap<TestRequirementRCCost, TestRequirementRCCostDto>().ReverseMap();

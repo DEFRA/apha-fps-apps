@@ -194,5 +194,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                 return ApiResponseDto<StaffJobViewDto?>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
+
+        public async Task<ApiResponseDto<List<StaffResourceUtilisationDto>>> GetStaffResourceUtilisationAsync(QueryParameters<string> query, string workgroup)
+        {
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetStaffResourceUtilisation, query);
+            url = QueryStringHelper.AddQueryString(url, new { workgroup });
+            var response = await _http.GetAsync<List<StaffResourceUtilisationRes>>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<StaffResourceUtilisationDto>>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<List<StaffResourceUtilisationDto>>>(response);
+            return ApiResponseDto<List<StaffResourceUtilisationDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
     }
 }
