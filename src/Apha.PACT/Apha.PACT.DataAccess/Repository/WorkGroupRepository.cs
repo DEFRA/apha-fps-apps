@@ -53,7 +53,7 @@ namespace Apha.PACT.DataAccess.Repository
                 .AsQueryable();
 
             baseQuery = ApplyWorkGroupMaintenanceFilter(baseQuery, query.Filter);
-            baseQuery = ApplyWorkGroupSorting(baseQuery, query.SortBy, query.Descending);
+            baseQuery = ApplyFpsWorkGroupSorting(baseQuery, query.SortBy, query.Descending);
 
             return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
@@ -630,6 +630,23 @@ namespace Apha.PACT.DataAccess.Repository
                 "owner"         => descending ? query.OrderByDescending(w => w.Owner)         : query.OrderBy(w => w.Owner),
                 "description"   => descending ? query.OrderByDescending(w => w.Description)   : query.OrderBy(w => w.Description),
                 _               => query.OrderBy(w => w.WorkGroupName)
+            };
+        }
+
+        // FPS-specific WorkGroup Maintenance sorting (frmMaintWorkGroup2 grid).
+        // Kept separate from ApplyWorkGroupSorting so PACT sorting behaviour is unaffected.
+        // Adds the CostCentre column, which the FPS maintenance grid exposes as sortable.
+        private static IQueryable<WorkGroup> ApplyFpsWorkGroupSorting(IQueryable<WorkGroup> query, string? sortBy, bool descending)
+        {
+            return sortBy?.ToLower() switch
+            {
+                "workgroupname"   => descending ? query.OrderByDescending(w => w.WorkGroupName)   : query.OrderBy(w => w.WorkGroupName),
+                "profitcentre"    => descending ? query.OrderByDescending(w => w.ProfitCentre)    : query.OrderBy(w => w.ProfitCentre),
+                "costcentre"      => descending ? query.OrderByDescending(w => w.CostCentre)      : query.OrderBy(w => w.CostCentre),
+                "description"     => descending ? query.OrderByDescending(w => w.Description)     : query.OrderBy(w => w.Description),
+                "owner"           => descending ? query.OrderByDescending(w => w.Owner)           : query.OrderBy(w => w.Owner),
+                "centraloverhead" => descending ? query.OrderByDescending(w => w.CentralOverhead) : query.OrderBy(w => w.CentralOverhead),
+                _                 => query.OrderBy(w => w.WorkGroupName)
             };
         }
     }
