@@ -86,10 +86,12 @@
             var id = $(btn).data('id');
             showGovukConfirm('Are you sure you want to delete this record?').then(function (result) {
                 if (!result) return;
+                showLoader();
                 $.ajax({
                     url: '/FPS/CostCentreMaintenance/Delete?id=' + encodeURIComponent(id),
                     type: 'DELETE',
                     success: function (response) {
+                        hideLoader();
                         if (response.success) {
                             showAlertMessage('Cost Centre deleted successfully', AlertType.SUCCESS).then(function () {
                                 reloadCostCentreGrid();
@@ -99,6 +101,7 @@
                         }
                     },
                     error: function () {
+                        hideLoader();
                         showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
                     }
                 });
@@ -128,13 +131,14 @@
                 CostCentreNo: ccNo,
                 ProfitCentre: $('#modal-cc-profit').val()
             };
-
+            showLoader();
             $.ajax({
                 url: '/FPS/CostCentreMaintenance/Create',
                 type: 'POST',
                 data: JSON.stringify(dto),
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
+                    hideLoader();
                     if (data.success) {
                         showAlertMessage(data.message || 'Cost Centre created successfully.', AlertType.SUCCESS);
                         closeModal();
@@ -144,6 +148,7 @@
                     }
                 },
                 error: function (xhr) {
+                    hideLoader();
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
@@ -178,13 +183,14 @@
                 CostCentreNo: ccNo,
                 ProfitCentre: $('#modal-cc-profit').val()
             };
-
+            showLoader();
             $.ajax({
                 url: '/FPS/CostCentreMaintenance/Edit?id=' + encodeURIComponent(originalId),
                 type: 'POST',
                 data: JSON.stringify(dto),
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
+                    hideLoader();
                     if (data.success) {
                         showAlertMessage(data.message || 'Cost Centre updated successfully.', AlertType.SUCCESS);
                         closeModal();
@@ -194,6 +200,7 @@
                     }
                 },
                 error: function (xhr) {
+                    hideLoader();
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
