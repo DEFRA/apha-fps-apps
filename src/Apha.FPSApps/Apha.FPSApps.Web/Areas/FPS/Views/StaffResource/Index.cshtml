@@ -105,7 +105,7 @@
     $(document).on('click', '#gridContainer_@Model.WorkgroupGrid.GridId table tbody tr', function () {
         var workGroupName = $(this).data('id');
         if (!workGroupName) return;
-
+        showLoader();
         $('#gridContainer_@Model.WorkgroupGrid.GridId table tbody tr').removeClass('selected-row');
         $(this).addClass('selected-row');
 
@@ -228,6 +228,7 @@
         if (e.detail.gridId === '@Model.StaffGrid.GridId') {
             applyRuvGroupedHeaderRow();
             buildRuvTotalsRow();
+            hideLoader();
         }
     });
 
