@@ -28,8 +28,8 @@ namespace Apha.FPS.DataAccess.Data
 
             // TRANSFORMENGINE: Added AvSalary mapping — fps.grade.avsalary money DEFAULT 0
             entity.Property(e => e.AvSalary)
-                .HasDefaultValueSql("0")
-                .HasColumnType("money")
+                .HasDefaultValue(0m)
+                .HasPrecision(19, 4)
                 .HasColumnName("avsalary");
 
             // TRANSFORMENGINE: Added PactCode mapping — fps.grade.pactcode varchar(50)
