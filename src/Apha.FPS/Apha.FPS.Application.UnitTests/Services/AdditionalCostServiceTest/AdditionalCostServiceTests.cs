@@ -305,7 +305,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
 
             _mockRepository.GetByIdAsync("JOB001", "ACC1", "Desc1").Returns(existing);
             _mockMapper.Map<AdditionalCost>(dto).Returns(entity);
-            _mockRepository.UpdateAsync(entity, "Desc1").Returns(entity);
+            _mockRepository.UpdateAsync(entity, "ACC1", "Desc1").Returns(entity);
             _mockMapper.Map<AdditionalCostDto>(entity).Returns(dto);
 
             // Act
@@ -314,7 +314,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
             // Assert
             result.Should().NotBeNull();
             result.ItemCost.Should().Be(200m);
-            await _mockRepository.Received(1).UpdateAsync(entity, "Desc1");
+            await _mockRepository.Received(1).UpdateAsync(entity, "ACC1", "Desc1");
         }
 
         [Fact]
@@ -329,7 +329,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
                 .Should().ThrowAsync<InvalidOperationException>()
                 .WithMessage("*JOB001*ACC1*Ghost*");
 
-            await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<AdditionalCost>(), Arg.Any<string>());
+            await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<AdditionalCost>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Fact]
@@ -371,7 +371,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
             // No duplicate exists under the new description
             _mockRepository.GetByIdAsync("JOB001", "ACC1", "NewDesc").Returns((AdditionalCost?)null);
             _mockMapper.Map<AdditionalCost>(dto).Returns(entity);
-            _mockRepository.UpdateAsync(entity, "OldDesc").Returns(entity);
+            _mockRepository.UpdateAsync(entity, "ACC1", "OldDesc").Returns(entity);
             _mockMapper.Map<AdditionalCostDto>(entity).Returns(dto);
 
             // Act
@@ -380,7 +380,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
             // Assert
             result.Should().NotBeNull();
             await _mockRepository.Received(1).GetByIdAsync("JOB001", "ACC1", "OldDesc");
-            await _mockRepository.Received(1).UpdateAsync(entity, "OldDesc");
+            await _mockRepository.Received(1).UpdateAsync(entity, "ACC1", "OldDesc");
         }
 
         [Fact]
@@ -406,7 +406,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
                 .Should().ThrowAsync<InvalidOperationException>()
                 .WithMessage("*JOB001*ACC1*TakenDesc*already exists*");
 
-            await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<AdditionalCost>(), Arg.Any<string>());
+            await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<AdditionalCost>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Fact]
@@ -426,7 +426,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
 
             _mockRepository.GetByIdAsync("JOB001", "ACC1", "Desc1").Returns(existing);
             _mockMapper.Map<AdditionalCost>(dto).Returns(entity);
-            _mockRepository.UpdateAsync(entity, "Desc1").Returns(entity);
+            _mockRepository.UpdateAsync(entity, "ACC1", "Desc1").Returns(entity);
             _mockMapper.Map<AdditionalCostDto>(entity).Returns(dto);
 
             // Act
