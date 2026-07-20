@@ -121,5 +121,13 @@ namespace Apha.PACT.Api.Controllers
             var result = await _service.GetPlannedTestsByWorkgroupAsync(query);
             return Ok(_mapper.Map<PaginationRes<TestReqBreakdownRes>>(result));
         }
+
+        /// <summary>Returns paged actuals tests with planned data rows from fps.vqryTestsActualBreakdown.</summary>
+        [HttpGet("getactualstestswithplanneddatabyworkgroup")]
+        public async Task<IActionResult> GetActualsTestsWithPlannedDataByWorkgroupAsync([FromQuery] QueryParameters<string> query)
+        {
+            var result = await _service.GetActualsTestsWithPlannedDataByWorkgroupAsync(query);
+            return Ok(_mapper.Map<PaginationRes<TestActualBreakdownRes>>(result));
+        }
     }
 }
