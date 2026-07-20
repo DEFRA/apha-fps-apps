@@ -44,6 +44,12 @@ namespace Apha.FPSApps.Application.Services.PACT
             return await _pactClient.PactTimeCodeValid.GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync(workGroup, timeCode);
         }
 
+        public async Task<ApiResponseDto<List<string>>> GetAllDistinctTimeCodesAsync()
+            => await _pactClient.PactTimeCodeValid.GetAllDistinctTimeCodesAsync();
+
+        public async Task<ApiResponseDto<List<string>>> GetAllDistinctProjectsAsync()
+            => await _pactClient.PactTimeCodeValid.GetAllDistinctProjectsAsync();
+
         public async Task<ApiResponseDto<TimeCodeValidDto>> GetTimeCodeValidAsync(string workGroup, string timeCode, string parentProject)
             => await _pactClient.PactTimeCodeValid.GetTimeCodeValidAsync(workGroup, timeCode, parentProject);
 

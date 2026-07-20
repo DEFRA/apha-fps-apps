@@ -283,9 +283,28 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<PactStaff>> GetPactWorkGroupStaffAsync(string workGroup)
-        {
-            var pactWorkgroupStaff = await _dbContext.Workgroups
+        public async Task<IEnumerable<PactStaff>> GetPactWorkGroupStaffAsync(string? workGroup)
+        {            
+            if (string.IsNullOrEmpty(workGroup))
+            {
+               return await _dbContext.Workgroups
+                    .AsNoTracking()
+                    .Join(_dbContext.PactWorkGroupGradeViews.AsNoTracking(),
+                        wg => wg.WorkGroupName,
+                        grade => grade.WorkGroup,
+                        (wg, grade) => new { wg, grade })
+                    .Join(_dbContext.PactStaffs.AsNoTracking(),
+                        wgGrade => wgGrade.grade.WgGrade,
+                        staff => staff.WorkGroupGrade,
+                        (wgGrade, staff) => new { wgGrade.wg, staff })                    
+                    .Select(x => x.staff)
+                    .OrderBy(x => x.Name)
+                    .ThenBy(x => x.WorkGroupGrade)
+                    .ToListAsync();
+            }
+            else
+            {
+                return await _dbContext.Workgroups
                     .AsNoTracking()
                     .Join(_dbContext.PactWorkGroupGradeViews.AsNoTracking(),
                         wg => wg.WorkGroupName,
@@ -300,8 +319,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     .OrderBy(x => x.Name)
                     .ThenBy(x => x.WorkGroupGrade)
                     .ToListAsync();
-
-            return pactWorkgroupStaff;
+            }
+            
         }
 
         private static IQueryable<PactStaff> ApplyWorkGroupStaffFilter(IQueryable<PactStaff> query, string? filter)

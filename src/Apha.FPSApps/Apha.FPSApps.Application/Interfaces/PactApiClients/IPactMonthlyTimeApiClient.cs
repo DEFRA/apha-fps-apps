@@ -22,6 +22,7 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients
         Task<ApiResponseDto<StagingMonthlyTimeDto>> UpdateStagingAsync(int id, StagingMonthlyTimeDto dto);
         Task<ApiResponseDto<bool>> DeleteStagingAsync(int id);
         Task<ApiResponseDto<bool>> DeleteAllStagingByUserAsync();
+        Task<ApiResponseDto<bool>> DeleteFailedStagingByUserAsync();
         Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportStagingAsync(MonthlyTimeImportReqDto request);
         Task<ApiResponseDto<MonthlyTimeValidateResultDto>> ValidateStagingAsync();
         Task<ApiResponseDto<MonthlyTimeMakeLiveResultDto>> MakeLiveAsync();

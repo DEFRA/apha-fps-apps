@@ -59,6 +59,9 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<bool>> DeleteAllStagingByUserAsync()
             => await _pactApiClient.PactMonthlyTime.DeleteAllStagingByUserAsync();
 
+        public async Task<ApiResponseDto<bool>> DeleteFailedStagingByUserAsync()
+            => await _pactApiClient.PactMonthlyTime.DeleteFailedStagingByUserAsync();
+
         public async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportMonthlyTimeAsync(IFormFile file, short importType)
         {
             using var stream = file.OpenReadStream();

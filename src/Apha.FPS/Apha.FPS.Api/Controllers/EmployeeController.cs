@@ -180,7 +180,7 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="workGroup">The work group to filter by.</param>
         /// <returns>A list of PACT staff for the specified work group.</returns>
         [HttpGet("PactWorkGroupStaff")]
-        public async Task<IActionResult> GetPactWorkGroupStaffAsync([FromQuery] string workGroup)
+        public async Task<IActionResult> GetPactWorkGroupStaffAsync([FromQuery] string? workGroup)
         {
             var result = await _employeeService.GetPactWorkGroupStaffAsync(workGroup);
             return Ok(_mapper.Map<List<PactStaffRes>>(result));

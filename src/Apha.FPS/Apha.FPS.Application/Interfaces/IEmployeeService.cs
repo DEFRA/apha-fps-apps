@@ -16,6 +16,6 @@ namespace Apha.FPS.Application.Interfaces
         Task<IEnumerable<WorkGroupPersonDto>> GetAllWorkGroupPersonAsync();
         Task<PaginatedResult<PactStaffDto>> GetPagedWorkGroupStaffAsync(QueryParameters<string> queryFilter, string? workGroup = null);
         Task<IEnumerable<PactStaffDto>> GetPactStaffAsync();
-        Task<IEnumerable<PactStaffDto>> GetPactWorkGroupStaffAsync(string workGroup);
+        Task<IEnumerable<PactStaffDto>> GetPactWorkGroupStaffAsync(string? workGroup);
     }
 }

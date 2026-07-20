@@ -131,12 +131,8 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<IEnumerable<PactStaffDto>>(items);
         }
 
-        public async Task<IEnumerable<PactStaffDto>> GetPactWorkGroupStaffAsync(string workGroup)
+        public async Task<IEnumerable<PactStaffDto>> GetPactWorkGroupStaffAsync(string? workGroup)
         {
-            if (string.IsNullOrWhiteSpace(workGroup))
-            {
-                throw new ArgumentException("WorkGroup cannot be null or empty.", nameof(workGroup));
-            }
             var items = await _employeeRepository.GetPactWorkGroupStaffAsync(workGroup);
             return _mapper.Map<IEnumerable<PactStaffDto>>(items);
         }

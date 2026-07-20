@@ -54,6 +54,26 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
+        public async Task<ApiResponseDto<List<string>>> GetAllDistinctTimeCodesAsync()
+        {
+            var response = await _http.GetAsync<List<string>>(PactApiEndpoints.GetAllDistinctTimeCodes);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<string>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+            return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<string>>> GetAllDistinctProjectsAsync()
+        {
+            var response = await _http.GetAsync<List<string>>(PactApiEndpoints.GetAllDistinctProjects);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<string>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+            return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<TimeCodeValidDto>> GetTimeCodeValidAsync(string workGroup, string timeCode, string parentProject)
         {
             var url = string.Format(PactApiEndpoints.GetTimeCodeValidById,

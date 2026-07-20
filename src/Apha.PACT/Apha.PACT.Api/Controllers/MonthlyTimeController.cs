@@ -131,6 +131,14 @@ namespace Apha.PACT.Api.Controllers
             return Ok(deletedCount > 0);
         }
 
+        [HttpDelete("staging/user/failed")]
+        public async Task<IActionResult> DeleteFailedStagingByUser()
+        {
+            var importedBy = _currentUserContext.UserId;
+            var deletedCount = await _service.DeleteFailedStagingByUserAsync(importedBy);
+            return Ok(deletedCount > 0);
+        }
+
         [HttpPost("staging/import")]
         public async Task<IActionResult> ImportStaging([FromBody] MonthlyTimeImportReq request)
         {

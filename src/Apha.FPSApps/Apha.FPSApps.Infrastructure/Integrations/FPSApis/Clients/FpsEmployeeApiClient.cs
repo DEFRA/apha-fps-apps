@@ -171,7 +171,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<PactStaffDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
         
-        public async Task<ApiResponseDto<List<PactStaffDto>>> GetPactWorkGroupStaffAsync(string workGroup)
+        public async Task<ApiResponseDto<List<PactStaffDto>>> GetPactWorkGroupStaffAsync(string? workGroup)
         {
             var response = await _http.GetAsync<List<PactStaffRes>>(string.Format(FpsApiEndpoints.GetPactWorkGroupStaff, workGroup));
             if (response.Success)

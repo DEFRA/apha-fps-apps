@@ -348,6 +348,7 @@
 .grid-column-group-cell--empty {
     background-color: transparent;
     border: none;
+}
 /* Disabled pagination links */
 .pagination--disabled,
 .pagination--disabled:hover,

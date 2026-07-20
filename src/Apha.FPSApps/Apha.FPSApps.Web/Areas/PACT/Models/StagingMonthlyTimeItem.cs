@@ -29,7 +29,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string? ParentProject { get; set; }
 
         [Display(Name = "Period")]
-        [GridColumn(Order = 6, Width = 80, Type = GridColumnType.Number, IsFilterable = true)]
+        [GridColumn(Order = 6, Width = 80, Type = GridColumnType.Number)]
         public double? Month { get; set; }
 
         [Display(Name = "Hours")]

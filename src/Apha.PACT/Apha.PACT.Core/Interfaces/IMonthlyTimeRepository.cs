@@ -30,6 +30,7 @@ namespace Apha.PACT.Core.Interfaces
         Task<StagingMonthlyTime> UpdateStagingAsync(StagingMonthlyTime stagingMonthlyTime, string importedBy);
         Task<bool> DeleteStagingAsync(int id, string importedBy);
         Task<int> DeleteAllStagingByUserAsync(string importedBy);
+        Task<int> DeleteFailedStagingByUserAsync(string importedBy);
         Task<int> ImportStagingAsync(IEnumerable<StagingMonthlyTime> stagingRows);
         Task<int> RemoveZeroAndNullHourRecordsAsync(string importedBy);
         Task<List<StagingMonthlyTime>> GetStagingRecordsForValidationAsync(string importedBy);

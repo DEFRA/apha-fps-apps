@@ -18,13 +18,5 @@ namespace Apha.PACT.DataAccess.Repository
                 .OrderBy(m => m.AccntsPeriod)
                 .ToListAsync();
         }
-
-        public async Task<List<double>> GetValidCalenderMonthsAsync()
-        {
-            return await _context.CalenderMonths
-                .AsNoTracking()
-                .Select(x => (double)x.MonthNumber)
-                .ToListAsync();
-        }
     }
 }

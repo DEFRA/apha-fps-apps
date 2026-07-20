@@ -167,6 +167,13 @@ namespace Apha.PACT.DataAccess.Repository
                 .ExecuteDeleteAsync();
         }
 
+        public async Task<int> DeleteFailedStagingByUserAsync(string importedBy)
+        {
+            return await _context.StagingMonthlyTimes
+                .Where(x => x.ImportedBy == importedBy && x.Passed == false)
+                .ExecuteDeleteAsync();
+        }
+
         public async Task<int> ImportStagingAsync(IEnumerable<StagingMonthlyTime> stagingRows)
         {
             var rows = stagingRows.ToList();

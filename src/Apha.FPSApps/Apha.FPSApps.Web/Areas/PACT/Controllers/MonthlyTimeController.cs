@@ -1,6 +1,5 @@
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
@@ -110,9 +109,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetStaffByWorkGroup(string? workGroup)
         {
-            if (string.IsNullOrWhiteSpace(workGroup))
-                return Json(Array.Empty<object>());
-
             var response = await _employeeService.GetPactWorkGroupStaffAsync(workGroup);
             if (!response.Success || response.Data == null)
                 return Json(Array.Empty<object>());
@@ -153,6 +149,28 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(result);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAllTimeCodes()
+        {
+            var response = await _timeCodeValidService.GetAllDistinctTimeCodesAsync();
+            if (!response.Success || response.Data == null)
+                return Json(Array.Empty<object>());
+
+            var result = response.Data.Select(x => new { value = x, text = x }).ToList();
+            return Json(result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllProjects()
+        {
+            var response = await _timeCodeValidService.GetAllDistinctProjectsAsync();
+            if (!response.Success || response.Data == null)
+                return Json(Array.Empty<object>());
+
+            var result = response.Data.Select(x => new { value = x, text = x }).ToList();
+            return Json(result);
+        }
+
         [HttpPost]
         public async Task<IActionResult> SaveLiveRecord([FromBody] MonthlyTimeLiveItem model)
         {
@@ -176,6 +194,16 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return NotFound();
 
             var model = _mapper.Map<StagingMonthlyTimeItem>(response.Data);
+
+            // Pre-populate TimeCode and ParentProject options from the existing record's WG/TC
+            if (!string.IsNullOrWhiteSpace(model.WorkGroup))
+            {
+                ViewBag.TimeCodeOptions = await GetTimeCodeOptionsAsync(model.WorkGroup);
+
+                if (!string.IsNullOrWhiteSpace(model.TimeCode))
+                    ViewBag.ProjectOptions = await GetProjectOptionsAsync(model.WorkGroup, model.TimeCode);
+            }
+
             return PartialView("_AddEditStagingMonthlyTime", model);
         }
 
@@ -215,6 +243,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             var response = await _monthlyTimeService.DeleteAllStagingByUserAsync();
             return Json(new { success = response.Success && response.Data });
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteFailedStagingRecords()
+        {
+            var response = await _monthlyTimeService.DeleteFailedStagingByUserAsync();
+            return Json(new
+            {
+                success = response.Success && response.Data,
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to delete failed imported records."
+            });
         }
 
         [HttpPost]

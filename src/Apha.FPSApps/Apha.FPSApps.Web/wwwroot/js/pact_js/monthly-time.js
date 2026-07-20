@@ -99,14 +99,18 @@ function loadStaffByWorkGroup(workGroup) {
         return;
     }
 
-    $.get('/PACT/MonthlyTime/GetStaffByWorkGroup', { workGroup: workGroup })
-        .done(function (data) {
+    $.ajax({
+        url: '/PACT/MonthlyTime/GetStaffByWorkGroup',
+        type: 'GET',
+        data: { workGroup: workGroup },
+        success: function (data) {
             window.monthlyTimeStaffDropdown.updateData(Array.isArray(data) ? data : []);
-        })
-        .fail(function () {
+        },
+        error: function () {
             window.monthlyTimeStaffDropdown.updateData([]);
             showAlertMessage('Failed to load staff options.', AlertType.ERROR);
-        });
+        }
+    });
 }
 
 function loadTimeCodesByWorkGroup(workGroup) {
@@ -117,17 +121,21 @@ function loadTimeCodesByWorkGroup(workGroup) {
         return;
     }
 
-    $.get('/PACT/MonthlyTime/GetTimeCodesByWorkGroup', { workGroup: workGroup })
-        .done(function (data) {
+    $.ajax({
+        url: '/PACT/MonthlyTime/GetTimeCodesByWorkGroup',
+        type: 'GET',
+        data: { workGroup: workGroup },
+        success: function (data) {
             const items = Array.isArray(data) ? data : [];
             const $timeCode = $('#ddTimeCode');
             items.forEach(function (item) {
                 $timeCode.append($('<option>', { value: item.value, text: item.text }));
             });
-        })
-        .fail(function () {
+        },
+        error: function () {
             showAlertMessage('Failed to load timecode options.', AlertType.ERROR);
-        });
+        }
+    });
 }
 
 function loadProjectsByWorkGroupAndTimeCode(workGroup, timeCode) {
@@ -137,17 +145,21 @@ function loadProjectsByWorkGroupAndTimeCode(workGroup, timeCode) {
         return;
     }
 
-    $.get('/PACT/MonthlyTime/GetProjectsByWorkGroupAndTimeCode', { workGroup: workGroup, timeCode: timeCode })
-        .done(function (data) {
+    $.ajax({
+        url: '/PACT/MonthlyTime/GetProjectsByWorkGroupAndTimeCode',
+        type: 'GET',
+        data: { workGroup: workGroup, timeCode: timeCode },
+        success: function (data) {
             const items = Array.isArray(data) ? data : [];
             const $parentProject = $('#ddParentProject');
             items.forEach(function (item) {
                 $parentProject.append($('<option>', { value: item.value, text: item.text }));
             });
-        })
-        .fail(function () {
+        },
+        error: function () {
             showAlertMessage('Failed to load parent project options.', AlertType.ERROR);
-        });
+        }
+    });
 }
 
 function parseCompositeKey(key) {
@@ -163,25 +175,147 @@ function parseCompositeKey(key) {
 function editMonthlyTimeLive(btn) {
     const key = $(btn).data('id');
     const parsed = parseCompositeKey(key);
-    $.get('/PACT/MonthlyTime/GetLiveRecord', parsed)
-        .done(function (html) {
+    $.ajax({
+        url: '/PACT/MonthlyTime/GetLiveRecord',
+        type: 'GET',
+        data: parsed,
+        success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-        })
-        .fail(function () {
+            const workGroup      = $('#LiveWorkGroup').val();
+            const existingName   = $('#LiveName').val();
+            const existingPactId = $('#LivePactStaffId').val();
+            initLiveModalDropdowns(workGroup, existingName, existingPactId);
+        },
+        error: function () {
             showAlertMessage('Failed to load monthly time record.', AlertType.ERROR);
-        });
+        }
+    });
+}
+
+function initLiveModalDropdowns(existingWorkGroup, existingName, existingPactId) {
+    window.liveWorkGroupDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'liveWorkGroup',
+        containerSelector: '#live-modal-workgroup-dropdown-container',
+        placeholder: '--select--',
+        searchPlaceholder: 'Type to search',
+        labelText: 'Work Group <span class="app-required" aria-hidden="true">*</span>',
+        columns: [
+            { field: 'text', header: 'Work Group', width: '200px' }
+        ],
+        data: $('#ddWorkGroup option').filter(function () { return $(this).val() !== ''; }).map(function () {
+            return { value: $(this).val(), text: $(this).text() };
+        }).get(),
+        displayField: function (row) { return row.text || ''; },
+        valueField: function (row) { return row.value || ''; },
+        enableSearch: true,
+        showSerialNumber: false,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                $('#LiveWorkGroup').val(selectedItem?.value || '');
+                loadLiveModalStaffByWorkGroup('');
+            },
+            onClear: function () {
+                $('#LiveWorkGroup').val('');
+                if (window.liveNameDropdown) window.liveNameDropdown.updateData([]);
+                $('#LivePactStaffId').val('');
+                $('#LiveName').val('');
+            }
+        }
+    });
+
+    window.liveNameDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'liveName',
+        containerSelector: '#live-modal-name-dropdown',
+        placeholder: '--select--',
+        searchPlaceholder: 'Type to search',
+        labelText: '',
+        columns: [
+            { field: 'name', header: 'Name', width: '180px' },
+            { field: 'pactId', header: 'PACTid', width: '90px' },
+            { field: 'workGroupGrade', header: 'WG_Grade', width: '100px' }
+        ],
+        data: [],
+        displayField: function (row) { return row.name || ''; },
+        valueField: function (row) { return row.pactId || ''; },
+        enableSearch: true,
+        showSerialNumber: false,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                $('#LiveName').val(selectedItem?.name || '');
+                $('#LivePactStaffId').val(selectedItem?.pactId || '');
+            },
+            onClear: function () {
+                $('#LiveName').val('');
+                $('#LivePactStaffId').val('');
+            }
+        }
+    });
+
+    if (existingWorkGroup) {
+        window.liveWorkGroupDropdown.setValue(existingWorkGroup);
+        loadLiveModalStaffByWorkGroup(existingWorkGroup, existingName, existingPactId);
+    }
+}
+
+function loadLiveModalStaffByWorkGroup(workGroup, restoreName, restorePactId) {
+    if (!window.liveNameDropdown) return;
+
+    window.liveNameDropdown.clear();
+    $('#LiveName').val('');
+    $('#LivePactStaffId').val('');
+
+    $.ajax({
+        url: '/PACT/MonthlyTime/GetStaffByWorkGroup',
+        type: 'GET',
+        data: { workGroup: workGroup },
+        success: function (data) {
+            const items = Array.isArray(data) ? data : [];
+            window.liveNameDropdown.updateData(items);
+
+            if (restoreName || restorePactId) {
+                const match = items.find(function (x) {
+                    return (restorePactId && x.pactId === restorePactId) || (restoreName && x.name === restoreName);
+                });
+                if (match) {
+                    window.liveNameDropdown.setValue(match.pactId);
+                    // Set hidden inputs explicitly in case setValue does not fire onSelect
+                    $('#LiveName').val(match.name);
+                    $('#LivePactStaffId').val(match.pactId);
+                } else {
+                    // Staff not in list (e.g. inactive) — show stored values directly
+                    $('#LiveName').val(restoreName || '');
+                    $('#LivePactStaffId').val(restorePactId || '');
+                }
+            }
+        },
+        error: function () {
+            window.liveNameDropdown.updateData([]);
+            showAlertMessage('Failed to load staff options.', AlertType.ERROR);
+        }
+    });
 }
 
 function saveMonthlyTimeLive() {
-    clearValidationErrors('#modaPopupBody');
     const form = $('#monthlyTimeLiveForm');
+    clearValidationErrors(form);
+
     if (!isFormValid(form)) {
-        displayClientValidationErrors(form, '#modaPopupBody');
+        displayClientValidationErrors(form, form);
         return;
     }
 
-    const data = form.serializeObject();
+    const data = {
+        CompositeKey: $('#CompositeKey').val(),
+        WorkGroup: $('#LiveWorkGroup').val(),
+        PactStaffId: $('#LivePactStaffId').val(),
+        Name: $('#LiveName').val(),
+        TimeCode: $('#TimeCode').val(),
+        ParentProject: $('#ParentProject').val(),
+        Month: $('#LiveMonth').val(),
+        Hours: $('#LiveHours').val()
+    };
+
     $.ajax({
         url: '/PACT/MonthlyTime/SaveLiveRecord',
         type: 'POST',
@@ -203,37 +337,302 @@ function saveMonthlyTimeLive() {
 }
 
 function addStagingMonthlyTime() {
-    $.get('/PACT/MonthlyTime/AddStagingRecord')
-        .done(function (html) {
+    $.ajax({
+        url: '/PACT/MonthlyTime/AddStagingRecord',
+        type: 'GET',
+        success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-        })
-        .fail(function () {
+            initStagingModalDropdowns(null);
+        },
+        error: function () {
             showAlertMessage('Failed to load add form.', AlertType.ERROR);
-        });
+        }
+    });
 }
 
 function editStagingMonthlyTime(btn) {
     const id = $(btn).data('id');
-    $.get('/PACT/MonthlyTime/GetStagingRecord', { id: id })
-        .done(function (html) {
+    $.ajax({
+        url: '/PACT/MonthlyTime/GetStagingRecord',
+        type: 'GET',
+        data: { id: id },
+        success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-        })
-        .fail(function () {
+            const workGroup  = $('#StagingWorkGroup').val();
+            const existingName      = $('#StagingName').val();
+            const existingPactId    = $('#StagingPactStaffId').val();
+            const existingTimeCode  = $('#StagingTimeCode').val();
+            initStagingModalDropdowns(workGroup, existingName, existingPactId, existingTimeCode);
+        },
+        error: function () {
             showAlertMessage('Failed to load staging record.', AlertType.ERROR);
-        });
+        }
+    });
 }
 
-function saveStagingMonthlyTime() {
-    clearValidationErrors('#modaPopupBody');
-    const form = $('#stagingMonthlyTimeForm');
-    if (!isFormValid(form)) {
-        displayClientValidationErrors(form, '#modaPopupBody');
+function initStagingModalDropdowns(existingWorkGroup, existingName, existingPactId, existingTimeCode) {
+    // Read work-group list from the JSON block embedded by the partial
+    var wgData = [];
+    var $wgJson = $('#staging-modal-workgroups-data');
+    if ($wgJson.length) {
+        try { wgData = JSON.parse($wgJson.text()); } catch (e) { wgData = []; }
+    }
+
+    window.stagingWorkGroupDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'stagingWorkGroup',
+        containerSelector: '#staging-modal-workgroup-dropdown-container',
+        placeholder: '--select--',
+        searchPlaceholder: 'Type to search',
+        labelText: 'Work Group <span class="app-required" aria-hidden="true">*</span>',
+        columns: [
+            { field: 'text', header: 'Work Group', width: '200px' }
+        ],
+        data: wgData,
+        displayField: function (row) { return row.text || ''; },
+        valueField: function (row) { return row.value || ''; },
+        enableSearch: true,
+        showSerialNumber: false,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                $('#StagingWorkGroup').val(selectedItem?.value || '');
+                //loadStagingModalStaffByWorkGroup(selectedItem?.value || '');
+                //loadStagingModalTimeCodesByWorkGroup(selectedItem?.value || '');
+            },
+            onClear: function () {
+                $('#StagingWorkGroup').val('');
+                // Reload all-data lists so the user can still pick freely without a WG
+                loadAllStagingModalStaff();
+                loadAllStagingModalTimeCodes();
+                loadAllStagingModalProjects();
+            }
+        }
+    });
+
+    window.stagingNameDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'stagingName',
+        containerSelector: '#staging-modal-name-dropdown',
+        placeholder: '--select--',
+        searchPlaceholder: 'Type to search',
+        labelText: '',
+        columns: [
+            { field: 'name', header: 'Name', width: '180px' },
+            { field: 'pactId', header: 'PACTid', width: '90px' },
+            { field: 'workGroupGrade', header: 'WG_Grade', width: '100px' }
+        ],
+        data: [],
+        displayField: function (row) { return row.name || ''; },
+        valueField: function (row) { return row.pactId || ''; },
+        enableSearch: true,
+        showSerialNumber: false,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                $('#StagingName').val(selectedItem?.name || '');
+                $('#StagingPactStaffId').val(selectedItem?.pactId || '');
+            },
+            onClear: function () {
+                $('#StagingName').val('');
+                $('#StagingPactStaffId').val('');
+            }
+        }
+    });
+
+    if (existingWorkGroup) {
+        // EDIT mode: restore selections using dependent per-WG data
+        window.stagingWorkGroupDropdown.setValue(existingWorkGroup);
+
+        // Load staff so Name dropdown is populated, then restore the selected name display
+        loadStagingModalStaffByWorkGroup(existingWorkGroup, existingName, existingPactId);
+
+        // Only reload time codes when NOT already pre-populated by the server
+        if (!existingTimeCode) {
+            loadStagingModalTimeCodesByWorkGroup(existingWorkGroup);
+        }
+    } else {
+        // ADD mode: load all available data so user can pick without selecting WG first
+        loadAllStagingModalStaff();
+        loadAllStagingModalTimeCodes();
+        loadAllStagingModalProjects();
+    }
+
+    $('#StagingTimeCode').on('change', function () {
+        const workGroup = $('#StagingWorkGroup').val();
+        const timeCode  = $(this).val();
+        if (workGroup) {
+            // WG already chosen — filter projects by WG + TC
+            loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, timeCode);
+        }
+        // No WG yet in ADD mode: projects list stays as all-data
+    });
+}
+
+function loadStagingModalStaffByWorkGroup(workGroup, restoreName, restorePactId) {
+    if (!window.stagingNameDropdown) return;
+
+    window.stagingNameDropdown.clear();
+    $('#StagingName').val('');
+    $('#StagingPactStaffId').val('');
+
+    if (!workGroup) {
+        window.stagingNameDropdown.updateData([]);
         return;
     }
 
-    const data = form.serializeObject();
+    $.ajax({
+        url: '/PACT/MonthlyTime/GetStaffByWorkGroup',
+        type: 'GET',
+        data: { workGroup: workGroup },
+        success: function (data) {
+            const items = Array.isArray(data) ? data : [];
+            window.stagingNameDropdown.updateData(items);
+
+            if (restoreName || restorePactId) {
+                const match = items.find(function (x) {
+                    return (restorePactId && x.pactId === restorePactId) || (restoreName && x.name === restoreName);
+                });
+                if (match) {
+                    window.stagingNameDropdown.setValue(match.pactId);
+                    // Set hidden inputs explicitly in case setValue does not fire onSelect
+                    $('#StagingName').val(match.name);
+                    $('#StagingPactStaffId').val(match.pactId);
+                } else {
+                    // Employee not in list (e.g. inactive) — show stored text directly
+                    $('#StagingName').val(restoreName || '');
+                    $('#StagingPactStaffId').val(restorePactId || '');
+                }
+            }
+        },
+        error: function () {
+            window.stagingNameDropdown.updateData([]);
+            showAlertMessage('Failed to load staff options.', AlertType.ERROR);
+        }
+    });
+}
+
+function loadStagingModalTimeCodesByWorkGroup(workGroup) {
+    resetStagingModalTimeCodeOptions();
+    resetStagingModalParentProjectOptions();
+
+    if (!workGroup) return;
+
+    $.ajax({
+        url: '/PACT/MonthlyTime/GetTimeCodesByWorkGroup',
+        type: 'GET',
+        data: { workGroup: workGroup },
+        success: function (data) {
+            const items = Array.isArray(data) ? data : [];
+            const $timeCode = $('#StagingTimeCode');
+            items.forEach(function (item) {
+                $timeCode.append($('<option>', { value: item.value, text: item.text }));
+            });
+        },
+        error: function () {
+            showAlertMessage('Failed to load timecode options.', AlertType.ERROR);
+        }
+    });
+}
+
+function loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, timeCode) {
+    resetStagingModalParentProjectOptions();
+
+    if (!workGroup || !timeCode) return;
+
+    $.ajax({
+        url: '/PACT/MonthlyTime/GetProjectsByWorkGroupAndTimeCode',
+        type: 'GET',
+        data: { workGroup: workGroup, timeCode: timeCode },
+        success: function (data) {
+            const items = Array.isArray(data) ? data : [];
+            const $parentProject = $('#StagingParentProject');
+            items.forEach(function (item) {
+                $parentProject.append($('<option>', { value: item.value, text: item.text }));
+            });
+        },
+        error: function () {
+            showAlertMessage('Failed to load parent project options.', AlertType.ERROR);
+        }
+    });
+}
+
+function resetStagingModalTimeCodeOptions() {
+    $('#StagingTimeCode').empty().append('<option value="">--select--</option>');
+}
+
+function resetStagingModalParentProjectOptions() {
+    $('#StagingParentProject').empty().append('<option value="">--select--</option>');
+}
+
+function loadAllStagingModalStaff() {
+    if (!window.stagingNameDropdown) return;
+    $.ajax({
+        url: '/PACT/MonthlyTime/GetStaffByWorkGroup',
+        type: 'GET',
+        success: function (data) {
+            window.stagingNameDropdown.updateData(Array.isArray(data) ? data : []);
+        },
+        error: function () {
+            showAlertMessage('Failed to load staff options.', AlertType.ERROR);
+        }
+    });
+}
+
+function loadAllStagingModalTimeCodes() {
+    resetStagingModalTimeCodeOptions();
+    $.ajax({
+        url: '/PACT/MonthlyTime/GetAllTimeCodes',
+        type: 'GET',
+        success: function (data) {
+            const items = Array.isArray(data) ? data : [];
+            const $timeCode = $('#StagingTimeCode');
+            items.forEach(function (item) {
+                $timeCode.append($('<option>', { value: item.value, text: item.text }));
+            });
+        },
+        error: function () {
+            showAlertMessage('Failed to load timecode options.', AlertType.ERROR);
+        }
+    });
+}
+
+function loadAllStagingModalProjects() {
+    resetStagingModalParentProjectOptions();
+    $.ajax({
+        url: '/PACT/MonthlyTime/GetAllProjects',
+        type: 'GET',
+        success: function (data) {
+            const items = Array.isArray(data) ? data : [];
+            const $parentProject = $('#StagingParentProject');
+            items.forEach(function (item) {
+                $parentProject.append($('<option>', { value: item.value, text: item.text }));
+            });
+        },
+        error: function () {
+            showAlertMessage('Failed to load parent project options.', AlertType.ERROR);
+        }
+    });
+}
+
+function saveStagingMonthlyTime() {
+    const form = $('#stagingMonthlyTimeForm');
+    clearValidationErrors(form);
+
+    if (!isFormValid(form)) {
+        displayClientValidationErrors(form, form);
+        return;
+    }
+
+    const data = {
+        Id: $('#Id').val(),
+        WorkGroup: $('#StagingWorkGroup').val(),
+        PactStaffId: $('#StagingPactStaffId').val(),
+        Name: $('#StagingName').val(),
+        TimeCode: $('#StagingTimeCode').val(),
+        ParentProject: $('#StagingParentProject').val(),
+        Month: $('#StagingMonth').val(),
+        Hours: $('#StagingHours').val()
+    };
+
     $.ajax({
         url: '/PACT/MonthlyTime/SaveStagingRecord',
         type: 'POST',
@@ -301,6 +700,7 @@ function importMonthlyTime(file) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('importType', window.monthlyTimeImportType || '2');
+    showLoader();
 
     $.ajax({
         url: '/PACT/MonthlyTime/Import',
@@ -318,28 +718,41 @@ function importMonthlyTime(file) {
         },
         error: function () {
             showAlertMessage('An error occurred while importing.', AlertType.ERROR);
+        },
+        complete: function () {
+            hideLoader();
         }
     });
 }
 
 function validateMonthlyTime() {
-    $.post('/PACT/MonthlyTime/Validate')
-        .done(function (response) {
+    showLoader();
+    $.ajax({
+        url: '/PACT/MonthlyTime/Validate',
+        type: 'POST',
+        success: function (response) {
             if (response.success) {
                 reloadStagingGrid();
                 showAlertMessage(response.message, AlertType.SUCCESS);
             } else {
                 showAlertMessage(response.message || 'Validation failed.', AlertType.ERROR);
             }
-        })
-        .fail(function () {
+        },
+        error: function () {
             showAlertMessage('An error occurred during validation.', AlertType.ERROR);
-        });
+        },
+        complete: function () {
+            hideLoader();
+        }
+    });
 }
 
 function makeLiveMonthlyTime() {
-    $.post('/PACT/MonthlyTime/MakeLive')
-        .done(function (response) {
+    showLoader();
+    $.ajax({
+        url: '/PACT/MonthlyTime/MakeLive',
+        type: 'POST',
+        success: function (response) {
             if (response.success) {
                 reloadLiveGrid();
                 reloadStagingGrid();
@@ -347,10 +760,14 @@ function makeLiveMonthlyTime() {
             } else {
                 showAlertMessage(response.message || 'Make live failed.', AlertType.ERROR);
             }
-        })
-        .fail(function (xhr) {
+        },
+        error: function (xhr) {
             showAlertMessage(xhr.responseJSON?.message || 'An error occurred during make live.', AlertType.ERROR);
-        });
+        },
+        complete: function () {
+            hideLoader();
+        }
+    });
 }
 
 function deleteAllMonthlyTime() {
@@ -369,6 +786,27 @@ function deleteAllMonthlyTime() {
             },
             error: function () {
                 showAlertMessage('An error occurred while deleting imported records.', AlertType.ERROR);
+            }
+        });
+    });
+}
+
+function deleteFailedMonthlyTime() {
+    showGovukConfirm('Delete failed imported records for the current user?').then(function (confirmed) {
+        if (!confirmed) return;
+        $.ajax({
+            url: '/PACT/MonthlyTime/DeleteFailedStagingRecords',
+            type: 'DELETE',
+            success: function (response) {
+                if (response.success) {
+                    reloadStagingGrid();
+                    showAlertMessage('Failed imported records deleted successfully.', AlertType.SUCCESS);
+                } else {
+                    showAlertMessage(response.message || 'Delete failed records failed.', AlertType.ERROR);
+                }
+            },
+            error: function () {
+                showAlertMessage('An error occurred while deleting failed imported records.', AlertType.ERROR);
             }
         });
     });
@@ -418,5 +856,6 @@ $(function () {
     $('#allBtn').on('click', function () { window.monthlyTimePassedFilter = null; reloadStagingGrid(); });
     $('#moveBtn').on('click', makeLiveMonthlyTime);
     $('#deleteAllWGBtn').on('click', deleteAllMonthlyTime);
+    $('#deleteFailedWGBtn').on('click', deleteFailedMonthlyTime);
     $('#exportExcel').on('click', exportMonthlyTime);
 });

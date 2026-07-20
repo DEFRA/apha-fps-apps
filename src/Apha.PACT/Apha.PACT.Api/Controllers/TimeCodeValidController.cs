@@ -46,6 +46,20 @@ namespace Apha.PACT.Api.Controllers
             return Ok(items);
         }
 
+        [HttpGet("timecodes/all")]
+        public async Task<IActionResult> GetAllDistinctTimeCodesAsync()
+        {
+            var items = await _service.GetAllDistinctTimeCodesAsync();
+            return Ok(items);
+        }
+
+        [HttpGet("projects/all")]
+        public async Task<IActionResult> GetAllDistinctProjectsAsync()
+        {
+            var items = await _service.GetAllDistinctProjectsAsync();
+            return Ok(items);
+        }
+
         [HttpGet("paged")]
         public async Task<IActionResult> GetPaged([FromQuery] QueryParameters<string> query, [FromQuery] string? jobCode, [FromQuery] string? parentProject)
         {

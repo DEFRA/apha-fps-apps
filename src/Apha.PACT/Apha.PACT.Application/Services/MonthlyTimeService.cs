@@ -83,9 +83,8 @@ namespace Apha.PACT.Application.Services
         {
             var entity = _mapper.Map<StagingMonthlyTime>(stagingMonthlyTime);
             entity.ImportedBy = importedBy;
-            var importedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
-            entity.ImportedDate = importedDate;
-            entity.Passed = false;
+            entity.ImportedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+            await ValidateSingleRecordAsync(entity);
             var created = await _repository.CreateStagingAsync(entity);
             return _mapper.Map<StagingMonthlyTimeDto>(created);
         }
@@ -93,8 +92,20 @@ namespace Apha.PACT.Application.Services
         public async Task<StagingMonthlyTimeDto> UpdateStagingAsync(StagingMonthlyTimeDto stagingMonthlyTime, string importedBy)
         {
             var entity = _mapper.Map<StagingMonthlyTime>(stagingMonthlyTime);
+            await ValidateSingleRecordAsync(entity);
             var updated = await _repository.UpdateStagingAsync(entity, importedBy);
             return _mapper.Map<StagingMonthlyTimeDto>(updated);
+        }
+
+        private async Task ValidateSingleRecordAsync(StagingMonthlyTime entity)
+        {
+            var context = await LoadValidationContextAsync();
+            var stagingKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var failures = ValidateRecord(entity, context, stagingKeys);
+            entity.Passed = failures.Count == 0;
+            entity.FailureComments = failures.Count == 0
+                ? string.Empty
+                : string.Join(Environment.NewLine, failures);
         }
 
         public async Task<bool> DeleteStagingAsync(int id, string importedBy)
@@ -105,6 +116,11 @@ namespace Apha.PACT.Application.Services
         public async Task<int> DeleteAllStagingByUserAsync(string importedBy)
         {
             return await _repository.DeleteAllStagingByUserAsync(importedBy);
+        }
+
+        public async Task<int> DeleteFailedStagingByUserAsync(string importedBy)
+        {
+            return await _repository.DeleteFailedStagingByUserAsync(importedBy);
         }
 
         public async Task<MonthlyTimeImportResultDto> ImportStagingAsync(MonthlyTimeImportDto request, string importedBy)
@@ -167,13 +183,13 @@ namespace Apha.PACT.Application.Services
 
         private async Task<ValidationContext> LoadValidationContextAsync()
         {
+            var calenderMonths = await _calenderMonthRepository.GetCalenderMonthsAsync();
             return new ValidationContext
             {
                 ValidWorkGroups = new HashSet<string>(
                     await _workGroupRepository.GetValidWorkGroupsAsync(),
                     StringComparer.OrdinalIgnoreCase),
-                ValidMonths = new HashSet<double>(
-                    await _calenderMonthRepository.GetValidCalenderMonthsAsync()),
+                ValidMonths = new HashSet<double>(calenderMonths.Select(c => (double)(c.MonthNumber ?? 0))),
                 StaffByWorkGroup = await _workGroupRepository.GetStaffByWorkGroupAsync(),
                 TimeCodeRows = await _timeCodeValidRepository.GetTimeCodeValidsAsync(),
                 ExistingLiveKeys = await _repository.GetExistingLiveKeysAsync()

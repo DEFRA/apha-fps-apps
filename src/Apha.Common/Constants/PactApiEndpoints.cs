@@ -18,6 +18,8 @@ namespace Apha.Common.Constants
         public const string GetTimeCodesByJobCode = "api/v1/timecodevalid/jobcode/{0}/project/{1}";
         public const string GetTimeCodesByWorkGroup = "api/v1/timecodevalid/workgroup/{0}";
         public const string GetTimeCodesProjectsByWorkGroupAndTimeCode = "api/v1/timecodevalid/projects/workgroup/{0}/timecode/{1}";
+        public const string GetAllDistinctTimeCodes = "api/v1/timecodevalid/timecodes/all";
+        public const string GetAllDistinctProjects = "api/v1/timecodevalid/projects/all";
         public const string GetTimeCodeValidById = "api/v1/timecodevalid/{0}/{1}/{2}";
         public const string GetPagedTimeCodes = "api/v1/timecodevalid/paged";
         public const string GetPagedTimeCodesByJobCode = "api/v1/timecodevalid/paged?jobCode={0}";
@@ -156,6 +158,7 @@ namespace Apha.Common.Constants
         public const string UpdateStagingMonthlyTime = "api/v1/monthlytime/staging/{0}";
         public const string DeleteStagingMonthlyTime = "api/v1/monthlytime/staging/{0}";
         public const string DeleteAllStagingMonthlyTimeByUser = "api/v1/monthlytime/staging/user";
+        public const string DeleteFailedStagingMonthlyTimeByUser = "api/v1/monthlytime/staging/user/failed";
         public const string ImportStagingMonthlyTime = "api/v1/monthlytime/staging/import";
         public const string ValidateStagingMonthlyTime = "api/v1/monthlytime/staging/validate";
         public const string MakeLiveMonthlyTime = "api/v1/monthlytime/staging/makelive";

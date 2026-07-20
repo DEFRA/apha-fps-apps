@@ -141,6 +141,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
         }
 
+        public async Task<ApiResponseDto<bool>> DeleteFailedStagingByUserAsync()
+        {
+            var response = await _http.DeleteAsync<bool?>(PactApiEndpoints.DeleteFailedStagingMonthlyTimeByUser);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
+        }
+
         public async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportStagingAsync(MonthlyTimeImportReqDto request)
         {
             var req = _mapper.Map<MonthlyTimeImportReq>(request);

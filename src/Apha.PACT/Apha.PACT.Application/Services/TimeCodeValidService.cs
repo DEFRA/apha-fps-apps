@@ -51,6 +51,18 @@ namespace Apha.PACT.Application.Services
             return items;
         }
 
+        public async Task<IEnumerable<string>> GetAllDistinctTimeCodesAsync()
+        {
+            var items = await _repository.GetTimeCodeValidsAsync();
+            return items.Select(x => x.TimeCode).Distinct().OrderBy(x => x);
+        }
+
+        public async Task<IEnumerable<string>> GetAllDistinctProjectsAsync()
+        {
+            var items = await _repository.GetTimeCodeValidsAsync();
+            return items.Select(x => x.ParentProject).Distinct().OrderBy(x => x);
+        }
+
         public async Task<PaginatedResult<TimeCodeValidDto>> GetPagedTimeCodesAsync(QueryParameters<string> query, string? jobCode, string? parentProject)
         {
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
