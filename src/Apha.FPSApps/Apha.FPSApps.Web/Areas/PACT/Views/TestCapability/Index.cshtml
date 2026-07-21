@@ -20,14 +20,8 @@
     @* WorkGroup dropdown *@
     <div class="govuk-grid-column-one-third">
         <label for="workGroupPick" class="govuk-label govuk-!-font-weight-bold">Select a Workgroup:</label>
-        <select id="workGroupPick" class="govuk-select govuk-!-font-size-16" style="width:100%;"
-                onchange="onWorkGroupPickChange(this.value)">
-            <option value="">-- Select --</option>
-            @foreach (var item in Model.WorkGroupOptions)
-            {
-                <option value="@item.Value">@item.Text</option>
-            }
-        </select>
+        <div id="workGroupPickMultiDropdown"></div>
+        <input type="hidden" id="workGroupPick" />
     </div>
 
     @* OR separator *@
@@ -38,14 +32,8 @@
     @* Test dropdown *@
     <div class="govuk-grid-column-one-third">
         <label for="mainTestPick" class="govuk-label govuk-!-font-weight-bold">Select a Test:</label>
-        <select id="mainTestPick" class="govuk-select govuk-!-font-size-16" style="width:100%;"
-                onchange="onTestPickChange(this.value)">
-            <option value="">-- Select --</option>
-            @foreach (var item in Model.TestorProductOptions)
-            {
-                <option value="@item.Value">@item.Text</option>
-            }
-        </select>
+       <div id="mainTestPickMultiDropdown"></div>
+        <input type="hidden" id="mainTestPick" />
     </div>
 
     @* Portfolio Maintenance button *@
@@ -64,16 +52,22 @@
 
 @* TestCode info row *@
 <div class="govuk-grid-row sup_margin_left_right_0 sup_p_8 sup_border-bottom sup_margin_bottom_10">
-    <div class="govuk-grid-column-full sup_flex_center_center_center">
-        <label for="divTestcode" class="govuk-label govuk-!-font-weight-bold">Test Requirement records for Test</label>
-        <div class="govuk-grid-column-one-third">
-            <input type="text" id="divTestcode" class="govuk-input govuk-!-font-size-16" readonly>
+    <div class="govuk-grid-column-full sup_padding_right_left_10">
+        <div class="govuk-grid-column-full sup_flex_center_center_center">
+            <label for="divTestcode" class="govuk-label govuk-!-font-weight-bold"> Test Requirement records for Test </label>
+            <div class="govuk-grid-column-one-third">
+                <input type="text" id="divTestcode" class="govuk-input govuk-!-font-size-16">
+            </div>
+        </div>
+        <div class="govuk-grid-column-one-half wgm-left-split sup_p_0">&nbsp;</div>
+        <div class="govuk-grid-column-one-half wgm-right-split sup_p_0 sup_padding_left_10">
+            <div class="sup_p_8">
+                <p class="govuk-body govuk-!-font-size-16 sup_margin_0">------------Buyer Defaulter------------</p>
+            </div>
         </div>
     </div>
-    <div class="govuk-grid-column-full sup_flex_center_center_center sup_p_8">
-        <p class="govuk-body sup_margin_0">------------Buyer Defaulter------------</p>
-    </div>
 </div>
+ 
 
 @* Two-column grid layout *@
 <div class="govuk-grid-row sup_margin_0">
@@ -94,14 +88,27 @@
 
 </div>
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+}
 
 @section Scripts {
     <script src="~/js/ajax-form-validation.js"></script>
+    <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script>
+        const workGroupOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.WorkGroupOptions));
+        const testOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TestorProductOptions));
+        
+
         // ── State ──────────────────────────────────────────────────────────────
         var currentViewBy = 1;
         var currentFilterValue = null;
         var currentSelectedTestCode = null;
+        var workGroupSelectDropdown = null;
+        var testSelectDropdown = null;
+        var selectedWorkGroup = null;
+        var selectedTest = null;
+
 
         var testCapabilityGridId = '@Model.TestCapabilityGrid.GridId';
         var testReqmtGridId      = '@Model.TestReqmtGrid.GridId';
@@ -124,24 +131,36 @@
 
         // ── Page Initialization ───────────────────────────────────────────────
         $(document).ready(function() {
-            // Check if workgroup is passed as query parameter
-            var workgroupParam = getUrlParameter('workgroup');
-            if (workgroupParam) {
-                // Set the dropdown value
-                $('#workGroupPick').val(workgroupParam);
-                currentViewBy = 1;
-                currentFilterValue = workgroupParam;
-                // Load the grid with the workgroup
-                reloadTestCapabilityGrid(workgroupParam);
-            } else {
-                // Select first row if grid is already loaded on page load
-                selectFirstTestCapabilityRow();
-            }
-        });
+
+    initializeWorkGroupMultiColumnDropdown();
+    initializeTestMultiColumnDropdown();
+
+    var workgroupParam = getUrlParameter('workgroup');
+
+    if (workgroupParam) {
+
+        if (workGroupSelectDropdown) {
+            workGroupSelectDropdown.setValue(workgroupParam);
+        }
+
+        currentViewBy = 1;
+        currentFilterValue = workgroupParam;
+        reloadTestCapabilityGrid(workgroupParam);
+
+    } else {
+        selectFirstTestCapabilityRow();
+    }
+
+    wireTestReqmtExportButton();
+});
 
         // ── WorkGroup dropdown change ──────────────────────────────────────────
         function onWorkGroupPickChange(value) {
-            document.getElementById('mainTestPick').value = '';
+            $('#mainTestPick').val('');
+
+            if (testSelectDropdown) {
+                 testSelectDropdown.setValue('');
+            }
             currentViewBy = 1;
             currentFilterValue = value || null;
             currentSelectedTestCode = null;
@@ -152,7 +171,10 @@
 
         // ── Test dropdown change ───────────────────────────────────────────────
         function onTestPickChange(value) {
-            document.getElementById('workGroupPick').value = '';
+            $('#workGroupPick').val('');
+            if (workGroupSelectDropdown) {
+                workGroupSelectDropdown.setValue('');
+            }
             currentViewBy = 2;
             currentFilterValue = value || null;
             currentSelectedTestCode = null;
@@ -207,6 +229,41 @@
             reloadTestReqmtGrid(currentSelectedTestCode);
         }
 
+        function wireTestReqmtExportButton() {
+            var exportButtonSelector = '#' + testReqmtGridId + '_exportBtn';
+            var $exportButton = $(exportButtonSelector);
+            if ($exportButton.length === 0) {
+                return;
+            }
+
+            $exportButton.off('click').on('click', function () {
+                var hasRows = $('#tbl_' + testReqmtGridId + ' tbody tr[data-id]').length > 0;
+                if (!hasRows) {
+                    $(this).removeData('export-url').attr('data-export-url', '');
+                    showAlertMessage('Please select a Test Capability record before exporting.', AlertType.INFO);
+                    return;
+                }
+
+                var exportUrl = $(this).data('export-url');
+                if (!exportUrl) {
+                    showAlertMessage('Please select a Test Capability record before exporting.', AlertType.INFO);
+                    return;
+                }
+
+                var reqmtGridManager = getReqmtGridManager();
+                var currentExtraFilters = getTestReqmtExtraFilters();
+                var params = $.extend(
+                    { filter: JSON.stringify(reqmtGridManager ? reqmtGridManager.getFilterModel() : {}) },
+                    currentExtraFilters
+                );
+
+                var query = Object.keys(params)
+                    .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
+                    .join('&');
+                window.fpsNavigateTo(exportUrl + '?' + query);
+            });
+        }
+
         // ── Grid 2: reload ─────────────────────────────────────────────────────
         function reloadTestReqmtGrid(testCode) {
             $.ajax({
@@ -221,6 +278,7 @@
                 },
                 success: function (html) {
                     $('#gridContainer_testReqmtGrid').html(html);
+                    wireTestReqmtExportButton();
                 },
                 error: function () {
                         showAlertMessage('Failed to load Test Reqmt grid', AlertType.ERROR);
@@ -231,6 +289,12 @@
         function clearTestReqmtGrid() {
             currentSelectedTestCode = null;
             document.getElementById('divTestcode').value = '';
+
+            var exportButtonSelector = '#' + testReqmtGridId + '_exportBtn';
+            $(exportButtonSelector)
+                .removeData('export-url')
+                .attr('data-export-url', '');
+
             $('#tbl_' + testReqmtGridId + ' tbody').html(
                 '<tr><td colspan="100" class="govuk-table__cell" ' +
                 'style="text-align:center;color:#505a5f;font-style:italic;padding:16px;">' +
@@ -315,7 +379,13 @@
         }
 
         // ── Grid 2 CRUD ────────────────────────────────────────────────────────
-        function addTestReqmt() {           
+        function addTestReqmt() {
+            var hasRows = $('#tbl_' + testReqmtGridId + ' tbody tr[data-id]').length > 0;
+            if (!hasRows || !currentSelectedTestCode) {
+                showAlertMessage('Please select a Test Capability record before adding the test requirement', AlertType.INFO);
+                return;
+            }
+
             $.get('/PACT/TestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
                 function (html) {
                     $('#modaPopupBody').html(html);
@@ -408,6 +478,85 @@
                 testCode: currentSelectedTestCode || ''
             };
         }
+
+        function initializeWorkGroupMultiColumnDropdown() {
+
+    workGroupSelectDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'workGroupPickDropdown',
+        containerSelector: '#workGroupPickMultiDropdown',
+        placeholder: 'Select a Workgroup',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by Workgroup',
+        labelText: '',
+        columns: [
+            { field: 'Value', header: 'Workgroup', width: '100px' },
+            { field: 'Text', header: 'ProfitCentre', width: '180px' }
+        ],
+        data: workGroupOptionsListData,
+        displayField: 'Value',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+
+        callbacks: {
+            onSelect: function (selectedItem) {
+
+                selectedWorkGroup = selectedItem.Value;
+
+                $('#workGroupPick').val(selectedWorkGroup);
+
+                onWorkGroupPickChange(selectedWorkGroup);
+            },
+
+            onClear: function () {
+
+                selectedWorkGroup = null;
+                $('#workGroupPick').val('');
+
+                onWorkGroupPickChange('');
+            }
+        }
+    });
+}
+
+function initializeTestMultiColumnDropdown() {
+
+    testSelectDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'mainTestPickDropdown',
+        containerSelector: '#mainTestPickMultiDropdown',
+        placeholder: 'Select a Test',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by Test',
+        labelText: '',
+        columns: [
+            { field: 'Value', header: 'Test Code', width: '100px' },
+            { field: 'Text', header: 'Test Description', width: '180px' }
+        ],
+        data: testOptionsListData,
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+        showClearButton: true,
+
+        callbacks: {
+            onSelect: function (selectedItem) {
+
+                selectedTest = selectedItem.Value;
+
+                $('#mainTestPick').val(selectedTest);
+
+                onTestPickChange(selectedTest);
+            },
+
+            onClear: function () {
+
+                selectedTest = null;
+                $('#mainTestPick').val('');
+
+                onTestPickChange('');
+            }
+        }
+    });
+}
 
             </script>
 

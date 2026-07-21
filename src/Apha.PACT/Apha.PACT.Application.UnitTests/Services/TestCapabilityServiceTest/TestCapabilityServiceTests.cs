@@ -17,6 +17,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
         private readonly ITestCapabilityRepository _testCapabilityRepo;
         private readonly ITestRequirementRepository _testReqmtRepo;
         private readonly ITestorProductRepository _testorProductRepo;
+        private readonly IMonthlyOutputRepository _monthlyOutputRepo;
         private readonly IMapper _mapper;
         private readonly TestCapabilityService _sut;
 
@@ -25,9 +26,10 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             _testCapabilityRepo = Substitute.For<ITestCapabilityRepository>();
             _testReqmtRepo = Substitute.For<ITestRequirementRepository>();
             _testorProductRepo = Substitute.For<ITestorProductRepository>();
+            _monthlyOutputRepo = Substitute.For<IMonthlyOutputRepository>();
             _mapper = Substitute.For<IMapper>();
             _sut = new TestCapabilityService(
-                _testCapabilityRepo, _testReqmtRepo, _testorProductRepo, _mapper);
+                _testCapabilityRepo, _testReqmtRepo, _testorProductRepo, _monthlyOutputRepo, _mapper);
         }
 
         #region GetPagedTestCapabilityByPortfolioAsync
@@ -297,6 +299,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
         public async Task DeleteTestCapabilityAsync_NoReqmtsDependency_DeletesAndReturnsTrue()
         {
             _testReqmtRepo.ExistsByTestBuyerCodeAsync("TC1WG1").Returns(false);
+            _monthlyOutputRepo.ExistsByTestCodeAndWorkGroupAsync("TC1", "WG1").Returns(false);
             _testCapabilityRepo.DeleteAsync("TC1", "WG1").Returns(true);
 
             var result = await _sut.DeleteTestCapabilityAsync("TC1", "WG1");
@@ -309,6 +312,25 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
         public async Task DeleteTestCapabilityAsync_HasReqmtsDependency_ThrowsInvalidOperationException()
         {
             _testReqmtRepo.ExistsByTestBuyerCodeAsync("TC1WG1").Returns(true);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteTestCapabilityAsync("TC1", "WG1"));
+            await _testCapabilityRepo.DidNotReceive().DeleteAsync(Arg.Any<string>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteTestCapabilityAsync_HasReqmtsDependency_DoesNotCheckMonthlyOutputs()
+        {
+            _testReqmtRepo.ExistsByTestBuyerCodeAsync("TC1WG1").Returns(true);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteTestCapabilityAsync("TC1", "WG1"));
+            await _monthlyOutputRepo.DidNotReceive().ExistsByTestCodeAndWorkGroupAsync(Arg.Any<string>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteTestCapabilityAsync_HasMonthlyOutputDependency_ThrowsInvalidOperationException()
+        {
+            _testReqmtRepo.ExistsByTestBuyerCodeAsync("TC1WG1").Returns(false);
+            _monthlyOutputRepo.ExistsByTestCodeAndWorkGroupAsync("TC1", "WG1").Returns(true);
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteTestCapabilityAsync("TC1", "WG1"));
             await _testCapabilityRepo.DidNotReceive().DeleteAsync(Arg.Any<string>(), Arg.Any<string>());
