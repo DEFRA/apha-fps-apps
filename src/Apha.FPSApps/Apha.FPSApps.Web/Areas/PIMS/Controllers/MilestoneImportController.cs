@@ -243,9 +243,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             if (!result.Success)
                 return Json(new { success = false, errors = result.Errors });
 
-            int deleted = 0;
-            if (result.Data is not null)
-                int.TryParse(result.Data.ToString(), out deleted);
+            int deleted = 0;           
 
             return Json(new
             {

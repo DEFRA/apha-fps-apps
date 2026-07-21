@@ -149,7 +149,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return Json(new { showConfirmationSection, confirmationLabelText });
         }
 
-        private async Task<(bool ShowConfirmationSection, string ConfirmationLabelText)> BuildConfirmationStateAsync(string? parentproject)
+        private static async Task<(bool ShowConfirmationSection, string ConfirmationLabelText)> BuildConfirmationStateAsync(string? parentproject)
         {
             await Task.CompletedTask;
 
