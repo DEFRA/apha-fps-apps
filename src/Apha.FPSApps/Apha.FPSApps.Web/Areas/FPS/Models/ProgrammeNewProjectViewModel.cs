@@ -15,24 +15,32 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "Manager")]
         public string? Manager { get; set; }
         [Display(Name = "Transfer Income")]
+        [Range(typeof(decimal), "0", "999999999999999.9999", ErrorMessage = "Transfer Income must be between 0 and 999999999999999.9999.")]
         public decimal TransferIncome { get; set; }
         [Display(Name = "Cust Income")]
+        [Range(typeof(decimal), "0", "999999999999999.9999", ErrorMessage = "Cust Income must be between 0 and 999999999999999.9999.")]
         public decimal CustIncome { get; set; }
         [Display(Name = "Project Status")]
         public string ProjectStatus { get; set; } = null!;
         public string? CostBookNo { get; set; }
+        [Range(typeof(decimal), "0", "999999999999999.9999", ErrorMessage = "Profit must be between 0 and 999999999999999.9999.")]
         public decimal? Profit { get; set; }
         [Required]
         [Display(Name = "Budget")]
+        [Range(typeof(decimal), "0", "999999999999999.9999", ErrorMessage = "Budget must be between 0 and 999999999999999.9999.")]
         public decimal? BudgetCvl { get; set; }
         public string Disease { get; set; } = null!;
         public string Contract { get; set; } = null!;
         [Display(Name = "Short Title")]
         public string ShortTitle { get; set; } = null!;
+        [Range(typeof(decimal), "0", "999999999999999.9999", ErrorMessage = "PVS Income must be between 0 and 999999999999999.9999.")]
         public decimal? PvsIncome { get; set; }
+        [Range(typeof(decimal), "0", "999999999999999.9999", ErrorMessage = "Plan Case Work Debit must be between 0 and 999999999999999.9999.")]
         public decimal? PlanCaseWorkDebit { get; set; }
         public string? Comments { get; set; }
+        [Range(typeof(decimal), "0", "999999999999999.9999", ErrorMessage = "Carry Over must be between 0 and 999999999999999.9999.")]
         public decimal? CarryOver { get; set; }
+        [Range(typeof(decimal), "0", "999999999999999.9999", ErrorMessage = "Carry Over Seed must be between 0 and 999999999999999.9999.")]
         public decimal? CarryOverSeed { get; set; }
         public short IsDefraProject { get; set; }
         [Required]

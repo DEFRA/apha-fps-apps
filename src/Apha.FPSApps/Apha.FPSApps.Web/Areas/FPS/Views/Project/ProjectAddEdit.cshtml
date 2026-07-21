@@ -209,7 +209,7 @@
                                     <label class="govuk-label required" asp-for="CustIncome">Customer Income:</label>
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">&pound;</div>
-                                        <input type="text" asp-for="CustIncome" class="govuk-input" required />
+                                        <input type="text" maxlength="20" asp-for="CustIncome" class="govuk-input" required />
                                     </div>
                                     <span asp-validation-for="CustIncome" class="govuk-error-message" style="display:none;"></span>
                                 </div>
@@ -218,7 +218,7 @@
                                     <label class="govuk-label required" asp-for="TransferIncome">Transfer Income:</label>
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">&pound;</div>
-                                        <input type="text" asp-for="TransferIncome" class="govuk-input" required />
+                                        <input type="text" maxlength="20" asp-for="TransferIncome" class="govuk-input" required />
                                     </div>
                                     <span asp-validation-for="TransferIncome" class="govuk-error-message" style="display:none;"></span>
                                 </div>
@@ -227,7 +227,7 @@
                                     <label class="govuk-label" asp-for="Profit">Target Profit:</label>
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">&pound;</div>
-                                        <input type="text" asp-for="Profit" class="govuk-input" />
+                                        <input type="text" maxlength="20" asp-for="Profit" class="govuk-input" />
                                     </div>
                                     <span asp-validation-for="Profit" class="govuk-error-message" style="display:none;"></span>
                                 </div>
@@ -326,7 +326,7 @@
                                     <label class="govuk-label required" asp-for="BudgetCvl">Budget:</label>
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">&pound;</div>
-                                        <input type="text" asp-for="BudgetCvl" class="govuk-input" required />
+                                        <input type="text" maxlength="20" asp-for="BudgetCvl" class="govuk-input" required />
                                     </div>
                                     <span asp-validation-for="BudgetCvl" class="govuk-error-message" style="display:none;"></span>
                                 </div>
@@ -335,7 +335,7 @@
                                     <label class="govuk-label" asp-for="PvsIncome">PVS Income: (Surv Only)</label>
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">&pound;</div>
-                                        <input type="text" asp-for="PvsIncome" class="govuk-input" />
+                                        <input type="text" maxlength="20" asp-for="PvsIncome" class="govuk-input" />
                                     </div>
                                     <span asp-validation-for="PvsIncome" class="govuk-error-message" style="display:none;"></span>
                                 </div>
@@ -344,7 +344,7 @@
                                     <label class="govuk-label" asp-for="PlanCaseWorkDebit">Plan CW Debit: (Surv Only)</label>
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">&pound;</div>
-                                        <input type="text" asp-for="PlanCaseWorkDebit" class="govuk-input" />
+                                        <input type="text" maxlength="20" asp-for="PlanCaseWorkDebit" class="govuk-input" />
                                     </div>
                                     <span asp-validation-for="PlanCaseWorkDebit" class="govuk-error-message" style="display:none;"></span>
                                 </div>
@@ -387,7 +387,21 @@
         // ── Currency helpers (top-level so they are always available) ──────────
 
         function formatCurrency(value) {
-            return '\u00A3' + parseFloat(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            var str = (value || '0').toString().trim();
+            var negative = str.charAt(0) === '-';
+            if (negative) str = str.substring(1);
+            var parts = str.split('.');
+            var intPart = parts[0] || '0';
+            var decPart = parts.length > 1 ? parts[1] : '';
+            if (decPart.length === 0) {
+                decPart = '0000';
+            } else if (decPart.length < 4) {
+                decPart = decPart + '0000'.substring(0, 4 - decPart.length);
+            } else {
+                decPart = decPart.substring(0, 4);
+            }
+            intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return (negative ? '-' : '') + intPart + '.' + decPart;
         }
 
         function parseCurrencyValue(val) {
@@ -609,8 +623,8 @@
                 });
                 $field.on('input', function () {
                     var raw = $(this).val();
-                    if (raw !== '' && raw !== '-' && !/^-?\d*\.?\d*$/.test(raw)) {
-                        $(this).val(raw.replace(/[^0-9.\-]/g, ''));
+                    if (raw !== '' && raw !== '-' && !/^-?\d*\.?\d{0,4}$/.test(raw)) {
+                        $(this).val(raw.replace(/[^0-9.\-]/g, '').replace(/(\.\d{4})\d+$/, '$1'));
                     }
                 });
             });
