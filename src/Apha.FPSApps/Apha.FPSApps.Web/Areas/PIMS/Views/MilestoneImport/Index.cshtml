@@ -126,7 +126,9 @@
                     <div class="sup_flex_one">
 
                         <!-- ── Year / Type toolbar ─────────────────────────── -->
-                        <div class="sup_flex_align_center sup_flex_gap_10 sup_margin_left_right_10 sup_margin_bottom_10">
+                        <div id="yearTypeToolbar"
+                             class="sup_flex_align_center sup_flex_gap_10 sup_margin_left_right_10 sup_margin_bottom_10"
+                             style="@(Model.TypeLookUp == 'D' ? string.Empty : "display:none;")">
                             <label class="govuk-label govuk-!-font-size-16 sup_margin_0" for="importYear">Year</label>
                             <input asp-for="Year"
                                    type="text"
@@ -159,19 +161,48 @@
 </div>
 
 <!-- ── Add / Edit modal placeholder (loaded via AJAX) ─────────────────────── -->
-<div id="importEditModalContainer"></div>
+<div id="importEditModalContainer" tabindex="-1"></div>
 <input type="hidden" id="hdnTypeLookUp" value="@Model.TypeLookUp" />
 <script src="~/js/ajax-form-validation.js"></script>
 @section Scripts {
 <script>
     var currentProject = '@Html.Raw(parentproject)';
 
+    function disableImportButton() {
+        var btnImport = document.getElementById('btnImport');
+        if (!btnImport) return;
+        btnImport.disabled = true;
+        btnImport.classList.add('govuk-button--disabled');
+        btnImport.setAttribute('aria-disabled', 'true');
+    }
+
+    function enableImportButton() {
+        var btnImport = document.getElementById('btnImport');
+        if (!btnImport) return;
+        btnImport.disabled = false;
+        btnImport.classList.remove('govuk-button--disabled');
+        btnImport.removeAttribute('aria-disabled');
+    }
+
     function getMilestoneImportExtraFilters() {
-        return { project: currentProject };
+        var numberFilter = document.querySelector('input[data-filter="Number"]')?.value || '';
+        return { 
+            project: currentProject,
+            Number: numberFilter
+        };
+    }
+
+    function toggleYearTypeToolbar() {
+        var typeLookUp = document.getElementById('hdnTypeLookUp')?.value || '';
+        var toolbar = document.getElementById('yearTypeToolbar');
+        if (!toolbar) return;
+        toolbar.style.display = typeLookUp === 'D' ? '' : 'none';
     }
 
     function onProjectChanged(project) {
         currentProject = project;
+        disableImportButton();
+
         $.get('@Url.Action("GetFormRequired", "MilestoneImport", new { area = "PIMS" })',
             { parentproject: project },
             function (data) {
@@ -188,10 +219,23 @@
                         importType.appendChild(option);
                     });
                 }
+
+                toggleYearTypeToolbar();
             });
         var gmImport = window['gridManager_importGrid'];
-        if (gmImport) { gmImport.reloadGrid({ page: 1 }); }
+        if (gmImport) { 
+            gmImport.reloadGrid({ page: 1 });
+            // Restore filter after grid reload
+            setTimeout(function() {
+                var numberFilter = document.querySelector('input[data-filter="Number"]');
+                if (numberFilter) {
+                    numberFilter.value = '';
+                }
+            }, 100);
+        }
     }
+
+    toggleYearTypeToolbar();
 
     // ── Add / Edit modal ─────────────────────────────────────────────────────
 
@@ -292,20 +336,23 @@
         const typeLookUp = document.getElementById('hdnTypeLookUp')?.value || 'M';
         const isDeliverableMode = typeLookUp === 'D';
 
-        const url = '/PIMS/MilestoneImport/ValidateImport'
-            + '?project=' + encodeURIComponent(project)
-            + '&typeId=' + encodeURIComponent(typeId)
-            + '&isDeliverableMode=' + isDeliverableMode;
-
         $.ajax({
-            url: url,
+            url: '@Url.Action("ValidateImport", "MilestoneImport", new { area = "PIMS" })',
             type: 'POST',
-            success: function () {
-                var gmImport = window['gridManager_importGrid'];
-                if (gmImport) { gmImport.reloadGrid({ page: 1 }); }
-                document.getElementById('btnImport').disabled = false;
-                document.getElementById('btnImport').classList.remove('govuk-button--disabled');
-                document.getElementById('btnImport').removeAttribute('aria-disabled');
+            data: {
+                project: project,
+                typeId: typeId,
+                isDeliverableMode: isDeliverableMode
+            },
+            success: function (result) {
+                if (result && result.success) {
+                    var gmImport = window['gridManager_importGrid'];
+                    if (gmImport) { gmImport.reloadGrid({ page: 1 }); }
+                    enableImportButton();
+                } else {
+                    const errorMsg = result?.errors?.map(e => e.message).join(', ') || 'Validation failed. Please check the data and try again.';
+                    showAlertMessage(errorMsg, AlertType.ERROR);
+                }
             },
             error: function () {
                 showAlertMessage('Validation failed. Please check the data and try again.', AlertType.ERROR);
@@ -318,15 +365,20 @@
         const overwrite = document.querySelector('input[name="overwrite"]:checked').value === 'true';
 
         $.ajax({
-            url: '/PIMS/MilestoneImport/ImportRecords?project=' + encodeURIComponent(project) + '&overwrite=' + overwrite,
+            url: '@Url.Action("ImportRecords", "MilestoneImport", new { area = "PIMS" })',
             type: 'POST',
-            success: function () {
-                showAlertMessage('Records imported successfully.', AlertType.SUCCESS).then(function () {
-                    onProjectChanged(project);
-                    document.getElementById('btnImport').disabled = true;
-                    document.getElementById('btnImport').classList.add('govuk-button--disabled');
-                    document.getElementById('btnImport').setAttribute('aria-disabled', 'true');
-                });
+            data: { project: project, overwrite: overwrite },
+            success: function (result) {
+                if (result && result.success) {
+                    showAlertMessage(result.message || 'Records imported successfully.', AlertType.SUCCESS).then(function () {
+                        var gmImport = window['gridManager_importGrid'];
+                        if (gmImport) { gmImport.reloadGrid({ page: 1 }); }
+                        disableImportButton();
+                    });
+                } else {
+                    const errorMsg = result?.errors?.map(e => e.message).join(', ') || 'Import failed. Please try again.';
+                    showAlertMessage(errorMsg, AlertType.ERROR);
+                }
             },
             error: function () {
                 showAlertMessage('An error occurred while importing records. Please try again.', AlertType.ERROR);
@@ -336,17 +388,31 @@
 
     function clearImport() {
         const project = document.getElementById('selectProject').value;
-        $.ajax({
-            url: '/PIMS/MilestoneImport/ClearImport?project=' + encodeURIComponent(project),
-            type: 'DELETE',
-            success: function () {
-                showAlertMessage('Data cleared successfully.', AlertType.SUCCESS).then(function () {
-                    onProjectChanged(project);
-                });
-            },
-            error: function () {
-                showAlertMessage('An error occurred while clearing the import data.', AlertType.ERROR);
-            }
+        
+        showGovukConfirm('Are you sure you want to clear all unimported records?').then(function (result) {
+            if (!result) return;
+            
+            disableImportButton();
+
+            $.ajax({
+                url: '@Url.Action("ClearImport", "MilestoneImport", new { area = "PIMS" })?project=' + encodeURIComponent(project),
+                type: 'DELETE',
+                success: function (result) {
+                    if (result && result.success) {
+                        showAlertMessage(result.message || 'Data cleared successfully.', AlertType.SUCCESS).then(function () {
+                            var gmImport = window['gridManager_importGrid'];
+                            if (gmImport) { gmImport.reloadGrid({ page: 1 }); }
+                            disableImportButton();
+                        });
+                    } else {
+                        const errorMsg = result?.errors?.map(e => e.message).join(', ') || 'Clear failed. Please try again.';
+                        showAlertMessage(errorMsg, AlertType.ERROR);
+                    }
+                },
+                error: function () {
+                    showAlertMessage('An error occurred while clearing the import data.', AlertType.ERROR);
+                }
+            });
         });
     }
 </script>

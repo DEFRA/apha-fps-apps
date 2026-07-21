@@ -92,7 +92,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 BindGridUrl = "/PIMS/MilestoneImport/LoadMilestoneImportGrid",
                 ExtraFilterMethod = "getMilestoneImportExtraFilters",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<StagingMilestoneItem>()
+                Columns = GridDataProvider.GetColumnsDefination<StagingMilestoneItem>(),
+                CurrentFilters = filterDict
             };
         }
 
@@ -105,10 +106,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             if (id.HasValue)
             {
-                var apiResult = await _milestoneService.GetStagingRowsAsync(project);
+                var apiResult = await _milestoneService.GetStagingRowsAsync(id.Value);
                 if (apiResult.Success && apiResult.Data != null)
                 {
-                    var dto = apiResult.Data.FirstOrDefault(r => r.Id == id.Value);
+                    var dto = apiResult.Data.FirstOrDefault();
                     if (dto != null)
                         model = _mapper.Map<StagingMilestoneItem>(dto);
                 }
@@ -158,9 +159,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         public async Task<IActionResult> DeleteImportRow(int id)
         {
             var result = await _milestoneService.DeleteStagingRowAsync(id);
-            if (!result.Success)
-                return BadRequest(result.Errors);
-            return Ok(new { success = true });
+            return result.Success
+                ? Json(new { success = true, message = "Import record deleted successfully." })
+                : Json(new { success = false, errors = result.Errors });
         }
         [HttpGet]
         public async Task<IActionResult> GetFormRequired(string parentproject)
@@ -184,35 +185,55 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
         [HttpPost]
         public async Task<IActionResult> ValidateImport(
-            [FromQuery] string project,
-            [FromQuery] string? typeId = null,
-            [FromQuery] bool isDeliverableMode = false)
+            [FromForm] string project,
+            [FromForm] string? typeId = null,
+            [FromForm] bool isDeliverableMode = false)
         {
             var result = await _milestoneService.ValidateStagingAsync(project, typeId, isDeliverableMode);
             if (!result.Success)
-                return BadRequest(result.Errors);
+                return Json(new { success = false, errors = result.Errors });
 
-            List<StagingMilestoneItem> items = _mapper.Map<List<StagingMilestoneItem>>(result.Data);
-            return Ok(items);
+            return Json(new { success = true });
         }
 
         [HttpPost]
         public async Task<IActionResult> ImportRecords(
-            [FromQuery] string project,
-            [FromQuery] bool overwrite = false)
+            [FromForm] string project,
+            [FromForm] bool overwrite = false)
         {
+            if (string.IsNullOrWhiteSpace(project))
+                return Json(new { success = false, errors = new[] { new { message = "Project is required." } } });
+
+            static int ToCount(object? value)
+            {
+                if (value is null) return 0;
+                return int.TryParse(value.ToString(), out int count) ? count : 0;
+            }
+
+            int overwritten = 0;
+
             if (overwrite)
             {
                 var owResult = await _milestoneService.ImportWithOverwriteAsync(project);
                 if (!owResult.Success)
-                    return BadRequest(owResult.Errors);
+                    return Json(new { success = false, errors = owResult.Errors });
+
+                overwritten = ToCount(owResult.Data);
             }
 
             var result = await _milestoneService.ImportStagingAsync(project);
             if (!result.Success)
-                return BadRequest(result.Errors);
+                return Json(new { success = false, errors = result.Errors });
 
-            return Ok(result.Data);
+            int imported = ToCount(result.Data);
+
+            return Json(new
+            {
+                success = true,
+                imported,
+                overwritten,
+                message = "Import completed successfully."
+            });
         }
 
         [HttpDelete]
@@ -220,8 +241,18 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         {
             var result = await _milestoneService.ClearStagingAsync(project);
             if (!result.Success)
-                return BadRequest(result.Errors);
-            return Ok(result.Data);
+                return Json(new { success = false, errors = result.Errors });
+
+            int deleted = 0;
+            if (result.Data is not null)
+                int.TryParse(result.Data.ToString(), out deleted);
+
+            return Json(new
+            {
+                success = true,
+                deleted,
+                message = "Data cleared successfully."
+            });
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────
