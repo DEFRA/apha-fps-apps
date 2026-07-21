@@ -3,6 +3,8 @@ using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
 using System.Linq.Expressions;
 
 namespace Apha.PACT.DataAccess.Repository
@@ -82,6 +84,15 @@ namespace Apha.PACT.DataAccess.Repository
             if (targetKeyExists)
                 throw new InvalidOperationException("A record with the target key already exists in MonthlyTime.");
 
+            // Capture original (DELETED) values for MT_LOG 'UD' entry - MT_LOG Update Trigger
+            var original = await _context.MonthlyTimes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.PactStaffId == originalPactStaffId
+                    && x.TimeCode == monthlyTime.TimeCode
+                    && x.Month == monthlyTime.Month
+                    && x.ParentProject == monthlyTime.ParentProject
+                    && x.FpsYear == fpsYear);
+
             var updatedCount = await _context.MonthlyTimes
                 .Where(x => x.PactStaffId == originalPactStaffId
                     && x.TimeCode == monthlyTime.TimeCode
@@ -106,7 +117,16 @@ namespace Apha.PACT.DataAccess.Repository
                     && x.ParentProject == monthlyTime.ParentProject
                     && x.FpsYear == fpsYear);
 
-            return updated ?? throw new InvalidOperationException("MonthlyTime record updated but could not be reloaded.");
+            if (updated == null)
+                throw new InvalidOperationException("MonthlyTime record updated but could not be reloaded.");
+
+            // Log 'UD' (old values) and 'UI' (new values) - MT_LOG Update Trigger
+            if (original != null)
+                await _context.MonthlyTimeLogs.AddAsync(BuildLogEntry(original, "UD"));
+            await _context.MonthlyTimeLogs.AddAsync(BuildLogEntry(updated, "UI"));
+            await _context.SaveChangesAsync();
+
+            return updated;
         }
 
         public async Task<bool> DeleteLiveAsync(string pactStaffId, string timeCode, double month, string parentProject)
@@ -115,6 +135,8 @@ namespace Apha.PACT.DataAccess.Repository
             if (entity == null)
                 return false;
 
+            // Log 'D' for the deleted row - MT_LOG Delete Trigger
+            await _context.MonthlyTimeLogs.AddAsync(BuildLogEntry(entity, "D"));
             _context.MonthlyTimes.Remove(entity);
             await _context.SaveChangesAsync();
             return true;
@@ -141,7 +163,36 @@ namespace Apha.PACT.DataAccess.Repository
                 .Where(x => x.ImportedBy == importedBy);
 
             if (passed.HasValue)
-                stagingQuery = stagingQuery.Where(x => x.Passed == passed.Value);
+            {
+                if (passed.Value)
+                {
+                    // If passed is true, get all passed records
+                    stagingQuery = stagingQuery.Where(x => x.Passed == true);
+                }
+                else
+                {
+                    // If passed is false, get failed records from the latest import date
+                    var latestImportDate = await _context.StagingMonthlyTimes
+                        .AsNoTracking()
+                        .Where(x => x.ImportedBy == importedBy)
+                        .MaxAsync(x => x.ImportedDate);
+
+                    stagingQuery = stagingQuery.Where(x => x.Passed == false && x.ImportedDate == latestImportDate);
+                }
+            }
+            else
+            {
+                // If passed is null, get all passed records AND failed records from the latest import date
+                var latestImportDate = await _context.StagingMonthlyTimes
+                    .AsNoTracking()
+                    .Where(x => x.ImportedBy == importedBy)
+                    .MaxAsync(x => x.ImportedDate);
+
+                stagingQuery = stagingQuery.Where(x => x.Passed == true || (x.Passed == false && x.ImportedDate == latestImportDate));
+            }
+
+            // Apply filtering
+            stagingQuery = ApplyStagingFilter(stagingQuery, query.Filter);
 
             stagingQuery = stagingQuery
                 .OrderBy(x => x.WorkGroup)
@@ -163,7 +214,17 @@ namespace Apha.PACT.DataAccess.Repository
         }
 
         public async Task<StagingMonthlyTime> CreateStagingAsync(StagingMonthlyTime stagingMonthlyTime)
-        {                      
+        {          
+            var latestImportedDate = await _context.StagingMonthlyTimes
+                .AsNoTracking()
+                .Where(x => x.ImportedBy == stagingMonthlyTime.ImportedBy)
+                .MaxAsync(x => x.ImportedDate);
+
+            if(latestImportedDate == null)
+            {
+                stagingMonthlyTime.ImportedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+            }
+
             await _context.StagingMonthlyTimes.AddAsync(stagingMonthlyTime);
             await _context.SaveChangesAsync();
             return stagingMonthlyTime;
@@ -234,8 +295,23 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<int> DeleteFailedStagingByUserAsync(string importedBy)
         {
+            var latestImportedDate = await _context.StagingMonthlyTimes
+                .AsNoTracking()
+                .Where(x => x.ImportedBy == importedBy)
+                .MaxAsync(x => (DateTime?)x.ImportedDate);
+
+            if (latestImportedDate == null)
+                return 0;
+
+            var failedCount = await _context.StagingMonthlyTimes
+                .AsNoTracking()
+                .CountAsync(x => x.ImportedBy == importedBy && x.Passed == false && x.ImportedDate == latestImportedDate);
+
+            if (failedCount == 0)
+                return 0;
+
             return await _context.StagingMonthlyTimes
-                .Where(x => x.ImportedBy == importedBy && x.Passed == false)
+                .Where(x => x.ImportedBy == importedBy && x.Passed == false && x.ImportedDate == latestImportedDate)
                 .ExecuteDeleteAsync();
         }
 
@@ -260,8 +336,13 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<List<StagingMonthlyTime>> GetStagingRecordsForValidationAsync(string importedBy)
         {
+            var latestImportedDate = await _context.StagingMonthlyTimes
+                .AsNoTracking()
+                .Where(x => x.ImportedBy == importedBy)
+                .MaxAsync(x => x.ImportedDate);
+
             return await _context.StagingMonthlyTimes
-                .Where(x => x.ImportedBy == importedBy && x.Passed == false)
+                .Where(x => x.ImportedBy == importedBy && x.Passed == false && x.ImportedDate == latestImportedDate)
                 .OrderBy(x => x.Id)
                 .Distinct()
                 .ToListAsync();
@@ -285,23 +366,25 @@ namespace Apha.PACT.DataAccess.Repository
             return new HashSet<string>(keys);
         }
 
-        public async Task<(int PassedCount, int FailedCount)> ValidateStagingAsync(string importedBy)
-        {
-            // Validation logic has been moved to MonthlyTimeService.ValidateStagingAsync
-            // This method is deprecated and should not be called directly.
-            // The repository now provides helper methods for validation data retrieval.
-            throw new NotImplementedException("Call MonthlyTimeService.ValidateStagingAsync() instead. Repository validation logic has been moved to the service layer.");
-        }
-
         public async Task<bool> HasFailedStagingAsync(string importedBy)
         {
+            var latestImportedDate = await _context.StagingMonthlyTimes
+                .AsNoTracking()
+                .Where(x => x.ImportedBy == importedBy)
+                .MaxAsync(x => x.ImportedDate);
+
+            if(latestImportedDate == null)
+                return false;
+
             return await _context.StagingMonthlyTimes
                 .AsNoTracking()
-                .AnyAsync(x => x.ImportedBy == importedBy && x.Passed == false);
+                .AnyAsync(x => x.ImportedBy == importedBy && x.Passed == false && x.ImportedDate == latestImportedDate);
         }
 
         public async Task<(int ProcessedCount, int ImportedCount, int FailedCount)> MakeLiveAsync(string importedBy)
         {
+            const string noLongerValidMessage = "This record is no longer valid. Needs re-validating";
+
             var passedRows = await _context.StagingMonthlyTimes
                 .Where(x => x.ImportedBy == importedBy && x.Passed == true)
                 .OrderBy(x => x.Id)
@@ -312,7 +395,7 @@ namespace Apha.PACT.DataAccess.Repository
 
             var failedCount = await _context.StagingMonthlyTimes
                 .AsNoTracking()
-                .CountAsync(x => x.ImportedBy == importedBy && x.Passed == false);
+                .CountAsync(x => x.ImportedBy == importedBy && x.Passed == false && x.ImportedDate == passedRows.Max(r => r.ImportedDate));
 
             var importedCount = 0;
             foreach (var row in passedRows)
@@ -323,24 +406,64 @@ namespace Apha.PACT.DataAccess.Repository
                     || string.IsNullOrWhiteSpace(row.ParentProject))
                 {
                     row.Passed = false;
-                    row.FailureComments = "Import of this record failed. Re-validate and try importing again.";
+                    row.FailureComments = noLongerValidMessage;
+                    failedCount++;
                     continue;
                 }
 
-                var liveRow = new MonthlyTime
-                {
-                    PactStaffId = row.PactId,
-                    TimeCode = row.TimeCode,
-                    Month = row.Month.Value,
-                    ParentProject = row.ParentProject,
-                    WorkGroup = row.WorkGroup,
-                    Hours = row.Hours,
-                    FpsYear = _fpsRequestContext.FpsYear
-                };
+                MonthlyTime? liveRow = null;
+                MonthlyTimeLog? logEntry = null;
 
-                await _context.MonthlyTimes.AddAsync(liveRow);
-                _context.StagingMonthlyTimes.Remove(row);
-                importedCount++;
+                try
+                {
+                    liveRow = new MonthlyTime
+                    {
+                        PactStaffId = row.PactId,
+                        TimeCode = row.TimeCode,
+                        Month = row.Month.Value,
+                        ParentProject = row.ParentProject,
+                        WorkGroup = row.WorkGroup,
+                        Hours = row.Hours,
+                        FpsYear = _fpsRequestContext.FpsYear
+                    };
+
+                    logEntry = BuildLogEntry(liveRow, "I");
+
+                    await _context.MonthlyTimes.AddAsync(liveRow);
+                    // Log 'I' for each new live row - mirrors MT_LOG_ITrig
+                    await _context.MonthlyTimeLogs.AddAsync(logEntry);
+                    _context.StagingMonthlyTimes.Remove(row);
+
+                    await _context.SaveChangesAsync();
+                    importedCount++;
+                }
+                catch
+                {
+                    if (liveRow != null)
+                    {
+                        var liveRowEntry = _context.Entry(liveRow);
+                        if (liveRowEntry.State != EntityState.Detached)
+                            liveRowEntry.State = EntityState.Detached;
+                    }
+
+                    if (logEntry != null)
+                    {
+                        var logEntryState = _context.Entry(logEntry);
+                        if (logEntryState.State != EntityState.Detached)
+                            logEntryState.State = EntityState.Detached;
+                    }
+
+                    var rowEntry = _context.Entry(row);
+                    if (rowEntry.State == EntityState.Deleted)
+                        rowEntry.State = EntityState.Unchanged;
+
+                    row.Passed = false;
+                    row.FailureComments = noLongerValidMessage;
+                    rowEntry.State = EntityState.Modified;
+
+                    await _context.SaveChangesAsync();
+                    failedCount++;
+                }
             }
 
             await _context.SaveChangesAsync();
@@ -396,6 +519,39 @@ namespace Apha.PACT.DataAccess.Repository
             return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
+        private static IQueryable<StagingMonthlyTime> ApplyStagingFilter(IQueryable<StagingMonthlyTime> stagingQuery, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+            {
+                return stagingQuery;
+            }
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+            {
+                return stagingQuery;
+            }
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
+                stagingQuery = stagingQuery.Where(x => EF.Functions.ILike(x.WorkGroup!, $"%{workGroup}%"));
+
+            if (dict.TryGetValue("PactStaffId", out var pactStaffId) && pactStaffId != null)
+                stagingQuery = stagingQuery.Where(x => EF.Functions.ILike(x.PactStaffId!, $"%{pactStaffId}%"));
+
+            if (dict.TryGetValue("Name", out var name) && name != null)
+                stagingQuery = stagingQuery.Where(x => EF.Functions.ILike(x.Name!, $"%{name}%"));
+
+            if (dict.TryGetValue("TimeCode", out var timeCode) && timeCode != null)
+                stagingQuery = stagingQuery.Where(x => EF.Functions.ILike(x.TimeCode!, $"%{timeCode}%"));
+
+            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+                stagingQuery = stagingQuery.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{parentProject}%"));            
+
+            return stagingQuery;
+        }
+
         private static IQueryable ApplySorting(IQueryable<MonthlyTime> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
@@ -427,6 +583,23 @@ namespace Apha.PACT.DataAccess.Repository
         private static IQueryable ApplyOrder<T>(IQueryable<MonthlyTime> query, Expression<Func<MonthlyTime, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        }
+
+        private MonthlyTimeLog BuildLogEntry(MonthlyTime entity, string insertDelete)
+        {
+            return new MonthlyTimeLog
+            {
+                PactStaffId = entity.PactStaffId,
+                TimeCode = entity.TimeCode,
+                Month = entity.Month,
+                ParentProject = entity.ParentProject,
+                WorkGroup = entity.WorkGroup,
+                Hours = entity.Hours,
+                DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                UserId = _fpsRequestContext.UserEmailId,
+                InsertDelete = insertDelete,
+                FpsYear = entity.FpsYear
+            };
         }
     }
 }

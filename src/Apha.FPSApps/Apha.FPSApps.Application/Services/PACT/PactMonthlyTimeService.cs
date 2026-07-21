@@ -93,8 +93,20 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportFlatFileAsync(string fileName, IXLWorkbook workbook)
         {
+            if (!TryGetTimeFileMetadata(fileName, out var workGroupFromFile, out var monthFromFile))
+            {
+                return ApiResponseDto<MonthlyTimeImportResultDto>.FailureResponse(
+                    [new ApiErrorDto { Code = "INVALID_FILENAME", Message = "Filename must contain WorkGroup and Month before TS (e.g. WorkGroup01TS.xlsx)." }],
+                    new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
+            }
+
             var requiredHeaders = new[] { "Work Group", "Name", "Time Code", "Parent Project", "Month", "Hours" };
-            var importResult = _excelImportService.ReadExcel(workbook, MapFlatFileRow, requiredHeaders, 1, "The uploaded Excel file format is not correct. Please use the correct flat-file template.");
+            var importResult = _excelImportService.ReadExcel(
+                workbook,
+                (row, headerMap) => MapFlatFileRow(row, headerMap, workGroupFromFile, monthFromFile),
+                requiredHeaders,
+                1,
+                "The uploaded Excel file format is not correct. Please use the correct flat-file template.");
             if (!importResult.IsSuccess)
             {
                 return BuildImportFailure(importResult, "INVALID_TEMPLATE", "EMPTY_FILE");
@@ -112,10 +124,10 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportCrossTabAsync(string fileName, IXLWorkbook workbook)
         {
-            if (!TryGetCrossTabFileMetadata(fileName, out var workGroupFromFile, out var monthFromFile))
+            if (!TryGetTimeFileMetadata(fileName, out var workGroupFromFile, out var monthFromFile))
             {
                 return ApiResponseDto<MonthlyTimeImportResultDto>.FailureResponse(
-                    [new ApiErrorDto { Code = "INVALID_FILENAME", Message = "Cross-tab filename must contain WorkGroup and Month (e.g. BAC101TS.xls)." }],
+                    [new ApiErrorDto { Code = "INVALID_FILENAME", Message = "Filename must contain WorkGroup and Month before TS (e.g. WorkGroup01TS.xlsx)." }],
                     new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
             }
 
@@ -185,21 +197,25 @@ namespace Apha.FPSApps.Application.Services.PACT
             return await _pactApiClient.PactMonthlyTime.ImportStagingAsync(request);
         }
 
-        private MonthlyTimeImportRowDto MapFlatFileRow(IXLRangeRow row, Dictionary<string, int> headerMap)
+        private MonthlyTimeImportRowDto MapFlatFileRow(
+            IXLRangeRow row,
+            Dictionary<string, int> headerMap,
+            string workGroupFromFile,
+            string monthFromFile)
         {
             return new MonthlyTimeImportRowDto
             {
-                WorkGroup = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Work Group")])),
+                WorkGroup = workGroupFromFile,
                 PactStaffId = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Name")])),
                 Name = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Name")])),
                 TimeCode = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Time Code")])),
                 ParentProject = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Parent Project")])),
-                Month = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Month")])),
+                Month = monthFromFile,
                 Hours = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Hours")]))
             };
         }
 
-        private static bool TryGetCrossTabFileMetadata(string fileName, out string workGroup, out string month)
+        private static bool TryGetTimeFileMetadata(string fileName, out string workGroup, out string month)
         {
             workGroup = string.Empty;
             month = string.Empty;
@@ -210,7 +226,7 @@ namespace Apha.FPSApps.Application.Services.PACT
                 return false;
             }
 
-            var match = Regex.Match(name, "^(?<workGroup>[A-Za-z0-9]+?)(?<month>\\d{2})TS$", RegexOptions.IgnoreCase);
+            var match = Regex.Match(name, "^(?<workGroup>[A-Za-z0-9]+?)(?<month>\\d{2})TS", RegexOptions.IgnoreCase);
             if (!match.Success)
             {
                 return false;

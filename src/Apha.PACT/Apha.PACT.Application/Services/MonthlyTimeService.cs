@@ -87,8 +87,7 @@ namespace Apha.PACT.Application.Services
         public async Task<StagingMonthlyTimeDto> CreateStagingAsync(StagingMonthlyTimeDto stagingMonthlyTime, string importedBy)
         {
             var entity = _mapper.Map<StagingMonthlyTime>(stagingMonthlyTime);
-            entity.ImportedBy = importedBy;
-            entity.ImportedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+            entity.ImportedBy = importedBy;            
             await ValidateSingleRecordAsync(entity);
             var created = await _repository.CreateStagingAsync(entity);
             return _mapper.Map<StagingMonthlyTimeDto>(created);
@@ -144,13 +143,13 @@ namespace Apha.PACT.Application.Services
 
         public async Task<int> DeleteFailedStagingByUserAsync(string importedBy)
         {
-            return await _repository.DeleteFailedStagingByUserAsync(importedBy);
+            var deletedCount = await _repository.DeleteFailedStagingByUserAsync(importedBy);
+            return deletedCount;
         }
 
         public async Task<MonthlyTimeImportResultDto> ImportStagingAsync(MonthlyTimeImportDto request, string importedBy)
         {
-            var importedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
-            await _repository.DeleteAllStagingByUserAsync(importedBy);
+            var importedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);            
 
             var rows = request.Rows.Select(row => new StagingMonthlyTime
             {
@@ -309,7 +308,7 @@ namespace Apha.PACT.Application.Services
 
             var matchedStaff = staffByWorkGroup
                 .Where(x => x.WorkGroup == workGroup &&
-                    ((!string.IsNullOrWhiteSpace(staffId) && x.SpNumber == staffId) ||
+                    ((!string.IsNullOrWhiteSpace(staffId) && x.PactId == staffId) ||
                      (!string.IsNullOrWhiteSpace(staffId) && x.Name == staffId)))
                 .ToList();
 

@@ -156,7 +156,20 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             var response = await _http.DeleteAsync<bool?>(PactApiEndpoints.DeleteFailedStagingMonthlyTimeByUser);
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<bool>>(response);
+            {
+                var mappedResponse = _mapper.Map<ApiResponseDto<bool>>(response);
+
+                // If no records were deleted (Data is false), add a specific message
+                if (!mappedResponse.Data)
+                {
+                    mappedResponse.Errors = new List<ApiErrorDto>
+                    {
+                        new ApiErrorDto { Message = "No failed imported records found to delete." }
+                    };
+                }
+
+                return mappedResponse;
+            }
 
             var dto = _mapper.Map<ApiResponseDto<bool>>(response);
             return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());

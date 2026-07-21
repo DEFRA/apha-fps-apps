@@ -44,7 +44,6 @@ namespace Apha.PACT.Core.Interfaces
         Task<List<StagingMonthlyTime>> GetStagingRecordsForValidationAsync(string importedBy);
         Task UpdateStagingRecordsAsync(IEnumerable<StagingMonthlyTime> records);
         Task<HashSet<string>> GetExistingLiveKeysAsync();
-        Task<(int PassedCount, int FailedCount)> ValidateStagingAsync(string importedBy);
         Task<bool> HasFailedStagingAsync(string importedBy);
         Task<(int ProcessedCount, int ImportedCount, int FailedCount)> MakeLiveAsync(string importedBy);
 
