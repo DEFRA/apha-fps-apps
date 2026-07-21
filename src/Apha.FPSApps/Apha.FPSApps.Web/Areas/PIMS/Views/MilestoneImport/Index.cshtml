@@ -68,7 +68,7 @@
 
                         <!-- Step 3b — Overwrite? -->
                         <div class="sup_margin_bottom_10">
-                            <fieldset class="govuk-fieldset">
+                            <fieldset class="govuk-fieldset" aria-required="true">
                                 <legend class="govuk-fieldset__legend govuk-!-font-weight-bold govuk-!-font-size-16"
                                         id="lbl-overwrite">
                                     Overwrite?
@@ -78,7 +78,7 @@
                                     <div class="govuk-radios__item">
                                         <input class="govuk-radios__input govuk-!-font-size-16"
                                                id="overwrite-no" name="overwrite" type="radio"
-                                               value="false" checked aria-required="true" />
+                                               value="false" checked />
                                         <label class="govuk-label govuk-radios__label govuk-!-font-size-16 sup_label_auto_width"
                                                for="overwrite-no">No</label>
                                     </div>
@@ -115,9 +115,8 @@
                             <button type="button" id="btnDeleteUnimported"
                                     class="govuk-button govuk-button--warning sup_margin_0 govuk-!-width-three-quarters"
                                     data-module="govuk-button"
-                                    aria-label="Delete all unimported records from the panel"
                                     onclick="clearImport()">
-                                Delete Unimported
+                                Delete All Unimported
                             </button>
                         </div>
                     </aside>

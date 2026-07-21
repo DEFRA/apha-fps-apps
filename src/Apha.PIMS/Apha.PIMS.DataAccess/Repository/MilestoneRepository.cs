@@ -77,7 +77,10 @@ namespace Apha.PIMS.DataAccess.Repository
                 _dbContext.LogMilestones.Add(BuildLogEntry(entity, 'I', changedBy));
                 await _dbContext.SaveChangesAsync();
             }
-            catch { /* log write failure must not affect the milestone operation */ }
+            catch (Exception)
+            {
+                // Log entry creation failure should not affect milestone addition
+            }
 
             return entity;
         }
@@ -92,7 +95,10 @@ namespace Apha.PIMS.DataAccess.Repository
                 _dbContext.LogMilestones.Add(BuildLogEntry(entity, 'U', changedBy));
                 await _dbContext.SaveChangesAsync();
             }
-            catch { /* log write failure must not affect the milestone operation */ }
+            catch (Exception)
+            {
+                // Log entry creation failure should not affect milestone update
+            }
 
             return entity;
         }
@@ -472,11 +478,20 @@ namespace Apha.PIMS.DataAccess.Repository
                 {
                     _dbContext.LogMilestones.Add(BuildLogEntry(m, 'I', changedBy));
                 }
-                catch { }
+                catch (Exception)
+                {
+                    // Log entry creation failure should not affect import
+                }
             }
 
-            try { await _dbContext.SaveChangesAsync(); }
-            catch { }
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                // Log save failure must not affect the import operation
+            }
 
             List<int> insertedStagingIds = rowsToInsert.Select(r => r.Id).ToList();
             if (insertedStagingIds.Count > 0)
@@ -530,7 +545,10 @@ namespace Apha.PIMS.DataAccess.Repository
                     _dbContext.LogMilestones.Add(BuildLogEntry(existing, 'U', changedBy));
                     await _dbContext.SaveChangesAsync();
                 }
-                catch { }
+                catch (Exception)
+                {
+                    // Log write failure must not affect the overwrite operation
+                }
 
                 await _dbContext.StagingMilestones
                     .Where(s => s.Id == stagingRow.Id)
