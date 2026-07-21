@@ -8,11 +8,6 @@ Enforce architecture standards: API → Service → Repository (no direct reposi
 Register required dependencies and adhere to existing logging, validation, exception handling, security, and coding conventions.
 Generate unit tests for the Repository, Service, and API layers, covering positive, negative, and edge-case scenarios.
 
-## Replan Feedback
-
-> CRUD Operations are required.
-ANalyse existing back end layer for api that perform CRUD operation on a single Entity and use that as a reference
-
 **Reasoning:** The Disease backend already exists (entity, map, repository, service, controller, DTO, repo tests, service tests) mirroring the Customer API reference pattern (read-only for lookup table tblDisease). The only clearly missing artifact required by the user story is the API-layer unit test for DiseaseController. Adding it completes the story's requirement to cover Repository, Service, and API layers with unit tests. CRUD write operations are not implemented in the Customer reference and tblDisease is a simple lookup, so scope is kept read-only to match the referenced pattern.
 
 ## Design
@@ -44,13 +39,11 @@ The following changes may be beneficial but are NOT part of this story. They sho
 
 ### Review Iterations
 
-**Fix/Review Loops Used:** 2 (of 2 max)  |  **Total Review Passes:** 3
+**Fix/Review Loops Used:** 0 (of 2 max)  |  **Total Review Passes:** 1
 
 | Iteration | Verdict | Score | Findings |
 |-----------|---------|-------|----------|
-| 1 | NEEDS_WORK | 6/10 | 7 |
-| 2 | NEEDS_WORK | 6/10 | 11 |
-| 3 | NEEDS_WORK | 5/10 | 8 |
+| 1 | APPROVE | 8/10 | 3 |
 
 ### Findings
 
