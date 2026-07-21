@@ -129,5 +129,12 @@ namespace Apha.FPS.Application.Services
             return isDeleted;
         }
 
+        public async Task<PaginatedResult<StaffResourceUtilisationDto>> GetStaffResourceUtilisationAsync(QueryParameters<string> query, string workgroup)
+        {
+            var filter = _mapper.Map<PaginationParameters<string>>(query);
+            var result = await _staffJobRepository.GetStaffResourceUtilisationAsync(filter, workgroup);
+            return _mapper.Map<PaginatedResult<StaffResourceUtilisationDto>>(result);
+        }
+
     }
 }

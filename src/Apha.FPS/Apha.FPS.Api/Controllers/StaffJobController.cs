@@ -191,5 +191,20 @@ namespace Apha.FPS.Api.Controllers
                 throw new KeyNotFoundException("Data not found.");
             return Ok(isDeleted);
         }
+
+        /// <summary>
+        /// Returns a paged, sorted and filtered resource utilisation summary for a given workgroup.
+        /// </summary>
+        /// <param name="query">Pagination and filter parameters.</param>
+        /// <param name="workgroup">The workgroup identifier to filter by.</param>
+        /// <returns>Paginated list of staff resource utilisation rows.</returns>
+        [HttpGet("resourceutilisation")]
+        public async Task<IActionResult> GetStaffResourceUtilisationAsync(
+            [FromQuery] PaginationReq<string> query, [FromQuery] string workgroup)
+        {
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _staffJobService.GetStaffResourceUtilisationAsync(filter, workgroup);
+            return Ok(_mapper.Map<PaginationRes<StaffResourceUtilisationRes>>(result));
+        }
     }
 }

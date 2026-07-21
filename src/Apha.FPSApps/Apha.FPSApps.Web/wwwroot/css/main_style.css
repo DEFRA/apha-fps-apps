@@ -1231,7 +1231,7 @@ label.required::after {
 .modal-content {
     background: #fff;
     border-radius: 10px;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
 
     .modal-header {
@@ -1243,13 +1243,8 @@ label.required::after {
 
 
         .btn-close {
-            color: #fff !important;
             float: right;
-            padding: .3rem .3rem;
-            margin: -.5rem -.5rem -.5rem auto;
-            background: #ff4239;
-            opacity: 1;
-            font-size: 14px !important;
+            
         }
     }
 }
