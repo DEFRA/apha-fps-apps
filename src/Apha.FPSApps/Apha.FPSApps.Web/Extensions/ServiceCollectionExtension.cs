@@ -1,4 +1,4 @@
-using Apha.Common.Utilities.ExcelExport;
+﻿using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.ExcelImport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
@@ -109,6 +109,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IContributionSummaryService, ContributionSummaryService>();
             services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
             services.AddScoped<IBosworthInterfaceService, BosworthInterfaceService>();
+            services.AddScoped<IResourceAllocationService, ResourceAllocationService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

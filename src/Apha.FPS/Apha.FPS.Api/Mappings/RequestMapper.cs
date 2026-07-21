@@ -1,4 +1,4 @@
-using Apha.Common.Contracts;
+﻿using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
@@ -160,6 +160,11 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<StaffResourceUtilisationDto, StaffResourceUtilisationRes>().ReverseMap();
 
 
+
+            // ResourceAllocation — Stage 2 Check Resource Allocation
+            CreateMap<ResourceStaffAllocationDto, ResourceStaffAllocationRes>().ReverseMap();
+            CreateMap<ResourceStaffJobDto, ResourceStaffJobRes>().ReverseMap();
+            CreateMap<ResourceStaffJobDetailDto, ResourceStaffJobDetailRes>().ReverseMap();
         }
     }
 }

@@ -1,4 +1,4 @@
-namespace Apha.Common.Constants
+﻿namespace Apha.Common.Constants
 {
     public static class FpsApiEndpoints
     {
@@ -263,5 +263,9 @@ namespace Apha.Common.Constants
         public const string CreateCostCentre = "api/v1/costcentre";
         public const string UpdateCostCentre = "api/v1/costcentre/{0}";
         public const string DeleteCostCentre = "api/v1/costcentre/{0}";
+
+        // ResourceAllocation — Stage 2 Check Resource Allocation
+        public const string GetPagedResourceStaffAllocations = "api/v1/ResourceAllocation/staffallocations/paged";
+        public const string GetPagedResourceStaffJobDetails = "api/v1/ResourceAllocation/staffjobdetails/paged";
     }
 }
