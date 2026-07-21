@@ -557,6 +557,16 @@
         // -----------------------------
         // CSG7 GROUP
         // -----------------------------
+        function handleCsg7GroupSaveError(response, fallbackMessage, $modal) {
+        var message = fallbackMessage || 'Save failed.';
+        if (response) {
+        message = response.message || response.title || response.detail || message;
+        }
+
+        showAlertMessage(message, AlertType.ERROR);
+        displayServerValidationErrors(response ? response.errors : null, message, $modal);
+        }
+
         function addCsg7Group() {
         $.get('@Url.Action("CreateCsg7Group", "Maintenance", new { area = "CostBook" })',
         function (html) {
@@ -642,11 +652,11 @@
         closeModal();
         reloadCsg7Grid();
         } else {
-        displayServerValidationErrors(data.errors, data.message || 'Save failed.', $modal);
+        handleCsg7GroupSaveError(data, 'Save failed.', $modal);
         }
         },
-        error: function () {
-        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
+        error: function (xhr) {
+        handleCsg7GroupSaveError(xhr && xhr.responseJSON ? xhr.responseJSON : null, 'An error occurred while saving.', $modal);
         }
         });
         }
@@ -659,6 +669,16 @@
         // -----------------------------
         // CAPS STAFF
         // -----------------------------
+        function handleCapsStaffSaveError(response, fallbackMessage, $modal) {
+        var message = fallbackMessage || 'Save failed.';
+        if (response) {
+        message = response.message || response.title || response.detail || message;
+        }
+
+        showAlertMessage(message, AlertType.ERROR);
+        displayServerValidationErrors(response ? response.errors : null, message, $modal);
+        }
+
         function addCapsStaff() {
         $.get('@Url.Action("CreateCapsStaff", "Maintenance", new { area = "CostBook" })',
         function (html) {
@@ -744,11 +764,11 @@
         closeModal();
         reloadCapsStaffGrid();
         } else {
-        displayServerValidationErrors(data.errors, data.message || 'Save failed.', $modal);
+        handleCapsStaffSaveError(data, 'Save failed.', $modal);
         }
         },
-        error: function () {
-        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
+        error: function (xhr) {
+        handleCapsStaffSaveError(xhr && xhr.responseJSON ? xhr.responseJSON : null, 'An error occurred while saving.', $modal);
         }
         });
         }
@@ -789,7 +809,9 @@
         { id: 'inflAnimals',           errorId: 'inflAnimals-error',           wrapId: 'fg-inflAnimals',           label: 'Animals' },
         { id: 'inflExceptionalCosts',  errorId: 'inflExceptionalCosts-error',  wrapId: 'fg-inflExceptionalCosts',  label: 'Exceptional Costs' },
         { id: 'inflStaff',             errorId: 'inflStaff-error',             wrapId: 'fg-inflStaff',             label: 'Staff' },
-        { id: 'inflTests',             errorId: 'inflTests-error',             wrapId: 'fg-inflTests',             label: 'Tests' }
+        { id: 'inflTests',             errorId: 'inflTests-error',             wrapId: 'fg-inflTests',             label: 'Tests' },
+        { id: 'inflWorkingHoursInDay', errorId: 'inflWorkingHoursInDay-error', wrapId: 'fg-inflWorkingHoursInDay', label: 'Working Hours in Day' },
+        { id: 'inflWorkingDaysInYear', errorId: 'inflWorkingDaysInYear-error', wrapId: 'fg-inflWorkingDaysInYear', label: 'Working Days in Year' }
         ];
         inflFields.forEach(function (f) {
         var val = document.getElementById(f.id) ? document.getElementById(f.id).value : '';
