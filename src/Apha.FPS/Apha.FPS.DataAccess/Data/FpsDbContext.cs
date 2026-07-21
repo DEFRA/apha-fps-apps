@@ -112,6 +112,8 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; }
 
         public virtual DbSet<CostCentre> CostCentres { get; set; }
+        public virtual DbSet<ResourceStaffAllocationView> ResourceStaffAllocationViews { get; set; }
+        public virtual DbSet<ResourceStaffJobView> ResourceStaffJobViews { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -349,6 +351,9 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new CostCentreMap());
             modelBuilder.Entity<CostCentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ResourceStaffAllocationViewMap());
+            modelBuilder.ApplyConfiguration(new ResourceStaffJobViewMap());
         }
     }
 }

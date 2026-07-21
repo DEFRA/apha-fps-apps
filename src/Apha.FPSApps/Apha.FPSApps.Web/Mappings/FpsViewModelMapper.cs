@@ -1,4 +1,4 @@
-using Apha.FPSApps.Application.Dtos;
+﻿using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Pagination;
@@ -23,6 +23,7 @@ namespace Apha.FPSApps.Web.Mappings
                 .ReverseMap()
                 .ForMember(d => d.PC, o => o.MapFrom(s => s.Pc))
                 .ForMember(d => d.WGPrice, o => o.MapFrom(s => s.WgPrice));
+            CreateMap<TestActualBreakdownItem, TestActualBreakdownDto>().ReverseMap();
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
             CreateMap<AnimalMaintenanceViewModel, AnimalDto>().ReverseMap();
             CreateMap<UserPermissionViewModel, UserDto>().ReverseMap();
@@ -61,12 +62,12 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<WorkGroupEmployeeStaffItem, WorkGroupEmployeeStaffDto>().ReverseMap();
             // Resource Set-Up
             CreateMap<SetUpStaffResourcesItem, WorkGroupEmployeeStaffDto>()
-                .ForMember(d => d.PersonStatus,   o => o.Ignore())
-                .ForMember(d => d.PersonClass,     o => o.Ignore())
-                .ForMember(d => d.TimeRecorder,    o => o.Ignore())
-                .ForMember(d => d.StartDate,       o => o.Ignore())
-                .ForMember(d => d.EndDate,         o => o.Ignore())
-                .ForMember(d => d.HoursPerWeek,    o => o.Ignore())
+                .ForMember(d => d.PersonStatus, o => o.Ignore())
+                .ForMember(d => d.PersonClass, o => o.Ignore())
+                .ForMember(d => d.TimeRecorder, o => o.Ignore())
+                .ForMember(d => d.StartDate, o => o.Ignore())
+                .ForMember(d => d.EndDate, o => o.Ignore())
+                .ForMember(d => d.HoursPerWeek, o => o.Ignore())
                 .ReverseMap();
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
 
@@ -120,6 +121,14 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
                 .ReverseMap();
 
+            // Resource Allocation — Staff Jobs grid
+            CreateMap<ResourceStaffJobDetailDto, ResourceStaffJobItem>()
+                .ForMember(d => d.Project, o => o.MapFrom(s => s.JobCode))
+                .ForMember(d => d.Description, o => o.MapFrom(s => s.JobDescription))
+                .ForMember(d => d.Hour, o => o.MapFrom(s => s.PlannedHours))
+                .ForMember(d => d.Status, o => o.MapFrom(s => s.ProjectStatus))
+                .ForMember(d => d.StaffId, o => o.Ignore());
+
             // Contribution Summary — row grid item
             CreateMap<ContributionSummaryRowDto, ContributionSummaryRowItem>().ReverseMap();
             // Total Business Overheads
@@ -169,6 +178,10 @@ namespace Apha.FPSApps.Web.Mappings
             // TestRequirementItem grid row ↔ DTO (Test Requirements tab — stage2TestRequirementsGrid):
             // Convention ReverseMap: Buyer, NoRequired, UnitPrice, TestCode, FpsYear all match DTO names.
             CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
+
+            // ResourceAllocation - Stage 2 Check Resource Allocation
+            CreateMap<ResourceStaffAllocationDto, ResourceStaffAllocationItem>().ReverseMap();
+            CreateMap<ResourceStaffJobDto, ResourceStaffJobItem>().ReverseMap();
 
             // TRANSFORMENGINE: WorkgroupMaintenance mappings added — Phase 10 (Step 15b)
             // DataGrid row: WorkgroupMaintenanceItem <-> WorkGroupDto (grid display and row selection)

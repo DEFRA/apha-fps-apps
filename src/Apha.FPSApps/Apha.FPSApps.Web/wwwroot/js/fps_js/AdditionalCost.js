@@ -89,6 +89,7 @@ function updateAdditionalCost() {
         Description: $('#Description').val(),
         OriginalDescription: $('#OriginalDescription').val(),
         Account: $('#Account').val(),
+        OriginalAccount: $('#OriginalAccount').val(),
         ItemCost: parseFloat($('#ItemCost').val()) || 0,
         Freq: $('#Freq').val(),
         Supplier: $('#Supplier').val()

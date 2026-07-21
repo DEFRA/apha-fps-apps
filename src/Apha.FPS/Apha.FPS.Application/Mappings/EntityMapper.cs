@@ -1,4 +1,4 @@
-using Apha.FPS.Application.Dtos;
+﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
@@ -111,6 +111,11 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             //TestListVLA
             CreateMap<TestRCCost, TestRCCostDto>().ReverseMap();
             CreateMap<TestRequirementRCCost, TestRequirementRCCostDto>().ReverseMap();
+
+            // ResourceAllocation — Stage 2 Check Resource Allocation
+            CreateMap<ResourceStaffGeneralSummaryRow, ResourceStaffAllocationDto>().ReverseMap();
+            CreateMap<ResourceStaffJobView, ResourceStaffJobDto>().ReverseMap();
+            CreateMap<ResourceStaffJobDetailRow, ResourceStaffJobDetailDto>().ReverseMap();
         }
     }
 }

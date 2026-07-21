@@ -45,7 +45,6 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IBosworthInterfaceService, BosworthInterfaceService>();
             services.AddScoped<IBatchJobService, BatchJobService>();
             services.AddSingleton<IEventPublisherService, EventBridgePublisherService>();
-
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

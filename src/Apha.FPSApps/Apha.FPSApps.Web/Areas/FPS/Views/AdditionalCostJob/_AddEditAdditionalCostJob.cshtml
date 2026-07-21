@@ -25,7 +25,8 @@
         <input type="hidden" asp-for="JobCode" id="JobCode" />
         @if (isEditMode)
         {
-            <input type="hidden" name="OriginalDescription" id="OriginalDescription" value="@Model.Description" />
+            <input type="hidden" name="OriginalDescription" id="OriginalDescription" value="@(Model.OriginalDescription ?? Model.Description)" />
+            <input type="hidden" name="OriginalAccount" id="OriginalAccount" value="@(Model.OriginalAccount ?? Model.Account)" />
         }
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
@@ -33,10 +34,6 @@
                 <input type="text" asp-for="JobCode" class="govuk-input sup_width_100" readonly>
             </div>
         </div>
-        @if (isEditMode)
-        {
-            <input type="hidden" asp-for="Account" id="OriginalAccount" />
-        }
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label for="Description" class="govuk-label p-0">Description <span class="sup_color_red">*</span></label>
@@ -47,16 +44,16 @@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label for="Account" class="govuk-label p-0">Account <span class="sup_color_red">*</span></label>
-                @if (isEditMode)
-                {
-                    <input type="text" class="govuk-input sup_width_100" asp-for="@Model.Account" readonly />                    
+                @{
+                    var selectedAccountDisplay = Model.AccountList?
+                        .FirstOrDefault(a => string.Equals(a.Value, Model.Account, StringComparison.OrdinalIgnoreCase))?
+                        .Text.Split('|')[0].Trim() ?? string.Empty;
                 }
-                else
-                {
-                    <div style="position: relative;">
-                        <input type="text" id="AccountDisplay" placeholder="Select Account" autocomplete="off"
-                               class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly
-                               onclick="toggleAccountPanel()" />
+                <div style="position: relative;">
+                    <input type="text" id="AccountDisplay" placeholder="Select Account" autocomplete="off"
+                           value="@selectedAccountDisplay"
+                           class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly
+                           onclick="toggleAccountPanel()" />
                         <div id="AccountDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
                                 max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
                                 box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
@@ -113,7 +110,6 @@
                         }
                     </select>
                     <span asp-validation-for="Account" class="govuk-error-message" style="display:none;"></span>
-                }
             </div>
         </div>
         <div class="col-12">
