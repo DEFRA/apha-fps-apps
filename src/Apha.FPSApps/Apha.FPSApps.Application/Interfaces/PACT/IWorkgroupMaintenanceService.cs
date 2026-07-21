@@ -28,9 +28,10 @@
 
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Pagination;
 
-namespace Apha.FPSApps.Application.Interfaces.FPS
+namespace Apha.FPSApps.Application.Interfaces.PACT
 {
     /// <summary>
     /// Frontend service interface for WorkGroup Maintenance CRUD and lookup operations.
@@ -47,24 +48,24 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         /// Returns a paginated list of workgroup maintenance records.
         /// </summary>
         /// <param name="query">Pagination, filter, and sort parameters.</param>
-        /// <returns>Paged list of <see cref="WorkgroupMaintenanceDto"/>.</returns>
-        Task<ApiResponseDto<List<WorkgroupMaintenanceDto>>> GetPagedAsync(QueryParameters<string> query);
+        /// <returns>Paged list of <see cref="WorkGroupDto"/>.</returns>
+        Task<ApiResponseDto<List<WorkGroupDto>>> GetPagedAsync(QueryParameters<string> query);
 
         // TRANSFORMENGINE: GetByWorkGroupNameAsync — single record fetch forwarding to GET api/v1/workgroup/{workGroupName}
         /// <summary>
         /// Returns a single workgroup record by its WorkGroupName.
         /// </summary>
         /// <param name="workGroupName">WorkGroup name sourced from grid row selection.</param>
-        /// <returns><see cref="WorkgroupMaintenanceDto"/> if found.</returns>
-        Task<ApiResponseDto<WorkgroupMaintenanceDto>> GetByWorkGroupNameAsync(string workGroupName);
+        /// <returns><see cref="WorkGroupDto"/> if found.</returns>
+        Task<ApiResponseDto<WorkGroupDto>> GetByWorkGroupNameAsync(string workGroupName);
 
         // TRANSFORMENGINE: CreateAsync — add-new path forwarding to POST api/v1/workgroup
         /// <summary>
         /// Creates a new workgroup record.
         /// </summary>
         /// <param name="dto">Workgroup data to create.</param>
-        /// <returns>Created <see cref="WorkgroupMaintenanceDto"/>.</returns>
-        Task<ApiResponseDto<WorkgroupMaintenanceDto>> CreateAsync(WorkgroupMaintenanceDto dto);
+        /// <returns>Created <see cref="WorkGroupDto"/>.</returns>
+        Task<ApiResponseDto<WorkGroupDto>> CreateAsync(WorkGroupDto dto);
 
         // TRANSFORMENGINE: UpdateAsync — edit path forwarding to PUT api/v1/workgroup/{workGroupName}
         //   workGroupName is the ORIGINAL key (before any rename); dto.WorkGroupName may differ (rename)
@@ -74,8 +75,8 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         /// </summary>
         /// <param name="workGroupName">Original WorkGroup name (route parameter).</param>
         /// <param name="dto">Updated workgroup data.</param>
-        /// <returns>Updated <see cref="WorkgroupMaintenanceDto"/>.</returns>
-        Task<ApiResponseDto<WorkgroupMaintenanceDto>> UpdateAsync(string workGroupName, WorkgroupMaintenanceDto dto);
+        /// <returns>Updated <see cref="WorkGroupDto"/>.</returns>
+        Task<ApiResponseDto<WorkGroupDto>> UpdateAsync(string workGroupName, WorkGroupDto dto);
 
         // TRANSFORMENGINE: DeleteAsync — delete confirm forwarding to DELETE api/v1/workgroup/{workGroupName}
         /// <summary>
@@ -96,10 +97,10 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
 
         // TRANSFORMENGINE: GetOwnersAsync — Owner dropdown; GET api/v1/workgroup/owners
         /// <summary>
-        /// Returns all manager records for the Owner dropdown.
+        /// Returns all owner records for the Owner dropdown.
         /// </summary>
-        /// <returns>List of <see cref="ManagerDto"/> records.</returns>
-        Task<ApiResponseDto<List<ManagerDto>>> GetOwnersAsync();
+        /// <returns>List of <see cref="OwnerDto"/> records.</returns>
+        Task<ApiResponseDto<List<OwnerDto>>> GetOwnersAsync();
 
         // TRANSFORMENGINE: GetCostCentresAsync — cascading CostCentre dropdown;
         //   GET api/v1/workgroup/costcentres?profitCentre={pc}

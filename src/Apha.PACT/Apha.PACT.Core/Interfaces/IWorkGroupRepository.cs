@@ -30,7 +30,7 @@ namespace Apha.PACT.Core.Interfaces
         Task<bool> DeleteAsync(string workGroupName);
         Task<bool> ExistsAsync(string workGroupName);
         Task<IEnumerable<string>> GetAllProfitCentresAsync();
-        Task<IEnumerable<Manager>> GetOwnersAsync();
+        Task<IEnumerable<Owner>> GetOwnersAsync();
         Task<IEnumerable<double?>> GetCostCentresByProfitCentreAsync(string profitCentre);
     }
 }

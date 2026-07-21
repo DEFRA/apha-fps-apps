@@ -620,10 +620,10 @@ namespace Apha.PACT.Application.Services
         public async Task<IEnumerable<string>> GetAllProfitCentresAsync()
             => await _repository.GetAllProfitCentresAsync();
 
-        public async Task<IEnumerable<ManagerDto>> GetOwnersAsync()
+        public async Task<IEnumerable<OwnerDto>> GetOwnersAsync()
         {
-            var managers = await _repository.GetOwnersAsync();
-            return _mapper.Map<IEnumerable<ManagerDto>>(managers);
+            var owners = await _repository.GetOwnersAsync();
+            return _mapper.Map<IEnumerable<OwnerDto>>(owners);
         }
 
         public async Task<IEnumerable<double?>> GetCostCentresByProfitCentreAsync(string profitCentre)

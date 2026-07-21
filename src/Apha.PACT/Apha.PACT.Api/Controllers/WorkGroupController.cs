@@ -310,10 +310,10 @@ namespace Apha.PACT.Api.Controllers
         /// Returns all manager records for the Owner dropdown.
         /// </summary>
         [HttpGet("owners")]
-        public async Task<ActionResult<IEnumerable<ManagerRes>>> GetOwnersAsync()
+        public async Task<ActionResult<IEnumerable<OwnerRes>>> GetOwnersAsync()
         {
-            var managerDtos = await _service.GetOwnersAsync();
-            return Ok(_mapper.Map<IEnumerable<ManagerRes>>(managerDtos));
+            var ownerDtos = await _service.GetOwnersAsync();
+            return Ok(_mapper.Map<IEnumerable<OwnerRes>>(ownerDtos));
         }
 
         /// <summary>

@@ -171,10 +171,10 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
 
             // TRANSFORMENGINE: WorkgroupMaintenance mappings added — Phase 10 (Step 15b)
-            // DataGrid row: WorkgroupMaintenanceItem <-> WorkgroupMaintenanceDto (grid display and row selection)
+            // DataGrid row: WorkgroupMaintenanceItem <-> WorkGroupDto (grid display and row selection)
             // All property names match exactly between Item and Dto (convention-based) — no ForMember needed.
             // Phase 11 adds [DataGridColumn] attributes to WorkgroupMaintenanceItem.
-            CreateMap<WorkgroupMaintenanceItem, WorkgroupMaintenanceDto>().ReverseMap();
+            CreateMap<WorkgroupMaintenanceItem, WorkGroupDto>().ReverseMap();
 
             // Modal form ViewModel: WorkgroupMaintenanceViewModel does not map 1:1 to Dto —
             // the ViewModel wraps DataGridConfig<WorkgroupMaintenanceItem>; modal binding uses

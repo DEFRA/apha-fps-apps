@@ -1,6 +1,6 @@
-namespace Apha.PACT.Application.Dtos
+namespace Apha.FPSApps.Application.Dtos.PACT
 {
-    public class ManagerDto
+    public class OwnerDto
     {
         public string Name { get; set; } = string.Empty;
         public string? WorkGroup { get; set; }

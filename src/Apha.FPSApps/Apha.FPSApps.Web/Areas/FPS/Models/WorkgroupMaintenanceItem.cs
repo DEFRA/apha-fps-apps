@@ -5,7 +5,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
     /// <summary>
     /// DataGrid row model and Add/Edit modal partial model for WorkGroup Maintenance.
-    /// Properties mirror <see cref="Apha.FPSApps.Application.Dtos.FPS.WorkgroupMaintenanceDto"/>
+    /// Properties mirror <see cref="Apha.FPSApps.Application.Dtos.PACT.WorkGroupDto"/>
     /// for AutoMapper convention-based mapping in FpsViewModelMapper.
     /// Derived from JS <c>initializeWGTable()</c> columns array in fps_workgroup_maintenance.js.
     /// </summary>

@@ -1,8 +1,9 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
-using Apha.FPSApps.Application.Services.FPS;
+using Apha.FPSApps.Application.Services.PACT;
 using NSubstitute;
 using Xunit;
 
@@ -24,13 +25,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkgroupMaintenanceSe
         }
 
         // TRANSFORMENGINE: static helpers — minimal valid response wrappers
-        private static WorkgroupMaintenanceDto BuildDto(string name = "WG001") =>
+        private static WorkGroupDto BuildDto(string name = "WG001") =>
             new() { WorkGroupName = name, ProfitCentre = "PC01" };
 
-        private static ApiResponseDto<WorkgroupMaintenanceDto> BuildSuccessResponse(string name = "WG001") =>
+        private static ApiResponseDto<WorkGroupDto> BuildSuccessResponse(string name = "WG001") =>
             new() { Success = true, Data = BuildDto(name) };
 
-        private static ApiResponseDto<WorkgroupMaintenanceDto> BuildFailureResponse() =>
+        private static ApiResponseDto<WorkGroupDto> BuildFailureResponse() =>
             new()
             {
                 Success = false,
@@ -54,10 +55,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkgroupMaintenanceSe
         {
             // Arrange
             var query    = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var expected = new ApiResponseDto<List<WorkgroupMaintenanceDto>>
+            var expected = new ApiResponseDto<List<WorkGroupDto>>
             {
                 Success    = true,
-                Data       = new List<WorkgroupMaintenanceDto> { BuildDto() },
+                Data       = new List<WorkGroupDto> { BuildDto() },
                 Pagination = new PaginationDto { TotalRecords = 1, PageNumber = 1, PageSize = 10 }
             };
             _fpsWorkgroupApiClient.GetPagedAsync(query).Returns(expected);
@@ -77,10 +78,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkgroupMaintenanceSe
         {
             // Arrange
             var query    = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var expected = new ApiResponseDto<List<WorkgroupMaintenanceDto>>
+            var expected = new ApiResponseDto<List<WorkGroupDto>>
             {
                 Success    = true,
-                Data       = new List<WorkgroupMaintenanceDto>(),
+                Data       = new List<WorkGroupDto>(),
                 Pagination = new PaginationDto { TotalRecords = 0, PageNumber = 1, PageSize = 10 }
             };
             _fpsWorkgroupApiClient.GetPagedAsync(query).Returns(expected);
@@ -98,7 +99,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkgroupMaintenanceSe
         {
             // Arrange
             var query    = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var expected = new ApiResponseDto<List<WorkgroupMaintenanceDto>>
+            var expected = new ApiResponseDto<List<WorkGroupDto>>
             {
                 Success = false,
                 Errors  = new List<ApiErrorDto> { new() { Message = "API error", Code = "ERR" } }
@@ -320,10 +321,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkgroupMaintenanceSe
         public async Task GetOwnersAsync_ApiClientReturnsSuccess_ReturnsDelegatedSuccessResponse()
         {
             // Arrange
-            var expected = new ApiResponseDto<List<ManagerDto>>
+            var expected = new ApiResponseDto<List<OwnerDto>>
             {
                 Success = true,
-                Data    = new List<ManagerDto> { new() { Name = "Alice Smith" } }
+                Data    = new List<OwnerDto> { new() { Name = "Alice Smith" } }
             };
             _fpsWorkgroupApiClient.GetOwnersAsync().Returns(expected);
 
@@ -340,7 +341,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkgroupMaintenanceSe
         public async Task GetOwnersAsync_ApiClientReturnsFailure_ReturnsDelegatedFailureResponse()
         {
             // Arrange
-            var expected = new ApiResponseDto<List<ManagerDto>>
+            var expected = new ApiResponseDto<List<OwnerDto>>
             {
                 Success = false,
                 Errors  = new List<ApiErrorDto> { new() { Message = "Failed to load owners", Code = "ERR" } }

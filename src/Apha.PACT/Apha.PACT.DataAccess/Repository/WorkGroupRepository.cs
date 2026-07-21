@@ -139,7 +139,7 @@ namespace Apha.PACT.DataAccess.Repository
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Manager>> GetOwnersAsync()
+        public async Task<IEnumerable<Owner>> GetOwnersAsync()
         {
             var result = await _context.WorkGroupStaffViews
                 .AsNoTracking()
@@ -159,7 +159,7 @@ namespace Apha.PACT.DataAccess.Repository
                 .Where(x => x.GradeCode != null && !x.GradeCode.StartsWith("G"))
                 .Distinct()
                 .OrderBy(x => x.Name)
-                .Select(x => new Manager
+                .Select(x => new Owner
                 {
                     Name      = x.Name!,
                     WorkGroup = x.WorkGroup,

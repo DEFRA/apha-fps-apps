@@ -25,7 +25,7 @@ namespace Apha.PACT.Application.Interfaces
         Task<WorkGroupDto> UpdateAsync(string originalWorkGroupName, WorkGroupDto dto);
         Task<bool> DeleteAsync(string workGroupName);
         Task<IEnumerable<string>> GetAllProfitCentresAsync();
-        Task<IEnumerable<ManagerDto>> GetOwnersAsync();
+        Task<IEnumerable<OwnerDto>> GetOwnersAsync();
         Task<IEnumerable<double?>> GetCostCentresByProfitCentreAsync(string profitCentre);
     }
 }

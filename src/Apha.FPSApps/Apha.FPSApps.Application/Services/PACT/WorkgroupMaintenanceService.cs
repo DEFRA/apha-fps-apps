@@ -1,10 +1,11 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 
-namespace Apha.FPSApps.Application.Services.FPS
+namespace Apha.FPSApps.Application.Services.PACT
 {
     /// <summary>
     /// Thin frontend service delegate for WorkGroup Maintenance CRUD and lookup operations.
@@ -24,26 +25,26 @@ namespace Apha.FPSApps.Application.Services.FPS
         // ── CRUD ────────────────────────────────────────────────────────────────────
 
         // TRANSFORMENGINE: thin delegate → IFpsApiClient.FpsWorkgroupMaintenance.GetPagedAsync
-        public async Task<ApiResponseDto<List<WorkgroupMaintenanceDto>>> GetPagedAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<List<WorkGroupDto>>> GetPagedAsync(QueryParameters<string> query)
         {
             return await _client.PactWorkGroup.GetPagedAsync(query);
         }
 
         // TRANSFORMENGINE: thin delegate → IFpsApiClient.FpsWorkgroupMaintenance.GetByWorkGroupNameAsync
-        public async Task<ApiResponseDto<WorkgroupMaintenanceDto>> GetByWorkGroupNameAsync(string workGroupName)
+        public async Task<ApiResponseDto<WorkGroupDto>> GetByWorkGroupNameAsync(string workGroupName)
         {
             return await _client.PactWorkGroup.GetByWorkGroupNameAsync(workGroupName);
         }
 
         // TRANSFORMENGINE: thin delegate → IFpsApiClient.FpsWorkgroupMaintenance.CreateAsync
-        public async Task<ApiResponseDto<WorkgroupMaintenanceDto>> CreateAsync(WorkgroupMaintenanceDto dto)
+        public async Task<ApiResponseDto<WorkGroupDto>> CreateAsync(WorkGroupDto dto)
         {
             return await _client.PactWorkGroup.CreateAsync(dto);
         }
 
         // TRANSFORMENGINE: thin delegate → IFpsApiClient.FpsWorkgroupMaintenance.UpdateAsync
         //   workGroupName is the original key (before any rename); dto.WorkGroupName may differ
-        public async Task<ApiResponseDto<WorkgroupMaintenanceDto>> UpdateAsync(string workGroupName, WorkgroupMaintenanceDto dto)
+        public async Task<ApiResponseDto<WorkGroupDto>> UpdateAsync(string workGroupName, WorkGroupDto dto)
         {
             return await _client.PactWorkGroup.UpdateAsync(workGroupName, dto);
         }
@@ -63,7 +64,7 @@ namespace Apha.FPSApps.Application.Services.FPS
         }
 
         // TRANSFORMENGINE: thin delegate → IFpsApiClient.FpsWorkgroupMaintenance.GetOwnersAsync
-        public async Task<ApiResponseDto<List<ManagerDto>>> GetOwnersAsync()
+        public async Task<ApiResponseDto<List<OwnerDto>>> GetOwnersAsync()
         {
             return await _client.PactWorkGroup.GetOwnersAsync();
         }

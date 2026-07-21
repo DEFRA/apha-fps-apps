@@ -8,7 +8,6 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using Microsoft.AspNetCore.WebUtilities;
-using FpsDtos = Apha.FPSApps.Application.Dtos.FPS;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 {
@@ -229,39 +228,39 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         // ── WorkGroup Maintenance (CRUD + lookups) ────────────────────────────────
 
-        public async Task<ApiResponseDto<List<FpsDtos.WorkgroupMaintenanceDto>>> GetPagedAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<List<WorkGroupDto>>> GetPagedAsync(QueryParameters<string> query)
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedWorkGroupMaintenance, query);
             var response = await _http.GetAsync<List<WorkGroupMaintenanceRes>>(url);
 
             if (response.Success)
             {
-                return _mapper.Map<ApiResponseDto<List<FpsDtos.WorkgroupMaintenanceDto>>>(response);
+                return _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
             }
             else
             {
-                var responseDto = _mapper.Map<ApiResponseDto<List<FpsDtos.WorkgroupMaintenanceDto>>>(response);
-                return ApiResponseDto<List<FpsDtos.WorkgroupMaintenanceDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
+                return ApiResponseDto<List<WorkGroupDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
 
-        public async Task<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>> GetByWorkGroupNameAsync(string workGroupName)
+        public async Task<ApiResponseDto<WorkGroupDto>> GetByWorkGroupNameAsync(string workGroupName)
         {
             var url = string.Format(PactApiEndpoints.GetWorkGroupMaintenanceByName, Uri.EscapeDataString(workGroupName));
             var response = await _http.GetAsync<WorkGroupMaintenanceRes>(url);
 
             if (response.Success)
             {
-                return _mapper.Map<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>>(response);
+                return _mapper.Map<ApiResponseDto<WorkGroupDto>>(response);
             }
             else
             {
-                var responseDto = _mapper.Map<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>>(response);
-                return ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<WorkGroupDto>>(response);
+                return ApiResponseDto<WorkGroupDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
 
-        public async Task<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>> CreateAsync(FpsDtos.WorkgroupMaintenanceDto dto)
+        public async Task<ApiResponseDto<WorkGroupDto>> CreateAsync(WorkGroupDto dto)
         {
             var request = _mapper.Map<WorkGroupMaintenanceReq>(dto);
             var response = await _http.PostAsync<WorkGroupMaintenanceReq, WorkGroupMaintenanceRes>(
@@ -269,16 +268,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
             if (response.Success)
             {
-                return _mapper.Map<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>>(response);
+                return _mapper.Map<ApiResponseDto<WorkGroupDto>>(response);
             }
             else
             {
-                var responseDto = _mapper.Map<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>>(response);
-                return ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<WorkGroupDto>>(response);
+                return ApiResponseDto<WorkGroupDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
 
-        public async Task<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>> UpdateAsync(string workGroupName, FpsDtos.WorkgroupMaintenanceDto dto)
+        public async Task<ApiResponseDto<WorkGroupDto>> UpdateAsync(string workGroupName, WorkGroupDto dto)
         {
             var url = string.Format(PactApiEndpoints.UpdateWorkGroupMaintenance, Uri.EscapeDataString(workGroupName));
             var request = _mapper.Map<WorkGroupMaintenanceReq>(dto);
@@ -286,12 +285,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
             if (response.Success)
             {
-                return _mapper.Map<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>>(response);
+                return _mapper.Map<ApiResponseDto<WorkGroupDto>>(response);
             }
             else
             {
-                var responseDto = _mapper.Map<ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>>(response);
-                return ApiResponseDto<FpsDtos.WorkgroupMaintenanceDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<WorkGroupDto>>(response);
+                return ApiResponseDto<WorkGroupDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
 
@@ -326,18 +325,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<List<FpsDtos.ManagerDto>>> GetOwnersAsync()
+        public async Task<ApiResponseDto<List<OwnerDto>>> GetOwnersAsync()
         {
-            var response = await _http.GetAsync<List<ManagerRes>>(PactApiEndpoints.GetWorkGroupOwners);
+            var response = await _http.GetAsync<List<OwnerRes>>(PactApiEndpoints.GetWorkGroupOwners);
 
             if (response.Success)
             {
-                return _mapper.Map<ApiResponseDto<List<FpsDtos.ManagerDto>>>(response);
+                return _mapper.Map<ApiResponseDto<List<OwnerDto>>>(response);
             }
             else
             {
-                var responseDto = _mapper.Map<ApiResponseDto<List<FpsDtos.ManagerDto>>>(response);
-                return ApiResponseDto<List<FpsDtos.ManagerDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<List<OwnerDto>>>(response);
+                return ApiResponseDto<List<OwnerDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
 

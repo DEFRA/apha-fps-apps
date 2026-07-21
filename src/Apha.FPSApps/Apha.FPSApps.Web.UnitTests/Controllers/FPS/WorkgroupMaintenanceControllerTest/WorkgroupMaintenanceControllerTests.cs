@@ -1,7 +1,8 @@
 using System.Text.Json;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
@@ -59,7 +60,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
                 Description   = TestDescription
             };
 
-        private static WorkgroupMaintenanceDto BuildDto(string name = TestWorkGroupName) =>
+        private static WorkGroupDto BuildDto(string name = TestWorkGroupName) =>
             new()
             {
                 WorkGroupName = name,
@@ -67,10 +68,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
                 Description   = TestDescription
             };
 
-        private static ApiResponseDto<WorkgroupMaintenanceDto> BuildSuccessResponse(string name = TestWorkGroupName) =>
+        private static ApiResponseDto<WorkGroupDto> BuildSuccessResponse(string name = TestWorkGroupName) =>
             new() { Success = true, Data = BuildDto(name) };
 
-        private static ApiResponseDto<WorkgroupMaintenanceDto> BuildFailureResponse(string errorMessage = "An error occurred") =>
+        private static ApiResponseDto<WorkGroupDto> BuildFailureResponse(string errorMessage = "An error occurred") =>
             new()
             {
                 Success = false,
@@ -84,17 +85,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
         {
             // Arrange
             var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var pagedData = new ApiResponseDto<List<WorkgroupMaintenanceDto>>
+            var pagedData = new ApiResponseDto<List<WorkGroupDto>>
             {
                 Success    = true,
-                Data       = new List<WorkgroupMaintenanceDto> { BuildDto() },
+                Data       = new List<WorkGroupDto> { BuildDto() },
                 Pagination = new PaginationDto { TotalRecords = 1, PageNumber = 1, PageSize = 10 }
             };
 
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                    .Returns(queryParameters);
             _service.GetPagedAsync(queryParameters).Returns(pagedData);
-            _mapper.Map<List<WorkgroupMaintenanceItem>>(Arg.Any<List<WorkgroupMaintenanceDto>>())
+            _mapper.Map<List<WorkgroupMaintenanceItem>>(Arg.Any<List<WorkGroupDto>>())
                    .Returns(new List<WorkgroupMaintenanceItem> { BuildItem() });
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                    .Returns(new PaginationModel { TotalRecords = 1, PageNumber = 1, PageSize = 10 });
@@ -117,17 +118,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 };
-            var pagedData = new ApiResponseDto<List<WorkgroupMaintenanceDto>>
+            var pagedData = new ApiResponseDto<List<WorkGroupDto>>
             {
                 Success    = true,
-                Data       = new List<WorkgroupMaintenanceDto> { BuildDto() },
+                Data       = new List<WorkGroupDto> { BuildDto() },
                 Pagination = new PaginationDto { TotalRecords = 1, PageNumber = 1, PageSize = 10 }
             };
             var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
             _service.GetPagedAsync(queryParameters).Returns(pagedData);
-            _mapper.Map<List<WorkgroupMaintenanceItem>>(Arg.Any<List<WorkgroupMaintenanceDto>>())
+            _mapper.Map<List<WorkgroupMaintenanceItem>>(Arg.Any<List<WorkGroupDto>>())
                    .Returns(new List<WorkgroupMaintenanceItem> { BuildItem() });
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                    .Returns(new PaginationModel { TotalRecords = 1, PageNumber = 1, PageSize = 10 });
@@ -147,17 +148,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 };
-            var pagedData = new ApiResponseDto<List<WorkgroupMaintenanceDto>>
+            var pagedData = new ApiResponseDto<List<WorkGroupDto>>
             {
                 Success    = true,
-                Data       = new List<WorkgroupMaintenanceDto>(),
+                Data       = new List<WorkGroupDto>(),
                 Pagination = new PaginationDto { TotalRecords = 0, PageNumber = 1, PageSize = 10 }
             };
             var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
             _service.GetPagedAsync(queryParameters).Returns(pagedData);
-            _mapper.Map<List<WorkgroupMaintenanceItem>>(Arg.Any<List<WorkgroupMaintenanceDto>>())
+            _mapper.Map<List<WorkgroupMaintenanceItem>>(Arg.Any<List<WorkGroupDto>>())
                    .Returns(new List<WorkgroupMaintenanceItem>());
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                    .Returns(new PaginationModel { TotalRecords = 0, PageNumber = 1, PageSize = 10 });
@@ -213,7 +214,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
             var dto      = BuildDto();
             var response = BuildSuccessResponse();
 
-            _mapper.Map<WorkgroupMaintenanceDto>(item).Returns(dto);
+            _mapper.Map<WorkGroupDto>(item).Returns(dto);
             _service.CreateAsync(dto).Returns(response);
 
             // Act
@@ -252,7 +253,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
             var dto      = BuildDto();
             var response = BuildFailureResponse("Failed to create WorkGroup.");
 
-            _mapper.Map<WorkgroupMaintenanceDto>(item).Returns(dto);
+            _mapper.Map<WorkGroupDto>(item).Returns(dto);
             _service.CreateAsync(dto).Returns(response);
 
             // Act
@@ -276,7 +277,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
             // Arrange
             var dto  = BuildDto();
             var item = BuildItem();
-            var response = new ApiResponseDto<WorkgroupMaintenanceDto> { Success = true, Data = dto };
+            var response = new ApiResponseDto<WorkGroupDto> { Success = true, Data = dto };
 
             _service.GetByWorkGroupNameAsync(TestWorkGroupName).Returns(response);
             // TRANSFORMENGINE: mapper must use the same dto instance that is stored in response.Data
@@ -330,7 +331,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
             var dto      = BuildDto();
             var response = BuildSuccessResponse();
 
-            _mapper.Map<WorkgroupMaintenanceDto>(item).Returns(dto);
+            _mapper.Map<WorkGroupDto>(item).Returns(dto);
             _service.UpdateAsync(TestWorkGroupName, dto).Returns(response);
 
             // Act
@@ -352,7 +353,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
             var dto          = BuildDto("WG_RENAMED");
             var response     = BuildSuccessResponse("WG_RENAMED");
 
-            _mapper.Map<WorkgroupMaintenanceDto>(item).Returns(dto);
+            _mapper.Map<WorkGroupDto>(item).Returns(dto);
             _service.UpdateAsync(originalName, dto).Returns(response);
 
             // Act
@@ -388,7 +389,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
             var dto      = BuildDto();
             var response = BuildFailureResponse("Failed to update WorkGroup.");
 
-            _mapper.Map<WorkgroupMaintenanceDto>(item).Returns(dto);
+            _mapper.Map<WorkGroupDto>(item).Returns(dto);
             _service.UpdateAsync(TestWorkGroupName, dto).Returns(response);
 
             // Act
@@ -512,10 +513,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
         public async Task GetOwners_ServiceReturnsSuccess_ReturnsJsonWithData()
         {
             // Arrange
-            var response = new ApiResponseDto<List<ManagerDto>>
+            var response = new ApiResponseDto<List<OwnerDto>>
             {
                 Success = true,
-                Data    = new List<ManagerDto> { new() { Name = "Alice Smith" } }
+                Data    = new List<OwnerDto> { new() { Name = "Alice Smith" } }
             };
             _service.GetOwnersAsync().Returns(response);
 
@@ -533,7 +534,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
         public async Task GetOwners_ServiceReturnsFailure_ReturnsJsonError()
         {
             // Arrange
-            var response = new ApiResponseDto<List<ManagerDto>>
+            var response = new ApiResponseDto<List<OwnerDto>>
             {
                 Success = false,
                 Errors  = new List<ApiErrorDto> { new() { Message = "Failed to load owners" } }

@@ -61,7 +61,8 @@
 
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -204,8 +205,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            // TRANSFORMENGINE: Item → Dto via AutoMapper (FpsViewModelMapper WorkgroupMaintenanceItem <-> WorkgroupMaintenanceDto)
-            var dto = _mapper.Map<WorkgroupMaintenanceDto>(item);
+            // TRANSFORMENGINE: Item → Dto via AutoMapper (FpsViewModelMapper WorkgroupMaintenanceItem <-> WorkGroupDto)
+            var dto = _mapper.Map<WorkGroupDto>(item);
             var result = await _service.CreateAsync(dto);
 
             if (result.Success)
@@ -267,7 +268,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ? originalWorkGroupName
                 : item.WorkGroupName;
 
-            var dto = _mapper.Map<WorkgroupMaintenanceDto>(item);
+            var dto = _mapper.Map<WorkGroupDto>(item);
             var result = await _service.UpdateAsync(identifyingName, dto);
 
             if (result.Success)
@@ -337,8 +338,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> GetOwners()
         {
-            // TRANSFORMENGINE: GetOwnersAsync maps to GET api/v1/workgroup/owners → List<ManagerDto>
-            // Returns ManagerDto.Name for display and value binding in the Owner select
+            // TRANSFORMENGINE: GetOwnersAsync maps to GET api/v1/workgroup/owners → List<OwnerDto>
+            // Returns OwnerDto.Name for display and value binding in the Owner select
             var result = await _service.GetOwnersAsync();
 
             if (result.Success && result.Data != null)

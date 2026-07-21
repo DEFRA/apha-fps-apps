@@ -24,7 +24,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<WorkGroupMaintenanceReq, WorkGroupDto>();
             CreateMap<WorkGroupDto, WorkGroupMaintenanceRes>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore());
-            CreateMap<ManagerDto, ManagerRes>().ReverseMap();
+            CreateMap<OwnerDto, OwnerRes>().ReverseMap();
             CreateMap<WorkGroupViewRes, WorkGroupViewDto>().ReverseMap();
             CreateMap<CalenderMonthRes, CalenderMonthDto>().ReverseMap();
             CreateMap<ProjectInvoiceReq, ProjectInvoiceDto>().ReverseMap();
