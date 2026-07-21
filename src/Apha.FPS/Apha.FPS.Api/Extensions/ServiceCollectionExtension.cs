@@ -62,6 +62,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             services.AddScoped<IYearEndService, YearEndService>();
             services.AddSingleton<IEventPublisherService, EventBridgePublisherService>();
+            services.AddScoped<IMonthHourService, MonthHourService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -107,6 +108,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITestRCCostRepository, TestRCCostRepository>();
             services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
             services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
+            services.AddScoped<IMonthHourRepository, MonthHourRepository>();
             services.AddScoped<IYearEndRepository, YearEndRepository>();
             return services;
 

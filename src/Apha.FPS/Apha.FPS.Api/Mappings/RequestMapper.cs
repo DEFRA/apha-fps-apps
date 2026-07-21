@@ -164,6 +164,7 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<BatchJobHistoryRes, BatchJobHistoryDto>().ReverseMap();
             CreateMap<BatchJobQueueRes, BatchJobQueueDto>().ReverseMap();
             CreateMap<BatchJobEventTriggerRes, BatchJobEventTriggerDto>().ReverseMap();
+            CreateMap<MonthHourRes, MonthHourDto>().ReverseMap();
         }
     }
 }

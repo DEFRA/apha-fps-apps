@@ -1,6 +1,7 @@
 ﻿using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using AutoMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -11,12 +12,15 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
     public class FpsSettingServiceTests
     {
         private readonly IFpsSettingRepository _mockRepository;
+        private readonly IMapper _mockMapper;
         private readonly FpsSettingService _sut;
 
         public FpsSettingServiceTests()
         {
             _mockRepository = Substitute.For<IFpsSettingRepository>();
-            _sut = new FpsSettingService(_mockRepository);
+            _mockMapper = Substitute.For<IMapper>();
+            _sut = new FpsSettingService(_mockRepository, _mockMapper);
+           
         }
 
         #region GetAllSettingsAsync

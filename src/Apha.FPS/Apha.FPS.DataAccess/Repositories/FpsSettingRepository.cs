@@ -39,30 +39,18 @@ namespace Apha.FPS.DataAccess.Repositories
             return setting;
         }
 
-        public async Task<List<FpsYearEndSetting>> GetYearEndSettingsAsync()
+        public async Task<List<YearEndFpsSetting>> GetYearEndSettingsAsync()
         {
-            var result = new List<FpsYearEndSetting>();
+           
             var settingIds = new[]
                {
                     "hoursinday",
                     "cap_approval_received_for_reset"
                 };
 
-            var OpenfpsYears = await _dbContext.YearMasters
-               .AsNoTracking()
-               .Where(y => y.Active && y.YearStatus.ToLower() == "open")
-               .OrderByDescending(y => y.FpsYear)
-               .ToListAsync();
+            int openYear = await GetOpenYear();
 
-            var openYear = OpenfpsYears.FirstOrDefault()?.FpsYear;
-
-            var PlannedfpsYears = await _dbContext.YearMasters
-               .AsNoTracking()
-               .Where(y => y.Active && y.YearStatus.ToLower() == "planned")
-               .OrderByDescending(y => y.FpsYear)
-               .ToListAsync();
-
-            var plannedYear = PlannedfpsYears.FirstOrDefault()?.FpsYear;
+            int? plannedYear = await GetPlannedYear();
 
             var settings = await _dbContext.TblSettings
                 .AsNoTracking()
@@ -76,7 +64,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Select(g => g.FirstOrDefault(x => x.FpsYear == plannedYear)
                 ?? g.First(x => x.FpsYear == openYear)).ToList();
 
-      
+            var result = GetSettingList( settingIds, openYear, plannedYear, settings);
+
+            return result;
+        }
+
+        private static List<YearEndFpsSetting> GetSettingList( string[] settingIds, int openYear, int? plannedYear, List<FpsSetting> settings)
+        {
+            var result = new List<YearEndFpsSetting>();
+
             foreach (var id in settingIds)
             {
                 var setting = settings.FirstOrDefault(s =>
@@ -84,7 +80,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
                 if (setting != null)
                 {
-                    result.Add(new FpsYearEndSetting
+                    result.Add(new YearEndFpsSetting
                     {
                         Id = setting.Id,
                         FpsYear = plannedYear.HasValue ? plannedYear.Value : openYear + 1,
@@ -96,19 +92,43 @@ namespace Apha.FPS.DataAccess.Repositories
                 }
                 else
                 {
-                    result.Add(new FpsYearEndSetting
+                    result.Add(new YearEndFpsSetting
                     {
                         Id = id,
                         FpsYear = plannedYear.HasValue ? plannedYear.Value : openYear + 1,
                         Notes = null,
                         UpdatedBy = null,
                         UpdatedAt = DateTime.MinValue,
-                        FpsYearType = plannedYear.HasValue ? "planned" : "open"
+                        FpsYearType = "planned"
                     });
                 }
             }
 
             return result;
+        }
+
+        private async Task<int> GetOpenYear()
+        {
+            var openFpsYears = await _dbContext.YearMasters
+                .AsNoTracking()
+                .Where(y => y.Active && y.YearStatus.ToLower() == "open")
+                .OrderByDescending(y => y.FpsYear)
+                .Select(y => y.FpsYear)
+                .FirstAsync();
+
+            return openFpsYears;
+        }
+
+        private async Task<int?> GetPlannedYear()
+        {
+            var plannedFpsYears = await _dbContext.YearMasters
+                .AsNoTracking()
+                .Where(y => y.Active && y.YearStatus.ToLower() == "planned")
+                .OrderByDescending(y => y.FpsYear)
+                .ToListAsync();
+
+            var plannedYear = plannedFpsYears.FirstOrDefault()?.FpsYear;
+            return plannedYear;
         }
     }
 }

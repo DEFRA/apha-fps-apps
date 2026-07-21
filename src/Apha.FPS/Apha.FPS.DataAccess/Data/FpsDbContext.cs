@@ -116,6 +116,9 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<BatchJobQueue> BatchJobQueues { get; set; }
         public virtual DbSet<BatchJobQueueLog> BatchJobQueueLogs { get; set; }
         public virtual DbSet<BatchJobStatus> BatchJobStatuses { get; set; }
+        public virtual DbSet<MonthHour> MonthHours { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -359,6 +362,9 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<BatchJobQueue>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new BatchJobQueueLogMap());
             modelBuilder.ApplyConfiguration(new BatchJobStatusMap());
+
+            modelBuilder.ApplyConfiguration(new MonthHourMap());
+            modelBuilder.Entity<MonthHour>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace Apha.FPS.Core.Entities
 {
-    public partial class FpsYearEndSetting
+    public partial class YearEndFpsSetting
     {
         public string Id { get; set; } = null!;
 
