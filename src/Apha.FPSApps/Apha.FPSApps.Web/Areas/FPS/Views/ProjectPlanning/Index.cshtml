@@ -98,7 +98,7 @@
             </div>
             <div class="summary-item">
                 <label class="govuk-label--s govuk-!-font-size-16" for="OffTarget">Off - Target:</label>
-                <input type="text" value="@(Model.OffTarget < 0 ? $"(£{Math.Abs(Model.OffTarget):N0})" : Model.OffTarget.ToString("C0"))" aria-label="Off - Target" id="OffTarget" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight @(Model.OffTarget < 0 ? "text-danger" : "text-primary")" name="OffTarget" asp-for="OffTarget">
+                <input type="text" value="@(Model.OffTarget < 0 ? $"(£{Math.Abs(Model.OffTarget):N0})" : Model.OffTarget.ToString("C0"))" aria-label="Off - Target" id="OffTarget" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="OffTarget" asp-for="OffTarget" style="color:#1d70b8;font-weight:400;">
             </div>
         </div>
     </footer>
@@ -151,7 +151,7 @@
 
             var offTarget = profitLoss - parseCurrency($('#TargetProfit').val());
             $('#OffTarget').val(formatGBP(offTarget));
-            applyValueColour('#OffTarget', offTarget);
+            $('#OffTarget').css({ 'color': '#1d70b8', 'font-weight': '400' });
         }
 
         // ---- Total cost refreshers ----

@@ -253,7 +253,7 @@ button a {
 
 .btn-close {
 
-    background: #ff4239;
+    background: #8f0b18;
     border: none;
     font-size: 14px;
     padding: 9px 7px 10px 7px;
@@ -266,7 +266,7 @@ button a {
 
 .btn-close:hover {
     color: #fff;
-    background: #ff4239;
+    background: #6f0a13;
 }
 
 .form-control:focus {
@@ -2872,6 +2872,16 @@ table.custom-table th {
     margin-bottom: 2px;
 }
 
+.isBlue {
+    color: #1d70b8 !important;
+    font-weight: 400 !important;
+}
+
+.isRed {
+    color: #d4351c !important;
+    font-weight: 700 !important;
+}
+
 .ppf-worktype-radios-row .govuk-radios__label {
     white-space: nowrap;
     word-break: keep-all;
@@ -3020,6 +3030,21 @@ table.custom-table th {
     display: none;
 }
 
+.isBlue {
+    color: #1d70b8 !important;
+    font-weight: 400 !important;
+}
+
+.isRed {
+    color: #d4351c !important;
+    font-weight: 700 !important;
+}
+
+.project-profitability-grid td[data-property="OffTarget"] span {
+    color: #1d70b8 !important;
+    font-weight: 400 !important;
+}
+
 .ac-table-checkboxes .govuk-checkboxes__item {
     margin: 0;
 }
@@ -3069,7 +3094,7 @@ table.custom-table th {
     min-height: 397px;
 }
 
-/* ── Budget Resource Level ──────────────────────────────────────── */
+/* -- Budget Resource Level ---------------------------------------- */
 .brl-workgroup-grid #gridContainer_workGroupGrid .editable-grid-container {
     min-height: unset !important;
     height: auto !important;
@@ -3119,7 +3144,7 @@ table.custom-table th {
     margin: auto;
     position: relative;
 }
-/* ────────────────────────────────────────────────────────────────── */
+/* ------------------------------------------------------------------ */
 
 .an-table {
     margin-bottom: 0;
@@ -3251,7 +3276,7 @@ table.custom-table th {
     justify-content: space-between;
 }
 
-.fps-sr-program-pill-text {
+.fps-sr_program-pill-text {
     border-right: 1px solid #684e00;
     text-align: left;
     padding: 1px 5px;
@@ -4080,10 +4105,10 @@ body,
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Set Up Staff Resources (SSR) — page-specific layout styles
-    ═══════════════════════════════════════════════════════════════════════════ */
-/* ── Heading row: title on left, resource-centre selector on right ──────── */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   Set Up Staff Resources (SSR) â€” page-specific layout styles
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* â”€â”€ Heading row: title on left, resource-centre selector on right â”€â”€â”€â”€â”€â”€â”€â”€ */
 .ssr-heading-row {
     display: flex;
     flex-direction: row;
@@ -4110,7 +4135,7 @@ body,
     min-width: 220px;
 }
 
-/* ── WorkGroup selection section ────────────────────────────────────────── */
+/* â”€â”€ WorkGroup selection section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .ssr-workgroup-section {
     margin-bottom: 0;
 }
@@ -4122,7 +4147,7 @@ body,
     background-color: #f3f2f1;
 }
 
-/* ── Top layout: grade panel (narrow left) + right panel (rest) ─────────── */
+/* â”€â”€ Top layout: grade panel (narrow left) + right panel (rest) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .ssr-top-layout {
     display: flex;
     flex-direction: row;
@@ -4198,7 +4223,7 @@ body,
     width: 200px !important;
 }
 
-/* ── Bottom row: summary box (left ~48%) + person selected (right) ──────── */
+/* â”€â”€ Bottom row: summary box (left ~48%) + person selected (right) â”€â”€â”€â”€â”€â”€â”€â”€ */
 .ssr-bottom-row {
     display: flex;
     flex-direction: row;
@@ -4551,4 +4576,19 @@ body,
     .s2cra-heading-controls {
         flex-wrap: wrap;
     }
+}
+
+.modal-content & .modal-header .btn-close,
+.modal-header .btn-close {
+    padding: .3rem .3rem;
+    margin: -.5rem -.5rem -.5rem auto;
+    background: #8f0b18;
+    opacity: 1;
+    font-size: 14px !important;
+}
+.isInfoSec {
+    border: 1px solid #b1b4b6;
+    background-color: #f8f8f8;
+    text-align: center;
+    font-weight: 700;
 }
