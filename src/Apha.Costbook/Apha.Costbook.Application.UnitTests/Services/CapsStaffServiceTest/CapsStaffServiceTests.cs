@@ -195,6 +195,28 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
         }
 
         [Fact]
+        public async Task AddAsync_MNumberWithWhitespace_TrimsBeforeSave()
+        {
+            // Arrange
+            var dto = new StaffDto { Mnumber = "  M003  ", Name = "Charlie" };
+            var entity = new Staff { Mnumber = "M003", Name = "Charlie" };
+            var created = new Staff { Mnumber = "M003", Name = "Charlie" };
+            var createdDto = new StaffDto { Mnumber = "M003", Name = "Charlie" };
+            _repository.ExistsAsync("M003").Returns(false);
+            _mapper.Map<Staff>(dto).Returns(entity);
+            _repository.AddStaffAsync(entity).Returns(created);
+            _mapper.Map<StaffDto>(created).Returns(createdDto);
+
+            // Act
+            var result = await _service.AddStaffAsync(dto);
+
+            // Assert
+            Assert.Equal("M003", dto.Mnumber);
+            await _repository.Received(1).ExistsAsync("M003");
+            await _repository.Received(1).AddStaffAsync(entity);
+        }
+
+        [Fact]
         public async Task AddAsync_DuplicateMNumber_ThrowsArgumentException()
         {
             // Arrange
@@ -240,15 +262,14 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
         #region UpdateAsync Tests
 
         [Fact]
-        public async Task UpdateAsync_ExistingMNumber_UpdatesAndReturnsMappedDto()
+        public async Task UpdateAsync_ValidKeyAndDto_UpdatesAndReturnsMappedDto()
         {
             // Arrange
             var mNumber = "M001";
-            var dto = new StaffDto { Mnumber = mNumber, Name = "Alice Updated" };   
+            var dto = new StaffDto { Mnumber = mNumber, Name = "Alice Updated" };
             var entity = new Staff { Mnumber = mNumber, Name = "Alice Updated" };
             var updated = new Staff { Mnumber = mNumber, Name = "Alice Updated" };
             var updatedDto = new StaffDto { Mnumber = mNumber, Name = "Alice Updated" };
-            _repository.ExistsAsync(mNumber).Returns(true);
             _mapper.Map<Staff>(dto).Returns(entity);
             _repository.UpdateStaffAsync(entity).Returns(updated);
             _mapper.Map<StaffDto>(updated).Returns(updatedDto);
@@ -260,28 +281,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
             Assert.NotNull(result);
             Assert.Equal(mNumber, result.Mnumber);
             await _repository.Received(1).UpdateStaffAsync(entity);
-        }
-
-        [Fact]
-        public async Task UpdateAsync_NonExistentMNumber_ThrowsKeyNotFoundException()
-        {
-            // Arrange
-            var mNumber = "NOTEXIST";
-            var dto = new StaffDto { Mnumber = mNumber, Name = "Ghost" };
-            _repository.ExistsAsync(mNumber).Returns(false);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.UpdateStaffAsync(mNumber, dto));
-        }
-
-        [Fact]
-        public async Task UpdateAsync_NullMNumber_ThrowsArgumentException()
-        {
-            // Arrange
-            var dto = new StaffDto { Mnumber = "M001", Name = "Alice" };
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateStaffAsync(null!, dto));
+            await _repository.DidNotReceive().ExistsAsync(Arg.Any<string>());
         }
 
         [Fact]
@@ -289,10 +289,22 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
         {
             // Arrange
             var mNumber = "M001";
-            _repository.ExistsAsync(mNumber).Returns(true);
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateStaffAsync(mNumber, null!));
+            await _repository.DidNotReceive().UpdateStaffAsync(Arg.Any<Staff>());
+        }
+
+        [Fact]
+        public async Task UpdateAsync_EmptyName_ThrowsArgumentException()
+        {
+            // Arrange
+            var mNumber = "M001";
+            var dto = new StaffDto { Mnumber = mNumber, Name = "" };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateStaffAsync(mNumber, dto));
+            await _repository.DidNotReceive().UpdateStaffAsync(Arg.Any<Staff>());
         }
 
         #endregion
@@ -302,11 +314,10 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
         #region DeleteAsync Tests
 
         [Fact]
-        public async Task DeleteAsync_ExistingMNumber_CallsRepositoryDelete()
+        public async Task DeleteAsync_ValidMNumber_CallsRepositoryDelete()
         {
             // Arrange
             var mNumber = "M001";
-            _repository.ExistsAsync(mNumber).Returns(true);
             _repository.DeleteStaffAsync(mNumber).Returns(true);
 
             // Act
@@ -314,25 +325,22 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
 
             // Assert
             await _repository.Received(1).DeleteStaffAsync(mNumber);
+            await _repository.DidNotReceive().ExistsAsync(Arg.Any<string>());
         }
 
         [Fact]
-        public async Task DeleteAsync_NonExistentMNumber_ThrowsKeyNotFoundException()
+        public async Task DeleteAsync_AnyMNumber_DelegatesToRepositoryWithoutExistenceCheck()
         {
             // Arrange
             var mNumber = "NOTEXIST";
-            _repository.ExistsAsync(mNumber).Returns(false);
+            _repository.DeleteStaffAsync(mNumber).Returns(false);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.DeleteStaffAsync(mNumber));
-            await _repository.DidNotReceive().DeleteStaffAsync(Arg.Any<string>());
-        }
+            // Act
+            await _service.DeleteStaffAsync(mNumber);
 
-        [Fact]
-        public async Task DeleteAsync_NullMNumber_ThrowsArgumentException()
-        {
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.DeleteStaffAsync(null!));
+            // Assert
+            await _repository.Received(1).DeleteStaffAsync(mNumber);
+            await _repository.DidNotReceive().ExistsAsync(Arg.Any<string>());
         }
 
         #endregion

@@ -59,6 +59,8 @@ namespace Apha.PIMS.Api.Mappings
             CreateMap<RadTrackInvoiceDto, RadTrackInvoiceRes>().ReverseMap();
             CreateMap<StagingMilestoneDto, StagingMilestoneReq>().ReverseMap();
             CreateMap<StagingMilestoneDto, StagingMilestoneRes>().ReverseMap();
+
+            CreateMap<ProjectYearManagerDto, ProjectYearManagerRes>().ReverseMap();
         }
     }
 }

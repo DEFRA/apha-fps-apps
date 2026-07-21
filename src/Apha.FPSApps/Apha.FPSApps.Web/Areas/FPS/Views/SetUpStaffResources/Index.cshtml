@@ -12,7 +12,7 @@
                         Set Up Staff Resources
                     </h1>
                     <div class="ssr-heading-controls">
-                        <label for="resourceCentreSelect" class="govuk-label govuk-!-margin-bottom-0">Select a Resource Center:</label>
+                        <label for="resourceCentreSelect" class="govuk-label govuk-!-font-weight-bold">Select a Resource Center: </label>
                         <select class="govuk-select ssr-resource-select"
                                 id="resourceCentreSelect"
                                 aria-label="Select a Resource Center"
@@ -20,6 +20,15 @@
                                 asp-items="Model.ResourceCentres"
                                 onchange="LoadGroupsByResourceCentre()">
                             <option value="">-- Select a Resource Center --</option>
+                        </select>
+                    </div>
+                    <div class="govuk-form-group ssr-wg-input-group">
+                        <label for="ssrSelectedWorkgroup" class="govuk-label govuk-!-font-weight-bold">Select WorkGroup: </label>
+                        <select class="govuk-select ssr-resource-select"
+                                id="workGroupSelect"
+                                aria-label="Select a Work Group"
+                                onchange="LoadGradeByGroup()">
+                            <option value="">-- Select a Work Group --</option>
                         </select>
                     </div>
                 </div>
@@ -66,15 +75,6 @@
                                                 </div>
 
                                                 <div class="ssr-right-panel">
-                                                    <div class="govuk-form-group ssr-wg-input-group">
-                                                        <label for="ssrSelectedWorkgroup" class="govuk-label govuk-!-font-weight-bold">Selected WorkGroup...</label>
-                                                        <select class="govuk-select ssr-resource-select"
-                                                                id="workGroupSelect"
-                                                                aria-label="Select a Work Group"
-                                                                onchange="LoadGradeByGroup()">
-                                                            <option value="">-- Select a Work Group --</option>
-                                                        </select>
-                                                    </div>
                                                     <div id="gridContainer_ssrStaffGrid">
                                                         @await Html.PartialAsync("_DataGrid", Model.StaffGrid)
                                                     </div>
