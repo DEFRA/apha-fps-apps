@@ -1,4 +1,4 @@
-namespace Apha.Common.Constants
+﻿namespace Apha.Common.Constants
 {
     public static class FpsApiEndpoints
     {
@@ -138,6 +138,7 @@ namespace Apha.Common.Constants
         public const string GetZtTotalHoursByStaffId = "api/v1/staffjob/zttotalhours?staffId={0}";
         public const string GetZtStaffJobsByStaffIdPaged = "api/v1/staffjob/ztstaffjobs/paged";
         public const string GetZtStaffJobDetailsById = "api/v1/staffjob/ztstaffjob/{0}/{1}";
+        public const string GetStaffResourceUtilisation = "api/v1/staffjob/resourceutilisation";
 
         // View Project Plan vs Actual Staff
         public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
@@ -194,6 +195,7 @@ namespace Apha.Common.Constants
         // Resource Set-Up — WG Staff
         public const string GetWgStaff = "api/v1/wgstaff?wgGrade={0}";
         public const string GetWgStaffForStaff = "api/v1/wgstaff/staff?wgGrade={0}";
+        public const string GetActiveWgStaffForStaff = "api/v1/wgstaff/activestaff?wgGrade={0}";
         public const string GetWgEmployeeById = "api/v1/wgstaff/{0}";
         public const string UpdateWgEmployee = "api/v1/wgstaff";
         public const string CreateWgEmployeeForStaff = "api/v1/wgstaff/staff";
@@ -213,6 +215,7 @@ namespace Apha.Common.Constants
         public const string UpdateWorkgroupGrade = "api/v1/wggrades/{0}";
         public const string DeleteWorkgroupGrade = "api/v1/wggrades/maintain/{0}";
         public const string GetAllGradeCodes = "api/v1/wggrades/gradecodes";
+        public const string GetWgGradesByWorkGroup = "api/v1/wggrades/byworkgroup?workGroup={0}";
 
         // Generic Bid — Budget Bids
         public const string GetBids = "api/v1/budgetbids?workgroup={0}";
@@ -252,5 +255,17 @@ namespace Apha.Common.Constants
         public const string GetUserPermissions = "api/v1/user/{0}/permissions";
         public const string SaveUserPermissions = "api/v1/user/{0}/permissions";
         public const string GetPermissionOptions = "api/v1/user/options";
+
+        // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
+        public const string GetAllCostCentres = "api/v1/costcentre";
+        public const string GetPagedCostCentres = "api/v1/costcentre/paged";
+        public const string GetCostCentreById = "api/v1/costcentre/{0}";
+        public const string CreateCostCentre = "api/v1/costcentre";
+        public const string UpdateCostCentre = "api/v1/costcentre/{0}";
+        public const string DeleteCostCentre = "api/v1/costcentre/{0}";
+
+        // ResourceAllocation — Stage 2 Check Resource Allocation
+        public const string GetPagedResourceStaffAllocations = "api/v1/ResourceAllocation/staffallocations/paged";
+        public const string GetPagedResourceStaffJobDetails = "api/v1/ResourceAllocation/staffjobdetails/paged";
     }
 }
