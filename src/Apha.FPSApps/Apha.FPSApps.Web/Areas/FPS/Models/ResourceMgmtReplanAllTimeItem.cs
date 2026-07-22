@@ -9,17 +9,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class ResourceMgmtReplanAllTimeItem
     {
         [GridColumn(IsVisible = false)]
-        public string? WgGrade { get; set; }
-
-        [GridColumn(IsVisible = false)]
-        public string? WorkGroupGrade { get; set; }
-
-        [Display(Name = "Staff ID")]
-        [GridColumn(Width = 100, Type = GridColumnType.ReadOnly, IsVisible = false)]
         public string? StaffId { get; set; }
 
         [Display(Name = "Staff")]
-        [GridColumn(IsVisible = true)]
         public string? Name { get; set; }
 
         [Display(Name = "Project")]
@@ -29,17 +21,5 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "Hours")]
         [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
         public double PlannedHours { get; set; }
-
-        [Display(Name = "Days")]
-        [GridColumn(IsVisible = false)]
-        public double Days { get; set; }
-
-        [Display(Name = "Charge Rate")]
-        [GridColumn(IsVisible = false)]
-        public decimal? ChargeRate { get; set; }
-
-        [Display(Name = "Staff Cost")]
-        [GridColumn(IsVisible = false)]
-        public decimal? StaffCost { get; set; }
     }
 }
