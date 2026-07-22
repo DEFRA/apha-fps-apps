@@ -55,7 +55,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<YearEndMonthHour>> GetMonthHoursAsync()
+        public async Task<List<YearEndMonthHour>> GetYearEndMonthHoursAsync()
         {
             int openYear = await GetOpenYear();
 
@@ -170,6 +170,31 @@ namespace Apha.FPS.DataAccess.Repositories
                 (openYear +1, 2, 11),
                 (openYear +1, 3, 2),
             };
+        }
+
+        public async Task<MonthHour> SaveAsync(MonthHour monthHour)
+        {
+            var existing = await _context.MonthHours
+                .FirstOrDefaultAsync(m =>
+                    m.Year == monthHour.Year &&
+                    m.Month == monthHour.Month &&
+                    m.FpsYear == monthHour.FpsYear);
+
+            if (existing is null)
+            {
+                _context.MonthHours.Add(monthHour);
+            }
+            else
+            {
+                existing.Days = monthHour.Days;
+                existing.CvlHours = monthHour.CvlHours;
+                existing.VidHours = monthHour.VidHours;
+                existing.Fmonth = monthHour.Fmonth;
+                _context.MonthHours.Update(existing);
+            }
+
+            await _context.SaveChangesAsync();
+            return existing ?? monthHour;
         }
 
         private static IQueryable<MonthHour> ApplyMonthHourFilter(

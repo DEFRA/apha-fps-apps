@@ -1,5 +1,6 @@
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Asp.Versioning;
@@ -65,6 +66,31 @@ namespace Apha.FPS.Api.Controllers
         {
             var years = await _service.GetDistinctYearsAsync();
             return Ok(years);
+        }
+
+        /// <summary>
+        /// Retrieves year-end month-hour records for the current open and planned FPS years.
+        /// </summary>
+        /// <returns><c>200 OK</c> with a <see cref="List{YearEndMonthHourRes}"/>.</returns>
+        [HttpGet("yearend")]
+        public async Task<IActionResult> GetYearEndMonthHours()
+        {
+            var result = await _service.GetYearEndMonthHoursAsync();
+            return Ok(_mapper.Map<List<YearEndMonthHourRes>>(result));
+        }
+
+        /// <summary>
+        /// Creates or updates a month-hour record identified by its composite key
+        /// (<c>Year</c>, <c>Month</c>, <c>FpsYear</c>).
+        /// </summary>
+        /// <param name="request">The month-hour values to save.</param>
+        /// <returns><c>200 OK</c> with the saved <see cref="MonthHourRes"/>.</returns>
+        [HttpPost("save")]
+        public async Task<IActionResult> Save([FromBody] MonthHourReq request)
+        {
+            var dto = _mapper.Map<MonthHourDto>(request);
+            var result = await _service.SaveAsync(dto);
+            return Ok(_mapper.Map<MonthHourRes>(result));
         }
     }
 }

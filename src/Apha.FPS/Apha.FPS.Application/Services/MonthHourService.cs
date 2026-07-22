@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
@@ -34,6 +35,19 @@ namespace Apha.FPS.Application.Services
         public async Task<IEnumerable<short>> GetDistinctYearsAsync()
         {
             return await _repository.GetDistinctYearsAsync();
+        }
+
+        public async Task<List<YearEndMonthHourDto>> GetYearEndMonthHoursAsync()
+        {
+            var items = await _repository.GetYearEndMonthHoursAsync();
+            return _mapper.Map<List<YearEndMonthHourDto>>(items);
+        }
+
+        public async Task<MonthHourDto> SaveAsync(MonthHourDto dto)
+        {
+            var entity = _mapper.Map<MonthHour>(dto);
+            var result = await _repository.SaveAsync(entity);
+            return _mapper.Map<MonthHourDto>(result);
         }
     }
 }
