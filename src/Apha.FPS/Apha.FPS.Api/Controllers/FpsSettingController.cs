@@ -93,5 +93,18 @@ namespace Apha.FPS.Api.Controllers
             var result = await _fpsSettingService.UpdateSettingAsync(dto);
             return Ok(_mapper.Map<FpsSettingRes>(result));
         }
+
+        /// <summary>
+        /// Saves an FPS setting (creates or updates).
+        /// </summary>
+        /// <param name="request">The setting to save.</param>
+        /// <returns>The saved FPS setting.</returns>
+        [HttpPost("save")]
+        public async Task<IActionResult> SaveAsync([FromBody] FpsSettingReq request)
+        {
+            var dto = _mapper.Map<FpsSettingDto>(request);
+            var result = await _fpsSettingService.SaveAsync(dto);
+            return Ok(_mapper.Map<FpsSettingRes>(result));
+        }
     }
 }

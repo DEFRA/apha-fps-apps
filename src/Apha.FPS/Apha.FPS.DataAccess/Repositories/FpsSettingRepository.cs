@@ -39,6 +39,27 @@ namespace Apha.FPS.DataAccess.Repositories
             return setting;
         }
 
+        public async Task<FpsSetting> SaveAsync(FpsSetting setting)
+        {
+            var existing = await _dbContext.TblSettings
+                .FirstOrDefaultAsync(m =>
+                    m.Id == setting.Id &&
+                    m.FpsYear == setting.FpsYear);
+
+            if (existing is null)
+            {
+                _dbContext.TblSettings.Add(setting);
+            }
+            else
+            {
+                existing.Setting = setting.Setting;
+                existing.Notes = setting.Notes;
+                _dbContext.TblSettings.Update(existing);
+            }
+
+            await _dbContext.SaveChangesAsync();
+            return existing ?? setting;
+        }
         public async Task<List<YearEndFpsSetting>> GetYearEndSettingsAsync()
         {
            

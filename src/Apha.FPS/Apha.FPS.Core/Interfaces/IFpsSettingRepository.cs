@@ -9,5 +9,6 @@ namespace Apha.FPS.Core.Interfaces
         Task<List<YearEndFpsSetting>> GetYearEndSettingsAsync();
         Task<FpsSetting> AddAsync(FpsSetting setting);
         Task<FpsSetting> UpdateAsync(FpsSetting setting);
+        Task<FpsSetting> SaveAsync(FpsSetting setting);
     }
 }

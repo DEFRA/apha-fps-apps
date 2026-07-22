@@ -62,5 +62,12 @@ namespace Apha.FPS.Application.Services
             var result = await _repository.UpdateAsync(entity);
             return _mapper.Map<FpsSettingDto>(result);
         }
+
+        public async Task<FpsSettingDto> SaveAsync(FpsSettingDto dto)
+        {
+            var entity = _mapper.Map<FpsSetting>(dto);
+            var result = await _repository.SaveAsync(entity);
+            return _mapper.Map<FpsSettingDto>(result);
+        }
     }
 }
