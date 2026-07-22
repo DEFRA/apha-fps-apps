@@ -1119,6 +1119,18 @@ main {
     margin-left: 12px;
 }
 
+.project-requirement-page .project-financial-summary .govuk-select:disabled,
+.project-requirement-page .project-financial-summary .govuk-input[readonly],
+.project-requirement-page .project-financial-summary .govuk-checkboxes__input:disabled + .govuk-checkboxes__label {
+    color: #0b0c0c;
+    -webkit-text-fill-color: #0b0c0c;
+    opacity: 1;
+}
+
+.project-requirement-page .project-financial-summary .govuk-select:disabled {
+    background-color: #ffffff;
+}
+
 .project-requirement-page .project-year-costs-shell {
     padding: 0;
     border-top: 1px solid #cbcbcb;
