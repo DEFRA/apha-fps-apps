@@ -8,13 +8,6 @@ Enforce architecture standards: API → Service → Repository (no direct reposi
 Register required dependencies and adhere to existing logging, validation, exception handling, security, and coding conventions.
 Generate unit tests for the Repository, Service, and API layers, covering positive, negative, and edge-case scenarios.
 
-## Replan Feedback
-
-> FOllow existing unit tests conventions for creating the DiseaseControllerTests.cs  in per-controller subfolder under "Controller"
-USe existing FPS API AutoMapper profile (`Apha.FPS.Api/Mappings/RequestMapper.cs`) is where every other FPS Req/Res <-> Dto mapping lives
-Use FPS Application profile mapping - `EntityMapper.cs`, dont create new `FpsMappingProfile.cs`
-PUT/Update endpoint is essentially meaningless for `tblDisease` because the entity has exactly one column (`DiseaseName`) which is also the primary key. Hence remove the PUT/Update and keep only POST + DELETE + GETs.
-
 **Reasoning:** The FPS Disease implementation currently only supports GetAll returning IEnumerable<string>. To satisfy the user story (full CRUD API for Disease → tblDisease), I need to: (1) introduce a proper DiseaseDto in FPS.Application, (2) add a DiseaseReq contract for create/update, (3) extend the repository interface and implementation with GetById/Add/Update/Delete, (4) refactor the service to use DTOs and add validation for full CRUD, (5) extend the controller with GET-by-id, POST, PUT, DELETE endpoints while keeping API → Service → Repository layering, (6) add/extend AutoMapper profile for Disease mappings, and (7) update/add unit tests at Repository, Service, and API layers. Entity and DiseaseMap already exist and are correct; DI registration follows existing conventions (already wired for IDiseaseService/IDiseaseRepository). Existing GET-all test needs updating because the service return type will change from IEnumerable<string> to IEnumerable<DiseaseDto>.
 
 ## Design
@@ -64,9 +57,9 @@ The following changes may be beneficial but are NOT part of this story. They sho
 
 | Iteration | Verdict | Score | Findings |
 |-----------|---------|-------|----------|
-| 1 | NEEDS_WORK | 4/10 | 8 |
-| 2 | NEEDS_WORK | 4/10 | 4 |
-| 3 | NEEDS_WORK | 4/10 | 7 |
+| 1 | NEEDS_WORK | 6/10 | 13 |
+| 2 | NEEDS_WORK | 5/10 | 7 |
+| 3 | NEEDS_WORK | 5/10 | 6 |
 
 ### Findings
 
