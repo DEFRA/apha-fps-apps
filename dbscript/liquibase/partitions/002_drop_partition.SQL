@@ -47,11 +47,11 @@ BEGIN
     END LOOP;
     
     -- Log the completion result
-    RAISE NOTICE 'Successfully dropped % partition table(s) matching pattern %.%_%', v_count, p_schema, v_part_name;
+    RAISE NOTICE 'Successfully dropped % partition table(s)', v_count;
     
     -- If no partitions were found, log a warning
     IF v_count = 0 THEN
-        RAISE WARNING 'No partition tables found matching pattern %.%_y% for year %', p_schema, p_schema, p_value;
+        RAISE WARNING 'No partition tables found matching pattern %%_y%% for year %', p_value;
     END IF;
 END $$;
 
