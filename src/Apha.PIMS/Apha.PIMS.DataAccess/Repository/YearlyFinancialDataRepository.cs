@@ -1,40 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — YearlyFinancialDataRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository (Steps 7-7a)
- * Migrated : 2026-07-09
- *
- * CHANGED:
- *   - New file: no prior C# repository existed for my_tlkpprojectradtrackdata
- *   - Implements IYearlyFinancialDataRepository using EF Core LINQ — no raw SP calls
- *   - GetAllAsync: AsNoTracking paginated query filtered by project, with search across
- *     year/project/costedby and sort across all display columns
- *   - GetByKeyAsync: AsNoTracking FirstOrDefaultAsync by composite key (year, project)
- *   - ExistsAsync: AnyAsync guard — lightweight existence check for duplicate-key validation
- *   - CreateAsync: AddAsync + SaveChangesAsync — single row insert
- *   - UpdateAsync: Attach + Entry state = Modified + SaveChangesAsync — full entity update
- *   - DeleteAsync: ExecuteDeleteAsync for set-based single-row delete by composite key
- *   - GetPactCostsAsync: AsNoTracking query against PactProjectYearCosts keyless view,
- *     filtered by project and year (cast double Year to short for filter), returns all
- *     month rows for the given year so service/caller can aggregate as needed
- *   - Private helpers: ApplySearch, ApplySorting, ApplyOrder — same pattern as existing repos
- *   - BaseRepository not extended — uses direct _context injection for consistency with
- *     ProjectYearCostsRepository which also manages its own paging
- *
- * PRESERVED:
- *   - Composite key (year, project) semantics from CONSTRAINT pk_my_tlkpprojectradtrackdata
- *   - All field names and method signatures from IYearlyFinancialDataRepository interface
- *   - AsNoTracking for all read paths
- *   - AnyAsync for existence check
- *   - ExecuteDeleteAsync for delete (set-based, no entity load required)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm EF Core handles money↔decimal? mapping for Npgsql without
- *     explicit value converter — if runtime cast errors occur, wrap money columns with
- *     HasConversion<decimal> in the map file
- *   - TRANSFORMENGINE TODO: GetPactCostsAsync casts view Year (double) to short for filtering;
- *     verify this cast is lossless for all realistic financial year values (e.g. 2025.0)
- */
-
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
@@ -44,11 +7,6 @@ using System.Linq.Expressions;
 
 namespace Apha.PIMS.DataAccess.Repository
 {
-    /// <summary>
-    /// LINQ-first repository for <see cref="YearlyFinancialData"/> (per-year project financial records)
-    /// and <see cref="PactProjectYearCosts"/> (PACT actuals aggregation view).
-    /// Implements <see cref="IYearlyFinancialDataRepository"/>.
-    /// </summary>
     public class YearlyFinancialDataRepository : IYearlyFinancialDataRepository
     {
         private readonly PimsDbContext _context;
@@ -58,9 +16,6 @@ namespace Apha.PIMS.DataAccess.Repository
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        // TRANSFORMENGINE: GetAllAsync — paginated list filtered by project
-        //   Mirrors Access form RecordSource: SELECT * FROM my_tlkpprojectradtrackdata WHERE project = ?
-        //   with optional search on year / costedby and column sorting
         public async Task<PagedData<YearlyFinancialData>> GetAllAsync(
             string project,
             PaginationParameters<string> paging)
@@ -94,7 +49,6 @@ namespace Apha.PIMS.DataAccess.Repository
             return new PagedData<YearlyFinancialData>(data, pagination);
         }
 
-        // TRANSFORMENGINE: GetByKeyAsync — single record by composite key (year + project)
         public async Task<YearlyFinancialData?> GetByKeyAsync(short year, string project)
         {
             return await _context.YearlyFinancialData
@@ -102,14 +56,15 @@ namespace Apha.PIMS.DataAccess.Repository
                 .FirstOrDefaultAsync(e => e.Year == year && e.Project == project);
         }
 
-        // TRANSFORMENGINE: ExistsAsync — AnyAsync for lightweight duplicate-key check
+       
         public async Task<bool> ExistsAsync(short year, string project)
         {
             return await _context.YearlyFinancialData
+                .AsNoTracking()
                 .AnyAsync(e => e.Year == year && e.Project == project);
         }
 
-        // TRANSFORMENGINE: CreateAsync — insert new row into my_tlkpprojectradtrackdata
+       
         public async Task<YearlyFinancialData> CreateAsync(YearlyFinancialData entity)
         {
             await _context.YearlyFinancialData.AddAsync(entity);
@@ -117,9 +72,6 @@ namespace Apha.PIMS.DataAccess.Repository
             return entity;
         }
 
-        // TRANSFORMENGINE: UpdateAsync — full entity update on existing row; Attach + Modified state
-        //   Caller (service) loads the existing entity first, maps updated values onto it,
-        //   then passes the tracked entity here — SaveChangesAsync persists all dirty properties
         public async Task<YearlyFinancialData> UpdateAsync(YearlyFinancialData entity)
         {
             _context.YearlyFinancialData.Update(entity);
@@ -127,8 +79,7 @@ namespace Apha.PIMS.DataAccess.Repository
             return entity;
         }
 
-        // TRANSFORMENGINE: DeleteAsync — ExecuteDeleteAsync for set-based delete by composite key
-        //   Returns true if a row was deleted, false if not found
+        
         public async Task<bool> DeleteAsync(short year, string project)
         {
             int affected = await _context.YearlyFinancialData
@@ -138,29 +89,117 @@ namespace Apha.PIMS.DataAccess.Repository
             return affected > 0;
         }
 
-        // TRANSFORMENGINE: GetPactCostsAsync — reads vpactprojectyearcosts keyless view
-        //   Filtered by project and year (view Year is double; cast to short for comparison)
-        //   Returns all monthno rows for the project+year combination so the service/caller
-        //   can sum or aggregate as required (e.g. btnUpdateCosting_Click in original VBA)
+      
         public async Task<IReadOnlyList<PactProjectYearCosts>> GetPactCostsAsync(
             string project,
             short year)
         {
-            // TRANSFORMENGINE: view Year column is double precision — cast short to double for filter
-            double yearAsDouble = (double)year;
-
-            List<PactProjectYearCosts> rows = await _context.PactProjectYearCosts
+            
+            ProjectRadTrackData? rtd = await _context.ProjectRadTrackData
                 .AsNoTracking()
-                .Where(v => v.Project == project && v.Year == yearAsDouble)
-                .OrderBy(v => v.MonthNo)
+                .Where(r => r.Parentproject == project)
+                .FirstOrDefaultAsync();
+
+           
+            List<ProjectMonthFinal> allMonths = await _context.ProjectMonthFinals
+                .AsNoTracking()
+                .Where(pmf => pmf.Project == project)
                 .ToListAsync();
+
+           
+            static short DeriveFiscalYear(ProjectMonthFinal pmf, ProjectRadTrackData? rtd)
+            {
+                if (rtd is { Useprojectyear: -1 } && rtd.Startdate.HasValue)
+                {
+                    int shift = (int)pmf.Monthno + 3 - rtd.Startdate.Value.Month;
+                    return (short)new DateTime(pmf.Year, 1, 1).AddMonths(shift).Year;
+                }
+                return pmf.Year;
+            }
+
+            List<ProjectMonthFinal> monthsForYear = allMonths
+                .Where(pmf => DeriveFiscalYear(pmf, rtd) == year)
+                .ToList();
+
+            if (monthsForYear.Count == 0)
+                return Array.Empty<PactProjectYearCosts>();
+
+            IEnumerable<short>  calendarYears = monthsForYear.Select(m => m.Year).Distinct();
+            IEnumerable<double> monthNos      = monthsForYear.Select(m => m.Monthno).Distinct();
+
+            List<TimeCostCalcs> tccRows = await _context.TimeCostCalcs
+                .AsNoTracking()
+                .Where(t => t.Project == project
+                         && calendarYears.Contains(t.Year)
+                         && monthNos.Contains(t.Month))
+                .ToListAsync();
+
+           
+            var tccLookup = tccRows
+                .GroupBy(t => (t.Year, t.Month))
+                .ToDictionary(
+                    g => g.Key,
+                    g => (
+                        Pay:      g.Sum(t => t.Pay      ?? 0m),
+                        NonPayOH: g.Sum(t => (t.Nonpay  ?? 0m) + (t.Overhead ?? 0m))
+                    ));
+
+            // ── 4. Aggregate per monthno into PactProjectYearCosts rows ──────────────
+            List<PactProjectYearCosts> rows = monthsForYear
+                .GroupBy(pmf => pmf.Monthno)
+                .OrderBy(g => g.Key)
+                .Select(g =>
+                {
+                    short calYear = g.First().Year;
+                    tccLookup.TryGetValue((calYear, g.Key), out var tcc);
+
+                    return new PactProjectYearCosts
+                    {
+                        Project      = project,
+                        Year         = (double)year,
+                        MonthNo      = g.Key,
+                        SubContracts = g.Sum(pmf => pmf.Subcontracts  ?? 0m),
+                        Animals      = g.Sum(pmf => pmf.Animals       ?? 0m),
+                        Tests        = g.Sum(pmf => pmf.Transfercosts ?? 0m),
+                        Pay          = tcc.Pay,
+                        NonPayOH     = tcc.NonPayOH,
+                        Hours        = g.Sum(pmf => pmf.Totalhours    ?? 0d),
+                        TotalCosts   = g.Sum(pmf => pmf.Totalcost     ?? 0m),
+                        TimeCost     = g.Sum(pmf => pmf.Timecosts     ?? 0m),
+                    };
+                })
+                .ToList();
+
+           
+            Projects? proj = await _context.MyTlkpProjects
+                .AsNoTracking()
+                .Where(p => p.Parentproject == project && p.Year == year)
+                .FirstOrDefaultAsync();
+
+            decimal? custIncome = proj?.Custincome;
+            decimal? budgetCvl  = proj?.BudgetCvl;
+
+            foreach (PactProjectYearCosts row in rows)
+            {
+                row.CustIncome = custIncome;
+                row.BudgetCvl  = budgetCvl;
+            }
 
             return rows.AsReadOnly();
         }
 
+        public async Task<string?> GetSettingValueByIdAsync(string id)
+        {
+            return await _context.DatabaseSettings
+                .AsNoTracking()
+                .Where(s => s.Id == id)
+                .Select(s => s.Setting)
+                .FirstOrDefaultAsync();
+        }
+
         // ─── Private helpers ────────────────────────────────────────────────────────
 
-        // TRANSFORMENGINE: ApplySearch — optional free-text filter across searchable columns
+      
         private static IQueryable<YearlyFinancialData> ApplySearch(
             IQueryable<YearlyFinancialData> query,
             string? search)
@@ -176,7 +215,7 @@ namespace Apha.PIMS.DataAccess.Repository
                 (e.AdjustmentComment != null && e.AdjustmentComment.ToLower().Contains(s)));
         }
 
-        // TRANSFORMENGINE: ApplySorting — column-name–driven sort for grid display
+      
         private static IQueryable<YearlyFinancialData> ApplySorting(
             IQueryable<YearlyFinancialData> query,
             string? sortBy,

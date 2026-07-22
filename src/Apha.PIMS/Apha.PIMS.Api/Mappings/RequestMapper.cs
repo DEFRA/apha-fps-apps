@@ -1,26 +1,4 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — RequestMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-09
- *
- * CHANGED:
- *   - Added YearlyFinancialData request/response mappings:
- *       YearlyFinancialDataDto <-> YearlyFinancialDataReq
- *       YearlyFinancialDataDto <-> YearlyFinancialDataRes
- *       PactProjectYearCostsDto <-> PactProjectYearCostsRes
- *
- * PRESERVED:
- *   - All pre-existing mapping registrations untouched
- *   - Existing ReverseMap chains preserved
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify YearlyFinancialDataRes.TotalCosts (set property) is
- *     populated correctly from YearlyFinancialDataDto.TotalCosts (computed getter).
- *     AutoMapper maps by name so the value will be read from the computed getter and
- *     set onto the flat response property — should work as-is.
- */
-
-using Apha.Common.Contracts;
+﻿using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
@@ -81,18 +59,9 @@ namespace Apha.PIMS.Api.Mappings
             CreateMap<RadTrackInvoiceDto, RadTrackInvoiceRes>().ReverseMap();
             CreateMap<StagingMilestoneDto, StagingMilestoneReq>().ReverseMap();
             CreateMap<StagingMilestoneDto, StagingMilestoneRes>().ReverseMap();
-
-            // TRANSFORMENGINE: YearlyFinancialData mappings added in Phase 5
-            //   Dto <-> Req: inbound create/update requests map to service-layer DTO
-            //   Dto <-> Res: outbound service DTO maps to API response contract
-            //   TotalCosts in Res is a flat settable property; AutoMapper reads the
-            //   computed getter from YearlyFinancialDataDto and writes it to the Res property
+            
             CreateMap<YearlyFinancialDataDto, YearlyFinancialDataReq>().ReverseMap();
             CreateMap<YearlyFinancialDataDto, YearlyFinancialDataRes>().ReverseMap();
-
-            // TRANSFORMENGINE: PactProjectYearCosts response mapping (read-only PACT actuals)
-            //   MonthNo is in the DTO but not in PactProjectYearCostsRes (suppressed at contract layer)
-            //   Year in DTO is double; Year in Res is short — explicit cast required
             CreateMap<PactProjectYearCostsDto, PactProjectYearCostsRes>()
                 .ForMember(dest => dest.Year, opt => opt.MapFrom(src => (short)src.Year))
                 .ReverseMap()

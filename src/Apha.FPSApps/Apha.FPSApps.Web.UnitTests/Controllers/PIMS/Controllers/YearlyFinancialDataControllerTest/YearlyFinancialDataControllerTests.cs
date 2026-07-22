@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — YearlyFinancialDataControllerTests.cs (FPSApps Web)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-09
- *
- * CHANGED:
- *   - New file: xUnit tests for Apha.FPSApps.Web.Areas.PIMS.Controllers.YearlyFinancialDataController
- *   - Covers: Index, LoadYearlyFinancialDataGrid, Create (GET/POST), Edit (GET/POST),
- *     Delete, GetById, GetPactCosts
- *   - NSubstitute for IMapper, IYearlyFinancialDataService, IProjectListService, IProjectDetailsService
- *   - TempData initialised per ProjectYearCostsControllerTests pattern
- *
- * PRESERVED:
- *   - Naming convention [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - Pattern consistent with ProjectYearCostsControllerTests (existing PIMS frontend tests)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: None — fully automated.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
@@ -31,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancialDataControllerTest
@@ -81,13 +62,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
                 : default;
         }
 
-        private void SetupDefaultIndexMocks(List<ProjectListViewDto>? projects = null)
+        private void SetupDefaultIndexMocks(List<ProjectListMilestoneDto>? projects = null)
         {
-            _projectListService.GetAllProjectsListAsync()
-                .Returns(new ApiResponseDto<List<ProjectListViewDto>>
+            _projectListService.GetAllProjectsForMilestoneAsync()
+                .Returns(new ApiResponseDto<List<ProjectListMilestoneDto>>
                 {
                     Success = true,
-                    Data    = projects ?? [new ProjectListViewDto { Parentproject = "PP001" }]
+                    Data    = projects ?? [new ProjectListMilestoneDto { Parentproject = "PP001" }]
                 });
 
             _projectDetailsService.GetPimsDetailAsync(Arg.Any<string>())
@@ -100,6 +81,33 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
                         EndDate   = new DateTime(2024, 3, 31)
                     }
                 });
+
+            _service.GetSettingValueByIdAsync(Arg.Any<string>())
+                .Returns(callInfo =>
+                {
+                    var id = callInfo.Arg<string>();
+                    return new ApiResponseDto<string>
+                    {
+                        Success = true,
+                        Data = id == "DaysInYear" ? "219" : "7.2"
+                    };
+                });
+        }
+
+        private void SetAuthenticatedUser(string userName)
+        {
+            var httpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(
+                [
+                    new Claim(ClaimTypes.Name, userName)
+                ], "TestAuth"))
+            };
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = httpContext
+            };
         }
 
         #region Constructor Tests
@@ -133,20 +141,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
         }
 
         [Fact]
-        public async Task Index_CallsGetAllProjectsListAsync_Once()
+        public async Task Index_CallsGetAllProjectsForMilestoneAsync_Once()
         {
             SetupDefaultIndexMocks();
             await _controller.Index(null);
-            await _projectListService.Received(1).GetAllProjectsListAsync();
+            await _projectListService.Received(1).GetAllProjectsForMilestoneAsync();
         }
 
         [Fact]
-        public async Task Index_WithNoProject_SelectsFirstProjectFromList()
+        public async Task Index_WithNoProject_LeavesSelectedProjectEmpty()
         {
-            SetupDefaultIndexMocks(projects: [new ProjectListViewDto { Parentproject = "PP001" }]);
+            SetupDefaultIndexMocks(projects: [new ProjectListMilestoneDto { Parentproject = "PP001" }]);
             var result = await _controller.Index(null);
             var model  = Assert.IsType<YearlyFinancialDataViewModel>(Assert.IsType<ViewResult>(result).Model);
-            Assert.Equal("PP001", model.SelectedProject);
+            Assert.Equal(string.Empty, model.SelectedProject);
         }
 
         [Fact]
@@ -163,8 +171,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
         {
             SetupDefaultIndexMocks(projects:
             [
-                new ProjectListViewDto { Parentproject = "PP001" },
-                new ProjectListViewDto { Parentproject = "PP002" }
+                new ProjectListMilestoneDto { Parentproject = "PP001" },
+                new ProjectListMilestoneDto { Parentproject = "PP002" }
             ]);
             var result = await _controller.Index(null);
             var model  = Assert.IsType<YearlyFinancialDataViewModel>(Assert.IsType<ViewResult>(result).Model);
@@ -184,10 +192,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
         [Fact]
         public async Task Index_WhenProjectListDataIsNull_ProjectListIsEmpty()
         {
-            _projectListService.GetAllProjectsListAsync()
-                .Returns(new ApiResponseDto<List<ProjectListViewDto>> { Success = true, Data = null });
+            _projectListService.GetAllProjectsForMilestoneAsync()
+                .Returns(new ApiResponseDto<List<ProjectListMilestoneDto>> { Success = true, Data = null });
             _projectDetailsService.GetPimsDetailAsync(Arg.Any<string>())
                 .Returns(new ApiResponseDto<ProjectDetailDto> { Success = false, Data = null });
+            _service.GetSettingValueByIdAsync(Arg.Any<string>())
+                .Returns(new ApiResponseDto<string> { Success = true, Data = "7.2" });
 
             var result = await _controller.Index(null);
             var model  = Assert.IsType<YearlyFinancialDataViewModel>(Assert.IsType<ViewResult>(result).Model);
@@ -197,7 +207,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
         [Fact]
         public async Task Index_WhenProjectListServiceThrowsException_PropagatesException()
         {
-            _projectListService.GetAllProjectsListAsync()
+            _projectListService.GetAllProjectsForMilestoneAsync()
                 .ThrowsAsync(new Exception("Service unavailable"));
             await Assert.ThrowsAsync<Exception>(() => _controller.Index(null));
         }
@@ -306,7 +316,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
         [Fact]
         public async Task Create_Get_ReturnsPartialViewWithEmptyItem()
         {
-            var result = _controller.Create();
+            var result = _controller.Create((string?)null);
             var partialResult = Assert.IsType<PartialViewResult>(result);
             Assert.IsType<YearlyFinancialDataItem>(partialResult.Model);
         }
@@ -314,8 +324,18 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
         [Fact]
         public async Task Create_Get_DoesNotCallService()
         {
-            _controller.Create();
+            _controller.Create((string?)null);
             await _service.DidNotReceive().CreateAsync(Arg.Any<YearlyFinancialDataDto>());
+        }
+
+        [Fact]
+        public void Create_Get_WithAuthenticatedUser_SetsCurrentCostingUserInViewData()
+        {
+            SetAuthenticatedUser("test.user");
+
+            _controller.Create("PP001");
+
+            Assert.Equal("test.user", _controller.ViewData["CurrentCostingUser"]);
         }
 
         #endregion
@@ -424,6 +444,22 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
             Assert.IsType<NotFoundObjectResult>(result);
         }
 
+        [Fact]
+        public async Task Edit_Get_WithAuthenticatedUser_SetsCurrentCostingUserInViewData()
+        {
+            SetAuthenticatedUser("test.user");
+            var dto = SampleDto();
+            var item = SampleItem();
+
+            _service.GetByKeyAsync((short)2024, "PP001")
+                .Returns(new ApiResponseDto<YearlyFinancialDataDto> { Success = true, Data = dto });
+            _mapper.Map<YearlyFinancialDataItem>(dto).Returns(item);
+
+            await _controller.Edit((short)2024, "PP001");
+
+            Assert.Equal("test.user", _controller.ViewData["CurrentCostingUser"]);
+        }
+
         #endregion
 
         #region Edit (POST) Tests
@@ -486,7 +522,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
         {
             // Arrange
             _service.DeleteAsync((short)2024, "PP001")
-                .Returns(new ApiResponseDto<bool> { Success = true });
+                .Returns(new ApiResponseDto<object> { Success = true, Data = new object() });
 
             // Act
             var result = await _controller.Delete((short)2024, "PP001");
@@ -502,7 +538,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
         {
             // Arrange
             _service.DeleteAsync(Arg.Any<short>(), Arg.Any<string>())
-                .Returns(new ApiResponseDto<bool>
+                .Returns(new ApiResponseDto<object>
                 {
                     Success = false,
                     Errors  = [new ApiErrorDto { Message = "Not found", Code = "NOT_FOUND" }]
@@ -514,42 +550,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             Assert.False(GetJsonProperty<bool>(jsonResult, "success"));
-        }
-
-        #endregion
-
-        #region GetById Tests
-
-        [Fact]
-        public async Task GetById_WithValidKey_ReturnsPartialViewWithItem()
-        {
-            // Arrange
-            var dto  = SampleDto();
-            var item = SampleItem();
-            _service.GetByKeyAsync((short)2024, "PP001")
-                .Returns(new ApiResponseDto<YearlyFinancialDataDto> { Success = true, Data = dto });
-            _mapper.Map<YearlyFinancialDataItem>(dto).Returns(item);
-
-            // Act
-            var result = await _controller.GetById((short)2024, "PP001");
-
-            // Assert
-            var partialResult = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal(item, partialResult.Model);
-        }
-
-        [Fact]
-        public async Task GetById_WhenNotFound_ReturnsNotFoundResult()
-        {
-            // Arrange
-            _service.GetByKeyAsync(Arg.Any<short>(), Arg.Any<string>())
-                .Returns(new ApiResponseDto<YearlyFinancialDataDto> { Success = false, Data = null });
-
-            // Act
-            var result = await _controller.GetById((short)9999, "UNKNOWN");
-
-            // Assert
-            Assert.IsType<NotFoundObjectResult>(result);
         }
 
         #endregion
@@ -608,6 +608,253 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             Assert.False(GetJsonProperty<bool>(jsonResult, "success"));
+        }
+
+        #endregion
+
+        #region GetProjectDates Tests
+
+        [Fact]
+        public async Task GetProjectDates_WithNullProject_ReturnsJsonWithSuccessFalse()
+        {
+            var result = await _controller.GetProjectDates(null!);
+            var json   = Assert.IsType<JsonResult>(result);
+            Assert.False(GetJsonProperty<bool>(json, "success"));
+            await _projectDetailsService.DidNotReceive().GetPimsDetailAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetProjectDates_WithWhitespaceProject_ReturnsJsonWithSuccessFalse()
+        {
+            var result = await _controller.GetProjectDates("   ");
+            var json   = Assert.IsType<JsonResult>(result);
+            Assert.False(GetJsonProperty<bool>(json, "success"));
+            await _projectDetailsService.DidNotReceive().GetPimsDetailAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetProjectDates_WhenServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
+        {
+            _projectDetailsService.GetPimsDetailAsync("PP001")
+                .Returns(new ApiResponseDto<ProjectDetailDto> { Success = false, Data = null });
+
+            var result = await _controller.GetProjectDates("PP001");
+            var json   = Assert.IsType<JsonResult>(result);
+            Assert.False(GetJsonProperty<bool>(json, "success"));
+        }
+
+        [Fact]
+        public async Task GetProjectDates_WhenServiceReturnsNullData_ReturnsJsonWithSuccessFalse()
+        {
+            _projectDetailsService.GetPimsDetailAsync("PP001")
+                .Returns(new ApiResponseDto<ProjectDetailDto> { Success = true, Data = null });
+
+            var result = await _controller.GetProjectDates("PP001");
+            var json   = Assert.IsType<JsonResult>(result);
+            Assert.False(GetJsonProperty<bool>(json, "success"));
+        }
+
+        [Fact]
+        public async Task GetProjectDates_WithValidProject_CallsGetPimsDetailAsyncOnce()
+        {
+            _projectDetailsService.GetPimsDetailAsync("PP001")
+                .Returns(new ApiResponseDto<ProjectDetailDto>
+                {
+                    Success = true,
+                    Data    = new ProjectDetailDto { StartDate = new DateTime(2024, 4, 1) }
+                });
+
+            await _controller.GetProjectDates("PP001");
+
+            await _projectDetailsService.Received(1).GetPimsDetailAsync("PP001");
+        }
+
+        [Fact]
+        public async Task GetProjectDates_WithStartAndRevisedEndDate_ReturnsFormattedDates()
+        {
+            // RevisedEndDate takes priority over EndDate
+            _projectDetailsService.GetPimsDetailAsync("PP001")
+                .Returns(new ApiResponseDto<ProjectDetailDto>
+                {
+                    Success = true,
+                    Data    = new ProjectDetailDto
+                    {
+                        StartDate       = new DateTime(2024, 4, 1),
+                        EndDate         = new DateTime(2025, 3, 31),
+                        RevisedEndDate  = new DateTime(2025, 6, 30)
+                    }
+                });
+
+            var result = await _controller.GetProjectDates("PP001");
+            var json   = Assert.IsType<JsonResult>(result);
+
+            Assert.True(GetJsonProperty<bool>(json, "success"));
+            Assert.Equal("01/04/2024", GetJsonProperty<string>(json, "startDate"));
+            Assert.Equal("30/06/2025", GetJsonProperty<string>(json, "endDate"));   // RevisedEndDate used
+        }
+
+        [Fact]
+        public async Task GetProjectDates_WithEndDateButNoRevisedEndDate_UsesEndDate()
+        {
+            _projectDetailsService.GetPimsDetailAsync("PP001")
+                .Returns(new ApiResponseDto<ProjectDetailDto>
+                {
+                    Success = true,
+                    Data    = new ProjectDetailDto
+                    {
+                        StartDate      = new DateTime(2024, 4, 1),
+                        EndDate        = new DateTime(2025, 3, 31),
+                        RevisedEndDate = null
+                    }
+                });
+
+            var result = await _controller.GetProjectDates("PP001");
+            var json   = Assert.IsType<JsonResult>(result);
+
+            Assert.True(GetJsonProperty<bool>(json, "success"));
+            Assert.Equal("31/03/2025", GetJsonProperty<string>(json, "endDate"));  // EndDate fallback
+        }
+
+        [Fact]
+        public async Task GetProjectDates_WithNoDates_ReturnsEmptyStringDates()
+        {
+            _projectDetailsService.GetPimsDetailAsync("PP001")
+                .Returns(new ApiResponseDto<ProjectDetailDto>
+                {
+                    Success = true,
+                    Data    = new ProjectDetailDto { StartDate = null, EndDate = null, RevisedEndDate = null }
+                });
+
+            var result = await _controller.GetProjectDates("PP001");
+            var json   = Assert.IsType<JsonResult>(result);
+
+            Assert.True(GetJsonProperty<bool>(json, "success"));
+            Assert.Equal(string.Empty, GetJsonProperty<string>(json, "startDate"));
+            Assert.Equal(string.Empty, GetJsonProperty<string>(json, "endDate"));
+        }
+
+        #endregion
+
+        #region CostedBy Normalisation Tests
+
+        [Fact]
+        public async Task Create_Post_WithEmailCostedBy_StripsEmailDomainBeforeCallingService()
+        {
+            // Arrange
+            var dto = SampleDto();
+            dto.CostedBy = "user.name@defradev.onmicrosoft.com";
+
+            _service.CreateAsync(Arg.Any<YearlyFinancialDataDto>())
+                .Returns(new ApiResponseDto<YearlyFinancialDataDto> { Success = true, Data = dto });
+
+            // Act
+            await _controller.Create(dto);
+
+            // Assert — CostedBy is trimmed at @
+            Assert.Equal("user.name", dto.CostedBy);
+        }
+
+        [Fact]
+        public async Task Create_Post_WithNonEmailCostedBy_LeavesCostedByUnchanged()
+        {
+            // Arrange
+            var dto = SampleDto();
+            dto.CostedBy = "plainuser";
+
+            _service.CreateAsync(Arg.Any<YearlyFinancialDataDto>())
+                .Returns(new ApiResponseDto<YearlyFinancialDataDto> { Success = true, Data = dto });
+
+            // Act
+            await _controller.Create(dto);
+
+            // Assert — no @ present, CostedBy unchanged
+            Assert.Equal("plainuser", dto.CostedBy);
+        }
+
+        [Fact]
+        public async Task Edit_Post_WithEmailCostedBy_StripsEmailDomainBeforeCallingService()
+        {
+            // Arrange
+            var dto = SampleDto();
+            dto.CostedBy = "another.user@defradev.onmicrosoft.com";
+
+            _service.UpdateAsync((short)2024, "PP001", Arg.Any<YearlyFinancialDataDto>())
+                .Returns(new ApiResponseDto<YearlyFinancialDataDto> { Success = true, Data = dto });
+
+            // Act
+            await _controller.Edit((short)2024, "PP001", dto);
+
+            // Assert — CostedBy is trimmed at @
+            Assert.Equal("another.user", dto.CostedBy);
+        }
+
+        [Fact]
+        public async Task Edit_Post_WithNonEmailCostedBy_LeavesCostedByUnchanged()
+        {
+            // Arrange
+            var dto = SampleDto();
+            dto.CostedBy = "plainuser";
+
+            _service.UpdateAsync((short)2024, "PP001", Arg.Any<YearlyFinancialDataDto>())
+                .Returns(new ApiResponseDto<YearlyFinancialDataDto> { Success = true, Data = dto });
+
+            // Act
+            await _controller.Edit((short)2024, "PP001", dto);
+
+            // Assert — no @ present, CostedBy unchanged
+            Assert.Equal("plainuser", dto.CostedBy);
+        }
+
+        #endregion
+
+        #region GetRequiredDoubleSettingAsync Error Branch Tests
+
+        [Fact]
+        public async Task Index_WhenSettingServiceReturnsFailed_ThrowsInvalidOperationException()
+        {
+            _projectListService.GetAllProjectsForMilestoneAsync()
+                .Returns(new ApiResponseDto<List<ProjectListMilestoneDto>> { Success = true, Data = [] });
+
+            _service.GetSettingValueByIdAsync(Arg.Any<string>())
+                .Returns(new ApiResponseDto<string> { Success = false, Data = null });
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.Index(null));
+        }
+
+        [Fact]
+        public async Task Index_WhenSettingValueIsNonNumeric_ThrowsInvalidOperationException()
+        {
+            _projectListService.GetAllProjectsForMilestoneAsync()
+                .Returns(new ApiResponseDto<List<ProjectListMilestoneDto>> { Success = true, Data = [] });
+
+            _service.GetSettingValueByIdAsync(Arg.Any<string>())
+                .Returns(new ApiResponseDto<string> { Success = true, Data = "not-a-number" });
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.Index(null));
+        }
+
+        [Fact]
+        public async Task Index_WhenSettingValueIsZero_ThrowsInvalidOperationException()
+        {
+            _projectListService.GetAllProjectsForMilestoneAsync()
+                .Returns(new ApiResponseDto<List<ProjectListMilestoneDto>> { Success = true, Data = [] });
+
+            _service.GetSettingValueByIdAsync(Arg.Any<string>())
+                .Returns(new ApiResponseDto<string> { Success = true, Data = "0" });
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.Index(null));
+        }
+
+        [Fact]
+        public async Task Index_WhenSettingValueIsNegative_ThrowsInvalidOperationException()
+        {
+            _projectListService.GetAllProjectsForMilestoneAsync()
+                .Returns(new ApiResponseDto<List<ProjectListMilestoneDto>> { Success = true, Data = [] });
+
+            _service.GetSettingValueByIdAsync(Arg.Any<string>())
+                .Returns(new ApiResponseDto<string> { Success = true, Data = "-1" });
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.Index(null));
         }
 
         #endregion

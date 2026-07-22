@@ -1,24 +1,4 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — PimsDbContext.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository (Steps 7-7a)
- * Migrated : 2026-07-09
- *
- * CHANGED:
- *   - Added DbSet<YearlyFinancialData> YearlyFinancialData — maps to mabarchive.my_tlkpprojectradtrackdata
- *   - Added DbSet<PactProjectYearCosts> PactProjectYearCosts — maps to mabarchive.vpactprojectyearcosts (keyless view)
- *   - Registered YearlyFinancialDataMap and PactProjectYearCostsMap via ApplyConfiguration in OnModelCreating
- *
- * PRESERVED:
- *   - All existing DbSets and ApplyConfiguration registrations unchanged
- *   - Constructor signature, collation setting, and partial class declaration unchanged
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: If HasQueryFilter on YearlyFinancialData is needed for multi-tenancy
- *     or year scoping, add modelBuilder.Entity<YearlyFinancialData>().HasQueryFilter(...) after
- *     ApplyConfiguration calls once the request-context pattern is confirmed for PIMS
- */
-
-using Apha.PIMS.Core.Entities;
+﻿using Apha.PIMS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -56,6 +36,7 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<ProjectStaffPlan> ProjectStaffPlans { get; set; }
         public virtual DbSet<ProjectMonthFinal> ProjectMonthFinals { get; set; }
         public virtual DbSet<FpsYearTotal> FpsYearTotals { get; set; }
+        public virtual DbSet<Settings> DatabaseSettings { get; set; }
 
         public virtual DbSet<Milestone> Milestones { get; set; }
         public virtual DbSet<MilestoneFormDates> MilestoneFormDates { get; set; }
@@ -66,13 +47,10 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<StagingMilestone> StagingMilestones { get; set; }
         public virtual DbSet<RadTrackInvoice> RadTrackInvoices { get; set; }
 
-        // Lookup: tblradtrackcontract — used by RadTrackInvoice contract dropdown.
         public virtual DbSet<RadTrackContract> RadTrackContracts { get; set; }
 
-        // TRANSFORMENGINE: Added Phase 4 — per-year financial data for RAD-track projects (my_tlkpprojectradtrackdata)
         public virtual DbSet<YearlyFinancialData> YearlyFinancialData { get; set; }
 
-        // TRANSFORMENGINE: Added Phase 4 — keyless view entity for PACT actuals aggregation (vpactprojectyearcosts)
         public virtual DbSet<PactProjectYearCosts> PactProjectYearCosts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -100,19 +78,16 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectStaffPlanMap());
             modelBuilder.ApplyConfiguration(new ProjectMonthFinalMap());
             modelBuilder.ApplyConfiguration(new FpsYearTotalMap());
+            modelBuilder.ApplyConfiguration(new SettingsMap());
             modelBuilder.ApplyConfiguration(new MilestoneMap());
             modelBuilder.ApplyConfiguration(new MilestoneTypeMap());
             modelBuilder.ApplyConfiguration(new MilestoneFormDatesMap());
             modelBuilder.ApplyConfiguration(new LogMilestoneMap());
             modelBuilder.ApplyConfiguration(new ProjectManagerMap());
-            modelBuilder.ApplyConfiguration(new StagingMilestoneMap());
-            // TRANSFORMENGINE: Added Phase 4 — register RadTrackInvoiceMap for mabarchive.tblradtrackinvoice.
+            modelBuilder.ApplyConfiguration(new StagingMilestoneMap());            
             modelBuilder.ApplyConfiguration(new RadTrackInvoiceMap());
-            modelBuilder.ApplyConfiguration(new RadTrackContractMap());
-
-            // TRANSFORMENGINE: Added Phase 4 — YearlyFinancialData map (my_tlkpprojectradtrackdata, composite PK year+project)
-            modelBuilder.ApplyConfiguration(new YearlyFinancialDataMap());
-            // TRANSFORMENGINE: Added Phase 4 — PactProjectYearCosts map (vpactprojectyearcosts, keyless view)
+            modelBuilder.ApplyConfiguration(new RadTrackContractMap());            
+            modelBuilder.ApplyConfiguration(new YearlyFinancialDataMap());           
             modelBuilder.ApplyConfiguration(new PactProjectYearCostsMap());
         }
     }

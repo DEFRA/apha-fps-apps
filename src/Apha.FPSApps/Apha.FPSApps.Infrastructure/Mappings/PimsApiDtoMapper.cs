@@ -1,30 +1,4 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — PimsApiDtoMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-07-09
- *
- * CHANGED:
- *   - Added Phase 10 YearlyFinancialData + PactProjectYearCosts mapper entries:
- *       YearlyFinancialDataRes <-> YearlyFinancialDataDto (.ReverseMap — covers list + single-record GET)
- *       YearlyFinancialDataDto <-> YearlyFinancialDataReq (.ReverseMap — covers POST/PUT request body)
- *       PactProjectYearCostsRes <-> PactProjectYearCostsDto (.ReverseMap — covers GetPactCosts response)
- *   - Entries were written during the Phase 9 API client build pass and confirmed correct here
- *
- * PRESERVED:
- *   - All pre-existing PIMS mapper entries (ProjectList, ProjectDetails, Comments, Risk, Year,
- *     AdditionalCost, AnimalCost, TestCost, StaffCost, ProjectYearDetails, PactPay, MonthlyPact,
- *     FpsYearTotals, Milestones, RadTrackInvoice, StagingMilestone)
- *   - Pagination/envelope generic maps (ApiResponseDto<>, PaginationRes<>, PaginationDto, ApiError, ApiMeta)
- *   - No duplicate entries introduced
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify PactProjectYearCostsRes <-> PactProjectYearCostsDto ReverseMap is
- *     safe — Year type is short on frontend Dto, short on Res (both confirmed identical); no ForMember needed
- *   - TRANSFORMENGINE TODO: Verify TotalCosts on YearlyFinancialDataDto is settable (it is) so
- *     ReverseMap from Res → Dto correctly populates TotalCosts field
- */
-
-using Apha.Common.Contracts;
+﻿using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
@@ -115,10 +89,6 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<StagingMilestoneRes, StagingMilestoneDto>().ReverseMap();
             CreateMap<StagingMilestoneDto, StagingMilestoneReq>().ReverseMap();
 
-            // TRANSFORMENGINE: YearlyFinancialData CRUD + pactcosts mappings (Phase 9 — Step 14)
-            //   YearlyFinancialDataRes ↔ YearlyFinancialDataDto (list + single-record endpoints)
-            //   YearlyFinancialDataDto → YearlyFinancialDataReq (create / update request body mapping)
-            //   PactProjectYearCostsRes → PactProjectYearCostsDto (GetPactCosts "Update Costing" button)
             CreateMap<YearlyFinancialDataRes, YearlyFinancialDataDto>().ReverseMap();
             CreateMap<YearlyFinancialDataDto, YearlyFinancialDataReq>().ReverseMap();
             CreateMap<PactProjectYearCostsRes, PactProjectYearCostsDto>().ReverseMap();

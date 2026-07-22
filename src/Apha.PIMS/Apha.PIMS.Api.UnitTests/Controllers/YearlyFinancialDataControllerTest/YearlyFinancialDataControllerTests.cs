@@ -1,22 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — YearlyFinancialDataControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-09
- *
- * CHANGED:
- *   - New file: xUnit tests for Apha.PIMS.Api.Controllers.YearlyFinancialDataController
- *   - Covers all 6 public actions: GetAll, GetByKey, Create, Update, Delete, GetPactCosts
- *   - Composite key (short year + string project) tested throughout
- *   - NSubstitute mocks for IYearlyFinancialDataService and IMapper
- *
- * PRESERVED:
- *   - Naming convention [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - Assert pattern consistent with RadTrackInvoiceControllerTests
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: None — fully automated.
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Api.Controllers;
@@ -476,6 +457,65 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.YearlyFinancialDataControllerTest
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.GetPactCosts("PP001", 2024));
+        }
+
+        #endregion
+
+        #region GetSettingValueById Tests
+
+        [Fact]
+        public async Task GetSettingValueById_WhenSettingExists_ReturnsOkWithValue()
+        {
+            // Arrange
+            _service.GetSettingValueByIdAsync("HoursInDay").Returns("7.2");
+
+            // Act
+            var result = await _controller.GetSettingValueById("HoursInDay");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal("7.2", okResult.Value);
+            await _service.Received(1).GetSettingValueByIdAsync("HoursInDay");
+        }
+
+        [Fact]
+        public async Task GetSettingValueById_WhenSettingMissing_ReturnsOkWithEmptyString()
+        {
+            // Arrange
+            _service.GetSettingValueByIdAsync("UnknownSetting").Returns((string?)null);
+
+            // Act
+            var result = await _controller.GetSettingValueById("UnknownSetting");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(string.Empty, okResult.Value);
+            await _service.Received(1).GetSettingValueByIdAsync("UnknownSetting");
+        }
+
+        [Fact]
+        public async Task GetSettingValueById_WhenIdIsNull_CallsServiceWithEmptyString()
+        {
+            // Arrange
+            _service.GetSettingValueByIdAsync(string.Empty).Returns(string.Empty);
+
+            // Act
+            var result = await _controller.GetSettingValueById(null);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(string.Empty, okResult.Value);
+            await _service.Received(1).GetSettingValueByIdAsync(string.Empty);
+        }
+
+        [Fact]
+        public async Task GetSettingValueById_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            _service.GetSettingValueByIdAsync(Arg.Any<string>()).Throws(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetSettingValueById("HoursInDay"));
         }
 
         #endregion

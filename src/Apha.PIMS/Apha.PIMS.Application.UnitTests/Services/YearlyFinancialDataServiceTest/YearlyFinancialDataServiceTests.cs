@@ -1,24 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — YearlyFinancialDataServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-09
- *
- * CHANGED:
- *   - New file: xUnit tests for Apha.PIMS.Application.Services.YearlyFinancialDataService
- *   - Covers: GetAllAsync, GetByKeyAsync, CreateAsync (validation + duplicate guard),
- *     UpdateAsync (validation + existence check), DeleteAsync, GetPactCostsAsync
- *   - NSubstitute for IYearlyFinancialDataRepository and IMapper; FluentAssertions for readability
- *   - Composite key (short year, string project) validated in all keyed operations
- *
- * PRESERVED:
- *   - Naming convention [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - ValidationError codes (YEAR_REQUIRED, PROJECT_REQUIRED, DUPLICATE_YEARLY_FINANCIAL_DATA)
- *   - BusinessValidationErrorException semantics matching RadTrackInvoiceServiceTests pattern
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: None — fully automated.
- */
-
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Application.Services;
@@ -43,6 +22,8 @@ namespace Apha.PIMS.Application.UnitTests.Services.YearlyFinancialDataServiceTes
         {
             _repository = Substitute.For<IYearlyFinancialDataRepository>();
             _mapper     = Substitute.For<IMapper>();
+            _repository.GetPactCostsAsync(Arg.Any<string>(), Arg.Any<short>())
+                .Returns(new List<PactProjectYearCosts>().AsReadOnly());
             _sut        = new YearlyFinancialDataService(_repository, _mapper);
         }
 
@@ -64,6 +45,9 @@ namespace Apha.PIMS.Application.UnitTests.Services.YearlyFinancialDataServiceTes
 
         private static YearlyFinancialData EntityFor(short year = 2024, string project = "PP001")
             => new() { Year = year, Project = project };
+
+        private static IReadOnlyList<PactProjectYearCosts> PactRows(params PactProjectYearCosts[] rows)
+            => rows.ToList().AsReadOnly();
 
         #region Constructor Tests
 
@@ -310,6 +294,67 @@ namespace Apha.PIMS.Application.UnitTests.Services.YearlyFinancialDataServiceTes
         }
 
         [Fact]
+        public async Task CreateAsync_WithAdjustmentAndNoComment_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var dto = ValidCreateDto();
+            dto.Adjustment = 10m;
+            dto.AdjustmentComment = "  ";
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CreateAsync(dto));
+            exception.Errors.Should().ContainSingle(e => e.Code == "ADJUSTMENT_COMMENT_REQUIRED");
+            await _repository.DidNotReceive().CreateAsync(Arg.Any<YearlyFinancialData>());
+        }
+
+        [Fact]
+        public async Task CreateAsync_WithLockedRecord_AppliesAccessCostingRulesBeforePersisting()
+        {
+            // Arrange
+            var dto = ValidCreateDto();
+            dto.Project = " PP001 ";
+            dto.Locked = 1;
+            dto.Adjustment = 15m;
+            dto.AdjustmentComment = "Legacy adjustment";
+            dto.ManDays = 22d;
+            dto.PayCosts = 125m;
+            dto.NonPayOhCosts = 60m;
+            dto.TestCosts = 40m;
+            dto.AnimalCosts = 10m;
+            dto.NonAnimalCosts = 90m;
+
+            var entity = EntityFor();
+            var created = EntityFor();
+            var createdDto = ValidCreateDto();
+            var pactRows = PactRows(
+                new PactProjectYearCosts { Project = "PP001", Year = 2024, TotalCosts = 100m, Hours = 770d, Pay = 125m, NonPayOH = 60m, Tests = 40m, Animals = 10m, SubContracts = 100m },
+                new PactProjectYearCosts { Project = "PP001", Year = 2024, TotalCosts = 25m, Hours = 77d, Pay = 0m, NonPayOH = 0m, Tests = 0m, Animals = 0m, SubContracts = 0m });
+
+            _repository.ExistsAsync(2024, "PP001").Returns(false);
+            _repository.GetPactCostsAsync("PP001", 2024).Returns(pactRows);
+            _mapper.Map<YearlyFinancialData>(dto).Returns(entity);
+            _repository.CreateAsync(entity).Returns(created);
+            _mapper.Map<YearlyFinancialDataDto>(created).Returns(createdDto);
+
+            // Act
+            await _sut.CreateAsync(dto);
+
+            // Assert
+            dto.Project.Should().Be("PP001");
+            dto.ManHours.Should().BeNull();
+            dto.ManYears.Should().BeNull();
+            dto.ActualExpenditure.Should().Be(140m);
+            dto.ActualManYears.Should().BeNull();
+            dto.PayCostsChanged.Should().Be(0);
+            dto.NonPayOhCostsChanged.Should().Be(0);
+            dto.TestCostsChanged.Should().Be(0);
+            dto.AnimalCostsChanged.Should().Be(0);
+            dto.NonAnimalCostsChanged.Should().Be(0);
+            dto.DateCosted.Should().NotBeNull();
+            await _repository.Received(1).GetPactCostsAsync("PP001", 2024);
+        }
+
+        [Fact]
         public async Task CreateAsync_WhenRepositoryThrowsException_PropagatesException()
         {
             // Arrange
@@ -408,6 +453,96 @@ namespace Apha.PIMS.Application.UnitTests.Services.YearlyFinancialDataServiceTes
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAsync(dto));
             exception.Errors.Should().ContainSingle(e => e.Code == "PROJECT_REQUIRED");
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WithAdjustmentAndNoComment_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var dto = ValidUpdateDto();
+            dto.Adjustment = 5m;
+            dto.AdjustmentComment = null;
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAsync(dto));
+            exception.Errors.Should().ContainSingle(e => e.Code == "ADJUSTMENT_COMMENT_REQUIRED");
+            await _repository.DidNotReceive().UpdateAsync(Arg.Any<YearlyFinancialData>());
+        }
+
+        [Fact]
+        public async Task UpdateAsync_AppliesPactComparisonAndReportedFigureRules()
+        {
+            // Arrange
+            var dto = ValidUpdateDto();
+            dto.ManYears = 0.5d;
+            dto.Locked = 1;
+            dto.Adjustment = -10m;
+            dto.AdjustmentComment = "Carry-over";
+            dto.PayCosts = 140m;
+            dto.NonPayOhCosts = 60m;
+            dto.TestCosts = 41m;
+            dto.AnimalCosts = 10m;
+            dto.NonAnimalCosts = 95m;
+            dto.DateCosted = new DateTime(2024, 5, 1);
+
+            var existing = EntityFor();
+            var updated = EntityFor();
+            var result = ValidUpdateDto();
+            var pactRows = PactRows(
+                new PactProjectYearCosts { Project = "PP001", Year = 2024, TotalCosts = 120m, Hours = 770d, Pay = 140m, NonPayOH = 60m, Tests = 40m, Animals = 10m, SubContracts = 100m });
+
+            _repository.GetByKeyAsync(dto.Year, dto.Project!).Returns(existing);
+            _repository.GetPactCostsAsync(dto.Project!, dto.Year).Returns(pactRows);
+            _repository.UpdateAsync(existing).Returns(updated);
+            _mapper.Map<YearlyFinancialDataDto>(updated).Returns(result);
+
+            // Act
+            await _sut.UpdateAsync(dto);
+
+            // Assert
+            dto.ManHours.Should().BeNull();
+            dto.ManDays.Should().BeNull();
+            dto.ActualExpenditure.Should().Be(110m);
+            dto.ActualManYears.Should().BeNull();
+            dto.PayCostsChanged.Should().Be(0);
+            dto.NonPayOhCostsChanged.Should().Be(0);
+            dto.TestCostsChanged.Should().Be(1);
+            dto.AnimalCostsChanged.Should().Be(0);
+            dto.NonAnimalCostsChanged.Should().Be(1);
+            dto.DateCosted.Should().Be(new DateTime(2024, 5, 1));
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WithLockedRecordAndNoAdjustment_ClearsActualExpenditure()
+        {
+            // Arrange
+            var dto = ValidUpdateDto();
+            dto.Locked = 1;
+            dto.Adjustment = null;
+            dto.AdjustmentComment = null;
+            dto.PayCosts = 140m;
+            dto.NonPayOhCosts = 60m;
+            dto.TestCosts = 41m;
+            dto.AnimalCosts = 10m;
+            dto.NonAnimalCosts = 95m;
+
+            var existing = EntityFor();
+            var updated = EntityFor();
+            var result = ValidUpdateDto();
+            var pactRows = PactRows(
+                new PactProjectYearCosts { Project = "PP001", Year = 2024, TotalCosts = 120m, Hours = 770d, Pay = 140m, NonPayOH = 60m, Tests = 40m, Animals = 10m, SubContracts = 100m });
+
+            _repository.GetByKeyAsync(dto.Year, dto.Project!).Returns(existing);
+            _repository.GetPactCostsAsync(dto.Project!, dto.Year).Returns(pactRows);
+            _repository.UpdateAsync(existing).Returns(updated);
+            _mapper.Map<YearlyFinancialDataDto>(updated).Returns(result);
+
+            // Act
+            await _sut.UpdateAsync(dto);
+
+            // Assert
+            dto.ActualExpenditure.Should().BeNull();
+            dto.DateCosted.Should().NotBeNull();
         }
 
         [Fact]
@@ -553,6 +688,78 @@ namespace Apha.PIMS.Application.UnitTests.Services.YearlyFinancialDataServiceTes
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(() => _sut.GetPactCostsAsync("PP001", 2024));
+            exception.Message.Should().Be("DB error");
+        }
+
+        #endregion
+
+        #region GetSettingValueByIdAsync Tests
+
+        [Fact]
+        public async Task GetSettingValueByIdAsync_WithValidId_ReturnsSettingValue()
+        {
+            // Arrange
+            _repository.GetSettingValueByIdAsync("HoursInDay").Returns("7.4");
+
+            // Act
+            var result = await _sut.GetSettingValueByIdAsync("HoursInDay");
+
+            // Assert
+            result.Should().Be("7.4");
+            await _repository.Received(1).GetSettingValueByIdAsync("HoursInDay");
+        }
+
+        [Fact]
+        public async Task GetSettingValueByIdAsync_WhenRepositoryReturnsNull_ReturnsEmptyString()
+        {
+            // Arrange
+            _repository.GetSettingValueByIdAsync("UnknownSetting").Returns((string?)null);
+
+            // Act
+            var result = await _sut.GetSettingValueByIdAsync("UnknownSetting");
+
+            // Assert
+            result.Should().BeEmpty();
+            await _repository.Received(1).GetSettingValueByIdAsync("UnknownSetting");
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task GetSettingValueByIdAsync_WithNullOrWhitespaceId_ReturnsEmptyStringWithoutCallingRepository(string? id)
+        {
+            // Act
+            var result = await _sut.GetSettingValueByIdAsync(id!);
+
+            // Assert
+            result.Should().BeEmpty();
+            await _repository.DidNotReceive().GetSettingValueByIdAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetSettingValueByIdAsync_WithPaddedId_TrimsBeforeQuerying()
+        {
+            // Arrange
+            _repository.GetSettingValueByIdAsync("DaysInYear").Returns("220");
+
+            // Act
+            var result = await _sut.GetSettingValueByIdAsync("  DaysInYear  ");
+
+            // Assert
+            result.Should().Be("220");
+            await _repository.Received(1).GetSettingValueByIdAsync("DaysInYear");
+        }
+
+        [Fact]
+        public async Task GetSettingValueByIdAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            _repository.GetSettingValueByIdAsync(Arg.Any<string>())
+                       .Throws(new Exception("DB error"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.GetSettingValueByIdAsync("HoursInDay"));
             exception.Message.Should().Be("DB error");
         }
 

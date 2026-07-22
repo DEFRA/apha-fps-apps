@@ -1,24 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-07-09
- *
- * CHANGED:
- *   - Added DI registration: AddScoped<IYearlyFinancialDataService, YearlyFinancialDataService>()
- *       Placed alphabetically under the PIMS service registrations block (after IRadTrackInvoiceService)
- *   - No other registrations changed
- *
- * PRESERVED:
- *   - All pre-existing service registrations (FPS, PACT, CostBook, PIMS project/milestone/invoice services)
- *   - AddRepositories() stub (no repository DI needed on frontend — API client pattern)
- *   - IYearlyFinancialDataService injects IPimsApiClient (aggregate client); IPimsApiClient itself is
- *     registered in ApiClientExtension.AddApiClient() — no additional API client registration needed here
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify IPimsApiClient.PimsYearlyFinancialData is resolved correctly via
- *     PimsApiClient aggregate — it is already registered in ApiClientExtension as part of AddApiClient()
- */
-
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
@@ -87,9 +66,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectYearCostsService, ProjectYearCostsService>();
             services.AddScoped<IMilestoneService, MilestoneService>();
             services.AddScoped<IRadTrackInvoiceService, RadTrackInvoiceService>();
-            // TRANSFORMENGINE: Register IYearlyFinancialDataService (Phase 10 — Step 15c)
-            //   Thin delegate service forwarding to IPimsApiClient.PimsYearlyFinancialData
-            //   IPimsApiClient is registered via ApiClientExtension.AddApiClient()
+         
             services.AddScoped<IYearlyFinancialDataService, YearlyFinancialDataService>();
 
             services.AddScoped<IProfitCentreService, ProfitCentreService>();

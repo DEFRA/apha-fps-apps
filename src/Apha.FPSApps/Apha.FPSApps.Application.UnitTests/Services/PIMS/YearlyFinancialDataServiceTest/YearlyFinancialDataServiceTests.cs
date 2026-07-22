@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — YearlyFinancialDataServiceTests.cs (FPSApps Application)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-09
- *
- * CHANGED:
- *   - New file: xUnit tests for Apha.FPSApps.Application.Services.PIMS.YearlyFinancialDataService
- *   - Thin-delegate pattern: every test verifies delegation to _pimsYearlyFinancialDataApiClient
- *   - NSubstitute mocks: IPimsApiClient, IPimsYearlyFinancialDataApiClient
- *   - _pimsApiClient.PimsYearlyFinancialData.Returns(_pimsYearlyFinancialDataApiClient) setup
- *
- * PRESERVED:
- *   - Naming convention [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - Pattern consistent with RadTrackInvoiceServiceTests (existing PIMS frontend Application tests)
- *   - xUnit Assert.* (no FluentAssertions — not referenced in this project)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: None — fully automated.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
@@ -38,7 +18,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.YearlyFinancialDataSe
             _pimsApiClient                    = Substitute.For<IPimsApiClient>();
             _pimsYearlyFinancialDataApiClient = Substitute.For<IPimsYearlyFinancialDataApiClient>();
 
-            // TRANSFORMENGINE: wire aggregate client sub-client property
+           
             _pimsApiClient.PimsYearlyFinancialData.Returns(_pimsYearlyFinancialDataApiClient);
             _sut = new YearlyFinancialDataService(_pimsApiClient);
         }
@@ -273,7 +253,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.YearlyFinancialDataSe
         public async Task DeleteAsync_ApiClientReturnsSuccess_ReturnsDelegatedSuccessResponse()
         {
             // Arrange
-            var expected = new ApiResponseDto<bool> { Success = true, Data = true };
+            var expected = new ApiResponseDto<object> { Success = true, Data = new object() };
             _pimsYearlyFinancialDataApiClient.DeleteAsync((short)2024, "PP001").Returns(expected);
 
             // Act
@@ -288,7 +268,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.YearlyFinancialDataSe
         public async Task DeleteAsync_ApiClientReturnsFailure_ReturnsDelegatedFailureResponse()
         {
             // Arrange
-            var expected = new ApiResponseDto<bool>
+            var expected = new ApiResponseDto<object>
             {
                 Success = false,
                 Errors  = OneError("Delete failed", "DELETE_ERROR")
@@ -357,6 +337,62 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.YearlyFinancialDataSe
             // Assert
             Assert.False(result.Success);
             await _pimsYearlyFinancialDataApiClient.Received(1).GetPactCostsAsync("PP001", (short)2024);
+        }
+
+        #endregion
+
+        #region GetSettingValueByIdAsync Tests
+
+        [Fact]
+        public async Task GetSettingValueByIdAsync_ApiClientReturnsValue_ReturnsDelegatedSuccessResponse()
+        {
+            // Arrange
+            var expected = new ApiResponseDto<string> { Success = true, Data = "7.4" };
+            _pimsYearlyFinancialDataApiClient.GetSettingValueByIdAsync("HoursInDay").Returns(expected);
+
+            // Act
+            var result = await _sut.GetSettingValueByIdAsync("HoursInDay");
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal("7.4", result.Data);
+            await _pimsYearlyFinancialDataApiClient.Received(1).GetSettingValueByIdAsync("HoursInDay");
+        }
+
+        [Fact]
+        public async Task GetSettingValueByIdAsync_ApiClientReturnsNullData_ReturnsDelegatedResponseWithNullData()
+        {
+            // Arrange
+            var expected = new ApiResponseDto<string> { Success = true, Data = null };
+            _pimsYearlyFinancialDataApiClient.GetSettingValueByIdAsync(Arg.Any<string>()).Returns(expected);
+
+            // Act
+            var result = await _sut.GetSettingValueByIdAsync("UnknownSetting");
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Null(result.Data);
+            await _pimsYearlyFinancialDataApiClient.Received(1).GetSettingValueByIdAsync("UnknownSetting");
+        }
+
+        [Fact]
+        public async Task GetSettingValueByIdAsync_ApiClientReturnsFailure_ReturnsDelegatedFailureResponse()
+        {
+            // Arrange
+            var expected = new ApiResponseDto<string>
+            {
+                Success = false,
+                Errors  = OneError("Setting not found", "NOT_FOUND")
+            };
+            _pimsYearlyFinancialDataApiClient.GetSettingValueByIdAsync(Arg.Any<string>()).Returns(expected);
+
+            // Act
+            var result = await _sut.GetSettingValueByIdAsync("HoursInDay");
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            await _pimsYearlyFinancialDataApiClient.Received(1).GetSettingValueByIdAsync("HoursInDay");
         }
 
         #endregion

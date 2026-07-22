@@ -1,42 +1,7 @@
-@* TRANSFORMENGINE MIGRATION — _AddEditYearlyFinancialData.cshtml
-   Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
-   Migrated : 2026-07-09
-   CHANGED:
-     - New file: Add/Edit modal partial for YearlyFinancialData (frmProjectRadTrackData yfdModal)
-     - Three-column layout mirrors HTML prototype: left (cost fields), centre (adjustment +
-       PACT details textarea), right (costing panel with Fix Costing / Fixed checkbox)
-     - isEditMode derived from Model.Year != 0 (short composite key; 0 = add mode)
-     - All input ids match HTML prototype exactly (yfdModalProject, yfdModalYear, yfdModalPPAcc,
-       yfdModalCustomerIncome, yfdModalVLABudget, yfdModalSeedcorn, yfdModalPayCosts,
-       yfdModalNonPay, yfdModalTestCosts, yfdModalAnimalCosts, yfdModalProjectSpecific,
-       yfdModalManHours, yfdModalManDays, yfdModalManYears, yfdModalTotalCosts,
-       yfdModalAdjustment, yfdModalAdjComment, yfdModalActualPact, yfdModalFixed,
-       yfdModalDateFixed, yfdModalFixedBy)
-     - TotalCosts displayed as read-only computed field (sum of cost columns)
-     - yfdModalFixed is a checkbox mapping to Model.Locked (short 0/1)
-     - DateCosted rendered with display text input + hidden ISO binding field
-     - Hidden scalar fields: hdnYfdYear, hdnYfdProject, hdnYfdIsEdit,
-       hdnYfdDateCosted, hdnYfdActualExpenditure, hdnYfdActualManYears
-     - Save/Update buttons call saveYFD() (defined in Index.cshtml @section Scripts)
-     - updateCosting() and fixCosting() defined in Index.cshtml @section Scripts
-     - PACT actuals panel (yfdModalActualPact textarea) is the display-only pact details text;
-       numeric pact inputs (pactCustomerIncome etc.) are in the yfd-costing-panel section
-   PRESERVED:
-     - All govuk-edit-modal__* class names and modal DOM structure
-     - All form element ids, aria attributes, and error message placeholders from prototype
-     - Mandatory field marker (yfdModalYear has app-required span)
-   DEFERRED / REQUIRES HUMAN REVIEW:
-     - TRANSFORMENGINE TODO: Confirm yfdModalActualPact textarea usage — HTML prototype
-       shows it as an editable textarea for free-text pact detail notes; verify whether
-       this maps to an entity field or is display-only
-     - TRANSFORMENGINE TODO: Confirm pact numeric panel inputs (pactCustomerIncome etc.)
-       are populated by updateCosting() JS from Index.cshtml only — they have no asp-for
-       binding as they are not part of the save DTO *@
-
 @model Apha.FPSApps.Web.Areas.PIMS.Models.YearlyFinancialDataItem
 
 @{
-    // TRANSFORMENGINE: isEditMode — Year != 0 means a real record is loaded for edit
+    
     bool isEditMode = Model.Year != 0;
     string modalTitle = isEditMode ? "Edit Yearly Record" : "Add New Yearly Record";
     string saveLabel  = isEditMode ? "Update" : "Save";
@@ -61,15 +26,15 @@
                 @Html.AntiForgeryToken()
 
                 @* ── Hidden state fields ───────────────────────────────────────────── *@
-                @* TRANSFORMENGINE: Composite key carried as hidden inputs for save/update operations *@
+                
                 <input type="hidden" id="hdnYfdYear"             value="@Model.Year" />
                 <input type="hidden" id="hdnYfdProject"          value="@Model.Project" />
                 <input type="hidden" id="hdnYfdIsEdit"           value="@isEditMode.ToString().ToLower()" />
-                @* TRANSFORMENGINE: DateCosted hidden ISO binding (yyyy-MM-dd) used by fixCosting() and saveYFD() *@
+                
                 <input type="hidden" id="hdnYfdDateCosted"
                        value="@(Model.DateCosted.HasValue ? Model.DateCosted.Value.ToString("yyyy-MM-dd") : string.Empty)" />
-                @* TRANSFORMENGINE: ActualExpenditure / ActualManYears are costing-panel read-only display values;
-                   sent back in the save DTO to preserve existing reported actuals *@
+                <input type="hidden" id="hdnYfdCurrentUser"       value="@ViewBag.CurrentCostingUser" />
+                
                 <input type="hidden" id="hdnYfdActualExpenditure" value="@Model.ActualExpenditure" />
                 <input type="hidden" id="hdnYfdActualManYears"    value="@Model.ActualManYears" />
 
@@ -113,12 +78,12 @@
                             </label>
                             @if (isEditMode)
                             {
-                                @* TRANSFORMENGINE: Year is the composite key — read-only in edit mode *@
+                               
                                 <input class="govuk-input govuk-!-font-size-16"
                                        id="yfdModalYear"
                                        name="yfdModalYear"
                                        type="text"
-                                       value="@Model.Year"
+                                       value="@(Model.Year != 0 ? Model.Year.ToString() : string.Empty)"
                                        disabled
                                        aria-readonly="true" />
                             }
@@ -128,7 +93,7 @@
                                        id="yfdModalYear"
                                        name="yfdModalYear"
                                        type="text"
-                                       value="@Model.Year"
+                                       value="@(Model.Year != 0 ? Model.Year.ToString() : string.Empty)"
                                        required
                                        aria-required="true"
                                        placeholder="e.g. 2026"
@@ -219,6 +184,7 @@
                                        type="text"
                                        inputmode="decimal"
                                        value="@Model.Seedcorn"
+                                       oninput="recalcYFDTotalCosts()"
                                        aria-describedby="yfdModalSeedcorn-error" />
                             </div>
                             <p class="govuk-error-message govuk-!-display-none" id="yfdModalSeedcorn-error">
@@ -417,7 +383,7 @@
                             </label>
                             <div class="govuk-input__wrapper">
                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                @* TRANSFORMENGINE: TotalCosts is a computed field — disabled + JS recalc *@
+                               
                                 <input class="govuk-input govuk-!-font-size-16"
                                        id="yfdModalTotalCosts"
                                        name="yfdModalTotalCosts"
@@ -468,18 +434,73 @@
                                       rows="6">@Model.AdjustmentComment</textarea>
                         </div>
 
-                        @* Actual (Pact) Details — free-text note area (prototype id="yfdModalActualPact") *@
-                        @* TRANSFORMENGINE TODO: verify if yfdModalActualPact maps to an entity field;
-                           currently rendered as an editable textarea but value not included in save DTO *@
+                        @* Actual (Pact) Details — read-only PACT costing fields used by Update Costing *@
                         <div class="govuk-form-group sup_margin_bottom_10" id="yfdActualPactGroup">
-                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
-                                   for="yfdModalActualPact">
-                                Actual (Pact) Details:
-                            </label>
-                            <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
-                                      id="yfdModalActualPact"
-                                      name="yfdModalActualPact"
-                                      rows="6"></textarea>
+                            <fieldset class="govuk-fieldset">
+                                <legend class="govuk-fieldset__legend govuk-!-font-weight-bold govuk-!-font-size-16">
+                                    Actual (Pact) Details:
+                                </legend>
+
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-size-16" for="pactCustomerIncome">Customer Income</label>
+                                    <input class="govuk-input govuk-!-font-size-16" id="pactCustomerIncome" type="text" value="—" readonly aria-readonly="true" />
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-size-16" for="pactVLABudget">VLA Budget</label>
+                                    <input class="govuk-input govuk-!-font-size-16" id="pactVLABudget" type="text" value="—" readonly aria-readonly="true" />
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-size-16" for="pactPay">Pay</label>
+                                    <input class="govuk-input govuk-!-font-size-16" id="pactPay" type="text" value="—" readonly aria-readonly="true" />
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-size-16" for="pactNonPayOH">NonPayOH</label>
+                                    <input class="govuk-input govuk-!-font-size-16" id="pactNonPayOH" type="text" value="—" readonly aria-readonly="true" />
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-size-16" for="pactTotalTimeCosts">Total Time Costs</label>
+                                    <input class="govuk-input govuk-!-font-size-16" id="pactTotalTimeCosts" type="text" value="—" readonly aria-readonly="true" />
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-size-16" for="pactTest">Test</label>
+                                    <input class="govuk-input govuk-!-font-size-16" id="pactTest" type="text" value="—" readonly aria-readonly="true" />
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-size-16" for="pactAnimal">Animal</label>
+                                    <input class="govuk-input govuk-!-font-size-16" id="pactAnimal" type="text" value="—" readonly aria-readonly="true" />
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-size-16" for="pactProjectSpecific">Project Specific</label>
+                                    <input class="govuk-input govuk-!-font-size-16" id="pactProjectSpecific" type="text" value="—" readonly aria-readonly="true" />
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-size-16" for="pactTotalCosts">Total Costs</label>
+                                    <input class="govuk-input govuk-!-font-size-16" id="pactTotalCosts" type="text" value="—" readonly aria-readonly="true" />
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-size-16" for="pactManHours">Man Hours</label>
+                                    <input class="govuk-input govuk-!-font-size-16" id="pactManHours" type="text" value="—" readonly aria-readonly="true" />
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-size-16" for="pactManDays">Man Days</label>
+                                    <input class="govuk-input govuk-!-font-size-16" id="pactManDays" type="text" value="—" readonly aria-readonly="true" />
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-size-16" for="pactManYears">Man Years</label>
+                                    <input class="govuk-input govuk-!-font-size-16" id="pactManYears" type="text" value="—" readonly aria-readonly="true" />
+                                </div>
+                            </fieldset>
                         </div>
 
                     </div>
@@ -489,8 +510,9 @@
                     <div class="yfd-modal-col-right">
 
                         <div class="yfd-update-costing-wrapper">
-                            @* TRANSFORMENGINE: updateCosting() defined in Index.cshtml @section Scripts *@
+                            
                             <button type="button"
+                                    id="btnYfdUpdateCosting"
                                     class="govuk-button govuk-button--secondary govuk-!-font-size-16 sup_margin_0"
                                     onclick="updateCosting()"
                                     aria-label="Update costing values">
@@ -498,14 +520,15 @@
                             </button>
                         </div>
 
-                        @* TRANSFORMENGINE: Panel starts disabled; updateCosting() enables it *@
+                        
                         <div id="yfdCostingPanel"
                              class="yfd-costing-panel yfd-costing-panel--disabled"
                              aria-disabled="true">
 
                             <div class="yfd-costing-panel__header">
-                                @* TRANSFORMENGINE: fixCosting() defined in Index.cshtml @section Scripts *@
+                               
                                 <button type="button"
+                                        id="btnYfdFixCosting"
                                         class="govuk-button govuk-!-font-size-16 sup_margin_0"
                                         onclick="fixCosting()"
                                         aria-label="Fix costing">
@@ -513,7 +536,7 @@
                                 </button>
 
                                 @* Fixed checkbox — maps to Model.Locked (short 0/1) *@
-                                @* TRANSFORMENGINE: Safe manual checkbox pattern — no @() inside option area *@
+                                
                                 <div class="govuk-checkboxes govuk-checkboxes--small yfd-costing-panel__checkbox"
                                      data-module="govuk-checkboxes">
                                     <div class="govuk-checkboxes__item">
@@ -588,7 +611,7 @@
                                 <p class="govuk-body govuk-!-font-size-16"
                                    id="yfdActualManYearsReported">
                                     @(Model.ActualManYears.HasValue
-                                        ? Model.ActualManYears.Value.ToString("F2")
+                                        ? Model.ActualManYears.Value.ToString("F3")
                                         : "—")
                                 </p>
                             </div>
@@ -614,7 +637,7 @@
             <div>
                 @if (isEditMode)
                 {
-                    @* TRANSFORMENGINE: Update button shown in edit mode *@
+                   
                     <button type="button"
                             class="govuk-button sup_margin_0 govuk-!-font-size-16"
                             data-module="govuk-button"
@@ -623,7 +646,7 @@
                 }
                 else
                 {
-                    @* TRANSFORMENGINE: Save button shown in add mode *@
+                    
                     <button type="button"
                             class="govuk-button sup_margin_0 govuk-!-font-size-16"
                             data-module="govuk-button"
@@ -638,15 +661,26 @@
 
 <script>
     // TRANSFORMENGINE: TotalCosts recalculation — triggered by oninput on cost fields
-    // Sums PayCosts + NonPayOhCosts + TestCosts + AnimalCosts + NonAnimalCosts
+    // Sums Seedcorn + PayCosts + NonPayOhCosts + TestCosts + AnimalCosts + NonAnimalCosts
     function recalcYFDTotalCosts() {
-        var pay     = parseFloat(document.getElementById('yfdModalPayCosts')?.value) || 0;
-        var nonPay  = parseFloat(document.getElementById('yfdModalNonPay')?.value) || 0;
-        var test    = parseFloat(document.getElementById('yfdModalTestCosts')?.value) || 0;
-        var animal  = parseFloat(document.getElementById('yfdModalAnimalCosts')?.value) || 0;
-        var projSpc = parseFloat(document.getElementById('yfdModalProjectSpecific')?.value) || 0;
-        var total   = pay + nonPay + test + animal + projSpc;
+        var parseMoney = function (id) {
+            var value = document.getElementById(id)?.value || '';
+            var normalized = String(value).replace(/[^0-9+\-.,]/g, '').replace(/,/g, '');
+            var parsed = parseFloat(normalized);
+            return isNaN(parsed) ? 0 : parsed;
+        };
+
+        var seedcorn = parseMoney('yfdModalSeedcorn');
+        var pay = parseMoney('yfdModalPayCosts');
+        var nonPay = parseMoney('yfdModalNonPay');
+        var test = parseMoney('yfdModalTestCosts');
+        var animal = parseMoney('yfdModalAnimalCosts');
+        var projSpc = parseMoney('yfdModalProjectSpecific');
+
+        var total = seedcorn + pay + nonPay + test + animal + projSpc;
         var el = document.getElementById('yfdModalTotalCosts');
         if (el) el.value = total.toFixed(2);
     }
+
+    recalcYFDTotalCosts();
 </script>
