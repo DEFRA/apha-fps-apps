@@ -72,7 +72,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                                 : $"{t.ItemDescription}",
                             t.ItemCode))
                         .ToList()
-                    : new List<SelectListItem>()
+                    : new List<SelectListItem>(),
+                SelectedWorkGroup= Request.Query["workgroup"].ToString()
             };
 
             return View(viewModel);

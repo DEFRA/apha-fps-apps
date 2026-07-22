@@ -41,7 +41,7 @@ namespace Apha.Costbook.Application.Services
         public async Task<AccountGroupDto?> GetByCsg7GroupAsync(string csg7Group)
         {
             if (string.IsNullOrWhiteSpace(csg7Group))
-                throw new ArgumentException("Csg7Group must not be null or empty.", nameof(csg7Group));
+                throw new ArgumentException("Csg7Group must not be null or empty.");
 
             var entity = await _repository.GetByCsg7GroupAsync(csg7Group);
             return entity is null ? null : _mapper.Map<AccountGroupDto>(entity);
@@ -51,15 +51,17 @@ namespace Apha.Costbook.Application.Services
         public async Task<AccountGroupDto> AddAccountGroupAsync(AccountGroupDto dto)
         {
             if (dto is null)
-                throw new ArgumentException("AccountGroupDto must not be null.", nameof(dto));
+                throw new ArgumentException("AccountGroupDto must not be null.");
             if (string.IsNullOrWhiteSpace(dto.Csg7group))
-                throw new ArgumentException("Csg7Group must not be null or empty.", nameof(dto));
+                throw new ArgumentException("Csg7Group must not be null or empty.");
 
-           
-            var exists = await _repository.ExistsAsync(dto.Csg7group);
+            var normalizedCsg7Group = dto.Csg7group.Trim();
+
+            var exists = await _repository.ExistsAsync(normalizedCsg7Group);
             if (exists)
-                throw new ArgumentException($"An AccountGroup with Csg7Group '{dto.Csg7group}' already exists.", nameof(dto));
+                throw new ArgumentException($"An AccountGroup with Csg7Group '{normalizedCsg7Group}' already exists.");
 
+            dto.Csg7group = normalizedCsg7Group;
             var entity = _mapper.Map<AccountGroup>(dto);
             var created = await _repository.AddAccountGroupAsync(entity);
             return _mapper.Map<AccountGroupDto>(created);
@@ -68,17 +70,9 @@ namespace Apha.Costbook.Application.Services
         
         public async Task<AccountGroupDto> UpdateAccountGroupAsync(string csg7Group, AccountGroupDto dto)
         {
-            if (string.IsNullOrWhiteSpace(csg7Group))
-                throw new ArgumentException("Csg7Group must not be null or empty.", nameof(csg7Group));
             if (dto is null)
-                throw new ArgumentException("AccountGroupDto must not be null.", nameof(dto));
+                throw new ArgumentException("AccountGroupDto must not be null.");
 
-            
-            var exists = await _repository.ExistsAsync(csg7Group);
-            if (!exists)
-                throw new KeyNotFoundException($"AccountGroup with Csg7Group '{csg7Group}' was not found.");
-
-            
             dto.Csg7group = csg7Group;
             var entity = _mapper.Map<AccountGroup>(dto);
             var updated = await _repository.UpdateAccountGroupAsync(entity);
@@ -88,13 +82,6 @@ namespace Apha.Costbook.Application.Services
         
         public async Task DeleteAccountGroupAsync(string csg7Group)
         {
-            if (string.IsNullOrWhiteSpace(csg7Group))
-                throw new ArgumentException("Csg7Group must not be null or empty.", nameof(csg7Group));
-
-            var exists = await _repository.ExistsAsync(csg7Group);
-            if (!exists)
-                throw new KeyNotFoundException($"AccountGroup with Csg7Group '{csg7Group}' was not found.");
-
             await _repository.DeleteAccountGroupAsync(csg7Group);
         }
     }
