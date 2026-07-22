@@ -25,15 +25,30 @@ namespace Apha.PACT.DataAccess.Repository
                 .AnyAsync(m => m.WorkGroup == workGroup && m.TimeCode == timeCode && m.ParentProject == parentProject);
         }
 
-        public async Task<PagedData<MonthlyTime>> SearchLiveAsync(
+        public async Task<PagedData<MonthlyTimeStaff>> SearchLiveAsync(
             PaginationParameters<string> query,
             string? workGroup,
             string? timeCode,
             string? pactStaffId,
-            string? parentProject,
+            string? parentProject,              
             double? month)
         {
-            var monthlyTimes = _context.MonthlyTimes.AsNoTracking().AsQueryable();
+            var monthlyTimes = from mt in _context.MonthlyTimes.AsNoTracking()
+                               join wgs in _context.WorkGroupStaffViews.AsNoTracking()
+                               on new { StaffId = (string?)mt.PactStaffId, Year = (int?)mt.FpsYear }
+                               equals new { StaffId = wgs.PactId, Year = wgs.FpsYear }
+                               where mt.FpsYear == _fpsRequestContext.FpsYear
+                               select new MonthlyTimeStaff
+                               {
+                                   PactStaffId = mt.PactStaffId,
+                                   Name = wgs.Name,
+                                   TimeCode = mt.TimeCode,
+                                   Month = mt.Month,
+                                   ParentProject = mt.ParentProject,
+                                   WorkGroup = mt.WorkGroup,
+                                   Hours = mt.Hours,
+                                   FpsYear = mt.FpsYear
+                               };
 
             if (!string.IsNullOrWhiteSpace(workGroup))
                 monthlyTimes = monthlyTimes.Where(x => x.WorkGroup == workGroup);
@@ -50,9 +65,11 @@ namespace Apha.PACT.DataAccess.Repository
             if (month.HasValue)
                 monthlyTimes = monthlyTimes.Where(x => (int)x.Month == (int)month.Value);
             
-            monthlyTimes = (IQueryable<MonthlyTime>)ApplyLiveSorting(monthlyTimes, query.SortBy, query.Descending);            
+            monthlyTimes = (IQueryable<MonthlyTimeStaff>)ApplyLiveSorting(monthlyTimes, query.SortBy, query.Descending);            
 
-            var pagedLiveData = await ApplyPaging(monthlyTimes, query.Page, query.PageSize);            
+            var pagedLiveData = await ApplyPaging(monthlyTimes, query.Page, query.PageSize);         
+            
+
             pagedLiveData.Total = await monthlyTimes.SumAsync(x => (decimal)(x.Hours ?? 0));   
             return pagedLiveData;
         }
@@ -389,9 +406,11 @@ namespace Apha.PACT.DataAccess.Repository
             if (passedRows.Count == 0)
                 return (0, 0, 0);
 
+            var latestImportedDate = passedRows.Max(x => x.ImportedDate);
+
             var failedCount = await _context.StagingMonthlyTimes
                 .AsNoTracking()
-                .CountAsync(x => x.ImportedBy == importedBy && x.Passed == false && x.ImportedDate == passedRows.Max(r => r.ImportedDate));
+                .CountAsync(x => x.ImportedBy == importedBy && x.Passed == false && x.ImportedDate == latestImportedDate);
 
             var importedCount = 0;
             foreach (var row in passedRows)
@@ -548,7 +567,7 @@ namespace Apha.PACT.DataAccess.Repository
             return stagingQuery;
         }
 
-        private static IQueryable ApplyLiveSorting(IQueryable<MonthlyTime> query, string? sortBy, bool descending)
+        private static IQueryable ApplyLiveSorting(IQueryable<MonthlyTimeStaff> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
             {
@@ -562,7 +581,7 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyLiveSortingByProperty(query, sortBy.ToLower(), descending);
         }
 
-        private static IQueryable ApplyLiveSortingByProperty(IQueryable<MonthlyTime> query, string property, bool descending)
+        private static IQueryable ApplyLiveSortingByProperty(IQueryable<MonthlyTimeStaff> query, string property, bool descending)
         {
             return property switch
             {
@@ -576,7 +595,7 @@ namespace Apha.PACT.DataAccess.Repository
             };
         }
 
-        private static IQueryable ApplyLiveOrder<T>(IQueryable<MonthlyTime> query, Expression<Func<MonthlyTime, T>> keySelector, bool descending)
+        private static IQueryable ApplyLiveOrder<T>(IQueryable<MonthlyTimeStaff> query, Expression<Func<MonthlyTimeStaff, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }

@@ -45,7 +45,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string? PactId { get; set; }
 
         [Display(Name = "Comments")]
-        [GridColumn(Order = 10, Width = 260, Type = GridColumnType.Text, CssClass = "grid-column-truncate-tooltip")]
+        [GridColumn(Order = 10, Width = 260, Type = GridColumnType.Text, CssClass = "aabbcc grid-column-truncate-tooltip")]
         public string? FailureComments { get; set; }
 
         [GridColumn(IsVisible = false)]

@@ -123,6 +123,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 .Select(x => new
                 {
                     pactId = x.PactId ?? string.Empty,
+                    spNumber = x.SpNumber ?? string.Empty,
                     name = x.Name ?? string.Empty,
                     workGroupGrade = x.WorkGroupGrade ?? string.Empty
                 })
@@ -508,14 +509,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _workGroupService.GetAllWorkGroupsAsync();
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x.WorkGroupName).Select(x => new SelectListItem(x.WorkGroupName, x.WorkGroupName)).ToList()
-                : [];
-        }
-
-        private async Task<List<SelectListItem>> GetPactWorkGroupStaffOptionsAsync(string workGroup)
-        {
-            var response = await _employeeService.GetPactWorkGroupStaffAsync(workGroup);
-            return response.Success && response.Data != null
-                ? response.Data.Where(x => !string.IsNullOrWhiteSpace(x.PactId)).OrderBy(x => x.Name).Select(x => new SelectListItem($"{x.Name} ({x.PactId})", x.PactId ?? string.Empty)).ToList()
                 : [];
         }
 

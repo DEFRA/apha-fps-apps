@@ -241,6 +241,7 @@ function initStaffDropdown() {
         labelText: 'Staff',
         columns: [
             { field: 'name', header: 'Name', width: '180px' },
+            { field: 'spNumber', header: 'SPNumber', width: '180px' },
             { field: 'pactId', header: 'PACTid', width: '90px' },
             { field: 'workGroupGrade', header: 'WG_Grade', width: '100px' }
         ],
@@ -407,6 +408,7 @@ function initLiveModalDropdowns(existingWorkGroup, existingName, existingPactId)
         labelText: '',
         columns: [
             { field: 'name', header: 'Name', width: '180px' },
+            { field: 'spNumber', header: 'SPNumber', width: '180px' },
             { field: 'pactId', header: 'PACTid', width: '90px' },
             { field: 'workGroupGrade', header: 'WG_Grade', width: '100px' }
         ],
@@ -603,6 +605,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
         labelText: '',
         columns: [
             { field: 'name', header: 'Name', width: '180px' },
+            { field: 'spNumber', header: 'SPNumber', width: '90px' },
             { field: 'pactId', header: 'PACTid', width: '90px' },
             { field: 'workGroupGrade', header: 'WG_Grade', width: '100px' }
         ],
@@ -615,8 +618,9 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
         callbacks: {
             onSelect: function (selectedItem) {
                 const selectedPactId = selectedItem?.pactId || '';
+                const selectedSpNumber = selectedItem?.spNumber || '';
                 $('#StagingName').val(selectedItem?.name || '');
-                $('#StagingPactStaffId').val(selectedPactId);
+                $('#StagingPactStaffId').val(selectedSpNumber);
                 $('#StagingPactId').val(selectedPactId);
             },
             onClear: function () {
