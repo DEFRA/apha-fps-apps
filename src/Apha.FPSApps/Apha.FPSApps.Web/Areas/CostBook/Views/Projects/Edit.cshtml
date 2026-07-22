@@ -261,10 +261,7 @@
                                 </div>
                                     
                                 <div class="d-flex align-items-center gap-2 margin_left_5">
-                                    <label asp-for="IsDefraProject" class="govuk-label  mb-0 pt-1" style="
-                                    min-width: 160px;
-                                    text-align: right;
-                                    ">Is Defra Project?:</label>
+                                    <label asp-for="IsDefraProject" class="govuk-label isCustomInfo  mb-0 pt-1">Is Defra Project?:</label>
                                             <select asp-for="IsDefraProject" asp-items="Model.AvailableDefraProjectOptions" class="govuk-select" style="min-width: 80px;"></select>
                                             <span class="warning-text" style="font-size:13px; width:217px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
                                                 Changing this option will recost existing projects with current rates.
@@ -327,7 +324,7 @@
                                             </label>
                                         </div>
                                     </div>
-                                    <span class="warning-text" style="font-size:13px; width:286px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
+                                    <span class="warning-text isCustomInfo">
                                         Changing this option will recost existing projects with current rates as well as affecting inflation.
                                     </span>
                                 </div>

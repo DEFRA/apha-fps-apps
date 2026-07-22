@@ -1700,3 +1700,8 @@ table#tblMonthPeriod > tbody > tr > td {
 .sup_font_weight_700 {
     font-weight: 700 !important;
 }
+
+select.govuk-select.govuk-select--width-2 {
+    max-width: none !important;
+    min-width: 3.3em !important;
+}

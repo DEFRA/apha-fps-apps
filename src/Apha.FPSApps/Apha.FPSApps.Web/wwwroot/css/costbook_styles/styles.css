@@ -2854,3 +2854,19 @@ tab-grid-scroll, .grid-scroll-container, .fps-sr-fixedheader-wrap {
     .fps-sr-fixedheader-wrap .custom-table th {
         white-space: nowrap !important;
     }
+
+.isYearlyDetailsTabs {
+    .grid-scroll-container {
+        height: auto !important;
+        min-height: auto !important;
+        overflow-y: hidden;
+    }
+}
+.isCustomInfo {
+    font-size: 0.90em;
+    width: 225px;
+    color: #000;
+    border: 1px dashed #0d6efd;
+    border-radius: 4px;
+    padding: 2px;
+}
