@@ -192,6 +192,28 @@ namespace Apha.Costbook.Application.UnitTests.Services.AccountGroupServiceTest
         }
 
         [Fact]
+        public async Task AddAsync_KeyWithWhitespace_TrimsBeforeSave()
+        {
+            // Arrange
+            var dto = new AccountGroupDto { Csg7group = "  CSG003  ", Useinflation = false };
+            var entity = new AccountGroup { Csg7group = "CSG003", Useinflation = false };
+            var created = new AccountGroup { Csg7group = "CSG003", Useinflation = false };
+            var createdDto = new AccountGroupDto { Csg7group = "CSG003", Useinflation = false };
+            _repository.ExistsAsync("CSG003").Returns(false);
+            _mapper.Map<AccountGroup>(dto).Returns(entity);
+            _repository.AddAccountGroupAsync(entity).Returns(created);
+            _mapper.Map<AccountGroupDto>(created).Returns(createdDto);
+
+            // Act
+            var result = await _service.AddAccountGroupAsync(dto);
+
+            // Assert
+            Assert.Equal("CSG003", dto.Csg7group);
+            await _repository.Received(1).ExistsAsync("CSG003");
+            await _repository.Received(1).AddAccountGroupAsync(entity);
+        }
+
+        [Fact]
         public async Task AddAsync_DuplicateKey_ThrowsArgumentException()
         {
             // Arrange
@@ -227,7 +249,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.AccountGroupServiceTest
         #region UpdateAsync Tests
 
         [Fact]
-        public async Task UpdateAsync_ExistingKey_UpdatesAndReturnsMappedDto()
+        public async Task UpdateAsync_ValidKeyAndDto_UpdatesAndReturnsMappedDto()
         {
             // Arrange
             var key = "CSG001";
@@ -235,7 +257,6 @@ namespace Apha.Costbook.Application.UnitTests.Services.AccountGroupServiceTest
             var entity = new AccountGroup { Csg7group = key, Useinflation = false };
             var updated = new AccountGroup { Csg7group = key, Useinflation = false };
             var updatedDto = new AccountGroupDto { Csg7group = key, Useinflation = false };
-            _repository.ExistsAsync(key).Returns(true);
             _mapper.Map<AccountGroup>(dto).Returns(entity);
             _repository.UpdateAccountGroupAsync(entity).Returns(updated);
             _mapper.Map<AccountGroupDto>(updated).Returns(updatedDto);
@@ -247,26 +268,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.AccountGroupServiceTest
             Assert.NotNull(result);
             Assert.Equal(key, result.Csg7group);
             await _repository.Received(1).UpdateAccountGroupAsync(entity);
-        }
-
-        [Fact]
-        public async Task UpdateAsync_NonExistentKey_ThrowsKeyNotFoundException()
-        {
-            // Arrange
-            var key = "NOTEXIST";
-            var dto = new AccountGroupDto { Csg7group = key, Useinflation = true };
-            _repository.ExistsAsync(key).Returns(false);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.UpdateAccountGroupAsync(key, dto));
-        }
-
-        [Fact]
-        public async Task UpdateAsync_NullKey_ThrowsArgumentException()
-        {
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.UpdateAccountGroupAsync(null!, new AccountGroupDto { Csg7group = "CSG001", Useinflation = true }));
+            await _repository.DidNotReceive().ExistsAsync(Arg.Any<string>());
         }
 
         [Fact]
@@ -274,10 +276,10 @@ namespace Apha.Costbook.Application.UnitTests.Services.AccountGroupServiceTest
         {
             // Arrange
             var key = "CSG001";
-            _repository.ExistsAsync(key).Returns(true);
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateAccountGroupAsync(key, null!));
+            await _repository.DidNotReceive().UpdateAccountGroupAsync(Arg.Any<AccountGroup>());
         }
 
         #endregion
@@ -287,11 +289,10 @@ namespace Apha.Costbook.Application.UnitTests.Services.AccountGroupServiceTest
         #region DeleteAsync Tests
 
         [Fact]
-        public async Task DeleteAsync_ExistingKey_CallsRepositoryDelete()
+        public async Task DeleteAsync_ValidKey_CallsRepositoryDelete()
         {
             // Arrange
             var key = "CSG001";
-            _repository.ExistsAsync(key).Returns(true);
             _repository.DeleteAccountGroupAsync(key).Returns(true);
 
             // Act
@@ -299,25 +300,22 @@ namespace Apha.Costbook.Application.UnitTests.Services.AccountGroupServiceTest
 
             // Assert
             await _repository.Received(1).DeleteAccountGroupAsync(key);
+            await _repository.DidNotReceive().ExistsAsync(Arg.Any<string>());
         }
 
         [Fact]
-        public async Task DeleteAsync_NonExistentKey_ThrowsKeyNotFoundException()
+        public async Task DeleteAsync_AnyKey_DelegatesToRepositoryWithoutExistenceCheck()
         {
             // Arrange
             var key = "NOTEXIST";
-            _repository.ExistsAsync(key).Returns(false);
+            _repository.DeleteAccountGroupAsync(key).Returns(false);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.DeleteAccountGroupAsync(key));
-            await _repository.DidNotReceive().DeleteAccountGroupAsync(Arg.Any<string>());
-        }
+            // Act
+            await _service.DeleteAccountGroupAsync(key);
 
-        [Fact]
-        public async Task DeleteAsync_NullKey_ThrowsArgumentException()
-        {
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.DeleteAccountGroupAsync(null!));
+            // Assert
+            await _repository.Received(1).DeleteAccountGroupAsync(key);
+            await _repository.DidNotReceive().ExistsAsync(Arg.Any<string>());
         }
 
         #endregion

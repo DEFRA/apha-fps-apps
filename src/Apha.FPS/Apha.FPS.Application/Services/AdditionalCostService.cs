@@ -69,17 +69,24 @@ namespace Apha.FPS.Application.Services
                 ? additionalCost.Description
                 : additionalCost.OriginalDescription;
 
+            var originalAccount = string.IsNullOrWhiteSpace(additionalCost.OriginalAccount)
+                ? additionalCost.Account
+                : additionalCost.OriginalAccount;
+
             var existing = await _repository.GetByIdAsync(
-                additionalCost.JobCode, additionalCost.Account, originalDescription);
+                additionalCost.JobCode, originalAccount, originalDescription);
 
             if (existing == null)
                 throw new InvalidOperationException(
-                    $"Additional cost with Job Code '{additionalCost.JobCode}', Account '{additionalCost.Account}' and Description '{originalDescription}' was not found.");
+                    $"Additional cost with Job Code '{additionalCost.JobCode}', Account '{originalAccount}' and Description '{originalDescription}' was not found.");
 
             var descriptionChanged = !string.Equals(
                 originalDescription, additionalCost.Description, StringComparison.OrdinalIgnoreCase);
 
-            if (descriptionChanged)
+            var accountChanged = !string.Equals(
+                originalAccount, additionalCost.Account, StringComparison.OrdinalIgnoreCase);
+
+            if (descriptionChanged || accountChanged)
             {
                 var duplicate = await _repository.GetByIdAsync(
                     additionalCost.JobCode, additionalCost.Account, additionalCost.Description);
@@ -90,7 +97,7 @@ namespace Apha.FPS.Application.Services
             }
 
             var entity = _mapper.Map<AdditionalCost>(additionalCost);
-            var result = await _repository.UpdateAsync(entity, originalDescription);
+            var result = await _repository.UpdateAsync(entity, originalAccount, originalDescription);
             return _mapper.Map<AdditionalCostDto>(result);
         }
 

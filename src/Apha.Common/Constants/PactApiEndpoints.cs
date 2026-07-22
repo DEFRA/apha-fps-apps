@@ -44,6 +44,16 @@ namespace Apha.Common.Constants
         public const string SetSendEmailForAllWorkGroups = "api/v1/workgroup/setsendemail/all";
         public const string UpdateWorkGroupEmail = "api/v1/workgroup/{0}/email";        
 
+        // Work Group Maintenance (CRUD + lookups)
+        public const string GetPagedWorkGroupMaintenance = "api/v1/workgroup/paged";
+        public const string GetWorkGroupMaintenanceByName = "api/v1/workgroup/maintenance/{0}";
+        public const string CreateWorkGroupMaintenance = "api/v1/workgroup/maintenance";
+        public const string UpdateWorkGroupMaintenance = "api/v1/workgroup/maintenance/{0}";
+        public const string DeleteWorkGroupMaintenance = "api/v1/workgroup/maintenance/{0}";
+        public const string GetWorkGroupProfitCentres = "api/v1/workgroup/profitcentres";
+        public const string GetWorkGroupOwners = "api/v1/workgroup/owners";
+        public const string GetWorkGroupCostCentres = "api/v1/workgroup/costcentres";
+
         // Month
         public const string GetAllMonths = "api/v1/months";
 
@@ -114,6 +124,9 @@ namespace Apha.Common.Constants
 
         // Test Requirement Breakdown
         public const string GetPagedTestReqBreakdown = "api/v1/testrequirement/testreqbreakdown";
+
+        // Test Actual Breakdown
+        public const string GetPagedTestActualBreakdown = "api/v1/testrequirement/getactualstestswithplanneddatabyworkgroup";
 
         // Test Requirement
         public const string GetPagedTestReqmt = "api/v1/testrequirement/paged/{0}";

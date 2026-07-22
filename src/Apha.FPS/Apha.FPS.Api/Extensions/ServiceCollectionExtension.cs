@@ -1,4 +1,4 @@
-using Apha.Common.Utilities.StateManagement;
+﻿using Apha.Common.Utilities.StateManagement;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Services;
@@ -54,9 +54,12 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IContributionSummaryService, ContributionSummaryService>();
             services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
             services.AddScoped<IUserService, UserService>();
-services.AddScoped<ITestRCCostService, TestRCCostService>();
-services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();
-services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
+            services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
+            services.AddScoped<ICostCentreService, CostCentreService>();
+            services.AddScoped<ITestRCCostService, TestRCCostService>();
+            services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();
+            services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
+            services.AddScoped<IResourceAllocationService, ResourceAllocationService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -97,9 +100,12 @@ services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService
             services.AddScoped<IContributionSummaryRepository, ContributionSummaryRepository>();
             services.AddScoped<IProjectAuditTrailRepository, ProjectAuditTrailRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
-services.AddScoped<ITestRCCostRepository, TestRCCostRepository>();
-services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
-services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
+            services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
+            services.AddScoped<ICostCentreRepository, CostCentreRepository>();
+            services.AddScoped<ITestRCCostRepository, TestRCCostRepository>();
+            services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
+            services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
+            services.AddScoped<IResourceAllocationRepository, ResourceAllocationRepository>();
             return services;
 
         }
