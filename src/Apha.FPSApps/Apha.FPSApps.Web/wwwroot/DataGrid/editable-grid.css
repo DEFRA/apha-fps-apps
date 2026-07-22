@@ -370,7 +370,7 @@
 
 /* Truncate text with tooltip support */
 .grid-column-truncate-tooltip {
-    display: block;
+/*    display: block;*/
     max-width: 250px;
     white-space: nowrap;
     overflow: hidden;

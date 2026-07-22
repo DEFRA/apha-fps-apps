@@ -9,31 +9,31 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string CompositeKey { get; set; } = string.Empty;
 
         [Display(Name = "Work Group")]
-        [GridColumn(Order = 1, Width = 120, Type = GridColumnType.Text)]
+        [GridColumn(Order = 1, Width = 200, Type = GridColumnType.Text, CssClass = "monthly-time-live-col-workgroup")]
         public string? WorkGroup { get; set; }
 
         [Display(Name = "PACT Staff Id")]
-        [GridColumn(Order = 2, Width = 120, Type = GridColumnType.Text)]
+        [GridColumn(Order = 2, Width = 200, Type = GridColumnType.Text, CssClass = "monthly-time-live-col-pactstaffid")]
         public string PactStaffId { get; set; } = string.Empty;
 
         [Display(Name = "Name")]
-        [GridColumn(Order = 3, Width = 180, Type = GridColumnType.Text)]
-        public string? Name { get; set; }
+        [GridColumn(Order = 3, Width = 250, Type = GridColumnType.Text, CssClass = "monthly-time-live-col-name")]
+        public string? Name { get; set; } 
 
         [Display(Name = "Time Code")]
-        [GridColumn(Order = 4, Width = 120, Type = GridColumnType.Text)]
+        [GridColumn(Order = 4, Width = 230, Type = GridColumnType.Text, CssClass = "monthly-time-live-col-timecode")]
         public string TimeCode { get; set; } = string.Empty;
 
         [Display(Name = "Parent Project")]
-        [GridColumn(Order = 5, Width = 140, Type = GridColumnType.Text)]
+        [GridColumn(Order = 5, Width = 250, Type = GridColumnType.Text, CssClass = "monthly-time-live-col-parentproject")]
         public string ParentProject { get; set; } = string.Empty;
 
         [Display(Name = "Period")]
-        [GridColumn(Order = 6, Width = 80, Type = GridColumnType.Number)]
+        [GridColumn(Order = 6, Width = 90, Type = GridColumnType.Number, CssClass = "monthly-time-live-col-period")]
         public double Month { get; set; }
 
         [Display(Name = "Hours")]
-        [GridColumn(Order = 7, Width = 90, Type = GridColumnType.Number)]
+        [GridColumn(Order = 7, Width = 90, Type = GridColumnType.Number, CssClass = "monthly-time-live-col-hours")]
         public double? Hours { get; set; }
 
         [GridColumn(IsVisible = false)]

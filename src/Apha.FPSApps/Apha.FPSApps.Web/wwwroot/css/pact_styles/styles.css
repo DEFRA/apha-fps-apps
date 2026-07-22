@@ -1301,6 +1301,112 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
 #divMakeliveTotalhours { display: flex; margin-right: 0; padding: 3px 4px 3px 0; align-items: center; justify-content: flex-start; }
 #divStagingTotalhours { display: flex; margin-right: 0; padding: 3px 4px 3px 0; align-items: center; justify-content: flex-start; }
 #hoursBoxContainer { position: relative; min-height: 45px; border-top: 1px solid var(--govuk-border-colour); width: 100%; }
+#gridContainer_monthlyTimeLiveGrid .monthly-time-live-col-workgroup {
+    min-width: 200px !important;
+    width: 200px !important;
+    max-width: 200px !important;
+}
+
+#gridContainer_monthlyTimeLiveGrid .monthly-time-live-col-workgroup {
+    min-width: 200px !important;
+    width: 200px !important;
+    max-width: 200px !important;
+}
+
+#gridContainer_monthlyTimeLiveGrid .monthly-time-live-col-pactstaffid {
+    min-width: 200px !important;
+    width: 200px !important;
+    max-width: 200px !important;
+}
+
+#gridContainer_monthlyTimeLiveGrid .monthly-time-live-col-name {
+    min-width: 250px !important;
+    width: 250px !important;
+    max-width: 250px !important;
+}
+
+#gridContainer_monthlyTimeLiveGrid .monthly-time-live-col-timecode {
+    min-width: 230px !important;
+    width: 230px !important;
+    max-width: 230px !important;
+}
+
+#gridContainer_monthlyTimeLiveGrid .monthly-time-live-col-parentproject {
+    min-width: 250px !important;
+    width: 250px !important;
+    max-width: 250px !important;
+}
+
+#gridContainer_monthlyTimeLiveGrid .monthly-time-live-col-period {
+    min-width: 90px !important;
+    width: 90px !important;
+    max-width: 90px !important;
+}
+
+#gridContainer_monthlyTimeLiveGrid .monthly-time-live-col-hours {
+    min-width: 90px !important;
+    width: 90px !important;
+    max-width: 90px !important;
+}
+#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-workgroup {
+    min-width: 100px !important;
+    width: 100px !important;
+    max-width: 100px !important;
+}
+
+#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-pactstaffid {
+    min-width: 120px !important;
+    width: 120px !important;
+    max-width: 120px !important;
+}
+
+#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-name {
+    min-width: 180px !important;
+    width: 180px !important;
+    max-width: 180px !important;
+}
+
+#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-timecode {
+    min-width: 120px !important;
+    width: 120px !important;
+    max-width: 120px !important;
+}
+
+#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-parentproject {
+    min-width: 140px !important;
+    width: 140px !important;
+    max-width: 140px !important;
+}
+
+#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-period {
+    min-width: 80px !important;
+    width: 80px !important;
+    max-width: 80px !important;
+}
+
+#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-hours {
+    min-width: 90px !important;
+    width: 90px !important;
+    max-width: 90px !important;
+}
+
+#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-pass {
+    min-width: 70px !important;
+    width: 70px !important;
+    max-width: 70px !important;
+}
+
+#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-pactid {
+    min-width: 100px !important;
+    width: 100px !important;
+    max-width: 100px !important;
+}
+
+#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-comments {
+    min-width: 260px !important;
+    width: 260px !important;
+    max-width: 260px !important;
+}
 
 /* ============================================================
    40. PERIOD DROPDOWN

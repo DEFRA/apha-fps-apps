@@ -117,11 +117,11 @@
                                 if (isSorted)
                                     sortIcon = Model.Pagination.SortDirection ? "▲" : "▼";
                                 <th scope="col" style="width: @column.Width px; cursor:pointer;"
-                                            class="sortable-header"
+                                    class="sortable-header @column.CssClass"
                                             data-column="@column.PropertyName"
                                             data-sortdir="@(!Model.Pagination.SortDirection)">
                                             @column.DisplayName <span class="sort-icon">@sortIcon</span>
-                                            <div class="column-resizer"></div>
+                                    <div class="column-resizer "></div>
                                         </th>
                                     }
                                 }
@@ -237,7 +237,7 @@
                                     var value = GridHelpers.GetPropertyValue(row, column.PropertyName);
                                     if (column.ColumnType == GridColumnType.Checkbox)
                                     {
-                                        <td class="checkbox-cell govuk-table__cell" data-property="@column.PropertyName" data-type="@column.ColumnType" style="text-align:center; vertical-align:middle;">
+                                        <td class="checkbox-cell govuk-table__cell @column.CssClass" data-property="@column.PropertyName" data-type="@column.ColumnType" style="text-align:center; vertical-align:middle;">
                                             <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes" style="display:flex; justify-content:center; align-items:center;">
                                                 <div class="govuk-checkboxes__item sup_chk_margin" style="pointer-events:none;">
                                                     <input type="checkbox" name="@column.PropertyName"
@@ -252,7 +252,7 @@
                                     }
                                     else
                                     {
-                                        <td data-property="@column.PropertyName" data-type="@column.ColumnType" class="govuk-table__cell">
+                                        <td data-property="@column.PropertyName" data-type="@column.ColumnType" class="govuk-table__cell @column.CssClass">
                                             @if (column.CssClass.Contains("grid-column-truncate-tooltip"))
                                             {
                                                 <span name="@column.PropertyName"
