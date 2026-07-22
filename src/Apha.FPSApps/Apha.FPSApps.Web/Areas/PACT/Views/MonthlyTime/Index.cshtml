@@ -17,13 +17,8 @@
                 <div class="sup_search_panel sup_border_b_0 sup_margin_bottom_left_10">
                     <div class="input-group searchfiels govuk-!-margin-right-3">
                         <label class="govuk-label govuk-!-font-weight-bold" for="ddWorkGroup">Work Group</label>
-                        <select id="ddWorkGroup" class="govuk-select govuk-!-font-size-16">
-                            <option value="">--select--</option>
-                            @foreach (var item in Model.WorkGroupOptions)
-                            {
-                                <option value="@item.Value">@item.Text</option>
-                            }
-                        </select>
+                        <div id="workGroupSelectDropdown"></div>
+                        <input type="hidden" id="ddWorkGroup" value="" />
                     </div>
 
                     <div class="input-group searchfiels govuk-!-margin-right-3">
@@ -33,24 +28,14 @@
 
                     <div class="input-group searchfiels govuk-!-margin-right-3">
                         <label class="govuk-label govuk-!-font-weight-bold" for="ddTimeCode">Timecode</label>
-                        <select id="ddTimeCode" class="govuk-select govuk-!-font-size-16">
-                            <option value="">--select--</option>
-                            @foreach (var item in Model.TimeCodeOptions)
-                            {
-                                <option value="@item.Value">@item.Text</option>
-                            }
-                        </select>
+                        <div id="timeCodeSelectDropdown"></div>
+                        <input type="hidden" id="ddTimeCode" value="" />
                     </div>
 
                     <div class="input-group searchfiels govuk-!-margin-right-3">
                         <label class="govuk-label govuk-!-font-weight-bold" for="ddParentProject">Parent Project</label>
-                        <select id="ddParentProject" class="govuk-select govuk-!-font-size-16">
-                            <option value="">--select--</option>
-                            @foreach (var item in Model.ProjectOptions)
-                            {
-                                <option value="@item.Value">@item.Text</option>
-                            }
-                        </select>
+                        <div id="parentProjectSelectDropdown"></div>
+                        <input type="hidden" id="ddParentProject" value="" />
                     </div>
 
                     <div class="input-group searchfiels govuk-!-margin-right-3">
@@ -89,7 +74,7 @@
                     <div class="wrapper-makelivehours sup_border">
                         <div id="divMakeliveTotalhours">
                             <span class="p-0 total-hours-label">Total Hours:</span>
-                            <input type="text" id="txtMakeliveTotalhours" class="govuk-input govuk-!-font-size-16 make-live-hours-input" value="@Model.LiveTotalHours" aria-label="Total Hours" readonly />
+                            <input type="text" id="txtMakeliveTotalhours" class="govuk-input govuk-!-font-size-16 make-live-hours-input" style="width:150px;" value="@Model.LiveTotalHours" aria-label="Total Hours" readonly />
                         </div>
                     </div>
                 </div>
@@ -106,7 +91,7 @@
             <div id="hoursBoxContainer" class="sup_surface_bg sup_position_relative ytd_total_div">
                 <div id="divStagingTotalhours">
                     <label id="lbltotalhours" for="txtTotalhours" class="govuk-label govuk-!-font-weight-bold">Total Hours:</label>
-                    <input type="text" id="txtTotalhours" class="govuk-input govuk-!-font-size-16 sup_margin_tb_5 sup_text_align_right make-live-hours-input" value="@Model.StagingTotalHours" readonly>
+                    <input type="text" id="txtTotalhours" class="govuk-input govuk-!-font-size-16 sup_margin_tb_5 sup_text_align_right make-live-hours-input" style="width:150px;" value="@Model.StagingTotalHours" readonly>
                 </div>
             </div>
         </div>
@@ -114,7 +99,7 @@
         <div class="time_record_div_wrapper govuk-!-margin-top-2 buttons-side-wrapper">
             <div class="time_record_btn_wrapper">
                 <div class="upload-container sup_width_140">
-                    <input type="file" id="csvInput" class="file-input" accept=".xls,.xlsx,.csv" hidden>
+                    <input type="file" id="csvInput" class="file-input" accept=".xlsx" aria-label="Import File" hidden>
                     <button type="button" id="importTypeBtn" class="govuk-button sup_width_140 sup_margin_0 sup_flex" allow-edit="true">
                         <img src="~/images/file-import-solid-full.svg" width="16" alt="Import excel file" />&nbsp;Import
                     </button>
@@ -208,7 +193,9 @@
         </div>
     </div>
 </div>
-
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+}
 @section Scripts {
     <script src="~/js/ajax-form-validation.js"></script>
     <script src="~/js/common/multicolumn-dropdown.component.js"></script>
@@ -216,6 +203,24 @@
         var monthlyTimeLiveGridId = '@Model.LiveGrid.GridId';
         var monthlyTimeStagingGridId = '@Model.StagingGrid.GridId';
         document.getElementById('failedmsg').style.display = 'none';
+    </script>
+    <script type="application/json" id="monthly-time-workgroups-data">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.WorkGroupOptions
+                 .Where(x => !string.IsNullOrWhiteSpace(x.Value))
+                 .Select(x => new { value = x.Value, text = x.Text })))
+    </script>
+    <script type="application/json" id="monthly-time-timecodes-data">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.TimeCodeOptions
+                 .Where(x => !string.IsNullOrWhiteSpace(x.Value))
+                 .Select(x => new { value = x.Value, text = x.Text })))
+    </script>
+    <script type="application/json" id="monthly-time-projects-data">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.ProjectOptions
+                 .Where(x => !string.IsNullOrWhiteSpace(x.Value))
+                 .Select(x => new { value = x.Value, text = x.Text })))
     </script>
     <script src="~/js/pact_js/monthly-time.js"></script>
 }

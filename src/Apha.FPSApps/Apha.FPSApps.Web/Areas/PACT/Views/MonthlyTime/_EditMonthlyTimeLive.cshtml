@@ -10,7 +10,7 @@
     <button type="button" class="btn-close btn-red" onclick="$('#modalPopup').removeClass('show')" aria-label="Close">X</button>
 </div>
 
-<div class="modal-body modal-body-custom">
+<div class="modal-body modal-body-custom" style="max-height: 500px;">
     <form id="monthlyTimeLiveForm" class="govuk-grid-column-full" novalidate>
         <input type="hidden" asp-for="CompositeKey" />
 
@@ -25,9 +25,9 @@
         <fieldset class="govuk-fieldset">
             <legend class="govuk-visually-hidden">Monthly Time Record</legend>
 
-            <span class="app-mandatory-note sup_padding_top_10" aria-hidden="true">
+            @* <span class="app-mandatory-note sup_padding_top_10" aria-hidden="true">
                 <span class="app-required">*</span> Mandatory Fields
-            </span>
+            </span> *@
 
             <div class="govuk-form-group sup_margin_bottom_10" id="fg-live-workgroup">
                 <div id="live-modal-workgroup-dropdown-container" class="modal-dropdown-container"></div>
@@ -43,7 +43,7 @@
             </div>
 
             <div class="govuk-form-group sup_margin_bottom_10" id="fg-live-name">
-                <label class="govuk-label govuk-!-font-weight-bold">
+                <label class="govuk-label govuk-!-font-weight-bold" asp-for="Name">
                     Name <span class="app-required" aria-hidden="true">*</span>
                 </label>
                 <div id="live-modal-name-dropdown"></div>
@@ -53,12 +53,16 @@
             </div>
 
             <div class="govuk-form-group sup_margin_bottom_10">
-                <label class="govuk-label govuk-!-font-weight-bold" asp-for="TimeCode">Time Code</label>
+                <label class="govuk-label govuk-!-font-weight-bold" asp-for="TimeCode">
+                    Time Code <span class="app-required" aria-hidden="true">*</span>
+                    </label>
                 <input class="govuk-input govuk-!-font-size-16" asp-for="TimeCode" disabled />
             </div>
 
             <div class="govuk-form-group sup_margin_bottom_10">
-                <label class="govuk-label govuk-!-font-weight-bold" asp-for="ParentProject">Parent Project</label>
+                <label class="govuk-label govuk-!-font-weight-bold" asp-for="ParentProject">
+                    Parent Project <span class="app-required" aria-hidden="true">*</span>
+                    </label>
                 <input class="govuk-input govuk-!-font-size-16" asp-for="ParentProject" disabled />
             </div>
 

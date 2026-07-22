@@ -403,13 +403,43 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             string? parentProject,
             double? month)
         {
-            var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _monthlyTimeService.GetLiveAsync(query, workGroup, timeCode, pactStaffId, parentProject, month);
-            var items = response.Success && response.Data != null ? _mapper.Map<List<MonthlyTimeLiveItem>>(response.Data) : [];
-            var total = response.Total;
-            var pagination = response.Pagination != null
-                ? _mapper.Map<PaginationModel>(response.Pagination)
-                : new PaginationModel();
+            var hasAnyFilter = !string.IsNullOrWhiteSpace(workGroup)
+                || !string.IsNullOrWhiteSpace(timeCode)
+                || !string.IsNullOrWhiteSpace(pactStaffId)
+                || !string.IsNullOrWhiteSpace(parentProject)
+                || month.HasValue;
+
+            var currentFilters = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? [];
+
+            List<MonthlyTimeLiveItem> items;
+            decimal total;
+            PaginationModel pagination;
+
+            if (!hasAnyFilter)
+            {
+                items = [];
+                total = 0;
+                pagination = new PaginationModel
+                {
+                    TotalRecords = 0,
+                    PageNumber = request.Page > 0 ? request.Page : 1,
+                    PageSize = request.PageSize > 0 ? request.PageSize : 10
+                };
+            }
+            else
+            {
+                var query = _mapper.Map<QueryParameters<string>>(request);
+                var response = await _monthlyTimeService.GetLiveAsync(query, workGroup, timeCode, pactStaffId, parentProject, month);
+
+                items = response.Success && response.Data != null
+                    ? _mapper.Map<List<MonthlyTimeLiveItem>>(response.Data)
+                    : [];
+                total = response.Total;
+                pagination = response.Pagination != null
+                    ? _mapper.Map<PaginationModel>(response.Pagination)
+                    : new PaginationModel();
+            }
+
             pagination.SortColumn = request.SortBy;
             pagination.SortDirection = request.Descending;
 
@@ -428,7 +458,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 Total = total,
                 Columns = GridDataProvider.GetColumnsDefination<MonthlyTimeLiveItem>(null),
                 Pagination = pagination,
-                CurrentFilters = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? []
+                CurrentFilters = currentFilters
             };
         }
 

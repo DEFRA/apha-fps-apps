@@ -50,7 +50,7 @@ namespace Apha.PACT.DataAccess.Repository
             if (month.HasValue)
                 monthlyTimes = monthlyTimes.Where(x => (int)x.Month == (int)month.Value);
             
-            monthlyTimes = (IQueryable<MonthlyTime>)ApplySorting(monthlyTimes, query.SortBy, query.Descending);            
+            monthlyTimes = (IQueryable<MonthlyTime>)ApplyLiveSorting(monthlyTimes, query.SortBy, query.Descending);            
 
             var pagedLiveData = await ApplyPaging(monthlyTimes, query.Page, query.PageSize);            
             pagedLiveData.Total = await monthlyTimes.SumAsync(x => (decimal)(x.Hours ?? 0));   
@@ -194,13 +194,9 @@ namespace Apha.PACT.DataAccess.Repository
             // Apply filtering
             stagingQuery = ApplyStagingFilter(stagingQuery, query.Filter);
 
-            stagingQuery = stagingQuery
-                .OrderBy(x => x.WorkGroup)
-                .ThenBy(x => x.PactStaffId)
-                .ThenBy(x => x.TimeCode)
-                .ThenBy(x => x.ParentProject)
-                .ThenBy(x => x.Month)
-                .ThenBy(x => x.Id);
+            stagingQuery = (IQueryable<StagingMonthlyTime>)ApplyStagingSorting(stagingQuery, query.SortBy, query.Descending);
+
+            
 
             var pagedStagingData = await ApplyPaging(stagingQuery, query.Page, query.PageSize);
             pagedStagingData.Total = await stagingQuery.SumAsync(x => (decimal)(x.Hours ?? 0));
@@ -552,7 +548,7 @@ namespace Apha.PACT.DataAccess.Repository
             return stagingQuery;
         }
 
-        private static IQueryable ApplySorting(IQueryable<MonthlyTime> query, string? sortBy, bool descending)
+        private static IQueryable ApplyLiveSorting(IQueryable<MonthlyTime> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
             {
@@ -563,24 +559,61 @@ namespace Apha.PACT.DataAccess.Repository
                 .ThenBy(x => x.Month);
             }               
 
-            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
+            return ApplyLiveSortingByProperty(query, sortBy.ToLower(), descending);
         }
 
-        private static IQueryable ApplySortingByProperty(IQueryable<MonthlyTime> query, string property, bool descending)
+        private static IQueryable ApplyLiveSortingByProperty(IQueryable<MonthlyTime> query, string property, bool descending)
         {
             return property switch
             {
-                "workgroup" => ApplyOrder(query, s => s.WorkGroup, descending),
-                "pactstaffid" => ApplyOrder(query, s => s.PactStaffId, descending),
-                "timecode" => ApplyOrder(query, s => s.TimeCode, descending),
-                "parentproject" => ApplyOrder(query, s => s.ParentProject, descending),
-                "period" => ApplyOrder(query, s => s.Month, descending),
-                "hours" => ApplyOrder(query, s => s.Hours, descending),
+                "workgroup" => ApplyLiveOrder(query, s => s.WorkGroup, descending),
+                "pactstaffid" => ApplyLiveOrder(query, s => s.PactStaffId, descending),
+                "timecode" => ApplyLiveOrder(query, s => s.TimeCode, descending),
+                "parentproject" => ApplyLiveOrder(query, s => s.ParentProject, descending),
+                "period" => ApplyLiveOrder(query, s => s.Month, descending),
+                "hours" => ApplyLiveOrder(query, s => s.Hours, descending),
                 _ => query.OrderBy(x => x.WorkGroup).ThenBy(x => x.PactStaffId).ThenBy(x => x.TimeCode).ThenBy(x => x.ParentProject).ThenBy(x => x.Month)
             };
         }
 
-        private static IQueryable ApplyOrder<T>(IQueryable<MonthlyTime> query, Expression<Func<MonthlyTime, T>> keySelector, bool descending)
+        private static IQueryable ApplyLiveOrder<T>(IQueryable<MonthlyTime> query, Expression<Func<MonthlyTime, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        }
+
+        private static IQueryable ApplyStagingSorting(IQueryable<StagingMonthlyTime> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+            {
+                return query.OrderBy(x => x.WorkGroup)
+                .ThenBy(x => x.PactStaffId)
+                .ThenBy(x => x.TimeCode)
+                .ThenBy(x => x.ParentProject)
+                .ThenBy(x => x.Month)
+                .ThenBy(x => x.Id);
+            }
+
+            return ApplyStagingSortingByProperty(query, sortBy.ToLower(), descending);
+        }
+
+        private static IQueryable ApplyStagingSortingByProperty(IQueryable<StagingMonthlyTime> query, string property, bool descending)
+        {
+            return property switch
+            {
+                "workgroup" => ApplyStagingOrder(query, s => s.WorkGroup, descending),
+                "pactstaffid" => ApplyStagingOrder(query, s => s.PactStaffId, descending),
+                "name" => ApplyStagingOrder(query, s => s.Name, descending),
+                "timecode" => ApplyStagingOrder(query, s => s.TimeCode, descending),
+                "parentproject" => ApplyStagingOrder(query, s => s.ParentProject, descending),
+                "period" => ApplyStagingOrder(query, s => s.Month, descending),
+                "hours" => ApplyStagingOrder(query, s => s.Hours, descending),
+                "pactid" => ApplyStagingOrder(query, s => s.PactId, descending),
+                "failurecomments" => ApplyStagingOrder(query, s => s.FailureComments, descending),
+                _ => query.OrderBy(x => x.WorkGroup).ThenBy(x => x.PactStaffId).ThenBy(x => x.TimeCode).ThenBy(x => x.ParentProject).ThenBy(x => x.Month)
+            };
+        }
+
+        private static IQueryable ApplyStagingOrder<T>(IQueryable<StagingMonthlyTime> query, Expression<Func<StagingMonthlyTime, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }

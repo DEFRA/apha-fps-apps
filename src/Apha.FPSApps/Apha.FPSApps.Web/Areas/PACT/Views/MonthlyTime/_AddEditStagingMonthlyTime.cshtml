@@ -14,13 +14,23 @@
         workGroups.Where(x => x.Value != null && x.Value != "")
                   .Select(x => new { value = x.Value, text = x.Text })))
 </script>
+<script type="application/json" id="staging-modal-timecodes-data">
+    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        timeCodeOptions.Where(x => !string.IsNullOrWhiteSpace(x.Value))
+                       .Select(x => new { value = x.Value, text = x.Text })))
+</script>
+<script type="application/json" id="staging-modal-projects-data">
+    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        projectOptions.Where(x => !string.IsNullOrWhiteSpace(x.Value))
+                      .Select(x => new { value = x.Value, text = x.Text })))
+</script>
 
 <div class="modal-header flex-space-center">
     <h3 class="modal-title m-0" id="stagingModalTitle">@(isEdit ? "Edit Imported Time Record" : "Add Time Record")</h3>
     <button type="button" class="btn-close btn-red" onclick="$('#modalPopup').removeClass('show')" aria-label="Close">X</button>
 </div>
 
-<div class="modal-body modal-body-custom">
+<div class="modal-body modal-body-custom" style="max-height: 500px;">
     <form id="stagingMonthlyTimeForm" class="govuk-grid-column-full" novalidate>
         <input type="hidden" asp-for="Id" />
         <input type="hidden" asp-for="PactId" id="StagingPactId" />
@@ -36,9 +46,9 @@
         <fieldset class="govuk-fieldset">
             <legend class="govuk-visually-hidden">Time Record</legend>
 
-            <span class="app-mandatory-note sup_padding_top_10" aria-hidden="true">
+            @* <span class="app-mandatory-note sup_padding_top_10" aria-hidden="true">
                 <span class="app-required">*</span> Mandatory Fields
-            </span>
+            </span> *@
 
             <div class="govuk-form-group sup_margin_bottom_10" id="fg-staging-workgroup">
                 <div id="staging-modal-workgroup-dropdown-container" class="modal-dropdown-container"></div>
@@ -52,11 +62,11 @@
                 </label>
                 <input type="text" class="govuk-input govuk-!-font-size-16" id="StagingPactStaffId"
                        asp-for="PactStaffId" placeholder="Select a name to populate"
-                       autocomplete="off" aria-describedby="live-modal-id-error" readonly />
+                       autocomplete="off" aria-describedby="live-modal-id-error" disabled />
             </div>
 
             <div class="govuk-form-group sup_margin_bottom_10" id="fg-staging-name">
-                <label class="govuk-label govuk-!-font-weight-bold">
+                <label class="govuk-label govuk-!-font-weight-bold" asp-for="Name">
                     Name <span class="app-required" aria-hidden="true">*</span>
                 </label>
                 <div id="staging-modal-name-dropdown"></div>
@@ -69,11 +79,9 @@
                 <label for="StagingTimeCode" class="govuk-label govuk-!-font-weight-bold">
                     Time Code <span class="app-required" aria-hidden="true">*</span>
                 </label>
-                <select class="govuk-select govuk-!-font-size-16 sup_width_100" asp-for="TimeCode"
-                        asp-items="@timeCodeOptions" id="StagingTimeCode" name="TimeCode"
-                        aria-describedby="staging-modal-timecode-error" aria-required="true" required>
-                    <option value="">--select--</option>
-                </select>
+                <div id="staging-modal-timecode-dropdown" class="modal-dropdown-container"></div>
+                <input type="hidden" asp-for="TimeCode" id="StagingTimeCode" name="TimeCode"
+                       aria-describedby="staging-modal-timecode-error" aria-required="true" required />
                 <span data-valmsg-for="TimeCode" class="govuk-error-message" style="display:none;"></span>
             </div>
 
@@ -81,11 +89,9 @@
                 <label for="StagingParentProject" class="govuk-label govuk-!-font-weight-bold">
                     Parent Project <span class="app-required" aria-hidden="true">*</span>
                 </label>
-                <select class="govuk-select govuk-!-font-size-16 sup_width_100" asp-for="ParentProject"
-                        asp-items="@projectOptions" id="StagingParentProject" name="ParentProject"
-                        aria-describedby="staging-modal-parentproject-error" aria-required="true" required>
-                    <option value="">--select--</option>
-                </select>
+                <div id="staging-modal-parentproject-dropdown" class="modal-dropdown-container"></div>
+                <input type="hidden" asp-for="ParentProject" id="StagingParentProject" name="ParentProject"
+                       aria-describedby="staging-modal-parentproject-error" aria-required="true" required />
                 <span data-valmsg-for="ParentProject" class="govuk-error-message" style="display:none;"></span>
             </div>
 

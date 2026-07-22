@@ -6,9 +6,13 @@ function getStagingGridManager() {
     return window['gridManager_' + monthlyTimeStagingGridId];
 }
 
+function getSelectedWorkGroup() {
+    return $('#ddWorkGroup').val() || null;
+}
+
 function getMonthlyTimeLiveFilters() {
     return {
-        workGroup: $('#ddWorkGroup').val() || null,
+        workGroup: getSelectedWorkGroup(),
         timeCode: $('#ddTimeCode').val() || null,
         pactStaffId: $('#ddStaff').val() || null,
         parentProject: $('#ddParentProject').val() || null,
@@ -41,9 +45,11 @@ function reloadStagingGrid() {
 function clearLiveSearch() {
     $('#ddWorkGroup').val('');
     $('#ddStaff').val('');
-    $('#ddTimeCode').val('');
-    $('#ddParentProject').val('');
     $('#ddMonth').val('');
+
+    if (window.monthlyTimeWorkGroupDropdown) {
+        window.monthlyTimeWorkGroupDropdown.clear();
+    }
 
     if (window.monthlyTimeStaffDropdown) {
         window.monthlyTimeStaffDropdown.clear();
@@ -72,7 +78,7 @@ function alignTotalHoursBox(gridId, rowContainerId, inputId, labelSelector) {
     label.style.marginLeft = Math.max(0, leftOffset - label.offsetWidth - 8) + 'px';
     label.style.marginRight = '8px';
 
-    input.style.width = thRect.width + 'px';
+    //input.style.width = thRect.width + 'px';
     input.style.flexShrink = '0';
 }
 
@@ -104,14 +110,126 @@ function scheduleAlignTotalHoursFields() {
     });
 }
 
+function readDropdownJsonData(selector) {
+    const $json = $(selector);
+    if (!$json.length) return [];
+    try {
+        const parsed = JSON.parse($json.text());
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+}
+
 function resetTimeCodeOptions() {
-    const $timeCode = $('#ddTimeCode');
-    $timeCode.empty().append('<option value="">--select--</option>');
+    $('#ddTimeCode').val('');
+    if (window.monthlyTimeTimeCodeDropdown) {
+        window.monthlyTimeTimeCodeDropdown.clear();
+        window.monthlyTimeTimeCodeDropdown.updateData([]);
+    }
 }
 
 function resetParentProjectOptions() {
-    const $parentProject = $('#ddParentProject');
-    $parentProject.empty().append('<option value="">--select--</option>');
+    $('#ddParentProject').val('');
+    if (window.monthlyTimeParentProjectDropdown) {
+        window.monthlyTimeParentProjectDropdown.clear();
+        window.monthlyTimeParentProjectDropdown.updateData([]);
+    }
+}
+
+function initWorkGroupDropdown() {
+    const workGroups = readDropdownJsonData('#monthly-time-workgroups-data');
+
+    window.monthlyTimeWorkGroupDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'monthlyTimeWorkGroup',
+        containerSelector: '#workGroupSelectDropdown',
+        placeholder: '--select--',
+        searchPlaceholder: 'Type to search',
+        columns: [
+            { field: 'text', header: 'Work Group', width: '240px' }
+        ],
+        data: workGroups,
+        displayField: function (row) { return row.text || ''; },
+        valueField: function (row) { return row.value || ''; },
+        enableSearch: true,
+        showSerialNumber: false,
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                const workGroup = selectedItem?.value || '';
+                $('#ddWorkGroup').val(workGroup);
+                loadStaffByWorkGroup(workGroup);
+                loadTimeCodesByWorkGroup(workGroup);
+            },
+            onClear: function () {
+                $('#ddWorkGroup').val('');
+                if (window.monthlyTimeStaffDropdown) {
+                    window.monthlyTimeStaffDropdown.clear();
+                    window.monthlyTimeStaffDropdown.updateData([]);
+                }
+                $('#ddStaff').val('');
+                resetTimeCodeOptions();
+                resetParentProjectOptions();
+            }
+        }
+    });
+}
+
+function initLiveFilterDropdowns() {
+    const initialTimeCodes = readDropdownJsonData('#monthly-time-timecodes-data');
+    const initialProjects = readDropdownJsonData('#monthly-time-projects-data');
+
+    window.monthlyTimeTimeCodeDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'monthlyTimeTimeCode',
+        containerSelector: '#timeCodeSelectDropdown',
+        placeholder: '--select--',
+        searchPlaceholder: 'Type to search',
+        columns: [
+            { field: 'text', header: 'Timecode', width: '220px' }
+        ],
+        data: initialTimeCodes,
+        displayField: function (row) { return row.text || ''; },
+        valueField: function (row) { return row.value || ''; },
+        enableSearch: true,
+        showSerialNumber: false,
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                const workGroup = getSelectedWorkGroup();
+                const timeCode = selectedItem?.value || '';
+                $('#ddTimeCode').val(timeCode);
+                loadProjectsByWorkGroupAndTimeCode(workGroup, timeCode);
+            },
+            onClear: function () {
+                $('#ddTimeCode').val('');
+                resetParentProjectOptions();
+            }
+        }
+    });
+
+    window.monthlyTimeParentProjectDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'monthlyTimeParentProject',
+        containerSelector: '#parentProjectSelectDropdown',
+        placeholder: '--select--',
+        searchPlaceholder: 'Type to search',
+        columns: [
+            { field: 'text', header: 'Parent Project', width: '240px' }
+        ],
+        data: initialProjects,
+        displayField: function (row) { return row.text || ''; },
+        valueField: function (row) { return row.value || ''; },
+        enableSearch: true,
+        showSerialNumber: false,
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                $('#ddParentProject').val(selectedItem?.value || '');
+            },
+            onClear: function () {
+                $('#ddParentProject').val('');
+            }
+        }
+    });
 }
 
 function initStaffDropdown() {
@@ -131,6 +249,7 @@ function initStaffDropdown() {
         valueField: function (row) { return row.pactId || ''; },
         enableSearch: true,
         showSerialNumber: false,
+        clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem) {
                 $('#ddStaff').val(selectedItem?.pactId || '');
@@ -180,10 +299,9 @@ function loadTimeCodesByWorkGroup(workGroup) {
         data: { workGroup: workGroup },
         success: function (data) {
             const items = Array.isArray(data) ? data : [];
-            const $timeCode = $('#ddTimeCode');
-            items.forEach(function (item) {
-                $timeCode.append($('<option>', { value: item.value, text: item.text }));
-            });
+            if (window.monthlyTimeTimeCodeDropdown) {
+                window.monthlyTimeTimeCodeDropdown.updateData(items);
+            }
         },
         error: function () {
             showAlertMessage('Failed to load timecode options.', AlertType.ERROR);
@@ -191,7 +309,7 @@ function loadTimeCodesByWorkGroup(workGroup) {
     });
 }
 
-function loadProjectsByWorkGroupAndTimeCode(workGroup, timeCode) {
+function loadProjectsByWorkGroupAndTimeCode(workGroup, timeCode, restoreParentProject) {
     resetParentProjectOptions();
 
     if (!workGroup || !timeCode) {
@@ -204,10 +322,13 @@ function loadProjectsByWorkGroupAndTimeCode(workGroup, timeCode) {
         data: { workGroup: workGroup, timeCode: timeCode },
         success: function (data) {
             const items = Array.isArray(data) ? data : [];
-            const $parentProject = $('#ddParentProject');
-            items.forEach(function (item) {
-                $parentProject.append($('<option>', { value: item.value, text: item.text }));
-            });
+            if (window.monthlyTimeParentProjectDropdown) {
+                window.monthlyTimeParentProjectDropdown.updateData(items);
+                if (restoreParentProject && items.some(function (item) { return item.value === restoreParentProject; })) {
+                    window.monthlyTimeParentProjectDropdown.setValue(restoreParentProject);
+                    $('#ddParentProject').val(restoreParentProject);
+                }
+            }
         },
         error: function () {
             showAlertMessage('Failed to load parent project options.', AlertType.ERROR);
@@ -235,8 +356,8 @@ function editMonthlyTimeLive(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-            const workGroup      = $('#LiveWorkGroup').val();
-            const existingName   = $('#LiveName').val();
+            const workGroup = $('#LiveWorkGroup').val();
+            const existingName = $('#LiveName').val();
             const existingPactId = $('#LivePactStaffId').val();
             initLiveModalDropdowns(workGroup, existingName, existingPactId);
         },
@@ -256,14 +377,13 @@ function initLiveModalDropdowns(existingWorkGroup, existingName, existingPactId)
         columns: [
             { field: 'text', header: 'Work Group', width: '200px' }
         ],
-        data: $('#ddWorkGroup option').filter(function () { return $(this).val() !== ''; }).map(function () {
-            return { value: $(this).val(), text: $(this).text() };
-        }).get(),
+        data: readDropdownJsonData('#monthly-time-workgroups-data'),
         displayField: function (row) { return row.text || ''; },
         valueField: function (row) { return row.value || ''; },
         enableSearch: true,
         disabled: true,
         showSerialNumber: false,
+        clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem) {
                 const selectedWorkGroup = selectedItem?.value || '';
@@ -295,6 +415,7 @@ function initLiveModalDropdowns(existingWorkGroup, existingName, existingPactId)
         valueField: function (row) { return row.pactId || ''; },
         enableSearch: true,
         showSerialNumber: false,
+        clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem) {
                 $('#LiveName').val(selectedItem?.name || '');
@@ -431,12 +552,9 @@ function editStagingMonthlyTime(btn) {
 }
 
 function initStagingModalDropdowns(existingWorkGroup, existingName, existingPactId, existingTimeCode, existingParentProject) {
-    // Read work-group list from the JSON block embedded by the partial
-    var wgData = [];
-    var $wgJson = $('#staging-modal-workgroups-data');
-    if ($wgJson.length) {
-        try { wgData = JSON.parse($wgJson.text()); } catch (e) { wgData = []; }
-    }
+    const wgData = readDropdownJsonData('#staging-modal-workgroups-data');
+    const initialTimeCodes = readDropdownJsonData('#staging-modal-timecodes-data');
+    const initialProjects = readDropdownJsonData('#staging-modal-projects-data');
 
     window.stagingWorkGroupDropdown = new MultiColumnDropdownComponent({
         dropdownId: 'stagingWorkGroup',
@@ -452,6 +570,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
         valueField: function (row) { return row.value || ''; },
         enableSearch: true,
         showSerialNumber: false,
+        clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem) {
                 const selectedWorkGroup = selectedItem?.value || '';
@@ -492,6 +611,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
         valueField: function (row) { return row.pactId || ''; },
         enableSearch: true,
         showSerialNumber: false,
+        clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem) {
                 const selectedPactId = selectedItem?.pactId || '';
@@ -507,34 +627,79 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
         }
     });
 
+    window.stagingTimeCodeDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'stagingTimeCode',
+        containerSelector: '#staging-modal-timecode-dropdown',
+        placeholder: '--select--',
+        searchPlaceholder: 'Type to search',
+        labelText: '',
+        columns: [
+            { field: 'text', header: 'Time Code', width: '260px' }
+        ],
+        data: initialTimeCodes,
+        displayField: function (row) { return row.text || ''; },
+        valueField: function (row) { return row.value || ''; },
+        enableSearch: true,
+        showSerialNumber: false,
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                const timeCode = selectedItem?.value || '';
+                const workGroup = $('#StagingWorkGroup').val();
+                $('#StagingTimeCode').val(timeCode);
+
+                if (workGroup) {
+                    loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, timeCode);
+                }
+            },
+            onClear: function () {
+                const workGroup = $('#StagingWorkGroup').val();
+                $('#StagingTimeCode').val('');
+
+                if (workGroup) {
+                    resetStagingModalParentProjectOptions();
+                } else {
+                    loadAllStagingModalProjects();
+                }
+            }
+        }
+    });
+
+    window.stagingParentProjectDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'stagingParentProject',
+        containerSelector: '#staging-modal-parentproject-dropdown',
+        placeholder: '--select--',
+        searchPlaceholder: 'Type to search',
+        labelText: '',
+        columns: [
+            { field: 'text', header: 'Parent Project', width: '260px' }
+        ],
+        data: initialProjects,
+        displayField: function (row) { return row.text || ''; },
+        valueField: function (row) { return row.value || ''; },
+        enableSearch: true,
+        showSerialNumber: false,
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                $('#StagingParentProject').val(selectedItem?.value || '');
+            },
+            onClear: function () {
+                $('#StagingParentProject').val('');
+            }
+        }
+    });
+
     if (existingWorkGroup) {
-        // EDIT mode: restore selections using dependent per-WG data
         window.stagingWorkGroupDropdown.setValue(existingWorkGroup);
-
-        // Load staff so Name dropdown is populated, then restore the selected name display
         loadStagingModalStaffByWorkGroup(existingWorkGroup, existingName, existingPactId);
-
-        // Load full time code list in edit mode (same as add mode) and restore selected time code
         loadAllStagingModalTimeCodes(existingTimeCode);
-
-        // Load full project list in edit mode (same as add mode) and restore selected project
         loadAllStagingModalProjects(existingParentProject);
     } else {
-        // ADD mode: keep Name dropdown WG-scoped; no staff until WG selected
         loadStagingModalStaffByWorkGroup($('#StagingWorkGroup').val());
         loadAllStagingModalTimeCodes();
         loadAllStagingModalProjects();
     }
-
-    $('#StagingTimeCode').on('change', function () {
-        const workGroup = $('#StagingWorkGroup').val();
-        const timeCode  = $(this).val();
-        if (workGroup) {
-            // WG already chosen — filter projects by WG + TC
-            loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, timeCode);
-        }
-        // No WG yet in ADD mode: projects list stays as all-data
-    });
 }
 
 function loadStagingModalStaffByWorkGroup(workGroup, restoreName, restorePactId) {
@@ -595,15 +760,15 @@ function loadStagingModalTimeCodesByWorkGroup(workGroup, restoreTimeCode, loadPr
         data: { workGroup: workGroup },
         success: function (data) {
             const items = Array.isArray(data) ? data : [];
-            const $timeCode = $('#StagingTimeCode');
-            items.forEach(function (item) {
-                $timeCode.append($('<option>', { value: item.value, text: item.text }));
-            });
+            if (window.stagingTimeCodeDropdown) {
+                window.stagingTimeCodeDropdown.updateData(items);
 
-            if (restoreTimeCode && items.some(function (item) { return item.value === restoreTimeCode; })) {
-                $timeCode.val(restoreTimeCode);
-                if (loadProjectsOnRestore) {
-                    loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, restoreTimeCode);
+                if (restoreTimeCode && items.some(function (item) { return item.value === restoreTimeCode; })) {
+                    window.stagingTimeCodeDropdown.setValue(restoreTimeCode);
+                    $('#StagingTimeCode').val(restoreTimeCode);
+                    if (loadProjectsOnRestore) {
+                        loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, restoreTimeCode);
+                    }
                 }
             }
         },
@@ -613,7 +778,7 @@ function loadStagingModalTimeCodesByWorkGroup(workGroup, restoreTimeCode, loadPr
     });
 }
 
-function loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, timeCode) {
+function loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, timeCode, restoreParentProject) {
     resetStagingModalParentProjectOptions();
 
     if (!workGroup || !timeCode) return;
@@ -624,10 +789,14 @@ function loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, timeCod
         data: { workGroup: workGroup, timeCode: timeCode },
         success: function (data) {
             const items = Array.isArray(data) ? data : [];
-            const $parentProject = $('#StagingParentProject');
-            items.forEach(function (item) {
-                $parentProject.append($('<option>', { value: item.value, text: item.text }));
-            });
+            if (window.stagingParentProjectDropdown) {
+                window.stagingParentProjectDropdown.updateData(items);
+
+                if (restoreParentProject && items.some(function (item) { return item.value === restoreParentProject; })) {
+                    window.stagingParentProjectDropdown.setValue(restoreParentProject);
+                    $('#StagingParentProject').val(restoreParentProject);
+                }
+            }
         },
         error: function () {
             showAlertMessage('Failed to load parent project options.', AlertType.ERROR);
@@ -636,11 +805,19 @@ function loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, timeCod
 }
 
 function resetStagingModalTimeCodeOptions() {
-    $('#StagingTimeCode').empty().append('<option value="">--select--</option>');
+    $('#StagingTimeCode').val('');
+    if (window.stagingTimeCodeDropdown) {
+        window.stagingTimeCodeDropdown.clear();
+        window.stagingTimeCodeDropdown.updateData([]);
+    }
 }
 
 function resetStagingModalParentProjectOptions() {
-    $('#StagingParentProject').empty().append('<option value="">--select--</option>');
+    $('#StagingParentProject').val('');
+    if (window.stagingParentProjectDropdown) {
+        window.stagingParentProjectDropdown.clear();
+        window.stagingParentProjectDropdown.updateData([]);
+    }
 }
 
 function loadAllStagingModalStaff() {
@@ -664,13 +841,13 @@ function loadAllStagingModalTimeCodes(restoreTimeCode) {
         type: 'GET',
         success: function (data) {
             const items = Array.isArray(data) ? data : [];
-            const $timeCode = $('#StagingTimeCode');
-            items.forEach(function (item) {
-                $timeCode.append($('<option>', { value: item.value, text: item.text }));
-            });
+            if (window.stagingTimeCodeDropdown) {
+                window.stagingTimeCodeDropdown.updateData(items);
 
-            if (restoreTimeCode && items.some(function (item) { return item.value === restoreTimeCode; })) {
-                $timeCode.val(restoreTimeCode);
+                if (restoreTimeCode && items.some(function (item) { return item.value === restoreTimeCode; })) {
+                    window.stagingTimeCodeDropdown.setValue(restoreTimeCode);
+                    $('#StagingTimeCode').val(restoreTimeCode);
+                }
             }
         },
         error: function () {
@@ -686,13 +863,13 @@ function loadAllStagingModalProjects(restoreParentProject) {
         type: 'GET',
         success: function (data) {
             const items = Array.isArray(data) ? data : [];
-            const $parentProject = $('#StagingParentProject');
-            items.forEach(function (item) {
-                $parentProject.append($('<option>', { value: item.value, text: item.text }));
-            });
+            if (window.stagingParentProjectDropdown) {
+                window.stagingParentProjectDropdown.updateData(items);
 
-            if (restoreParentProject && items.some(function (item) { return item.value === restoreParentProject; })) {
-                $parentProject.val(restoreParentProject);
+                if (restoreParentProject && items.some(function (item) { return item.value === restoreParentProject; })) {
+                    window.stagingParentProjectDropdown.setValue(restoreParentProject);
+                    $('#StagingParentProject').val(restoreParentProject);
+                }
             }
         },
         error: function () {
@@ -914,7 +1091,9 @@ function exportMonthlyTime() {
 $(function () {
     window.monthlyTimePassedFilter = null;
 
+    initWorkGroupDropdown();
     initStaffDropdown();
+    initLiveFilterDropdowns();
     scheduleAlignTotalHoursFields();
     $(window).on('resize', scheduleAlignTotalHoursFields);
 
@@ -924,17 +1103,6 @@ $(function () {
         }
     });
 
-    $('#ddWorkGroup').on('change', function () {
-        const workGroup = $(this).val();
-        loadStaffByWorkGroup(workGroup);
-        loadTimeCodesByWorkGroup(workGroup);
-    });
-
-    $('#ddTimeCode').on('change', function () {
-        const workGroup = $('#ddWorkGroup').val();
-        const timeCode = $(this).val();
-        loadProjectsByWorkGroupAndTimeCode(workGroup, timeCode);
-    });
 
     $('#btnSearchLive').on('click', reloadLiveGrid);
     $('#btnClearLiveSearch').on('click', function () {
