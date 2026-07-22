@@ -36,26 +36,25 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("ProfitCentre", out var profitCentre) && profitCentre != null)
-                query = query.Where(x => EF.Functions.ILike(x.ProfitCentre!, $"%{profitCentre}%"));
+            query = ApplyLike(query, dict, "ProfitCentre", (q, v) => q.Where(x => EF.Functions.ILike(x.ProfitCentre!, $"%{v}%")));
+            query = ApplyLike(query, dict, "Program", (q, v) => q.Where(x => EF.Functions.ILike(x.Program!, $"%{v}%")));
+            query = ApplyLike(query, dict, "Name", (q, v) => q.Where(x => EF.Functions.ILike(x.Name!, $"%{v}%")));
+            query = ApplyLike(query, dict, "Manager", (q, v) => q.Where(x => EF.Functions.ILike(x.Manager!, $"%{v}%")));
+            query = ApplyLike(query, dict, "ProjectStatus", (q, v) => q.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{v}%")));
+            query = ApplyLike(query, dict, "WorkGroup", (q, v) => q.Where(x => EF.Functions.ILike(x.WorkGroup!, $"%{v}%")));
+            query = ApplyLike(query, dict, "GradeCode", (q, v) => q.Where(x => EF.Functions.ILike(x.GradeCode!, $"%{v}%")));
 
-            if (dict.TryGetValue("Program", out var program) && program != null)
-                query = query.Where(x => EF.Functions.ILike(x.Program!, $"%{program}%"));
+            return query;
+        }
 
-            if (dict.TryGetValue("Name", out var name) && name != null)
-                query = query.Where(x => EF.Functions.ILike(x.Name!, $"%{name}%"));
-
-            if (dict.TryGetValue("Manager", out var manager) && manager != null)
-                query = query.Where(x => EF.Functions.ILike(x.Manager!, $"%{manager}%"));
-
-            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && projectStatus != null)
-                query = query.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
-
-            if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
-                query = query.Where(x => EF.Functions.ILike(x.WorkGroup!, $"%{workGroup}%"));
-
-            if (dict.TryGetValue("GradeCode", out var gradeCode) && gradeCode != null)
-                query = query.Where(x => EF.Functions.ILike(x.GradeCode!, $"%{gradeCode}%"));
+        private static IQueryable<ProjectStaffPlanDetailsView> ApplyLike(
+            IQueryable<ProjectStaffPlanDetailsView> query,
+            IDictionary<string, object> dict,
+            string key,
+            Func<IQueryable<ProjectStaffPlanDetailsView>, object, IQueryable<ProjectStaffPlanDetailsView>> apply)
+        {
+            if (dict.TryGetValue(key, out var value) && value != null)
+                return apply(query, value);
 
             return query;
         }
