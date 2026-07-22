@@ -182,6 +182,14 @@ namespace Apha.FPSApps.Web.Mappings
             // ResourceAllocation - Stage 2 Check Resource Allocation
             CreateMap<ResourceStaffAllocationDto, ResourceStaffAllocationItem>().ReverseMap();
             CreateMap<ResourceStaffJobDto, ResourceStaffJobItem>().ReverseMap();
+
+            // ResourceMgmtReplan — Resource Re-allocation Screen (frmRM_RePlan)
+            CreateMap<ResourceMgmtReplanViewDto, ResourceMgmtReplanGridItem>().ReverseMap();
+            CreateMap<ProjectStaffReplanDto, ResourceMgmtReplanGridItem>();
+            CreateMap<ResourceMgmtReplanStaffJobDto, ResourceMgmtReplanAllTimeItem>().ReverseMap();
+            CreateMap<StaffJobViewDto, ResourceMgmtReplanAllTimeItem>()
+                .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID));
+            CreateMap<ResourceMgmtReplanStaffJobDto, ResourceMgmtReplanStagedItem>().ReverseMap();
         }
     }
 }

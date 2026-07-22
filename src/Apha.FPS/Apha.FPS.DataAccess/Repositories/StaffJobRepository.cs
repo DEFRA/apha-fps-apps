@@ -576,6 +576,70 @@ namespace Apha.FPS.DataAccess.Repositories
             };
         }
 
+        public async Task<PagedData<StaffJobView>> GetStaffJobsAllocationByJobCodeWgGradePagedAsync(PaginationParameters<string> query, string jobcode, string wgGrade)
+        {
+            var baseQuery = (from sj in _dbContext.StaffJobs
+                             join wge in _dbContext.WorkGroupEmployees on sj.StaffId equals wge.PactId
+                             join wgg in _dbContext.WorkgroupGrades on wge.WorkGroupGrade equals wgg.WgGrade
+                             join wg in _dbContext.Workgroups on wgg.Workgroup equals wg.WorkGroupName
+                             join pc in _dbContext.ProfitCentres on wg.ProfitCentre equals pc.ProfitCentreId
+                             join upc in _dbContext.UserProfitcentres on pc.ProfitCentreId equals upc.ProfitCentre
+                             join u in _dbContext.Users on upc.UserId equals u.UserId
+                             where wge.WorkGroupGrade == wgGrade &&  sj.JobCode == jobcode
+                                && EF.Functions.ILike(u.UserEmail!, _requestContext.UserEmailId)
+                             select new StaffJobView
+                             {
+                                 StaffID = sj.StaffId,
+                                 JobCode = sj.JobCode,
+                                 PlannedHours = sj.PlannedHours,
+                                 WorkGroupGrade = wge.WorkGroupGrade
+                             }).Distinct().AsQueryable();
+
+            baseQuery = ApplyStaffJobByStaffIdFilter(baseQuery, query.Filter);
+            baseQuery = ApplyStaffJobByStaffIdSorting(baseQuery, query.SortBy, query.Descending);
+
+            var result = await baseQuery.AsNoTracking().ToListAsync();
+            return base.ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        private static IQueryable<StaffJobView> ApplyStaffJobByStaffIdFilter(IQueryable<StaffJobView> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("StaffID", out var staffId) && staffId != null)
+                query = query.Where(x => EF.Functions.ILike(x.StaffID!, $"%{staffId}%"));
+
+            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.JobCode!, $"%{jobCode}%"));
+
+            if (dict.TryGetValue("WorkGroupGrade", out var workGroupGrade) && workGroupGrade != null)
+                query = query.Where(x => EF.Functions.ILike(x.WorkGroupGrade!, $"%{workGroupGrade}%"));
+
+            return query;
+        }
+
+        private static IQueryable<StaffJobView> ApplyStaffJobByStaffIdSorting(IQueryable<StaffJobView> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+                return query.OrderBy(x => x.JobCode);
+
+            return sortBy.ToLower() switch
+            {
+                "staffid" => descending ? query.OrderByDescending(x => x.StaffID) : query.OrderBy(x => x.StaffID),
+                "jobcode" => descending ? query.OrderByDescending(x => x.JobCode) : query.OrderBy(x => x.JobCode),
+                "plannedhours" => descending ? query.OrderByDescending(x => x.PlannedHours) : query.OrderBy(x => x.PlannedHours),
+                "workgroupgrade" => descending ? query.OrderByDescending(x => x.WorkGroupGrade) : query.OrderBy(x => x.WorkGroupGrade),
+                _ => query.OrderBy(x => x.JobCode)
+            };
+        }
+
         private static IQueryable<StaffJobZtView> ApplyZtStaffJobFilter(IQueryable<StaffJobZtView> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))

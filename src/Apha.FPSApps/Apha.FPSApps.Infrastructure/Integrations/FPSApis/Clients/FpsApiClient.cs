@@ -41,6 +41,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsContributionSummaryApiClient FpsContributionSummary { get; }
         public IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
         public IFpsResourceAllocationApiClient FpsResourceAllocation { get; }
+        public IFpsResourceMgmtReplanApiClient FpsResourceMgmtReplan { get; }
 
         public IFpsTestRCCostApiClient FpsTestRCCost { get; }
         public IFpsTestRequirementRCCostApiClient FpsTestRequirementRCCost { get; }
@@ -87,6 +88,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsTotalBusinessOverheads = new FpsTotalBusinessOverheadsApiClient(http, mapper);
             FpsCostCentre = new FpsCostCentreApiClient(http, mapper);
             FpsResourceAllocation = new FpsResourceAllocationApiClient(http, mapper);
+            FpsResourceMgmtReplan = new FpsResourceMgmtReplanApiClient(http, mapper);
         }
     }
 }

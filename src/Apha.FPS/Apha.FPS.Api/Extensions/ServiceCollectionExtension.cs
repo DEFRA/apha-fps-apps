@@ -60,6 +60,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             services.AddScoped<IResourceAllocationService, ResourceAllocationService>();
+            //services.AddScoped<IResourceMgmtReplanService, ResourceMgmtReplanService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -106,6 +107,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
             services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
             services.AddScoped<IResourceAllocationRepository, ResourceAllocationRepository>();
+            //services.AddScoped<IResourceMgmtReplanRepository, ResourceMgmtReplanRepository>();
             return services;
 
         }

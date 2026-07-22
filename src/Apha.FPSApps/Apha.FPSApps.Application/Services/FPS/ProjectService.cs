@@ -142,5 +142,9 @@ namespace Apha.FPSApps.Application.Services.FPS
             string? manager = null,
             string? customer = null)
             => _fpsClient.FpsProject.GetProjectProfitabilityVlaAsync(query, projectStatus, programNo, manager, customer);
+
+        public Task<ApiResponseDto<List<ProjectStaffReplanDto>>> GetProjectGroupStaffReplanAsync(QueryParameters<string> query, string workgroup)
+            => _fpsClient.FpsProject.GetProjectGroupStaffReplanAsync(query, workgroup);
+
     }
 }
