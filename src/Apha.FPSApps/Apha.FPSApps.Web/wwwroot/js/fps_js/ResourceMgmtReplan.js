@@ -6,7 +6,8 @@
     let _currentWgGrade        = '';
     let _currentJobCode        = '';
     let _stagedRows            = [];
-    const _emptyStaffGridHtml  = (document.getElementById('gridContainer_RePlanGrid') || {}).innerHTML || '';
+    const _emptyStaffGridHtml   = (document.getElementById('gridContainer_RePlanGrid') || {}).innerHTML || '';
+    const _emptyAllTimeGridHtml  = (document.getElementById('gridContainer_AllTimeGrid') || {}).innerHTML || '';
 
     /* ── DOM helpers ────────────────────────────────────────────────────── */
     const el      = id => document.getElementById(id);
@@ -369,6 +370,51 @@
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
     }
+
+    /* ── Auto-select first row after re-plan grid reloads ───────────────── */
+    // rraLoadRePlanGrid injects new HTML into #gridContainer_RePlanGrid via
+    // jQuery .html(). A MutationObserver watches for that childList change and
+    // immediately highlights + selects the first data row so the AllTime grid
+    // loads without requiring a manual click.
+    // When the grid has no data rows, AllTimeGrid is refreshed to show its
+    // empty state (columns + "No records found") and AllTime fields are cleared.
+    function autoSelectFirstRePlanRow() {
+        var container = el('gridContainer_RePlanGrid');
+        if (!container) return;
+
+        // First row that carries a composite StaffRowKey (data-id = "JobCode|WgGrade")
+        var firstRow = container.querySelector('tbody tr[data-id]');
+
+        if (!firstRow || !firstRow.getAttribute('data-id')) {
+            // No data rows — reset AllTime section and restore its initial empty HTML (columns + "No records found")
+            _currentJobCode = '';
+            rraResetAllTimeFields();
+            var c = el('gridContainer_AllTimeGrid');
+            if (c) c.innerHTML = _emptyAllTimeGridHtml;
+            return;
+        }
+
+        // Mirror the selected-row highlight applied by the DataGrid click handler
+        container.querySelectorAll('tbody tr').forEach(function (r) {
+            r.classList.remove('selected-row');
+        });
+        firstRow.classList.add('selected-row');
+
+        // Directly call the in-scope handler — loads the AllTime grid
+        rraOnStaffRowSelect(firstRow);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var container = el('gridContainer_RePlanGrid');
+        if (!container) return;
+
+        // jQuery .html() triggers a childList mutation on the container
+        var observer = new MutationObserver(function () {
+            autoSelectFirstRePlanRow();
+        });
+
+        observer.observe(container, { childList: true });
+    });
 
     /* ── Expose public API (called by Razor inline handlers) ────────────── */
     window.rraUpdateResourceCentre  = rraUpdateResourceCentre;

@@ -584,6 +584,7 @@ namespace Apha.FPS.DataAccess.Repositories
                              join wg in _dbContext.Workgroups on wgg.Workgroup equals wg.WorkGroupName
                              join pc in _dbContext.ProfitCentres on wg.ProfitCentre equals pc.ProfitCentreId
                              join upc in _dbContext.UserProfitcentres on pc.ProfitCentreId equals upc.ProfitCentre
+                             join emp in _dbContext.Employees on wge.SpNumber equals emp.SPNumber
                              join u in _dbContext.Users on upc.UserId equals u.UserId
                              where wge.WorkGroupGrade == wgGrade &&  sj.JobCode == jobcode
                                 && EF.Functions.ILike(u.UserEmail!, _requestContext.UserEmailId)
@@ -592,7 +593,9 @@ namespace Apha.FPS.DataAccess.Repositories
                                  StaffID = sj.StaffId,
                                  JobCode = sj.JobCode,
                                  PlannedHours = sj.PlannedHours,
-                                 WorkGroupGrade = wge.WorkGroupGrade
+                                 WorkGroupGrade = wge.WorkGroupGrade,
+                                 Name = (emp.LastName ?? string.Empty) + ", " +
+                                                 (emp.FirstName ?? string.Empty),
                              }).Distinct().AsQueryable();
 
             baseQuery = ApplyStaffJobByStaffIdFilter(baseQuery, query.Filter);

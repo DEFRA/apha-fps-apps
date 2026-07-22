@@ -1,5 +1,6 @@
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -22,20 +23,23 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class ResourceMgmtReplanController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IResourceMgmtReplanService _resourceMgmtReplanService;
         private readonly IProfitCentreService _profitCentreService;
-        private readonly IWorkGroupGradeService _workGroupGradeService;
+        private readonly IWorkGroupService _workGroupService;
+        private readonly IProjectService _projectService;
+        private readonly IPlanStaffZTCodeService _planStaffZTCodeService;
 
         public ResourceMgmtReplanController(
             IMapper mapper,
-            IResourceMgmtReplanService resourceMgmtReplanService,
             IProfitCentreService profitCentreService,
-            IWorkGroupGradeService workGroupGradeService)
+            IWorkGroupService workGroupService,
+            IProjectService projectService,
+            IPlanStaffZTCodeService planStaffZTCodeService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-            _resourceMgmtReplanService = resourceMgmtReplanService ?? throw new ArgumentNullException(nameof(resourceMgmtReplanService));
             _profitCentreService = profitCentreService ?? throw new ArgumentNullException(nameof(profitCentreService));
-            _workGroupGradeService = workGroupGradeService ?? throw new ArgumentNullException(nameof(workGroupGradeService));
+            _workGroupService = workGroupService ?? throw new ArgumentNullException(nameof(workGroupService));
+            _projectService = projectService ?? throw new ArgumentNullException(nameof(projectService));
+            _planStaffZTCodeService = planStaffZTCodeService ?? throw new ArgumentNullException(nameof(planStaffZTCodeService));
         }
 
         /// <summary>
@@ -65,12 +69,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (string.IsNullOrWhiteSpace(resourceCentre))
                 return Json(new { success = false, message = "Resource centre is required." });
 
-            var response = await _workGroupGradeService.GetWorkgroupGradesByWorkGroupAsync(resourceCentre);
+            var response = await _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync(resourceCentre);
             if (!response.Success)
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load workgroups." });
 
             var workgroups = (response.Data ?? [])
-                .Select(w => w.WgGrade)
+                .Select(w => w.WorkGroupName)
                 .Where(w => !string.IsNullOrWhiteSpace(w))
                 .Distinct()
                 .OrderBy(w => w)
@@ -93,7 +97,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return PartialView("_DataGrid", BuildRePlanGridConfig([]));
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _resourceMgmtReplanService.GetRePlanGridAsync(workGroup, query);
+            var response = await _projectService.GetProjectGroupStaffReplanAsync(query, workGroup);
             if (!response.Success)
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load re-plan grid." });
 
@@ -116,7 +120,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return PartialView("_DataGrid", BuildAllTimeGridConfig([]));
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _resourceMgmtReplanService.GetStaffJobsAsync(jobCode, wgGrade, query);
+            var response = await _planStaffZTCodeService.GetStaffJobsAllocationByJobCodeWgGradePagedAsync(query, jobCode, wgGrade);
             if (!response.Success)
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load all-time grid." });
 
@@ -132,40 +136,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// <summary>
         /// Returns the currently staged re-plan rows for the given job code and workgroup grade.
         /// </summary>
-        [HttpGet]
-        public async Task<IActionResult> GetStagedRows(string jobCode, string wgGrade)
-        {
-            if (string.IsNullOrWhiteSpace(jobCode) || string.IsNullOrWhiteSpace(wgGrade))
-                return Json(new { success = false, message = "Job code and workgroup grade are required." });
+        //[HttpGet]
+        //public async Task<IActionResult> GetStagedRows(string jobCode, string wgGrade)
+        //{
+        //    if (string.IsNullOrWhiteSpace(jobCode) || string.IsNullOrWhiteSpace(wgGrade))
+        //        return Json(new { success = false, message = "Job code and workgroup grade are required." });
 
-            var response = await _resourceMgmtReplanService.GetStagedRowsAsync(jobCode, wgGrade);
-            if (!response.Success)
-                return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load staged rows." });
+        //    var response = await _resourceMgmtReplanService.GetStagedRowsAsync(jobCode, wgGrade);
+        //    if (!response.Success)
+        //        return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load staged rows." });
 
-            var data = (response.Data ?? []).Select(d => _mapper.Map<ResourceMgmtReplanStagedItem>(d)).ToList();
-            return Json(new { success = true, data });
-        }
-
-        // ─────────────── COMMIT / CANCEL ───────────────
-
-        /// <summary>
-        /// Commits the staged re-plan rows for the given job code and workgroup grade.
-        /// </summary>
-        [HttpPost]
-        [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> CommitReplan([FromForm] string jobCode, [FromForm] string wgGrade)
-        {
-            if (string.IsNullOrWhiteSpace(jobCode) || string.IsNullOrWhiteSpace(wgGrade))
-                return Json(new { success = false, message = "Job code and workgroup grade are required." });
-
-            var response = await _resourceMgmtReplanService.CommitReplanAsync(jobCode, wgGrade);
-
-            if (response.Success && response.Data)
-                return Json(new { success = true, message = "Re-plan committed successfully." });
-
-            var errorMessage = response.Errors?.FirstOrDefault()?.Message ?? "Failed to commit re-plan.";
-            return Json(new { success = false, message = errorMessage });
-        }
+        //    var data = (response.Data ?? []).Select(d => _mapper.Map<ResourceMgmtReplanStagedItem>(d)).ToList();
+        //    return Json(new { success = true, data });
+        //}
 
         // ─────────────── PRIVATE HELPERS ───────────────
 

@@ -195,7 +195,8 @@ namespace Apha.FPSApps.Web.Mappings
 
             // ResourceMgmtReplan — Resource Re-allocation Screen (frmRM_RePlan)
             CreateMap<ResourceMgmtReplanViewDto, ResourceMgmtReplanGridItem>().ReverseMap();
-            CreateMap<ProjectStaffReplanDto, ResourceMgmtReplanGridItem>();
+            CreateMap<ProjectStaffReplanDto, ResourceMgmtReplanGridItem>()
+                .ForMember(d => d.StaffRowKey, o => o.MapFrom(s => $"{s.ParentProject}|{s.WgGrade}"));
             CreateMap<ResourceMgmtReplanStaffJobDto, ResourceMgmtReplanAllTimeItem>().ReverseMap();
             CreateMap<StaffJobViewDto, ResourceMgmtReplanAllTimeItem>()
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID));

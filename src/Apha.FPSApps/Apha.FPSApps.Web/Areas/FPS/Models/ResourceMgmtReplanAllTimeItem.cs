@@ -11,36 +11,35 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(IsVisible = false)]
         public string? WgGrade { get; set; }
 
+        [GridColumn(IsVisible = false)]
+        public string? WorkGroupGrade { get; set; }
+
         [Display(Name = "Staff ID")]
-        [GridColumn(Width = 100, Type = GridColumnType.ReadOnly, IsFilterable = true)]
+        [GridColumn(Width = 100, Type = GridColumnType.ReadOnly, IsVisible = false)]
         public string? StaffId { get; set; }
 
-        [Display(Name = "Job Code")]
+        [Display(Name = "Staff")]
+        [GridColumn(IsVisible = true)]
+        public string? Name { get; set; }
+
+        [Display(Name = "Project")]
         [GridColumn(Width = 130, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? JobCode { get; set; }
 
-        [Display(Name = "Name")]
-        [GridColumn(Width = 200, Type = GridColumnType.ReadOnly, IsFilterable = true)]
-        public string? Name { get; set; }
-
-        [Display(Name = "Grade")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
-        public string? GradeCode { get; set; }
-
-        [Display(Name = "Plan Hrs")]
+        [Display(Name = "Hours")]
         [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
         public double PlannedHours { get; set; }
 
         [Display(Name = "Days")]
-        [GridColumn(Width = 80, Type = GridColumnType.ReadOnly)]
+        [GridColumn(IsVisible = false)]
         public double Days { get; set; }
 
         [Display(Name = "Charge Rate")]
-        [GridColumn(Width = 100, Type = GridColumnType.GbpValue)]
+        [GridColumn(IsVisible = false)]
         public decimal? ChargeRate { get; set; }
 
         [Display(Name = "Staff Cost")]
-        [GridColumn(Width = 100, Type = GridColumnType.GbpValue)]
+        [GridColumn(IsVisible = false)]
         public decimal? StaffCost { get; set; }
     }
 }
