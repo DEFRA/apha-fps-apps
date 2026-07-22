@@ -1,4 +1,22 @@
-﻿using Apha.FPSApps.Application.Dtos;
+﻿/*
+ * TRANSFORMENGINE MIGRATION — ProjectCommentServiceTests.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
+ * Migrated : 2026-07-22
+ *
+ * CHANGED:
+ *   - Added TransformEngine migration annotation header
+ *   - Added GetCommentTopicsAsync region (3 scenarios: happy path, empty list, API failure)
+ *   - Added GetCommentsByProjectAsync_WithTopicFilter scenario to cover string? topic delegation
+ *
+ * PRESERVED:
+ *   - All existing test methods and assertions unchanged
+ *   - NSubstitute mocking pattern (_pimsApiClient → _pimsProjectCommentApiClient)
+ *   - Namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentServiceTest
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - DEFERRED: none — fully automated.
+ */
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
 using Apha.FPSApps.Application.Pagination;
@@ -37,17 +55,17 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
             };
             var expectedResponse = ApiResponseDto<List<CommentDto>>.SuccessResponse(comments);
 
-            _pimsProjectCommentApiClient.GetCommentsByProjectAsync(project, year, query).Returns(expectedResponse);
+            _pimsProjectCommentApiClient.GetCommentsByProjectAsync(project, year, null, query).Returns(expectedResponse);
 
             // Act
-            var result = await _projectCommentService.GetCommentsByProjectAsync(project, year, query);
+            var result = await _projectCommentService.GetCommentsByProjectAsync(project, year, null, query);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Equal(2, result.Data.Count);
-            await _pimsProjectCommentApiClient.Received(1).GetCommentsByProjectAsync(project, year, query);
+            await _pimsProjectCommentApiClient.Received(1).GetCommentsByProjectAsync(project, year, null, query);
         }
 
         [Fact]
@@ -58,10 +76,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
             var query = new QueryParameters<string>();
             var expectedResponse = ApiResponseDto<List<CommentDto>>.SuccessResponse(new List<CommentDto>());
 
-            _pimsProjectCommentApiClient.GetCommentsByProjectAsync(project, null, query).Returns(expectedResponse);
+            _pimsProjectCommentApiClient.GetCommentsByProjectAsync(project, null, null, query).Returns(expectedResponse);
 
             // Act
-            var result = await _projectCommentService.GetCommentsByProjectAsync(project, null, query);
+            var result = await _projectCommentService.GetCommentsByProjectAsync(project, null, null, query);
 
             // Assert
             Assert.NotNull(result);
@@ -81,10 +99,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
             };
             var expectedResponse = ApiResponseDto<List<CommentDto>>.FailureResponse(errors, new ApiMetaDto());
 
-            _pimsProjectCommentApiClient.GetCommentsByProjectAsync(project, null, query).Returns(expectedResponse);
+            _pimsProjectCommentApiClient.GetCommentsByProjectAsync(project, null, null, query).Returns(expectedResponse);
 
             // Act
-            var result = await _projectCommentService.GetCommentsByProjectAsync(project, null, query);
+            var result = await _projectCommentService.GetCommentsByProjectAsync(project, null, null, query);
 
             // Assert
             Assert.NotNull(result);
@@ -102,15 +120,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
             var query = new QueryParameters<string> { Page = 2, PageSize = 5 };
             var expectedResponse = ApiResponseDto<List<CommentDto>>.SuccessResponse(new List<CommentDto>());
 
-            _pimsProjectCommentApiClient.GetCommentsByProjectAsync(project, year, query).Returns(expectedResponse);
+            _pimsProjectCommentApiClient.GetCommentsByProjectAsync(project, year, null, query).Returns(expectedResponse);
 
             // Act
-            await _projectCommentService.GetCommentsByProjectAsync(project, year, query);
+            await _projectCommentService.GetCommentsByProjectAsync(project, year, null, query);
 
             // Assert
             await _pimsProjectCommentApiClient.Received(1).GetCommentsByProjectAsync(
                 Arg.Is<string>(p => p == project),
                 Arg.Is<int?>(y => y == year),
+                Arg.Is<string?>(t => t == null),
                 Arg.Is<QueryParameters<string>>(q => q.Page == 2 && q.PageSize == 5)
             );
         }
@@ -418,6 +437,140 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
 
             // Assert
             Assert.NotNull(service);
+        }
+
+        #endregion
+
+        // TRANSFORMENGINE: GetCommentsByProjectAsync topic filter delegation — covers string? topic parameter
+        //   added when backend GET /api/v1/projectcomment?topic= was extended in Phase 8
+        #region GetCommentsByProjectAsync Topic Filter Tests
+
+        [Fact]
+        public async Task GetCommentsByProjectAsync_WithTopicFilter_PassesTopicToApiClient()
+        {
+            // Arrange
+            var project = "PP001";
+            var year = 2024;
+            var topic = "Budget";
+            var query = new QueryParameters<string>();
+            var expectedResponse = ApiResponseDto<List<CommentDto>>.SuccessResponse(new List<CommentDto>());
+
+            _pimsProjectCommentApiClient.GetCommentsByProjectAsync(project, year, topic, query).Returns(expectedResponse);
+
+            // Act
+            var result = await _projectCommentService.GetCommentsByProjectAsync(project, year, topic, query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            await _pimsProjectCommentApiClient.Received(1).GetCommentsByProjectAsync(
+                Arg.Is<string>(p => p == project),
+                Arg.Is<int?>(y => y == year),
+                Arg.Is<string?>(t => t == topic),
+                Arg.Is<QueryParameters<string>>(q => q == query));
+        }
+
+        [Fact]
+        public async Task GetCommentsByProjectAsync_WithNullTopicFilter_PassesNullToApiClient()
+        {
+            // Arrange
+            var project = "PP001";
+            var query = new QueryParameters<string>();
+            var expectedResponse = ApiResponseDto<List<CommentDto>>.SuccessResponse(new List<CommentDto>());
+
+            _pimsProjectCommentApiClient.GetCommentsByProjectAsync(project, null, null, query).Returns(expectedResponse);
+
+            // Act
+            var result = await _projectCommentService.GetCommentsByProjectAsync(project, null, null, query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            await _pimsProjectCommentApiClient.Received(1).GetCommentsByProjectAsync(
+                project, null, null, query);
+        }
+
+        #endregion
+
+        // TRANSFORMENGINE: GetCommentTopicsAsync — lookup delegate added in Phase 8 for topic dropdown population.
+        //   Three scenarios: happy path (returns topics), empty list, API failure.
+        #region GetCommentTopicsAsync Tests
+
+        [Fact]
+        public async Task GetCommentTopicsAsync_ApiClientReturnsTopics_ReturnsSuccessWithTopicList()
+        {
+            // Arrange
+            var topics = new List<CommentTopicDto>
+            {
+                new CommentTopicDto { Topic = "Budget" },
+                new CommentTopicDto { Topic = "Risk" },
+                new CommentTopicDto { Topic = "Schedule" }
+            };
+            var expectedResponse = ApiResponseDto<List<CommentTopicDto>>.SuccessResponse(topics);
+            _pimsProjectCommentApiClient.GetCommentTopicsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectCommentService.GetCommentTopicsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(3, result.Data.Count);
+            await _pimsProjectCommentApiClient.Received(1).GetCommentTopicsAsync();
+        }
+
+        [Fact]
+        public async Task GetCommentTopicsAsync_ApiClientReturnsEmptyList_ReturnsSuccessWithEmptyData()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<CommentTopicDto>>.SuccessResponse(new List<CommentTopicDto>());
+            _pimsProjectCommentApiClient.GetCommentTopicsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectCommentService.GetCommentTopicsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetCommentTopicsAsync_ApiClientReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Code = "TOPICS_ERROR", Message = "Failed to retrieve comment topics" }
+            };
+            var expectedResponse = ApiResponseDto<List<CommentTopicDto>>.FailureResponse(errors, new ApiMetaDto());
+            _pimsProjectCommentApiClient.GetCommentTopicsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectCommentService.GetCommentTopicsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("TOPICS_ERROR", result.Errors[0].Code);
+            await _pimsProjectCommentApiClient.Received(1).GetCommentTopicsAsync();
+        }
+
+        [Fact]
+        public async Task GetCommentTopicsAsync_DelegatesToPimsProjectCommentApiClient()
+        {
+            // Arrange
+            _pimsProjectCommentApiClient.GetCommentTopicsAsync()
+                .Returns(ApiResponseDto<List<CommentTopicDto>>.SuccessResponse([]));
+
+            // Act
+            await _projectCommentService.GetCommentTopicsAsync();
+
+            // Assert — verify thin delegation: exactly one call to the correct API client method
+            await _pimsProjectCommentApiClient.Received(1).GetCommentTopicsAsync();
         }
 
         #endregion

@@ -1,0 +1,156 @@
+<!-- TRANSFORMENGINE MIGRATION — Comment/_AddEditComment.cshtml
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-07-22
+     CHANGED:
+       - MS Access frmtblComments inline tblCommentsModal HTML → ASP.NET Core MVC Razor partial
+       - Loaded into shared #modaPopupBody via $.get() from Index.cshtml addComment / editComment functions
+       - modal-commentYear (input name="year") → <select> asp-for="Year" asp-items="Model.YearOptions"
+       - modal-commentYearTopic (input name="yearTopic") → <select> asp-for="Topic" asp-items="Model.TopicOptions"
+       - modal-commentDate (input name="date", trigger-managed) → NOT rendered (set server-side by trigger)
+       - modal-commentMadeBy (input name="madeChangedBy", server-set) → NOT rendered (set from User.Identity.Name)
+       - modal-commentText (textarea name="comment") → <textarea> asp-for="CommentText"
+       - CommentNo PK → <input type="hidden"> asp-for="CommentNo" (not visible in grid; hidden for save round-trip)
+       - Project → <input type="hidden"> asp-for="Project"
+       - IsAddingNew → <input type="hidden"> controls modal title and Save/Update label
+       - saveComment() JS call wired to Save/Update button — defined in Index.cshtml
+       - closeCommentModal() JS call wired to Cancel and X buttons
+       - @Html.AntiForgeryToken() included in form
+     PRESERVED:
+       - govuk-* CSS classes and govuk-grid-column layout matching prototype modal structure
+       - Required field indicators (* Mandatory Fields) for Year, Topic, Comment
+       - All field labels from frmtblComments.html prototype modal:
+         Year (modal-commentYear), Year Topic (modal-commentYearTopic), Comment (modal-commentText)
+       - modal-commentDate and modal-commentMadeBy excluded — set server-side, not user-editable
+     DEFERRED / REQUIRES HUMAN REVIEW:
+       - TRANSFORMENGINE TODO: CommentText alias (no tblComments.CommentText column); retained to match
+         AddEditCommentViewModel <-> CommentDto AutoMapper binding; resolve when CommentDto alias is cleaned up.
+-->
+@model Apha.FPSApps.Web.Areas.PIMS.Models.AddEditCommentViewModel
+
+@{
+    var title     = Model.IsAddingNew ? "Add Comment" : "Edit Comment";
+    var saveLabel = Model.IsAddingNew ? "Save"        : "Update";
+}
+
+<div class="modal-header sup_flex_between_center">
+    <h3 class="govuk-heading-s sup_margin_0" id="tblCommentsModalLabel">@title</h3>
+    <button type="button" class="btn-close btn-red" onclick="closeCommentModal()" aria-label="Close">x</button>
+</div>
+<div class="modal-body">
+    <div class="app-mandatory-note">* Mandatory Fields</div>
+    <form id="formTblComments" class="app-form row">
+        @Html.AntiForgeryToken()
+
+        @* ── Hidden fields ── *@
+        @* TRANSFORMENGINE: CommentNo hidden PK — not shown in grid (IsVisible = false on ProjectCommentItem);
+             still posted as hidden for edit save round-trip. id used by saveComment() in Index.cshtml *@
+        <input type="hidden" asp-for="CommentNo" id="hdnCommentNo" />
+        @* TRANSFORMENGINE: Project hidden — sourced from commentProject page-level selector;
+             passed to GetAddEditCommentPartial as parentproject query param *@
+        <input type="hidden" asp-for="Project" id="hdnProject" />
+        @* TRANSFORMENGINE: IsAddingNew hidden — controls modal title and Save/Update distinction in JS *@
+        <input type="hidden" asp-for="IsAddingNew" id="hdnIsAddingNew" />
+
+        <div id="tblCommentsDbError" class="govuk-error-summary sup_display_none" aria-live="assertive">
+            <div role="alert">
+                <h2 class="govuk-error-summary__title">There is a problem</h2>
+                <div class="govuk-error-summary__body">
+                    <p id="tblCommentsDbErrorText" class="sup_margin_0"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-half">
+                @* ── Year field (modal-commentYear) ── *@
+                @* TRANSFORMENGINE: modal-commentYear → <select> asp-items="Model.YearOptions";
+                     mandatory (*); id="selCommentYear" used by saveComment() in Index.cshtml *@
+                <div class="govuk-form-group sup_margin_bottom_10" data-field-group="modal-commentYear">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           asp-for="Year">
+                        Year <span class="app-required" aria-hidden="true">*</span>
+                    </label>
+                    <select class="govuk-select govuk-!-font-size-16 govuk-!-width-full"
+                            asp-for="Year"
+                            id="selCommentYear"
+                            asp-items="Model.YearOptions"
+                            aria-required="true">
+                        <option value="">-- Select year --</option>
+                    </select>
+                    <span asp-validation-for="Year" class="govuk-error-message" style="display:none;"></span>
+                    <p class="govuk-error-message sup_display_none" id="modal-commentYear-error">
+                        <span class="govuk-visually-hidden">Error:</span> <span></span>
+                    </p>
+                </div>
+            </div>
+            <div class="govuk-grid-column-one-half">
+                @* ── Topic field (modal-commentYearTopic) ── *@
+                @* TRANSFORMENGINE: modal-commentYearTopic (labelled "Year Topic" in prototype) →
+                     <select> asp-items="Model.TopicOptions"; mandatory (*);
+                     id="selCommentTopic" used by saveComment() in Index.cshtml *@
+                <div class="govuk-form-group sup_margin_bottom_10" data-field-group="modal-commentYearTopic">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           asp-for="Topic">
+                        Year Topic <span class="app-required" aria-hidden="true">*</span>
+                    </label>
+                    <select class="govuk-select govuk-!-font-size-16 govuk-!-width-full"
+                            asp-for="Topic"
+                            id="selCommentTopic"
+                            asp-items="Model.TopicOptions"
+                            aria-required="true">
+                        <option value="">-- Select topic --</option>
+                    </select>
+                    <span asp-validation-for="Topic" class="govuk-error-message" style="display:none;"></span>
+                    <p class="govuk-error-message sup_display_none" id="modal-commentYearTopic-error">
+                        <span class="govuk-visually-hidden">Error:</span> <span></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        @* ── Date and MadeBy fields omitted ── *@
+        @* TRANSFORMENGINE: modal-commentDate (DateEntered) — trigger-managed server-side in CommentService.AddAsync();
+             NOT rendered as a user-editable field. Prototype showed it in the modal but it is set by the DB trigger.
+             modal-commentMadeBy (MadeBy) — set from User.Identity.Name in CommentController.CreateComment/UpdateComment;
+             NOT rendered as a user-editable field. *@
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                @* ── Comment text field (modal-commentText) ── *@
+                @* TRANSFORMENGINE: modal-commentText (textarea name="comment") → <textarea> asp-for="CommentText";
+                     mandatory (*); id="txtCommentText" used by saveComment() in Index.cshtml *@
+                <div class="govuk-form-group sup_margin_bottom_10" data-field-group="modal-commentText">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           asp-for="CommentText">
+                        Comment <span class="app-required" aria-hidden="true">*</span>
+                    </label>
+                    <textarea class="govuk-textarea govuk-!-font-size-16 govuk-!-width-full sup_margin_0"
+                              asp-for="CommentText"
+                              id="txtCommentText"
+                              rows="5"
+                              aria-required="true"></textarea>
+                    <span asp-validation-for="CommentText" class="govuk-error-message" style="display:none;"></span>
+                    <p class="govuk-error-message sup_display_none" id="modal-commentText-error">
+                        <span class="govuk-visually-hidden">Error:</span> <span></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 govuk-!-margin-top-2" style="display: flex; justify-content: space-between;">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary sup_margin_0"
+                    data-module="govuk-button"
+                    onclick="closeCommentModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button sup_margin_0"
+                    data-module="govuk-button"
+                    id="tblCommentsSaveBtn"
+                    onclick="saveComment()">
+                @saveLabel
+            </button>
+        </div>
+    </form>
+</div>

@@ -1,4 +1,30 @@
-﻿using Apha.Common.Helpers.Repository;
+/*
+ * TRANSFORMENGINE MIGRATION — CommentRepositoryTests.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
+ * Migrated : 2026-07-22
+ *
+ * CHANGED:
+ *   - Added mandatory TransformEngine file-level header block (PB-14)
+ *   - Extended CreateRepository / CreateRepositoryWithMocks factory methods to set up
+ *     DbSet<CommentTopic> CommentTopics so GetCommentTopicsAsync tests can run
+ *   - Added region: GetCommentsByProjectAsync — topic filter
+ *     (covers optional string? topic parameter added to ICommentRepository in Phase 4)
+ *   - Added region: ExistsAsync
+ *     (covers project/year/topic existence check and excludeCommentNo update-path guard)
+ *   - Added region: GetCommentTopicsAsync
+ *     (covers lookup-table read used by Topic combo-box on the Comments form)
+ *
+ * PRESERVED:
+ *   - All existing test methods: GetCommentsByProjectAsync (project, year, sorting, paging),
+ *     GetByIdAsync, AddAsync, UpdateAsync, DeleteAsync — unchanged
+ *   - Established RepositoryTestHelper + Moq pattern (Moq for DbContext/DbSet, no NSubstitute)
+ *   - CreateRepository / CreateRepositoryWithMocks factory helper signatures remain backward-compatible
+ *     (new commentTopics parameter is optional, existing call-sites compile unchanged)
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - DEFERRED: none — fully automated.
+ */
+using Apha.Common.Helpers.Repository;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
@@ -12,17 +38,24 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
     {
         /// <summary>
         /// Creates a CommentRepository with in-memory data.
-        /// The parameter is optional — omitted set is initialised as empty.
+        /// All parameters are optional — omitted sets are initialised as empty.
         /// </summary>
-        private static CommentRepository CreateRepository(IEnumerable<Comment>? comments = null)
+        // TRANSFORMENGINE: extended to accept commentTopics so GetCommentTopicsAsync tests compile
+        private static CommentRepository CreateRepository(
+            IEnumerable<Comment>? comments = null,
+            IEnumerable<CommentTopic>? commentTopics = null)
         {
             var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
-            var commentsMockSet = RepositoryTestHelper.CreateMockDbSet(comments ?? Enumerable.Empty<Comment>());
 
+            var commentsMockSet = RepositoryTestHelper.CreateMockDbSet(comments ?? Enumerable.Empty<Comment>());
             RepositoryTestHelper.SetupDbSetOperations(commentsMockSet);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
-
             mockContext.Setup(x => x.Comments).Returns(commentsMockSet.Object);
+
+            // TRANSFORMENGINE: CommentTopics DbSet wired for GetCommentTopicsAsync lookup coverage
+            var commentTopicsMockSet = RepositoryTestHelper.CreateMockDbSet(commentTopics ?? Enumerable.Empty<CommentTopic>());
+            RepositoryTestHelper.SetupDbSetOperations(commentTopicsMockSet);
+            mockContext.Setup(x => x.CommentTopics).Returns(commentTopicsMockSet.Object);
 
             return new CommentRepository(mockContext.Object);
         }
@@ -31,19 +64,27 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         /// Returns the repository alongside its mocked DbSet and DbContext
         /// for tests that need to verify Add / Update / Remove / SaveChanges calls.
         /// </summary>
+        // TRANSFORMENGINE: extended to accept commentTopics so full context is available in write-path tests
         private static (
             CommentRepository Repo,
             Mock<DbSet<Comment>> CommentsDbSet,
             Mock<PimsDbContext> Context)
-            CreateRepositoryWithMocks(IEnumerable<Comment>? comments = null)
+            CreateRepositoryWithMocks(
+                IEnumerable<Comment>? comments = null,
+                IEnumerable<CommentTopic>? commentTopics = null)
         {
             var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
-            var commentsMockSet = RepositoryTestHelper.CreateMockDbSet(comments ?? Enumerable.Empty<Comment>());
 
+            var commentsMockSet = RepositoryTestHelper.CreateMockDbSet(comments ?? Enumerable.Empty<Comment>());
             RepositoryTestHelper.SetupDbSetOperations(commentsMockSet);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
-
             mockContext.Setup(x => x.Comments).Returns(commentsMockSet.Object);
+
+            // TRANSFORMENGINE: CommentTopics DbSet wired for completeness; avoids NullReferenceException in any
+            // code-path that touches _dbContext.CommentTopics even indirectly
+            var commentTopicsMockSet = RepositoryTestHelper.CreateMockDbSet(commentTopics ?? Enumerable.Empty<CommentTopic>());
+            RepositoryTestHelper.SetupDbSetOperations(commentTopicsMockSet);
+            mockContext.Setup(x => x.CommentTopics).Returns(commentTopicsMockSet.Object);
 
             var repo = new CommentRepository(mockContext.Object);
             return (repo, commentsMockSet, mockContext);
@@ -217,6 +258,118 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
 
         #endregion
 
+        #region GetCommentsByProjectAsync — topic filter
+
+        // TRANSFORMENGINE: topic filter region — covers optional string? topic parameter added to
+        //   GetCommentsByProjectAsync in Phase 4 (ICommentRepository / CommentRepository update)
+
+        [Fact]
+        public async Task GetCommentsByProjectAsync_FiltersByTopic_WhenTopicIsProvided()
+        {
+            // Arrange
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Safety"   },
+                new() { CommentNo = 2, Project = "PP001", Year = 2024, Topic = "Finance"  },
+                new() { CommentNo = 3, Project = "PP001", Year = 2024, Topic = "Safety"   },
+                new() { CommentNo = 4, Project = "PP001", Year = 2024, Topic = "Planning" }
+            };
+            var repo = CreateRepository(comments: comments);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetCommentsByProjectAsync("PP001", null, query, topic: "Safety");
+
+            // Assert
+            Assert.Equal(2, result.Data.Count);
+            Assert.All(result.Data, c => Assert.Equal("Safety", c.Topic));
+        }
+
+        [Fact]
+        public async Task GetCommentsByProjectAsync_ReturnsAllTopics_WhenTopicIsNull()
+        {
+            // Arrange
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Safety"  },
+                new() { CommentNo = 2, Project = "PP001", Year = 2024, Topic = "Finance" },
+                new() { CommentNo = 3, Project = "PP001", Year = 2024, Topic = "Safety"  }
+            };
+            var repo = CreateRepository(comments: comments);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act — pass topic: null (default) — all records should be returned
+            var result = await repo.GetCommentsByProjectAsync("PP001", null, query, topic: null);
+
+            // Assert
+            Assert.Equal(3, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetCommentsByProjectAsync_ReturnsEmpty_WhenTopicMatchesNoComments()
+        {
+            // Arrange
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Safety"  },
+                new() { CommentNo = 2, Project = "PP001", Year = 2024, Topic = "Finance" }
+            };
+            var repo = CreateRepository(comments: comments);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetCommentsByProjectAsync("PP001", null, query, topic: "Engineering");
+
+            // Assert
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetCommentsByProjectAsync_FiltersByTopicAndYear_WhenBothAreProvided()
+        {
+            // Arrange
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 1, Project = "PP001", Year = 2023, Topic = "Safety"  },
+                new() { CommentNo = 2, Project = "PP001", Year = 2024, Topic = "Safety"  },
+                new() { CommentNo = 3, Project = "PP001", Year = 2024, Topic = "Finance" },
+                new() { CommentNo = 4, Project = "PP001", Year = 2023, Topic = "Finance" }
+            };
+            var repo = CreateRepository(comments: comments);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetCommentsByProjectAsync("PP001", 2024, query, topic: "Safety");
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal(2, result.Data.First().CommentNo);
+            Assert.Equal((short)2024, result.Data.First().Year);
+            Assert.Equal("Safety", result.Data.First().Topic);
+        }
+
+        [Fact]
+        public async Task GetCommentsByProjectAsync_ReturnsAllTopics_WhenTopicIsEmptyString()
+        {
+            // Arrange — empty string is treated as "no filter" by IsNullOrEmpty guard in repository
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Safety"  },
+                new() { CommentNo = 2, Project = "PP001", Year = 2024, Topic = "Finance" }
+            };
+            var repo = CreateRepository(comments: comments);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetCommentsByProjectAsync("PP001", null, query, topic: string.Empty);
+
+            // Assert — empty string must not filter (IsNullOrEmpty returns true)
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        #endregion
+
         #region GetCommentsByProjectAsync — ApplySorting
 
         [Theory]
@@ -258,7 +411,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
 
             switch (sortBy.ToLower())
             {
-                case "CommentNo":
+                case "commentno":
                     Assert.Equal(descending ? 3 : 1, first.CommentNo);
                     break;
                 case "topic":
@@ -267,7 +420,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
                 case "year":
                     Assert.Equal(descending ? (short)2024 : (short)2022, first.Year);
                     break;
-                case "MadeBy":
+                case "madeby":
                     Assert.Equal(descending ? "Charlie" : "Alice", first.MadeBy);
                     break;
                 case "project":
@@ -478,7 +631,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         [Theory]
         [InlineData(0)]
         [InlineData(999)]
-        public async Task GetByIdAsync_ReturnsNull_WhenIdDoesNotMatch(int CommentNo)
+        public async Task GetByIdAsync_ReturnsNull_WhenIdDoesNotMatch(int commentNo)
         {
             // Arrange
             var comments = new List<Comment>
@@ -488,10 +641,168 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             var repo = CreateRepository(comments: comments);
 
             // Act
-            var result = await repo.GetByIdAsync(CommentNo);
+            var result = await repo.GetByIdAsync(commentNo);
 
             // Assert
             Assert.Null(result);
+        }
+
+        #endregion
+
+        #region ExistsAsync
+
+        // TRANSFORMENGINE: ExistsAsync region added — covers unique-index guard (project, year, topic)
+        //   and excludeCommentNo update-path parameter (mirrors ix_tblcomments unique constraint)
+
+        [Fact]
+        public async Task ExistsAsync_ReturnsTrue_WhenMatchingRecordExists()
+        {
+            // Arrange
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Safety" },
+                new() { CommentNo = 2, Project = "PP001", Year = 2024, Topic = "Finance" }
+            };
+            var repo = CreateRepository(comments: comments);
+
+            // Act
+            var result = await repo.ExistsAsync("PP001", (short)2024, "Safety");
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_ReturnsFalse_WhenNoMatchingRecordExists()
+        {
+            // Arrange
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Safety" }
+            };
+            var repo = CreateRepository(comments: comments);
+
+            // Act
+            var result = await repo.ExistsAsync("PP001", (short)2024, "Finance");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_ReturnsFalse_WhenCommentsDbSetIsEmpty()
+        {
+            // Arrange
+            var repo = CreateRepository(comments: new List<Comment>());
+
+            // Act
+            var result = await repo.ExistsAsync("PP001", (short)2024, "Safety");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_ReturnsFalse_WhenProjectDoesNotMatch()
+        {
+            // Arrange
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 1, Project = "PP002", Year = 2024, Topic = "Safety" }
+            };
+            var repo = CreateRepository(comments: comments);
+
+            // Act
+            var result = await repo.ExistsAsync("PP001", (short)2024, "Safety");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_ReturnsFalse_WhenYearDoesNotMatch()
+        {
+            // Arrange
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 1, Project = "PP001", Year = 2023, Topic = "Safety" }
+            };
+            var repo = CreateRepository(comments: comments);
+
+            // Act
+            var result = await repo.ExistsAsync("PP001", (short)2024, "Safety");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_ReturnsFalse_WhenExcludeCommentNoMatchesOnlyRecord()
+        {
+            // Arrange — update-path: the only matching record is the one being updated; must not report duplicate
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 5, Project = "PP001", Year = 2024, Topic = "Safety" }
+            };
+            var repo = CreateRepository(comments: comments);
+
+            // Act — exclude the record being updated (CommentNo = 5)
+            var result = await repo.ExistsAsync("PP001", (short)2024, "Safety", excludeCommentNo: 5);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_ReturnsTrue_WhenAnotherMatchingRecordExistsAfterExclusion()
+        {
+            // Arrange — update-path: there are two records with the same key; excluding one still leaves another
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 5, Project = "PP001", Year = 2024, Topic = "Safety" },
+                new() { CommentNo = 7, Project = "PP001", Year = 2024, Topic = "Safety" }
+            };
+            var repo = CreateRepository(comments: comments);
+
+            // Act — exclude CommentNo=5; CommentNo=7 is still a duplicate
+            var result = await repo.ExistsAsync("PP001", (short)2024, "Safety", excludeCommentNo: 5);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_ReturnsTrue_WhenExcludeCommentNoDoesNotMatchAnyRecord()
+        {
+            // Arrange — excludeCommentNo is set but doesn't match any of the existing records
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Safety" }
+            };
+            var repo = CreateRepository(comments: comments);
+
+            // Act
+            var result = await repo.ExistsAsync("PP001", (short)2024, "Safety", excludeCommentNo: 999);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_WithoutExcludeCommentNo_ReturnsTrue_WhenRecordExists()
+        {
+            // Arrange — verify default null path (no excludeCommentNo)
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 3, Project = "PP002", Year = 2022, Topic = "Planning" }
+            };
+            var repo = CreateRepository(comments: comments);
+
+            // Act
+            var result = await repo.ExistsAsync("PP002", (short)2022, "Planning");
+
+            // Assert
+            Assert.True(result);
         }
 
         #endregion
@@ -710,6 +1021,87 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
 
             // Assert
             RepositoryTestHelper.VerifySaveChanges(mockContext, times: 0);
+        }
+
+        #endregion
+
+        #region GetCommentTopicsAsync
+
+        // TRANSFORMENGINE: GetCommentTopicsAsync region added — covers lookup-table read used by
+        //   Topic combo-box RowSource on the Comments form (tlkpcommenttopics → DbSet<CommentTopic>)
+
+        [Fact]
+        public async Task GetCommentTopicsAsync_ReturnsAllTopics_WhenTopicsExist()
+        {
+            // Arrange
+            var topics = new List<CommentTopic>
+            {
+                new() { Topic = "Safety"    },
+                new() { Topic = "Finance"   },
+                new() { Topic = "Planning"  },
+                new() { Topic = "Engineering" }
+            };
+            var repo = CreateRepository(commentTopics: topics);
+
+            // Act
+            var result = await repo.GetCommentTopicsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            var list = result.ToList();
+            Assert.Equal(4, list.Count);
+        }
+
+        [Fact]
+        public async Task GetCommentTopicsAsync_ReturnsEmpty_WhenTopicsDbSetIsEmpty()
+        {
+            // Arrange
+            var repo = CreateRepository(commentTopics: new List<CommentTopic>());
+
+            // Act
+            var result = await repo.GetCommentTopicsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetCommentTopicsAsync_ReturnsCorrectTopicValues()
+        {
+            // Arrange
+            var topics = new List<CommentTopic>
+            {
+                new() { Topic = "Safety"   },
+                new() { Topic = "Finance"  }
+            };
+            var repo = CreateRepository(commentTopics: topics);
+
+            // Act
+            var result = await repo.GetCommentTopicsAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Contains(list, t => t.Topic == "Safety");
+            Assert.Contains(list, t => t.Topic == "Finance");
+        }
+
+        [Fact]
+        public async Task GetCommentTopicsAsync_ReturnsSingleTopic_WhenOnlyOneTopicExists()
+        {
+            // Arrange
+            var topics = new List<CommentTopic>
+            {
+                new() { Topic = "Safety" }
+            };
+            var repo = CreateRepository(commentTopics: topics);
+
+            // Act
+            var result = await repo.GetCommentTopicsAsync();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("Safety", result.First().Topic);
         }
 
         #endregion

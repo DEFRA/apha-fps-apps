@@ -1,4 +1,23 @@
-﻿using Apha.PIMS.Application.Dtos;
+﻿/*
+ * TRANSFORMENGINE MIGRATION — CommentServiceTests.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
+ * Migrated : 2026-07-22
+ *
+ * CHANGED:
+ *   - Verified existing 33 test scenarios cover GetCommentsByProjectAsync, GetByIdAsync, AddAsync, UpdateAsync, DeleteAsync
+ *   - Added GetCommentsByProjectAsync_WithTopicFilter test to cover optional string? topic parameter (Phase 4 addition)
+ *   - Added GetCommentTopicsAsync region with 3 new scenarios: happy path, empty result, and exception propagation
+ *   - Added TRANSFORMENGINE file-level header (migration annotation policy compliance)
+ *
+ * PRESERVED:
+ *   - All 33 original test methods and their exact Arrange/Act/Assert bodies
+ *   - NSubstitute mock pattern, FluentAssertions assertions, and all region groupings
+ *   - Existing namespace, class name, and constructor setup
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - DEFERRED: none — fully automated.
+ */
+using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Application.Services;
 using Apha.PIMS.Application.Validation;
@@ -128,6 +147,48 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
 
             await _mockRepository.Received(1).GetCommentsByProjectAsync(project, year, paginationParams);
             _mockMapper.DidNotReceive().Map<PaginatedResult<CommentDto>>(Arg.Any<PagedData<Comment>>());
+        }
+
+        // TRANSFORMENGINE: topic filter parameter added in Phase 4 — new test scenario covers forwarding
+        [Fact]
+        public async Task GetCommentsByProjectAsync_WithTopicFilter_ForwardsTopicToRepository()
+        {
+            // Arrange
+            var project = "PP001";
+            int? year = 2024;
+            var topic = "Risk";
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var commentEntities = new List<Comment>
+            {
+                new Comment { CommentNo = 5, Project = project, Year = 2024, Topic = "Risk", CommentText = "Risk comment", MadeBy = "User1" }
+            };
+
+            var paginationData = new PaginationData { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 1 };
+            var pagedData = new PagedData<Comment>(commentEntities, paginationData);
+
+            var expectedDtos = new List<CommentDto>
+            {
+                new CommentDto { CommentNo = 5, Project = project, Year = 2024, Topic = "Risk", CommentText = "Risk comment", MadeBy = "User1" }
+            };
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 1 };
+            var expectedResult = new PaginatedResult<CommentDto>(expectedDtos, paginationDto);
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetCommentsByProjectAsync(project, year, paginationParams, topic).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<CommentDto>>(pagedData).Returns(expectedResult);
+
+            // Act
+            var result = await _sut.GetCommentsByProjectAsync(project, year, query, topic);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Data.Should().HaveCount(1);
+            result.Data.First().Topic.Should().Be("Risk");
+
+            await _mockRepository.Received(1).GetCommentsByProjectAsync(project, year, paginationParams, topic);
+            _mockMapper.Received(1).Map<PaginatedResult<CommentDto>>(pagedData);
         }
 
         #endregion
@@ -706,6 +767,86 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
             exception.Message.Should().Be("Database connection failed");
 
             await _mockRepository.Received(1).DeleteAsync(CommentNo);
+        }
+
+        #endregion
+
+        #region GetCommentTopicsAsync
+
+        // TRANSFORMENGINE: GetCommentTopicsAsync covers RowSource lookup for Topic combo-box — new test region
+        [Fact]
+        public async Task GetCommentTopicsAsync_WhenTopicsExist_ReturnsMappedDtos()
+        {
+            // Arrange
+            var topicEntities = new List<CommentTopic>
+            {
+                new CommentTopic { Topic = "Risk" },
+                new CommentTopic { Topic = "Progress" },
+                new CommentTopic { Topic = "Financial" }
+            };
+
+            var expectedDtos = new List<CommentTopicDto>
+            {
+                new CommentTopicDto { Topic = "Risk" },
+                new CommentTopicDto { Topic = "Progress" },
+                new CommentTopicDto { Topic = "Financial" }
+            };
+
+            _mockRepository.GetCommentTopicsAsync().Returns(Task.FromResult<IEnumerable<CommentTopic>>(topicEntities));
+            _mockMapper.Map<IEnumerable<CommentTopicDto>>(topicEntities).Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetCommentTopicsAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(3);
+            result.Should().Contain(t => t.Topic == "Risk");
+            result.Should().Contain(t => t.Topic == "Progress");
+
+            await _mockRepository.Received(1).GetCommentTopicsAsync();
+            _mockMapper.Received(1).Map<IEnumerable<CommentTopicDto>>(topicEntities);
+        }
+
+        [Fact]
+        public async Task GetCommentTopicsAsync_WhenNoTopicsExist_ReturnsEmptyCollection()
+        {
+            // Arrange
+            var emptyTopics = new List<CommentTopic>();
+            var emptyDtos = new List<CommentTopicDto>();
+
+            _mockRepository.GetCommentTopicsAsync().Returns(Task.FromResult<IEnumerable<CommentTopic>>(emptyTopics));
+            _mockMapper.Map<IEnumerable<CommentTopicDto>>(emptyTopics).Returns(emptyDtos);
+
+            // Act
+            var result = await _sut.GetCommentTopicsAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+
+            await _mockRepository.Received(1).GetCommentTopicsAsync();
+            _mockMapper.Received(1).Map<IEnumerable<CommentTopicDto>>(emptyTopics);
+        }
+
+        [Fact]
+        public async Task GetCommentTopicsAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var expectedException = new Exception("Database connection failed");
+
+            _mockRepository.GetCommentTopicsAsync()
+                .Returns(Task.FromException<IEnumerable<CommentTopic>>(expectedException));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetCommentTopicsAsync()
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+
+            await _mockRepository.Received(1).GetCommentTopicsAsync();
+            _mockMapper.DidNotReceive().Map<IEnumerable<CommentTopicDto>>(Arg.Any<IEnumerable<CommentTopic>>());
         }
 
         #endregion

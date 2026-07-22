@@ -53,7 +53,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _mapper.Map<ApiResponseDto<List<CommentDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetCommentsByProjectAsync(project, year, query);
+            var result = await _client.GetCommentsByProjectAsync(project, year, null, query);
 
             // Assert
             Assert.NotNull(result);
@@ -89,7 +89,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _mapper.Map<ApiResponseDto<List<CommentDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetCommentsByProjectAsync(project, year, query);
+            var result = await _client.GetCommentsByProjectAsync(project, year, null, query);
 
             // Assert
             Assert.NotNull(result);
@@ -113,7 +113,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _http.GetAsync<List<CommentRes>>(url).ThrowsAsync(new Exception("Network error"));
 
             // Act
-            var result = await _client.GetCommentsByProjectAsync(project, year, query);
+            var result = await _client.GetCommentsByProjectAsync(project, year, null, query);
 
             // Assert
             Assert.NotNull(result);
@@ -144,7 +144,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _mapper.Map<ApiResponseDto<List<CommentDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
 
             // Act
-            var result = await _client.GetCommentsByProjectAsync(project, year, query);
+            var result = await _client.GetCommentsByProjectAsync(project, year, null, query);
 
             // Assert
             Assert.NotNull(result);
@@ -172,7 +172,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _mapper.Map<ApiResponseDto<List<CommentDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            await _client.GetCommentsByProjectAsync(project, year, query);
+            await _client.GetCommentsByProjectAsync(project, year, null, query);
 
             // Assert
             await _http.Received(1).GetAsync<List<CommentRes>>(Arg.Is<string>(s => s == expectedUrl));

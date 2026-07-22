@@ -1,4 +1,29 @@
-﻿using Apha.Common.Utilities.ExcelExport;
+﻿/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-07-22
+ *
+ * CHANGED:
+ *   - TransformEngine migration annotation header added (Phase 10 verification pass)
+ *
+ * PRESERVED:
+ *   - All existing AddScoped registrations including PIMS block:
+ *     IProjectListService, IProjectDetailsService, IProjectCommentService (frmtblComments),
+ *     IProposedProjectService, IProjectYearCostsService, IMilestoneService, IRadTrackInvoiceService
+ *   - FPS, PACT, Costbook, and shared service registrations
+ *   - AddRepositories() with IFpsProjectAuditTrailApiClient
+ *   - IWorkgroupMaintenanceService registration from prior Phase 10 batch
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: IProjectService registered twice (lines 34 and 36) — duplicate
+ *     AddScoped registration; second registration silently overrides the first in ASP.NET Core DI.
+ *     Remove the duplicate once confirmed safe.
+ *   - TRANSFORMENGINE TODO: ICalenderMonthService registered twice (lines 57 and 92) — same
+ *     duplicate pattern as IProjectService above.
+ *   - TRANSFORMENGINE TODO: IWorkGroupGradeService registered twice (lines 54 and 83) — same
+ *     duplicate pattern.
+ */
+using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.ExcelImport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;

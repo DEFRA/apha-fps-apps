@@ -1,0 +1,336 @@
+<!-- TRANSFORMENGINE MIGRATION — Comment/Index.cshtml
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-07-22
+     CHANGED:
+       - MS Access frmtblComments form → ASP.NET Core MVC Razor view
+       - commentProject <select id="commentProject"> (outside grid, left panel) → asp-items="Model.ProjectOptions"
+       - forecastSpend <input> (outside grid, read-only display) → disabled input bound to Model.ForecastSpend
+       - filterTopic <select id="filterTopic"> (outside grid, filter panel) → asp-items="Model.TopicOptions"
+       - filterYear <input type="text" id="filterYear"> (outside grid, filter panel) → plain text input
+       - Apply Filter button → applyCommentsFilter() JS function calls reloadCommentsGrid()
+       - #gridContainer_comments → shared _DataGrid partial bound to Model.CommentsGrid
+       - Inline HTML modal markup replaced with shared #modalPopup / #modaPopupBody pattern via $.get()
+       - Delete confirm → JS confirm() — no modal partial
+       - addComment / editComment / deleteComment JS functions wired to CommentController CRUD actions
+       - getCommentsExtraFilters() passes project + topic + year to DataGrid ExtraFilterMethod
+     PRESERVED:
+       - govuk-* CSS classes and inline styles from frmtblComments.html prototype exactly
+       - All three filter controls from HTML prototype (commentProject, filterTopic, filterYear)
+       - Forecast Spend label text "Forecast Spend: (%)"
+       - All element IDs: commentProject, forecastSpend, filterTopic, filterYear
+       - Apply Filter button text and aria-label
+     CHANGED (Phase 14 — Security Review):
+       - saveComment() JS: reads RequestVerificationToken from _AddEditComment partial form and sends as
+         'RequestVerificationToken' header on CreateComment/UpdateComment POST — required by [ValidateAntiForgeryToken]
+       - deleteComment() JS: reads token from standalone @Html.AntiForgeryToken() and sends as header on DELETE —
+         required by [ValidateAntiForgeryToken] added to DeleteComment in Phase 14
+       - @Html.AntiForgeryToken() added to page body for DELETE operations (no inline form covers the delete flow)
+     DEFERRED / REQUIRES HUMAN REVIEW:
+       - TRANSFORMENGINE TODO: forecastSpend value loaded via AJAX stub GetForecastSpend action;
+         real implementation requires new backend GET /api/v1/projectcomment/forecastspend?project={project}
+         and frontend service. Until resolved, field remains empty on page load.
+-->
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PIMS.Models.CommentViewModel
+
+@{
+    ViewData["Title"] = "PIMS : Comments";
+}
+
+<div class="govuk-grid-row sup_border-bottom" style="padding: 0">
+    <div class="govuk-grid-column-full">
+        <h1 class="govuk-heading-s sup_margin_0 govuk-grid-row govuk-!-padding-top-2">
+            Comments
+            <a href="@Url.Action("Index", "Home", new { area = "PIMS" })" class="govuk-back-link sup_align_right">Back</a>
+        </h1>
+    </div>
+</div>
+
+<div class="content-wrapper">
+    <div class="sup_flex sup_align-items-flex-start">
+
+        <!-- ── Side Navigation ──────────────────────────────────────────── -->
+        @await Html.PartialAsync("../Shared/_SideNav", Model)
+
+        <!-- ── Main Content ─────────────────────────────────────────────── -->
+        <main class="ra-main-content sup_p_0 sup_width_100">
+
+            <!-- ── Filter / header row ────────────────────────────────────── -->
+            <!-- TRANSFORMENGINE: Left panel (commentProject + forecastSpend) and right filter panel
+                 (filterTopic + filterYear + Apply Filter) are ALL outside #gridContainer_comments
+                 and therefore rendered as explicit page-level controls per frmtblComments.html -->
+            <div class="sup_margin_left_right_0 sup_flex_space_between sup_padding_right_20 sup_margin_bottom_10">
+
+                <!-- Left panel: Project selector + Forecast Spend display -->
+                <div class="govuk-!-padding-4 govuk-!-margin-bottom-9">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="commentProject">
+                            Project:
+                        </label>
+                        <select class="govuk-select govuk-!-font-size-16 govuk-!-width-full"
+                                id="commentProject"
+                                name="commentProject"
+                                aria-label="Select project"
+                                asp-items="Model.ProjectOptions"
+                                onchange="onProjectChanged()">
+                        </select>
+                    </div>
+
+                    <!-- TRANSFORMENGINE TODO STUB: forecastSpend — value loaded via AJAX from GetForecastSpend
+                         stub action; real value requires new backend endpoint. Disabled = read-only display. -->
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="forecastSpend">
+                            Forecast Spend: (%)
+                        </label>
+                        <input class="govuk-input govuk-!-font-size-16 govuk-!-width-full"
+                               type="text"
+                               id="forecastSpend"
+                               name="forecastSpend"
+                               value="@Model.ForecastSpend"
+                               autocomplete="off"
+                               disabled />
+                    </div>
+                </div>
+
+                <!-- Right panel: Filter controls -->
+                <div class="govuk-!-width-one-half">
+                    <div>
+                        <div class="sup_border sup_padding_10 sup_margin_top_10 govuk-!-width-full"
+                             aria-labelledby="commentsFilterTitle">
+                            <div id="commentsFilterTitle"
+                                 class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 sup_margin_bottom_10">
+                                Filter:
+                            </div>
+
+                            <!-- TRANSFORMENGINE: filterTopic — explicit <select> outside grid container in HTML prototype;
+                                 page-level filter dropdown; asp-items populated from Model.TopicOptions (CommentTopicDto.Topic) -->
+                            <div class="govuk-form-group sup_margin_bottom_10">
+                                <label class="govuk-label govuk-!-font-weight-bold sup_margin_0" for="filterTopic">
+                                    Topic
+                                </label>
+                                <select class="govuk-select govuk-!-font-size-16 govuk-!-width-full"
+                                        id="filterTopic"
+                                        name="filterTopic"
+                                        aria-label="Filter by topic"
+                                        asp-items="Model.TopicOptions">
+                                </select>
+                            </div>
+
+                            <!-- TRANSFORMENGINE: filterYear — explicit <input type="text"> outside grid container;
+                                 free-text year filter; parsed to int? in LoadCommentsGrid -->
+                            <div class="govuk-form-group sup_margin_bottom_10">
+                                <label class="govuk-label govuk-!-font-weight-bold sup_margin_0" for="filterYear">
+                                    Year
+                                </label>
+                                <input class="govuk-input govuk-!-font-size-16"
+                                       type="text"
+                                       id="filterYear"
+                                       name="filterYear"
+                                       autocomplete="off"
+                                       aria-label="Filter by year" />
+                            </div>
+
+                            <div class="govuk-form-group sup_flex_end sup_margin_0 govuk-!-margin-top-2">
+                                <button type="button"
+                                        class="govuk-button govuk-button--secondary govuk-!-font-size-16 sup_margin_0"
+                                        data-module="govuk-button"
+                                        onclick="applyCommentsFilter()"
+                                        aria-label="Apply filter">
+                                    Apply Filter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Comments DataGrid ──────────────────────────────────────── -->
+            <!-- TRANSFORMENGINE: #gridContainer_comments → shared _DataGrid partial bound to CommentsGrid.
+                 Columns: Year (80px), Topic (200px), Comments/Comment (400px) per JS prototype column definitions.
+                 AllowAdd/Edit/Delete all true; ExtraFilterMethod = "getCommentsExtraFilters". -->
+            <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_20">
+                <div class="govuk-grid-column-full">
+                    <div id="gridContainer_comments">
+                        @await Html.PartialAsync("_DataGrid", Model.CommentsGrid)
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+@* TRANSFORMENGINE (Phase 14 security fix): Standalone anti-forgery token for DELETE operations.
+   The delete flow has no surrounding form; this hidden field is read by deleteComment() JS below.
+   Pattern matches Invoice/Index.cshtml and Milestone/Index.cshtml. *@
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script>
+        // ── Extra filter method ─────────────────────────────────────────────────
+        // TRANSFORMENGINE: getCommentsExtraFilters — called automatically by _DataGrid ExtraFilterMethod
+        //   on every grid reload. Passes project (required business context), topic, and year
+        //   from the three explicit page controls outside #gridContainer_comments.
+        function getCommentsExtraFilters() {
+            return {
+                project: document.getElementById('commentProject')?.value || '',
+                topic:   document.getElementById('filterTopic')?.value   || '',
+                year:    document.getElementById('filterYear')?.value    || ''
+            };
+        }
+
+        // ── Grid reload ─────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: always use gm.reloadGrid({ page: 1 }) — NOT gm.reload()
+        function reloadCommentsGrid() {
+            var gm = window['gridManager_commentsGrid'];
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+        }
+
+        // ── Apply filter ────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: applyCommentsFilter — bound to Apply Filter button (onclick="applyCommentsFilter()");
+        //   mirrors HTML prototype onclick="applyCommentsFilter()".
+        function applyCommentsFilter() {
+            reloadCommentsGrid();
+        }
+
+        // ── Project changed ─────────────────────────────────────────────────────
+        // TRANSFORMENGINE: onProjectChanged — fires on commentProject <select> change;
+        //   reloads grid so new project's comments are fetched and updates ForecastSpend stub.
+        function onProjectChanged() {
+            var project = document.getElementById('commentProject')?.value || '';
+            reloadCommentsGrid();
+            // TRANSFORMENGINE TODO STUB: load forecastSpend from backend when service is available
+            if (project) {
+                $.get('/PIMS/Comment/GetForecastSpend', { project: project }, function (data) {
+                    document.getElementById('forecastSpend').value =
+                        (data && data.forecastSpend !== null && data.forecastSpend !== undefined)
+                            ? data.forecastSpend
+                            : '';
+                }).fail(function () {
+                    document.getElementById('forecastSpend').value = '';
+                });
+            } else {
+                document.getElementById('forecastSpend').value = '';
+            }
+        }
+
+        // ── Add ─────────────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: addComment — AllowAdd = true; loads _AddEditComment partial into shared #modaPopupBody
+        function addComment() {
+            var project = document.getElementById('commentProject')?.value || '';
+            var year    = document.getElementById('filterYear')?.value     || '';
+            $.get('/PIMS/Comment/GetAddEditCommentPartial',
+                { parentproject: project, commentNo: null, selectedYear: year || null },
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                });
+        }
+
+        // ── Edit ─────────────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: editComment — AllowEdit = true; $(btn).data('id') retrieves CommentNo PK
+        function editComment(btn) {
+            var commentNo = $(btn).data('id');
+            var project   = document.getElementById('commentProject')?.value || '';
+            $.get('/PIMS/Comment/GetAddEditCommentPartial',
+                { parentproject: project, commentNo: commentNo, selectedYear: null },
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                });
+        }
+
+        // ── Delete ───────────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: deleteComment — AllowDelete = true; uses JS confirm() — no delete modal partial
+        //   (DataGrid delete is always confirm-only; no _DeleteComment.cshtml)
+        // TRANSFORMENGINE (Phase 14 security fix): reads RequestVerificationToken from standalone @Html.AntiForgeryToken()
+        //   and sends as 'RequestVerificationToken' header — required by [ValidateAntiForgeryToken] on DeleteComment.
+        //   Pattern matches Invoice/Index.cshtml deleteInvoice() and ProjectDetails/Index.cshtml deleteComment().
+        function deleteComment(btn) {
+            var commentNo = $(btn).data('id');
+            if (confirm('Are you sure you want to delete this comment?')) {
+                var token = $('input[name="__RequestVerificationToken"]').val();
+                $.ajax({
+                    url:     '/PIMS/Comment/DeleteComment?commentNo=' + encodeURIComponent(commentNo),
+                    type:    'DELETE',
+                    headers: { 'RequestVerificationToken': token },
+                    success: function (response) {
+                        if (response.success) {
+                            alert('Comment deleted successfully');
+                            reloadCommentsGrid();
+                        } else {
+                            alert('Error: ' + (response.message || 'Delete failed.'));
+                        }
+                    },
+                    error: function () { alert('An error occurred while deleting the comment.'); }
+                });
+            }
+        }
+
+        // ── Save (called from _AddEditComment partial) ────────────────────────────
+        // TRANSFORMENGINE: saveComment — collects editable fields from modal form; posts to
+        //   CreateComment (add) or UpdateComment (edit) based on IsAddingNew hidden field.
+        // TRANSFORMENGINE (Phase 14 security fix): reads RequestVerificationToken from the modal form's
+        //   @Html.AntiForgeryToken() hidden field (rendered in _AddEditComment.cshtml) and sends as
+        //   'RequestVerificationToken' header — required by [ValidateAntiForgeryToken] on CreateComment/UpdateComment.
+        //   Pattern matches ProjectDetails/Index.cshtml saveComment() (token from form element).
+        function saveComment() {
+            var isAdding   = document.getElementById('hdnIsAddingNew')?.value === 'true';
+            var commentNo  = parseInt(document.getElementById('hdnCommentNo')?.value  || '0', 10);
+            var project    = document.getElementById('hdnProject')?.value             || '';
+            var year       = document.getElementById('selCommentYear')?.value         || null;
+            var topic      = document.getElementById('selCommentTopic')?.value        || '';
+            var commentTxt = document.getElementById('txtCommentText')?.value         || '';
+
+            // Basic client-side validation
+            var errors = [];
+            if (!year)       { errors.push('Year is required.'); }
+            if (!topic)      { errors.push('Topic is required.'); }
+            if (!commentTxt) { errors.push('Comment is required.'); }
+            if (errors.length > 0) {
+                alert(errors.join('\n'));
+                return;
+            }
+
+            // TRANSFORMENGINE (Phase 14): read token from _AddEditComment partial form
+            var token = $('input[name="__RequestVerificationToken"]').first().val();
+
+            var dto = {
+                commentNo:   isAdding ? 0 : commentNo,
+                project:     project,
+                year:        parseInt(year, 10),
+                topic:       topic,
+                comment:     commentTxt,
+                commentText: commentTxt
+            };
+
+            var url  = isAdding ? '/PIMS/Comment/CreateComment' : '/PIMS/Comment/UpdateComment';
+
+            $.ajax({
+                url:         url,
+                type:        'POST',
+                data:        JSON.stringify(dto),
+                contentType: 'application/json; charset=utf-8',
+                headers:     { 'RequestVerificationToken': token },
+                success: function (data) {
+                    if (data.success) {
+                        closeCommentModal();
+                        reloadCommentsGrid();
+                    } else {
+                        var msg = (data.errors && data.errors.length > 0)
+                            ? data.errors.map(function(e) { return e.message || e; }).join('\n')
+                            : 'Save failed.';
+                        alert('Save failed: ' + msg);
+                    }
+                },
+                error: function () { alert('An error occurred while saving the comment.'); }
+            });
+        }
+
+        // ── Modal helpers ─────────────────────────────────────────────────────────
+        function closeCommentModal() {
+            $('#modaPopupBody').html('');
+            $('#modalPopup').removeClass('show');
+        }
+    </script>
+}

@@ -1,4 +1,23 @@
-﻿using Apha.FPSApps.Application.Interfaces.PimsApiClients;
+﻿/*
+ * TRANSFORMENGINE MIGRATION — PimsApiClient.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
+ * Migrated : 2026-07-22
+ *
+ * CHANGED:
+ *   - TransformEngine migration annotation header added
+ *
+ * PRESERVED:
+ *   - All 7 aggregate client properties: PimsProjectList, PimsProjectDetails, PimsProjectComment,
+ *     PimsProposedProject, PimsProjectYearCosts, PimsMilestone, PimsRadTrackInvoice
+ *   - All constructor assignments wiring each I[App]XxxApiClient implementation
+ *   - IPimsApiClient interface implementation
+ *   - PimsProjectComment property wired to PimsProjectCommentApiClient (confirmed present)
+ *   - Namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - DEFERRED: none — fully automated.
+ */
+using Apha.FPSApps.Application.Interfaces.PimsApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
