@@ -14,6 +14,13 @@ BEGIN
         RAISE EXCEPTION 'Input parameters custom.p_schema or custom.p_value are missing!';
     END IF;
 
+    -- Ensure p_value is a valid 4-digit year
+    IF btrim(p_value) !~ '^[0-9]{4}$' THEN
+        RAISE EXCEPTION 'Input parameter custom.p_value must be a 4-digit year (YYYY). Got: %', p_value;
+    END IF;
+
+    p_value := btrim(p_value);
+
     FOR r IN
         SELECT
             n.nspname AS schema_name,
@@ -27,7 +34,7 @@ BEGIN
            AND a.attnum = ANY(pt.partattrs)
         WHERE n.nspname = p_schema 
           AND pt.partstrat = 'l' -- List partitioning
-          AND a.attname = 'year'
+          AND a.attname = 'fpsyear'
     LOOP
          -- Generate safe partition name
          v_part_name := r.table_name || '_y' || p_value;

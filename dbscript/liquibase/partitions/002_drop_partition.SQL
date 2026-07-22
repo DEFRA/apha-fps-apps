@@ -14,6 +14,13 @@ BEGIN
         RAISE EXCEPTION 'Input parameters custom.p_schema or custom.p_value are missing!';
     END IF;
 
+    -- Ensure p_value is a valid 4-digit year
+    IF btrim(p_value) !~ '^[0-9]{4}$' THEN
+        RAISE EXCEPTION 'Input parameter custom.p_value must be a 4-digit year (YYYY). Got: %', p_value;
+    END IF;
+
+    p_value := btrim(p_value);
+
     -- Generate partition search pattern (e.g., '%_y2026')
     v_part_name := '%_y' || p_value;
 
