@@ -10,10 +10,10 @@ Generate unit tests for the Repository, Service, and API layers, covering positi
 
 ## Replan Feedback
 
-> FOllow existing unit tests conventions for creating the DiseaseControllerTests.cs  in per-controller subfolder under "Controller"
-USe existing FPS API AutoMapper profile (`Apha.FPS.Api/Mappings/RequestMapper.cs`) is where every other FPS Req/Res <-> Dto mapping lives
-Use FPS Application profile mapping - `EntityMapper.cs`, dont create new `FpsMappingProfile.cs`
-PUT/Update endpoint is essentially meaningless for `tblDisease` because the entity has exactly one column (`DiseaseName`) which is also the primary key. Hence remove the PUT/Update and keep only POST + DELETE + GETs.
+> Change the controller test path to `Apha.FPS/Apha.FPS.Api.UnitTests/Controller/DiseaseControllerTest/DiseaseControllerTests.cs` to match the existing per-controller subfolder convention.
+Replace the create of `DiseaseApiProfile.cs` with a modify of `Apha.FPS/Apha.FPS.Api/Mappings/RequestMapper.cs`, adding `CreateMap<DiseaseDto, DiseaseRes>().ForMember(d => d.Disease, o => o.MapFrom(s => s.DiseaseName)).ReverseMap()` and `CreateMap<DiseaseReq, DiseaseDto>().ForMember(d => d.DiseaseName, o => o.MapFrom(s => s.DiseaseName)).ReverseMap()`.
+Change the Application mapping change target from `FpsMappingProfile.cs` to the existing `Apha.FPS/Apha.FPS.Application/Mappings/EntityMapper.cs`, adding `CreateMap<Disease, DiseaseDto>().ReverseMap()` there. Drop the "create DiseaseProfile.cs" fallback.
+Reconsider scoping Update out of the plan since `tblDisease` has no non-key columns to update
 
 **Reasoning:** The FPS Disease implementation currently only supports GetAll returning IEnumerable<string>. To satisfy the user story (full CRUD API for Disease → tblDisease), I need to: (1) introduce a proper DiseaseDto in FPS.Application, (2) add a DiseaseReq contract for create/update, (3) extend the repository interface and implementation with GetById/Add/Update/Delete, (4) refactor the service to use DTOs and add validation for full CRUD, (5) extend the controller with GET-by-id, POST, PUT, DELETE endpoints while keeping API → Service → Repository layering, (6) add/extend AutoMapper profile for Disease mappings, and (7) update/add unit tests at Repository, Service, and API layers. Entity and DiseaseMap already exist and are correct; DI registration follows existing conventions (already wired for IDiseaseService/IDiseaseRepository). Existing GET-all test needs updating because the service return type will change from IEnumerable<string> to IEnumerable<DiseaseDto>.
 
@@ -65,8 +65,8 @@ The following changes may be beneficial but are NOT part of this story. They sho
 | Iteration | Verdict | Score | Findings |
 |-----------|---------|-------|----------|
 | 1 | NEEDS_WORK | 4/10 | 8 |
-| 2 | NEEDS_WORK | 4/10 | 4 |
-| 3 | NEEDS_WORK | 4/10 | 7 |
+| 2 | NEEDS_WORK | 5/10 | 7 |
+| 3 | NEEDS_WORK | 4/10 | 8 |
 
 ### Findings
 
