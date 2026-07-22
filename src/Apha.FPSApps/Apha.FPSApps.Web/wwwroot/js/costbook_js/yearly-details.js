@@ -289,7 +289,7 @@ function saveStaff() {
     })
         .then(function (r) { return r.json(); })
         .then(function (d) {
-            if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadStaffGrid(); }); }
+            if (d.success) { closeModal(); showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadStaffGrid(); }); }
             else if (d.errors) { _showModalErrors(d.errors, $modal); }
             else { showAlertMessage(d.message || 'Failed to save staff requirement.', AlertType.ERROR); }
         })
@@ -359,7 +359,7 @@ function saveTest() {
     })
         .then(function (r) { return r.json(); })
         .then(function (d) {
-            if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadTestGrid(); }); }
+            if (d.success) { closeModal(); showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadTestGrid(); }); }
             else if (d.errors) { _showModalErrors(d.errors, $modal); }
             else { showAlertMessage(d.message || 'Failed to save test requirement.', AlertType.ERROR); }
         })
@@ -430,7 +430,7 @@ function saveAnimal() {
         .then(function (r) { return r.json(); })
         .then(function (d) {
             if (d.success) {
-                showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadAnimalGrid(); });
+                closeModal(); showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadAnimalGrid(); });
             }
             else if (d.errors) { _showModalErrors(d.errors, $modal); }
             else { showAlertMessage(d.message || 'Failed to save animal requirement.', AlertType.ERROR); }
@@ -501,7 +501,7 @@ function saveAdditionalCost() {
     })
         .then(function (r) { return r.json(); })
         .then(function (d) {
-            if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadAdditionalCostGrid(); }); }
+            if (d.success) { closeModal(); showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadAdditionalCostGrid(); }); }
             else if (d.errors) { _showModalErrors(d.errors, $modal); }
             else { showAlertMessage(d.message || 'Failed to save additional cost.', AlertType.ERROR); }
         })
