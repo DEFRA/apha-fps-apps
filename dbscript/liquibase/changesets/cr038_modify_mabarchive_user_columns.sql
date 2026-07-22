@@ -1,24 +1,19 @@
 --liquibase formatted sql
 
---changeset repo-admin:CR038 labels:ddl context:all
+--changeset repo-admin:cr038 labels:ddl context:all
 
--- Standardize user/audit columns to VARCHAR(255) for consistency across mabarchive tables.
-ALTER TABLE mabarchive.tblcomments
-ALTER COLUMN madeby TYPE VARCHAR(255);
+-- standardize user/audit columns to varchar(255) for consistency across mabarchive tables.
+alter table mabarchive.tblcomments
+alter column madeby type varchar(255);
 
-ALTER TABLE mabarchive.tbllogmilestone
-ALTER COLUMN changedby TYPE VARCHAR(255);
+alter table mabarchive.tbllogmilestone
+alter column changedby type varchar(255);
 
--- Add missing login email column to project manager table.
-ALTER TABLE mabarchive.tblprojectmanager
-ADD COLUMN IF NOT EXISTS loginemail VARCHAR(255);
+-- add missing login email column to project manager table.
+alter table mabarchive.tblprojectmanager
+add column if not exists loginemail varchar(255);
 
---ROLLBACK
-ALTER TABLE mabarchive.tblcomments
-ALTER COLUMN madeby TYPE VARCHAR(50);
+--rollback alter table mabarchive.tblcomments alter column madeby type varchar(50);
+--rollback alter table mabarchive.tbllogmilestone alter column changedby type varchar(10);
+--rollback alter table mabarchive.tblprojectmanager drop column if exists loginemail;
 
-ALTER TABLE mabarchive.tbllogmilestone
-ALTER COLUMN changedby TYPE VARCHAR(10);
-
-ALTER TABLE mabarchive.tblprojectmanager
-DROP COLUMN IF EXISTS loginemail;
