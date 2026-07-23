@@ -193,5 +193,26 @@ namespace Apha.PACT.Application.Services
             var pagedData = await _testCapabilityRepository.GetPagedWgTestCapabilitiesWithDescriptionAsync(parameters, workGroup);
             return _mapper.Map<PaginatedResult<WgTestCapabilitiesWithDescriptionDto>>(pagedData);
         }
+
+        // ── Plan CrossTab ─────────────────────────────────────────────────────
+
+        public async Task BuildTestPlanSummaryAsync()
+        {
+            await _testCapabilityRepository.BuildTestPlanSummaryAsync();
+        }
+
+        public async Task<TestPlanCrossTabDto> GetPagedTestPlanCrossTabAsync(QueryParameters<string> query)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var result = await _testCapabilityRepository.GetPagedTestPlanCrossTabAsync(parameters);
+            return new TestPlanCrossTabDto
+            {
+                Columns = result.Columns,
+                Rows = result.Rows,
+                TotalCount = result.TotalCount,
+                Page = result.Page,
+                PageSize = result.PageSize
+            };
+        }
     }
 }

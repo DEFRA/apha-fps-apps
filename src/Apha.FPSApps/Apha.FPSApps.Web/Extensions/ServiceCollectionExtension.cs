@@ -99,6 +99,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
             services.AddScoped<ITestReqBreakdownService, TestReqBreakdownService>();
             services.AddScoped<ITestActualBreakdownService, TestActualBreakdownService>();
+            services.AddScoped<ITestPlanCrossTabService, TestPlanCrossTabService>();
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();

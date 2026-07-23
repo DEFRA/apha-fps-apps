@@ -19,6 +19,31 @@
             }
         }
 
+        /// <summary>
+        /// Overload for dynamic dictionary-backed rows (e.g. Plan Test CrossTab).
+        /// The DLR picks this overload at runtime when the row is a Dictionary,
+        /// leaving the existing reflection-based overload untouched for all other grids.
+        /// </summary>
+        public static object? GetPropertyValue(IDictionary<string, string?> dict, string propertyName)
+        {
+            if (dict == null || string.IsNullOrEmpty(propertyName))
+                return null;
+
+            return dict.TryGetValue(propertyName, out var value) ? value : null;
+        }
+
+        /// <summary>
+        /// Retrieves a cell value from a dynamic dictionary-backed row (e.g. CrossTab).
+        /// Returns an empty string when the key is absent or the value is null.
+        /// </summary>
+        public static string GetPropertyCrossTab(Dictionary<string, string?> row, string propertyName)
+        {
+            if (row == null || string.IsNullOrEmpty(propertyName))
+                return string.Empty;
+
+            return row.TryGetValue(propertyName, out var value) ? value ?? string.Empty : string.Empty;
+        }
+
         public static string GetTypeCssClass(DataGridColumn column)
         {
             return column.ColumnType switch
