@@ -63,7 +63,7 @@ namespace Apha.FPS.Application.Services
             {
                 throw new InvalidOperationException(
                     $"Program '{programDto.ProgramNo}' already exists. " +
-                    "Please use a different program number.", ex);
+                    "Please use a different program.", ex);
             }
         }
 
