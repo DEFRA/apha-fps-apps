@@ -269,9 +269,9 @@ namespace Apha.Common.Constants
         public const string GetPermissionOptions = "api/v1/user/options";
 
         // Year End Batch Job
-        public const string GetYearEndBatchJobHistory = "api/v1/batchjob/history";
-        public const string CanRunYearEndBatchJob = "api/v1/batchjob/canrun";
-        public const string TriggerYearEndRecreateSummariesJob = "api/v1/trigger";
+        public const string GetYearEndBatchJobHistory = "api/v1/yearend/batchjob/history";
+        public const string CanRunYearEndBatchJob = "api/v1/yearend/batchjob/canrun";
+        public const string TriggerYearEndRecreateSummariesJob = "api/v1/yearend/batchjob/trigger";
 
         // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
         public const string GetAllCostCentres = "api/v1/costcentre";

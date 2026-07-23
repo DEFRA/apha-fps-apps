@@ -6,10 +6,10 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
 {
     public interface IFpsMonthHourApiClient
     {
-        Task<ApiResponseDto<List<MonthHourDto>>> GetAllAsync(QueryParameters<string> query);
-        Task<ApiResponseDto<IEnumerable<MonthHourDto>>> GetByYearAsync(short year);
+        Task<ApiResponseDto<List<MonthHourDto>>> GetAllMonthHourAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<IEnumerable<MonthHourDto>>> GetMonthHoursByYearAsync(short year);
         Task<ApiResponseDto<IEnumerable<short>>> GetDistinctYearsAsync();
         Task<ApiResponseDto<List<YearEndMonthHourDto>>> GetYearEndMonthHoursAsync();
-        Task<ApiResponseDto<MonthHourDto>> SaveAsync(MonthHourDto dto);
+        Task<ApiResponseDto<MonthHourDto>> SaveMonthHourAsync(MonthHourDto dto);
     }
 }

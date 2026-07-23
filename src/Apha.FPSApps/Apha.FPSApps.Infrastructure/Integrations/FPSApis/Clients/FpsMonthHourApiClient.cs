@@ -22,7 +22,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<ApiResponseDto<List<MonthHourDto>>> GetAllAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<List<MonthHourDto>>> GetAllMonthHourAsync(QueryParameters<string> query)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedMonthHours, query);
             var response = await _http.GetAsync<List<MonthHourRes>>(url);
@@ -34,7 +34,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<MonthHourDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<IEnumerable<MonthHourDto>>> GetByYearAsync(short year)
+        public async Task<ApiResponseDto<IEnumerable<MonthHourDto>>> GetMonthHoursByYearAsync(short year)
         {
             var url = string.Format(FpsApiEndpoints.GetMonthHoursByYear, year);
             var response = await _http.GetAsync<List<MonthHourRes>>(url);
@@ -68,7 +68,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<YearEndMonthHourDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<MonthHourDto>> SaveAsync(MonthHourDto monthHourDto)
+        public async Task<ApiResponseDto<MonthHourDto>> SaveMonthHourAsync(MonthHourDto monthHourDto)
         {
             var request = _mapper.Map<MonthHourReq>(monthHourDto);
             var response = await _http.PostAsync<MonthHourReq, MonthHourRes>(FpsApiEndpoints.SaveMonthHour, request);

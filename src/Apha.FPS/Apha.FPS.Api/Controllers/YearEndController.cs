@@ -66,7 +66,7 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="request">Request body containing the target month (1–12).</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobEventTriggerRes"/>.</returns>
-        [HttpPost("trigger")]
+        [HttpPost("batchjob/trigger")]
         public async Task<IActionResult> TriggerYearEndInitiationJob([FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
             var result = await _yearEndService.TriggerYearEndInitiationJobAsync(_fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);

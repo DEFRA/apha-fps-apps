@@ -15,14 +15,14 @@ namespace Apha.FPSApps.Application.Services.FPS
             _fpsClient = fpsClient ?? throw new ArgumentNullException(nameof(fpsClient));
         }
 
-        public async Task<ApiResponseDto<List<MonthHourDto>>> GetAllAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<List<MonthHourDto>>> GetAllMonthHourAsync(QueryParameters<string> query)
         {
-            return await _fpsClient.FpsMonthHour.GetAllAsync(query);
+            return await _fpsClient.FpsMonthHour.GetAllMonthHourAsync   (query);
         }
 
-        public async Task<ApiResponseDto<IEnumerable<MonthHourDto>>> GetByYearAsync(short year)
+        public async Task<ApiResponseDto<IEnumerable<MonthHourDto>>> GetMonthHoursByYearAsync(short year)
         {
-            return await _fpsClient.FpsMonthHour.GetByYearAsync(year);
+            return await _fpsClient.FpsMonthHour.GetMonthHoursByYearAsync(year);
         }
 
         public async Task<ApiResponseDto<IEnumerable<short>>> GetDistinctYearsAsync()
@@ -35,9 +35,9 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsClient.FpsMonthHour.GetYearEndMonthHoursAsync();
         }
 
-        public async Task<ApiResponseDto<MonthHourDto>> SaveAsync(MonthHourDto dto)
+        public async Task<ApiResponseDto<MonthHourDto>> SaveMonthHourAsync(MonthHourDto dto)
         {
-            return await _fpsClient.FpsMonthHour.SaveAsync(dto);
+            return await _fpsClient.FpsMonthHour.SaveMonthHourAsync(dto);
         }
     }
 }
