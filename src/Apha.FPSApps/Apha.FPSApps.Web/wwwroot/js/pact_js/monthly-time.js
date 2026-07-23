@@ -616,7 +616,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
         showSerialNumber: false,
         clearButtonClearsSelection: true,
         callbacks: {
-            onSelect: function (selectedItem) {
+            onSelect: function (selectedItem) {                
                 const selectedPactId = selectedItem?.pactId || '';
                 const selectedSpNumber = selectedItem?.spNumber || '';
                 $('#StagingName').val(selectedItem?.name || '');
@@ -735,7 +735,7 @@ function loadStagingModalStaffByWorkGroup(workGroup, restoreName, restorePactId)
                     window.stagingNameDropdown.setValue(match.pactId);
                     // Set hidden inputs explicitly in case setValue does not fire onSelect
                     $('#StagingName').val(match.name);
-                    $('#StagingPactStaffId').val(match.pactId);
+                    $('#StagingPactStaffId').val(match.spNumber);
                     $('#StagingPactId').val(match.pactId);
                 } else {
                     // Employee not in list (e.g. inactive) — show stored text directly

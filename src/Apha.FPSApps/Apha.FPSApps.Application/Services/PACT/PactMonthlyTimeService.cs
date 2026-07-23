@@ -207,7 +207,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             {
                 WorkGroup = workGroupFromFile,
                 PactStaffId = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Name")])),
-                Name = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Name")])),
+                //Name = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Name")])),
                 TimeCode = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Time Code")])),
                 ParentProject = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Parent Project")])),
                 Month = monthFromFile,
