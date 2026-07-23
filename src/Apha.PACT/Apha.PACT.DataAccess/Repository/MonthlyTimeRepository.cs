@@ -482,6 +482,10 @@ namespace Apha.PACT.DataAccess.Repository
             }
 
             await _context.SaveChangesAsync();
+
+            if (failedCount == 0)
+                await DeleteAllStagingByUserAsync(importedBy);
+
             return (passedRows.Count, importedCount, failedCount);
         }
 

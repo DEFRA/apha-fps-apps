@@ -882,28 +882,7 @@ function loadAllStagingModalProjects(restoreParentProject) {
     });
 }
 
-function saveStagingMonthlyTime() {
-    const form = $('#stagingMonthlyTimeForm');
-    clearValidationErrors(form);
-
-    if (!isFormValid(form)) {
-        displayClientValidationErrors(form, form);
-        return;
-    }
-
-    const data = {
-        Id: $('#Id').val(),
-        WorkGroup: $('#StagingWorkGroup').val(),
-        PactStaffId: $('#StagingPactStaffId').val(),
-        PactId: $('#StagingPactId').val(),
-        Name: $('#StagingName').val(),
-        TimeCode: $('#StagingTimeCode').val(),
-        ParentProject: $('#StagingParentProject').val(),
-        Month: $('#StagingMonth').val(),
-        Hours: $('#StagingHours').val(),
-        NameUpdating: $('#chkNameupdating').is(':checked')
-    };
-
+function submitStagingMonthlyTime(data) {
     $.ajax({
         url: '/PACT/MonthlyTime/SaveStagingRecord',
         type: 'POST',
@@ -922,6 +901,48 @@ function saveStagingMonthlyTime() {
             showAlertMessage('An error occurred while saving.', AlertType.ERROR);
         }
     });
+}
+
+function saveStagingMonthlyTime() {
+    const form = $('#stagingMonthlyTimeForm');
+    clearValidationErrors(form);
+
+    if (!isFormValid(form)) {
+        displayClientValidationErrors(form, form);
+        return;
+    }
+
+    const isNameUpdatingChecked = $('#chkNameupdating').is(':checked');
+
+    const data = {
+        Id: $('#Id').val(),
+        WorkGroup: $('#StagingWorkGroup').val(),
+        PactStaffId: $('#StagingPactStaffId').val(),
+        PactId: $('#StagingPactId').val(),
+        Name: $('#StagingName').val(),
+        TimeCode: $('#StagingTimeCode').val(),
+        ParentProject: $('#StagingParentProject').val(),
+        Month: $('#StagingMonth').val(),
+        Hours: $('#StagingHours').val(),
+        NameUpdating: isNameUpdatingChecked
+    };
+
+    if (isNameUpdatingChecked) {
+        const selectedSpNumber = ($('#StagingPactStaffId').val() || '').trim();
+        const selectedWorkGroup = ($('#StagingWorkGroup').val() || '').trim();
+        const strOriginalName = selectedSpNumber;
+
+        const message = 'Do you want to update all other entries for "' + strOriginalName + '" in "' + selectedWorkGroup + '" ?';
+
+        showGovukConfirm(message).then(function (confirmed) {
+            data.NameUpdating = confirmed;
+            submitStagingMonthlyTime(data);
+        });
+
+        return;
+    }
+
+    submitStagingMonthlyTime(data);
 }
 
 function deleteStagingMonthlyTime(btn) {

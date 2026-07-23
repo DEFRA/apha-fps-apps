@@ -366,7 +366,7 @@ namespace Apha.PACT.Application.Services
             }
             else if (!timeCodeRows.Any(x => x.WorkGroup == workGroup && x.TimeCode == timeCode && x.ParentProject == parentProject))
             {
-                failures.Add($"Not valid timecode/Project/WG combination: {parentProject}, {timeCode}, {workGroup}");
+                failures.Add($"Not valid timecode/Project/WG combination: {timeCode}, {parentProject}, {workGroup}");
             }
         }
 
