@@ -1716,3 +1716,6 @@ table#tblMonthPeriod > tbody > tr > td {
 .sup-margin-left-3-percent {
      margin-left: 3% !important;
 }
+.sup_m-2 {
+    margin-bottom: 2px;
+}

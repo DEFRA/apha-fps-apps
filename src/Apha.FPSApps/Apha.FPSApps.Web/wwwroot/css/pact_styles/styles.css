@@ -251,6 +251,26 @@ blockquote {
   .col-lg-12 { flex: 0 0 100%;    max-width: 100%; }
 }
 
+.monthly-time-workgroup-dropdown-width {
+  width: 160px;
+}
+
+.monthly-time-staff-dropdown-width {
+  width: 340px;
+}
+
+.monthly-time-timecode-filter-width {
+  width: 250px;
+}
+
+.monthly-time-parentproject-filter-width {
+  width: 320px;
+}
+
+.monthly-time-period-select-width {
+  min-width: 100px !important;
+}
+
 @media (min-width: 1200px) {
   .col-xl-1  { flex: 0 0 8.333%;  max-width: 8.333%; }
   .col-xl-2  { flex: 0 0 16.666%; max-width: 16.666%; }
@@ -1314,30 +1334,29 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
 }
 
 #gridContainer_monthlyTimeLiveGrid .monthly-time-live-col-name {
-    min-width: 250px !important;
-    width: 250px !important;
-    max-width: 250px !important;
+    min-width: 350px !important;
+    width: 350px !important;
+    max-width: 350px !important;
 }
 
 #gridContainer_monthlyTimeLiveGrid .monthly-time-live-col-timecode {
-    min-width: 380px !important;
-    width: 380px !important;
-    max-width: 380px !important;
+    min-width: 270px !important;
+    width: 270px !important;
+    max-width: 270px !important;
 }
 
 #gridContainer_monthlyTimeLiveGrid .monthly-time-live-col-parentproject {
-    min-width: 380px !important;
-    width: 380px !important;
-    max-width: 380px !important;
+    min-width: 340px !important;
+    width: 340px !important;
+    max-width: 340px !important;
 }
 
 #gridContainer_monthlyTimeLiveGrid .monthly-time-live-col-period {
-    min-width: 90px !important;
-    width: 90px !important;
-    max-width: 90px !important;
+    min-width: 100px !important;
+    width: 100px !important;
+    max-width: 100px !important;
 }
 
-#gridContainer_monthlyTimeLiveGrid th.monthly-time-live-col-period,
 #gridContainer_monthlyTimeLiveGrid td.monthly-time-live-col-period,
 #gridContainer_monthlyTimeLiveGrid span.monthly-time-live-col-period {
     text-align: right !important;
@@ -1351,13 +1370,12 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
 }
 
 #gridContainer_monthlyTimeLiveGrid .monthly-time-live-col-hours {
-    min-width: 90px !important;
-    width: 90px !important;
-    max-width: 90px !important;
+    min-width: 100px !important;
+    width: 100px !important;
+    max-width: 100px !important;
 
 }
 
-#gridContainer_monthlyTimeLiveGrid th.monthly-time-live-col-hours,
 #gridContainer_monthlyTimeLiveGrid td.monthly-time-live-col-hours,
 #gridContainer_monthlyTimeLiveGrid span.monthly-time-live-col-hours {
     text-align: right !important;

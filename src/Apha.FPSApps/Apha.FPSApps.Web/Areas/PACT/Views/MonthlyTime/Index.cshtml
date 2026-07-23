@@ -17,22 +17,22 @@
                 <div class="sup_search_panel sup_border_b_0 sup_margin_bottom_left_10">
                     <div class="input-group searchfiels govuk-!-margin-right-3">
                         <label class="govuk-label govuk-!-font-weight-bold" for="ddWorkGroup">Work Group</label>
-                        <div id="workGroupSelectDropdown"></div>
+                        <div id="workGroupSelectDropdown" class="monthly-time-workgroup-dropdown-width"></div>
                         <input type="hidden" id="ddWorkGroup" value="" />
                     </div>
 
                     <div class="input-group searchfiels govuk-!-margin-right-3">
-                        <div id="staffSelectDropdown"></div>
+                        <div id="staffSelectDropdown" class="monthly-time-staff-dropdown-width"></div>
                         <input type="hidden" id="ddStaff" value="" />
                     </div>
 
-                    <div class="input-group searchfiels govuk-!-margin-right-3">
+                    <div class="input-group searchfiels govuk-!-margin-right-3 monthly-time-timecode-filter-width">
                         <label class="govuk-label govuk-!-font-weight-bold" for="ddTimeCode">Timecode</label>
                         <div id="timeCodeSelectDropdown"></div>
                         <input type="hidden" id="ddTimeCode" value="" />
                     </div>
 
-                    <div class="input-group searchfiels govuk-!-margin-right-3">
+                    <div class="input-group searchfiels govuk-!-margin-right-3 monthly-time-parentproject-filter-width">
                         <label class="govuk-label govuk-!-font-weight-bold" for="ddParentProject">Parent Project</label>
                         <div id="parentProjectSelectDropdown"></div>
                         <input type="hidden" id="ddParentProject" value="" />
@@ -40,7 +40,7 @@
 
                     <div class="input-group searchfiels govuk-!-margin-right-3">
                         <label class="govuk-label govuk-!-font-weight-bold" for="ddMonth">Period</label>
-                        <select id="ddMonth" class="govuk-select govuk-!-font-size-16">
+                        <select id="ddMonth" class="govuk-select govuk-!-font-size-16 monthly-time-period-select-width">
                             <option value="">--select--</option>
                             @foreach (var item in Model.MonthOptions)
                             {
@@ -51,7 +51,7 @@
 
                     <div class="input-group searchfiels govuk-!-margin-right-3">
                         <div class="govuk-form-group sup_margin_0">
-                            <button id="btnSearchLive" type="button" class="govuk-button sup_margin_0 sup_flex govuk-!-margin-right-1" allow-edit="true">
+                            <button id="btnSearchLive" type="button" class="govuk-button sup_margin_0 sup_flex govuk-!-margin-right-1 sup_m-2" allow-edit="true">
                                 <img src="~/images/filter-solid.svg" width="16" alt="Search" />&nbsp;Search
                             </button>
                         </div>
@@ -59,7 +59,7 @@
 
                     <div class="input-group searchfiels">
                         <div class="govuk-form-group sup_margin_0">
-                            <button id="btnClearLiveSearch" type="button" class="govuk-button sup_margin_0 sup_flex" allow-edit="true">
+                            <button id="btnClearLiveSearch" type="button" class="govuk-button sup_margin_0 sup_flex sup_m-2" allow-edit="true">
                                 <img src="~/images/filter-circle-xmark-solid.svg" width="16" alt="Clear search" />&nbsp;Clear search
                             </button>
                         </div>
