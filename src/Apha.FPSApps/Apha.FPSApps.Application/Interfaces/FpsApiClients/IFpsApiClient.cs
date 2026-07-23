@@ -35,5 +35,7 @@
         IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
         IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
         IFpsCostCentreApiClient FpsCostCentre { get; }
+        IFpsMonthHourApiClient FpsMonthHour { get; }
+        IFpsYearEndApiClient FpsYearEnd { get; }
     }
 }

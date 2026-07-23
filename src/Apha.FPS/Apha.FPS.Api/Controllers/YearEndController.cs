@@ -39,7 +39,7 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with a list of <see cref="BatchJobHistoryRes"/>.</returns>
-        [HttpGet("/api/v1/batchjob/history")]
+        [HttpGet("batchjob/history")]
         public async Task<IActionResult> GetYearEndBatchJobHistory([FromQuery] QueryParameters<string> query, [FromQuery] string jobName)
         {
             var result = await _yearEndService.GetBatchJobsHistoryAsync(query,jobName);
@@ -51,7 +51,7 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with <c>true</c> if the job can run; <c>false</c> if it is already running.</returns>
-        [HttpGet("/api/v1/batchjob/canrun")]
+        [HttpGet("batchjob/canrun")]
         public async Task<IActionResult> CanRunBatchJob([FromQuery] string jobName)
         {
             var result = await _yearEndService.CanRunBatchJobAsync(jobName);
@@ -66,7 +66,7 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="request">Request body containing the target month (1–12).</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobEventTriggerRes"/>.</returns>
-        [HttpPost("/api/v1/trigger")]
+        [HttpPost("trigger")]
         public async Task<IActionResult> TriggerRecreateSummariesJob([FromBody] RecreateSummariesReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
             var result = await _yearEndService.TriggerRecreateSummariesJobAsync(request.Month, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);

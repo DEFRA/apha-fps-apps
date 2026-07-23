@@ -117,6 +117,18 @@ namespace Apha.Common.Constants
 
         // Setting
         public const string GetHoursPerDay = "api/v1/setting/hoursperday";
+        public const string GetAllSettings = "api/v1/setting";
+        public const string GetYearEndSettings = "api/v1/setting/yearend";
+        public const string CreateSetting = "api/v1/setting";
+        public const string UpdateSetting = "api/v1/setting/{0}";
+        public const string SaveSetting = "api/v1/setting/save";
+
+        // Month Hour
+        public const string GetPagedMonthHours = "api/v1/monthhour";
+        public const string GetMonthHoursByYear = "api/v1/monthhour/year/{0}";
+        public const string GetDistinctMonthHourYears = "api/v1/monthhour/years";
+        public const string GetYearEndMonthHours = "api/v1/monthhour/yearend";
+        public const string SaveMonthHour = "api/v1/monthhour/save";
 
         // Project Staff Plan
         public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";
@@ -255,6 +267,11 @@ namespace Apha.Common.Constants
         public const string GetUserPermissions = "api/v1/user/{0}/permissions";
         public const string SaveUserPermissions = "api/v1/user/{0}/permissions";
         public const string GetPermissionOptions = "api/v1/user/options";
+
+        // Year End Batch Job
+        public const string GetYearEndBatchJobHistory = "api/v1/batchjob/history";
+        public const string CanRunYearEndBatchJob = "api/v1/batchjob/canrun";
+        public const string TriggerYearEndRecreateSummariesJob = "api/v1/trigger";
 
         // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
         public const string GetAllCostCentres = "api/v1/costcentre";

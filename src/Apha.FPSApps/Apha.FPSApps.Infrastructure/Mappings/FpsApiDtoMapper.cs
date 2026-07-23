@@ -2,7 +2,6 @@ using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Pagination;
 using AutoMapper;
 namespace Apha.FPSApps.Infrastructure.Mappings
@@ -57,7 +56,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<YearMasterDto, YearMasterReq>().ReverseMap();
 
             // Testor Product
-            CreateMap<TestorProductDto, Apha.Common.Contracts.FPS.TestorProductRes>().ReverseMap();
+            CreateMap<Apha.FPSApps.Application.Dtos.PACT.TestorProductDto, Apha.Common.Contracts.FPS.TestorProductRes>().ReverseMap();
             
             // View Project Plan vs Actual Staff
             CreateMap<TimeCostCalcsViewDto, TimeCostCalcsViewRes>().ReverseMap();
@@ -181,6 +180,16 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Total Business Overheads
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
+
+            // Setting
+            CreateMap<SettingDto, FpsSettingRes>().ReverseMap();
+            CreateMap<SettingDto, FpsSettingReq>().ReverseMap();
+            CreateMap<YearEndSettingDto, FpsYearEndSettingRes>().ReverseMap();
+
+            // MonthHour
+            CreateMap<MonthHourDto, MonthHourRes>().ReverseMap();
+            CreateMap<MonthHourDto, MonthHourReq>().ReverseMap();
+            CreateMap<YearEndMonthHourDto, YearEndMonthHourRes>().ReverseMap();
             // StaffResourceUtilisation
             CreateMap<StaffResourceUtilisationDto, StaffResourceUtilisationRes>().ReverseMap();
 
@@ -189,6 +198,11 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TestRCCostDto, TestRCCostReq>().ReverseMap();
             CreateMap<TestRequirementRCCostDto, TestRequirementRCCostRes>().ReverseMap();
             CreateMap<TestRequirementRCCostDto, TestRequirementRCCostReq>().ReverseMap();
+
+            // Year End batch job
+            CreateMap<BatchJobQueueDto, BatchJobQueueRes>().ReverseMap();
+            CreateMap<BatchJobHistoryDto, BatchJobHistoryRes>().ReverseMap();
+            CreateMap<BatchJobEventTriggerDto, BatchJobEventTriggerRes>().ReverseMap();
 
         }
     }
