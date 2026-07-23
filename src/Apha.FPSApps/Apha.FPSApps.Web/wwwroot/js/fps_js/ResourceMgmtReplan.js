@@ -3,16 +3,17 @@
 
     /* ── State ─────────────────────────────────────────────────────────── */
     let _currentResourceCentre = '';
-    let _currentWgGrade        = '';
+    let _currentWorkGroup      = '';   // WorkGroup name selected from left list (e.g. "WG1")
+    let _currentWgGrade        = '';   // WgGrade from selected RePlanGrid row  (e.g. "WG1-AGRADE")
     let _currentJobCode        = '';
     let _stagedRows            = [];
-    const _emptyStaffGridHtml   = (document.getElementById('gridContainer_RePlanGrid') || {}).innerHTML || '';
-    const _emptyAllTimeGridHtml  = (document.getElementById('gridContainer_AllTimeGrid') || {}).innerHTML || '';
+    const _emptyStaffGridHtml = (document.getElementById('gridContainer_RePlanGrid') || {}).innerHTML || '';
+    const _emptyAllTimeGridHtml = (document.getElementById('gridContainer_AllTimeGrid') || {}).innerHTML || '';
 
     /* ── DOM helpers ────────────────────────────────────────────────────── */
-    const el      = id => document.getElementById(id);
-    const setVal  = (id, v) => { const e = el(id); if (e) e.value = v ?? ''; };
-    const setTxt  = (id, v) => { const e = el(id); if (e) e.textContent = v ?? ''; };
+    const el = id => document.getElementById(id);
+    const setVal = (id, v) => { const e = el(id); if (e) e.value = v ?? ''; };
+    const setTxt = (id, v) => { const e = el(id); if (e) e.textContent = v ?? ''; };
 
     /* ── Antiforgery token ──────────────────────────────────────────────── */
     function getAntiforgeryHeader() {
@@ -26,6 +27,7 @@
     function rraUpdateResourceCentre() {
         const centre = el('resourceCentreSelect')?.value || '';
         _currentResourceCentre = centre;
+        _currentWorkGroup = '';
         _currentWgGrade = '';
         _currentJobCode = '';
         _stagedRows = [];
@@ -94,46 +96,47 @@
             .forEach(function (i) { i.classList.remove('ssr-grade-item--active'); });
         liEl.classList.add('ssr-grade-item--active');
 
-        _currentWgGrade = liEl.dataset.wgGrade || '';
-        _currentJobCode = '';
-        _stagedRows     = [];
+        _currentWorkGroup = liEl.dataset.wgGrade || '';   // WorkGroup name (e.g. "WG1")
+        _currentWgGrade   = '';                            // Reset grade until a row is selected
+        _currentJobCode   = '';
+        _stagedRows       = [];
 
         rraResetAllTimeFields();
         rraResetStagedPanel();
 
-        if (!_currentWgGrade) return;
+        if (!_currentWorkGroup) return;
 
         rraLoadRePlanGrid();
     }
 
     /* ── Load Section 2: re-plan grid ───────────────────────────────────── */
     function rraLoadRePlanGrid() {
-        if (!_currentWgGrade) {
+        if (!_currentWorkGroup) {
             rraClearStaffGrid();
             return;
         }
 
         showLoader();
         $.ajax({
-            url:  RRA_LOAD_GRID_URL,
+            url: RRA_LOAD_GRID_URL,
             type: 'POST',
-            data: { workGroup: _currentWgGrade },
+            data: { workGroup: _currentWorkGroup },
             headers: getAntiforgeryHeader()
         })
-        .done(function (html) {
-            hideLoader();
-            const container = el('gridContainer_RePlanGrid');
-            if (container) $(container).html(html);
-        })
-        .fail(function () {
-            hideLoader();
-            showAlertMessage('Failed to load the re-plan grid. Please try again.', AlertType.ERROR);
-        });
+            .done(function (html) {
+                hideLoader();
+                const container = el('gridContainer_RePlanGrid');
+                if (container) $(container).html(html);
+            })
+            .fail(function () {
+                hideLoader();
+                showAlertMessage('Failed to load the re-plan grid. Please try again.', AlertType.ERROR);
+            });
     }
 
     /* ── ExtraFilterMethod hook — passes current workgroup to every grid request ── */
     window.rraGetRePlanExtraFilters = function () {
-        return { workGroup: _currentWgGrade || '' };
+        return { workGroup: _currentWorkGroup || '' };
     };
 
     /* ── ExtraFilterMethod hook — passes jobCode + wgGrade to AllTime grid reloads ── */
@@ -148,7 +151,7 @@
         // _DataGrid sets data-id on the <tr> from KeyProperty ("StaffRowKey").
         // StaffRowKey is rendered as "{ParentProject}|{WgGrade}" by the server.
         var rowKey = trEl.getAttribute('data-id') || '';
-        var parts  = rowKey.split('|');
+        var parts = rowKey.split('|');
         if (parts.length < 2 || !parts[0] || !parts[1]) return;
 
         _currentJobCode = parts[0];   // ParentProject = sj.JobCode
@@ -169,21 +172,21 @@
 
         showLoader();
         $.ajax({
-            url:  RRA_LOAD_ALLTIME_URL,
+            url: RRA_LOAD_ALLTIME_URL,
             type: 'POST',
             data: { jobCode: _currentJobCode, wgGrade: _currentWgGrade },
             headers: getAntiforgeryHeader()
         })
-        .done(function (html) {
-            hideLoader();
-            const container = el('gridContainer_AllTimeGrid');
-            if (container) $(container).html(html);
-            rraRecalcAllTimeTotal();
-        })
-        .fail(function () {
-            hideLoader();
-            showAlertMessage('Failed to load the all-time grid. Please try again.', AlertType.ERROR);
-        });
+            .done(function (html) {
+                hideLoader();
+                const container = el('gridContainer_AllTimeGrid');
+                if (container) $(container).html(html);
+                rraRecalcAllTimeTotal();
+            })
+            .fail(function () {
+                hideLoader();
+                showAlertMessage('Failed to load the all-time grid. Please try again.', AlertType.ERROR);
+            });
 
         setVal('ssrAllTimeProject', _currentJobCode);
         setVal('ssrAllTimeWgGrade', _currentWgGrade);
@@ -271,9 +274,9 @@
 
     /* ── Enable / disable OK + Cancel buttons ───────────────────────────── */
     function rraEnableStagedButtons(enabled) {
-        const ok     = el('ssrReplanOkBtn');
+        const ok = el('ssrReplanOkBtn');
         const cancel = el('ssrReplanCancelBtn');
-        if (ok)     ok.disabled     = !enabled;
+        if (ok) ok.disabled = !enabled;
         if (cancel) cancel.disabled = !enabled;
     }
 
@@ -286,30 +289,30 @@
 
         showLoader();
         $.ajax({
-            url:         RRA_COMMIT_URL,
-            type:        'POST',
+            url: RRA_COMMIT_URL,
+            type: 'POST',
             contentType: 'application/json',
-            data:        JSON.stringify({
-                jobCode:    _currentJobCode,
-                wgGrade:    _currentWgGrade,
+            data: JSON.stringify({
+                jobCode: _currentJobCode,
+                wgGrade: _currentWgGrade,
                 stagedRows: _stagedRows
             }),
             headers: getAntiforgeryHeader()
         })
-        .done(function (r) {
-            hideLoader();
-            if (r?.success) {
-                showAlertMessage('Re-plan committed successfully.', AlertType.SUCCESS);
-                rraResetAll();
-            } else {
-                showAlertMessage(r?.message || 'Commit failed. Please check your data and try again.', AlertType.ERROR);
-            }
-        })
-        .fail(function (xhr) {
-            hideLoader();
-            const msg = xhr.responseJSON?.message || 'An error occurred while committing the re-plan.';
-            showAlertMessage(msg, AlertType.ERROR);
-        });
+            .done(function (r) {
+                hideLoader();
+                if (r?.success) {
+                    showAlertMessage('Re-plan committed successfully.', AlertType.SUCCESS);
+                    rraResetAll();
+                } else {
+                    showAlertMessage(r?.message || 'Commit failed. Please check your data and try again.', AlertType.ERROR);
+                }
+            })
+            .fail(function (xhr) {
+                hideLoader();
+                const msg = xhr.responseJSON?.message || 'An error occurred while committing the re-plan.';
+                showAlertMessage(msg, AlertType.ERROR);
+            });
     }
 
     /* ── Cancel staged re-plan ──────────────────────────────────────────── */
@@ -320,9 +323,10 @@
 
     /* ── Reset helpers ──────────────────────────────────────────────────── */
     function rraResetAll() {
-        _currentWgGrade = '';
-        _currentJobCode = '';
-        _stagedRows     = [];
+        _currentWorkGroup = '';
+        _currentWgGrade   = '';
+        _currentJobCode   = '';
+        _stagedRows       = [];
 
         document.querySelectorAll('#ssrWorkGroupList .ssr-workgroup-item')
             .forEach(function (i) { i.classList.remove('ssr-workgroup-item--selected'); });
@@ -350,7 +354,7 @@
     function rraResetAllTimeFields() {
         setVal('ssrAllTimeProject', '');
         setVal('ssrAllTimeWgGrade', '');
-        setVal('ssrAllTimeTotal',   '0.00');
+        setVal('ssrAllTimeTotal', '0.00');
     }
 
     function rraResetStagedPanel() {
@@ -417,11 +421,11 @@
     });
 
     /* ── Expose public API (called by Razor inline handlers) ────────────── */
-    window.rraUpdateResourceCentre  = rraUpdateResourceCentre;
-    window.rraOnStaffRowSelect      = rraOnStaffRowSelect;
-    window.rraRePlanGeneralGrades   = rraLoadStagedRows;
-    window.rraConfirmRePlan         = rraConfirmRePlan;
-    window.rraCancelRePlan          = rraCancelRePlan;
-    window.rraRemoveStagedRow       = rraRemoveStagedRow;
+    window.rraUpdateResourceCentre = rraUpdateResourceCentre;
+    window.rraOnStaffRowSelect = rraOnStaffRowSelect;
+    window.rraRePlanGeneralGrades = rraLoadStagedRows;
+    window.rraConfirmRePlan = rraConfirmRePlan;
+    window.rraCancelRePlan = rraCancelRePlan;
+    window.rraRemoveStagedRow = rraRemoveStagedRow;
 
 }());

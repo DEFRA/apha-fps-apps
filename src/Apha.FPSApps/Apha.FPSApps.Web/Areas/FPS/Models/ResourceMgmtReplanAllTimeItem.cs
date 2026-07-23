@@ -12,14 +12,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? StaffId { get; set; }
 
         [Display(Name = "Staff")]
+        [GridColumn(Type = GridColumnType.ReadOnly)]
         public string? Name { get; set; }
 
         [Display(Name = "Project")]
-        [GridColumn(Width = 130, Type = GridColumnType.ReadOnly, IsFilterable = true)]
+        [GridColumn (Type = GridColumnType.ReadOnly)]
         public string? JobCode { get; set; }
 
         [Display(Name = "Hours")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
+        [GridColumn(Type = GridColumnType.Number)]
         public double PlannedHours { get; set; }
     }
 }
