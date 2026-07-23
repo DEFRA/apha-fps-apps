@@ -89,6 +89,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<StagingMilestoneRes, StagingMilestoneDto>().ReverseMap();
             CreateMap<StagingMilestoneDto, StagingMilestoneReq>().ReverseMap();
 
+            CreateMap<YearlyFinancialDataRes, YearlyFinancialDataDto>().ReverseMap();
+            CreateMap<YearlyFinancialDataDto, YearlyFinancialDataReq>().ReverseMap();
+            CreateMap<PactProjectYearCostsRes, PactProjectYearCostsDto>().ReverseMap();
+
             // Project Year Manager
             CreateMap<ProjectYearManagerRes, ProjectYearManagerDto>().ReverseMap();
         }
