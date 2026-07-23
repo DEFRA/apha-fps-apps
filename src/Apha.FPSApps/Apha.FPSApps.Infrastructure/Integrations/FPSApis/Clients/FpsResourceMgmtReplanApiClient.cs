@@ -73,7 +73,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             var url = QueryHelpers.AddQueryString(FpsApiEndpoints.CommitResourceMgmtReplan, "jobCode", jobCode);
             url = QueryHelpers.AddQueryString(url, "wgGrade", wgGrade);
-            var response = await _http.PostAsync<object, bool>(url, null);
+            var response = await _http.PostAsync<object, bool>(url, new { });
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);
