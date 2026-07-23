@@ -119,7 +119,7 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
                 .ForMember(dest => dest.EventId, opt => opt.Ignore());
 
             CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
-            CreateMap<YearEndFpsSetting, FpsYearEndSettingDto>().ReverseMap();
+            CreateMap<YearEndFpsSetting, YearEndFpsSettingDto>().ReverseMap();
             CreateMap<MonthHour, MonthHourDto>().ReverseMap();
         }
     }

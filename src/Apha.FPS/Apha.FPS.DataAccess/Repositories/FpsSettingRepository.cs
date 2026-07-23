@@ -2,7 +2,6 @@
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Numerics;
 
 namespace Apha.FPS.DataAccess.Repositories
 {

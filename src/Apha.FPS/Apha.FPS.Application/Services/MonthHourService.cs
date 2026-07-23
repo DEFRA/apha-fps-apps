@@ -19,14 +19,14 @@ namespace Apha.FPS.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<PaginatedResult<MonthHourDto>> GetAllAsync(QueryParameters<string> query)
+        public async Task<PaginatedResult<MonthHourDto>> GetAllMonthHourAsync(QueryParameters<string> query)
         {
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
             var pagedData = await _repository.GetAllAsync(parameters);
             return _mapper.Map<PaginatedResult<MonthHourDto>>(pagedData);
         }
 
-        public async Task<IEnumerable<MonthHourDto>> GetByYearAsync(short year)
+        public async Task<IEnumerable<MonthHourDto>> GetMonthHoursByYearAsync(short year)
         {
             var items = await _repository.GetByYearAsync(year);
             return _mapper.Map<IEnumerable<MonthHourDto>>(items);
@@ -43,7 +43,7 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<List<YearEndMonthHourDto>>(items);
         }
 
-        public async Task<MonthHourDto> SaveAsync(MonthHourDto dto)
+        public async Task<MonthHourDto> SaveMonthHourAsync(MonthHourDto dto)
         {
             var entity = _mapper.Map<MonthHour>(dto);
             var result = await _repository.SaveAsync(entity);

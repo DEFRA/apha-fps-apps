@@ -103,7 +103,7 @@ namespace Apha.FPS.Api.Controllers
         public async Task<IActionResult> SaveAsync([FromBody] FpsSettingReq request)
         {
             var dto = _mapper.Map<FpsSettingDto>(request);
-            var result = await _fpsSettingService.SaveAsync(dto);
+            var result = await _fpsSettingService.SaveSettingAsync(dto);
             return Ok(_mapper.Map<FpsSettingRes>(result));
         }
     }

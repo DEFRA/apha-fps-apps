@@ -24,7 +24,7 @@ namespace Apha.FPS.Api.Mappings
 
             CreateMap<FpsSettingRes, FpsSettingDto>().ReverseMap();
             CreateMap<FpsSettingReq, FpsSettingDto>().ReverseMap();
-            CreateMap<FpsYearEndSettingRes, FpsYearEndSettingDto>().ReverseMap();
+            CreateMap<FpsYearEndSettingRes, YearEndFpsSettingDto>().ReverseMap();
 
             CreateMap<AnimalCostViewDto, AnimalCostViewRes>().ReverseMap();
             CreateMap<AnimalDto, AnimalRes>().ReverseMap();

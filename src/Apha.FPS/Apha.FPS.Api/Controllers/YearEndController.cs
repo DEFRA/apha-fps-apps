@@ -59,7 +59,7 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Triggers the RecreateSummaries batch job for the specified month.
+        /// Triggers the YearEndInitiation batch job for the specified month.
         /// Validates that <paramref name="request"/>.<c>Month</c> is between 1 and 12,
         /// confirms a matching release period exists, verifies no instance is already running,
         /// then enqueues the job.
@@ -67,9 +67,9 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="request">Request body containing the target month (1–12).</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobEventTriggerRes"/>.</returns>
         [HttpPost("trigger")]
-        public async Task<IActionResult> TriggerRecreateSummariesJob([FromBody] RecreateSummariesReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
+        public async Task<IActionResult> TriggerYearEndInitiationJob([FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
-            var result = await _yearEndService.TriggerRecreateSummariesJobAsync(request.Month, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
+            var result = await _yearEndService.TriggerYearEndInitiationJobAsync(_fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
             
             return Ok(_mapper.Map<BatchJobEventTriggerRes>(result));
         }

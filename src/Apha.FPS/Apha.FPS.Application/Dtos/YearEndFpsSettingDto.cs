@@ -1,6 +1,6 @@
 namespace Apha.FPS.Application.Dtos
 {
-    public class FpsYearEndSettingDto
+    public class YearEndFpsSettingDto
     {
         public string Id { get; set; } = string.Empty;
         public string? Setting { get; set; }

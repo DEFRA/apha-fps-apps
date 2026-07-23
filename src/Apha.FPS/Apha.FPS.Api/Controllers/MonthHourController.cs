@@ -40,7 +40,7 @@ namespace Apha.FPS.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] QueryParameters<string> query)
         {
-            var result = await _service.GetAllAsync(query);
+            var result = await _service.GetAllMonthHourAsync(query);
             return Ok(_mapper.Map<PaginationRes<MonthHourRes>>(result));
         }
 
@@ -52,7 +52,7 @@ namespace Apha.FPS.Api.Controllers
         [HttpGet("year/{year}")]
         public async Task<IActionResult> GetByYear(short year)
         {
-            var items = await _service.GetByYearAsync(year);
+            var items = await _service.GetMonthHoursByYearAsync(year);
             return Ok(_mapper.Map<IEnumerable<MonthHourRes>>(items));
         }
 
@@ -89,7 +89,7 @@ namespace Apha.FPS.Api.Controllers
         public async Task<IActionResult> Save([FromBody] MonthHourReq request)
         {
             var dto = _mapper.Map<MonthHourDto>(request);
-            var result = await _service.SaveAsync(dto);
+            var result = await _service.SaveMonthHourAsync(dto);
             return Ok(_mapper.Map<MonthHourRes>(result));
         }
     }

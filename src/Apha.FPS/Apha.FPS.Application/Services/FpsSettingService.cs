@@ -43,10 +43,10 @@ namespace Apha.FPS.Application.Services
             return DefaultHoursPerDay;
         }
 
-        public async Task<List<FpsYearEndSettingDto>> GetYearEndSettingsAsync()
+        public async Task<List<YearEndFpsSettingDto>> GetYearEndSettingsAsync()
         {
             var settings = await _repository.GetYearEndSettingsAsync();
-            return _mapper.Map<List<FpsYearEndSettingDto>>(settings);
+            return _mapper.Map<List<YearEndFpsSettingDto>>(settings);
         }
 
         public async Task<FpsSettingDto> AddSettingAsync(FpsSettingDto dto)
@@ -63,7 +63,7 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<FpsSettingDto>(result);
         }
 
-        public async Task<FpsSettingDto> SaveAsync(FpsSettingDto dto)
+        public async Task<FpsSettingDto> SaveSettingAsync(FpsSettingDto dto)
         {
             var entity = _mapper.Map<FpsSetting>(dto);
             var result = await _repository.SaveAsync(entity);

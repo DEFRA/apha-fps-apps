@@ -4,7 +4,6 @@ using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
@@ -53,6 +52,31 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Distinct()
                 .OrderBy(y => y)
                 .ToListAsync();
+        }
+
+        public async Task<MonthHour> SaveAsync(MonthHour monthHour)
+        {
+            var existing = await _context.MonthHours
+                .FirstOrDefaultAsync(m =>
+                    m.Year == monthHour.Year &&
+                    m.Month == monthHour.Month &&
+                    m.FpsYear == monthHour.FpsYear);
+
+            if (existing is null)
+            {
+                _context.MonthHours.Add(monthHour);
+            }
+            else
+            {
+                existing.Days = monthHour.Days;
+                existing.CvlHours = monthHour.CvlHours;
+                existing.VidHours = monthHour.VidHours;
+                existing.Fmonth = monthHour.Fmonth;
+                _context.MonthHours.Update(existing);
+            }
+
+            await _context.SaveChangesAsync();
+            return existing ?? monthHour;
         }
 
         public async Task<List<YearEndMonthHour>> GetYearEndMonthHoursAsync()
@@ -172,31 +196,6 @@ namespace Apha.FPS.DataAccess.Repositories
             };
         }
 
-        public async Task<MonthHour> SaveAsync(MonthHour monthHour)
-        {
-            var existing = await _context.MonthHours
-                .FirstOrDefaultAsync(m =>
-                    m.Year == monthHour.Year &&
-                    m.Month == monthHour.Month &&
-                    m.FpsYear == monthHour.FpsYear);
-
-            if (existing is null)
-            {
-                _context.MonthHours.Add(monthHour);
-            }
-            else
-            {
-                existing.Days = monthHour.Days;
-                existing.CvlHours = monthHour.CvlHours;
-                existing.VidHours = monthHour.VidHours;
-                existing.Fmonth = monthHour.Fmonth;
-                _context.MonthHours.Update(existing);
-            }
-
-            await _context.SaveChangesAsync();
-            return existing ?? monthHour;
-        }
-
         private static IQueryable<MonthHour> ApplyMonthHourFilter(
             IQueryable<MonthHour> query, string? filterJson)
         {
@@ -213,6 +212,5 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return query;
         }
-
     }
 }

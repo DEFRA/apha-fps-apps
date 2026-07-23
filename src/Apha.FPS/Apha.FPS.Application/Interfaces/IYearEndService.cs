@@ -9,6 +9,6 @@ namespace Apha.FPS.Application.Interfaces
 
         Task<bool> CanRunBatchJobAsync(string jobName);
 
-        Task<BatchJobEventTriggerDto> TriggerRecreateSummariesJobAsync(int month, int contextyear, string requestedBy, string correlationId);
+        Task<BatchJobEventTriggerDto> TriggerYearEndInitiationJobAsync(int contextyear, string requestedBy, string correlationId);
     }
 }

@@ -37,14 +37,15 @@ namespace Apha.FPS.Application.Services
             return await _repository.CanRunBatchJobAsync(jobName);
         }
 
-        public async Task<BatchJobEventTriggerDto> TriggerRecreateSummariesJobAsync(int month, int contextyear, string requestedBy, string correlationId)
+        public async Task<BatchJobEventTriggerDto> TriggerYearEndInitiationJobAsync(int contextyear, string requestedBy, string correlationId)
         {
+            int month = 1;
             var errors = new List<BusinessValidationError>();
             
             var note = $"'{RecreateSummariesJobName}' is initiated for {month} - {contextyear}.";
 
-            if (month < 1 || month > 12)
-                errors.Add(new BusinessValidationError("Month must be a numeric value between 1 and 12.", "INVALID_MONTH"));
+            //if (month < 1 || month > 12)
+            //    errors.Add(new BusinessValidationError("Month must be a numeric value between 1 and 12.", "INVALID_MONTH"));
 
             if (contextyear == 0 || (contextyear < 1900 || contextyear > 9999))
                 errors.Add(new BusinessValidationError($"The selected financial year is not valid. If the issue persists, contact support.", "INVALID_ContextYear"));
