@@ -7,7 +7,7 @@ namespace Apha.PACT.Core.Interfaces
     {
         Task<bool> HasMonthlyTimeEntriesAsync(string workGroup, string timeCode, string parentProject);
 
-        Task<PagedData<MonthlyTime>> SearchLiveAsync(
+        Task<PagedData<MonthlyTimeStaff>> SearchLiveAsync(
             PaginationParameters<string> query,
             string? workGroup,
             string? timeCode,

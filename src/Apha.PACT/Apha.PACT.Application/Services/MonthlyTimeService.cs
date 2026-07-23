@@ -308,7 +308,7 @@ namespace Apha.PACT.Application.Services
 
             var matchedStaff = staffByWorkGroup
                 .Where(x => x.WorkGroup == workGroup &&
-                    ((!string.IsNullOrWhiteSpace(staffId) && x.PactId == staffId) ||
+                    ((!string.IsNullOrWhiteSpace(staffId) && x.SpNumber == staffId) ||
                      (!string.IsNullOrWhiteSpace(staffId) && x.Name == staffId)))
                 .ToList();
 
