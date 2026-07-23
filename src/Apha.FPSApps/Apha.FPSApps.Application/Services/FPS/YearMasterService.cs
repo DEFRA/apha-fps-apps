@@ -32,5 +32,11 @@ namespace Apha.FPSApps.Application.Services.FPS
             var yearMaster = await _fpsClient.FpsYearMaster.GetFpsYearByIdAsync(fpsYear);
             return yearMaster;
         }
+
+        public async Task<ApiResponseDto<int>> GetFpsPlannedYearAsync()
+        {
+            var yearMasters = await _fpsClient.FpsYearMaster.GetAllFpsYearsAsync();
+            return new ApiResponseDto<int> { Data = 2025 };
+        }
     }
 }
