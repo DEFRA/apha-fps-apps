@@ -34,7 +34,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
 
-        // TRANSFORMENGINE: new method — maps to GET /api/v1/project/profitability-vla (Phase 5 backend endpoint)
         // All four filter params are optional; each maps to a filter dropdown on the VLA page
         // (filterProjectStatus, filterProgram, filterManager, filterCustomer in projectprofitability_vla.js).
         // QueryParameters<string> carries page + pageSize for server-side DataGrid pagination.

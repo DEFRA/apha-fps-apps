@@ -66,6 +66,8 @@ namespace Apha.PIMS.Api.Mappings
                 .ForMember(dest => dest.Year, opt => opt.MapFrom(src => (short)src.Year))
                 .ReverseMap()
                 .ForMember(dest => dest.Year, opt => opt.MapFrom(src => (double)src.Year));
+
+            CreateMap<ProjectYearManagerDto, ProjectYearManagerRes>().ReverseMap();
         }
     }
 }

@@ -92,6 +92,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<YearlyFinancialDataRes, YearlyFinancialDataDto>().ReverseMap();
             CreateMap<YearlyFinancialDataDto, YearlyFinancialDataReq>().ReverseMap();
             CreateMap<PactProjectYearCostsRes, PactProjectYearCostsDto>().ReverseMap();
+
+            // Project Year Manager
+            CreateMap<ProjectYearManagerRes, ProjectYearManagerDto>().ReverseMap();
         }
     }
 }

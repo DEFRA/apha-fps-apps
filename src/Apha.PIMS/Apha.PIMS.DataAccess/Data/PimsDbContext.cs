@@ -1,4 +1,4 @@
-﻿using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -84,7 +84,7 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new MilestoneFormDatesMap());
             modelBuilder.ApplyConfiguration(new LogMilestoneMap());
             modelBuilder.ApplyConfiguration(new ProjectManagerMap());
-            modelBuilder.ApplyConfiguration(new StagingMilestoneMap());            
+            modelBuilder.ApplyConfiguration(new StagingMilestoneMap());
             modelBuilder.ApplyConfiguration(new RadTrackInvoiceMap());
             modelBuilder.ApplyConfiguration(new RadTrackContractMap());            
             modelBuilder.ApplyConfiguration(new YearlyFinancialDataMap());           

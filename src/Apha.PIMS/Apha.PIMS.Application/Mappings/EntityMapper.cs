@@ -45,6 +45,8 @@ namespace Apha.PIMS.Application.Mappings
             CreateMap<StagingMilestone, StagingMilestoneDto>().ReverseMap();
             CreateMap<YearlyFinancialData, YearlyFinancialDataDto>().ReverseMap();
             CreateMap<PactProjectYearCosts, PactProjectYearCostsDto>().ReverseMap();
+
+            CreateMap<ProjectYearManager, ProjectYearManagerDto>().ReverseMap();
         }
     }
 }
