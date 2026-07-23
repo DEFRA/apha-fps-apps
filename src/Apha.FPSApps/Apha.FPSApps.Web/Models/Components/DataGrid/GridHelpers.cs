@@ -71,6 +71,14 @@
                     if (value is double doubleValue)
                         return doubleValue.ToString("F2");
                     break;
+                case GridColumnType.Percentage:
+                    if (value is double pctDouble)
+                        return pctDouble.ToString("F2") + "%";
+                    if (value is decimal pctDecimal)
+                        return pctDecimal.ToString("F2") + "%";
+                    if (value is float pctFloat)
+                        return ((double)pctFloat).ToString("F2") + "%";
+                    break;
             }
 
             return value.ToString() ?? string.Empty;

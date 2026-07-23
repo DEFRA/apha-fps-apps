@@ -56,7 +56,7 @@ namespace Apha.Common.Constants
         public const string DeleteMilestone = "api/v1/milestone/{0}/milestones/{1}";
         public const string UpdateFormRequired = "api/v1/milestone/{0}/formrequired";
         public const string GetAllProjectsForMilestone = "api/v1/projectlist/AllProjectsMilestone";
-        public const string GetProjectsDetailsForMilestone = "api/v1/projectlist/ProjectDetailsMilestone/{0}";
+        public const string GetProjectsDetailsForMilestone = "api/v1/projectlist/ProjectDetailsMilestone/{0}";        
 
         // Milestone Types
         public const string GetMilestoneTypes = "api/v1/milestone/milestonetypes";
@@ -93,5 +93,9 @@ namespace Apha.Common.Constants
         public const string ImportStagingMilestones = "api/v1/milestone/{0}/staging/import";
         public const string ImportOverwriteStagingMilestones = "api/v1/milestone/{0}/staging/import-overwrite";
         public const string GetNextStagingMilestoneNumber = "api/v1/milestone/{0}/staging/nextnumber";
+
+        //PMD
+        public const string GetProjectYearManagers = "api/v1/pmd/projectyearmanagers/{0}";
+        public const string GetPMDMilestones = "api/v1/pmd/milestones";
     }
 }
