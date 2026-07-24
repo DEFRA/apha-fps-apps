@@ -2883,7 +2883,22 @@ tab-grid-scroll, .grid-scroll-container, .fps-sr-fixedheader-wrap {
     padding: 2px;
 }
 .isAddNewYearModal {
-    .rates-section h3{
-        font-size:1em !important;
+    .rates-section h3 {
+        font-size: 1em !important;
+    }
+
+    .govuk-table__header,
+    .govuk-table__cell {
+        border: none;
+        max-width: 85px;
+        padding: 0 0 10px 0;
+    }
+
+    .govuk-table__cell {
+        max-width: 90px;
+    }
+
+    .govuk-button.isBtnSave {
+        float: right !important;
     }
 }
