@@ -456,7 +456,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             var grid    = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(partial.Model);
-            Assert.Empty(grid.CurrentFilters);
+            Assert.Empty(grid.CurrentFilters ?? []);
         }
 
         [Fact]
@@ -474,6 +474,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
             var partial = Assert.IsType<PartialViewResult>(result);
             var grid    = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(partial.Model);
 
+            Assert.NotNull(grid.CurrentFilters);
             Assert.True(grid.CurrentFilters.ContainsKey("testcode"));
             Assert.Equal("PT0047", grid.CurrentFilters["testcode"]);
         }
