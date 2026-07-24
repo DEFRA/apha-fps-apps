@@ -142,7 +142,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         CvlHours = null,
                         VidHours = null,
                         FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
-                        FpsYearType = "planned"
+                        FpsYearType = "new"
                     });
                 }
             }

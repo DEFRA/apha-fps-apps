@@ -104,6 +104,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     {
                         Id = setting.Id,
                         FpsYear = plannedYear.HasValue ? plannedYear.Value : openYear + 1,
+                        Setting = setting.Setting,
                         Notes = setting.Notes,
                         UpdatedBy = setting.UpdatedBy,
                         UpdatedAt = setting.UpdatedAt,
@@ -116,10 +117,11 @@ namespace Apha.FPS.DataAccess.Repositories
                     {
                         Id = id,
                         FpsYear = plannedYear.HasValue ? plannedYear.Value : openYear + 1,
+                        Setting = null,
                         Notes = null,
                         UpdatedBy = null,
                         UpdatedAt = DateTime.MinValue,
-                        FpsYearType = "planned"
+                        FpsYearType = "new"
                     });
                 }
             }

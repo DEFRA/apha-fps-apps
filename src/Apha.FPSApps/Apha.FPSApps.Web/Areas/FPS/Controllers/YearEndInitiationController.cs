@@ -44,19 +44,33 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> Index()
         {
             var plannedYear = await GetPlannedYearAsync();
-            var configValues = await GetConfigValuesAsync();
-            var monthHours = await GetMonthWorkingHoursAsync();
             var canRun = await GetCanRunJobAsync();
-            var grid = await BuildHistoryGridAsync(new PaginationFilter<string> { Filter = "{}" });
+            var configValuesGrid = await BuildConfigValuesGridAsync();
+            var monthHoursGrid = await BuildMonthHoursGridAsync();
+            var historyGrid = await BuildHistoryGridAsync(new PaginationFilter<string> { Filter = "{}" });
 
             return View(new YearEndInitiationViewModel
             {
                 PlannedYear = plannedYear,
-                ConfigValues = configValues,
-                MonthWorkingHours = monthHours,
                 CanRunJob = canRun,
-                HistoryGrid = grid
+                ConfigValuesGrid = configValuesGrid,
+                MonthHoursGrid = monthHoursGrid,
+                HistoryGrid = historyGrid
             });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadConfigValuesGrid(PaginationFilter<string> request)
+        {
+            var grid = await BuildConfigValuesGridAsync();
+            return PartialView("_DataGrid", grid);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadMonthHoursGrid(PaginationFilter<string> request)
+        {
+            var grid = await BuildMonthHoursGridAsync();
+            return PartialView("_DataGrid", grid);
         }
 
         [HttpPost]
@@ -64,6 +78,51 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var grid = await BuildHistoryGridAsync(request);
             return PartialView("_DataGrid", grid);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditConfigValue(string id)
+        {
+            var result = await _settingService.GetYearEndSettingsAsync();
+            var setting = result.Data?.FirstOrDefault(s => s.Id == id);
+            if (setting == null)
+                return NotFound();
+
+            var label = setting.Setting ?? setting.Id;
+            var value = setting.Notes ?? string.Empty;
+            var isYesNo = label.Contains("approval", StringComparison.OrdinalIgnoreCase) ||
+                          value == "Yes" || value == "No";
+
+            var model = new YearEndEditConfigValueModel
+            {
+                Id = setting.Id,
+                Label = label,
+                Value = value,
+                IsYesNo = isYesNo
+            };
+            return PartialView("_EditConfigValue", model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditMonthHour(short year, short month)
+        {
+            var result = await _monthHourService.GetYearEndMonthHoursAsync();
+            var record = result.Data?.FirstOrDefault(m => m.Year == year && m.Month == month);
+            if (record == null)
+                return NotFound();
+
+            var model = new YearEndEditMonthHourModel
+            {
+                MonthName = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(record.Month),
+                Year = record.Year,
+                Month = record.Month,
+                Fmonth = record.Fmonth,
+                FpsYear = record.FpsYear,
+                Days = record.Days,
+                CvlHours = record.CvlHours,
+                VidHours = record.VidHours
+            };
+            return PartialView("_EditMonthHour", model);
         }
 
         [HttpPost]
@@ -106,6 +165,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new { success = false, errors });
         }
 
+        // ?? Private helpers ??????????????????????????????????????????????????
+
         private async Task<int> GetPlannedYearAsync()
         {
             var result = await _yearMasterService.GetFpsPlannedYearAsync();
@@ -118,12 +179,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return result.Success && result.Data;
         }
 
-        private async Task<List<YearEndConfigValueItem>> GetConfigValuesAsync()
+        private async Task<DataGridConfig<YearEndConfigValueItem>> BuildConfigValuesGridAsync()
         {
+            var grid = ConfigValuesGridConfig();
             var result = await _settingService.GetYearEndSettingsAsync();
             if (result.Success && result.Data != null)
             {
-                return result.Data.Select(s => new YearEndConfigValueItem
+                grid.Data = result.Data.Select(s => new YearEndConfigValueItem
                 {
                     Id = s.Id,
                     Label = s.Setting ?? s.Id,
@@ -131,15 +193,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     FpsYearType = s.FpsYearType
                 }).ToList();
             }
-            return [];
+            return grid;
         }
 
-        private async Task<List<YearEndMonthWorkingItem>> GetMonthWorkingHoursAsync()
+        private async Task<DataGridConfig<YearEndMonthWorkingItem>> BuildMonthHoursGridAsync()
         {
+            var grid = MonthHoursGridConfig();
             var result = await _monthHourService.GetYearEndMonthHoursAsync();
             if (result.Success && result.Data != null)
             {
-                return result.Data.Select(m => new YearEndMonthWorkingItem
+                grid.Data = result.Data.Select(m => new YearEndMonthWorkingItem
                 {
                     Year = m.Year,
                     Month = m.Month,
@@ -152,7 +215,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     FpsYearType = m.FpsYearType
                 }).ToList();
             }
-            return [];
+            return grid;
         }
 
         private async Task<DataGridConfig<YearEndHistoryItem>> BuildHistoryGridAsync(PaginationFilter<string> request)
@@ -183,6 +246,42 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return grid;
         }
 
+        private static DataGridConfig<YearEndConfigValueItem> ConfigValuesGridConfig() => new()
+        {
+            GridId = "yearEndConfigValuesGrid",
+            Title = "Config Value",
+            BindGridUrl = "/FPS/YearEndInitiation/LoadConfigValuesGrid",
+            ShowCheckboxColumn = false,
+            ShowPagination = false,
+            AllowAdd = false,
+            AllowEdit = true,
+            EditFunction = "openConfigEditModal",
+            AllowDelete = true,
+            DeleteFunction = "confirmConfigValue",
+            AllowView = false,
+            AllowCopy = false,
+            KeyProperty = "Id",
+            Columns = GridDataProvider.GetColumnsDefination<YearEndConfigValueItem>()
+        };
+
+        private static DataGridConfig<YearEndMonthWorkingItem> MonthHoursGridConfig() => new()
+        {
+            GridId = "yearEndMonthHoursGrid",
+            Title = "Month Working Hours",
+            BindGridUrl = "/FPS/YearEndInitiation/LoadMonthHoursGrid",
+            ShowCheckboxColumn = false,
+            ShowPagination = false,
+            AllowAdd = false,
+            AllowEdit = true,
+            EditFunction = "openMonthHourEditModal",
+            AllowDelete = true,
+            DeleteFunction = "confirmMonthHour",
+            AllowView = false,
+            AllowCopy = false,
+            KeyProperty = "Month",
+            Columns = GridDataProvider.GetColumnsDefination<YearEndMonthWorkingItem>()
+        };
+
         private static DataGridConfig<YearEndHistoryItem> HistoryGridConfig() => new()
         {
             GridId = "yearEndInitiationHistoryGrid",
@@ -196,3 +295,5 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         };
     }
 }
+
+       
