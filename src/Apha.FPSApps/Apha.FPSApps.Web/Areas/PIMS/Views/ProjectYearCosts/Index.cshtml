@@ -1,4 +1,5 @@
 ﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using System.Linq
 @model Apha.FPSApps.Web.Areas.PIMS.Models.ProjectYearCostsViewModel
 
 @{
@@ -40,8 +41,8 @@
                                     class="govuk-select project-dropdown tab-font-size"
                                     style="width: 100%;">
                                 <option value="">Select a Project</option>
-                                @foreach (var item in Model.ProjectOptions)
-                                {
+                                    @foreach (var item in Model.ProjectOptions)
+                                    {
                                     if (item.Value == Model.Parentproject)
                                     {
                                         <option value="@item.Value" selected="selected">@item.Text</option>
@@ -52,7 +53,7 @@
                                     }
                                 }
                             </select>
-                        </div>
+                                </div>
 
                         <div style="margin: 0 5px; flex: 1;">
                             <label for="dpyear" class="govuk-label govuk-!-font-weight-bold tab-font-size">Year</label>
@@ -642,6 +643,55 @@
     function getPactPayGridManager()        { return window['gridManager_' + pactPayGridId]; }
     function getMonthlyPactGridManager()   { return window['gridManager_' + monthlyPactGridId]; }
 
+    function positionProjectPickerPanel() {
+        var panel = document.getElementById('dpprojectSelectPanel');
+        var display = document.getElementById('dpprojectSelectDisplay');
+        if (!panel || !display) return;
+
+        panel.style.top = 'calc(100% + 2px)';
+        panel.style.bottom = 'auto';
+
+        var rect = display.getBoundingClientRect();
+        var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        var spaceBelow = viewportHeight - rect.bottom - 12;
+        var spaceAbove = rect.top - 12;
+        var preferredHeight = 240;
+
+        if (spaceBelow < preferredHeight && spaceAbove > spaceBelow) {
+            panel.style.top = 'auto';
+            panel.style.bottom = 'calc(100% + 2px)';
+            panel.style.maxHeight = Math.max(120, Math.min(preferredHeight, spaceAbove)) + 'px';
+        } else {
+            panel.style.maxHeight = Math.max(120, Math.min(preferredHeight, spaceBelow)) + 'px';
+        }
+    }
+
+    function toggleProjectPicker(forceOpen) {
+        var panel = document.getElementById('dpprojectSelectPanel');
+        var display = document.getElementById('dpprojectSelectDisplay');
+        if (!panel || !display) return;
+
+        var shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : panel.hidden;
+        panel.hidden = !shouldOpen;
+        display.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+
+        if (shouldOpen) {
+            positionProjectPickerPanel();
+        }
+    }
+
+    function selectProjectPickerOption(value, text) {
+        var hidden = document.getElementById('dpprojectSelect');
+        var display = document.getElementById('dpprojectSelectDisplay');
+        if (!hidden || !display) return;
+
+        hidden.value = value || '';
+        display.textContent = text || 'Select a Project';
+        toggleProjectPicker(false);
+        hidden.dispatchEvent(new Event('change'));
+    }
+
+
     function syncPactPayFooterColumns() {
         // Read the actual rendered widths from the grid header <th> elements
         // and apply them to the footer table colgroup so totals align exactly.
@@ -869,6 +919,39 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+        var projectPickerDisplay = document.getElementById('dpprojectSelectDisplay');
+        var projectPickerPanel = document.getElementById('dpprojectSelectPanel');
+
+        if (projectPickerDisplay && projectPickerPanel) {
+            projectPickerDisplay.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleProjectPicker();
+            });
+
+            window.addEventListener('resize', function () {
+                if (!projectPickerPanel.hidden) {
+                    positionProjectPickerPanel();
+                }
+            });
+
+            window.addEventListener('scroll', function () {
+                if (!projectPickerPanel.hidden) {
+                    positionProjectPickerPanel();
+                }
+            }, true);
+
+            projectPickerPanel.addEventListener('click', function (e) {
+                var option = e.target.closest('.pims-project-picker__option');
+                if (!option) return;
+                selectProjectPickerOption(option.getAttribute('data-value'), option.getAttribute('data-text'));
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('.pims-project-picker')) {
+                    toggleProjectPicker(false);
+                }
+            });
+        }
 
         localStorage.removeItem('monthlyPactGrid_colWidths');
 
