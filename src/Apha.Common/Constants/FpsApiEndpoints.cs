@@ -1,4 +1,4 @@
-namespace Apha.Common.Constants
+﻿namespace Apha.Common.Constants
 {
     public static class FpsApiEndpoints
     {
@@ -256,6 +256,17 @@ namespace Apha.Common.Constants
         public const string SaveUserPermissions = "api/v1/user/{0}/permissions";
         public const string GetPermissionOptions = "api/v1/user/options";
 
+        // TRANSFORMENGINE: WorkgroupMaintenance (frmMaintWorkGroup2 — fps.workgroup) — added Phase 6
+        // CRUD endpoints
+        public const string GetPagedWorkgroups = "api/v1/workgroup/paged";
+        public const string GetWorkgroupByName = "api/v1/workgroup/{0}";
+        public const string CreateWorkgroup = "api/v1/workgroup";
+        public const string UpdateWorkgroup = "api/v1/workgroup/{0}";
+        public const string DeleteWorkgroup = "api/v1/workgroup/{0}";
+        // Lookup endpoints (separate from CRUD resource family)
+        public const string GetWorkgroupProfitCentres = "api/v1/workgroup/profitcentres";
+        public const string GetWorkgroupOwners = "api/v1/workgroup/owners";
+        public const string GetWorkgroupCostCentres = "api/v1/workgroup/costcentres?profitCentre={0}";
         // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
         public const string GetAllCostCentres = "api/v1/costcentre";
         public const string GetPagedCostCentres = "api/v1/costcentre/paged";
@@ -263,5 +274,9 @@ namespace Apha.Common.Constants
         public const string CreateCostCentre = "api/v1/costcentre";
         public const string UpdateCostCentre = "api/v1/costcentre/{0}";
         public const string DeleteCostCentre = "api/v1/costcentre/{0}";
+
+        // ResourceAllocation — Stage 2 Check Resource Allocation
+        public const string GetPagedResourceStaffAllocations = "api/v1/ResourceAllocation/staffallocations/paged";
+        public const string GetPagedResourceStaffJobDetails = "api/v1/ResourceAllocation/staffjobdetails/paged";
     }
 }

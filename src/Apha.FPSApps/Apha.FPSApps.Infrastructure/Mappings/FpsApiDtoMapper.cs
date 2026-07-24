@@ -190,6 +190,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TestRequirementRCCostDto, TestRequirementRCCostRes>().ReverseMap();
             CreateMap<TestRequirementRCCostDto, TestRequirementRCCostReq>().ReverseMap();
 
+            // ResourceAllocation — Stage 2 Check Resource Allocation
+            CreateMap<ResourceStaffAllocationDto, ResourceStaffAllocationRes>().ReverseMap();
+            CreateMap<ResourceStaffJobDto, ResourceStaffJobRes>().ReverseMap();
+            CreateMap<ResourceStaffJobDetailDto, ResourceStaffJobDetailRes>().ReverseMap();
         }
     }
 }
