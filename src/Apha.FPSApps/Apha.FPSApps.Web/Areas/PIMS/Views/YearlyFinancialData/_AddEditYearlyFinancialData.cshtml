@@ -8,19 +8,16 @@
 }
 
 <div id="editYFDModal" class="govuk-edit-modal" role="dialog" aria-modal="true" aria-labelledby="yfdModalTitle">
-    <div class="govuk-edit-modal-dialog sup_max-width_900">
+    <div class="govuk-edit-modal-dialog yfd-modal-min-width-height">
 
         <div class="govuk-edit-modal__header">
-            <h2 class="govuk-edit-modal__title" id="yfdModalTitle">@modalTitle</h2>
+            <h3 class="govuk-edit-modal__title" id="yfdModalTitle">@modalTitle</h3>
             <button type="button" onclick="closeYFDModal()"
                     class="govuk-edit-modal__close-btn"
                     aria-label="Close">&#x2715;</button>
         </div>
 
         <div class="govuk-edit-modal__body">
-            <p class="app-mandatory-note govuk-!-font-size-14">
-                <span class="app-required" aria-hidden="true">*</span>&nbsp;Mandatory Fields
-            </p>
 
             <form id="formYFD" novalidate>
                 @Html.AntiForgeryToken()
@@ -68,42 +65,6 @@
                                    value="@Model.Project"
                                    disabled
                                    aria-readonly="true" />
-                        </div>
-
-                        @* Year (required; editable in add mode, read-only in edit mode) *@
-                        <div class="govuk-form-group sup_margin_bottom_10">
-                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
-                                   for="yfdModalYear">
-                                Year <span class="app-required" aria-hidden="true">*</span>
-                            </label>
-                            @if (isEditMode)
-                            {
-                               
-                                <input class="govuk-input govuk-!-font-size-16"
-                                       id="yfdModalYear"
-                                       name="yfdModalYear"
-                                       type="text"
-                                       value="@(Model.Year != 0 ? Model.Year.ToString() : string.Empty)"
-                                       disabled
-                                       aria-readonly="true" />
-                            }
-                            else
-                            {
-                                <input class="govuk-input govuk-!-font-size-16 validate-required"
-                                       id="yfdModalYear"
-                                       name="yfdModalYear"
-                                       type="text"
-                                       value="@(Model.Year != 0 ? Model.Year.ToString() : string.Empty)"
-                                       required
-                                       aria-required="true"
-                                       placeholder="e.g. 2026"
-                                       maxlength="4"
-                                       aria-describedby="yfdModalYear-error" />
-                            }
-                            <p class="govuk-error-message govuk-!-display-none" id="yfdModalYear-error">
-                                <span class="govuk-visually-hidden">Error:</span>
-                                <span id="yfdModalYear-error-msg"></span>
-                            </p>
                         </div>
 
                         @* PP/Acc — BfBudget *@
@@ -308,73 +269,6 @@
                             </p>
                         </div>
 
-                        @* Approximate Man-Time fieldset *@
-                        <fieldset class="govuk-fieldset yfd-fieldset-mantime">
-                            <legend class="govuk-fieldset__legend govuk-!-font-size-14 govuk-!-font-weight-bold">
-                                Approximate Man-Time (fill in one)
-                            </legend>
-
-                            @* Appr. Man Hours — ManHours *@
-                            <div class="govuk-form-group sup_margin_bottom_10">
-                                <label class="govuk-label govuk-!-font-size-16" for="yfdModalManHours">
-                                    Appr. Man Hours:
-                                </label>
-                                <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10 validate-number"
-                                       id="yfdModalManHours"
-                                       name="yfdModalManHours"
-                                       type="number"
-                                       step="any"
-                                       inputmode="decimal"
-                                       min="0"
-                                       value="@Model.ManHours"
-                                       aria-describedby="yfdModalManHours-error" />
-                                <p class="govuk-error-message govuk-!-display-none" id="yfdModalManHours-error">
-                                    <span class="govuk-visually-hidden">Error:</span>
-                                    <span id="yfdModalManHours-error-msg"></span>
-                                </p>
-                            </div>
-
-                            @* Appr. Man Days — ManDays *@
-                            <div class="govuk-form-group sup_margin_bottom_10">
-                                <label class="govuk-label govuk-!-font-size-16" for="yfdModalManDays">
-                                    Appr. Man Days:
-                                </label>
-                                <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10 validate-number"
-                                       id="yfdModalManDays"
-                                       name="yfdModalManDays"
-                                       type="number"
-                                       step="any"
-                                       inputmode="decimal"
-                                       min="0"
-                                       value="@Model.ManDays"
-                                       aria-describedby="yfdModalManDays-error" />
-                                <p class="govuk-error-message govuk-!-display-none" id="yfdModalManDays-error">
-                                    <span class="govuk-visually-hidden">Error:</span>
-                                    <span id="yfdModalManDays-error-msg"></span>
-                                </p>
-                            </div>
-
-                            @* Appr. Man Years — ManYears *@
-                            <div class="govuk-form-group sup_margin_bottom_10">
-                                <label class="govuk-label govuk-!-font-size-16" for="yfdModalManYears">
-                                    Appr. Man Years:
-                                </label>
-                                <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10 validate-number"
-                                       id="yfdModalManYears"
-                                       name="yfdModalManYears"
-                                       type="number"
-                                       step="any"
-                                       inputmode="decimal"
-                                       min="0"
-                                       value="@Model.ManYears"
-                                       aria-describedby="yfdModalManYears-error" />
-                                <p class="govuk-error-message govuk-!-display-none" id="yfdModalManYears-error">
-                                    <span class="govuk-visually-hidden">Error:</span>
-                                    <span id="yfdModalManYears-error-msg"></span>
-                                </p>
-                            </div>
-                        </fieldset>
-
                         @* Total Costs — computed read-only display *@
                         <div class="govuk-form-group sup_margin_bottom_10 govuk-!-margin-top-2">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
@@ -397,45 +291,47 @@
                     </div>
                     @* end left column *@
 
-                    @* ── CENTRE column: Adjustment + Actual Pact Details ──────────── *@
+                    @* ── CENTRE column: Year + Actual Pact Details + Adjustment ────── *@
                     <div class="yfd-modal-col-centre">
 
-                        @* Adjustment (+/-) — Adjustment *@
+                        @* Year (required; editable in add mode, read-only in edit mode) *@
                         <div class="govuk-form-group sup_margin_bottom_10">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
-                                   for="yfdModalAdjustment">
-                                Adjustment (+/-):
+                                   for="yfdModalYear">
+                                Year
                             </label>
-                            <div class="govuk-input__wrapper">
-                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                <input class="govuk-input govuk-!-font-size-16 validate-number"
-                                       id="yfdModalAdjustment"
-                                       name="yfdModalAdjustment"
+                            @if (isEditMode)
+                            {
+
+                                <input class="govuk-input govuk-!-font-size-16"
+                                       id="yfdModalYear"
+                                       name="yfdModalYear"
                                        type="text"
-                                       inputmode="decimal"
-                                       value="@Model.Adjustment"
-                                       aria-describedby="yfdModalAdjustment-error" />
-                            </div>
-                            <p class="govuk-error-message govuk-!-display-none" id="yfdModalAdjustment-error">
+                                       value="@(Model.Year != 0 ? Model.Year.ToString() : string.Empty)"
+                                       disabled
+                                       aria-readonly="true" />
+                            }
+                            else
+                            {
+                                <input class="govuk-input govuk-!-font-size-16 validate-required"
+                                       id="yfdModalYear"
+                                       name="yfdModalYear"
+                                       type="text"
+                                       value="@(Model.Year != 0 ? Model.Year.ToString() : string.Empty)"
+                                       required
+                                       aria-required="true"
+                                       placeholder="e.g. 2026"
+                                       maxlength="4"
+                                       aria-describedby="yfdModalYear-error" />
+                            }
+                            <p class="govuk-error-message govuk-!-display-none" id="yfdModalYear-error">
                                 <span class="govuk-visually-hidden">Error:</span>
-                                <span id="yfdModalAdjustment-error-msg"></span>
+                                <span id="yfdModalYear-error-msg"></span>
                             </p>
                         </div>
 
-                        @* Adjustment Comment — AdjustmentComment *@
-                        <div class="govuk-form-group sup_margin_bottom_10">
-                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
-                                   for="yfdModalAdjComment">
-                                Adjustment Comment:
-                            </label>
-                            <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
-                                      id="yfdModalAdjComment"
-                                      name="yfdModalAdjComment"
-                                      rows="6">@Model.AdjustmentComment</textarea>
-                        </div>
-
                         @* Actual (Pact) Details — read-only PACT costing fields used by Update Costing *@
-                        <div class="govuk-form-group sup_margin_bottom_10" id="yfdActualPactGroup">
+                        <div class="govuk-form-group sup_margin_bottom_10 sup_border govuk-!-padding-2" id="yfdActualPactGroup">
                             <fieldset class="govuk-fieldset">
                                 <legend class="govuk-fieldset__legend govuk-!-font-weight-bold govuk-!-font-size-16">
                                     Actual (Pact) Details:
@@ -509,8 +405,109 @@
                     @* ── RIGHT column: Costing panel ──────────────────────────────── *@
                     <div class="yfd-modal-col-right">
 
+                        @* Approximate Man-Time fieldset *@
+                        <fieldset class="govuk-fieldset yfd-fieldset-mantime">
+                            <legend class="govuk-fieldset__legend govuk-!-font-size-14 govuk-!-font-weight-bold">
+                                Approximate Man-Time (fill in one)
+                            </legend>
+
+                            @* Appr. Man Hours — ManHours *@
+                            <div class="govuk-form-group sup_margin_bottom_10">
+                                <label class="govuk-label govuk-!-font-size-16" for="yfdModalManHours">
+                                    Appr. Man Hours:
+                                </label>
+                                <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10 validate-number"
+                                       id="yfdModalManHours"
+                                       name="yfdModalManHours"
+                                       type="number"
+                                       step="any"
+                                       inputmode="decimal"
+                                       min="0"
+                                       value="@Model.ManHours"
+                                       aria-describedby="yfdModalManHours-error" />
+                                <p class="govuk-error-message govuk-!-display-none" id="yfdModalManHours-error">
+                                    <span class="govuk-visually-hidden">Error:</span>
+                                    <span id="yfdModalManHours-error-msg"></span>
+                                </p>
+                            </div>
+
+                            @* Appr. Man Days — ManDays *@
+                            <div class="govuk-form-group sup_margin_bottom_10">
+                                <label class="govuk-label govuk-!-font-size-16" for="yfdModalManDays">
+                                    Appr. Man Days:
+                                </label>
+                                <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10 validate-number"
+                                       id="yfdModalManDays"
+                                       name="yfdModalManDays"
+                                       type="number"
+                                       step="any"
+                                       inputmode="decimal"
+                                       min="0"
+                                       value="@Model.ManDays"
+                                       aria-describedby="yfdModalManDays-error" />
+                                <p class="govuk-error-message govuk-!-display-none" id="yfdModalManDays-error">
+                                    <span class="govuk-visually-hidden">Error:</span>
+                                    <span id="yfdModalManDays-error-msg"></span>
+                                </p>
+                            </div>
+
+                            @* Appr. Man Years — ManYears *@
+                            <div class="govuk-form-group sup_margin_bottom_10">
+                                <label class="govuk-label govuk-!-font-size-16" for="yfdModalManYears">
+                                    Appr. Man Years:
+                                </label>
+                                <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10 validate-number"
+                                       id="yfdModalManYears"
+                                       name="yfdModalManYears"
+                                       type="number"
+                                       step="any"
+                                       inputmode="decimal"
+                                       min="0"
+                                       value="@Model.ManYears"
+                                       aria-describedby="yfdModalManYears-error" />
+                                <p class="govuk-error-message govuk-!-display-none" id="yfdModalManYears-error">
+                                    <span class="govuk-visually-hidden">Error:</span>
+                                    <span id="yfdModalManYears-error-msg"></span>
+                                </p>
+                            </div>
+                        </fieldset>
+
+                        @* Adjustment (+/-) — Adjustment *@
+                        <div class="govuk-form-group sup_margin_bottom_10">
+                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                                   for="yfdModalAdjustment">
+                                Adjustment (+/-):
+                            </label>
+                            <div class="govuk-input__wrapper">
+                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                <input class="govuk-input govuk-!-font-size-16 validate-number"
+                                       id="yfdModalAdjustment"
+                                       name="yfdModalAdjustment"
+                                       type="text"
+                                       inputmode="decimal"
+                                       value="@Model.Adjustment"
+                                       aria-describedby="yfdModalAdjustment-error" />
+                            </div>
+                            <p class="govuk-error-message govuk-!-display-none" id="yfdModalAdjustment-error">
+                                <span class="govuk-visually-hidden">Error:</span>
+                                <span id="yfdModalAdjustment-error-msg"></span>
+                            </p>
+                        </div>
+
+                        @* Adjustment Comment — AdjustmentComment *@
+                        <div class="govuk-form-group sup_margin_bottom_10">
+                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                                   for="yfdModalAdjComment">
+                                Adjustment Comment:
+                            </label>
+                            <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
+                                      id="yfdModalAdjComment"
+                                      name="yfdModalAdjComment"
+                                      rows="6">@Model.AdjustmentComment</textarea>
+                        </div>
+
                         <div class="yfd-update-costing-wrapper">
-                            
+
                             <button type="button"
                                     id="btnYfdUpdateCosting"
                                     class="govuk-button govuk-button--secondary govuk-!-font-size-16 sup_margin_0"
@@ -520,7 +517,7 @@
                             </button>
                         </div>
 
-                        
+
                         <div id="yfdCostingPanel"
                              class="yfd-costing-panel yfd-costing-panel--disabled"
                              aria-disabled="true">
