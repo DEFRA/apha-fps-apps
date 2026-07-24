@@ -59,7 +59,7 @@
                             <select id="dpyear"
                                     class="govuk-select project-dropdown tab-font-size"
                                     style="width: 100%;">
-                                <option value="">Year</option>
+                                <option class="isCustomHeight" value="">Year</option>
                                 @foreach (var item in Model.YearOptions)
                                 {
                                     if (item.Value == Model.SelectedYear.ToString())

@@ -1504,3 +1504,10 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
     font-size: 1.6rem;
     line-height: 1.2;
 }
+#dpyear option {
+    font-size: 13px;
+    padding: 2px;
+    line-height: 18px;
+}
+
+
