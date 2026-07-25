@@ -17,11 +17,12 @@
         @Html.AntiForgeryToken()
         <input type="hidden" id="configModalId" value="@Model.Id" />
         <input type="hidden" id="configModalLabel" value="@Model.Label" />
+        <input type="hidden" id="configModalFpsYear" value="@Model.FpsYear" />
 
         <div class="govuk-form-group">
             <label class="govuk-label govuk-!-font-weight-bold"
                    for="@(Model.IsYesNo ? "configModalSelect" : "configModalInput")">
-                @Model.Label
+                @Model.Id
             </label>
 
             @if (Model.IsYesNo)

@@ -170,16 +170,17 @@
     window.saveConfigValue = function () {
         var id    = $('#modaPopupBody #configModalId').val();
         var label = $('#modaPopupBody #configModalLabel').val();
+        var fpsYear = $('#modaPopupBody #configModalFpsYear').val();
 
         // Server renders either a <select id="configModalSelect"> or <input id="configModalInput">
         var $select = $('#modaPopupBody #configModalSelect');
         var $input  = $('#modaPopupBody #configModalInput');
         var value   = $select.length ? $select.val() : $input.val();
 
-        postJson(cfg.saveSettingUrl, { id: id, setting: label, notes: value },
+        postJson(cfg.saveSettingUrl, { id: id, setting: value, fpsYear: fpsYear },
             function () {
                 window.closeYeiModal();
-                showAlertMessage('Config value "' + label + '" saved successfully.', AlertType.SUCCESS);
+                showAlertMessage('Config value "' + value + '" saved successfully.', AlertType.SUCCESS);
                 reloadConfigGrid();
             },
             function (msgs) { showModalError(msgs); }

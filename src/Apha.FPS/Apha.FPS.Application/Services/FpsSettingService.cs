@@ -28,7 +28,7 @@ namespace Apha.FPS.Application.Services
                 Id = s.Id,
                 Setting = s.Setting,
                 Notes = s.Notes,
-                FpsCalYear = s.FpsYear,
+                FpsYear = s.FpsYear,
                 UpdatedBy = s.UpdatedBy,
                 UpdatedAt = s.UpdatedAt
             }).ToList();

@@ -14,21 +14,24 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
     public class YearEndConfigValueItem
     {
-        [Display(Name = "ID")]
-        [GridColumn(Order = 1, Width = 200, Type = GridColumnType.Text)]
+        [Display(Name = "Fps Year")]
+        [GridColumn(Order = 1, Width = 60, Type = GridColumnType.Text)]
+        public int FpsYear { get; set; }
+
+        [GridColumn(Order = 2, Width = 200, Type = GridColumnType.Text)]
         public string Id { get; set; } = string.Empty;
 
         [Display(Name = "Value")]
-        [GridColumn(Order = 2, Width = 200, Type = GridColumnType.Text)]
-        public string? Value { get; set; }
+        [GridColumn(Order = 3, Width = 200, Type = GridColumnType.Text)]
+        public string? Setting { get; set; }
 
         // Supporting fields — hidden via CSS, readable by JS
-        [Display(Name = "Label")]
-        [GridColumn(Order = 3, Width = 200, Type = GridColumnType.Text)]
-        public string Label { get; set; } = string.Empty;
+        //[Display(Name = "Notes")]
+        //[GridColumn(Order = 4, Width = 200, Type = GridColumnType.Text)]
+        //public string? Notes { get; set; } = string.Empty;
 
         [Display(Name = "FpsYearType")]
-        [GridColumn(Order = 4, Width = 100, Type = GridColumnType.Text)]
+        [GridColumn(Order = 5, Width = 100, Type = GridColumnType.Text)]
         public string FpsYearType { get; set; } = string.Empty;
     }
 
@@ -78,6 +81,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string Label { get; set; } = string.Empty;
         public string? Value { get; set; }
         public bool IsYesNo { get; set; }
+        public int FpsYear { get; set; }
     }
 
     public class YearEndEditMonthHourModel

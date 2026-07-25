@@ -88,8 +88,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (setting == null)
                 return NotFound();
 
-            var label = setting.Setting ?? setting.Id;
-            var value = setting.Notes ?? string.Empty;
+            var label = setting.Id;
+            var value = setting.Setting ?? string.Empty;
             var isYesNo = label.Contains("approval", StringComparison.OrdinalIgnoreCase) ||
                           value == "Yes" || value == "No";
 
@@ -98,7 +98,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Id = setting.Id,
                 Label = label,
                 Value = value,
-                IsYesNo = isYesNo
+                IsYesNo = isYesNo,
+                FpsYear = setting.FpsYear,
             };
             return PartialView("_EditConfigValue", model);
         }
@@ -187,9 +188,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 grid.Data = result.Data.Select(s => new YearEndConfigValueItem
                 {
+                    FpsYear= s.FpsYear,
                     Id = s.Id,
-                    Label = s.Setting ?? s.Id,
-                    Value = s.Notes,
+                    Setting = s.Setting,
+                    //Notes = s.Notes,
                     FpsYearType = s.FpsYearType
                 }).ToList();
             }

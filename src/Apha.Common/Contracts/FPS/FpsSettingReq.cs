@@ -5,7 +5,7 @@ namespace Apha.Common.Contracts.FPS
         public string Id { get; set; } = null!;
         public string? Setting { get; set; }
         public string? Notes { get; set; }
-        public int? FpsCalYear { get; set; }
+        public int? FpsYear { get; set; }
         public string? UpdatedBy { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

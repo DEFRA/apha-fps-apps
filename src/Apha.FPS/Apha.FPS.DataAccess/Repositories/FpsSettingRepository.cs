@@ -5,13 +5,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
-    public class FpsSettingRepository : IFpsSettingRepository
+    public class FpsSettingRepository : BaseRepository, IFpsSettingRepository
     {
         private readonly FpsDbContext _dbContext;
+        private readonly IFpsRequestContext _requestContext;
 
-        public FpsSettingRepository(FpsDbContext dbContext)
+        public FpsSettingRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
             _dbContext = dbContext;
+            _requestContext = requestContext;
         }
 
         public async Task<List<FpsSetting>> GetAllAsync()
@@ -40,10 +42,13 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<FpsSetting> SaveAsync(FpsSetting setting)
         {
-            var existing = await _dbContext.TblSettings
+            var existing = await _dbContext.TblSettings.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(m =>
                     m.Id == setting.Id &&
                     m.FpsYear == setting.FpsYear);
+
+            setting.UpdatedBy = _requestContext.UserEmailId;
+            setting.UpdatedAt = DateTime.UtcNow;
 
             if (existing is null)
             {
@@ -53,6 +58,8 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 existing.Setting = setting.Setting;
                 existing.Notes = setting.Notes;
+                existing.UpdatedBy = setting.UpdatedBy;
+                existing.UpdatedAt = setting.UpdatedAt;
                 _dbContext.TblSettings.Update(existing);
             }
 
@@ -72,7 +79,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             int? plannedYear = await GetPlannedYear();
 
-            var settings = await _dbContext.TblSettings
+            var settings = await _dbContext.TblSettings.IgnoreQueryFilters()
                 .AsNoTracking()
                 .Where(s => (s.FpsYear == openYear || s.FpsYear == plannedYear) &&
                             settingIds.Contains(s.Id.ToLower()))
