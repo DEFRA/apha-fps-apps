@@ -60,7 +60,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             _service.GetAllAccessUsersAsync()
                 .Returns(SuccessResponse(new List<AccessUserDto>()));
             _service.GetPagedAccessUserLevelsAsync(Arg.Any<QueryParameters<string>>())
-                .Returns(SuccessResponse(new List<AccessUserLevelDto>()));
+                .Returns(SuccessResponse(new PaginatedResult<AccessUserLevelDto>()));
             _service.GetAllFrequenciesAsync()
                 .Returns(SuccessResponse(new List<FrequencyDto>()));
             _service.GetAllReviewItemsAsync()
@@ -274,7 +274,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task GetAddEditReportPartial_ValidId_ServiceReturnsData_ReturnsPopulatedModel()
         {
             // Arrange
-            var dto  = new ReportDto { Id = 7, Reportname = "TestReport", Type = "R" };
+            var dto  = new ReportDto { Id = 7, ReportName = "TestReport", Type = "R" };
             var item = new ReportItem { Id = 7, ReportName = "TestReport" };
             _service.GetReportByIdAsync(7).Returns(SuccessResponse(dto));
             _mapper.Map<ReportItem>(dto).Returns(item);
@@ -316,7 +316,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         {
             // Arrange
             var item = new ReportItem { Id = 0, ReportName = "New Report" };
-            var dto  = new ReportDto { Id = 0, Reportname = "New Report", Type = "R" };
+            var dto  = new ReportDto { Id = 0, ReportName = "New Report", Type = "R" };
             _mapper.Map<ReportDto>(item).Returns(dto);
             _service.CreateReportAsync(dto).Returns(SuccessResponse(dto));
 
@@ -334,7 +334,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         {
             // Arrange
             var item = new ReportItem { Id = 5, ReportName = "Existing Report" };
-            var dto  = new ReportDto { Id = 5, Reportname = "Existing Report", Type = "R" };
+            var dto  = new ReportDto { Id = 5, ReportName = "Existing Report", Type = "R" };
             _mapper.Map<ReportDto>(item).Returns(dto);
             _service.UpdateReportAsync(5, dto).Returns(SuccessResponse(dto));
 
@@ -352,7 +352,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         {
             // Arrange
             var item = new ReportItem { Id = 0, ReportName = "Bad Report" };
-            var dto  = new ReportDto { Id = 0, Reportname = "Bad Report", Type = "R" };
+            var dto  = new ReportDto { Id = 0, ReportName = "Bad Report", Type = "R" };
             _mapper.Map<ReportDto>(item).Returns(dto);
             _service.CreateReportAsync(dto).Returns(FailureResponse<ReportDto>());
 
@@ -463,7 +463,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadReportGroupsGrid_ServiceReturnsData_GridContainsItems()
         {
             // Arrange
-            var dtos  = new List<ReportGroupDto> { new() { Groupid = 1, Description = "Group A" } };
+            var dtos  = new List<ReportGroupDto> { new() { GroupId = 1, Description = "Group A" } };
             var items = new List<ReportGroupItem> { new() { Groupid = 1, Description = "Group A" } };
             _service.GetAllReportGroupsAsync().Returns(SuccessResponse(dtos));
             _mapper.Map<List<ReportGroupItem>>(dtos).Returns(items);
@@ -519,7 +519,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task GetAddEditReportGroupPartial_ValidId_ServiceReturnsData_ReturnsPopulatedModel()
         {
             // Arrange
-            var dto  = new ReportGroupDto { Groupid = 2, Description = "Grp B" };
+            var dto  = new ReportGroupDto { GroupId = 2, Description = "Grp B" };
             var item = new ReportGroupItem { Groupid = 2, Description = "Grp B" };
             _service.GetReportGroupByIdAsync(2).Returns(SuccessResponse(dto));
             _mapper.Map<ReportGroupItem>(dto).Returns(item);
@@ -546,7 +546,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         {
             // Arrange
             var item = new ReportGroupViewModel { Groupid = 0, Description = "New Group" };
-            var dto  = new ReportGroupDto { Groupid = 0, Description = "New Group" };
+            var dto  = new ReportGroupDto { GroupId = 0, Description = "New Group" };
             _mapper.Map<ReportGroupDto>(item).Returns(dto);
             _service.CreateReportGroupAsync(dto).Returns(SuccessResponse(dto));
 
@@ -564,7 +564,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         {
             // Arrange
             var item = new ReportGroupViewModel { Groupid = 3, Description = "Existing Group" };
-            var dto  = new ReportGroupDto { Groupid = 3, Description = "Existing Group" };
+            var dto  = new ReportGroupDto { GroupId = 3, Description = "Existing Group" };
             _mapper.Map<ReportGroupDto>(item).Returns(dto);
             _service.UpdateReportGroupAsync(3, dto).Returns(SuccessResponse(dto));
 
@@ -598,7 +598,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         {
             // Arrange
             var item = new ReportGroupViewModel { Groupid = 0, Description = "Bad Group" };
-            var dto  = new ReportGroupDto { Groupid = 0, Description = "Bad Group" };
+            var dto  = new ReportGroupDto { GroupId = 0, Description = "Bad Group" };
             _mapper.Map<ReportGroupDto>(item).Returns(dto);
             _service.CreateReportGroupAsync(dto).Returns(FailureResponse<ReportGroupDto>());
 
@@ -1328,7 +1328,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveProfitCentreManagerLink_ValidDto_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var dto = new ProfitCentreManagerLinkDto { Profitcentre = "RC01", Manager = "Smith" };
+            var dto = new ProfitCentreManagerLinkDto { ProfitCentre = "RC01", Manager = "Smith" };
             _service.CreateProfitCentreManagerLinkAsync(dto).Returns(SuccessResponse(dto));
 
             // Act
@@ -1356,7 +1356,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveProfitCentreManagerLink_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
-            var dto = new ProfitCentreManagerLinkDto { Profitcentre = "RC_BAD", Manager = "Jones" };
+            var dto = new ProfitCentreManagerLinkDto { ProfitCentre = "RC_BAD", Manager = "Jones" };
             _service.CreateProfitCentreManagerLinkAsync(dto).Returns(FailureResponse<ProfitCentreManagerLinkDto>());
 
             // Act
@@ -1477,13 +1477,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         #endregion
 
         // ════════════════════════════════════════════════════════════════════════════
-        //  TIME TAB — GetTimeTabSettings
+        //  TIME TAB — LoadTimeTabSettings
         // ════════════════════════════════════════════════════════════════════════════
 
-        #region GetTimeTabSettings
+        #region LoadTimeTabSettings
 
         [Fact]
-        public async Task GetTimeTabSettings_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
+        public async Task LoadTimeTabSettings_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
             var settings = new List<SettingDto>
@@ -1494,7 +1494,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             _service.GetAllUserUpdateableSettingsAsync().Returns(SuccessResponse(settings));
 
             // Act
-            var result = await _controller.GetTimeTabSettings();
+            var result = await _controller.LoadTimeTabSettings();
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -1503,13 +1503,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         }
 
         [Fact]
-        public async Task GetTimeTabSettings_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
+        public async Task LoadTimeTabSettings_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
             _service.GetAllUserUpdateableSettingsAsync().Returns(FailureResponse<List<SettingDto>>());
 
             // Act
-            var result = await _controller.GetTimeTabSettings();
+            var result = await _controller.LoadTimeTabSettings();
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -1518,14 +1518,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         }
 
         [Fact]
-        public async Task GetTimeTabSettings_ServiceReturnsNullData_ReturnsJsonWithSuccessFalse()
+        public async Task LoadTimeTabSettings_ServiceReturnsNullData_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
             var response = new ApiResponseDto<List<SettingDto>> { Success = false, Data = null };
             _service.GetAllUserUpdateableSettingsAsync().Returns(response);
 
             // Act
-            var result = await _controller.GetTimeTabSettings();
+            var result = await _controller.LoadTimeTabSettings();
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -1534,13 +1534,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         }
 
         [Fact]
-        public async Task GetTimeTabSettings_CallsGetAllUserUpdateableSettingsAsync()
+        public async Task LoadTimeTabSettings_CallsGetAllUserUpdateableSettingsAsync()
         {
             // Arrange
             _service.GetAllUserUpdateableSettingsAsync().Returns(SuccessResponse(new List<SettingDto>()));
 
             // Act
-            await _controller.GetTimeTabSettings();
+            await _controller.LoadTimeTabSettings();
 
             // Assert
             await _service.Received(1).GetAllUserUpdateableSettingsAsync();
@@ -1589,8 +1589,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadAccessUsersGrid_ServiceReturnsData_GridContainsItems()
         {
             // Arrange
-            var dtos  = new List<AccessUserDto> { new() { Systemid = 1, Ntlogin = "jsmith" } };
-            var items = new List<AccessUserItem> { new() { Systemid = 1, Ntlogin = "jsmith" } };
+            var dtos  = new List<AccessUserDto> { new() { SystemId = 1, NtLogin = "jsmith" } };
+            var items = new List<AccessUserItem> { new() { SystemId = 1, NtLogin = "jsmith" } };
             _service.GetAllAccessUsersAsync().Returns(SuccessResponse(dtos));
             _mapper.Map<List<AccessUserItem>>(dtos).Returns(items);
             var request = new PaginationFilter<string> { Filter = "{}" };
@@ -1645,8 +1645,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task GetAddEditAccessUserPartial_ValidArgs_ServiceReturnsData_ReturnsPopulatedModel()
         {
             // Arrange
-            var dto  = new AccessUserDto { Systemid = 1, Ntlogin = "jsmith", Username = "John Smith" };
-            var item = new AccessUserItem { Systemid = 1, Ntlogin = "jsmith", Username = "John Smith" };
+            var dto  = new AccessUserDto { SystemId = 1, NtLogin = "jsmith", UserName = "John Smith" };
+            var item = new AccessUserItem { SystemId = 1, NtLogin = "jsmith", UserName = "John Smith" };
             _service.GetAccessUserByIdAsync(1, "jsmith").Returns(SuccessResponse(dto));
             _mapper.Map<AccessUserItem>(dto).Returns(item);
 
@@ -1656,7 +1656,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             var model   = Assert.IsType<AccessUserItem>(partial.Model);
-            Assert.Equal("jsmith", model.Ntlogin);
+            Assert.Equal("jsmith", model.NtLogin);
         }
 
         #endregion
@@ -1671,8 +1671,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveAccessUser_NewUser_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var item = new AccessUserItem { Systemid = 0, Ntlogin = "newuser", Username = "New User" };
-            var dto  = new AccessUserDto  { Systemid = 0, Ntlogin = "newuser", Username = "New User" };
+            var item = new AccessUserItem { SystemId = 0, NtLogin = "newuser", UserName = "New User" };
+            var dto  = new AccessUserDto  { SystemId = 0, NtLogin = "newuser", UserName = "New User" };
             _mapper.Map<AccessUserDto>(item).Returns(dto);
             _service.CreateAccessUserAsync(dto).Returns(SuccessResponse(dto));
 
@@ -1689,8 +1689,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveAccessUser_ExistingUser_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var item = new AccessUserItem { Systemid = 2, Ntlogin = "jsmith", Username = "John Smith" };
-            var dto  = new AccessUserDto  { Systemid = 2, Ntlogin = "jsmith", Username = "John Smith" };
+            var item = new AccessUserItem { SystemId = 2, NtLogin = "jsmith", UserName = "John Smith" };
+            var dto  = new AccessUserDto  { SystemId = 2, NtLogin = "jsmith", UserName = "John Smith" };
             _mapper.Map<AccessUserDto>(item).Returns(dto);
             _service.UpdateAccessUserAsync(2, "jsmith", dto).Returns(SuccessResponse(dto));
 
@@ -1723,8 +1723,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveAccessUser_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
-            var item = new AccessUserItem { Systemid = 0, Ntlogin = "baduser", Username = "Bad" };
-            var dto  = new AccessUserDto  { Systemid = 0, Ntlogin = "baduser", Username = "Bad" };
+            var item = new AccessUserItem { SystemId = 0, NtLogin = "baduser", UserName = "Bad" };
+            var dto  = new AccessUserDto  { SystemId = 0, NtLogin = "baduser", UserName = "Bad" };
             _mapper.Map<AccessUserDto>(item).Returns(dto);
             _service.CreateAccessUserAsync(dto).Returns(FailureResponse<AccessUserDto>());
 
@@ -1821,8 +1821,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadAccessUserLevelsGrid_ServiceReturnsData_GridContainsItems()
         {
             // Arrange
-            var dtos  = new List<AccessUserLevelDto> { new() { Systemid = 1, Ntlogin = "jsmith", Accesslevelid = 2 } };
-            var items = new List<AccessUserLevelItem> { new() { Systemid = 1, Ntlogin = "jsmith", Accesslevelid = 2 } };
+            var dtos  = new List<AccessUserLevelDto> { new() { SystemId = 1, NtLogin = "jsmith", AccessLevelId = 2 } };
+            var items = new List<AccessUserLevelItem> { new() { SystemId = 1, NtLogin = "jsmith", AccessLevelId = 2 } };
             var paged = new PaginatedResult<AccessUserLevelDto>(dtos, 1, 1, 10);
             _service.GetPagedAccessUserLevelsAsync(Arg.Any<QueryParameters<string>>()).Returns(SuccessResponse(paged));
             _mapper.Map<List<AccessUserLevelItem>>(Arg.Any<object>()).Returns(items);
@@ -1861,8 +1861,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task GetAddEditAccessUserLevelPartial_ValidArgs_ServiceReturnsData_ReturnsPopulatedModel()
         {
             // Arrange
-            var dto  = new AccessUserLevelDto { Systemid = 1, Ntlogin = "jsmith", Accesslevelid = 3 };
-            var item = new AccessUserLevelItem { Systemid = 1, Ntlogin = "jsmith", Accesslevelid = 3 };
+            var dto  = new AccessUserLevelDto { SystemId = 1, NtLogin = "jsmith", AccessLevelId = 3 };
+            var item = new AccessUserLevelItem { SystemId = 1, NtLogin = "jsmith", AccessLevelId = 3 };
             _service.GetAccessUserLevelByIdAsync(1, "jsmith", 3).Returns(SuccessResponse(dto));
             _mapper.Map<AccessUserLevelItem>(dto).Returns(item);
 
@@ -1872,7 +1872,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             var model   = Assert.IsType<AccessUserLevelItem>(partial.Model);
-            Assert.Equal(3, model.Accesslevelid);
+            Assert.Equal(3, model.AccessLevelId);
         }
 
         #endregion
@@ -1887,8 +1887,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveAccessUserLevel_ValidItem_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var item = new AccessUserLevelItem { Systemid = 1, Ntlogin = "jsmith", Accesslevelid = 2 };
-            var dto  = new AccessUserLevelDto  { Systemid = 1, Ntlogin = "jsmith", Accesslevelid = 2 };
+            var item = new AccessUserLevelItem { SystemId = 1, NtLogin = "jsmith", AccessLevelId = 2 };
+            var dto  = new AccessUserLevelDto  { SystemId = 1, NtLogin = "jsmith", AccessLevelId = 2 };
             _mapper.Map<AccessUserLevelDto>(item).Returns(dto);
             _service.CreateAccessUserLevelAsync(dto).Returns(SuccessResponse(dto));
 
@@ -1921,8 +1921,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveAccessUserLevel_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
-            var item = new AccessUserLevelItem { Systemid = 1, Ntlogin = "bad", Accesslevelid = 99 };
-            var dto  = new AccessUserLevelDto  { Systemid = 1, Ntlogin = "bad", Accesslevelid = 99 };
+            var item = new AccessUserLevelItem { SystemId = 1, NtLogin = "bad", AccessLevelId = 99 };
+            var dto  = new AccessUserLevelDto  { SystemId = 1, NtLogin = "bad", AccessLevelId = 99 };
             _mapper.Map<AccessUserLevelDto>(item).Returns(dto);
             _service.CreateAccessUserLevelAsync(dto).Returns(FailureResponse<AccessUserLevelDto>());
 
@@ -2105,7 +2105,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             _service.CreateFrequencyAsync(dto).Returns(SuccessResponse(dto));
 
             // Act
-            var result = await _controller.SaveFrequency(item);
+            var result = await _controller.SaveFrequency(item, false);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -2123,7 +2123,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             _service.UpdateFrequencyAsync(3, dto).Returns(SuccessResponse(dto));
 
             // Act
-            var result = await _controller.SaveFrequency(item);
+            var result = await _controller.SaveFrequency(item, true);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -2139,7 +2139,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             var item = new FrequencyItem();
 
             // Act
-            var result = await _controller.SaveFrequency(item);
+            var result = await _controller.SaveFrequency(item, false);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -2157,7 +2157,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             _service.CreateFrequencyAsync(dto).Returns(FailureResponse<FrequencyDto>());
 
             // Act
-            var result = await _controller.SaveFrequency(item);
+            var result = await _controller.SaveFrequency(item, false);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
