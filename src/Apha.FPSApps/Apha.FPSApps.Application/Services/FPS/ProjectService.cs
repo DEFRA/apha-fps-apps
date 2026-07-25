@@ -89,7 +89,7 @@ namespace Apha.FPSApps.Application.Services.FPS
 
             var lookup = response.Data
                 .OrderBy(p => p.ParentProject)
-                .Select(p => new ProjectDto { ParentProject = p.ParentProject, Program = p.Program })
+                .Select(p => new ProjectDto { ParentProject = p.ParentProject, Program = p.Program, ProjectGroup = p.ProjectGroup })
                 .ToList();
 
             return ApiResponseDto<List<ProjectDto>>.SuccessResponse(lookup);
