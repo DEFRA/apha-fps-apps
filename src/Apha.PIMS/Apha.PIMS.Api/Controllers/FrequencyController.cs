@@ -1,25 +1,8 @@
-/*
- * TRANSFORMENGINE MIGRATION — FrequencyController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - MS Access Form (frmFrequency) -> ASP.NET Core 10 Web API [ApiController]
- *   - VBA form CRUD operations -> REST endpoints: GET /frequency, GET /frequency/{frequencyid}, POST /frequency, PUT /frequency/{frequencyid}, DELETE /frequency/{frequencyid}
- *   - Access DAO data binding -> IFrequencyService dependency injection
- *   - Request/Response contracts mapped via AutoMapper (FrequencyReq <-> FrequencyDto <-> FrequencyRes)
- *
- * PRESERVED:
- *   - Integer PK semantics (frequencyid)
- *   - All CRUD semantics from the original form
- *   - Authorization: API-PIMSUser, API-PIMSAdmin roles required
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm integer PK (frequencyid) generation strategy — verify DB identity/sequence vs application-assigned
- */
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Pagination;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -44,48 +27,56 @@ namespace Apha.PIMS.Api.Controllers
 
         /// <summary>Get all frequencies.</summary>
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAllFrequencies()
         {
-            // TRANSFORMENGINE: GetAllAsync -> GET /frequency (full list)
-            List<FrequencyDto> result = await _service.GetAllAsync();
+            // TRANSFORMENGINE: GetAllFrequenciesAsync -> GET /frequency (full list)
+            List<FrequencyDto> result = await _service.GetAllFrequenciesAsync();
             return Ok(_mapper.Map<List<FrequencyRes>>(result));
         }
 
-        /// <summary>Get a single frequency by frequencyid.</summary>
-        [HttpGet("{frequencyid:int}")]
-        public async Task<IActionResult> GetById(int frequencyid)
+        /// <summary>Get paged frequencies.</summary>
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPagedFrequencies([FromQuery] QueryParameters<string> query)
         {
-            FrequencyDto? result = await _service.GetByIdAsync(frequencyid);
+            var result = await _service.GetPagedFrequenciesAsync(query);
+            return Ok(_mapper.Map<PaginationRes<FrequencyRes>>(result));
+        }
+
+        /// <summary>Get a single frequency by frequencyid.</summary>
+        [HttpGet("{frequencyId:int}")]
+        public async Task<IActionResult> GetFrequencyById(int frequencyId)
+        {
+            FrequencyDto? result = await _service.GetFrequencyByIdAsync(frequencyId);
             return result is null ? NotFound() : Ok(_mapper.Map<FrequencyRes>(result));
         }
 
         /// <summary>Create a new frequency.</summary>
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] FrequencyReq request)
+        public async Task<IActionResult> CreateFrequency([FromBody] FrequencyReq request)
         {
             FrequencyDto dto = _mapper.Map<FrequencyDto>(request);
-            FrequencyDto created = await _service.CreateAsync(dto);
+            FrequencyDto created = await _service.CreateFrequencyAsync(dto);
             FrequencyRes res = _mapper.Map<FrequencyRes>(created);
-            return CreatedAtAction(nameof(GetById), new { frequencyid = res.FrequencyId, version = "1.0" }, res);
+            return CreatedAtAction(nameof(GetFrequencyById), new { frequencyId = res.Frequencyid, version = "1.0" }, res);
         }
 
         /// <summary>Update an existing frequency.</summary>
-        [HttpPut("{frequencyid:int}")]
-        public async Task<IActionResult> Update(int frequencyid, [FromBody] FrequencyReq request)
+        [HttpPut("{frequencyId:int}")]
+        public async Task<IActionResult> UpdateFrequency(int frequencyId, [FromBody] FrequencyReq request)
         {
             FrequencyDto dto = _mapper.Map<FrequencyDto>(request);
-            // TRANSFORMENGINE: Route frequencyid is authoritative — set before service call
-            dto.Frequencyid = frequencyid;
-            FrequencyDto updated = await _service.UpdateAsync(dto);
+            // TRANSFORMENGINE: Route frequencyId is authoritative — set before service call
+            dto.FrequencyId = frequencyId;
+            FrequencyDto updated = await _service.UpdateFrequencyAsync(dto);
             return Ok(_mapper.Map<FrequencyRes>(updated));
         }
 
         /// <summary>Delete a frequency by frequencyid.</summary>
-        [HttpDelete("{frequencyid:int}")]
-        public async Task<IActionResult> Delete(int frequencyid)
+        [HttpDelete("{frequencyId:int}")]
+        public async Task<IActionResult> DeleteFrequency(int frequencyId)
         {
-            await _service.DeleteAsync(frequencyid);
-            return Ok(new { success = true });
+            bool deleted = await _service.DeleteFrequencyAsync(frequencyId);
+            return Ok(deleted);
         }
     }
 }

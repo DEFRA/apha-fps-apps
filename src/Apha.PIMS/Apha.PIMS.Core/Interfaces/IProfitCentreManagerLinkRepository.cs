@@ -1,39 +1,26 @@
-/*
- * TRANSFORMENGINE MIGRATION — IProfitCentreManagerLinkRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 2 — Core Layer - Entities + Repository Interfaces + Pagination
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New Core repository interface for ProfitCentreManagerLink CRUD operations
- *   - All methods are async (Task<T>) — no synchronous signatures
- *   - Composite PK (profitcentre, manager) — both string — reflected in method signatures
- *   - GetByProfitCentreAsync supports listing all manager links for a given profit centre
- *   - ExistsAsync follows AnyAsync-style existence semantics per phase rules
- *
- * PRESERVED:
- *   - No infrastructure-specific code (DbContext, EF) in this Core interface
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Pagination;
 
 namespace Apha.PIMS.Core.Interfaces
 {
-    // TRANSFORMENGINE: interface covers CRUD for ProfitCentreManagerLink (mabarchive.tblprofitcentre_manager_link); composite PK (profitcentre, manager)
     public interface IProfitCentreManagerLinkRepository
     {
-        Task<List<ProfitCentreManagerLink>> GetAllAsync();
+        Task<List<ProfitCentreManagerLink>> GetAllProfitCentreManagerLinksAsync();
 
-        Task<List<ProfitCentreManagerLink>> GetByProfitCentreAsync(string profitcentre);
+        Task<PagedData<ProfitCentreManagerLink>> GetPagedByManagerAsync(PaginationParameters<string> query, string manager);
 
-        Task<ProfitCentreManagerLink?> GetByIdAsync(string profitcentre, string manager);
+        Task<List<ProfitCentreLookup>> GetProfitCentresAsync();
 
-        Task<ProfitCentreManagerLink> AddAsync(ProfitCentreManagerLink entity);
+        Task<List<ProfitCentreManagerLink>> GetByProfitCentreAsync(string profitCentre);
 
-        Task DeleteAsync(string profitcentre, string manager);
+        Task<List<ProfitCentreManagerLink>> GetByManagerAsync(string manager);
 
-        Task<bool> ExistsAsync(string profitcentre, string manager);
+        Task<ProfitCentreManagerLink?> GetProfitCentreManagerLinkByIdAsync(string profitCentre, string manager);
+
+        Task<ProfitCentreManagerLink> AddProfitCentreManagerLinkAsync(ProfitCentreManagerLink entity);
+
+        Task<bool> DeleteProfitCentreManagerLinkAsync(string profitCentre, string manager);
+
+        Task<bool> ProfitCentreManagerLinkExistsAsync(string profitCentre, string manager);
     }
 }

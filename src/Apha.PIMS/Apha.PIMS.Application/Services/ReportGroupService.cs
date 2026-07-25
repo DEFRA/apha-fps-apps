@@ -1,27 +1,10 @@
-/*
- * TRANSFORMENGINE MIGRATION — ReportGroupService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New Application service implementing IReportGroupService for ReportGroup CRUD (Reports Tab group lookup, frmMaintainance)
- *   - Delegates all persistence to IReportGroupRepository; no direct DbContext usage
- *   - All methods are async end-to-end
- *   - Throws ArgumentException on null/invalid input; KeyNotFoundException when entity not found
- *   - AutoMapper used for all entity <-> DTO conversions
- *
- * PRESERVED:
- *   - All business guards: null-input validation, not-found checks
- *   - Group description required guard on create/update
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Pagination;
+using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
+using Apha.PIMS.Core.Pagination;
 using AutoMapper;
 
 namespace Apha.PIMS.Application.Services
@@ -39,60 +22,91 @@ namespace Apha.PIMS.Application.Services
         }
 
         // TRANSFORMENGINE: returns full list for report-group dropdown / lookup
-        public async Task<List<ReportGroupDto>> GetAllAsync()
+        public async Task<List<ReportGroupDto>> GetAllReportGroupsAsync()
         {
-            List<ReportGroup> entities = await _repository.GetAllAsync();
+            List<ReportGroup> entities = await _repository.GetAllReportGroupsAsync();
+            return _mapper.Map<List<ReportGroupDto>>(entities);
+        }
+
+        // TRANSFORMENGINE: paged report groups with repository-level filter/sort/paging
+        public async Task<PaginatedResult<ReportGroupDto>> GetPagedReportGroupsAsync(QueryParameters<string> query, int? reportId = null)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetPagedReportGroupsAsync(parameters, reportId);
+            return _mapper.Map<PaginatedResult<ReportGroupDto>>(pagedData);
+        }
+
+        // TRANSFORMENGINE: returns all report groups linked to the given reportid via tblreportgroup_link
+        public async Task<List<ReportGroupDto>> GetReportGroupsByReportIdAsync(int reportId)
+        {
+            List<ReportGroup> entities = await _repository.GetReportGroupsByReportIdAsync(reportId);
             return _mapper.Map<List<ReportGroupDto>>(entities);
         }
 
         // TRANSFORMENGINE: returns nullable — controller maps null to 404
-        public async Task<ReportGroupDto?> GetByIdAsync(int groupid)
+        public async Task<ReportGroupDto?> GetReportGroupByIdAsync(int groupId)
         {
-            ReportGroup? entity = await _repository.GetByIdAsync(groupid);
+            ReportGroup? entity = await _repository.GetReportGroupByIdAsync(groupId);
             return entity is null ? null : _mapper.Map<ReportGroupDto>(entity);
         }
 
         // TRANSFORMENGINE: validate non-null DTO before first await
-        public async Task<ReportGroupDto> CreateAsync(ReportGroupDto dto)
+        public async Task<ReportGroupDto> CreateReportGroupAsync(ReportGroupDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.Description))
                 throw new ArgumentException("Group description is required.", nameof(dto));
 
             ReportGroup entity = _mapper.Map<ReportGroup>(dto);
-            ReportGroup created = await _repository.AddAsync(entity);
+            ReportGroup created = await _repository.AddReportGroupAsync(entity);
             return _mapper.Map<ReportGroupDto>(created);
         }
 
-        // TRANSFORMENGINE: validate existence before update — throws KeyNotFoundException if not found
-        public async Task<ReportGroupDto> UpdateAsync(ReportGroupDto dto)
+        // TRANSFORMENGINE: validate existence before update — throws BusinessValidationErrorException if not found
+        public async Task<ReportGroupDto> UpdateReportGroupAsync(ReportGroupDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.Description))
                 throw new ArgumentException("Group description is required.", nameof(dto));
 
-            bool exists = await _repository.ExistsAsync(dto.Groupid);
+            bool exists = await _repository.ReportGroupExistsAsync(dto.GroupId);
             if (!exists)
-                throw new KeyNotFoundException($"ReportGroup with groupid {dto.Groupid} was not found.");
+            {
+                var errors = new List<BusinessValidationError>
+                {
+                    new BusinessValidationError(
+                        $"ReportGroup with groupid {dto.GroupId} was not found.",
+                        "REPORT_GROUP_NOT_FOUND")
+                };
+                throw new BusinessValidationErrorException(errors);
+            }
 
             ReportGroup entity = _mapper.Map<ReportGroup>(dto);
-            ReportGroup updated = await _repository.UpdateAsync(entity);
+            ReportGroup updated = await _repository.UpdateReportGroupAsync(entity);
             return _mapper.Map<ReportGroupDto>(updated);
         }
 
-        // TRANSFORMENGINE: throws KeyNotFoundException if not found before delete
-        public async Task DeleteAsync(int groupid)
+        // TRANSFORMENGINE: throws BusinessValidationErrorException if not found before delete
+        public async Task<bool> DeleteReportGroupAsync(int groupId)
         {
-            bool exists = await _repository.ExistsAsync(groupid);
+            bool exists = await _repository.ReportGroupExistsAsync(groupId);
             if (!exists)
-                throw new KeyNotFoundException($"ReportGroup with groupid {groupid} was not found.");
+            {
+                var errors = new List<BusinessValidationError>
+                {
+                    new BusinessValidationError(
+                        $"ReportGroup with groupid {groupId} was not found.",
+                        "REPORT_GROUP_NOT_FOUND")
+                };
+                throw new BusinessValidationErrorException(errors);
+            }
 
-            await _repository.DeleteAsync(groupid);
+            return await _repository.DeleteReportGroupAsync(groupId);
         }
 
-        public async Task<bool> ExistsAsync(int groupid)
+        public async Task<bool> ReportGroupExistsAsync(int groupId)
         {
-            return await _repository.ExistsAsync(groupid);
+            return await _repository.ReportGroupExistsAsync(groupId);
         }
     }
 }

@@ -1,38 +1,25 @@
-/*
- * TRANSFORMENGINE MIGRATION — IRadTrackProgRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New Core repository interface for RadtrackProg CRUD operations (mabarchive.tblradtrackprog)
- *   - All methods are async (Task<T>) — no synchronous signatures
- *   - Natural string PK (program varchar(10)) reflected in method signatures
- *   - GetAllAsync returns full list for Programme Tab administration
- *
- * PRESERVED:
- *   - No infrastructure-specific code (DbContext, EF) in this Core interface
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Pagination;
 
 namespace Apha.PIMS.Core.Interfaces
 {
-    // TRANSFORMENGINE: interface covers CRUD for RadtrackProg (mabarchive.tblradtrackprog); natural string PK (program varchar(10)); Programme Tab
     public interface IRadTrackProgRepository
     {
-        Task<List<RadtrackProg>> GetAllAsync();
+        Task<List<RadtrackProg>> GetAllRadTrackProgsAsync();
 
-        Task<RadtrackProg?> GetByIdAsync(string program);
+        Task<PagedData<RadtrackProg>> GetPagedRadTrackProgsAsync(PaginationParameters<string> query);
 
-        Task<RadtrackProg> AddAsync(RadtrackProg entity);
+        Task<RadtrackProg?> GetRadTrackProgByProgramAsync(string program);
 
-        Task<RadtrackProg> UpdateAsync(RadtrackProg entity);
+        Task<RadtrackProg> AddRadTrackProgAsync(RadtrackProg entity);
 
-        Task DeleteAsync(string program);
+        Task<RadtrackProg> UpdateRadTrackProgAsync(RadtrackProg entity);
 
-        Task<bool> ExistsAsync(string program);
+        Task<bool> DeleteRadTrackProgAsync(string program);
+
+        Task<bool> RadTrackProgExistsAsync(string program);
+
+        // Returns distinct non-null Program values from MY_tlkpProject ordered alphabetically — used to populate the Programme dropdown
+        Task<List<string>> GetAllProgramNamesAsync();
     }
 }

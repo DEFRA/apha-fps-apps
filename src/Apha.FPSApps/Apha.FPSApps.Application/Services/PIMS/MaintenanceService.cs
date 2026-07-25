@@ -1,31 +1,8 @@
-/*
- * TRANSFORMENGINE MIGRATION — MaintenanceService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 8 — Frontend Service Interface + Implementation (Steps 12-13)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New thin-delegate frontend aggregate service for frmMaintainance (PIMS Admin Maintenance)
- *   - Implements IMaintenanceService by forwarding every call to the corresponding
- *     IPimsApiClient sub-client (PimsReport, PimsReportGroup, PimsReportGroupLink,
- *     PimsProjectManager, PimsProgramManagerLink, PimsProfitCentreManagerLink, PimsSetting,
- *     PimsAccessUser, PimsAccessLevel, PimsAccessUserLevel, PimsAccessSystem,
- *     PimsFrequency, PimsReviewItem, PimsRadTrackProg)
- *   - No business logic — each method body is a single return await delegation
- *   - _client field is private readonly (Sonar S2933)
- *
- * PRESERVED:
- *   - All PK types and composite-PK parameter signatures from IMaintenanceService
- *   - Read-only surfaces (AccessSystem) and read/update-only surfaces (Setting)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: verify IPimsApiClient is registered in DI container (ServiceCollectionExtension) before first use
- *   - TRANSFORMENGINE TODO: confirm role requirements for admin-gated endpoints (Setting update, AccessUser CRUD)
- */
-
-using Apha.FPSApps.Application.Dtos;
+﻿using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
+using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.PIMS
 {
@@ -43,124 +20,157 @@ namespace Apha.FPSApps.Application.Services.PIMS
         // TRANSFORMENGINE: thin delegates — PimsReport sub-client; integer PK (id)
 
         public async Task<ApiResponseDto<List<ReportDto>>> GetAllReportsAsync()
-            => await _client.PimsReport.GetAllAsync();
+            => await _client.PimsReport.GetAllReportsAsync();
+
+        public async Task<ApiResponseDto<PaginatedResult<ReportDto>>> GetPagedReportsAsync(QueryParameters<string> query)
+            => await _client.PimsReport.GetPagedReportsAsync(query);
 
         public async Task<ApiResponseDto<ReportDto>> GetReportByIdAsync(int id)
-            => await _client.PimsReport.GetByIdAsync(id);
+            => await _client.PimsReport.GetReportByIdAsync(id);
 
         public async Task<ApiResponseDto<ReportDto>> CreateReportAsync(ReportDto dto)
-            => await _client.PimsReport.CreateAsync(dto);
+            => await _client.PimsReport.CreateReportAsync(dto);
 
         public async Task<ApiResponseDto<ReportDto>> UpdateReportAsync(int id, ReportDto dto)
-            => await _client.PimsReport.UpdateAsync(id, dto);
+            => await _client.PimsReport.UpdateReportAsync(id, dto);
 
         public async Task<ApiResponseDto<bool>> DeleteReportAsync(int id)
-            => await _client.PimsReport.DeleteAsync(id);
+            => await _client.PimsReport.DeleteReportAsync(id);
 
         // ── ReportGroup ─────────────────────────────────────────────────────────────
         // TRANSFORMENGINE: thin delegates — PimsReportGroup sub-client; integer PK (groupid); also serves as Report dropdown lookup
 
         public async Task<ApiResponseDto<List<ReportGroupDto>>> GetAllReportGroupsAsync()
-            => await _client.PimsReportGroup.GetAllAsync();
+            => await _client.PimsReportGroup.GetAllReportGroupsAsync();
 
-        public async Task<ApiResponseDto<ReportGroupDto>> GetReportGroupByIdAsync(int groupid)
-            => await _client.PimsReportGroup.GetByIdAsync(groupid);
+        public async Task<ApiResponseDto<PaginatedResult<ReportGroupDto>>> GetPagedReportGroupsAsync(QueryParameters<string> query, int? reportId = null)
+            => await _client.PimsReportGroup.GetPagedReportGroupsAsync(query, reportId);
+
+        public async Task<ApiResponseDto<List<ReportGroupDto>>> GetReportGroupsByReportIdAsync(int reportId)
+            => await _client.PimsReportGroup.GetReportGroupsByReportIdAsync(reportId);
+
+        public async Task<ApiResponseDto<ReportGroupDto>> GetReportGroupByIdAsync(int groupId)
+            => await _client.PimsReportGroup.GetReportGroupByIdAsync(groupId);
 
         public async Task<ApiResponseDto<ReportGroupDto>> CreateReportGroupAsync(ReportGroupDto dto)
-            => await _client.PimsReportGroup.CreateAsync(dto);
+            => await _client.PimsReportGroup.CreateReportGroupAsync(dto);
 
-        public async Task<ApiResponseDto<ReportGroupDto>> UpdateReportGroupAsync(int groupid, ReportGroupDto dto)
-            => await _client.PimsReportGroup.UpdateAsync(groupid, dto);
+        public async Task<ApiResponseDto<ReportGroupDto>> UpdateReportGroupAsync(int groupId, ReportGroupDto dto)
+            => await _client.PimsReportGroup.UpdateReportGroupAsync(groupId, dto);
 
-        public async Task<ApiResponseDto<bool>> DeleteReportGroupAsync(int groupid)
-            => await _client.PimsReportGroup.DeleteAsync(groupid);
+        public async Task<ApiResponseDto<bool>> DeleteReportGroupAsync(int groupId)
+            => await _client.PimsReportGroup.DeleteReportGroupAsync(groupId);
 
         // ── ReportGroupLink ─────────────────────────────────────────────────────────
         // TRANSFORMENGINE: thin delegates — PimsReportGroupLink sub-client; composite PK (reportid int + groupid int); no PUT
 
         public async Task<ApiResponseDto<List<ReportGroupLinkDto>>> GetAllReportGroupLinksAsync()
-            => await _client.PimsReportGroupLink.GetAllAsync();
+            => await _client.PimsReportGroupLink.GetAllReportGroupLinksAsync();
 
-        public async Task<ApiResponseDto<List<ReportGroupLinkDto>>> GetReportGroupLinksByReportIdAsync(int reportid)
-            => await _client.PimsReportGroupLink.GetByReportIdAsync(reportid);
+        public async Task<ApiResponseDto<List<ReportGroupLinkDto>>> GetReportGroupLinksByReportIdAsync(int reportId)
+            => await _client.PimsReportGroupLink.GetReportGroupLinksByReportIdAsync(reportId);
 
-        public async Task<ApiResponseDto<ReportGroupLinkDto>> GetReportGroupLinkByIdAsync(int reportid, int groupid)
-            => await _client.PimsReportGroupLink.GetByIdAsync(reportid, groupid);
+        public async Task<ApiResponseDto<ReportGroupLinkDto>> GetReportGroupLinkByIdAsync(int reportId, int groupId)
+            => await _client.PimsReportGroupLink.GetReportGroupLinkByIdAsync(reportId, groupId);
 
         public async Task<ApiResponseDto<ReportGroupLinkDto>> CreateReportGroupLinkAsync(ReportGroupLinkDto dto)
-            => await _client.PimsReportGroupLink.CreateAsync(dto);
+            => await _client.PimsReportGroupLink.CreateReportGroupLinkAsync(dto);
 
-        public async Task<ApiResponseDto<bool>> DeleteReportGroupLinkAsync(int reportid, int groupid)
-            => await _client.PimsReportGroupLink.DeleteAsync(reportid, groupid);
+        public async Task<ApiResponseDto<bool>> DeleteReportGroupLinkAsync(int reportId, int groupId)
+            => await _client.PimsReportGroupLink.DeleteReportGroupLinkAsync(reportId, groupId);
 
         // ── ProjectManager ──────────────────────────────────────────────────────────
         // TRANSFORMENGINE: thin delegates — PimsProjectManager sub-client; natural varchar PK (projectmanager)
 
-        public async Task<ApiResponseDto<List<ProjectManagerDto>>> GetAllProjectManagersAsync()
-            => await _client.PimsProjectManager.GetAllAsync();
+        public async Task<ApiResponseDto<List<ProjectManagerDto>>> GetAllProjectManagersAsync(QueryParameters<string>? query = null)
+            => await _client.PimsProjectManager.GetAllProjectManagersAsync(query);
 
-        public async Task<ApiResponseDto<ProjectManagerDto>> GetProjectManagerByIdAsync(string projectmanager)
-            => await _client.PimsProjectManager.GetByIdAsync(projectmanager);
+        public async Task<ApiResponseDto<PaginatedResult<ProjectManagerDto>>> GetPagedProjectManagersAsync(QueryParameters<string> query)
+            => await _client.PimsProjectManager.GetPagedProjectManagersAsync(query);
+
+        public async Task<ApiResponseDto<List<string>>> GetManagerNamesAsync()
+            => await _client.PimsProjectManager.GetManagerNamesAsync();
+
+        public async Task<ApiResponseDto<ProjectManagerDto>> GetProjectManagerByIdAsync(string projectManagerName)
+            => await _client.PimsProjectManager.GetProjectManagerByNameAsync(projectManagerName);
 
         public async Task<ApiResponseDto<ProjectManagerDto>> CreateProjectManagerAsync(ProjectManagerDto dto)
-            => await _client.PimsProjectManager.CreateAsync(dto);
+            => await _client.PimsProjectManager.CreateProjectManagerAsync(dto);
 
-        public async Task<ApiResponseDto<ProjectManagerDto>> UpdateProjectManagerAsync(string projectmanager, ProjectManagerDto dto)
-            => await _client.PimsProjectManager.UpdateAsync(projectmanager, dto);
+        public async Task<ApiResponseDto<ProjectManagerDto>> UpdateProjectManagerAsync(string projectManagerName, ProjectManagerDto dto)
+            => await _client.PimsProjectManager.UpdateProjectManagerAsync(projectManagerName, dto);
 
-        public async Task<ApiResponseDto<bool>> DeleteProjectManagerAsync(string projectmanager)
-            => await _client.PimsProjectManager.DeleteAsync(projectmanager);
+        public async Task<ApiResponseDto<bool>> DeleteProjectManagerAsync(string projectManagerName)
+            => await _client.PimsProjectManager.DeleteProjectManagerAsync(projectManagerName);
 
         // ── ProgramManagerLink ──────────────────────────────────────────────────────
         // TRANSFORMENGINE: thin delegates — PimsProgramManagerLink sub-client; composite natural PK (program string + manager string); no PUT
 
         public async Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetAllProgramManagerLinksAsync()
-            => await _client.PimsProgramManagerLink.GetAllAsync();
+            => await _client.PimsProgramManagerLink.GetAllProgramManagerLinksAsync();
+
+        public async Task<ApiResponseDto<PaginatedResult<ProgramManagerLinkDto>>> GetPagedProgramManagerLinksByManagerAsync(QueryParameters<string> query, string manager)
+            => await _client.PimsProgramManagerLink.GetPagedByManagerAsync(query, manager);
 
         public async Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetProgramManagerLinksByProgramAsync(string program)
             => await _client.PimsProgramManagerLink.GetByProgramAsync(program);
 
+        public async Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetProgramManagerLinksByManagerAsync(string manager)
+            => await _client.PimsProgramManagerLink.GetByManagerAsync(manager);
+
         public async Task<ApiResponseDto<ProgramManagerLinkDto>> GetProgramManagerLinkByIdAsync(string program, string manager)
-            => await _client.PimsProgramManagerLink.GetByIdAsync(program, manager);
+            => await _client.PimsProgramManagerLink.GetProgramManagerLinkByIdAsync(program, manager);
 
         public async Task<ApiResponseDto<ProgramManagerLinkDto>> CreateProgramManagerLinkAsync(ProgramManagerLinkDto dto)
-            => await _client.PimsProgramManagerLink.CreateAsync(dto);
+            => await _client.PimsProgramManagerLink.CreateProgramManagerLinkAsync(dto);
 
         public async Task<ApiResponseDto<bool>> DeleteProgramManagerLinkAsync(string program, string manager)
-            => await _client.PimsProgramManagerLink.DeleteAsync(program, manager);
+            => await _client.PimsProgramManagerLink.DeleteProgramManagerLinkAsync(program, manager);
+
+        public async Task<ApiResponseDto<List<ProgramLookupDto>>> GetProgramsAsync()
+            => await _client.PimsProgramManagerLink.GetProgramsAsync();
 
         // ── ProfitCentreManagerLink ─────────────────────────────────────────────────
         // TRANSFORMENGINE: thin delegates — PimsProfitCentreManagerLink sub-client; composite natural PK (profitcentre string + manager string); no PUT
 
         public async Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetAllProfitCentreManagerLinksAsync()
-            => await _client.PimsProfitCentreManagerLink.GetAllAsync();
+            => await _client.PimsProfitCentreManagerLink.GetAllProfitCentreManagerLinksAsync();
 
-        public async Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetProfitCentreManagerLinksByProfitCentreAsync(string profitcentre)
-            => await _client.PimsProfitCentreManagerLink.GetByProfitCentreAsync(profitcentre);
+        public async Task<ApiResponseDto<PaginatedResult<ProfitCentreManagerLinkDto>>> GetPagedProfitCentreManagerLinksByManagerAsync(QueryParameters<string> query, string manager)
+            => await _client.PimsProfitCentreManagerLink.GetPagedByManagerAsync(query, manager);
 
-        public async Task<ApiResponseDto<ProfitCentreManagerLinkDto>> GetProfitCentreManagerLinkByIdAsync(string profitcentre, string manager)
-            => await _client.PimsProfitCentreManagerLink.GetByIdAsync(profitcentre, manager);
+        public async Task<ApiResponseDto<List<ProfitCentreLookupDto>>> GetProfitCentresAsync()
+            => await _client.PimsProfitCentreManagerLink.GetProfitCentresAsync();
+
+        public async Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetProfitCentreManagerLinksByProfitCentreAsync(string profitCentre)
+            => await _client.PimsProfitCentreManagerLink.GetByProfitCentreAsync(profitCentre);
+
+        public async Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetProfitCentreManagerLinksByManagerAsync(string manager)
+            => await _client.PimsProfitCentreManagerLink.GetByManagerAsync(manager);
+
+        public async Task<ApiResponseDto<ProfitCentreManagerLinkDto>> GetProfitCentreManagerLinkByIdAsync(string profitCentre, string manager)
+            => await _client.PimsProfitCentreManagerLink.GetProfitCentreManagerLinkByIdAsync(profitCentre, manager);
 
         public async Task<ApiResponseDto<ProfitCentreManagerLinkDto>> CreateProfitCentreManagerLinkAsync(ProfitCentreManagerLinkDto dto)
-            => await _client.PimsProfitCentreManagerLink.CreateAsync(dto);
+            => await _client.PimsProfitCentreManagerLink.CreateProfitCentreManagerLinkAsync(dto);
 
-        public async Task<ApiResponseDto<bool>> DeleteProfitCentreManagerLinkAsync(string profitcentre, string manager)
-            => await _client.PimsProfitCentreManagerLink.DeleteAsync(profitcentre, manager);
+        public async Task<ApiResponseDto<bool>> DeleteProfitCentreManagerLinkAsync(string profitCentre, string manager)
+            => await _client.PimsProfitCentreManagerLink.DeleteProfitCentreManagerLinkAsync(profitCentre, manager);
 
         // ── Setting ─────────────────────────────────────────────────────────────────
         // TRANSFORMENGINE: thin delegates — PimsSetting sub-client; read/update only; string PK; no create/delete
 
         public async Task<ApiResponseDto<List<SettingDto>>> GetAllSettingsAsync()
-            => await _client.PimsSetting.GetAllAsync();
+            => await _client.PimsSetting.GetAllSettingsAsync();
 
         public async Task<ApiResponseDto<List<SettingDto>>> GetAllUserUpdateableSettingsAsync()
-            => await _client.PimsSetting.GetAllUserUpdateableAsync();
+            => await _client.PimsSetting.GetAllUserUpdateableSettingsAsync();
 
         public async Task<ApiResponseDto<SettingDto>> GetSettingByIdAsync(string id)
-            => await _client.PimsSetting.GetByIdAsync(id);
+            => await _client.PimsSetting.GetSettingByIdAsync(id);
 
         public async Task<ApiResponseDto<SettingDto>> UpdateSettingAsync(string id, SettingDto dto)
-            => await _client.PimsSetting.UpdateAsync(id, dto);
+            => await _client.PimsSetting.UpdateSettingAsync(id, dto);
 
         // ── AccessUser ──────────────────────────────────────────────────────────────
         // TRANSFORMENGINE: thin delegates — PimsAccessUser sub-client; composite PK (systemid int + ntlogin string)
@@ -183,8 +193,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
         public async Task<ApiResponseDto<bool>> DeleteAccessUserAsync(int systemid, string ntlogin)
             => await _client.PimsAccessUser.DeleteAsync(systemid, ntlogin);
 
-        // ── AccessLevel ─────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsAccessLevel sub-client; composite PK (systemid int + accesslevelid int)
+        // ── AccessLevel ───────────────────────────────────────────────────────────
 
         public async Task<ApiResponseDto<List<AccessLevelDto>>> GetAllAccessLevelsAsync()
             => await _client.PimsAccessLevel.GetAllAsync();
@@ -204,11 +213,8 @@ namespace Apha.FPSApps.Application.Services.PIMS
         public async Task<ApiResponseDto<bool>> DeleteAccessLevelAsync(int systemid, int accesslevelid)
             => await _client.PimsAccessLevel.DeleteAsync(systemid, accesslevelid);
 
-        // ── AccessUserLevel ─────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsAccessUserLevel sub-client; triple composite PK (systemid int + ntlogin string + accesslevelid int); no PUT
-
-        public async Task<ApiResponseDto<List<AccessUserLevelDto>>> GetAllAccessUserLevelsAsync()
-            => await _client.PimsAccessUserLevel.GetAllAsync();
+        public async Task<ApiResponseDto<PaginatedResult<AccessUserLevelDto>>> GetPagedAccessUserLevelsAsync(QueryParameters<string> request)
+            => await _client.PimsAccessUserLevel.GetPagedAsync(request);
 
         public async Task<ApiResponseDto<List<AccessUserLevelDto>>> GetAccessUserLevelsBySystemIdAsync(int systemid)
             => await _client.PimsAccessUserLevel.GetBySystemIdAsync(systemid);
@@ -238,54 +244,108 @@ namespace Apha.FPSApps.Application.Services.PIMS
         // TRANSFORMENGINE: thin delegates — PimsFrequency sub-client; integer PK (frequencyid); full CRUD
 
         public async Task<ApiResponseDto<List<FrequencyDto>>> GetAllFrequenciesAsync()
-            => await _client.PimsFrequency.GetAllAsync();
+            => await _client.PimsFrequency.GetAllFrequenciesAsync();
 
-        public async Task<ApiResponseDto<FrequencyDto>> GetFrequencyByIdAsync(int frequencyid)
-            => await _client.PimsFrequency.GetByIdAsync(frequencyid);
+        public async Task<ApiResponseDto<PaginatedResult<FrequencyDto>>> GetPagedFrequenciesAsync(QueryParameters<string> query)
+            => await _client.PimsFrequency.GetPagedFrequenciesAsync(query);
+
+        public async Task<ApiResponseDto<FrequencyDto>> GetFrequencyByIdAsync(int frequencyId)
+            => await _client.PimsFrequency.GetFrequencyByIdAsync(frequencyId);
 
         public async Task<ApiResponseDto<FrequencyDto>> CreateFrequencyAsync(FrequencyDto dto)
-            => await _client.PimsFrequency.CreateAsync(dto);
+            => await _client.PimsFrequency.CreateFrequencyAsync(dto);
 
-        public async Task<ApiResponseDto<FrequencyDto>> UpdateFrequencyAsync(int frequencyid, FrequencyDto dto)
-            => await _client.PimsFrequency.UpdateAsync(frequencyid, dto);
+        public async Task<ApiResponseDto<FrequencyDto>> UpdateFrequencyAsync(int frequencyId, FrequencyDto dto)
+            => await _client.PimsFrequency.UpdateFrequencyAsync(frequencyId, dto);
 
-        public async Task<ApiResponseDto<bool>> DeleteFrequencyAsync(int frequencyid)
-            => await _client.PimsFrequency.DeleteAsync(frequencyid);
+        public async Task<ApiResponseDto<bool>> DeleteFrequencyAsync(int frequencyId)
+            => await _client.PimsFrequency.DeleteFrequencyAsync(frequencyId);
 
         // ── ReviewItem ──────────────────────────────────────────────────────────────
         // TRANSFORMENGINE: thin delegates — PimsReviewItem sub-client; integer PK (itemid); full CRUD; Other Tab lookup
 
         public async Task<ApiResponseDto<List<ReviewItemDto>>> GetAllReviewItemsAsync()
-            => await _client.PimsReviewItem.GetAllAsync();
+            => await _client.PimsReviewItem.GetAllReviewItemsAsync();
 
-        public async Task<ApiResponseDto<ReviewItemDto>> GetReviewItemByIdAsync(int itemid)
-            => await _client.PimsReviewItem.GetByIdAsync(itemid);
+        public async Task<ApiResponseDto<PaginatedResult<ReviewItemDto>>> GetPagedReviewItemsAsync(QueryParameters<string> query)
+            => await _client.PimsReviewItem.GetPagedReviewItemsAsync(query);
+
+        public async Task<ApiResponseDto<ReviewItemDto>> GetReviewItemByIdAsync(int itemId)
+            => await _client.PimsReviewItem.GetReviewItemByIdAsync(itemId);
 
         public async Task<ApiResponseDto<ReviewItemDto>> CreateReviewItemAsync(ReviewItemDto dto)
-            => await _client.PimsReviewItem.CreateAsync(dto);
+            => await _client.PimsReviewItem.CreateReviewItemAsync(dto);
 
-        public async Task<ApiResponseDto<ReviewItemDto>> UpdateReviewItemAsync(int itemid, ReviewItemDto dto)
-            => await _client.PimsReviewItem.UpdateAsync(itemid, dto);
+        public async Task<ApiResponseDto<ReviewItemDto>> UpdateReviewItemAsync(int itemId, ReviewItemDto dto)
+            => await _client.PimsReviewItem.UpdateReviewItemAsync(itemId, dto);
 
-        public async Task<ApiResponseDto<bool>> DeleteReviewItemAsync(int itemid)
-            => await _client.PimsReviewItem.DeleteAsync(itemid);
+        public async Task<ApiResponseDto<bool>> DeleteReviewItemAsync(int itemId)
+            => await _client.PimsReviewItem.DeleteReviewItemAsync(itemId);
 
         // ── RadTrackProg ────────────────────────────────────────────────────────────
         // TRANSFORMENGINE: thin delegates — PimsRadTrackProg sub-client; natural string PK (program); full CRUD; Programme Tab
 
         public async Task<ApiResponseDto<List<RadTrackProgDto>>> GetAllRadTrackProgsAsync()
-            => await _client.PimsRadTrackProg.GetAllAsync();
+            => await _client.PimsRadTrackProg.GetAllRadTrackProgsAsync();
+
+        public async Task<ApiResponseDto<PaginatedResult<RadTrackProgDto>>> GetPagedRadTrackProgsAsync(QueryParameters<string> query)
+            => await _client.PimsRadTrackProg.GetPagedRadTrackProgsAsync(query);
 
         public async Task<ApiResponseDto<RadTrackProgDto>> GetRadTrackProgByIdAsync(string program)
-            => await _client.PimsRadTrackProg.GetByIdAsync(program);
+            => await _client.PimsRadTrackProg.GetRadTrackProgByProgramAsync(program);
 
         public async Task<ApiResponseDto<RadTrackProgDto>> CreateRadTrackProgAsync(RadTrackProgDto dto)
-            => await _client.PimsRadTrackProg.CreateAsync(dto);
+            => await _client.PimsRadTrackProg.CreateRadTrackProgAsync(dto);
 
         public async Task<ApiResponseDto<RadTrackProgDto>> UpdateRadTrackProgAsync(string program, RadTrackProgDto dto)
-            => await _client.PimsRadTrackProg.UpdateAsync(program, dto);
+            => await _client.PimsRadTrackProg.UpdateRadTrackProgAsync(program, dto);
 
         public async Task<ApiResponseDto<bool>> DeleteRadTrackProgAsync(string program)
-            => await _client.PimsRadTrackProg.DeleteAsync(program);
+            => await _client.PimsRadTrackProg.DeleteRadTrackProgAsync(program);
+
+        public async Task<ApiResponseDto<List<string>>> GetRadTrackProgProgramsAsync()
+            => await _client.PimsRadTrackProg.GetAllProgramNamesAsync();
+
+        // ── Risk ──
+        // thin delegates — PimsRisk sub-client; integer PK (riskid); full CRUD; Other Tab lookup
+
+        public async Task<ApiResponseDto<List<RiskDto>>> GetAllRiskRatingsAsync()
+            => await _client.PimsRisk.GetAllRiskRatingsAsync();
+
+        public async Task<ApiResponseDto<PaginatedResult<RiskDto>>> GetPagedRiskRatingsAsync(QueryParameters<string> query)
+            => await _client.PimsRisk.GetPagedRiskRatingsAsync(query);
+
+        public async Task<ApiResponseDto<RiskDto>> GetRiskRatingByIdAsync(int riskId)
+            => await _client.PimsRisk.GetRiskRatingByIdAsync(riskId);
+
+        public async Task<ApiResponseDto<RiskDto>> CreateRiskRatingAsync(RiskDto dto)
+            => await _client.PimsRisk.CreateRiskRatingAsync(dto);
+
+        public async Task<ApiResponseDto<RiskDto>> UpdateRiskRatingAsync(int riskId, RiskDto dto)
+            => await _client.PimsRisk.UpdateRiskRatingAsync(riskId, dto);
+
+        public async Task<ApiResponseDto<bool>> DeleteRiskRatingAsync(int riskId)
+            => await _client.PimsRisk.DeleteRiskRatingAsync(riskId);
+
+        // ── PublicationType ─────────────────────────────────────────────────────────────────────────
+        // thin delegates — PimsPublicationType sub-client; string PK (type); full CRUD; Other Tab lookup
+
+        public async Task<ApiResponseDto<List<PublicationTypeDto>>> GetAllPublicationTypesAsync()
+            => await _client.PimsPublicationType.GetAllPublicationTypesAsync();
+
+        public async Task<ApiResponseDto<PaginatedResult<PublicationTypeDto>>> GetPagedPublicationTypesAsync(QueryParameters<string> query)
+            => await _client.PimsPublicationType.GetPagedPublicationTypesAsync(query);
+
+        public async Task<ApiResponseDto<PublicationTypeDto>> GetPublicationTypeByCodeAsync(string type)
+            => await _client.PimsPublicationType.GetPublicationTypeByCodeAsync(type);
+
+        public async Task<ApiResponseDto<PublicationTypeDto>> CreatePublicationTypeAsync(PublicationTypeDto dto)
+            => await _client.PimsPublicationType.CreatePublicationTypeAsync(dto);
+
+        public async Task<ApiResponseDto<PublicationTypeDto>> UpdatePublicationTypeAsync(string type, PublicationTypeDto dto)
+            => await _client.PimsPublicationType.UpdatePublicationTypeAsync(type, dto);
+
+        public async Task<ApiResponseDto<bool>> DeletePublicationTypeAsync(string type)
+            => await _client.PimsPublicationType.DeletePublicationTypeAsync(type);
     }
 }

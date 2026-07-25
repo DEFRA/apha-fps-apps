@@ -1,8 +1,5 @@
 ﻿using Apha.PIMS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Apha.PIMS.DataAccess.Data
 {
@@ -21,8 +18,7 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<ProposedProject> ProposedProjects { get; set; }
         public virtual DbSet<RadtrackProg> RadtrackProgs { get; set; }
         public virtual DbSet<ProjectDetail> ProjectDetails { get; set; }
-        public virtual DbSet<ProjectLatestDetail> ProjectLatestDetails { get; set; } // New DbSet for ProjectLatestDetail
-                                                                                     // Add these 4 new DbSets alongside the existing ones
+        public virtual DbSet<ProjectLatestDetail> ProjectLatestDetails { get; set; } 
         public virtual DbSet<ProjectRadTrackData> ProjectRadTrackData { get; set; }
         public virtual DbSet<Risk> Risks { get; set; }
         public virtual DbSet<ProjectStatus> ProjectStatuses { get; set; }
@@ -54,6 +50,7 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<ReportGroup> ReportGroups { get; set; }
         public virtual DbSet<ReportGroupLink> ReportGroupLinks { get; set; }
         public virtual DbSet<ProgramManagerLink> ProgramManagerLinks { get; set; }
+        public virtual DbSet<MABProfitCentre> MyTblProfitCentres { get; set; }
         public virtual DbSet<ProfitCentreManagerLink> ProfitCentreManagerLinks { get; set; }
         public virtual DbSet<Setting> Settings { get; set; }
         public virtual DbSet<AccessUser> AccessUsers { get; set; }
@@ -62,6 +59,7 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<AccessSystem> AccessSystems { get; set; }
         public virtual DbSet<Frequency> Frequencies { get; set; }
         public virtual DbSet<ReviewItem> ReviewItems { get; set; }
+        public virtual DbSet<PublicationType> PublicationTypes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -103,6 +101,7 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ReportGroupMap());
             modelBuilder.ApplyConfiguration(new ReportGroupLinkMap());
             modelBuilder.ApplyConfiguration(new ProgramManagerLinkMap());
+            modelBuilder.ApplyConfiguration(new MyTblProfitCentreMap());
             modelBuilder.ApplyConfiguration(new ProfitCentreManagerLinkMap());
             modelBuilder.ApplyConfiguration(new SettingMap());
             modelBuilder.ApplyConfiguration(new AccessUserMap());
@@ -111,6 +110,7 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new AccessSystemMap());
             modelBuilder.ApplyConfiguration(new FrequencyMap());
             modelBuilder.ApplyConfiguration(new ReviewItemMap());
+            modelBuilder.ApplyConfiguration(new PublicationTypeMap());
         }
     }
 }

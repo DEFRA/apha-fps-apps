@@ -1,29 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — MaintenanceServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - Expanded xUnit test class for Apha.FPSApps.Application.Services.PIMS.MaintenanceService
- *   - Added full coverage for all 14 sub-client surfaces exposed by IMaintenanceService:
- *       Report, ReportGroup, ReportGroupLink, ProjectManager, ProgramManagerLink,
- *       ProfitCentreManagerLink, Setting, AccessUser, AccessLevel, AccessUserLevel,
- *       AccessSystem (read-only), Frequency, ReviewItem, RadTrackProg
- *   - Added missing sub-client mocks: IPimsReportGroupApiClient, IPimsReportGroupLinkApiClient,
- *       IPimsProgramManagerLinkApiClient, IPimsProfitCentreManagerLinkApiClient,
- *       IPimsAccessLevelApiClient, IPimsAccessUserLevelApiClient, IPimsAccessSystemApiClient
- *   - Added missing test scenarios for Frequency (GetById, Create, Update),
- *       Setting (GetAll, GetById), AccessUser (GetById), ReviewItem, RadTrackProg
- *   - Uses NSubstitute for IPimsApiClient and all sub-client interfaces
- *
- * PRESERVED:
- *   - Single delegation pattern: each method is a single return await call
- *   - Sub-client property access pattern (_client.PimsXxx)
- *   - All previously passing test method bodies
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
@@ -109,8 +83,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAllReportsAsync_DelegatesToPimsReportClient_ReturnsResult()
         {
             // Arrange
-            var expected = SuccessDto(new List<ReportDto> { new() { Reportname = "R1" } });
-            _pimsReportApiClient.GetAllAsync().Returns(expected);
+            var expected = SuccessDto(new List<ReportDto> { new() { ReportName = "R1" } });
+            _pimsReportApiClient.GetAllReportsAsync().Returns(expected);
 
             // Act
             var result = await _service.GetAllReportsAsync();
@@ -118,14 +92,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _pimsReportApiClient.Received(1).GetAllAsync();
+            await _pimsReportApiClient.Received(1).GetAllReportsAsync();
         }
 
         [Fact]
         public async Task GetAllReportsAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsReportApiClient.GetAllAsync().Returns(FailureDto<List<ReportDto>>());
+            _pimsReportApiClient.GetAllReportsAsync().Returns(FailureDto<List<ReportDto>>());
 
             // Act
             var result = await _service.GetAllReportsAsync();
@@ -138,9 +112,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetReportByIdAsync_DelegatesToPimsReportClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new ReportDto { Id = 5, Reportname = "R5" };
+            var dto      = new ReportDto { Id = 5, ReportName = "R5" };
             var expected = SuccessDto(dto);
-            _pimsReportApiClient.GetByIdAsync(5).Returns(expected);
+            _pimsReportApiClient.GetReportByIdAsync(5).Returns(expected);
 
             // Act
             var result = await _service.GetReportByIdAsync(5);
@@ -148,14 +122,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Equal(5, result.Data!.Id);
-            await _pimsReportApiClient.Received(1).GetByIdAsync(5);
+            await _pimsReportApiClient.Received(1).GetReportByIdAsync(5);
         }
 
         [Fact]
         public async Task GetReportByIdAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsReportApiClient.GetByIdAsync(Arg.Any<int>()).Returns(FailureDto<ReportDto>());
+            _pimsReportApiClient.GetReportByIdAsync(Arg.Any<int>()).Returns(FailureDto<ReportDto>());
 
             // Act
             var result = await _service.GetReportByIdAsync(99);
@@ -168,24 +142,24 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task CreateReportAsync_DelegatesToPimsReportClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new ReportDto { Reportname = "New", Type = "R" };
+            var dto      = new ReportDto { ReportName = "New", Type = "R" };
             var expected = SuccessDto(dto);
-            _pimsReportApiClient.CreateAsync(dto).Returns(expected);
+            _pimsReportApiClient.CreateReportAsync(dto).Returns(expected);
 
             // Act
             var result = await _service.CreateReportAsync(dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsReportApiClient.Received(1).CreateAsync(dto);
+            await _pimsReportApiClient.Received(1).CreateReportAsync(dto);
         }
 
         [Fact]
         public async Task CreateReportAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var dto = new ReportDto { Reportname = "Bad" };
-            _pimsReportApiClient.CreateAsync(dto).Returns(FailureDto<ReportDto>());
+            var dto = new ReportDto { ReportName = "Bad" };
+            _pimsReportApiClient.CreateReportAsync(dto).Returns(FailureDto<ReportDto>());
 
             // Act
             var result = await _service.CreateReportAsync(dto);
@@ -198,16 +172,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task UpdateReportAsync_DelegatesToPimsReportClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new ReportDto { Id = 3, Reportname = "Updated", Type = "R" };
+            var dto      = new ReportDto { Id = 3, ReportName = "Updated", Type = "R" };
             var expected = SuccessDto(dto);
-            _pimsReportApiClient.UpdateAsync(3, dto).Returns(expected);
+            _pimsReportApiClient.UpdateReportAsync(3, dto).Returns(expected);
 
             // Act
             var result = await _service.UpdateReportAsync(3, dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsReportApiClient.Received(1).UpdateAsync(3, dto);
+            await _pimsReportApiClient.Received(1).UpdateReportAsync(3, dto);
         }
 
         [Fact]
@@ -215,21 +189,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         {
             // Arrange
             var expected = SuccessDto(true);
-            _pimsReportApiClient.DeleteAsync(7).Returns(expected);
+            _pimsReportApiClient.DeleteReportAsync(7).Returns(expected);
 
             // Act
             var result = await _service.DeleteReportAsync(7);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsReportApiClient.Received(1).DeleteAsync(7);
+            await _pimsReportApiClient.Received(1).DeleteReportAsync(7);
         }
 
         [Fact]
         public async Task DeleteReportAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsReportApiClient.DeleteAsync(Arg.Any<int>()).Returns(FailureDto<bool>());
+            _pimsReportApiClient.DeleteReportAsync(Arg.Any<int>()).Returns(FailureDto<bool>());
 
             // Act
             var result = await _service.DeleteReportAsync(99);
@@ -248,9 +222,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAllReportGroupsAsync_DelegatesToPimsReportGroupClient_ReturnsResult()
         {
             // Arrange
-            var dtos     = new List<ReportGroupDto> { new() { Groupid = 1, Description = "Group A" } };
+            var dtos     = new List<ReportGroupDto> { new() { GroupId = 1, Description = "Group A" } };
             var expected = SuccessDto(dtos);
-            _pimsReportGroupApiClient.GetAllAsync().Returns(expected);
+            _pimsReportGroupApiClient.GetAllReportGroupsAsync().Returns(expected);
 
             // Act
             var result = await _service.GetAllReportGroupsAsync();
@@ -258,14 +232,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _pimsReportGroupApiClient.Received(1).GetAllAsync();
+            await _pimsReportGroupApiClient.Received(1).GetAllReportGroupsAsync();
         }
 
         [Fact]
         public async Task GetAllReportGroupsAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsReportGroupApiClient.GetAllAsync().Returns(FailureDto<List<ReportGroupDto>>());
+            _pimsReportGroupApiClient.GetAllReportGroupsAsync().Returns(FailureDto<List<ReportGroupDto>>());
 
             // Act
             var result = await _service.GetAllReportGroupsAsync();
@@ -278,24 +252,24 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetReportGroupByIdAsync_DelegatesToPimsReportGroupClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new ReportGroupDto { Groupid = 2, Description = "Group B" };
+            var dto      = new ReportGroupDto { GroupId = 2, Description = "Group B" };
             var expected = SuccessDto(dto);
-            _pimsReportGroupApiClient.GetByIdAsync(2).Returns(expected);
+            _pimsReportGroupApiClient.GetReportGroupByIdAsync(2).Returns(expected);
 
             // Act
             var result = await _service.GetReportGroupByIdAsync(2);
 
             // Assert
             Assert.True(result.Success);
-            Assert.Equal(2, result.Data!.Groupid);
-            await _pimsReportGroupApiClient.Received(1).GetByIdAsync(2);
+            Assert.Equal(2, result.Data!.GroupId);
+            await _pimsReportGroupApiClient.Received(1).GetReportGroupByIdAsync(2);
         }
 
         [Fact]
         public async Task GetReportGroupByIdAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsReportGroupApiClient.GetByIdAsync(Arg.Any<int>()).Returns(FailureDto<ReportGroupDto>());
+            _pimsReportGroupApiClient.GetReportGroupByIdAsync(Arg.Any<int>()).Returns(FailureDto<ReportGroupDto>());
 
             // Act
             var result = await _service.GetReportGroupByIdAsync(99);
@@ -310,30 +284,30 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new ReportGroupDto { Description = "New Group" };
             var expected = SuccessDto(dto);
-            _pimsReportGroupApiClient.CreateAsync(dto).Returns(expected);
+            _pimsReportGroupApiClient.CreateReportGroupAsync(dto).Returns(expected);
 
             // Act
             var result = await _service.CreateReportGroupAsync(dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsReportGroupApiClient.Received(1).CreateAsync(dto);
+            await _pimsReportGroupApiClient.Received(1).CreateReportGroupAsync(dto);
         }
 
         [Fact]
         public async Task UpdateReportGroupAsync_DelegatesToPimsReportGroupClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new ReportGroupDto { Groupid = 3, Description = "Updated Group" };
+            var dto      = new ReportGroupDto { GroupId = 3, Description = "Updated Group" };
             var expected = SuccessDto(dto);
-            _pimsReportGroupApiClient.UpdateAsync(3, dto).Returns(expected);
+            _pimsReportGroupApiClient.UpdateReportGroupAsync(3, dto).Returns(expected);
 
             // Act
             var result = await _service.UpdateReportGroupAsync(3, dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsReportGroupApiClient.Received(1).UpdateAsync(3, dto);
+            await _pimsReportGroupApiClient.Received(1).UpdateReportGroupAsync(3, dto);
         }
 
         [Fact]
@@ -341,21 +315,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         {
             // Arrange
             var expected = SuccessDto(true);
-            _pimsReportGroupApiClient.DeleteAsync(4).Returns(expected);
+            _pimsReportGroupApiClient.DeleteReportGroupAsync(4).Returns(expected);
 
             // Act
             var result = await _service.DeleteReportGroupAsync(4);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsReportGroupApiClient.Received(1).DeleteAsync(4);
+            await _pimsReportGroupApiClient.Received(1).DeleteReportGroupAsync(4);
         }
 
         [Fact]
         public async Task DeleteReportGroupAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsReportGroupApiClient.DeleteAsync(Arg.Any<int>()).Returns(FailureDto<bool>());
+            _pimsReportGroupApiClient.DeleteReportGroupAsync(Arg.Any<int>()).Returns(FailureDto<bool>());
 
             // Act
             var result = await _service.DeleteReportGroupAsync(99);
@@ -374,9 +348,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAllReportGroupLinksAsync_DelegatesToPimsReportGroupLinkClient_ReturnsResult()
         {
             // Arrange
-            var dtos     = new List<ReportGroupLinkDto> { new() { Reportid = 1, Groupid = 2 } };
+            var dtos     = new List<ReportGroupLinkDto> { new() { ReportId = 1, GroupId = 2 } };
             var expected = SuccessDto(dtos);
-            _pimsReportGroupLinkApiClient.GetAllAsync().Returns(expected);
+            _pimsReportGroupLinkApiClient.GetAllReportGroupLinksAsync().Returns(expected);
 
             // Act
             var result = await _service.GetAllReportGroupLinksAsync();
@@ -384,16 +358,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _pimsReportGroupLinkApiClient.Received(1).GetAllAsync();
+            await _pimsReportGroupLinkApiClient.Received(1).GetAllReportGroupLinksAsync();
         }
 
         [Fact]
         public async Task GetReportGroupLinksByReportIdAsync_DelegatesToPimsReportGroupLinkClient_ReturnsResult()
         {
             // Arrange
-            var dtos     = new List<ReportGroupLinkDto> { new() { Reportid = 5, Groupid = 1 } };
+            var dtos     = new List<ReportGroupLinkDto> { new() { ReportId = 5, GroupId = 1 } };
             var expected = SuccessDto(dtos);
-            _pimsReportGroupLinkApiClient.GetByReportIdAsync(5).Returns(expected);
+            _pimsReportGroupLinkApiClient.GetReportGroupLinksByReportIdAsync(5).Returns(expected);
 
             // Act
             var result = await _service.GetReportGroupLinksByReportIdAsync(5);
@@ -401,14 +375,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _pimsReportGroupLinkApiClient.Received(1).GetByReportIdAsync(5);
+            await _pimsReportGroupLinkApiClient.Received(1).GetReportGroupLinksByReportIdAsync(5);
         }
 
         [Fact]
         public async Task GetReportGroupLinksByReportIdAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsReportGroupLinkApiClient.GetByReportIdAsync(Arg.Any<int>()).Returns(FailureDto<List<ReportGroupLinkDto>>());
+            _pimsReportGroupLinkApiClient.GetReportGroupLinksByReportIdAsync(Arg.Any<int>()).Returns(FailureDto<List<ReportGroupLinkDto>>());
 
             // Act
             var result = await _service.GetReportGroupLinksByReportIdAsync(99);
@@ -421,34 +395,34 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetReportGroupLinkByIdAsync_DelegatesToPimsReportGroupLinkClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new ReportGroupLinkDto { Reportid = 3, Groupid = 7 };
+            var dto      = new ReportGroupLinkDto { ReportId = 3, GroupId = 7 };
             var expected = SuccessDto(dto);
-            _pimsReportGroupLinkApiClient.GetByIdAsync(3, 7).Returns(expected);
+            _pimsReportGroupLinkApiClient.GetReportGroupLinkByIdAsync(3, 7).Returns(expected);
 
             // Act
             var result = await _service.GetReportGroupLinkByIdAsync(3, 7);
 
             // Assert
             Assert.True(result.Success);
-            Assert.Equal(3, result.Data!.Reportid);
-            Assert.Equal(7, result.Data.Groupid);
-            await _pimsReportGroupLinkApiClient.Received(1).GetByIdAsync(3, 7);
+            Assert.Equal(3, result.Data!.ReportId);
+            Assert.Equal(7, result.Data.GroupId);
+            await _pimsReportGroupLinkApiClient.Received(1).GetReportGroupLinkByIdAsync(3, 7);
         }
 
         [Fact]
         public async Task CreateReportGroupLinkAsync_DelegatesToPimsReportGroupLinkClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new ReportGroupLinkDto { Reportid = 1, Groupid = 2 };
+            var dto      = new ReportGroupLinkDto { ReportId = 1, GroupId = 2 };
             var expected = SuccessDto(dto);
-            _pimsReportGroupLinkApiClient.CreateAsync(dto).Returns(expected);
+            _pimsReportGroupLinkApiClient.CreateReportGroupLinkAsync(dto).Returns(expected);
 
             // Act
             var result = await _service.CreateReportGroupLinkAsync(dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsReportGroupLinkApiClient.Received(1).CreateAsync(dto);
+            await _pimsReportGroupLinkApiClient.Received(1).CreateReportGroupLinkAsync(dto);
         }
 
         [Fact]
@@ -456,21 +430,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         {
             // Arrange
             var expected = SuccessDto(true);
-            _pimsReportGroupLinkApiClient.DeleteAsync(2, 5).Returns(expected);
+            _pimsReportGroupLinkApiClient.DeleteReportGroupLinkAsync(2, 5).Returns(expected);
 
             // Act
             var result = await _service.DeleteReportGroupLinkAsync(2, 5);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsReportGroupLinkApiClient.Received(1).DeleteAsync(2, 5);
+            await _pimsReportGroupLinkApiClient.Received(1).DeleteReportGroupLinkAsync(2, 5);
         }
 
         [Fact]
         public async Task DeleteReportGroupLinkAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsReportGroupLinkApiClient.DeleteAsync(Arg.Any<int>(), Arg.Any<int>()).Returns(FailureDto<bool>());
+            _pimsReportGroupLinkApiClient.DeleteReportGroupLinkAsync(Arg.Any<int>(), Arg.Any<int>()).Returns(FailureDto<bool>());
 
             // Act
             var result = await _service.DeleteReportGroupLinkAsync(99, 99);
@@ -491,7 +465,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dtos     = new List<ProjectManagerDto> { new() { Projectmanager = "Smith" } };
             var expected = SuccessDto(dtos);
-            _pimsProjectManagerApiClient.GetAllAsync().Returns(expected);
+            _pimsProjectManagerApiClient.GetAllProjectManagersAsync().Returns(expected);
 
             // Act
             var result = await _service.GetAllProjectManagersAsync();
@@ -499,7 +473,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _pimsProjectManagerApiClient.Received(1).GetAllAsync();
+            await _pimsProjectManagerApiClient.Received(1).GetAllProjectManagersAsync();
         }
 
         [Fact]
@@ -508,21 +482,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new ProjectManagerDto { Projectmanager = "Smith, J." };
             var expected = SuccessDto(dto);
-            _pimsProjectManagerApiClient.GetByIdAsync("Smith, J.").Returns(expected);
+            _pimsProjectManagerApiClient.GetProjectManagerByNameAsync("Smith, J.").Returns(expected);
 
             // Act
             var result = await _service.GetProjectManagerByIdAsync("Smith, J.");
 
             // Assert
             Assert.True(result.Success);
-            await _pimsProjectManagerApiClient.Received(1).GetByIdAsync("Smith, J.");
+            await _pimsProjectManagerApiClient.Received(1).GetProjectManagerByNameAsync("Smith, J.");
         }
 
         [Fact]
         public async Task GetProjectManagerByIdAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsProjectManagerApiClient.GetByIdAsync(Arg.Any<string>()).Returns(FailureDto<ProjectManagerDto>());
+            _pimsProjectManagerApiClient.GetProjectManagerByNameAsync(Arg.Any<string>()).Returns(FailureDto<ProjectManagerDto>());
 
             // Act
             var result = await _service.GetProjectManagerByIdAsync("Unknown");
@@ -537,14 +511,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new ProjectManagerDto { Projectmanager = "New Manager" };
             var expected = SuccessDto(dto);
-            _pimsProjectManagerApiClient.CreateAsync(dto).Returns(expected);
+            _pimsProjectManagerApiClient.CreateProjectManagerAsync(dto).Returns(expected);
 
             // Act
             var result = await _service.CreateProjectManagerAsync(dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsProjectManagerApiClient.Received(1).CreateAsync(dto);
+            await _pimsProjectManagerApiClient.Received(1).CreateProjectManagerAsync(dto);
         }
 
         [Fact]
@@ -553,14 +527,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new ProjectManagerDto { Projectmanager = "Smith, J." };
             var expected = SuccessDto(dto);
-            _pimsProjectManagerApiClient.UpdateAsync("Smith, J.", dto).Returns(expected);
+            _pimsProjectManagerApiClient.UpdateProjectManagerAsync("Smith, J.", dto).Returns(expected);
 
             // Act
             var result = await _service.UpdateProjectManagerAsync("Smith, J.", dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsProjectManagerApiClient.Received(1).UpdateAsync("Smith, J.", dto);
+            await _pimsProjectManagerApiClient.Received(1).UpdateProjectManagerAsync("Smith, J.", dto);
         }
 
         [Fact]
@@ -568,21 +542,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         {
             // Arrange
             var expected = SuccessDto(true);
-            _pimsProjectManagerApiClient.DeleteAsync("Smith, J.").Returns(expected);
+            _pimsProjectManagerApiClient.DeleteProjectManagerAsync("Smith, J.").Returns(expected);
 
             // Act
             var result = await _service.DeleteProjectManagerAsync("Smith, J.");
 
             // Assert
             Assert.True(result.Success);
-            await _pimsProjectManagerApiClient.Received(1).DeleteAsync("Smith, J.");
+            await _pimsProjectManagerApiClient.Received(1).DeleteProjectManagerAsync("Smith, J.");
         }
 
         [Fact]
         public async Task DeleteProjectManagerAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsProjectManagerApiClient.DeleteAsync(Arg.Any<string>()).Returns(FailureDto<bool>());
+            _pimsProjectManagerApiClient.DeleteProjectManagerAsync(Arg.Any<string>()).Returns(FailureDto<bool>());
 
             // Act
             var result = await _service.DeleteProjectManagerAsync("Unknown");
@@ -603,7 +577,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dtos     = new List<ProgramManagerLinkDto> { new() { Program = "RAD", Manager = "Jones" } };
             var expected = SuccessDto(dtos);
-            _pimsProgramManagerLinkApiClient.GetAllAsync().Returns(expected);
+            _pimsProgramManagerLinkApiClient.GetAllProgramManagerLinksAsync().Returns(expected);
 
             // Act
             var result = await _service.GetAllProgramManagerLinksAsync();
@@ -611,7 +585,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _pimsProgramManagerLinkApiClient.Received(1).GetAllAsync();
+            await _pimsProgramManagerLinkApiClient.Received(1).GetAllProgramManagerLinksAsync();
         }
 
         [Fact]
@@ -649,7 +623,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new ProgramManagerLinkDto { Program = "RAD", Manager = "Jones" };
             var expected = SuccessDto(dto);
-            _pimsProgramManagerLinkApiClient.GetByIdAsync("RAD", "Jones").Returns(expected);
+            _pimsProgramManagerLinkApiClient.GetProgramManagerLinkByIdAsync("RAD", "Jones").Returns(expected);
 
             // Act
             var result = await _service.GetProgramManagerLinkByIdAsync("RAD", "Jones");
@@ -658,7 +632,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             Assert.True(result.Success);
             Assert.Equal("RAD",   result.Data!.Program);
             Assert.Equal("Jones", result.Data.Manager);
-            await _pimsProgramManagerLinkApiClient.Received(1).GetByIdAsync("RAD", "Jones");
+            await _pimsProgramManagerLinkApiClient.Received(1).GetProgramManagerLinkByIdAsync("RAD", "Jones");
         }
 
         [Fact]
@@ -667,14 +641,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new ProgramManagerLinkDto { Program = "RAD", Manager = "Smith" };
             var expected = SuccessDto(dto);
-            _pimsProgramManagerLinkApiClient.CreateAsync(dto).Returns(expected);
+            _pimsProgramManagerLinkApiClient.CreateProgramManagerLinkAsync(dto).Returns(expected);
 
             // Act
             var result = await _service.CreateProgramManagerLinkAsync(dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsProgramManagerLinkApiClient.Received(1).CreateAsync(dto);
+            await _pimsProgramManagerLinkApiClient.Received(1).CreateProgramManagerLinkAsync(dto);
         }
 
         [Fact]
@@ -682,21 +656,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         {
             // Arrange
             var expected = SuccessDto(true);
-            _pimsProgramManagerLinkApiClient.DeleteAsync("RAD", "Jones").Returns(expected);
+            _pimsProgramManagerLinkApiClient.DeleteProgramManagerLinkAsync("RAD", "Jones").Returns(expected);
 
             // Act
             var result = await _service.DeleteProgramManagerLinkAsync("RAD", "Jones");
 
             // Assert
             Assert.True(result.Success);
-            await _pimsProgramManagerLinkApiClient.Received(1).DeleteAsync("RAD", "Jones");
+            await _pimsProgramManagerLinkApiClient.Received(1).DeleteProgramManagerLinkAsync("RAD", "Jones");
         }
 
         [Fact]
         public async Task DeleteProgramManagerLinkAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsProgramManagerLinkApiClient.DeleteAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(FailureDto<bool>());
+            _pimsProgramManagerLinkApiClient.DeleteProgramManagerLinkAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(FailureDto<bool>());
 
             // Act
             var result = await _service.DeleteProgramManagerLinkAsync("X", "Y");
@@ -715,9 +689,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAllProfitCentreManagerLinksAsync_DelegatesToPimsProfitCentreManagerLinkClient_ReturnsResult()
         {
             // Arrange
-            var dtos     = new List<ProfitCentreManagerLinkDto> { new() { Profitcentre = "PC01", Manager = "Jones" } };
+            var dtos     = new List<ProfitCentreManagerLinkDto> { new() { ProfitCentre = "PC01", Manager = "Jones" } };
             var expected = SuccessDto(dtos);
-            _pimsProfitCentreManagerLinkApiClient.GetAllAsync().Returns(expected);
+            _pimsProfitCentreManagerLinkApiClient.GetAllProfitCentreManagerLinksAsync().Returns(expected);
 
             // Act
             var result = await _service.GetAllProfitCentreManagerLinksAsync();
@@ -725,14 +699,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _pimsProfitCentreManagerLinkApiClient.Received(1).GetAllAsync();
+            await _pimsProfitCentreManagerLinkApiClient.Received(1).GetAllProfitCentreManagerLinksAsync();
         }
 
         [Fact]
         public async Task GetProfitCentreManagerLinksByProfitCentreAsync_DelegatesToPimsProfitCentreManagerLinkClient_ReturnsResult()
         {
             // Arrange
-            var dtos     = new List<ProfitCentreManagerLinkDto> { new() { Profitcentre = "PC01", Manager = "Jones" } };
+            var dtos     = new List<ProfitCentreManagerLinkDto> { new() { ProfitCentre = "PC01", Manager = "Jones" } };
             var expected = SuccessDto(dtos);
             _pimsProfitCentreManagerLinkApiClient.GetByProfitCentreAsync("PC01").Returns(expected);
 
@@ -761,34 +735,34 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetProfitCentreManagerLinkByIdAsync_DelegatesToPimsProfitCentreManagerLinkClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new ProfitCentreManagerLinkDto { Profitcentre = "PC01", Manager = "Jones" };
+            var dto      = new ProfitCentreManagerLinkDto { ProfitCentre = "PC01", Manager = "Jones" };
             var expected = SuccessDto(dto);
-            _pimsProfitCentreManagerLinkApiClient.GetByIdAsync("PC01", "Jones").Returns(expected);
+            _pimsProfitCentreManagerLinkApiClient.GetProfitCentreManagerLinkByIdAsync("PC01", "Jones").Returns(expected);
 
             // Act
             var result = await _service.GetProfitCentreManagerLinkByIdAsync("PC01", "Jones");
 
             // Assert
             Assert.True(result.Success);
-            Assert.Equal("PC01",  result.Data!.Profitcentre);
+            Assert.Equal("PC01",  result.Data!.ProfitCentre);
             Assert.Equal("Jones", result.Data.Manager);
-            await _pimsProfitCentreManagerLinkApiClient.Received(1).GetByIdAsync("PC01", "Jones");
+            await _pimsProfitCentreManagerLinkApiClient.Received(1).GetProfitCentreManagerLinkByIdAsync("PC01", "Jones");
         }
 
         [Fact]
         public async Task CreateProfitCentreManagerLinkAsync_DelegatesToPimsProfitCentreManagerLinkClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new ProfitCentreManagerLinkDto { Profitcentre = "PC02", Manager = "Smith" };
+            var dto      = new ProfitCentreManagerLinkDto { ProfitCentre = "PC02", Manager = "Smith" };
             var expected = SuccessDto(dto);
-            _pimsProfitCentreManagerLinkApiClient.CreateAsync(dto).Returns(expected);
+            _pimsProfitCentreManagerLinkApiClient.CreateProfitCentreManagerLinkAsync(dto).Returns(expected);
 
             // Act
             var result = await _service.CreateProfitCentreManagerLinkAsync(dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsProfitCentreManagerLinkApiClient.Received(1).CreateAsync(dto);
+            await _pimsProfitCentreManagerLinkApiClient.Received(1).CreateProfitCentreManagerLinkAsync(dto);
         }
 
         [Fact]
@@ -796,21 +770,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         {
             // Arrange
             var expected = SuccessDto(true);
-            _pimsProfitCentreManagerLinkApiClient.DeleteAsync("PC01", "Jones").Returns(expected);
+            _pimsProfitCentreManagerLinkApiClient.DeleteProfitCentreManagerLinkAsync("PC01", "Jones").Returns(expected);
 
             // Act
             var result = await _service.DeleteProfitCentreManagerLinkAsync("PC01", "Jones");
 
             // Assert
             Assert.True(result.Success);
-            await _pimsProfitCentreManagerLinkApiClient.Received(1).DeleteAsync("PC01", "Jones");
+            await _pimsProfitCentreManagerLinkApiClient.Received(1).DeleteProfitCentreManagerLinkAsync("PC01", "Jones");
         }
 
         [Fact]
         public async Task DeleteProfitCentreManagerLinkAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsProfitCentreManagerLinkApiClient.DeleteAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(FailureDto<bool>());
+            _pimsProfitCentreManagerLinkApiClient.DeleteProfitCentreManagerLinkAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(FailureDto<bool>());
 
             // Act
             var result = await _service.DeleteProfitCentreManagerLinkAsync("X", "Y");
@@ -831,7 +805,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dtos     = new List<SettingDto> { new() { Id = "WorkingHours" }, new() { Id = "TestSetting" } };
             var expected = SuccessDto(dtos);
-            _pimsSettingApiClient.GetAllAsync().Returns(expected);
+            _pimsSettingApiClient.GetAllSettingsAsync().Returns(expected);
 
             // Act
             var result = await _service.GetAllSettingsAsync();
@@ -839,14 +813,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Equal(2, result.Data!.Count);
-            await _pimsSettingApiClient.Received(1).GetAllAsync();
+            await _pimsSettingApiClient.Received(1).GetAllSettingsAsync();
         }
 
         [Fact]
         public async Task GetAllSettingsAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsSettingApiClient.GetAllAsync().Returns(FailureDto<List<SettingDto>>());
+            _pimsSettingApiClient.GetAllSettingsAsync().Returns(FailureDto<List<SettingDto>>());
 
             // Act
             var result = await _service.GetAllSettingsAsync();
@@ -861,21 +835,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dtos     = new List<SettingDto> { new() { Id = "WorkingHours" } };
             var expected = SuccessDto(dtos);
-            _pimsSettingApiClient.GetAllUserUpdateableAsync().Returns(expected);
+            _pimsSettingApiClient.GetAllUserUpdateableSettingsAsync().Returns(expected);
 
             // Act
             var result = await _service.GetAllUserUpdateableSettingsAsync();
 
             // Assert
             Assert.True(result.Success);
-            await _pimsSettingApiClient.Received(1).GetAllUserUpdateableAsync();
+            await _pimsSettingApiClient.Received(1).GetAllUserUpdateableSettingsAsync();
         }
 
         [Fact]
         public async Task GetAllUserUpdateableSettingsAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsSettingApiClient.GetAllUserUpdateableAsync().Returns(FailureDto<List<SettingDto>>());
+            _pimsSettingApiClient.GetAllUserUpdateableSettingsAsync().Returns(FailureDto<List<SettingDto>>());
 
             // Act
             var result = await _service.GetAllUserUpdateableSettingsAsync();
@@ -890,7 +864,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new SettingDto { Id = "WorkingHours", SettingValue = "7.4" };
             var expected = SuccessDto(dto);
-            _pimsSettingApiClient.GetByIdAsync("WorkingHours").Returns(expected);
+            _pimsSettingApiClient.GetSettingByIdAsync("WorkingHours").Returns(expected);
 
             // Act
             var result = await _service.GetSettingByIdAsync("WorkingHours");
@@ -898,14 +872,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Equal("WorkingHours", result.Data!.Id);
-            await _pimsSettingApiClient.Received(1).GetByIdAsync("WorkingHours");
+            await _pimsSettingApiClient.Received(1).GetSettingByIdAsync("WorkingHours");
         }
 
         [Fact]
         public async Task GetSettingByIdAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsSettingApiClient.GetByIdAsync(Arg.Any<string>()).Returns(FailureDto<SettingDto>());
+            _pimsSettingApiClient.GetSettingByIdAsync(Arg.Any<string>()).Returns(FailureDto<SettingDto>());
 
             // Act
             var result = await _service.GetSettingByIdAsync("Unknown");
@@ -920,14 +894,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new SettingDto { Id = "WorkingHours" };
             var expected = SuccessDto(dto);
-            _pimsSettingApiClient.UpdateAsync("WorkingHours", dto).Returns(expected);
+            _pimsSettingApiClient.UpdateSettingAsync("WorkingHours", dto).Returns(expected);
 
             // Act
             var result = await _service.UpdateSettingAsync("WorkingHours", dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsSettingApiClient.Received(1).UpdateAsync("WorkingHours", dto);
+            await _pimsSettingApiClient.Received(1).UpdateSettingAsync("WorkingHours", dto);
         }
 
         [Fact]
@@ -935,7 +909,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         {
             // Arrange
             var dto = new SettingDto { Id = "WorkingHours" };
-            _pimsSettingApiClient.UpdateAsync(Arg.Any<string>(), Arg.Any<SettingDto>()).Returns(FailureDto<SettingDto>());
+            _pimsSettingApiClient.UpdateSettingAsync(Arg.Any<string>(), Arg.Any<SettingDto>()).Returns(FailureDto<SettingDto>());
 
             // Act
             var result = await _service.UpdateSettingAsync("WorkingHours", dto);
@@ -954,7 +928,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAllAccessUsersAsync_DelegatesToPimsAccessUserClient_ReturnsResult()
         {
             // Arrange
-            var dtos     = new List<AccessUserDto> { new() { Systemid = 1, Ntlogin = "dom\\u1" } };
+            var dtos     = new List<AccessUserDto> { new() { SystemId = 1, NtLogin = "dom\\u1" } };
             var expected = SuccessDto(dtos);
             _pimsAccessUserApiClient.GetAllAsync().Returns(expected);
 
@@ -970,7 +944,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAccessUsersBySystemIdAsync_DelegatesToPimsAccessUserClient_ReturnsResult()
         {
             // Arrange
-            var dtos     = new List<AccessUserDto> { new() { Systemid = 2, Ntlogin = "dom\\u1" } };
+            var dtos     = new List<AccessUserDto> { new() { SystemId = 2, NtLogin = "dom\\u1" } };
             var expected = SuccessDto(dtos);
             _pimsAccessUserApiClient.GetBySystemIdAsync(2).Returns(expected);
 
@@ -999,7 +973,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAccessUserByIdAsync_DelegatesToPimsAccessUserClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new AccessUserDto { Systemid = 1, Ntlogin = "dom\\user" };
+            var dto      = new AccessUserDto { SystemId = 1, NtLogin = "dom\\user" };
             var expected = SuccessDto(dto);
             _pimsAccessUserApiClient.GetByIdAsync(1, "dom\\user").Returns(expected);
 
@@ -1008,8 +982,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
 
             // Assert
             Assert.True(result.Success);
-            Assert.Equal(1,            result.Data!.Systemid);
-            Assert.Equal("dom\\user",  result.Data.Ntlogin);
+            Assert.Equal(1,            result.Data!.SystemId);
+            Assert.Equal("dom\\user",  result.Data.NtLogin);
             await _pimsAccessUserApiClient.Received(1).GetByIdAsync(1, "dom\\user");
         }
 
@@ -1030,7 +1004,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task CreateAccessUserAsync_DelegatesToPimsAccessUserClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new AccessUserDto { Systemid = 1, Ntlogin = "dom\\newuser" };
+            var dto      = new AccessUserDto { SystemId = 1, NtLogin = "dom\\newuser" };
             var expected = SuccessDto(dto);
             _pimsAccessUserApiClient.CreateAsync(dto).Returns(expected);
 
@@ -1046,7 +1020,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task UpdateAccessUserAsync_DelegatesToPimsAccessUserClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new AccessUserDto { Systemid = 1, Ntlogin = "dom\\user" };
+            var dto      = new AccessUserDto { SystemId = 1, NtLogin = "dom\\user" };
             var expected = SuccessDto(dto);
             _pimsAccessUserApiClient.UpdateAsync(1, "dom\\user", dto).Returns(expected);
 
@@ -1088,15 +1062,15 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
 
         #endregion
 
-        // ── AccessLevel surface ───────────────────────────────────────────────────
+        // ── AccessLevelName surface ───────────────────────────────────────────────────
 
-        #region AccessLevel
+        #region AccessLevelName
 
         [Fact]
         public async Task GetAllAccessLevelsAsync_DelegatesToPimsAccessLevelClient_ReturnsResult()
         {
             // Arrange
-            var dtos     = new List<AccessLevelDto> { new() { Systemid = 1, Accesslevelid = 10, Accesslevel = "Admin" } };
+            var dtos     = new List<AccessLevelDto> { new() { SystemId = 1, AccessLevelId = 10, AccessLevelName = "Admin" } };
             var expected = SuccessDto(dtos);
             _pimsAccessLevelApiClient.GetAllAsync().Returns(expected);
 
@@ -1126,7 +1100,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAccessLevelsBySystemIdAsync_DelegatesToPimsAccessLevelClient_ReturnsResult()
         {
             // Arrange
-            var dtos     = new List<AccessLevelDto> { new() { Systemid = 1, Accesslevelid = 10 } };
+            var dtos     = new List<AccessLevelDto> { new() { SystemId = 1, AccessLevelId = 10 } };
             var expected = SuccessDto(dtos);
             _pimsAccessLevelApiClient.GetBySystemIdAsync(1).Returns(expected);
 
@@ -1142,7 +1116,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAccessLevelByIdAsync_DelegatesToPimsAccessLevelClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new AccessLevelDto { Systemid = 1, Accesslevelid = 10, Accesslevel = "Admin" };
+            var dto      = new AccessLevelDto { SystemId = 1, AccessLevelId = 10, AccessLevelName = "Admin" };
             var expected = SuccessDto(dto);
             _pimsAccessLevelApiClient.GetByIdAsync(1, 10).Returns(expected);
 
@@ -1151,7 +1125,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
 
             // Assert
             Assert.True(result.Success);
-            Assert.Equal(10, result.Data!.Accesslevelid);
+            Assert.Equal(10, result.Data!.AccessLevelId);
             await _pimsAccessLevelApiClient.Received(1).GetByIdAsync(1, 10);
         }
 
@@ -1172,7 +1146,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task CreateAccessLevelAsync_DelegatesToPimsAccessLevelClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new AccessLevelDto { Systemid = 1, Accesslevelid = 20, Accesslevel = "ReadOnly" };
+            var dto      = new AccessLevelDto { SystemId = 1, AccessLevelId = 20, AccessLevelName = "ReadOnly" };
             var expected = SuccessDto(dto);
             _pimsAccessLevelApiClient.CreateAsync(dto).Returns(expected);
 
@@ -1188,7 +1162,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task UpdateAccessLevelAsync_DelegatesToPimsAccessLevelClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new AccessLevelDto { Systemid = 1, Accesslevelid = 10, Accesslevel = "SuperAdmin" };
+            var dto      = new AccessLevelDto { SystemId = 1, AccessLevelId = 10, AccessLevelName = "SuperAdmin" };
             var expected = SuccessDto(dto);
             _pimsAccessLevelApiClient.UpdateAsync(1, 10, dto).Returns(expected);
 
@@ -1238,24 +1212,24 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAllAccessUserLevelsAsync_DelegatesToPimsAccessUserLevelClient_ReturnsResult()
         {
             // Arrange
-            var dtos     = new List<AccessUserLevelDto> { new() { Systemid = 1, Ntlogin = "dom\\u1", Accesslevelid = 10 } };
+            var dtos     = new List<AccessUserLevelDto> { new() { SystemId = 1, NtLogin = "dom\\u1", AccessLevelId = 10 } };
             var expected = SuccessDto(dtos);
-            _pimsAccessUserLevelApiClient.GetAllAsync().Returns(expected);
+            _pimsAccessUserLevelApiClient.GetBySystemIdAsync(Arg.Any<int>()).Returns(expected);
 
             // Act
-            var result = await _service.GetAllAccessUserLevelsAsync();
+            var result = await _service.GetAccessUserLevelsBySystemIdAsync(1);
 
             // Assert
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _pimsAccessUserLevelApiClient.Received(1).GetAllAsync();
+            await _pimsAccessUserLevelApiClient.Received(1).GetBySystemIdAsync(Arg.Any<int>());
         }
 
         [Fact]
         public async Task GetAccessUserLevelsBySystemIdAsync_DelegatesToPimsAccessUserLevelClient_ReturnsResult()
         {
             // Arrange
-            var dtos     = new List<AccessUserLevelDto> { new() { Systemid = 1, Ntlogin = "dom\\u1", Accesslevelid = 10 } };
+            var dtos     = new List<AccessUserLevelDto> { new() { SystemId = 1, NtLogin = "dom\\u1", AccessLevelId = 10 } };
             var expected = SuccessDto(dtos);
             _pimsAccessUserLevelApiClient.GetBySystemIdAsync(1).Returns(expected);
 
@@ -1271,7 +1245,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAccessUserLevelsByUserAsync_DelegatesToPimsAccessUserLevelClient_ReturnsResult()
         {
             // Arrange
-            var dtos     = new List<AccessUserLevelDto> { new() { Systemid = 1, Ntlogin = "dom\\u1", Accesslevelid = 10 } };
+            var dtos     = new List<AccessUserLevelDto> { new() { SystemId = 1, NtLogin = "dom\\u1", AccessLevelId = 10 } };
             var expected = SuccessDto(dtos);
             _pimsAccessUserLevelApiClient.GetByUserAsync(1, "dom\\u1").Returns(expected);
 
@@ -1300,7 +1274,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAccessUserLevelByIdAsync_DelegatesToPimsAccessUserLevelClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new AccessUserLevelDto { Systemid = 1, Ntlogin = "dom\\u1", Accesslevelid = 10 };
+            var dto      = new AccessUserLevelDto { SystemId = 1, NtLogin = "dom\\u1", AccessLevelId = 10 };
             var expected = SuccessDto(dto);
             _pimsAccessUserLevelApiClient.GetByIdAsync(1, "dom\\u1", 10).Returns(expected);
 
@@ -1309,7 +1283,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
 
             // Assert
             Assert.True(result.Success);
-            Assert.Equal(10, result.Data!.Accesslevelid);
+            Assert.Equal(10, result.Data!.AccessLevelId);
             await _pimsAccessUserLevelApiClient.Received(1).GetByIdAsync(1, "dom\\u1", 10);
         }
 
@@ -1317,7 +1291,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task CreateAccessUserLevelAsync_DelegatesToPimsAccessUserLevelClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new AccessUserLevelDto { Systemid = 1, Ntlogin = "dom\\newuser", Accesslevelid = 20 };
+            var dto      = new AccessUserLevelDto { SystemId = 1, NtLogin = "dom\\newuser", AccessLevelId = 20 };
             var expected = SuccessDto(dto);
             _pimsAccessUserLevelApiClient.CreateAsync(dto).Returns(expected);
 
@@ -1367,7 +1341,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAllAccessSystemsAsync_DelegatesToPimsAccessSystemClient_ReturnsResult()
         {
             // Arrange
-            var dtos     = new List<AccessSystemDto> { new() { Systemid = 1, Systemname = "PIMS" }, new() { Systemid = 2, Systemname = "FPS" } };
+            var dtos     = new List<AccessSystemDto> { new() { SystemId = 1, SystemName = "PIMS" }, new() { SystemId = 2, SystemName = "FPS" } };
             var expected = SuccessDto(dtos);
             _pimsAccessSystemApiClient.GetAllAsync().Returns(expected);
 
@@ -1397,7 +1371,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         public async Task GetAccessSystemByIdAsync_DelegatesToPimsAccessSystemClient_ReturnsResult()
         {
             // Arrange
-            var dto      = new AccessSystemDto { Systemid = 1, Systemname = "PIMS" };
+            var dto      = new AccessSystemDto { SystemId = 1, SystemName = "PIMS" };
             var expected = SuccessDto(dto);
             _pimsAccessSystemApiClient.GetByIdAsync(1).Returns(expected);
 
@@ -1406,7 +1380,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
 
             // Assert
             Assert.True(result.Success);
-            Assert.Equal("PIMS", result.Data!.Systemname);
+            Assert.Equal("PIMS", result.Data!.SystemName);
             await _pimsAccessSystemApiClient.Received(1).GetByIdAsync(1);
         }
 
@@ -1435,21 +1409,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dtos     = new List<FrequencyDto> { new() { Frequencyid = 1 } };
             var expected = SuccessDto(dtos);
-            _pimsFrequencyApiClient.GetAllAsync().Returns(expected);
+            _pimsFrequencyApiClient.GetAllFrequenciesAsync().Returns(expected);
 
             // Act
             var result = await _service.GetAllFrequenciesAsync();
 
             // Assert
             Assert.True(result.Success);
-            await _pimsFrequencyApiClient.Received(1).GetAllAsync();
+            await _pimsFrequencyApiClient.Received(1).GetAllFrequenciesAsync();
         }
 
         [Fact]
         public async Task GetAllFrequenciesAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsFrequencyApiClient.GetAllAsync().Returns(FailureDto<List<FrequencyDto>>());
+            _pimsFrequencyApiClient.GetAllFrequenciesAsync().Returns(FailureDto<List<FrequencyDto>>());
 
             // Act
             var result = await _service.GetAllFrequenciesAsync();
@@ -1464,7 +1438,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new FrequencyDto { Frequencyid = 5, FrequencyValue = "Monthly" };
             var expected = SuccessDto(dto);
-            _pimsFrequencyApiClient.GetByIdAsync(5).Returns(expected);
+            _pimsFrequencyApiClient.GetFrequencyByIdAsync(5).Returns(expected);
 
             // Act
             var result = await _service.GetFrequencyByIdAsync(5);
@@ -1472,14 +1446,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Equal(5, result.Data!.Frequencyid);
-            await _pimsFrequencyApiClient.Received(1).GetByIdAsync(5);
+            await _pimsFrequencyApiClient.Received(1).GetFrequencyByIdAsync(5);
         }
 
         [Fact]
         public async Task GetFrequencyByIdAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsFrequencyApiClient.GetByIdAsync(Arg.Any<int>()).Returns(FailureDto<FrequencyDto>());
+            _pimsFrequencyApiClient.GetFrequencyByIdAsync(Arg.Any<int>()).Returns(FailureDto<FrequencyDto>());
 
             // Act
             var result = await _service.GetFrequencyByIdAsync(99);
@@ -1494,14 +1468,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new FrequencyDto { FrequencyValue = "Weekly" };
             var expected = SuccessDto(dto);
-            _pimsFrequencyApiClient.CreateAsync(dto).Returns(expected);
+            _pimsFrequencyApiClient.CreateFrequencyAsync(dto).Returns(expected);
 
             // Act
             var result = await _service.CreateFrequencyAsync(dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsFrequencyApiClient.Received(1).CreateAsync(dto);
+            await _pimsFrequencyApiClient.Received(1).CreateFrequencyAsync(dto);
         }
 
         [Fact]
@@ -1509,7 +1483,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         {
             // Arrange
             var dto = new FrequencyDto { FrequencyValue = "Bad" };
-            _pimsFrequencyApiClient.CreateAsync(dto).Returns(FailureDto<FrequencyDto>());
+            _pimsFrequencyApiClient.CreateFrequencyAsync(dto).Returns(FailureDto<FrequencyDto>());
 
             // Act
             var result = await _service.CreateFrequencyAsync(dto);
@@ -1524,14 +1498,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new FrequencyDto { Frequencyid = 3, FrequencyValue = "Quarterly" };
             var expected = SuccessDto(dto);
-            _pimsFrequencyApiClient.UpdateAsync(3, dto).Returns(expected);
+            _pimsFrequencyApiClient.UpdateFrequencyAsync(3, dto).Returns(expected);
 
             // Act
             var result = await _service.UpdateFrequencyAsync(3, dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsFrequencyApiClient.Received(1).UpdateAsync(3, dto);
+            await _pimsFrequencyApiClient.Received(1).UpdateFrequencyAsync(3, dto);
         }
 
         [Fact]
@@ -1539,21 +1513,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         {
             // Arrange
             var expected = SuccessDto(true);
-            _pimsFrequencyApiClient.DeleteAsync(3).Returns(expected);
+            _pimsFrequencyApiClient.DeleteFrequencyAsync(3).Returns(expected);
 
             // Act
             var result = await _service.DeleteFrequencyAsync(3);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsFrequencyApiClient.Received(1).DeleteAsync(3);
+            await _pimsFrequencyApiClient.Received(1).DeleteFrequencyAsync(3);
         }
 
         [Fact]
         public async Task DeleteFrequencyAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsFrequencyApiClient.DeleteAsync(Arg.Any<int>()).Returns(FailureDto<bool>());
+            _pimsFrequencyApiClient.DeleteFrequencyAsync(Arg.Any<int>()).Returns(FailureDto<bool>());
 
             // Act
             var result = await _service.DeleteFrequencyAsync(99);
@@ -1574,7 +1548,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dtos     = new List<ReviewItemDto> { new() { Itemid = 1, Item = "Item A" } };
             var expected = SuccessDto(dtos);
-            _pimsReviewItemApiClient.GetAllAsync().Returns(expected);
+            _pimsReviewItemApiClient.GetAllReviewItemsAsync().Returns(expected);
 
             // Act
             var result = await _service.GetAllReviewItemsAsync();
@@ -1582,14 +1556,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _pimsReviewItemApiClient.Received(1).GetAllAsync();
+            await _pimsReviewItemApiClient.Received(1).GetAllReviewItemsAsync();
         }
 
         [Fact]
         public async Task GetAllReviewItemsAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsReviewItemApiClient.GetAllAsync().Returns(FailureDto<List<ReviewItemDto>>());
+            _pimsReviewItemApiClient.GetAllReviewItemsAsync().Returns(FailureDto<List<ReviewItemDto>>());
 
             // Act
             var result = await _service.GetAllReviewItemsAsync();
@@ -1604,7 +1578,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new ReviewItemDto { Itemid = 5, Item = "Item E" };
             var expected = SuccessDto(dto);
-            _pimsReviewItemApiClient.GetByIdAsync(5).Returns(expected);
+            _pimsReviewItemApiClient.GetReviewItemByIdAsync(5).Returns(expected);
 
             // Act
             var result = await _service.GetReviewItemByIdAsync(5);
@@ -1612,14 +1586,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Equal(5, result.Data!.Itemid);
-            await _pimsReviewItemApiClient.Received(1).GetByIdAsync(5);
+            await _pimsReviewItemApiClient.Received(1).GetReviewItemByIdAsync(5);
         }
 
         [Fact]
         public async Task GetReviewItemByIdAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsReviewItemApiClient.GetByIdAsync(Arg.Any<int>()).Returns(FailureDto<ReviewItemDto>());
+            _pimsReviewItemApiClient.GetReviewItemByIdAsync(Arg.Any<int>()).Returns(FailureDto<ReviewItemDto>());
 
             // Act
             var result = await _service.GetReviewItemByIdAsync(99);
@@ -1634,14 +1608,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new ReviewItemDto { Item = "New Item" };
             var expected = SuccessDto(dto);
-            _pimsReviewItemApiClient.CreateAsync(dto).Returns(expected);
+            _pimsReviewItemApiClient.CreateReviewItemAsync(dto).Returns(expected);
 
             // Act
             var result = await _service.CreateReviewItemAsync(dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsReviewItemApiClient.Received(1).CreateAsync(dto);
+            await _pimsReviewItemApiClient.Received(1).CreateReviewItemAsync(dto);
         }
 
         [Fact]
@@ -1649,7 +1623,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         {
             // Arrange
             var dto = new ReviewItemDto { Item = "Bad" };
-            _pimsReviewItemApiClient.CreateAsync(dto).Returns(FailureDto<ReviewItemDto>());
+            _pimsReviewItemApiClient.CreateReviewItemAsync(dto).Returns(FailureDto<ReviewItemDto>());
 
             // Act
             var result = await _service.CreateReviewItemAsync(dto);
@@ -1664,14 +1638,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new ReviewItemDto { Itemid = 3, Item = "Updated Item" };
             var expected = SuccessDto(dto);
-            _pimsReviewItemApiClient.UpdateAsync(3, dto).Returns(expected);
+            _pimsReviewItemApiClient.UpdateReviewItemAsync(3, dto).Returns(expected);
 
             // Act
             var result = await _service.UpdateReviewItemAsync(3, dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsReviewItemApiClient.Received(1).UpdateAsync(3, dto);
+            await _pimsReviewItemApiClient.Received(1).UpdateReviewItemAsync(3, dto);
         }
 
         [Fact]
@@ -1679,21 +1653,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         {
             // Arrange
             var expected = SuccessDto(true);
-            _pimsReviewItemApiClient.DeleteAsync(4).Returns(expected);
+            _pimsReviewItemApiClient.DeleteReviewItemAsync(4).Returns(expected);
 
             // Act
             var result = await _service.DeleteReviewItemAsync(4);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsReviewItemApiClient.Received(1).DeleteAsync(4);
+            await _pimsReviewItemApiClient.Received(1).DeleteReviewItemAsync(4);
         }
 
         [Fact]
         public async Task DeleteReviewItemAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsReviewItemApiClient.DeleteAsync(Arg.Any<int>()).Returns(FailureDto<bool>());
+            _pimsReviewItemApiClient.DeleteReviewItemAsync(Arg.Any<int>()).Returns(FailureDto<bool>());
 
             // Act
             var result = await _service.DeleteReviewItemAsync(99);
@@ -1714,7 +1688,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dtos     = new List<RadTrackProgDto> { new() { Program = "RAD1", Radtrackprog = true } };
             var expected = SuccessDto(dtos);
-            _pimsRadTrackProgApiClient.GetAllAsync().Returns(expected);
+            _pimsRadTrackProgApiClient.GetAllRadTrackProgsAsync().Returns(expected);
 
             // Act
             var result = await _service.GetAllRadTrackProgsAsync();
@@ -1722,14 +1696,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _pimsRadTrackProgApiClient.Received(1).GetAllAsync();
+            await _pimsRadTrackProgApiClient.Received(1).GetAllRadTrackProgsAsync();
         }
 
         [Fact]
         public async Task GetAllRadTrackProgsAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsRadTrackProgApiClient.GetAllAsync().Returns(FailureDto<List<RadTrackProgDto>>());
+            _pimsRadTrackProgApiClient.GetAllRadTrackProgsAsync().Returns(FailureDto<List<RadTrackProgDto>>());
 
             // Act
             var result = await _service.GetAllRadTrackProgsAsync();
@@ -1744,7 +1718,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new RadTrackProgDto { Program = "RAD1", Radtrackprog = true, Publicationprefix = "RT" };
             var expected = SuccessDto(dto);
-            _pimsRadTrackProgApiClient.GetByIdAsync("RAD1").Returns(expected);
+            _pimsRadTrackProgApiClient.GetRadTrackProgByProgramAsync("RAD1").Returns(expected);
 
             // Act
             var result = await _service.GetRadTrackProgByIdAsync("RAD1");
@@ -1752,14 +1726,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Assert
             Assert.True(result.Success);
             Assert.Equal("RAD1", result.Data!.Program);
-            await _pimsRadTrackProgApiClient.Received(1).GetByIdAsync("RAD1");
+            await _pimsRadTrackProgApiClient.Received(1).GetRadTrackProgByProgramAsync("RAD1");
         }
 
         [Fact]
         public async Task GetRadTrackProgByIdAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsRadTrackProgApiClient.GetByIdAsync(Arg.Any<string>()).Returns(FailureDto<RadTrackProgDto>());
+            _pimsRadTrackProgApiClient.GetRadTrackProgByProgramAsync(Arg.Any<string>()).Returns(FailureDto<RadTrackProgDto>());
 
             // Act
             var result = await _service.GetRadTrackProgByIdAsync("UNKNOWN");
@@ -1774,14 +1748,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new RadTrackProgDto { Program = "RAD2", Radtrackprog = false };
             var expected = SuccessDto(dto);
-            _pimsRadTrackProgApiClient.CreateAsync(dto).Returns(expected);
+            _pimsRadTrackProgApiClient.CreateRadTrackProgAsync(dto).Returns(expected);
 
             // Act
             var result = await _service.CreateRadTrackProgAsync(dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsRadTrackProgApiClient.Received(1).CreateAsync(dto);
+            await _pimsRadTrackProgApiClient.Received(1).CreateRadTrackProgAsync(dto);
         }
 
         [Fact]
@@ -1789,7 +1763,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         {
             // Arrange
             var dto = new RadTrackProgDto { Program = "BAD" };
-            _pimsRadTrackProgApiClient.CreateAsync(dto).Returns(FailureDto<RadTrackProgDto>());
+            _pimsRadTrackProgApiClient.CreateRadTrackProgAsync(dto).Returns(FailureDto<RadTrackProgDto>());
 
             // Act
             var result = await _service.CreateRadTrackProgAsync(dto);
@@ -1804,14 +1778,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
             // Arrange
             var dto      = new RadTrackProgDto { Program = "RAD1", Radtrackprog = true, Publicationprefix = "RT2" };
             var expected = SuccessDto(dto);
-            _pimsRadTrackProgApiClient.UpdateAsync("RAD1", dto).Returns(expected);
+            _pimsRadTrackProgApiClient.UpdateRadTrackProgAsync("RAD1", dto).Returns(expected);
 
             // Act
             var result = await _service.UpdateRadTrackProgAsync("RAD1", dto);
 
             // Assert
             Assert.True(result.Success);
-            await _pimsRadTrackProgApiClient.Received(1).UpdateAsync("RAD1", dto);
+            await _pimsRadTrackProgApiClient.Received(1).UpdateRadTrackProgAsync("RAD1", dto);
         }
 
         [Fact]
@@ -1819,21 +1793,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS
         {
             // Arrange
             var expected = SuccessDto(true);
-            _pimsRadTrackProgApiClient.DeleteAsync("RAD1").Returns(expected);
+            _pimsRadTrackProgApiClient.DeleteRadTrackProgAsync("RAD1").Returns(expected);
 
             // Act
             var result = await _service.DeleteRadTrackProgAsync("RAD1");
 
             // Assert
             Assert.True(result.Success);
-            await _pimsRadTrackProgApiClient.Received(1).DeleteAsync("RAD1");
+            await _pimsRadTrackProgApiClient.Received(1).DeleteRadTrackProgAsync("RAD1");
         }
 
         [Fact]
         public async Task DeleteRadTrackProgAsync_ClientReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            _pimsRadTrackProgApiClient.DeleteAsync(Arg.Any<string>()).Returns(FailureDto<bool>());
+            _pimsRadTrackProgApiClient.DeleteRadTrackProgAsync(Arg.Any<string>()).Returns(FailureDto<bool>());
 
             // Act
             var result = await _service.DeleteRadTrackProgAsync("UNKNOWN");

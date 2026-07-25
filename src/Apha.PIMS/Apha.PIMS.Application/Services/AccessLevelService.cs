@@ -1,25 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — AccessLevelService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New Application service implementing IAccessLevelService for AccessLevel CRUD/lookup (Admin Maintenance Tab access level dropdown, frmMaintainance)
- *   - Composite PK (systemid, accesslevelid) — both required for lookup/update/delete
- *   - Delegates all persistence to IAccessLevelRepository; no direct DbContext usage
- *   - All methods are async end-to-end
- *   - Throws ArgumentException on null/invalid input; KeyNotFoundException when entity not found;
- *     InvalidOperationException on duplicate-level guard
- *   - AutoMapper used for all entity <-> DTO conversions
- *
- * PRESERVED:
- *   - Duplicate-level guard: cannot create an access level that already exists for the same systemid+accesslevelid combination
- *   - GetBySystemIdAsync supports dropdown population scoped to a specific system
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Core.Entities;
@@ -28,7 +6,6 @@ using AutoMapper;
 
 namespace Apha.PIMS.Application.Services
 {
-    // TRANSFORMENGINE: service orchestrates IAccessLevelRepository; composite PK (systemid, accesslevelid)
     public class AccessLevelService : IAccessLevelService
     {
         private readonly IAccessLevelRepository _repository;
@@ -66,10 +43,10 @@ namespace Apha.PIMS.Application.Services
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
 
-            bool alreadyExists = await _repository.ExistsAsync(dto.Systemid, dto.Accesslevelid);
+            bool alreadyExists = await _repository.ExistsAsync(dto.SystemId, dto.AccessLevelId);
             if (alreadyExists)
                 throw new InvalidOperationException(
-                    $"AccessLevel (systemid={dto.Systemid}, accesslevelid={dto.Accesslevelid}) already exists.");
+                    $"AccessLevel (systemid={dto.SystemId}, accesslevelid={dto.AccessLevelId}) already exists.");
 
             AccessLevel entity = _mapper.Map<AccessLevel>(dto);
             AccessLevel created = await _repository.AddAsync(entity);
@@ -81,10 +58,10 @@ namespace Apha.PIMS.Application.Services
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
 
-            bool exists = await _repository.ExistsAsync(dto.Systemid, dto.Accesslevelid);
+            bool exists = await _repository.ExistsAsync(dto.SystemId, dto.AccessLevelId);
             if (!exists)
                 throw new KeyNotFoundException(
-                    $"AccessLevel (systemid={dto.Systemid}, accesslevelid={dto.Accesslevelid}) was not found.");
+                    $"AccessLevel (systemid={dto.SystemId}, accesslevelid={dto.AccessLevelId}) was not found.");
 
             AccessLevel entity = _mapper.Map<AccessLevel>(dto);
             AccessLevel updated = await _repository.UpdateAsync(entity);

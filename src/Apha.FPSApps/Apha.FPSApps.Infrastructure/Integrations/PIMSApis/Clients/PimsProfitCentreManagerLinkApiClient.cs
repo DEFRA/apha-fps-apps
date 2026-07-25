@@ -1,34 +1,9 @@
-/*
- * TRANSFORMENGINE MIGRATION — PimsProfitCentreManagerLinkApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New HTTP API client implementing IPimsProfitCentreManagerLinkApiClient
- *   - Binds to backend ProfitCentreManagerLinkController routes:
- *       GET    /api/v1/profitcentremanagerlink                          — full list
- *       GET    /api/v1/profitcentremanagerlink/{profitcentre}           — scoped by profit centre
- *       GET    /api/v1/profitcentremanagerlink/{profitcentre}/{manager} — composite natural PK get
- *       POST   /api/v1/profitcentremanagerlink                          — create link
- *       DELETE /api/v1/profitcentremanagerlink/{profitcentre}/{manager} — delete by composite natural PK
- *   - Composite natural PK (profitcentre string + manager string) — Uri.EscapeDataString applied to both segments
- *   - No PUT endpoint — link table has no mutable fields beyond composite PK
- *   - Every HTTP call wrapped in try/catch(Exception) returning FailureResponse with InternalCodeError
- *   - Req/Res contracts: ProfitCentreManagerLinkReq, ProfitCentreManagerLinkRes from Apha.Common.Contracts.PIMS
- *
- * PRESERVED:
- *   - Composite natural PK semantics (profitcentre + manager)
- *   - GetByProfitCentre scoped list endpoint preserved
- *   - Return types wrapped in ApiResponseDto<T>
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm composite natural PK delete route with URL-encoded string segments is acceptable
- */
-
 using Apha.Common.Contracts.PIMS;
+using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
@@ -50,7 +25,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: GET /api/v1/profitcentremanagerlink — full list
-        public async Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetAllAsync()
+        public async Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetAllProfitCentreManagerLinksAsync()
         {
             try
             {
@@ -69,12 +44,32 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/profitcentremanagerlink/{profitcentre} — scoped by profit centre; Uri.EscapeDataString applied
-        public async Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetByProfitCentreAsync(string profitcentre)
+        // TRANSFORMENGINE: GET /api/v1/profitcentremanagerlink/profitcentres — dropdown lookup for profit centre codes
+        public async Task<ApiResponseDto<List<ProfitCentreLookupDto>>> GetProfitCentresAsync()
         {
             try
             {
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(profitcentre)}";
+                var response = await _http.GetAsync<List<ProfitCentreLookupRes>>($"{BaseUrl}/profitcentres");
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<ProfitCentreLookupDto>>>(response);
+
+                var responseDto = _mapper.Map<ApiResponseDto<List<ProfitCentreLookupDto>>>(response);
+                return ApiResponseDto<List<ProfitCentreLookupDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<ProfitCentreLookupDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve ProfitCentre lookup data", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        // TRANSFORMENGINE: GET /api/v1/profitcentremanagerlink/{profitcentre} — scoped by profit centre; Uri.EscapeDataString applied
+        public async Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetByProfitCentreAsync(string profitCentre)
+        {
+            try
+            {
+                var url = $"{BaseUrl}/{Uri.EscapeDataString(profitCentre)}";
                 var response = await _http.GetAsync<List<ProfitCentreManagerLinkRes>>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<ProfitCentreManagerLinkDto>>>(response);
@@ -90,12 +85,62 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/profitcentremanagerlink/{profitcentre}/{manager} — composite natural PK get; Uri.EscapeDataString on both segments
-        public async Task<ApiResponseDto<ProfitCentreManagerLinkDto>> GetByIdAsync(string profitcentre, string manager)
+        public async Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetByManagerAsync(string manager)
         {
             try
             {
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(profitcentre)}/{Uri.EscapeDataString(manager)}";
+                var url = $"{BaseUrl}/manager/{Uri.EscapeDataString(manager)}";
+                var response = await _http.GetAsync<List<ProfitCentreManagerLinkRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<ProfitCentreManagerLinkDto>>>(response);
+
+                var responseDto = _mapper.Map<ApiResponseDto<List<ProfitCentreManagerLinkDto>>>(response);
+                return ApiResponseDto<List<ProfitCentreManagerLinkDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<ProfitCentreManagerLinkDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve ProfitCentreManagerLink by manager", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        public async Task<ApiResponseDto<PaginatedResult<ProfitCentreManagerLinkDto>>> GetPagedByManagerAsync(QueryParameters<string> query, string manager)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString($"{BaseUrl}/paged", query);
+                url += $"&manager={Uri.EscapeDataString(manager)}";
+
+                var response = await _http.GetAsync<List<ProfitCentreManagerLinkRes>>(url);
+                if (response.Success)
+                {
+                    var items = _mapper.Map<List<ProfitCentreManagerLinkDto>>(response.Data ?? []);
+                    var pageNumber = response.Pagination?.PageNumber ?? query.Page;
+                    var pageSize = response.Pagination?.PageSize ?? query.PageSize;
+                    var totalRecords = response.Pagination?.TotalRecords ?? items.Count;
+                    var paged = new PaginatedResult<ProfitCentreManagerLinkDto>(items, totalRecords, pageNumber, pageSize);
+                    return ApiResponseDto<PaginatedResult<ProfitCentreManagerLinkDto>>.SuccessResponse(paged);
+                }
+
+                return ApiResponseDto<PaginatedResult<ProfitCentreManagerLinkDto>>.FailureResponse(
+                    _mapper.Map<List<ApiErrorDto>>(response.Errors ?? []),
+                    _mapper.Map<ApiMetaDto>(response.Meta));
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<PaginatedResult<ProfitCentreManagerLinkDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve paged ProfitCentreManagerLink data", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        // TRANSFORMENGINE: GET /api/v1/profitcentremanagerlink/{profitcentre}/{manager} — composite natural PK get; Uri.EscapeDataString on both segments
+        public async Task<ApiResponseDto<ProfitCentreManagerLinkDto>> GetProfitCentreManagerLinkByIdAsync(string profitCentre, string manager)
+        {
+            try
+            {
+                var url = $"{BaseUrl}/{Uri.EscapeDataString(profitCentre)}/{Uri.EscapeDataString(manager)}";
                 var response = await _http.GetAsync<ProfitCentreManagerLinkRes>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ProfitCentreManagerLinkDto>>(response);
@@ -112,7 +157,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: POST /api/v1/profitcentremanagerlink — create link
-        public async Task<ApiResponseDto<ProfitCentreManagerLinkDto>> CreateAsync(ProfitCentreManagerLinkDto dto)
+        public async Task<ApiResponseDto<ProfitCentreManagerLinkDto>> CreateProfitCentreManagerLinkAsync(ProfitCentreManagerLinkDto dto)
         {
             try
             {
@@ -133,11 +178,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: DELETE /api/v1/profitcentremanagerlink/{profitcentre}/{manager} — composite natural PK delete; no PUT (no mutable fields)
-        public async Task<ApiResponseDto<bool>> DeleteAsync(string profitcentre, string manager)
+        public async Task<ApiResponseDto<bool>> DeleteProfitCentreManagerLinkAsync(string profitCentre, string manager)
         {
             try
             {
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(profitcentre)}/{Uri.EscapeDataString(manager)}";
+                var url = $"{BaseUrl}/{Uri.EscapeDataString(profitCentre)}/{Uri.EscapeDataString(manager)}";
                 var response = await _http.DeleteAsync<bool>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);

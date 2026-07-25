@@ -1,25 +1,9 @@
-/*
- * TRANSFORMENGINE MIGRATION — ProjectManagerControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New xUnit test class for Apha.PIMS.Api.Controllers.ProjectManagerController
- *   - Natural varchar PK (projectmanager name string) with URL-decode semantics
- *   - Covers: GetAll, GetById (found/null), Create, Update (PK injection), Delete
- *   - Uses NSubstitute for IProjectManagerService and IMapper mocks
- *
- * PRESERVED:
- *   - Natural varchar PK semantics; name is URL-decoded before service calls
- *   - Duplicate-name guard via InvalidOperationException propagation
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Api.Controllers;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Pagination;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -43,7 +27,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
         // ── helpers ───────────────────────────────────────────────────────────────
 
         private static ProjectManagerDto MakeDto(string name = "J. Smith") =>
-            new ProjectManagerDto { Projectmanager = name, Email = "j.smith@apha.gov.uk", Disable = false };
+            new ProjectManagerDto { ProjectManager = name, Email = "j.smith@apha.gov.uk", Disable = false };
 
         private static ProjectManagerRes MakeRes(string name = "J. Smith") =>
             new ProjectManagerRes { ProjectManager = name, Email = "j.smith@apha.gov.uk", Disable = false };
@@ -59,46 +43,54 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
         public async Task GetAll_ServiceReturnsData_ReturnsOkWithMappedList()
         {
             // Arrange
-            var dtos    = new List<ProjectManagerDto> { MakeDto("Smith"), MakeDto("Jones") };
-            var resList = new List<ProjectManagerRes> { MakeRes("Smith"), MakeRes("Jones") };
-            _service.GetAllAsync().Returns(dtos);
-            _mapper.Map<List<ProjectManagerRes>>(dtos).Returns(resList);
+            var pagedDto = new PaginatedResult<ProjectManagerDto>
+            {
+                Data = new List<ProjectManagerDto> { MakeDto("Smith"), MakeDto("Jones") },
+                PaginationData = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2, TotalPages = 1 }
+            };
+            var pagedRes = new PaginationRes<ProjectManagerRes>
+            {
+                Data = new List<ProjectManagerRes> { MakeRes("Smith"), MakeRes("Jones") }
+            };
+            _service.GetPagedProjectManagersAsync(null).Returns(pagedDto);
+            _mapper.Map<PaginationRes<ProjectManagerRes>>(pagedDto).Returns(pagedRes);
 
             // Act
-            var result = await _controller.GetAll();
+            var result = await _controller.GetPagedProjectManagers();
 
             // Assert
             var ok = Assert.IsType<OkObjectResult>(result);
-            var returned = Assert.IsType<List<ProjectManagerRes>>(ok.Value);
-            Assert.Equal(2, returned.Count);
-            await _service.Received(1).GetAllAsync();
+            var returned = Assert.IsType<PaginationRes<ProjectManagerRes>>(ok.Value);
+            Assert.Equal(2, returned.Data.Count());
+            await _service.Received(1).GetPagedProjectManagersAsync(null);
         }
 
         [Fact]
         public async Task GetAll_ServiceReturnsEmptyList_ReturnsOkWithEmptyList()
         {
             // Arrange
-            var dtos    = new List<ProjectManagerDto>();
-            var resList = new List<ProjectManagerRes>();
-            _service.GetAllAsync().Returns(dtos);
-            _mapper.Map<List<ProjectManagerRes>>(dtos).Returns(resList);
+            var pagedDto = new PaginatedResult<ProjectManagerDto>();
+            var pagedRes = new PaginationRes<ProjectManagerRes>();
+            _service.GetPagedProjectManagersAsync(null).Returns(pagedDto);
+            _mapper.Map<PaginationRes<ProjectManagerRes>>(pagedDto).Returns(pagedRes);
 
             // Act
-            var result = await _controller.GetAll();
+            var result = await _controller.GetPagedProjectManagers();
 
             // Assert
             var ok = Assert.IsType<OkObjectResult>(result);
-            Assert.Empty(Assert.IsType<List<ProjectManagerRes>>(ok.Value));
+            var returned = Assert.IsType<PaginationRes<ProjectManagerRes>>(ok.Value);
+            Assert.Empty(returned.Data);
         }
 
         [Fact]
         public async Task GetAll_ServiceThrowsException_PropagatesException()
         {
             // Arrange
-            _service.GetAllAsync().ThrowsAsync(new Exception("db error"));
+            _service.GetPagedProjectManagersAsync(null).ThrowsAsync(new Exception("db error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAll());
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetPagedProjectManagers());
         }
 
         #endregion
@@ -114,26 +106,26 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
             const string name = "J. Smith";
             var dto = MakeDto(name);
             var res = MakeRes(name);
-            _service.GetByIdAsync(name).Returns(dto);
+            _service.GetProjectManagerByNameAsync(name).Returns(dto);
             _mapper.Map<ProjectManagerRes>(dto).Returns(res);
 
             // Act
-            var result = await _controller.GetById(name);
+            var result = await _controller.GetProjectManagerByName(name);
 
             // Assert
             var ok = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(res, ok.Value);
-            await _service.Received(1).GetByIdAsync(name);
+            await _service.Received(1).GetProjectManagerByNameAsync(name);
         }
 
         [Fact]
         public async Task GetById_ServiceReturnsNull_ReturnsNotFound()
         {
             // Arrange
-            _service.GetByIdAsync(Arg.Any<string>()).Returns((ProjectManagerDto?)null);
+            _service.GetProjectManagerByNameAsync(Arg.Any<string>()).Returns((ProjectManagerDto?)null);
 
             // Act
-            var result = await _controller.GetById("Unknown");
+            var result = await _controller.GetProjectManagerByName("Unknown");
 
             // Assert
             Assert.IsType<NotFoundResult>(result);
@@ -145,14 +137,14 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
             // Arrange — URL-encoded space %20 should be decoded
             const string encoded = "J.%20Smith";
             const string decoded = "J. Smith";
-            _service.GetByIdAsync(decoded).Returns(MakeDto(decoded));
+            _service.GetProjectManagerByNameAsync(decoded).Returns(MakeDto(decoded));
             _mapper.Map<ProjectManagerRes>(Arg.Any<ProjectManagerDto>()).Returns(MakeRes(decoded));
 
             // Act
-            await _controller.GetById(encoded);
+            await _controller.GetProjectManagerByName(encoded);
 
             // Assert
-            await _service.Received(1).GetByIdAsync(decoded);
+            await _service.Received(1).GetProjectManagerByNameAsync(decoded);
         }
 
         #endregion
@@ -170,15 +162,15 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
             var created = MakeDto("New Manager");
             var res     = MakeRes("New Manager");
             _mapper.Map<ProjectManagerDto>(req).Returns(dto);
-            _service.CreateAsync(dto).Returns(created);
+            _service.CreateProjectManagerAsync(dto).Returns(created);
             _mapper.Map<ProjectManagerRes>(created).Returns(res);
 
             // Act
-            var result = await _controller.Create(req);
+            var result = await _controller.CreateProjectManager(req);
 
             // Assert
             var created201 = Assert.IsType<CreatedAtActionResult>(result);
-            Assert.Equal(nameof(ProjectManagerController.GetById), created201.ActionName);
+            Assert.Equal(nameof(ProjectManagerController.GetProjectManagerByName), created201.ActionName);
             Assert.Equal(res, created201.Value);
         }
 
@@ -187,10 +179,10 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
         {
             // Arrange
             _mapper.Map<ProjectManagerDto>(Arg.Any<ProjectManagerReq>()).Returns(MakeDto());
-            _service.CreateAsync(Arg.Any<ProjectManagerDto>()).ThrowsAsync(new InvalidOperationException("already exists"));
+            _service.CreateProjectManagerAsync(Arg.Any<ProjectManagerDto>()).ThrowsAsync(new InvalidOperationException("already exists"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.Create(MakeReq()));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.CreateProjectManager(MakeReq()));
         }
 
         #endregion
@@ -208,11 +200,11 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
             var updated = MakeDto(name);
             var res     = MakeRes(name);
             _mapper.Map<ProjectManagerDto>(Arg.Any<ProjectManagerReq>()).Returns(dto);
-            _service.UpdateAsync(Arg.Any<ProjectManagerDto>()).Returns(updated);
+            _service.UpdateProjectManagerAsync(Arg.Any<ProjectManagerDto>()).Returns(updated);
             _mapper.Map<ProjectManagerRes>(updated).Returns(res);
 
             // Act
-            var result = await _controller.Update(name, MakeReq(name));
+            var result = await _controller.UpdateProjectManager(name, MakeReq(name));
 
             // Assert
             var ok = Assert.IsType<OkObjectResult>(result);
@@ -222,19 +214,19 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
         [Fact]
         public async Task Update_SetsRouteNameOnDtoBeforeCallingService()
         {
-            // Arrange — mapper returns empty name; controller sets dto.Projectmanager = route name
+            // Arrange — mapper returns empty name; controller sets dto.ProjectManager = route name
             const string routeName = "J. Smith";
-            var dto = new ProjectManagerDto { Projectmanager = "" };
+            var dto = new ProjectManagerDto { ProjectManager = "" };
             _mapper.Map<ProjectManagerDto>(Arg.Any<ProjectManagerReq>()).Returns(dto);
-            _service.UpdateAsync(Arg.Any<ProjectManagerDto>()).Returns(MakeDto(routeName));
+            _service.UpdateProjectManagerAsync(Arg.Any<ProjectManagerDto>()).Returns(MakeDto(routeName));
             _mapper.Map<ProjectManagerRes>(Arg.Any<ProjectManagerDto>()).Returns(MakeRes(routeName));
 
             // Act
-            await _controller.Update(routeName, MakeReq(""));
+            await _controller.UpdateProjectManager(routeName, MakeReq(""));
 
             // Assert
-            await _service.Received(1).UpdateAsync(
-                Arg.Is<ProjectManagerDto>(d => d.Projectmanager == routeName));
+            await _service.Received(1).UpdateProjectManagerAsync(
+                Arg.Is<ProjectManagerDto>(d => d.ProjectManager == routeName));
         }
 
         [Fact]
@@ -242,10 +234,10 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
         {
             // Arrange
             _mapper.Map<ProjectManagerDto>(Arg.Any<ProjectManagerReq>()).Returns(MakeDto());
-            _service.UpdateAsync(Arg.Any<ProjectManagerDto>()).ThrowsAsync(new KeyNotFoundException("not found"));
+            _service.UpdateProjectManagerAsync(Arg.Any<ProjectManagerDto>()).ThrowsAsync(new KeyNotFoundException("not found"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _controller.Update("Unknown", MakeReq("Unknown")));
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _controller.UpdateProjectManager("Unknown", MakeReq("Unknown")));
         }
 
         #endregion
@@ -258,17 +250,15 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
         public async Task Delete_ServiceCompletes_ReturnsOkWithSuccessTrue()
         {
             // Arrange
-            _service.DeleteAsync("J. Smith").Returns(Task.CompletedTask);
+            _service.DeleteProjectManagerAsync("J. Smith").Returns(true);
 
             // Act
-            var result = await _controller.Delete("J.%20Smith");
+            var result = await _controller.DeleteProjectManager("J.%20Smith");
 
             // Assert
             var ok = Assert.IsType<OkObjectResult>(result);
-            var json    = System.Text.Json.JsonSerializer.Serialize(ok.Value);
-            var element = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(json);
-            Assert.True(element.GetProperty("success").GetBoolean());
-            await _service.Received(1).DeleteAsync("J. Smith");
+            Assert.True(Assert.IsType<bool>(ok.Value));
+            await _service.Received(1).DeleteProjectManagerAsync("J. Smith");
         }
 
         [Fact]
@@ -277,23 +267,23 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
             // Arrange
             const string encoded = "J.%20Smith";
             const string decoded = "J. Smith";
-            _service.DeleteAsync(Arg.Any<string>()).Returns(Task.CompletedTask);
+            _service.DeleteProjectManagerAsync(Arg.Any<string>()).Returns(true);
 
             // Act
-            await _controller.Delete(encoded);
+            await _controller.DeleteProjectManager(encoded);
 
             // Assert
-            await _service.Received(1).DeleteAsync(decoded);
+            await _service.Received(1).DeleteProjectManagerAsync(decoded);
         }
 
         [Fact]
         public async Task Delete_ServiceThrowsKeyNotFoundException_PropagatesException()
         {
             // Arrange
-            _service.DeleteAsync(Arg.Any<string>()).ThrowsAsync(new KeyNotFoundException("not found"));
+            _service.DeleteProjectManagerAsync(Arg.Any<string>()).ThrowsAsync(new KeyNotFoundException("not found"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _controller.Delete("Unknown"));
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _controller.DeleteProjectManager("Unknown"));
         }
 
         #endregion

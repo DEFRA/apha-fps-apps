@@ -1,29 +1,9 @@
-/*
- * TRANSFORMENGINE MIGRATION — AccessUserServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New xUnit test class for Apha.PIMS.Application.Services.AccessUserService
- *   - Composite PK (systemid int + ntlogin string)
- *   - Covers: GetAllAsync, GetBySystemIdAsync, GetByNtLoginAsync, GetByIdAsync,
- *             CreateAsync (dup-guard), UpdateAsync, DeleteAsync, ExistsAsync
- *   - Uses NSubstitute for IAccessUserRepository and IMapper
- *
- * PRESERVED:
- *   - Duplicate-user guard: InvalidOperationException when systemid+ntlogin already exists
- *   - System isolation: GetBySystemId scoped by systemid
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Services;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 
 namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
 {
@@ -43,10 +23,10 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         // ── helpers ───────────────────────────────────────────────────────────────
 
         private static AccessUser MakeEntity(int systemid = 1, string ntlogin = "DOM\\user1") =>
-            new AccessUser { Systemid = systemid, Ntlogin = ntlogin, Username = "User One" };
+            new AccessUser { SystemId = systemid, NtLogin = ntlogin, UserName = "User One" };
 
         private static AccessUserDto MakeDto(int systemid = 1, string ntlogin = "DOM\\user1") =>
-            new AccessUserDto { Systemid = systemid, Ntlogin = ntlogin, Username = "User One" };
+            new AccessUserDto { SystemId = systemid, NtLogin = ntlogin, UserName = "User One" };
 
         // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -196,7 +176,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(ntlogin, result!.Ntlogin);
+            Assert.Equal(ntlogin, result!.NtLogin);
         }
 
         [Fact]
@@ -243,7 +223,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(ntlogin, result.Ntlogin);
+            Assert.Equal(ntlogin, result.NtLogin);
             await _repository.Received(1).AddAsync(entity);
         }
 
@@ -267,7 +247,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         [Fact]
         public async Task CreateAsync_EmptyNtlogin_ThrowsArgumentException()
         {
-            var dto = new AccessUserDto { Systemid = 1, Ntlogin = "" };
+            var dto = new AccessUserDto { SystemId = 1, NtLogin = "" };
             await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateAsync(dto));
         }
 
@@ -332,7 +312,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         [Fact]
         public async Task UpdateAsync_EmptyNtlogin_ThrowsArgumentException()
         {
-            var dto = new AccessUserDto { Systemid = 1, Ntlogin = "" };
+            var dto = new AccessUserDto { SystemId = 1, NtLogin = "" };
             await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateAsync(dto));
         }
 
@@ -343,17 +323,18 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         #region DeleteAsync
 
         [Fact]
-        public async Task DeleteAsync_EntityExists_CallsRepositoryDelete()
+        public async Task DeleteAsync_EntityExists_ReturnsTrueAndCallsRepositoryDelete()
         {
             // Arrange
             const string ntlogin = "dom\\user";
             _repository.ExistsAsync(1, ntlogin).Returns(true);
-            _repository.DeleteAsync(1, ntlogin).Returns(Task.CompletedTask);
+            _repository.DeleteAsync(1, ntlogin).Returns(true);
 
             // Act
-            await _service.DeleteAsync(1, ntlogin);
+            var result = await _service.DeleteAsync(1, ntlogin);
 
             // Assert
+            Assert.True(result);
             await _repository.Received(1).DeleteAsync(1, ntlogin);
         }
 

@@ -1,22 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — PimsAccessUserApiClientTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New xUnit test class for Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients.PimsAccessUserApiClient
- *   - Composite PK (systemid int + ntlogin string) with Uri.EscapeDataString on ntlogin segment
- *   - Covers: GetAllAsync, GetBySystemIdAsync, GetByIdAsync, CreateAsync, UpdateAsync, DeleteAsync
- *   - Every method: happy path, failure path, exception path, URL construction
- *   - Uses NSubstitute for IPimsHttpExecutor and IMapper
- *
- * PRESERVED:
- *   - Uri.EscapeDataString applied to ntlogin for all routes containing ntlogin segment
- *   - try/catch => INTERNAL_ERROR FailureResponse pattern
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
@@ -45,8 +26,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _client = new PimsAccessUserApiClient(_http, _mapper);
         }
 
-        // ── helpers ───────────────────────────────────────────────────────────────
-
         private static ApiResponse<T> SuccessApiResponse<T>(T data) =>
             new ApiResponse<T> { Success = true, Data = data };
 
@@ -69,16 +48,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             new AccessUserRes { SystemId = systemid, NtLogin = ntlogin, UserName = "Test User" };
 
         private static AccessUserDto MakeDto(int systemid = 1, string ntlogin = "DOM\\user1") =>
-            new AccessUserDto { Systemid = systemid, Ntlogin = ntlogin, Username = "Test User" };
+            new AccessUserDto { SystemId = systemid, NtLogin = ntlogin, UserName = "Test User" };
 
-        // ── GetAllAsync ───────────────────────────────────────────────────────────
-
+        
         #region GetAllAsync
 
         [Fact]
         public async Task GetAllAsync_HttpReturnsSuccess_ReturnsMappedResponse()
         {
-            // Arrange
             var resList = new List<AccessUserRes> { MakeRes() };
             var apiResp = SuccessApiResponse(resList);
             var dto     = SuccessDto(new List<AccessUserDto> { MakeDto() });

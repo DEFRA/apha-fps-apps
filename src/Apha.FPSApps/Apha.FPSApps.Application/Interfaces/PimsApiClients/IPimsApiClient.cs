@@ -27,5 +27,11 @@
         // TRANSFORMENGINE: Phase 7 — ReviewItem and RadTrackProg sub-clients (Other Tab + Programme Tab CRUD)
         IPimsReviewItemApiClient PimsReviewItem { get; }
         IPimsRadTrackProgApiClient PimsRadTrackProg { get; }
+
+        // Risk Rating sub-client (Other Tab CRUD)
+        IPimsRiskApiClient PimsRisk { get; }
+
+        // Publication Type sub-client (Other Tab CRUD)
+        IPimsPublicationTypeApiClient PimsPublicationType { get; }
     }
 }

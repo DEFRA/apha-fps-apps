@@ -1,31 +1,12 @@
-/*
- * TRANSFORMENGINE MIGRATION — ProfitCentreManagerLinkRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New EF Core LINQ-first repository implementing IProfitCentreManagerLinkRepository
- *   - All read operations use AsNoTracking for performance
- *   - Composite PK (profitcentre, manager) — both string — used throughout
- *   - GetByProfitCentreAsync enables sub-grid population for a given profit centre
- *   - DeleteAsync and ExistsAsync filter on both PK columns
- *
- * PRESERVED:
- *   - All method signatures defined in IProfitCentreManagerLinkRepository (Phase 2)
- *   - mabarchive.tblprofitcentre_manager_link is the backing table (mapped via ProfitCentreManagerLinkMap.cs)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
+using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace Apha.PIMS.DataAccess.Repository
 {
-    // TRANSFORMENGINE: implements IProfitCentreManagerLinkRepository — backs mabarchive.tblprofitcentre_manager_link; composite PK (profitcentre, manager)
     public class ProfitCentreManagerLinkRepository : BaseRepository, IProfitCentreManagerLinkRepository
     {
         private readonly PimsDbContext _dbContext;
@@ -35,55 +16,109 @@ namespace Apha.PIMS.DataAccess.Repository
             _dbContext = dbContext;
         }
 
-        // TRANSFORMENGINE: AsNoTracking full list — all profit centre/manager link records
-        public async Task<List<ProfitCentreManagerLink>> GetAllAsync()
+        public async Task<List<ProfitCentreManagerLink>> GetAllProfitCentreManagerLinksAsync()
         {
             return await _dbContext.ProfitCentreManagerLinks
                 .AsNoTracking()
-                .OrderBy(l => l.Profitcentre)
+                .OrderBy(l => l.ProfitCentre)
                 .ThenBy(l => l.Manager)
                 .ToListAsync();
         }
 
-        // TRANSFORMENGINE: AsNoTracking filtered by profitcentre — supports Manager Tab Resource Centre sub-grid
-        public async Task<List<ProfitCentreManagerLink>> GetByProfitCentreAsync(string profitcentre)
+        public async Task<PagedData<ProfitCentreManagerLink>> GetPagedByManagerAsync(PaginationParameters<string> query, string manager)
+        {
+            var baseQuery = _dbContext.ProfitCentreManagerLinks
+                .AsNoTracking()
+                .Where(l => l.Manager == manager);
+
+            if (!string.IsNullOrWhiteSpace(query.Filter))
+            {
+                var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(query.Filter)
+                    ?? new Dictionary<string, string>();
+
+                if (filters.TryGetValue("ProfitCentre", out var profitcentreFilter)
+                    && !string.IsNullOrWhiteSpace(profitcentreFilter))
+                {
+                    var value = profitcentreFilter.Trim();
+                    baseQuery = baseQuery.Where(l => EF.Functions.ILike(l.ProfitCentre, $"%{value}%"));
+                }
+
+                if (filters.TryGetValue("Manager", out var managerFilter)
+                    && !string.IsNullOrWhiteSpace(managerFilter))
+                {
+                    var value = managerFilter.Trim();
+                    baseQuery = baseQuery.Where(l => EF.Functions.ILike(l.Manager, $"%{value}%"));
+                }
+            }
+
+            baseQuery = (query.SortBy, query.Descending) switch
+            {
+                ("ProfitCentre", true) => baseQuery.OrderByDescending(l => l.ProfitCentre).ThenBy(l => l.Manager),
+                ("ProfitCentre", false) => baseQuery.OrderBy(l => l.ProfitCentre).ThenBy(l => l.Manager),
+                ("Manager", true) => baseQuery.OrderByDescending(l => l.Manager).ThenBy(l => l.ProfitCentre),
+                ("Manager", false) => baseQuery.OrderBy(l => l.Manager).ThenBy(l => l.ProfitCentre),
+                (_, true) => baseQuery.OrderByDescending(l => l.ProfitCentre).ThenBy(l => l.Manager),
+                _ => baseQuery.OrderBy(l => l.ProfitCentre).ThenBy(l => l.Manager)
+            };
+
+            var page = query.Page > 0 ? query.Page : 1;
+            var pageSize = query.PageSize > 0 ? query.PageSize : 10;
+            return await ApplyPaging(baseQuery, page, pageSize);
+        }
+        public async Task<List<ProfitCentreLookup>> GetProfitCentresAsync()
+        {
+            return await _dbContext.MyTblProfitCentres
+                .AsNoTracking()
+                .GroupBy(x => x.ProfitCentre)
+                .Select(g => new ProfitCentreLookup
+                {
+                    ProfitCentre = g.Key,
+                    LatestYear = g.Max(x => x.Year)
+                })
+                .OrderBy(x => x.ProfitCentre)
+                .ToListAsync();
+        }
+        public async Task<List<ProfitCentreManagerLink>> GetByProfitCentreAsync(string profitCentre)
         {
             return await _dbContext.ProfitCentreManagerLinks
                 .AsNoTracking()
-                .Where(l => l.Profitcentre == profitcentre)
+                .Where(l => l.ProfitCentre == profitCentre)
                 .OrderBy(l => l.Manager)
                 .ToListAsync();
         }
 
-        // TRANSFORMENGINE: AsNoTracking single-row lookup by composite PK (profitcentre, manager)
-        public async Task<ProfitCentreManagerLink?> GetByIdAsync(string profitcentre, string manager)
+        public async Task<List<ProfitCentreManagerLink>> GetByManagerAsync(string manager)
         {
             return await _dbContext.ProfitCentreManagerLinks
                 .AsNoTracking()
-                .FirstOrDefaultAsync(l => l.Profitcentre == profitcentre && l.Manager == manager);
+                .Where(l => l.Manager == manager)
+                .OrderBy(l => l.ProfitCentre)
+                .ToListAsync();
         }
-
-        // TRANSFORMENGINE: insert — EF Add + SaveChangesAsync; no surrogate key
-        public async Task<ProfitCentreManagerLink> AddAsync(ProfitCentreManagerLink entity)
+        public async Task<ProfitCentreManagerLink?> GetProfitCentreManagerLinkByIdAsync(string profitCentre, string manager)
+        {
+            return await _dbContext.ProfitCentreManagerLinks
+                .AsNoTracking()
+                .FirstOrDefaultAsync(l => l.ProfitCentre == profitCentre && l.Manager == manager);
+        }
+        public async Task<ProfitCentreManagerLink> AddProfitCentreManagerLinkAsync(ProfitCentreManagerLink entity)
         {
             _dbContext.ProfitCentreManagerLinks.Add(entity);
             await _dbContext.SaveChangesAsync();
             return entity;
         }
-
-        // TRANSFORMENGINE: set-based delete via ExecuteDeleteAsync — filters on both PK columns
-        public async Task DeleteAsync(string profitcentre, string manager)
+        public async Task<bool> DeleteProfitCentreManagerLinkAsync(string profitCentre, string manager)
         {
-            await _dbContext.ProfitCentreManagerLinks
-                .Where(l => l.Profitcentre == profitcentre && l.Manager == manager)
+            int rowsAffected = await _dbContext.ProfitCentreManagerLinks
+                .Where(l => l.ProfitCentre == profitCentre && l.Manager == manager)
                 .ExecuteDeleteAsync();
-        }
 
-        // TRANSFORMENGINE: AnyAsync guard on composite PK (profitcentre, manager)
-        public async Task<bool> ExistsAsync(string profitcentre, string manager)
+            return rowsAffected > 0;
+        }
+        public async Task<bool> ProfitCentreManagerLinkExistsAsync(string profitCentre, string manager)
         {
             return await _dbContext.ProfitCentreManagerLinks
-                .AnyAsync(l => l.Profitcentre == profitcentre && l.Manager == manager);
+                .AnyAsync(l => l.ProfitCentre == profitCentre && l.Manager == manager);
         }
     }
 }

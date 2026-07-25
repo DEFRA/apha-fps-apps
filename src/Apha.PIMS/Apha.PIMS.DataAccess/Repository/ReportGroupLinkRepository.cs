@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ReportGroupLinkRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New EF Core LINQ-first repository implementing IReportGroupLinkRepository
- *   - All read operations use AsNoTracking for performance
- *   - Composite PK (reportid, groupid) used throughout — no surrogate key
- *   - DeleteAsync and ExistsAsync filter on both PK columns
- *   - GetByReportIdAsync enables sub-grid population for a given report
- *
- * PRESERVED:
- *   - All method signatures defined in IReportGroupLinkRepository (Phase 2)
- *   - mabarchive.tblreportgroup_link is the backing table (mapped via ReportGroupLinkMap.cs)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.DataAccess.Data;
@@ -25,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.PIMS.DataAccess.Repository
 {
-    // TRANSFORMENGINE: implements IReportGroupLinkRepository — backs mabarchive.tblreportgroup_link; composite PK (reportid, groupid)
     public class ReportGroupLinkRepository : BaseRepository, IReportGroupLinkRepository
     {
         private readonly PimsDbContext _dbContext;
@@ -35,55 +14,46 @@ namespace Apha.PIMS.DataAccess.Repository
             _dbContext = dbContext;
         }
 
-        // TRANSFORMENGINE: AsNoTracking full list — all report/group link records
-        public async Task<List<ReportGroupLink>> GetAllAsync()
+        public async Task<List<ReportGroupLink>> GetAllReportGroupLinksAsync()
         {
             return await _dbContext.ReportGroupLinks
                 .AsNoTracking()
-                .OrderBy(l => l.Reportid)
-                .ThenBy(l => l.Groupid)
+                .OrderBy(l => l.ReportId)
+                .ThenBy(l => l.GroupId)
                 .ToListAsync();
         }
-
-        // TRANSFORMENGINE: AsNoTracking filtered by reportid — supports report sub-grid population
-        public async Task<List<ReportGroupLink>> GetByReportIdAsync(int reportid)
+        public async Task<List<ReportGroupLink>> GetReportGroupLinksByReportIdAsync(int reportId)
         {
             return await _dbContext.ReportGroupLinks
                 .AsNoTracking()
-                .Where(l => l.Reportid == reportid)
-                .OrderBy(l => l.Groupid)
+                .Where(l => l.ReportId == reportId)
+                .OrderBy(l => l.GroupId)
                 .ToListAsync();
         }
-
-        // TRANSFORMENGINE: AsNoTracking single-row lookup by composite PK (reportid, groupid)
-        public async Task<ReportGroupLink?> GetByIdAsync(int reportid, int groupid)
+        public async Task<ReportGroupLink?> GetReportGroupLinkByIdAsync(int reportId, int groupId)
         {
             return await _dbContext.ReportGroupLinks
                 .AsNoTracking()
-                .FirstOrDefaultAsync(l => l.Reportid == reportid && l.Groupid == groupid);
+                .FirstOrDefaultAsync(l => l.ReportId == reportId && l.GroupId == groupId);
         }
-
-        // TRANSFORMENGINE: insert — EF Add + SaveChangesAsync; no surrogate key
-        public async Task<ReportGroupLink> AddAsync(ReportGroupLink entity)
+        public async Task<ReportGroupLink> AddReportGroupLinkAsync(ReportGroupLink entity)
         {
             _dbContext.ReportGroupLinks.Add(entity);
             await _dbContext.SaveChangesAsync();
             return entity;
         }
-
-        // TRANSFORMENGINE: set-based delete via ExecuteDeleteAsync — filters on both PK columns
-        public async Task DeleteAsync(int reportid, int groupid)
+        public async Task<bool> DeleteReportGroupLinkAsync(int reportId, int groupId)
         {
-            await _dbContext.ReportGroupLinks
-                .Where(l => l.Reportid == reportid && l.Groupid == groupid)
+            int rowsAffected = await _dbContext.ReportGroupLinks
+                .Where(l => l.ReportId == reportId && l.GroupId == groupId)
                 .ExecuteDeleteAsync();
-        }
 
-        // TRANSFORMENGINE: AnyAsync guard on composite PK (reportid, groupid)
-        public async Task<bool> ExistsAsync(int reportid, int groupid)
+            return rowsAffected > 0;
+        }
+        public async Task<bool> ReportGroupLinkExistsAsync(int reportId, int groupId)
         {
             return await _dbContext.ReportGroupLinks
-                .AnyAsync(l => l.Reportid == reportid && l.Groupid == groupid);
+                .AnyAsync(l => l.ReportId == reportId && l.GroupId == groupId);
         }
     }
 }

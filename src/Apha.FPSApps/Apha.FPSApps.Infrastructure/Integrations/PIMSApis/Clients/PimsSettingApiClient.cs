@@ -50,7 +50,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: GET /api/v1/setting — full settings list
-        public async Task<ApiResponseDto<List<SettingDto>>> GetAllAsync()
+        public async Task<ApiResponseDto<List<SettingDto>>> GetAllSettingsAsync()
         {
             try
             {
@@ -70,7 +70,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: GET /api/v1/setting/userupdateable — filtered list for user UI
-        public async Task<ApiResponseDto<List<SettingDto>>> GetAllUserUpdateableAsync()
+        public async Task<ApiResponseDto<List<SettingDto>>> GetAllUserUpdateableSettingsAsync()
         {
             try
             {
@@ -91,7 +91,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: GET /api/v1/setting/{id} — string PK; Uri.EscapeDataString applied
-        public async Task<ApiResponseDto<SettingDto>> GetByIdAsync(string id)
+        public async Task<ApiResponseDto<SettingDto>> GetSettingByIdAsync(string id)
         {
             try
             {
@@ -112,7 +112,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: PUT /api/v1/setting/{id} — route id is authoritative; Uri.EscapeDataString applied; no create/delete (pre-configured rows)
-        public async Task<ApiResponseDto<SettingDto>> UpdateAsync(string id, SettingDto dto)
+        public async Task<ApiResponseDto<SettingDto>> UpdateSettingAsync(string id, SettingDto dto)
         {
             try
             {

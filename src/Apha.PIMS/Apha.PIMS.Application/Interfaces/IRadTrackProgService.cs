@@ -1,38 +1,25 @@
-/*
- * TRANSFORMENGINE MIGRATION — IRadTrackProgService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New Application service interface for RadTrackProg CRUD operations (Programme Tab, frmPIMSMainForm)
- *   - All methods are async (Task<T>) — no synchronous signatures
- *   - Natural string PK (program varchar(10)) reflected in GetByIdAsync / DeleteAsync / ExistsAsync
- *   - GetAllAsync returns full list for programme administration usage
- *
- * PRESERVED:
- *   - No infrastructure-specific code in this Application interface
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Application.Dtos;
+using Apha.PIMS.Application.Pagination;
 
 namespace Apha.PIMS.Application.Interfaces
 {
-    // TRANSFORMENGINE: service interface for RadTrackProg CRUD; natural string PK (program varchar(10)); Programme Tab; consumed by RadTrackProgController (Phase 5)
     public interface IRadTrackProgService
     {
-        Task<List<RadTrackProgDto>> GetAllAsync();
+        Task<List<RadTrackProgDto>> GetAllRadTrackProgsAsync();
 
-        Task<RadTrackProgDto?> GetByIdAsync(string program);
+        Task<PaginatedResult<RadTrackProgDto>> GetPagedRadTrackProgsAsync(QueryParameters<string> query);
 
-        Task<RadTrackProgDto> CreateAsync(RadTrackProgDto dto);
+        Task<RadTrackProgDto?> GetRadTrackProgByProgramAsync(string program);
 
-        Task<RadTrackProgDto> UpdateAsync(RadTrackProgDto dto);
+        Task<RadTrackProgDto> CreateRadTrackProgAsync(RadTrackProgDto dto);
 
-        Task DeleteAsync(string program);
+        Task<RadTrackProgDto> UpdateRadTrackProgAsync(RadTrackProgDto dto);
 
-        Task<bool> ExistsAsync(string program);
+        Task<bool> DeleteRadTrackProgAsync(string program);
+
+        Task<bool> RadTrackProgExistsAsync(string program);
+
+        // Returns distinct non-null Program values from MY_tlkpProject for populating the Programme dropdown
+        Task<List<string>> GetAllProgramNamesAsync();
     }
 }

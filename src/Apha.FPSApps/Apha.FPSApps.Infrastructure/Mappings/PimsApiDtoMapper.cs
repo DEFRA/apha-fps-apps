@@ -18,6 +18,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PaginationDto, Pagination>().ReverseMap();
 
             // Project List
+            CreateMap<ProfitCentreLookupRes, ProfitCentreLookupDto>().ReverseMap();
+            CreateMap<ProgramLookupRes, ProgramLookupDto>().ReverseMap();
             CreateMap<ProjectListRes, ProjectListViewDto>().ReverseMap();
             CreateMap<ProjectListMilestoneRes, ProjectListMilestoneDto>().ReverseMap();
             CreateMap<ProjectDetailsMilestoneRes, ProjectDetailsMilestoneDto>().ReverseMap();
@@ -45,6 +47,11 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Risk
             CreateMap<RiskRes, RiskDto>().ReverseMap();
+            CreateMap<RiskDto, RiskReq>().ReverseMap();
+
+            // Publication Type
+            CreateMap<PublicationTypeRes, PublicationTypeDto>().ReverseMap();
+            CreateMap<PublicationTypeDto, PublicationTypeReq>().ReverseMap();
 
             // Year
             CreateMap<YearRes, YearDto>().ReverseMap();

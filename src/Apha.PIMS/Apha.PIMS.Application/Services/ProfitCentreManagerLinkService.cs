@@ -1,33 +1,13 @@
-/*
- * TRANSFORMENGINE MIGRATION — ProfitCentreManagerLinkService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New Application service implementing IProfitCentreManagerLinkService for ProfitCentreManagerLink CRUD (Manager Tab resource centre sub-grid, frmMaintainance)
- *   - Composite PK (profitcentre, manager) — both string — no UpdateAsync (link table: add/delete only)
- *   - Delegates all persistence to IProfitCentreManagerLinkRepository; no direct DbContext usage
- *   - All methods are async end-to-end
- *   - Throws ArgumentException on null/invalid input; KeyNotFoundException when entity not found;
- *     InvalidOperationException on duplicate-link guard
- *   - AutoMapper used for all entity <-> DTO conversions
- *
- * PRESERVED:
- *   - Duplicate-link guard: cannot add a profit-centre-manager link that already exists
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
+using Apha.PIMS.Core.Pagination;
 using AutoMapper;
 
 namespace Apha.PIMS.Application.Services
 {
-    // TRANSFORMENGINE: service orchestrates IProfitCentreManagerLinkRepository; composite PK (profitcentre, manager); link table — no update
     public class ProfitCentreManagerLinkService : IProfitCentreManagerLinkService
     {
         private readonly IProfitCentreManagerLinkRepository _repository;
@@ -39,78 +19,99 @@ namespace Apha.PIMS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        // TRANSFORMENGINE: returns full list of all profit-centre-manager links
-        public async Task<List<ProfitCentreManagerLinkDto>> GetAllAsync()
+        public async Task<List<ProfitCentreManagerLinkDto>> GetAllProfitCentreManagerLinksAsync()
         {
-            List<ProfitCentreManagerLink> entities = await _repository.GetAllAsync();
+            List<ProfitCentreManagerLink> entities = await _repository.GetAllProfitCentreManagerLinksAsync();
             return _mapper.Map<List<ProfitCentreManagerLinkDto>>(entities);
         }
 
-        // TRANSFORMENGINE: returns all manager links for a given profit centre — used for sub-grid population
-        public async Task<List<ProfitCentreManagerLinkDto>> GetByProfitCentreAsync(string profitcentre)
+        public async Task<PaginatedResult<ProfitCentreManagerLinkDto>> GetPagedByManagerAsync(QueryParameters<string> query, string manager)
         {
-            if (string.IsNullOrWhiteSpace(profitcentre))
-                throw new ArgumentException("Profit centre is required.", nameof(profitcentre));
-
-            List<ProfitCentreManagerLink> entities = await _repository.GetByProfitCentreAsync(profitcentre);
-            return _mapper.Map<List<ProfitCentreManagerLinkDto>>(entities);
-        }
-
-        // TRANSFORMENGINE: returns nullable — controller maps null to 404; composite PK lookup
-        public async Task<ProfitCentreManagerLinkDto?> GetByIdAsync(string profitcentre, string manager)
-        {
-            if (string.IsNullOrWhiteSpace(profitcentre))
-                throw new ArgumentException("Profit centre is required.", nameof(profitcentre));
+            if (query is null) throw new ArgumentNullException(nameof(query));
             if (string.IsNullOrWhiteSpace(manager))
                 throw new ArgumentException("Manager is required.", nameof(manager));
 
-            ProfitCentreManagerLink? entity = await _repository.GetByIdAsync(profitcentre, manager);
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetPagedByManagerAsync(parameters, manager);
+            return _mapper.Map<PaginatedResult<ProfitCentreManagerLinkDto>>(pagedData);
+        }
+
+        public async Task<List<ProfitCentreLookupDto>> GetProfitCentresAsync()
+        {
+            List<ProfitCentreLookup> entities = await _repository.GetProfitCentresAsync();
+            return _mapper.Map<List<ProfitCentreLookupDto>>(entities);
+        }
+
+        public async Task<List<ProfitCentreManagerLinkDto>> GetByProfitCentreAsync(string profitCentre)
+        {
+            if (string.IsNullOrWhiteSpace(profitCentre))
+                throw new ArgumentException("Profit centre is required.", nameof(profitCentre));
+
+            List<ProfitCentreManagerLink> entities = await _repository.GetByProfitCentreAsync(profitCentre);
+            return _mapper.Map<List<ProfitCentreManagerLinkDto>>(entities);
+        }
+
+        public async Task<List<ProfitCentreManagerLinkDto>> GetByManagerAsync(string manager)
+        {
+            if (string.IsNullOrWhiteSpace(manager))
+                throw new ArgumentException("Manager is required.", nameof(manager));
+
+            List<ProfitCentreManagerLink> entities = await _repository.GetByManagerAsync(manager);
+            return _mapper.Map<List<ProfitCentreManagerLinkDto>>(entities);
+        }
+
+        public async Task<ProfitCentreManagerLinkDto?> GetProfitCentreManagerLinkByIdAsync(string profitCentre, string manager)
+        {
+            if (string.IsNullOrWhiteSpace(profitCentre))
+                throw new ArgumentException("Profit centre is required.", nameof(profitCentre));
+            if (string.IsNullOrWhiteSpace(manager))
+                throw new ArgumentException("Manager is required.", nameof(manager));
+
+            ProfitCentreManagerLink? entity = await _repository.GetProfitCentreManagerLinkByIdAsync(profitCentre, manager);
             return entity is null ? null : _mapper.Map<ProfitCentreManagerLinkDto>(entity);
         }
 
-        // TRANSFORMENGINE: duplicate-link guard — throws InvalidOperationException if link already exists
-        public async Task<ProfitCentreManagerLinkDto> CreateAsync(ProfitCentreManagerLinkDto dto)
+        public async Task<ProfitCentreManagerLinkDto> CreateProfitCentreManagerLinkAsync(ProfitCentreManagerLinkDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.Profitcentre))
+            if (string.IsNullOrWhiteSpace(dto.ProfitCentre))
                 throw new ArgumentException("Profit centre is required.", nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.Manager))
                 throw new ArgumentException("Manager is required.", nameof(dto));
 
-            bool alreadyExists = await _repository.ExistsAsync(dto.Profitcentre, dto.Manager);
+            bool alreadyExists = await _repository.ProfitCentreManagerLinkExistsAsync(dto.ProfitCentre, dto.Manager);
             if (alreadyExists)
                 throw new InvalidOperationException(
-                    $"ProfitCentreManagerLink (profitcentre='{dto.Profitcentre}', manager='{dto.Manager}') already exists.");
+                    $"ProfitCentreManagerLink (profitcentre='{dto.ProfitCentre}', manager='{dto.Manager}') already exists.");
 
             ProfitCentreManagerLink entity = _mapper.Map<ProfitCentreManagerLink>(dto);
-            ProfitCentreManagerLink created = await _repository.AddAsync(entity);
+            ProfitCentreManagerLink created = await _repository.AddProfitCentreManagerLinkAsync(entity);
             return _mapper.Map<ProfitCentreManagerLinkDto>(created);
         }
 
-        // TRANSFORMENGINE: throws KeyNotFoundException if link not found before delete
-        public async Task DeleteAsync(string profitcentre, string manager)
+        public async Task<bool> DeleteProfitCentreManagerLinkAsync(string profitCentre, string manager)
         {
-            if (string.IsNullOrWhiteSpace(profitcentre))
-                throw new ArgumentException("Profit centre is required.", nameof(profitcentre));
+            if (string.IsNullOrWhiteSpace(profitCentre))
+                throw new ArgumentException("Profit centre is required.", nameof(profitCentre));
             if (string.IsNullOrWhiteSpace(manager))
                 throw new ArgumentException("Manager is required.", nameof(manager));
 
-            bool exists = await _repository.ExistsAsync(profitcentre, manager);
+            bool exists = await _repository.ProfitCentreManagerLinkExistsAsync(profitCentre, manager);
             if (!exists)
                 throw new KeyNotFoundException(
-                    $"ProfitCentreManagerLink (profitcentre='{profitcentre}', manager='{manager}') was not found.");
+                    $"ProfitCentreManagerLink (profitcentre='{profitCentre}', manager='{manager}') was not found.");
 
-            await _repository.DeleteAsync(profitcentre, manager);
+            return await _repository.DeleteProfitCentreManagerLinkAsync(profitCentre, manager);
         }
 
-        public async Task<bool> ExistsAsync(string profitcentre, string manager)
+        public async Task<bool> ProfitCentreManagerLinkExistsAsync(string profitCentre, string manager)
         {
-            if (string.IsNullOrWhiteSpace(profitcentre))
-                throw new ArgumentException("Profit centre is required.", nameof(profitcentre));
+            if (string.IsNullOrWhiteSpace(profitCentre))
+                throw new ArgumentException("Profit centre is required.", nameof(profitCentre));
             if (string.IsNullOrWhiteSpace(manager))
                 throw new ArgumentException("Manager is required.", nameof(manager));
 
-            return await _repository.ExistsAsync(profitcentre, manager);
+            return await _repository.ProfitCentreManagerLinkExistsAsync(profitCentre, manager);
         }
     }
 }

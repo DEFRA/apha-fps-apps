@@ -1,36 +1,8 @@
-/*
- * TRANSFORMENGINE MIGRATION — ReportController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - MS Access Form (frmReport) -> ASP.NET Core 10 Web API [ApiController]
- *   - VBA form CRUD operations -> REST endpoints: GET /report, GET /report/{id}, POST /report, PUT /report/{id}, DELETE /report/{id}
- *   - Access DAO data binding -> IReportService dependency injection
- *   - Request/Response contracts mapped via AutoMapper (ReportReq <-> ReportDto <-> ReportRes)
- *
- * PRESERVED:
- *   - All CRUD semantics from the original form operations
- *   - Authorization: API-PIMSUser, API-PIMSAdmin roles required
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm role requirements match environment-specific access policy for report management
- *
- * PHASE 6 — Backend Readiness Gate (VERIFIED 2026-07-06):
- *   - Route confirmed: [Route("api/v{version:apiVersion}/report")] → base path GET/POST /api/v1/report
- *   - GET /api/v1/report              → GetAll()      — no required params
- *   - GET /api/v1/report/{id:int}     → GetById(id)   — required: id (integer PK, route)
- *   - POST /api/v1/report             → Create(req)   — required: ReportReq body (all writable fields)
- *   - PUT /api/v1/report/{id:int}     → Update(id,req)— required: id (route, authoritative), ReportReq body
- *   - DELETE /api/v1/report/{id:int}  → Delete(id)    — required: id (route)
- *   - Contracts: ReportReq (body), ReportRes (response) — both registered in RequestMapper
- *   - Lookup separation: ReportGroup is a separate lookup endpoint on ReportGroupController; not mixed here
- *   - No pagination required — Reports Tab grid loads full list
- *   - All route parameters are satisfiable from the page context (integer PK from grid row selection)
- */
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Pagination;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -55,48 +27,57 @@ namespace Apha.PIMS.Api.Controllers
 
         /// <summary>Get all reports.</summary>
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAllReports()
         {
-            // TRANSFORMENGINE: GetAllAsync -> GET /report (list all reports)
-            List<ReportDto> result = await _service.GetAllAsync();
+            // TRANSFORMENGINE: GetAllReportsAsync -> GET /report (list all reports)
+            List<ReportDto> result = await _service.GetAllReportsAsync();
             return Ok(_mapper.Map<List<ReportRes>>(result));
+        }
+
+        /// <summary>Retrieves a paged list of reports.</summary>
+        /// <param name="query">Paging, sorting and filter parameters.</param>
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPagedReports([FromQuery] QueryParameters<string> query)
+        {
+            var result = await _service.GetPagedReportsAsync(query);
+            return Ok(_mapper.Map<PaginationRes<ReportRes>>(result));
         }
 
         /// <summary>Get a single report by id.</summary>
         [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetReportById(int id)
         {
-            ReportDto? result = await _service.GetByIdAsync(id);
+            ReportDto? result = await _service.GetReportByIdAsync(id);
             return result is null ? NotFound() : Ok(_mapper.Map<ReportRes>(result));
         }
 
         /// <summary>Create a new report.</summary>
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ReportReq request)
+        public async Task<IActionResult> CreateReport([FromBody] ReportReq request)
         {
             ReportDto dto = _mapper.Map<ReportDto>(request);
-            ReportDto created = await _service.CreateAsync(dto);
+            ReportDto created = await _service.CreateReportAsync(dto);
             ReportRes res = _mapper.Map<ReportRes>(created);
-            return CreatedAtAction(nameof(GetById), new { id = res.Id, version = "1.0" }, res);
+            return CreatedAtAction(nameof(GetReportById), new { id = res.Id, version = "1.0" }, res);
         }
 
         /// <summary>Update an existing report.</summary>
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] ReportReq request)
+        public async Task<IActionResult> UpdateReport(int id, [FromBody] ReportReq request)
         {
             ReportDto dto = _mapper.Map<ReportDto>(request);
             // TRANSFORMENGINE: Route id is authoritative — set before service call
             dto.Id = id;
-            ReportDto updated = await _service.UpdateAsync(dto);
+            ReportDto updated = await _service.UpdateReportAsync(dto);
             return Ok(_mapper.Map<ReportRes>(updated));
         }
 
         /// <summary>Delete a report by id.</summary>
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteReport(int id)
         {
-            await _service.DeleteAsync(id);
-            return Ok(new { success = true });
+            bool deleted = await _service.DeleteReportAsync(id);
+            return Ok(deleted);
         }
     }
 }

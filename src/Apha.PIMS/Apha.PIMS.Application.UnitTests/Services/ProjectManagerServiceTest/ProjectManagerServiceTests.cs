@@ -1,21 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ProjectManagerServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New xUnit test class for Apha.PIMS.Application.Services.ProjectManagerService
- *   - Natural varchar PK (projectmanager name string)
- *   - Covers: GetAllAsync, GetByIdAsync, CreateAsync (dup-guard), UpdateAsync, DeleteAsync, ExistsAsync
- *   - Uses NSubstitute for IProjectManagerRepository and IMapper
- *
- * PRESERVED:
- *   - Duplicate-name guard: InvalidOperationException when manager name already exists
- *   - Not-found guard: KeyNotFoundException on update/delete
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Services;
 using Apha.PIMS.Core.Entities;
@@ -45,7 +27,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectManagerServiceTest
             new ProjectManager { Projectmanager = name, Email = "j.smith@apha.gov.uk", Disable = false };
 
         private static ProjectManagerDto MakeDto(string name = "J. Smith") =>
-            new ProjectManagerDto { Projectmanager = name, Email = "j.smith@apha.gov.uk", Disable = false };
+            new ProjectManagerDto { ProjectManager = name, Email = "j.smith@apha.gov.uk", Disable = false };
 
         // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -75,26 +57,26 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectManagerServiceTest
             // Arrange
             var entities = new List<ProjectManager> { MakeEntity("Smith"), MakeEntity("Jones") };
             var dtos     = new List<ProjectManagerDto> { MakeDto("Smith"), MakeDto("Jones") };
-            _repository.GetAllAsync().Returns(entities);
+            _repository.GetAllProjectManagersAsync().Returns(entities);
             _mapper.Map<List<ProjectManagerDto>>(entities).Returns(dtos);
 
             // Act
-            var result = await _service.GetAllAsync();
+            var result = await _service.GetAllProjectManagersAsync();
 
             // Assert
             Assert.Equal(2, result.Count);
-            await _repository.Received(1).GetAllAsync();
+            await _repository.Received(1).GetAllProjectManagersAsync();
         }
 
         [Fact]
         public async Task GetAllAsync_RepositoryReturnsEmpty_ReturnsEmptyList()
         {
             // Arrange
-            _repository.GetAllAsync().Returns(new List<ProjectManager>());
+            _repository.GetAllProjectManagersAsync().Returns(new List<ProjectManager>());
             _mapper.Map<List<ProjectManagerDto>>(Arg.Any<List<ProjectManager>>()).Returns(new List<ProjectManagerDto>());
 
             // Act
-            var result = await _service.GetAllAsync();
+            var result = await _service.GetAllProjectManagersAsync();
 
             // Assert
             Assert.Empty(result);
@@ -104,10 +86,10 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectManagerServiceTest
         public async Task GetAllAsync_RepositoryThrowsException_PropagatesException()
         {
             // Arrange
-            _repository.GetAllAsync().ThrowsAsync(new InvalidOperationException("db error"));
+            _repository.GetAllProjectManagersAsync().ThrowsAsync(new InvalidOperationException("db error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetAllAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetAllProjectManagersAsync());
         }
 
         #endregion
@@ -123,25 +105,25 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectManagerServiceTest
             const string name = "J. Smith";
             var entity = MakeEntity(name);
             var dto    = MakeDto(name);
-            _repository.GetByIdAsync(name).Returns(entity);
+            _repository.GetProjectManagerByNameAsync(name).Returns(entity);
             _mapper.Map<ProjectManagerDto>(entity).Returns(dto);
 
             // Act
-            var result = await _service.GetByIdAsync(name);
+            var result = await _service.GetProjectManagerByNameAsync(name);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(name, result!.Projectmanager);
+            Assert.Equal(name, result!.ProjectManager);
         }
 
         [Fact]
         public async Task GetByIdAsync_EntityNotFound_ReturnsNull()
         {
             // Arrange
-            _repository.GetByIdAsync(Arg.Any<string>()).Returns((ProjectManager?)null);
+            _repository.GetProjectManagerByNameAsync(Arg.Any<string>()).Returns((ProjectManager?)null);
 
             // Act
-            var result = await _service.GetByIdAsync("Unknown");
+            var result = await _service.GetProjectManagerByNameAsync("Unknown");
 
             // Assert
             Assert.Null(result);
@@ -150,13 +132,13 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectManagerServiceTest
         [Fact]
         public async Task GetByIdAsync_EmptyName_ThrowsArgumentException()
         {
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetByIdAsync(""));
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetProjectManagerByNameAsync(""));
         }
 
         [Fact]
         public async Task GetByIdAsync_WhitespaceName_ThrowsArgumentException()
         {
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetByIdAsync("   "));
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetProjectManagerByNameAsync("   "));
         }
 
         #endregion
@@ -174,18 +156,18 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectManagerServiceTest
             var entity  = MakeEntity(name);
             var created = MakeEntity(name);
             var result_dto = MakeDto(name);
-            _repository.ExistsAsync(name).Returns(false);
+            _repository.ProjectManagerExistsAsync(name).Returns(false);
             _mapper.Map<ProjectManager>(dto).Returns(entity);
-            _repository.AddAsync(entity).Returns(created);
+            _repository.AddProjectManagerAsync(entity).Returns(created);
             _mapper.Map<ProjectManagerDto>(created).Returns(result_dto);
 
             // Act
-            var result = await _service.CreateAsync(dto);
+            var result = await _service.CreateProjectManagerAsync(dto);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(name, result.Projectmanager);
-            await _repository.Received(1).AddAsync(entity);
+            Assert.Equal(name, result.ProjectManager);
+            await _repository.Received(1).AddProjectManagerAsync(entity);
         }
 
         [Fact]
@@ -193,23 +175,23 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectManagerServiceTest
         {
             // Arrange
             var dto = MakeDto("Existing Manager");
-            _repository.ExistsAsync("Existing Manager").Returns(true);
+            _repository.ProjectManagerExistsAsync("Existing Manager").Returns(true);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateProjectManagerAsync(dto));
         }
 
         [Fact]
         public async Task CreateAsync_NullDto_ThrowsArgumentNullException()
         {
-            await Assert.ThrowsAsync<ArgumentNullException>(() => _service.CreateAsync(null!));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _service.CreateProjectManagerAsync(null!));
         }
 
         [Fact]
         public async Task CreateAsync_EmptyName_ThrowsArgumentException()
         {
-            var dto = new ProjectManagerDto { Projectmanager = "" };
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateAsync(dto));
+            var dto = new ProjectManagerDto { ProjectManager = "" };
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateProjectManagerAsync(dto));
         }
 
         [Fact]
@@ -217,13 +199,13 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectManagerServiceTest
         {
             // Arrange
             var dto = MakeDto("Existing");
-            _repository.ExistsAsync("Existing").Returns(true);
+            _repository.ProjectManagerExistsAsync("Existing").Returns(true);
 
             // Act + ignore exception
-            try { await _service.CreateAsync(dto); } catch { }
+            try { await _service.CreateProjectManagerAsync(dto); } catch { }
 
             // Assert
-            await _repository.DidNotReceive().AddAsync(Arg.Any<ProjectManager>());
+            await _repository.DidNotReceive().AddProjectManagerAsync(Arg.Any<ProjectManager>());
         }
 
         #endregion
@@ -241,40 +223,40 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectManagerServiceTest
             var entity  = MakeEntity(name);
             var updated = MakeEntity(name);
             var result_dto = MakeDto(name);
-            _repository.ExistsAsync(name).Returns(true);
+            _repository.ProjectManagerExistsAsync(name).Returns(true);
             _mapper.Map<ProjectManager>(dto).Returns(entity);
-            _repository.UpdateAsync(entity).Returns(updated);
+            _repository.UpdateProjectManagerAsync(entity).Returns(updated);
             _mapper.Map<ProjectManagerDto>(updated).Returns(result_dto);
 
             // Act
-            var result = await _service.UpdateAsync(dto);
+            var result = await _service.UpdateProjectManagerAsync(dto);
 
             // Assert
             Assert.NotNull(result);
-            await _repository.Received(1).UpdateAsync(entity);
+            await _repository.Received(1).UpdateProjectManagerAsync(entity);
         }
 
         [Fact]
         public async Task UpdateAsync_EntityNotFound_ThrowsKeyNotFoundException()
         {
             // Arrange
-            _repository.ExistsAsync(Arg.Any<string>()).Returns(false);
+            _repository.ProjectManagerExistsAsync(Arg.Any<string>()).Returns(false);
 
             // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.UpdateAsync(MakeDto("Unknown")));
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.UpdateProjectManagerAsync(MakeDto("Unknown")));
         }
 
         [Fact]
         public async Task UpdateAsync_NullDto_ThrowsArgumentNullException()
         {
-            await Assert.ThrowsAsync<ArgumentNullException>(() => _service.UpdateAsync(null!));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _service.UpdateProjectManagerAsync(null!));
         }
 
         [Fact]
         public async Task UpdateAsync_EmptyName_ThrowsArgumentException()
         {
-            var dto = new ProjectManagerDto { Projectmanager = "" };
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateAsync(dto));
+            var dto = new ProjectManagerDto { ProjectManager = "" };
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateProjectManagerAsync(dto));
         }
 
         #endregion
@@ -284,34 +266,35 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectManagerServiceTest
         #region DeleteAsync
 
         [Fact]
-        public async Task DeleteAsync_EntityExists_CallsRepositoryDelete()
+        public async Task DeleteAsync_EntityExists_ReturnsTrueAndCallsRepositoryDelete()
         {
             // Arrange
             const string name = "J. Smith";
-            _repository.ExistsAsync(name).Returns(true);
-            _repository.DeleteAsync(name).Returns(Task.CompletedTask);
+            _repository.ProjectManagerExistsAsync(name).Returns(true);
+            _repository.DeleteProjectManagerAsync(name).Returns(true);
 
             // Act
-            await _service.DeleteAsync(name);
+            var result = await _service.DeleteProjectManagerAsync(name);
 
             // Assert
-            await _repository.Received(1).DeleteAsync(name);
+            Assert.True(result);
+            await _repository.Received(1).DeleteProjectManagerAsync(name);
         }
 
         [Fact]
         public async Task DeleteAsync_EntityNotFound_ThrowsKeyNotFoundException()
         {
             // Arrange
-            _repository.ExistsAsync(Arg.Any<string>()).Returns(false);
+            _repository.ProjectManagerExistsAsync(Arg.Any<string>()).Returns(false);
 
             // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.DeleteAsync("Unknown"));
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.DeleteProjectManagerAsync("Unknown"));
         }
 
         [Fact]
         public async Task DeleteAsync_EmptyName_ThrowsArgumentException()
         {
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.DeleteAsync(""));
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.DeleteProjectManagerAsync(""));
         }
 
         #endregion
@@ -324,10 +307,10 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectManagerServiceTest
         public async Task ExistsAsync_EntityExists_ReturnsTrue()
         {
             // Arrange
-            _repository.ExistsAsync("J. Smith").Returns(true);
+            _repository.ProjectManagerExistsAsync("J. Smith").Returns(true);
 
             // Act
-            var result = await _service.ExistsAsync("J. Smith");
+            var result = await _service.ProjectManagerExistsAsync("J. Smith");
 
             // Assert
             Assert.True(result);
@@ -337,10 +320,10 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectManagerServiceTest
         public async Task ExistsAsync_EntityNotFound_ReturnsFalse()
         {
             // Arrange
-            _repository.ExistsAsync(Arg.Any<string>()).Returns(false);
+            _repository.ProjectManagerExistsAsync(Arg.Any<string>()).Returns(false);
 
             // Act
-            var result = await _service.ExistsAsync("Unknown");
+            var result = await _service.ProjectManagerExistsAsync("Unknown");
 
             // Assert
             Assert.False(result);
@@ -349,7 +332,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectManagerServiceTest
         [Fact]
         public async Task ExistsAsync_EmptyName_ThrowsArgumentException()
         {
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.ExistsAsync(""));
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.ProjectManagerExistsAsync(""));
         }
 
         #endregion

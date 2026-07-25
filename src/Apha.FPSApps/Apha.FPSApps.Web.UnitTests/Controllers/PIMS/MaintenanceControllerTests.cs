@@ -1,47 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — MaintenanceControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - Expanded xUnit test class for Apha.FPSApps.Web.Areas.PIMS.Controllers.MaintenanceController
- *   - Full coverage of all public controller actions across all 6 tabs:
- *       Index, LoadReportsGrid, SaveReport, DeleteReport,
- *       LoadReportGroupsGrid, GetAddEditReportGroupPartial, SaveReportGroup, DeleteReportGroup,
- *       LoadRadTrackProgsGrid, GetAddEditRadTrackProgPartial, SaveRadTrackProg, DeleteRadTrackProg,
- *       LoadProjectManagersGrid, GetAddEditProjectManagerPartial, SaveProjectManager, DeleteProjectManager,
- *       LoadProgramManagerLinksGrid, SaveProgramManagerLink, DeleteProgramManagerLink,
- *       LoadProfitCentreManagerLinksGrid, SaveProfitCentreManagerLink, DeleteProfitCentreManagerLink,
- *       SaveSetting, GetTimeTabSettings,
- *       LoadAccessUsersGrid, GetAddEditAccessUserPartial, SaveAccessUser, DeleteAccessUser,
- *       LoadAccessUserLevelsGrid, GetAddEditAccessUserLevelPartial, SaveAccessUserLevel, DeleteAccessUserLevel,
- *       LoadFrequenciesGrid, GetAddEditFrequencyPartial, SaveFrequency, DeleteFrequency,
- *       LoadReviewItemsGrid, GetAddEditReviewItemPartial, SaveReviewItem, DeleteReviewItem
- *   - Uses NSubstitute for IMaintenanceService and IMapper mocks
- *
- * PRESERVED:
- *   - All success/failure JSON response semantics (success:true/false)
- *   - ModelState.IsValid guard (tested via AddModelError)
- *   - DataGridConfig partial view return path
- *   - Composite-PK delete routes (program+manager, profitcentre+manager, systemid+ntlogin+accesslevelid)
- *   - Setting read/update only (no Create/Delete)
- *
- * CHANGED (Phase 14 — Security Review):
- *   - SaveRadTrackProg tests updated: controller now uses server-side existence check via
- *     GetRadTrackProgByIdAsync instead of ViewBag.IsAddingNew. Tests now stub that call
- *     to exercise correct Create vs Update branching.
- *   - SaveProjectManager tests updated: same fix — GetProjectManagerByIdAsync stubbed.
- *   - Renamed SaveRadTrackProg_ValidItem_... → SaveRadTrackProg_ExistingProg_... and
- *     SaveProjectManager_ExistingManager_... to reflect true test intent.
- *   - Added SaveRadTrackProg_NewProg_... and SaveProjectManager_NewManager_... tests to
- *     cover the Create branch (existence check returns null).
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: [HttpDelete] endpoints lack [ValidateAntiForgeryToken] and
- *     Index.cshtml JavaScript DELETE calls do not send RequestVerificationToken. Requires
- *     coordinated fix in MaintenanceController.cs and Index.cshtml (tracked in checklist).
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
@@ -103,7 +59,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
                 .Returns(SuccessResponse(new List<ProfitCentreManagerLinkDto>()));
             _service.GetAllAccessUsersAsync()
                 .Returns(SuccessResponse(new List<AccessUserDto>()));
-            _service.GetAllAccessUserLevelsAsync()
+            _service.GetPagedAccessUserLevelsAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(SuccessResponse(new List<AccessUserLevelDto>()));
             _service.GetAllFrequenciesAsync()
                 .Returns(SuccessResponse(new List<FrequencyDto>()));
@@ -319,7 +275,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         {
             // Arrange
             var dto  = new ReportDto { Id = 7, Reportname = "TestReport", Type = "R" };
-            var item = new ReportItem { Id = 7, Reportname = "TestReport" };
+            var item = new ReportItem { Id = 7, ReportName = "TestReport" };
             _service.GetReportByIdAsync(7).Returns(SuccessResponse(dto));
             _mapper.Map<ReportItem>(dto).Returns(item);
 
@@ -359,7 +315,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveReport_NewReport_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var item = new ReportItem { Id = 0, Reportname = "New Report" };
+            var item = new ReportItem { Id = 0, ReportName = "New Report" };
             var dto  = new ReportDto { Id = 0, Reportname = "New Report", Type = "R" };
             _mapper.Map<ReportDto>(item).Returns(dto);
             _service.CreateReportAsync(dto).Returns(SuccessResponse(dto));
@@ -377,7 +333,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveReport_ExistingReport_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var item = new ReportItem { Id = 5, Reportname = "Existing Report" };
+            var item = new ReportItem { Id = 5, ReportName = "Existing Report" };
             var dto  = new ReportDto { Id = 5, Reportname = "Existing Report", Type = "R" };
             _mapper.Map<ReportDto>(item).Returns(dto);
             _service.UpdateReportAsync(5, dto).Returns(SuccessResponse(dto));
@@ -395,7 +351,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveReport_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
-            var item = new ReportItem { Id = 0, Reportname = "Bad Report" };
+            var item = new ReportItem { Id = 0, ReportName = "Bad Report" };
             var dto  = new ReportDto { Id = 0, Reportname = "Bad Report", Type = "R" };
             _mapper.Map<ReportDto>(item).Returns(dto);
             _service.CreateReportAsync(dto).Returns(FailureResponse<ReportDto>());
@@ -589,7 +545,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveReportGroup_NewGroup_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var item = new ReportGroupItem { Groupid = 0, Description = "New Group" };
+            var item = new ReportGroupViewModel { Groupid = 0, Description = "New Group" };
             var dto  = new ReportGroupDto { Groupid = 0, Description = "New Group" };
             _mapper.Map<ReportGroupDto>(item).Returns(dto);
             _service.CreateReportGroupAsync(dto).Returns(SuccessResponse(dto));
@@ -607,7 +563,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveReportGroup_ExistingGroup_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var item = new ReportGroupItem { Groupid = 3, Description = "Existing Group" };
+            var item = new ReportGroupViewModel { Groupid = 3, Description = "Existing Group" };
             var dto  = new ReportGroupDto { Groupid = 3, Description = "Existing Group" };
             _mapper.Map<ReportGroupDto>(item).Returns(dto);
             _service.UpdateReportGroupAsync(3, dto).Returns(SuccessResponse(dto));
@@ -626,7 +582,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         {
             // Arrange
             _controller.ModelState.AddModelError("Description", "Required");
-            var item = new ReportGroupItem();
+            var item = new ReportGroupViewModel();
 
             // Act
             var result = await _controller.SaveReportGroup(item);
@@ -641,7 +597,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveReportGroup_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
-            var item = new ReportGroupItem { Groupid = 0, Description = "Bad Group" };
+            var item = new ReportGroupViewModel { Groupid = 0, Description = "Bad Group" };
             var dto  = new ReportGroupDto { Groupid = 0, Description = "Bad Group" };
             _mapper.Map<ReportGroupDto>(item).Returns(dto);
             _service.CreateReportGroupAsync(dto).Returns(FailureResponse<ReportGroupDto>());
@@ -1832,8 +1788,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadAccessUserLevelsGrid_ValidRequest_ReturnsPartialView()
         {
             // Arrange
-            _service.GetAllAccessUserLevelsAsync().Returns(SuccessResponse(new List<AccessUserLevelDto>()));
-            _mapper.Map<List<AccessUserLevelItem>>(Arg.Any<List<AccessUserLevelDto>>())
+            _service.GetPagedAccessUserLevelsAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(new PaginatedResult<AccessUserLevelDto>()));
+            _mapper.Map<List<AccessUserLevelItem>>(Arg.Any<object>())
                 .Returns(new List<AccessUserLevelItem>());
             var request = new PaginationFilter<string> { Filter = "{}" };
 
@@ -1866,8 +1823,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             // Arrange
             var dtos  = new List<AccessUserLevelDto> { new() { Systemid = 1, Ntlogin = "jsmith", Accesslevelid = 2 } };
             var items = new List<AccessUserLevelItem> { new() { Systemid = 1, Ntlogin = "jsmith", Accesslevelid = 2 } };
-            _service.GetAllAccessUserLevelsAsync().Returns(SuccessResponse(dtos));
-            _mapper.Map<List<AccessUserLevelItem>>(dtos).Returns(items);
+            var paged = new PaginatedResult<AccessUserLevelDto>(dtos, 1, 1, 10);
+            _service.GetPagedAccessUserLevelsAsync(Arg.Any<QueryParameters<string>>()).Returns(SuccessResponse(paged));
+            _mapper.Map<List<AccessUserLevelItem>>(Arg.Any<object>()).Returns(items);
             var request = new PaginationFilter<string> { Filter = "{}" };
 
             // Act
@@ -2377,7 +2335,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             _service.CreateReviewItemAsync(dto).Returns(SuccessResponse(dto));
 
             // Act
-            var result = await _controller.SaveReviewItem(reviewItem);
+            var result = await _controller.SaveReviewItem(reviewItem, isEdit: false);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -2395,7 +2353,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             _service.UpdateReviewItemAsync(7, dto).Returns(SuccessResponse(dto));
 
             // Act
-            var result = await _controller.SaveReviewItem(reviewItem);
+            var result = await _controller.SaveReviewItem(reviewItem, isEdit: true);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -2411,7 +2369,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             var reviewItem = new ReviewItemItem();
 
             // Act
-            var result = await _controller.SaveReviewItem(reviewItem);
+            var result = await _controller.SaveReviewItem(reviewItem, isEdit: false);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -2429,7 +2387,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             _service.CreateReviewItemAsync(dto).Returns(FailureResponse<ReviewItemDto>());
 
             // Act
-            var result = await _controller.SaveReviewItem(reviewItem);
+            var result = await _controller.SaveReviewItem(reviewItem, isEdit: false);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);

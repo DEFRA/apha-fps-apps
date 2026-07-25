@@ -1,32 +1,8 @@
-/*
- * TRANSFORMENGINE MIGRATION — RadTrackProgController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - MS Access Form (frmPIMSMainForm / Programme Tab) -> ASP.NET Core 10 Web API [ApiController]
- *   - VBA form CRUD operations -> REST endpoints:
- *       GET    /api/v1/radtrackprog            — list all programmes
- *       GET    /api/v1/radtrackprog/{program}  — get single programme by natural PK
- *       POST   /api/v1/radtrackprog            — create new programme
- *       PUT    /api/v1/radtrackprog/{program}  — update existing programme
- *       DELETE /api/v1/radtrackprog/{program}  — delete programme
- *   - Access DAO data binding -> IRadTrackProgService dependency injection
- *   - Request/Response contracts mapped via AutoMapper (RadTrackProgReq <-> RadTrackProgDto <-> RadTrackProgRes)
- *
- * PRESERVED:
- *   - Natural string PK semantics (program varchar(10))
- *   - All CRUD semantics from the original Programme Tab form
- *   - Authorization: API-PIMSUser, API-PIMSAdmin roles required
- *   - radtrackprog boolean flag and publicationprefix optional field preserved
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm Programme Tab in form maps solely to tblradtrackprog or also tblaccessprograms
- *   - TRANSFORMENGINE TODO: verify publicationprefix varchar(5) max length enforced via validation attribute on RadTrackProgReq
- */
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Pagination;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -52,49 +28,61 @@ namespace Apha.PIMS.Api.Controllers
 
         /// <summary>Get all RadTrack programmes.</summary>
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAllRadTrackProgs()
         {
-            // TRANSFORMENGINE: GetAllAsync -> GET /radtrackprog (full list for Programme Tab grid)
-            List<RadTrackProgDto> result = await _service.GetAllAsync();
+            List<RadTrackProgDto> result = await _service.GetAllRadTrackProgsAsync();
             return Ok(_mapper.Map<List<RadTrackProgRes>>(result));
+        }
+
+        /// <summary>Get distinct non-null Programme names from MY_tlkpProject for dropdown binding.</summary>
+        [HttpGet("programs")]
+        public async Task<IActionResult> GetAllProgramNames()
+        {
+            List<string> programs = await _service.GetAllProgramNamesAsync();
+            return Ok(programs);
+        }
+
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPagedRadTrackProgs([FromQuery] QueryParameters<string> query)
+        {
+            var result = await _service.GetPagedRadTrackProgsAsync(query);
+            return Ok(_mapper.Map<PaginationRes<RadTrackProgRes>>(result));
         }
 
         /// <summary>Get a single RadTrack programme by its natural string PK (program).</summary>
         [HttpGet("{program}")]
-        public async Task<IActionResult> GetById(string program)
+        public async Task<IActionResult> GetRadTrackProgByProgram(string program)
         {
-            RadTrackProgDto? result = await _service.GetByIdAsync(program);
+            RadTrackProgDto? result = await _service.GetRadTrackProgByProgramAsync(program);
             return result is null ? NotFound() : Ok(_mapper.Map<RadTrackProgRes>(result));
         }
 
         /// <summary>Create a new RadTrack programme.</summary>
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] RadTrackProgReq request)
+        public async Task<IActionResult> CreateRadTrackProg([FromBody] RadTrackProgReq request)
         {
-            // TRANSFORMENGINE: natural PK create — Program is client-supplied; CreatedAtAction references GET by program
             RadTrackProgDto dto = _mapper.Map<RadTrackProgDto>(request);
-            RadTrackProgDto created = await _service.CreateAsync(dto);
+            RadTrackProgDto created = await _service.CreateRadTrackProgAsync(dto);
             RadTrackProgRes res = _mapper.Map<RadTrackProgRes>(created);
-            return CreatedAtAction(nameof(GetById), new { program = res.Program, version = "1.0" }, res);
+            return CreatedAtAction(nameof(GetRadTrackProgByProgram), new { program = res.Program, version = "1.0" }, res);
         }
 
         /// <summary>Update an existing RadTrack programme.</summary>
         [HttpPut("{program}")]
-        public async Task<IActionResult> Update(string program, [FromBody] RadTrackProgReq request)
+        public async Task<IActionResult> UpdateRadTrackProg(string program, [FromBody] RadTrackProgReq request)
         {
             RadTrackProgDto dto = _mapper.Map<RadTrackProgDto>(request);
-            // TRANSFORMENGINE: Route program is authoritative — set before service call to prevent body/route mismatch
             dto.Program = program;
-            RadTrackProgDto updated = await _service.UpdateAsync(dto);
+            RadTrackProgDto updated = await _service.UpdateRadTrackProgAsync(dto);
             return Ok(_mapper.Map<RadTrackProgRes>(updated));
         }
 
         /// <summary>Delete a RadTrack programme by its natural string PK (program).</summary>
         [HttpDelete("{program}")]
-        public async Task<IActionResult> Delete(string program)
+        public async Task<IActionResult> DeleteRadTrackProg(string program)
         {
-            await _service.DeleteAsync(program);
-            return Ok(new { success = true });
+            bool deleted = await _service.DeleteRadTrackProgAsync(program);
+            return Ok(deleted);
         }
     }
 }

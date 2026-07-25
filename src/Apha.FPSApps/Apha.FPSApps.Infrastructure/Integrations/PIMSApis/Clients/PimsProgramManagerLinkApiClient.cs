@@ -1,34 +1,8 @@
-/*
- * TRANSFORMENGINE MIGRATION — PimsProgramManagerLinkApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New HTTP API client implementing IPimsProgramManagerLinkApiClient
- *   - Binds to backend ProgramManagerLinkController routes:
- *       GET    /api/v1/programmanagerlink                      — full list
- *       GET    /api/v1/programmanagerlink/{program}            — scoped by program
- *       GET    /api/v1/programmanagerlink/{program}/{manager}  — composite natural PK get
- *       POST   /api/v1/programmanagerlink                      — create link
- *       DELETE /api/v1/programmanagerlink/{program}/{manager}  — delete by composite natural PK
- *   - Composite natural PK (program string + manager string) — Uri.EscapeDataString applied to both segments
- *   - No PUT endpoint — link table has no mutable fields beyond composite PK
- *   - Every HTTP call wrapped in try/catch(Exception) returning FailureResponse with InternalCodeError
- *   - Req/Res contracts: ProgramManagerLinkReq, ProgramManagerLinkRes from Apha.Common.Contracts.PIMS
- *
- * PRESERVED:
- *   - Composite natural PK semantics (program + manager)
- *   - GetByProgram scoped list endpoint preserved
- *   - Return types wrapped in ApiResponseDto<T>
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm composite natural PK delete route with URL-encoded string segments is acceptable
- */
-
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
@@ -50,7 +24,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: GET /api/v1/programmanagerlink — full list
-        public async Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetAllAsync()
+        public async Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetAllProgramManagerLinksAsync()
         {
             try
             {
@@ -65,6 +39,49 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             {
                 return ApiResponseDto<List<ProgramManagerLinkDto>>.FailureResponse(
                     [new ApiErrorDto { Message = "Failed to retrieve ProgramManagerLink data", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        // TRANSFORMENGINE: GET /api/v1/programmanagerlink/paged — paged list scoped by manager
+        public async Task<ApiResponseDto<PaginatedResult<ProgramManagerLinkDto>>> GetPagedByManagerAsync(
+            QueryParameters<string> query,
+            string manager)
+        {
+            try
+            {
+                var url = $"{BaseUrl}/paged?" +
+                    $"search={Uri.EscapeDataString(query.Search ?? string.Empty)}" +
+                    $"&sortBy={Uri.EscapeDataString(query.SortBy ?? string.Empty)}" +
+                    $"&descending={query.Descending}" +
+                    $"&page={query.Page}" +
+                    $"&pageSize={query.PageSize}" +
+                    $"&manager={Uri.EscapeDataString(manager)}";
+
+                if (!string.IsNullOrWhiteSpace(query.Filter))
+                {
+                    url += $"&filter={Uri.EscapeDataString(query.Filter)}";
+                }
+
+                var response = await _http.GetAsync<List<ProgramManagerLinkRes>>(url);
+                if (response.Success)
+                {
+                    var items = _mapper.Map<List<ProgramManagerLinkDto>>(response.Data ?? []);
+                    var pageNumber = response.Pagination?.PageNumber ?? query.Page;
+                    var pageSize = response.Pagination?.PageSize ?? query.PageSize;
+                    var totalRecords = response.Pagination?.TotalRecords ?? items.Count;
+                    var paged = new PaginatedResult<ProgramManagerLinkDto>(items, totalRecords, pageNumber, pageSize);
+                    return ApiResponseDto<PaginatedResult<ProgramManagerLinkDto>>.SuccessResponse(paged);
+                }
+
+                return ApiResponseDto<PaginatedResult<ProgramManagerLinkDto>>.FailureResponse(
+                    _mapper.Map<List<ApiErrorDto>>(response.Errors ?? []),
+                    _mapper.Map<ApiMetaDto>(response.Meta));
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<PaginatedResult<ProgramManagerLinkDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve paged ProgramManagerLink data", Code = InternalCodeError }],
                     new ApiMetaDto());
             }
         }
@@ -90,8 +107,28 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
+        public async Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetByManagerAsync(string manager)
+        {
+            try
+            {
+                var url = $"{BaseUrl}/manager/{Uri.EscapeDataString(manager)}";
+                var response = await _http.GetAsync<List<ProgramManagerLinkRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<ProgramManagerLinkDto>>>(response);
+
+                var responseDto = _mapper.Map<ApiResponseDto<List<ProgramManagerLinkDto>>>(response);
+                return ApiResponseDto<List<ProgramManagerLinkDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<ProgramManagerLinkDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve ProgramManagerLink by manager", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
         // TRANSFORMENGINE: GET /api/v1/programmanagerlink/{program}/{manager} — composite natural PK get; Uri.EscapeDataString on both segments
-        public async Task<ApiResponseDto<ProgramManagerLinkDto>> GetByIdAsync(string program, string manager)
+        public async Task<ApiResponseDto<ProgramManagerLinkDto>> GetProgramManagerLinkByIdAsync(string program, string manager)
         {
             try
             {
@@ -112,7 +149,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: POST /api/v1/programmanagerlink — create link
-        public async Task<ApiResponseDto<ProgramManagerLinkDto>> CreateAsync(ProgramManagerLinkDto dto)
+        public async Task<ApiResponseDto<ProgramManagerLinkDto>> CreateProgramManagerLinkAsync(ProgramManagerLinkDto dto)
         {
             try
             {
@@ -132,8 +169,28 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
+        // GET /api/v1/programmanagerlink/programs — dropdown lookup for program codes
+        public async Task<ApiResponseDto<List<ProgramLookupDto>>> GetProgramsAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync<List<ProgramLookupRes>>($"{BaseUrl}/programs");
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<ProgramLookupDto>>>(response);
+
+                var responseDto = _mapper.Map<ApiResponseDto<List<ProgramLookupDto>>>(response);
+                return ApiResponseDto<List<ProgramLookupDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<ProgramLookupDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve Program lookup data", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
         // TRANSFORMENGINE: DELETE /api/v1/programmanagerlink/{program}/{manager} — composite natural PK delete; no PUT (no mutable fields)
-        public async Task<ApiResponseDto<bool>> DeleteAsync(string program, string manager)
+        public async Task<ApiResponseDto<bool>> DeleteProgramManagerLinkAsync(string program, string manager)
         {
             try
             {

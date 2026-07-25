@@ -1,22 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ProjectManagerRepositoryTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New xUnit test class for Apha.PIMS.DataAccess.Repository.ProjectManagerRepository
- *   - Natural varchar PK (projectmanager name string)
- *   - Uses RepositoryTestHelper + Moq (established pattern for DataAccess tests)
- *   - Covers: GetAllAsync, GetByIdAsync, AddAsync, UpdateAsync, ExistsAsync
- *
- * PRESERVED:
- *   - Natural varchar PK semantics for all lookup, write, and existence checks
- *   - Disable field preserved in test data
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: DeleteAsync uses ExecuteDeleteAsync (set-based) — not easily
- *     unit-tested via mock; covered via ExistsAsync guard in service layer
- */
 using Apha.Common.Helpers.Repository;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.DataAccess.Data;
@@ -28,8 +9,6 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
 {
     public class ProjectManagerRepositoryTests
     {
-        // ── factory ───────────────────────────────────────────────────────────────
-
         private static ProjectManagerRepository CreateRepository(
             IEnumerable<ProjectManager>? managers = null)
         {
@@ -88,7 +67,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var repo = CreateRepository(managers);
 
             // Act
-            var result = await repo.GetAllAsync();
+            var result = await repo.GetAllProjectManagersAsync();
 
             // Assert
             Assert.Equal(2, result.Count);
@@ -102,7 +81,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var repo = CreateRepository();
 
             // Act
-            var result = await repo.GetAllAsync();
+            var result = await repo.GetAllProjectManagersAsync();
 
             // Assert
             Assert.Empty(result);
@@ -126,7 +105,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var repo = CreateRepository(managers);
 
             // Act
-            var result = await repo.GetByIdAsync("Smith, J.");
+            var result = await repo.GetProjectManagerByNameAsync("Smith, J.");
 
             // Assert
             Assert.NotNull(result);
@@ -141,7 +120,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var repo = CreateRepository(managers);
 
             // Act
-            var result = await repo.GetByIdAsync("Unknown Manager");
+            var result = await repo.GetProjectManagerByNameAsync("Unknown Manager");
 
             // Assert
             Assert.Null(result);
@@ -154,7 +133,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var repo = CreateRepository();
 
             // Act
-            var result = await repo.GetByIdAsync("Smith, J.");
+            var result = await repo.GetProjectManagerByNameAsync("Smith, J.");
 
             // Assert
             Assert.Null(result);
@@ -170,7 +149,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var repo = CreateRepository(managers);
 
             // Act
-            var result = await repo.GetByIdAsync(name);
+            var result = await repo.GetProjectManagerByNameAsync(name);
 
             // Assert
             Assert.Null(result);
@@ -190,7 +169,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var manager = MakeManager("New Manager");
 
             // Act
-            var result = await repo.AddAsync(manager);
+            var result = await repo.AddProjectManagerAsync(manager);
 
             // Assert
             Assert.NotNull(result);
@@ -205,7 +184,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var manager = MakeManager("New Manager");
 
             // Act
-            await repo.AddAsync(manager);
+            await repo.AddProjectManagerAsync(manager);
 
             // Assert
             managersDbSet.Verify(
@@ -221,7 +200,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var manager = MakeManager("New Manager");
 
             // Act
-            await repo.AddAsync(manager);
+            await repo.AddProjectManagerAsync(manager);
 
             // Assert
             RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
@@ -241,7 +220,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var manager = MakeManager("Manager X", disable: true);
 
             // Act
-            await repo.AddAsync(manager);
+            await repo.AddProjectManagerAsync(manager);
 
             // Assert
             Assert.NotNull(captured);
@@ -268,7 +247,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             };
 
             // Act
-            var result = await repo.UpdateAsync(updatedEntity);
+            var result = await repo.UpdateProjectManagerAsync(updatedEntity);
 
             // Assert
             Assert.NotNull(result);
@@ -284,7 +263,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var (repo, _, mockContext) = CreateRepositoryWithMocks(new List<ProjectManager> { existing });
 
             // Act
-            await repo.UpdateAsync(MakeManager("Smith, J."));
+            await repo.UpdateProjectManagerAsync(MakeManager("Smith, J."));
 
             // Assert
             RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
@@ -304,7 +283,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var repo = CreateRepository(managers);
 
             // Act
-            var result = await repo.ExistsAsync("Smith, J.");
+            var result = await repo.ProjectManagerExistsAsync("Smith, J.");
 
             // Assert
             Assert.True(result);
@@ -318,7 +297,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var repo = CreateRepository(managers);
 
             // Act
-            var result = await repo.ExistsAsync("Unknown Manager");
+            var result = await repo.ProjectManagerExistsAsync("Unknown Manager");
 
             // Assert
             Assert.False(result);
@@ -331,7 +310,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             var repo = CreateRepository();
 
             // Act
-            var result = await repo.ExistsAsync("Smith, J.");
+            var result = await repo.ProjectManagerExistsAsync("Smith, J.");
 
             // Assert
             Assert.False(result);

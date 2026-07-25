@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — PimsReportApiClientTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New xUnit test class for Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients.PimsReportApiClient
- *   - Covers: GetAllAsync, GetByIdAsync, CreateAsync, UpdateAsync, DeleteAsync
- *   - Every method: happy path (success + mapper called), failure path, exception path
- *   - URL construction verification for parameterised routes
- *   - Uses NSubstitute for IPimsHttpExecutor and IMapper
- *
- * PRESERVED:
- *   - Integer PK (id) route semantics — api/v1/report/{id}
- *   - try/catch => INTERNAL_ERROR FailureResponse pattern
- *   - Mapper called exactly once on success path
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
@@ -70,7 +50,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             new ReportRes { Id = id, ReportName = $"R{id}", Type = "R" };
 
         private static ReportDto MakeDto(int id = 1) =>
-            new ReportDto { Id = id, Reportname = $"R{id}", Type = "R" };
+            new ReportDto { Id = id, ReportName = $"R{id}", Type = "R" };
 
         // ── GetAllAsync ───────────────────────────────────────────────────────────
 
@@ -87,7 +67,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _mapper.Map<ApiResponseDto<List<ReportDto>>>(apiResp).Returns(dto);
 
             // Act
-            var result = await _client.GetAllAsync();
+            var result = await _client.GetAllReportsAsync();
 
             // Assert
             Assert.True(result.Success);
@@ -106,7 +86,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _mapper.Map<ApiResponseDto<List<ReportDto>>>(apiResp).Returns(dto);
 
             // Act
-            var result = await _client.GetAllAsync();
+            var result = await _client.GetAllReportsAsync();
 
             // Assert
             Assert.False(result.Success);
@@ -120,7 +100,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
                  .ThrowsAsync(new Exception("Network error"));
 
             // Act
-            var result = await _client.GetAllAsync();
+            var result = await _client.GetAllReportsAsync();
 
             // Assert
             Assert.False(result.Success);
@@ -138,7 +118,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _mapper.Map<ApiResponseDto<List<ReportDto>>>(apiResp).Returns(dto);
 
             // Act
-            await _client.GetAllAsync();
+            await _client.GetAllReportsAsync();
 
             // Assert
             await _http.Received(1).GetAsync<List<ReportRes>>(Arg.Is<string>(s => s == BaseUrl));
@@ -161,7 +141,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _mapper.Map<ApiResponseDto<ReportDto>>(apiResp).Returns(dto);
 
             // Act
-            var result = await _client.GetByIdAsync(5);
+            var result = await _client.GetReportByIdAsync(5);
 
             // Assert
             Assert.True(result.Success);
@@ -181,7 +161,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _mapper.Map<ApiResponseDto<ReportDto>>(apiResp).Returns(dto);
 
             // Act
-            var result = await _client.GetByIdAsync(99);
+            var result = await _client.GetReportByIdAsync(99);
 
             // Assert
             Assert.False(result.Success);
@@ -194,7 +174,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _http.GetAsync<ReportRes>(Arg.Any<string>()).ThrowsAsync(new Exception("Timeout"));
 
             // Act
-            var result = await _client.GetByIdAsync(1);
+            var result = await _client.GetReportByIdAsync(1);
 
             // Assert
             Assert.False(result.Success);
@@ -213,7 +193,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _mapper.Map<ApiResponseDto<ReportDto>>(apiResp).Returns(dto);
 
             // Act
-            await _client.GetByIdAsync(id);
+            await _client.GetReportByIdAsync(id);
 
             // Assert
             await _http.Received(1).GetAsync<ReportRes>(Arg.Is<string>(s => s == $"{BaseUrl}/{id}"));
@@ -238,7 +218,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _mapper.Map<ApiResponseDto<ReportDto>>(apiResp).Returns(dto);
 
             // Act
-            var result = await _client.CreateAsync(inputDto);
+            var result = await _client.CreateReportAsync(inputDto);
 
             // Assert
             Assert.True(result.Success);
@@ -260,7 +240,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _mapper.Map<ApiResponseDto<ReportDto>>(apiResp).Returns(dto);
 
             // Act
-            var result = await _client.CreateAsync(inputDto);
+            var result = await _client.CreateReportAsync(inputDto);
 
             // Assert
             Assert.False(result.Success);
@@ -275,7 +255,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
                  .ThrowsAsync(new Exception("POST failed"));
 
             // Act
-            var result = await _client.CreateAsync(MakeDto(0));
+            var result = await _client.CreateReportAsync(MakeDto(0));
 
             // Assert
             Assert.False(result.Success);
@@ -303,7 +283,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _mapper.Map<ApiResponseDto<ReportDto>>(apiResp).Returns(dto);
 
             // Act
-            var result = await _client.UpdateAsync(id, inputDto);
+            var result = await _client.UpdateReportAsync(id, inputDto);
 
             // Assert
             Assert.True(result.Success);
@@ -320,7 +300,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
                  .ThrowsAsync(new Exception("PUT failed"));
 
             // Act
-            var result = await _client.UpdateAsync(1, MakeDto(1));
+            var result = await _client.UpdateReportAsync(1, MakeDto(1));
 
             // Assert
             Assert.False(result.Success);
@@ -340,7 +320,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _mapper.Map<ApiResponseDto<ReportDto>>(apiResp).Returns(dto);
 
             // Act
-            await _client.UpdateAsync(id, MakeDto(id));
+            await _client.UpdateReportAsync(id, MakeDto(id));
 
             // Assert
             await _http.Received(1).PutAsync<ReportReq, ReportRes>(
@@ -366,7 +346,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _mapper.Map<ApiResponseDto<bool>>(apiResp).Returns(dto);
 
             // Act
-            var result = await _client.DeleteAsync(id);
+            var result = await _client.DeleteReportAsync(id);
 
             // Assert
             Assert.True(result.Success);
@@ -386,7 +366,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _mapper.Map<ApiResponseDto<bool>>(apiResp).Returns(dto);
 
             // Act
-            var result = await _client.DeleteAsync(id);
+            var result = await _client.DeleteReportAsync(id);
 
             // Assert
             Assert.False(result.Success);
@@ -399,7 +379,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("DELETE failed"));
 
             // Act
-            var result = await _client.DeleteAsync(1);
+            var result = await _client.DeleteReportAsync(1);
 
             // Assert
             Assert.False(result.Success);
@@ -418,7 +398,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             _mapper.Map<ApiResponseDto<bool>>(apiResp).Returns(dto);
 
             // Act
-            await _client.DeleteAsync(id);
+            await _client.DeleteReportAsync(id);
 
             // Assert
             await _http.Received(1).DeleteAsync<bool>(Arg.Is<string>(s => s == expectedUrl));

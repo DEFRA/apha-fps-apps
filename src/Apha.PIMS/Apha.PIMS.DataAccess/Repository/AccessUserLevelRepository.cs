@@ -1,33 +1,12 @@
-/*
- * TRANSFORMENGINE MIGRATION — AccessUserLevelRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New EF Core LINQ-first repository implementing IAccessUserLevelRepository
- *   - All read operations use AsNoTracking for performance
- *   - Three-column composite PK (systemid, ntlogin, accesslevelid) — used in all key-based operations
- *   - GetBySystemIdAsync supports Admin Maintenance Tab User Access grid for a given system
- *   - GetByUserAsync supports listing all level assignments for a specific user (systemid + ntlogin)
- *   - DeleteAsync uses ExecuteDeleteAsync for set-based delete on three-column composite PK
- *   - No UpdateAsync — user-level assignments are add/delete only (junction table)
- *
- * PRESERVED:
- *   - All method signatures defined in IAccessUserLevelRepository (Phase 2)
- *   - mabarchive.tblaccessusers_levels is the backing table (mapped via AccessUserLevelMap.cs)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
+using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace Apha.PIMS.DataAccess.Repository
 {
-    // TRANSFORMENGINE: implements IAccessUserLevelRepository — backs mabarchive.tblaccessusers_levels; three-column composite PK (systemid, ntlogin, accesslevelid)
     public class AccessUserLevelRepository : BaseRepository, IAccessUserLevelRepository
     {
         private readonly PimsDbContext _dbContext;
@@ -36,74 +15,92 @@ namespace Apha.PIMS.DataAccess.Repository
         {
             _dbContext = dbContext;
         }
-
-        // TRANSFORMENGINE: AsNoTracking read — full user-level assignment list across all systems
-        public async Task<List<AccessUserLevel>> GetAllAsync()
+        public async Task<PagedData<AccessUserLevel>> GetPagedAccessUserLevelAllAsync(PaginationParameters<string> query)
         {
-            return await _dbContext.AccessUserLevels
-                .AsNoTracking()
-                .OrderBy(ul => ul.Systemid)
-                .ThenBy(ul => ul.Ntlogin)
-                .ThenBy(ul => ul.Accesslevelid)
-                .ToListAsync();
-        }
+            var baseQuery = _dbContext.AccessUserLevels.AsNoTracking();
 
-        // TRANSFORMENGINE: AsNoTracking filtered by systemid — Admin Maintenance Tab User Access grid per system
+            if (!string.IsNullOrWhiteSpace(query.Filter))
+            {
+                var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(query.Filter)
+                    ?? new Dictionary<string, string>();
+
+                if (filters.TryGetValue("NtLogin", out var ntloginFilter)
+                    && !string.IsNullOrWhiteSpace(ntloginFilter))
+                {
+                    var value = ntloginFilter.Trim();
+                    baseQuery = baseQuery.Where(ul => EF.Functions.ILike(ul.NtLogin, $"%{value}%"));
+                }
+
+                if (filters.TryGetValue("SystemId", out var systemIdFilter)
+                    && int.TryParse(systemIdFilter, out var systemIdVal))
+                {
+                    baseQuery = baseQuery.Where(ul => ul.SystemId == systemIdVal);
+                }
+            }
+
+            baseQuery = (query.SortBy, query.Descending) switch
+            {
+                ("NtLogin", true)        => baseQuery.OrderByDescending(ul => ul.NtLogin),
+                ("NtLogin", false)       => baseQuery.OrderBy(ul => ul.NtLogin),
+                ("AccessLevelId", true)  => baseQuery.OrderByDescending(ul => ul.AccessLevelId),
+                ("AccessLevelId", false) => baseQuery.OrderBy(ul => ul.AccessLevelId),
+                ("SystemId", true)       => baseQuery.OrderByDescending(ul => ul.SystemId),
+                ("SystemId", false)      => baseQuery.OrderBy(ul => ul.SystemId),
+                (_, true)               => baseQuery.OrderByDescending(ul => ul.SystemId).ThenByDescending(ul => ul.NtLogin),
+                _                       => baseQuery.OrderBy(ul => ul.SystemId).ThenBy(ul => ul.NtLogin)
+            };
+
+            var page = query.Page > 0 ? query.Page : 1;
+            var pageSize = query.PageSize > 0 ? query.PageSize : 10;
+            return await ApplyPaging(baseQuery, page, pageSize);
+        }
         public async Task<List<AccessUserLevel>> GetBySystemIdAsync(int systemid)
         {
             return await _dbContext.AccessUserLevels
                 .AsNoTracking()
-                .Where(ul => ul.Systemid == systemid)
-                .OrderBy(ul => ul.Ntlogin)
-                .ThenBy(ul => ul.Accesslevelid)
+                .Where(ul => ul.SystemId == systemid)
+                .OrderBy(ul => ul.NtLogin)
+                .ThenBy(ul => ul.AccessLevelId)
                 .ToListAsync();
         }
-
-        // TRANSFORMENGINE: AsNoTracking filtered by (systemid, ntlogin) — all level assignments for a given user
         public async Task<List<AccessUserLevel>> GetByUserAsync(int systemid, string ntlogin)
         {
             return await _dbContext.AccessUserLevels
                 .AsNoTracking()
-                .Where(ul => ul.Systemid == systemid && ul.Ntlogin == ntlogin)
-                .OrderBy(ul => ul.Accesslevelid)
+                .Where(ul => ul.SystemId == systemid && ul.NtLogin == ntlogin)
+                .OrderBy(ul => ul.AccessLevelId)
                 .ToListAsync();
         }
-
-        // TRANSFORMENGINE: AsNoTracking single-row lookup by three-column composite PK
         public async Task<AccessUserLevel?> GetByIdAsync(int systemid, string ntlogin, int accesslevelid)
         {
             return await _dbContext.AccessUserLevels
                 .AsNoTracking()
-                .FirstOrDefaultAsync(ul => ul.Systemid == systemid
-                                        && ul.Ntlogin == ntlogin
-                                        && ul.Accesslevelid == accesslevelid);
+                .FirstOrDefaultAsync(ul => ul.SystemId == systemid
+                                        && ul.NtLogin == ntlogin
+                                        && ul.AccessLevelId == accesslevelid);
         }
-
-        // TRANSFORMENGINE: insert — EF Add + SaveChangesAsync; junction table — no surrogate key
         public async Task<AccessUserLevel> AddAsync(AccessUserLevel entity)
         {
             _dbContext.AccessUserLevels.Add(entity);
             await _dbContext.SaveChangesAsync();
             return entity;
         }
-
-        // TRANSFORMENGINE: set-based delete via ExecuteDeleteAsync — filters on all three PK columns
-        public async Task DeleteAsync(int systemid, string ntlogin, int accesslevelid)
+        public async Task<bool> DeleteAsync(int systemId, string ntLogin, int accessLevelId)
         {
-            await _dbContext.AccessUserLevels
-                .Where(ul => ul.Systemid == systemid
-                          && ul.Ntlogin == ntlogin
-                          && ul.Accesslevelid == accesslevelid)
+            int rowsAffected = await _dbContext.AccessUserLevels
+                .Where(ul => ul.SystemId == systemId
+                          && ul.NtLogin == ntLogin
+                          && ul.AccessLevelId == accessLevelId)
                 .ExecuteDeleteAsync();
-        }
 
-        // TRANSFORMENGINE: AnyAsync guard on three-column composite PK
-        public async Task<bool> ExistsAsync(int systemid, string ntlogin, int accesslevelid)
+            return rowsAffected > 0;
+        }
+        public async Task<bool> ExistsAsync(int systemId, string ntLogin, int accessLevelId)
         {
             return await _dbContext.AccessUserLevels
-                .AnyAsync(ul => ul.Systemid == systemid
-                             && ul.Ntlogin == ntlogin
-                             && ul.Accesslevelid == accesslevelid);
+                .AnyAsync(ul => ul.SystemId == systemId
+                             && ul.NtLogin == ntLogin
+                             && ul.AccessLevelId == accessLevelId);
         }
     }
 }

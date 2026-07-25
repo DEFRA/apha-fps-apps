@@ -1,22 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — AccessUserRepositoryTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New xUnit test class for Apha.PIMS.DataAccess.Repository.AccessUserRepository
- *   - Composite PK (systemid int + ntlogin string)
- *   - Uses RepositoryTestHelper + Moq (established pattern for DataAccess tests)
- *   - Covers: GetAllAsync, GetBySystemIdAsync, GetByNtLoginAsync, GetByIdAsync,
- *             AddAsync, UpdateAsync, ExistsAsync
- *
- * PRESERVED:
- *   - Composite PK semantics for all lookup, write, and existence checks
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: DeleteAsync uses ExecuteDeleteAsync (set-based) — not easily
- *     unit-tested via mock; covered via ExistsAsync guard in service layer
- */
 using Apha.Common.Helpers.Repository;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.DataAccess.Data;
@@ -28,8 +9,6 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserRepositoryTest
 {
     public class AccessUserRepositoryTests
     {
-        // ── factory ───────────────────────────────────────────────────────────────
-
         private static AccessUserRepository CreateRepository(
             IEnumerable<AccessUser>? accessUsers = null)
         {
@@ -65,7 +44,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserRepositoryTest
         // ── helpers ───────────────────────────────────────────────────────────────
 
         private static AccessUser MakeUser(int systemid = 1, string ntlogin = "DOM\\user1") =>
-            new AccessUser { Systemid = systemid, Ntlogin = ntlogin, Username = "User One" };
+            new AccessUser { SystemId = systemid, NtLogin = ntlogin, UserName = "User One" };
 
         // ── GetAllAsync ───────────────────────────────────────────────────────────
 
@@ -126,7 +105,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserRepositoryTest
 
             // Assert
             Assert.Equal(2, result.Count);
-            Assert.All(result, u => Assert.Equal(1, u.Systemid));
+            Assert.All(result, u => Assert.Equal(1, u.SystemId));
         }
 
         [Fact]
@@ -167,7 +146,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserRepositoryTest
 
             // Assert
             Assert.Equal(2, result.Count);
-            Assert.All(result, u => Assert.Equal(ntlogin, u.Ntlogin));
+            Assert.All(result, u => Assert.Equal(ntlogin, u.NtLogin));
         }
 
         [Fact]
@@ -208,8 +187,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserRepositoryTest
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(1, result!.Systemid);
-            Assert.Equal(ntlogin, result.Ntlogin);
+            Assert.Equal(1, result!.SystemId);
+            Assert.Equal(ntlogin, result.NtLogin);
         }
 
         [Fact]
@@ -286,7 +265,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserRepositoryTest
 
             // Assert
             accessUsersDbSet.Verify(
-                x => x.Add(It.Is<AccessUser>(u => u.Ntlogin == "dom\\newuser")),
+                x => x.Add(It.Is<AccessUser>(u => u.NtLogin == "dom\\newuser")),
                 Times.Once);
         }
 
@@ -318,9 +297,9 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserRepositoryTest
             var (repo, _, _) = CreateRepositoryWithMocks(new List<AccessUser> { existing });
             var updatedEntity = new AccessUser
             {
-                Systemid = 1,
-                Ntlogin  = "dom\\user",
-                Username = "Updated User Name"
+                SystemId = 1,
+                NtLogin  = "dom\\user",
+                UserName = "Updated User Name"
             };
 
             // Act
@@ -328,7 +307,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserRepositoryTest
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal("Updated User Name", result.Username);
+            Assert.Equal("Updated User Name", result.UserName);
         }
 
         [Fact]

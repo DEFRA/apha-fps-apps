@@ -1,28 +1,9 @@
-/*
- * TRANSFORMENGINE MIGRATION — PimsReportGroupApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New HTTP API client implementing IPimsReportGroupApiClient
- *   - Binds to backend ReportGroupController routes: GET/POST /api/v1/reportgroup, GET/PUT/DELETE /api/v1/reportgroup/{groupid:int}
- *   - Every HTTP call wrapped in try/catch(Exception) returning FailureResponse with InternalCodeError
- *   - Mapper used for all success response mappings (ReportGroupRes -> ReportGroupDto via ApiResponseDto)
- *   - Req/Res contracts: ReportGroupReq, ReportGroupRes from Apha.Common.Contracts.PIMS
- *
- * PRESERVED:
- *   - All CRUD semantics matching IPimsReportGroupApiClient interface (GetAll, GetById, Create, Update, Delete)
- *   - Integer PK (groupid) matching backend route constraint {groupid:int}
- *   - ReportGroup also serves as lookup source for Report dropdown
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.Common.Contracts.PIMS;
+using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
@@ -44,7 +25,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: GET /api/v1/reportgroup — full list (also used as Report dropdown source)
-        public async Task<ApiResponseDto<List<ReportGroupDto>>> GetAllAsync()
+        public async Task<ApiResponseDto<List<ReportGroupDto>>> GetAllReportGroupsAsync()
         {
             try
             {
@@ -63,12 +44,65 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/reportgroup/{groupid:int}
-        public async Task<ApiResponseDto<ReportGroupDto>> GetByIdAsync(int groupid)
+        // TRANSFORMENGINE: GET /api/v1/reportgroup/byreport/{reportid:int} — groups linked to a specific report
+        public async Task<ApiResponseDto<List<ReportGroupDto>>> GetReportGroupsByReportIdAsync(int reportId)
         {
             try
             {
-                var url = $"{BaseUrl}/{groupid}";
+                var url = $"{BaseUrl}/byreport/{reportId}";
+                var response = await _http.GetAsync<List<ReportGroupRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<ReportGroupDto>>>(response);
+
+                var responseDto = _mapper.Map<ApiResponseDto<List<ReportGroupDto>>>(response);
+                return ApiResponseDto<List<ReportGroupDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<ReportGroupDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve ReportGroups by report ID", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        // TRANSFORMENGINE: GET /api/v1/reportgroup/paged (+ optional reportid)
+        public async Task<ApiResponseDto<PaginatedResult<ReportGroupDto>>> GetPagedReportGroupsAsync(QueryParameters<string> query, int? reportId = null)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString($"{BaseUrl}/paged", query);
+                if (reportId.HasValue)
+                    url += $"&reportid={reportId.Value}";
+
+                var response = await _http.GetAsync<List<ReportGroupRes>>(url);
+                if (response.Success)
+                {
+                    var items = _mapper.Map<List<ReportGroupDto>>(response.Data ?? []);
+                    var pageNumber = response.Pagination?.PageNumber ?? query.Page;
+                    var pageSize = response.Pagination?.PageSize ?? query.PageSize;
+                    var totalRecords = response.Pagination?.TotalRecords ?? items.Count;
+                    var paged = new PaginatedResult<ReportGroupDto>(items, totalRecords, pageNumber, pageSize);
+                    return ApiResponseDto<PaginatedResult<ReportGroupDto>>.SuccessResponse(paged);
+                }
+
+                return ApiResponseDto<PaginatedResult<ReportGroupDto>>.FailureResponse(
+                    _mapper.Map<List<ApiErrorDto>>(response.Errors ?? []),
+                    _mapper.Map<ApiMetaDto>(response.Meta));
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<PaginatedResult<ReportGroupDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve paged ReportGroup data", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        // TRANSFORMENGINE: GET /api/v1/reportgroup/{groupid:int}
+        public async Task<ApiResponseDto<ReportGroupDto>> GetReportGroupByIdAsync(int groupId)
+        {
+            try
+            {
+                var url = $"{BaseUrl}/{groupId}";
                 var response = await _http.GetAsync<ReportGroupRes>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ReportGroupDto>>(response);
@@ -85,7 +119,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: POST /api/v1/reportgroup
-        public async Task<ApiResponseDto<ReportGroupDto>> CreateAsync(ReportGroupDto dto)
+        public async Task<ApiResponseDto<ReportGroupDto>> CreateReportGroupAsync(ReportGroupDto dto)
         {
             try
             {
@@ -106,12 +140,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: PUT /api/v1/reportgroup/{groupid:int} — route PK (groupid) is authoritative
-        public async Task<ApiResponseDto<ReportGroupDto>> UpdateAsync(int groupid, ReportGroupDto dto)
+        public async Task<ApiResponseDto<ReportGroupDto>> UpdateReportGroupAsync(int groupId, ReportGroupDto dto)
         {
             try
             {
                 var request = _mapper.Map<ReportGroupReq>(dto);
-                var url = $"{BaseUrl}/{groupid}";
+                var url = $"{BaseUrl}/{groupId}";
                 var response = await _http.PutAsync<ReportGroupReq, ReportGroupRes>(url, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ReportGroupDto>>(response);
@@ -128,11 +162,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: DELETE /api/v1/reportgroup/{groupid:int}
-        public async Task<ApiResponseDto<bool>> DeleteAsync(int groupid)
+        public async Task<ApiResponseDto<bool>> DeleteReportGroupAsync(int groupId)
         {
             try
             {
-                var url = $"{BaseUrl}/{groupid}";
+                var url = $"{BaseUrl}/{groupId}";
                 var response = await _http.DeleteAsync<bool>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);

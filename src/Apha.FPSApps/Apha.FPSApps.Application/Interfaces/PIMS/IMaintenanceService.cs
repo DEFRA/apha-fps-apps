@@ -1,55 +1,26 @@
-/*
- * TRANSFORMENGINE MIGRATION — IMaintenanceService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 8 — Frontend Service Interface + Implementation (Steps 12-13)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New frontend aggregate service interface for frmMaintainance (PIMS Admin Maintenance)
- *   - Aggregates all Maintenance-form API surfaces: Report, ReportGroup, ReportGroupLink,
- *     ProjectManager, ProgramManagerLink, ProfitCentreManagerLink, Setting, AccessUser,
- *     AccessLevel, AccessUserLevel, AccessSystem (lookup), Frequency, ReviewItem, RadTrackProg
- *   - Method signatures mirror the corresponding IPimsXxxApiClient interfaces exactly
- *   - Composite and natural-PK variants preserved (reportid+groupid, program+manager, etc.)
- *
- * PRESERVED:
- *   - All PK types: int (Report, ReportGroup, Frequency, ReviewItem),
- *     string (ProjectManager, RadTrackProg), composite int+int (ReportGroupLink, AccessLevel),
- *     composite string+string (ProgramManagerLink, ProfitCentreManagerLink),
- *     composite int+string (AccessUser, AccessUserLevel)
- *   - Read-only surfaces for AccessSystem (lookup only — no create/update/delete)
- *   - Setting read/update only (no create/delete)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm role requirements for admin-gated endpoints (Setting update, AccessUser CRUD)
- *   - TRANSFORMENGINE TODO: confirm composite delete routes for ReportGroupLink, ProgramManagerLink, ProfitCentreManagerLink,
- *     AccessUserLevel are acceptable from MVC controller callers
- */
-
-using Apha.FPSApps.Application.Dtos;
+﻿using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
+using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.PIMS
 {
     public interface IMaintenanceService
     {
-        // ── Report ──────────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: delegates to IPimsReportApiClient — GET/POST /api/v1/report, GET/PUT/DELETE /api/v1/report/{id:int}
-
         Task<ApiResponseDto<List<ReportDto>>> GetAllReportsAsync();
+
+        Task<ApiResponseDto<PaginatedResult<ReportDto>>> GetPagedReportsAsync(QueryParameters<string> query);
         Task<ApiResponseDto<ReportDto>> GetReportByIdAsync(int id);
         Task<ApiResponseDto<ReportDto>> CreateReportAsync(ReportDto dto);
         Task<ApiResponseDto<ReportDto>> UpdateReportAsync(int id, ReportDto dto);
         Task<ApiResponseDto<bool>> DeleteReportAsync(int id);
 
-        // ── ReportGroup ─────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: delegates to IPimsReportGroupApiClient — GET/POST /api/v1/reportgroup, GET/PUT/DELETE /api/v1/reportgroup/{groupid:int}
-        // Also used as lookup source for Report dropdown
-
         Task<ApiResponseDto<List<ReportGroupDto>>> GetAllReportGroupsAsync();
-        Task<ApiResponseDto<ReportGroupDto>> GetReportGroupByIdAsync(int groupid);
+        Task<ApiResponseDto<PaginatedResult<ReportGroupDto>>> GetPagedReportGroupsAsync(QueryParameters<string> query, int? reportId = null);
+        Task<ApiResponseDto<List<ReportGroupDto>>> GetReportGroupsByReportIdAsync(int reportId);
+        Task<ApiResponseDto<ReportGroupDto>> GetReportGroupByIdAsync(int groupId);
         Task<ApiResponseDto<ReportGroupDto>> CreateReportGroupAsync(ReportGroupDto dto);
-        Task<ApiResponseDto<ReportGroupDto>> UpdateReportGroupAsync(int groupid, ReportGroupDto dto);
-        Task<ApiResponseDto<bool>> DeleteReportGroupAsync(int groupid);
+        Task<ApiResponseDto<ReportGroupDto>> UpdateReportGroupAsync(int groupId, ReportGroupDto dto);
+        Task<ApiResponseDto<bool>> DeleteReportGroupAsync(int groupId);
 
         // ── ReportGroupLink ─────────────────────────────────────────────────────────
         // TRANSFORMENGINE: delegates to IPimsReportGroupLinkApiClient — composite PK (reportid int + groupid int); no PUT
@@ -63,7 +34,9 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         // ── ProjectManager ──────────────────────────────────────────────────────────
         // TRANSFORMENGINE: delegates to IPimsProjectManagerApiClient — natural varchar PK (projectmanager)
 
-        Task<ApiResponseDto<List<ProjectManagerDto>>> GetAllProjectManagersAsync();
+        Task<ApiResponseDto<List<ProjectManagerDto>>> GetAllProjectManagersAsync(QueryParameters<string>? query = null);
+        Task<ApiResponseDto<PaginatedResult<ProjectManagerDto>>> GetPagedProjectManagersAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<List<string>>> GetManagerNamesAsync();
         Task<ApiResponseDto<ProjectManagerDto>> GetProjectManagerByIdAsync(string projectmanager);
         Task<ApiResponseDto<ProjectManagerDto>> CreateProjectManagerAsync(ProjectManagerDto dto);
         Task<ApiResponseDto<ProjectManagerDto>> UpdateProjectManagerAsync(string projectmanager, ProjectManagerDto dto);
@@ -73,16 +46,22 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         // TRANSFORMENGINE: delegates to IPimsProgramManagerLinkApiClient — composite natural PK (program string + manager string); no PUT
 
         Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetAllProgramManagerLinksAsync();
+        Task<ApiResponseDto<PaginatedResult<ProgramManagerLinkDto>>> GetPagedProgramManagerLinksByManagerAsync(QueryParameters<string> query, string manager);
         Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetProgramManagerLinksByProgramAsync(string program);
+        Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetProgramManagerLinksByManagerAsync(string manager);
         Task<ApiResponseDto<ProgramManagerLinkDto>> GetProgramManagerLinkByIdAsync(string program, string manager);
         Task<ApiResponseDto<ProgramManagerLinkDto>> CreateProgramManagerLinkAsync(ProgramManagerLinkDto dto);
         Task<ApiResponseDto<bool>> DeleteProgramManagerLinkAsync(string program, string manager);
+        Task<ApiResponseDto<List<ProgramLookupDto>>> GetProgramsAsync();
 
         // ── ProfitCentreManagerLink ─────────────────────────────────────────────────
         // TRANSFORMENGINE: delegates to IPimsProfitCentreManagerLinkApiClient — composite natural PK (profitcentre string + manager string); no PUT
 
         Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetAllProfitCentreManagerLinksAsync();
+        Task<ApiResponseDto<PaginatedResult<ProfitCentreManagerLinkDto>>> GetPagedProfitCentreManagerLinksByManagerAsync(QueryParameters<string> query, string manager);
+        Task<ApiResponseDto<List<ProfitCentreLookupDto>>> GetProfitCentresAsync();
         Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetProfitCentreManagerLinksByProfitCentreAsync(string profitcentre);
+        Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetProfitCentreManagerLinksByManagerAsync(string manager);
         Task<ApiResponseDto<ProfitCentreManagerLinkDto>> GetProfitCentreManagerLinkByIdAsync(string profitcentre, string manager);
         Task<ApiResponseDto<ProfitCentreManagerLinkDto>> CreateProfitCentreManagerLinkAsync(ProfitCentreManagerLinkDto dto);
         Task<ApiResponseDto<bool>> DeleteProfitCentreManagerLinkAsync(string profitcentre, string manager);
@@ -118,7 +97,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         // ── AccessUserLevel ─────────────────────────────────────────────────────────
         // TRANSFORMENGINE: delegates to IPimsAccessUserLevelApiClient — triple composite PK (systemid int + ntlogin string + accesslevelid int); no PUT
 
-        Task<ApiResponseDto<List<AccessUserLevelDto>>> GetAllAccessUserLevelsAsync();
+        Task<ApiResponseDto<PaginatedResult<AccessUserLevelDto>>> GetPagedAccessUserLevelsAsync(QueryParameters<string> request);
         Task<ApiResponseDto<List<AccessUserLevelDto>>> GetAccessUserLevelsBySystemIdAsync(int systemid);
         Task<ApiResponseDto<List<AccessUserLevelDto>>> GetAccessUserLevelsByUserAsync(int systemid, string ntlogin);
         Task<ApiResponseDto<AccessUserLevelDto>> GetAccessUserLevelByIdAsync(int systemid, string ntlogin, int accesslevelid);
@@ -135,27 +114,53 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         // TRANSFORMENGINE: delegates to IPimsFrequencyApiClient — integer PK (frequencyid); full CRUD
 
         Task<ApiResponseDto<List<FrequencyDto>>> GetAllFrequenciesAsync();
-        Task<ApiResponseDto<FrequencyDto>> GetFrequencyByIdAsync(int frequencyid);
+        Task<ApiResponseDto<PaginatedResult<FrequencyDto>>> GetPagedFrequenciesAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<FrequencyDto>> GetFrequencyByIdAsync(int frequencyId);
         Task<ApiResponseDto<FrequencyDto>> CreateFrequencyAsync(FrequencyDto dto);
-        Task<ApiResponseDto<FrequencyDto>> UpdateFrequencyAsync(int frequencyid, FrequencyDto dto);
-        Task<ApiResponseDto<bool>> DeleteFrequencyAsync(int frequencyid);
+        Task<ApiResponseDto<FrequencyDto>> UpdateFrequencyAsync(int frequencyId, FrequencyDto dto);
+        Task<ApiResponseDto<bool>> DeleteFrequencyAsync(int frequencyId);
 
         // ── ReviewItem ──────────────────────────────────────────────────────────────
         // TRANSFORMENGINE: delegates to IPimsReviewItemApiClient — integer PK (itemid); full CRUD; Other Tab lookup
 
         Task<ApiResponseDto<List<ReviewItemDto>>> GetAllReviewItemsAsync();
-        Task<ApiResponseDto<ReviewItemDto>> GetReviewItemByIdAsync(int itemid);
+        Task<ApiResponseDto<PaginatedResult<ReviewItemDto>>> GetPagedReviewItemsAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<ReviewItemDto>> GetReviewItemByIdAsync(int itemId);
         Task<ApiResponseDto<ReviewItemDto>> CreateReviewItemAsync(ReviewItemDto dto);
-        Task<ApiResponseDto<ReviewItemDto>> UpdateReviewItemAsync(int itemid, ReviewItemDto dto);
-        Task<ApiResponseDto<bool>> DeleteReviewItemAsync(int itemid);
+        Task<ApiResponseDto<ReviewItemDto>> UpdateReviewItemAsync(int itemId, ReviewItemDto dto);
+        Task<ApiResponseDto<bool>> DeleteReviewItemAsync(int itemId);
 
-        // ── RadTrackProg ────────────────────────────────────────────────────────────
+        // ── Risk ──────────────────────────────────────────────────────────────────────────────────────
+        // delegates to IPimsRiskApiClient — integer PK (riskid); full CRUD; Other Tab lookup
+
+        Task<ApiResponseDto<List<RiskDto>>> GetAllRiskRatingsAsync();
+        Task<ApiResponseDto<PaginatedResult<RiskDto>>> GetPagedRiskRatingsAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<RiskDto>> GetRiskRatingByIdAsync(int riskId);
+        Task<ApiResponseDto<RiskDto>> CreateRiskRatingAsync(RiskDto dto);
+        Task<ApiResponseDto<RiskDto>> UpdateRiskRatingAsync(int riskId, RiskDto dto);
+        Task<ApiResponseDto<bool>> DeleteRiskRatingAsync(int riskId);
+
+        // ── PublicationType ───────────────────────────────────────────────────────────────────────────
+        // delegates to IPimsPublicationTypeApiClient — string PK (type); full CRUD; Other Tab lookup
+
+        Task<ApiResponseDto<List<PublicationTypeDto>>> GetAllPublicationTypesAsync();
+        Task<ApiResponseDto<PaginatedResult<PublicationTypeDto>>> GetPagedPublicationTypesAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<PublicationTypeDto>> GetPublicationTypeByCodeAsync(string type);
+        Task<ApiResponseDto<PublicationTypeDto>> CreatePublicationTypeAsync(PublicationTypeDto dto);
+        Task<ApiResponseDto<PublicationTypeDto>> UpdatePublicationTypeAsync(string type, PublicationTypeDto dto);
+        Task<ApiResponseDto<bool>> DeletePublicationTypeAsync(string type);
+
+        // ── RadTrackProg
         // TRANSFORMENGINE: delegates to IPimsRadTrackProgApiClient — natural string PK (program); full CRUD; Programme Tab
 
         Task<ApiResponseDto<List<RadTrackProgDto>>> GetAllRadTrackProgsAsync();
+        Task<ApiResponseDto<PaginatedResult<RadTrackProgDto>>> GetPagedRadTrackProgsAsync(QueryParameters<string> query);
         Task<ApiResponseDto<RadTrackProgDto>> GetRadTrackProgByIdAsync(string program);
         Task<ApiResponseDto<RadTrackProgDto>> CreateRadTrackProgAsync(RadTrackProgDto dto);
         Task<ApiResponseDto<RadTrackProgDto>> UpdateRadTrackProgAsync(string program, RadTrackProgDto dto);
         Task<ApiResponseDto<bool>> DeleteRadTrackProgAsync(string program);
+
+        // Returns distinct non-null Programme names from MY_tlkpProject for dropdown binding
+        Task<ApiResponseDto<List<string>>> GetRadTrackProgProgramsAsync();
     }
 }

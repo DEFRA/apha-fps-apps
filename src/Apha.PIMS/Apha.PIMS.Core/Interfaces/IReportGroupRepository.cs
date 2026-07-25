@@ -1,39 +1,25 @@
-/*
- * TRANSFORMENGINE MIGRATION — IReportGroupRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 2 — Core Layer - Entities + Repository Interfaces + Pagination
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New Core repository interface for ReportGroup lookup operations
- *   - All methods are async (Task<T>) — no synchronous signatures
- *   - ExistsAsync follows AnyAsync-style existence semantics per phase rules
- *   - GetAllAsync returns full list for group dropdown / lookup usage
- *   - GetByIdAsync returns nullable to signal not-found without throwing
- *
- * PRESERVED:
- *   - No infrastructure-specific code (DbContext, EF) in this Core interface
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Pagination;
 
 namespace Apha.PIMS.Core.Interfaces
 {
-    // TRANSFORMENGINE: interface covers lookup operations for ReportGroup (mabarchive.tblreportgroup); used by ReportGroupService (Phase 3)
     public interface IReportGroupRepository
     {
-        Task<List<ReportGroup>> GetAllAsync();
+        Task<List<ReportGroup>> GetAllReportGroupsAsync();
 
-        Task<ReportGroup?> GetByIdAsync(int groupid);
+        Task<PagedData<ReportGroup>> GetPagedReportGroupsAsync(PaginationParameters<string> query, int? reportId = null);
 
-        Task<ReportGroup> AddAsync(ReportGroup entity);
+        // Returns all ReportGroup rows that are linked to the given reportid via tblreportgroup_link
+        Task<List<ReportGroup>> GetReportGroupsByReportIdAsync(int reportId);
 
-        Task<ReportGroup> UpdateAsync(ReportGroup entity);
+        Task<ReportGroup?> GetReportGroupByIdAsync(int groupId);
 
-        Task DeleteAsync(int groupid);
+        Task<ReportGroup> AddReportGroupAsync(ReportGroup entity);
 
-        Task<bool> ExistsAsync(int groupid);
+        Task<ReportGroup> UpdateReportGroupAsync(ReportGroup entity);
+
+        Task<bool> DeleteReportGroupAsync(int groupId);
+
+        Task<bool> ReportGroupExistsAsync(int groupId);
     }
 }

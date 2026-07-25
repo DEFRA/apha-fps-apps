@@ -1,24 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ReportGroupLinkService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New Application service implementing IReportGroupLinkService for ReportGroupLink CRUD (Reports Tab sub-grid, frmMaintainance)
- *   - Composite PK (reportid, groupid) — no UpdateAsync (link table: add/delete only)
- *   - Delegates all persistence to IReportGroupLinkRepository; no direct DbContext usage
- *   - All methods are async end-to-end
- *   - Throws ArgumentException on null/invalid input; KeyNotFoundException when entity not found;
- *     InvalidOperationException on duplicate-link guard
- *   - AutoMapper used for all entity <-> DTO conversions
- *
- * PRESERVED:
- *   - Duplicate-link guard: cannot add a link that already exists (composite PK uniqueness enforced at service layer)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Core.Entities;
@@ -31,64 +10,89 @@ namespace Apha.PIMS.Application.Services
     public class ReportGroupLinkService : IReportGroupLinkService
     {
         private readonly IReportGroupLinkRepository _repository;
+        private readonly IReportRepository _reportRepository;
+        private readonly IReportGroupRepository _reportGroupRepository;
         private readonly IMapper _mapper;
 
-        public ReportGroupLinkService(IReportGroupLinkRepository repository, IMapper mapper)
+        public ReportGroupLinkService(
+            IReportGroupLinkRepository repository,
+            IReportRepository reportRepository,
+            IReportGroupRepository reportGroupRepository,
+            IMapper mapper)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _reportRepository = reportRepository ?? throw new ArgumentNullException(nameof(reportRepository));
+            _reportGroupRepository = reportGroupRepository ?? throw new ArgumentNullException(nameof(reportGroupRepository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         // TRANSFORMENGINE: returns full list of all report-group links
-        public async Task<List<ReportGroupLinkDto>> GetAllAsync()
+        public async Task<List<ReportGroupLinkDto>> GetAllReportGroupLinksAsync()
         {
-            List<ReportGroupLink> entities = await _repository.GetAllAsync();
+            List<ReportGroupLink> entities = await _repository.GetAllReportGroupLinksAsync();
             return _mapper.Map<List<ReportGroupLinkDto>>(entities);
         }
 
         // TRANSFORMENGINE: returns all group links for a given report — used for sub-grid population
-        public async Task<List<ReportGroupLinkDto>> GetByReportIdAsync(int reportid)
+        public async Task<List<ReportGroupLinkDto>> GetReportGroupLinksByReportIdAsync(int reportId)
         {
-            List<ReportGroupLink> entities = await _repository.GetByReportIdAsync(reportid);
+            List<ReportGroupLink> entities = await _repository.GetReportGroupLinksByReportIdAsync(reportId);
             return _mapper.Map<List<ReportGroupLinkDto>>(entities);
         }
 
         // TRANSFORMENGINE: returns nullable — controller maps null to 404; composite PK lookup
-        public async Task<ReportGroupLinkDto?> GetByIdAsync(int reportid, int groupid)
+        public async Task<ReportGroupLinkDto?> GetReportGroupLinkByIdAsync(int reportId, int groupId)
         {
-            ReportGroupLink? entity = await _repository.GetByIdAsync(reportid, groupid);
+            ReportGroupLink? entity = await _repository.GetReportGroupLinkByIdAsync(reportId, groupId);
             return entity is null ? null : _mapper.Map<ReportGroupLinkDto>(entity);
         }
 
+        private async Task<(string ReportName, string GroupName)> GetDisplayNamesAsync(int reportId, int groupId)
+        {
+            Report? report = await _reportRepository.GetReportByIdAsync(reportId);
+            ReportGroup? reportGroup = await _reportGroupRepository.GetReportGroupByIdAsync(groupId);
+
+            string reportName = report?.ReportName ?? $"reportid={reportId}";
+            string groupName = reportGroup?.Description ?? $"groupid={groupId}";
+
+            return (reportName, groupName);
+        }
+
         // TRANSFORMENGINE: duplicate-link guard — throws InvalidOperationException if link already exists
-        public async Task<ReportGroupLinkDto> CreateAsync(ReportGroupLinkDto dto)
+        public async Task<ReportGroupLinkDto> CreateReportGroupLinkAsync(ReportGroupLinkDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
 
-            bool alreadyExists = await _repository.ExistsAsync(dto.Reportid, dto.Groupid);
+            bool alreadyExists = await _repository.ReportGroupLinkExistsAsync(dto.ReportId, dto.GroupId);
             if (alreadyExists)
+            {
+                (string reportName, string groupName) = await GetDisplayNamesAsync(dto.ReportId, dto.GroupId);
                 throw new InvalidOperationException(
-                    $"ReportGroupLink (reportid={dto.Reportid}, groupid={dto.Groupid}) already exists.");
+                    $"Report '{reportName}' and group '{groupName}' already exists.");
+            }
 
             ReportGroupLink entity = _mapper.Map<ReportGroupLink>(dto);
-            ReportGroupLink created = await _repository.AddAsync(entity);
+            ReportGroupLink created = await _repository.AddReportGroupLinkAsync(entity);
             return _mapper.Map<ReportGroupLinkDto>(created);
         }
 
         // TRANSFORMENGINE: throws KeyNotFoundException if link not found before delete
-        public async Task DeleteAsync(int reportid, int groupid)
+        public async Task<bool> DeleteReportGroupLinkAsync(int reportId, int groupId)
         {
-            bool exists = await _repository.ExistsAsync(reportid, groupid);
+            bool exists = await _repository.ReportGroupLinkExistsAsync(reportId, groupId);
             if (!exists)
+            {
+                (string reportName, string groupName) = await GetDisplayNamesAsync(reportId, groupId);
                 throw new KeyNotFoundException(
-                    $"ReportGroupLink (reportid={reportid}, groupid={groupid}) was not found.");
+                    $"Report '{reportName}' and group '{groupName}' was not found.");
+            }
 
-            await _repository.DeleteAsync(reportid, groupid);
+            return await _repository.DeleteReportGroupLinkAsync(reportId, groupId);
         }
 
-        public async Task<bool> ExistsAsync(int reportid, int groupid)
+        public async Task<bool> ReportGroupLinkExistsAsync(int reportId, int groupId)
         {
-            return await _repository.ExistsAsync(reportid, groupid);
+            return await _repository.ReportGroupLinkExistsAsync(reportId, groupId);
         }
     }
 }

@@ -1,34 +1,9 @@
-/*
- * TRANSFORMENGINE MIGRATION — PimsReviewItemApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New HTTP API client implementing IPimsReviewItemApiClient
- *   - Binds to backend ReviewItemController routes:
- *       GET    /api/v1/reviewitem               — full list
- *       GET    /api/v1/reviewitem/{itemid}      — get by integer PK
- *       POST   /api/v1/reviewitem               — create
- *       PUT    /api/v1/reviewitem/{itemid}      — update; route PK is authoritative
- *       DELETE /api/v1/reviewitem/{itemid}      — delete
- *   - Integer PK (itemid) — matches backend controller route constraint {itemid:int}
- *   - Other Tab lookup CRUD from frmMaintainance
- *   - Every HTTP call wrapped in try/catch(Exception) returning FailureResponse with InternalCodeError
- *   - Req/Res contracts: ReviewItemReq, ReviewItemRes from Apha.Common.Contracts.PIMS
- *
- * PRESERVED:
- *   - All CRUD semantics matching IPimsReviewItemApiClient interface (GetAll, GetById, Create, Update, Delete)
- *   - Integer PK (itemid) semantics
- *   - Return types wrapped in ApiResponseDto<T>
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm integer PK generation strategy — verify DB identity/sequence vs application-assigned
- */
-
 using Apha.Common.Contracts.PIMS;
+using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
@@ -50,7 +25,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: GET /api/v1/reviewitem — full list
-        public async Task<ApiResponseDto<List<ReviewItemDto>>> GetAllAsync()
+        public async Task<ApiResponseDto<List<ReviewItemDto>>> GetAllReviewItemsAsync()
         {
             try
             {
@@ -69,12 +44,41 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/reviewitem/{itemid:int}
-        public async Task<ApiResponseDto<ReviewItemDto>> GetByIdAsync(int itemid)
+        // TRANSFORMENGINE: GET /api/v1/reviewitem/paged
+        public async Task<ApiResponseDto<PaginatedResult<ReviewItemDto>>> GetPagedReviewItemsAsync(QueryParameters<string> query)
         {
             try
             {
-                var url = $"{BaseUrl}/{itemid}";
+                string url = QueryStringHelper.AddQueryString($"{BaseUrl}/paged", query);
+                var response = await _http.GetAsync<List<ReviewItemRes>>(url);
+                if (response.Success)
+                {
+                    var items = _mapper.Map<List<ReviewItemDto>>(response.Data ?? []);
+                    var pageNumber = response.Pagination?.PageNumber ?? query.Page;
+                    var pageSize = response.Pagination?.PageSize ?? query.PageSize;
+                    var totalRecords = response.Pagination?.TotalRecords ?? items.Count;
+                    var paged = new PaginatedResult<ReviewItemDto>(items, totalRecords, pageNumber, pageSize);
+                    return ApiResponseDto<PaginatedResult<ReviewItemDto>>.SuccessResponse(paged);
+                }
+
+                return ApiResponseDto<PaginatedResult<ReviewItemDto>>.FailureResponse(
+                    _mapper.Map<List<ApiErrorDto>>(response.Errors ?? []),
+                    _mapper.Map<ApiMetaDto>(response.Meta));
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<PaginatedResult<ReviewItemDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve paged ReviewItem data", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        // TRANSFORMENGINE: GET /api/v1/reviewitem/{itemid:int}
+        public async Task<ApiResponseDto<ReviewItemDto>> GetReviewItemByIdAsync(int itemId)
+        {
+            try
+            {
+                var url = $"{BaseUrl}/{itemId}";
                 var response = await _http.GetAsync<ReviewItemRes>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
@@ -91,7 +95,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: POST /api/v1/reviewitem
-        public async Task<ApiResponseDto<ReviewItemDto>> CreateAsync(ReviewItemDto dto)
+        public async Task<ApiResponseDto<ReviewItemDto>> CreateReviewItemAsync(ReviewItemDto dto)
         {
             try
             {
@@ -112,12 +116,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: PUT /api/v1/reviewitem/{itemid:int} — route PK is authoritative
-        public async Task<ApiResponseDto<ReviewItemDto>> UpdateAsync(int itemid, ReviewItemDto dto)
+        public async Task<ApiResponseDto<ReviewItemDto>> UpdateReviewItemAsync(int itemId, ReviewItemDto dto)
         {
             try
             {
                 var request = _mapper.Map<ReviewItemReq>(dto);
-                var url = $"{BaseUrl}/{itemid}";
+                var url = $"{BaseUrl}/{itemId}";
                 var response = await _http.PutAsync<ReviewItemReq, ReviewItemRes>(url, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
@@ -134,11 +138,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: DELETE /api/v1/reviewitem/{itemid:int}
-        public async Task<ApiResponseDto<bool>> DeleteAsync(int itemid)
+        public async Task<ApiResponseDto<bool>> DeleteReviewItemAsync(int itemId)
         {
             try
             {
-                var url = $"{BaseUrl}/{itemid}";
+                var url = $"{BaseUrl}/{itemId}";
                 var response = await _http.DeleteAsync<bool>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);

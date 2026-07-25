@@ -74,7 +74,7 @@ namespace Apha.PIMS.Api.Controllers
         {
             var decodedId = HttpUtility.UrlDecode(number);
             bool deleted = await _service.DeleteMilestoneAsync(project, decodedId);
-            return Ok(new { success = deleted });
+            return Ok(deleted);
         }
 
         /// <summary>Update FormRequired flag for a project.</summary>
@@ -126,7 +126,7 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> DeleteMilestoneFormDates(string parentProject, short year)
         {
             bool deleted = await _service.DeleteMilestoneFormDatesAsync(year, parentProject);
-            return Ok(new { success = deleted });
+            return Ok(deleted);
         }
 
         /// <summary>Get paged log milestone changes with optional project and number filters.</summary>
@@ -177,7 +177,7 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> DeleteStagingRow(int id)
         {
             bool deleted = await _service.DeleteStagingRowAsync(id);
-            return Ok(new { success = deleted });
+            return Ok(deleted);
         }
 
         /// <summary>Clear all staging rows for a project.</summary>

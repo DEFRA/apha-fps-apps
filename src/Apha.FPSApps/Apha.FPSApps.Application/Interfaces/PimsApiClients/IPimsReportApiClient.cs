@@ -1,24 +1,6 @@
-/*
- * TRANSFORMENGINE MIGRATION — IPimsReportApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 7 — Frontend DTOs + API Client Interfaces (Steps 10-11)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New frontend API client interface for Report CRUD endpoints
- *   - Mirrors backend ReportController routes: GET/POST /api/v1/report, GET/PUT/DELETE /api/v1/report/{id}
- *   - Integer PK (id) — matches backend controller route constraint {id:int}
- *   - No pagination required — Reports Tab grid loads full list
- *
- * PRESERVED:
- *   - All CRUD semantics matching ReportController actions (GetAll, GetById, Create, Update, Delete)
- *   - Return types wrapped in ApiResponseDto<T>
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm role requirements match environment-specific access policy for report management
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
+using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
 {
@@ -26,18 +8,21 @@ namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
     public interface IPimsReportApiClient
     {
         // TRANSFORMENGINE: GET /api/v1/report — no required params; full list for Reports Tab grid
-        Task<ApiResponseDto<List<ReportDto>>> GetAllAsync();
+        Task<ApiResponseDto<List<ReportDto>>> GetAllReportsAsync();
+
+        // GET /api/v1/report/paged — paged/sorted/filterable list
+        Task<ApiResponseDto<PaginatedResult<ReportDto>>> GetPagedReportsAsync(QueryParameters<string> query);
 
         // TRANSFORMENGINE: GET /api/v1/report/{id:int}
-        Task<ApiResponseDto<ReportDto>> GetByIdAsync(int id);
+        Task<ApiResponseDto<ReportDto>> GetReportByIdAsync(int id);
 
         // TRANSFORMENGINE: POST /api/v1/report
-        Task<ApiResponseDto<ReportDto>> CreateAsync(ReportDto dto);
+        Task<ApiResponseDto<ReportDto>> CreateReportAsync(ReportDto dto);
 
         // TRANSFORMENGINE: PUT /api/v1/report/{id:int}
-        Task<ApiResponseDto<ReportDto>> UpdateAsync(int id, ReportDto dto);
+        Task<ApiResponseDto<ReportDto>> UpdateReportAsync(int id, ReportDto dto);
 
         // TRANSFORMENGINE: DELETE /api/v1/report/{id:int}
-        Task<ApiResponseDto<bool>> DeleteAsync(int id);
+        Task<ApiResponseDto<bool>> DeleteReportAsync(int id);
     }
 }

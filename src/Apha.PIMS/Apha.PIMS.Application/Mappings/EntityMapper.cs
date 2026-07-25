@@ -1,26 +1,4 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — EntityMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - AutoMapper Profile extended with CreateMap entries for all Phase 3 frmMaintainance-derived entities:
- *     Report, ReportGroup, ReportGroupLink, ProjectManager, ProgramManagerLink,
- *     ProfitCentreManagerLink, Setting, AccessUser, AccessLevel, AccessUserLevel,
- *     AccessSystem, Frequency, ReviewItem, RadtrackProg
- *   - All new mappings use .ReverseMap() for bidirectional DTO <-> Entity conversion
- *   - Existing pre-Phase 3 mappings (pagination, Project family, Milestone, RadTrackInvoice, etc.) preserved verbatim
- *
- * PRESERVED:
- *   - All pagination generic mappings (PaginationParameters<>, PagedData<>, PaginationData)
- *   - All pre-existing entity-to-DTO mappings (ProjectListView, Project, Milestone, RadTrackInvoice families)
- *   - Milestone custom ForMember(IsLate, Ignore) configuration
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
-using Apha.PIMS.Application.Dtos;
+﻿using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Pagination;
@@ -78,6 +56,8 @@ namespace Apha.PIMS.Application.Mappings
             CreateMap<ReportGroupLink, ReportGroupLinkDto>().ReverseMap();
             CreateMap<ProjectManager, ProjectManagerDto>().ReverseMap();
             CreateMap<ProgramManagerLink, ProgramManagerLinkDto>().ReverseMap();
+            CreateMap<ProgramLookup, ProgramLookupDto>().ReverseMap();
+            CreateMap<ProfitCentreLookup, ProfitCentreLookupDto>().ReverseMap();
             CreateMap<ProfitCentreManagerLink, ProfitCentreManagerLinkDto>().ReverseMap();
             CreateMap<Setting, SettingDto>().ReverseMap();
             CreateMap<AccessUser, AccessUserDto>().ReverseMap();
@@ -86,6 +66,7 @@ namespace Apha.PIMS.Application.Mappings
             CreateMap<AccessSystem, AccessSystemDto>().ReverseMap();
             CreateMap<Frequency, FrequencyDto>().ReverseMap();
             CreateMap<ReviewItem, ReviewItemDto>().ReverseMap();
+            CreateMap<PublicationType, PublicationTypeDto>().ReverseMap();
 
             // TRANSFORMENGINE: Phase 3 — RadTrackProg DTO mapping (Programme Tab)
             CreateMap<RadtrackProg, RadTrackProgDto>().ReverseMap();

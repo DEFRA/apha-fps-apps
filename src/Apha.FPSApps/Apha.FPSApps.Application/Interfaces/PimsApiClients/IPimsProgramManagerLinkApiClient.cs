@@ -1,49 +1,27 @@
-/*
- * TRANSFORMENGINE MIGRATION — IPimsProgramManagerLinkApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 7 — Frontend DTOs + API Client Interfaces (Steps 10-11)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New frontend API client interface for ProgramManagerLink CRUD endpoints
- *   - Mirrors backend ProgramManagerLinkController routes:
- *       GET    /api/v1/programmanagerlink                      — full list
- *       GET    /api/v1/programmanagerlink/{program}            — scoped by program
- *       GET    /api/v1/programmanagerlink/{program}/{manager}  — composite natural PK get
- *       POST   /api/v1/programmanagerlink                      — create link
- *       DELETE /api/v1/programmanagerlink/{program}/{manager}  — delete by composite natural PK
- *   - Composite natural PK (program string + manager string) — URL-encoding handled by implementation
- *   - No PUT endpoint — link table has no mutable fields beyond composite PK
- *
- * PRESERVED:
- *   - Composite natural PK semantics (program + manager)
- *   - GetByProgram scoped list endpoint preserved
- *   - Return types wrapped in ApiResponseDto<T>
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm composite natural PK delete route with URL-encoded string segments is acceptable
- */
 
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
+using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
 {
-    // TRANSFORMENGINE: mirrors ProgramManagerLinkController — composite natural PK (program + manager); URL-encoding in implementation
-    public interface IPimsProgramManagerLinkApiClient
-    {
-        // TRANSFORMENGINE: GET /api/v1/programmanagerlink — full list
-        Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetAllAsync();
+// TRANSFORMENGINE: mirrors ProgramManagerLinkController — composite natural PK (program + manager); URL-encoding in implementation
+public interface IPimsProgramManagerLinkApiClient
+{
+    Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetAllProgramManagerLinksAsync();
 
-        // TRANSFORMENGINE: GET /api/v1/programmanagerlink/{program} — scoped by program
-        Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetByProgramAsync(string program);
+    Task<ApiResponseDto<List<ProgramLookupDto>>> GetProgramsAsync();
 
-        // TRANSFORMENGINE: GET /api/v1/programmanagerlink/{program}/{manager} — composite PK get
-        Task<ApiResponseDto<ProgramManagerLinkDto>> GetByIdAsync(string program, string manager);
+    Task<ApiResponseDto<PaginatedResult<ProgramManagerLinkDto>>> GetPagedByManagerAsync(QueryParameters<string> query, string manager);
 
-        // TRANSFORMENGINE: POST /api/v1/programmanagerlink
-        Task<ApiResponseDto<ProgramManagerLinkDto>> CreateAsync(ProgramManagerLinkDto dto);
+    Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetByProgramAsync(string program);
 
-        // TRANSFORMENGINE: DELETE /api/v1/programmanagerlink/{program}/{manager}
-        Task<ApiResponseDto<bool>> DeleteAsync(string program, string manager);
-    }
+    Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetByManagerAsync(string manager);
+
+    Task<ApiResponseDto<ProgramManagerLinkDto>> GetProgramManagerLinkByIdAsync(string program, string manager);
+
+    Task<ApiResponseDto<ProgramManagerLinkDto>> CreateProgramManagerLinkAsync(ProgramManagerLinkDto dto);
+
+    Task<ApiResponseDto<bool>> DeleteProgramManagerLinkAsync(string program, string manager);
+}
 }

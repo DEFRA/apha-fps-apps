@@ -1,39 +1,24 @@
-/*
- * TRANSFORMENGINE MIGRATION — IProjectManagerRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 2 — Core Layer - Entities + Repository Interfaces + Pagination
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New Core repository interface for ProjectManager CRUD operations
- *   - All methods are async (Task<T>) — no synchronous signatures
- *   - PK is string (Projectmanager name) — reflected in GetByIdAsync / DeleteAsync / ExistsAsync
- *   - GetAllAsync returns full list for manager lookup/dropdown usage
- *   - ExistsAsync follows AnyAsync-style existence semantics per phase rules
- *
- * PRESERVED:
- *   - No infrastructure-specific code (DbContext, EF) in this Core interface
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Pagination;
 
 namespace Apha.PIMS.Core.Interfaces
 {
-    // TRANSFORMENGINE: interface covers CRUD for ProjectManager; string PK (projectmanager name)
     public interface IProjectManagerRepository
     {
-        Task<List<ProjectManager>> GetAllAsync();
+        Task<List<ProjectManager>> GetAllProjectManagersAsync();
 
-        Task<ProjectManager?> GetByIdAsync(string projectmanager);
+        Task<PagedData<ProjectManager>> GetPagedProjectManagersAsync(PaginationParameters<string>? query = null);
 
-        Task<ProjectManager> AddAsync(ProjectManager entity);
+        Task<List<string>> GetManagerNamesAsync();
 
-        Task<ProjectManager> UpdateAsync(ProjectManager entity);
+        Task<ProjectManager?> GetProjectManagerByNameAsync(string projectManagerName);
 
-        Task DeleteAsync(string projectmanager);
+        Task<ProjectManager> AddProjectManagerAsync(ProjectManager entity);
 
-        Task<bool> ExistsAsync(string projectmanager);
+        Task<ProjectManager> UpdateProjectManagerAsync(ProjectManager entity);
+
+        Task<bool> DeleteProjectManagerAsync(string projectManagerName);
+
+        Task<bool> ProjectManagerExistsAsync(string projectManagerName);
     }
 }

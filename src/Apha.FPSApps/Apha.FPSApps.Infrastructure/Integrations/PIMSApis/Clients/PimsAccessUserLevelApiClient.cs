@@ -1,35 +1,9 @@
-/*
- * TRANSFORMENGINE MIGRATION — PimsAccessUserLevelApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New HTTP API client implementing IPimsAccessUserLevelApiClient
- *   - Binds to backend AccessUserLevelController routes:
- *       GET    /api/v1/accessuserlevel                                         — full list
- *       GET    /api/v1/accessuserlevel/{systemid}                              — scoped by system
- *       GET    /api/v1/accessuserlevel/{systemid}/{ntlogin}                    — scoped by user within system
- *       GET    /api/v1/accessuserlevel/{systemid}/{ntlogin}/{accesslevelid}    — triple composite PK get
- *       POST   /api/v1/accessuserlevel                                         — create assignment
- *       DELETE /api/v1/accessuserlevel/{systemid}/{ntlogin}/{accesslevelid}    — delete by triple composite PK
- *   - Triple composite PK (systemid int + ntlogin string + accesslevelid int) — Uri.EscapeDataString applied to ntlogin
- *   - No PUT endpoint — assignment table has no mutable fields beyond composite PK
- *   - Every HTTP call wrapped in try/catch(Exception) returning FailureResponse with InternalCodeError
- *   - Req/Res contracts: AccessUserLevelReq, AccessUserLevelRes from Apha.Common.Contracts.PIMS
- *
- * PRESERVED:
- *   - Triple composite PK semantics (systemid + ntlogin + accesslevelid)
- *   - GetBySystemId and GetByUser scoped list endpoints preserved
- *   - Return types wrapped in ApiResponseDto<T>
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm triple composite delete route is acceptable for client consumers
- */
-
 using Apha.Common.Contracts.PIMS;
+using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
@@ -50,22 +24,31 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET /api/v1/accessuserlevel — full list
-        public async Task<ApiResponseDto<List<AccessUserLevelDto>>> GetAllAsync()
+        // TRANSFORMENGINE: GET /api/v1/accessuserlevel/paged — paged, sorted, filtered list; builds query string from QueryParameters
+        public async Task<ApiResponseDto<PaginatedResult<AccessUserLevelDto>>> GetPagedAsync(QueryParameters<string> request)
         {
             try
             {
-                var response = await _http.GetAsync<List<AccessUserLevelRes>>(BaseUrl);
+                string url = QueryStringHelper.AddQueryString($"{BaseUrl}/paged", request);
+                var response = await _http.GetAsync<List<AccessUserLevelRes>>(url);
                 if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<AccessUserLevelDto>>>(response);
+                {
+                    var items       = _mapper.Map<List<AccessUserLevelDto>>(response.Data ?? []);
+                    var pageNumber  = response.Pagination?.PageNumber  ?? request.Page;
+                    var pageSize    = response.Pagination?.PageSize    ?? request.PageSize;
+                    var totalRecords = response.Pagination?.TotalRecords ?? items.Count;
+                    var paged = new PaginatedResult<AccessUserLevelDto>(items, totalRecords, pageNumber, pageSize);
+                    return ApiResponseDto<PaginatedResult<AccessUserLevelDto>>.SuccessResponse(paged);
+                }
 
-                var responseDto = _mapper.Map<ApiResponseDto<List<AccessUserLevelDto>>>(response);
-                return ApiResponseDto<List<AccessUserLevelDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                return ApiResponseDto<PaginatedResult<AccessUserLevelDto>>.FailureResponse(
+                    _mapper.Map<List<ApiErrorDto>>(response.Errors ?? []),
+                    _mapper.Map<ApiMetaDto>(response.Meta));
             }
             catch (Exception)
             {
-                return ApiResponseDto<List<AccessUserLevelDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve AccessUserLevel data", Code = InternalCodeError }],
+                return ApiResponseDto<PaginatedResult<AccessUserLevelDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve paged AccessUserLevel data", Code = InternalCodeError }],
                     new ApiMetaDto());
             }
         }

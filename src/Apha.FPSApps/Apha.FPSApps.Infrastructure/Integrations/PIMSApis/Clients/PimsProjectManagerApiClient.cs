@@ -1,33 +1,10 @@
-/*
- * TRANSFORMENGINE MIGRATION — PimsProjectManagerApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New HTTP API client implementing IPimsProjectManagerApiClient
- *   - Binds to backend ProjectManagerController routes:
- *       GET    /api/v1/projectmanager                    — full list
- *       GET    /api/v1/projectmanager/{projectmanager}   — natural varchar PK get
- *       POST   /api/v1/projectmanager                    — create
- *       PUT    /api/v1/projectmanager/{projectmanager}   — update; route PK is authoritative
- *       DELETE /api/v1/projectmanager/{projectmanager}   — delete
- *   - Natural varchar string PK (projectmanager name) — Uri.EscapeDataString applied before URL embedding
- *   - Every HTTP call wrapped in try/catch(Exception) returning FailureResponse with InternalCodeError
- *   - Req/Res contracts: ProjectManagerReq, ProjectManagerRes from Apha.Common.Contracts.PIMS
- *
- * PRESERVED:
- *   - Natural string PK semantics (projectmanager name as identifier)
- *   - All CRUD semantics matching IPimsProjectManagerApiClient interface
- *   - Return types wrapped in ApiResponseDto<T>
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm rename scenario handling (delete+create vs update-in-place) at implementation layer
- */
-
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
+using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
@@ -48,12 +25,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET /api/v1/projectmanager — full list
-        public async Task<ApiResponseDto<List<ProjectManagerDto>>> GetAllAsync()
+        // TRANSFORMENGINE: GET /api/v1/projectmanager — supports paging/sorting/filter via query string
+        public async Task<ApiResponseDto<List<ProjectManagerDto>>> GetAllProjectManagersAsync(QueryParameters<string>? query = null)
         {
             try
             {
-                var response = await _http.GetAsync<List<ProjectManagerRes>>(BaseUrl);
+                query ??= new QueryParameters<string>();
+                string url = QueryStringHelper.AddQueryString(BaseUrl, query);
+                var response = await _http.GetAsync<List<ProjectManagerRes>>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<ProjectManagerDto>>>(response);
 
@@ -68,12 +47,61 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/projectmanager/{projectmanager} — Uri.EscapeDataString applied to natural varchar PK
-        public async Task<ApiResponseDto<ProjectManagerDto>> GetByIdAsync(string projectmanager)
+        // TRANSFORMENGINE: GET /api/v1/projectmanager/names — dropdown source for manager names
+        public async Task<ApiResponseDto<List<string>>> GetManagerNamesAsync()
         {
             try
             {
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(projectmanager)}";
+                var response = await _http.GetAsync<List<string>>($"{BaseUrl}/names");
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<string>>>(response);
+
+                var responseDto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+                return ApiResponseDto<List<string>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<string>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve ProjectManager names", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        // TRANSFORMENGINE: GET /api/v1/projectmanager — paged list with search/sort/filter support
+        public async Task<ApiResponseDto<PaginatedResult<ProjectManagerDto>>> GetPagedProjectManagersAsync(QueryParameters<string> query)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString(BaseUrl, query);
+                var response = await _http.GetAsync<List<ProjectManagerRes>>(url);
+                if (response.Success)
+                {
+                    var items = _mapper.Map<List<ProjectManagerDto>>(response.Data ?? []);
+                    var pageNumber = response.Pagination?.PageNumber ?? query.Page;
+                    var pageSize = response.Pagination?.PageSize ?? query.PageSize;
+                    var totalRecords = response.Pagination?.TotalRecords ?? items.Count;
+                    var paged = new PaginatedResult<ProjectManagerDto>(items, totalRecords, pageNumber, pageSize);
+                    return ApiResponseDto<PaginatedResult<ProjectManagerDto>>.SuccessResponse(paged);
+                }
+
+                return ApiResponseDto<PaginatedResult<ProjectManagerDto>>.FailureResponse(
+                    _mapper.Map<List<ApiErrorDto>>(response.Errors ?? []),
+                    _mapper.Map<ApiMetaDto>(response.Meta));
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<PaginatedResult<ProjectManagerDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve paged ProjectManager data", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        // TRANSFORMENGINE: GET /api/v1/projectmanager/{projectmanager} — Uri.EscapeDataString applied to natural varchar PK
+        public async Task<ApiResponseDto<ProjectManagerDto>> GetProjectManagerByNameAsync(string projectManagerName)
+        {
+            try
+            {
+                var url = $"{BaseUrl}/{Uri.EscapeDataString(projectManagerName)}";
                 var response = await _http.GetAsync<ProjectManagerRes>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ProjectManagerDto>>(response);
@@ -90,7 +118,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: POST /api/v1/projectmanager
-        public async Task<ApiResponseDto<ProjectManagerDto>> CreateAsync(ProjectManagerDto dto)
+        public async Task<ApiResponseDto<ProjectManagerDto>> CreateProjectManagerAsync(ProjectManagerDto dto)
         {
             try
             {
@@ -111,12 +139,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: PUT /api/v1/projectmanager/{projectmanager} — route PK is authoritative; Uri.EscapeDataString applied
-        public async Task<ApiResponseDto<ProjectManagerDto>> UpdateAsync(string projectmanager, ProjectManagerDto dto)
+        public async Task<ApiResponseDto<ProjectManagerDto>> UpdateProjectManagerAsync(string projectManagerName, ProjectManagerDto dto)
         {
             try
             {
                 var request = _mapper.Map<ProjectManagerReq>(dto);
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(projectmanager)}";
+                var url = $"{BaseUrl}/{Uri.EscapeDataString(projectManagerName)}";
                 var response = await _http.PutAsync<ProjectManagerReq, ProjectManagerRes>(url, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ProjectManagerDto>>(response);
@@ -133,11 +161,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: DELETE /api/v1/projectmanager/{projectmanager} — Uri.EscapeDataString applied to natural varchar PK
-        public async Task<ApiResponseDto<bool>> DeleteAsync(string projectmanager)
+        public async Task<ApiResponseDto<bool>> DeleteProjectManagerAsync(string projectManagerName)
         {
             try
             {
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(projectmanager)}";
+                var url = $"{BaseUrl}/{Uri.EscapeDataString(projectManagerName)}";
                 var response = await _http.DeleteAsync<bool>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);

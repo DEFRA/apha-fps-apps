@@ -1,38 +1,24 @@
-/*
- * TRANSFORMENGINE MIGRATION — IProjectManagerService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New Application service interface for ProjectManager CRUD operations (Manager Tab, frmMaintainance)
- *   - All methods are async (Task<T>) — no synchronous signatures
- *   - String PK (projectmanager name) reflected in GetByIdAsync / DeleteAsync / ExistsAsync
- *   - GetAllAsync returns full list for manager lookup/dropdown
- *
- * PRESERVED:
- *   - No infrastructure-specific code in this Application interface
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Application.Dtos;
+using Apha.PIMS.Application.Pagination;
 
 namespace Apha.PIMS.Application.Interfaces
 {
-    // TRANSFORMENGINE: service interface for ProjectManager CRUD; string PK; consumed by ProjectManagerController (Phase 5)
     public interface IProjectManagerService
     {
-        Task<List<ProjectManagerDto>> GetAllAsync();
+        Task<List<ProjectManagerDto>> GetAllProjectManagersAsync();
 
-        Task<ProjectManagerDto?> GetByIdAsync(string projectmanager);
+        Task<PaginatedResult<ProjectManagerDto>> GetPagedProjectManagersAsync(QueryParameters<string>? query = null);
 
-        Task<ProjectManagerDto> CreateAsync(ProjectManagerDto dto);
+        Task<List<string>> GetManagerNamesAsync();
 
-        Task<ProjectManagerDto> UpdateAsync(ProjectManagerDto dto);
+        Task<ProjectManagerDto?> GetProjectManagerByNameAsync(string projectManagerName);
 
-        Task DeleteAsync(string projectmanager);
+        Task<ProjectManagerDto> CreateProjectManagerAsync(ProjectManagerDto dto);
 
-        Task<bool> ExistsAsync(string projectmanager);
+        Task<ProjectManagerDto> UpdateProjectManagerAsync(ProjectManagerDto dto);
+
+        Task<bool> DeleteProjectManagerAsync(string projectManagerName);
+
+        Task<bool> ProjectManagerExistsAsync(string projectManagerName);
     }
 }

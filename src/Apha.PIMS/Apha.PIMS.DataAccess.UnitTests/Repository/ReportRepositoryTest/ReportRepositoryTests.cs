@@ -72,7 +72,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
         // ── helpers ───────────────────────────────────────────────────────────────
 
         private static Report MakeReport(int id, string name = "Test Report") =>
-            new Report { Id = id, Reportname = name, Type = "R", Emailable = false };
+            new Report { Id = id, ReportName = name, Type = "R", Emailable = false };
 
         // ── GetAllAsync ───────────────────────────────────────────────────────────
 
@@ -90,13 +90,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
             var repo = CreateRepository(reports);
 
             // Act
-            var result = await repo.GetAllAsync();
+            var result = await repo.GetAllReportsAsync();
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(2, result.Count);
-            Assert.Contains(result, r => r.Reportname == "Report Alpha");
-            Assert.Contains(result, r => r.Reportname == "Report Beta");
+            Assert.Contains(result, r => r.ReportName == "Report Alpha");
+            Assert.Contains(result, r => r.ReportName == "Report Beta");
         }
 
         [Fact]
@@ -106,7 +106,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
             var repo = CreateRepository(Enumerable.Empty<Report>());
 
             // Act
-            var result = await repo.GetAllAsync();
+            var result = await repo.GetAllReportsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -131,12 +131,12 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
             var repo = CreateRepository(reports);
 
             // Act
-            var result = await repo.GetByIdAsync(1);
+            var result = await repo.GetReportByIdAsync(1);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(1, result!.Id);
-            Assert.Equal("Alpha", result.Reportname);
+            Assert.Equal("Alpha", result.ReportName);
         }
 
         [Fact]
@@ -147,7 +147,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
             var repo = CreateRepository(reports);
 
             // Act
-            var result = await repo.GetByIdAsync(99);
+            var result = await repo.GetReportByIdAsync(99);
 
             // Assert
             Assert.Null(result);
@@ -160,7 +160,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
             var repo = CreateRepository();
 
             // Act
-            var result = await repo.GetByIdAsync(1);
+            var result = await repo.GetReportByIdAsync(1);
 
             // Assert
             Assert.Null(result);
@@ -180,7 +180,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
             var report = MakeReport(0, "New Report");
 
             // Act
-            var result = await repo.AddAsync(report);
+            var result = await repo.AddReportAsync(report);
 
             // Assert
             Assert.NotNull(result);
@@ -195,10 +195,10 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
             var report = MakeReport(0, "New Report");
 
             // Act
-            await repo.AddAsync(report);
+            await repo.AddReportAsync(report);
 
             // Assert
-            reportsDbSet.Verify(x => x.Add(It.Is<Report>(r => r.Reportname == "New Report")), Times.Once);
+            reportsDbSet.Verify(x => x.Add(It.Is<Report>(r => r.ReportName == "New Report")), Times.Once);
         }
 
         [Fact]
@@ -209,7 +209,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
             var report = MakeReport(0, "New Report");
 
             // Act
-            await repo.AddAsync(report);
+            await repo.AddReportAsync(report);
 
             // Assert
             RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
@@ -230,11 +230,11 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
             var updatedEntity = MakeReport(5, "Updated Name");
 
             // Act
-            var result = await repo.UpdateAsync(updatedEntity);
+            var result = await repo.UpdateReportAsync(updatedEntity);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal("Updated Name", result.Reportname);
+            Assert.Equal("Updated Name", result.ReportName);
         }
 
         [Fact]
@@ -245,7 +245,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
             var (repo, _, mockContext) = CreateRepositoryWithMocks(new List<Report> { existing });
 
             // Act
-            await repo.UpdateAsync(MakeReport(5, "Updated"));
+            await repo.UpdateReportAsync(MakeReport(5, "Updated"));
 
             // Assert
             RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
@@ -265,7 +265,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
             var repo = CreateRepository(reports);
 
             // Act
-            var result = await repo.ExistsAsync(3);
+            var result = await repo.ReportExistsAsync(3);
 
             // Assert
             Assert.True(result);
@@ -279,7 +279,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
             var repo = CreateRepository(reports);
 
             // Act
-            var result = await repo.ExistsAsync(99);
+            var result = await repo.ReportExistsAsync(99);
 
             // Assert
             Assert.False(result);
@@ -292,7 +292,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ReportRepositoryTest
             var repo = CreateRepository();
 
             // Act
-            var result = await repo.ExistsAsync(1);
+            var result = await repo.ReportExistsAsync(1);
 
             // Assert
             Assert.False(result);

@@ -1,19 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ReportServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New xUnit test class for Apha.PIMS.Application.Services.ReportService
- *   - Covers: GetAllAsync, GetByIdAsync, CreateAsync, UpdateAsync, DeleteAsync, ExistsAsync
- *   - Uses NSubstitute for IReportRepository and IMapper; FluentAssertions available via project ref
- *
- * PRESERVED:
- *   - All guard branches: null-input validation, not-found KeyNotFoundException, duplicate-name guard
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Services;
 using Apha.PIMS.Core.Entities;
@@ -39,8 +23,8 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
 
         // ── helpers ───────────────────────────────────────────────────────────────
 
-        private static Report MakeEntity(int id = 1) => new Report { Id = id, Reportname = $"R{id}", Type = "R" };
-        private static ReportDto MakeDto(int id = 1) => new ReportDto { Id = id, Reportname = $"R{id}", Type = "R" };
+        private static Report MakeEntity(int id = 1) => new Report { Id = id, ReportName = $"R{id}", Type = "R" };
+        private static ReportDto MakeDto(int id = 1) => new ReportDto { Id = id, ReportName = $"R{id}", Type = "R" };
 
         // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -70,16 +54,16 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
             // Arrange
             var entities = new List<Report> { MakeEntity(1), MakeEntity(2) };
             var dtos     = new List<ReportDto> { MakeDto(1), MakeDto(2) };
-            _repository.GetAllAsync().Returns(entities);
+            _repository.GetAllReportsAsync().Returns(entities);
             _mapper.Map<List<ReportDto>>(entities).Returns(dtos);
 
             // Act
-            var result = await _service.GetAllAsync();
+            var result = await _service.GetAllReportsAsync();
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(2, result.Count);
-            await _repository.Received(1).GetAllAsync();
+            await _repository.Received(1).GetAllReportsAsync();
             _mapper.Received(1).Map<List<ReportDto>>(entities);
         }
 
@@ -87,11 +71,11 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
         public async Task GetAllAsync_RepositoryReturnsEmptyList_ReturnsEmptyDtoList()
         {
             // Arrange
-            _repository.GetAllAsync().Returns(new List<Report>());
+            _repository.GetAllReportsAsync().Returns(new List<Report>());
             _mapper.Map<List<ReportDto>>(Arg.Any<List<Report>>()).Returns(new List<ReportDto>());
 
             // Act
-            var result = await _service.GetAllAsync();
+            var result = await _service.GetAllReportsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -102,10 +86,10 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
         public async Task GetAllAsync_RepositoryThrowsException_PropagatesException()
         {
             // Arrange
-            _repository.GetAllAsync().ThrowsAsync(new InvalidOperationException("db error"));
+            _repository.GetAllReportsAsync().ThrowsAsync(new InvalidOperationException("db error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetAllAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetAllReportsAsync());
         }
 
         #endregion
@@ -120,26 +104,26 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
             // Arrange
             var entity = MakeEntity(3);
             var dto    = MakeDto(3);
-            _repository.GetByIdAsync(3).Returns(entity);
+            _repository.GetReportByIdAsync(3).Returns(entity);
             _mapper.Map<ReportDto>(entity).Returns(dto);
 
             // Act
-            var result = await _service.GetByIdAsync(3);
+            var result = await _service.GetReportByIdAsync(3);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(3, result!.Id);
-            await _repository.Received(1).GetByIdAsync(3);
+            await _repository.Received(1).GetReportByIdAsync(3);
         }
 
         [Fact]
         public async Task GetByIdAsync_EntityNotFound_ReturnsNull()
         {
             // Arrange
-            _repository.GetByIdAsync(99).Returns((Report?)null);
+            _repository.GetReportByIdAsync(99).Returns((Report?)null);
 
             // Act
-            var result = await _service.GetByIdAsync(99);
+            var result = await _service.GetReportByIdAsync(99);
 
             // Assert
             Assert.Null(result);
@@ -160,42 +144,42 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
             var created = MakeEntity(10);
             var result_dto = MakeDto(10);
             _mapper.Map<Report>(dto).Returns(entity);
-            _repository.AddAsync(entity).Returns(created);
+            _repository.AddReportAsync(entity).Returns(created);
             _mapper.Map<ReportDto>(created).Returns(result_dto);
 
             // Act
-            var result = await _service.CreateAsync(dto);
+            var result = await _service.CreateReportAsync(dto);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(10, result.Id);
-            await _repository.Received(1).AddAsync(entity);
+            await _repository.Received(1).AddReportAsync(entity);
         }
 
         [Fact]
         public async Task CreateAsync_NullDto_ThrowsArgumentNullException()
         {
-            await Assert.ThrowsAsync<ArgumentNullException>(() => _service.CreateAsync(null!));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _service.CreateReportAsync(null!));
         }
 
         [Fact]
         public async Task CreateAsync_EmptyReportname_ThrowsArgumentException()
         {
             // Arrange
-            var dto = new ReportDto { Reportname = "", Type = "R" };
+            var dto = new ReportDto { ReportName = "", Type = "R" };
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateAsync(dto));
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateReportAsync(dto));
         }
 
         [Fact]
         public async Task CreateAsync_WhitespaceReportname_ThrowsArgumentException()
         {
             // Arrange
-            var dto = new ReportDto { Reportname = "   ", Type = "R" };
+            var dto = new ReportDto { ReportName = "   ", Type = "R" };
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateAsync(dto));
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateReportAsync(dto));
         }
 
         #endregion
@@ -212,45 +196,45 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
             var entity  = MakeEntity(5);
             var updated = MakeEntity(5);
             var result_dto = MakeDto(5);
-            _repository.ExistsAsync(5).Returns(true);
+            _repository.ReportExistsAsync(5).Returns(true);
             _mapper.Map<Report>(dto).Returns(entity);
-            _repository.UpdateAsync(entity).Returns(updated);
+            _repository.UpdateReportAsync(entity).Returns(updated);
             _mapper.Map<ReportDto>(updated).Returns(result_dto);
 
             // Act
-            var result = await _service.UpdateAsync(dto);
+            var result = await _service.UpdateReportAsync(dto);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(5, result.Id);
-            await _repository.Received(1).ExistsAsync(5);
-            await _repository.Received(1).UpdateAsync(entity);
+            await _repository.Received(1).ReportExistsAsync(5);
+            await _repository.Received(1).UpdateReportAsync(entity);
         }
 
         [Fact]
         public async Task UpdateAsync_EntityNotFound_ThrowsKeyNotFoundException()
         {
             // Arrange
-            _repository.ExistsAsync(99).Returns(false);
+            _repository.ReportExistsAsync(99).Returns(false);
 
             // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.UpdateAsync(MakeDto(99)));
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.UpdateReportAsync(MakeDto(99)));
         }
 
         [Fact]
         public async Task UpdateAsync_NullDto_ThrowsArgumentNullException()
         {
-            await Assert.ThrowsAsync<ArgumentNullException>(() => _service.UpdateAsync(null!));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _service.UpdateReportAsync(null!));
         }
 
         [Fact]
         public async Task UpdateAsync_EmptyReportname_ThrowsArgumentException()
         {
             // Arrange
-            var dto = new ReportDto { Id = 1, Reportname = "", Type = "R" };
+            var dto = new ReportDto { Id = 1, ReportName = "", Type = "R" };
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateAsync(dto));
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateReportAsync(dto));
         }
 
         #endregion
@@ -260,40 +244,41 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
         #region DeleteAsync
 
         [Fact]
-        public async Task DeleteAsync_EntityExists_CallsRepositoryDelete()
+        public async Task DeleteAsync_EntityExists_ReturnsTrueAndCallsRepositoryDelete()
         {
             // Arrange
-            _repository.ExistsAsync(7).Returns(true);
-            _repository.DeleteAsync(7).Returns(Task.CompletedTask);
+            _repository.ReportExistsAsync(7).Returns(true);
+            _repository.DeleteReportAsync(7).Returns(true);
 
             // Act
-            await _service.DeleteAsync(7);
+            var result = await _service.DeleteReportAsync(7);
 
             // Assert
-            await _repository.Received(1).DeleteAsync(7);
+            Assert.True(result);
+            await _repository.Received(1).DeleteReportAsync(7);
         }
 
         [Fact]
         public async Task DeleteAsync_EntityNotFound_ThrowsKeyNotFoundException()
         {
             // Arrange
-            _repository.ExistsAsync(99).Returns(false);
+            _repository.ReportExistsAsync(99).Returns(false);
 
             // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.DeleteAsync(99));
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.DeleteReportAsync(99));
         }
 
         [Fact]
         public async Task DeleteAsync_DoesNotCallDelete_WhenEntityNotFound()
         {
             // Arrange
-            _repository.ExistsAsync(99).Returns(false);
+            _repository.ReportExistsAsync(99).Returns(false);
 
             // Act + ignore exception
-            try { await _service.DeleteAsync(99); } catch { }
+            try { await _service.DeleteReportAsync(99); } catch { }
 
             // Assert — repository.DeleteAsync should never be called
-            await _repository.DidNotReceive().DeleteAsync(Arg.Any<int>());
+            await _repository.DidNotReceive().DeleteReportAsync(Arg.Any<int>());
         }
 
         #endregion
@@ -306,10 +291,10 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
         public async Task ExistsAsync_EntityExists_ReturnsTrue()
         {
             // Arrange
-            _repository.ExistsAsync(1).Returns(true);
+            _repository.ReportExistsAsync(1).Returns(true);
 
             // Act
-            var result = await _service.ExistsAsync(1);
+            var result = await _service.ReportExistsAsync(1);
 
             // Assert
             Assert.True(result);
@@ -319,10 +304,10 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
         public async Task ExistsAsync_EntityNotFound_ReturnsFalse()
         {
             // Arrange
-            _repository.ExistsAsync(99).Returns(false);
+            _repository.ReportExistsAsync(99).Returns(false);
 
             // Act
-            var result = await _service.ExistsAsync(99);
+            var result = await _service.ReportExistsAsync(99);
 
             // Assert
             Assert.False(result);

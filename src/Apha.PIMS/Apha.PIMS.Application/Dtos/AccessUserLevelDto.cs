@@ -1,28 +1,11 @@
-/*
- * TRANSFORMENGINE MIGRATION — AccessUserLevelDto.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New Application DTO mirroring Apha.PIMS.Core.Entities.AccessUserLevel
- *   - Three-column composite PK (Systemid, Ntlogin, Accesslevelid) carried in DTO for Add/Delete
- *
- * PRESERVED:
- *   - All field names consistent with entity naming convention
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 namespace Apha.PIMS.Application.Dtos
 {
-    // TRANSFORMENGINE: DTO maps to/from Apha.PIMS.Core.Entities.AccessUserLevel via EntityMapper; three-column composite PK (Systemid, Ntlogin, Accesslevelid)
     public class AccessUserLevelDto
     {
-        public int Systemid { get; set; }
+        public int SystemId { get; set; }
 
-        public string Ntlogin { get; set; } = null!;
+        public string NtLogin { get; set; } = null!;
 
-        public int Accesslevelid { get; set; }
+        public int AccessLevelId { get; set; }
     }
 }

@@ -1,23 +1,4 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - Added scoped service registrations for 14 new Phase 5 resource families:
- *     IReportService, IReportGroupService, IReportGroupLinkService,
- *     IProjectManagerService, IProgramManagerLinkService, IProfitCentreManagerLinkService,
- *     ISettingService, IAccessUserService, IAccessLevelService, IAccessUserLevelService,
- *     IAccessSystemService, IFrequencyService, IReviewItemService, IRadTrackProgService
- *   - Added scoped repository registrations for all corresponding repository pairs
- *
- * PRESERVED:
- *   - All existing service and repository registrations (ProjectList, Milestone, RadTrackInvoice, etc.)
- *   - IFPSYearContext, AppStateService, ExcelExportService registrations unchanged
- *
- * DEFERRED: none — fully automated.
- */
-using Apha.Common.Utilities.ExcelExport;
+﻿using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Services;
@@ -73,6 +54,12 @@ namespace Apha.PIMS.Api.Extensions
             // TRANSFORMENGINE: Phase 5 additions — RadTrackProg (Programme Tab); natural string PK (program varchar(10))
             services.AddScoped<IRadTrackProgService, RadTrackProgService>();
 
+            // Risk rating lookup maintenance
+            services.AddScoped<IRiskService, RiskService>();
+
+            // Publication type lookup maintenance
+            services.AddScoped<IPublicationTypeService, PublicationTypeService>();
+
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -112,6 +99,12 @@ namespace Apha.PIMS.Api.Extensions
 
             // TRANSFORMENGINE: Phase 5 additions — RadTrackProg (Programme Tab); natural string PK (program varchar(10))
             services.AddScoped<IRadTrackProgRepository, RadTrackProgRepository>();
+
+            // Risk rating lookup maintenance
+            services.AddScoped<IRiskRepository, RiskRepository>();
+
+            // Publication type lookup maintenance
+            services.AddScoped<IPublicationTypeRepository, PublicationTypeRepository>();
 
             return services;
         }

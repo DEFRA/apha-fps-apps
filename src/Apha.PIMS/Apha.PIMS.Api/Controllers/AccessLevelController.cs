@@ -1,24 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — AccessLevelController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - MS Access Form (frmAccessLevel) -> ASP.NET Core 10 Web API [ApiController]
- *   - VBA form operations -> REST lookup endpoints with composite PK (systemid int + accesslevelid int)
- *   - Routes: GET /accesslevel, GET /accesslevel/{systemid}, GET /accesslevel/{systemid}/{accesslevelid}, POST /accesslevel, PUT /accesslevel/{systemid}/{accesslevelid}, DELETE /accesslevel/{systemid}/{accesslevelid}
- *   - Access DAO data binding -> IAccessLevelService dependency injection
- *   - Response contracts mapped via AutoMapper (AccessLevelDto <-> AccessLevelRes)
- *   - No AccessLevelReq exists — request body uses AccessLevelRes shape (full resource including IDs)
- *
- * PRESERVED:
- *   - Composite PK semantics (systemid + accesslevelid)
- *   - GetBySystemId scoped list endpoint preserved
- *   - Authorization: API-PIMSUser, API-PIMSAdmin roles required
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: AccessLevelReq contract does not exist — using AccessLevelRes for create/update body; create dedicated request contract if write semantics differ from read
- */
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
@@ -86,8 +65,8 @@ namespace Apha.PIMS.Api.Controllers
         {
             AccessLevelDto dto = _mapper.Map<AccessLevelDto>(request);
             // TRANSFORMENGINE: Route composite PK is authoritative — set before service call
-            dto.Systemid = systemid;
-            dto.Accesslevelid = accesslevelid;
+            dto.SystemId = systemid;
+            dto.AccessLevelId = accesslevelid;
             AccessLevelDto updated = await _service.UpdateAsync(dto);
             return Ok(_mapper.Map<AccessLevelRes>(updated));
         }
@@ -97,7 +76,7 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> Delete(int systemid, int accesslevelid)
         {
             await _service.DeleteAsync(systemid, accesslevelid);
-            return Ok(new { success = true });
+            return Ok(true);
         }
     }
 }

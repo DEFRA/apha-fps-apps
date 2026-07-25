@@ -1,33 +1,9 @@
-/*
- * TRANSFORMENGINE MIGRATION — PimsFrequencyApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New HTTP API client implementing IPimsFrequencyApiClient
- *   - Binds to backend FrequencyController routes:
- *       GET    /api/v1/frequency                 — full list
- *       GET    /api/v1/frequency/{frequencyid}   — get by integer PK
- *       POST   /api/v1/frequency                 — create
- *       PUT    /api/v1/frequency/{frequencyid}   — update; route PK is authoritative
- *       DELETE /api/v1/frequency/{frequencyid}   — delete
- *   - Integer PK (frequencyid) — matches backend controller route constraint {frequencyid:int}
- *   - Every HTTP call wrapped in try/catch(Exception) returning FailureResponse with InternalCodeError
- *   - Req/Res contracts: FrequencyReq, FrequencyRes from Apha.Common.Contracts.PIMS
- *
- * PRESERVED:
- *   - All CRUD semantics matching IPimsFrequencyApiClient interface (GetAll, GetById, Create, Update, Delete)
- *   - Integer PK (frequencyid) semantics
- *   - Return types wrapped in ApiResponseDto<T>
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm integer PK generation strategy — verify DB identity/sequence vs application-assigned
- */
-
 using Apha.Common.Contracts.PIMS;
+using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
@@ -49,7 +25,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: GET /api/v1/frequency — full list
-        public async Task<ApiResponseDto<List<FrequencyDto>>> GetAllAsync()
+        public async Task<ApiResponseDto<List<FrequencyDto>>> GetAllFrequenciesAsync()
         {
             try
             {
@@ -68,12 +44,41 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/frequency/{frequencyid:int}
-        public async Task<ApiResponseDto<FrequencyDto>> GetByIdAsync(int frequencyid)
+        // TRANSFORMENGINE: GET /api/v1/frequency/paged
+        public async Task<ApiResponseDto<PaginatedResult<FrequencyDto>>> GetPagedFrequenciesAsync(QueryParameters<string> query)
         {
             try
             {
-                var url = $"{BaseUrl}/{frequencyid}";
+                string url = QueryStringHelper.AddQueryString($"{BaseUrl}/paged", query);
+                var response = await _http.GetAsync<List<FrequencyRes>>(url);
+                if (response.Success)
+                {
+                    var items = _mapper.Map<List<FrequencyDto>>(response.Data ?? []);
+                    var pageNumber = response.Pagination?.PageNumber ?? query.Page;
+                    var pageSize = response.Pagination?.PageSize ?? query.PageSize;
+                    var totalRecords = response.Pagination?.TotalRecords ?? items.Count;
+                    var paged = new PaginatedResult<FrequencyDto>(items, totalRecords, pageNumber, pageSize);
+                    return ApiResponseDto<PaginatedResult<FrequencyDto>>.SuccessResponse(paged);
+                }
+
+                return ApiResponseDto<PaginatedResult<FrequencyDto>>.FailureResponse(
+                    _mapper.Map<List<ApiErrorDto>>(response.Errors ?? []),
+                    _mapper.Map<ApiMetaDto>(response.Meta));
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<PaginatedResult<FrequencyDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve paged Frequency data", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        // TRANSFORMENGINE: GET /api/v1/frequency/{frequencyId:int}
+        public async Task<ApiResponseDto<FrequencyDto>> GetFrequencyByIdAsync(int frequencyId)
+        {
+            try
+            {
+                var url = $"{BaseUrl}/{frequencyId}";
                 var response = await _http.GetAsync<FrequencyRes>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<FrequencyDto>>(response);
@@ -90,7 +95,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: POST /api/v1/frequency
-        public async Task<ApiResponseDto<FrequencyDto>> CreateAsync(FrequencyDto dto)
+        public async Task<ApiResponseDto<FrequencyDto>> CreateFrequencyAsync(FrequencyDto dto)
         {
             try
             {
@@ -110,13 +115,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PUT /api/v1/frequency/{frequencyid:int} — route PK is authoritative
-        public async Task<ApiResponseDto<FrequencyDto>> UpdateAsync(int frequencyid, FrequencyDto dto)
+        // TRANSFORMENGINE: PUT /api/v1/frequency/{frequencyId:int} — route PK is authoritative
+        public async Task<ApiResponseDto<FrequencyDto>> UpdateFrequencyAsync(int frequencyId, FrequencyDto dto)
         {
             try
             {
                 var request = _mapper.Map<FrequencyReq>(dto);
-                var url = $"{BaseUrl}/{frequencyid}";
+                var url = $"{BaseUrl}/{frequencyId}";
                 var response = await _http.PutAsync<FrequencyReq, FrequencyRes>(url, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<FrequencyDto>>(response);
@@ -132,12 +137,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE /api/v1/frequency/{frequencyid:int}
-        public async Task<ApiResponseDto<bool>> DeleteAsync(int frequencyid)
+        // TRANSFORMENGINE: DELETE /api/v1/frequency/{frequencyId:int}
+        public async Task<ApiResponseDto<bool>> DeleteFrequencyAsync(int frequencyId)
         {
             try
             {
-                var url = $"{BaseUrl}/{frequencyid}";
+                var url = $"{BaseUrl}/{frequencyId}";
                 var response = await _http.DeleteAsync<bool>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);

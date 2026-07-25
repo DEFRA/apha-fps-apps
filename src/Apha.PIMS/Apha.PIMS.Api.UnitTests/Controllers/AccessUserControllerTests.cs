@@ -1,21 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — AccessUserControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New xUnit test class for Apha.PIMS.Api.Controllers.AccessUserController
- *   - Composite PK (systemid int + ntlogin string) with URL-decode semantics
- *   - Covers: GetAll, GetBySystemId, GetById (found/null), Create, Update (PK injection), Delete
- *   - Uses NSubstitute for IAccessUserService and IMapper mocks
- *
- * PRESERVED:
- *   - Composite PK semantics; ntlogin is URL-decoded before service calls
- *   - GetBySystemId scoped list preserved for Admin tab system filtering
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: test HttpUtility.UrlDecode behavior for special characters in ntlogin
- */
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Api.Controllers;
 using Apha.PIMS.Application.Dtos;
@@ -43,7 +25,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
         // ── helpers ───────────────────────────────────────────────────────────────
 
         private static AccessUserDto MakeDto(int systemid = 1, string ntlogin = "DOMAIN\\user1") =>
-            new AccessUserDto { Systemid = systemid, Ntlogin = ntlogin, Username = "User One" };
+            new AccessUserDto { SystemId = systemid, NtLogin = ntlogin, UserName = "User One" };
 
         private static AccessUserRes MakeRes(int systemid = 1, string ntlogin = "DOMAIN\\user1") =>
             new AccessUserRes { SystemId = systemid, NtLogin = ntlogin, UserName = "User One" };
@@ -263,9 +245,9 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
         [Fact]
         public async Task Update_SetsCompositePkOnDtoBeforeCallingService()
         {
-            // Arrange — controller should set Systemid and Ntlogin from route on the mapped DTO
+            // Arrange — controller should set SystemId and NtLogin from route on the mapped DTO
             const string decodedLogin = "dom\\user";
-            var dto = new AccessUserDto { Systemid = 0, Ntlogin = "" }; // blank from mapper
+            var dto = new AccessUserDto { SystemId = 0, NtLogin = "" }; // blank from mapper
             _mapper.Map<AccessUserDto>(Arg.Any<AccessUserReq>()).Returns(dto);
             _service.UpdateAsync(Arg.Any<AccessUserDto>()).Returns(MakeDto(5, decodedLogin));
             _mapper.Map<AccessUserRes>(Arg.Any<AccessUserDto>()).Returns(MakeRes(5, decodedLogin));
@@ -275,7 +257,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
 
             // Assert — dto should have route values set
             await _service.Received(1).UpdateAsync(
-                Arg.Is<AccessUserDto>(d => d.Systemid == 5 && d.Ntlogin == decodedLogin));
+                Arg.Is<AccessUserDto>(d => d.SystemId == 5 && d.NtLogin == decodedLogin));
         }
 
         [Fact]
@@ -299,16 +281,14 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
         public async Task Delete_ServiceCompletes_ReturnsOkWithSuccessTrue()
         {
             // Arrange
-            _service.DeleteAsync(1, "dom\\user").Returns(Task.CompletedTask);
+            _service.DeleteAsync(1, "dom\\user").Returns(true);
 
             // Act
             var result = await _controller.Delete(1, "dom%5Cuser");
 
             // Assert
             var ok = Assert.IsType<OkObjectResult>(result);
-            var json    = System.Text.Json.JsonSerializer.Serialize(ok.Value);
-            var element = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(json);
-            Assert.True(element.GetProperty("success").GetBoolean());
+            Assert.True(Assert.IsType<bool>(ok.Value));
             await _service.Received(1).DeleteAsync(1, "dom\\user");
         }
 
@@ -318,7 +298,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
             // Arrange
             const string encoded = "dom%5Cjsmith";
             const string decoded = "dom\\jsmith";
-            _service.DeleteAsync(Arg.Any<int>(), Arg.Any<string>()).Returns(Task.CompletedTask);
+            _service.DeleteAsync(Arg.Any<int>(), Arg.Any<string>()).Returns(true);
 
             // Act
             await _controller.Delete(1, encoded);

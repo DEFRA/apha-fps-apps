@@ -1,39 +1,22 @@
-/*
- * TRANSFORMENGINE MIGRATION — IReportRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 2 — Core Layer - Entities + Repository Interfaces + Pagination
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New Core repository interface for Report CRUD operations
- *   - All methods are async (Task<T>) — no synchronous signatures
- *   - ExistsAsync follows AnyAsync-style existence semantics per phase rules
- *   - GetAllAsync returns full list for grid display (Reports Tab in frmMaintainance)
- *   - GetByIdAsync returns nullable to signal not-found without throwing
- *
- * PRESERVED:
- *   - No infrastructure-specific code (DbContext, EF) in this Core interface
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Pagination;
 
 namespace Apha.PIMS.Core.Interfaces
 {
-    // TRANSFORMENGINE: interface covers full CRUD required by ReportService (Phase 3) and ReportController (Phase 5)
     public interface IReportRepository
     {
-        Task<List<Report>> GetAllAsync();
+        Task<List<Report>> GetAllReportsAsync();
 
-        Task<Report?> GetByIdAsync(int id);
+        Task<PagedData<Report>> GetPagedReportsAsync(PaginationParameters<string> query);
 
-        Task<Report> AddAsync(Report entity);
+        Task<Report?> GetReportByIdAsync(int id);
 
-        Task<Report> UpdateAsync(Report entity);
+        Task<Report> AddReportAsync(Report entity);
 
-        Task DeleteAsync(int id);
+        Task<Report> UpdateReportAsync(Report entity);
 
-        Task<bool> ExistsAsync(int id);
+        Task<bool> DeleteReportAsync(int id);
+
+        Task<bool> ReportExistsAsync(int id);
     }
 }

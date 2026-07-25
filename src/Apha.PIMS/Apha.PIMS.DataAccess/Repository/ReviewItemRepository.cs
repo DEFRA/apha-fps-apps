@@ -1,33 +1,12 @@
-/*
- * TRANSFORMENGINE MIGRATION — ReviewItemRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository (Steps 7-7a)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New EF Core LINQ-first repository implementing IReviewItemRepository
- *   - All read operations use AsNoTracking for performance
- *   - Single integer PK (itemid) — ValueGeneratedNever, client-supplied on create
- *   - DeleteAsync uses ExecuteDeleteAsync for set-based delete (no entity load required)
- *   - AddAsync uses Add + SaveChangesAsync; UpdateAsync uses Update + SaveChangesAsync
- *   - ExistsAsync uses AnyAsync guard — avoids full row load
- *
- * PRESERVED:
- *   - All method signatures defined in IReviewItemRepository (Phase 2)
- *   - mabarchive.tlkpreviewitem is the backing table (mapped via ReviewItemMap.cs)
- *   - ReviewItem.Item property maps to DDL column 'item'
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm integer PK generation strategy; if DB auto-generates, update Req contract and remove client-supplied PK pattern
- */
-
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
+using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace Apha.PIMS.DataAccess.Repository
 {
-    // TRANSFORMENGINE: implements IReviewItemRepository — backs mabarchive.tlkpreviewitem; single integer PK (itemid); lookup/reference table with CRUD
     public class ReviewItemRepository : BaseRepository, IReviewItemRepository
     {
         private readonly PimsDbContext _dbContext;
@@ -37,52 +16,86 @@ namespace Apha.PIMS.DataAccess.Repository
             _dbContext = dbContext;
         }
 
-        // TRANSFORMENGINE: AsNoTracking read — full review item list for dropdown / lookup usage
-        public async Task<List<ReviewItem>> GetAllAsync()
+        public async Task<List<ReviewItem>> GetAllReviewItemsAsync()
         {
             return await _dbContext.ReviewItems
                 .AsNoTracking()
-                .OrderBy(r => r.Itemid)
+                .OrderBy(r => r.ItemId)
                 .ToListAsync();
         }
 
-        // TRANSFORMENGINE: AsNoTracking single-row lookup by integer PK (itemid)
-        public async Task<ReviewItem?> GetByIdAsync(int itemid)
+        public async Task<PagedData<ReviewItem>> GetPagedReviewItemsAsync(PaginationParameters<string> query)
+        {
+            var baseQuery = _dbContext.ReviewItems.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(query.Filter))
+            {
+                var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(query.Filter)
+                    ?? new Dictionary<string, string>();
+
+                if (filters.TryGetValue("Itemid", out var itemIdFilter)
+                    && int.TryParse(itemIdFilter, out var itemId))
+                {
+                    baseQuery = baseQuery.Where(r => r.ItemId == itemId);
+                }
+
+                if (filters.TryGetValue("Item", out var itemFilter)
+                    && !string.IsNullOrWhiteSpace(itemFilter))
+                {
+                    var value = itemFilter.Trim();
+                    baseQuery = baseQuery.Where(r => r.Item != null &&
+                        EF.Functions.ILike(r.Item, $"%{value}%"));
+                }
+            }
+
+            baseQuery = (query.SortBy, query.Descending) switch
+            {
+                ("Itemid", true) => baseQuery.OrderByDescending(r => r.ItemId),
+                ("Itemid", false) => baseQuery.OrderBy(r => r.ItemId),
+                ("Item", true) => baseQuery.OrderByDescending(r => r.Item),
+                ("Item", false) => baseQuery.OrderBy(r => r.Item),
+                (_, true) => baseQuery.OrderByDescending(r => r.ItemId),
+                _ => baseQuery.OrderBy(r => r.ItemId)
+            };
+
+            var page = query.Page > 0 ? query.Page : 1;
+            var pageSize = query.PageSize > 0 ? query.PageSize : 10;
+            return await ApplyPaging(baseQuery, page, pageSize);
+        }
+
+        public async Task<ReviewItem?> GetReviewItemByIdAsync(int itemId)
         {
             return await _dbContext.ReviewItems
                 .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.Itemid == itemid);
+                .FirstOrDefaultAsync(r => r.ItemId == itemId);
         }
 
-        // TRANSFORMENGINE: Add + SaveChangesAsync — PK is client-supplied (ValueGeneratedNever on tlkpreviewitem.itemid)
-        public async Task<ReviewItem> AddAsync(ReviewItem entity)
+        public async Task<ReviewItem> AddReviewItemAsync(ReviewItem entity)
         {
             _dbContext.ReviewItems.Add(entity);
             await _dbContext.SaveChangesAsync();
             return entity;
         }
-
-        // TRANSFORMENGINE: Update + SaveChangesAsync — replaces full row for the supplied entity
-        public async Task<ReviewItem> UpdateAsync(ReviewItem entity)
+        public async Task<ReviewItem> UpdateReviewItemAsync(ReviewItem entity)
         {
             _dbContext.ReviewItems.Update(entity);
             await _dbContext.SaveChangesAsync();
             return entity;
         }
 
-        // TRANSFORMENGINE: ExecuteDeleteAsync — set-based delete by integer PK; no entity load required
-        public async Task DeleteAsync(int itemid)
+        public async Task<bool> DeleteReviewItemAsync(int itemId)
         {
-            await _dbContext.ReviewItems
-                .Where(r => r.Itemid == itemid)
+            int rowsAffected = await _dbContext.ReviewItems
+                .Where(r => r.ItemId == itemId)
                 .ExecuteDeleteAsync();
+
+            return rowsAffected > 0;
         }
 
-        // TRANSFORMENGINE: AnyAsync guard — avoids full row load for existence check
-        public async Task<bool> ExistsAsync(int itemid)
+        public async Task<bool> ReviewItemExistsAsync(int itemId)
         {
             return await _dbContext.ReviewItems
-                .AnyAsync(r => r.Itemid == itemid);
+                .AnyAsync(r => r.ItemId == itemId);
         }
     }
 }

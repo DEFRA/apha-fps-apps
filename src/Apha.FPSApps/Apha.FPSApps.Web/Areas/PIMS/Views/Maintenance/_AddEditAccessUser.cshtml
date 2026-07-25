@@ -1,17 +1,7 @@
-<!-- TRANSFORMENGINE MIGRATION — _AddEditAccessUser.cshtml
-     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
-     Migrated : 2026-07-06
-     CHANGED:
-       - MS Access frmMaintainance adminUserEditModal -> Razor partial
-       - Fields derived from admin.js adminUserEditModal: adminUserNTLogin (text -> Ntlogin),
-         adminUserName (text -> Username); composite PK Systemid hidden
-       - Anti-forgery token included; saveAccessUser() calls /PIMS/Maintenance/SaveAccessUser
-     DEFERRED:
-       - TRANSFORMENGINE TODO: confirm AccessUserItem.Dt2login handling — not shown in modal -->
 @model Apha.FPSApps.Web.Areas.PIMS.Models.AccessUserItem
 
 @{
-    var isEditMode = Model.Systemid != 0;
+    var isEditMode = Model.SystemId != 0;
     var title = isEditMode ? "Edit User" : "Add User";
     var saveLabel = isEditMode ? "Update" : "Save";
 }
@@ -24,8 +14,7 @@
     <form class="row" id="formAccessUser">
         @Html.AntiForgeryToken()
 
-        @* TRANSFORMENGINE: Composite PK — Systemid hidden; Ntlogin also posted as editable field *@
-        <input type="hidden" asp-for="Systemid" id="hdnUserSystemid" />
+        <input type="hidden" asp-for="SystemId" id="hdnUserSystemid" />
         <input type="hidden" id="hdnUserIsEdit" value="@isEditMode.ToString().ToLower()" />
 
         <div class="govuk-error-summary ra-form-error-banner ra-hidden"
@@ -36,36 +25,32 @@
             </div>
         </div>
 
-        @* NTLogin — adminUserNTLogin in HTML modal *@
         <div class="govuk-form-group sup_margin_bottom_10" id="adminUserNTLoginGroup">
-            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Ntlogin">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="NtLogin">
                 NTLogin<span class="ra-required-star" aria-hidden="true"> *</span>
             </label>
-            @* TRANSFORMENGINE: Ntlogin -> adminUserNTLogin in HTML modal *@
             <input class="govuk-input govuk-!-font-size-16"
-                   asp-for="Ntlogin"
+                   asp-for="NtLogin"
                    id="adminUserNTLogin"
                    type="text"
                    aria-required="true"
                    aria-describedby="adminUserNTLoginError"
                    autocomplete="off" />
-            <span asp-validation-for="Ntlogin" class="govuk-error-message" id="adminUserNTLoginError" style="display:none;"></span>
+            <span asp-validation-for="NtLogin" class="govuk-error-message" id="adminUserNTLoginError" style="display:none;"></span>
         </div>
 
-        @* UserName — adminUserName in HTML modal *@
         <div class="govuk-form-group sup_margin_bottom_10" id="adminUserNameGroup">
-            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Username">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="UserName">
                 UserName<span class="ra-required-star" aria-hidden="true"> *</span>
             </label>
-            @* TRANSFORMENGINE: Username -> adminUserName in HTML modal *@
             <input class="govuk-input govuk-!-font-size-16"
-                   asp-for="Username"
+                   asp-for="UserName"
                    id="adminUserName"
                    type="text"
                    aria-required="true"
                    aria-describedby="adminUserNameError"
                    autocomplete="off" />
-            <span asp-validation-for="Username" class="govuk-error-message" id="adminUserNameError" style="display:none;"></span>
+            <span asp-validation-for="UserName" class="govuk-error-message" id="adminUserNameError" style="display:none;"></span>
         </div>
 
         <div class="col-12" style="text-align: right; margin-top: 10px;">

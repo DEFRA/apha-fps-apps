@@ -1,35 +1,9 @@
-/*
- * TRANSFORMENGINE MIGRATION — PimsRadTrackProgApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New HTTP API client implementing IPimsRadTrackProgApiClient
- *   - Binds to backend RadTrackProgController routes:
- *       GET    /api/v1/radtrackprog               — full list for Programme Tab grid
- *       GET    /api/v1/radtrackprog/{program}     — get by natural string PK (program varchar(10))
- *       POST   /api/v1/radtrackprog               — create new programme; natural PK client-supplied
- *       PUT    /api/v1/radtrackprog/{program}     — update; route PK is authoritative
- *       DELETE /api/v1/radtrackprog/{program}     — delete by natural string PK
- *   - Natural string PK (program varchar(10)) — matches backend controller route
- *   - Programme Tab CRUD from frmPIMSMainForm
- *   - Every HTTP call wrapped in try/catch(Exception) returning FailureResponse with InternalCodeError
- *   - Req/Res contracts: RadTrackProgReq, RadTrackProgRes from Apha.Common.Contracts.PIMS
- *
- * PRESERVED:
- *   - All CRUD semantics matching IPimsRadTrackProgApiClient interface (GetAll, GetById, Create, Update, Delete)
- *   - Natural string PK (program) semantics
- *   - Return types wrapped in ApiResponseDto<T>
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm Programme Tab maps solely to tblradtrackprog (see backend controller deferred note)
- *   - TRANSFORMENGINE TODO: verify publicationprefix varchar(5) max length enforced via validation attribute on RadTrackProgReq
- */
-
 using Apha.Common.Contracts.PIMS;
+using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
@@ -51,7 +25,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: GET /api/v1/radtrackprog — full list for Programme Tab grid; no pagination needed
-        public async Task<ApiResponseDto<List<RadTrackProgDto>>> GetAllAsync()
+        public async Task<ApiResponseDto<List<RadTrackProgDto>>> GetAllRadTrackProgsAsync()
         {
             try
             {
@@ -70,8 +44,37 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
+        // GET /api/v1/radtrackprog/paged — paged list with search/sort/filter support
+        public async Task<ApiResponseDto<PaginatedResult<RadTrackProgDto>>> GetPagedRadTrackProgsAsync(QueryParameters<string> query)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString($"{BaseUrl}/paged", query);
+                var response = await _http.GetAsync<List<RadTrackProgRes>>(url);
+                if (response.Success)
+                {
+                    var items = _mapper.Map<List<RadTrackProgDto>>(response.Data ?? []);
+                    var pageNumber = response.Pagination?.PageNumber ?? query.Page;
+                    var pageSize = response.Pagination?.PageSize ?? query.PageSize;
+                    var totalRecords = response.Pagination?.TotalRecords ?? items.Count;
+                    var paged = new PaginatedResult<RadTrackProgDto>(items, totalRecords, pageNumber, pageSize);
+                    return ApiResponseDto<PaginatedResult<RadTrackProgDto>>.SuccessResponse(paged);
+                }
+
+                return ApiResponseDto<PaginatedResult<RadTrackProgDto>>.FailureResponse(
+                    _mapper.Map<List<ApiErrorDto>>(response.Errors ?? []),
+                    _mapper.Map<ApiMetaDto>(response.Meta));
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<PaginatedResult<RadTrackProgDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve paged RadTrackProg data", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
         // TRANSFORMENGINE: GET /api/v1/radtrackprog/{program} — natural string PK lookup
-        public async Task<ApiResponseDto<RadTrackProgDto>> GetByIdAsync(string program)
+        public async Task<ApiResponseDto<RadTrackProgDto>> GetRadTrackProgByProgramAsync(string program)
         {
             try
             {
@@ -92,7 +95,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: POST /api/v1/radtrackprog — create new programme; natural PK is client-supplied in request body
-        public async Task<ApiResponseDto<RadTrackProgDto>> CreateAsync(RadTrackProgDto dto)
+        public async Task<ApiResponseDto<RadTrackProgDto>> CreateRadTrackProgAsync(RadTrackProgDto dto)
         {
             try
             {
@@ -113,7 +116,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: PUT /api/v1/radtrackprog/{program} — route PK is authoritative; mirrors backend dto.Program = program guard
-        public async Task<ApiResponseDto<RadTrackProgDto>> UpdateAsync(string program, RadTrackProgDto dto)
+        public async Task<ApiResponseDto<RadTrackProgDto>> UpdateRadTrackProgAsync(string program, RadTrackProgDto dto)
         {
             try
             {
@@ -135,7 +138,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         }
 
         // TRANSFORMENGINE: DELETE /api/v1/radtrackprog/{program} — delete by natural string PK
-        public async Task<ApiResponseDto<bool>> DeleteAsync(string program)
+        public async Task<ApiResponseDto<bool>> DeleteRadTrackProgAsync(string program)
         {
             try
             {
@@ -151,6 +154,27 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             {
                 return ApiResponseDto<bool>.FailureResponse(
                     [new ApiErrorDto { Message = "Failed to delete RadTrackProg", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        // GET /api/v1/radtrackprog/programs — distinct non-null Programme names for dropdown binding
+        public async Task<ApiResponseDto<List<string>>> GetAllProgramNamesAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync<List<string>>($"{BaseUrl}/programs");
+                if (response.Success)
+                    return ApiResponseDto<List<string>>.SuccessResponse(response.Data ?? []);
+
+                return ApiResponseDto<List<string>>.FailureResponse(
+                    _mapper.Map<List<ApiErrorDto>>(response.Errors ?? []),
+                    _mapper.Map<ApiMetaDto>(response.Meta));
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<string>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve Programme names", Code = InternalCodeError }],
                     new ApiMetaDto());
             }
         }

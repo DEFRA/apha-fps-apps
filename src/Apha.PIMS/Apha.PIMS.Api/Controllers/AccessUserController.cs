@@ -1,37 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — AccessUserController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - MS Access Form (frmAccessUser) -> ASP.NET Core 10 Web API [ApiController]
- *   - VBA form CRUD operations -> REST endpoints using composite PK (systemid int + ntlogin string)
- *   - Routes: GET /accessuser, GET /accessuser/{systemid}, GET /accessuser/{systemid}/{ntlogin}, POST /accessuser, PUT /accessuser/{systemid}/{ntlogin}, DELETE /accessuser/{systemid}/{ntlogin}
- *   - Access DAO data binding -> IAccessUserService dependency injection
- *   - Request/Response contracts mapped via AutoMapper (AccessUserReq <-> AccessUserDto <-> AccessUserRes)
- *   - URL encoding/decoding applied for ntlogin string segment
- *
- * PRESERVED:
- *   - Composite PK semantics (systemid + ntlogin)
- *   - GetBySystemId scoped list endpoint preserved
- *   - Authorization: API-PIMSUser, API-PIMSAdmin roles required
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm systemid is client-provided vs session-derived — if session-derived, remove from request body and derive from claims/context
- *
- * PHASE 6 — Backend Readiness Gate (VERIFIED 2026-07-06):
- *   - Route confirmed: [Route("api/v{version:apiVersion}/accessuser")] → base path /api/v1/accessuser
- *   - GET /api/v1/accessuser                            → GetAll()            — no required params
- *   - GET /api/v1/accessuser/{systemid:int}             → GetBySystemId(sid)  — required: systemid (route, integer); satisfiable from Admin tab system selector
- *   - GET /api/v1/accessuser/{systemid:int}/{ntlogin}   → GetById(sid,login)  — required: systemid + ntlogin (composite PK, route)
- *   - POST /api/v1/accessuser                           → Create(req)         — required: AccessUserReq body
- *   - PUT /api/v1/accessuser/{systemid:int}/{ntlogin}   → Update(sid,login,req) — required: composite PK (route, authoritative) + AccessUserReq body
- *   - DELETE /api/v1/accessuser/{systemid:int}/{ntlogin}→ Delete(sid,login)   — required: composite PK (route)
- *   - Contracts: AccessUserReq (body), AccessUserRes (response) — both registered in RequestMapper
- *   - Lookup separation: AccessLevel lookup is on AccessLevelController; AccessSystem lookup is on AccessSystemController — CRUD here is independent
- *   - systemId filter: GetBySystemId supports page filtering by PIMS system; all params satisfiable from Admin tab UI controls
- *   - ntlogin URL-encoding: HttpUtility.UrlDecode applied consistently on GetById, Update, Delete
- */
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
@@ -101,8 +67,8 @@ namespace Apha.PIMS.Api.Controllers
             var decodedLogin = HttpUtility.UrlDecode(ntlogin);
             AccessUserDto dto = _mapper.Map<AccessUserDto>(request);
             // TRANSFORMENGINE: Route composite PK is authoritative — set before service call
-            dto.Systemid = systemid;
-            dto.Ntlogin = decodedLogin;
+            dto.SystemId = systemid;
+            dto.NtLogin = decodedLogin;
             AccessUserDto updated = await _service.UpdateAsync(dto);
             return Ok(_mapper.Map<AccessUserRes>(updated));
         }
@@ -113,8 +79,8 @@ namespace Apha.PIMS.Api.Controllers
         {
             // TRANSFORMENGINE: Composite PK delete — systemid + URL-decoded ntlogin
             var decodedLogin = HttpUtility.UrlDecode(ntlogin);
-            await _service.DeleteAsync(systemid, decodedLogin);
-            return Ok(new { success = true });
+            bool deleted = await _service.DeleteAsync(systemid, decodedLogin);
+            return Ok(deleted);
         }
     }
 }

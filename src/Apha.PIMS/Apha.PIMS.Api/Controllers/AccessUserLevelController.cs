@@ -1,27 +1,8 @@
-/*
- * TRANSFORMENGINE MIGRATION — AccessUserLevelController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - MS Access Form (frmAccessUserLevel) -> ASP.NET Core 10 Web API [ApiController]
- *   - VBA form operations -> REST endpoints using triple composite PK (systemid int + ntlogin string + accesslevelid int)
- *   - Routes: GET /accessuserlevel, GET /accessuserlevel/{systemid}, GET /accessuserlevel/{systemid}/{ntlogin}, GET /accessuserlevel/{systemid}/{ntlogin}/{accesslevelid}, POST /accessuserlevel, DELETE /accessuserlevel/{systemid}/{ntlogin}/{accesslevelid}
- *   - Access DAO data binding -> IAccessUserLevelService dependency injection
- *   - Request/Response contracts mapped via AutoMapper (AccessUserLevelReq <-> AccessUserLevelDto <-> AccessUserLevelRes)
- *   - URL encoding/decoding applied for ntlogin string segment
- *
- * PRESERVED:
- *   - Triple composite PK semantics (systemid + ntlogin + accesslevelid)
- *   - GetBySystemId and GetByUser scoped list endpoints preserved
- *   - Authorization: API-PIMSUser, API-PIMSAdmin roles required
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm triple composite delete route is acceptable for client consumers
- */
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Pagination;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -45,13 +26,13 @@ namespace Apha.PIMS.Api.Controllers
             _mapper = mapper;
         }
 
-        /// <summary>Get all access user levels.</summary>
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+        /// <summary>Get paged access user levels.</summary>
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPagedAccessUserLevelAll([FromQuery] QueryParameters<string> query)
         {
-            // TRANSFORMENGINE: GetAllAsync -> GET /accessuserlevel (full list)
-            List<AccessUserLevelDto> result = await _service.GetAllAsync();
-            return Ok(_mapper.Map<List<AccessUserLevelRes>>(result));
+            // TRANSFORMENGINE: GetPagedAccessUserLevelAllAsync -> GET /accessuserlevel/paged (paged, sorted, filtered)
+            var result = await _service.GetPagedAccessUserLevelAllAsync(query);
+            return Ok(_mapper.Map<PaginationRes<AccessUserLevelRes>>(result));
         }
 
         /// <summary>Get all access user levels for a specific system.</summary>
@@ -96,8 +77,8 @@ namespace Apha.PIMS.Api.Controllers
         {
             // TRANSFORMENGINE: Triple composite PK delete — systemid + URL-decoded ntlogin + accesslevelid
             var decodedLogin = HttpUtility.UrlDecode(ntlogin);
-            await _service.DeleteAsync(systemid, decodedLogin, accesslevelid);
-            return Ok(new { success = true });
+            bool deleted = await _service.DeleteAsync(systemid, decodedLogin, accesslevelid);
+            return Ok(deleted);
         }
     }
 }

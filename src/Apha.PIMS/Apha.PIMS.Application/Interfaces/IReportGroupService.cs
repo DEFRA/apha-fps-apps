@@ -1,39 +1,25 @@
-/*
- * TRANSFORMENGINE MIGRATION — IReportGroupService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New Application service interface for ReportGroup lookup/CRUD operations (Reports Tab, frmMaintainance)
- *   - All methods are async (Task<T>) — no synchronous signatures
- *   - GetAllAsync returns full list for report-group dropdown / lookup usage
- *   - GetByIdAsync returns nullable to signal not-found without throwing
- *   - Full CRUD surface retained to match IReportGroupRepository capabilities
- *
- * PRESERVED:
- *   - No infrastructure-specific code in this Application interface
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.PIMS.Application.Dtos;
+using Apha.PIMS.Application.Pagination;
 
 namespace Apha.PIMS.Application.Interfaces
 {
-    // TRANSFORMENGINE: service interface for ReportGroup lookup/CRUD; consumed by ReportGroupController (Phase 5); backed by IReportGroupRepository
     public interface IReportGroupService
     {
-        Task<List<ReportGroupDto>> GetAllAsync();
+        Task<List<ReportGroupDto>> GetAllReportGroupsAsync();
 
-        Task<ReportGroupDto?> GetByIdAsync(int groupid);
+        Task<PaginatedResult<ReportGroupDto>> GetPagedReportGroupsAsync(QueryParameters<string> query, int? reportId = null);
 
-        Task<ReportGroupDto> CreateAsync(ReportGroupDto dto);
+        // Returns all report groups linked to the given reportid
+        Task<List<ReportGroupDto>> GetReportGroupsByReportIdAsync(int reportId);
 
-        Task<ReportGroupDto> UpdateAsync(ReportGroupDto dto);
+        Task<ReportGroupDto?> GetReportGroupByIdAsync(int groupId);
 
-        Task DeleteAsync(int groupid);
+        Task<ReportGroupDto> CreateReportGroupAsync(ReportGroupDto dto);
 
-        Task<bool> ExistsAsync(int groupid);
+        Task<ReportGroupDto> UpdateReportGroupAsync(ReportGroupDto dto);
+
+        Task<bool> DeleteReportGroupAsync(int groupId);
+
+        Task<bool> ReportGroupExistsAsync(int groupId);
     }
 }

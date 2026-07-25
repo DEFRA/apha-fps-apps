@@ -1,25 +1,8 @@
-/*
- * TRANSFORMENGINE MIGRATION — ReviewItemController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - MS Access Form (frmReviewItem) -> ASP.NET Core 10 Web API [ApiController]
- *   - VBA form CRUD operations -> REST endpoints: GET /reviewitem, GET /reviewitem/{itemid}, POST /reviewitem, PUT /reviewitem/{itemid}, DELETE /reviewitem/{itemid}
- *   - Access DAO data binding -> IReviewItemService dependency injection
- *   - Request/Response contracts mapped via AutoMapper (ReviewItemReq <-> ReviewItemDto <-> ReviewItemRes)
- *
- * PRESERVED:
- *   - Integer PK semantics (itemid)
- *   - All CRUD semantics from the original form
- *   - Authorization: API-PIMSUser, API-PIMSAdmin roles required
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm integer PK (itemid) generation strategy — verify DB identity/sequence vs application-assigned
- */
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Pagination;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -44,48 +27,56 @@ namespace Apha.PIMS.Api.Controllers
 
         /// <summary>Get all review items.</summary>
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAllReviewItems()
         {
-            // TRANSFORMENGINE: GetAllAsync -> GET /reviewitem (full list)
-            List<ReviewItemDto> result = await _service.GetAllAsync();
+            // TRANSFORMENGINE: GetAllReviewItemsAsync -> GET /reviewitem (full list)
+            List<ReviewItemDto> result = await _service.GetAllReviewItemsAsync();
             return Ok(_mapper.Map<List<ReviewItemRes>>(result));
         }
 
-        /// <summary>Get a single review item by itemid.</summary>
-        [HttpGet("{itemid:int}")]
-        public async Task<IActionResult> GetById(int itemid)
+        /// <summary>Get paged review items.</summary>
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPagedReviewItems([FromQuery] QueryParameters<string> query)
         {
-            ReviewItemDto? result = await _service.GetByIdAsync(itemid);
+            var result = await _service.GetPagedReviewItemsAsync(query);
+            return Ok(_mapper.Map<PaginationRes<ReviewItemRes>>(result));
+        }
+
+        /// <summary>Get a single review item by itemid.</summary>
+        [HttpGet("{itemId:int}")]
+        public async Task<IActionResult> GetReviewItemById(int itemId)
+        {
+            ReviewItemDto? result = await _service.GetReviewItemByIdAsync(itemId);
             return result is null ? NotFound() : Ok(_mapper.Map<ReviewItemRes>(result));
         }
 
         /// <summary>Create a new review item.</summary>
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ReviewItemReq request)
+        public async Task<IActionResult> CreateReviewItem([FromBody] ReviewItemReq request)
         {
             ReviewItemDto dto = _mapper.Map<ReviewItemDto>(request);
-            ReviewItemDto created = await _service.CreateAsync(dto);
+            ReviewItemDto created = await _service.CreateReviewItemAsync(dto);
             ReviewItemRes res = _mapper.Map<ReviewItemRes>(created);
-            return CreatedAtAction(nameof(GetById), new { itemid = res.ItemId, version = "1.0" }, res);
+            return CreatedAtAction(nameof(GetReviewItemById), new { itemId = res.ItemId, version = "1.0" }, res);
         }
 
         /// <summary>Update an existing review item.</summary>
-        [HttpPut("{itemid:int}")]
-        public async Task<IActionResult> Update(int itemid, [FromBody] ReviewItemReq request)
+        [HttpPut("{itemId:int}")]
+        public async Task<IActionResult> UpdateReviewItem(int itemId, [FromBody] ReviewItemReq request)
         {
             ReviewItemDto dto = _mapper.Map<ReviewItemDto>(request);
-            // TRANSFORMENGINE: Route itemid is authoritative — set before service call
-            dto.Itemid = itemid;
-            ReviewItemDto updated = await _service.UpdateAsync(dto);
+            // TRANSFORMENGINE: Route itemId is authoritative — set before service call
+            dto.ItemId = itemId;
+            ReviewItemDto updated = await _service.UpdateReviewItemAsync(dto);
             return Ok(_mapper.Map<ReviewItemRes>(updated));
         }
 
         /// <summary>Delete a review item by itemid.</summary>
-        [HttpDelete("{itemid:int}")]
-        public async Task<IActionResult> Delete(int itemid)
+        [HttpDelete("{itemId:int}")]
+        public async Task<IActionResult> DeleteReviewItem(int itemId)
         {
-            await _service.DeleteAsync(itemid);
-            return Ok(new { success = true });
+            bool deleted = await _service.DeleteReviewItemAsync(itemId);
+            return Ok(deleted);
         }
     }
 }

@@ -1,28 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — PimsApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - Registered 14 new Phase 9 sub-clients on the aggregate PimsApiClient:
- *       PimsReport, PimsReportGroup, PimsReportGroupLink, PimsProjectManager,
- *       PimsProgramManagerLink, PimsProfitCentreManagerLink, PimsSetting,
- *       PimsAccessUser, PimsAccessLevel, PimsAccessUserLevel, PimsAccessSystem,
- *       PimsFrequency, PimsReviewItem, PimsRadTrackProg
- *   - Added interface property declarations matching IPimsApiClient Phase 7 additions
- *   - Constructor initialises each new sub-client with (http, mapper)
- *   - PimsRadTrackProg stub replaced with PimsRadTrackProgApiClient instance
- *
- * PRESERVED:
- *   - All existing Phase 5 sub-clients: PimsProjectList, PimsProjectDetails,
- *     PimsProjectComment, PimsProposedProject, PimsProjectYearCosts,
- *     PimsMilestone, PimsRadTrackInvoice
- *   - Constructor signature (IPimsHttpExecutor http, IMapper mapper)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
@@ -58,6 +33,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         // TRANSFORMENGINE: PimsRadTrackProg — registered; binds to api/v1/radtrackprog (natural string PK, Programme Tab)
         public IPimsRadTrackProgApiClient PimsRadTrackProg { get; }
 
+        // Risk Rating sub-client — binds to api/v1/risk-ratings
+        public IPimsRiskApiClient PimsRisk { get; }
+
+        // Publication Type sub-client — binds to api/v1/publication-types
+        public IPimsPublicationTypeApiClient PimsPublicationType { get; }
+
         public PimsApiClient(IPimsHttpExecutor http, IMapper mapper)
         {
             // TRANSFORMENGINE: existing Phase 5 sub-client initialisations — preserved verbatim
@@ -86,6 +67,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
 
             // TRANSFORMENGINE: PimsRadTrackProg — wired to PimsRadTrackProgApiClient; api/v1/radtrackprog
             PimsRadTrackProg = new PimsRadTrackProgApiClient(http, mapper);
+
+            // Risk Rating — wired to PimsRiskApiClient; api/v1/risk-ratings
+            PimsRisk = new PimsRiskApiClient(http, mapper);
+
+            // Publication Type — wired to PimsPublicationTypeApiClient; api/v1/publication-types
+            PimsPublicationType = new PimsPublicationTypeApiClient(http, mapper);
         }
     }
 }
