@@ -164,22 +164,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         // TRANSFORMENGINE: DELETE /api/v1/reportgroup/{groupid:int}
         public async Task<ApiResponseDto<bool>> DeleteReportGroupAsync(int groupId)
         {
-            try
-            {
-                var url = $"{BaseUrl}/{groupId}";
-                var response = await _http.DeleteAsync<bool>(url);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<bool>>(response);
+            var url = $"{BaseUrl}/{groupId}";
+            var response = await _http.DeleteAsync<bool?>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
-                return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<bool>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to delete ReportGroup", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
     }
 }

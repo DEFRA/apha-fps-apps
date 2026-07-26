@@ -1,6 +1,6 @@
 namespace Apha.PIMS.Core.Entities
 {
-    public partial class MABProfitCentre
+    public partial class MabProfitCentre
     {
         public short Year { get; set; }
 

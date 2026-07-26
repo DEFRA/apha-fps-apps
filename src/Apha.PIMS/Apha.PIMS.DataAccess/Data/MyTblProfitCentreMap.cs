@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.PIMS.DataAccess.Data
 {
-    public class MyTblProfitCentreMap : IEntityTypeConfiguration<MABProfitCentre>
+    public class MyTblProfitCentreMap : IEntityTypeConfiguration<MabProfitCentre>
     {
-        public void Configure(EntityTypeBuilder<MABProfitCentre> entity)
+        public void Configure(EntityTypeBuilder<MabProfitCentre> entity)
         {
             entity.HasKey(e => new { e.Year, e.ProfitCentre }).HasName("pk_my_tblprofitcentre");
             entity.ToTable("my_tblprofitcentre", "mabarchive");

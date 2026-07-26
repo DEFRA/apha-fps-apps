@@ -50,7 +50,7 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<ReportGroup> ReportGroups { get; set; }
         public virtual DbSet<ReportGroupLink> ReportGroupLinks { get; set; }
         public virtual DbSet<ProgramManagerLink> ProgramManagerLinks { get; set; }
-        public virtual DbSet<MABProfitCentre> MyTblProfitCentres { get; set; }
+        public virtual DbSet<MabProfitCentre> MyTblProfitCentres { get; set; }
         public virtual DbSet<ProfitCentreManagerLink> ProfitCentreManagerLinks { get; set; }
         public virtual DbSet<Setting> Settings { get; set; }
         public virtual DbSet<AccessUser> AccessUsers { get; set; }
