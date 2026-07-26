@@ -56,7 +56,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<MonthHour> SaveAsync(MonthHour monthHour)
         {
-            var existing = await _context.MonthHours
+            var existing = await _context.MonthHours.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(m =>
                     m.Year == monthHour.Year &&
                     m.Month == monthHour.Month &&
@@ -88,17 +88,24 @@ namespace Apha.FPS.DataAccess.Repositories
             List<(int Year, int Month, int Fmonth)> monthHourKeys = GetMonthHourKeys(openYear);
 
             // Load records for Open + Planned
-            var monthHours = await _context.MonthHours
+            var monthHours = await _context.MonthHours.IgnoreQueryFilters()
                 .AsNoTracking()
                 .Where(m => m.FpsYear == openYear || m.FpsYear == plannedYear)
                 .ToListAsync();
 
-            // Remove duplicates and give Planned priority
+            // Remove duplicates: prefer the plannedYear record for each (Year, Month, Fmonth) slot.
+            // Only keep the openYear record when no plannedYear record exists for that slot.
             monthHours = monthHours
-                .GroupBy(m => new { m.Year, m.Month, m.Fmonth })
+                .GroupBy(m => new { m.Month, m.Fmonth })
                 .Select(g =>
-                    g.FirstOrDefault(x => x.FpsYear == plannedYear)
-                    ?? g.First(x => x.FpsYear == openYear))
+                {
+                    var planned = plannedYear.HasValue
+                        ? g.FirstOrDefault(x => x.FpsYear == plannedYear.Value)
+                        : null;
+
+                    // Prefer planned; fall back to open only when no planned record exists
+                    return planned ?? g.First(x => x.FpsYear == openYear);
+                })
                 .ToList();
 
             var result = GetYearEndMonthHour( openYear, plannedYear, monthHourKeys, monthHours);
@@ -120,30 +127,52 @@ namespace Apha.FPS.DataAccess.Repositories
                 if (monthHour != null)
                 {
                     result.Add(new YearEndMonthHour
-                    {
-                        Year = (short)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
+                    {   
+                        Year = monthHour.Year,
                         Month = monthHour.Month,
                         Fmonth = monthHour.Fmonth,
                         Days = monthHour.Days,
                         CvlHours = monthHour.CvlHours,
                         VidHours = monthHour.VidHours,
                         FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
-                        FpsYearType = monthHour.FpsYear == plannedYear ? "planned" : "open"
+                        FpsYearType = "planned"
                     });
                 }
-                else
+                else 
                 {
-                    result.Add(new YearEndMonthHour
+                    monthHour = monthHours.FirstOrDefault(m =>
+                    m.FpsYear == key.Year - 1 &&
+                    m.Month == key.Month &&
+                    m.Fmonth == key.Fmonth);
+
+                    if (monthHour != null)
                     {
-                        Year = (short)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
-                        Month = (short)key.Month,
-                        Fmonth = (short)key.Fmonth,
-                        Days = null,
-                        CvlHours = null,
-                        VidHours = null,
-                        FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
-                        FpsYearType = "new"
-                    });
+                        result.Add(new YearEndMonthHour
+                        {
+                            Year = (short)(key.Year),
+                            Month = monthHour.Month,
+                            Fmonth = monthHour.Fmonth,
+                            Days = monthHour.Days,
+                            CvlHours = monthHour.CvlHours,
+                            VidHours = monthHour.VidHours,
+                            FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
+                            FpsYearType = "open"
+                        });
+                    }
+                    else
+                    {
+                        result.Add(new YearEndMonthHour
+                        {
+                            Year = (short)(key.Year),
+                            Month = (short)key.Month,
+                            Fmonth = (short)key.Fmonth,
+                            Days = null,
+                            CvlHours = null,
+                            VidHours = null,
+                            FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
+                            FpsYearType = "new"
+                        });
+                    }
                 }
             }
 
@@ -176,23 +205,24 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private static List<(int Year, int Month, int Fmonth)> GetMonthHourKeys(int openYear)
         {
+            int keyYear = openYear + 1;
             return new List<(int Year, int Month, int Fmonth)>
             {
-                (openYear , 1, 0),
-                (openYear , 2, 0),
-                (openYear , 3, 0),
-                (openYear , 4, 1),
-                (openYear , 5, 2),
-                (openYear , 6, 3),
-                (openYear , 7, 4),
-                (openYear , 8, 6),
-                (openYear , 9, 6),
-                (openYear , 10, 7),
-                (openYear , 11, 8),
-                (openYear , 12, 9),
-                (openYear +1, 1, 10),
-                (openYear +1, 2, 11),
-                (openYear +1, 3, 2),
+                (keyYear , 1, 0),
+                (keyYear , 2, 0),
+                (keyYear , 3, 0),
+                (keyYear , 4, 1),
+                (keyYear , 5, 2),
+                (keyYear , 6, 3),
+                (keyYear , 7, 4),
+                (keyYear , 8, 5),
+                (keyYear , 9, 6),
+                (keyYear , 10, 7),
+                (keyYear , 11, 8),
+                (keyYear , 12, 9),
+                (keyYear+1, 1, 10),
+                (keyYear+1, 2, 11),
+                (keyYear+1, 3, 12),
             };
         }
 
