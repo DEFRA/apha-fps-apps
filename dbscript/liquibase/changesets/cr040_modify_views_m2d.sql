@@ -188,7 +188,7 @@ GROUP BY vtimerecordedrc.project, vtimerecordedrc.profitcentre, vtimerecordedrc.
 -- View: fps.qryjobmonth_transfers1
 -- -----------------------------------------------------------------------------
 -- Note: View recreation may fail if dependent objects are not updated first.
-DROP VIEW IF EXISTS fps.qryjobmonth_transfers1;
+DROP VIEW IF EXISTS fps.qryjobmonth_transfers1 CASCADE;
 CREATE OR REPLACE VIEW fps.qryjobmonth_transfers1 AS
 SELECT DISTINCT monthlyoutput.buyer AS project,
     monthlyoutput.month,
@@ -209,6 +209,47 @@ GROUP BY monthlyoutput.buyer,
     monthlyoutput.volume,
     tlkptestreqmt.unitprice,
     monthlyoutput.fpsyear;
+-- -----------------------------------------------------------------------------
+-- View: fps.qryjobmonth_transfers2
+-- -----------------------------------------------------------------------------
+-- Recreate dependent view that was dropped with CASCADE
+DROP VIEW IF EXISTS fps.qryjobmonth_transfers2;
+CREATE OR REPLACE VIEW fps.qryjobmonth_transfers2 AS
+SELECT DISTINCT project,
+    month,
+    fpsyear,
+    sum(transfercost) AS sumoftransfercost
+FROM fps.qryjobmonth_transfers1
+GROUP BY project, month, fpsyear;
+-- -----------------------------------------------------------------------------
+-- View: fps.qryjobmonth_transferunion
+-- -----------------------------------------------------------------------------
+-- Recreate dependent view that was dropped with CASCADE
+DROP VIEW IF EXISTS fps.qryjobmonth_transferunion;
+CREATE OR REPLACE VIEW fps.qryjobmonth_transferunion AS
+SELECT qryjobmonth_tctransfers.project,
+    qryjobmonth_tctransfers.month,
+    qryjobmonth_tctransfers.fpsyear,
+    qryjobmonth_tctransfers.transfercost
+FROM fps.qryjobmonth_tctransfers
+UNION ALL
+SELECT qryjobmonth_transfers1.project,
+    qryjobmonth_transfers1.month,
+    qryjobmonth_transfers1.fpsyear,
+    qryjobmonth_transfers1.transfercost
+FROM fps.qryjobmonth_transfers1;
+-- -----------------------------------------------------------------------------
+-- View: fps.qryjobmonth_transferstotal
+-- -----------------------------------------------------------------------------
+-- Recreate dependent view that was dropped with CASCADE
+DROP VIEW IF EXISTS fps.qryjobmonth_transferstotal;
+CREATE OR REPLACE VIEW fps.qryjobmonth_transferstotal AS
+SELECT DISTINCT project,
+    month,
+    fpsyear,
+    sum(transfercost) AS sumoftransfercost
+FROM fps.qryjobmonth_transferunion
+GROUP BY project, month, fpsyear;
 -- -----------------------------------------------------------------------------
 -- View: fps.qryprojectmonthcw
 -- -----------------------------------------------------------------------------
@@ -462,7 +503,7 @@ GROUP BY pc.conttarget,
 -- View: fps.vpostmort1
 -- -----------------------------------------------------------------------------
 -- Note: View recreation may fail if dependent objects are not updated first.
-DROP VIEW IF EXISTS fps.vpostmort1;
+DROP VIEW IF EXISTS fps.vpostmort1 CASCADE;
 CREATE OR REPLACE VIEW fps.vpostmort1 AS
 SELECT tlkptestcapability.planportfolio,
     monthlyoutput.testcode,
@@ -507,7 +548,7 @@ HAVING tlkptestcapability.planportfolio::text ~~* 'tg0100'::text;
 -- View: fps.vprojectanimalplan
 -- -----------------------------------------------------------------------------
 -- Note: View recreation may fail if dependent objects are not updated first.
-DROP VIEW IF EXISTS fps.vprojectanimalplan;
+DROP VIEW IF EXISTS fps.vprojectanimalplan CASCADE;
 CREATE OR REPLACE VIEW fps.vprojectanimalplan AS
 SELECT tlkpproject.parentproject,
     tlkpproject.program,
@@ -532,8 +573,35 @@ FROM fps.tlkpproject
     JOIN fps.tblanimalreq ON tlkpproject.parentproject::text = tblanimalreq.jobcode::text
     AND tlkpproject.fpsyear = tblanimalreq.fpsyear
     JOIN fps.tblanimals ON tblanimalreq.animaltype::text = tblanimals.animaltype::text
-    AND tblanimalreq.fpsyear = tblanimals.fpsyear;
-
+    AND tblanimalreq.fpsyear = tblanimals.fpsyear;-- -----------------------------------------------------------------------------
+-- View: fps.qrytotalanimalcosts
+-- -----------------------------------------------------------------------------
+-- Recreate dependent view that was dropped with CASCADE
+DROP VIEW IF EXISTS fps.qrytotalanimalcosts;
+CREATE OR REPLACE VIEW fps.qrytotalanimalcosts AS
+SELECT DISTINCT parentproject AS jobcode,
+    fpsyear,
+    sum(cost) AS totalanimalcosts
+FROM fps.vprojectanimalplan
+GROUP BY parentproject, fpsyear;
+-- -----------------------------------------------------------------------------
+-- View: fps.vpostmortem1report_obsolete
+-- -----------------------------------------------------------------------------
+-- Recreate dependent view that was dropped with CASCADE
+DROP VIEW IF EXISTS fps.vpostmortem1report_obsolete;
+CREATE OR REPLACE VIEW fps.vpostmortem1report_obsolete AS
+SELECT testcode,
+    itemdescription,
+    totvol,
+    ltunitcharge,
+    sdunitcharge,
+    (round((ltfee)::numeric))::integer AS ltfee,
+    (round((sdfee)::numeric))::integer AS sdfee,
+    ((round((ltfee)::numeric))::integer + (round((sdfee)::numeric))::integer) AS total_fee,
+    (round((feecharged)::numeric))::integer AS fee_charged,
+    (round((((feecharged - ltfee) - sdfee))::numeric))::integer AS profit_loss,
+    workgroup
+FROM fps.vpostmort1;
 -- End of changeset
 
 
