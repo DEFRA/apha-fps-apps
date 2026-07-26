@@ -15,6 +15,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         public IPimsMilestoneApiClient PimsMilestone { get; }
         public IPimsRadTrackInvoiceApiClient PimsRadTrackInvoice { get; }
 
+        
+        public IPimsYearlyFinancialDataApiClient PimsYearlyFinancialData { get; }
+
+
         // TRANSFORMENGINE: Phase 9 new sub-clients — maintenance form API surfaces
         public IPimsReportApiClient PimsReport { get; }
         public IPimsReportGroupApiClient PimsReportGroup { get; }
@@ -49,6 +53,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             PimsProjectYearCosts = new PimsProjectYearCostsApiClient(http, mapper);
             PimsMilestone = new PimsMilestoneApiClient(http, mapper);
             PimsRadTrackInvoice = new PimsRadTrackInvoiceApiClient(http, mapper);
+            
+            PimsYearlyFinancialData = new PimsYearlyFinancialDataApiClient(http, mapper);
 
             // TRANSFORMENGINE: Phase 9 new sub-client initialisations
             PimsReport = new PimsReportApiClient(http, mapper);

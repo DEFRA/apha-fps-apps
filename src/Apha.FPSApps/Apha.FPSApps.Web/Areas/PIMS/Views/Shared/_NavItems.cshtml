@@ -1,30 +1,32 @@
-<!-- Choose Project -->
-<div class="nav-item">
-    <a class="nav-button" asp-area="PIMS" asp-controller="ProjectList" asp-action="Index">
-        <div class="align-menu-text"><span>Choose Project</span></div>
-    </a>
-</div>
+@* PIMS navigation items — referenced by Views/Shared/Components/AppNav/Default.cshtml *@
 
-<!-- Print Reports -->
+            <!-- Choose Project -->
+            <div class="nav-item">
+                <a class="nav-button" asp-area="PIMS" asp-controller="ProjectList" asp-action="Index">
+                    <div class="align-menu-text"><span>Choose Project</span></div>
+                </a>
+            </div>
 
-<div class="nav-item dropdown">
-    <a class="nav-button" href="#">
-        <div class="align-menu-text"><span>Print Reports</span></div>
-    </a>
-</div>
+            <!-- Print Reports -->
 
-<!-- Milestones -->
-<div class="nav-item dropdown">
-    <a class="nav-button" asp-area="PIMS" asp-controller="Milestone" asp-action="Index">
-        <div class="align-menu-text"><span>Milestone</span></div>
-    </a>
-</div>
-<!-- PMD Milestones -->
-<div class="nav-item dropdown">
-    <a class="nav-button" href="#">
-        <div class="align-menu-text"><span>PMD Milestone</span></div>
-    </a>
-</div>
+            <div class="nav-item dropdown">
+                <a class="nav-button" href="#">
+                    <div class="align-menu-text"><span>Print Reports</span></div>
+                </a>
+            </div>
+            
+            <!-- Milestones -->
+            <div class="nav-item dropdown">
+                <a class="nav-button" asp-area="PIMS" asp-controller="Milestone" asp-action="Index">
+                    <div class="align-menu-text"><span>Milestone</span></div>
+                </a>
+            </div>
+                <!-- PMD Milestones -->
+            <div class="nav-item dropdown">
+    <a class="nav-button" asp-area="PIMS" asp-controller="PMDMilestone" asp-action="Index">
+                    <div class="align-menu-text"><span>PMD Milestone</span></div>
+                </a>
+            </div>
 
 <!-- Invoices -->
 <div class="nav-item">
@@ -33,12 +35,12 @@
     </a>
 </div>
 
-<!-- Maintenance -->
-<div class="nav-item dropdown">
-    <a class="nav-button" asp-area="PIMS" asp-controller="Maintenance" asp-action="Index">
-        <div class="align-menu-text"><span>Maintenance</span></div>
-    </a>
-</div>
+            <!-- Maintenance -->
+            <div class="nav-item dropdown">
+                <a class="nav-button" href="#">
+                    <div class="align-menu-text"><span>Maintenance</span></div>
+                </a>
+            </div>
 
            
             

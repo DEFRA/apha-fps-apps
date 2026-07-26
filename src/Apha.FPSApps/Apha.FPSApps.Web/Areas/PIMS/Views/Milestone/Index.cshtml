@@ -32,6 +32,11 @@
                         </select>
                     </div>
                     <div>
+                        <a id="importBtn"
+                               href="@Url.Action("Index", "MilestoneImport", new { area = "PIMS", project = parentproject })"
+                               class="govuk-button font-size-16 govuk-!-margin-bottom-1">
+                            Import
+                        </a>
                         <a id="logOfUpdatesBtn"
                            href="@Url.Action("LogIndex", "Milestone", new { area = "PIMS", project = parentproject })"
                            class="govuk-button font-size-16 govuk-!-margin-bottom-1">

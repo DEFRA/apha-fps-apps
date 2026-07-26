@@ -9,6 +9,8 @@
         IPimsProjectYearCostsApiClient PimsProjectYearCosts { get; }
         IPimsMilestoneApiClient PimsMilestone { get; }
         IPimsRadTrackInvoiceApiClient PimsRadTrackInvoice { get; }
+        
+        IPimsYearlyFinancialDataApiClient PimsYearlyFinancialData { get; }
 
         // TRANSFORMENGINE: Phase 7 sub-clients — maintenance form API surfaces (Report, ReportGroup, ReportGroupLink, ProjectManager, etc.)
         IPimsReportApiClient PimsReport { get; }

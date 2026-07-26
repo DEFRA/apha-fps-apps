@@ -11,13 +11,14 @@
         ViewData["Title"] = $"{fpsYearCode} : {pageTitle}";
     }
     <title>@ViewData["Title"]</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
-    <link rel="stylesheet" href="~/css/supplement_style_for_gov.uk_style.css" />
-    <link rel="stylesheet" href="~/css/fps_styles/styles.css" />
-    <link rel="stylesheet" href="~/css/main_style.css" />
-    <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
-    <link rel="stylesheet" href="~/css/common/headernav/navstyle.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css"/>
+    <link rel="stylesheet" href="~/css/supplement_style_for_gov.uk_style.css"/>
+    <link rel="stylesheet" href="~/css/fps_styles/styles.css"/>
+    <link rel="stylesheet" href="~/DataGrid/datagrid.css"/>
+    <link rel="stylesheet" href="~/css/main_style.css"/>
+    <link rel="stylesheet" href="~/DataGrid/editable-grid.css"/>
+    <link rel="stylesheet" href="~/css/common/headernav/navstyle.css"/>
     <script src="~/lib/jquery/dist/jquery.js"></script>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -37,7 +38,7 @@
     @await Component.InvokeAsync("AppFooter")
 
     <!-- ── Shared modal popup (for add/edit forms) ───────────────────── -->
-    <div id="modalPopup" tabindex="-1" aria-labelledby="modalPopupLabel"
+    <div id="modalPopup" tabindex="-1" aria-label="Modal dialog"
          style="display:none; position:fixed; inset:0; z-index:1050;
                 background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
         <div class="modal-dialog modal-lg" style="margin:auto; width:100%; max-width:700px;">

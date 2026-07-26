@@ -1,11 +1,11 @@
-﻿using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.PIMS.DataAccess.Data
 {
     public partial class PimsDbContext : DbContext
     {
-        
+
         public PimsDbContext(DbContextOptions<PimsDbContext> options)
         : base(options)
         {
@@ -32,6 +32,7 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<ProjectStaffPlan> ProjectStaffPlans { get; set; }
         public virtual DbSet<ProjectMonthFinal> ProjectMonthFinals { get; set; }
         public virtual DbSet<FpsYearTotal> FpsYearTotals { get; set; }
+        public virtual DbSet<Settings> DatabaseSettings { get; set; }
 
         public virtual DbSet<Milestone> Milestones { get; set; }
         public virtual DbSet<MilestoneFormDates> MilestoneFormDates { get; set; }
@@ -42,8 +43,12 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<StagingMilestone> StagingMilestones { get; set; }
         public virtual DbSet<RadTrackInvoice> RadTrackInvoices { get; set; }
 
-        // Lookup: tblradtrackcontract — used by RadTrackInvoice contract dropdown.
         public virtual DbSet<RadTrackContract> RadTrackContracts { get; set; }
+
+        public virtual DbSet<YearlyFinancialData> YearlyFinancialData { get; set; }
+
+        public virtual DbSet<PactProjectYearCosts> PactProjectYearCosts { get; set; }
+
 
         // TRANSFORMENGINE: Phase 4 — new DbSets for Report/ReportGroup/Link, ProgramManagerLink, ProfitCentreManagerLink, Setting, Access*, Frequency, ReviewItem
         public virtual DbSet<Report> Reports { get; set; }
@@ -86,14 +91,17 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectStaffPlanMap());
             modelBuilder.ApplyConfiguration(new ProjectMonthFinalMap());
             modelBuilder.ApplyConfiguration(new FpsYearTotalMap());
+            modelBuilder.ApplyConfiguration(new SettingsMap());
             modelBuilder.ApplyConfiguration(new MilestoneMap());
             modelBuilder.ApplyConfiguration(new MilestoneTypeMap());
             modelBuilder.ApplyConfiguration(new MilestoneFormDatesMap());
             modelBuilder.ApplyConfiguration(new LogMilestoneMap());
             modelBuilder.ApplyConfiguration(new ProjectManagerMap());
             modelBuilder.ApplyConfiguration(new StagingMilestoneMap());
-            // TRANSFORMENGINE: Added Phase 4 — register RadTrackInvoiceMap for mabarchive.tblradtrackinvoice.
             modelBuilder.ApplyConfiguration(new RadTrackInvoiceMap());
+            modelBuilder.ApplyConfiguration(new RadTrackContractMap());            
+            modelBuilder.ApplyConfiguration(new YearlyFinancialDataMap());           
+            modelBuilder.ApplyConfiguration(new PactProjectYearCostsMap());
             modelBuilder.ApplyConfiguration(new RadTrackContractMap());
 
             // TRANSFORMENGINE: Phase 4 batch — register 12 new map configurations

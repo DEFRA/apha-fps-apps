@@ -1,31 +1,16 @@
-/*
- * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - Added AddScoped<IMaintenanceService, MaintenanceService>() registration in AddServices()
- *     for the frmMaintenance (PIMS Admin Maintenance) aggregate service
- *
- * PRESERVED:
- *   - All existing FPS, PACT, Costbook, and PIMS service registrations unchanged
- *   - Alphabetical ordering within the PIMS service block preserved
- *   - AddRepositories() method left empty (no repository DI required for frontend services)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
-
-using Apha.Common.Utilities.ExcelExport;
+﻿using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.ExcelImport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Services.Costbook;
 using Apha.FPSApps.Application.Services.FPS;
 using Apha.FPSApps.Application.Services.PACT;
 using Apha.FPSApps.Application.Services.PIMS;
+using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Web.Handler;
 
 namespace Apha.FPSApps.Web.Extensions
@@ -61,6 +46,8 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICostBookYearlyDetailsService, CostBookYearlyDetailsService>();
             services.AddScoped<ICostBookProjectSummaryService, CostBookProjectSummaryService>();
             services.AddScoped<ICostBookSettingsService, CostBookSettingsService>();
+            // frmMaintCostCentres frontend CRUD service; AddScoped follows request-scoped API client pattern
+            services.AddScoped<ICostCentreService, CostCentreService>();
             services.AddScoped<IGradeService, GradeService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IDivisionService, DivisionService>();
@@ -71,14 +58,19 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
+            //   TestListVlaService delegates to IPactApiClient.PactTestList (PACT API).
+            //   FpsYear filtering is handled by the PACT DbContext global query filter.
+            services.AddScoped<ITestListVlaService, TestListVlaService>();
             services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IExcelImportService, ExcelImportService>();
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IAdditionalCostService, AdditionalCostService>();
             services.AddScoped<IAccountCategoryService, AccountCategoryService>();
+            services.AddScoped<ICostBookAccountGroupService, CostBookAccountGroupService>();
+            services.AddScoped<ICostBookCapsStaffService, CostBookCapsStaffService>();
+            services.AddScoped<ICostBookMaintenanceService, CostBookMaintenanceService>();
             // PIMS
-            // TRANSFORMENGINE: IMaintenanceService -> MaintenanceService registered — frmMaintenance aggregate facade (Phase 10)
-            services.AddScoped<IMaintenanceService, MaintenanceService>();
             services.AddScoped<IProjectListService, ProjectListService>();
             services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
             services.AddScoped<IProjectCommentService, ProjectCommentService>();
@@ -86,6 +78,9 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectYearCostsService, ProjectYearCostsService>();
             services.AddScoped<IMilestoneService, MilestoneService>();
             services.AddScoped<IRadTrackInvoiceService, RadTrackInvoiceService>();
+            services.AddScoped<IMaintenanceService, MaintenanceService>();
+
+            services.AddScoped<IYearlyFinancialDataService, YearlyFinancialDataService>();
 
             services.AddScoped<IProfitCentreService, ProfitCentreService>();
             services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();
@@ -99,24 +94,34 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
+            // TRANSFORMENGINE: IWorkgroupMaintenanceService registered — Phase 10 (Step 15c)
+            // FPS CRUD maintenance service for frmMaintWorkGroup2 (distinct from PACT IWorkGroupService read-only lookup)
+            services.AddScoped<IWorkgroupMaintenanceService, WorkgroupMaintenanceService>();
             services.AddScoped<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService, Apha.FPSApps.Application.Services.PACT.WorkGroupService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
+            services.AddScoped<ITestReqBreakdownService, TestReqBreakdownService>();
+            services.AddScoped<ITestActualBreakdownService, TestActualBreakdownService>();
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();
             services.AddScoped<Apha.FPSApps.Application.Interfaces.FPS.IUserService, Apha.FPSApps.Application.Services.FPS.UserService>();
-            services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
+            services.AddScoped<IRecreateSummaryService, RecreateSummaryService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             services.AddScoped<IReleaseSummaryService, ReleaseSummaryService>();
             services.AddScoped<IPlanStaffZTCodeService, PlanStaffZTCodeService>();
+            services.AddScoped<IContributionSummaryService, ContributionSummaryService>();
+            services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
             services.AddScoped<IBosworthInterfaceService, BosworthInterfaceService>();
+            services.AddScoped<IResourceAllocationService, ResourceAllocationService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
+            //   used by IFpsProfitCentreApiClient and other IFps*ApiClient registrations (see ApiClientExtension.cs).
+            services.AddScoped<IFpsProjectAuditTrailApiClient, FpsProjectAuditTrailApiClient>();
             return services;
         }
     }

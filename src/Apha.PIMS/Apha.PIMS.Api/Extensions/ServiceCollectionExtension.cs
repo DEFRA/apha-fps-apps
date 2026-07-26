@@ -26,6 +26,8 @@ namespace Apha.PIMS.Api.Extensions
             services.AddScoped<ICommentService, CommentService>();
             services.AddScoped<IProjectYearCostsService, ProjectYearCostsService>();
             services.AddScoped<IMilestoneService, MilestoneService>();
+            services.AddScoped<IRadTrackInvoiceService, RadTrackInvoiceService>();       
+            services.AddScoped<IYearlyFinancialDataService, YearlyFinancialDataService>();
             services.AddScoped<IRadTrackInvoiceService, RadTrackInvoiceService>();
 
             // TRANSFORMENGINE: Phase 5 additions — Report, ReportGroup, ReportGroupLink
@@ -73,6 +75,7 @@ namespace Apha.PIMS.Api.Extensions
             services.AddScoped<IProjectYearCostsRepository, ProjectYearCostsRepository>();
             services.AddScoped<IMilestoneRepository, MilestoneRepository>();
             services.AddScoped<IRadTrackInvoiceRepository, RadTrackInvoiceRepository>();
+            services.AddScoped<IYearlyFinancialDataRepository, YearlyFinancialDataRepository>();
 
             // TRANSFORMENGINE: Phase 5 additions — Report, ReportGroup, ReportGroupLink
             services.AddScoped<IReportRepository, ReportRepository>();
