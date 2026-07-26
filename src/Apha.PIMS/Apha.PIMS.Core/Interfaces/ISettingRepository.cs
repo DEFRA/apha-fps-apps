@@ -4,13 +4,13 @@ namespace Apha.PIMS.Core.Interfaces
 {
     public interface ISettingRepository
     {
-        Task<List<Setting>> GetAllSettingsAsync();
+        Task<List<Settings>> GetAllSettingsAsync();
 
-        Task<List<Setting>> GetAllUserUpdateableSettingsAsync();
+        Task<List<Settings>> GetAllUserUpdateableSettingsAsync();
 
-        Task<Setting?> GetSettingByIdAsync(string id);
+        Task<Settings?> GetSettingByIdAsync(string id);
 
-        Task<Setting> UpdateSettingAsync(Setting entity);
+        Task<Settings> UpdateSettingAsync(Settings entity);
 
         Task<bool> SettingExistsAsync(string id);
     }

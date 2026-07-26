@@ -19,13 +19,13 @@ namespace Apha.PIMS.Application.Services
 
         public async Task<List<SettingDto>> GetAllSettingsAsync()
         {
-            List<Setting> entities = await _repository.GetAllSettingsAsync();
+            List<Settings> entities = await _repository.GetAllSettingsAsync();
             return _mapper.Map<List<SettingDto>>(entities);
         }
 
         public async Task<List<SettingDto>> GetAllUserUpdateableSettingsAsync()
         {
-            List<Setting> entities = await _repository.GetAllUserUpdateableSettingsAsync();
+            List<Settings> entities = await _repository.GetAllUserUpdateableSettingsAsync();
             return _mapper.Map<List<SettingDto>>(entities);
         }
 
@@ -35,7 +35,7 @@ namespace Apha.PIMS.Application.Services
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentException("Setting id is required.", nameof(id));
 
-            Setting? entity = await _repository.GetSettingByIdAsync(id);
+            Settings? entity = await _repository.GetSettingByIdAsync(id);
             return entity is null ? null : _mapper.Map<SettingDto>(entity);
         }
 
@@ -46,17 +46,17 @@ namespace Apha.PIMS.Application.Services
             if (string.IsNullOrWhiteSpace(dto.Id))
                 throw new ArgumentException("Setting id is required.", nameof(dto));
 
-            Setting? existing = await _repository.GetSettingByIdAsync(dto.Id);
+            Settings? existing = await _repository.GetSettingByIdAsync(dto.Id);
             if (existing is null)
                 throw new KeyNotFoundException($"Setting '{dto.Id}' was not found.");
 
             // TRANSFORMENGINE: enforce Userupdateable guard — protected settings may not be changed by standard update flow
-            if (!existing.Userupdateable)
+            if (existing.Userupdateable != true)
                 throw new InvalidOperationException(
                     $"Setting '{dto.Id}' is not user-updateable and cannot be modified through this operation.");
 
-            Setting entity = _mapper.Map<Setting>(dto);
-            Setting updated = await _repository.UpdateSettingAsync(entity);
+            Settings entity = _mapper.Map<Settings>(dto);
+            Settings updated = await _repository.UpdateSettingAsync(entity);
             return _mapper.Map<SettingDto>(updated);
         }
 

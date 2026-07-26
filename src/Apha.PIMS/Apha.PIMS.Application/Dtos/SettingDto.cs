@@ -4,7 +4,7 @@ namespace Apha.PIMS.Application.Dtos
     {
         public string Id { get; set; } = null!;
 
-        public string? SettingValue { get; set; }
+        public string? Setting { get; set; }
 
         public string? Notes { get; set; }
 

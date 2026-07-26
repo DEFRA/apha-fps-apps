@@ -13,36 +13,36 @@ namespace Apha.PIMS.DataAccess.Repository
         {
             _dbContext = dbContext;
         }
-        public async Task<List<Setting>> GetAllSettingsAsync()
+        public async Task<List<Settings>> GetAllSettingsAsync()
         {
-            return await _dbContext.Settings
+            return await _dbContext.DatabaseSettings
                 .AsNoTracking()
                 .OrderBy(s => s.Id)
                 .ToListAsync();
         }
-        public async Task<List<Setting>> GetAllUserUpdateableSettingsAsync()
+        public async Task<List<Settings>> GetAllUserUpdateableSettingsAsync()
         {
-            return await _dbContext.Settings
+            return await _dbContext.DatabaseSettings
                 .AsNoTracking()
-                .Where(s => s.Userupdateable)
+                .Where(s => s.Userupdateable == true)
                 .OrderBy(s => s.Id)
                 .ToListAsync();
         }
-        public async Task<Setting?> GetSettingByIdAsync(string id)
+        public async Task<Settings?> GetSettingByIdAsync(string id)
         {
-            return await _dbContext.Settings
+            return await _dbContext.DatabaseSettings
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
-        public async Task<Setting> UpdateSettingAsync(Setting entity)
+        public async Task<Settings> UpdateSettingAsync(Settings entity)
         {
-            _dbContext.Settings.Update(entity);
+            _dbContext.DatabaseSettings.Update(entity);
             await _dbContext.SaveChangesAsync();
             return entity;
         }
         public async Task<bool> SettingExistsAsync(string id)
         {
-            return await _dbContext.Settings
+            return await _dbContext.DatabaseSettings
                 .AnyAsync(s => s.Id == id);
         }
     }

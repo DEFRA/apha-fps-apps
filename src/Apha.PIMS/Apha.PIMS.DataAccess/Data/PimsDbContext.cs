@@ -57,7 +57,6 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<ProgramManagerLink> ProgramManagerLinks { get; set; }
         public virtual DbSet<MabProfitCentre> MyTblProfitCentres { get; set; }
         public virtual DbSet<ProfitCentreManagerLink> ProfitCentreManagerLinks { get; set; }
-        public virtual DbSet<Setting> Settings { get; set; }
         public virtual DbSet<AccessUser> AccessUsers { get; set; }
         public virtual DbSet<AccessLevel> AccessLevels { get; set; }
         public virtual DbSet<AccessUserLevel> AccessUserLevels { get; set; }
@@ -111,7 +110,6 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProgramManagerLinkMap());
             modelBuilder.ApplyConfiguration(new MyTblProfitCentreMap());
             modelBuilder.ApplyConfiguration(new ProfitCentreManagerLinkMap());
-            modelBuilder.ApplyConfiguration(new SettingMap());
             modelBuilder.ApplyConfiguration(new AccessUserMap());
             modelBuilder.ApplyConfiguration(new AccessLevelMap());
             modelBuilder.ApplyConfiguration(new AccessUserLevelMap());

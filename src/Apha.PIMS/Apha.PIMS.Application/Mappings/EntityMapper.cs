@@ -52,7 +52,7 @@ namespace Apha.PIMS.Application.Mappings
             CreateMap<ProgramLookup, ProgramLookupDto>().ReverseMap();
             CreateMap<ProfitCentreLookup, ProfitCentreLookupDto>().ReverseMap();
             CreateMap<ProfitCentreManagerLink, ProfitCentreManagerLinkDto>().ReverseMap();
-            CreateMap<Setting, SettingDto>().ReverseMap();
+            CreateMap<Settings, SettingDto>().ReverseMap();
             CreateMap<AccessUser, AccessUserDto>().ReverseMap();
             CreateMap<AccessLevel, AccessLevelDto>().ReverseMap();
             CreateMap<AccessUserLevel, AccessUserLevelDto>().ReverseMap();
