@@ -1,7 +1,7 @@
 @model Apha.FPSApps.Web.Areas.PIMS.Models.ReportGroupItem
 
 @{
-    var isAddingNew = ViewBag.IsAddingNew as bool? ?? Model.Groupid == 0;
+    var isAddingNew = ViewBag.IsAddingNew as bool? ?? Model.GroupId == 0;
     var isEditMode = !isAddingNew;
     var title = isEditMode ? "Edit Report Group" : "Add Report Group";
     var saveLabel = isEditMode ? "Update" : "Save";
@@ -27,33 +27,33 @@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10" id="otherReportGroupIdGroup">
-                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Groupid">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="GroupId">
                         Group Id: <span class="ra-required-star" aria-hidden="true">*</span>
                     </label>
                     @if (isEditMode)
                     {
                         <input class="govuk-input govuk-!-font-size-16"
-                               asp-for="Groupid"
-                               id="otherGroupid"
+                               asp-for="GroupId"
+                               id="otherGroupId"
                                type="number"
                                readonly
                                aria-required="true"
-                               aria-describedby="otherGroupidError" />
+                               aria-describedby="otherGroupIdError" />
                     }
                     else
                     {
                         <input class="govuk-input govuk-!-font-size-16"
-                               asp-for="Groupid"
-                               id="otherGroupid"
+                               asp-for="GroupId"
+                               id="otherGroupId"
                                type="number"
                                required
                                aria-required="true"
-                               aria-describedby="otherGroupidError" />
+                               aria-describedby="otherGroupIdError" />
                     }
-                    <span asp-validation-for="Groupid"
-                          data-valmsg-for="Groupid"
+                    <span asp-validation-for="GroupId"
+                          data-valmsg-for="GroupId"
                           class="govuk-error-message"
-                          id="otherGroupidError"
+                          id="otherGroupIdError"
                           style="display:none;"></span>
                 </div>
             </div>

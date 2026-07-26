@@ -268,7 +268,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 Title = "Report Groups",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
-                KeyProperty = "Groupid",
+                KeyProperty = "GroupId",
                 AllowAdd = true,
                 AddFunction = "addReportGroup",
                 AllowEdit = false,
@@ -320,7 +320,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 Title = "Report Groups",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
-                KeyProperty = "Groupid",
+                KeyProperty = "GroupId",
                 AllowAdd = true,
                 AddFunction = "addOtherReportGroup",
                 AllowEdit = true,
@@ -390,7 +390,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             var dto = new ReportGroupLinkDto
             {
-                GroupId = model.Groupid,
+                GroupId = model.GroupId,
                 ReportId = model.Reportid
             };
 
@@ -439,12 +439,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             var dto = _mapper.Map<ReportGroupDto>(model);
             ApiResponseDto<ReportGroupDto> result = isEdit
-                ? await _service.UpdateReportGroupAsync(model.Groupid, dto)
+                ? await _service.UpdateReportGroupAsync(model.GroupId, dto)
                 : await _service.CreateReportGroupAsync(dto);
 
             return result.Success
                 ? Json(new { success = true, message = isEdit ? "Report group updated successfully." : "Report group created successfully." })
-                : Json(new { success = false, errors = result.Errors, message = "Save failed." });
+                : Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Save failed.", errors = result.Errors });
         }
 
         [HttpDelete]
@@ -453,7 +453,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             var result = await _service.DeleteReportGroupAsync(groupid);
             return result.Success
                 ? Json(new { success = true, message = "Report group deleted successfully." })
-                : Json(new { success = false, errors = result.Errors });
+                : Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Delete failed.", errors = result.Errors });
         }
 
         // ════════════════════════════════════════════════════════════════════════════

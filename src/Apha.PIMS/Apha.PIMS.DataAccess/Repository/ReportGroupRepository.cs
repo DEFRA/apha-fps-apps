@@ -31,7 +31,7 @@ namespace Apha.PIMS.DataAccess.Repository
                 var linkedGroupIds = _dbContext.ReportGroupLinks
                     .Where(l => l.ReportId == reportId.Value)
                     .Select(l => l.GroupId);
-                baseQuery = baseQuery.Where(g => linkedGroupIds.Contains(g.Groupid));
+                baseQuery = baseQuery.Where(g => linkedGroupIds.Contains(g.GroupId));
             }
 
             if (!string.IsNullOrWhiteSpace(query.Filter))
@@ -39,10 +39,10 @@ namespace Apha.PIMS.DataAccess.Repository
                 var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(query.Filter)
                     ?? new Dictionary<string, string>();
 
-                if (filters.TryGetValue("Groupid", out var groupIdFilter)
+                if (filters.TryGetValue("GroupId", out var groupIdFilter)
                     && int.TryParse(groupIdFilter, out var groupId))
                 {
-                    baseQuery = baseQuery.Where(g => g.Groupid == groupId);
+                    baseQuery = baseQuery.Where(g => g.GroupId == groupId);
                 }
 
                 if (filters.TryGetValue("Description", out var descriptionFilter)
@@ -56,8 +56,8 @@ namespace Apha.PIMS.DataAccess.Repository
 
             baseQuery = (query.SortBy, query.Descending) switch
             {
-                ("Groupid", true) => baseQuery.OrderByDescending(g => g.Groupid),
-                ("Groupid", false) => baseQuery.OrderBy(g => g.Groupid),
+                ("GroupId", true) => baseQuery.OrderByDescending(g => g.GroupId),
+                ("GroupId", false) => baseQuery.OrderBy(g => g.GroupId),
                 ("Description", true) => baseQuery.OrderByDescending(g => g.Description),
                 ("Description", false) => baseQuery.OrderBy(g => g.Description),
                 (_, true) => baseQuery.OrderByDescending(g => g.Description),
@@ -77,7 +77,7 @@ namespace Apha.PIMS.DataAccess.Repository
 
             return await _dbContext.ReportGroups
                 .AsNoTracking()
-                .Where(g => linkedGroupIds.Contains(g.Groupid))
+                .Where(g => linkedGroupIds.Contains(g.GroupId))
                 .OrderBy(g => g.Description)
                 .ToListAsync();
         }
@@ -86,7 +86,7 @@ namespace Apha.PIMS.DataAccess.Repository
         {
             return await _dbContext.ReportGroups
                 .AsNoTracking()
-                .FirstOrDefaultAsync(g => g.Groupid == groupId);
+                .FirstOrDefaultAsync(g => g.GroupId == groupId);
         }
         public async Task<ReportGroup> AddReportGroupAsync(ReportGroup entity)
         {
@@ -103,7 +103,7 @@ namespace Apha.PIMS.DataAccess.Repository
         public async Task<bool> DeleteReportGroupAsync(int groupId)
         {
             int rowsAffected = await _dbContext.ReportGroups
-                .Where(g => g.Groupid == groupId)
+                .Where(g => g.GroupId == groupId)
                 .ExecuteDeleteAsync();
 
             return rowsAffected > 0;
@@ -111,7 +111,13 @@ namespace Apha.PIMS.DataAccess.Repository
         public async Task<bool> ReportGroupExistsAsync(int groupId)
         {
             return await _dbContext.ReportGroups
-                .AnyAsync(g => g.Groupid == groupId);
+                .AnyAsync(g => g.GroupId == groupId);
+        }
+
+        public async Task<bool> HasLinkedReportsAsync(int groupId)
+        {
+            return await _dbContext.ReportGroupLinks
+                .AnyAsync(l => l.GroupId == groupId);
         }
     }
 }

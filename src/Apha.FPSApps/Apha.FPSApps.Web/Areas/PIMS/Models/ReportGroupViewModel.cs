@@ -9,7 +9,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         [Required(ErrorMessage = "Report Group is required")]
         [Display(Name = "Report Group")]
         [GridColumn(Order = 1, Width = 100, Type = GridColumnType.Number)]
-        public int Groupid { get; set; }
+        public int GroupId { get; set; }
 
         public int Reportid { get; set; }
 

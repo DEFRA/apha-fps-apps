@@ -1,7 +1,7 @@
 @model Apha.FPSApps.Web.Areas.PIMS.Models.ReportGroupViewModel
 
 @{
-    var isEditMode = Model.Groupid != 0;
+    var isEditMode = Model.GroupId != 0;
     var title = isEditMode ? "Edit Report Group" : "Add Report Group";
     var saveLabel = isEditMode ? "Update" : "Save";
 }
@@ -28,11 +28,11 @@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
                 <div class="govuk-form-group" id="groupFormGroup">
-                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Groupid">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="GroupId">
                         Report Group: <span class="ra-required-star" aria-hidden="true">*</span>
                     </label>
 
-                    <select asp-for="Groupid"
+                    <select asp-for="GroupId"
                             asp-items="Model.ReportGroups"
                             class="govuk-select govuk-!-font-size-16 ra-select-full"
                             id="groupReportGroup"
@@ -41,8 +41,8 @@
                             aria-describedby="groupReportGroupError">
                         <option value="">-- Select Report Group --</option>
                     </select>
-                    <span asp-validation-for="Groupid"
-                          data-valmsg-for="Groupid"
+                    <span asp-validation-for="GroupId"
+                          data-valmsg-for="GroupId"
                           class="govuk-error-message"
                           id="groupReportGroupError"
                           style="display:none;"></span>

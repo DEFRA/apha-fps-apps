@@ -464,7 +464,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         {
             // Arrange
             var dtos  = new List<ReportGroupDto> { new() { GroupId = 1, Description = "Group A" } };
-            var items = new List<ReportGroupItem> { new() { Groupid = 1, Description = "Group A" } };
+            var items = new List<ReportGroupItem> { new() { GroupId = 1, Description = "Group A" } };
             _service.GetAllReportGroupsAsync().Returns(SuccessResponse(dtos));
             _mapper.Map<List<ReportGroupItem>>(dtos).Returns(items);
             var request = new PaginationFilter<string> { Filter = "{}" };
@@ -520,7 +520,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         {
             // Arrange
             var dto  = new ReportGroupDto { GroupId = 2, Description = "Grp B" };
-            var item = new ReportGroupItem { Groupid = 2, Description = "Grp B" };
+            var item = new ReportGroupItem { GroupId = 2, Description = "Grp B" };
             _service.GetReportGroupByIdAsync(2).Returns(SuccessResponse(dto));
             _mapper.Map<ReportGroupItem>(dto).Returns(item);
 
@@ -530,7 +530,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             var model   = Assert.IsType<ReportGroupItem>(partial.Model);
-            Assert.Equal(2, model.Groupid);
+            Assert.Equal(2, model.GroupId);
         }
 
         #endregion
@@ -545,7 +545,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveReportGroup_NewGroup_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var item = new ReportGroupViewModel { Groupid = 0, Description = "New Group" };
+            var item = new ReportGroupViewModel { GroupId = 0, Description = "New Group" };
             var dto  = new ReportGroupDto { GroupId = 0, Description = "New Group" };
             _mapper.Map<ReportGroupDto>(item).Returns(dto);
             _service.CreateReportGroupAsync(dto).Returns(SuccessResponse(dto));
@@ -563,7 +563,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveReportGroup_ExistingGroup_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var item = new ReportGroupViewModel { Groupid = 3, Description = "Existing Group" };
+            var item = new ReportGroupViewModel { GroupId = 3, Description = "Existing Group" };
             var dto  = new ReportGroupDto { GroupId = 3, Description = "Existing Group" };
             _mapper.Map<ReportGroupDto>(item).Returns(dto);
             _service.UpdateReportGroupAsync(3, dto).Returns(SuccessResponse(dto));
@@ -597,7 +597,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveReportGroup_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
-            var item = new ReportGroupViewModel { Groupid = 0, Description = "Bad Group" };
+            var item = new ReportGroupViewModel { GroupId = 0, Description = "Bad Group" };
             var dto  = new ReportGroupDto { GroupId = 0, Description = "Bad Group" };
             _mapper.Map<ReportGroupDto>(item).Returns(dto);
             _service.CreateReportGroupAsync(dto).Returns(FailureResponse<ReportGroupDto>());

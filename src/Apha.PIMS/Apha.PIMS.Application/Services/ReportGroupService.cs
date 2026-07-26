@@ -57,6 +57,15 @@ namespace Apha.PIMS.Application.Services
             if (string.IsNullOrWhiteSpace(dto.Description))
                 throw new ArgumentException("Group description is required.", nameof(dto));
 
+            bool duplicate = await _repository.ReportGroupExistsAsync(dto.GroupId);
+            if (duplicate)
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"A report group with ID '{dto.GroupId}' already exists.",
+                        "REPORT_GROUP_DUPLICATE")
+                ]);
+
             ReportGroup entity = _mapper.Map<ReportGroup>(dto);
             ReportGroup created = await _repository.AddReportGroupAsync(entity);
             return _mapper.Map<ReportGroupDto>(created);
@@ -97,6 +106,18 @@ namespace Apha.PIMS.Application.Services
                     new BusinessValidationError(
                         $"ReportGroup with groupid {groupId} was not found.",
                         "REPORT_GROUP_NOT_FOUND")
+                };
+                throw new BusinessValidationErrorException(errors);
+            }
+
+            bool hasLinkedReports = await _repository.HasLinkedReportsAsync(groupId);
+            if (hasLinkedReports)
+            {
+                var errors = new List<BusinessValidationError>
+                {
+                    new BusinessValidationError(
+                        $"Report Group {groupId} cannot be deleted because it is currently linked to one or more reports. Please remove the linked reports before deleting this group.",
+                        "REPORT_GROUP_HAS_LINKED_REPORTS")
                 };
                 throw new BusinessValidationErrorException(errors);
             }

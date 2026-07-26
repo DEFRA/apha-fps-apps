@@ -1576,10 +1576,10 @@ function saveOtherReportGroup() {
 
             if (data.errors) {
                 displayServerValidationErrors(data.errors, data.message, $form);
+            } else {
+                $bannerText.text(data.message || 'Save failed.');
+                $banner.show();
             }
-
-            $bannerText.text(data.message || 'Save failed.');
-            $banner.show();
         })
         .fail(function () {
             $bannerText.text('An error occurred while saving.');

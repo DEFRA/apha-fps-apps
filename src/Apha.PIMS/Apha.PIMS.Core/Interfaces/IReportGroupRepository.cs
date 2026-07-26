@@ -21,5 +21,7 @@ namespace Apha.PIMS.Core.Interfaces
         Task<bool> DeleteReportGroupAsync(int groupId);
 
         Task<bool> ReportGroupExistsAsync(int groupId);
+
+        Task<bool> HasLinkedReportsAsync(int groupId);
     }
 }

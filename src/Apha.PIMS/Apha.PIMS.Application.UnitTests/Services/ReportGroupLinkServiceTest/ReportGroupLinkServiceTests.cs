@@ -31,7 +31,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportGroupLinkServiceTest
             var dto = new ReportGroupLinkDto { ReportId = 10, GroupId = 20 };
             _repository.ReportGroupLinkExistsAsync(10, 20).Returns(true);
             _reportRepository.GetReportByIdAsync(10).Returns(new Report { Id = 10, ReportName = "Annual Report" });
-            _reportGroupRepository.GetReportGroupByIdAsync(20).Returns(new ReportGroup { Groupid = 20, Description = "Finance" });
+            _reportGroupRepository.GetReportGroupByIdAsync(20).Returns(new ReportGroup { GroupId = 20, Description = "Finance" });
 
             // Act
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateReportGroupLinkAsync(dto));
@@ -48,7 +48,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportGroupLinkServiceTest
             // Arrange
             _repository.ReportGroupLinkExistsAsync(10, 20).Returns(false);
             _reportRepository.GetReportByIdAsync(10).Returns(new Report { Id = 10, ReportName = "Annual Report" });
-            _reportGroupRepository.GetReportGroupByIdAsync(20).Returns(new ReportGroup { Groupid = 20, Description = "Finance" });
+            _reportGroupRepository.GetReportGroupByIdAsync(20).Returns(new ReportGroup { GroupId = 20, Description = "Finance" });
 
             // Act
             var ex = await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.DeleteReportGroupLinkAsync(10, 20));
