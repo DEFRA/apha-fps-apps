@@ -161,13 +161,14 @@ GROUP BY workgroup.profitcentre, vprojectstaffplan.parentproject, vprojectstaffp
 -- -----------------------------------------------------------------------------
 -- View: fps.qrytotalstaffcosts
 -- -----------------------------------------------------------------------------
--- Recreate dependent view that was dropped with CASCADE
+-- Recreate dependent view that was dropped with CASCADE.
+-- Definition preserved from CR035 (COALESCE/numeric), not the older baseline.
 DROP VIEW IF EXISTS fps.qrytotalstaffcosts;
 CREATE OR REPLACE VIEW fps.qrytotalstaffcosts AS
-SELECT DISTINCT parentproject AS jobcode,
+SELECT parentproject AS jobcode,
     fpsyear,
-    sum(cost) AS totalstaffcosts,
-    sum(paycost) AS totalpaycosts
+    COALESCE(SUM(cost::numeric), 0) AS totalstaffcosts,
+    COALESCE(SUM(paycost::numeric), 0) AS totalpaycosts
 FROM fps.vprojectstaffplan
 GROUP BY parentproject, fpsyear;
 -- -----------------------------------------------------------------------------
@@ -184,6 +185,31 @@ SELECT vtimerecordedrc.project,
 FROM fps.vtimerecordedrc
     LEFT JOIN fps.vplannedstaffcostssummary ON ((((vtimerecordedrc.profitcentre)::text = (vplannedstaffcostssummary.profitcentre)::text) AND ((vtimerecordedrc.project)::text = (vplannedstaffcostssummary.parentproject)::text) AND vtimerecordedrc.fpsyear = vplannedstaffcostssummary.fpsyear))
 GROUP BY vtimerecordedrc.project, vtimerecordedrc.profitcentre, vtimerecordedrc.fpsyear, vplannedstaffcostssummary.sumofplannedhours, vplannedstaffcostssummary.sumofcost;
+-- -----------------------------------------------------------------------------
+-- View: fps.qryjobmonth_tctransfers
+-- -----------------------------------------------------------------------------
+-- Note: Base view for qryjobmonth_transferunion. Recreated before its dependents.
+DROP VIEW IF EXISTS fps.qryjobmonth_tctransfers CASCADE;
+CREATE OR REPLACE VIEW fps.qryjobmonth_tctransfers AS
+SELECT vpacttlkptestcapability.planportfolio AS project,
+    monthlyoutput.month,
+    monthlyoutput.testcode,
+    monthlyoutput.volume,
+    tlkptestreqmt.unitprice AS intunitprice,
+    monthlyoutput.fpsyear,
+    sum(monthlyoutput.volume * tlkptestreqmt.unitprice) AS transfercost
+FROM fps.monthlyoutput
+    JOIN fps.tlkptestreqmt ON monthlyoutput.testcode::text = tlkptestreqmt.testcode::text
+    AND monthlyoutput.buyer::text = tlkptestreqmt.buyer::text
+    AND monthlyoutput.fpsyear = tlkptestreqmt.fpsyear
+    JOIN fps.vpacttlkptestcapability ON tlkptestreqmt.buyer::text = vpacttlkptestcapability.wgtestcode
+    AND tlkptestreqmt.fpsyear = vpacttlkptestcapability.fpsyear
+GROUP BY vpacttlkptestcapability.planportfolio,
+    monthlyoutput.month,
+    monthlyoutput.testcode,
+    monthlyoutput.volume,
+    tlkptestreqmt.unitprice,
+    monthlyoutput.fpsyear;
 -- -----------------------------------------------------------------------------
 -- View: fps.qryjobmonth_transfers1
 -- -----------------------------------------------------------------------------
@@ -241,13 +267,14 @@ FROM fps.qryjobmonth_transfers1;
 -- -----------------------------------------------------------------------------
 -- View: fps.qryjobmonth_transferstotal
 -- -----------------------------------------------------------------------------
--- Recreate dependent view that was dropped with CASCADE
+-- Recreate dependent view that was dropped with CASCADE.
+-- Definition preserved from CR036 (month::integer, COALESCE/numeric).
 DROP VIEW IF EXISTS fps.qryjobmonth_transferstotal;
 CREATE OR REPLACE VIEW fps.qryjobmonth_transferstotal AS
-SELECT DISTINCT project,
-    month,
+SELECT project,
+    month::integer AS month,
     fpsyear,
-    sum(transfercost) AS sumoftransfercost
+    COALESCE(SUM(transfercost::numeric), 0) AS sumoftransfercost
 FROM fps.qryjobmonth_transferunion
 GROUP BY project, month, fpsyear;
 -- -----------------------------------------------------------------------------
@@ -265,31 +292,6 @@ FROM fps.tlkpproject
     JOIN fps.projectmonth ON tlkpproject.parentproject::text = projectmonth.project::text
     AND tlkpproject.fpsyear = projectmonth.fpsyear;
 -- -----------------------------------------------------------------------------
--- View: fps.qryjobmonth_tctransfers
--- -----------------------------------------------------------------------------
--- Note: View recreation may fail if dependent objects are not updated first.
-DROP VIEW IF EXISTS fps.qryjobmonth_tctransfers;
-CREATE OR REPLACE VIEW fps.qryjobmonth_tctransfers AS
-SELECT vpacttlkptestcapability.planportfolio AS project,
-    monthlyoutput.month,
-    monthlyoutput.testcode,
-    monthlyoutput.volume,
-    tlkptestreqmt.unitprice AS intunitprice,
-    monthlyoutput.fpsyear,
-    sum(monthlyoutput.volume * tlkptestreqmt.unitprice) AS transfercost
-FROM fps.monthlyoutput
-    JOIN fps.tlkptestreqmt ON monthlyoutput.testcode::text = tlkptestreqmt.testcode::text
-    AND monthlyoutput.buyer::text = tlkptestreqmt.buyer::text
-    AND monthlyoutput.fpsyear = tlkptestreqmt.fpsyear
-    JOIN fps.vpacttlkptestcapability ON tlkptestreqmt.buyer::text = vpacttlkptestcapability.wgtestcode
-    AND tlkptestreqmt.fpsyear = vpacttlkptestcapability.fpsyear
-GROUP BY vpacttlkptestcapability.planportfolio,
-    monthlyoutput.month,
-    monthlyoutput.testcode,
-    monthlyoutput.volume,
-    tlkptestreqmt.unitprice,
-    monthlyoutput.fpsyear;
--- -----------------------------------------------------------------------------
 -- View: fps.vplantestcosts
 -- -----------------------------------------------------------------------------
 -- Note: View recreation may fail if dependent objects are not updated first.
@@ -304,8 +306,8 @@ GROUP BY buyer,
 -- -----------------------------------------------------------------------------
 -- View: fps.qrytestspcostplan_xtab
 -- -----------------------------------------------------------------------------
--- Note: View recreation may fail if dependent objects are not updated first.
-DROP VIEW IF EXISTS fps.qrytestspcostplan_xtab;
+-- Note: Base view for vpostmort1. Dropped with CASCADE; dependents recreated later.
+DROP VIEW IF EXISTS fps.qrytestspcostplan_xtab CASCADE;
 CREATE OR REPLACE VIEW fps.qrytestspcostplan_xtab AS
 SELECT testcode,
     sum(
@@ -576,12 +578,13 @@ FROM fps.tlkpproject
     AND tblanimalreq.fpsyear = tblanimals.fpsyear;-- -----------------------------------------------------------------------------
 -- View: fps.qrytotalanimalcosts
 -- -----------------------------------------------------------------------------
--- Recreate dependent view that was dropped with CASCADE
+-- Recreate dependent view that was dropped with CASCADE.
+-- Definition preserved from CR035 (COALESCE/numeric), not the older baseline.
 DROP VIEW IF EXISTS fps.qrytotalanimalcosts;
 CREATE OR REPLACE VIEW fps.qrytotalanimalcosts AS
-SELECT DISTINCT parentproject AS jobcode,
+SELECT parentproject AS jobcode,
     fpsyear,
-    sum(cost) AS totalanimalcosts
+    COALESCE(SUM(cost::numeric), 0) AS totalanimalcosts
 FROM fps.vprojectanimalplan
 GROUP BY parentproject, fpsyear;
 -- -----------------------------------------------------------------------------
