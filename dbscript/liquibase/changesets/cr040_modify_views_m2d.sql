@@ -82,7 +82,7 @@ GROUP BY tblkpprofitcentre.conttarget,
 -- View: fps.vprojectstaffplan
 -- -----------------------------------------------------------------------------
 -- Note: View recreation may fail if dependent objects are not updated first.
-DROP VIEW IF EXISTS fps.vprojectstaffplan;
+DROP VIEW IF EXISTS fps.vprojectstaffplan CASCADE;
 CREATE OR REPLACE VIEW fps.vprojectstaffplan AS
 SELECT tlkpproject.parentproject,
     tlkpprogram.programno,
@@ -130,6 +130,60 @@ FROM fps.tblwgemployee
     AND tblstaffjob.fpsyear = tlkpproject.fpsyear
     JOIN fps.tlkpprogram ON tlkpproject.program::text = tlkpprogram.programno::text
     AND tlkpproject.fpsyear = tlkpprogram.fpsyear;
+-- -----------------------------------------------------------------------------
+-- View: fps.vplannedstaffcostspar1
+-- -----------------------------------------------------------------------------
+-- Recreate dependent view that was dropped with CASCADE
+DROP VIEW IF EXISTS fps.vplannedstaffcostspar1;
+CREATE OR REPLACE VIEW fps.vplannedstaffcostspar1 AS
+SELECT vprojectstaffplan.parentproject,
+    vprojectstaffplan.programno,
+    vprojectstaffplan.fpsyear,
+    sum(vprojectstaffplan.plannedhours) AS sumofplannedhours,
+    sum(vprojectstaffplan.cost) AS sumofcost
+FROM fps.vprojectstaffplan
+    JOIN fps.tlkpproject ON (((vprojectstaffplan.parentproject)::text = (tlkpproject.parentproject)::text) AND vprojectstaffplan.fpsyear = tlkpproject.fpsyear)
+GROUP BY vprojectstaffplan.parentproject, vprojectstaffplan.programno, vprojectstaffplan.fpsyear;
+-- -----------------------------------------------------------------------------
+-- View: fps.vplannedstaffcostssummary
+-- -----------------------------------------------------------------------------
+-- Recreate dependent view that was dropped with CASCADE
+DROP VIEW IF EXISTS fps.vplannedstaffcostssummary;
+CREATE OR REPLACE VIEW fps.vplannedstaffcostssummary AS
+SELECT workgroup.profitcentre,
+    vprojectstaffplan.parentproject,
+    vprojectstaffplan.fpsyear,
+    sum(vprojectstaffplan.cost) AS sumofcost,
+    sum(vprojectstaffplan.plannedhours) AS sumofplannedhours
+FROM fps.vprojectstaffplan
+    JOIN fps.workgroup ON (((vprojectstaffplan.workgroup)::text = (workgroup.workgroup)::text) AND vprojectstaffplan.fpsyear = workgroup.fpsyear)
+GROUP BY workgroup.profitcentre, vprojectstaffplan.parentproject, vprojectstaffplan.fpsyear;
+-- -----------------------------------------------------------------------------
+-- View: fps.qrytotalstaffcosts
+-- -----------------------------------------------------------------------------
+-- Recreate dependent view that was dropped with CASCADE
+DROP VIEW IF EXISTS fps.qrytotalstaffcosts;
+CREATE OR REPLACE VIEW fps.qrytotalstaffcosts AS
+SELECT DISTINCT parentproject AS jobcode,
+    fpsyear,
+    sum(cost) AS totalstaffcosts,
+    sum(paycost) AS totalpaycosts
+FROM fps.vprojectstaffplan
+GROUP BY parentproject, fpsyear;
+-- -----------------------------------------------------------------------------
+-- View: fps.vtimerecordedrc_final
+-- -----------------------------------------------------------------------------
+-- Recreate dependent view that was dropped with CASCADE
+DROP VIEW IF EXISTS fps.vtimerecordedrc_final;
+CREATE OR REPLACE VIEW fps.vtimerecordedrc_final AS
+SELECT vtimerecordedrc.project,
+    vtimerecordedrc.profitcentre,
+    vtimerecordedrc.fpsyear,
+    COALESCE(vplannedstaffcostssummary.sumofplannedhours, (0)::double precision) AS sumofplannedhours,
+    COALESCE((vplannedstaffcostssummary.sumofcost)::numeric, (0)::numeric) AS sumofcost
+FROM fps.vtimerecordedrc
+    LEFT JOIN fps.vplannedstaffcostssummary ON ((((vtimerecordedrc.profitcentre)::text = (vplannedstaffcostssummary.profitcentre)::text) AND ((vtimerecordedrc.project)::text = (vplannedstaffcostssummary.parentproject)::text) AND vtimerecordedrc.fpsyear = vplannedstaffcostssummary.fpsyear))
+GROUP BY vtimerecordedrc.project, vtimerecordedrc.profitcentre, vtimerecordedrc.fpsyear, vplannedstaffcostssummary.sumofplannedhours, vplannedstaffcostssummary.sumofcost;
 -- -----------------------------------------------------------------------------
 -- View: fps.qryjobmonth_transfers1
 -- -----------------------------------------------------------------------------
