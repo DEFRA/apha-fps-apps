@@ -147,6 +147,15 @@ namespace Apha.FPS.Api.Mappings
             // MaintTotalBusinessOverheads
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
             CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
+
+            // Disease
+            // NOTE: DiseaseRes.Disease is preserved as-is (not renamed to DiseaseName) to avoid breaking
+            // existing FPSApps consumers. This ForMember bridge is the only place that translates the
+            // DiseaseDto.DiseaseName <-> DiseaseRes.Disease property-name difference.
+            CreateMap<DiseaseDto, DiseaseRes>()
+                .ForMember(d => d.Disease, o => o.MapFrom(s => s.DiseaseName)).ReverseMap()
+                .ForMember(d => d.DiseaseName, o => o.MapFrom(s => s.Disease));
+            CreateMap<DiseaseReq, DiseaseDto>().ReverseMap();
         }
     }
 }
