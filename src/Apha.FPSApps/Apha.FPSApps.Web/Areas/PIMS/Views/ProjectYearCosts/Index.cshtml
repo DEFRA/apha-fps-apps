@@ -33,7 +33,7 @@
                          style="margin: 8px; display: flex; align-items: flex-end;">
 
                         <div style="margin: 0 7px; flex: 1;">
-                            <label for="dpprojectSelect" class="govuk-label govuk-!-font-weight-bold tab-font-size">
+                            <label for="dpprojectSelect " class="govuk-label tab-font-size govuk-!-font-weight-bold">
                                 Select a Project
                             </label>
                             <select id="dpprojectSelect"
@@ -147,7 +147,7 @@
                      id="nav-monthlyPact" role="tabpanel" aria-labelledby="tab_nav-monthlyPact">
                     <div class="govuk-grid-row">
                         <div class="govuk-grid-column-full">
-                            <div class="sup_border govuk-!-padding-3">
+                            <div class="govuk-!-padding-3">
                                 <div id="@($"gridContainer_{Model.MonthlyPactGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.MonthlyPactGrid)
                                 </div>
@@ -245,7 +245,7 @@
                      id="nav-pact-pay" role="tabpanel" aria-labelledby="tab_nav-pact-pay">
                     <div class="govuk-grid-row">
                         <div class="govuk-grid-column-full">
-                            <div class="sup_border govuk-!-padding-3">
+                            <div class="govuk-!-padding-3">
                                 <div id="@($"gridContainer_{Model.PactPayGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.PactPayGrid)
                                 </div>
