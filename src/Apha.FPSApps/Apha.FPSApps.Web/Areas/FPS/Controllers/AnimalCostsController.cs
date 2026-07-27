@@ -44,25 +44,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             // Build the full DataGridConfig — do NOT leave it as new() default.
             // DataGridConfig<T> constructor sets AllowAdd=true, GridId="", BindGridUrl="" — those defaults
             // cause the Add button to appear on initial load and gridManager to fail to register.
-            viewModel.AnimalCostsGrid = new DataGridConfig<AnimalCostsItem>
-            {
-                GridId             = "asuUsageList",
-                Title              = "Animal Type Usage",
-                ShowCheckboxColumn = false,
-                ShowPagination     = true,
-                KeyProperty        = "IndCounter",
-                AllowAdd           = false,
-                AddFunction        = null,
-                AllowEdit          = false,
-                EditFunction       = null,
-                AllowDelete        = false,
-                DeleteFunction     = null,
-                ExtraFilterMethod  = "getAnimalCostsExtraFilters",
-                BindGridUrl        = "/FPS/AnimalCosts/LoadAnimalCostsGrid",
-                Data               = new List<AnimalCostsItem>(),
-                Columns            = GridDataProvider.GetColumnsDefination<AnimalCostsItem>(),
-                Pagination         = new PaginationModel()
-            };
+            viewModel.AnimalCostsGrid = BuildAnimalCostsGridConfig();
 
             return View(viewModel);
         }
@@ -100,13 +82,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         private static DataGridConfig<AnimalCostsItem> BuildAnimalCostsGridConfig(
-            List<AnimalCostsItem> items,
-            PaginationModel paginationModel,
-            Dictionary<string, string> filterDict,
-            PaginationFilter<string> request)
+            List<AnimalCostsItem>? items = null,
+            PaginationModel? paginationModel = null,
+            Dictionary<string, string>? filterDict = null,
+            PaginationFilter<string>? request = null)
         {
-            paginationModel.SortColumn = request.SortBy;
-            paginationModel.SortDirection = request.Descending;
+            paginationModel ??= new PaginationModel();
+
+            if (request != null)
+            {
+                paginationModel.SortColumn = request.SortBy;
+                paginationModel.SortDirection = request.Descending;
+            }
 
             return new DataGridConfig<AnimalCostsItem>
             {
@@ -116,14 +103,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ShowPagination = true,
                 KeyProperty = "IndCounter",
                 AllowAdd = false,
-                AddFunction = null,
                 AllowEdit = false,
-                EditFunction = null,
                 AllowDelete = false,
-                DeleteFunction = null,
                 ExtraFilterMethod = "getAnimalCostsExtraFilters",
                 BindGridUrl = "/FPS/AnimalCosts/LoadAnimalCostsGrid",
-                Data = items,
+                Data = items ?? new List<AnimalCostsItem>(),
                 Columns = GridDataProvider.GetColumnsDefination<AnimalCostsItem>(),
                 Pagination = paginationModel,
                 CurrentFilters = filterDict
