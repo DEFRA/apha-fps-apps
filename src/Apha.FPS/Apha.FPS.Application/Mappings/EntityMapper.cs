@@ -49,6 +49,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Agency, AgencyDto>().ReverseMap();
             CreateMap<TimeCostCalcsView, TimeCostCalcsViewDto>().ReverseMap();
             CreateMap<ProjectStaffPlanView, ProjectStaffPlanViewDto>().ReverseMap();
+            CreateMap<ProjectStaffPlanDetailsView, ProjectStaffPlanDetailsViewDto>().ReverseMap();
             CreateMap<ProjectGroupStaffPlanView, ProjectGroupStaffPlanViewDto>().ReverseMap();
             CreateMap<AdditionalCost, AdditionalCostDto>().ReverseMap();
             CreateMap<AccountCategory, AccountCategoryDto>().ReverseMap();
