@@ -10,11 +10,6 @@ Enforce architecture standards: API → Service → Repository (no direct reposi
 Register required dependencies and adhere to existing logging, validation, exception handling, security, and coding conventions.
 Generate unit tests for the Repository, Service, and API layers following existing conventions for creating the Test classes in a   subfolder (eg: per-controller subfolder under "Controller"). Unit tests should covers positive, negative, and edge-case scenarios.
 
-## Replan Feedback
-
-> Item 2 : Apha.Common/Contracts/FPS/DiseaseRes.cs
-Remove Item 2 entirely from the plan. The reasoning note already states this file must remain unchanged; Item 9's ForMember mapping (`DiseaseDto.DiseaseName ↔ DiseaseRes.Disease`) is the intended bridge and preserves the 11+ FPSApps consumers.
-
 **Reasoning:** Revised plan addressing all critical/major reviewer findings. Key fixes: (1) REMOVED the item that modified Apha.Common/Contracts/FPS/DiseaseRes.cs — the existing `Disease` property is preserved to keep 11+ FPSApps consumers compiling; the RequestMapper uses .ForMember() to bridge DiseaseDto.DiseaseName ↔ DiseaseRes.Disease. (2) DiseaseDto has NO DataAnnotations — validation lives in the service via ArgumentNullException.ThrowIfNull/ArgumentException.ThrowIfNullOrWhiteSpace + manual length check, matching AccountCategoryService. (3) Repository uses `.Add(entity)` + `await SaveChangesAsync()` (matching AccountCategoryRepository), and `FirstOrDefaultAsync`/`AnyAsync` for mock compatibility. (4) Service/repo method naming standardized to AddAsync/DeleteAsync/ExistsAsync. (5) Controller DELETE throws KeyNotFoundException on not-found and returns Ok(bool). (6) No [ProducesResponseType] added. (7) DiseaseServiceTests plan explicitly retains the repository-throws exception propagation test (adapted to DTO return type). (8) Schema source-of-truth is Apha.FPS.DataAccess/Data/DiseaseMap.cs → fps.tbldisease, PK `disease` nvarchar(50), because dbscript/schemas is absent from the repo. (9) DI registration for IDiseaseService/IDiseaseRepository already exists (GetAll works today) — no Program.cs changes needed. Scope stays strictly within Apha.FPS backend and its unit tests. Total items: 12.
 
 Note (automated merge): the regenerated plan above proposed changes to Apha.Common/Contracts/FPS/DiseaseRes.cs, but automated merging preserved the prior item(s) for these file(s) unchanged, since they were not flagged by the review/feedback that triggered this revision. If the above reasoning describes removing, replacing, or otherwise changing this file, that description does NOT apply — the plan `items` array reflects the preserved (unchanged) version instead.
@@ -75,9 +70,9 @@ The following changes may be beneficial but are NOT part of this story. They sho
 
 | Iteration | Verdict | Score | Findings |
 |-----------|---------|-------|----------|
-| 1 | NEEDS_WORK | 5/10 | 5 |
-| 2 | NEEDS_WORK | 4/10 | 8 |
-| 3 | NEEDS_WORK | 5/10 | 4 |
+| 1 | NEEDS_WORK | 5/10 | 16 |
+| 2 | NEEDS_WORK | 6/10 | 11 |
+| 3 | NEEDS_WORK | 6/10 | 4 |
 
 ### Findings
 
