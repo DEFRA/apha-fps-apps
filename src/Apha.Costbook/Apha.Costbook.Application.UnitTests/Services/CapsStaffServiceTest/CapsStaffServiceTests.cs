@@ -1,6 +1,7 @@
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Services;
 using Apha.Costbook.Application.Pagination;
+using Apha.Costbook.Application.Validation;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
@@ -109,7 +110,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
         public async Task GetPaginatedAsync_NullParameters_ThrowsArgumentException()
         {
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetPaginatedAsync(null!));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.GetPaginatedAsync(null!));
             await _repository.DidNotReceive().GetPaginatedAsync(Arg.Any<PaginationParameters<string>>());
         }
 
@@ -155,7 +156,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
         public async Task GetByMNumberAsync_NullMNumber_ThrowsArgumentException()
         {
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetByMNumberAsync(null!));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.GetByMNumberAsync(null!));
             await _repository.DidNotReceive().GetByMNumberAsync(Arg.Any<string>());
         }
 
@@ -163,7 +164,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
         public async Task GetByMNumberAsync_WhitespaceMNumber_ThrowsArgumentException()
         {
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetByMNumberAsync("   "));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.GetByMNumberAsync("   "));
         }
 
         #endregion
@@ -224,7 +225,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
             _repository.ExistsAsync("M001").Returns(true);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.AddStaffAsync(dto));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.AddStaffAsync(dto));
             await _repository.DidNotReceive().AddStaffAsync(Arg.Any<Staff>());
         }
 
@@ -232,7 +233,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
         public async Task AddAsync_NullDto_ThrowsArgumentException()
         {
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.AddStaffAsync(null!));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.AddStaffAsync(null!));
         }
 
         [Fact]
@@ -242,7 +243,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
             var dto = new StaffDto { Mnumber = "", Name = "Alice" };
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.AddStaffAsync(dto));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.AddStaffAsync(dto));
         }
 
         [Fact]
@@ -252,7 +253,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
             var dto = new StaffDto { Mnumber = "M003", Name = "" };
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.AddStaffAsync(dto));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.AddStaffAsync(dto));
         }
 
         #endregion
@@ -291,7 +292,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
             var mNumber = "M001";
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateStaffAsync(mNumber, null!));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.UpdateStaffAsync(mNumber, null!));
             await _repository.DidNotReceive().UpdateStaffAsync(Arg.Any<Staff>());
         }
 
@@ -303,7 +304,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
             var dto = new StaffDto { Mnumber = mNumber, Name = "" };
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateStaffAsync(mNumber, dto));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.UpdateStaffAsync(mNumber, dto));
             await _repository.DidNotReceive().UpdateStaffAsync(Arg.Any<Staff>());
         }
 
