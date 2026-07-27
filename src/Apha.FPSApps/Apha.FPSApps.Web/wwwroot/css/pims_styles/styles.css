@@ -1047,7 +1047,7 @@ select {
     border: none;
     font-size: 21px;
     color: white;
-    background-color: red;
+    background-color: #ca3535;
     opacity: 1;
     cursor: pointer;
     padding: 2px;
@@ -1134,7 +1134,7 @@ th.col-resizable {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    gap: 3rem;
+/*    gap: 3rem;*/
     margin-bottom: 5px;
 }
 
@@ -1305,7 +1305,7 @@ th.sorted-desc {
 .inv-toolbar {
     padding: 8px 12px 4px 12px;
     border-bottom: 1px solid #b1b4b6;
-    background-color: #f3f2f1;
+    background-color: #ffffff;
 }
 
 .inv-toolbar__row {
@@ -1318,6 +1318,13 @@ th.sorted-desc {
 .inv-toolbar__item {
     display: flex;
     flex-direction: column;
+}
+
+.inv-toolbar__item label {
+    font-weight: 700;
+    color: #0b0c0c;
+    margin-bottom: 4px;
+
 }
 
 #tblInv .govuk-table__header,
@@ -1475,6 +1482,13 @@ th.sorted-desc {
 /* Totals row must not show its own scrollbar — its scroll position is driven
    programmatically (via JS) to stay in lockstep with the data grid's scroll. */
 #yfdTotalsScrollWrapper {
+    overflow-x: hidden;
+}
+
+/* Invoice totals row — same behaviour as the Yearly Financial Data totals row:
+   scroll position is driven programmatically (via JS) to stay in lockstep
+   with the invoices grid's scroll. */
+#invTotalsScrollWrapper {
     overflow-x: hidden;
 }
 
@@ -2969,10 +2983,11 @@ th.sorted-desc {
     height: 300px !important;
     max-height: 300px !important;
 }
-
+#gridContainer_pmdMilestonesGrid > .editable-grid-container > div > .grid-scroll-container,
+#gridContainer_invoicesGrid > .editable-grid-container > div > .grid-scroll-container,
 #gridContainer_milestoneFormDatesGrid > .editable-grid-container > div > .grid-scroll-container {
-    height: 250px !important;
-    max-height: 250px !important;
+    height: 270px !important;
+    max-height: 270px !important;
 }
 
 .isProjectList {
