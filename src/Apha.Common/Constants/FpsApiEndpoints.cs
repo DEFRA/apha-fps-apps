@@ -12,6 +12,7 @@
 
         // Animal
         public const string GetAnimalCosts = "api/v1/animalrequest?jobCode={0}";
+        public const string GetAnimalCostsByAnimalType = "api/v1/animalrequest/byanimaltype";
         public const string GetAnimalLookup = "api/v1/animalrequest/lookup";
         public const string GetAnimalRate = "api/v1/animalrequest/rate?animalType={0}&jobCode={1}";
         public const string CreateAnimalCost = "api/v1/animalrequest";

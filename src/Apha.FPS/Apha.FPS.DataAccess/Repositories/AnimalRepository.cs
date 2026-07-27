@@ -432,5 +432,86 @@ namespace Apha.FPS.DataAccess.Repositories
             // Step 2 — LINQ-to-Objects: safe mixed-type arithmetic after materialisation
             return raw.Sum(x => (decimal)x.NumberOfDays * (decimal)x.NumberOfAnimals * (x.DailyRate ?? 0m));
         }
+
+        // Animal Costs ASU View (AnimalCosts — frmAnimalCosts)
+
+        /// <summary>
+        /// Converted from qryJobAnimalCost (RecordSource of fsubAnimalCosts).
+        /// Returns a paged list of all animal cost records for the current FPS year,
+        /// optionally filtered by animal type. No user-email guard — this is the ASU admin view.
+        ///
+        /// Two-step pattern: NumberOfDays and NumberOfAnimals are double precision (C# double);
+        /// DailyRate/DefraDailyRate are money (C# decimal). Mixed-type arithmetic is performed
+        /// in LINQ-to-Objects after materialisation to avoid a double × decimal compile error
+        /// inside the IQueryable projection.
+        /// </summary>
+        public async Task<PagedData<AnimalCostView>> GetAnimalCostByAnimalTypeAsync(
+            PaginationParameters<string> query, string animalType)
+        {
+            // Step 1 — IQueryable: apply provider-side filter, then materialise
+            var animalCostQuery = BuildProgrammeAnimalCostQuery(animalType);
+
+            animalCostQuery = ApplyAnimalCostFilter(animalCostQuery, query.Filter);
+
+            var raw = await animalCostQuery.ToListAsync();
+
+            // Step 2 — LINQ-to-Objects: compute AnimalCost (double × decimal) before sorting
+            foreach (var e in raw)
+            {
+                e.AnimalCost = (decimal)e.NumberOfDays * (decimal)e.NumberOfAnimals * (e.DailyRate ?? 0m);
+            }
+
+            // Step 3 — sort in memory so AnimalCost ordering reflects the computed value
+            var result = ApplyAnimalCostInMemorySorting(raw, query.SortBy, query.Descending);
+
+            return base.ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        private static List<AnimalCostView> ApplyAnimalCostInMemorySorting(
+            List<AnimalCostView> source, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+                return source;
+
+            Func<AnimalCostView, object?> keySelector = sortBy.ToLower() switch
+            {
+                "jobcode" => i => i.JobCode,
+                "animalcost" => i => i.AnimalCost,
+                "dailyrate" => i => i.DailyRate,
+                "totaldays" => i => i.TotalDays,
+                "numberofanimals" => i => i.NumberOfAnimals,
+                _ => null!
+            };
+
+            if (keySelector == null)
+                return source;
+
+            return descending
+                ? source.OrderByDescending(keySelector).ToList()
+                : source.OrderBy(keySelector).ToList();
+        }
+
+
+        private IQueryable<AnimalCostView> BuildProgrammeAnimalCostQuery(string animalType)
+        {
+            return from project in _dbContext.Projects
+                   join animalReq in _dbContext.AnimalRequests
+                       on project.ParentProject equals animalReq.JobCode
+                   join animal in _dbContext.Animals
+                       on animalReq.AnimalType equals animal.AnimalType
+                   where animalReq.AnimalType.ToLower().Trim().Equals(animalType.ToLower().Trim())
+                   let dailyRate = project.IsDefraProject == 0 ? animal.DailyRate : animal.DefraDailyRate
+                   select new AnimalCostView
+                   {
+                       IndCounter = animalReq.IndCounter,
+                       Programme = project.Program,
+                       AnimalType = animalReq.AnimalType,
+                       JobCode = animalReq.JobCode,
+                       NumberOfDays = animalReq.NumberOfDays,
+                       NumberOfAnimals = animalReq.NumberOfAnimals,
+                       DailyRate = dailyRate,
+                       TotalDays = animalReq.NumberOfAnimals * animalReq.NumberOfDays
+                   };
+        }
     }
 }
