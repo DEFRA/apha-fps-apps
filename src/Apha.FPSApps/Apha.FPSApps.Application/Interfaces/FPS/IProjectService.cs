@@ -55,5 +55,6 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
             string? programNo = null,
             string? manager = null,
             string? customer = null);
+        Task<ApiResponseDto<List<ProjectDto>>> GetProjectLookupAsync();
     }
 }
