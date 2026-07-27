@@ -315,6 +315,9 @@ namespace Apha.FPS.DataAccess.Repositories
             if (dict.TryGetValue("AnimalType", out var animalType) && animalType != null)
                 query = query.Where(x => EF.Functions.ILike(x.AnimalType!, $"%{animalType}%"));
 
+            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.JobCode!, $"%{jobCode}%"));
+
             if (dict.TryGetValue("NumberOfDays", out var numberOfDays) && numberOfDays != null)
                 query = query.Where(x => EF.Functions.ILike(x.NumberOfDays.ToString(), $"%{numberOfDays}%"));
 

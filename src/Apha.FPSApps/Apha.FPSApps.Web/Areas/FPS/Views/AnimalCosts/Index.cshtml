@@ -36,10 +36,6 @@
                        class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
                        readonly
                        aria-label="Choose an animal type">
-                <input type="hidden"
-                       id="asu-animal-type-value"
-                       name="animalTypeFilter"
-                       value="">
 
                 <div class="multicolumn-dropdown-panel" id="animal-type-panel">
                     <div class="search-box-wrapper">
@@ -143,7 +139,6 @@
         function selectAnimalType(value, label) {
             currentAnimalType = value;
             document.getElementById('animal-type-input').value = label;
-            document.getElementById('asu-animal-type-value').value = value;
             document.getElementById('animal-type-panel').style.display = 'none';
 
             // Reset totals while grid reloads
