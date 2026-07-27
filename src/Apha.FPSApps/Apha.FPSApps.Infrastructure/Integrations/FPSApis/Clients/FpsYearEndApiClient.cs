@@ -1,5 +1,5 @@
 using Apha.Common.Constants;
-using Apha.Common.Contracts.PACT;
+using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
@@ -57,9 +57,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndInitiationJobAsync(int month, string correlationId)
         {
-            var request = new RecreateSummariesReq { Month = month };
-            var response = await _http.PostAsync<RecreateSummariesReq, BatchJobEventTriggerRes>(
-                FpsApiEndpoints.TriggerYearEndRecreateSummariesJob, request);
+            //var request = new RecreateSummariesReq { Month = month };
+            var response = await _http.PostAsync<BatchJobEventTriggerRes>(
+                FpsApiEndpoints.TriggerYearEndRecreateSummariesJob);
 
             if (response.Success && response.Data is not null)
                 return _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(response);

@@ -1738,3 +1738,7 @@ textarea {
         opacity: .15;
     }
 }
+
+.isCustomSvg {
+    filter: brightness(0) saturate(100%) invert(26%) sepia(89%) saturate(1026%) hue-rotate(345deg) brightness(90%) contrast(102%);
+}

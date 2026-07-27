@@ -1,5 +1,5 @@
 using Apha.Common.Contracts;
-using Apha.Common.Contracts.PACT;
+using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Interfaces;

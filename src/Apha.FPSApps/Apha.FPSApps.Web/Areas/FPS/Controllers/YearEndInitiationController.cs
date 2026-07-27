@@ -15,7 +15,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class YearEndInitiationController : Controller
     {
-        private const string YearEndInitiationJobName = "YearEndInitiation";
+        private const string YearEndInitiationJobName = "RecreateSummary"; // "YearEndInitiation";
 
         private readonly IMapper _mapper;
         private readonly IYearMasterService _yearMasterService;
@@ -258,10 +258,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             AllowAdd = false,
             AllowEdit = true,
             EditFunction = "openConfigEditModal",
-            AllowDelete = true,
-            DeleteFunction = "confirmConfigValue",
+            AllowDelete = false,
+           // DeleteFunction = "confirmConfigValue",
             AllowView = false,
             AllowCopy = false,
+            AllowConfirm = true,
+            ConfirmFunction = "confirmConfigValue",
             KeyProperty = "Id",
             Columns = GridDataProvider.GetColumnsDefination<YearEndConfigValueItem>()
         };
@@ -276,10 +278,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             AllowAdd = false,
             AllowEdit = true,
             EditFunction = "openMonthHourEditModal",
-            AllowDelete = true,
-            DeleteFunction = "confirmMonthHour",
+            AllowDelete = false,
+           // DeleteFunction = "confirmMonthHour",
             AllowView = false,
             AllowCopy = false,
+            AllowConfirm = true,
+            ConfirmFunction = "confirmMonthHour",
             KeyProperty = "Month",
             Columns = GridDataProvider.GetColumnsDefination<YearEndMonthWorkingItem>()
         };
