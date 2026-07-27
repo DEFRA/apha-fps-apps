@@ -54,7 +54,8 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<AdditionalCost, AdditionalCostDto>().ReverseMap();
             CreateMap<AccountCategory, AccountCategoryDto>().ReverseMap();
             CreateMap<WorkGroupPerson, WorkGroupPersonDto>().ReverseMap();
-           
+            CreateMap<Disease, DiseaseDto>().ReverseMap();
+
 
             // ResourceSetUp
             CreateMap<ProfitCentre, ProfitCentreDto>().ReverseMap();
