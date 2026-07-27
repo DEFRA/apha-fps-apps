@@ -1716,3 +1716,7 @@ table#tblMonthPeriod > tbody > tr > td {
 .sup-margin-left-3-percent {
      margin-left: 3% !important;
 }
+.govuk-select, .govuk-input, .govuk-input__prefix {
+    max-width: none !important;
+    min-width: 3.3em !important;
+}

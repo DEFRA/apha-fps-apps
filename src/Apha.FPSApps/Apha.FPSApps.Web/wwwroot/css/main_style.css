@@ -1305,18 +1305,18 @@ label.required::after {
 .border_1 {
   border: 1px solid #1d70b8 !important;
 }
- 
+
 .btn-close {
-  /* background: none; */
-  background: #ff4239;
-  border: none;
-  font-size: 14px;
-  padding: 9px 7px 10px 7px;
-  line-height: 5px;
-  cursor: pointer;
-  --bs-btn-close-opacity: 1;
-  border-radius: 0;
-  color: #fff;
+    /* background: none; */
+    background: #ca3535;
+    border: none;
+    font-size: 14px;
+    padding: 9px 7px 10px 7px;
+    line-height: 5px;
+    cursor: pointer;
+    --bs-btn-close-opacity: 1;
+    border-radius: 0;
+    color: #fff;
 }
  
 .btn-close:hover {
