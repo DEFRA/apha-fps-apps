@@ -31,7 +31,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestPlanCrossTabServi
         {
             // Arrange
             var query    = new QueryParameters<string> { Page = 1, PageSize = 20 };
-            var expected = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(new TestPlanCrossTabDto
+            var expected = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(new TestPlanCostBreakdownDto
             {
                 Columns    = ["testcode", "Jan"],
                 Rows       = [new Dictionary<string, string?> { ["testcode"] = "PT0047", ["Jan"] = "5" }],
@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestPlanCrossTabServi
         {
             // Arrange
             var query    = new QueryParameters<string> { Page = 1, PageSize = 20 };
-            var expected = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(new TestPlanCrossTabDto
+            var expected = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(new TestPlanCostBreakdownDto
             {
                 Columns = ["testcode", "Jan", "Feb"],
                 Rows    = [],
@@ -77,7 +77,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestPlanCrossTabServi
         {
             // Arrange
             var query    = new QueryParameters<string> { Page = 1, PageSize = 20 };
-            var expected = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(new TestPlanCrossTabDto
+            var expected = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(new TestPlanCostBreakdownDto
             {
                 Columns    = [],
                 Rows       = [],
@@ -103,7 +103,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestPlanCrossTabServi
             // Arrange
             var query    = new QueryParameters<string> { Page = 1, PageSize = 20 };
             var errors   = new List<ApiErrorDto> { new() { Code = "SERVER_500", Message = "Internal Server Error" } };
-            var expected = ApiResponseDto<TestPlanCrossTabDto>.FailureResponse(errors, new ApiMetaDto());
+            var expected = ApiResponseDto<TestPlanCostBreakdownDto>.FailureResponse(errors, new ApiMetaDto());
 
             _apiClient.GetPagedTestPlanCrossTabAsync(query).Returns(expected);
 
@@ -120,7 +120,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestPlanCrossTabServi
             // Arrange
             var query  = new QueryParameters<string> { Page = 1, PageSize = 20 };
             var errors = new List<ApiErrorDto> { new() { Code = "SERVER_500", Message = "Internal Server Error" } };
-            var expected = ApiResponseDto<TestPlanCrossTabDto>.FailureResponse(errors, new ApiMetaDto());
+            var expected = ApiResponseDto<TestPlanCostBreakdownDto>.FailureResponse(errors, new ApiMetaDto());
 
             _apiClient.GetPagedTestPlanCrossTabAsync(query).Returns(expected);
 
@@ -144,7 +144,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestPlanCrossTabServi
                 new() { ["testcode"] = "PT0049", ["Jan"] = "2",  ["Feb"] = "7"  },
                 new() { ["testcode"] = "TC0001", ["Jan"] = "11", ["Feb"] = "9"  }
             };
-            var expected = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(new TestPlanCrossTabDto
+            var expected = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(new TestPlanCostBreakdownDto
             {
                 Columns    = ["testcode", "Jan", "Feb"],
                 Rows       = rows,
@@ -168,7 +168,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestPlanCrossTabServi
         {
             // Arrange
             var query    = new QueryParameters<string> { Page = 2, PageSize = 10 };
-            var expected = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(new TestPlanCrossTabDto
+            var expected = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(new TestPlanCostBreakdownDto
             {
                 Columns    = ["testcode"],
                 Rows       = [],
@@ -198,7 +198,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestPlanCrossTabServi
                 new() { Code = "ERR_001", Message = "First error"  },
                 new() { Code = "ERR_002", Message = "Second error" }
             };
-            var expected = ApiResponseDto<TestPlanCrossTabDto>.FailureResponse(errors, new ApiMetaDto());
+            var expected = ApiResponseDto<TestPlanCostBreakdownDto>.FailureResponse(errors, new ApiMetaDto());
 
             _apiClient.GetPagedTestPlanCrossTabAsync(query).Returns(expected);
 

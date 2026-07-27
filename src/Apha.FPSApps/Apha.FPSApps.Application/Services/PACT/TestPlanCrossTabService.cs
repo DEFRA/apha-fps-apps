@@ -15,7 +15,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             _pactClient = pactClient;
         }
 
-        public async Task<ApiResponseDto<TestPlanCrossTabDto>> GetPagedTestPlanCrossTabAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<TestPlanCostBreakdownDto>> GetPagedTestPlanCrossTabAsync(QueryParameters<string> query)
             => await _pactClient.PactTestPlanCrossTab.GetPagedTestPlanCrossTabAsync(query);
     }
 }

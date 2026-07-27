@@ -307,7 +307,8 @@ namespace Apha.PACT.DataAccess.Repository
             var allProgrammeNumberSet = allProgrammeNumbers
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            // One aggregated plan-cost row per (testcode, programno)
+            // One aggregated plan-cost row per (owner, testcode, programno)
+            // Mirrors ACCESS: GROUP BY TestOrProduct.Owner, tlkpTestReqmt.TestCode PIVOT tlkpProgram.ProgramNo
             var planCostRows = (
                 from requirement in testRequirements
                 where defaultWorkgroupByTestCode.ContainsKey(requirement.TestCode)
@@ -316,8 +317,9 @@ namespace Apha.PACT.DataAccess.Repository
                    && programmesByBuyerProject.ContainsKey(requirement.Buyer)
                 from programmeNo in programmesByBuyerProject[requirement.Buyer]
                 where allProgrammeNumberSet.Contains(programmeNo)
+                let owner    = testorProductByTestCode[requirement.TestCode].Owner
                 let planCost = (requirement.UnitPrice ?? 0m) * (decimal)(requirement.NoRequired ?? 0)
-                group planCost by new { requirement.TestCode, ProgrammeNo = programmeNo } into costGroup
+                group planCost by new { Owner = owner, requirement.TestCode, ProgrammeNo = programmeNo } into costGroup
                 select new
                 {
                     TestCode    = costGroup.Key.TestCode,
@@ -445,6 +447,16 @@ namespace Apha.PACT.DataAccess.Repository
 
            
             var totalMatchingRows = pivotedRows.Count;
+
+            // ── Apply sorting ─────────────────────────────────────────────────
+            if (!string.IsNullOrWhiteSpace(query.SortBy))
+            {
+                var sortKey = query.SortBy.ToLowerInvariant();
+                pivotedRows = query.Descending
+                    ? pivotedRows.OrderByDescending(r => GetSortValue(r, sortKey)).ToList()
+                    : pivotedRows.OrderBy(r => GetSortValue(r, sortKey)).ToList();
+            }
+
             var pagedRows = pivotedRows
                 .Skip((query.Page - 1) * query.PageSize)
                 .Take(query.PageSize)
@@ -464,5 +476,18 @@ namespace Apha.PACT.DataAccess.Repository
         private static int ResolveWorkgroupLevel(string workGroup) =>
             workGroup.StartsWith("lt", StringComparison.OrdinalIgnoreCase) ? 3 :
             workGroup.StartsWith("sv", StringComparison.OrdinalIgnoreCase) ? 2 : 1;
+
+        /// <summary>
+        /// Returns a sort-comparable value for a pivot row column.
+        /// Numeric columns sort as decimal; text columns sort as string.
+        /// </summary>
+        private static IComparable GetSortValue(Dictionary<string, string?> row, string key)
+        {
+            var raw = row.TryGetValue(key, out var val) ? val : null;
+            if (raw != null && decimal.TryParse(raw, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out var number))
+                return number;
+            return raw ?? string.Empty;
+        }
     }
 }

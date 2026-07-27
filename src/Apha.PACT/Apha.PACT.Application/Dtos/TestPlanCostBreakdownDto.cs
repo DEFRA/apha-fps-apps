@@ -1,6 +1,6 @@
-namespace Apha.FPSApps.Application.Dtos.PACT;
+namespace Apha.PACT.Application.Dtos;
 
-public class TestPlanCrossTabDto
+public class TestPlanCostBreakdownDto
 {
     public List<string> Columns { get; set; } = [];
     public List<Dictionary<string, string?>> Rows { get; set; } = [];

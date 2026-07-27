@@ -74,12 +74,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 columns = response.Data.Columns.Select(col => new DataGridColumn
                 {
                     PropertyName = col,
-                    DisplayName  = col,
+                    DisplayName  = GetColumnDisplayName(col),
                     IsVisible    = true,
                     IsEditable   = false,
                     IsFilterable = col.Equals("testcode",         StringComparison.OrdinalIgnoreCase)
                                 || col.Equals("shortdescription", StringComparison.OrdinalIgnoreCase),
-                    ColumnType   = GridColumnType.ReadOnly,
+                    ColumnType   = GridColumnType.RoundTwoDecimal,
                     Width        = 100
                 }).ToList();
             }
@@ -104,5 +104,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             return new TestPlanCrossTabViewModel { Grid = grid };
         }
+
+        private static string GetColumnDisplayName(string col) => col switch
+        {
+            "plan_total"    => "Plan Total",
+            "req_totalcost" => "PC Total Cost",
+            _ when col.StartsWith("pc_", StringComparison.OrdinalIgnoreCase) => col[3..],
+            _               => col
+        };
     }
 }

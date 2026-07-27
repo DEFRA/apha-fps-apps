@@ -21,15 +21,15 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<TestPlanCrossTabDto>> GetPagedTestPlanCrossTabAsync(
+        public async Task<ApiResponseDto<TestPlanCostBreakdownDto>> GetPagedTestPlanCrossTabAsync(
             QueryParameters<string> query)
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedTestPlanCrossTab, query);
-            var response = await _http.GetAsync<TestPlanCrossTabRes>(url);
+            var response = await _http.GetAsync<TestPlanCostBreakdownRes>(url);
 
             if (response.Success && response.Data is not null)
             {
-                return ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(new TestPlanCrossTabDto
+                return ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(new TestPlanCostBreakdownDto
                 {
                     Columns = response.Data.Columns,
                     Rows = response.Data.Rows,
@@ -39,8 +39,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 });
             }
 
-            var dto = _mapper.Map<ApiResponseDto<TestPlanCrossTabDto>>(response);
-            return ApiResponseDto<TestPlanCrossTabDto>.FailureResponse(dto.Errors, dto.Meta);
+            var dto = _mapper.Map<ApiResponseDto<TestPlanCostBreakdownDto>>(response);
+            return ApiResponseDto<TestPlanCostBreakdownDto>.FailureResponse(dto.Errors, dto.Meta);
         }
     }
 }

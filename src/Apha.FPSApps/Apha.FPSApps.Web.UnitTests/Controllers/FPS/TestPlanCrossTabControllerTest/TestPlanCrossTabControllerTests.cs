@@ -34,11 +34,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
                 });
         }
 
-        private static TestPlanCrossTabDto BuildDto(
+        private static TestPlanCostBreakdownDto BuildDto(
             List<string>? columns = null,
             List<Dictionary<string, string?>>? rows = null,
             int totalCount = 0, int page = 1, int pageSize = 20)
-            => new()
+            => new TestPlanCostBreakdownDto()
             {
                 Columns    = columns ?? [],
                 Rows       = rows    ?? [],
@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         {
             // Arrange
             var dto      = BuildDto(["testcode", "shortdescription"], [new() { ["testcode"] = "PT0047" }], 1, 1, 20);
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(dto);
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(dto);
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -74,7 +74,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         public async Task Index_GridId_IsCorrect()
         {
             // Arrange
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(BuildDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(BuildDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -97,7 +97,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
                 new() { ["testcode"] = "PT0049", ["shortdescription"] = "Bact test"    }
             };
             var dto      = BuildDto(["testcode", "shortdescription"], rows, 2, 1, 20);
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(dto);
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(dto);
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -115,7 +115,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         {
             // Arrange
             var dto      = BuildDto(["testcode", "shortdescription", "Jan", "Feb"], [], 0, 1, 20);
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(dto);
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(dto);
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -132,7 +132,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         public async Task Index_WhenServiceReturnsEmpty_GridHasNoRows()
         {
             // Arrange
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(BuildDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(BuildDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -150,7 +150,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         {
             // Arrange
             var errors   = new List<ApiErrorDto> { new() { Code = "API_ERROR" } };
-            var response = ApiResponseDto<TestPlanCrossTabDto>.FailureResponse(errors, new ApiMetaDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.FailureResponse(errors, new ApiMetaDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -168,7 +168,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         {
             // Arrange
             var errors   = new List<ApiErrorDto> { new() { Code = "API_ERROR" } };
-            var response = ApiResponseDto<TestPlanCrossTabDto>.FailureResponse(errors, new ApiMetaDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.FailureResponse(errors, new ApiMetaDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -185,7 +185,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         public async Task Index_GridConfig_HasCorrectProperties()
         {
             // Arrange
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(BuildDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(BuildDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -209,7 +209,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         {
             // Arrange
             var dto      = BuildDto(["testcode", "shortdescription", "Jan", "Feb"], [], 0, 1, 20);
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(dto);
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(dto);
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -231,7 +231,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         {
             // Arrange
             var dto      = BuildDto(["testcode"], [], 500, 1, 20);
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(dto);
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(dto);
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -257,7 +257,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         {
             // Arrange
             var request  = new PaginationFilter<string> { Page = 1, PageSize = 20, Filter = "{}" };
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(BuildDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(BuildDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -275,7 +275,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         {
             // Arrange
             var request  = new PaginationFilter<string> { Page = 1, PageSize = 20, Filter = "{}" };
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(BuildDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(BuildDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -313,7 +313,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
                 new() { ["testcode"] = "PT0049" }
             };
             var dto      = BuildDto(["testcode"], rows, 2, 1, 20);
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(dto);
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(dto);
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -332,7 +332,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         {
             // Arrange
             var request  = new PaginationFilter<string> { Page = 1, PageSize = 20, Filter = "{}" };
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(BuildDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(BuildDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -351,7 +351,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
             // Arrange
             var request  = new PaginationFilter<string> { Page = 1, PageSize = 20, Filter = "{}" };
             var errors   = new List<ApiErrorDto> { new() { Code = "API_ERROR" } };
-            var response = ApiResponseDto<TestPlanCrossTabDto>.FailureResponse(errors, new ApiMetaDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.FailureResponse(errors, new ApiMetaDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -370,7 +370,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
             // Arrange
             var filter   = "{\"testcode\":\"PT\"}";
             var request  = new PaginationFilter<string> { Page = 1, PageSize = 20, Filter = filter };
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(BuildDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(BuildDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -388,7 +388,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         {
             // Arrange
             var request  = new PaginationFilter<string> { Page = 1, PageSize = 20, Filter = null };
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(BuildDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(BuildDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -406,7 +406,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
             // Arrange
             var request  = new PaginationFilter<string> { Page = 2, PageSize = 10, Filter = "{}" };
             var dto      = BuildDto(["testcode"], [], 4030, 2, 10);
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(dto);
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(dto);
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -426,7 +426,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         {
             // Arrange
             var request  = new PaginationFilter<string> { Page = 1, PageSize = 20, Filter = "{}", SortBy = "testcode", Descending = true };
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(BuildDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(BuildDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -445,7 +445,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         {
             // Arrange
             var request  = new PaginationFilter<string> { Page = 1, PageSize = 20, Filter = "not_valid_json" };
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(BuildDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(BuildDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();
@@ -464,7 +464,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         {
             // Arrange
             var request  = new PaginationFilter<string> { Page = 1, PageSize = 20, Filter = "{\"testcode\":\"PT0047\"}" };
-            var response = ApiResponseDto<TestPlanCrossTabDto>.SuccessResponse(BuildDto());
+            var response = ApiResponseDto<TestPlanCostBreakdownDto>.SuccessResponse(BuildDto());
 
             _service.GetPagedTestPlanCrossTabAsync(Arg.Any<QueryParameters<string>>()).Returns(response);
             SetupQueryParamMapper();

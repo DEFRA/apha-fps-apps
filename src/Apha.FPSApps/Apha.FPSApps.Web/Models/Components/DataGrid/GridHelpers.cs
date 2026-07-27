@@ -104,6 +104,12 @@
                     if (value is float pctFloat)
                         return ((double)pctFloat).ToString("F2") + "%";
                     break;
+                case GridColumnType.RoundTwoDecimal:
+                    var raw = value.ToString();
+                    if (decimal.TryParse(raw, System.Globalization.NumberStyles.Any,
+                            System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+                        return parsed.ToString("F2");
+                    return raw ?? string.Empty;
             }
 
             return value.ToString() ?? string.Empty;

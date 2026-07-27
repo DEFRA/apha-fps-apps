@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.PACT.DataAccess.Data
 {
-    public class TestPlanCrossTabViewMap : IEntityTypeConfiguration<TestPlanCrossTabView>
+    public class TestPlanCostBreakdownMap : IEntityTypeConfiguration<TestPlanCostBreakdownView>
     {
-        public void Configure(EntityTypeBuilder<TestPlanCrossTabView> builder)
+        public void Configure(EntityTypeBuilder<TestPlanCostBreakdownView> builder)
         {
             builder.HasNoKey();
             builder.ToView("vw_testplan_cost_breakdown", "fps");

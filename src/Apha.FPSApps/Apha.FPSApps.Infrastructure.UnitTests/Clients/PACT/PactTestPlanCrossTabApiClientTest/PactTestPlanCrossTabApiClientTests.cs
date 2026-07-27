@@ -33,7 +33,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
-            var res = new TestPlanCrossTabRes
+            var res = new TestPlanCostBreakdownRes
             {
                 Columns    = ["testcode", "shortdescription", "Jan", "Feb"],
                 Rows       = [new Dictionary<string, string?> { ["testcode"] = "PT0047", ["Jan"] = "5" }],
@@ -41,9 +41,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
                 Page       = 1,
                 PageSize   = 20
             };
-            var apiResponse = new ApiResponse<TestPlanCrossTabRes> { Success = true, Data = res };
+            var apiResponse = new ApiResponse<TestPlanCostBreakdownRes> { Success = true, Data = res };
 
-            _http.GetAsync<TestPlanCrossTabRes>(Arg.Any<string>()).Returns(apiResponse);
+            _http.GetAsync<TestPlanCostBreakdownRes>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
             var result = await _client.GetPagedTestPlanCrossTabAsync(query);
@@ -58,7 +58,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
-            var res = new TestPlanCrossTabRes
+            var res = new TestPlanCostBreakdownRes
             {
                 Columns    = ["testcode", "shortdescription", "Jan", "Feb"],
                 Rows       = [],
@@ -66,9 +66,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
                 Page       = 1,
                 PageSize   = 20
             };
-            var apiResponse = new ApiResponse<TestPlanCrossTabRes> { Success = true, Data = res };
+            var apiResponse = new ApiResponse<TestPlanCostBreakdownRes> { Success = true, Data = res };
 
-            _http.GetAsync<TestPlanCrossTabRes>(Arg.Any<string>()).Returns(apiResponse);
+            _http.GetAsync<TestPlanCostBreakdownRes>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
             var result = await _client.GetPagedTestPlanCrossTabAsync(query);
@@ -89,7 +89,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
             var row1  = new Dictionary<string, string?> { ["testcode"] = "PT0047", ["Jan"] = "5", ["Feb"] = "3" };
             var row2  = new Dictionary<string, string?> { ["testcode"] = "PT0049", ["Jan"] = "2", ["Feb"] = "7" };
-            var res = new TestPlanCrossTabRes
+            var res = new TestPlanCostBreakdownRes
             {
                 Columns    = ["testcode", "Jan", "Feb"],
                 Rows       = [row1, row2],
@@ -97,9 +97,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
                 Page       = 1,
                 PageSize   = 20
             };
-            var apiResponse = new ApiResponse<TestPlanCrossTabRes> { Success = true, Data = res };
+            var apiResponse = new ApiResponse<TestPlanCostBreakdownRes> { Success = true, Data = res };
 
-            _http.GetAsync<TestPlanCrossTabRes>(Arg.Any<string>()).Returns(apiResponse);
+            _http.GetAsync<TestPlanCostBreakdownRes>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
             var result = await _client.GetPagedTestPlanCrossTabAsync(query);
@@ -116,7 +116,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 2, PageSize = 10 };
-            var res = new TestPlanCrossTabRes
+            var res = new TestPlanCostBreakdownRes
             {
                 Columns    = ["testcode"],
                 Rows       = [],
@@ -124,9 +124,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
                 Page       = 2,
                 PageSize   = 10
             };
-            var apiResponse = new ApiResponse<TestPlanCrossTabRes> { Success = true, Data = res };
+            var apiResponse = new ApiResponse<TestPlanCostBreakdownRes> { Success = true, Data = res };
 
-            _http.GetAsync<TestPlanCrossTabRes>(Arg.Any<string>()).Returns(apiResponse);
+            _http.GetAsync<TestPlanCostBreakdownRes>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
             var result = await _client.GetPagedTestPlanCrossTabAsync(query);
@@ -143,7 +143,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
-            var res = new TestPlanCrossTabRes
+            var res = new TestPlanCostBreakdownRes
             {
                 Columns    = [],
                 Rows       = [],
@@ -151,9 +151,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
                 Page       = 1,
                 PageSize   = 20
             };
-            var apiResponse = new ApiResponse<TestPlanCrossTabRes> { Success = true, Data = res };
+            var apiResponse = new ApiResponse<TestPlanCostBreakdownRes> { Success = true, Data = res };
 
-            _http.GetAsync<TestPlanCrossTabRes>(Arg.Any<string>()).Returns(apiResponse);
+            _http.GetAsync<TestPlanCostBreakdownRes>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
             var result = await _client.GetPagedTestPlanCrossTabAsync(query);
@@ -171,17 +171,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
-            var apiResponse = new ApiResponse<TestPlanCrossTabRes>
+            var apiResponse = new ApiResponse<TestPlanCostBreakdownRes>
             {
                 Success = false,
                 Errors  = [new ApiError { Code = "SERVER_500", Message = "Internal Server Error" }]
             };
-            var failureDto = ApiResponseDto<TestPlanCrossTabDto>.FailureResponse(
+            var failureDto = ApiResponseDto<TestPlanCostBreakdownDto>.FailureResponse(
                 [new ApiErrorDto { Code = "SERVER_500", Message = "Internal Server Error" }],
                 new ApiMetaDto());
 
-            _http.GetAsync<TestPlanCrossTabRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TestPlanCrossTabDto>>(apiResponse).Returns(failureDto);
+            _http.GetAsync<TestPlanCostBreakdownRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<TestPlanCostBreakdownDto>>(apiResponse).Returns(failureDto);
 
             // Act
             var result = await _client.GetPagedTestPlanCrossTabAsync(query);
@@ -195,17 +195,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
-            var apiResponse = new ApiResponse<TestPlanCrossTabRes>
+            var apiResponse = new ApiResponse<TestPlanCostBreakdownRes>
             {
                 Success = false,
                 Errors  = [new ApiError { Code = "SERVER_500", Message = "Internal Server Error" }]
             };
-            var failureDto = ApiResponseDto<TestPlanCrossTabDto>.FailureResponse(
+            var failureDto = ApiResponseDto<TestPlanCostBreakdownDto>.FailureResponse(
                 [new ApiErrorDto { Code = "SERVER_500", Message = "Internal Server Error" }],
                 new ApiMetaDto());
 
-            _http.GetAsync<TestPlanCrossTabRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TestPlanCrossTabDto>>(apiResponse).Returns(failureDto);
+            _http.GetAsync<TestPlanCostBreakdownRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<TestPlanCostBreakdownDto>>(apiResponse).Returns(failureDto);
 
             // Act
             var result = await _client.GetPagedTestPlanCrossTabAsync(query);
@@ -221,15 +221,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
-            var apiResponse = new ApiResponse<TestPlanCrossTabRes>
+            var apiResponse = new ApiResponse<TestPlanCostBreakdownRes>
             {
                 Success = false,
                 Data    = null
             };
-            var failureDto = ApiResponseDto<TestPlanCrossTabDto>.FailureResponse([], new ApiMetaDto());
+            var failureDto = ApiResponseDto<TestPlanCostBreakdownDto>.FailureResponse([], new ApiMetaDto());
 
-            _http.GetAsync<TestPlanCrossTabRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TestPlanCrossTabDto>>(apiResponse).Returns(failureDto);
+            _http.GetAsync<TestPlanCostBreakdownRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<TestPlanCostBreakdownDto>>(apiResponse).Returns(failureDto);
 
             // Act
             var result = await _client.GetPagedTestPlanCrossTabAsync(query);
@@ -243,16 +243,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
-            var res = new TestPlanCrossTabRes { Columns = ["testcode"], Rows = [], TotalCount = 0, Page = 1, PageSize = 20 };
-            var apiResponse = new ApiResponse<TestPlanCrossTabRes> { Success = true, Data = res };
+            var res = new TestPlanCostBreakdownRes { Columns = ["testcode"], Rows = [], TotalCount = 0, Page = 1, PageSize = 20 };
+            var apiResponse = new ApiResponse<TestPlanCostBreakdownRes> { Success = true, Data = res };
 
-            _http.GetAsync<TestPlanCrossTabRes>(Arg.Any<string>()).Returns(apiResponse);
+            _http.GetAsync<TestPlanCostBreakdownRes>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
             await _client.GetPagedTestPlanCrossTabAsync(query);
 
             // Assert
-            await _http.Received(1).GetAsync<TestPlanCrossTabRes>(Arg.Any<string>());
+            await _http.Received(1).GetAsync<TestPlanCostBreakdownRes>(Arg.Any<string>());
         }
 
         [Fact]
@@ -267,7 +267,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
                 ["Jan"]             = "10",
                 ["Feb"]             = null
             };
-            var res = new TestPlanCrossTabRes
+            var res = new TestPlanCostBreakdownRes
             {
                 Columns    = ["testcode", "shortdescription", "Jan", "Feb"],
                 Rows       = [row],
@@ -275,9 +275,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestPlanCrossTa
                 Page       = 1,
                 PageSize   = 20
             };
-            var apiResponse = new ApiResponse<TestPlanCrossTabRes> { Success = true, Data = res };
+            var apiResponse = new ApiResponse<TestPlanCostBreakdownRes> { Success = true, Data = res };
 
-            _http.GetAsync<TestPlanCrossTabRes>(Arg.Any<string>()).Returns(apiResponse);
+            _http.GetAsync<TestPlanCostBreakdownRes>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
             var result = await _client.GetPagedTestPlanCrossTabAsync(query);

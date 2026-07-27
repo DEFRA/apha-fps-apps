@@ -201,11 +201,11 @@ namespace Apha.PACT.Application.Services
             await _testCapabilityRepository.BuildTestPlanSummaryAsync();
         }
 
-        public async Task<TestPlanCrossTabDto> GetPagedTestPlanCrossTabAsync(QueryParameters<string> query)
+        public async Task<TestPlanCostBreakdownDto> GetPagedTestPlanCrossTabAsync(QueryParameters<string> query)
         {
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
             var result = await _testCapabilityRepository.GetPagedTestPlanCrossTabAsync(parameters);
-            return new TestPlanCrossTabDto
+            return new TestPlanCostBreakdownDto
             {
                 Columns = result.Columns,
                 Rows = result.Rows,

@@ -80,7 +80,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<BatchJobHistoryDto, BatchJobHistoryRes>().ReverseMap();
             CreateMap<BatchJobEventTriggerDto, BatchJobEventTriggerRes>().ReverseMap();
             CreateMap<TestActualBreakdownRes, TestActualBreakdownDto>().ReverseMap();
-            CreateMap<TestPlanCrossTabRes, TestPlanCrossTabDto>().ReverseMap();
+            CreateMap<TestPlanCostBreakdownRes, TestPlanCostBreakdownDto>().ReverseMap();
         }
     }
 }

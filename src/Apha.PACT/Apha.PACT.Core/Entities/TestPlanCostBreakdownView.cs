@@ -1,6 +1,6 @@
 namespace Apha.PACT.Core.Entities
 {
-    public class TestPlanCrossTabView
+    public class TestPlanCostBreakdownView
     {
         public string TestCode { get; set; } = null!;
         public string? ShortDescription { get; set; }

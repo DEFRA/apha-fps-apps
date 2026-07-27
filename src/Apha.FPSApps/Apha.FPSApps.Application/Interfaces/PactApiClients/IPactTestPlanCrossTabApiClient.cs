@@ -6,6 +6,6 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients
 {
 public interface IPactTestPlanCrossTabApiClient
 {
-    Task<ApiResponseDto<TestPlanCrossTabDto>> GetPagedTestPlanCrossTabAsync(QueryParameters<string> query);
+    Task<ApiResponseDto<TestPlanCostBreakdownDto>> GetPagedTestPlanCrossTabAsync(QueryParameters<string> query);
 }
 }

@@ -16,6 +16,6 @@ namespace Apha.PACT.Application.Interfaces
 
         // Plan CrossTab
         Task BuildTestPlanSummaryAsync();
-        Task<TestPlanCrossTabDto> GetPagedTestPlanCrossTabAsync(QueryParameters<string> query);
+        Task<TestPlanCostBreakdownDto> GetPagedTestPlanCrossTabAsync(QueryParameters<string> query);
     }
 }

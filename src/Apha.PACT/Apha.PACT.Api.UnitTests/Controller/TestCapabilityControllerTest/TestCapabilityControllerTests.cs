@@ -347,7 +347,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
-            var serviceResult = new Apha.PACT.Application.Dtos.TestPlanCrossTabDto
+            var serviceResult = new Apha.PACT.Application.Dtos.TestPlanCostBreakdownDto
             {
                 Columns    = ["testcode", "shortdescription", "PROG01"],
                 Rows       = [new Dictionary<string, string?> { ["testcode"] = "PT001", ["PROG01"] = "200" }],
@@ -371,7 +371,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
-            var serviceResult = new Apha.PACT.Application.Dtos.TestPlanCrossTabDto
+            var serviceResult = new Apha.PACT.Application.Dtos.TestPlanCostBreakdownDto
             {
                 Columns    = [],
                 Rows       = [],
@@ -387,7 +387,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
 
             // Assert
             var ok  = Assert.IsType<OkObjectResult>(result);
-            var dto = Assert.IsType<Apha.PACT.Application.Dtos.TestPlanCrossTabDto>(ok.Value);
+            var dto = Assert.IsType<Apha.PACT.Application.Dtos.TestPlanCostBreakdownDto>(ok.Value);
             dto.Rows.Should().BeEmpty();
             dto.Columns.Should().BeEmpty();
         }
@@ -397,7 +397,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
-            var serviceResult = new Apha.PACT.Application.Dtos.TestPlanCrossTabDto
+            var serviceResult = new Apha.PACT.Application.Dtos.TestPlanCostBreakdownDto
             {
                 Columns    = ["testcode", "shortdescription", "PROG01", "PROG02"],
                 Rows       =
@@ -417,7 +417,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
 
             // Assert
             var ok  = Assert.IsType<OkObjectResult>(result);
-            var dto = Assert.IsType<Apha.PACT.Application.Dtos.TestPlanCrossTabDto>(ok.Value);
+            var dto = Assert.IsType<Apha.PACT.Application.Dtos.TestPlanCostBreakdownDto>(ok.Value);
             dto.TotalCount.Should().Be(2);
             dto.Rows.Should().HaveCount(2);
         }
@@ -438,7 +438,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 2, PageSize = 10 };
-            var serviceResult = new Apha.PACT.Application.Dtos.TestPlanCrossTabDto
+            var serviceResult = new Apha.PACT.Application.Dtos.TestPlanCostBreakdownDto
             {
                 Columns    = ["testcode"],
                 Rows       = [],
@@ -454,7 +454,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
 
             // Assert
             var ok  = Assert.IsType<OkObjectResult>(result);
-            var dto = Assert.IsType<Apha.PACT.Application.Dtos.TestPlanCrossTabDto>(ok.Value);
+            var dto = Assert.IsType<Apha.PACT.Application.Dtos.TestPlanCostBreakdownDto>(ok.Value);
             dto.TotalCount.Should().Be(250);
             dto.Page.Should().Be(2);
             dto.PageSize.Should().Be(10);
