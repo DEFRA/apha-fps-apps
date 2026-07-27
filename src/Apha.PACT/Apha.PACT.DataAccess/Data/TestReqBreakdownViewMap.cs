@@ -17,8 +17,8 @@ namespace Apha.PACT.DataAccess.Data
             builder.Property(e => e.Project).HasColumnName("project");
             builder.Property(e => e.Pc).HasColumnName("pc");
             builder.Property(e => e.WorkG).HasColumnName("workg");
-            builder.Property(e => e.WgPrice).HasPrecision(19, 4).HasColumnName("wgprice");
-            builder.Property(e => e.TotalCost).HasPrecision(19, 4).HasColumnName("totalcost");
+            builder.Property(e => e.WgPrice).HasColumnName("wgprice").HasColumnType("numeric");
+            builder.Property(e => e.TotalCost).HasColumnName("totalcost").HasColumnType("numeric");
             builder.Property(e => e.FpsYear).HasColumnName("fpsyear");
         }
     }

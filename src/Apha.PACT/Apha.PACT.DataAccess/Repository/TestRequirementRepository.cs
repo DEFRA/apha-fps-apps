@@ -83,7 +83,21 @@ namespace Apha.PACT.DataAccess.Repository
                 : rows.OrderBy(t => t.TestCost);
             IEnumerable<TestSupplierView> result = sortByTestCost ? sortedByTestCost : rows;
 
-            return await ApplyPaging(result.AsQueryable(), query.Page, query.PageSize);
+            var totalRecords = result.Count();
+            var pagedItems = result
+                .Skip((query.Page - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .ToList();
+
+            var pagination = new PaginationData
+            {
+                PageNumber = query.Page,
+                PageSize = query.PageSize,
+                TotalPages = (int)Math.Ceiling((double)totalRecords / query.PageSize),
+                TotalRecords = totalRecords
+            };
+
+            return new PagedData<TestSupplierView>(pagedItems.AsReadOnly(), pagination);
         }
 
         public async Task<PagedData<TestRequirementDetail>> GetPagedWithDetailsAsync(
