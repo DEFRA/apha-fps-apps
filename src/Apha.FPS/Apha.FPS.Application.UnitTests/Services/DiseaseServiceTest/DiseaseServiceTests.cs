@@ -99,6 +99,62 @@ namespace Apha.FPS.Application.UnitTests.Services.DiseaseServiceTest
 
         #endregion
 
+        #region GetDiseaseByNameAsync
+
+        [Fact]
+        public async Task GetDiseaseByNameAsync_FoundByName_ReturnsMappedDto()
+        {
+            // Arrange
+            const string diseaseName = "Foot and Mouth Disease";
+            var entity = new Disease { DiseaseName = diseaseName };
+            var expectedDto = new DiseaseDto { DiseaseName = diseaseName };
+
+            _mockRepository.GetByNameAsync(diseaseName).Returns(entity);
+            _mockMapper.Map<DiseaseDto>(entity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.GetDiseaseByNameAsync(diseaseName);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.DiseaseName.Should().Be(diseaseName);
+
+            await _mockRepository.Received(1).GetByNameAsync(diseaseName);
+            _mockMapper.Received(1).Map<DiseaseDto>(entity);
+        }
+
+        [Fact]
+        public async Task GetDiseaseByNameAsync_NotFound_ReturnsNull()
+        {
+            // Arrange
+            const string diseaseName = "Nonexistent Disease";
+            _mockRepository.GetByNameAsync(diseaseName).Returns((Disease?)null);
+
+            // Act
+            var result = await _sut.GetDiseaseByNameAsync(diseaseName);
+
+            // Assert
+            result.Should().BeNull();
+
+            await _mockRepository.Received(1).GetByNameAsync(diseaseName);
+            _mockMapper.DidNotReceive().Map<DiseaseDto>(Arg.Any<Disease>());
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task GetDiseaseByNameAsync_NullOrWhitespaceName_ThrowsArgumentException(string? diseaseName)
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _sut.GetDiseaseByNameAsync(diseaseName!));
+
+            await _mockRepository.DidNotReceive().GetByNameAsync(Arg.Any<string>());
+        }
+
+        #endregion
+
         #region CreateDiseaseAsync
 
         [Fact]

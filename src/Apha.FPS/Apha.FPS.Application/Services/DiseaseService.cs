@@ -23,6 +23,13 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<IEnumerable<DiseaseDto>>(diseases);
         }
 
+        public async Task<DiseaseDto?> GetDiseaseByNameAsync(string diseaseName)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(diseaseName);
+            var entity = await _diseaseRepository.GetByNameAsync(diseaseName);
+            return entity == null ? null : _mapper.Map<DiseaseDto>(entity);
+        }
+
         public async Task<DiseaseDto> CreateDiseaseAsync(DiseaseDto dto)
         {
             ArgumentNullException.ThrowIfNull(dto);

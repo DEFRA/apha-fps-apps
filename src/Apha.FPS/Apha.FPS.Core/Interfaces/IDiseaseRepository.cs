@@ -5,6 +5,7 @@ namespace Apha.FPS.Core.Interfaces
     public interface IDiseaseRepository
     {
         Task<IEnumerable<Disease>> GetAllDiseasesAsync();
+        Task<Disease?> GetByNameAsync(string diseaseName);
         Task<Disease> AddAsync(Disease disease);
         Task<bool> DeleteAsync(string diseaseName);
         Task<bool> ExistsAsync(string diseaseName);

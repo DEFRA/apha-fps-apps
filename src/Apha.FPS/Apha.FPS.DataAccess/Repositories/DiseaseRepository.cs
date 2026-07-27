@@ -21,6 +21,13 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        public async Task<Disease?> GetByNameAsync(string diseaseName)
+        {
+            return await _dbContext.Diseases
+                .AsNoTracking()
+                .FirstOrDefaultAsync(d => d.DiseaseName == diseaseName);
+        }
+
         public async Task<Disease> AddAsync(Disease disease)
         {
             _dbContext.Diseases.Add(disease);

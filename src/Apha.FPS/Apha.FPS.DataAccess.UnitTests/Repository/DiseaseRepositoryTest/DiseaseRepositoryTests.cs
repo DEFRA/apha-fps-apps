@@ -105,6 +105,63 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DiseaseRepositoryTest
 
         #endregion
 
+        #region GetByNameAsync
+
+        [Fact]
+        public async Task GetByNameAsync_ExistingName_ReturnsEntity()
+        {
+            // Arrange
+            var diseases = new List<Disease>
+            {
+                new() { DiseaseName = "Disease A" }
+            };
+            var (repo, _, _) = CreateRepository(diseases);
+
+            // Act
+            var result = await repo.GetByNameAsync("Disease A");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("Disease A", result.DiseaseName);
+        }
+
+        [Fact]
+        public async Task GetByNameAsync_UnknownName_ReturnsNull()
+        {
+            // Arrange
+            var diseases = new List<Disease>
+            {
+                new() { DiseaseName = "Disease A" }
+            };
+            var (repo, _, _) = CreateRepository(diseases);
+
+            // Act
+            var result = await repo.GetByNameAsync("Unknown Disease");
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetByNameAsync_CaseSensitiveMatch_ReturnsNull()
+        {
+            // Arrange — verifies string comparison is case-sensitive (no implicit case-insensitive matching),
+            // even though the underlying fps.tbldisease.disease column is citext (case-insensitive) at the DB level.
+            var diseases = new List<Disease>
+            {
+                new() { DiseaseName = "Disease A" }
+            };
+            var (repo, _, _) = CreateRepository(diseases);
+
+            // Act
+            var result = await repo.GetByNameAsync("disease a");
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        #endregion
+
         #region AddAsync
 
         [Fact]
@@ -224,9 +281,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DiseaseRepositoryTest
         }
 
         [Fact]
-        public async Task ExistsAsync_CaseSensitiveMatch()
+        public async Task ExistsAsync_InMemoryProvider_IsCaseSensitive()
         {
-            // Arrange — verifies string comparison is case-sensitive (no implicit case-insensitive matching)
+            // Arrange — this exercises the in-memory mock's comparison behavior only.
+            // Note: fps.tbldisease.disease is declared as citext in the real PostgreSQL
+            // schema (dbscript/schemas/01fps/01tables/tbldisease.sql), so against the actual
+            // database this lookup is case-insensitive regardless of the C# `==` operator used
+            // in the LINQ predicate. This test does not represent production matching behavior.
             var diseases = new List<Disease>
             {
                 new() { DiseaseName = "Disease A" }

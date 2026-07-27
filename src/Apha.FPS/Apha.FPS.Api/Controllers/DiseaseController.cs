@@ -30,12 +30,22 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<List<DiseaseRes>>(diseases));
         }
 
+        [HttpGet("{diseaseName}")]
+        public async Task<IActionResult> GetByNameAsync(string diseaseName)
+        {
+            var disease = await _diseaseService.GetDiseaseByNameAsync(diseaseName);
+            if (disease == null)
+                throw new KeyNotFoundException("Disease not found.");
+            return Ok(_mapper.Map<DiseaseRes>(disease));
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateAsync([FromBody] DiseaseReq req)
         {
             var dto = _mapper.Map<DiseaseDto>(req);
             var result = await _diseaseService.CreateDiseaseAsync(dto);
-            return CreatedAtAction(nameof(GetAllDiseasesAsync), _mapper.Map<DiseaseRes>(result));
+            var res = _mapper.Map<DiseaseRes>(result);
+            return CreatedAtAction(nameof(GetByNameAsync), new { diseaseName = result.DiseaseName }, res);
         }
 
         [HttpDelete("{diseaseName}")]

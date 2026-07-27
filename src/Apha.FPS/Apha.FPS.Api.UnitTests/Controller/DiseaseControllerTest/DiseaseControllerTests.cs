@@ -113,7 +113,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.DiseaseControllerTest
             // Assert
             var createdResult = Assert.IsType<CreatedAtActionResult>(result);
             Assert.Equal(res, createdResult.Value);
-            Assert.Equal(nameof(DiseaseController.GetAllDiseasesAsync), createdResult.ActionName);
+            Assert.Equal(nameof(DiseaseController.GetByNameAsync), createdResult.ActionName);
             await _serviceMock.Received(1).CreateDiseaseAsync(dto);
         }
 
