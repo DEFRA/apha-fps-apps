@@ -46,6 +46,7 @@
 .govuk-tabs__tab {
     color: #1d70b8;
     text-decoration: none !important;
+    font-weight: 600;
 }
 
     .govuk-tabs__tab:hover {
