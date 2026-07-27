@@ -20,5 +20,30 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
+
+        public async Task<Disease> AddAsync(Disease disease)
+        {
+            _dbContext.Diseases.Add(disease);
+            await _dbContext.SaveChangesAsync();
+            return disease;
+        }
+
+        public async Task<bool> DeleteAsync(string diseaseName)
+        {
+            var entity = await _dbContext.Diseases.FirstOrDefaultAsync(d => d.DiseaseName == diseaseName);
+            if (entity == null)
+            {
+                return false;
+            }
+
+            _dbContext.Diseases.Remove(entity);
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ExistsAsync(string diseaseName)
+        {
+            return await _dbContext.Diseases.AnyAsync(d => d.DiseaseName == diseaseName);
+        }
     }
 }
