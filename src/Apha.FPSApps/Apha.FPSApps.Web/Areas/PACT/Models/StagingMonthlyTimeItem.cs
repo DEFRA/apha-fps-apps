@@ -29,11 +29,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string? ParentProject { get; set; }
 
         [Display(Name = "Period")]
-        [GridColumn(Order = 6, Width = 80, Type = GridColumnType.Number)]
+        [GridColumn(Order = 6, Width = 80, Type = GridColumnType.Number, CssClass = "monthly-time-staging-period-right-align")]
         public double? Month { get; set; }
 
         [Display(Name = "Hours")]
-        [GridColumn(Order = 7, Width = 90, Type = GridColumnType.Number)]
+        [GridColumn(Order = 7, Width = 90, Type = GridColumnType.Number, CssClass = "monthly-time-staging-hours-right-align")]
         public double? Hours { get; set; }
 
         [Display(Name = "Pass")]

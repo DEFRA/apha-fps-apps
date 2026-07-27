@@ -1388,90 +1388,27 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
     box-sizing: border-box;
 }
 
-#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-workgroup {
-    min-width: 100px !important;
-    width: 100px !important;
-    max-width: 100px !important;
-}
-
-#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-pactstaffid {
-    min-width: 120px !important;
-    width: 120px !important;
-    max-width: 120px !important;
-}
-
-#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-name {
-    min-width: 180px !important;
-    width: 180px !important;
-    max-width: 180px !important;
-}
-
-#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-timecode {
-    min-width: 120px !important;
-    width: 120px !important;
-    max-width: 120px !important;
-}
-
-#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-parentproject {
-    min-width: 140px !important;
-    width: 140px !important;
-    max-width: 140px !important;
-}
-
-#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-period {
-    min-width: 80px !important;
-    width: 80px !important;
-    max-width: 80px !important;
-}
-
-#gridContainer_monthlyTimeStagingGrid th.monthly-time-staging-col-period,
-#gridContainer_monthlyTimeStagingGrid td.monthly-time-staging-col-period,
-#gridContainer_monthlyTimeStagingGrid span.monthly-time-staging-col-period {
+/*Staging grid*/
+/*Staging- right align*/
+#gridContainer_monthlyTimeStagingGrid td.monthly-time-staging-period-right-align,
+#gridContainer_monthlyTimeStagingGrid span.monthly-time-staging-period-right-align {
     text-align: right !important;
 }
 
-#gridContainer_monthlyTimeStagingGrid span.monthly-time-staging-col-period {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
+#gridContainer_monthlyTimeStagingGrid span.monthly-time-staging-period-right-align {
+    display: block;
     box-sizing: border-box;
 }
 
-#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-hours {
-    min-width: 90px !important;
-    width: 90px !important;
-    max-width: 90px !important;
-}
 
-#gridContainer_monthlyTimeStagingGrid th.monthly-time-staging-col-hours,
-#gridContainer_monthlyTimeStagingGrid td.monthly-time-staging-col-hours,
-#gridContainer_monthlyTimeStagingGrid span.monthly-time-staging-col-hours {
+#gridContainer_monthlyTimeStagingGrid td.monthly-time-staging-hours-right-align,
+#gridContainer_monthlyTimeStagingGrid span.monthly-time-staging-hours-right-align {
     text-align: right !important;
 }
 
-#gridContainer_monthlyTimeStagingGrid span.monthly-time-staging-col-hours {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
+#gridContainer_monthlyTimeStagingGrid span.monthly-time-staging-hours-right-align {
+    display: block;
     box-sizing: border-box;
-}
-
-#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-pass {
-    min-width: 70px !important;
-    width: 70px !important;
-    max-width: 70px !important;
-}
-
-#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-pactid {
-    min-width: 100px !important;
-    width: 100px !important;
-    max-width: 100px !important;
-}
-
-#gridContainer_monthlyTimeStagingGrid .monthly-time-staging-col-comments {
-    min-width: 260px !important;
-    width: 260px !important;
-    max-width: 260px !important;
 }
 
 /* ============================================================
