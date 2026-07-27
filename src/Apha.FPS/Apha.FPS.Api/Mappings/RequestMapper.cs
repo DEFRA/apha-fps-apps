@@ -165,6 +165,9 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<ResourceStaffAllocationDto, ResourceStaffAllocationRes>().ReverseMap();
             CreateMap<ResourceStaffJobDto, ResourceStaffJobRes>().ReverseMap();
             CreateMap<ResourceStaffJobDetailDto, ResourceStaffJobDetailRes>().ReverseMap();
+
+            // Resource Replan — project staff replan
+            CreateMap<ProjectStaffReplanDto, ProjectStaffReplanRes>().ReverseMap();
         }
     }
 }

@@ -194,6 +194,13 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ResourceStaffAllocationDto, ResourceStaffAllocationRes>().ReverseMap();
             CreateMap<ResourceStaffJobDto, ResourceStaffJobRes>().ReverseMap();
             CreateMap<ResourceStaffJobDetailDto, ResourceStaffJobDetailRes>().ReverseMap();
+
+            // ResourceMgmtReplan — Resource Re-allocation Screen (frmRM_RePlan)
+            CreateMap<ResourceMgmtReplanViewDto, ResourceMgmtReplanViewRes>().ReverseMap();
+            CreateMap<ResourceMgmtReplanStaffJobDto, ResourceMgmtReplanStaffJobRes>().ReverseMap();
+
+            // Resource Replan — project staff replan
+            CreateMap<ProjectStaffReplanDto, ProjectStaffReplanRes>().ReverseMap();
         }
     }
 }
