@@ -387,7 +387,7 @@
         // ── Currency helpers (top-level so they are always available) ──────────
 
         function formatCurrency(value) {
-            return '\u00A3' + parseFloat(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return parseFloat(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
         function parseCurrencyValue(val) {
@@ -395,6 +395,21 @@
         }
 
         var currencyFieldNames = ['CustIncome', 'TransferIncome', 'Profit', 'BudgetCvl', 'PvsIncome', 'PlanCaseWorkDebit', 'CarryOver', 'CarryOverSeed'];
+
+        function scrollToFirstError() {
+            // Wait one tick for the DOM to render error messages
+            setTimeout(function () {
+                var firstError = document.querySelector('.govuk-error-message:not([style*="display: none"]):not([style*="display:none"])');
+                if (!firstError) return;
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Try to focus the associated input
+                var formGroup = firstError.closest('.govuk-form-group');
+                if (formGroup) {
+                    var input = formGroup.querySelector('input:not([type="hidden"]):not([readonly]), select, textarea');
+                    if (input) input.focus({ preventScroll: true });
+                }
+            }, 50);
+        }
 
         function stripCurrencyFormatting() {
             currencyFieldNames.forEach(function (name) {
@@ -424,6 +439,7 @@
                             $field.val(formatCurrency(raw));
                         }
                     });
+                    scrollToFirstError();
                     return;
                 }
                 submitForm(formId, isEdit, parentProject);
@@ -558,6 +574,7 @@
                     }
                 } else {
                     displayServerValidationErrors(result.errors, result.message, '#main-content');
+                    scrollToFirstError();
                 }
             })
             .catch(function (err) {

@@ -20,5 +20,6 @@ namespace Apha.FPS.Application.Interfaces
         Task<StaffJobDto> UpdateAsync(StaffJobDto staffJob);
         Task<bool> DeleteAsync(string staffId, string jobCode);
         Task<PaginatedResult<StaffResourceUtilisationDto>> GetStaffResourceUtilisationAsync(QueryParameters<string> query, string workgroup);
+        Task<PaginatedResult<StaffJobViewDto>> GetStaffJobsAllocationByJobCodeWgGradePagedAsync(QueryParameters<string> query, string jobcode, string wgGrade);
     }
 }
