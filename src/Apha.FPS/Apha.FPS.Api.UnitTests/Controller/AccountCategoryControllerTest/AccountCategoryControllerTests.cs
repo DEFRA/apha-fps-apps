@@ -8,7 +8,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 
-namespace Apha.FPS.Api.UnitTests.Controllers.AccountCategoryControllerTest
+namespace Apha.FPS.Api.UnitTests.Controller.AccountCategoryControllerTest
 {
     public class AccountCategoryControllerTests
     {
