@@ -120,7 +120,7 @@ namespace Apha.FPS.DataAccess.Repositories
             foreach (var key in monthHourKeys)
             {
                 var monthHour = monthHours.FirstOrDefault(m =>
-                    m.FpsYear == key.Year &&
+                    m.Year == key.Year &&
                     m.Month == key.Month &&
                     m.Fmonth == key.Fmonth);
 
@@ -141,7 +141,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 else 
                 {
                     monthHour = monthHours.FirstOrDefault(m =>
-                    m.FpsYear == key.Year - 1 &&
+                    m.Year == key.Year - 1 &&
                     m.Month == key.Month &&
                     m.Fmonth == key.Fmonth);
 

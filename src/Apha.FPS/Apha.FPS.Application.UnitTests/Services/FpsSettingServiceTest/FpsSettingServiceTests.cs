@@ -50,7 +50,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
             result[0].Notes.Should().Be("Maximum FPS limit");
             result[0].UpdatedBy.Should().Be("user1");
             result[0].UpdatedAt.Should().Be(updatedAt);
-            result[0].FpsCalYear.Should().Be(2024);
+            result[0].FpsYear.Should().Be(2024);
 
             result[1].Id.Should().Be("2");
             result[1].Setting.Should().Be("MinFPS");
@@ -101,7 +101,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
             result[0].Notes.Should().Be("Default setting");
             result[0].UpdatedBy.Should().Be("admin");
             result[0].UpdatedAt.Should().Be(updatedAt);
-            result[0].FpsCalYear.Should().Be(2024);
+            result[0].FpsYear.Should().Be(2024);
 
             await _mockRepository.Received(1).GetAllAsync();
         }

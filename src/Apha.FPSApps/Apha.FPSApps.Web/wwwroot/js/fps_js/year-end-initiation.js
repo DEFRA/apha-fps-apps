@@ -147,18 +147,19 @@
         var label       = getCellValue(row, 'Label');
         var value       = getCellValue(row, 'Value') || '';
         var fpsYearType = getCellValue(row, 'FpsYearType');
+        var fpsyear = getCellValue(row, 'FpsYear');
 
         // if (fpsYearType && fpsYearType !== 'Planned') {
         //     showAlertMessage('Only Planned year values can be confirmed.', AlertType.WARNING);
         //     return;
         // }
 
-        showGovukConfirm('Are you sure you want to confirm the config value for "' + label + '"?')
+        showGovukConfirm('Are you sure you want to confirm the config value for "' + id + '"?')
             .then(function (confirmed) {
                 if (!confirmed) return;
-                postJson(cfg.saveSettingUrl, { id: id, setting: label, notes: value },
+                postJson(cfg.saveSettingUrl, { id: id, setting: value, fpsyear: fpsyear },
                     function () {
-                        showAlertMessage('Config value "' + label + '" confirmed successfully.', AlertType.SUCCESS);
+                        showAlertMessage('Config value "' + id + '" confirmed successfully.', AlertType.SUCCESS);
                         reloadConfigGrid();
                     },
                     function (msgs) { showPageError(msgs); }
@@ -195,15 +196,17 @@
 
         var row         = $(btn).closest('tr')[0];
         var fpsYearType = getCellValue(row, 'FpsYearType');
-        var year        = getCellValue(row, 'Year');
+        var year        = getCellValue(row, 'Year');    
         var month       = getCellValue(row, 'Month');
+        var fpsyear = getCellValue(row, 'FpsYear');
+        var fmonth = getCellValue(row, 'Fmonth');
 
         // if (fpsYearType && fpsYearType !== 'Planned') {
         //     showAlertMessage('Only Planned year month hours can be edited.', AlertType.WARNING);
         //     return;
         // }
 
-        $.get(cfg.editMonthHourUrl, { year: year, month: month })
+        $.get(cfg.editMonthHourUrl, { year: year, month: month, fpsyear: fpsyear, fmonth: fmonth })
             .done(function (html) {
                 openModalWithHtml(html);
             })
@@ -222,10 +225,10 @@
         var fpsYearType = getCellValue(row, 'FpsYearType');
         var monthName   = getCellValue(row, 'MonthName');
 
-        if (fpsYearType && fpsYearType !== 'Planned') {
-            showAlertMessage('Only Planned year month hours can be confirmed.', AlertType.WARNING);
-            return;
-        }
+        // if (fpsYearType && fpsYearType !== 'Planned') {
+        //     showAlertMessage('Only Planned year month hours can be confirmed.', AlertType.WARNING);
+        //     return;
+        // }
 
         showGovukConfirm('Are you sure you want to confirm the working hours for ' + monthName + '?')
             .then(function (confirmed) {
@@ -241,7 +244,7 @@
                 };
                 postJson(cfg.saveMonthHourUrl, dto,
                     function () {
-                        showAlertMessage('Working hours for ' + monthName + ' confirmed successfully.', AlertType.SUCCESS);
+                        showAlertMessage('Working hours for ' + monthName + ' saved successfully.', AlertType.SUCCESS);
                         reloadMonthGrid();
                     },
                     function (msgs) { showPageError(msgs); }

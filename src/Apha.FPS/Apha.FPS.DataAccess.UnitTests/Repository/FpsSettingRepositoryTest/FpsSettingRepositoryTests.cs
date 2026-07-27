@@ -29,7 +29,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
             var settingsMockSet = RepositoryTestHelper.CreateMockDbSet(settings);
             mockContext.Setup(x => x.TblSettings).Returns(settingsMockSet.Object);
 
-            return new FpsSettingRepository(mockContext.Object);
+            return new FpsSettingRepository(mockContext.Object, fpsYearContext);
         }
 
         #region GetAllAsync

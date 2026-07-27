@@ -105,10 +105,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditMonthHour(short year, short month)
+        public async Task<IActionResult> EditMonthHour(short year, short month, short fpsyear, short fmonth)
         {
             var result = await _monthHourService.GetYearEndMonthHoursAsync();
-            var record = result.Data?.FirstOrDefault(m => m.Year == year && m.Month == month);
+            var record = result.Data?.FirstOrDefault(m => m.Year == year && m.Month == month && m.FpsYear == fpsyear && m.Fmonth == fmonth);
             if (record == null)
                 return NotFound();
 
