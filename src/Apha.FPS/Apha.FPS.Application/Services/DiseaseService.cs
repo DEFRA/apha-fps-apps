@@ -1,21 +1,45 @@
-﻿using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using AutoMapper;
 
 namespace Apha.FPS.Application.Services
 {
     public class DiseaseService : IDiseaseService
     {
         private readonly IDiseaseRepository _diseaseRepository;
-        
-        public DiseaseService(IDiseaseRepository diseaseRepository)
+        private readonly IMapper _mapper;
+
+        public DiseaseService(IDiseaseRepository diseaseRepository, IMapper mapper)
         {
             _diseaseRepository = diseaseRepository;
+            _mapper = mapper;
         }
 
-        public async Task<IEnumerable<string>> GetAllDiseasesAsync()
+        public async Task<IEnumerable<DiseaseDto>> GetAllDiseasesAsync()
         {
             var diseases = await _diseaseRepository.GetAllDiseasesAsync();
-           return  diseases.Select(d => d.DiseaseName);           
+            return _mapper.Map<IEnumerable<DiseaseDto>>(diseases);
+        }
+
+        public async Task<DiseaseDto> CreateDiseaseAsync(DiseaseDto dto)
+        {
+            ArgumentNullException.ThrowIfNull(dto);
+            ArgumentException.ThrowIfNullOrWhiteSpace(dto.DiseaseName);
+
+            if (await _diseaseRepository.ExistsAsync(dto.DiseaseName))
+                throw new InvalidOperationException($"A disease with name '{dto.DiseaseName}' already exists.");
+
+            var entity = _mapper.Map<Disease>(dto);
+            var added = await _diseaseRepository.AddAsync(entity);
+            return _mapper.Map<DiseaseDto>(added);
+        }
+
+        public async Task<bool> DeleteDiseaseAsync(string diseaseName)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(diseaseName);
+            return await _diseaseRepository.DeleteAsync(diseaseName);
         }
     }
 }
