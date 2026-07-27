@@ -1716,3 +1716,15 @@ table#tblMonthPeriod > tbody > tr > td {
 .sup-margin-left-3-percent {
      margin-left: 3% !important;
 }
+.sup_text_right_align{
+    box-sizing: border-box !important;
+    text-align: right !important;
+}
+.sup_font_italic {
+    font-style: italic;
+}
+
+.sup_flex_align_end {
+    display: flex;
+    align-items: end;
+}
