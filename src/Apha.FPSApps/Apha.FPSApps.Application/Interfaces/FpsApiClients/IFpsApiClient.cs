@@ -36,5 +36,6 @@
         IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
         IFpsCostCentreApiClient FpsCostCentre { get; }
         IFpsResourceAllocationApiClient FpsResourceAllocation { get; }
+        IFpsBulkRatesApiClient FpsBulkRates { get; }
     }
 }
