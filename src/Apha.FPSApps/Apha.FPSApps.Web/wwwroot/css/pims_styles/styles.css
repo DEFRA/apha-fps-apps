@@ -966,7 +966,7 @@ select {
 
 .govuk-tabs__list-item--selected,
 .govuk-tabs__list-item {
-    padding: 5px !important;
+    padding: 12px !important;
 
 }
 

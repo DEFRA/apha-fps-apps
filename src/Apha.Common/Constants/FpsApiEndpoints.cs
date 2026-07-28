@@ -122,6 +122,9 @@
         // Project Staff Plan
         public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";
 
+        // Project Staff Plan Details (fps.vwprojectstaffplandetails)
+        public const string GetPagedProjectStaffPlanDetails = "api/v1/projectstaffplandetails";
+
         // Project Group Staff Plan (fps.vpvtprojectgroupmgrplan)
         public const string GetPagedProjectGroupStaffPlan = "api/v1/projectgroupstaffplan";
 
