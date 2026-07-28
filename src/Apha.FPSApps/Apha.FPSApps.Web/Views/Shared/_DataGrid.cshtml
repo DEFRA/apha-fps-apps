@@ -129,7 +129,7 @@
                                 if (isSorted)
                                     sortIcon = Model.Pagination.SortDirection ? "▲" : "▼";
                                 <th scope="col" style="width: @column.Width px; cursor:pointer;"
-                                            class="sortable-header"
+                                            class="sortable-header @GridHelpers.GetHeaderAlignmentCssClass(column)"
                                             data-column="@column.PropertyName"
                                             data-sortdir="@(!Model.Pagination.SortDirection)">
                                             @column.DisplayName <span class="sort-icon">@sortIcon</span>
@@ -158,7 +158,7 @@
                         {
                             if (column.IsVisible)
                             {
-                                    <th scope="col" aria-label="Select row checkbox">
+                                    <th scope="col" aria-label="Select row checkbox" class="@GridHelpers.GetHeaderAlignmentCssClass(column)">
                                     @if (column.IsFilterable)
                                     {
                                         var filterValue = Model.CurrentFilters != null && Model.CurrentFilters.ContainsKey(column.PropertyName)
@@ -225,12 +225,12 @@
                             data-select-function="@(Model.AllowRowSelection ? selectFnForRow : null)">
                             @if (Model.ShowCheckboxColumn)
                             {
-                                <td class="checkbox-cell govuk-table__cell">
+                                <td class="checkbox-cell govuk-table__cell ">
                                     @*  <input type="checkbox" name="chk-box-_@rowIndex"
                                            id="@($"chk_{Model.GridId}_{rowIndex}")" class="row-checkbox" /> *@
 
 
-                                    <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes">
+                                    <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0 " data-module="govuk-checkboxes">
                                         <div class="govuk-checkboxes__item sup_chk_margin">
                                             <input type="checkbox" name="chk-box-_@rowIndex"
                                                    id="@($"chk_{Model.GridId}_{rowIndex}")" class="row-checkbox govuk-checkboxes__input govuk-!-font-size-16" />
@@ -249,9 +249,9 @@
                                     var value = GridHelpers.GetPropertyValue(row, column.PropertyName);
                                     if (column.ColumnType == GridColumnType.Checkbox)
                                     {
-                                        <td class="checkbox-cell govuk-table__cell" data-property="@column.PropertyName" data-type="@column.ColumnType" style="text-align:center; vertical-align:middle;">
+                                        <td class="checkbox-cell govuk-table__cell @column.CssClass" data-property="@column.PropertyName" data-type="@column.ColumnType" style="text-align:center; vertical-align:middle;">
                                             <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes" style="display:flex; justify-content:center; align-items:center;">
-                                                <div class="govuk-checkboxes__item sup_chk_margin" style="pointer-events:none;">
+                                                <div class="govuk-checkboxes__item sup_chk_margin" style="pointer-events:none; padding-bottom: 8px;">
                                                     <input type="checkbox" name="@column.PropertyName"
                                                            id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")" class="govuk-checkboxes__input govuk-!-font-size-16 @GridHelpers.GetTypeCssClass(column)"
                                                            @(Convert.ToBoolean(value) ? "checked" : "") />
@@ -264,7 +264,7 @@
                                     }
                                     else
                                     {
-                                        <td data-property="@column.PropertyName" data-type="@column.ColumnType" class="govuk-table__cell">
+                                        <td data-property="@column.PropertyName" data-type="@column.ColumnType" class="govuk-table__cell @column.CssClass @GridHelpers.GetAlignmentCssClass(column)">
                                             @if (column.CssClass.Contains("grid-column-truncate-tooltip"))
                                             {
                                                 <span name="@column.PropertyName"

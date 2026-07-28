@@ -1570,7 +1570,7 @@ table#tblMonthPeriod > tbody > tr > td {
 }
 
 .sup_color_red {
-    color: #ca3535;
+    color: red;
 }
 
 .sup_position_relative {
@@ -1716,6 +1716,19 @@ table#tblMonthPeriod > tbody > tr > td {
 .sup-margin-left-3-percent {
      margin-left: 3% !important;
 }
+.sup_text_right_align{
+    box-sizing: border-box !important;
+    text-align: right !important;
+}
+.sup_font_italic {
+    font-style: italic;
+}
+
+.sup_flex_align_end {
+    display: flex;
+    align-items: end;
+}
+
 .sup_max_width_3 {
     max-width: none !important;
     min-width: 3.3em !important;
