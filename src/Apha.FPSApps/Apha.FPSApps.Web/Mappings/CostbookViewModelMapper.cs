@@ -11,6 +11,9 @@ namespace Apha.FPSApps.Web.Mappings
     {
         public CostbookViewModelMapper()
         {
+
+            CreateMap<PaginationDto, PaginationModel>().ReverseMap();
+
             // ── Existing project view model mappings ──────────────────────────
             CreateMap<ProjectDto, ProjectItemViewModel>().ReverseMap();
             CreateMap<ProjectDto, ProjectDetailViewModel>().ReverseMap();
@@ -19,9 +22,17 @@ namespace Apha.FPSApps.Web.Mappings
             // ── Yearly details: Dto ↔ ViewModel/Item ─────────────────────────
             CreateMap<ProjectYearDto, ProjectYearRateItem>().ReverseMap();
             CreateMap<StaffRequirementDto, StaffRequirementItem>().ReverseMap();
+            CreateMap<StaffRequirementDto, StaffRequirementFormItem>().ReverseMap();
             CreateMap<TestRequirementDto, TestRequirementItem>().ReverseMap();
             CreateMap<AnimalRequirementDto, AnimalRequirementItem>().ReverseMap();
             CreateMap<AdditionalCostDto, AdditionalCostItem>().ReverseMap();
+            
+            CreateMap<InflationSettingsItem, MaintenanceSettingsDto>().ReverseMap();            
+            CreateMap<ProfitMarginsItem, MaintenanceSettingsDto>().ReverseMap();            
+            CreateMap<AccountCategoryItem, AccountCategoryMaintenanceDto>().ReverseMap();
+            CreateMap<Csg7GroupItem, AccountGroupDto>().ReverseMap();
+            CreateMap<CapsStaffItem, StaffDto>().ReverseMap();
+           
         }
     }
 }

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
  * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
  * Migrated : 2026-07-10
@@ -25,7 +25,6 @@ using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Context;
 using Apha.FPS.DataAccess.Repositories;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 
 namespace Apha.FPS.Api.Extensions
 {
@@ -68,13 +67,20 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
+            services.AddScoped<IProjectStaffPlanDetailsService, ProjectStaffPlanDetailsService>();
             services.AddScoped<IGradeService, GradeService>();
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
+            services.AddScoped<IContributionSummaryService, ContributionSummaryService>();
             services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
+            services.AddScoped<ICostCentreService, CostCentreService>();
+            services.AddScoped<ITestRCCostService, TestRCCostService>();
+            services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();
+            services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
+            services.AddScoped<IResourceAllocationService, ResourceAllocationService>();
             // TRANSFORMENGINE: DepartmentIncome service registration — supports GET /api/v1/department-income/* reporting endpoints
             services.AddScoped<IDepartmentIncomeService, DepartmentIncomeService>();
             return services;
@@ -110,13 +116,20 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupEmployeeRepository, WorkGroupEmployeeRepository>();
             services.AddScoped<IDivisionGradeRepository, DivisionGradeRepository>();
             services.AddScoped<IProjectStaffPlanRepository, ProjectStaffPlanRepository>();
+            services.AddScoped<IProjectStaffPlanDetailsRepository, ProjectStaffPlanDetailsRepository>();
             services.AddScoped<IGradeRepository, GradeRepository>();
             services.AddScoped<IProjectGroupStaffPlanRepository, ProjectGroupStaffPlanRepository>();
             services.AddScoped<IBudgetBidsRepository, BudgetBidsRepository>();
             services.AddScoped<IPurchasesRepository, PurchasesRepository>();
+            services.AddScoped<IContributionSummaryRepository, ContributionSummaryRepository>();
             services.AddScoped<IProjectAuditTrailRepository, ProjectAuditTrailRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
+            services.AddScoped<ICostCentreRepository, CostCentreRepository>();
+            services.AddScoped<ITestRCCostRepository, TestRCCostRepository>();
+            services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
+            services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
+            services.AddScoped<IResourceAllocationRepository, ResourceAllocationRepository>();
             // TRANSFORMENGINE: DepartmentIncome repository registration — LINQ-first reporting queries via EF Core keyless views
             services.AddScoped<IDepartmentIncomeRepository, DepartmentIncomeRepository>();
             return services;

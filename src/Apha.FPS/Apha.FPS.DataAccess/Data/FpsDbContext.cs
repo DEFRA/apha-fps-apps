@@ -1,27 +1,4 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsDbContext.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository (Steps 7-7a)
- * Migrated : 2026-07-10
- *
- * CHANGED:
- *   - Added DbSet<DepartmentIncomeTime> DepartmentIncomeTimes
- *   - Added DbSet<DepartmentIncomeTest> DepartmentIncomeTests
- *   - Added DbSet<DepartmentIncomeAnimal> DepartmentIncomeAnimals
- *   - Added DbSet<DepartmentIncomeAdditional> DepartmentIncomeAdditionals
- *   - Added DbSet<DepartmentIncomeTotals> DepartmentIncomeTotals
- *   - Added DbSet<PeriodLookup> PeriodLookups
- *   - Added ApplyConfiguration calls for all six new maps in OnModelCreating
- *
- * PRESERVED:
- *   - All existing DbSet declarations and ApplyConfiguration calls
- *   - All HasQueryFilter registrations (year-scoped entities)
- *   - IFpsRequestContext injection and FilterFpsYear property
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: DepartmentIncome keyless entities do not support HasQueryFilter;
- *     year scoping is enforced per-query in DepartmentIncomeRepository via joins to year-filtered entities
- */
-
+﻿
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -79,6 +56,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<StaffGeneralView> StaffGeneralViews { get; set; }
         public virtual DbSet<StaffView> StaffViews { get; set; }
         public virtual DbSet<StaffPickView> StaffPickViews { get; set; }
+        public virtual DbSet<StaffJobRmView> StaffJobRmViews { get; set; }
         public virtual DbSet<AnimalRequestView> AnimalRequestViews { get; set; }
         public virtual DbSet<PactProjectView> PactProjectViews { get; set; }
         public virtual DbSet<PactWorkGroupGradeView> PactWorkGroupGradeViews { get; set; }
@@ -119,17 +97,24 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<WorkGroupEmployeeView> WorkGroupEmployeeViews { get; set; }
         public virtual DbSet<PactStaff> PactStaffs { get; set; }
 
-
         public virtual DbSet<ProjectStaffPlanView> ProjectStaffPlanViews { get; set; }
+        public virtual DbSet<ProjectStaffPlanDetailsView> ProjectStaffPlanDetailsViews { get; set; }
         public virtual DbSet<ProjectGroupStaffPlanView> ProjectGroupStaffPlanViews { get; set; }
 
         public virtual DbSet<ProjectProfitabilityVlaView> ProjectProfitabilityVlaViews { get; set; }
 
-
         public virtual DbSet<Bid> Bids { get; set; }
         public virtual DbSet<BidView> BidViews { get; set; }
         public virtual DbSet<Purchase> Purchases { get; set; }
+        public virtual DbSet<TestOrProduct> TestOrProducts { get; set; }
+        public virtual DbSet<TestRCCost> TestRCCosts { get; set; }
+        public virtual DbSet<TestRequirementRCCost> TestRequirementRCCosts { get; set; }
+        public virtual DbSet<ContributionSummaryView> VQryFrmTimeSellerPcViews { get; set; }
         public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; }
+
+        public virtual DbSet<CostCentre> CostCentres { get; set; }
+        public virtual DbSet<ResourceStaffAllocationView> ResourceStaffAllocationViews { get; set; }
+        public virtual DbSet<ResourceStaffJobView> ResourceStaffJobViews { get; set; }
 
         // TRANSFORMENGINE: DepartmentIncome reporting entities — keyless LINQ-projection DbSets
         public virtual DbSet<DepartmentIncomeTime> DepartmentIncomeTimes { get; set; }
@@ -246,6 +231,8 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new StaffPickViewMap());
             modelBuilder.Entity<StaffPickView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new StaffJobRmViewMap());
+
             modelBuilder.ApplyConfiguration(new AnimalRequestViewMap());
             modelBuilder.Entity<AnimalRequestView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -269,7 +256,6 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new AdditionalCostLogMap());
             modelBuilder.Entity<AdditionalCostLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
-
 
             modelBuilder.ApplyConfiguration(new SurvFFSubmissionMap());
             modelBuilder.Entity<SurvFFSubmission>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -310,12 +296,14 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new ProjectMonthFinalMap());
 
-
             modelBuilder.ApplyConfiguration(new TimeCostCalcsViewMap());
             modelBuilder.Entity<TimeCostCalcsView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new ProjectStaffPlanViewMap());
             modelBuilder.Entity<ProjectStaffPlanView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProjectStaffPlanDetailsViewMap());
+            modelBuilder.Entity<ProjectStaffPlanDetailsView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new ProjectGroupStaffPlanViewMap());
             modelBuilder.Entity<ProjectGroupStaffPlanView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -348,6 +336,9 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new PurchaseMap());
             modelBuilder.Entity<Purchase>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new ContributionSummaryViewMap());
+            modelBuilder.Entity<ContributionSummaryView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
             modelBuilder.Entity<MonthlyTime>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -358,9 +349,23 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new GradeMap());
             modelBuilder.Entity<Grade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new TestOrProductMap());
+            modelBuilder.Entity<TestOrProduct>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TestRCCostMap());
+            modelBuilder.Entity<TestRCCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TestRequirementRCCostMap());
+            modelBuilder.Entity<TestRequirementRCCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new TotalBusinessOverheadsMap());
             modelBuilder.Entity<TotalBusinessOverheads>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new CostCentreMap());
+            modelBuilder.Entity<CostCentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ResourceStaffAllocationViewMap());
+            modelBuilder.ApplyConfiguration(new ResourceStaffJobViewMap());
 
             // TRANSFORMENGINE: DepartmentIncome keyless view maps — no HasQueryFilter (keyless entities do not support it)
             // Repository methods apply year-scoped joins via the underlying entity DbSets (TimeCostCalcs, ProjectSubContract, etc.)
