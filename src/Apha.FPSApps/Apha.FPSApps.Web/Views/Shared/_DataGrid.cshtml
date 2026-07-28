@@ -346,7 +346,7 @@
              <div class="sup_pagination_wrapper">
                  <div class="sup_margin_top_bottom_5_10 sup_flex_center">
                     <label for="recordsPerPage" class="sup_margin_right_5">Records per page  </label>
-                    <select id="@($"{Model.GridId}_pageSize")" class="govuk-select govuk-!-font-size-16">
+                    <select id="@($"{Model.GridId}_pageSize")" class="sup_max_width_3 govuk-select govuk-!-font-size-16">
                          @{
                              var sizes = new[] { 5, 10, 20, 50, 100 };
                              int currentSize = Model.Pagination?.PageSize ?? 5;
