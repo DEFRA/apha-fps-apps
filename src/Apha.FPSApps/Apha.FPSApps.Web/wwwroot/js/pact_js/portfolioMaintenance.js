@@ -19,7 +19,17 @@ function toggleSidebar() {
 $(document).ready(function () {
     initializePortfolioMultiColumnDropdown();
     initializeProgramMultiColumnDropdown();
-    
+
+    // Initialize numeric validation for decimal inputs
+    initializeNumericInputValidation(); // From number-validation.js
+
+    // Initialize jQuery Unobtrusive Validation for the portfolio form
+    if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
+        $.validator.unobtrusive.parse('#portfolioDetailForm');
+    }
+
+    attachNumericValidation();
+
     var $panel = $('#portfolioDropdownPanel');
     var $input = $('#dpselectportfolio');
     var $rows  = $('#portfolioDropdownBody tr');
@@ -84,14 +94,21 @@ $(document).ready(function () {
     $('#btnSavePortfolio').on('click', function () {
         clearValidationErrors('#portfolioDetailForm');
 
+        // Parse decimal fields as numbers (consistent with project-maintenance-details.js)
+        var budgetCvlValue = $('#txtBudgetCvl').val();
+        var transferIncomeValue = $('#txtTransferIncome').val();
+
+        var budgetCvlParsed = parseFloat(budgetCvlValue);
+        var transferIncomeParsed = parseFloat(transferIncomeValue);
+
         var payload = {
             parentProject: $('#hdnParentProject').val(),
             projectTitle: $('#txtProjectTitle').val(),
             finished: $('#chkFinished').is(':checked'),
             program: $('#dpProgramme').val(),
             projectManager: $('#dpManager').val(),
-            budgetCvl: $('#txtBudgetCvl').val() || null,
-            transferIncome: $('#txtTransferIncome').val() || null,
+            budgetCvl: isNaN(budgetCvlParsed) ? null : budgetCvlParsed,
+            transferIncome: isNaN(transferIncomeParsed) ? null : transferIncomeParsed,
             comments: $('#txtComments').val()
         };
 
@@ -217,6 +234,13 @@ function loadPortfolioData(parentProject) {
                 updateNavHref('#sideNavTimeCodes', parentProject);
                 updateNavHref('#sideNavInvoices', parentProject);
 
+                // Initialize jQuery Unobtrusive Validation for the portfolio form
+                if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
+                    $.validator.unobtrusive.parse('#portfolioDetailForm');
+                }
+
+                attachNumericValidation();
+
                 resetFormButtons(true);
                 loadConstituentTestGrid(parentProject);
             } else {
@@ -272,6 +296,12 @@ function addConstituentTest() {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             $('#modaPopupBody').data('submitFn', 'saveConstituentTest');
+            // Initialize jQuery Unobtrusive Validation
+            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
+                $.validator.unobtrusive.parse('#formAddTest');
+            }
+            // Attach numeric validation
+            attachNumericValidation();
             initializeTestCodeMultiColumnDropdown();
         });
 }
@@ -375,6 +405,12 @@ function addPortfolioTimeCode() {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             $('#modaPopupBody').data('submitFn', 'savePortfolioTimeCode');
+            // Initialize jQuery Unobtrusive Validation
+            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
+                $.validator.unobtrusive.parse('#timeCodeForm');
+            }
+            // Attach numeric validation
+            attachNumericValidation();
         });
 }
 
@@ -415,6 +451,12 @@ function editPortfolioTimeCode(btn) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             $('#modaPopupBody').data('submitFn', 'updatePortfolioTimeCode');
+            // Initialize jQuery Unobtrusive Validation
+            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
+                $.validator.unobtrusive.parse('#timeCodeForm');
+            }
+            // Attach numeric validation
+            attachNumericValidation();
         });
 }
 

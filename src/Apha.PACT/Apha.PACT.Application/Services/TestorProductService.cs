@@ -210,23 +210,6 @@ namespace Apha.PACT.Application.Services
                 validationErrors.Add("Charge Method cannot exceed 2 characters.");
             }
 
-            // Validate DefraUnitPrice is non-negative
-            if (dto.DefraUnitPrice < 0)
-            {
-                validationErrors.Add("DEFRA Unit Price cannot be negative.");
-            }
-
-            // Validate UnitPriceVla is non-negative if provided
-            if (dto.UnitPriceVla.HasValue && dto.UnitPriceVla.Value < 0)
-            {
-                validationErrors.Add("Unit Price VLA cannot be negative.");
-            }
-
-            // Validate PriceAhvg is non-negative if provided
-            if (dto.PriceAhvg.HasValue && dto.PriceAhvg.Value < 0)
-            {
-                validationErrors.Add("Price AHVG cannot be negative.");
-            }
 
             // Validate FpsYear is within reasonable range
             if (dto.FpsYear < 2000 || dto.FpsYear > 2100)
