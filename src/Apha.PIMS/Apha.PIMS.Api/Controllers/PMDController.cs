@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Apha.PIMS.Api.Controllers
 {
     [ApiController]
-    [Authorize(Roles = "API-PIMSUser,API-PIMSAdmin")]
+    [Authorize(Roles = "API-PMDAdmin,API-PIMSProjectManager")]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/pmd")]
     public class PMDController : ControllerBase
