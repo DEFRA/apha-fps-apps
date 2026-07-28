@@ -72,7 +72,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var settingIds = new[]
                {
                     "hoursinday",
-                    "cap_approval_received_for_reset"
+                    "CapApprovalReceivedForReset"
                 };
 
             int openYear = await GetOpenYear();

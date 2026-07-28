@@ -6,6 +6,7 @@ using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
+using DocumentFormat.OpenXml.Wordprocessing;
 using System.Text.Json;
 
 namespace Apha.FPS.Application.Services
@@ -14,27 +15,97 @@ namespace Apha.FPS.Application.Services
     {
         private const string RecreateSummariesJobName = "RecreateSummary";
 
-        private readonly IYearEndRepository _repository;
+        private readonly IYearEndRepository _yearEndRepository;
+        private readonly IFpsSettingRepository _fpsSettingRepository;
+        private readonly IMonthHourService _monthHourService;
         private readonly IEventPublisherService _eventPublisherService;
         private readonly IMapper _mapper;
 
-        public YearEndService(IYearEndRepository repository, IEventPublisherService eventPublisherService, IMapper mapper)
+        public YearEndService(IYearEndRepository yearEndRepository,
+            IFpsSettingRepository fpsSettingRepository,
+            IMonthHourService monthHourService,
+            IEventPublisherService eventPublisherService, IMapper mapper)
         {
-            _repository = repository;
-            _eventPublisherService= eventPublisherService;
+            _yearEndRepository = yearEndRepository;
+            _fpsSettingRepository = fpsSettingRepository;
+            _monthHourService = monthHourService;
+            _eventPublisherService = eventPublisherService;
             _mapper = mapper;
         }
 
         public async Task<PaginatedResult<BatchJobHistoryDto>> GetBatchJobsHistoryAsync(QueryParameters<string> query, string jobName)
         {
             var filter = _mapper.Map<PaginationParameters<string>>(query);
-            var history = await _repository.GetBatchJobsHistoryAsync(filter, jobName);
+            var history = await _yearEndRepository.GetBatchJobsHistoryAsync(filter, jobName);
             return _mapper.Map<PaginatedResult<BatchJobHistoryDto>>(history);
         }
 
-        public async Task<bool> CanRunBatchJobAsync(string jobName)
+        public async Task<bool> CanInitiateYearEndDataSetupRequestAsync(string jobName)
         {
-            return await _repository.CanRunBatchJobAsync(jobName);
+           // List<BusinessValidationError> errors = await Validation();
+            return await _yearEndRepository.CanRunBatchJobAsync(jobName);
+        }
+
+        private async Task<List<BusinessValidationError>> Validation()
+        {
+            var errors = new List<BusinessValidationError>();
+
+            //var configs = await _fpsSettingRepository.GetYearEndSettingsAsync();
+            //bool hasUnplannedOpenConfigs = configs.Any(x => string.Equals(x.FpsYearType, "open", StringComparison.OrdinalIgnoreCase) 
+            //|| string.Equals(x.FpsYearType, "new", StringComparison.OrdinalIgnoreCase));
+
+            //if (hasUnplannedOpenConfigs)
+            //{
+            //    errors.Add(new BusinessValidationError($"Configuration values for the IDs (HoursInDay or CapApprovalReceivedForReset) are missing for the planned year. Please verify and add the required configuration.", "Missing_Config"));
+            //}
+            //else
+            //{
+            //    if(configs.Any(x => x.Id == "HoursInDay"))
+            //    { 
+            //        var value = configs.FirstOrDefault(x => x.Id == "HoursInDay")?.Setting;
+            //        bool isValid = !string.IsNullOrWhiteSpace(value) &&
+            //            decimal.TryParse(value, out var number) && number < 0;
+
+            //        if(!isValid)
+            //        errors.Add(new BusinessValidationError($"Configuration values for the IDs HoursInDay is not valid. Please provide a numeric value.", "Missing_HoursInDay"));
+            //    }
+            //    if (configs.Any(x => x.Id == "CapApprovalReceivedForReset"))
+            //    {
+            //        var value = configs.FirstOrDefault(x => x.Id == "CapApprovalReceivedForReset")?.Setting;
+            //        bool isValid = string.Equals(value?.Trim().ToLower(), "yes", StringComparison.OrdinalIgnoreCase) 
+            //            || string.Equals(value?.Trim().ToLower(), "no", StringComparison.OrdinalIgnoreCase);
+
+            //        if (!isValid)
+            //            errors.Add(new BusinessValidationError($"Configuration values for the IDs CapApprovalReceivedForReset is not valid. Please provide 'Yes' or 'No'.", "Missing_CapApprovalReceivedForReset"));
+            //    }
+            //}
+
+            //var monthConfigs = await _monthHourService.GetYearEndMonthHoursAsync();
+            //bool hasUnplannedMonthConfigs = monthConfigs.Any(x => string.Equals(x.FpsYearType, "open", StringComparison.OrdinalIgnoreCase) 
+            //|| string.Equals(x.FpsYearType, "new", StringComparison.OrdinalIgnoreCase));
+
+            //if (hasUnplannedMonthConfigs)
+            //    errors.Add(new BusinessValidationError($"Month Working days, VID hours and CVL hours are missing for the planned year. Please verify and add for each missing month.", "Missing_Config"));
+
+            //bool hasmissingMissingVal = monthConfigs.Any(x => x.Days < 0 || x.VidHours < 0 || x.CvlHours < 0);
+
+            //if (hasmissingMissingVal)
+            //    errors.Add(new BusinessValidationError($"Month Working days, VID hours and CVL hours are missing for the planned year. Please verify and add for each missing month.", "Missing_Config"));
+
+            //var canRun = await _yearEndRepository.CanRunBatchJobAsync(jobName);
+            //if (!canRun)
+            //{
+            //    errors.Add(new BusinessValidationError($"Job '{jobName}' is already running or initiated., Please try after sometime.", "INVALID_Rerun"));
+            //}
+
+            //if (errors.Count > 0)
+            //    throw new BusinessValidationErrorException(errors);
+            return errors;
+        }
+
+        public async Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName)
+        {
+            return await _yearEndRepository.CanRunBatchJobAsync(jobName);
         }
 
         public async Task<BatchJobEventTriggerDto> TriggerYearEndInitiationJobAsync(int contextyear, string requestedBy, string correlationId)
@@ -60,7 +131,7 @@ namespace Apha.FPS.Application.Services
             if (exists)
                 errors.Add(new BusinessValidationError($"You cannot rerun a period when a later period has been run.","INVALID_Rerun"));
 
-            var canRun = await _repository.CanRunBatchJobAsync(RecreateSummariesJobName);
+            var canRun = await _yearEndRepository.CanRunBatchJobAsync(RecreateSummariesJobName);
             if (!canRun)
             {
                 errors.Add(new BusinessValidationError($"Job '{RecreateSummariesJobName}' is already running or initiated., Please try after sometime.", "INVALID_Rerun"));
@@ -69,7 +140,7 @@ namespace Apha.FPS.Application.Services
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            var queued = await _repository.EnqueueBatchJobAsync(RecreateSummariesJobName, requestedBy, correlationId, note);
+            var queued = await _yearEndRepository.EnqueueBatchJobAsync(RecreateSummariesJobName, requestedBy, correlationId, note);
 
             var eventDetail = BuildReCreateJobEvent(requestedBy, correlationId, month, contextyear);
 
