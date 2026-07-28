@@ -1570,7 +1570,8 @@ table#tblMonthPeriod > tbody > tr > td {
 }
 
 .sup_color_red {
-    color: red;
+    color: #ca3535;
+    
 }
 
 .sup_position_relative {
@@ -1727,4 +1728,12 @@ table#tblMonthPeriod > tbody > tr > td {
 .sup_flex_align_end {
     display: flex;
     align-items: end;
+}
+
+.sup_max_width_3 {
+    max-width: none !important;
+    min-width: 3.3em !important;
+}
+.sup_whitespace_nowrap {
+    white-space: nowrap !important;
 }
