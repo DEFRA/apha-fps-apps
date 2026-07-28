@@ -56,6 +56,26 @@ namespace Apha.Common.Utilities.ExcelImport
                 failures.Add($"{fieldName} must be a valid decimal number.");
                 return;
             }
+
+            if (parsed.Value < 0)
+                failures.Add($"{fieldName} cannot be negative.");
+        }
+
+        public static void ValidateDecimal(string? value, string fieldName, List<string> failures, bool required = false)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                if (required)
+                    failures.Add($"{fieldName} is required.");
+                return;
+            }
+
+            var parsed = ExcelParseHelper.TryParseDecimal(value);
+            if (!parsed.HasValue)
+            {
+                failures.Add($"{fieldName} must be a valid decimal number.");
+                return;
+            }
         }
 
         public static void ValidateMonth(string? value, List<string> failures)
