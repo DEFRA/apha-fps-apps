@@ -1,6 +1,9 @@
+using Apha.Common.Constants;
+using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Pagination;
+using static System.Net.WebRequestMethods;
 
 namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
 {
@@ -43,5 +46,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
             string? programNo = null,
             string? manager = null,
             string? customer = null);
+
+        Task<ApiResponseDto<List<ProjectStaffReplanDto>>> GetProjectGroupStaffReplanAsync(QueryParameters<string> query, string workgroup);
     }
 }
