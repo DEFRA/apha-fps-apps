@@ -19,6 +19,41 @@
             }
         }
 
+        public static bool IsNumericColumn(GridColumnType columnType)
+        {
+            return columnType switch
+            {
+                GridColumnType.Number => true,
+                GridColumnType.DecimalNumber => true,
+                GridColumnType.DoubleNumber => true,
+                GridColumnType.UsdValue => true,
+                GridColumnType.GbpValue => true,
+                GridColumnType.GbpValueRounded => true,
+                GridColumnType.Percentage => true,
+                _ => false
+            };
+        }
+
+        public static string GetAlignmentCssClass(DataGridColumn column)
+        {
+            // A custom CssClass specified at the property level takes precedence
+            // and overrides the default numeric right-alignment.
+            if (!string.IsNullOrWhiteSpace(column.CssClass))
+                return string.Empty;
+
+            return IsNumericColumn(column.ColumnType) ? "govuk-table__cell--numeric" : string.Empty;
+        }
+
+        public static string GetHeaderAlignmentCssClass(DataGridColumn column)
+        {
+            // A custom CssClass specified at the property level takes precedence
+            // and overrides the default numeric right-alignment.
+            if (!string.IsNullOrWhiteSpace(column.CssClass))
+                return string.Empty;
+
+            return IsNumericColumn(column.ColumnType) ? "govuk-table__header--numeric" : string.Empty;
+        }
+
         public static string GetTypeCssClass(DataGridColumn column)
         {
             return column.ColumnType switch
@@ -70,6 +105,14 @@
                 case GridColumnType.DoubleNumber:
                     if (value is double doubleValue)
                         return doubleValue.ToString("F2");
+                    break;
+                case GridColumnType.Percentage:
+                    if (value is double pctDouble)
+                        return pctDouble.ToString("F2") + "%";
+                    if (value is decimal pctDecimal)
+                        return pctDecimal.ToString("F2") + "%";
+                    if (value is float pctFloat)
+                        return ((double)pctFloat).ToString("F2") + "%";
                     break;
             }
 

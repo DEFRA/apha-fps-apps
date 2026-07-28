@@ -7,7 +7,7 @@ namespace Apha.PACT.Core.Interfaces
     {
         Task<PagedData<TestRequirement>> GetPagedByTestCodeAsync(PaginationParameters<string> query, string testCode);
         Task<PagedData<TestSupplierView>> GetPagedBySupplierTestCodeAsync(
-            PaginationParameters<string> query, string testCode, bool showRejected);
+         PaginationParameters<string> query, string testCode, bool showRejected);
         Task<PagedData<TestRequirementDetail>> GetPagedWithDetailsAsync(PaginationParameters<string> query, string testCode);
         Task<PagedData<TestRequirementDetail>> GetPagedByProjectAsync(PaginationParameters<string> query, string parentProject);
         Task<TestRequirement?> GetByIdAsync(string testCode, string buyer);
@@ -23,5 +23,6 @@ namespace Apha.PACT.Core.Interfaces
 
         // TestReqBreakdown (fps.vtestreqbreakdown)
         Task<PagedData<TestReqBreakdownView>> GetPlannedTestsByWorkgroupAsync(PaginationParameters<string> query);
+        Task<PagedData<TestActualBreakdownView>> GetActualsTestsWithPlannedDataByWorkgroupAsync(PaginationParameters<string> query);
     }
 }
