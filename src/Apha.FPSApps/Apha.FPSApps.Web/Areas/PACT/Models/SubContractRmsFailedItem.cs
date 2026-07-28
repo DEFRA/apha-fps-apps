@@ -47,7 +47,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string? SupplierNumber { get; set; }
 
         [Display(Name = "Daily Rate")]
-        [RegularExpression(@"^(?!-)\d+(\.\d+)?$", ErrorMessage = "Daily Rate cannot be negative.")]
         [GridColumn(Order = 10, Width = 100, Type = GridColumnType.Text)]
         public string? DailyRate { get; set; }
 

@@ -56,9 +56,6 @@ namespace Apha.Common.Utilities.ExcelImport
                 failures.Add($"{fieldName} must be a valid decimal number.");
                 return;
             }
-
-            if (parsed.Value < 0)
-                failures.Add($"{fieldName} cannot be negative.");
         }
 
         public static void ValidateMonth(string? value, List<string> failures)
