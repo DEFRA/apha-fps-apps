@@ -274,9 +274,54 @@
         );
     };
 
+    // ── Row button state enforcement ──────────────────────────────────────────
+    //
+    // Config grid rules (per row):
+    //   FpsYearType == "planned"  → edit enabled,  confirm enabled
+    //   FpsYearType != "planned"  → edit disabled, confirm disabled
+    //
+    // Month hours grid rules (per row):
+    //   Same as config grid PLUS: if Fmonth == "0" → both disabled regardless
+
+    function applyConfigGridButtonStates() {
+        $('#tbl_yearEndConfigValuesGrid tbody tr').each(function () {
+            debugger;
+            var fpsYearType = getCellValue(this, 'FpsYearType').toLowerCase();
+            var isPlanned = (fpsYearType === 'planned');
+
+            $(this).find('.edit-row-btn').prop('disabled', !isPlanned);
+            $(this).find('.delete-row-btn').prop('disabled', isPlanned);
+        });
+    }
+
+    function applyMonthGridButtonStates() {
+        $('#tbl_yearEndMonthHoursGrid tbody tr').each(function () {
+            var fpsYearType = getCellValue(this, 'FpsYearType').toLowerCase();
+            var fmonth      = getCellValue(this, 'Fmonth').trim();
+            var isPlanned   = (fpsYearType === 'planned');
+            var fmonthZero  = (fmonth === '0' || fmonth === '');
+            var disabled    = isPlanned || fmonthZero;
+            $(this).find('.edit-row-btn').prop('disabled', disabled);
+            $(this).find('.delete-row-btn').prop('disabled', disabled);
+        });
+    }
+
+    // Applies button states immediately and re-applies whenever the grid container
+    // DOM changes (i.e. after every grid reload).
+    function observeGridForButtonStates(containerId, applyFn) {
+        var container = document.getElementById(containerId);
+        if (!container) { return; }
+        applyFn();
+        new MutationObserver(function () { applyFn(); })
+            .observe(container, { childList: true, subtree: true });
+    }
+
     // ── Initiate DataSetup Request button ─────────────────────────────────────
 
     $(function () {
+        observeGridForButtonStates('gridContainer_yearEndConfigValuesGrid', applyConfigGridButtonStates);
+        observeGridForButtonStates('gridContainer_yearEndMonthHoursGrid',   applyMonthGridButtonStates);
+
         var btnInitiate = document.getElementById('btnInitiateDataSetupRequest');
         if (btnInitiate) {
             btnInitiate.addEventListener('click', function () {

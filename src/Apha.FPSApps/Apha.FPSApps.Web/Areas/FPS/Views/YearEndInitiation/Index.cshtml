@@ -67,7 +67,7 @@
                                 </div>
 
                                 <div class="govuk-grid-row">
-                                    <div class="govuk-grid-column-one-half">
+                                    <div class="govuk-grid-column-one-half sup_p_0">
                                         <div id="gridContainer_yearEndConfigValuesGrid">
                                             @await Html.PartialAsync("_DataGrid", Model.ConfigValuesGrid)
                                         </div>
@@ -129,11 +129,12 @@
 @section Styles {
 <style>
     /* Hide supporting-data columns — readable by JS via data-property but not shown */
-    #tbl_yearEndConfigValuesGrid th[data-column="Label"],
-    #tbl_yearEndConfigValuesGrid td[data-property="Label"],
+   /*  #tbl_yearEndConfigValuesGrid th[data-column="Label"],
+    #tbl_yearEndConfigValuesGrid td[data-property="Label"], */
     #tbl_yearEndConfigValuesGrid th[data-column="FpsYearType"],
-    #tbl_yearEndConfigValuesGrid td[data-property="FpsYearType"] {
-        display: none;
+    #tbl_yearEndConfigValuesGrid td[data-property="FpsYearType"] 
+    {
+       /* //display: none; */
     }
 /*     #tbl_yearEndMonthHoursGrid th[data-column="Year"],
     #tbl_yearEndMonthHoursGrid td[data-property="Year"],
@@ -146,7 +147,7 @@
     #tbl_yearEndMonthHoursGrid th[data-column="FpsYearType"],
     #tbl_yearEndMonthHoursGrid td[data-property="FpsYearType"] 
     {
-       // display: none;
+      /*  // display: none; */
     }
 </style>
 }

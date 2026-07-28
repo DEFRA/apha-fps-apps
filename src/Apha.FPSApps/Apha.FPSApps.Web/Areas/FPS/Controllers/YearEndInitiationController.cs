@@ -291,7 +291,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private static DataGridConfig<YearEndHistoryItem> HistoryGridConfig() => new()
         {
             GridId = "yearEndInitiationHistoryGrid",
-            Title = string.Empty,
+            Title = "Request History",
             BindGridUrl = "/FPS/YearEndInitiation/LoadHistoryGrid",
             ShowCheckboxColumn = false,
             AllowAdd = false,

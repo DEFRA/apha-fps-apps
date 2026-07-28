@@ -31,7 +31,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         //public string? Notes { get; set; } = string.Empty;
 
         [Display(Name = "FpsYearType")]
-        [GridColumn(Order = 5, Width = 100, Type = GridColumnType.Text)]
+        [GridColumn(Order = 4, Width = 100, Type = GridColumnType.Text)]
         public string FpsYearType { get; set; } = string.Empty;
     }
 
