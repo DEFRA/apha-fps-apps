@@ -149,7 +149,71 @@ namespace Apha.PACT.Application.Services
 
         public async Task<MonthlyTimeImportResultDto> ImportStagingAsync(MonthlyTimeImportDto request, string importedBy)
         {
-            var importedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);            
+            var importedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+
+            if (request.ImportType == 4)
+            {
+                var rowsToUpdate = new List<StagingMonthlyTime>();
+                var rowsToInsert = new List<StagingMonthlyTime>();
+
+                foreach (var row in request.Rows)
+                {
+                    if (row.Id > 0)
+                    {
+                        var existing = await _repository.GetStagingByIdAsync(row.Id, importedBy);
+                        if (existing != null)
+                        {
+                            existing.PactStaffId = row.PactStaffId;
+                            existing.TimeCode = row.TimeCode;
+                            existing.ParentProject = row.ParentProject;
+                            existing.Month = ExcelParseHelper.TryParseDouble(row.Month);
+                            existing.WorkGroup = row.WorkGroup;
+                            existing.Hours = ExcelParseHelper.TryParseDouble(row.Hours);
+                            existing.Name = row.Name;
+                            existing.PactId = null;
+                            existing.Passed = false;
+                            existing.FailureComments = string.Empty;
+                            existing.Filename = request.FileName;
+                            existing.ImportedDate = importedDate;
+                            rowsToUpdate.Add(existing);
+                            continue;
+                        }
+                    }
+
+                    rowsToInsert.Add(new StagingMonthlyTime
+                    {
+                        PactStaffId = row.PactStaffId,
+                        TimeCode = row.TimeCode,
+                        ParentProject = row.ParentProject,
+                        Month = ExcelParseHelper.TryParseDouble(row.Month),
+                        WorkGroup = row.WorkGroup,
+                        Hours = ExcelParseHelper.TryParseDouble(row.Hours),
+                        FailureComments = string.Empty,
+                        Passed = false,
+                        PactId = null,
+                        Name = row.Name,
+                        Filename = request.FileName,
+                        ImportedBy = importedBy,
+                        ImportedDate = importedDate
+                    });
+                }
+
+                if (rowsToUpdate.Count > 0)
+                {
+                    await _repository.UpdateStagingRecordsAsync(rowsToUpdate);
+                }
+
+                var insertedCount = await _repository.ImportStagingAsync(rowsToInsert);
+                var processedCount = rowsToUpdate.Count + insertedCount;
+
+                return new MonthlyTimeImportResultDto
+                {
+                    ImportedCount = processedCount,
+                    PassedCount = 0,
+                    FailedCount = 0,
+                    Message = $"Import completed. {processedCount} rows processed in staging."
+                };
+            }
 
             var rows = request.Rows.Select(row => new StagingMonthlyTime
             {

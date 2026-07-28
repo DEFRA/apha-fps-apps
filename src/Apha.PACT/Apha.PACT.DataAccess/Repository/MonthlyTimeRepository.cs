@@ -308,23 +308,8 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<int> DeleteFailedStagingByUserAsync(string importedBy)
         {
-            var latestImportedDate = await _context.StagingMonthlyTimes
-                .AsNoTracking()
-                .Where(x => x.ImportedBy == importedBy)
-                .MaxAsync(x => (DateTime?)x.ImportedDate);
-
-            if (latestImportedDate == null)
-                return 0;
-
-            var failedCount = await _context.StagingMonthlyTimes
-                .AsNoTracking()
-                .CountAsync(x => x.ImportedBy == importedBy && x.Passed == false && x.ImportedDate == latestImportedDate);
-
-            if (failedCount == 0)
-                return 0;
-
             return await _context.StagingMonthlyTimes
-                .Where(x => x.ImportedBy == importedBy && x.Passed == false && x.ImportedDate == latestImportedDate)
+                .Where(x => x.ImportedBy == importedBy && x.Passed == false)
                 .ExecuteDeleteAsync();
         }
 
@@ -349,13 +334,8 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<List<StagingMonthlyTime>> GetStagingRecordsForValidationAsync(string importedBy)
         {
-            var latestImportedDate = await _context.StagingMonthlyTimes
-                .AsNoTracking()
-                .Where(x => x.ImportedBy == importedBy)
-                .MaxAsync(x => x.ImportedDate);
-
             return await _context.StagingMonthlyTimes
-                .Where(x => x.ImportedBy == importedBy && x.Passed == false && x.ImportedDate == latestImportedDate)
+                .Where(x => x.ImportedBy == importedBy && x.Passed == false)
                 .OrderBy(x => x.Id)
                 .Distinct()
                 .ToListAsync();
@@ -381,17 +361,9 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<bool> HasFailedStagingAsync(string importedBy)
         {
-            var latestImportedDate = await _context.StagingMonthlyTimes
-                .AsNoTracking()
-                .Where(x => x.ImportedBy == importedBy)
-                .MaxAsync(x => x.ImportedDate);
-
-            if(latestImportedDate == null)
-                return false;
-
             return await _context.StagingMonthlyTimes
                 .AsNoTracking()
-                .AnyAsync(x => x.ImportedBy == importedBy && x.Passed == false && x.ImportedDate == latestImportedDate);
+                .AnyAsync(x => x.ImportedBy == importedBy && x.Passed == false);
         }
 
         public async Task<(int ProcessedCount, int ImportedCount, int FailedCount)> MakeLiveAsync(string importedBy)
@@ -406,11 +378,9 @@ namespace Apha.PACT.DataAccess.Repository
             if (passedRows.Count == 0)
                 return (0, 0, 0);
 
-            var latestImportedDate = passedRows.Max(x => x.ImportedDate);
-
             var failedCount = await _context.StagingMonthlyTimes
                 .AsNoTracking()
-                .CountAsync(x => x.ImportedBy == importedBy && x.Passed == false && x.ImportedDate == latestImportedDate);
+                .CountAsync(x => x.ImportedBy == importedBy && x.Passed == false);
 
             var importedCount = 0;
             foreach (var row in passedRows)

@@ -236,6 +236,24 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportExportedDataAsync(string fileName, IXLWorkbook workbook)
         {
+            var worksheet = workbook.Worksheet(1);
+            var usedRows = worksheet.RangeUsed()?.RowsUsed().ToList() ?? [];
+            if (usedRows.Count <= 1)
+            {
+                return ApiResponseDto<MonthlyTimeImportResultDto>.FailureResponse(
+                    [new ApiErrorDto { Code = "EMPTY_FILE", Message = "No data rows found in the uploaded Excel file." }],
+                    new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
+            }
+
+            var headerMap = _excelImportService.BuildHeaderMap(usedRows[0]);
+            var missingStagingIdColumn = _excelImportService.GetMissingRequiredHeaders(headerMap, new[] { "StagingId" }).Any();
+            if (missingStagingIdColumn)
+            {
+                return ApiResponseDto<MonthlyTimeImportResultDto>.FailureResponse(
+                    [new ApiErrorDto { Code = "INVALID_TEMPLATE", Message = "This file is not a valid correction file. Please use the exported file without removing the hidden StagingId column." }],
+                    new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
+            }
+
             var requiredHeaders = new[]
             {
                 "Work Group",
@@ -244,7 +262,8 @@ namespace Apha.FPSApps.Application.Services.PACT
                 "Time Code",
                 "Parent Project",
                 "Month",
-                "Hours"
+                "Hours",
+                "StagingId"
             };
 
             var importResult = _excelImportService.ReadExcel(
@@ -303,8 +322,10 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         private MonthlyTimeImportRowDto MapExportedDataRow(IXLRangeRow row, Dictionary<string, int> headerMap)
         {
+            var stagingIdText = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("StagingId")])) ;
             return new MonthlyTimeImportRowDto
             {
+                Id = int.TryParse(stagingIdText, out var parsedStagingId) ? parsedStagingId : 0,
                 WorkGroup = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Work Group")])) ,
                 PactStaffId = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Pact Staff Id")])) ,
                 Name = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Name")])) ,

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Apha.Common.Utilities.ExcelExport;
+using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
@@ -19,5 +20,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public bool? Passed { get; set; }
         public string? FailureComments { get; set; }
         public string? Filename { get; set; }
+        [Display(Name = "StagingId")]
+        [ExcelHiddenColumn]
+        public int Id { get; set; }
     }
 }

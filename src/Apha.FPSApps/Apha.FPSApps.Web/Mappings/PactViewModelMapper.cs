@@ -63,7 +63,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<StagingMonthlyTimeItem, StagingMonthlyTimeDto>()
                 .ForMember(dest => dest.Passed, opt => opt.MapFrom(src => (bool?)src.Passed));
             CreateMap<StagingMonthlyTimeDto, StagingMonthlyTimeExportItem>()
-                //.ForMember(dest => dest.Name, opt => opt.MapFrom(src => string.IsNullOrWhiteSpace(src.Name) ? src.PactStaffId : src.Name))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => string.IsNullOrWhiteSpace(src.Name) ? src.PactStaffId : src.Name))
                 .ForMember(dest => dest.Passed, opt => opt.MapFrom(src => src.Passed ?? false));
             CreateMap<MonthlyTimeLogDto, MonthlyTimeLogItem>().ReverseMap();
             CreateMap<CalenderMonthDto, CalenderMonth>().ReverseMap();
