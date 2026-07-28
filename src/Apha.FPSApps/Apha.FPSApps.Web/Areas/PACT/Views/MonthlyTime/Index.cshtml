@@ -105,6 +105,10 @@
                     </button>
                 </div>
 
+                <button type="button" id="importExportedBtn" class="govuk-button sup_margin_0 sup_flex sup_width_140" allow-edit="true" onclick="openImportExportedFilePicker()">
+                    <img src="~/images/file-import-solid-full.svg" width="16" alt="Import exported excel file" />&nbsp;Import Export
+                </button>
+
                 <button type="button" id="validateBtn" class="govuk-button sup_margin_0 govuk-button--warning sup_flex sup_width_140" allow-edit="true">
                     <img src="~/images/triangle-exclamation-solid-full.svg" width="16" alt="Validate records" />&nbsp;Validate
                 </button>
@@ -176,6 +180,11 @@
                             <div class="govuk-radios__item">
                                 <input class="govuk-radios__input" id="importType-flatfile-other" name="importType" type="radio" value="3">
                                 <label class="govuk-label govuk-radios__label radio-label-nowrap" for="importType-flatfile-other">Cross-tab .xlsx</label>
+                            </div>
+
+                            <div class="govuk-radios__item">
+                                <input class="govuk-radios__input" id="importType-otl" name="importType" type="radio" value="1">
+                                <label class="govuk-label govuk-radios__label radio-label-nowrap" for="importType-otl">OTL-data .xlsx</label>
                             </div>
                         </div>
                     </fieldset>

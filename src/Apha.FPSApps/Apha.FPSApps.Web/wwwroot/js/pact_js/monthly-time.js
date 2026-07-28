@@ -977,15 +977,24 @@ function closeImportTypeModal() {
     $('#importTypeModal').removeClass('show').hide();
 }
 
+function triggerMonthlyTimeImportSelection(importType) {
+    window.monthlyTimeImportType = importType;
+    $('#csvInput').click();
+}
+
+function openImportExportedFilePicker() {
+    triggerMonthlyTimeImportSelection('4');
+}
+
 function confirmImportType() {
     const selected = $('input[name="importType"]:checked').val();
     if (!selected) {
         showAlertMessage('Please select an import type.', AlertType.INFO);
         return;
     }
-    window.monthlyTimeImportType = selected;
+
     closeImportTypeModal();
-    $('#csvInput').click();
+    triggerMonthlyTimeImportSelection(selected);
 }
 
 function importMonthlyTime(file) {

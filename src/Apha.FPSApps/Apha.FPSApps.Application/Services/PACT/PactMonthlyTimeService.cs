@@ -72,8 +72,10 @@ namespace Apha.FPSApps.Application.Services.PACT
 
             return importType switch
             {
+                1 => await ImportOtlDataAsync(file.FileName, workbook),
                 2 => await ImportFlatFileAsync(file.FileName, workbook),
                 3 => await ImportCrossTabAsync(file.FileName, workbook),
+                4 => await ImportExportedDataAsync(file.FileName, workbook),
                 _ => ApiResponseDto<MonthlyTimeImportResultDto>.FailureResponse(
                     [new ApiErrorDto { Code = "INVALID_IMPORT_TYPE", Message = "Unsupported monthly time import type." }],
                     new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow })
@@ -197,6 +199,76 @@ namespace Apha.FPSApps.Application.Services.PACT
             return await _pactApiClient.PactMonthlyTime.ImportStagingAsync(request);
         }
 
+        private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportOtlDataAsync(string fileName, IXLWorkbook workbook)
+        {
+            var requiredHeaders = new[]
+            {
+                "Work Group",
+                "Employee/Supplier Number",
+                "Employee/Supplier",
+                "Task Number",
+                "Project Code",
+                "Period",
+                "Sum of Quantity"
+            };
+
+            var importResult = _excelImportService.ReadExcel(
+                workbook,
+                MapOtlDataRow,
+                requiredHeaders,
+                1,
+                "The uploaded Excel file format is not correct. Please use the correct OTL Data template.");
+
+            if (!importResult.IsSuccess)
+            {
+                return BuildImportFailure(importResult, "INVALID_TEMPLATE", "EMPTY_FILE");
+            }
+
+            var request = new MonthlyTimeImportReqDto
+            {
+                FileName = fileName,
+                ImportType = 1,
+                Rows = importResult.Rows
+            };
+
+            return await _pactApiClient.PactMonthlyTime.ImportStagingAsync(request);
+        }
+
+        private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportExportedDataAsync(string fileName, IXLWorkbook workbook)
+        {
+            var requiredHeaders = new[]
+            {
+                "Work Group",
+                "Pact Staff Id",
+                "Name",
+                "Time Code",
+                "Parent Project",
+                "Month",
+                "Hours"
+            };
+
+            var importResult = _excelImportService.ReadExcel(
+                workbook,
+                MapExportedDataRow,
+                requiredHeaders,
+                1,
+                "The uploaded Excel file format is not correct. Please use the correct exported file template.");
+
+            if (!importResult.IsSuccess)
+            {
+                return BuildImportFailure(importResult, "INVALID_TEMPLATE", "EMPTY_FILE");
+            }
+
+            var request = new MonthlyTimeImportReqDto
+            {
+                FileName = fileName,
+                ImportType = 4,
+                Rows = importResult.Rows
+            };
+
+            return await _pactApiClient.PactMonthlyTime.ImportStagingAsync(request);
+        }
+
         private MonthlyTimeImportRowDto MapFlatFileRow(
             IXLRangeRow row,
             Dictionary<string, int> headerMap,
@@ -211,6 +283,34 @@ namespace Apha.FPSApps.Application.Services.PACT
                 TimeCode = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Time Code")])),
                 ParentProject = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Parent Project")])),
                 Month = monthFromFile,
+                Hours = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Hours")]))
+            };
+        }
+
+        private MonthlyTimeImportRowDto MapOtlDataRow(IXLRangeRow row, Dictionary<string, int> headerMap)
+        {
+            return new MonthlyTimeImportRowDto
+            {
+                WorkGroup = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Work Group")])) ,
+                PactStaffId = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Employee/Supplier Number")])) ,
+                Name = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Employee/Supplier")])) ,
+                TimeCode = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Task Number")])) ,
+                ParentProject = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Project Code")])) ,
+                Month = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Period")])) ,
+                Hours = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Sum of Quantity")]))
+            };
+        }
+
+        private MonthlyTimeImportRowDto MapExportedDataRow(IXLRangeRow row, Dictionary<string, int> headerMap)
+        {
+            return new MonthlyTimeImportRowDto
+            {
+                WorkGroup = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Work Group")])) ,
+                PactStaffId = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Pact Staff Id")])) ,
+                Name = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Name")])) ,
+                TimeCode = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Time Code")])) ,
+                ParentProject = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Parent Project")])) ,
+                Month = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Month")])) ,
                 Hours = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Hours")]))
             };
         }

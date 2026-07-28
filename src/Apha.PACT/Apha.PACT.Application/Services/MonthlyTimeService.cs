@@ -259,6 +259,7 @@ namespace Apha.PACT.Application.Services
 
             var workGroup = record.WorkGroup?.Trim();
             var staffId = record.PactStaffId?.Trim();
+            var name = record.Name?.Trim();
             var timeCode = record.TimeCode?.Trim();
             var parentProject = record.ParentProject?.Trim();
             var month = record.Month;
@@ -266,7 +267,7 @@ namespace Apha.PACT.Application.Services
 
             ValidateHours(hours, failures);
             ValidateWorkGroup(workGroup, context.ValidWorkGroups, failures);
-            ValidateStaff(staffId, workGroup, record, context.StaffByWorkGroup, failures);
+            ValidateStaff(staffId, name, workGroup, record, context.StaffByWorkGroup, failures);
             ValidateTimeCode(timeCode, workGroup, context.TimeCodeRows, failures);
             ValidateParentProject(parentProject, workGroup, timeCode, context.TimeCodeRows, failures);
             ValidateMonth(month, context.ValidMonths, failures);
@@ -295,6 +296,7 @@ namespace Apha.PACT.Application.Services
 
         private static void ValidateStaff(
             string? staffId,
+            string? name,
             string? workGroup,
             StagingMonthlyTime record,
             List<WorkGroupStaffItem> staffByWorkGroup,
@@ -309,7 +311,8 @@ namespace Apha.PACT.Application.Services
             var matchedStaff = staffByWorkGroup
                 .Where(x => x.WorkGroup == workGroup &&
                     ((!string.IsNullOrWhiteSpace(staffId) && x.SpNumber == staffId) ||
-                     (!string.IsNullOrWhiteSpace(staffId) && x.Name == staffId)))
+                     (!string.IsNullOrWhiteSpace(staffId) && x.Name == staffId) ||
+                     (!string.IsNullOrWhiteSpace(name) && x.Name == name)))
                 .ToList();
 
             if (matchedStaff.Count == 0)
@@ -318,6 +321,7 @@ namespace Apha.PACT.Application.Services
             }
             else if (matchedStaff.Count == 1)
             {
+                record.PactStaffId = matchedStaff[0].SpNumber;
                 record.PactId = matchedStaff[0].PactId;
                 record.Name = matchedStaff[0].Name;
             }
