@@ -941,9 +941,9 @@ button a {
 }
 
 .label_width {
-
     min-width: 190px;
     text-align: right;
+    padding-right: 5px;
 }
 
 
@@ -1198,7 +1198,7 @@ main {
     justify-content: flex-end;
     align-items: center;
     padding: 9px 0px 0 20px;
-    border-top: 1px solid #1d70b8 !important;
+/*    border-top: 1px solid #1d70b8 !important;*/
 }
 
 .project-requirement-page .project-total-label-wrap {
@@ -1260,7 +1260,7 @@ main {
 }
 
 .project-requirement-page .project-close-btn {
-    padding: 0 5px;
+    padding: 0 7px;
     border: none;
     border-radius: 0;
     background: #ca3535;
@@ -1638,9 +1638,9 @@ main {
     width: 100%;
 }
 
-.govuk-link {
+/*.govuk-link {
     color: rgba(var(--bs-link-color-rgb), var(--bs-link-opacity, 1)) !important;
-}
+}*/
 
 /* .govuk-link:visited {
     color: white !important;
@@ -2689,10 +2689,10 @@ th.col-resizable {
     font-size: 17px;
 }
 
-.fps-sr-fixedheader-wrap {
+/*.fps-sr-fixedheader-wrap {
     border: 1px solid #6f777b;
     height: 223px;
-}
+}*/
 
 /* ---- Staff column totals bar ---- */
 .fps-sr-totals-bar {
@@ -2833,10 +2833,10 @@ th.col-resizable {
 main {
     padding-bottom: 50px;
 }
-tab-grid-scroll, .grid-scroll-container, .fps-sr-fixedheader-wrap {
+/*tab-grid-scroll, .grid-scroll-container, .fps-sr-fixedheader-wrap {
     overflow-y: auto !important;
     max-height: 400px !important;
-}
+}*/
 
 
     /* Make grid data cells wrap text content - exclude first 2 columns and last column (Action) */ .fps-sr-fixedheader-wrap .editable-grid-table td:not(:first-child):not(:nth-child(2)):not(:last-child),
@@ -2869,9 +2869,7 @@ tab-grid-scroll, .grid-scroll-container, .fps-sr-fixedheader-wrap {
 
 .isYearlyDetailsTabs {
     .grid-scroll-container {
-        height: auto !important;
-        min-height: auto !important;
-        overflow-y: hidden;
+        max-height: 219px;
     }
 }
 .isCustomInfo {
@@ -2882,7 +2880,12 @@ tab-grid-scroll, .grid-scroll-container, .fps-sr-fixedheader-wrap {
     border-radius: 4px;
     padding: 2px;
 }
+.modal-dialog:has(.isAddNewYearModal) {
+    max-width: 650px !important;
+}
 .isAddNewYearModal {
+    padding: 16px 29px !important;
+
     .rates-section h3 {
         font-size: 1em !important;
     }
@@ -2901,4 +2904,52 @@ tab-grid-scroll, .grid-scroll-container, .fps-sr-fixedheader-wrap {
     .govuk-button.isBtnSave {
         float: right !important;
     }
+}
+.isProjectSeclectionGrid {
+    .govuk-table__header {
+        border-bottom: none;
+        padding-top: 0;
+        padding-right: 10px;
+        padding-bottom: 0;
+        min-width: 11vw;
+        width: auto !important;
+        text-align: right;
+    }
+
+    .govuk-table__cell {
+        padding-top 22px;
+        border-bottom: none;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .isCustomErrorMsg {
+        display: block;
+        width: 266px;
+    }
+}
+}
+.summary-item label {
+    min-width: 80px;
+    font-weight: bold;
+}
+.govuk-frontend-supported .govuk-tabs__tab:link {
+    font-weight: bold;
+    text-decoration: none;
+}
+.fps-sr-fixedheader-wrap {
+    height: 283px;
+    max-height: 276px;
+/*    overflow-y: auto;*/
+}
+.fps-sr-fixedheader-wrap:empty {
+    overflow-y: hidden !important;
+}
+.govuk-label{
+    font-weight: bold;
+    font-size: 1em;
+}
+.sup_overflow_y_400 {
+    overflow-y: unset;
+    max-height: max-content;
 }
