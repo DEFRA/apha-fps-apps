@@ -17,6 +17,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string? TestJob { get; set; }
 
         [Display(Name = "Month")]
+        [RegularExpression(@"^(?:[1-9]|1[0-2])$", ErrorMessage = "Month must be between 1 and 12.")]
         [GridColumn(Order = 3, Width = 80, Type = GridColumnType.Text)]
         public string? Month { get; set; }
 
@@ -41,10 +42,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string? Description { get; set; }
 
         [Display(Name = "Supplier Number")]
+        [RegularExpression(@"^\d+$", ErrorMessage = "Supplier Number must be a valid whole number.")]
         [GridColumn(Order = 9, Width = 120, Type = GridColumnType.Text)]
         public string? SupplierNumber { get; set; }
 
         [Display(Name = "Daily Rate")]
+        [RegularExpression(@"^(?!-)\d+(\.\d+)?$", ErrorMessage = "Daily Rate cannot be negative.")]
         [GridColumn(Order = 10, Width = 100, Type = GridColumnType.Text)]
         public string? DailyRate { get; set; }
 
