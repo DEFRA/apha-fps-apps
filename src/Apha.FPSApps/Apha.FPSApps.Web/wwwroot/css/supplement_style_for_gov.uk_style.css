@@ -1158,7 +1158,7 @@ a {
         background-color: #f3f2f1;
         border-bottom: 2px solid var(--govuk-border-colour);
         font-weight: bold;
-        text-align: left;
+        text-align: left !important;
     }
 
 .tbl-dropdown-panel table {
@@ -1522,7 +1522,7 @@ table#tblMonthPeriod > tbody > tr > td {
         background-color: #f3f2f1;
         border-bottom: 2px solid var(--govuk-border-colour);
         font-weight: bold;
-        text-align: left;
+        text-align: left !important;
     }
 
 .tbl-dropdown-panel table {
