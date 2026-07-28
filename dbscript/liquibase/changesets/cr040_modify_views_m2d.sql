@@ -1,9 +1,7 @@
 ﻿--liquibase formatted sql
 --changeset repo-admin:CR040 labels:ddl context:all runOnChange:true
---comment Recreate FPS and mabarchive views for money->numeric(19,4) migration. Float/double precision expressions are intentionally unchanged.
-
+--comment Recreate FPS and mabarchive views for money->numeric(19,4) migration. Non-money double precision expressions (hours, quantities) are intentionally unchanged; money-derived expressions are cast to numeric so they no longer widen to double precision.
 -- Source: pgAdmin schema diff output, adapted for Liquibase execution.
-
 -- -----------------------------------------------------------------------------
 -- View: fps.vtestssummary
 -- -----------------------------------------------------------------------------
@@ -97,20 +95,20 @@ SELECT tlkpproject.parentproject,
         WHEN 0 THEN profitcentregrade.chargerate
         ELSE profitcentregrade.defrachargerate
     END AS chargerate,
-    tblstaffjob.plannedhours * CASE
+    tblstaffjob.plannedhours::numeric * CASE
         lower(tlkpprogram.sector_name::text)
         WHEN 'charge'::text THEN 1::numeric
         ELSE 0::numeric
-    END::double precision * CASE
+    END::numeric * CASE
         tlkpproject.isdefraproject
         WHEN 0 THEN profitcentregrade.chargerate
         ELSE profitcentregrade.defrachargerate
-    END AS cost,
-    tblstaffjob.plannedhours * CASE
+    END::numeric AS cost,
+    tblstaffjob.plannedhours::numeric * CASE
         lower(tlkpprogram.sector_name::text)
         WHEN 'charge'::text THEN 1::numeric
         ELSE 0::numeric
-    END::double precision * profitcentregrade.payrate AS paycost,
+    END::numeric * profitcentregrade.payrate::numeric AS paycost,
     profitcentregrade.profitcentre,
     workgroupgrade.workgroup,
     workgroupgrade.wggrade,
@@ -130,6 +128,7 @@ FROM fps.tblwgemployee
     AND tblstaffjob.fpsyear = tlkpproject.fpsyear
     JOIN fps.tlkpprogram ON tlkpproject.program::text = tlkpprogram.programno::text
     AND tlkpproject.fpsyear = tlkpprogram.fpsyear;
+
 -- -----------------------------------------------------------------------------
 -- View: fps.vplannedstaffcostspar1
 -- -----------------------------------------------------------------------------
@@ -142,8 +141,15 @@ SELECT vprojectstaffplan.parentproject,
     sum(vprojectstaffplan.plannedhours) AS sumofplannedhours,
     sum(vprojectstaffplan.cost) AS sumofcost
 FROM fps.vprojectstaffplan
-    JOIN fps.tlkpproject ON (((vprojectstaffplan.parentproject)::text = (tlkpproject.parentproject)::text) AND vprojectstaffplan.fpsyear = tlkpproject.fpsyear)
-GROUP BY vprojectstaffplan.parentproject, vprojectstaffplan.programno, vprojectstaffplan.fpsyear;
+    JOIN fps.tlkpproject ON (
+        (
+            (vprojectstaffplan.parentproject)::text = (tlkpproject.parentproject)::text
+        )
+        AND vprojectstaffplan.fpsyear = tlkpproject.fpsyear
+    )
+GROUP BY vprojectstaffplan.parentproject,
+    vprojectstaffplan.programno,
+    vprojectstaffplan.fpsyear;
 -- -----------------------------------------------------------------------------
 -- View: fps.vplannedstaffcostssummary
 -- -----------------------------------------------------------------------------
@@ -156,8 +162,15 @@ SELECT workgroup.profitcentre,
     sum(vprojectstaffplan.cost) AS sumofcost,
     sum(vprojectstaffplan.plannedhours) AS sumofplannedhours
 FROM fps.vprojectstaffplan
-    JOIN fps.workgroup ON (((vprojectstaffplan.workgroup)::text = (workgroup.workgroup)::text) AND vprojectstaffplan.fpsyear = workgroup.fpsyear)
-GROUP BY workgroup.profitcentre, vprojectstaffplan.parentproject, vprojectstaffplan.fpsyear;
+    JOIN fps.workgroup ON (
+        (
+            (vprojectstaffplan.workgroup)::text = (workgroup.workgroup)::text
+        )
+        AND vprojectstaffplan.fpsyear = workgroup.fpsyear
+    )
+GROUP BY workgroup.profitcentre,
+    vprojectstaffplan.parentproject,
+    vprojectstaffplan.fpsyear;
 -- -----------------------------------------------------------------------------
 -- View: fps.qrytotalstaffcosts
 -- -----------------------------------------------------------------------------
@@ -170,7 +183,8 @@ SELECT parentproject AS jobcode,
     COALESCE(SUM(cost::numeric), 0) AS totalstaffcosts,
     COALESCE(SUM(paycost::numeric), 0) AS totalpaycosts
 FROM fps.vprojectstaffplan
-GROUP BY parentproject, fpsyear;
+GROUP BY parentproject,
+    fpsyear;
 -- -----------------------------------------------------------------------------
 -- View: fps.vtimerecordedrc_final
 -- -----------------------------------------------------------------------------
@@ -180,11 +194,31 @@ CREATE OR REPLACE VIEW fps.vtimerecordedrc_final AS
 SELECT vtimerecordedrc.project,
     vtimerecordedrc.profitcentre,
     vtimerecordedrc.fpsyear,
-    COALESCE(vplannedstaffcostssummary.sumofplannedhours, (0)::double precision) AS sumofplannedhours,
-    COALESCE((vplannedstaffcostssummary.sumofcost)::numeric, (0)::numeric) AS sumofcost
+    COALESCE(
+        vplannedstaffcostssummary.sumofplannedhours,
+        (0)::double precision
+    ) AS sumofplannedhours,
+    COALESCE(
+        (vplannedstaffcostssummary.sumofcost)::numeric,
+        (0)::numeric
+    ) AS sumofcost
 FROM fps.vtimerecordedrc
-    LEFT JOIN fps.vplannedstaffcostssummary ON ((((vtimerecordedrc.profitcentre)::text = (vplannedstaffcostssummary.profitcentre)::text) AND ((vtimerecordedrc.project)::text = (vplannedstaffcostssummary.parentproject)::text) AND vtimerecordedrc.fpsyear = vplannedstaffcostssummary.fpsyear))
-GROUP BY vtimerecordedrc.project, vtimerecordedrc.profitcentre, vtimerecordedrc.fpsyear, vplannedstaffcostssummary.sumofplannedhours, vplannedstaffcostssummary.sumofcost;
+    LEFT JOIN fps.vplannedstaffcostssummary ON (
+        (
+            (
+                (vtimerecordedrc.profitcentre)::text = (vplannedstaffcostssummary.profitcentre)::text
+            )
+            AND (
+                (vtimerecordedrc.project)::text = (vplannedstaffcostssummary.parentproject)::text
+            )
+            AND vtimerecordedrc.fpsyear = vplannedstaffcostssummary.fpsyear
+        )
+    )
+GROUP BY vtimerecordedrc.project,
+    vtimerecordedrc.profitcentre,
+    vtimerecordedrc.fpsyear,
+    vplannedstaffcostssummary.sumofplannedhours,
+    vplannedstaffcostssummary.sumofcost;
 -- -----------------------------------------------------------------------------
 -- View: fps.qryjobmonth_tctransfers
 -- -----------------------------------------------------------------------------
@@ -246,7 +280,9 @@ SELECT DISTINCT project,
     fpsyear,
     sum(transfercost) AS sumoftransfercost
 FROM fps.qryjobmonth_transfers1
-GROUP BY project, month, fpsyear;
+GROUP BY project,
+    month,
+    fpsyear;
 -- -----------------------------------------------------------------------------
 -- View: fps.qryjobmonth_transferunion
 -- -----------------------------------------------------------------------------
@@ -276,7 +312,9 @@ SELECT project,
     fpsyear,
     COALESCE(SUM(transfercost::numeric), 0) AS sumoftransfercost
 FROM fps.qryjobmonth_transferunion
-GROUP BY project, month, fpsyear;
+GROUP BY project,
+    month,
+    fpsyear;
 -- -----------------------------------------------------------------------------
 -- View: fps.qryprojectmonthcw
 -- -----------------------------------------------------------------------------
@@ -287,7 +325,7 @@ SELECT DISTINCT projectmonth.project,
     projectmonth.monthno,
     projectmonth.fpsyear,
     tlkpproject.plancaseworkdebit / 12 AS cwdebit,
-    tlkpproject.transferincome * tlkpproject.caseworksub::double precision / 12 AS cwcredit
+    tlkpproject.transferincome * tlkpproject.caseworksub::numeric / 12 AS cwcredit
 FROM fps.tlkpproject
     JOIN fps.projectmonth ON tlkpproject.parentproject::text = projectmonth.project::text
     AND tlkpproject.fpsyear = projectmonth.fpsyear;
@@ -353,10 +391,10 @@ SELECT DISTINCT p.projectgroup,
     p.projectstatus,
     sj.plannedhours AS hrs,
     pcg.chargerate,
-    sj.plannedhours * CASE
+    sj.plannedhours::numeric * CASE
         WHEN lower(prog.sector_name::text) = 'charge'::text THEN 1::numeric
         ELSE 0::numeric
-    END::double precision * pcg.chargerate AS fee
+    END::numeric * pcg.chargerate::numeric AS fee
 FROM fps.tlkpproject p
     JOIN fps.vtblstaffjob_bygroup sj ON sj.jobcode::text = p.parentproject::text
     AND sj.fpsyear = p.fpsyear
@@ -370,13 +408,11 @@ FROM fps.tlkpproject p
     AND pcg.fpsyear = wgg.fpsyear
     JOIN fps.tlkpprogram prog ON prog.programno::text = p.program::text
     AND prog.fpsyear = p.fpsyear;
-
 -- -----------------------------------------------------------------------------
 -- View: fps.vtestreqbreakdown
 -- -----------------------------------------------------------------------------
 -- Note: View recreation may fail if dependent objects are not updated first.
 DROP VIEW IF EXISTS fps.vtestreqbreakdown;
-
 CREATE OR REPLACE VIEW fps.vtestreqbreakdown AS WITH default_workgroup AS (
         SELECT tc.testcode,
             tc.fpsyear,
@@ -445,7 +481,7 @@ SELECT q.testcode,
     COALESCE(q.profitcentre, wg.profitcentre) AS pc,
     q.workg,
     q.wgprice,
-    (q.noreq::numeric * q.wgprice::numeric)::numeric(19, 4) AS totalcost,
+    (q.noreq::numeric * q.wgprice::numeric)::numeric AS totalcost,
     q.fpsyear
 FROM qry_test_req_breakdown q
     LEFT JOIN workgroup_lookup wg ON wg.workgroup::text = q.workg::text;
@@ -513,15 +549,15 @@ SELECT tlkptestcapability.planportfolio,
     sum(monthlyoutput.volume) AS totvol,
     qrytestspcostplan_xtab.labt::numeric AS ltunitcharge,
     qrytestspcostplan_xtab.vetr::numeric AS sdunitcharge,
-    qrytestspcostplan_xtab.labt::numeric::double precision * sum(monthlyoutput.volume) AS ltfee,
-    qrytestspcostplan_xtab.vetr::numeric::double precision * sum(monthlyoutput.volume) AS sdfee,
-    sum(monthlyoutput.volume) + qrytestspcostplan_xtab.vetr::numeric::double precision * sum(monthlyoutput.volume) AS totalfee,
+    qrytestspcostplan_xtab.labt::numeric * sum(monthlyoutput.volume) AS ltfee,
+    qrytestspcostplan_xtab.vetr::numeric * sum(monthlyoutput.volume) AS sdfee,
+    sum(monthlyoutput.volume) + qrytestspcostplan_xtab.vetr::numeric * sum(monthlyoutput.volume) AS totalfee,
     sum(
-        vtbltestrequ.testprice::numeric::double precision * monthlyoutput.volume
+        vtbltestrequ.testprice::numeric * monthlyoutput.volume
     ) AS feecharged,
     sum(
-        vtbltestrequ.testprice::numeric::double precision * monthlyoutput.volume
-    ) - sum(monthlyoutput.volume) + qrytestspcostplan_xtab.vetr::numeric::double precision * sum(monthlyoutput.volume) AS profit_loss,
+        vtbltestrequ.testprice::numeric * monthlyoutput.volume
+    ) - sum(monthlyoutput.volume) + qrytestspcostplan_xtab.vetr::numeric * sum(monthlyoutput.volume) AS profit_loss,
     monthlyoutput.workgroup
 FROM fps.vtbltestrequ
     JOIN (
@@ -575,7 +611,8 @@ FROM fps.tlkpproject
     JOIN fps.tblanimalreq ON tlkpproject.parentproject::text = tblanimalreq.jobcode::text
     AND tlkpproject.fpsyear = tblanimalreq.fpsyear
     JOIN fps.tblanimals ON tblanimalreq.animaltype::text = tblanimals.animaltype::text
-    AND tblanimalreq.fpsyear = tblanimals.fpsyear;-- -----------------------------------------------------------------------------
+    AND tblanimalreq.fpsyear = tblanimals.fpsyear;
+-- -----------------------------------------------------------------------------
 -- View: fps.qrytotalanimalcosts
 -- -----------------------------------------------------------------------------
 -- Recreate dependent view that was dropped with CASCADE.
@@ -586,7 +623,8 @@ SELECT parentproject AS jobcode,
     fpsyear,
     COALESCE(SUM(cost::numeric), 0) AS totalanimalcosts
 FROM fps.vprojectanimalplan
-GROUP BY parentproject, fpsyear;
+GROUP BY parentproject,
+    fpsyear;
 -- -----------------------------------------------------------------------------
 -- View: fps.vpostmortem1report_obsolete
 -- -----------------------------------------------------------------------------
@@ -600,7 +638,9 @@ SELECT testcode,
     sdunitcharge,
     (round((ltfee)::numeric))::integer AS ltfee,
     (round((sdfee)::numeric))::integer AS sdfee,
-    ((round((ltfee)::numeric))::integer + (round((sdfee)::numeric))::integer) AS total_fee,
+    (
+        (round((ltfee)::numeric))::integer + (round((sdfee)::numeric))::integer
+    ) AS total_fee,
     (round((feecharged)::numeric))::integer AS fee_charged,
     (round((((feecharged - ltfee) - sdfee))::numeric))::integer AS profit_loss,
     workgroup
@@ -610,50 +650,92 @@ FROM fps.vpostmort1;
 -- -----------------------------------------------------------------------------
 -- Note: View recreation may fail if dependent objects are not updated first.
 DROP VIEW IF EXISTS mabarchive.vmy_projectanimalplan;
-CREATE OR REPLACE VIEW mabarchive.vmy_projectanimalplan
- AS
- SELECT my_tlkpproject.year,
+CREATE OR REPLACE VIEW mabarchive.vmy_projectanimalplan AS
+SELECT my_tlkpproject.year,
     my_tlkpproject.parentproject,
     my_tblanimalreq.animaltype,
     my_tblanimalreq.numberofdays,
     my_tblanimalreq.numberofanimals,
-        CASE
-            WHEN my_tlkpproject.isdefraproject <> 0 AND my_tlkpproject.year >= 2013 THEN my_tblanimals.defradailyrate
-            ELSE my_tblanimals.dailyrate
-        END AS rate,
-        CASE
-            WHEN my_tlkpproject.isdefraproject <> 0 AND my_tlkpproject.year >= 2013 THEN my_tblanimals.defradailyrate
-            ELSE my_tblanimals.dailyrate
-        END * my_tblanimalreq.numberofdays * my_tblanimalreq.numberofanimals AS cost
-   FROM mabarchive.my_tlkpproject
-     JOIN mabarchive.my_tblanimalreq ON my_tlkpproject.year = my_tblanimalreq.year AND my_tlkpproject.parentproject::text = my_tblanimalreq.jobcode::text
-     JOIN mabarchive.my_tblanimals ON my_tblanimalreq.year = my_tblanimals.year AND my_tblanimalreq.animaltype::text = my_tblanimals.animaltype::text;
+    CASE
+        WHEN my_tlkpproject.isdefraproject <> 0
+        AND my_tlkpproject.year >= 2013 THEN my_tblanimals.defradailyrate
+        ELSE my_tblanimals.dailyrate
+    END AS rate,
+    CASE
+        WHEN my_tlkpproject.isdefraproject <> 0
+        AND my_tlkpproject.year >= 2013 THEN my_tblanimals.defradailyrate
+        ELSE my_tblanimals.dailyrate
+    END * my_tblanimalreq.numberofdays * my_tblanimalreq.numberofanimals AS cost
+FROM mabarchive.my_tlkpproject
+    JOIN mabarchive.my_tblanimalreq ON my_tlkpproject.year = my_tblanimalreq.year
+    AND my_tlkpproject.parentproject::text = my_tblanimalreq.jobcode::text
+    JOIN mabarchive.my_tblanimals ON my_tblanimalreq.year = my_tblanimals.year
+    AND my_tblanimalreq.animaltype::text = my_tblanimals.animaltype::text;
 -- -----------------------------------------------------------------------------
 -- View: mabarchive.vmy_projectstaffplan
 -- -----------------------------------------------------------------------------
 -- Note: View recreation may fail if dependent objects are not updated first.
 DROP VIEW IF EXISTS mabarchive.vmy_projectstaffplan;
-CREATE OR REPLACE VIEW mabarchive.vmy_projectstaffplan
- AS
- SELECT my_tlkpproject.year,
+CREATE OR REPLACE VIEW mabarchive.vmy_projectstaffplan AS
+SELECT my_tlkpproject.year,
     my_tlkpproject.parentproject,
     my_profitcentregrade.pcgrade,
     my_staff.workgroupgrade,
     my_staff.name,
     my_tblstaffjob.plannedhours,
+    CASE
+        WHEN my_tlkpproject.isdefraproject <> 0
+        AND my_tlkpproject.year >= 2013 THEN my_profitcentregrade.npr + my_profitcentregrade.payrate
+        ELSE my_profitcentregrade.chargerate
+    END AS rate,
+    CASE
+        WHEN my_tlkpproject.isdefraproject <> 0
+        AND my_tlkpproject.year >= 2013 THEN my_tblstaffjob.plannedhours * (
+            my_profitcentregrade.npr + my_profitcentregrade.payrate
+        )
+        ELSE my_tblstaffjob.plannedhours * my_profitcentregrade.chargerate
+    END AS cost
+FROM mabarchive.my_tlkpproject
+    JOIN mabarchive.my_tblstaffjob ON my_tlkpproject.year = my_tblstaffjob.year
+    AND my_tlkpproject.parentproject::text = my_tblstaffjob.jobcode::text
+    JOIN mabarchive.my_staff ON my_tblstaffjob.year = my_staff.year
+    AND my_tblstaffjob.staffid::text = my_staff.staffid::text
+    JOIN mabarchive.my_workgroupgrade ON my_staff.year = my_workgroupgrade.year
+    AND my_staff.workgroupgrade::text = my_workgroupgrade.wggrade::text
+    JOIN mabarchive.my_profitcentregrade ON my_workgroupgrade.year = my_profitcentregrade.year
+    AND my_workgroupgrade.profitcentregrade::text = my_profitcentregrade.pcgrade::text;
+
+-- -----------------------------------------------------------------------------
+-- View: fps.vqrytestsactualbreakdown
+-- -----------------------------------------------------------------------------
+-- Note: New view, no prior definition in baseline/changesets.
+DROP VIEW IF EXISTS fps.vqrytestsactualbreakdown;
+CREATE OR REPLACE VIEW fps.vqrytestsactualbreakdown
+ AS
+ SELECT DISTINCT vtlkpproject_general.program,
+    monthlyoutput.buyer,
+    tlkptestcapability.planportfolio AS portfolio,
+    tlkptestcapability.workgroup,
+    tlkptestcapability.testcode,
+    testorproduct.shortdescription,
+    monthlyoutput.month,
+    monthlyoutput.fpsyear,
+    COALESCE(tbltestrccost.price, tlkptestreqmt.unitprice)::numeric AS pcprice,
+    monthlyoutput.volume::numeric * COALESCE(tbltestrccost.price, tlkptestreqmt.unitprice)::numeric AS pccost,
         CASE
-            WHEN my_tlkpproject.isdefraproject <> 0 AND my_tlkpproject.year >= 2013 THEN my_profitcentregrade.npr + my_profitcentregrade.payrate
-            ELSE my_profitcentregrade.chargerate
-        END AS rate,
-        CASE
-            WHEN my_tlkpproject.isdefraproject <> 0 AND my_tlkpproject.year >= 2013 THEN my_tblstaffjob.plannedhours * (my_profitcentregrade.npr + my_profitcentregrade.payrate)
-            ELSE my_tblstaffjob.plannedhours * my_profitcentregrade.chargerate
-        END AS cost
-   FROM mabarchive.my_tlkpproject
-     JOIN mabarchive.my_tblstaffjob ON my_tlkpproject.year = my_tblstaffjob.year AND my_tlkpproject.parentproject::text = my_tblstaffjob.jobcode::text
-     JOIN mabarchive.my_staff ON my_tblstaffjob.year = my_staff.year AND my_tblstaffjob.staffid::text = my_staff.staffid::text
-     JOIN mabarchive.my_workgroupgrade ON my_staff.year = my_workgroupgrade.year AND my_staff.workgroupgrade::text = my_workgroupgrade.wggrade::text
-     JOIN mabarchive.my_profitcentregrade ON my_workgroupgrade.year = my_profitcentregrade.year AND my_workgroupgrade.profitcentregrade::text = my_profitcentregrade.pcgrade::text;
+            WHEN monthlyoutput.workgroup::text = 'LTLA'::text AND tbltestrccost.profitcentre::text = 'VetR'::text THEN 'Path'::character varying
+            WHEN tbltestrccost.profitcentre IS NULL THEN vworkgroup_general.profitcentre
+            ELSE tbltestrccost.profitcentre
+        END AS profitcentre
+   FROM fps.tlkptestreqmt
+     JOIN fps.tlkptestcapability ON tlkptestcapability.testcode::text = tlkptestreqmt.testcode::text AND tlkptestcapability.fpsyear = tlkptestreqmt.fpsyear
+     JOIN fps.monthlyoutput ON tlkptestcapability.testcode::text = monthlyoutput.testcode::text AND tlkptestcapability.workgroup::text = monthlyoutput.workgroup::text AND tlkptestreqmt.buyer::text = monthlyoutput.buyer::text AND monthlyoutput.fpsyear = tlkptestreqmt.fpsyear
+     JOIN fps.vworkgroup_general ON monthlyoutput.workgroup::text = vworkgroup_general.workgroup::text AND vworkgroup_general.fpsyear = monthlyoutput.fpsyear
+     JOIN fps.testorproduct ON tlkptestreqmt.testcode::text = testorproduct.itemcode::text AND testorproduct.fpsyear = tlkptestreqmt.fpsyear
+     JOIN fps.vtlkpproject_general ON tlkptestreqmt.buyer::text = vtlkpproject_general.parentproject::text AND vtlkpproject_general.fpsyear = tlkptestreqmt.fpsyear
+     LEFT JOIN fps.tbltestrccost ON testorproduct.itemcode::text = tbltestrccost.testcode::text AND tbltestrccost.fpsyear = tlkptestreqmt.fpsyear;
+
+
+
+
 -- End of changeset
-
-
