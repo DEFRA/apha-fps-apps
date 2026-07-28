@@ -18,7 +18,6 @@
 
     <div class="project-code-section govuk-!-margin-bottom-2 govuk-!-padding-left-0">
         <textarea class="govuk-textarea pp-project-description" id="projectDescription" aria-label="Project description" rows="2" asp-for="ProjectDescription">@Model.ProjectDescription</textarea>
-        <button type="button" class="govuk-button sup_margin_0" aria-label="Preview Report">Preview Report</button>
         <a href="@Url.Action("ExportToExcel", "ProjectPlanning", new { area = "FPS", projectCode = Model.ProjectCode })"
            class="govuk-button sup_margin_0" aria-label="Export to Excel">Export to Excel</a>
     </div>

@@ -82,6 +82,20 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Returns a paged, sorted and filtered list of staff job allocation rows for a job code and workgroup grade.
+        /// </summary>
+        [HttpGet("staffjobsallocation/paged")]
+        public async Task<IActionResult> GetStaffJobsAllocationByJobCodeWgGradePagedAsync(
+            [FromQuery] PaginationReq<string> query,
+            [FromQuery] string jobcode,
+            [FromQuery] string wgGrade)
+        {
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _staffJobService.GetStaffJobsAllocationByJobCodeWgGradePagedAsync(filter, jobcode, wgGrade);
+            return Ok(_mapper.Map<PaginationRes<StaffJobViewRes>>(result));
+        }
+
+        /// <summary>
         /// Returns a paged, sorted and filtered list of ZT-type staff job rows for a specific staff member.
         /// </summary>
         [HttpGet("ztstaffjobs/paged")]
