@@ -30,6 +30,7 @@
                 GridColumnType.GbpValue => true,
                 GridColumnType.GbpValueRounded => true,
                 GridColumnType.Percentage => true,
+                GridColumnType.RoundTwoDecimal => true,
                 _ => false
             };
         }
