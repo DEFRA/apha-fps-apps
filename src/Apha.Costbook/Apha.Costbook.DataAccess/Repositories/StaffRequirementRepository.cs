@@ -122,7 +122,7 @@ public class StaffRequirementRepository : RepositoryBase, IStaffRequirementRepos
 
         return rows.Select(x =>
         {
-            var baseRate = isDefra ? (double?)x.DefraChargeRate : (double?)x.ChargeRate;
+            var baseRate = isDefra ? (decimal?)x.DefraChargeRate : (decimal?)x.ChargeRate;
             return new PayRateLookup
             {
                 WgGrade = x.WgGrade,
@@ -130,7 +130,7 @@ public class StaffRequirementRepository : RepositoryBase, IStaffRequirementRepos
                 PayRate = (decimal?)x.PayRate,
                 Npr = (decimal?)x.Npr,
                 Ohr = (decimal?)x.Ohr,
-                ChargeRateWithInflamation = baseRate.HasValue ? (decimal?)(baseRate.Value * inflationFactor) : null
+                ChargeRateWithInflamation = baseRate.HasValue ? (decimal?)(baseRate.Value * (decimal)inflationFactor) : null
             };
         });
     }
