@@ -229,5 +229,259 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             Assert.Equal(15m, a1.Values["WG2"]);
             Assert.Equal(15m, a1.RowSummary);
         }
+
+        private void ArrangeSortableGrid()
+        {
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync("PC1")
+                .Returns(ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(new List<WorkGroupViewDto>
+                {
+                    new() { WorkGroupName = "WG1", ProfitCentre = "PC1" },
+                    new() { WorkGroupName = "WG2", ProfitCentre = "PC1" }
+                }));
+            _budgetBidsService.GetBidViewAsync("WG1").Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(
+                new List<BidViewDto>
+                {
+                    new() { Account = "A1", WorkGroupName = "WG1", GenBid = 10m },
+                    new() { Account = "A2", WorkGroupName = "WG1", GenBid = 5m }
+                }));
+            _budgetBidsService.GetBidViewAsync("WG2").Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(
+                new List<BidViewDto>
+                {
+                    new() { Account = "A1", WorkGroupName = "WG2", GenBid = 20m },
+                    new() { Account = "A2", WorkGroupName = "WG2", GenBid = 40m }
+                }));
+            _budgetBidsService.GetAccountCategoriesAsync().Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(
+                new List<AccountCategoryDto>
+                {
+                    new() { AccShortName = "A1" },
+                    new() { AccShortName = "A2" }
+                }));
+        }
+
+        [Fact]
+        public async Task LoadGrid_NoSort_DefaultsToAccountAscending_AndClearsSortState()
+        {
+            ArrangeSortableGrid();
+
+            var result = await _controller.LoadGrid("PC1");
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Null(grid.Pagination.SortColumn);
+            Assert.False(grid.Pagination.SortDirection);
+            Assert.Collection(grid.Data,
+                r => Assert.Equal("A1", r.AccShortName),
+                r => Assert.Equal("A2", r.AccShortName));
+        }
+
+        [Fact]
+        public async Task LoadGrid_SortByAccShortName_Descending_ReordersRows_AndReflectsSortState()
+        {
+            ArrangeSortableGrid();
+
+            var result = await _controller.LoadGrid("PC1", "AccShortName", true);
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Equal("AccShortName", grid.Pagination.SortColumn);
+            Assert.True(grid.Pagination.SortDirection);
+            Assert.Collection(grid.Data,
+                r => Assert.Equal("A2", r.AccShortName),
+                r => Assert.Equal("A1", r.AccShortName));
+        }
+
+        [Fact]
+        public async Task LoadGrid_SortByRowSummary_Ascending_OrdersNumerically()
+        {
+            ArrangeSortableGrid();
+
+            // A1 summary = 30, A2 summary = 45.
+            var result = await _controller.LoadGrid("PC1", "RowSummary", false);
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Collection(grid.Data,
+                r => Assert.Equal(30m, r.RowSummary),
+                r => Assert.Equal(45m, r.RowSummary));
+        }
+
+        [Fact]
+        public async Task LoadGrid_SortByRowSummary_Descending_OrdersNumerically()
+        {
+            ArrangeSortableGrid();
+
+            var result = await _controller.LoadGrid("PC1", "RowSummary", true);
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Collection(grid.Data,
+                r => Assert.Equal(45m, r.RowSummary),
+                r => Assert.Equal(30m, r.RowSummary));
+        }
+
+        [Fact]
+        public async Task LoadGrid_SortByDynamicWorkgroupColumn_OrdersByValuesDictionary()
+        {
+            ArrangeSortableGrid();
+
+            // WG2 values: A1 = 20, A2 = 40. Ascending -> A1 then A2; descending -> A2 then A1.
+            var ascResult = await _controller.LoadGrid("PC1", "WG2", false);
+            var ascGrid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(ascResult).Model);
+            Assert.Collection(ascGrid.Data,
+                r => Assert.Equal("A1", r.AccShortName),
+                r => Assert.Equal("A2", r.AccShortName));
+
+            var descResult = await _controller.LoadGrid("PC1", "WG2", true);
+            var descGrid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(descResult).Model);
+            Assert.Collection(descGrid.Data,
+                r => Assert.Equal("A2", r.AccShortName),
+                r => Assert.Equal("A1", r.AccShortName));
+        }
+
+        [Fact]
+        public async Task LoadGrid_SortByUnknownColumn_KeepsRowsStable()
+        {
+            ArrangeSortableGrid();
+
+            // Unknown column resolves to null keys for all rows -> original order preserved.
+            var result = await _controller.LoadGrid("PC1", "DoesNotExist", false);
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Collection(grid.Data,
+                r => Assert.Equal("A1", r.AccShortName),
+                r => Assert.Equal("A2", r.AccShortName));
+        }
+
+        [Fact]
+        public async Task LoadGrid_SortWithNoProfitCentre_ReturnsEmptyData_WithSortState()
+        {
+            var result = await _controller.LoadGrid(null, "RowSummary", true);
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Empty(grid.Data);
+            Assert.Equal("RowSummary", grid.Pagination.SortColumn);
+            Assert.True(grid.Pagination.SortDirection);
+        }
+
+        [Fact]
+        public async Task LoadGrid_FilterByAccShortName_ReturnsMatchingRows_AndKeepsFilterState()
+        {
+            ArrangeSortableGrid();
+
+            var result = await _controller.LoadGrid("PC1", filter: "{\"AccShortName\":\"A1\"}");
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var row = Assert.Single(grid.Data);
+            Assert.Equal("A1", row.AccShortName);
+            Assert.NotNull(grid.CurrentFilters);
+            Assert.Equal("A1", grid.CurrentFilters!["AccShortName"]);
+        }
+
+        [Fact]
+        public async Task LoadGrid_FilterByAccShortName_IsCaseInsensitiveContains()
+        {
+            ArrangeSortableGrid();
+
+            var result = await _controller.LoadGrid("PC1", filter: "{\"AccShortName\":\"a\"}");
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Equal(2, grid.Data.Count);
+        }
+
+        [Fact]
+        public async Task LoadGrid_FilterByRowSummary_MatchesNumericText()
+        {
+            ArrangeSortableGrid();
+
+            // A1 summary = 30, A2 summary = 45.
+            var result = await _controller.LoadGrid("PC1", filter: "{\"RowSummary\":\"45\"}");
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var row = Assert.Single(grid.Data);
+            Assert.Equal("A2", row.AccShortName);
+        }
+
+        [Fact]
+        public async Task LoadGrid_FilterByDynamicWorkgroupColumn_MatchesValuesDictionary()
+        {
+            ArrangeSortableGrid();
+
+            // WG2 values: A1 = 20, A2 = 40.
+            var result = await _controller.LoadGrid("PC1", filter: "{\"WG2\":\"40\"}");
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var row = Assert.Single(grid.Data);
+            Assert.Equal("A2", row.AccShortName);
+        }
+
+        [Fact]
+        public async Task LoadGrid_MultipleFilters_AppliedWithAndSemantics()
+        {
+            ArrangeSortableGrid();
+
+            // A1 has AccShortName "A1" and RowSummary 30 -> matches both.
+            var result = await _controller.LoadGrid("PC1", filter: "{\"AccShortName\":\"A\",\"RowSummary\":\"30\"}");
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var row = Assert.Single(grid.Data);
+            Assert.Equal("A1", row.AccShortName);
+        }
+
+        [Fact]
+        public async Task LoadGrid_FilterWithNoMatch_ReturnsNoRows()
+        {
+            ArrangeSortableGrid();
+
+            var result = await _controller.LoadGrid("PC1", filter: "{\"AccShortName\":\"ZZZ\"}");
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Empty(grid.Data);
+        }
+
+        [Fact]
+        public async Task LoadGrid_EmptyFilterObject_ReturnsAllRows_WithNoFilterState()
+        {
+            ArrangeSortableGrid();
+
+            var result = await _controller.LoadGrid("PC1", filter: "{}");
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Equal(2, grid.Data.Count);
+            Assert.Null(grid.CurrentFilters);
+        }
+
+        [Fact]
+        public async Task LoadGrid_FilterWithBlankValue_IsIgnored()
+        {
+            ArrangeSortableGrid();
+
+            var result = await _controller.LoadGrid("PC1", filter: "{\"AccShortName\":\"   \"}");
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Equal(2, grid.Data.Count);
+            Assert.Null(grid.CurrentFilters);
+        }
+
+        [Fact]
+        public async Task LoadGrid_InvalidFilterJson_IsIgnored_ReturnsAllRows()
+        {
+            ArrangeSortableGrid();
+
+            var result = await _controller.LoadGrid("PC1", filter: "not-json");
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Equal(2, grid.Data.Count);
+            Assert.Null(grid.CurrentFilters);
+        }
+
+        [Fact]
+        public async Task LoadGrid_FilterAndSort_AppliedTogether()
+        {
+            ArrangeSortableGrid();
+
+            // Filter to rows containing "A", then sort by RowSummary descending (A2=45, A1=30).
+            var result = await _controller.LoadGrid("PC1", "RowSummary", true, "{\"AccShortName\":\"A\"}");
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Collection(grid.Data,
+                r => Assert.Equal("A2", r.AccShortName),
+                r => Assert.Equal("A1", r.AccShortName));
+        }
     }
 }

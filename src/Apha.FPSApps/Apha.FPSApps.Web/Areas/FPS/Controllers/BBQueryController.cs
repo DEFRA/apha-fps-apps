@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
+using System.Text.Json;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
@@ -55,13 +56,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// </summary>
         [HttpPost]
         [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> LoadGrid(string? profitCentre)
+        public async Task<IActionResult> LoadGrid(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null)
         {
-            var grid = await BuildGridAsync(profitCentre);
+            var grid = await BuildGridAsync(profitCentre, sortBy, descending, filter);
             return PartialView("_DataGrid", grid);
         }
 
-        private async Task<DataGridConfig<BBQueryCrosstabRow>> BuildGridAsync(string? profitCentre)
+        private async Task<DataGridConfig<BBQueryCrosstabRow>> BuildGridAsync(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null)
         {
             var rows = new List<BBQueryCrosstabRow>();
             var columns = new List<DataGridColumn>
@@ -133,6 +134,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 }
             }
 
+            var filters = ParseFilters(filter);
+            rows = ApplyFilters(rows, filters);
+            rows = ApplySorting(rows, sortBy, descending);
+
             return new DataGridConfig<BBQueryCrosstabRow>
             {
                 GridId            = "bbQueryGrid",
@@ -145,8 +150,140 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 BindGridUrl       = "/FPS/BBQuery/LoadGrid",
                 Columns           = columns,
                 Data              = rows,
-                Pagination        = new PaginationModel()
+                CurrentFilters    = filters,
+                Pagination        = new PaginationModel
+                {
+                    SortColumn    = sortBy,
+                    SortDirection = descending
+                }
             };
+        }
+
+        /// <summary>
+        /// Parses the JSON filter payload posted by the DataGrid into a column/value map.
+        /// Returns null when there is nothing to filter on.
+        /// </summary>
+        private static Dictionary<string, string>? ParseFilters(string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return null;
+
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<Dictionary<string, string>>(filter);
+                if (parsed == null || parsed.Count == 0)
+                    return null;
+
+                var cleaned = parsed
+                    .Where(kvp => !string.IsNullOrWhiteSpace(kvp.Value))
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+                return cleaned.Count > 0 ? cleaned : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Filters the cross-tab rows using a case-insensitive "contains" match on the fixed
+        /// <c>AccShortName</c> column and a "contains" match on the string form of the
+        /// <c>RowSummary</c> and dynamic workgroup columns.
+        /// </summary>
+        private static List<BBQueryCrosstabRow> ApplyFilters(List<BBQueryCrosstabRow> rows, Dictionary<string, string>? filters)
+        {
+            if (filters == null || filters.Count == 0 || rows.Count == 0)
+                return rows;
+
+            return rows.Where(row => filters.All(f => RowMatchesFilter(row, f.Key, f.Value))).ToList();
+        }
+
+        private static bool RowMatchesFilter(BBQueryCrosstabRow row, string column, string value)
+        {
+            var cellValue = column switch
+            {
+                "AccShortName" => row.AccShortName,
+                "RowSummary"   => row.RowSummary.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                _              => row.Values.TryGetValue(column, out var v) ? v?.ToString() : null
+            };
+
+            return cellValue != null &&
+                   cellValue.Contains(value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Sorts the cross-tab rows by the requested column. Supports the fixed
+        /// <c>AccShortName</c> and <c>RowSummary</c> columns as well as the dynamic
+        /// workgroup columns whose values are held in <see cref="BBQueryCrosstabRow.Values"/>.
+        /// </summary>
+        private static List<BBQueryCrosstabRow> ApplySorting(List<BBQueryCrosstabRow> rows, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy) || rows.Count == 0)
+                return rows;
+
+            Func<BBQueryCrosstabRow, object?> keySelector = sortBy switch
+            {
+                "AccShortName" => r => r.AccShortName,
+                "RowSummary"   => r => r.RowSummary,
+                _              => r => r.Values.TryGetValue(sortBy, out var v) ? v : null
+            };
+
+            var comparer = new BBQueryRowComparer(keySelector);
+
+            return descending
+                ? rows.OrderByDescending(r => r, comparer).ToList()
+                : rows.OrderBy(r => r, comparer).ToList();
+        }
+
+        /// <summary>
+        /// Compares cross-tab rows by an extracted key, ordering numeric values numerically
+        /// and everything else as case-insensitive strings, with nulls sorted first.
+        /// </summary>
+        private sealed class BBQueryRowComparer : IComparer<BBQueryCrosstabRow>
+        {
+            private readonly Func<BBQueryCrosstabRow, object?> _keySelector;
+
+            public BBQueryRowComparer(Func<BBQueryCrosstabRow, object?> keySelector)
+            {
+                _keySelector = keySelector;
+            }
+
+            public int Compare(BBQueryCrosstabRow? x, BBQueryCrosstabRow? y)
+            {
+                var xKey = x is null ? null : _keySelector(x);
+                var yKey = y is null ? null : _keySelector(y);
+
+                if (xKey is null && yKey is null) return 0;
+                if (xKey is null) return -1;
+                if (yKey is null) return 1;
+
+                if (TryToDecimal(xKey, out var xNum) && TryToDecimal(yKey, out var yNum))
+                    return xNum.CompareTo(yNum);
+
+                return string.Compare(xKey.ToString(), yKey.ToString(), StringComparison.OrdinalIgnoreCase);
+            }
+
+            private static bool TryToDecimal(object value, out decimal result)
+            {
+                switch (value)
+                {
+                    case decimal d:
+                        result = d;
+                        return true;
+                    case double db:
+                        result = (decimal)db;
+                        return true;
+                    case int i:
+                        result = i;
+                        return true;
+                    case long l:
+                        result = l;
+                        return true;
+                    default:
+                        return decimal.TryParse(value.ToString(), out result);
+                }
+            }
         }
 
         private int GetSelectedFpsYear()
