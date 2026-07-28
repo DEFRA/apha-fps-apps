@@ -15,6 +15,6 @@
         GbpValueRounded, // £0 (rounded, no decimals)
         DoubleNumber,
         Percentage, // 0.00%
-        RoundTwoDecimal // string-backed decimal, rounded to 2 dp
+        RoundTwoDecimal // decimal/double/string-backed decimal, formatted as £#,##0.00
     }
 }

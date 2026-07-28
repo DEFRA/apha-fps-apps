@@ -140,10 +140,14 @@
                         return ((double)pctFloat).ToString("F2") + "%";
                     break;
                 case GridColumnType.RoundTwoDecimal:
+                    if (value is decimal rtdDecimal)
+                        return rtdDecimal.ToString("£#,##0.00;-£#,##0.00");
+                    if (value is double rtdDouble)
+                        return rtdDouble.ToString("£#,##0.00;-£#,##0.00");
                     var raw = value.ToString();
                     if (decimal.TryParse(raw, System.Globalization.NumberStyles.Any,
                             System.Globalization.CultureInfo.InvariantCulture, out var parsed))
-                        return parsed.ToString("F2");
+                        return parsed.ToString("£#,##0.00;-£#,##0.00");
                     return raw ?? string.Empty;
             }
 
