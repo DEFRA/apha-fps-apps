@@ -38,6 +38,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         public async Task<IActionResult> Index(string workGroup = "")
         {
+            TempData["NavigationSource"] = "WorkGroupTestCapability";
             var workGroupsResponse = await _workGroupService.GetAllWorkGroupsAsync();
 
             var viewModel = new WorkGroupTestCapabilityViewModel

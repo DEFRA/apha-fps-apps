@@ -44,6 +44,16 @@ namespace Apha.Common.Constants
         public const string SetSendEmailForAllWorkGroups = "api/v1/workgroup/setsendemail/all";
         public const string UpdateWorkGroupEmail = "api/v1/workgroup/email?workGroupName={0}";        
 
+        // Work Group Maintenance (CRUD + lookups)
+        public const string GetPagedWorkGroupMaintenance = "api/v1/workgroup/paged";
+        public const string GetWorkGroupMaintenanceByName = "api/v1/workgroup/maintenance/{0}";
+        public const string CreateWorkGroupMaintenance = "api/v1/workgroup/maintenance";
+        public const string UpdateWorkGroupMaintenance = "api/v1/workgroup/maintenance/{0}";
+        public const string DeleteWorkGroupMaintenance = "api/v1/workgroup/maintenance/{0}";
+        public const string GetWorkGroupProfitCentres = "api/v1/workgroup/profitcentres";
+        public const string GetWorkGroupOwners = "api/v1/workgroup/owners";
+        public const string GetWorkGroupCostCentres = "api/v1/workgroup/costcentres";
+
         // Month
         public const string GetAllMonths = "api/v1/months";
 
@@ -108,6 +118,10 @@ namespace Apha.Common.Constants
         public const string GetPagedTestCapabilityByPortfolio = "api/v1/testcapability/paged/portfolio";
         public const string GetTestCapabilityById = "api/v1/testcapability/testcapability?testCode={0}&workGroup={1}";
         public const string CreateTestCapability = "api/v1/testcapability/testcapability";
+
+        // Plan CrossTab
+        public const string RebuildTestPlanCrossTab = "api/v1/testcapability/plantestcrosstab/rebuild";
+        public const string GetPagedTestPlanCrossTab = "api/v1/testcapability/paged/plantestcrosstab";
         public const string UpdateTestCapability = "api/v1/testcapability/testcapability";
         public const string DeleteTestCapability = "api/v1/testcapability/testcapability?testCode={0}&workGroup={1}";
         public const string GetPagedWgTestCapabilitiesWithDescription = "api/v1/testcapability/paged/wg-test-capabilities";

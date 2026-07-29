@@ -367,6 +367,19 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<List<ProjectStaffReplanDto>>> GetProjectGroupStaffReplanAsync(QueryParameters<string> query, string workgroup)
+        {
+            var baseUrl = string.Format(FpsApiEndpoints.GetWorkgroupStaffReplan, Uri.EscapeDataString(workgroup));
+            var url = QueryStringHelper.AddQueryString(baseUrl, query);
+
+            var response = await _http.GetAsync<List<ProjectStaffReplanRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectStaffReplanDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectStaffReplanDto>>>(response);
+            return ApiResponseDto<List<ProjectStaffReplanDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
 }
 

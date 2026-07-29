@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
@@ -21,8 +21,11 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<TimeCodeValidReq, TimeCodeValidDto>().ReverseMap();
             CreateMap<TimeCodeValidRes, TimeCodeValidDto>().ReverseMap();
             CreateMap<WorkGroupRes, WorkGroupDto>().ReverseMap();
+            CreateMap<WorkGroupMaintenanceReq, WorkGroupDto>();
+            CreateMap<WorkGroupDto, WorkGroupMaintenanceRes>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore());
+            CreateMap<OwnerDto, OwnerRes>().ReverseMap();
             CreateMap<WorkGroupViewRes, WorkGroupViewDto>().ReverseMap();
-            CreateMap<MonthRes, MonthDto>().ReverseMap();
             CreateMap<CalenderMonthRes, CalenderMonthDto>().ReverseMap();
             CreateMap<ProjectInvoiceReq, ProjectInvoiceDto>().ReverseMap();
             CreateMap<ProjectInvoiceRes, ProjectInvoiceDto>().ReverseMap();
@@ -78,6 +81,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<BatchJobQueueRes, BatchJobQueueDto>().ReverseMap();
             CreateMap<BatchJobEventTriggerRes, BatchJobEventTriggerDto>().ReverseMap();
             CreateMap<TestActualBreakdownDto, TestActualBreakdownRes>().ReverseMap();
+            CreateMap<TestPlanCostBreakdownDto, TestPlanCostBreakdownRes>().ReverseMap();
         }
     }
 }
