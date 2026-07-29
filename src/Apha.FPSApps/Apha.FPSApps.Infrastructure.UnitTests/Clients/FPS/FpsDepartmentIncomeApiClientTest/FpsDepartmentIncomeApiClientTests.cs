@@ -1,24 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsDepartmentIncomeApiClientTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-10
- *
- * CHANGED:
- *   - New xUnit test class for FpsDepartmentIncomeApiClient (Infrastructure layer)
- *   - Covers all 6 public methods: GetTimeIncomeAsync, GetTestIncomeAsync, GetAnimalIncomeAsync,
- *     GetAdditionalIncomeAsync, GetTotalsAsync, GetPeriodsAsync
- *   - NSubstitute mocks for IFpsHttpExecutor and IMapper
- *   - Tests: HTTP success path (mapper called), HTTP failure path, exception catch path (INTERNAL_ERROR),
- *     URL construction (BaseUrl + segment + optional query params)
- *
- * PRESERVED:
- *   - BaseUrl = "api/v1/department-income" (matches backend DepartmentIncomeController route)
- *   - All 6 interface methods; no CRUD methods (resource is read-only)
- *   - Optional params (project, monthFrom, monthTo) appended only when non-null
- *
- * DEFERRED: none — fully automated.
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
@@ -513,7 +492,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDepartmentIncomeA
                     new() { AccntsPeriod = 2, MonthName = "May",   MonthNumber = 5 },
                 });
 
-            // TRANSFORMENGINE: GetPeriodsAsync calls exact base URL with no query params
             _http.GetAsync<List<PeriodLookupRes>>($"{BaseUrl}/periods").Returns(httpResponse);
             _mapper.Map<ApiResponseDto<List<PeriodLookupDto>>>(httpResponse).Returns(dto);
 

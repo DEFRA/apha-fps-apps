@@ -1,35 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — DepartmentIncomeController.cs (FPS Web)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 11 — ViewModels + MVC Controller (Steps 16-17)
- * Migrated : 2026-07-10
- *
- * CHANGED:
- *   - New ASP.NET Core 10 MVC controller for the Department Income report page (frmDeptIncome)
- *   - [Area("FPS")], [Authorize(Roles = "FPSAdmin,FPSUser")], [AuthorizeForScopes] applied
- *   - Injects IDepartmentIncomeService (CRUD/query service) and IProjectService (project dropdown lookup)
- *   - Index() action builds ViewModel with populated project dropdown, period list, and empty snapshot grid
- *   - 5 AJAX POST endpoints (GetTimeData, GetTestData, GetAnimalData, GetAdditionalData, GetTotalsData)
- *     return JSON with the query result items — rendered by the Razor view into the modal grid
- *   - LoadSnapshotGrid() POST endpoint reloads the Snapshot-tab DataGrid with filtered period rows
- *   - Project dropdown uses IProjectService.GetAllProjectsAsync() — consistent with other FPS controllers
- *   - Period list uses IDepartmentIncomeService.GetPeriodsAsync() for the period-table-dropdown control
- *   - Page-level filter params (project, monthFrom, monthTo) are optional on all AJAX endpoints
- *   - No CRUD endpoints (AllowAdd/Edit/Delete all false) — this is a read-only report resource
- *
- * PRESERVED:
- *   - Backend route authority: /api/v1/department-income/* endpoints served by Apha.FPS.Api
- *   - VBA filter logic (fnDeptIncomeMonthFrom → 1, fnDeptIncomeMonthTo → 12 or monthFrom)
- *     is applied in DepartmentIncomeService (Application layer), not here
- *   - All 5 query types: Time, Tests, Animals, Additional (Exceptional), Totals
- *   - All AutoMapper mappings via IMapper (DepartmentIncomeViewModelMapper from Phase 10)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm snapshot data source — the SnapshotGrid shows period-level status
- *     (periodName, finalSummariesRun, periodLocke). If the backend exposes a dedicated snapshot
- *     endpoint, wire LoadSnapshotGrid to that service method instead of filtering from GetPeriodsAsync
- *   - TRANSFORMENGINE TODO: Verify IProjectService registration is available in FPSApps DI container
- */
-
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -49,10 +17,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     {
         private readonly IMapper _mapper;
 
-        // TRANSFORMENGINE: CRUD/query service — calls backend /api/v1/department-income/* endpoints
         private readonly IDepartmentIncomeService _departmentIncomeService;
 
-        // TRANSFORMENGINE: Lookup service — used only for the project dropdown (page-level filter)
         // Separate from the CRUD resource per the Backend -> Frontend Handoff rule
         private readonly IProjectService _projectService;
 
@@ -68,13 +34,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── Index ──────────────────────────────────────────────────────────────────
 
-        // TRANSFORMENGINE: Index — page entry point; populates project dropdown, period list, empty snapshot grid
         public async Task<IActionResult> Index()
         {
             var viewModel = new DepartmentIncomeViewModel();
             await PopulateDropdownsAsync(viewModel);
 
-            // TRANSFORMENGINE: Snapshot grid — shows period summary rows (periodName, finalSummariesRun, periodLocke)
             // Built explicitly here; JS loadSnapshotQueryResults populates it via LoadSnapshotGrid AJAX on run
             viewModel.SnapshotGrid = BuildSnapshotGridConfig(
                 new List<DepartmentIncomeSnapshotItem>(), new PaginationModel(), null);
@@ -84,7 +48,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── Dropdown / Lookup population ──────────────────────────────────────────
 
-        // TRANSFORMENGINE: PopulateDropdownsAsync — project dropdown from IProjectService (lookup flow);
         // Period list from IDepartmentIncomeService.GetPeriodsAsync (period-table-dropdown control)
         private async Task PopulateDropdownsAsync(DepartmentIncomeViewModel model)
         {
@@ -121,7 +84,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── Snapshot tab DataGrid AJAX reload ──────────────────────────────────────
 
-        // TRANSFORMENGINE: LoadSnapshotGrid — reloads the snapshot-tab DataGrid
         // The snapshot data shows period-level status (periodName, finalSummariesRun, periodLocke)
         // Filtered by project and month range from page controls
         [HttpPost]
@@ -146,7 +108,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ? JsonSerializer.Deserialize<Dictionary<string, string>>(request.Filter)
                 : null;
 
-            // TRANSFORMENGINE: Snapshot data sourced from period data; pending dedicated backend snapshot endpoint
             // If no project selected, return empty grid (snapshot requires a project context)
             // TRANSFORMENGINE TODO STUB: Replace with dedicated snapshot service method when backend Phase adds endpoint
             var items = new List<DepartmentIncomeSnapshotItem>();
@@ -158,7 +119,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── Query Result AJAX Endpoints ───────────────────────────────────────────
 
-        // TRANSFORMENGINE: GetTimeData — returns Time query results for modal display
         // Bound to JS "Run query" click for 'qryDeptIncomeTime' / 'time' selection
         [HttpPost]
         public async Task<IActionResult> GetTimeData(
@@ -178,7 +138,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new { success = true, data = items });
         }
 
-        // TRANSFORMENGINE: GetTestData — returns Tests query results for modal display
         // Bound to JS "Run query" click for 'qryDeptIncomeTest' / 'tests' selection
         [HttpPost]
         public async Task<IActionResult> GetTestData(
@@ -198,7 +157,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new { success = true, data = items });
         }
 
-        // TRANSFORMENGINE: GetAnimalData — returns Animals query results for modal display
         // Bound to JS "Run query" click for 'qryDeptIncomeAnimal' / 'animals' selection
         [HttpPost]
         public async Task<IActionResult> GetAnimalData(
@@ -218,7 +176,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new { success = true, data = items });
         }
 
-        // TRANSFORMENGINE: GetAdditionalData — returns Additional/Exceptional query results for modal display
         // Bound to JS "Run query" click for 'qryDeptIncomeAdditional' / 'exceptional' selection
         [HttpPost]
         public async Task<IActionResult> GetAdditionalData(
@@ -238,7 +195,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new { success = true, data = items });
         }
 
-        // TRANSFORMENGINE: GetTotalsData — returns Totals (PIVOT) query results for modal display
         // Bound to JS "Run query" click for 'qryDeptIncomeTotals' / 'totals' selection
         [HttpPost]
         public async Task<IActionResult> GetTotalsData(
@@ -260,7 +216,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── Private Grid Config Builders ──────────────────────────────────────────
 
-        // TRANSFORMENGINE: BuildSnapshotGridConfig — Snapshot-tab DataGrid
         // showAddButton: false in JS → AllowAdd/Edit/Delete all false
         // KeyProperty uses implicit row index (no natural PK in snapshotData)
         private static DataGridConfig<DepartmentIncomeSnapshotItem> BuildSnapshotGridConfig(
@@ -290,7 +245,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             };
         }
 
-        // TRANSFORMENGINE: BuildPagination — maps PaginationDto to PaginationModel with sort state
         private PaginationModel BuildPagination(
             Apha.FPSApps.Application.Dtos.PaginationDto? paginationDto,
             PaginationFilter<string> request)

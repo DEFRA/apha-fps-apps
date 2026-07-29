@@ -1,22 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — DepartmentIncomeServiceTests.cs (FPSApps Application)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-10
- *
- * CHANGED:
- *   - New xUnit test class for frontend FPS DepartmentIncomeService (Application layer)
- *   - Covers all 6 public methods: GetTimeIncomeAsync, GetTestIncomeAsync, GetAnimalIncomeAsync,
- *     GetAdditionalIncomeAsync, GetTotalsAsync, GetPeriodsAsync
- *   - NSubstitute mocks: IFpsApiClient (aggregate) + IFpsDepartmentIncomeApiClient (sub-client)
- *   - Tests: happy path (success response), failure response, delegation verified with Received(1)
- *
- * PRESERVED:
- *   - Service is thin delegate — no business logic to test beyond delegation
- *   - All parameters are optional (nullable) — tests use null and explicit values
- *
- * DEFERRED: none — fully automated.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.DepartmentIncome;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -38,7 +19,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DepartmentIncomeServic
         {
             _fpsClient                     = Substitute.For<IFpsApiClient>();
             _fpsDepartmentIncomeApiClient  = Substitute.For<IFpsDepartmentIncomeApiClient>();
-            // TRANSFORMENGINE: Wire aggregate client sub-property to typed mock
             _fpsClient.FpsDepartmentIncome.Returns(_fpsDepartmentIncomeApiClient);
             _service = new DepartmentIncomeService(_fpsClient);
         }

@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — DepartmentIncomeRepositoryTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-10
- *
- * CHANGED:
- *   - New xUnit test class for IDepartmentIncomeRepository (interface contract tests)
- *   - Mirrors established repository-test pattern in AccountCategoryRepositoryTests (NSubstitute interface mock)
- *   - Covers all 6 public interface methods: GetTimeIncomeAsync, GetTestIncomeAsync,
- *     GetAnimalIncomeAsync, GetAdditionalIncomeAsync, GetTotalsAsync, GetPeriodsAsync
- *   - Tests: happy path, empty result, NSubstitute exception simulations per method
- *   - No DbContext or Moq used — interface-mock-only pattern matches AccountCategoryRepositoryTests
- *
- * PRESERVED:
- *   - Repository is read-only (no write/delete paths)
- *   - Month filter params are non-nullable at the repository boundary (VBA defaults applied in service)
- *
- * DEFERRED: none — fully automated.
- */
-
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using NSubstitute;

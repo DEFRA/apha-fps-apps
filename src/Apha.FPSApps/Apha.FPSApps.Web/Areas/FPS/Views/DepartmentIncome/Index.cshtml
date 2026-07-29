@@ -1,39 +1,3 @@
-<!-- TRANSFORMENGINE MIGRATION — DepartmentIncome/Index.cshtml
-     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
-     Migrated : 2026-07-10
-     CHANGED:
-       - frmDeptIncome MS Access form → ASP.NET Core 10 MVC Razor view
-       - GOV.UK tabs structure (Snapshot data / Current data) mirrored from HTML prototype
-       - Page-level filter controls: projectSelect (asp-items), period-table-dropdown custom controls
-         for periodFromDropdown and periodToDropdown with backing hidden selects monthFromSelect/monthToSelect
-       - Snapshot tab: snapshotQuerySelect (multi-select listbox) + Run query button + DataGrid container
-         for SnapshotGrid (LoadSnapshotGrid AJAX endpoint); Run query also opens departmentIncomeQueryModal
-       - Current tab: querySelect (single-select listbox) + Run query button; opens departmentIncomeQueryModal
-       - Query result modal: departmentIncomeQueryModal (GOV.UK modal pattern, separate from shared #modalPopup)
-         — contains #gridContainer_departmentIncomeQuery for DataGridComponent (client-side, read-only)
-       - govuk-popup-overlay preserved for showPopupMessage / closePopupMessage JS
-       - @@section Styles includes ~/css/common/_govuk_tabs.css (tabs present in prototype)
-       - @@section Scripts includes ~/js/common/_govuk_tabs.js for tab switching (no inline tab logic)
-       - All JS ported from fps_department_income.js: period dropdown tables, filter functions,
-         query grid initialisation, modal open/close, Run query handlers, refreshAllTabData
-       - QueryGrid uses client-side DataGridComponent (not _DataGrid partial) — query results loaded
-         via AJAX POST to /FPS/DepartmentIncome/Get*Data and rendered into modal DataGrid
-     PRESERVED:
-       - HTML prototype DOM structure, CSS classes, element IDs, inline styles
-       - projectSelect / monthFromSelect / monthToSelect IDs match JS wire-up
-       - periodFromDropdown / periodToDropdown custom table-dropdown panel IDs preserved
-       - snapshotQuerySelect / querySelect / runQueryBtnSnapshot / runQueryBtnCurrent IDs preserved
-       - departmentIncomeQueryModal / departmentIncomeQueryModalTitle / departmentIncomeQueryModalCloseBtn IDs
-       - govuk-popup-overlay / govuk-popup IDs preserved
-       - All JS function names, filter logic, modal behavior unchanged from prototype
-     DEFERRED / REQUIRES HUMAN REVIEW:
-       - TRANSFORMENGINE TODO: Confirm ~/js/common/datagrid.component.js path — DataGridComponent used
-         for the query results modal grid; ensure it is bundled/available in the FPS layout or this view
-       - TRANSFORMENGINE TODO: Confirm snapshot data source — LoadSnapshotGrid currently stubs period rows;
-         wire to dedicated backend snapshot endpoint when available
-       - TRANSFORMENGINE TODO: Verify departmentIncomeQueryModal CSS (.department-income-query-modal-dialog)
-         is available in the deployed stylesheet bundle -->
-
 @using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.FPS.Models.DepartmentIncomeViewModel
 
@@ -310,7 +274,6 @@
 
     <script>
         // ── Snapshot DataGrid extra-filter callback ──────────────────────────
-        // TRANSFORMENGINE: ExtraFilterMethod referenced in BuildSnapshotGridConfig →
         //   ExtraFilterMethod = "getDepartmentIncomeSnapshotExtraFilters"
         // Called automatically by _DataGrid on every reload; passes project + period params
         function getDepartmentIncomeSnapshotExtraFilters() {
@@ -322,7 +285,6 @@
         }
 
         // ── Snapshot grid reload helper ──────────────────────────────────────
-        // TRANSFORMENGINE: Always use gm.reloadGrid({ page: 1 }) — gm.reload() does not exist
         function reloadDepartmentIncomeSnapshotGrid() {
             var gm = window['gridManager_departmentIncomeSnapshotGrid'];
             if (gm) { gm.reloadGrid({ page: 1 }); }
@@ -330,7 +292,6 @@
 
         // ────────────────────────────────────────────────────────────────────
         // Period-table-dropdown state and helpers
-        // TRANSFORMENGINE: PeriodList populated server-side from IDepartmentIncomeService.GetPeriodsAsync()
         // ────────────────────────────────────────────────────────────────────
         var departmentIncomePagePeriods = @Html.Raw(
             System.Text.Json.JsonSerializer.Serialize(
@@ -455,7 +416,6 @@
 
         // ────────────────────────────────────────────────────────────────────
         // Query results grid (client-side DataGridComponent in modal)
-        // TRANSFORMENGINE: ensureQueryGrid mirrors JS from fps_department_income.js
         // ────────────────────────────────────────────────────────────────────
         var deptIncomeQueryGrid = null;
 
@@ -508,7 +468,6 @@
 
         // ────────────────────────────────────────────────────────────────────
         // GOV.UK query results modal helpers
-        // TRANSFORMENGINE: departmentIncomeQueryModal uses GOV.UK modal pattern
         //   openModal / closeModal from ~/css/common/_govuk_modal.css conventions
         // ────────────────────────────────────────────────────────────────────
         function openDeptIncomeQueryModal() {
@@ -588,7 +547,6 @@
 
         // ────────────────────────────────────────────────────────────────────
         // AJAX data loaders — call MVC controller AJAX endpoints
-        // TRANSFORMENGINE: Each query maps to a controller POST action returning JSON { success, data }
         // ────────────────────────────────────────────────────────────────────
         var deptIncomeQueryIdToEndpoint = {
             'time':                   '@Url.Action("GetTimeData",       "DepartmentIncome", new { area = "FPS" })',
@@ -637,7 +595,6 @@
 
         // ────────────────────────────────────────────────────────────────────
         // Snapshot tab — Run query
-        // TRANSFORMENGINE: openSnapshotQueryModal mirrors JS from prototype;
         //   merges rows from all selected snapshot query IDs then shows the modal
         // ────────────────────────────────────────────────────────────────────
         function getSelectedSnapshotQueryIds() {
@@ -665,7 +622,6 @@
                 }
             }
 
-            // TRANSFORMENGINE: fetch each selected query in sequence (sequential for clarity;
             //   prototype also runs them sequentially via concat)
             queryIds.forEach(function (queryId) {
                 fetchDeptIncomeQueryData(queryId, onDone);

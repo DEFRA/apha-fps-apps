@@ -1,22 +1,3 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-07-10
- *
- * CHANGED:
- *   - AddServices(): added AddScoped<IDepartmentIncomeService, DepartmentIncomeService>()
- *   - AddRepositories(): added AddScoped<IFpsDepartmentIncomeApiClient, FpsDepartmentIncomeApiClient>()
- *   - Both registrations follow existing alphabetical/pattern conventions
- *
- * PRESERVED:
- *   - All existing service and repository registrations unchanged
- *   - AddScoped lifetime used for both (frontend services hold request-scoped API client references)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: FpsDepartmentIncomeApiClient uses IFpsHttpExecutor — confirm FPS HttpClient
- *     pipeline is configured in ApiClientExtension.AddApiClient() before this service is resolved
- */
-
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.ExcelImport;
 using Apha.Common.Utilities.StateManagement;
@@ -75,7 +56,6 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
             services.AddScoped<IMonthService, MonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
-            // TRANSFORMENGINE: DepartmentIncome frontend service — delegates to IFpsDepartmentIncomeApiClient
             services.AddScoped<IDepartmentIncomeService, DepartmentIncomeService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
@@ -114,7 +94,6 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
-            // TRANSFORMENGINE: IWorkgroupMaintenanceService registered — Phase 10 (Step 15c)
             // FPS CRUD maintenance service for frmMaintWorkGroup2 (distinct from PACT IWorkGroupService read-only lookup)
             services.AddScoped<IWorkgroupMaintenanceService, WorkgroupMaintenanceService>();
             services.AddScoped<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService, Apha.FPSApps.Application.Services.PACT.WorkGroupService>();
@@ -144,7 +123,6 @@ namespace Apha.FPSApps.Web.Extensions
         {
             //   used by IFpsProfitCentreApiClient and other IFps*ApiClient registrations (see ApiClientExtension.cs).
             services.AddScoped<IFpsProjectAuditTrailApiClient, FpsProjectAuditTrailApiClient>();
-            // TRANSFORMENGINE: DepartmentIncome API client — HTTP client calling /api/v1/department-income/* endpoints
             services.AddScoped<IFpsDepartmentIncomeApiClient, FpsDepartmentIncomeApiClient>();
             return services;
         }

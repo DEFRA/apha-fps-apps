@@ -1,33 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsDepartmentIncomeApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-10
- *
- * CHANGED:
- *   - Stub NotImplementedException bodies replaced with full async HTTP calls via IFpsHttpExecutor
- *   - All 6 interface methods implemented: GetTimeIncomeAsync, GetTestIncomeAsync,
- *     GetAnimalIncomeAsync, GetAdditionalIncomeAsync, GetTotalsAsync, GetPeriodsAsync
- *   - Every HTTP call wrapped in try/catch(Exception) returning FailureResponse on failure
- *   - URL base extracted to private const BaseUrl = "api/v1/department-income" (Sonar S1192)
- *   - Optional filter params (project, monthFrom, monthTo) appended via QueryHelpers only when non-null
- *   - Response mapping uses _mapper.Map<ApiResponseDto<T>>(response) on success path
- *   - _http and _mapper declared private readonly (Sonar S2933)
- *   - InternalCodeError declared private const string (Sonar S1192)
- *   - Private helper BuildIncomeUrl() extracts repeated optional-param URL construction
- *
- * PRESERVED:
- *   - All 6 interface method signatures from IFpsDepartmentIncomeApiClient
- *   - Constructor guards: ArgumentNullException on null http and mapper
- *   - Resource is read-only (report form) — no Create/Update/Delete calls
- *   - Backend route paths match DepartmentIncomeController [Route] attributes resolved in Phase 5
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify AutoMapper profile FpsDepartmentIncomeApiDtoMapper maps all
- *     Res properties to Dto counterparts before enabling in production
- *   - TRANSFORMENGINE TODO: fPeriodTotals stored proc backing GetPeriodsAsync must be
- *     re-implemented in DepartmentIncomeRepository (see PeriodLookupRes.cs TODO)
- */
-
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.DepartmentIncome;
@@ -43,10 +13,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        // TRANSFORMENGINE: S1192 — repeated error code extracted to const
         private const string InternalCodeError = "INTERNAL_ERROR";
 
-        // TRANSFORMENGINE: BaseUrl matches backend DepartmentIncomeController [Route("api/v{version:apiVersion}/department-income")]
         private const string BaseUrl = "api/v1/department-income";
 
         public FpsDepartmentIncomeApiClient(IFpsHttpExecutor http, IMapper mapper)
@@ -55,7 +23,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        // TRANSFORMENGINE: Maps to GET /api/v1/department-income/time — optional filter params appended via QueryHelpers
         public async Task<ApiResponseDto<List<DepartmentIncomeTimeDto>>> GetTimeIncomeAsync(
             string? project = null,
             int? monthFrom = null,
@@ -79,7 +46,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: Maps to GET /api/v1/department-income/tests — optional filter params appended via QueryHelpers
         public async Task<ApiResponseDto<List<DepartmentIncomeTestDto>>> GetTestIncomeAsync(
             string? project = null,
             int? monthFrom = null,
@@ -103,7 +69,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: Maps to GET /api/v1/department-income/animals — optional filter params appended via QueryHelpers
         public async Task<ApiResponseDto<List<DepartmentIncomeAnimalDto>>> GetAnimalIncomeAsync(
             string? project = null,
             int? monthFrom = null,
@@ -127,7 +92,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: Maps to GET /api/v1/department-income/additional — optional filter params appended via QueryHelpers
         public async Task<ApiResponseDto<List<DepartmentIncomeAdditionalDto>>> GetAdditionalIncomeAsync(
             string? project = null,
             int? monthFrom = null,
@@ -151,7 +115,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: Maps to GET /api/v1/department-income/totals — optional filter params appended via QueryHelpers
         public async Task<ApiResponseDto<List<DepartmentIncomeTotalsDto>>> GetTotalsAsync(
             string? project = null,
             int? monthFrom = null,
@@ -175,7 +138,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: Maps to GET /api/v1/department-income/periods — no filter params (lookup endpoint)
         public async Task<ApiResponseDto<List<PeriodLookupDto>>> GetPeriodsAsync()
         {
             try
@@ -195,7 +157,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: Private helper — appends optional filter params to an income sub-endpoint URL only when non-null
         private static string BuildIncomeUrl(string endpoint, string? project, int? monthFrom, int? monthTo)
         {
             var queryParams = new Dictionary<string, string?>();
