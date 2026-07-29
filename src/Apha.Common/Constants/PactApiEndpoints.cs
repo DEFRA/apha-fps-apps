@@ -118,6 +118,10 @@ namespace Apha.Common.Constants
         public const string GetPagedTestCapabilityByPortfolio = "api/v1/testcapability/paged/portfolio";
         public const string GetTestCapabilityById = "api/v1/testcapability/testcapability/{0}/{1}";
         public const string CreateTestCapability = "api/v1/testcapability/testcapability";
+
+        // Plan CrossTab
+        public const string RebuildTestPlanCrossTab = "api/v1/testcapability/plantestcrosstab/rebuild";
+        public const string GetPagedTestPlanCrossTab = "api/v1/testcapability/paged/plantestcrosstab";
         public const string UpdateTestCapability = "api/v1/testcapability/testcapability";
         public const string DeleteTestCapability = "api/v1/testcapability/testcapability/{0}/{1}";
         public const string GetPagedWgTestCapabilitiesWithDescription = "api/v1/testcapability/paged/wg-test-capabilities";
