@@ -51,13 +51,19 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with <c>true</c> if the job can run; <c>false</c> if it is already running.</returns>
-        [HttpGet("batchjob/canrun")]
-        public async Task<IActionResult> CanRunBatchJob([FromQuery] string jobName)
+        [HttpGet("dataSetup/caninitiate")]
+        public async Task<IActionResult> CanInitiateYearEndDataSetupRequestAsync([FromQuery] string jobName)
         {
-            var result = await _yearEndService.CanRunBatchJobAsync(jobName);
+            var result = await _yearEndService.CanInitiateYearEndDataSetupRequestAsync(jobName);
             return Ok(result);
         }
 
+        [HttpGet("dataSetup/canapprove")]
+        public async Task<IActionResult> CanApproveYearEndDataSetupRequestAsync([FromQuery] string jobName)
+        {
+            var result = await _yearEndService.CanApproveYearEndDataSetupRequestAsync(jobName);
+            return Ok(result);
+        }
         /// <summary>
         /// Triggers the YearEndInitiation batch job for the specified month.
         /// Validates that <paramref name="request"/>.<c>Month</c> is between 1 and 12,

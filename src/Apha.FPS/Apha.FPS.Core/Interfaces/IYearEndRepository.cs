@@ -7,8 +7,8 @@ namespace Apha.FPS.Core.Interfaces
     {
         Task<PagedData<BatchJobHistory>> GetBatchJobsHistoryAsync(PaginationParameters<string> query, string jobName);
 
-        Task<bool> CanInitiateYearEndDataSetupJobAsync(string jobName);
-        Task<bool> CanApproveYearEndDataSetupJobAsync(string jobName);
+        Task<bool> CanInitiateYearEndDataSetupRequestAsync(string jobName);
+        Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName);
 
         Task<BatchJobQueue> EnqueueBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
     }

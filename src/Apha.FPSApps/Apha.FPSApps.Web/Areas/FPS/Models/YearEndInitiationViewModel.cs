@@ -6,7 +6,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class YearEndInitiationViewModel
     {
         public int PlannedYear { get; set; }
-        public bool CanRunJob { get; set; }
+        public bool CanInitiate { get; set; }
+        public bool CanApprove { get; set; }
         public required DataGridConfig<YearEndConfigValueItem> ConfigValuesGrid { get; set; }
         public required DataGridConfig<YearEndMonthWorkingItem> MonthHoursGrid { get; set; }
         public required DataGridConfig<YearEndHistoryItem> HistoryGrid { get; set; }

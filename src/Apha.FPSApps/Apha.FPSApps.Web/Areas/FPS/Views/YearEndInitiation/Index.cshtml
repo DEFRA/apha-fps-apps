@@ -2,7 +2,8 @@
 
 @{
     ViewData["Title"] = "Year End Initiation";
-    var btnDisabled = Model.CanRunJob ? (string?)null : "disabled";
+    var btnIntDisabled = Model.CanInitiate ? (string?)null : "disabled";
+    var btnAppDisabled = Model.CanApprove ? (string?)null : "disabled";
 }
 
 <div class="govuk-grid-row">
@@ -106,12 +107,12 @@
                                     <div class="govuk-button-group sup_flex_end_center approval-buttons-group">
                                         <button type="button" class="govuk-button" data-module="govuk-button"
                                                 id="btnInitiateDataSetupRequest"
-                                                disabled="@btnDisabled">
+                                                disabled="@btnIntDisabled">
                                             Initiate DataSetup Request
                                         </button>
                                         <button type="button" class="govuk-button" data-module="govuk-button"
                                                 id="btnApproveDataSetupRequest"
-                                                disabled="@btnDisabled">
+                                                disabled="@btnAppDisabled">
                                             Approve DataSetup Request
                                         </button>
                                     </div>

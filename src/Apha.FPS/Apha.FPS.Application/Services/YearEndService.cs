@@ -43,7 +43,7 @@ namespace Apha.FPS.Application.Services
         public async Task<bool> CanInitiateYearEndDataSetupRequestAsync(string jobName)
         {
            // List<BusinessValidationError> errors = await Validation();
-            return await _yearEndRepository.CanRunBatchJobAsync(jobName);
+            return await _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(jobName);
         }
 
         private async Task<List<BusinessValidationError>> Validation()
@@ -105,7 +105,7 @@ namespace Apha.FPS.Application.Services
 
         public async Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName)
         {
-            return await _yearEndRepository.CanRunBatchJobAsync(jobName);
+            return await _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(jobName);
         }
 
         public async Task<BatchJobEventTriggerDto> TriggerYearEndInitiationJobAsync(int contextyear, string requestedBy, string correlationId)
@@ -131,7 +131,7 @@ namespace Apha.FPS.Application.Services
             if (exists)
                 errors.Add(new BusinessValidationError($"You cannot rerun a period when a later period has been run.","INVALID_Rerun"));
 
-            var canRun = await _yearEndRepository.CanRunBatchJobAsync(RecreateSummariesJobName);
+            var canRun = await _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(RecreateSummariesJobName);
             if (!canRun)
             {
                 errors.Add(new BusinessValidationError($"Job '{RecreateSummariesJobName}' is already running or initiated., Please try after sometime.", "INVALID_Rerun"));

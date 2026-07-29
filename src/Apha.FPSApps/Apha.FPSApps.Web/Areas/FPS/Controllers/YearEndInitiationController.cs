@@ -44,7 +44,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> Index()
         {
             var plannedYear = await GetPlannedYearAsync();
-            var canRun = await GetCanRunJobAsync();
+            var canInitiate = await GetCanInitiateDataSetupRequestAsync();
+            var canApprove = await GetCanApproveDataSetupRequestAsync();
             var configValuesGrid = await BuildConfigValuesGridAsync();
             var monthHoursGrid = await BuildMonthHoursGridAsync();
             var historyGrid = await BuildHistoryGridAsync(new PaginationFilter<string> { Filter = "{}" });
@@ -52,7 +53,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return View(new YearEndInitiationViewModel
             {
                 PlannedYear = plannedYear,
-                CanRunJob = canRun,
+                CanInitiate = canInitiate,
+                CanApprove = canApprove,
                 ConfigValuesGrid = configValuesGrid,
                 MonthHoursGrid = monthHoursGrid,
                 HistoryGrid = historyGrid
@@ -174,12 +176,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return result.Success ? result.Data : 0;
         }
 
-        private async Task<bool> GetCanRunJobAsync()
+        private async Task<bool> GetCanInitiateDataSetupRequestAsync()
         {
-            var result = await _yearEndService.CanRunYearEndInitiationBatchJobAsync(YearEndInitiationJobName);
+            var result = await _yearEndService.GetCanInitiateDataSetupRequestAsync(YearEndInitiationJobName);
             return result.Success && result.Data;
         }
 
+        private async Task<bool> GetCanApproveDataSetupRequestAsync()
+        {
+            var result = await _yearEndService.GetCanApproveDataSetupRequestAsync(YearEndInitiationJobName);
+            return result.Success && result.Data;
+        }
         private async Task<DataGridConfig<YearEndConfigValueItem>> BuildConfigValuesGridAsync()
         {
             var grid = ConfigValuesGridConfig();

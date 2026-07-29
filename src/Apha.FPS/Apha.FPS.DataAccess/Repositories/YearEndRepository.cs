@@ -40,7 +40,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        public async Task<bool> CanInitiateYearEndDataSetupJobAsync(string jobName)
+        public async Task<bool> CanInitiateYearEndDataSetupRequestAsync(string jobName)
         {
             var hasRunningJob = await (
                 from jm in _context.BatchJobs.AsNoTracking()
@@ -48,25 +48,25 @@ namespace Apha.FPS.DataAccess.Repositories
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
                 where EF.Functions.ILike(jm.JobName, jobName) 
-                && (EF.Functions.ILike(js.Status, "running") || EF.Functions.ILike(js.Status, "initiated"))
+                && (EF.Functions.ILike(js.Status, "Rejected") || EF.Functions.ILike(js.Status, "Failed"))
                 select jq.JobqueueId
             ).AnyAsync();
 
-            return !hasRunningJob;
+            return hasRunningJob;
         }
 
-        public async Task<bool> CanApproveYearEndDataSetupJobAsync(string jobName)
+        public async Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName)
         {
             var hasRunningJob = await (
                 from jm in _context.BatchJobs.AsNoTracking()
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
-                where EF.Functions.ILike(jm.JobName, jobName) && (EF.Functions.ILike(js.Status, "running") || EF.Functions.ILike(js.Status, "initiated"))
+                where EF.Functions.ILike(jm.JobName, jobName) && (EF.Functions.ILike(js.Status, "initiated"))
                 select jq.JobqueueId
             ).AnyAsync();
 
-            return !hasRunningJob;
+            return hasRunningJob;
         }
 
         public async Task<BatchJobQueue> EnqueueBatchJobAsync(string jobName, string requestedBy, string correlationId,string note)
