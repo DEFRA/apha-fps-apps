@@ -11,18 +11,7 @@
                 if (obj == null) return null;
                 var type = obj.GetType();
                 var prop = type.GetProperty(propertyName);
-                if (prop != null)
-                    return prop.GetValue(obj);
-
-                // Fallback for rows that expose dynamic columns through a "Values" dictionary
-                // (e.g. cross-tab / pivot grids where columns are built at runtime).
-                if (type.GetProperty("Values")?.GetValue(obj) is IDictionary<string, object?> values
-                    && values.TryGetValue(propertyName, out var dynamicValue))
-                {
-                    return dynamicValue;
-                }
-
-                return null;
+                return prop?.GetValue(obj);
             }
             catch
             {
