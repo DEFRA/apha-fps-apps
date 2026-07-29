@@ -741,7 +741,14 @@ public class YearlyDetailsController : Controller
             },
             EditFunction = "gridEditMarkupAndProfit",
             BindGridUrl = Url.Action("LoadMarkupAndProfitGrid", new { projectId, year }) ?? string.Empty,
-            Columns = GridDataProvider.GetColumnsDefination<ProjectYearRateItem>(null)
+            Columns = GridDataProvider.GetColumnsDefination<ProjectYearRateItem>(null),
+            ColumnGroups =
+                [
+                    new() { Label = "",                        Span = 1 },
+                    new() { Label = "Contingency Markup %",      Span = 4 },
+                    new() { Label = "Profit Margin %",    Span = 4 },
+
+                ]
         };
     }
 
