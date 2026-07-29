@@ -1,6 +1,7 @@
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Pagination;
 using Apha.Costbook.Application.Services;
+using Apha.Costbook.Application.Validation;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
@@ -153,14 +154,14 @@ namespace Apha.Costbook.Application.UnitTests.Services.AccountGroupServiceTest
         public async Task GetByCsg7GroupAsync_NullKey_ThrowsArgumentException()
         {
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetByCsg7GroupAsync(null!));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.GetByCsg7GroupAsync(null!));
         }
 
         [Fact]
         public async Task GetByCsg7GroupAsync_WhitespaceKey_ThrowsArgumentException()
         {
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetByCsg7GroupAsync("   "));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.GetByCsg7GroupAsync("   "));
         }
 
         #endregion
@@ -221,7 +222,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.AccountGroupServiceTest
             _repository.ExistsAsync("CSG001").Returns(true);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.AddAccountGroupAsync(dto));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.AddAccountGroupAsync(dto));
             await _repository.DidNotReceive().AddAccountGroupAsync(Arg.Any<AccountGroup>());
         }
 
@@ -229,7 +230,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.AccountGroupServiceTest
         public async Task AddAsync_NullDto_ThrowsArgumentException()
         {
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.AddAccountGroupAsync(null!));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.AddAccountGroupAsync(null!));
         }
 
         [Fact]
@@ -239,7 +240,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.AccountGroupServiceTest
             var dto = new AccountGroupDto { Csg7group = "", Useinflation = true };
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.AddAccountGroupAsync(dto));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.AddAccountGroupAsync(dto));
         }
 
         #endregion
@@ -278,7 +279,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.AccountGroupServiceTest
             var key = "CSG001";
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateAccountGroupAsync(key, null!));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.UpdateAccountGroupAsync(key, null!));
             await _repository.DidNotReceive().UpdateAccountGroupAsync(Arg.Any<AccountGroup>());
         }
 

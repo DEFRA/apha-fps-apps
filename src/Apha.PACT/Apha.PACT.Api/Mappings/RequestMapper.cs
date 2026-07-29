@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
@@ -81,6 +81,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<BatchJobQueueRes, BatchJobQueueDto>().ReverseMap();
             CreateMap<BatchJobEventTriggerRes, BatchJobEventTriggerDto>().ReverseMap();
             CreateMap<TestActualBreakdownDto, TestActualBreakdownRes>().ReverseMap();
+            CreateMap<TestPlanCostBreakdownDto, TestPlanCostBreakdownRes>().ReverseMap();
         }
     }
 }

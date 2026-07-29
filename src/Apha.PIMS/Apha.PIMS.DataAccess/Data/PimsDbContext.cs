@@ -1,22 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — PimsDbContext.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
- * Migrated : 2026-07-22
- *
- * CHANGED:
- *   - DbSet<Comment> Comments and DbSet<CommentTopic> CommentTopics registered for standalone Comments page migration
- *   - modelBuilder.ApplyConfiguration(new CommentMap()) and ApplyConfiguration(new CommentTopicMap()) registered in OnModelCreating
- *   - These DbSets support GetCommentsByProjectAsync (with optional topic filter), GetCommentTopicsAsync, and all CRUD operations
- *
- * PRESERVED:
- *   - All pre-existing DbSets (Projects, ProposedProjects, Risks, Milestones, etc.) unchanged
- *   - All pre-existing ApplyConfiguration registrations in OnModelCreating unchanged
- *   - modelBuilder.UseCollation("en_GB.utf8") unchanged
- *   - Partial class declaration unchanged
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Unused `using System`, `using System.Collections.Generic`, `using System.Text` — safe to remove in a housekeeping pass.
- */
 using Apha.PIMS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -27,7 +8,7 @@ namespace Apha.PIMS.DataAccess.Data
 {
     public partial class PimsDbContext : DbContext
     {
-        
+
         public PimsDbContext(DbContextOptions<PimsDbContext> options)
         : base(options)
         {
@@ -55,6 +36,7 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<ProjectStaffPlan> ProjectStaffPlans { get; set; }
         public virtual DbSet<ProjectMonthFinal> ProjectMonthFinals { get; set; }
         public virtual DbSet<FpsYearTotal> FpsYearTotals { get; set; }
+        public virtual DbSet<Settings> DatabaseSettings { get; set; }
 
         public virtual DbSet<Milestone> Milestones { get; set; }
         public virtual DbSet<MilestoneFormDates> MilestoneFormDates { get; set; }
@@ -65,8 +47,13 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<StagingMilestone> StagingMilestones { get; set; }
         public virtual DbSet<RadTrackInvoice> RadTrackInvoices { get; set; }
 
-        // Lookup: tblradtrackcontract � used by RadTrackInvoice contract dropdown.
+       
         public virtual DbSet<RadTrackContract> RadTrackContracts { get; set; }
+
+        public virtual DbSet<YearlyFinancialData> YearlyFinancialData { get; set; }
+
+        public virtual DbSet<PactProjectYearCosts> PactProjectYearCosts { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.UseCollation("en_GB.utf8");           
@@ -92,6 +79,7 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectStaffPlanMap());
             modelBuilder.ApplyConfiguration(new ProjectMonthFinalMap());
             modelBuilder.ApplyConfiguration(new FpsYearTotalMap());
+            modelBuilder.ApplyConfiguration(new SettingsMap());
             modelBuilder.ApplyConfiguration(new MilestoneMap());
             modelBuilder.ApplyConfiguration(new MilestoneTypeMap());
             modelBuilder.ApplyConfiguration(new MilestoneFormDatesMap());
@@ -99,7 +87,9 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectManagerMap());
             modelBuilder.ApplyConfiguration(new StagingMilestoneMap());
             modelBuilder.ApplyConfiguration(new RadTrackInvoiceMap());
-            modelBuilder.ApplyConfiguration(new RadTrackContractMap());
+            modelBuilder.ApplyConfiguration(new RadTrackContractMap());            
+            modelBuilder.ApplyConfiguration(new YearlyFinancialDataMap());           
+            modelBuilder.ApplyConfiguration(new PactProjectYearCostsMap());
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * TRANSFORMENGINE MIGRATION — EntityMapper.cs
  * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services
  * Migrated : 2026-07-22
@@ -33,7 +33,6 @@ namespace Apha.PIMS.Application.Mappings
             CreateMap(typeof(PaginationParameters<>), typeof(QueryParameters<>)).ReverseMap();
             CreateMap(typeof(PagedData<>), typeof(PaginatedResult<>)).ReverseMap();
             CreateMap<PaginationData, PaginationDto>().ReverseMap();
-
             CreateMap<ProjectListView, ProjectListViewDto>().ReverseMap();
             CreateMap<ProjectListMilestone, ProjectListMilestoneDto>().ReverseMap();
             CreateMap<ProjectDetailsMilestone, ProjectDetailsMilestoneDto>().ReverseMap();
@@ -55,21 +54,17 @@ namespace Apha.PIMS.Application.Mappings
             CreateMap<PactPayCalc, PactPayDto>().ReverseMap();
             CreateMap<ProjectMonthFinal, MonthlyPactDto>().ReverseMap();
             CreateMap<FpsYearTotal, FpsYearTotalsDto>().ReverseMap();
-
             CreateMap<Milestone, MilestoneDto>()
                .ForMember(dest => dest.IsLate, opt => opt.Ignore());
             CreateMap<MilestoneDto, Milestone>();
-
-
-
             CreateMap<MilestoneType, MilestoneTypeDto>().ReverseMap();
-
             CreateMap<MilestoneFormDates, MilestoneFormDatesDto>().ReverseMap();
-
             CreateMap<LogMilestone, LogMilestoneDto>().ReverseMap();
             CreateMap<RadTrackInvoice, RadTrackInvoiceDto>().ReverseMap();
             CreateMap<RadTrackInvoiceTotals, RadTrackInvoiceTotalsDto>().ReverseMap();
             CreateMap<StagingMilestone, StagingMilestoneDto>().ReverseMap();
+            CreateMap<YearlyFinancialData, YearlyFinancialDataDto>().ReverseMap();
+            CreateMap<PactProjectYearCosts, PactProjectYearCostsDto>().ReverseMap();
 
             CreateMap<ProjectYearManager, ProjectYearManagerDto>().ReverseMap();
         }

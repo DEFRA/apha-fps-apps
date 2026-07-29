@@ -8,7 +8,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 
-namespace Apha.FPS.Api.UnitTests.Controllers.ProjectAuditTrailControllerTest
+namespace Apha.FPS.Api.UnitTests.Controller.ProjectAuditTrailControllerTest
 {
     public class ProjectAuditTrailControllerTests
     {

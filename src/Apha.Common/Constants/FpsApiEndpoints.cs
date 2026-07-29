@@ -97,6 +97,7 @@
         public const string GetProjectsByProjectGroup = "api/v1/project/paged/by-project-group?projectGroup={0}";
         public const string GetProjectsByProgramVla = "api/v1/project/paged-vla?programNo={0}";
         public const string GetProjectsByProjectGroupVla = "api/v1/project/paged-vla/by-project-group?projectGroup={0}";
+        public const string GetWorkgroupStaffReplan = "api/v1/project/{0}/staff-replan";
 
         // Project Group
         public const string GetAllProjectGroups = "api/v1/projectgroup";
@@ -121,6 +122,9 @@
         // Project Staff Plan
         public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";
 
+        // Project Staff Plan Details (fps.vwprojectstaffplandetails)
+        public const string GetPagedProjectStaffPlanDetails = "api/v1/projectstaffplandetails";
+
         // Project Group Staff Plan (fps.vpvtprojectgroupmgrplan)
         public const string GetPagedProjectGroupStaffPlan = "api/v1/projectgroupstaffplan";
 
@@ -139,6 +143,7 @@
         public const string GetZtStaffJobsByStaffIdPaged = "api/v1/staffjob/ztstaffjobs/paged";
         public const string GetZtStaffJobDetailsById = "api/v1/staffjob/ztstaffjob/{0}/{1}";
         public const string GetStaffResourceUtilisation = "api/v1/staffjob/resourceutilisation";
+        public const string GetStaffJobsAllocationByJobCodeWgGradePaged = "api/v1/staffjob/staffjobsallocation/paged";
 
         // View Project Plan vs Actual Staff
         public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
@@ -278,5 +283,11 @@
         // ResourceAllocation — Stage 2 Check Resource Allocation
         public const string GetPagedResourceStaffAllocations = "api/v1/ResourceAllocation/staffallocations/paged";
         public const string GetPagedResourceStaffJobDetails = "api/v1/ResourceAllocation/staffjobdetails/paged";
+
+        // ResourceMgmtReplan — Resource Re-allocation Screen (frmRM_RePlan)
+        public const string GetResourceMgmtReplanGrid = "api/v1/resourcemgmtreplan/grid";
+        public const string GetResourceMgmtReplanStaffJobs = "api/v1/resourcemgmtreplan/staffjobs";
+        public const string GetResourceMgmtReplanStaged = "api/v1/resourcemgmtreplan/staged";
+        public const string CommitResourceMgmtReplan = "api/v1/resourcemgmtreplan/commit";
     }
 }
