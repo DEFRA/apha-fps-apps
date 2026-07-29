@@ -255,6 +255,8 @@ function editFailedSubContractRms(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            // Attach numeric validation to decimal fields
+            attachNumericValidation();
         },
         error: function () {
             showAlertMessage('Error loading form.', AlertType.ERROR);
