@@ -53,6 +53,12 @@ function addSubContractRms() {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            // Initialize jQuery Unobtrusive Validation
+            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
+                $.validator.unobtrusive.parse('#formAddProjectCost');
+            }
+            // Attach numeric validation
+            attachNumericValidation();
         },
         error: function () {
             showAlertMessage('Error loading form.', AlertType.ERROR);
@@ -70,6 +76,12 @@ function editSubContractRms(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            // Initialize jQuery Unobtrusive Validation
+            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
+                $.validator.unobtrusive.parse('#formAddProjectCost');
+            }
+            // Attach numeric validation
+            attachNumericValidation();
         },
         error: function () {
             showAlertMessage('Error loading form.', AlertType.ERROR);
@@ -112,7 +124,18 @@ function saveProjectCost() {
 
     const data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
 
-    ['Month', 'Amount', 'SupplierNumber', 'DailyRate', 'AnimalDays'].forEach(function (field) {
+    // Convert empty strings to null for numeric fields, but parse valid numbers
+    ['Amount', 'DailyRate'].forEach(function (field) {
+        if (data[field] === '' || data[field] === undefined) {
+            data[field] = null;
+        } else if (typeof data[field] === 'string') {
+            var parsed = parseFloat(data[field]);
+            data[field] = isNaN(parsed) ? null : parsed;
+        }
+    });
+
+    // Handle other numeric/integer fields
+    ['Month', 'SupplierNumber', 'AnimalDays'].forEach(function (field) {
         if (data[field] === '' || data[field] === undefined) {
             data[field] = null;
         }

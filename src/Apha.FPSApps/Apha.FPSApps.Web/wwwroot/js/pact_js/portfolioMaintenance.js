@@ -28,8 +28,6 @@ $(document).ready(function () {
         $.validator.unobtrusive.parse('#portfolioDetailForm');
     }
 
-    attachNumericValidation();
-
     var $panel = $('#portfolioDropdownPanel');
     var $input = $('#dpselectportfolio');
     var $rows  = $('#portfolioDropdownBody tr');
@@ -234,13 +232,6 @@ function loadPortfolioData(parentProject) {
                 updateNavHref('#sideNavTimeCodes', parentProject);
                 updateNavHref('#sideNavInvoices', parentProject);
 
-                // Initialize jQuery Unobtrusive Validation for the portfolio form
-                if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-                    $.validator.unobtrusive.parse('#portfolioDetailForm');
-                }
-
-                attachNumericValidation();
-
                 resetFormButtons(true);
                 loadConstituentTestGrid(parentProject);
             } else {
@@ -296,12 +287,7 @@ function addConstituentTest() {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             $('#modaPopupBody').data('submitFn', 'saveConstituentTest');
-            // Initialize jQuery Unobtrusive Validation
-            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-                $.validator.unobtrusive.parse('#formAddTest');
-            }
-            // Attach numeric validation
-            attachNumericValidation();
+           
             initializeTestCodeMultiColumnDropdown();
         });
 }
@@ -405,12 +391,6 @@ function addPortfolioTimeCode() {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             $('#modaPopupBody').data('submitFn', 'savePortfolioTimeCode');
-            // Initialize jQuery Unobtrusive Validation
-            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-                $.validator.unobtrusive.parse('#timeCodeForm');
-            }
-            // Attach numeric validation
-            attachNumericValidation();
         });
 }
 
@@ -451,12 +431,7 @@ function editPortfolioTimeCode(btn) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             $('#modaPopupBody').data('submitFn', 'updatePortfolioTimeCode');
-            // Initialize jQuery Unobtrusive Validation
-            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-                $.validator.unobtrusive.parse('#timeCodeForm');
-            }
-            // Attach numeric validation
-            attachNumericValidation();
+          
         });
 }
 

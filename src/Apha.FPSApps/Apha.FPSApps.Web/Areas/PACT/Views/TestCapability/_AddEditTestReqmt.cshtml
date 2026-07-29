@@ -86,10 +86,10 @@
                     <label class="govuk-label govuk-!-font-weight-bold" for="UnitPrice">Unit Price</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input class="govuk-input govuk-!-font-size-16" id="UnitPrice" name="UnitPrice"
-                               type="number" step="0.01" min="0" value="@(Model.UnitPrice.HasValue ? Model.UnitPrice.Value.ToString("F2") : "")" />
+                        <input class="govuk-input govuk-!-font-size-16 decfmt-input" id="UnitPrice" name="UnitPrice"
+                               type="text" value="@(Model.UnitPrice.HasValue ? Model.UnitPrice.Value.ToString("F2") : "")" />
                     </div>
-                    <span data-valmsg-for="UnitPrice"
+                    <span asp-validation-for="UnitPrice"
                           class="govuk-error-message field-validation-valid" style="display:none;"></span>
                 </div>
             </div>
