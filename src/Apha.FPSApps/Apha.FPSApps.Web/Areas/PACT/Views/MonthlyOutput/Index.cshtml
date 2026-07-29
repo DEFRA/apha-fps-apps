@@ -11,7 +11,7 @@
         </div>
     </div>
 
-    <div class="align-items-start m-10" id="search-grid">
+    <div class="align-items-start m-10 isOutputRecordDataEntry" id="search-grid">
         <div>
             <div>
                 <div class="sup_search_panel sup_border_b_0 sup_margin_bottom_left_10">
@@ -35,7 +35,7 @@
 
                     <div class="input-group searchfiels govuk-!-margin-right-3">
                         <label class="govuk-label govuk-!-font-weight-bold" for="ddMonth">Period</label>
-                        <select id="ddMonth" class="govuk-select govuk-!-font-size-16 monthly-output-period-select-width">
+                        <select id="ddMonth" class="govuk-select govuk-!-font-size-16">
                             <option value="">--select--</option>
                             @foreach (var item in Model.MonthOptions)
                             {
@@ -79,7 +79,7 @@
 
     <div class="grid-buttons-wrapper">
         <div class="align-items-start m-10 sup_search_panel sup_p_0 bottom-grid-wrapper">
-            <div id="gridContainer_@Model.StagingGrid.GridId" class="govuk-grid-column-full sup_p_0">
+            <div id="gridContainer_@Model.StagingGrid.GridId" class="govuk-grid-column-full sup_p_0 isOutputRecordDataEntryGrid">
                 @await Html.PartialAsync("_DataGrid", Model.StagingGrid)
             </div>
 

@@ -1794,3 +1794,59 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
         align-items: center;
         justify-content: center;
     }
+
+.isOutputRecordDataEntry {
+    .sup_search_panel .searchfiels:nth-child(1) {
+        width: 290px !important;
+    }
+
+    #tbl_monthlyOutputLiveGrid th.sortable-header:nth-child(1) {
+        width: 300px !important;
+    }
+
+    .sup_search_panel .searchfiels:nth-child(2),
+    .sup_search_panel .searchfiels:nth-child(2) .tableselectdropdown {
+        width: 290px !important;
+    }
+
+    .sup_search_panel .searchfiels:nth-child(2) {
+        margin-right: 10px !important;
+    }
+
+    #tbl_monthlyOutputLiveGrid th:nth-child(2) {
+        width: 300px !important;
+    }
+
+    .sup_search_panel .searchfiels:nth-child(3),
+    .sup_search_panel .searchfiels:nth-child(3) .tableselectdropdown {
+        width: 505px !important;
+    }
+
+    #tbl_monthlyOutputLiveGrid th:nth-child(3) {
+        margin-right: 10px !important;
+        width: 515px !important;
+    }
+
+    .sup_search_panel .searchfiels:nth-child(4) {
+        width: 250px !important;
+
+        .govuk-select {
+            width: 100% !important;
+        }
+    }
+
+    #tbl_monthlyOutputLiveGrid th:nth-child(4) {
+        width: 260px !important;
+    }
+
+    .custom-table tbody td:nth-child(4),
+    .custom-table tbody td:nth-child(5) {
+        text-align: right !important;
+    }
+}
+#tbl_monthlyOutputStagingGrid {
+    .custom-table tbody td:nth-child(4),
+    .custom-table tbody td:nth-child(5) {
+        text-align: right !important;
+    }
+}
