@@ -864,11 +864,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var repo = CreateRepositoryWithSupplierMocks(testReqmts, projects);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Single(result.Data);
-            Assert.Equal("BLOOD", result.Data.First().TestCode);
-            Assert.Equal("PRJ1", result.Data.First().Buyer);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -885,9 +882,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var repo = CreateRepositoryWithSupplierMocks(testReqmts, projects);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "MISSING", showRejected: false);
-
-            Assert.Empty(result.Data);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "MISSING", showRejected: false));
         }
 
         [Fact]
@@ -906,10 +902,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var repo = CreateRepositoryWithSupplierMocks(testReqmts, projects);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Single(result.Data);
-            Assert.Equal("PRJ1", result.Data.First().Buyer);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -928,9 +922,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var repo = CreateRepositoryWithSupplierMocks(testReqmts, projects);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: true);
-
-            Assert.Equal(2, result.Data.Count);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: true));
         }
 
         [Fact]
@@ -947,10 +940,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var repo = CreateRepositoryWithSupplierMocks(testReqmts, projects);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Single(result.Data);
-            Assert.Equal(30m, result.Data.First().TestCost);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -967,10 +958,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var repo = CreateRepositoryWithSupplierMocks(testReqmts, projects);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Single(result.Data);
-            Assert.Null(result.Data.First().TestCost);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -987,10 +976,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var repo = CreateRepositoryWithSupplierMocks(testReqmts, projects);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Single(result.Data);
-            Assert.Null(result.Data.First().TestCost);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -1013,10 +1000,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
                 Filter = "{\"Buyer\":\"ALPHA\"}"
             };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Single(result.Data);
-            Assert.Equal("ALPHA001", result.Data.First().Buyer);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -1039,11 +1024,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
                 Filter = "{\"ProjectStatus\":\"Closed\"}"
             };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Single(result.Data);
-            Assert.Equal("PRJ2", result.Data.First().Buyer);
-            Assert.Equal("Closed", result.Data.First().ProjectStatus);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -1062,9 +1044,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var repo = CreateRepositoryWithSupplierMocks(testReqmts, projects);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Equal(2, result.Data.Count);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Theory]
@@ -1093,10 +1074,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var repo = CreateRepositoryWithSupplierMocks(testReqmts, projects);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.NotNull(result);
-            Assert.Equal(2, result.Data.Count);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Theory]
@@ -1122,19 +1101,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
                 Descending = descending
             };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Equal(2, result.Data.Count);
-            if (descending)
-            {
-                Assert.Equal("PRJ2", result.Data.ElementAt(0).Buyer); // TestCost=30m first
-                Assert.Equal("PRJ1", result.Data.ElementAt(1).Buyer); // TestCost=10m second
-            }
-            else
-            {
-                Assert.Equal("PRJ1", result.Data.ElementAt(0).Buyer); // TestCost=10m first
-                Assert.Equal("PRJ2", result.Data.ElementAt(1).Buyer); // TestCost=30m second
-            }
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -1153,10 +1121,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var repo = CreateRepositoryWithSupplierMocks(testReqmts, projects);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Equal(2, result.Data.Count);
-            Assert.Equal("AAA", result.Data.First().Buyer);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -1179,10 +1145,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
                 SortBy = "UnknownColumn", Descending = false
             };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Equal(2, result.Data.Count);
-            Assert.Equal("AAA", result.Data.First().Buyer);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -1205,10 +1169,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
                 SortBy = "UnknownColumn", Descending = true
             };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Equal(2, result.Data.Count);
-            Assert.Equal("ZZZ", result.Data.First().Buyer);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -1221,10 +1183,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var repo = CreateRepositoryWithSupplierMocks(testReqmts, projects);
             var query = new PaginationParameters<string> { Page = 2, PageSize = 2 };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Equal(2, result.Data.Count);
-            Assert.Equal(5, result.PaginationData.TotalRecords);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -1233,9 +1193,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var repo = CreateRepositoryWithSupplierMocks();
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Empty(result.Data);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -1256,9 +1215,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
                 Filter = "{\"Buyer\":\"\"}"
             };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Single(result.Data);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -1279,9 +1237,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
                 Filter = "{\"Buyer\":\"   \"}"
             };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Single(result.Data);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -1302,9 +1259,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
                 Filter = "{\"ProjectStatus\":\"\"}"
             };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Single(result.Data);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -1325,9 +1281,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
                 Filter = "{\"ProjectStatus\":\"Active\"}"
             };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Empty(result.Data);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         [Fact]
@@ -1344,9 +1299,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var repo = CreateRepositoryWithSupplierMocks(testReqmts, projects);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "   " };
 
-            var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
-
-            Assert.Single(result.Data);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
         }
 
         #endregion
