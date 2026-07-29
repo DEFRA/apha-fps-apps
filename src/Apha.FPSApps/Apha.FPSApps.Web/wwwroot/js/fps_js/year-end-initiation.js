@@ -298,11 +298,16 @@
         $('#tbl_yearEndMonthHoursGrid tbody tr').each(function () {
             var fpsYearType = getCellValue(this, 'FpsYearType').toLowerCase();
             var fmonth      = getCellValue(this, 'Fmonth').trim();
-            var isPlanned   = (fpsYearType === 'planned');
             var fmonthZero  = (fmonth === '0' || fmonth === '');
-            var disabled    = isPlanned || fmonthZero;
-            $(this).find('.edit-row-btn').prop('disabled', disabled);
-            $(this).find('.delete-row-btn').prop('disabled', disabled);
+
+            if (fmonthZero) {
+                $(this).find('.edit-row-btn').prop('disabled', true);
+                $(this).find('.delete-row-btn').prop('disabled', true);
+            } else {
+                var Planned = (fpsYearType == 'planned');
+                $(this).find('.edit-row-btn').prop('disabled', !Planned);
+                $(this).find('.delete-row-btn').prop('disabled', Planned);
+            }
         });
     }
 
