@@ -56,13 +56,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// </summary>
         [HttpPost]
         [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> LoadGrid(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null)
+        public async Task<IActionResult> LoadGrid(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
         {
-            var grid = await BuildGridAsync(profitCentre, sortBy, descending, filter);
+            var grid = await BuildGridAsync(profitCentre, sortBy, descending, filter, page, pageSize);
             return PartialView("_DataGrid", grid);
         }
 
-        private async Task<DataGridConfig<BBQueryCrosstabRow>> BuildGridAsync(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null)
+        private async Task<DataGridConfig<BBQueryCrosstabRow>> BuildGridAsync(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
         {
             var rows = new List<BBQueryCrosstabRow>();
             var columns = new List<DataGridColumn>
@@ -138,6 +138,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             rows = ApplyFilters(rows, filters);
             rows = ApplySorting(rows, sortBy, descending);
 
+            var pageNumber = page > 0 ? page : 1;
+            var itemsPerPage = pageSize > 0 ? pageSize : 20;
+            var totalRecords = rows.Count;
+
+            var pagedRows = rows
+                .Skip((pageNumber - 1) * itemsPerPage)
+                .Take(itemsPerPage)
+                .ToList();
+
             return new DataGridConfig<BBQueryCrosstabRow>
             {
                 GridId            = "bbQueryGrid",
@@ -145,14 +154,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowAdd          = false,
                 AllowEdit         = false,
                 AllowDelete       = false,
-                ShowPagination    = false,
+                ShowPagination    = true,
                 ExtraFilterMethod = "getBBQueryExtraFilters",
                 BindGridUrl       = "/FPS/BBQuery/LoadGrid",
                 Columns           = columns,
-                Data              = rows,
+                Data              = pagedRows,
                 CurrentFilters    = filters,
                 Pagination        = new PaginationModel
                 {
+                    TotalRecords  = totalRecords,
+                    PageNumber    = pageNumber,
+                    PageSize      = itemsPerPage,
                     SortColumn    = sortBy,
                     SortDirection = descending
                 }

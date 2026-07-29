@@ -483,5 +483,99 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
                 r => Assert.Equal("A2", r.AccShortName),
                 r => Assert.Equal("A1", r.AccShortName));
         }
+
+        private void ArrangeManyAccountsGrid(int accountCount)
+        {
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync("PC1")
+                .Returns(ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(new List<WorkGroupViewDto>
+                {
+                    new() { WorkGroupName = "WG1", ProfitCentre = "PC1" }
+                }));
+
+            var bids = new List<BidViewDto>();
+            var categories = new List<AccountCategoryDto>();
+            for (int i = 1; i <= accountCount; i++)
+            {
+                var account = $"A{i:D3}";
+                bids.Add(new BidViewDto { Account = account, WorkGroupName = "WG1", GenBid = i });
+                categories.Add(new AccountCategoryDto { AccShortName = account });
+            }
+
+            _budgetBidsService.GetBidViewAsync("WG1")
+                .Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(bids));
+            _budgetBidsService.GetAccountCategoriesAsync()
+                .Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(categories));
+        }
+
+        [Fact]
+        public async Task LoadGrid_EnablesPagination_AndReportsTotalRecords()
+        {
+            ArrangeManyAccountsGrid(25);
+
+            var result = await _controller.LoadGrid("PC1");
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.True(grid.ShowPagination);
+            Assert.Equal(25, grid.Pagination.TotalRecords);
+            // Default page size is 20.
+            Assert.Equal(20, grid.Pagination.PageSize);
+            Assert.Equal(1, grid.Pagination.PageNumber);
+            Assert.Equal(20, grid.Data.Count);
+        }
+
+        [Fact]
+        public async Task LoadGrid_ReturnsRequestedPage_WithRemainingRows()
+        {
+            ArrangeManyAccountsGrid(25);
+
+            var result = await _controller.LoadGrid("PC1", page: 2, pageSize: 20);
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Equal(2, grid.Pagination.PageNumber);
+            Assert.Equal(5, grid.Data.Count);
+            Assert.Equal("A021", grid.Data.First().AccShortName);
+            Assert.Equal("A025", grid.Data.Last().AccShortName);
+        }
+
+        [Fact]
+        public async Task LoadGrid_RespectsCustomPageSize()
+        {
+            ArrangeManyAccountsGrid(25);
+
+            var result = await _controller.LoadGrid("PC1", page: 1, pageSize: 10);
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Equal(10, grid.Pagination.PageSize);
+            Assert.Equal(10, grid.Data.Count);
+            Assert.Equal(25, grid.Pagination.TotalRecords);
+        }
+
+        [Fact]
+        public async Task LoadGrid_InvalidPageAndPageSize_FallBackToDefaults()
+        {
+            ArrangeManyAccountsGrid(25);
+
+            var result = await _controller.LoadGrid("PC1", page: 0, pageSize: 0);
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Equal(1, grid.Pagination.PageNumber);
+            Assert.Equal(20, grid.Pagination.PageSize);
+            Assert.Equal(20, grid.Data.Count);
+        }
+
+        [Fact]
+        public async Task LoadGrid_PaginationAppliedAfterFilterAndSort()
+        {
+            ArrangeManyAccountsGrid(25);
+
+            // Sort by RowSummary descending -> A025 (25) first; page 1 size 5 -> A025..A021.
+            var result = await _controller.LoadGrid("PC1", "RowSummary", true, null, 1, 5);
+
+            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            Assert.Equal(25, grid.Pagination.TotalRecords);
+            Assert.Equal(5, grid.Data.Count);
+            Assert.Equal("A025", grid.Data.First().AccShortName);
+            Assert.Equal("A021", grid.Data.Last().AccShortName);
+        }
     }
 }
