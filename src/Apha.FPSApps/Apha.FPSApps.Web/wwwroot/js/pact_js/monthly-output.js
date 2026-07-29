@@ -57,13 +57,14 @@ function alignTotalVolumeBox(gridId, rowContainerId, inputId, labelSelector) {
     if (!volumeTh || !gridContainer || !rowContainer || !input || !label) return;
 
     const thRect = volumeTh.getBoundingClientRect();
-    const leftOffset = thRect.left - gridContainer.getBoundingClientRect().left;
+    const containerLeft = gridContainer.getBoundingClientRect().left;
+    const rightOffset = thRect.right - containerLeft;
 
     rowContainer.style.display = 'flex';
     rowContainer.style.alignItems = 'center';
 
     label.style.whiteSpace = 'nowrap';
-    label.style.marginLeft = Math.max(0, leftOffset - label.offsetWidth - 8) + 'px';
+    label.style.marginLeft = Math.max(0, rightOffset - label.offsetWidth - 8 - input.offsetWidth) + 'px';
     label.style.marginRight = '8px';
 
     input.style.flexShrink = '0';
