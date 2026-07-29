@@ -1,21 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ProjectCommentControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-22
- *
- * CHANGED:
- *   - All GetCommentsByProject test calls updated to include new string? topic parameter (position 3)
- *   - All ICommentService.GetCommentsByProjectAsync mock setups updated to include topic argument
- *   - Added GetCommentsByProject_WithTopicFilter test to cover new topic parameter path
- *
- * PRESERVED:
- *   - All existing test methods and assertions
- *   - Test structure: Arrange/Act/Assert pattern
- *   - NSubstitute Received() verification calls
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Api.Controllers;
@@ -464,6 +446,112 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
             await Assert.ThrowsAsync<Exception>(() => _controller.Delete(CommentNo));
 
             await _service.Received(1).DeleteAsync(CommentNo);
+        }
+
+        #endregion
+
+        #region GetCommentTopics
+
+        [Fact]
+        public async Task GetCommentTopics_ReturnsOkResult_WithMappedTopics()
+        {
+            // Arrange
+            var topicDtos = new List<CommentTopicDto>
+            {
+                new CommentTopicDto { Topic = "Budget" },
+                new CommentTopicDto { Topic = "Risk" }
+            };
+            var topicRes = new List<CommentTopicRes>
+            {
+                new CommentTopicRes { Topic = "Budget" },
+                new CommentTopicRes { Topic = "Risk" }
+            };
+
+            _service.GetCommentTopicsAsync().Returns(topicDtos);
+            _mapper.Map<IEnumerable<CommentTopicRes>>(topicDtos).Returns(topicRes);
+
+            // Act
+            var result = await _controller.GetCommentTopics();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(topicRes, okResult.Value);
+            await _service.Received(1).GetCommentTopicsAsync();
+            _mapper.Received(1).Map<IEnumerable<CommentTopicRes>>(topicDtos);
+        }
+
+        #endregion
+
+        #region GetForecastSpendByProject
+
+        [Fact]
+        public async Task GetForecastSpendByProject_ReturnsOkResult_WithForecastSpendResponse()
+        {
+            // Arrange
+            const string project = "PP001";
+            const double expectedForecastSpend = 12345.67;
+            _service.GetForecastSpendByProjectAsync(project).Returns(expectedForecastSpend);
+
+            // Act
+            var result = await _controller.GetForecastSpendByProject(project);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var value = Assert.IsType<ProjectCommentForecastSpendRes>(okResult.Value);
+            Assert.Equal(expectedForecastSpend, value.ForecastSpend);
+            await _service.Received(1).GetForecastSpendByProjectAsync(project);
+        }
+
+        #endregion
+
+        #region UpdateForecastSpendByProject
+
+        [Fact]
+        public async Task UpdateForecastSpendByProject_WithEmptyProject_ReturnsBadRequest()
+        {
+            // Arrange
+            var request = new ProjectCommentForecastSpendRes { ForecastSpend = 12.34 };
+
+            // Act
+            var result = await _controller.UpdateForecastSpendByProject(string.Empty, request);
+
+            // Assert
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Project is required.", badRequest.Value);
+            await _service.DidNotReceive().UpdateForecastSpendByProjectAsync(Arg.Any<string>(), Arg.Any<double?>());
+        }
+
+        [Fact]
+        public async Task UpdateForecastSpendByProject_WithNullRequest_ReturnsBadRequest()
+        {
+            // Arrange
+            const string project = "PP001";
+
+            // Act
+            var result = await _controller.UpdateForecastSpendByProject(project, null!);
+
+            // Assert
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Forecast spend payload is required.", badRequest.Value);
+            await _service.DidNotReceive().UpdateForecastSpendByProjectAsync(Arg.Any<string>(), Arg.Any<double?>());
+        }
+
+        [Fact]
+        public async Task UpdateForecastSpendByProject_WithValidInput_ReturnsOkResult_WithUpdatedForecastSpend()
+        {
+            // Arrange
+            const string project = "PP001";
+            var request = new ProjectCommentForecastSpendRes { ForecastSpend = 9876.54 };
+            _service.UpdateForecastSpendByProjectAsync(project, request.ForecastSpend).Returns(request.ForecastSpend);
+
+            // Act
+            var result = await _controller.UpdateForecastSpendByProject(project, request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var value = Assert.IsType<ProjectCommentForecastSpendRes>(okResult.Value);
+            Assert.Equal(request.ForecastSpend, value.ForecastSpend);
+            await _service.Received(1).UpdateForecastSpendByProjectAsync(project, request.ForecastSpend);
         }
 
         #endregion

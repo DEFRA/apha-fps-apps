@@ -1,28 +1,4 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — PimsViewModelMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-07-22
- *
- * CHANGED:
- *   - Added CreateMap<AddEditCommentViewModel, CommentDto>().ReverseMap() for the standalone
- *     Comments page modal add/edit form (frmtblComments PIMS)
- *   - TransformEngine migration annotation header added
- *
- * PRESERVED:
- *   - All existing CreateMap entries: ProjectListItem, ProjectListViewModel, ProposedProjectViewModel,
- *     ProjectDetailsViewModel, ProjectCommentItem <-> CommentDto, AdditionalCost plan/actual items,
- *     AnimalCost plan/actual items, TestCost plan/actual items, StaffCost plan/actual items,
- *     PactPayItem, MonthlyPactItem, MilestoneItem, MilestoneFormDatesItem, LogMilestoneItem,
- *     InvoiceItem, InvoiceViewModel, InvoiceTotalsItem, StagingMilestoneItem,
- *     PaginationFilter <-> QueryParameters, PaginationModel <-> PaginationDto
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: CommentViewModel (standalone Comments page ViewModel) will be created
- *     in Phase 11. Add CreateMap<CommentViewModel, CommentDto>().ReverseMap() once that class exists.
- *   - TRANSFORMENGINE TODO: AddEditCommentViewModel.CommentText maps to CommentDto.CommentText (alias
- *     for Comment). Verify field alignment once the CommentDto alias is resolved.
- */
-using Apha.FPSApps.Application.Dtos;
+﻿using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
@@ -43,7 +19,14 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ProposedProjectViewModel, ProposedProjectDto>().ReverseMap();
             CreateMap<ProjectDetailsViewModel, ProjectDetailDto>().ReverseMap();
             CreateMap<ProjectDetailsViewModel, ProposedProjectDto>().ReverseMap();
-            CreateMap<ProjectCommentItem, CommentDto>().ReverseMap();
+            CreateMap<ProjectCommentItem, CommentDto>()
+                .ForMember(dest => dest.CommentText, opt => opt.MapFrom(src => src.Comment))
+                .ForMember(dest => dest.MadeBy, opt => opt.MapFrom(src => src.MadeBy))
+                .ForMember(dest => dest.DateEntered, opt => opt.MapFrom(src => src.DateEntered))
+                .ReverseMap()
+                .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.CommentText))
+                .ForMember(dest => dest.MadeBy, opt => opt.MapFrom(src => src.MadeBy))
+                .ForMember(dest => dest.DateEntered, opt => opt.MapFrom(src => src.DateEntered));
             // TRANSFORMENGINE: AddEditCommentViewModel — modal add/edit form for frmtblComments standalone Comments page
             // Maps CommentNo, Project, Year, Topic, CommentText → CommentDto fields; ReverseMap for pre-population on edit
             CreateMap<AddEditCommentViewModel, CommentDto>().ReverseMap();

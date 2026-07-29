@@ -1,29 +1,4 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — PimsProjectCommentApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-22
- *
- * CHANGED:
- *   - string? topic parameter added to GetCommentsByProjectAsync — forwarded as optional
- *     query string parameter to backend GET /api/v1/projectcomment?project&year&topic
- *   - topic appended via QueryStringHelper.AddQueryString(url, new { project, year, topic })
- *     so null/empty values are omitted automatically
- *   - All HTTP calls wrapped in try/catch(Exception) returning FailureResponse with InternalCodeError
- *   - private readonly fields _http and _mapper (S2933)
- *   - private const string InternalCodeError (S1192)
- *
- * PRESERVED:
- *   - All 5 CRUD + 1 lookup methods: GetCommentsByProjectAsync, GetByIdAsync, CreateCommentAsync,
- *     UpdateCommentAsync, DeleteCommentAsync, GetCommentTopicsAsync
- *   - URL constants delegated to PimsApiEndpoints static class (GetCommentsByProject,
- *     GetCommentById, CreateComment, UpdateComment, DeleteComment, GetCommentTopics)
- *   - Mapper used for all success response mappings (not manual construction)
- *   - Namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
-using Apha.Common.Constants;
+﻿using Apha.Common.Constants;
 using Apha.Common.Contracts.PIMS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -162,6 +137,47 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             {
                 return ApiResponseDto<List<CommentTopicDto>>.FailureResponse(
                     [new ApiErrorDto { Message = "Failed to retrieve comment topics", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        public async Task<ApiResponseDto<ProjectCommentForecastSpendDto>> GetForecastSpendByProjectAsync(string project)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetCommentForecastSpend, new { project });
+                var response = await _http.GetAsync<ProjectCommentForecastSpendRes>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<ProjectCommentForecastSpendDto>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<ProjectCommentForecastSpendDto>>(response);
+                return ApiResponseDto<ProjectCommentForecastSpendDto>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<ProjectCommentForecastSpendDto>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve forecast spend", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        public async Task<ApiResponseDto<ProjectCommentForecastSpendDto>> UpdateForecastSpendByProjectAsync(string project, double? forecastSpend)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetCommentForecastSpend, new { project });
+                ProjectCommentForecastSpendRes request = new() { ForecastSpend = forecastSpend };
+                var response = await _http.PutAsync<ProjectCommentForecastSpendRes, ProjectCommentForecastSpendRes>(url, request);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<ProjectCommentForecastSpendDto>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<ProjectCommentForecastSpendDto>>(response);
+                return ApiResponseDto<ProjectCommentForecastSpendDto>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<ProjectCommentForecastSpendDto>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to update forecast spend", Code = InternalCodeError }],
                     new ApiMetaDto());
             }
         }

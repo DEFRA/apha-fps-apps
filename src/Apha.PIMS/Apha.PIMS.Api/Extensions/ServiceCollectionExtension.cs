@@ -1,24 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-22
- *
- * CHANGED:
- *   - Verified Phase 5 DI registrations complete; no new registrations required
- *   - TransformEngine header added
- *
- * PRESERVED:
- *   - All existing scoped service registrations (IAppStateService, IProjectListService,
- *     IProposedProjectService, IProjectDetailsService, ICommentService,
- *     IProjectYearCostsService, IMilestoneService, IRadTrackInvoiceService, IExcelExportService)
- *   - All existing scoped repository registrations (IFPSYearContext, IProjectListRepository,
- *     IProposedProjectRepository, IProjectDetailsRepository, ICommentRepository,
- *     IProjectYearCostsRepository, IMilestoneRepository, IRadTrackInvoiceRepository)
- *   - AddApplicationServices() orchestration method calling AddServices() + AddRepositories()
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.PIMS.Application.Interfaces;
@@ -45,8 +24,7 @@ namespace Apha.PIMS.Api.Extensions
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IProjectListService, ProjectListService>();
             services.AddScoped<IProposedProjectService, ProposedProjectService>();
-            services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
-            // TRANSFORMENGINE: ICommentService registered — supports ProjectCommentController comment CRUD + topic filter
+            services.AddScoped<IProjectDetailsService, ProjectDetailsService>();           
             services.AddScoped<ICommentService, CommentService>();
             services.AddScoped<IProjectYearCostsService, ProjectYearCostsService>();
             services.AddScoped<IMilestoneService, MilestoneService>();
@@ -61,8 +39,7 @@ namespace Apha.PIMS.Api.Extensions
             services.AddScoped<IFPSYearContext, FPSYearContext>();
             services.AddScoped<IProjectListRepository, ProjectListRepository>();
             services.AddScoped<IProposedProjectRepository, ProposedProjectRepository>();
-            services.AddScoped<IProjectDetailsRepository, ProjectDetailsRepository>();
-            // TRANSFORMENGINE: ICommentRepository registered — backing store for ICommentService; topic filter support added in Phase 4
+            services.AddScoped<IProjectDetailsRepository, ProjectDetailsRepository>();            
             services.AddScoped<ICommentRepository, CommentRepository>();
             services.AddScoped<IProjectYearCostsRepository, ProjectYearCostsRepository>();
             services.AddScoped<IMilestoneRepository, MilestoneRepository>();

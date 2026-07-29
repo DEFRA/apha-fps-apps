@@ -1,29 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — CommentRepositoryTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-22
- *
- * CHANGED:
- *   - Added mandatory TransformEngine file-level header block (PB-14)
- *   - Extended CreateRepository / CreateRepositoryWithMocks factory methods to set up
- *     DbSet<CommentTopic> CommentTopics so GetCommentTopicsAsync tests can run
- *   - Added region: GetCommentsByProjectAsync — topic filter
- *     (covers optional string? topic parameter added to ICommentRepository in Phase 4)
- *   - Added region: ExistsAsync
- *     (covers project/year/topic existence check and excludeCommentNo update-path guard)
- *   - Added region: GetCommentTopicsAsync
- *     (covers lookup-table read used by Topic combo-box on the Comments form)
- *
- * PRESERVED:
- *   - All existing test methods: GetCommentsByProjectAsync (project, year, sorting, paging),
- *     GetByIdAsync, AddAsync, UpdateAsync, DeleteAsync — unchanged
- *   - Established RepositoryTestHelper + Moq pattern (Moq for DbContext/DbSet, no NSubstitute)
- *   - CreateRepository / CreateRepositoryWithMocks factory helper signatures remain backward-compatible
- *     (new commentTopics parameter is optional, existing call-sites compile unchanged)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
 using Apha.Common.Helpers.Repository;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Pagination;
@@ -36,14 +10,11 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
 {
     public class CommentRepositoryTests
     {
-        /// <summary>
-        /// Creates a CommentRepository with in-memory data.
-        /// All parameters are optional — omitted sets are initialised as empty.
-        /// </summary>
-        // TRANSFORMENGINE: extended to accept commentTopics so GetCommentTopicsAsync tests compile
+       
         private static CommentRepository CreateRepository(
             IEnumerable<Comment>? comments = null,
-            IEnumerable<CommentTopic>? commentTopics = null)
+            IEnumerable<CommentTopic>? commentTopics = null,
+            IEnumerable<ProjectRadTrackData>? projectRadTrackData = null)
         {
             var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
 
@@ -52,26 +23,28 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             RepositoryTestHelper.SetupSaveChanges(mockContext);
             mockContext.Setup(x => x.Comments).Returns(commentsMockSet.Object);
 
-            // TRANSFORMENGINE: CommentTopics DbSet wired for GetCommentTopicsAsync lookup coverage
+            
             var commentTopicsMockSet = RepositoryTestHelper.CreateMockDbSet(commentTopics ?? Enumerable.Empty<CommentTopic>());
             RepositoryTestHelper.SetupDbSetOperations(commentTopicsMockSet);
             mockContext.Setup(x => x.CommentTopics).Returns(commentTopicsMockSet.Object);
 
+            
+            var projectRadTrackDataMockSet = RepositoryTestHelper.CreateMockDbSet(projectRadTrackData ?? Enumerable.Empty<ProjectRadTrackData>());
+            RepositoryTestHelper.SetupDbSetOperations(projectRadTrackDataMockSet);
+            mockContext.Setup(x => x.ProjectRadTrackData).Returns(projectRadTrackDataMockSet.Object);
+
             return new CommentRepository(mockContext.Object);
         }
 
-        /// <summary>
-        /// Returns the repository alongside its mocked DbSet and DbContext
-        /// for tests that need to verify Add / Update / Remove / SaveChanges calls.
-        /// </summary>
-        // TRANSFORMENGINE: extended to accept commentTopics so full context is available in write-path tests
+       
         private static (
             CommentRepository Repo,
             Mock<DbSet<Comment>> CommentsDbSet,
             Mock<PimsDbContext> Context)
             CreateRepositoryWithMocks(
                 IEnumerable<Comment>? comments = null,
-                IEnumerable<CommentTopic>? commentTopics = null)
+                IEnumerable<CommentTopic>? commentTopics = null,
+                IEnumerable<ProjectRadTrackData>? projectRadTrackData = null)
         {
             var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
 
@@ -80,15 +53,20 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             RepositoryTestHelper.SetupSaveChanges(mockContext);
             mockContext.Setup(x => x.Comments).Returns(commentsMockSet.Object);
 
-            // TRANSFORMENGINE: CommentTopics DbSet wired for completeness; avoids NullReferenceException in any
-            // code-path that touches _dbContext.CommentTopics even indirectly
+           
             var commentTopicsMockSet = RepositoryTestHelper.CreateMockDbSet(commentTopics ?? Enumerable.Empty<CommentTopic>());
             RepositoryTestHelper.SetupDbSetOperations(commentTopicsMockSet);
             mockContext.Setup(x => x.CommentTopics).Returns(commentTopicsMockSet.Object);
 
+            
+            var projectRadTrackDataMockSet = RepositoryTestHelper.CreateMockDbSet(projectRadTrackData ?? Enumerable.Empty<ProjectRadTrackData>());
+            RepositoryTestHelper.SetupDbSetOperations(projectRadTrackDataMockSet);
+            mockContext.Setup(x => x.ProjectRadTrackData).Returns(projectRadTrackDataMockSet.Object);
+
             var repo = new CommentRepository(mockContext.Object);
             return (repo, commentsMockSet, mockContext);
         }
+
 
         #region GetCommentsByProjectAsync — project filter
 
@@ -214,6 +192,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
 
             // Assert
             Assert.Equal(3, result.Data.Count);
+            Assert.Equal((short)2024, result.Data.First().Year);
+            Assert.Equal((short)2022, result.Data.Last().Year);
         }
 
         [Fact]
@@ -1102,6 +1082,86 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Assert
             Assert.Single(result);
             Assert.Equal("Safety", result.First().Topic);
+        }
+
+        #endregion
+
+        #region GetForecastSpendByProjectAsync
+
+        [Fact]
+        public async Task GetForecastSpendByProjectAsync_ReturnsForecastSpend_WhenProjectExists()
+        {
+            // Arrange
+            var radTrackData = new List<ProjectRadTrackData>
+            {
+                new() { Parentproject = "PP001", Pcforecastspend = 1234.56 },
+                new() { Parentproject = "PP002", Pcforecastspend = 4321.00 }
+            };
+            var repo = CreateRepository(projectRadTrackData: radTrackData);
+
+            // Act
+            var result = await repo.GetForecastSpendByProjectAsync("PP001");
+
+            // Assert
+            Assert.Equal(1234.56, result);
+        }
+
+        [Fact]
+        public async Task GetForecastSpendByProjectAsync_ReturnsNull_WhenProjectDoesNotExist()
+        {
+            // Arrange
+            var radTrackData = new List<ProjectRadTrackData>
+            {
+                new() { Parentproject = "PP002", Pcforecastspend = 4321.00 }
+            };
+            var repo = CreateRepository(projectRadTrackData: radTrackData);
+
+            // Act
+            var result = await repo.GetForecastSpendByProjectAsync("PP001");
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        #endregion
+
+        #region UpdateForecastSpendByProjectAsync
+
+        [Fact]
+        public async Task UpdateForecastSpendByProjectAsync_UpdatesAndReturnsForecastSpend_WhenProjectExists()
+        {
+            // Arrange
+            var radTrackData = new List<ProjectRadTrackData>
+            {
+                new() { Parentproject = "PP001", Pcforecastspend = 100.00 }
+            };
+            var (repo, _, mockContext) = CreateRepositoryWithMocks(projectRadTrackData: radTrackData);
+
+            // Act
+            var result = await repo.UpdateForecastSpendByProjectAsync("PP001", 2500.75);
+
+            // Assert
+            Assert.Equal(2500.75, result);
+            Assert.Equal(2500.75, radTrackData[0].Pcforecastspend);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        [Fact]
+        public async Task UpdateForecastSpendByProjectAsync_ReturnsNullAndDoesNotSave_WhenProjectDoesNotExist()
+        {
+            // Arrange
+            var radTrackData = new List<ProjectRadTrackData>
+            {
+                new() { Parentproject = "PP002", Pcforecastspend = 100.00 }
+            };
+            var (repo, _, mockContext) = CreateRepositoryWithMocks(projectRadTrackData: radTrackData);
+
+            // Act
+            var result = await repo.UpdateForecastSpendByProjectAsync("PP001", 2500.75);
+
+            // Assert
+            Assert.Null(result);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 0);
         }
 
         #endregion

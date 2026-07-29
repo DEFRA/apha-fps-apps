@@ -1,22 +1,4 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — ProjectCommentServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-22
- *
- * CHANGED:
- *   - Added TransformEngine migration annotation header
- *   - Added GetCommentTopicsAsync region (3 scenarios: happy path, empty list, API failure)
- *   - Added GetCommentsByProjectAsync_WithTopicFilter scenario to cover string? topic delegation
- *
- * PRESERVED:
- *   - All existing test methods and assertions unchanged
- *   - NSubstitute mocking pattern (_pimsApiClient → _pimsProjectCommentApiClient)
- *   - Namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentServiceTest
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
-using Apha.FPSApps.Application.Dtos;
+﻿using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
 using Apha.FPSApps.Application.Pagination;
@@ -441,8 +423,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
 
         #endregion
 
-        // TRANSFORMENGINE: GetCommentsByProjectAsync topic filter delegation — covers string? topic parameter
-        //   added when backend GET /api/v1/projectcomment?topic= was extended in Phase 8
+       
         #region GetCommentsByProjectAsync Topic Filter Tests
 
         [Fact]
@@ -492,8 +473,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
 
         #endregion
 
-        // TRANSFORMENGINE: GetCommentTopicsAsync — lookup delegate added in Phase 8 for topic dropdown population.
-        //   Three scenarios: happy path (returns topics), empty list, API failure.
+       
         #region GetCommentTopicsAsync Tests
 
         [Fact]
@@ -571,6 +551,106 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
 
             // Assert — verify thin delegation: exactly one call to the correct API client method
             await _pimsProjectCommentApiClient.Received(1).GetCommentTopicsAsync();
+        }
+
+        #endregion
+
+        #region GetForecastSpendByProjectAsync Tests
+
+        [Fact]
+        public async Task GetForecastSpendByProjectAsync_WithSuccessResponse_ReturnsForecastSpend()
+        {
+            // Arrange
+            var project = "PP001";
+            var forecastSpend = new ProjectCommentForecastSpendDto { ForecastSpend = 12345.67 };
+            var expectedResponse = ApiResponseDto<ProjectCommentForecastSpendDto>.SuccessResponse(forecastSpend);
+
+            _pimsProjectCommentApiClient.GetForecastSpendByProjectAsync(project).Returns(expectedResponse);
+
+            // Act
+            var result = await _projectCommentService.GetForecastSpendByProjectAsync(project);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(12345.67, result.Data.ForecastSpend);
+            await _pimsProjectCommentApiClient.Received(1).GetForecastSpendByProjectAsync(project);
+        }
+
+        [Fact]
+        public async Task GetForecastSpendByProjectAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var project = "INVALID";
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Message = "Forecast spend not found", Code = "NOT_FOUND" }
+            };
+            var expectedResponse = ApiResponseDto<ProjectCommentForecastSpendDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _pimsProjectCommentApiClient.GetForecastSpendByProjectAsync(project).Returns(expectedResponse);
+
+            // Act
+            var result = await _projectCommentService.GetForecastSpendByProjectAsync(project);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            await _pimsProjectCommentApiClient.Received(1).GetForecastSpendByProjectAsync(project);
+        }
+
+        #endregion
+
+        #region UpdateForecastSpendByProjectAsync Tests
+
+        [Fact]
+        public async Task UpdateForecastSpendByProjectAsync_WithSuccessResponse_ReturnsUpdatedForecastSpend()
+        {
+            // Arrange
+            var project = "PP001";
+            double? forecastSpend = 20000.50;
+            var updatedForecastSpend = new ProjectCommentForecastSpendDto { ForecastSpend = forecastSpend };
+            var expectedResponse = ApiResponseDto<ProjectCommentForecastSpendDto>.SuccessResponse(updatedForecastSpend);
+
+            _pimsProjectCommentApiClient.UpdateForecastSpendByProjectAsync(project, forecastSpend).Returns(expectedResponse);
+
+            // Act
+            var result = await _projectCommentService.UpdateForecastSpendByProjectAsync(project, forecastSpend);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(forecastSpend, result.Data.ForecastSpend);
+            await _pimsProjectCommentApiClient.Received(1).UpdateForecastSpendByProjectAsync(project, forecastSpend);
+        }
+
+        [Fact]
+        public async Task UpdateForecastSpendByProjectAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var project = "PP001";
+            double? forecastSpend = 0;
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Message = "Unable to update forecast spend", Code = "UPDATE_FAILED" }
+            };
+            var expectedResponse = ApiResponseDto<ProjectCommentForecastSpendDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _pimsProjectCommentApiClient.UpdateForecastSpendByProjectAsync(project, forecastSpend).Returns(expectedResponse);
+
+            // Act
+            var result = await _projectCommentService.UpdateForecastSpendByProjectAsync(project, forecastSpend);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            await _pimsProjectCommentApiClient.Received(1).UpdateForecastSpendByProjectAsync(project, forecastSpend);
         }
 
         #endregion

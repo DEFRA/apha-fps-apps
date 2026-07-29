@@ -1,25 +1,4 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — CommentService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services
- * Migrated : 2026-07-22
- *
- * CHANGED:
- *   - MS Access form operations (frmtblComments RecordSource + VBA CRUD code-behind) → async service class implementing ICommentService
- *   - GetCommentsByProjectAsync: optional `string? topic` parameter added (forwarded to repository when ICommentRepository is updated in Phase 4)
- *   - AddAsync: server-side `DateEntered = DateTime.UtcNow` replaces SQL Server trigger UI_tblComments (INSERT path)
- *   - AddAsync: duplicate guard (ExistsAsync) enforces unique index ix_tblcomments (project, year, topic)
- *   - UpdateAsync: server-side field mapping replaces VBA bound-form Save operation; preserves existing DateEntered
- *   - Validation: BusinessValidationErrorException thrown on missing Project/Year/Topic (replaces Access Required property on controls)
- *
- * PRESERVED:
- *   - All 6 public method bodies and every conditional branch (validation, duplicate check, null guard, update field assignments)
- *   - DateEntered set as DateTimeKind.Unspecified to match PostgreSQL timestamptz convention
- *   - MadeBy forwarded from DTO (controller injects current user in Phase 5)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — topic parameter forwarding to ICommentRepository completed in Phase 4.
- */
-using Apha.PIMS.Application.Dtos;
+﻿using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Application.Validation;
@@ -41,7 +20,7 @@ namespace Apha.PIMS.Application.Services
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: optional topic parameter now forwarded to repository (Phase 4 completion)
+        
         public async Task<PaginatedResult<CommentDto>> GetCommentsByProjectAsync(string project, int? year, QueryParameters<string> query, string? topic = null)
         {
             PaginationParameters<string> filter = _mapper.Map<PaginationParameters<string>>(query);
@@ -126,6 +105,16 @@ namespace Apha.PIMS.Application.Services
         {
             var topics = await _repository.GetCommentTopicsAsync();
             return _mapper.Map<IEnumerable<CommentTopicDto>>(topics);
+        }
+
+        public async Task<double?> GetForecastSpendByProjectAsync(string project)
+        {
+            return await _repository.GetForecastSpendByProjectAsync(project);
+        }
+
+        public async Task<double?> UpdateForecastSpendByProjectAsync(string project, double? forecastSpend)
+        {
+            return await _repository.UpdateForecastSpendByProjectAsync(project, forecastSpend);
         }
     }
 }

@@ -1,23 +1,4 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — PimsApiDtoMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-07-22
- *
- * CHANGED:
- *   - TransformEngine migration annotation header added (Phase 10 verification pass)
- *
- * PRESERVED:
- *   - All CreateMap entries: ProjectList, ProposedProject, Comments (CommentRes <-> CommentDto,
- *     CommentDto <-> CommentReq), CommentTopics (CommentTopicRes <-> CommentTopicDto),
- *     ProjectDetail, Risk, Year, AdditionalCost, AnimalCost, TestCost, StaffCost,
- *     ProjectYearDetails, PactPay, MonthlyPact, FpsYearTotals, Milestones, StagingMilestone,
- *     ProjectYearManager, RadTrackInvoice, pagination and ApiResponse infrastructure maps
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify CommentDto.CommentText / CommentDto.Comment alias is
- *     consistent with CommentRes once the backend alias is resolved (tracked in CommentDto.cs).
- */
-using Apha.Common.Contracts;
+﻿using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
@@ -52,8 +33,14 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProjectsRes, ProjectsDto>().ReverseMap();
 
             // Comments
-            CreateMap<CommentRes, CommentDto>().ReverseMap();
-            CreateMap<CommentDto, CommentReq>().ReverseMap();
+            CreateMap<CommentRes, CommentDto>()
+                .ForMember(dest => dest.CommentText, opt => opt.MapFrom(src => src.Comment))
+                .ReverseMap()
+                .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.CommentText));
+            CreateMap<CommentDto, CommentReq>()
+                .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.CommentText))
+                .ReverseMap()
+                .ForMember(dest => dest.CommentText, opt => opt.MapFrom(src => src.Comment));
 
             // PIMS Project Detail
             CreateMap<ProjectDetailRes, ProjectDetailDto>().ReverseMap();
@@ -61,6 +48,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Comment Topics
             CreateMap<CommentTopicRes, CommentTopicDto>().ReverseMap();
+            CreateMap<ProjectCommentForecastSpendRes, ProjectCommentForecastSpendDto>().ReverseMap();
 
             // Risk
             CreateMap<RiskRes, RiskDto>().ReverseMap();

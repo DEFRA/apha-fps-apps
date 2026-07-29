@@ -1,23 +1,4 @@
-﻿/*
- * TRANSFORMENGINE MIGRATION — CommentServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-22
- *
- * CHANGED:
- *   - Verified existing 33 test scenarios cover GetCommentsByProjectAsync, GetByIdAsync, AddAsync, UpdateAsync, DeleteAsync
- *   - Added GetCommentsByProjectAsync_WithTopicFilter test to cover optional string? topic parameter (Phase 4 addition)
- *   - Added GetCommentTopicsAsync region with 3 new scenarios: happy path, empty result, and exception propagation
- *   - Added TRANSFORMENGINE file-level header (migration annotation policy compliance)
- *
- * PRESERVED:
- *   - All 33 original test methods and their exact Arrange/Act/Assert bodies
- *   - NSubstitute mock pattern, FluentAssertions assertions, and all region groupings
- *   - Existing namespace, class name, and constructor setup
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
-using Apha.PIMS.Application.Dtos;
+﻿using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Application.Services;
 using Apha.PIMS.Application.Validation;
@@ -847,6 +828,85 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
 
             await _mockRepository.Received(1).GetCommentTopicsAsync();
             _mockMapper.DidNotReceive().Map<IEnumerable<CommentTopicDto>>(Arg.Any<IEnumerable<CommentTopic>>());
+        }
+
+        #endregion
+
+        #region GetForecastSpendByProjectAsync
+
+        [Fact]
+        public async Task GetForecastSpendByProjectAsync_WhenRepositoryReturnsValue_ReturnsForecastSpend()
+        {
+            // Arrange
+            var project = "PP001";
+            double? forecastSpend = 12345.67;
+            _mockRepository.GetForecastSpendByProjectAsync(project).Returns(Task.FromResult(forecastSpend));
+
+            // Act
+            var result = await _sut.GetForecastSpendByProjectAsync(project);
+
+            // Assert
+            result.Should().Be(forecastSpend);
+            await _mockRepository.Received(1).GetForecastSpendByProjectAsync(project);
+        }
+
+        [Fact]
+        public async Task GetForecastSpendByProjectAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var project = "PP001";
+            var expectedException = new Exception("Database connection failed");
+            _mockRepository.GetForecastSpendByProjectAsync(project)
+                .Returns(Task.FromException<double?>(expectedException));
+
+            // Act
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetForecastSpendByProjectAsync(project)
+            );
+
+            // Assert
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).GetForecastSpendByProjectAsync(project);
+        }
+
+        #endregion
+
+        #region UpdateForecastSpendByProjectAsync
+
+        [Fact]
+        public async Task UpdateForecastSpendByProjectAsync_WithValidInput_ReturnsUpdatedForecastSpend()
+        {
+            // Arrange
+            var project = "PP001";
+            double? forecastSpend = 9876.54;
+            _mockRepository.UpdateForecastSpendByProjectAsync(project, forecastSpend).Returns(Task.FromResult(forecastSpend));
+
+            // Act
+            var result = await _sut.UpdateForecastSpendByProjectAsync(project, forecastSpend);
+
+            // Assert
+            result.Should().Be(forecastSpend);
+            await _mockRepository.Received(1).UpdateForecastSpendByProjectAsync(project, forecastSpend);
+        }
+
+        [Fact]
+        public async Task UpdateForecastSpendByProjectAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var project = "PP001";
+            double? forecastSpend = 9876.54;
+            var expectedException = new Exception("Database connection failed");
+            _mockRepository.UpdateForecastSpendByProjectAsync(project, forecastSpend)
+                .Returns(Task.FromException<double?>(expectedException));
+
+            // Act
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.UpdateForecastSpendByProjectAsync(project, forecastSpend)
+            );
+
+            // Assert
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).UpdateForecastSpendByProjectAsync(project, forecastSpend);
         }
 
         #endregion

@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — EntityMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services
- * Migrated : 2026-07-22
- *
- * CHANGED:
- *   - MS Access / VBA implicit field bindings → AutoMapper Profile with explicit bidirectional CreateMap<Entity, Dto>().ReverseMap() entries
- *   - Pagination primitives mapped: PaginationParameters<T> <-> QueryParameters<T>, PagedData<T> <-> PaginatedResult<T>, PaginationData <-> PaginationDto
- *   - Comment <-> CommentDto: maps all 7 tblcomments columns including CommentText (entity) <-> CommentText (dto), server-managed DateEntered nullable
- *   - CommentTopic <-> CommentTopicDto: single-column PK lookup table
- *   - Milestone <-> MilestoneDto: IsLate is a computed property, ignored on inbound map to avoid overwrite
- *   - All other entity pairs registered for ReverseMap bi-directional mapping
- *
- * PRESERVED:
- *   - All existing CreateMap registrations unchanged — no removals or renames
- *   - MilestoneDto -> Milestone unidirectional map (IsLate opt-out) preserved exactly
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Core.Entities;

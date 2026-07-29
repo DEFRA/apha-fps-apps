@@ -1,27 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — CommentControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-22
- *
- * CHANGED:
- *   - New xUnit test class for CommentController (standalone PIMS Comments page controller)
- *   - Tests cover: Index (dropdown population), LoadCommentsGrid (empty project guard, valid project,
- *     invalid ModelState), GetAddEditCommentPartial (add new, edit existing, GetById failure),
- *     GetComment (success, failure), CreateComment (null, valid, service failure),
- *     UpdateComment (null, valid, service failure), DeleteComment (success, failure),
- *     GetForecastSpend (stub — always returns success+null)
- *   - NSubstitute mocks for IMapper, IProjectCommentService, IProjectListService, IProjectDetailsService
- *   - DefaultHttpContext wired so User.Identity.Name resolves (GetCurrentUser)
- *
- * PRESERVED:
- *   - Test naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - Namespace mirrors existing PIMS controller test layout:
- *     Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: GetForecastSpend is a STUB in production — test only verifies the stub
- *     returns success+null until the real service is wired up.
- */
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
@@ -58,7 +34,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
                 _projectListService,
                 _projectDetailsService);
 
-            // TRANSFORMENGINE: DefaultHttpContext required so User.Identity.Name does not throw in GetCurrentUser()
+            
             _controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext()
@@ -80,7 +56,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
             List<CommentTopicDto>? topics = null,
             List<YearDto>? years = null)
         {
-            _projectListService.GetAllProjectsListAsync()
+            _projectListService.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), 1)
                 .Returns(ApiResponseDto<List<ProjectListViewDto>>.SuccessResponse(projects ?? []));
             _commentService.GetCommentTopicsAsync()
                 .Returns(ApiResponseDto<List<CommentTopicDto>>.SuccessResponse(topics ?? []));
@@ -115,7 +91,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
                 years: [new YearDto { Value = 2024 }]);
 
             // Act
-            var result = await _controller.Index();
+            var result = await _controller.Index(parentproject: null);
 
             // Assert
             Assert.IsType<ViewResult>(result);
@@ -131,7 +107,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
                 years: [new YearDto { Value = 2025 }]);
 
             // Act
-            var result = await _controller.Index();
+            var result = await _controller.Index(parentproject: null);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -146,7 +122,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
                 projects: [new ProjectListViewDto { Parentproject = "PP001" }, new ProjectListViewDto { Parentproject = "PP002" }]);
 
             // Act
-            var result = await _controller.Index();
+            var result = await _controller.Index(parentproject: null);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -162,7 +138,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
             SetupDropdownMocks(topics: [new CommentTopicDto { Topic = "Budget" }, new CommentTopicDto { Topic = "Risk" }]);
 
             // Act
-            var result = await _controller.Index();
+            var result = await _controller.Index(parentproject: null);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -178,7 +154,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
             SetupDropdownMocks(years: [new YearDto { Value = 2024 }, new YearDto { Value = 2025 }]);
 
             // Act
-            var result = await _controller.Index();
+            var result = await _controller.Index(parentproject: null);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -193,13 +169,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
             SetupDropdownMocks();
 
             // Act
-            var result = await _controller.Index();
+            var result = await _controller.Index(parentproject: null);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<CommentViewModel>(viewResult.Model);
             Assert.NotNull(model.CommentsGrid);
-            Assert.Equal("commentsGrid", model.CommentsGrid.GridId);
+            Assert.Equal("comments", model.CommentsGrid.GridId);
             Assert.Equal("/PIMS/Comment/LoadCommentsGrid", model.CommentsGrid.BindGridUrl);
             Assert.True(model.CommentsGrid.AllowAdd);
             Assert.True(model.CommentsGrid.AllowEdit);
@@ -213,7 +189,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
             SetupDropdownMocks();
 
             // Act
-            var result = await _controller.Index();
+            var result = await _controller.Index(parentproject: null);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -867,32 +843,116 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
         // ─────────────────────────────────────────────────────────────────────
 
         [Fact]
-        public void GetForecastSpend_AnyProject_ReturnsJsonWithSuccessTrue()
+        public async Task GetForecastSpend_ProjectIsEmpty_ReturnsSuccessWithNullAndSkipsService()
         {
-            // TRANSFORMENGINE: GetForecastSpend is a stub — always returns success+null
-            //   until backend GET /api/v1/projectcomment/forecastspend endpoint is implemented
-
             // Act
-            var result = _controller.GetForecastSpend("PP001");
+            var result = await _controller.GetForecastSpend(string.Empty);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var element = GetJsonResultElement(jsonResult);
             Assert.True(element.GetProperty("success").GetBoolean());
+            Assert.Equal(JsonValueKind.Null, element.GetProperty("forecastSpend").ValueKind);
+            await _commentService.DidNotReceive().GetForecastSpendByProjectAsync(Arg.Any<string>());
         }
 
         [Fact]
-        public void GetForecastSpend_AnyProject_ForecastSpendIsNull()
+        public async Task GetForecastSpend_ServiceReturnsSuccess_ReturnsForecastSpend()
         {
-            // TRANSFORMENGINE: stub returns null forecastSpend until real service is wired up
+            // Arrange
+            const string project = "PP001";
+            _commentService.GetForecastSpendByProjectAsync(project)
+                .Returns(ApiResponseDto<ProjectCommentForecastSpendDto>.SuccessResponse(
+                    new ProjectCommentForecastSpendDto { ForecastSpend = 3456.78 }));
 
             // Act
-            var result = _controller.GetForecastSpend("PP001");
+            var result = await _controller.GetForecastSpend(project);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var element = GetJsonResultElement(jsonResult);
-            Assert.Equal(JsonValueKind.Null, element.GetProperty("forecastSpend").ValueKind);
+            Assert.True(element.GetProperty("success").GetBoolean());
+            Assert.Equal(3456.78, element.GetProperty("forecastSpend").GetDouble());
+            await _commentService.Received(1).GetForecastSpendByProjectAsync(project);
+        }
+
+        [Fact]
+        public async Task GetForecastSpend_ServiceReturnsFailure_ReturnsSuccessFalseWithErrors()
+        {
+            // Arrange
+            const string project = "PP001";
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Code = "FORECAST_ERROR", Message = "Failed" } };
+            _commentService.GetForecastSpendByProjectAsync(project)
+                .Returns(ApiResponseDto<ProjectCommentForecastSpendDto>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.GetForecastSpend(project);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var element = GetJsonResultElement(jsonResult);
+            Assert.False(element.GetProperty("success").GetBoolean());
+            Assert.Equal(JsonValueKind.Array, element.GetProperty("errors").ValueKind);
+        }
+
+        #endregion
+
+        // ─────────────────────────────────────────────────────────────────────
+        #region SaveForecastSpend Tests
+        // ─────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task SaveForecastSpend_ProjectIsEmpty_ReturnsSuccessFalse()
+        {
+            // Act
+            var result = await _controller.SaveForecastSpend(string.Empty, new ProjectCommentForecastSpendDto { ForecastSpend = 10 });
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var element = GetJsonResultElement(jsonResult);
+            Assert.False(element.GetProperty("success").GetBoolean());
+            await _commentService.DidNotReceive().UpdateForecastSpendByProjectAsync(Arg.Any<string>(), Arg.Any<double?>());
+        }
+
+        [Fact]
+        public async Task SaveForecastSpend_ServiceReturnsSuccess_ReturnsSuccessTrueWithForecastSpend()
+        {
+            // Arrange
+            const string project = "PP001";
+            var dto = new ProjectCommentForecastSpendDto { ForecastSpend = 1200.25 };
+            _commentService.UpdateForecastSpendByProjectAsync(project, dto.ForecastSpend)
+                .Returns(ApiResponseDto<ProjectCommentForecastSpendDto>.SuccessResponse(
+                    new ProjectCommentForecastSpendDto { ForecastSpend = dto.ForecastSpend }));
+
+            // Act
+            var result = await _controller.SaveForecastSpend(project, dto);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var element = GetJsonResultElement(jsonResult);
+            Assert.True(element.GetProperty("success").GetBoolean());
+            Assert.Equal(dto.ForecastSpend, element.GetProperty("forecastSpend").GetDouble());
+            await _commentService.Received(1).UpdateForecastSpendByProjectAsync(project, dto.ForecastSpend);
+        }
+
+        [Fact]
+        public async Task SaveForecastSpend_ServiceReturnsFailure_ReturnsSuccessFalse()
+        {
+            // Arrange
+            const string project = "PP001";
+            var dto = new ProjectCommentForecastSpendDto { ForecastSpend = 1200.25 };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Code = "SAVE_ERROR", Message = "Save failed" } };
+            _commentService.UpdateForecastSpendByProjectAsync(project, dto.ForecastSpend)
+                .Returns(ApiResponseDto<ProjectCommentForecastSpendDto>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.SaveForecastSpend(project, dto);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var element = GetJsonResultElement(jsonResult);
+            Assert.False(element.GetProperty("success").GetBoolean());
+            Assert.Equal(JsonValueKind.Array, element.GetProperty("errors").ValueKind);
         }
 
         #endregion

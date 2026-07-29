@@ -23,8 +23,8 @@ namespace Apha.Common.Helpers.Repository
             var elementType = rewritten.Type.GetGenericArguments().FirstOrDefault() ?? typeof(T);
             var enumerable = _inner.CreateQuery(rewritten);
 
-            var asyncEnumerableType = typeof(TestAsyncEnumerable<>).MakeGenericType(elementType);
-            var constructor = asyncEnumerableType.GetConstructor(
+            var asyncQueryableType = typeof(TestAsyncQueryable<>).MakeGenericType(elementType);
+            var constructor = asyncQueryableType.GetConstructor(
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
                 null,
                 new[] { typeof(IQueryable<>).MakeGenericType(elementType) },
@@ -37,8 +37,8 @@ namespace Apha.Common.Helpers.Repository
         {
             var rewritten = LikeRewriter.Rewrite(expression);
             var query = _inner.CreateQuery<TElement>(rewritten);
-            var asyncEnumerableType = typeof(TestAsyncEnumerable<>).MakeGenericType(typeof(TElement));
-            return (IQueryable<TElement>)Activator.CreateInstance(asyncEnumerableType, query)!;
+            var asyncQueryableType = typeof(TestAsyncQueryable<>).MakeGenericType(typeof(TElement));
+            return (IQueryable<TElement>)Activator.CreateInstance(asyncQueryableType, query)!;
         }
 
         public object? Execute(Expression expression)

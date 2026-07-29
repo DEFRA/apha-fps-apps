@@ -1,21 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — RequestMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-22
- *
- * CHANGED:
- *   - Verified Phase 5 Comment mappings complete; no new map entries required
- *   - TransformEngine header added
- *
- * PRESERVED:
- *   - All existing AutoMapper Profile CreateMap entries (pagination, project, comment, milestone, costs, invoice)
- *   - CommentDto <-> CommentReq: ForMember Comment/CommentText custom field projection preserved
- *   - CommentDto <-> CommentRes: ForMember Comment/CommentText custom field projection preserved
- *   - CommentTopicDto <-> CommentTopicRes: simple bidirectional map preserved
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
@@ -43,13 +25,13 @@ namespace Apha.PIMS.Api.Mappings
             CreateMap<ProposedProjectDto, ProposedProjectRes>().ReverseMap();
             CreateMap<ProjectsDto, ProjectsRes>().ReverseMap();
 
-            // TRANSFORMENGINE: CommentDto <-> CommentReq — Comment field in contract maps to CommentText in Dto
+            
             CreateMap<CommentDto, CommentReq>()
                 .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.CommentText))
                 .ReverseMap()
                 .ForMember(dest => dest.CommentText, opt => opt.MapFrom(src => src.Comment));
 
-            // TRANSFORMENGINE: CommentDto <-> CommentRes — Comment field in contract maps to CommentText in Dto
+            
             CreateMap<CommentDto, CommentRes>()
                 .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.CommentText))
                 .ReverseMap()
@@ -60,7 +42,7 @@ namespace Apha.PIMS.Api.Mappings
             CreateMap<RiskDto, RiskRes>().ReverseMap();
             CreateMap<YearDto, YearRes>().ReverseMap();
 
-            // TRANSFORMENGINE: CommentTopicDto <-> CommentTopicRes — lookup topic for filter dropdown
+            
             CreateMap<CommentTopicDto, CommentTopicRes>().ReverseMap();
 
             CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
