@@ -15,7 +15,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class YearEndInitiationController : Controller
     {
-        private const string YearEndInitiationJobName = "RecreateSummary"; // "YearEndInitiation";
+        private const string YearEndInitiationJobName = "YearEnd-DataSetup"; 
 
         private readonly IMapper _mapper;
         private readonly IYearMasterService _yearMasterService;

@@ -22,7 +22,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
-               where EF.Functions.ILike(jm.JobName, jobName)
+               where  jm.JobName.ToLower() == jobName.ToLower()
                 select new BatchJobHistory
                 {
                     JobId = jm.JobId,
@@ -47,8 +47,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
-                where EF.Functions.ILike(jm.JobName, jobName) 
-                && (EF.Functions.ILike(js.Status, "Rejected") || EF.Functions.ILike(js.Status, "Failed"))
+                where jm.JobName.ToLower() == jobName.ToLower() 
+                && (js.Status.ToLower() == "rejected" || js.Status.ToLower() == "failed" || js.Status.ToLower() == "cancelled")
                 select jq.JobqueueId
             ).AnyAsync();
 
@@ -62,26 +62,26 @@ namespace Apha.FPS.DataAccess.Repositories
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
-                where EF.Functions.ILike(jm.JobName, jobName) && (EF.Functions.ILike(js.Status, "initiated"))
+                where jm.JobName.ToLower() == jobName && (js.Status.ToLower() == "initiated")
                 select jq.JobqueueId
             ).AnyAsync();
 
             return hasRunningJob;
         }
 
-        public async Task<BatchJobQueue> EnqueueBatchJobAsync(string jobName, string requestedBy, string correlationId,string note)
+        public async Task<BatchJobQueue> EnqueueDataSetupBatchJobAsync(string jobName, string requestedBy, string correlationId,string note)
         {
             BatchJobQueue jobQueueEntry = null!;
 
             var job = await _context.BatchJobs
                 .AsNoTracking()
-                .FirstOrDefaultAsync(j => EF.Functions.ILike(j.JobName, jobName))
+                .FirstOrDefaultAsync(j => j.JobName.ToLower() == jobName.ToLower())
                 ?? throw new KeyNotFoundException($"Batch job '{jobName}' was not found.");
 
             var initiatedStatus = await _context.BatchJobStatuses
                 .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.JobId == job.JobId && EF.Functions.ILike(s.Status, "initiated"))
-                ?? throw new KeyNotFoundException($"Status 'Running' not found for job '{jobName}'.");
+                .FirstOrDefaultAsync(s => s.JobId == job.JobId && s.Status.ToLower() == "initiated")
+                ?? throw new KeyNotFoundException($"Status 'initiated' not found for job '{jobName}'.");
 
             var strategy = _context.Database.CreateExecutionStrategy();
 
@@ -109,6 +109,45 @@ namespace Apha.FPS.DataAccess.Repositories
             return jobQueueEntry;
         }
 
+        public async Task<BatchJobQueue> EnqueueApprovedDataSetupBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        {
+            BatchJobQueue jobQueueEntry = null!;
+
+            var job = await _context.BatchJobs
+                .AsNoTracking()
+                .FirstOrDefaultAsync(j => j.JobName.ToLower() == jobName.ToLower())
+                ?? throw new KeyNotFoundException($"Batch job '{jobName}' was not found.");
+
+            var initiatedStatus = await _context.BatchJobStatuses
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.JobId == job.JobId && s.Status.ToLower() == "initiated")
+                ?? throw new KeyNotFoundException($"Status 'initiated' not found for job '{jobName}'.");
+
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+                try
+                {
+                    jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, _requestContext.FpsYear);
+                    _context.BatchJobQueues.Add(jobQueueEntry);
+
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId);
+                    _context.BatchJobQueueLogs.Add(logEntry);
+
+                    await _context.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+            return jobQueueEntry;
+        }
         private static IQueryable ApplySorting(IQueryable<BatchJobHistory> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))

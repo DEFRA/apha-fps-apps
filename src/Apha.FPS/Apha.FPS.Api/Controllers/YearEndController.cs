@@ -71,13 +71,13 @@ namespace Apha.FPS.Api.Controllers
         /// then enqueues the job.
         /// </summary>
         /// <param name="request">Request body containing the target month (1–12).</param>
-        /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobEventTriggerRes"/>.</returns>
-        [HttpPost("batchjob/trigger")]
-        public async Task<IActionResult> TriggerYearEndInitiationJob([FromHeader(Name = "X-Correlation-ID")] string correlationId)
+        /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
+        [HttpPost("dataSetup/initiation")]
+        public async Task<IActionResult> EnqueueYearEndDataSetupInitiationJob([FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
-            var result = await _yearEndService.TriggerYearEndInitiationJobAsync(_fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
+            var result = await _yearEndService.EnqueueYearEndDataSetupInitiationJobAsync(_fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
             
-            return Ok(_mapper.Map<BatchJobEventTriggerRes>(result));
+            return Ok(_mapper.Map<BatchJobQueueRes>(result));
         }
     }
 }

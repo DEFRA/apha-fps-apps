@@ -13,22 +13,25 @@ namespace Apha.FPS.Application.Services
 {
     public class YearEndService : IYearEndService
     {
-        private const string RecreateSummariesJobName = "RecreateSummary";
+        private const string YearEndDataSetupJobName = "YearEnd-DataSetup";
 
         private readonly IYearEndRepository _yearEndRepository;
         private readonly IFpsSettingRepository _fpsSettingRepository;
-        private readonly IMonthHourService _monthHourService;
+        private readonly IMonthHourRepository _monthHourRepository;
+        private readonly IYearMasterRepository _yearMasterRepository;
         private readonly IEventPublisherService _eventPublisherService;
         private readonly IMapper _mapper;
 
         public YearEndService(IYearEndRepository yearEndRepository,
             IFpsSettingRepository fpsSettingRepository,
-            IMonthHourService monthHourService,
+            IMonthHourRepository monthHourRepository,
+            IYearMasterRepository yearMasterRepository,
             IEventPublisherService eventPublisherService, IMapper mapper)
         {
             _yearEndRepository = yearEndRepository;
             _fpsSettingRepository = fpsSettingRepository;
-            _monthHourService = monthHourService;
+            _monthHourRepository = monthHourRepository;
+            _yearMasterRepository = yearMasterRepository;
             _eventPublisherService = eventPublisherService;
             _mapper = mapper;
         }
@@ -46,117 +49,117 @@ namespace Apha.FPS.Application.Services
             return await _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(jobName);
         }
 
-        private async Task<List<BusinessValidationError>> Validation()
-        {
-            var errors = new List<BusinessValidationError>();
-
-            //var configs = await _fpsSettingRepository.GetYearEndSettingsAsync();
-            //bool hasUnplannedOpenConfigs = configs.Any(x => string.Equals(x.FpsYearType, "open", StringComparison.OrdinalIgnoreCase) 
-            //|| string.Equals(x.FpsYearType, "new", StringComparison.OrdinalIgnoreCase));
-
-            //if (hasUnplannedOpenConfigs)
-            //{
-            //    errors.Add(new BusinessValidationError($"Configuration values for the IDs (HoursInDay or CapApprovalReceivedForReset) are missing for the planned year. Please verify and add the required configuration.", "Missing_Config"));
-            //}
-            //else
-            //{
-            //    if(configs.Any(x => x.Id == "HoursInDay"))
-            //    { 
-            //        var value = configs.FirstOrDefault(x => x.Id == "HoursInDay")?.Setting;
-            //        bool isValid = !string.IsNullOrWhiteSpace(value) &&
-            //            decimal.TryParse(value, out var number) && number < 0;
-
-            //        if(!isValid)
-            //        errors.Add(new BusinessValidationError($"Configuration values for the IDs HoursInDay is not valid. Please provide a numeric value.", "Missing_HoursInDay"));
-            //    }
-            //    if (configs.Any(x => x.Id == "CapApprovalReceivedForReset"))
-            //    {
-            //        var value = configs.FirstOrDefault(x => x.Id == "CapApprovalReceivedForReset")?.Setting;
-            //        bool isValid = string.Equals(value?.Trim().ToLower(), "yes", StringComparison.OrdinalIgnoreCase) 
-            //            || string.Equals(value?.Trim().ToLower(), "no", StringComparison.OrdinalIgnoreCase);
-
-            //        if (!isValid)
-            //            errors.Add(new BusinessValidationError($"Configuration values for the IDs CapApprovalReceivedForReset is not valid. Please provide 'Yes' or 'No'.", "Missing_CapApprovalReceivedForReset"));
-            //    }
-            //}
-
-            //var monthConfigs = await _monthHourService.GetYearEndMonthHoursAsync();
-            //bool hasUnplannedMonthConfigs = monthConfigs.Any(x => string.Equals(x.FpsYearType, "open", StringComparison.OrdinalIgnoreCase) 
-            //|| string.Equals(x.FpsYearType, "new", StringComparison.OrdinalIgnoreCase));
-
-            //if (hasUnplannedMonthConfigs)
-            //    errors.Add(new BusinessValidationError($"Month Working days, VID hours and CVL hours are missing for the planned year. Please verify and add for each missing month.", "Missing_Config"));
-
-            //bool hasmissingMissingVal = monthConfigs.Any(x => x.Days < 0 || x.VidHours < 0 || x.CvlHours < 0);
-
-            //if (hasmissingMissingVal)
-            //    errors.Add(new BusinessValidationError($"Month Working days, VID hours and CVL hours are missing for the planned year. Please verify and add for each missing month.", "Missing_Config"));
-
-            //var canRun = await _yearEndRepository.CanRunBatchJobAsync(jobName);
-            //if (!canRun)
-            //{
-            //    errors.Add(new BusinessValidationError($"Job '{jobName}' is already running or initiated., Please try after sometime.", "INVALID_Rerun"));
-            //}
-
-            //if (errors.Count > 0)
-            //    throw new BusinessValidationErrorException(errors);
-            return errors;
-        }
+        
 
         public async Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName)
         {
             return await _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(jobName);
         }
 
-        public async Task<BatchJobEventTriggerDto> TriggerYearEndInitiationJobAsync(int contextyear, string requestedBy, string correlationId)
+        public async Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, string requestedBy, string correlationId)
         {
-            int month = 1;
             var errors = new List<BusinessValidationError>();
+
+            var note = $"'{YearEndDataSetupJobName}' is initiated for {plannedYear}.";
+
+            await ValidateConfiguration(errors);
+            await ValidateInput(plannedYear, requestedBy, errors, YearEndDataSetupJobName);
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+
+            var queued = await _yearEndRepository.EnqueueDataSetupBatchJobAsync(YearEndDataSetupJobName, requestedBy, correlationId, note);
+
+            //var eventDetail = BuildReCreateJobEvent(requestedBy, correlationId, month, contextyear);
+
+            //var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
+
+            //var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
+            //result.EventId = eventId; 
+            return _mapper.Map<BatchJobQueueDto>(queued);
+
             
-            var note = $"'{RecreateSummariesJobName}' is initiated for {month} - {contextyear}.";
+        }
 
-            //if (month < 1 || month > 12)
-            //    errors.Add(new BusinessValidationError("Month must be a numeric value between 1 and 12.", "INVALID_MONTH"));
-
-            if (contextyear == 0 || (contextyear < 1900 || contextyear > 9999))
-                errors.Add(new BusinessValidationError($"The selected financial year is not valid. If the issue persists, contact support.", "INVALID_ContextYear"));
+        private async Task ValidateInput(int plannedYear, string requestedBy, List<BusinessValidationError> errors, string jobName)
+        {
+            if (plannedYear == 0 || (plannedYear < 1900 || plannedYear > 9999))
+                errors.Add(new BusinessValidationError($"PlannedYear year is not valid. If the issue persists, contact support.", "INVALID_PlannedYear"));
 
             if (string.IsNullOrEmpty(requestedBy))
                 errors.Add(new BusinessValidationError($"Unable to identify the requester. Please sign in again and retry. If the issue persists, contact support.", "INVALID_User"));
 
 
-            //var releasePeriods = await _releaseRepository.GetReleasePeriodsAsync();
-            bool exists = true;//releasePeriods.Any(p => p.FinalSummariesRun == -1 && p.EndPeriod >= month);
+            var plannedYearEntity = await _yearMasterRepository.GetFpsYearByIdAsync(plannedYear);
 
-            if (exists)
-                errors.Add(new BusinessValidationError($"You cannot rerun a period when a later period has been run.","INVALID_Rerun"));
+            if (plannedYearEntity != null)
+                errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year. You cannot reinitiate request.", "INVALID_Rerun"));
 
-            var canRun = await _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(RecreateSummariesJobName);
-            if (!canRun)
+            if (jobName != null && jobName == YearEndDataSetupJobName)
             {
-                errors.Add(new BusinessValidationError($"Job '{RecreateSummariesJobName}' is already running or initiated., Please try after sometime.", "INVALID_Rerun"));
+                var canRun = await _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(jobName);
+                if (!canRun)
+                {
+                    errors.Add(new BusinessValidationError($"Job '{jobName}' is already running or initiated., Please try after sometime.", "INVALID_Rerun"));
+                }
             }
 
-            if (errors.Count > 0)
-                throw new BusinessValidationErrorException(errors);
-
-            var queued = await _yearEndRepository.EnqueueBatchJobAsync(RecreateSummariesJobName, requestedBy, correlationId, note);
-
-            var eventDetail = BuildReCreateJobEvent(requestedBy, correlationId, month, contextyear);
-
-            var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
-
-            var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
-            result.EventId = eventId; 
-            return result;
+            //return errors;
         }
+        private async Task ValidateConfiguration(List<BusinessValidationError> errors)
+        {
+            //var errors = new List<BusinessValidationError>();
 
+            var configs = await _fpsSettingRepository.GetYearEndSettingsAsync();
+            bool hasUnplannedOpenConfigs = configs.Any(x => string.Equals(x.FpsYearType, "open", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(x.FpsYearType, "new", StringComparison.OrdinalIgnoreCase));
+
+            if (hasUnplannedOpenConfigs)
+            {
+                errors.Add(new BusinessValidationError($"Configuration values for the IDs (HoursInDay or CapApprovalReceivedForReset) are missing for the planned year. Please verify and add the required configuration.", "Missing_Config"));
+            }
+            else
+            {
+                if (configs.Any(x => x.Id == "HoursInDay"))
+                {
+                    var value = configs.FirstOrDefault(x => x.Id == "HoursInDay")?.Setting;
+                    bool isValid = !string.IsNullOrWhiteSpace(value) &&
+                        decimal.TryParse(value, out var number) && number < 0;
+
+                    if (!isValid)
+                        errors.Add(new BusinessValidationError($"Configuration values for the IDs HoursInDay is not valid. Please provide a numeric value.", "Missing_HoursInDay"));
+                }
+                if (configs.Any(x => x.Id == "CapApprovalReceivedForReset"))
+                {
+                    var value = configs.FirstOrDefault(x => x.Id == "CapApprovalReceivedForReset")?.Setting;
+                    bool isValid = string.Equals(value?.Trim().ToLower(), "yes", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(value?.Trim().ToLower(), "no", StringComparison.OrdinalIgnoreCase);
+
+                    if (!isValid)
+                        errors.Add(new BusinessValidationError($"Configuration values for the IDs CapApprovalReceivedForReset is not valid. Please provide 'Yes' or 'No'.", "Missing_CapApprovalReceivedForReset"));
+                }
+            }
+
+            var monthConfigs = await _monthHourRepository.GetYearEndMonthHoursAsync();
+            bool hasUnplannedMonthConfigs = monthConfigs.Any(x => string.Equals(x.FpsYearType, "open", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(x.FpsYearType, "new", StringComparison.OrdinalIgnoreCase));
+
+            if (hasUnplannedMonthConfigs)
+                errors.Add(new BusinessValidationError($"Month Working days, VID hours and CVL hours are missing for the planned year. Please verify and add for each missing month.", "Missing_Config"));
+
+            bool hasmissingMissingVal = monthConfigs.Any(x => x.Days < 0 || x.VidHours < 0 || x.CvlHours < 0);
+
+            if (hasmissingMissingVal)
+                errors.Add(new BusinessValidationError($"Provided Month Working days, VID hours and CVL hours values are not valid for the planned year. Values should be non-negative and greater than zero.  Please verify and add valid value for each month.", "Missing_Config"));
+
+           // return errors;
+        }
         private static EventDetail BuildReCreateJobEvent(string requestedBy, string correlationId, int month, int contextYear)
         {
             return new EventDetail
             {
                 JobExecutionId = correlationId,
-                JobName = RecreateSummariesJobName,
+                JobName = YearEndDataSetupJobName,
                 RunMode = "Manual",
                 RequestedBy = requestedBy,
                 RequestedAtUtc = DateTime.UtcNow,

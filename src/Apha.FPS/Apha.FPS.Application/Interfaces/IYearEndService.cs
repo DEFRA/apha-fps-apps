@@ -11,6 +11,6 @@ namespace Apha.FPS.Application.Interfaces
 
         Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName);
 
-        Task<BatchJobEventTriggerDto> TriggerYearEndInitiationJobAsync(int contextyear, string requestedBy, string correlationId);
+        Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, string requestedBy, string correlationId);
     }
 }

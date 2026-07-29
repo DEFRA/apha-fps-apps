@@ -272,8 +272,8 @@ namespace Apha.Common.Constants
         public const string GetYearEndBatchJobHistory = "api/v1/yearend/batchjob/history";
         public const string GetCanInitiateDataSetupRequest = "api/v1/yearend/dataSetup/caninitiate";
         public const string GetCanApproveDataSetupRequest = "api/v1/yearend/dataSetup/canapprove";
-        public const string TriggerYearEndRecreateSummariesJob = "api/v1/yearend/batchjob/trigger";
-
+        public const string EnqueueYearEndDataSetupInitiationJob = "api/v1/yearend/dataSetup/initiation";
+            
         // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
         public const string GetAllCostCentres = "api/v1/costcentre";
         public const string GetPagedCostCentres = "api/v1/costcentre/paged";

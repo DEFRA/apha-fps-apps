@@ -70,7 +70,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             //var request = new RecreateSummariesReq { Month = month };
             var response = await _http.PostAsync<BatchJobEventTriggerRes>(
-                FpsApiEndpoints.TriggerYearEndRecreateSummariesJob);
+                FpsApiEndpoints.EnqueueYearEndDataSetupInitiationJob);
 
             if (response.Success && response.Data is not null)
                 return _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(response);
