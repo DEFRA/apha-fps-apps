@@ -302,7 +302,7 @@
         loadUrls();
         loadOwners();
 
-        // Wait for modal content to be fully rendered, then initialize numeric validation
+        // Initialize numeric validation after a short delay to ensure DOM is ready
         setTimeout(function() {
             if (typeof initializeNumericInputValidation === 'function') {
                 initializeNumericInputValidation();

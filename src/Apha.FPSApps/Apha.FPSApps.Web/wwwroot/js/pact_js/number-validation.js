@@ -49,8 +49,11 @@ function validateNumericInput(event) {
 
 // Format and validate numeric input on paste
 function handleNumericPaste(event) {
-    event.preventDefault();
-    var pastedData = (event.clipboardData || window.clipboardData).getData('text');
+    // Get the original event if this is a jQuery event
+    var originalEvent = event.originalEvent || event;
+    originalEvent.preventDefault();
+
+    var pastedData = (originalEvent.clipboardData || window.clipboardData).getData('text');
 
     // Check if pasted data contains any alphabetic characters
     if (/[a-zA-Z]/.test(pastedData)) {
@@ -90,8 +93,8 @@ function handleNumericPaste(event) {
         return;
     }
 
-    // Insert cleaned text, replacing any selected text
-    var input = event.target;
+    // Get the input element (handle both jQuery events and native events)
+    var input = event.target || event.currentTarget;
     var start = input.selectionStart;
     var end = input.selectionEnd;
     var currentValue = input.value;
@@ -103,20 +106,8 @@ function handleNumericPaste(event) {
     var newCursorPos = start + cleaned.length;
     input.selectionStart = input.selectionEnd = newCursorPos;
 
-    // Mark that this is from paste to skip sanitization in validateRangeOnInput
-    input.setAttribute('data-from-paste', 'true');
-
     // Trigger input event for any validation listeners
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-
-    // Remove the paste flag after a short delay
-    setTimeout(function() {
-        input.removeAttribute('data-from-paste');
-    }, 50);
-
-    // Validate range after paste for visual feedback (without re-sanitizing)
-    validateRangeOnInput(input);
-
+    $(input).trigger('input');
 }
 
 // Validate numeric input range and provide visual feedback
@@ -125,12 +116,9 @@ function validateRangeOnInput(input) {
     var value = $input.val().trim();
     var fieldName = $input.attr('name') || $input.attr('id');
 
-    // Skip sanitization if this value came from paste (already sanitized)
-    var fromPaste = input.hasAttribute('data-from-paste');
-
     // Sanitize the input value to fix invalid formats like "999-87.0000"
     // Only allow minus at the beginning, remove any other minus signs
-    if (value.length > 0 && !fromPaste) {
+    if (value.length > 0) {
         var sanitized = value;
         var firstChar = value.charAt(0);
         var isNegative = firstChar === '-';
@@ -217,6 +205,8 @@ function validateRangeOnInput(input) {
 function initializeNumericInputValidation() {
     var $decimalFields = $('.decfmt-input'); // Use jQuery selector
 
+    $decimalFields.each(function() {
+        var $field = $(this);
         var fieldId = $field.attr('id') || $field.attr('name') || 'unknown';
 
 
