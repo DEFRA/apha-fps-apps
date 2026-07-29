@@ -147,6 +147,22 @@ namespace Apha.Common.Constants
         // Monthly Output Log
         public const string SearchMonthlyOutputLog = "api/v1/monthlyoutput/log/search";
 
+        // Monthly Output
+        public const string GetPagedMonthlyOutputLive = "api/v1/monthlyoutput/live";
+        public const string GetMonthlyOutputLiveByKey = "api/v1/monthlyoutput/live/key?testCode={0}&buyer={1}&month={2}&workGroup={3}";
+        public const string UpdateMonthlyOutputLive = "api/v1/monthlyoutput/live";
+        public const string DeleteMonthlyOutputLive = "api/v1/monthlyoutput/live?testCode={0}&buyer={1}&month={2}&workGroup={3}";
+        public const string GetPagedStagingMonthlyOutput = "api/v1/monthlyoutput/staging";
+        public const string GetStagingMonthlyOutputById = "api/v1/monthlyoutput/staging/{0}";
+        public const string CreateStagingMonthlyOutput = "api/v1/monthlyoutput/staging";
+        public const string UpdateStagingMonthlyOutput = "api/v1/monthlyoutput/staging/{0}";
+        public const string DeleteStagingMonthlyOutput = "api/v1/monthlyoutput/staging/{0}";
+        public const string DeleteAllStagingMonthlyOutputByUser = "api/v1/monthlyoutput/staging/user";
+        public const string DeleteFailedStagingMonthlyOutputByUser = "api/v1/monthlyoutput/staging/user/failed";
+        public const string ImportStagingMonthlyOutput = "api/v1/monthlyoutput/staging/import";
+        public const string ValidateStagingMonthlyOutput = "api/v1/monthlyoutput/staging/validate";
+        public const string MakeLiveMonthlyOutput = "api/v1/monthlyoutput/staging/makelive";
+
         // Monthly Time
         public const string GetPagedMonthlyTimeLive = "api/v1/monthlytime/live";
         public const string GetMonthlyTimeLiveByKey = "api/v1/monthlytime/live/key?pactStaffId={0}&timeCode={1}&month={2}&parentProject={3}";

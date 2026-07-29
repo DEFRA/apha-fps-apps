@@ -1639,7 +1639,19 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
     text-align: right;
 }
 
+.total-volume-label {
+    width: auto;
+    margin-right: 4px;
+    text-align: right;
+}
+
 #lbltotalhours {
+    width: auto;
+    margin-bottom: 0;
+    margin-right: 4px;
+}
+
+#lbltotalvolume {
     width: auto;
     margin-bottom: 0;
     margin-right: 4px;

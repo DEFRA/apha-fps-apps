@@ -162,6 +162,22 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ReleasePeriodDto, ReleasePeriodItem>().ReverseMap();
 
             CreateMap<WgTestCapabilitiesWithDescriptionDto, WgTestCapabilitiesWithDescriptionItem>().ReverseMap();
+
+            // Monthly Output
+            CreateMap<Apha.FPSApps.Application.Dtos.PACT.PactMonthlyOutputDto, MonthlyOutputLiveItem>()
+                .ForMember(dest => dest.CompositeKey, opt => opt.MapFrom(src => $"{src.TestCode}|{src.Buyer}|{src.Month}|{src.WorkGroup}"));
+            CreateMap<MonthlyOutputLiveItem, Apha.FPSApps.Application.Dtos.PACT.PactMonthlyOutputDto>()
+                .ForMember(dest => dest.FpsYear, opt => opt.MapFrom(src => src.FpsYear ?? 0))
+                .ForMember(dest => dest.OriginalTestCode,  opt => opt.Ignore())
+                .ForMember(dest => dest.OriginalBuyer,     opt => opt.Ignore())
+                .ForMember(dest => dest.OriginalMonth,     opt => opt.Ignore())
+                .ForMember(dest => dest.OriginalWorkGroup, opt => opt.Ignore())
+                .ForMember(dest => dest.WgBuyer,           opt => opt.Ignore());
+            CreateMap<StagingMonthlyOutputDto, StagingMonthlyOutputItem>()
+                .ForMember(dest => dest.Passed, opt => opt.MapFrom(src => src.Passed ?? false));
+            CreateMap<StagingMonthlyOutputItem, StagingMonthlyOutputDto>()
+                .ForMember(dest => dest.Passed, opt => opt.MapFrom(src => (bool?)src.Passed));
+            CreateMap<StagingMonthlyOutputDto, StagingMonthlyOutputExportItem>();
         }
     }
 }

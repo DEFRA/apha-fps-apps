@@ -44,6 +44,15 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProjectProfileDto, ProjectProfileRes>().ReverseMap();
             CreateMap<ProjectProfileCumulativeDto, ProjectProfileCumulativeRes>().ReverseMap();
             CreateMap<MonthlyOutputLogDto, MonthlyOutputLogRes>().ReverseMap();
+            CreateMap<MonthlyOutputRes, PactMonthlyOutputDto>().ReverseMap();
+            CreateMap<PactMonthlyOutputDto, MonthlyOutputReq>();
+            CreateMap<MonthlyOutputImportReqDto, MonthlyOutputImportReq>();
+            CreateMap<MonthlyOutputImportRowDto, MonthlyOutputImportRowReq>();
+            CreateMap<MonthlyOutputImportRes, MonthlyOutputImportResultDto>();
+            CreateMap<StagingMonthlyOutputRes, StagingMonthlyOutputDto>().ReverseMap();
+            CreateMap<StagingMonthlyOutputDto, StagingMonthlyOutputReq>().ReverseMap();
+            CreateMap<MonthlyOutputValidateRes, MonthlyOutputValidateResultDto>().ReverseMap();
+            CreateMap<MonthlyOutputMakeLiveRes, MonthlyOutputMakeLiveResultDto>().ReverseMap();
             CreateMap<MonthlyTimeDto, MonthlyTimeReq>().ReverseMap();
             CreateMap<MonthlyTimeDto, MonthlyTimeRes>().ReverseMap();
             CreateMap<StagingMonthlyTimeDto, StagingMonthlyTimeReq>().ReverseMap();

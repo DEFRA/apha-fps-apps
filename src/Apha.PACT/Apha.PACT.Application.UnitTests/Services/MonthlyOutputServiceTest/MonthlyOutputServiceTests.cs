@@ -15,13 +15,27 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyOutputServiceTest
     {
         private readonly IMonthlyOutputRepository _mockRepository;
         private readonly IMapper _mockMapper;
+        private readonly ICalenderMonthRepository _mockCalenderMonthRepository;
+        private readonly IWorkGroupRepository _mockWorkGroupRepository;
+        private readonly ITestCapabilityRepository _mockTestCapabilityRepository;
+        private readonly ITestRequirementRepository _mockTestRequirementRepository;
         private readonly MonthlyOutputService _sut;
 
         public MonthlyOutputServiceTests()
         {
             _mockRepository = Substitute.For<IMonthlyOutputRepository>();
             _mockMapper = Substitute.For<IMapper>();
-            _sut = new MonthlyOutputService(_mockRepository, _mockMapper);
+            _mockCalenderMonthRepository = Substitute.For<ICalenderMonthRepository>();
+            _mockWorkGroupRepository = Substitute.For<IWorkGroupRepository>();
+            _mockTestCapabilityRepository = Substitute.For<ITestCapabilityRepository>();
+            _mockTestRequirementRepository = Substitute.For<ITestRequirementRepository>();
+            _sut = new MonthlyOutputService(
+                _mockRepository,
+                _mockMapper,
+                _mockCalenderMonthRepository,
+                _mockWorkGroupRepository,
+                _mockTestCapabilityRepository,
+                _mockTestRequirementRepository);
         }
 
         // ── helpers ────────────────────────────────────────────────────────────

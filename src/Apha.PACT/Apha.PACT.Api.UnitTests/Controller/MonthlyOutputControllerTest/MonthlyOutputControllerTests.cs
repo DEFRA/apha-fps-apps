@@ -1,5 +1,6 @@
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
+using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Api.Controllers;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
@@ -15,13 +16,15 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthlyOutputControllerTest
     {
         private readonly IMonthlyOutputService _serviceMock;
         private readonly IMapper _mapperMock;
+        private readonly ICurrentUserContext _currentUserContextMock;
         private readonly MonthlyOutputController _controller;
 
         public MonthlyOutputControllerTests()
         {
             _serviceMock = Substitute.For<IMonthlyOutputService>();
             _mapperMock = Substitute.For<IMapper>();
-            _controller = new MonthlyOutputController(_serviceMock, _mapperMock);
+            _currentUserContextMock = Substitute.For<ICurrentUserContext>();
+            _controller = new MonthlyOutputController(_serviceMock, _mapperMock, _currentUserContextMock);
         }
 
         #region SearchAsync

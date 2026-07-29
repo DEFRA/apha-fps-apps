@@ -47,6 +47,16 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<ProjectProfileDto, ProjectProfileRes>().ReverseMap();
             CreateMap<ProjectProfileCumulativeDto, ProjectProfileCumulativeRes>().ReverseMap();
             CreateMap<MonthlyOutputLogDto, MonthlyOutputLogRes>().ReverseMap();
+            CreateMap<MonthlyOutputDto, MonthlyOutputReq>().ReverseMap();
+            CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
+            CreateMap<StagingMonthlyOutputDto, StagingMonthlyOutputReq>().ReverseMap();
+            CreateMap<StagingMonthlyOutputDto, StagingMonthlyOutputRes>().ReverseMap();
+            CreateMap<MonthlyOutputImportRowDto, MonthlyOutputImportRowReq>().ReverseMap();
+            CreateMap<MonthlyOutputImportRowDto, MonthlyOutputImportRowRes>().ReverseMap();
+            CreateMap<MonthlyOutputImportDto, MonthlyOutputImportReq>().ReverseMap();
+            CreateMap<MonthlyOutputImportResultDto, MonthlyOutputImportRes>().ReverseMap();
+            CreateMap<MonthlyOutputValidateResultDto, MonthlyOutputValidateRes>().ReverseMap();
+            CreateMap<MonthlyOutputMakeLiveResultDto, MonthlyOutputMakeLiveRes>().ReverseMap();
             CreateMap<MonthlyTimeDto, MonthlyTimeReq>().ReverseMap();
             CreateMap<MonthlyTimeDto, MonthlyTimeRes>().ReverseMap();
             CreateMap<StagingMonthlyTimeDto, StagingMonthlyTimeReq>().ReverseMap();

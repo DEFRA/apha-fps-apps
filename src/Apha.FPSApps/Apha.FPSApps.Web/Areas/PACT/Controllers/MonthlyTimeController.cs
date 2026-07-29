@@ -389,9 +389,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var rows = _mapper.Map<List<StagingMonthlyTimeExportItem>>(response.Data);
             var excelBytes = _excelExportService.ExportToExcel(rows, "MonthlyTime");
 
-            var fileName = rows.FirstOrDefault()?.Filename;
-            if (string.IsNullOrWhiteSpace(fileName))
-                fileName = $"MonthlyTime_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+            var fileName = $"ExportedTS_{DateTime.Now:ddMMyyyy}.xlsx";
 
             return File(excelBytes, ExcelContentType, fileName);
         }

@@ -36,6 +36,9 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<ProjectMonth, ProjectMonthDto>().ReverseMap();
             CreateMap<ProjectMonthFinal, ProjectMonthFinalDto>().ReverseMap();
             CreateMap<MonthlyOutputLog, MonthlyOutputLogDto>().ReverseMap();
+            CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
+            CreateMap<StagingMonthlyOutput, StagingMonthlyOutputDto>().ReverseMap();
+            CreateMap<MonthlyOutputImportRowDto, StagingMonthlyOutputDto>().ReverseMap();
             CreateMap<MonthlyTime, MonthlyTimeDto>().ReverseMap();
             CreateMap<MonthlyTimeStaff, MonthlyTimeDto>();
             CreateMap<StagingMonthlyTime, StagingMonthlyTimeDto>().ReverseMap();

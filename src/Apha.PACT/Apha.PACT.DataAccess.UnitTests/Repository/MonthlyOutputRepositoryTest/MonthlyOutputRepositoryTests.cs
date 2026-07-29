@@ -24,7 +24,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyOutputRepositoryTest
 
             mockContext.Setup(x => x.MonthlyOutputLogs).Returns(mockSet.Object);
 
-            return new MonthlyOutputRepository(mockContext.Object);
+            return new MonthlyOutputRepository(mockContext.Object, fpsRequestContext);
         }
 
         private static MonthlyOutputRepository CreateRepositoryWithOutputs(
@@ -39,7 +39,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyOutputRepositoryTest
 
             mockContext.Setup(x => x.MonthlyOutputs).Returns(mockSet.Object);
 
-            return new MonthlyOutputRepository(mockContext.Object);
+            return new MonthlyOutputRepository(mockContext.Object, fpsRequestContext);
         }
 
         private static PaginationParameters<string> DefaultQuery(int page = 1, int pageSize = 10)
