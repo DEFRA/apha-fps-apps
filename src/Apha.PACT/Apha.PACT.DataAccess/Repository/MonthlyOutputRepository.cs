@@ -84,20 +84,23 @@ namespace Apha.PACT.DataAccess.Repository
             string? buyer,
             double? month)
         {
-            var q = _context.MonthlyOutputs.AsNoTracking();
+            var monthlyOutputs = _context.MonthlyOutputs.AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(workGroup))
-                q = q.Where(x => x.WorkGroup == workGroup);
+                monthlyOutputs = monthlyOutputs.Where(x => x.WorkGroup == workGroup);
             if (!string.IsNullOrWhiteSpace(testCode))
-                q = q.Where(x => x.TestCode == testCode);
+                monthlyOutputs = monthlyOutputs.Where(x => x.TestCode == testCode);
             if (!string.IsNullOrWhiteSpace(buyer))
-                q = q.Where(x => x.Buyer == buyer);
+                monthlyOutputs = monthlyOutputs.Where(x => x.Buyer == buyer);
             if (month.HasValue)
-                q = q.Where(x => (int)x.Month == (int)month.Value);
+                monthlyOutputs = monthlyOutputs.Where(x => (int)x.Month == (int)month.Value);
 
-            q = q.OrderBy(x => x.WorkGroup).ThenBy(x => x.TestCode).ThenBy(x => x.Buyer).ThenBy(x => x.Month);
+            monthlyOutputs = monthlyOutputs.OrderBy(x => x.WorkGroup).ThenBy(x => x.TestCode).ThenBy(x => x.Buyer).ThenBy(x => x.Month);
 
-            return await ApplyPaging(q, query.Page, query.PageSize);
+            var pagedLiveData = await ApplyPaging(monthlyOutputs, query.Page, query.PageSize);
+
+            pagedLiveData.Total = await monthlyOutputs.SumAsync(x => (decimal)(x.Volume ?? 0));
+            return pagedLiveData;
         }
 
         public async Task<MonthlyOutput?> GetLiveByKeyAsync(string testCode, string buyer, double month, string workGroup)
@@ -157,15 +160,19 @@ namespace Apha.PACT.DataAccess.Repository
             string importedBy,
             bool? passed)
         {
-            var q = _context.StagingMonthlyOutputs
+            var stagingQuery = _context.StagingMonthlyOutputs
                 .AsNoTracking()
                 .Where(x => x.ImportedBy == importedBy);
 
             if (passed.HasValue)
-                q = q.Where(x => x.Passed == passed.Value);
+                stagingQuery = stagingQuery.Where(x => x.Passed == passed.Value);
 
-            q = q.OrderBy(x => x.Id);
-            return await ApplyPaging(q, query.Page, query.PageSize);
+            stagingQuery = stagingQuery.OrderBy(x => x.Id);
+
+            var pagedStagingData = await ApplyPaging(stagingQuery, query.Page, query.PageSize);
+
+            pagedStagingData.Total = await stagingQuery.SumAsync(x => (decimal)(x.Volume ?? 0));
+            return pagedStagingData;
         }
 
         public async Task<StagingMonthlyOutput?> GetStagingByIdAsync(int id, string importedBy)
