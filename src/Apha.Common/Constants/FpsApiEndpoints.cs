@@ -1,4 +1,4 @@
-namespace Apha.Common.Constants
+﻿namespace Apha.Common.Constants
 {
     public static class FpsApiEndpoints
     {
@@ -97,6 +97,7 @@ namespace Apha.Common.Constants
         public const string GetProjectsByProjectGroup = "api/v1/project/paged/by-project-group?projectGroup={0}";
         public const string GetProjectsByProgramVla = "api/v1/project/paged-vla?programNo={0}";
         public const string GetProjectsByProjectGroupVla = "api/v1/project/paged-vla/by-project-group?projectGroup={0}";
+        public const string GetWorkgroupStaffReplan = "api/v1/project/{0}/staff-replan";
 
         // Project Group
         public const string GetAllProjectGroups = "api/v1/projectgroup";
@@ -121,6 +122,9 @@ namespace Apha.Common.Constants
         // Project Staff Plan
         public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";
 
+        // Project Staff Plan Details (fps.vwprojectstaffplandetails)
+        public const string GetPagedProjectStaffPlanDetails = "api/v1/projectstaffplandetails";
+
         // Project Group Staff Plan (fps.vpvtprojectgroupmgrplan)
         public const string GetPagedProjectGroupStaffPlan = "api/v1/projectgroupstaffplan";
 
@@ -138,6 +142,8 @@ namespace Apha.Common.Constants
         public const string GetZtTotalHoursByStaffId = "api/v1/staffjob/zttotalhours?staffId={0}";
         public const string GetZtStaffJobsByStaffIdPaged = "api/v1/staffjob/ztstaffjobs/paged";
         public const string GetZtStaffJobDetailsById = "api/v1/staffjob/ztstaffjob/{0}/{1}";
+        public const string GetStaffResourceUtilisation = "api/v1/staffjob/resourceutilisation";
+        public const string GetStaffJobsAllocationByJobCodeWgGradePaged = "api/v1/staffjob/staffjobsallocation/paged";
 
         // View Project Plan vs Actual Staff
         public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
@@ -254,5 +260,34 @@ namespace Apha.Common.Constants
         public const string GetUserPermissions = "api/v1/user/{0}/permissions";
         public const string SaveUserPermissions = "api/v1/user/{0}/permissions";
         public const string GetPermissionOptions = "api/v1/user/options";
+
+        // TRANSFORMENGINE: WorkgroupMaintenance (frmMaintWorkGroup2 — fps.workgroup) — added Phase 6
+        // CRUD endpoints
+        public const string GetPagedWorkgroups = "api/v1/workgroup/paged";
+        public const string GetWorkgroupByName = "api/v1/workgroup/{0}";
+        public const string CreateWorkgroup = "api/v1/workgroup";
+        public const string UpdateWorkgroup = "api/v1/workgroup/{0}";
+        public const string DeleteWorkgroup = "api/v1/workgroup/{0}";
+        // Lookup endpoints (separate from CRUD resource family)
+        public const string GetWorkgroupProfitCentres = "api/v1/workgroup/profitcentres";
+        public const string GetWorkgroupOwners = "api/v1/workgroup/owners";
+        public const string GetWorkgroupCostCentres = "api/v1/workgroup/costcentres?profitCentre={0}";
+        // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
+        public const string GetAllCostCentres = "api/v1/costcentre";
+        public const string GetPagedCostCentres = "api/v1/costcentre/paged";
+        public const string GetCostCentreById = "api/v1/costcentre/{0}";
+        public const string CreateCostCentre = "api/v1/costcentre";
+        public const string UpdateCostCentre = "api/v1/costcentre/{0}";
+        public const string DeleteCostCentre = "api/v1/costcentre/{0}";
+
+        // ResourceAllocation — Stage 2 Check Resource Allocation
+        public const string GetPagedResourceStaffAllocations = "api/v1/ResourceAllocation/staffallocations/paged";
+        public const string GetPagedResourceStaffJobDetails = "api/v1/ResourceAllocation/staffjobdetails/paged";
+
+        // ResourceMgmtReplan — Resource Re-allocation Screen (frmRM_RePlan)
+        public const string GetResourceMgmtReplanGrid = "api/v1/resourcemgmtreplan/grid";
+        public const string GetResourceMgmtReplanStaffJobs = "api/v1/resourcemgmtreplan/staffjobs";
+        public const string GetResourceMgmtReplanStaged = "api/v1/resourcemgmtreplan/staged";
+        public const string CommitResourceMgmtReplan = "api/v1/resourcemgmtreplan/commit";
     }
 }

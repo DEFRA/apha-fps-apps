@@ -24,6 +24,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<ProjectSubContract> ProjectSubContracts { get; set; }
         public virtual DbSet<TestCapability> TestCapabilities { get; set; }
         public virtual DbSet<TestRequirement> TestRequirements { get; set; }
+       
         public virtual DbSet<TestorProduct> TestorProducts { get; set; }
         public virtual DbSet<Month> Months { get; set; }
         public virtual DbSet<TestRequirementLog> TestRequirementLogs { get; set; }
@@ -53,12 +54,14 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<Program> Programs { get; set; }
         public virtual DbSet<TestReqBreakdownView> TestReqBreakdownViews { get; set; }
         public virtual DbSet<ProjectSubcontractStaging> ProjectSubcontractStagings { get; set; }
+        public virtual DbSet<TestActualBreakdownView> TestActualBreakdownViews { get; set; }
+        public virtual DbSet<TestPlanCostBreakdownView> TestPlanCrossTabViews { get; set; }
 
         public virtual DbSet<BatchJobMaster> BatchJobs { get; set; }
         public virtual DbSet<BatchJobQueue> BatchJobQueues { get; set; }
         public virtual DbSet<BatchJobQueueLog> BatchJobQueueLogs { get; set; }
         public virtual DbSet<BatchJobStatus> BatchJobStatuses { get; set; }
-
+        public virtual DbSet<WorkGroupGeneralView> WorkGroupGeneralViews { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new ProjectMap());
@@ -161,6 +164,10 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.Entity<Program>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new TestReqBreakdownViewMap());
             modelBuilder.Entity<TestReqBreakdownView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new TestActualBreakdownViewMap());
+            modelBuilder.Entity<TestActualBreakdownView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new TestPlanCostBreakdownMap());
+            modelBuilder.Entity<TestPlanCostBreakdownView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new ProjectSubcontractStagingMap());
             modelBuilder.ApplyConfiguration(new BatchJobMasterMap());
@@ -168,6 +175,8 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.Entity<BatchJobQueue>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new BatchJobQueueLogMap());
             modelBuilder.ApplyConfiguration(new BatchJobStatusMap());
+            modelBuilder.ApplyConfiguration(new WorkGroupGeneralViewMap());
+            modelBuilder.Entity<WorkGroupGeneralView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

@@ -731,11 +731,175 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
 
             var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
 
-            result.Data.Should().HaveCount(2);
-        }
+                    result.Data.Should().HaveCount(2);
+                    }
 
-        #endregion
+                    #endregion
+
+                    #region BuildTestPlanSummaryAsync
+
+                    [Fact]
+                    public async Task BuildTestPlanSummaryAsync_CallsRepository()
+                    {
+                        // Act
+                        await _sut.BuildTestPlanSummaryAsync();
+
+                        // Assert
+                        await _testCapabilityRepo.Received(1).BuildTestPlanSummaryAsync();
+                    }
+
+                    [Fact]
+                    public async Task BuildTestPlanSummaryAsync_DoesNotThrow()
+                    {
+                        _testCapabilityRepo.BuildTestPlanSummaryAsync().Returns(Task.CompletedTask);
+
+                        var ex = await Record.ExceptionAsync(() => _sut.BuildTestPlanSummaryAsync());
+
+                        Assert.Null(ex);
+                    }
+
+                    #endregion
+
+                    #region GetPagedTestPlanCrossTabAsync
+
+                    [Fact]
+                    public async Task GetPagedTestPlanCrossTabAsync_MapsQueryAndCallsRepository()
+                    {
+                        // Arrange
+                        var query        = new QueryParameters<string> { Page = 1, PageSize = 20 };
+                        var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 20 };
+                        var repoResult   = new CrossTabPagedResult
+                        {
+                            Columns    = ["testcode", "PROG01"],
+                            Rows       = [new() { ["testcode"] = "PT001", ["PROG01"] = "200" }],
+                            TotalCount = 1,
+                            Page       = 1,
+                            PageSize   = 20
+                        };
+
+                        _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+                        _testCapabilityRepo.GetPagedTestPlanCrossTabAsync(mappedParams).Returns(repoResult);
+
+                        // Act
+                        var result = await _sut.GetPagedTestPlanCrossTabAsync(query);
+
+                        // Assert
+                        await _testCapabilityRepo.Received(1).GetPagedTestPlanCrossTabAsync(mappedParams);
+                        result.Should().NotBeNull();
+                    }
+
+                    [Fact]
+                    public async Task GetPagedTestPlanCrossTabAsync_MapsResultToDto_ColumnsMatch()
+                    {
+                        // Arrange
+                        var query        = new QueryParameters<string> { Page = 1, PageSize = 20 };
+                        var mappedParams = new PaginationParameters<string>();
+                        var repoResult   = new CrossTabPagedResult
+                        {
+                            Columns    = ["testcode", "shortdescription", "PROG01"],
+                            Rows       = [],
+                            TotalCount = 0,
+                            Page       = 1,
+                            PageSize   = 20
+                        };
+
+                        _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+                        _testCapabilityRepo.GetPagedTestPlanCrossTabAsync(mappedParams).Returns(repoResult);
+
+                        // Act
+                        var result = await _sut.GetPagedTestPlanCrossTabAsync(query);
+
+                        // Assert
+                        result.Columns.Should().BeEquivalentTo(["testcode", "shortdescription", "PROG01"]);
+                    }
+
+                    [Fact]
+                    public async Task GetPagedTestPlanCrossTabAsync_MapsResultToDto_RowsMatch()
+                    {
+                        // Arrange
+                        var query        = new QueryParameters<string> { Page = 1, PageSize = 20 };
+                        var mappedParams = new PaginationParameters<string>();
+                        var rows         = new List<Dictionary<string, string?>>
+                        {
+                            new() { ["testcode"] = "PT001", ["PROG01"] = "200" },
+                            new() { ["testcode"] = "PT002", ["PROG01"] = "50"  }
+                        };
+                        var repoResult = new CrossTabPagedResult
+                        {
+                            Columns    = ["testcode", "PROG01"],
+                            Rows       = rows,
+                            TotalCount = 2,
+                            Page       = 1,
+                            PageSize   = 20
+                        };
+
+                        _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+                        _testCapabilityRepo.GetPagedTestPlanCrossTabAsync(mappedParams).Returns(repoResult);
+
+                        // Act
+                        var result = await _sut.GetPagedTestPlanCrossTabAsync(query);
+
+                        // Assert
+                        result.Rows.Should().HaveCount(2);
+                        result.Rows[0]["testcode"].Should().Be("PT001");
+                    }
+
+                    [Fact]
+                    public async Task GetPagedTestPlanCrossTabAsync_MapsResultToDto_PaginationMatch()
+                    {
+                        // Arrange
+                        var query        = new QueryParameters<string> { Page = 3, PageSize = 10 };
+                        var mappedParams = new PaginationParameters<string>();
+                        var repoResult   = new CrossTabPagedResult
+                        {
+                            Columns    = ["testcode"],
+                            Rows       = [],
+                            TotalCount = 250,
+                            Page       = 3,
+                            PageSize   = 10
+                        };
+
+                        _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+                        _testCapabilityRepo.GetPagedTestPlanCrossTabAsync(mappedParams).Returns(repoResult);
+
+                        // Act
+                        var result = await _sut.GetPagedTestPlanCrossTabAsync(query);
+
+                        // Assert
+                        result.TotalCount.Should().Be(250);
+                        result.Page.Should().Be(3);
+                        result.PageSize.Should().Be(10);
+                    }
+
+                    [Fact]
+                    public async Task GetPagedTestPlanCrossTabAsync_EmptyRepositoryResult_ReturnsEmptyDto()
+                    {
+                        // Arrange
+                        var query        = new QueryParameters<string> { Page = 1, PageSize = 20 };
+                        var mappedParams = new PaginationParameters<string>();
+                        var repoResult   = new CrossTabPagedResult
+                        {
+                            Columns    = [],
+                            Rows       = [],
+                            TotalCount = 0,
+                            Page       = 1,
+                            PageSize   = 20
+                        };
+
+                        _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+                        _testCapabilityRepo.GetPagedTestPlanCrossTabAsync(mappedParams).Returns(repoResult);
+
+                        // Act
+                        var result = await _sut.GetPagedTestPlanCrossTabAsync(query);
+
+                        // Assert
+                        result.Columns.Should().BeEmpty();
+                        result.Rows.Should().BeEmpty();
+                        result.TotalCount.Should().Be(0);
+                    }
+
+                    #endregion
 
 
-    }
-}
+                }
+            }

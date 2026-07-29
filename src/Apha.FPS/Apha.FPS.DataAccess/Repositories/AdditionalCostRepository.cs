@@ -50,9 +50,15 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<AdditionalCost?> GetByIdAsync(string jobCode, string account, string description)
         {
+            var jobCodeValue = (jobCode ?? string.Empty).Trim();
+            var accountValue = (account ?? string.Empty).Trim();
+            var descriptionValue = (description ?? string.Empty).Trim();
+
             return await _context.AdditionalCosts
                 .AsNoTracking()
-                .FirstOrDefaultAsync(a => a.JobCode == jobCode && a.Account == account && a.Description == description);
+                .FirstOrDefaultAsync(a => a.JobCode.Trim() == jobCodeValue
+                                       && a.Account.Trim() == accountValue
+                                       && a.Description.Trim() == descriptionValue);
         }
 
         public async Task<AdditionalCost> AddAsync(AdditionalCost additionalCost)
@@ -83,7 +89,7 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        public async Task<AdditionalCost> UpdateAsync(AdditionalCost additionalCost, string originalDescription)
+        public async Task<AdditionalCost> UpdateAsync(AdditionalCost additionalCost, string originalAccount, string originalDescription)
         {
             ArgumentNullException.ThrowIfNull(additionalCost);
 
@@ -93,24 +99,31 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
+                    var jobCodeValue = (additionalCost.JobCode ?? string.Empty).Trim();
+                    var originalAccountValue = (originalAccount ?? string.Empty).Trim();
+                    var originalDescriptionValue = (originalDescription ?? string.Empty).Trim();
+
                     var existing = await _context.AdditionalCosts
-                        .FirstOrDefaultAsync(a => a.JobCode == additionalCost.JobCode
-                                               && a.Account == additionalCost.Account
-                                               && a.Description == originalDescription);
+                        .FirstOrDefaultAsync(a => a.JobCode.Trim() == jobCodeValue
+                                               && a.Account.Trim() == originalAccountValue
+                                               && a.Description.Trim() == originalDescriptionValue);
 
                     if (existing == null)
                         throw new InvalidOperationException(
-                            $"Additional cost with JobCode {additionalCost.JobCode}, Account {additionalCost.Account}, Description {originalDescription} not found");
+                            $"Additional cost with JobCode {additionalCost.JobCode}, Account {originalAccount}, Description {originalDescription} not found");
 
                     var descriptionChanged = !string.Equals(
                         existing.Description, additionalCost.Description, StringComparison.OrdinalIgnoreCase);
 
+                    var accountChanged = !string.Equals(
+                        existing.Account, additionalCost.Account, StringComparison.OrdinalIgnoreCase);
+
                     AdditionalCost result;
 
-                    if (descriptionChanged)
+                    if (descriptionChanged || accountChanged)
                     {
-                        // Description is part of the primary key, so the row must be
-                        // recreated rather than updated in place.
+                        // Account and Description are part of the primary key, so the row
+                        // must be recreated rather than updated in place.
                         var replacement = new AdditionalCost
                         {
                             JobCode = additionalCost.JobCode,

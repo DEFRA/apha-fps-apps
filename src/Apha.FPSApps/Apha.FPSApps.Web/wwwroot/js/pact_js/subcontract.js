@@ -29,7 +29,7 @@ function onMonthPickChange(value) {
 function reloadSubContractsGrid() {
     var postData = {
         Page: 1,
-        PageSize: 50,
+        PageSize: 10,
         SortBy: 'Month',
         Descending: false,
         Filter: '{}',
