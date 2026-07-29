@@ -1,7 +1,5 @@
 // fec_testmanagement.js
 // FEC Bulk Rates Update — Phase 4 MVC/UI layer.
-// Covers US-UI-01 (create), US-UI-02/03 (upload + validation), US-UI-04 (release),
-// US-UI-05 (approve), US-UI-06 (reject modal), US-UI-07 (detail), US-UI-08 (cancel).
 
 /* jshint esversion: 6 */
 /* global $, showLoader, hideLoader, showAlertMessage, showGovukConfirm, AlertType */
@@ -63,7 +61,7 @@ var BulkRates = (function () {
         });
     }
 
-    // ── US-UI-01: Create Request ────────────────────────────────────────────
+    // ── Create Request ──────────────────────────────────────────────────────
 
     function submitCreate() {
         var jobName = document.getElementById('jobName');
@@ -115,7 +113,7 @@ var BulkRates = (function () {
         window.location.href = endpoint + '?fpsYear=' + fpsYear;
     }
 
-    // ── US-UI-02/03: Upload Excel file ──────────────────────────────────────
+    // ── Upload Excel file ───────────────────────────────────────────────────
     function uploadFile(requestId) {
         var fileInput = document.getElementById('ratesFile');
         if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
@@ -246,7 +244,7 @@ var BulkRates = (function () {
         window.location.href = '/FPS/BulkRates/DownloadStagingData/' + requestId;
     }
 
-    // ── US-UI-05: Bulk Rates queue grid ──────────────────────────────────────
+    // ── Bulk Rates queue grid ───────────────────────────────────────────────
     // getBulkRatesExtraFilters / viewBulkRatesRequest are looked up by _DataGrid.cshtml's
     // JS via window[functionName] (ExtraFilterMethod / ViewFunction) — they must be true
     // globals, not members of the BulkRates module object like the rest of this file.
@@ -272,7 +270,7 @@ var BulkRates = (function () {
         if (gm) { gm.reloadGrid({ page: 1 }); }
     }
 
-    // ── US-UI-04: Release for Approval ─────────────────────────────────────
+    // ── Release for Approval ────────────────────────────────────────────────
 
     function release(requestId) {
         showGovukConfirm('Release this request for approval? This action cannot be undone.').then(function (confirmed) {
@@ -293,7 +291,7 @@ var BulkRates = (function () {
         });
     }
 
-    // ── US-UI-05: Approve ───────────────────────────────────────────────────
+    // ── Approve ──────────────────────────────────────────────────────────────
 
     function approve(requestId) {
         showGovukConfirm('Approve this request? The batch job will be triggered.').then(function (confirmed) {
@@ -314,7 +312,7 @@ var BulkRates = (function () {
         });
     }
 
-    // ── US-UI-06: Reject modal ──────────────────────────────────────────────
+    // ── Reject modal ─────────────────────────────────────────────────────────
 
     var _pendingRejectId = null;
 
@@ -370,7 +368,7 @@ var BulkRates = (function () {
         );
     }
 
-    // ── US-UI-08: Cancel modal ──────────────────────────────────────────────
+    // ── Cancel modal ─────────────────────────────────────────────────────────
 
     var _pendingCancelId = null;
 

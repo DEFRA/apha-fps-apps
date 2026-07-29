@@ -43,15 +43,26 @@ on:
          required: false
          type: boolean
          default: false
+       dataaccess_test_filter:
+         description: "Optional dotnet test filter expression for the DataAccess test project (for example to skip Postgres-dependent integration tests in CI, which has no Postgres service)"
+         required: false
+         type: string
+         default: ''
        run_infrastructure_tests:
          description: "Run Infrastructure layer unit tests for FrontEnd Only (requires <SolutionName>.Infrastructure.UnitTests project)"
          required: false
          type: boolean
          default: false
-       environment:
-         description: "Optional environment name"
+       run_custom_tests:
+         description: "Run a custom unit test project path for non-standard solution layouts"
+         required: false
+         type: boolean
+         default: false
+       custom_test_filter:
+         description: "Optional dotnet test filter expression for custom tests (for example to skip integration tests in CI)"
          required: false
          type: string
+         default: ''
 
      secrets:
        SONAR_TOKEN:
@@ -61,7 +72,6 @@ jobs:
   build-and-sonar-analyze:
     name: build-and-sonar-analyze
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment || '' }}
     permissions:
       id-token: write
       contents: read
@@ -192,9 +202,16 @@ jobs:
         shell: bash
         env:
           APP_SOLUTION_NAME: ${{ inputs.dotnet_application_solution_name }}
+          DATAACCESS_TEST_FILTER: ${{ inputs.dataaccess_test_filter }}
         run: |
+          FILTER_ARGS=()
+          if [ -n "$DATAACCESS_TEST_FILTER" ]; then
+            FILTER_ARGS+=(--filter "$DATAACCESS_TEST_FILTER")
+          fi
+
           dotnet test src/$APP_SOLUTION_NAME/$APP_SOLUTION_NAME.DataAccess.UnitTests/$APP_SOLUTION_NAME.DataAccess.UnitTests.csproj \
             --no-build --configuration Release \
+            "${FILTER_ARGS[@]}" \
             -p:CollectCoverage=true \
             -p:CoverletOutput=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.DataAccess.coverage.opencover.xml \
             -p:CoverletOutputFormat=opencover \
@@ -214,6 +231,27 @@ jobs:
             -p:CoverletOutputFormat=opencover \
             -p:Deterministic=true \
             --logger "trx;LogFileName=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.Infrastructure.test_results.trx"
+
+      - name: Run Custom Unit Tests with Coverage
+        if: ${{ inputs.run_custom_tests }}
+        shell: bash
+        env:
+          APP_SOLUTION_NAME: ${{ inputs.dotnet_application_solution_name }}
+          CUSTOM_TEST_FILTER: ${{ inputs.custom_test_filter }}
+        run: |
+          FILTER_ARGS=()
+          if [ -n "$CUSTOM_TEST_FILTER" ]; then
+            FILTER_ARGS+=(--filter "$CUSTOM_TEST_FILTER")
+          fi
+
+          dotnet test src/$APP_SOLUTION_NAME/$APP_SOLUTION_NAME.UnitTests/$APP_SOLUTION_NAME.UnitTests.csproj \
+            --no-build --configuration Release \
+            "${FILTER_ARGS[@]}" \
+            -p:CollectCoverage=true \
+            -p:CoverletOutput=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.coverage.opencover.xml \
+            -p:CoverletOutputFormat=opencover \
+            -p:Deterministic=true \
+            --logger "trx;LogFileName=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.test_results.trx"
 
       - name: List coverage files
         shell: bash

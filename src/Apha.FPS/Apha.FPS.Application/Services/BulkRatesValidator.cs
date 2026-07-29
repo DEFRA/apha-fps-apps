@@ -1,4 +1,5 @@
 using Apha.Common.BulkRates.Validation;
+using Apha.Common.BulkRates.Validation.StaffAnimal;
 using Apha.Common.Constants;
 using Apha.FPS.Core.Entities.BulkRates;
 using Apha.FPS.Core.Interfaces;
@@ -7,24 +8,30 @@ namespace Apha.FPS.Application.Services
 {
     /// <summary>
     /// Orchestrates Bulk Rates upload/release validation. FEC/AGRUP business rules live in
-    /// Apha.Common.BulkRates.Validation.IBulkRatesValidationService (DR-VAL-01, Phase D2) —
-    /// this class's job (Phase D3) is to build that service's ValidationContext from bulk
+    /// Apha.Common.BulkRates.Validation.IBulkRatesValidationService —
+    /// this class's job is to build that service's ValidationContext from bulk
     /// repository reads plus the parsed/staged rows, call it once, and map the returned
     /// ValidationFinding list onto StagingValidationError/BulkRatesRowCounts. It must not
-    /// reimplement any FEC/AGRUP rule itself (plan §4: "every item... calls DR-VAL-01/DR-VAL-02
-    /// rather than implementing its own copy"). Staff/Animal validation predates DR-VAL-01 and
-    /// is outside its scope (its ValidationContext has no Staff/Animal shape), so those two
-    /// stay exactly as before.
+    /// reimplement any FEC/AGRUP rule itself ("every item... calls the shared validator
+    /// rather than implementing its own copy"). Staff/Animal rules live the same way in
+    /// Apha.Common.BulkRates.Validation.StaffAnimal.IStaffAnimalValidationService
+    /// — a parallel, differently-shaped service, not the
+    /// ValidationContext.
     /// </summary>
     public class BulkRatesValidator
     {
         private readonly IBulkRatesRepository _repository;
         private readonly IBulkRatesValidationService _validationService;
+        private readonly IStaffAnimalValidationService _staffAnimalValidationService;
 
-        public BulkRatesValidator(IBulkRatesRepository repository, IBulkRatesValidationService validationService)
+        public BulkRatesValidator(
+            IBulkRatesRepository repository,
+            IBulkRatesValidationService validationService,
+            IStaffAnimalValidationService staffAnimalValidationService)
         {
             _repository = repository;
             _validationService = validationService;
+            _staffAnimalValidationService = staffAnimalValidationService;
         }
 
         public async Task<BulkRatesValidationResult> ValidateAsync(
@@ -57,8 +64,10 @@ namespace Apha.FPS.Application.Services
                 BulkRatesJobNames.Fec => await ValidateFecAsync(
                     parseResult.JobQueueId, fpsYear, uploadVersion, downloadVersion,
                     parseResult.FecRows, parseResult.AgrupRows, ct),
-                BulkRatesJobNames.Staff => ValidateStaff(parseResult),
-                BulkRatesJobNames.Animal => ValidateAnimal(parseResult),
+                BulkRatesJobNames.Staff => await ValidateStaffAsync(
+                    parseResult.JobQueueId, fpsYear, parseResult.StaffRows, uploadVersion, ct),
+                BulkRatesJobNames.Animal => await ValidateAnimalAsync(
+                    parseResult.JobQueueId, fpsYear, parseResult.AnimalRows, uploadVersion, ct),
                 _ => new BulkRatesValidationResult
                 {
                     Errors =
@@ -69,13 +78,13 @@ namespace Apha.FPS.Application.Services
             };
         }
 
-        // ── DR-API-07: release-time re-validation + freeze ───────────────────────
+        // ── Release-time re-validation + freeze ───────────────────────────────────
 
         /// <summary>
-        /// Re-runs the same DR-VAL-01 rules against the currently staged rows (read back from
+        /// Re-runs the same rules against the currently staged rows (read back from
         /// the DB — release time has no fresh parseResult in hand) and the current live/
         /// reference data, and packages the per-row classification for
-        /// BulkRatesRequestService.ReleaseForApprovalAsync to freeze onto staging (CR056).
+        /// BulkRatesRequestService.ReleaseForApprovalAsync to freeze onto staging.
         /// This is a safety net: live reference data can drift between upload and release, so
         /// release must not blindly trust the validation errors recorded at upload time.
         /// </summary>
@@ -119,10 +128,58 @@ namespace Apha.FPS.Application.Services
             };
         }
 
-        // ── DR-UI-03: calculated action for display, when nothing is frozen yet ─────
+        /// <summary>
+        /// Staff equivalent of BuildFreezeAsync — re-runs its rules
+        /// against the currently staged rows (DB read-back) and current live data, for
+        /// BulkRatesRequestService.ReleaseForApprovalAsync to freeze onto staging once
+        /// clean. validation_version is StaffAnimalValidationVersion.Current — a rule-set
+        /// version, not UploadVersion (§3, unlike FEC/AGRUP's validation_version column).
+        /// </summary>
+        public async Task<BulkRatesStaffFreezeResult> BuildStaffFreezeAsync(
+            Guid jobQueueId, int fpsYear, CancellationToken ct = default)
+        {
+            var stagedRows = await _repository.GetStaffStagingRowsAsync(jobQueueId, ct);
+            var context = await BuildStaffAnimalContextAsync(jobQueueId, fpsYear, stagedRows, [], ct);
+            var result = _staffAnimalValidationService.Validate(context);
+
+            var blockingErrors = result.StaffResults
+                .SelectMany(r => r.Errors)
+                .Where(f => f.Severity == ValidationSeverity.Error)
+                .ToList();
+
+            var freezes = result.StaffResults.Select(r => new StaffFreezeEntry(
+                r.PcGrade, r.Action,
+                r.Source?.PayRate, r.Source?.Npr, r.Source?.Ohr,
+                r.Effective?.PayRate, r.Effective?.Npr, r.Effective?.Ohr)).ToList();
+
+            return new BulkRatesStaffFreezeResult { BlockingErrors = blockingErrors, Freezes = freezes };
+        }
+
+        /// <summary>As BuildStaffFreezeAsync, for Animal.</summary>
+        public async Task<BulkRatesAnimalFreezeResult> BuildAnimalFreezeAsync(
+            Guid jobQueueId, int fpsYear, CancellationToken ct = default)
+        {
+            var stagedRows = await _repository.GetAnimalStagingRowsAsync(jobQueueId, ct);
+            var context = await BuildStaffAnimalContextAsync(jobQueueId, fpsYear, [], stagedRows, ct);
+            var result = _staffAnimalValidationService.Validate(context);
+
+            var blockingErrors = result.AnimalResults
+                .SelectMany(r => r.Errors)
+                .Where(f => f.Severity == ValidationSeverity.Error)
+                .ToList();
+
+            var freezes = result.AnimalResults.Select(r => new AnimalFreezeEntry(
+                r.AnimalType, r.Action,
+                r.Source?.DailyRate, r.Source?.DefraDailyRate, r.Source?.PlanByWeek, r.Source?.Species, r.Source?.SecurityLevel,
+                r.Effective?.DailyRate, r.Effective?.DefraDailyRate, r.Effective?.PlanByWeek, r.Effective?.Species, r.Effective?.SecurityLevel)).ToList();
+
+            return new BulkRatesAnimalFreezeResult { BlockingErrors = blockingErrors, Freezes = freezes };
+        }
+
+        // ── Calculated action for display, when nothing is frozen yet ────────────────
 
         /// <summary>
-        /// Computes the same DR-VAL-01 classification <see cref="BuildFreezeAsync"/> would freeze,
+        /// Computes the same classification <see cref="BuildFreezeAsync"/> would freeze,
         /// for display purposes before a request has ever been released (calculated_action is
         /// still null on staging). Returns raw ROW_CLASSIFIED findings rather than a bespoke
         /// shape — callers (the Detail-page staging grid) read <see cref="ValidationFinding.BusinessKey"/>/
@@ -144,7 +201,7 @@ namespace Apha.FPS.Application.Services
                 .ToList();
         }
 
-        // ── FEC + AGRUP validation (DR-API-01/02/03/04/05/06/08/09, all via DR-VAL-01) ──
+        // ── FEC + AGRUP validation ─────────────────────────────────────────────────
 
         private async Task<BulkRatesValidationResult> ValidateFecAsync(
             Guid jobQueueId, int fpsYear, int uploadVersion, int? downloadVersion,
@@ -156,10 +213,10 @@ namespace Apha.FPS.Application.Services
                 includeWorkerOnlyChecks: false, ct);
             var findings = _validationService.Validate(context);
 
-            // ROW_CLASSIFIED findings (Info severity) are DR-VAL-01's per-row calculated-action
+            // ROW_CLASSIFIED findings (Info severity) are the per-row calculated-action
             // output, not user-facing validation errors — they drive RowCounts below, not
-            // fps.staging_validation_error (DR-UI-03 reads them from the frozen staging columns
-            // instead, once DR-API-07 has run).
+            // fps.staging_validation_error (reads them from the frozen staging columns
+            // instead, once release-time re-validation has run).
             var errors = findings
                 .Where(f => f.ValidationCode != "ROW_CLASSIFIED")
                 .Select(f => MapFinding(f, jobQueueId, uploadVersion))
@@ -171,7 +228,7 @@ namespace Apha.FPS.Application.Services
         }
 
         /// <summary>
-        /// Builds DR-VAL-01's ValidationContext from bulk repository reads (§3.2 — batched,
+        /// Builds the ValidationContext from bulk repository reads (§3.2 — batched,
         /// never per-row) plus the given FEC/AGRUP rows, which the two callers above source
         /// differently: a fresh parse at upload time, or a DB read-back at release time.
         /// </summary>
@@ -243,11 +300,11 @@ namespace Apha.FPS.Application.Services
                     Buyer = r.Buyer,
                     AgrupNew = r.AgrupNew,
                     // Existing rows: the workbook has no column yet to assert a routing value
-                    // (DR-UI-02/Phase D5 adds that). Until then, an absent staged value must echo
+                    // (Phase D5 adds that). Until then, an absent staged value must echo
                     // the live one rather than read as "blanked out" — otherwise every ordinary
                     // rate-only update on a row that already has routing data would falsely trip
-                    // DR-API-05's immutability check below. New rows have no live value to echo,
-                    // so they correctly stay null and fall through to DR-API-04's
+                    // the immutability check below. New rows have no live value to echo,
+                    // so they correctly stay null and fall through to the
                     // MISSING_ROUTING_FIELD until a workbook can actually supply one.
                     ProjectBuyerCode = r.ProjectBuyerCode ?? live?.ProjectBuyerCode,
                     TestBuyerCode = r.TestBuyerCode ?? live?.TestBuyerCode,
@@ -293,7 +350,7 @@ namespace Apha.FPS.Application.Services
             };
         }
 
-        /// <summary>AGRUP findings carry "TestCode/Buyer" as a single BusinessKey string (DR-VAL-01); everything else is a plain TestCode.</summary>
+        /// <summary>AGRUP findings carry "TestCode/Buyer" as a single BusinessKey string; everything else is a plain TestCode.</summary>
         private static (string? TestCode, string? Buyer) SplitBusinessKey(string sheet, string? businessKey)
         {
             if (businessKey is null) return (null, null);
@@ -331,117 +388,137 @@ namespace Apha.FPS.Application.Services
             };
         }
 
-        // ── Staff validation (predates DR-VAL-01 — no Staff shape in its ValidationContext) ──
+        // ── Staff/Animal validation ────────────────────────────────────────────────
+        //
+        // Findings carry PcGrade/AnimalType as ValidationFinding.BusinessKey, which MapFinding
+        // (shared with FEC/AGRUP — it only special-cases the "AGRUP" sheet) turns into
+        // StagingValidationError.TestCode, so the Web UI can attach them inline to the matching
+        // staging grid row the same way it does for FEC/AGRUP's own TestCode. MISSING_GRADE/
+        // MISSING_ANIMAL_TYPE necessarily leave BusinessKey null (there's no key to attach to),
+        // so those findings stay in the unmatched/top-of-page list by design, not by omission.
 
-        private static BulkRatesValidationResult ValidateStaff(BulkRatesParseResult parseResult)
+        private async Task<BulkRatesValidationResult> ValidateStaffAsync(
+            Guid jobQueueId, int fpsYear, IReadOnlyList<StaffStagingRow> rows, int uploadVersion, CancellationToken ct)
         {
-            var errors = new List<StagingValidationError>();
-            var rows = parseResult.StaffRows;
-            var jobQueueId = parseResult.JobQueueId;
+            var context = await BuildStaffAnimalContextAsync(jobQueueId, fpsYear, rows, [], ct);
+            var result = _staffAnimalValidationService.Validate(context);
 
-            var duplicates = rows.GroupBy(r => r.PcGrade, StringComparer.OrdinalIgnoreCase)
-                .Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var errors = result.StaffResults
+                .SelectMany(r => r.Errors)
+                .Select(f => MapFinding(f, jobQueueId, uploadVersion))
+                .ToList();
 
-            for (int i = 0; i < rows.Count; i++)
-            {
-                var row = rows[i];
-                var sourceRow = i + 2;
+            var counts = ComputeStaffAnimalRowCounts(rows.Count, result.StaffResults.Select(r => r.Action), errors);
 
-                if (string.IsNullOrWhiteSpace(row.PcGrade))
-                    AddError(errors, jobQueueId, sourceRow, "pcgrade", "MISSING_GRADE", "PcGrade is required.",
-                        sheetName: "Staff");
-                else if (duplicates.Contains(row.PcGrade))
-                    AddError(errors, jobQueueId, sourceRow, "pcgrade", "DUPLICATE_GRADE",
-                        $"Grade '{row.PcGrade}' appears more than once.", sheetName: "Staff");
-
-                if (row.PayRate.HasValue && row.PayRate.Value < 0)
-                    AddError(errors, jobQueueId, sourceRow, "payrate", "NEGATIVE_RATE", "Negative rates are not permitted.",
-                        sheetName: "Staff");
-                if (row.Npr.HasValue && row.Npr.Value < 0)
-                    AddError(errors, jobQueueId, sourceRow, "npr", "NEGATIVE_RATE", "Negative rates are not permitted.",
-                        sheetName: "Staff");
-                if (row.Ohr.HasValue && row.Ohr.Value < 0)
-                    AddError(errors, jobQueueId, sourceRow, "ohr", "NEGATIVE_RATE", "Negative rates are not permitted.",
-                        sheetName: "Staff");
-            }
-
-            return new BulkRatesValidationResult
-            {
-                Errors = errors,
-                RowCounts = new BulkRatesRowCounts
-                {
-                    Total = rows.Count,
-                    Update = rows.Count,
-                    Invalid = errors.Count(e => e.Severity == "Error"),
-                    Valid = rows.Count - errors.Count(e => e.Severity == "Error")
-                }
-            };
+            return new BulkRatesValidationResult { Errors = errors, RowCounts = counts };
         }
 
-        // ── Animal validation (predates DR-VAL-01 — no Animal shape in its ValidationContext) ──
-
-        private static BulkRatesValidationResult ValidateAnimal(BulkRatesParseResult parseResult)
+        private async Task<BulkRatesValidationResult> ValidateAnimalAsync(
+            Guid jobQueueId, int fpsYear, IReadOnlyList<AnimalStagingRow> rows, int uploadVersion, CancellationToken ct)
         {
-            var errors = new List<StagingValidationError>();
-            var rows = parseResult.AnimalRows;
-            var jobQueueId = parseResult.JobQueueId;
+            var context = await BuildStaffAnimalContextAsync(jobQueueId, fpsYear, [], rows, ct);
+            var result = _staffAnimalValidationService.Validate(context);
 
-            var duplicates = rows.GroupBy(r => r.AnimalType, StringComparer.OrdinalIgnoreCase)
-                .Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var errors = result.AnimalResults
+                .SelectMany(r => r.Errors)
+                .Select(f => MapFinding(f, jobQueueId, uploadVersion))
+                .ToList();
 
-            for (int i = 0; i < rows.Count; i++)
-            {
-                var row = rows[i];
-                var sourceRow = i + 2;
+            var counts = ComputeStaffAnimalRowCounts(rows.Count, result.AnimalResults.Select(r => r.Action), errors);
 
-                if (string.IsNullOrWhiteSpace(row.AnimalType))
-                    AddError(errors, jobQueueId, sourceRow, "animaltype", "MISSING_ANIMAL_TYPE", "AnimalType is required.",
-                        sheetName: "Animal");
-                else if (duplicates.Contains(row.AnimalType))
-                    AddError(errors, jobQueueId, sourceRow, "animaltype", "DUPLICATE_ANIMAL_TYPE",
-                        $"AnimalType '{row.AnimalType}' appears more than once.", sheetName: "Animal");
-
-                if (row.DailyRate.HasValue && row.DailyRate.Value < 0)
-                    AddError(errors, jobQueueId, sourceRow, "dailyrate", "NEGATIVE_RATE", "Negative rates are not permitted.",
-                        sheetName: "Animal");
-                if (row.DefraDailyRate.HasValue && row.DefraDailyRate.Value < 0)
-                    AddError(errors, jobQueueId, sourceRow, "defradailyrate", "NEGATIVE_RATE", "Negative rates are not permitted.",
-                        sheetName: "Animal");
-            }
-
-            return new BulkRatesValidationResult
-            {
-                Errors = errors,
-                RowCounts = new BulkRatesRowCounts
-                {
-                    Total = rows.Count,
-                    Update = rows.Count,
-                    Invalid = errors.Count(e => e.Severity == "Error"),
-                    Valid = rows.Count - errors.Count(e => e.Severity == "Error")
-                }
-            };
+            return new BulkRatesValidationResult { Errors = errors, RowCounts = counts };
         }
 
-        // ── Error helpers (Staff/Animal only — FEC/AGRUP findings go through MapFinding) ──
-
-        private static void AddError(
-            List<StagingValidationError> list, Guid jobQueueId,
-            int sourceRowNumber, string? fieldName, string code, string message,
-            string? sheetName = null, string? testCode = null, string? buyer = null)
+        /// <summary>
+        /// Builds IStaffAnimalValidationService's context from bulk repository reads (mirroring
+        /// FEC/AGRUP's BuildContextAsync) plus the given staged rows, which the two callers
+        /// above source differently: a fresh parse at upload time, or a DB read-back at release
+        /// time (BuildStaffFreezeAsync/BuildAnimalFreezeAsync). SourceRow is synthesized from
+        /// list position in both cases — the same simplification BuildContextAsync already makes
+        /// for FEC/AGRUP's release-time read-back, since the original worksheet row number isn't
+        /// persisted to staging.
+        /// </summary>
+        private async Task<StaffAnimalValidationContext> BuildStaffAnimalContextAsync(
+            Guid jobQueueId, int fpsYear,
+            IReadOnlyList<StaffStagingRow> stagedStaffRows,
+            IReadOnlyList<AnimalStagingRow> stagedAnimalRows,
+            CancellationToken ct)
         {
-            list.Add(new StagingValidationError
+            var liveStaffRows = await _repository.GetStaffRowsForExportAsync(fpsYear, ct);
+            var liveAnimalRows = await _repository.GetAnimalRowsForExportAsync(fpsYear, ct);
+
+            var liveStaffLookup = liveStaffRows.ToDictionary(
+                r => StaffAnimalValidationKeys.PcGrade(r.PcGrade),
+                r => new LiveStaffRow { PcGrade = r.PcGrade, PayRate = r.PayRate, Npr = r.Npr, Ohr = r.Ohr });
+
+            var liveAnimalLookup = liveAnimalRows.ToDictionary(
+                r => StaffAnimalValidationKeys.AnimalType(r.AnimalType),
+                r => new LiveAnimalRow
+                {
+                    AnimalType = r.AnimalType,
+                    DailyRate = r.DailyRate,
+                    DefraDailyRate = r.DefraDailyRate,
+                    PlanByWeek = r.PlanByWeek ?? false,
+                    Species = r.Species,
+                    SecurityLevel = r.SecurityLevel
+                });
+
+            var stagedStaff = stagedStaffRows.Select((r, i) => new ValidationStaffRow
+            {
+                PcGrade = r.PcGrade,
+                PayRate = r.PayRate,
+                Npr = r.Npr,
+                Ohr = r.Ohr,
+                SourceRow = i + 2
+            }).ToList();
+
+            var stagedAnimal = stagedAnimalRows.Select((r, i) => new ValidationAnimalRow
+            {
+                AnimalType = r.AnimalType,
+                DailyRate = r.DailyRate,
+                DefraDailyRate = r.DefraDailyRate,
+                PlanByWeek = r.PlanByWeek,
+                Species = r.Species,
+                SecurityLevel = r.SecurityLevel,
+                SourceRow = i + 2
+            }).ToList();
+
+            return new StaffAnimalValidationContext
             {
                 JobQueueId = jobQueueId,
-                UploadVersion = 0, // set to actual version by service before persisting
-                SourceRowNumber = sourceRowNumber,
-                FieldName = fieldName,
-                ValidationCode = code,
-                Severity = "Error",
-                ValidationMessage = message,
-                SheetName = sheetName,
-                TestCode = testCode,
-                Buyer = buyer
-            });
+                FpsYear = fpsYear,
+                LiveStaffLookup = liveStaffLookup,
+                LiveAnimalLookup = liveAnimalLookup,
+                StagedStaffRows = stagedStaff,
+                StagedAnimalRows = stagedAnimal
+            };
+        }
+
+        /// <summary>
+        /// Staff/Animal equivalent of ComputeRowCounts — no Insert bucket (update-only, gating
+        /// decision #3): NotFound/Invalid rows both carry an Error-severity finding, so they're
+        /// counted the same way FEC/AGRUP's Invalid bucket already is, from the mapped errors
+        /// rather than from StaffAnimalCalculatedAction directly.
+        /// </summary>
+        private static BulkRatesRowCounts ComputeStaffAnimalRowCounts(
+            int total, IEnumerable<string> actions, IReadOnlyList<StagingValidationError> errors)
+        {
+            int update = 0, unchanged = 0;
+            foreach (var action in actions)
+            {
+                if (action == StaffAnimalCalculatedAction.Update) update++;
+                else if (action == StaffAnimalCalculatedAction.NoChange) unchanged++;
+            }
+
+            var invalid = errors.Count(e => e.Severity == ValidationSeverity.Error);
+            return new BulkRatesRowCounts
+            {
+                Total = total,
+                Update = update,
+                Unchanged = unchanged,
+                Invalid = invalid,
+                Valid = total - invalid
+            };
         }
     }
 }
