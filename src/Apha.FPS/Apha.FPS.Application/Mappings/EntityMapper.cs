@@ -127,6 +127,9 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
                 .ForMember(d => d.PlannedHours, o => o.MapFrom(s => s.PlannedHours ?? 0))
                 .ReverseMap();
             CreateMap<ResourceMgmtReplanDto, ResourceMgmtReplanRow>().ReverseMap();
+
+            // Workgroup Staff Plan view
+            CreateMap<WgStaffPlanView, WgStaffPlanViewDto>().ReverseMap();
         }
     }
 }

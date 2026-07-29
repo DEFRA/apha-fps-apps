@@ -1,0 +1,109 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.WgStaffPlanViewModel
+@{
+    ViewData["Title"] = "Workgroup Staff Plan";
+}
+
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom">
+            <span class="sup_flex_left_center">Workgroup Staff Plan</span>
+        </h1>
+    </div>
+</div>
+
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <div style="display:flex; align-items:center; gap:12px; padding:6px 8px; border:1px solid #b1b4b6; border-bottom:0; background:#f3f2f1;">
+            <label class="govuk-label govuk-!-margin-bottom-0" for="resourceCentreDropdown" style="white-space:nowrap; font-weight:bold;">Select a Resource Centre</label>
+            <select id="resourceCentreDropdown"
+                    asp-items="Model.ResourceCentreList"
+                    asp-for="SelectedResourceCentre"
+                    onchange="onResourceCentreChange()"
+                    class="govuk-select"
+                    style="width:auto; min-width:200px;"
+                    aria-label="Select a Resource Centre">
+                <option value="">-- Select Resource Centre --</option>
+            </select>
+
+            <label class="govuk-label govuk-!-margin-bottom-0" for="workGroupDropdown" style="white-space:nowrap; font-weight:bold;">Select a Work Group</label>
+            <select id="workGroupDropdown"
+                    asp-items="Model.WorkGroupList"
+                    asp-for="SelectedWorkGroup"
+                    onchange="onWorkGroupChange()"
+                    class="govuk-select"
+                    style="width:auto; min-width:220px;"
+                    aria-label="Select a Work Group"
+                    data-disabled="@(string.IsNullOrEmpty(Model.SelectedResourceCentre) ? "true" : "false")">
+                <option value="">-- Select Work Group --</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+    <div class="govuk-grid-column-full">
+        <div id="gridContainer_wgStaffPlanGrid">
+            @await Html.PartialAsync("_DataGrid", Model.Grid)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function onResourceCentreChange() {
+            var resourceCentre = document.getElementById('resourceCentreDropdown').value;
+            var wgDropdown = document.getElementById('workGroupDropdown');
+
+            // Reset and disable work group dropdown
+            wgDropdown.innerHTML = '<option value="">-- Select Work Group --</option>';
+            wgDropdown.disabled = true;
+
+            if (!resourceCentre) return;
+
+            showLoader();
+            $.get('@Url.Action("GetWorkGroupsByResourceCentre", "WgStaffPlan", new { area = "FPS" })',
+                { resourceCentre: resourceCentre },
+                function (response) {
+                    hideLoader();
+                    if (response && response.success) {
+                        (response.data || []).forEach(function (wg) {
+                            var opt = document.createElement('option');
+                            opt.value = wg;
+                            opt.text  = wg;
+                            wgDropdown.appendChild(opt);
+                        });
+                        wgDropdown.disabled = false;
+                    } else {
+                        showAlertMessage('Could not load work groups: ' + (response && response.message || 'Unknown error.'), AlertType.WARNING);
+                    }
+                }
+            ).fail(function () {
+                hideLoader();
+                showAlertMessage('Could not load work groups. Please try selecting the Resource Centre again.', AlertType.WARNING);
+            });
+        }
+
+        function onWorkGroupChange() {
+            var resourceCentre = document.getElementById('resourceCentreDropdown').value;
+            var workGroup      = document.getElementById('workGroupDropdown').value;
+            if (!workGroup) return;
+
+            fpsNavigateTo('@Url.Action("Index", "WgStaffPlan", new { area = "FPS" })?resourceCentre='
+                + encodeURIComponent(resourceCentre)
+                + '&workGroup=' + encodeURIComponent(workGroup));
+        }
+
+        function getWgStaffPlanExtraFilters() {
+            return {};
+        }
+
+        // Disable work group dropdown on page load when no resource centre is selected
+        document.addEventListener('DOMContentLoaded', function () {
+            var wgDropdown = document.getElementById('workGroupDropdown');
+            if (wgDropdown && wgDropdown.getAttribute('data-disabled') === 'true') {
+                wgDropdown.disabled = true;
+            }
+        });
+    </script>
+}
