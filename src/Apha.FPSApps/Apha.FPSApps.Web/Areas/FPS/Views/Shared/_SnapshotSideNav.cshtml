@@ -1,0 +1,31 @@
+@*
+    Reusable Snapshot queries side navigation.
+    Usage:  @await Html.PartialAsync("_SnapshotSideNav")
+
+    Requires a toggleSidebar() JS function on the host page (toggles '.sidenav.collapsed').
+*@
+
+<nav class="sidenav flex-column flex-shrink-0 govuk-!-padding-left-2"
+     id="shortnav"
+     aria-label="Maintenance navigation">
+    <button class="toggle-btn" type="button"
+            aria-label="Toggle side navigation"
+            aria-expanded="true"
+            aria-controls="shortnav-list"
+            onclick="toggleSidebar()"
+            style="right: -8px; top: 30px;">
+        <img src="~/images/chevron-left-solid-full.svg" alt="" aria-hidden="true" width="24" />
+    </button>
+    <ul id="shortnav-list">
+        <li>
+            <a class="dropdown-item sidenav-title"
+               asp-area="FPS" asp-controller="AnimalSnapshotData" asp-action="Index"
+               aria-current="page">SnapshotAnimalReq</a>
+        </li>
+        <li><a class="dropdown-item" href="#">SnapshotExceptionalCosts</a></li>
+        <li><a class="dropdown-item" href="#">SnapshotsTests</a></li>
+        <li><a class="dropdown-item" href="#">SnapshotTime</a></li>
+        <li><a class="dropdown-item" href="#">SnapshotBids</a></li>
+        <li><a class="dropdown-item" href="#">SnapshotProjects</a></li>
+    </ul>
+</nav>

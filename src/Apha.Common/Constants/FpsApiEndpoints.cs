@@ -19,6 +19,7 @@
         public const string DeleteAnimalCost = "api/v1/animalrequest?indCounter={0}";
         public const string GetTotalAnimalCost = "api/v1/animalrequest/totalanimalcost?jobCode={0}";
         public const string GetAnimalCostViewById = "api/v1/animalrequest/view?indCounter={0}&jobCode={1}";
+        public const string GetAnimalSnapshot = "api/v1/animalrequest/snapshot";
 
         // Employee
         public const string GetFilteredEmployees = "api/v1/employee/paginated?filterOption={0}";

@@ -461,5 +461,46 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalRequestControllerTest
         }
 
         #endregion
+
+        #region GetAnimalSnapshotAsync
+
+        [Fact]
+        public async Task GetAnimalSnapshotAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var query = new PaginationReq<string>();
+            var mappedQuery = new QueryParameters<string>();
+            var serviceResult = new PaginatedResult<AnimalSnapshotViewDto>();
+            var mappedResult = new PaginationRes<AnimalSnapshotViewRes>();
+
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
+            _serviceMock.GetAnimalSnapshotAsync(mappedQuery).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<AnimalSnapshotViewRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetAnimalSnapshotAsync(query);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+            await _serviceMock.Received(1).GetAnimalSnapshotAsync(mappedQuery);
+        }
+
+        [Fact]
+        public async Task GetAnimalSnapshotAsync_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new PaginationReq<string>();
+            var mappedQuery = new QueryParameters<string>();
+
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
+            _serviceMock.GetAnimalSnapshotAsync(mappedQuery)
+                .Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAnimalSnapshotAsync(query));
+        }
+
+        #endregion
     }
 }

@@ -144,6 +144,17 @@ namespace Apha.FPS.DataAccess.Repositories
             return result.Sum(e => (decimal)e.NumberOfDays * (decimal)e.NumberOfAnimals * (e.DailyRate ?? 0m));
         }
 
+        public async Task<PagedData<AnimalSnapshotView>> GetAnimalSnapshotAsync(PaginationParameters<string> query)
+        {
+            var snapshotQuery = BuildAnimalSnapshotQuery();
+
+            snapshotQuery = ApplyAnimalSnapshotFilter(snapshotQuery, query.Filter);
+
+            snapshotQuery = (IQueryable<AnimalSnapshotView>)ApplyAnimalSnapshotSorting(snapshotQuery, query.SortBy, query.Descending);
+
+            return base.ApplyPaging(snapshotQuery, query.Page, query.PageSize);
+        }
+
         public async Task<AnimalCostView?> GetAnimalCostViewByIdAsync(int indCounter, string jobCode)
         {
             var record = await BuildAnimalCostQuery(jobCode)
@@ -299,6 +310,111 @@ namespace Apha.FPS.DataAccess.Repositories
                        DailyRate = dailyRate,
                        TotalDays = animalReq.NumberOfAnimals * animalReq.NumberOfDays
                    };
+        }
+
+        private IQueryable<AnimalSnapshotView> BuildAnimalSnapshotQuery()
+        {
+            return from prg in _dbContext.Programs
+                   join prj in _dbContext.ProjectViews on prg.ProgramNo equals prj.Program
+                   join ar in _dbContext.AnimalRequests on prj.ParentProject equals ar.JobCode
+                   join an in _dbContext.Animals on ar.AnimalType equals an.AnimalType
+                   where EF.Functions.ILike(prj.UserEmail!, _requestContext.UserEmailId)
+                   select new AnimalSnapshotView
+                   {
+                       Directorate = prg.Directorate,
+                       Program = prj.Program,
+                       Contract = prj.Contract,
+                       Project = prj.ParentProject,
+                       ProjectStatus = prj.ProjectStatus,
+                       Species = an.Species,
+                       SecurityLevel = an.SecurityLevel,
+                       AnimalType = an.AnimalType,
+                       DailyRate = an.DailyRate,
+                       JobCode = ar.JobCode,
+                       NumberOfDays = ar.NumberOfDays,
+                       NumberOfAnimals = ar.NumberOfAnimals,
+                       Cost = 0//(decimal)((an.DailyRate ?? 0m) * (decimal)ar.NumberOfAnimals * (decimal)ar.NumberOfDays) 
+                   };
+        }
+
+        private static IQueryable<AnimalSnapshotView> ApplyAnimalSnapshotFilter(IQueryable<AnimalSnapshotView> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("Directorate", out var directorate) && directorate != null)
+                query = query.Where(x => EF.Functions.ILike(x.Directorate!, $"%{directorate}%"));
+
+            if (dict.TryGetValue("Program", out var program) && program != null)
+                query = query.Where(x => EF.Functions.ILike(x.Program!, $"%{program}%"));
+
+            if (dict.TryGetValue("Contract", out var contract) && contract != null)
+                query = query.Where(x => EF.Functions.ILike(x.Contract!, $"%{contract}%"));
+
+            if (dict.TryGetValue("Project", out var project) && project != null)
+                query = query.Where(x => EF.Functions.ILike(x.Project!, $"%{project}%"));
+
+            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && projectStatus != null)
+                query = query.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
+
+            if (dict.TryGetValue("Species", out var species) && species != null)
+                query = query.Where(x => EF.Functions.ILike(x.Species!, $"%{species}%"));
+
+            if (dict.TryGetValue("SecurityLevel", out var securityLevel) && securityLevel != null)
+                query = query.Where(x => EF.Functions.ILike(x.SecurityLevel!, $"%{securityLevel}%"));
+
+            if (dict.TryGetValue("AnimalType", out var animalType) && animalType != null)
+                query = query.Where(x => EF.Functions.ILike(x.AnimalType!, $"%{animalType}%"));
+
+            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.JobCode!, $"%{jobCode}%"));
+
+            if (dict.TryGetValue("Cost", out var cost) && cost != null)
+                query = query.Where(x => EF.Functions.ILike((x.Cost ?? 0m).ToString(), $"%{cost}%"));
+
+            return query;
+        }
+
+        private static IQueryable ApplyAnimalSnapshotSorting(IQueryable<AnimalSnapshotView> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+            {
+                return query;
+            }
+
+            return ApplyAnimalSnapshotSortingByProperty(query, sortBy.ToLower(), descending);
+        }
+
+        private static IQueryable ApplyAnimalSnapshotSortingByProperty(IQueryable<AnimalSnapshotView> query, string property, bool descending)
+        {
+            return property switch
+            {
+                "directorate" => ApplyAnimalSnapshotOrder(query, i => i.Directorate, descending),
+                "program" => ApplyAnimalSnapshotOrder(query, i => i.Program, descending),
+                "contract" => ApplyAnimalSnapshotOrder(query, i => i.Contract, descending),
+                "project" => ApplyAnimalSnapshotOrder(query, i => i.Project, descending),
+                "projectstatus" => ApplyAnimalSnapshotOrder(query, i => i.ProjectStatus, descending),
+                "species" => ApplyAnimalSnapshotOrder(query, i => i.Species, descending),
+                "securitylevel" => ApplyAnimalSnapshotOrder(query, i => i.SecurityLevel, descending),
+                "animaltype" => ApplyAnimalSnapshotOrder(query, i => i.AnimalType, descending),
+                "dailyrate" => ApplyAnimalSnapshotOrder(query, i => i.DailyRate, descending),
+                "jobcode" => ApplyAnimalSnapshotOrder(query, i => i.JobCode, descending),
+                "numberofdays" => ApplyAnimalSnapshotOrder(query, i => i.NumberOfDays, descending),
+                "numberofanimals" => ApplyAnimalSnapshotOrder(query, i => i.NumberOfAnimals, descending),
+                "cost" => ApplyAnimalSnapshotOrder(query, i => i.Cost, descending),
+                _ => query
+            };
+        }
+
+        private static IQueryable ApplyAnimalSnapshotOrder<T>(IQueryable<AnimalSnapshotView> query, Expression<Func<AnimalSnapshotView, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
         private static IQueryable<AnimalCostView> ApplyAnimalCostFilter(IQueryable<AnimalCostView> query, string? filter)

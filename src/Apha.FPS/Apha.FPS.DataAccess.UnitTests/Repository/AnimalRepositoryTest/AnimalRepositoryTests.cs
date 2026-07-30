@@ -572,5 +572,33 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
         }
 
         #endregion
+
+        #region GetAnimalSnapshotAsync Tests
+
+        // NOTE: GetAnimalSnapshotAsync builds its query via BuildAnimalSnapshotQuery which
+        // joins Programs, ProjectViews, AnimalRequests and Animals and filters with
+        // EF.Functions.ILike(prj.UserEmail, _requestContext.UserEmailId). EF.Functions.ILike
+        // cannot be evaluated client-side by the in-memory/mock provider and requires a real
+        // PostgreSQL connection, so these paths are covered by integration tests.
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetAnimalSnapshotAsync_WithMatchingRows_ReturnsPagedData()
+        {
+            await Task.CompletedTask;
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetAnimalSnapshotAsync_WithNoMatchingRows_ReturnsEmptyPage()
+        {
+            await Task.CompletedTask;
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetAnimalSnapshotAsync_AppliesFilterSortingAndPaging()
+        {
+            await Task.CompletedTask;
+        }
+
+        #endregion
     }
 }

@@ -50,6 +50,19 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Gets a paginated snapshot of animal costs across programmes, projects and animal requests.
+        /// </summary>
+        /// <param name="query">Pagination and filter parameters.</param>
+        /// <returns>A paginated list of animal snapshot view results.</returns>
+        [HttpGet("snapshot")]
+        public async Task<IActionResult> GetAnimalSnapshotAsync([FromQuery] PaginationReq<string> query)
+        {
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _animalService.GetAnimalSnapshotAsync(filter);
+            return Ok(_mapper.Map<PaginationRes<AnimalSnapshotViewRes>>(result));
+        }
+
+        /// <summary>
         /// Gets a lookup list of all animals.
         /// </summary>
         /// <returns>A list of animal resources.</returns>

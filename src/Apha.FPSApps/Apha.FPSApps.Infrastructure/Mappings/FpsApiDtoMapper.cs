@@ -45,6 +45,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             
             // FPS Animal Plan
             CreateMap<AnimalCostViewDto, AnimalCostViewRes>().ReverseMap();
+            CreateMap<AnimalSnapshotViewDto, AnimalSnapshotViewRes>().ReverseMap();
             CreateMap<AnimalDto, AnimalRes>().ReverseMap();
             CreateMap<AnimalRequestDto, AnimalRequestReq>().ReverseMap();
             CreateMap<AnimalRequestDto, AnimalRequestRes>().ReverseMap();
@@ -114,9 +115,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<WorkGroupEmployeeStaffDto, WorkGroupEmployeeRes>().ReverseMap();
 
             // ProjectProfitability
-            CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
-
-            // ProjectProfitabilityVla
+            CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();            // ProjectProfitabilityVla
             //   ForMember(Id) handles int->int? coercion: Id=GetValueOrDefault(0) on reverse.
             //   TotalCount is on Res only; silently ignored in Res->Dto direction (see DEFERRED note above).
             CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaRes>()
