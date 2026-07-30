@@ -74,6 +74,20 @@ namespace Apha.FPS.DataAccess.Repositories
             return hasRunningJob;
         }
 
+        public async Task<string> GetYearEndDataSetupRequestInitiatorAsync(string jobName)
+        {
+            var initiator = await (
+                from jm in _context.BatchJobs.AsNoTracking()
+                join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
+                join js in _context.BatchJobStatuses.AsNoTracking()
+                    on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
+                where jm.JobName.ToLower() == jobName.ToLower() && (js.Status.ToLower() == "initiated")
+                select jq.RequestedBy
+            ).FirstOrDefaultAsync();
+
+            return initiator??string.Empty;
+        }
+
         public async Task<BatchJobQueue> EnqueueDataSetupBatchJobAsync(string jobName, string requestedBy, string correlationId,string note)
         {
             BatchJobQueue jobQueueEntry = null!;
@@ -118,15 +132,32 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             BatchJobQueue jobQueueEntry = null!;
 
-            var job = await _context.BatchJobs
-                .AsNoTracking()
-                .FirstOrDefaultAsync(j => j.JobName.ToLower() == jobName.ToLower())
-                ?? throw new KeyNotFoundException($"Batch job '{jobName}' was not found.");
+            var jobqueue= await (
+                from jm in _context.BatchJobs.AsNoTracking()
+                join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
+                join js in _context.BatchJobStatuses.AsNoTracking()
+                    on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
+                where jm.JobName.ToLower() == jobName.ToLower() && (js.Status.ToLower() == "initiated")
+                select new { jq.JobqueueId, jq.JobId }
+            ).FirstOrDefaultAsync();
+            
+            if (jobqueue == null)
+            {
+                throw new KeyNotFoundException($"Batch jobqueue for job '{jobName}' was not found.");
+            }
 
-            var initiatedStatus = await _context.BatchJobStatuses
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.JobId == job.JobId && s.Status.ToLower() == "initiated")
-                ?? throw new KeyNotFoundException($"Status 'initiated' not found for job '{jobName}'.");
+            var approveStatusId = await _context.BatchJobStatuses
+    .AsNoTracking()
+    .Where(s => s.JobId == jobqueue.JobId &&
+                s.Status.ToLower() == "approved")
+    .Select(s => s.StatusId)
+    .FirstOrDefaultAsync();
+
+            //var approveStatusId = await _context.BatchJobStatuses
+            //    .AsNoTracking()
+            //    .FirstOrDefaultAsync(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "approved")
+                 
+                //?? throw new KeyNotFoundException($"Status 'approved' not found for job '{jobName}'.");
 
             var strategy = _context.Database.CreateExecutionStrategy();
 
@@ -135,10 +166,22 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, _requestContext.FpsYear);
-                    _context.BatchJobQueues.Add(jobQueueEntry);
+                    var queueRow = await _context.BatchJobQueues
+                .AsNoTracking()
+                .FirstOrDefaultAsync(j => j.JobqueueId == jobqueue.JobqueueId)
+                ?? throw new KeyNotFoundException($"Batch jobqueue for job '{jobName}' was not found.");
 
-                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId);
+                    if (queueRow != null)
+                    {
+                        queueRow.StatusId = approveStatusId;
+                        queueRow.RequestedBy = requestedBy;
+                        queueRow.RequestedAtUtc = DateTime.UtcNow;
+                        queueRow.StartDateTime = DateTime.UtcNow;
+                        queueRow.ErrorMessage = note;
+                        _context.BatchJobQueues.Update(queueRow);
+                    }
+
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, approveStatusId);
                     _context.BatchJobQueueLogs.Add(logEntry);
 
                     await _context.SaveChangesAsync();

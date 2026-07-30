@@ -362,6 +362,38 @@
                 );
             });
         }
+
+        // ── Approve DataSetup Request button ──────────────────────────────────
+
+        var btnApprove = document.getElementById('btnApproveDataSetupRequest');
+        if (btnApprove) {
+            btnApprove.addEventListener('click', function () {
+                hidePageError();
+
+                var plannedYearVal = parseInt(document.getElementById('yearEndProcessYear').value, 10);
+
+                if (!plannedYearVal || isNaN(plannedYearVal)) {
+                    displayServerValidationErrors(
+                        [{ field: 'plannedYear', message: 'Please provide planned year.' }],
+                        'There is a problem',
+                        SCOPE
+                    );
+                    return;
+                }
+
+                btnApprove.disabled = true;
+                postJson(cfg.triggerApproveUrl + '?plannedYear=' + plannedYearVal, {},
+                    function () {
+                        showAlertMessage('Year End Approval request submitted successfully.', AlertType.SUCCESS);
+                        reloadHistoryGrid();
+                    },
+                    function (msgs) {
+                        showPageError(msgs);
+                        btnApprove.disabled = false;
+                    }
+                );
+            });
+        }
     });
 
 }(jQuery));

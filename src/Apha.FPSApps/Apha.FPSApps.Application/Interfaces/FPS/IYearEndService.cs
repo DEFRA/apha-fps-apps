@@ -10,5 +10,7 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<bool>> GetCanInitiateDataSetupRequestAsync(string jobName);
         Task<ApiResponseDto<bool>> GetCanApproveDataSetupRequestAsync(string jobName);
         Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndInitiationJobAsync(int plannedYear);
+
+        Task<ApiResponseDto<BatchJobEventTriggerDto>> ApproveYearEndInitiationJobAsync(int plannedYear);
     }
 }

@@ -80,4 +80,12 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<BatchJobQueueRes>(result));
 
         }
+
+        [HttpPost("dataSetup/approval")]
+        public async Task<IActionResult> EnqueueYearEndDataSetupApprovalJob([FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
+        {
+            var result = await _yearEndService.EnqueueYearEndDataSetupApprovalJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
+
+            return Ok(_mapper.Map<BatchJobQueueRes>(result));
+        }
     } }

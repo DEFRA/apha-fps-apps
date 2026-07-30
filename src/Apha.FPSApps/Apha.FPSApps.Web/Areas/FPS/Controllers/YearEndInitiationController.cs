@@ -155,7 +155,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpPost]
         public async Task<IActionResult> TriggerInitiate(int plannedYear)
         {
-            var correlationId = Guid.NewGuid().ToString();
             var result = await _yearEndService.TriggerYearEndInitiationJobAsync(plannedYear);
             if (result.Success)
             {
@@ -165,6 +164,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var errors = result?.Errors?.Select(e => new { field = string.Empty, message = e.Message }).ToArray()
                          ?? [new { field = string.Empty, message = "Failed to trigger Year End Initiation job." }];
+            return Json(new { success = false, errors });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> TriggerApprove(int plannedYear)
+        {
+            var result = await _yearEndService.ApproveYearEndInitiationJobAsync(plannedYear);
+            if (result.Success)
+            {
+                _logger.LogInformation("Year End Approval job triggered. EventId: {EventId}", result?.Data?.EventId);
+                return Json(new { success = true });
+            }
+
+            var errors = result?.Errors?.Select(e => new { field = string.Empty, message = e.Message }).ToArray()
+                         ?? [new { field = string.Empty, message = "Failed to trigger Year End Approval job." }];
             return Json(new { success = false, errors });
         }
 

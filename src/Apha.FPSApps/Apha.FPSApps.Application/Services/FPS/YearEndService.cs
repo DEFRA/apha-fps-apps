@@ -26,5 +26,8 @@ namespace Apha.FPSApps.Application.Services.FPS
 
         public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndInitiationJobAsync(int plannedYear)
             => await _fpsClient.FpsYearEnd.TriggerYearEndInitiationJobAsync(plannedYear);
+
+        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> ApproveYearEndInitiationJobAsync(int plannedYear)
+            => await _fpsClient.FpsYearEnd.ApproveYearEndInitiationJobAsync(plannedYear);
     }
 }

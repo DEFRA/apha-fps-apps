@@ -63,7 +63,7 @@ namespace Apha.FPS.Application.Services
             var note = $"'{YearEndDataSetupJobName}' is initiated for {plannedYear}.";
 
             await ValidateConfiguration(errors);
-            await ValidateInput(plannedYear, requestedBy, errors, YearEndDataSetupJobName);
+            await ValidateDataSetupInput(plannedYear, requestedBy, errors, YearEndDataSetupJobName, false);
 
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
@@ -78,29 +78,60 @@ namespace Apha.FPS.Application.Services
             //result.EventId = eventId; 
             return _mapper.Map<BatchJobQueueDto>(queued);
 
-            
+
         }
 
-        private async Task ValidateInput(int plannedYear, string requestedBy, List<BusinessValidationError> errors, string jobName)
+        public async Task<BatchJobQueueDto> EnqueueYearEndDataSetupApprovalJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
+        {
+            var errors = new List<BusinessValidationError>();
+
+            var note = $"'{YearEndDataSetupJobName}' is approved for {plannedYear}.";
+ 
+            await ValidateConfiguration(errors);
+            await ValidateDataSetupInput(plannedYear, requestedBy, errors, YearEndDataSetupJobName, true);
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+
+            var queued = await _yearEndRepository.EnqueueApprovedDataSetupBatchJobAsync(YearEndDataSetupJobName, requestedBy, correlationId, note);
+
+            return _mapper.Map<BatchJobQueueDto>(queued);
+        }
+ 
+        private async Task ValidateDataSetupInput(int plannedYear, string requestedBy, List<BusinessValidationError> errors, string jobName,bool isApprovalReq)
         {
             if (plannedYear == 0 || (plannedYear < 1900 || plannedYear > 9999))
-                errors.Add(new BusinessValidationError($"PlannedYear year is not valid. If the issue persists, contact support.", "INVALID_PlannedYear"));
+                errors.Add(new BusinessValidationError($"PlannedYear is not valid.", "INVALID_PlannedYear"));
 
-            if (string.IsNullOrEmpty(requestedBy))
+            if (string.IsNullOrEmpty(requestedBy) && !isApprovalReq)
                 errors.Add(new BusinessValidationError($"Unable to identify the requester. Please sign in again and retry. If the issue persists, contact support.", "INVALID_User"));
-
+            else if (string.IsNullOrEmpty(requestedBy) && isApprovalReq)
+                errors.Add(new BusinessValidationError($"Unable to identify the approver. Please sign in again and retry. If the issue persists, contact support.", "INVALID_User"));
 
             var plannedYearEntity = await _yearMasterRepository.GetFpsYearByIdAsync(plannedYear);
 
             if (plannedYearEntity != null)
                 //errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year {plannedYear}. You cannot reinitiate request.", "INVALID_Rerun"));
 
-            if (jobName != null && jobName == YearEndDataSetupJobName)
+            if (jobName != null && jobName == YearEndDataSetupJobName && !isApprovalReq)
             {
                 var canRun = await _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(jobName);
                 if (!canRun)
                 {
                     errors.Add(new BusinessValidationError($"Job '{jobName}' is already running or initiated., Please try after sometime.", "INVALID_Rerun"));
+                }
+            }
+            if (jobName != null && jobName == YearEndDataSetupJobName && isApprovalReq)
+            {
+                var canApprove = await _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(YearEndDataSetupJobName);
+                if (!canApprove)
+                    errors.Add(new BusinessValidationError($"There is no initiated request to approve for job '{YearEndDataSetupJobName}'.", "INVALID_Approve"));
+
+                var initiator = await _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(YearEndDataSetupJobName);
+
+                if(!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
+                {
+                    errors.Add(new BusinessValidationError($"Initiator and approver for job '{YearEndDataSetupJobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approve"));
                 }
             }
 

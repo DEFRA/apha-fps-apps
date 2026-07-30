@@ -273,6 +273,7 @@ namespace Apha.Common.Constants
         public const string GetCanInitiateDataSetupRequest = "api/v1/yearend/dataSetup/caninitiate";
         public const string GetCanApproveDataSetupRequest = "api/v1/yearend/dataSetup/canapprove";
         public const string EnqueueYearEndDataSetupInitiationJob = "api/v1/yearend/dataSetup/initiation";
+        public const string EnqueueYearEndDataSetupApprovalJob    = "api/v1/yearend/dataSetup/approval";
             
         // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
         public const string GetAllCostCentres = "api/v1/costcentre";
