@@ -32,14 +32,29 @@ namespace Apha.FPSApps.Web.UnitTests.Models.Components.DataGrid
         }
 
         [Fact]
-        public void GetPropertyValue_ReturnsDynamicValue_FromValuesDictionary_WhenPropertyMissing()
+        public void GetPropertyValue_ReturnsNull_ForMissingProperty_EvenWhenValuesDictionaryPresent()
         {
+            // Dynamic/pivot rows are now dictionary-backed and resolved via the
+            // IDictionary overload; the reflection-based "Values" fallback is not used.
             var row = new DynamicRow { Key = "K1" };
             row.Values["WG1"] = 100m;
-            row.Values["WG2"] = null;
 
-            Assert.Equal(100m, GridHelpers.GetPropertyValue(row, "WG1"));
+            Assert.Null(GridHelpers.GetPropertyValue(row, "WG1"));
+        }
+
+        [Fact]
+        public void GetPropertyValue_ReturnsDynamicValue_FromDictionaryRow()
+        {
+            var row = new Dictionary<string, string?>
+            {
+                ["Key"] = "K1",
+                ["WG1"] = "100",
+                ["WG2"] = null
+            };
+
+            Assert.Equal("100", GridHelpers.GetPropertyValue(row, "WG1"));
             Assert.Null(GridHelpers.GetPropertyValue(row, "WG2"));
+            Assert.Null(GridHelpers.GetPropertyValue(row, "DoesNotExist"));
         }
 
         [Fact]
