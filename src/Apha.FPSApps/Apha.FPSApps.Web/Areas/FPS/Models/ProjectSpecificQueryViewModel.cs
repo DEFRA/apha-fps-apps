@@ -64,7 +64,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? Supplier { get; set; }
 
         [Display(Name = "Item Cost")]
-        [GridColumn(Order = 12, Width = 120, Type = GridColumnType.Number, IsFilterable = true)]
+        [GridColumn(Order = 12, Width = 120, Type = GridColumnType.GbpValue, IsFilterable = true)]
         public decimal ItemCost { get; set; }
 
         [Display(Name = "Manager")]

@@ -64,7 +64,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectSpecificQueryControl
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectSpecificQueryViewModel>(viewResult.Model);
             Assert.Equal("projectSpecificQueryGrid", model.ProjectSpecificQueryGrid.GridId);
-            Assert.Equal("Project Specific Query", model.ProjectSpecificQueryGrid.Title);
+            Assert.Equal("Project Specifics Query", model.ProjectSpecificQueryGrid.Title);
             Assert.False(model.ProjectSpecificQueryGrid.AllowAdd);
             Assert.False(model.ProjectSpecificQueryGrid.AllowEdit);
             Assert.False(model.ProjectSpecificQueryGrid.AllowDelete);

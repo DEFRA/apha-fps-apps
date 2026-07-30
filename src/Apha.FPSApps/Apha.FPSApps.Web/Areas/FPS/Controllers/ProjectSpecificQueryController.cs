@@ -84,7 +84,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<ProjectSpecificQueryItem>
             {
                 GridId = "projectSpecificQueryGrid",
-                Title = "Project Specific Query",
+                Title = "Project Specifics Query",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 AllowAdd = false,
