@@ -12,19 +12,6 @@
                 var type = obj.GetType();
                 var prop = type.GetProperty(propertyName);
                 return prop?.GetValue(obj);
-                /*if (prop != null)
-                    return prop.GetValue(obj);
-
-                // Fallback for dynamic/pivot rows (e.g. BBQuery cross-tab) that expose a
-                // "Values" dictionary of runtime columns keyed by column PropertyName.
-                var valuesProp = type.GetProperty("Values");
-                if (valuesProp?.GetValue(obj) is IDictionary<string, object?> values &&
-                    values.TryGetValue(propertyName, out var dynamicValue))
-                {
-                    return dynamicValue;
-                }
-
-                return null;*/
             }
             catch
             {
