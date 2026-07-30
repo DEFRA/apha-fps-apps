@@ -226,6 +226,7 @@
         // Generic Bid — Budget Bids
         public const string GetBids = "api/v1/budgetbids?workgroup={0}";
         public const string GetBidsPagedView = "api/v1/budgetbids/paged";
+        public const string GetGenericBidsPaged = "api/v1/budgetbids/generic/paged";
         public const string GetBidByWorkgroupAccount = "api/v1/budgetbids/{0}/{1}";
         public const string CreateBudgetBid = "api/v1/budgetbids";
         public const string UpdateBudgetBid = "api/v1/budgetbids";

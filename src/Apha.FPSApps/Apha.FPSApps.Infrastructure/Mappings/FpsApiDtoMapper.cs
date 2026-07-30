@@ -151,6 +151,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<BidDto, BidReq>().ReverseMap();
             CreateMap<BidDto, BidRes>().ReverseMap();
             CreateMap<BidViewDto, BidViewRes>().ReverseMap();
+            CreateMap<GenericBidViewDto, GenericBidViewRes>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
