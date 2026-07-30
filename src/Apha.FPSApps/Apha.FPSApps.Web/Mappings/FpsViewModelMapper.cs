@@ -30,6 +30,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();
+            CreateMap<ProjectSpecificQueryDto, ProjectSpecificQueryItem>().ReverseMap();
             CreateMap<ProjectDto, ProgramProjectEditViewModel>().ReverseMap();
             CreateMap<ProjectDto, ProgramProjectItem>()
                 .ForMember(d => d.TransferIncome, o => o.MapFrom(s => s.TransferIncome))

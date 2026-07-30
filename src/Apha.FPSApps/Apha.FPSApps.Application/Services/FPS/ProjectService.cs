@@ -27,6 +27,9 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsAsync(QueryParameters<string> query)
             => await _fpsClient.FpsProject.GetPagedProjectsAsync(query);
 
+        public async Task<ApiResponseDto<List<ProjectSpecificQueryDto>>> GetPagedProjectSpecificQueryAsync(QueryParameters<string> query)
+            => await _fpsClient.FpsProject.GetPagedProjectSpecificQueryAsync(query);
+
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsByUserAsync(QueryParameters<string> query)
             => await _fpsClient.FpsProject.GetPagedProjectsByUserAsync(query);
 

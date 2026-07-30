@@ -49,6 +49,9 @@ namespace Apha.FPS.Api.Mappings
                 .ForMember(d => d.Project, o => o.MapFrom(s => s.JobCode));
             CreateMap<PaginatedResult<ProjectProfitabilityVlaDto>, PaginationRes<ProjectProfitabilityVlaRes>>();
 
+            CreateMap<ProjectSpecificQueryDto, ProjectSpecificQueryRes>().ReverseMap();
+            CreateMap<PaginatedResult<ProjectSpecificQueryDto>, PaginationRes<ProjectSpecificQueryRes>>();
+
             CreateMap<ContractDto, ContractRes>()
                 .ForMember(d => d.ContractNo, o => o.MapFrom(s => s.Contractno))
                 .ForMember(d => d.Category, o => o.MapFrom(s => s.Category));

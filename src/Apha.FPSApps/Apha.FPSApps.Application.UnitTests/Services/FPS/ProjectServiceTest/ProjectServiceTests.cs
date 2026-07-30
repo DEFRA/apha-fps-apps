@@ -293,6 +293,42 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
 
         #endregion
 
+        #region GetPagedProjectSpecificQueryAsync Tests
+
+        [Fact]
+        public async Task GetPagedProjectSpecificQueryAsync_WithValidQuery_ReturnsData()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var data = new List<ProjectSpecificQueryDto> { new() { ParentProject = "PP001", Account = "ACC1" } };
+            var expectedResponse = ApiResponseDto<List<ProjectSpecificQueryDto>>.SuccessResponse(
+                data, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
+            _fpsProjectApiClient.GetPagedProjectSpecificQueryAsync(query).Returns(expectedResponse);
+
+            var result = await _projectService.GetPagedProjectSpecificQueryAsync(query);
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _fpsProjectApiClient.Received(1).GetPagedProjectSpecificQueryAsync(query);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSpecificQueryAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<ProjectSpecificQueryDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.GetPagedProjectSpecificQueryAsync(query).Returns(expectedResponse);
+
+            var result = await _projectService.GetPagedProjectSpecificQueryAsync(query);
+
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
         #region GetPagedProjectsByUserAsync Tests
 
         [Fact]
