@@ -93,7 +93,7 @@ namespace Apha.FPS.Application.Services
             var plannedYearEntity = await _yearMasterRepository.GetFpsYearByIdAsync(plannedYear);
 
             if (plannedYearEntity != null)
-                errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year {plannedYear}. You cannot reinitiate request.", "INVALID_Rerun"));
+                //errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year {plannedYear}. You cannot reinitiate request.", "INVALID_Rerun"));
 
             if (jobName != null && jobName == YearEndDataSetupJobName)
             {

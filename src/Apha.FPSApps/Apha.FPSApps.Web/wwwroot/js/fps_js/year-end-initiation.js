@@ -46,6 +46,11 @@
         if (gm && typeof gm.reloadGrid === 'function') { gm.reloadGrid({ page: 1 }); }
     }
 
+    function reloadHistoryGrid() {
+        var gm = window['gridManager_yearEndInitiationHistoryGrid'];
+        if (gm && typeof gm.reloadGrid === 'function') { gm.reloadGrid({ page: 1 }); }
+    }
+
     // ── Generic helpers ───────────────────────────────────────────────────────
 
     function getAntiForgeryToken() {
@@ -346,6 +351,9 @@
                 postJson(cfg.triggerInitiateUrl + '?plannedYear=' + plannedYearVal, {},
                     function () {
                         showAlertMessage('Year End Initiation request submitted successfully.', AlertType.SUCCESS);
+                        reloadHistoryGrid();
+                        var btnapprove = document.getElementById('btnApproveDataSetupRequest');
+                        btnapprove.disabled = false;
                     },
                     function (msgs) {
                         showPageError(msgs);
