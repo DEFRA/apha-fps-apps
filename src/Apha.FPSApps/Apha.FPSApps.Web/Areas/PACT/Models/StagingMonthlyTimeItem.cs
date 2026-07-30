@@ -8,7 +8,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         [GridColumn(IsVisible = false)]
         public int Id { get; set; }
 
-        [Display(Name = "WG")]
+        [Display(Name = "Work Group")]
         [GridColumn(Order = 1, Width = 100, Type = GridColumnType.Text, IsFilterable = true)]
         public string? WorkGroup { get; set; }
 

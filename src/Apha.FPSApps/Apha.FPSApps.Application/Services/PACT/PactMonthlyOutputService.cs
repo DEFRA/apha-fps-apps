@@ -79,10 +79,15 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         // ── Import ───────────────────────────────────────────────────────────────
 
-        public async Task<ApiResponseDto<MonthlyOutputImportResultDto>> ImportMonthlyOutputAsync(IFormFile file)
+        public async Task<ApiResponseDto<MonthlyOutputImportResultDto>> ImportMonthlyOutputAsync(IFormFile file, short importType)
         {
             using var stream = file.OpenReadStream();
             using var workbook = new XLWorkbook(stream);
+
+            if (importType == 4)
+            {
+                return await ImportExportedDataAsync(file.FileName, workbook);
+            }
 
             var importResult = _excelImportService.ReadExcel(
                 workbook,
@@ -116,6 +121,61 @@ namespace Apha.FPSApps.Application.Services.PACT
             var request = new MonthlyOutputImportReqDto
             {
                 FileName = file.FileName,
+                ImportType = 1,
+                Rows = importResult.Rows
+            };
+
+            return await _pactApiClient.PactMonthlyOutput.ImportStagingAsync(request);
+        }
+
+        private async Task<ApiResponseDto<MonthlyOutputImportResultDto>> ImportExportedDataAsync(string fileName, IXLWorkbook workbook)
+        {
+            var worksheet = workbook.Worksheet(1);
+            var usedRows = worksheet.RangeUsed()?.RowsUsed().ToList() ?? [];
+            if (usedRows.Count <= 1)
+            {
+                return ApiResponseDto<MonthlyOutputImportResultDto>.FailureResponse(
+                    [new ApiErrorDto { Code = "EMPTY_FILE", Message = "No data rows found in the uploaded Excel file." }],
+                    new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
+            }
+
+            var headerMap = _excelImportService.BuildHeaderMap(usedRows[0]);
+            var missingStagingIdColumn = _excelImportService.GetMissingRequiredHeaders(headerMap, ["StagingId"]).Any();
+            if (missingStagingIdColumn)
+            {
+                return ApiResponseDto<MonthlyOutputImportResultDto>.FailureResponse(
+                    [new ApiErrorDto { Code = "INVALID_TEMPLATE", Message = "This file is not a valid correction file. Please use the exported file without removing the hidden StagingId column." }],
+                    new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
+            }
+
+            var requiredHeaders = new[] { "Work Group", "Test Code", "Buyer", "Month", "Volume", "StagingId" };
+            var importResult = _excelImportService.ReadExcel(
+                workbook,
+                MapExportedOutputRow,
+                requiredHeaders,
+                1,
+                "The uploaded Excel file format is not correct. Please use the correct exported file template.");
+
+            if (!importResult.IsSuccess)
+            {
+                var errors = new List<ApiErrorDto>
+                {
+                    new ApiErrorDto
+                    {
+                        Code = importResult.MissingHeaders.Count > 0 ? "INVALID_TEMPLATE" : "EMPTY_FILE",
+                        Message = importResult.ErrorMessage ?? "Import failed."
+                    }
+                };
+
+                return ApiResponseDto<MonthlyOutputImportResultDto>.FailureResponse(
+                    errors,
+                    new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
+            }
+
+            var request = new MonthlyOutputImportReqDto
+            {
+                FileName = fileName,
+                ImportType = 4,
                 Rows = importResult.Rows
             };
 
@@ -139,6 +199,20 @@ namespace Apha.FPSApps.Application.Services.PACT
                 //ItemDescription = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Item Description")])),
                 Buyer           = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Buyer")])),
                 Month           = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Month")])),
+                Volume          = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Volume")]))
+            };
+        }
+
+        private MonthlyOutputImportRowDto MapExportedOutputRow(IXLRangeRow row, Dictionary<string, int> headerMap)
+        {
+            var stagingIdText = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("StagingId")])) ;
+            return new MonthlyOutputImportRowDto
+            {
+                Id              = int.TryParse(stagingIdText, out var parsedStagingId) ? parsedStagingId : 0,
+                WorkGroup       = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Work Group")])) ,
+                TestCode        = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Test Code")])) ,
+                Buyer           = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Buyer")])) ,
+                Month           = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Month")])) ,
                 Volume          = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Volume")]))
             };
         }

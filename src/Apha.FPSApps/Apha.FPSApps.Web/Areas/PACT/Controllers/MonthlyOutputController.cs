@@ -290,12 +290,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         // ── Import / Validate / Make Live ─────────────────────────────────────────
 
         [HttpPost]
-        public async Task<IActionResult> Import(IFormFile file)
+        public async Task<IActionResult> Import(IFormFile file, short importType = 1)
         {
             if (file == null || file.Length == 0)
                 return Json(new { success = false, message = "Please select an Excel file to import." });
 
-            var response = await _monthlyOutputService.ImportMonthlyOutputAsync(file);
+            var response = await _monthlyOutputService.ImportMonthlyOutputAsync(file, importType);
             if (response.Success && response.Data != null)
             {
                 return Json(new

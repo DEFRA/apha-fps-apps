@@ -16,6 +16,7 @@ namespace Apha.PACT.Application.Dtos
     public class MonthlyOutputImportDto
     {
         public string? FileName { get; set; }
+        public short ImportType { get; set; }
         public List<MonthlyOutputImportRowDto> Rows { get; set; } = new();
     }
 

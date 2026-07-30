@@ -270,6 +270,11 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task UpdateStagingRecordsAsync(IEnumerable<StagingMonthlyOutput> records)
         {
+            foreach (var record in records)
+            {
+                _context.Entry(record).State = EntityState.Modified;
+            }
+
             await _context.SaveChangesAsync();
         }
 

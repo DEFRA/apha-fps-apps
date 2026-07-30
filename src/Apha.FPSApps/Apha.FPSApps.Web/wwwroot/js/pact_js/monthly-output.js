@@ -551,6 +551,15 @@ function deleteStagingMonthlyOutput(btn) {
 
 // ── Import (direct file browse — PACT flat file .xls, ImportOption 1) ─────────
 
+function triggerMonthlyOutputImportSelection(importType) {
+    window.monthlyOutputImportType = importType;
+    openImportFilePicker();
+}
+
+function openImportExportedFilePicker() {
+    triggerMonthlyOutputImportSelection('4');
+}
+
 function openImportFilePicker() {
     $('#csvInput').val('');
     $('#csvInput').trigger('click');
@@ -561,8 +570,9 @@ function importMonthlyOutput(file) {
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('importType', window.monthlyOutputImportType || '1');
 
-    showBusyIndicator();
+    showLoader();
 
     $.ajax({
         url: '/PACT/MonthlyOutput/Import',
@@ -571,7 +581,6 @@ function importMonthlyOutput(file) {
         processData: false,
         contentType: false,
         success: function (response) {
-            hideBusyIndicator();
             if (response.success) {
                 reloadStagingGrid();
                 const msg = response.message ||
@@ -584,8 +593,10 @@ function importMonthlyOutput(file) {
             }
         },
         error: function () {
-            hideBusyIndicator();
             showAlertMessage('An error occurred during import.', AlertType.ERROR);
+        },
+        complete: function () {
+            hideLoader();
         }
     });
 }
@@ -593,34 +604,27 @@ function importMonthlyOutput(file) {
 // ── Validate ──────────────────────────────────────────────────────────────────
 
 function validateMonthlyOutput() {
-    showBusyIndicator();
+    showLoader();
 
     $.ajax({
         url: '/PACT/MonthlyOutput/Validate',
         type: 'POST',
         success: function (response) {
-            hideBusyIndicator();
             if (response.success) {
                 reloadStagingGrid();
                 const msg = response.message ||
                     ('Passed: ' + response.passedCount + ' | Failed: ' + response.failedCount);
                 showAlertMessage(msg, AlertType.SUCCESS);
-
-                if (response.failedCount > 0) {
-                    document.getElementById('failedmsg').style.display = 'block';
-                    $('#txt-description').val(
-                        response.failedCount + ' record(s) failed validation. Review the staging grid for failure comments.'
-                    );
-                } else {
-                    document.getElementById('failedmsg').style.display = 'none';
-                }
+                document.getElementById('failedmsg').style.display = 'none';
             } else {
                 showAlertMessage(response.message || 'Validation failed.', AlertType.ERROR);
             }
         },
         error: function () {
-            hideBusyIndicator();
             showAlertMessage('An error occurred during validation.', AlertType.ERROR);
+        },
+        complete: function () {
+            hideLoader();
         }
     });
 }
@@ -631,13 +635,12 @@ function makeLiveMonthlyOutput() {
     showGovukConfirm('Are you sure you want to make all passed records live?').then(function (confirmed) {
         if (!confirmed) return;
 
-        showBusyIndicator();
+        showLoader();
 
         $.ajax({
             url: '/PACT/MonthlyOutput/MakeLive',
             type: 'POST',
             success: function (response) {
-                hideBusyIndicator();
                 if (response.success) {
                     reloadLiveGrid();
                     reloadStagingGrid();
@@ -652,8 +655,10 @@ function makeLiveMonthlyOutput() {
                 }
             },
             error: function () {
-                hideBusyIndicator();
                 showAlertMessage('An error occurred during Make Live.', AlertType.ERROR);
+            },
+            complete: function () {
+                hideLoader();
             }
         });
     });
@@ -724,16 +729,6 @@ function filterStagingAll() {
     reloadStagingGrid();
 }
 
-// ── Busy indicator helpers (no-op if not provided globally) ───────────────────
-
-function showBusyIndicator() {
-    if (typeof window.showLoading === 'function') window.showLoading();
-}
-
-function hideBusyIndicator() {
-    if (typeof window.hideLoading === 'function') window.hideLoading();
-}
-
 // ── Page init ─────────────────────────────────────────────────────────────────
 
 $(document).ready(function () {
@@ -760,14 +755,15 @@ $(document).ready(function () {
         reloadLiveGrid();
     });
 
-    // Import — direct file browse, no type selection modal
+    // Import — direct file browse, PACT flat file default
     $('#importBtn').on('click', function () {
-        openImportFilePicker();
+        triggerMonthlyOutputImportSelection('1');
     });
 
     $('#csvInput').on('change', function () {
         const file = this.files[0];
         if (file) importMonthlyOutput(file);
+        this.value = '';
     });
 
     // Validate

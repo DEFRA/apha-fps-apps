@@ -146,6 +146,64 @@ namespace Apha.PACT.Application.Services
         {
             var importedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
 
+            if (request.ImportType == 4)
+            {
+                var rowsToUpdate = new List<StagingMonthlyOutput>();
+                var rowsToInsert = new List<StagingMonthlyOutput>();
+
+                foreach (var row in request.Rows)
+                {
+                    if (row.Id > 0)
+                    {
+                        var existing = await _repository.GetStagingByIdAsync(row.Id, importedBy);
+                        if (existing != null)
+                        {
+                            existing.TestCode = row.TestCode ?? string.Empty;
+                            existing.Buyer = row.Buyer ?? string.Empty;
+                            existing.Month = ExcelParseHelper.TryParseDouble(row.Month) ?? 0;
+                            existing.WorkGroup = row.WorkGroup ?? string.Empty;
+                            existing.Volume = ExcelParseHelper.TryParseDouble(row.Volume);
+                            existing.Passed = false;
+                            existing.FailureComments = string.Empty;
+                            existing.Filename = request.FileName;
+                            existing.ImportedDate = importedDate;
+                            rowsToUpdate.Add(existing);
+                            continue;
+                        }
+                    }
+
+                    rowsToInsert.Add(new StagingMonthlyOutput
+                    {
+                        TestCode = row.TestCode ?? string.Empty,
+                        Buyer = row.Buyer ?? string.Empty,
+                        Month = ExcelParseHelper.TryParseDouble(row.Month) ?? 0,
+                        WorkGroup = row.WorkGroup ?? string.Empty,
+                        Volume = ExcelParseHelper.TryParseDouble(row.Volume),
+                        FailureComments = string.Empty,
+                        Passed = false,
+                        Filename = request.FileName,
+                        ImportedBy = importedBy,
+                        ImportedDate = importedDate
+                    });
+                }
+
+                if (rowsToUpdate.Count > 0)
+                {
+                    await _repository.UpdateStagingRecordsAsync(rowsToUpdate);
+                }
+
+                var insertedCount = await _repository.ImportStagingAsync(rowsToInsert);
+                var processedCount = rowsToUpdate.Count + insertedCount;
+
+                return new MonthlyOutputImportResultDto
+                {
+                    ImportedCount = processedCount,
+                    PassedCount = 0,
+                    FailedCount = 0,
+                    Message = $"Import completed. {processedCount} rows processed in staging."
+                };
+            }
+
             var rows = request.Rows.Select(row => new StagingMonthlyOutput
             {
                 TestCode = row.TestCode ?? string.Empty,

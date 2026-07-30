@@ -29,7 +29,7 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
         Task<ApiResponseDto<bool>> DeleteStagingAsync(int id);
         Task<ApiResponseDto<bool>> DeleteAllStagingByUserAsync();
         Task<ApiResponseDto<bool>> DeleteFailedStagingByUserAsync();
-        Task<ApiResponseDto<MonthlyOutputImportResultDto>> ImportMonthlyOutputAsync(IFormFile file);
+        Task<ApiResponseDto<MonthlyOutputImportResultDto>> ImportMonthlyOutputAsync(IFormFile file, short importType);
         Task<ApiResponseDto<MonthlyOutputValidateResultDto>> ValidateStagingAsync();
         Task<ApiResponseDto<MonthlyOutputMakeLiveResultDto>> MakeLiveAsync();
     }

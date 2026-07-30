@@ -16,6 +16,7 @@ namespace Apha.Common.Contracts.PACT
     public class MonthlyOutputImportReq
     {
         public string? FileName { get; set; }
+        public short ImportType { get; set; }
         public List<MonthlyOutputImportRowReq> Rows { get; set; } = new();
     }
 }
