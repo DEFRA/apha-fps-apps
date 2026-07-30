@@ -67,7 +67,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
-                where jm.JobName.ToLower() == jobName && (js.Status.ToLower() == "initiated")
+                where jm.JobName.ToLower() == jobName.ToLower() && (js.Status.ToLower() == "initiated")
                 select jq.JobqueueId
             ).AnyAsync();
 

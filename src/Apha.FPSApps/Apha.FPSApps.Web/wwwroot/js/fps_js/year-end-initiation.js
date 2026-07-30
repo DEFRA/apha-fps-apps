@@ -330,8 +330,20 @@
         if (btnInitiate) {
             btnInitiate.addEventListener('click', function () {
                 hidePageError();
+
+                var plannedYearVal = parseInt(document.getElementById('yearEndProcessYear').value, 10);
+
+                if (!plannedYearVal || isNaN(plannedYearVal)) {
+                    displayServerValidationErrors(
+                        [{ field: 'plannedYear', message: 'Please provide planned year.' }],
+                        'There is a problem',
+                        SCOPE
+                    );
+                    return;
+                }
+
                 btnInitiate.disabled = true;
-                postJson(cfg.triggerInitiateUrl, {},
+                postJson(cfg.triggerInitiateUrl + '?plannedYear=' + plannedYearVal, {},
                     function () {
                         showAlertMessage('Year End Initiation request submitted successfully.', AlertType.SUCCESS);
                     },
