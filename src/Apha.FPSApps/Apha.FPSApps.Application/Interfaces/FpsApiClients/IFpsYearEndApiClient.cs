@@ -9,6 +9,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetYearEndInitiationBatchJobHistoryAsync(QueryParameters<string> query, string jobName);
         Task<ApiResponseDto<bool>> GetCanInitiateDataSetupRequestAsync(string jobName);
         Task<ApiResponseDto<bool>> GetCanApproveDataSetupRequestAsync(string jobName);
-        Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndInitiationJobAsync(int month, string correlationId);
+        Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndInitiationJobAsync(int plannedYear);
     }
 }

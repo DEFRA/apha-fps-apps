@@ -42,7 +42,7 @@ namespace Apha.FPS.Api.Controllers
         [HttpGet("batchjob/history")]
         public async Task<IActionResult> GetYearEndBatchJobHistory([FromQuery] QueryParameters<string> query, [FromQuery] string jobName)
         {
-            var result = await _yearEndService.GetBatchJobsHistoryAsync(query,jobName);
+            var result = await _yearEndService.GetBatchJobsHistoryAsync(query, jobName);
             return Ok(_mapper.Map<PaginationRes<BatchJobHistoryRes>>(result));
         }
 
@@ -68,16 +68,16 @@ namespace Apha.FPS.Api.Controllers
         /// Triggers the YearEndInitiation batch job for the specified month.
         /// Validates that <paramref name="request"/>.<c>Month</c> is between 1 and 12,
         /// confirms a matching release period exists, verifies no instance is already running,
-        /// then enqueues the job.
+        /// then enqueues the job. 
         /// </summary>
         /// <param name="request">Request body containing the target month (1–12).</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
         [HttpPost("dataSetup/initiation")]
-        public async Task<IActionResult> EnqueueYearEndDataSetupInitiationJob([FromHeader(Name = "X-Correlation-ID")] string correlationId)
+        public async Task<IActionResult> EnqueueYearEndDataSetupInitiationJob([FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
-            var result = await _yearEndService.EnqueueYearEndDataSetupInitiationJobAsync(_fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
-            
+            var result = await _yearEndService.EnqueueYearEndDataSetupInitiationJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
+
             return Ok(_mapper.Map<BatchJobQueueRes>(result));
+
         }
-    }
-}
+    } }

@@ -1,5 +1,6 @@
 using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
+//using Apha.Common.Contracts.PACT;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
@@ -66,11 +67,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var failDto = _mapper.Map<ApiResponseDto<bool>>(response);
             return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
         }
-        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndInitiationJobAsync(int month, string correlationId)
+        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndInitiationJobAsync(int plannedYear)
         {
-            //var request = new RecreateSummariesReq { Month = month };
-            var response = await _http.PostAsync<BatchJobEventTriggerRes>(
-                FpsApiEndpoints.EnqueueYearEndDataSetupInitiationJob);
+            var request = new YearEndDataSetupReq { PlannedYear = plannedYear };
+            var response = await _http.PostAsync<YearEndDataSetupReq,BatchJobEventTriggerRes>(
+                FpsApiEndpoints.EnqueueYearEndDataSetupInitiationJob, request);
 
             if (response.Success && response.Data is not null)
                 return _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(response);

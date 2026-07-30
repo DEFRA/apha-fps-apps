@@ -285,7 +285,6 @@
 
     function applyConfigGridButtonStates() {
         $('#tbl_yearEndConfigValuesGrid tbody tr').each(function () {
-            debugger;
             var fpsYearType = getCellValue(this, 'FpsYearType').toLowerCase();
             var isPlanned = (fpsYearType === 'planned');
 

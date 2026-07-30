@@ -153,10 +153,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> TriggerInitiate()
+        public async Task<IActionResult> TriggerInitiate(int plannedYear)
         {
             var correlationId = Guid.NewGuid().ToString();
-            var result = await _yearEndService.TriggerYearEndInitiationJobAsync(0, correlationId);
+            var result = await _yearEndService.TriggerYearEndInitiationJobAsync(plannedYear);
             if (result.Success)
             {
                 _logger.LogInformation("Year End Initiation job triggered. EventId: {EventId}", result?.Data?.EventId);

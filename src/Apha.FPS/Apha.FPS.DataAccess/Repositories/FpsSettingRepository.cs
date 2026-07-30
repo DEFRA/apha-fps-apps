@@ -71,7 +71,7 @@ namespace Apha.FPS.DataAccess.Repositories
            
             var settingIds = new[]
                {
-                    "hoursinday",
+                    "HoursInDay",
                     "CapApprovalReceivedForReset"
                 };
 
@@ -79,10 +79,12 @@ namespace Apha.FPS.DataAccess.Repositories
 
             int? plannedYear = await GetPlannedYear();
 
+            var settingIdsLower = settingIds.Select(id => id.ToLowerInvariant()).ToArray();
+
             var settings = await _dbContext.TblSettings.IgnoreQueryFilters()
                 .AsNoTracking()
                 .Where(s => (s.FpsYear == openYear || s.FpsYear == plannedYear) &&
-                            settingIds.Contains(s.Id.ToLower()))
+                            settingIdsLower.Contains(s.Id.ToLower()))
                 .ToListAsync();
 
             //Remove duplicates based on Id and prioritize planned year over open year

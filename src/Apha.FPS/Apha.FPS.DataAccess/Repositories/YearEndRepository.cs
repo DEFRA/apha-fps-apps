@@ -42,17 +42,22 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> CanInitiateYearEndDataSetupRequestAsync(string jobName)
         {
-            var hasRunningJob = await (
+            // Returns true when no records exist for the job, OR every record is in a terminal
+            // status (rejected / failed / cancelled).
+            // Returns false when at least one record exists that is NOT in a terminal status.
+            var hasNonTerminalRecord = await (
                 from jm in _context.BatchJobs.AsNoTracking()
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
-                where jm.JobName.ToLower() == jobName.ToLower() 
-                && (js.Status.ToLower() == "rejected" || js.Status.ToLower() == "failed" || js.Status.ToLower() == "cancelled")
+                where jm.JobName.ToLower() == jobName.ToLower()
+                   && js.Status.ToLower() != "rejected"
+                   && js.Status.ToLower() != "failed"
+                   && js.Status.ToLower() != "cancelled"
                 select jq.JobqueueId
             ).AnyAsync();
 
-            return hasRunningJob;
+            return !hasNonTerminalRecord;
         }
 
         public async Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName)

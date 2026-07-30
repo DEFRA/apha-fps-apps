@@ -56,7 +56,7 @@ namespace Apha.FPS.Application.Services
             return await _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(jobName);
         }
 
-        public async Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, string requestedBy, string correlationId)
+        public async Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, int contextyear, string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
 
@@ -93,7 +93,7 @@ namespace Apha.FPS.Application.Services
             var plannedYearEntity = await _yearMasterRepository.GetFpsYearByIdAsync(plannedYear);
 
             if (plannedYearEntity != null)
-                errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year. You cannot reinitiate request.", "INVALID_Rerun"));
+                errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year {plannedYear}. You cannot reinitiate request.", "INVALID_Rerun"));
 
             if (jobName != null && jobName == YearEndDataSetupJobName)
             {
@@ -124,7 +124,7 @@ namespace Apha.FPS.Application.Services
                 {
                     var value = configs.FirstOrDefault(x => x.Id == "HoursInDay")?.Setting;
                     bool isValid = !string.IsNullOrWhiteSpace(value) &&
-                        decimal.TryParse(value, out var number) && number < 0;
+                        decimal.TryParse(value, out var number) && number > 0;
 
                     if (!isValid)
                         errors.Add(new BusinessValidationError($"Configuration values for the IDs HoursInDay is not valid. Please provide a numeric value.", "Missing_HoursInDay"));
