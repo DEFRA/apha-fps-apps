@@ -134,6 +134,15 @@ namespace Apha.FPS.Application.Services
         public async Task<decimal> GetTotalAnimalCostAsync(string jobCode)
             => await _animalRepository.GetTotalAnimalCostAsync(jobCode);
 
+        // Animal Costs ASU View (AnimalCosts — frmAnimalCosts)
+        public async Task<PaginatedResult<AnimalCostViewDto>> GetAnimalCostByAnimalTypeAsync(
+            QueryParameters<string> query, string animalType)
+        {
+            var filter = _mapper.Map<PaginationParameters<string>>(query);
+            var paged = await _animalRepository.GetAnimalCostByAnimalTypeAsync(filter, animalType);
+            return _mapper.Map<PaginatedResult<AnimalCostViewDto>>(paged);
+        }
+
         public async Task<AnimalCostViewDto?> GetAnimalCostViewByIdAsync(int indCounter, string jobCode)
         {
             var result = await _animalRepository.GetAnimalCostViewByIdAsync(indCounter, jobCode);

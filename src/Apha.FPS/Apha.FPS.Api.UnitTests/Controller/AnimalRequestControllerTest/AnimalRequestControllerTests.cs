@@ -93,6 +93,76 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalRequestControllerTest
 
         #endregion
 
+        #region GetAnimalCostByAnimalTypeAsync
+
+        [Fact]
+        public async Task GetAnimalCostByAnimalTypeAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var query = new PaginationReq<string>();
+            var mappedQuery = new QueryParameters<string>();
+            var serviceResult = new PaginatedResult<AnimalCostViewDto>();
+            var mappedResult = new PaginationRes<AnimalCostViewRes>();
+
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
+            _serviceMock.GetAnimalCostByAnimalTypeAsync(mappedQuery, "CATTLE").Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<AnimalCostViewRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetAnimalCostByAnimalTypeAsync(query, "CATTLE");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetAnimalCostByAnimalTypeAsync_EdgeCase_EmptyResult_ReturnsOk()
+        {
+            // Arrange
+            var query = new PaginationReq<string>();
+            var mappedQuery = new QueryParameters<string>();
+            var serviceResult = new PaginatedResult<AnimalCostViewDto>();
+            var mappedResult = new PaginationRes<AnimalCostViewRes>();
+
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
+            _serviceMock.GetAnimalCostByAnimalTypeAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+                .Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<AnimalCostViewRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetAnimalCostByAnimalTypeAsync(query, "");
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task GetAnimalCostByAnimalTypeAsync_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new PaginationReq<string>();
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(new QueryParameters<string>());
+            _serviceMock.GetAnimalCostByAnimalTypeAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+                .Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAnimalCostByAnimalTypeAsync(query, "CATTLE"));
+        }
+
+        [Fact]
+        public async Task GetAnimalCostByAnimalTypeAsync_MapperThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new PaginationReq<string>();
+            _mapperMock.Map<QueryParameters<string>>(query).Throws(new Exception("Mapping error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAnimalCostByAnimalTypeAsync(query, "CATTLE"));
+        }
+
+        #endregion
+
         #region GetAnimalLookupAsync
 
         [Fact]

@@ -36,6 +36,7 @@ namespace Apha.FPSApps.Web.Mappings
                 .ReverseMap();
             CreateMap<AnimalPlanItem, AnimalCostViewDto>().ReverseMap();
             CreateMap<AnimalPlanItem, AnimalRequestDto>().ReverseMap();
+            CreateMap<AnimalCostsItem, AnimalCostViewDto>().ReverseMap();
             CreateMap<AnimalSnapshotItem, AnimalSnapshotViewDto>().ReverseMap();
             CreateMap<GenericBidItem, GenericBidViewDto>().ReverseMap();
             CreateMap<CompareStaff2Item, TimeCostCalcsViewDto>().ReverseMap();
