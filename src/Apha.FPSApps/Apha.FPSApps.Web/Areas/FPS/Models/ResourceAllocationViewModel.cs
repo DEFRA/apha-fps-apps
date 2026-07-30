@@ -14,6 +14,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// <summary>Currently selected Resource Centre code.</summary>
         public string SelectedResourceCentre { get; set; } = string.Empty;
 
+        /// <summary>Currently selected Work Group.</summary>
+        public string SelectedWorkGroup { get; set; } = string.Empty;
+
         /// <summary>Staff-of-grade allocation DataGrid.</summary>
         public DataGridConfig<ResourceStaffAllocationItem> StaffAllocationGrid { get; set; } = new();
 

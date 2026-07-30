@@ -39,11 +39,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? resourceCentre = null, string? workGroup = null)
         {
             var viewModel = new ResourceAllocationViewModel
             {
                 ResourceCentres = await PopulateResourceCentresAsync(),
+                SelectedResourceCentre = resourceCentre ?? string.Empty,
+                SelectedWorkGroup = workGroup ?? string.Empty,
                 StaffAllocationGrid = BuildStaffAllocationGridConfig(new List<ResourceStaffAllocationItem>()),
                 StaffJobsGrid = BuildStaffJobsGridConfig(new List<ResourceStaffJobItem>())
             };
