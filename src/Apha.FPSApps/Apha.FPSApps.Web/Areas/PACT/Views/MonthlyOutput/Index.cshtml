@@ -14,7 +14,7 @@
     <div class="align-items-start m-10 isOutputRecordDataEntry" id="search-grid">
         <div>
             <div>
-                <div class="sup_search_panel sup_border_b_0 sup_margin_bottom_left_10">
+                <div class="sup_search_panel sup_border_b_0 sup_margin_bottom_left_10" style="width: 98.5%">
                     <div class="input-group searchfiels govuk-!-margin-right-3">
                         <label class="govuk-label govuk-!-font-weight-bold" for="ddWorkGroup">Work Group</label>
                         <div id="workGroupSelectDropdown" class="monthly-output-workgroup-dropdown-width"></div>
@@ -61,7 +61,7 @@
                     </div>
                 </div>
 
-                <div class="sup_width_100">
+                <div class="sup_width_100" style="width: 98.5%">
                     <div id="gridContainer_@Model.LiveGrid.GridId">
                         @await Html.PartialAsync("_DataGrid", Model.LiveGrid)
                     </div>
