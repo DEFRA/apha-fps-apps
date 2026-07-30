@@ -62,13 +62,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return PartialView("_DataGrid", grid);
         }
 
-        private async Task<DataGridConfig<BBQueryCrosstabRow>> BuildGridAsync(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
+        private async Task<DataGridConfig<Dictionary<string, string?>>> BuildGridAsync(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
         {
-            var rows = new List<BBQueryCrosstabRow>();
+            var rows = new List<Dictionary<string, string?>>();
             var columns = new List<DataGridColumn>
             {
                 new() { PropertyName = "AccShortName", DisplayName = "AccShortName", ColumnType = GridColumnType.ReadOnly, IsFilterable = true,  Width = 160 },
-                new() { PropertyName = "RowSummary",   DisplayName = "Row Summary",  ColumnType = GridColumnType.GbpValue, IsFilterable = false, Width = 120 }
+                new() { PropertyName = "RowSummary",   DisplayName = "Row Summary",  ColumnType = GridColumnType.RoundTwoDecimal, IsFilterable = false, Width = 120 }
             };
 
             if (!string.IsNullOrWhiteSpace(profitCentre))
@@ -105,7 +105,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     {
                         PropertyName = wg,
                         DisplayName  = wg,
-                        ColumnType   = GridColumnType.GbpValue,
+                        ColumnType   = GridColumnType.RoundTwoDecimal,
                         IsFilterable = false,
                         Width        = 110
                     });
@@ -113,7 +113,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
                 foreach (var account in accounts)
                 {
-                    var row = new BBQueryCrosstabRow { AccShortName = account };
+                    var row = new Dictionary<string, string?>
+                    {
+                        ["AccShortName"] = account
+                    };
                     decimal rowTotal = 0;
 
                     foreach (var wg in workgroups)
@@ -125,11 +128,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                             amount = value;
                         }
 
-                        row.Values[wg] = amount;
+                        row[wg] = amount.ToString(System.Globalization.CultureInfo.InvariantCulture);
                         rowTotal += amount;
                     }
 
-                    row.RowSummary = rowTotal;
+                    row["RowSummary"] = rowTotal.ToString(System.Globalization.CultureInfo.InvariantCulture);
                     rows.Add(row);
                 }
             }
@@ -147,7 +150,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 .Take(itemsPerPage)
                 .ToList();
 
-            return new DataGridConfig<BBQueryCrosstabRow>
+            return new DataGridConfig<Dictionary<string, string?>>
             {
                 GridId            = "bbQueryGrid",
                 KeyProperty       = "AccShortName",
@@ -203,7 +206,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// <c>AccShortName</c> column and a "contains" match on the string form of the
         /// <c>RowSummary</c> and dynamic workgroup columns.
         /// </summary>
-        private static List<BBQueryCrosstabRow> ApplyFilters(List<BBQueryCrosstabRow> rows, Dictionary<string, string>? filters)
+        private static List<Dictionary<string, string?>> ApplyFilters(List<Dictionary<string, string?>> rows, Dictionary<string, string>? filters)
         {
             if (filters == null || filters.Count == 0 || rows.Count == 0)
                 return rows;
@@ -211,14 +214,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return rows.Where(row => filters.All(f => RowMatchesFilter(row, f.Key, f.Value))).ToList();
         }
 
-        private static bool RowMatchesFilter(BBQueryCrosstabRow row, string column, string value)
+        private static bool RowMatchesFilter(Dictionary<string, string?> row, string column, string value)
         {
-            var cellValue = column switch
-            {
-                "AccShortName" => row.AccShortName,
-                "RowSummary"   => row.RowSummary.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                _              => row.Values.TryGetValue(column, out var v) ? v?.ToString() : null
-            };
+            var cellValue = row.TryGetValue(column, out var v) ? v : null;
 
             return cellValue != null &&
                    cellValue.Contains(value, StringComparison.OrdinalIgnoreCase);
@@ -227,19 +225,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// <summary>
         /// Sorts the cross-tab rows by the requested column. Supports the fixed
         /// <c>AccShortName</c> and <c>RowSummary</c> columns as well as the dynamic
-        /// workgroup columns whose values are held in <see cref="BBQueryCrosstabRow.Values"/>.
+        /// workgroup columns whose values are held in the row dictionary.
         /// </summary>
-        private static List<BBQueryCrosstabRow> ApplySorting(List<BBQueryCrosstabRow> rows, string? sortBy, bool descending)
+        private static List<Dictionary<string, string?>> ApplySorting(List<Dictionary<string, string?>> rows, string? sortBy, bool descending)
         {
             if (string.IsNullOrWhiteSpace(sortBy) || rows.Count == 0)
                 return rows;
 
-            Func<BBQueryCrosstabRow, object?> keySelector = sortBy switch
-            {
-                "AccShortName" => r => r.AccShortName,
-                "RowSummary"   => r => r.RowSummary,
-                _              => r => r.Values.TryGetValue(sortBy, out var v) ? v : null
-            };
+            Func<Dictionary<string, string?>, object?> keySelector =
+                r => r.TryGetValue(sortBy, out var v) ? v : null;
 
             var comparer = new BBQueryRowComparer(keySelector);
 
@@ -252,16 +246,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// Compares cross-tab rows by an extracted key, ordering numeric values numerically
         /// and everything else as case-insensitive strings, with nulls sorted first.
         /// </summary>
-        private sealed class BBQueryRowComparer : IComparer<BBQueryCrosstabRow>
+        private sealed class BBQueryRowComparer : IComparer<Dictionary<string, string?>>
         {
-            private readonly Func<BBQueryCrosstabRow, object?> _keySelector;
+            private readonly Func<Dictionary<string, string?>, object?> _keySelector;
 
-            public BBQueryRowComparer(Func<BBQueryCrosstabRow, object?> keySelector)
+            public BBQueryRowComparer(Func<Dictionary<string, string?>, object?> keySelector)
             {
                 _keySelector = keySelector;
             }
 
-            public int Compare(BBQueryCrosstabRow? x, BBQueryCrosstabRow? y)
+            public int Compare(Dictionary<string, string?>? x, Dictionary<string, string?>? y)
             {
                 var xKey = x is null ? null : _keySelector(x);
                 var yKey = y is null ? null : _keySelector(y);
@@ -293,7 +287,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                         result = l;
                         return true;
                     default:
-                        return decimal.TryParse(value.ToString(), out result);
+                        return decimal.TryParse(value.ToString(), System.Globalization.NumberStyles.Any,
+                            System.Globalization.CultureInfo.InvariantCulture, out result);
                 }
             }
         }

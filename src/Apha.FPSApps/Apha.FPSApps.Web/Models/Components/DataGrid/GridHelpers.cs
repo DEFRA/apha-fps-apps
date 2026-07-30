@@ -11,7 +11,8 @@
                 if (obj == null) return null;
                 var type = obj.GetType();
                 var prop = type.GetProperty(propertyName);
-                if (prop != null)
+                return prop?.GetValue(obj);
+                /*if (prop != null)
                     return prop.GetValue(obj);
 
                 // Fallback for dynamic/pivot rows (e.g. BBQuery cross-tab) that expose a
@@ -23,7 +24,7 @@
                     return dynamicValue;
                 }
 
-                return null;
+                return null;*/
             }
             catch
             {

@@ -103,7 +103,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(partial.Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(partial.Model);
             Assert.Equal(2, grid.Columns.Count);
             Assert.Empty(grid.Data);
         }
@@ -140,7 +140,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
 
             // Columns: AccShortName, RowSummary, then workgroups ordered ascending (WG1, WG2).
             Assert.Collection(grid.Columns.Select(c => c.PropertyName),
@@ -152,16 +152,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             // Rows ordered by account (A1, A2).
             Assert.Equal(2, grid.Data.Count);
             var a1 = grid.Data[0];
-            Assert.Equal("A1", a1.AccShortName);
-            Assert.Equal(10m, a1.Values["WG1"]);
-            Assert.Equal(20m, a1.Values["WG2"]);
-            Assert.Equal(30m, a1.RowSummary);
+            Assert.Equal("A1", a1["AccShortName"]);
+            Assert.Equal("10", a1["WG1"]);
+            Assert.Equal("20", a1["WG2"]);
+            Assert.Equal("30", a1["RowSummary"]);
 
             var a2 = grid.Data[1];
-            Assert.Equal("A2", a2.AccShortName);
-            Assert.Equal(5m, a2.Values["WG1"]);
-            Assert.Equal(0m, a2.Values["WG2"]);
-            Assert.Equal(5m, a2.RowSummary);
+            Assert.Equal("A2", a2["AccShortName"]);
+            Assert.Equal("5", a2["WG1"]);
+            Assert.Equal("0", a2["WG2"]);
+            Assert.Equal("5", a2["RowSummary"]);
         }
 
         [Fact]
@@ -182,10 +182,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Single(grid.Data);
-            Assert.Equal("A1", grid.Data[0].AccShortName);
-            Assert.Equal(10m, grid.Data[0].RowSummary);
+            Assert.Equal("A1", grid.Data[0]["AccShortName"]);
+            Assert.Equal("10", grid.Data[0]["RowSummary"]);
         }
 
         [Fact]
@@ -198,7 +198,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal(2, grid.Columns.Count);
             Assert.Empty(grid.Data);
         }
@@ -223,11 +223,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             var a1 = Assert.Single(grid.Data);
-            Assert.Equal(0m, a1.Values["WG1"]);
-            Assert.Equal(15m, a1.Values["WG2"]);
-            Assert.Equal(15m, a1.RowSummary);
+            Assert.Equal("0", a1["WG1"]);
+            Assert.Equal("15", a1["WG2"]);
+            Assert.Equal("15", a1["RowSummary"]);
         }
 
         private void ArrangeSortableGrid()
@@ -265,12 +265,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Null(grid.Pagination.SortColumn);
             Assert.False(grid.Pagination.SortDirection);
             Assert.Collection(grid.Data,
-                r => Assert.Equal("A1", r.AccShortName),
-                r => Assert.Equal("A2", r.AccShortName));
+                r => Assert.Equal("A1", r["AccShortName"]),
+                r => Assert.Equal("A2", r["AccShortName"]));
         }
 
         [Fact]
@@ -280,12 +280,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1", "AccShortName", true);
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal("AccShortName", grid.Pagination.SortColumn);
             Assert.True(grid.Pagination.SortDirection);
             Assert.Collection(grid.Data,
-                r => Assert.Equal("A2", r.AccShortName),
-                r => Assert.Equal("A1", r.AccShortName));
+                r => Assert.Equal("A2", r["AccShortName"]),
+                r => Assert.Equal("A1", r["AccShortName"]));
         }
 
         [Fact]
@@ -296,10 +296,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             // A1 summary = 30, A2 summary = 45.
             var result = await _controller.LoadGrid("PC1", "RowSummary", false);
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Collection(grid.Data,
-                r => Assert.Equal(30m, r.RowSummary),
-                r => Assert.Equal(45m, r.RowSummary));
+                r => Assert.Equal("30", r["RowSummary"]),
+                r => Assert.Equal("45", r["RowSummary"]));
         }
 
         [Fact]
@@ -309,10 +309,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1", "RowSummary", true);
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Collection(grid.Data,
-                r => Assert.Equal(45m, r.RowSummary),
-                r => Assert.Equal(30m, r.RowSummary));
+                r => Assert.Equal("45", r["RowSummary"]),
+                r => Assert.Equal("30", r["RowSummary"]));
         }
 
         [Fact]
@@ -322,16 +322,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             // WG2 values: A1 = 20, A2 = 40. Ascending -> A1 then A2; descending -> A2 then A1.
             var ascResult = await _controller.LoadGrid("PC1", "WG2", false);
-            var ascGrid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(ascResult).Model);
+            var ascGrid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(ascResult).Model);
             Assert.Collection(ascGrid.Data,
-                r => Assert.Equal("A1", r.AccShortName),
-                r => Assert.Equal("A2", r.AccShortName));
+                r => Assert.Equal("A1", r["AccShortName"]),
+                r => Assert.Equal("A2", r["AccShortName"]));
 
             var descResult = await _controller.LoadGrid("PC1", "WG2", true);
-            var descGrid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(descResult).Model);
+            var descGrid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(descResult).Model);
             Assert.Collection(descGrid.Data,
-                r => Assert.Equal("A2", r.AccShortName),
-                r => Assert.Equal("A1", r.AccShortName));
+                r => Assert.Equal("A2", r["AccShortName"]),
+                r => Assert.Equal("A1", r["AccShortName"]));
         }
 
         [Fact]
@@ -342,10 +342,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             // Unknown column resolves to null keys for all rows -> original order preserved.
             var result = await _controller.LoadGrid("PC1", "DoesNotExist", false);
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Collection(grid.Data,
-                r => Assert.Equal("A1", r.AccShortName),
-                r => Assert.Equal("A2", r.AccShortName));
+                r => Assert.Equal("A1", r["AccShortName"]),
+                r => Assert.Equal("A2", r["AccShortName"]));
         }
 
         [Fact]
@@ -353,7 +353,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
         {
             var result = await _controller.LoadGrid(null, "RowSummary", true);
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Empty(grid.Data);
             Assert.Equal("RowSummary", grid.Pagination.SortColumn);
             Assert.True(grid.Pagination.SortDirection);
@@ -366,9 +366,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1", filter: "{\"AccShortName\":\"A1\"}");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             var row = Assert.Single(grid.Data);
-            Assert.Equal("A1", row.AccShortName);
+            Assert.Equal("A1", row["AccShortName"]);
             Assert.NotNull(grid.CurrentFilters);
             Assert.Equal("A1", grid.CurrentFilters!["AccShortName"]);
         }
@@ -380,7 +380,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1", filter: "{\"AccShortName\":\"a\"}");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal(2, grid.Data.Count);
         }
 
@@ -392,9 +392,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             // A1 summary = 30, A2 summary = 45.
             var result = await _controller.LoadGrid("PC1", filter: "{\"RowSummary\":\"45\"}");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             var row = Assert.Single(grid.Data);
-            Assert.Equal("A2", row.AccShortName);
+            Assert.Equal("A2", row["AccShortName"]);
         }
 
         [Fact]
@@ -405,9 +405,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             // WG2 values: A1 = 20, A2 = 40.
             var result = await _controller.LoadGrid("PC1", filter: "{\"WG2\":\"40\"}");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             var row = Assert.Single(grid.Data);
-            Assert.Equal("A2", row.AccShortName);
+            Assert.Equal("A2", row["AccShortName"]);
         }
 
         [Fact]
@@ -418,9 +418,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             // A1 has AccShortName "A1" and RowSummary 30 -> matches both.
             var result = await _controller.LoadGrid("PC1", filter: "{\"AccShortName\":\"A\",\"RowSummary\":\"30\"}");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             var row = Assert.Single(grid.Data);
-            Assert.Equal("A1", row.AccShortName);
+            Assert.Equal("A1", row["AccShortName"]);
         }
 
         [Fact]
@@ -430,7 +430,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1", filter: "{\"AccShortName\":\"ZZZ\"}");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Empty(grid.Data);
         }
 
@@ -441,7 +441,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1", filter: "{}");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal(2, grid.Data.Count);
             Assert.Null(grid.CurrentFilters);
         }
@@ -453,7 +453,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1", filter: "{\"AccShortName\":\"   \"}");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal(2, grid.Data.Count);
             Assert.Null(grid.CurrentFilters);
         }
@@ -465,7 +465,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1", filter: "not-json");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal(2, grid.Data.Count);
             Assert.Null(grid.CurrentFilters);
         }
@@ -478,10 +478,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             // Filter to rows containing "A", then sort by RowSummary descending (A2=45, A1=30).
             var result = await _controller.LoadGrid("PC1", "RowSummary", true, "{\"AccShortName\":\"A\"}");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Collection(grid.Data,
-                r => Assert.Equal("A2", r.AccShortName),
-                r => Assert.Equal("A1", r.AccShortName));
+                r => Assert.Equal("A2", r["AccShortName"]),
+                r => Assert.Equal("A1", r["AccShortName"]));
         }
 
         private void ArrangeManyAccountsGrid(int accountCount)
@@ -514,7 +514,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1");
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.True(grid.ShowPagination);
             Assert.Equal(25, grid.Pagination.TotalRecords);
             // Default page size is 20.
@@ -530,11 +530,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1", page: 2, pageSize: 20);
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal(2, grid.Pagination.PageNumber);
             Assert.Equal(5, grid.Data.Count);
-            Assert.Equal("A021", grid.Data.First().AccShortName);
-            Assert.Equal("A025", grid.Data.Last().AccShortName);
+            Assert.Equal("A021", grid.Data.First()["AccShortName"]);
+            Assert.Equal("A025", grid.Data.Last()["AccShortName"]);
         }
 
         [Fact]
@@ -544,7 +544,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1", page: 1, pageSize: 10);
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal(10, grid.Pagination.PageSize);
             Assert.Equal(10, grid.Data.Count);
             Assert.Equal(25, grid.Pagination.TotalRecords);
@@ -557,7 +557,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var result = await _controller.LoadGrid("PC1", page: 0, pageSize: 0);
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal(1, grid.Pagination.PageNumber);
             Assert.Equal(20, grid.Pagination.PageSize);
             Assert.Equal(20, grid.Data.Count);
@@ -571,11 +571,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             // Sort by RowSummary descending -> A025 (25) first; page 1 size 5 -> A025..A021.
             var result = await _controller.LoadGrid("PC1", "RowSummary", true, null, 1, 5);
 
-            var grid = Assert.IsType<DataGridConfig<BBQueryCrosstabRow>>(Assert.IsType<PartialViewResult>(result).Model);
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal(25, grid.Pagination.TotalRecords);
             Assert.Equal(5, grid.Data.Count);
-            Assert.Equal("A025", grid.Data.First().AccShortName);
-            Assert.Equal("A021", grid.Data.Last().AccShortName);
+            Assert.Equal("A025", grid.Data.First()["AccShortName"]);
+            Assert.Equal("A021", grid.Data.Last()["AccShortName"]);
         }
     }
 }
+
+
+
