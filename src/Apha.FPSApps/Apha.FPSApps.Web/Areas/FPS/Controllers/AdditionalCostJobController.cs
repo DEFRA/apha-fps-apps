@@ -146,6 +146,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             var model = _mapper.Map<AdditionalCostItemViewModel>(result.Data);
+            model.OriginalDescription = model.Description;
+            model.OriginalAccount = model.Account;
             await PopulateDropdownsAsync(model);
             return PartialView("_AddEditAdditionalCostJob", model);
         }
@@ -170,7 +172,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             var dto = _mapper.Map<AdditionalCostDto>(model);
-            var result = await _additionalCostService.UpdateAdditionalCostAsync(model.JobCode!, model.Account, dto);
+            var originalAccount = string.IsNullOrWhiteSpace(model.OriginalAccount) ? model.Account : model.OriginalAccount;
+            var result = await _additionalCostService.UpdateAdditionalCostAsync(model.JobCode!, originalAccount, dto);
 
             if (result.Success)
             {
