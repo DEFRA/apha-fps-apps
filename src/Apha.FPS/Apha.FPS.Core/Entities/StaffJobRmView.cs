@@ -9,5 +9,7 @@
         public double? PlannedHours { get; set; }
 
         public int? FpsYear { get; set; }
+
+        public string? Name { get; set; }
     }
 }

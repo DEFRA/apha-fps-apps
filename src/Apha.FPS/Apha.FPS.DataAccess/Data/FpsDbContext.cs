@@ -1,4 +1,5 @@
-﻿using Apha.FPS.Core.Entities;
+﻿
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -97,6 +98,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<PactStaff> PactStaffs { get; set; }
 
         public virtual DbSet<ProjectStaffPlanView> ProjectStaffPlanViews { get; set; }
+        public virtual DbSet<ProjectStaffPlanDetailsView> ProjectStaffPlanDetailsViews { get; set; }
         public virtual DbSet<ProjectGroupStaffPlanView> ProjectGroupStaffPlanViews { get; set; }
 
         public virtual DbSet<ProjectProfitabilityVlaView> ProjectProfitabilityVlaViews { get; set; }
@@ -111,6 +113,8 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; }
 
         public virtual DbSet<CostCentre> CostCentres { get; set; }
+        public virtual DbSet<ResourceStaffAllocationView> ResourceStaffAllocationViews { get; set; }
+        public virtual DbSet<ResourceStaffJobView> ResourceStaffJobViews { get; set; }
 
         public virtual DbSet<BatchJobMaster> BatchJobs { get; set; }
         public virtual DbSet<BatchJobQueue> BatchJobQueues { get; set; }
@@ -298,6 +302,9 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectStaffPlanViewMap());
             modelBuilder.Entity<ProjectStaffPlanView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new ProjectStaffPlanDetailsViewMap());
+            modelBuilder.Entity<ProjectStaffPlanDetailsView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new ProjectGroupStaffPlanViewMap());
             modelBuilder.Entity<ProjectGroupStaffPlanView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -356,6 +363,9 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new CostCentreMap());
             modelBuilder.Entity<CostCentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ResourceStaffAllocationViewMap());
+            modelBuilder.ApplyConfiguration(new ResourceStaffJobViewMap());
 
             modelBuilder.ApplyConfiguration(new BatchJobMasterMap());
             modelBuilder.ApplyConfiguration(new BatchJobQueueMap());

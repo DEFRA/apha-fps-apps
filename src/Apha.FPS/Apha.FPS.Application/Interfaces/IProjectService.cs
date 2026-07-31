@@ -9,6 +9,7 @@ namespace Apha.FPS.Application.Interfaces
         Task<IEnumerable<ProjectDto>> GetAllProjectsForAllUsersAsync();
         Task<IEnumerable<ProjectDto>> GetAllPactProjectsAsync();
         Task<PaginatedResult<ProjectDto>> GetPagedProjectsAsync(QueryParameters<string> query);
+        Task<PaginatedResult<ProjectSpecificQueryDto>> GetPagedProjectSpecificQueryAsync(QueryParameters<string> query);
         Task<PaginatedResult<ProjectDto>> GetPagedProjectsByUserAsync(QueryParameters<string> query);
         Task<PaginatedResult<ProjectDto>> GetPagedPactProjectsAsync(QueryParameters<string> query);
         Task<PaginatedResult<ProjectDto>> GetPagedPactProjectsByProgramAsync(QueryParameters<string> query, string programNo);
@@ -33,5 +34,8 @@ namespace Apha.FPS.Application.Interfaces
         Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
         Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
         Task<PaginatedResult<ProjectProfitabilityVlaDto>> GetProjectProfitabilityVlaAsync(QueryParameters<string> query, string? projectStatus = null, string? programNo = null, string? manager = null, string? customer = null);
+
+        // Resource Replan — staff data for a workgroup, paged/filtered/sorted
+        Task<PaginatedResult<ProjectStaffReplanDto>> GetProjectStaffReplanAsync(QueryParameters<string> query, string workgroup);
     }
 }

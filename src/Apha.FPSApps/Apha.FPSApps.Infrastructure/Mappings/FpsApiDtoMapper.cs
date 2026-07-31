@@ -34,7 +34,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
                 .ReverseMap()
                 .ForMember(d => d.CustIncome, o => o.MapFrom(s => s.BudgetExt));
             CreateMap<ProjectDto, ProjectRes>().ReverseMap();
-            
+            CreateMap<ProjectSpecificQueryDto, ProjectSpecificQueryRes>().ReverseMap();
+
             // FPS Lookups
             CreateMap<StatusDto, StatusRes>().ReverseMap();
             CreateMap<DiseaseDto, DiseaseRes>().ReverseMap();
@@ -128,6 +129,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Staff Plan view
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
 
+            // Staff Plan Details view
+            CreateMap<ProjectStaffPlanDetailsViewDto, ProjectStaffPlanDetailsViewRes>().ReverseMap();
+
             // Project Group Staff Plan view
             CreateMap<ProjectGroupStaffPlanViewDto, ProjectGroupStaffPlanViewRes>().ReverseMap();
 
@@ -199,6 +203,17 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TestRequirementRCCostDto, TestRequirementRCCostRes>().ReverseMap();
             CreateMap<TestRequirementRCCostDto, TestRequirementRCCostReq>().ReverseMap();
 
+            // ResourceAllocation — Stage 2 Check Resource Allocation
+            CreateMap<ResourceStaffAllocationDto, ResourceStaffAllocationRes>().ReverseMap();
+            CreateMap<ResourceStaffJobDto, ResourceStaffJobRes>().ReverseMap();
+            CreateMap<ResourceStaffJobDetailDto, ResourceStaffJobDetailRes>().ReverseMap();
+
+            // ResourceMgmtReplan — Resource Re-allocation Screen (frmRM_RePlan)
+            CreateMap<ResourceMgmtReplanViewDto, ResourceMgmtReplanViewRes>().ReverseMap();
+            CreateMap<ResourceMgmtReplanStaffJobDto, ResourceMgmtReplanStaffJobRes>().ReverseMap();
+
+            // Resource Replan — project staff replan
+            CreateMap<ProjectStaffReplanDto, ProjectStaffReplanRes>().ReverseMap();
             // Year End batch job
             CreateMap<BatchJobQueueDto, BatchJobQueueRes>().ReverseMap();
             CreateMap<BatchJobHistoryDto, BatchJobHistoryRes>().ReverseMap();
