@@ -162,6 +162,183 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
 
         #endregion
 
+        #region GetBidViewPagedAsync Tests
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_WithNullFilter_ReturnsAllMatchingRows()
+        {
+            // Arrange
+            var bidViews = new List<BidView>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo  = CreateRepository(bidViews: bidViews);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_WithNonJsonFilter_ReturnsUnfilteredRows()
+        {
+            // Covers: filter does not start with '{' — early return branch
+            var bidViews = new List<BidView>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo  = CreateRepository(bidViews: bidViews);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, Filter = "not-json"
+            };
+
+            // Act
+            var result = await repo.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert — filter ignored, row returned
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_WithWorkGroupNameFilter_ReturnsFilteredRows()
+        {
+            // Covers: dict.TryGetValue("WorkGroupName") branch
+            var bidViews = new List<BidView>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG02", Account = "ACC2", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo  = CreateRepository(bidViews: bidViews);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, Filter = """{"WorkGroupName":"WG01"}"""
+            };
+
+            // Act
+            var result = await repo.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert
+            Assert.All(result.Data, r => Assert.Contains("WG01", r.WorkGroupName));
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_WithAccountFilter_ReturnsFilteredRows()
+        {
+            // Covers: dict.TryGetValue("Account") branch
+            var bidViews = new List<BidView>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo  = CreateRepository(bidViews: bidViews);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, Filter = """{"Account":"ACC1"}"""
+            };
+
+            // Act
+            var result = await repo.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("ACC1", result.Data.First().Account);
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_WithSortByWorkGroupName_ReturnsSortedRows()
+        {
+            // Covers: "workgroupname" sort branch
+            var bidViews = new List<BidView>
+            {
+                new() { WorkGroupName = "WG02", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo  = CreateRepository(bidViews: bidViews);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, SortBy = "WorkGroupName", Descending = false
+            };
+
+            // Act
+            var result = await repo.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert — sorted ascending so WG01 first
+            Assert.Equal("WG01", result.Data.First().WorkGroupName);
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_WithSortByAccount_ReturnsSortedRows()
+        {
+            // Covers: "account" sort branch
+            var bidViews = new List<BidView>
+            {
+                new() { WorkGroupName = "WG01", Account = "ZZZ", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG01", Account = "AAA", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo  = CreateRepository(bidViews: bidViews);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, SortBy = "account", Descending = false
+            };
+
+            // Act
+            var result = await repo.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert
+            Assert.Equal("AAA", result.Data.First().Account);
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_WithSortByGenBid_ReturnsSortedRows()
+        {
+            // Covers: "genbid" sort branch
+            var bidViews = new List<BidView>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 300m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo  = CreateRepository(bidViews: bidViews);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, SortBy = "genbid", Descending = false
+            };
+
+            // Act
+            var result = await repo.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert
+            Assert.Equal(100m, result.Data.First().GenBid);
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_WithDescendingSort_ReturnsSortedDescending()
+        {
+            // Covers: descending = true branch on "account"
+            var bidViews = new List<BidView>
+            {
+                new() { WorkGroupName = "WG01", Account = "AAA", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG01", Account = "ZZZ", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo  = CreateRepository(bidViews: bidViews);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, SortBy = "account", Descending = true
+            };
+
+            // Act
+            var result = await repo.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert
+            Assert.Equal("ZZZ", result.Data.First().Account);
+        }
+
+        #endregion
+
         #region GetBidByIdAsync Tests
 
         [Fact]
