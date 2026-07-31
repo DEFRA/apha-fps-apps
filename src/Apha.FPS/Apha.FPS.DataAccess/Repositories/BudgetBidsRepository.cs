@@ -20,7 +20,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 from u in _context.Users
                 join up in _context.UserProfitcentres on u.UserId equals up.UserId
                 join w in _context.Workgroups on up.ProfitCentre equals w.ProfitCentre
-                where w.WorkGroupName == WorkGroupName && u.UserEmail != null && u.UserEmail.ToLower() == _requestContext.UserEmailId.ToLower()
+                where w.WorkGroupName == WorkGroupName
+                   && u.UserEmail != null
+                   && u.UserEmail.ToLower() == _requestContext.UserEmailId.ToLower()
                 select u
             ).AnyAsync();
 
@@ -228,22 +230,19 @@ namespace Apha.FPS.DataAccess.Repositories
             if (string.IsNullOrWhiteSpace(filter))
                 return query;
 
-            if (filter.TrimStart().StartsWith('{'))
-            {
-                try
-                {
-                    var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(filter,
-                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    if (dict != null)
-                    {
-                        if (dict.TryGetValue("WorkGroupName", out var wg) && !string.IsNullOrWhiteSpace(wg))
-                            query = query.Where(b => EF.Functions.ILike(b.WorkGroupName, $"%{wg}%"));
-                        if (dict.TryGetValue("Account", out var acc) && !string.IsNullOrWhiteSpace(acc))
-                            query = query.Where(b => EF.Functions.ILike(b.Account, $"%{acc}%"));
-                    }
-                }
-                catch { }
-            }
+            if (!filter.TrimStart().StartsWith('{'))
+                return query;
+
+            var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(filter,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                ?? [];
+
+            if (dict.TryGetValue("WorkGroupName", out var wg) && !string.IsNullOrWhiteSpace(wg))
+                query = query.Where(b => EF.Functions.ILike(b.WorkGroupName, $"%{wg}%"));
+
+            if (dict.TryGetValue("Account", out var acc) && !string.IsNullOrWhiteSpace(acc))
+                query = query.Where(b => EF.Functions.ILike(b.Account, $"%{acc}%"));
+
             return query;
         }
 
