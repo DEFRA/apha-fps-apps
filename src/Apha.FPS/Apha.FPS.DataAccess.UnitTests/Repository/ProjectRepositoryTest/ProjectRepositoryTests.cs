@@ -1243,6 +1243,89 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
         #endregion
 
+        #region GetPagedProjectFinancialSummaryAsync Tests
+
+        [Fact]
+        public async Task GetPagedProjectFinancialSummaryAsync_ReturnsPagedResults()
+        {
+            var projects = Enumerable.Range(1, 15)
+                .Select(i => new Project
+                {
+                    ParentProject = $"PP{i:D3}", ProjectTitle = $"Project {i}",
+                    Program = "P001", Customer = "C1", Contract = "C1",
+                    Disease = "D1", ProjectStatus = "Active", IncomeAccountCode = "I1"
+                }).ToList();
+            var repo = CreateRepository(projects: projects);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectFinancialSummaryAsync(query);
+
+            Assert.Equal(15, result.PaginationData.TotalRecords);
+            Assert.Equal(10, result.Data.Count());
+            Assert.Equal(2, result.PaginationData.TotalPages);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectFinancialSummaryAsync_ReturnsEmpty_WhenNoProjects()
+        {
+            var repo = CreateRepository(projects: new List<Project>());
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectFinancialSummaryAsync(query);
+
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectFinancialSummaryAsync_ProjectsFinancialFields()
+        {
+            var projects = new List<Project>
+            {
+                new()
+                {
+                    ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P1",
+                    Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A",
+                    IncomeAccountCode = "I1", TransferIncome = 100m, CustIncome = 200m,
+                    BudgetCvl = 300m, CaseWorkSub = 400m, PvsIncome = 500m, PlanCaseWorkDebit = 600m
+                }
+            };
+            var repo = CreateRepository(projects: projects);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectFinancialSummaryAsync(query);
+
+            var item = Assert.Single(result.Data);
+            Assert.Equal(100m, item.TransferIncome);
+            Assert.Equal(200m, item.CustIncome);
+            Assert.Equal(300m, item.BudgetCvl);
+            Assert.Equal(400m, item.CaseWorkSub);
+            Assert.Equal(500m, item.PvsIncome);
+            Assert.Equal(600m, item.PlanCaseWorkDebit);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectFinancialSummaryAsync_SortsByParentProjectAscending_ByDefault()
+        {
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "CC003", ProjectTitle = "Gamma", Program = "P1", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1" },
+                new() { ParentProject = "AA001", ProjectTitle = "Alpha", Program = "P1", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1" },
+                new() { ParentProject = "BB002", ProjectTitle = "Beta",  Program = "P1", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1" },
+            };
+            var repo = CreateRepository(projects: projects);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectFinancialSummaryAsync(query);
+
+            var items = result.Data.ToList();
+            Assert.Equal("AA001", items[0].ParentProject);
+            Assert.Equal("BB002", items[1].ParentProject);
+            Assert.Equal("CC003", items[2].ParentProject);
+        }
+
+        #endregion
+
         #region GetPagedProjectsByUserAsync Tests
 
         [Fact]

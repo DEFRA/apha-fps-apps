@@ -871,5 +871,69 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
         }
 
         #endregion
+
+        #region GetPagedProjectFinancialSummaryAsync
+
+        [Fact]
+        public async Task GetPagedProjectFinancialSummaryAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var projectDtos = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project" }
+            };
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 1 };
+            var serviceResult = new PaginatedResult<ProjectDto>(projectDtos, paginationDto);
+            var mappedResult = new PaginationRes<ProjectRes>
+            {
+                Data = new List<ProjectRes> { new() { ParentProject = "PP001", ProjectTitle = "Alpha Project" } }
+            };
+
+            _serviceMock.GetPagedProjectFinancialSummaryAsync(query).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProjectRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetPagedProjectFinancialSummaryAsync(query);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+            await _serviceMock.Received(1).GetPagedProjectFinancialSummaryAsync(query);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectFinancialSummaryAsync_EmptyResult_ReturnsOkWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var emptyResult = new PaginatedResult<ProjectDto>(
+                Enumerable.Empty<ProjectDto>(),
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 0, TotalRecords = 0 });
+            var mappedResult = new PaginationRes<ProjectRes> { Data = new List<ProjectRes>() };
+
+            _serviceMock.GetPagedProjectFinancialSummaryAsync(query).Returns(emptyResult);
+            _mapperMock.Map<PaginationRes<ProjectRes>>(emptyResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetPagedProjectFinancialSummaryAsync(query);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectFinancialSummaryAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _serviceMock.GetPagedProjectFinancialSummaryAsync(query).Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetPagedProjectFinancialSummaryAsync(query));
+        }
+
+        #endregion
     }
 }
