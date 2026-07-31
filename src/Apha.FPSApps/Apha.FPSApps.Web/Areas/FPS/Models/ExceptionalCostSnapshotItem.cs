@@ -14,11 +14,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 130, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? Directorate { get; set; }
 
-        [Display(Name = "Programme")]
+        [Display(Name = "Program")]
         [GridColumn(Width = 130, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? Programme { get; set; }
 
-        [Display(Name = "Contract Number")]
+        [Display(Name = "Contract")]
         [GridColumn(Width = 140, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? ContractNumber { get; set; }
 
@@ -26,7 +26,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 120, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? Project { get; set; }
 
-        [Display(Name = "Account Cat")]
+        [Display(Name = "Account")]
         [GridColumn(Width = 130, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? AccountCat { get; set; }
 
