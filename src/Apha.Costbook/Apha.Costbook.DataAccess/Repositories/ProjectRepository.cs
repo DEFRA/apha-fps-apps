@@ -770,8 +770,8 @@ namespace Apha.Costbook.DataAccess.Repositories
 
         // Filtering logic similar to FPS ApplyEmployeeFilter
         private static IQueryable<Project> ApplyProjectFilter(IQueryable<Project> queryProjects, string? filter)
-        { 
-        if (string.IsNullOrEmpty(filter))
+        {
+            if (string.IsNullOrEmpty(filter))
             {
                 return queryProjects;
             }
