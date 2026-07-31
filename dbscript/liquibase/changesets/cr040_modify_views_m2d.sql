@@ -694,7 +694,7 @@ SELECT my_tlkpproject.year,
             my_profitcentregrade.npr + my_profitcentregrade.payrate
         )
         ELSE my_tblstaffjob.plannedhours * my_profitcentregrade.chargerate
-    END AS cost
+    END :: numeric AS cost
 FROM mabarchive.my_tlkpproject
     JOIN mabarchive.my_tblstaffjob ON my_tlkpproject.year = my_tblstaffjob.year
     AND my_tlkpproject.parentproject::text = my_tblstaffjob.jobcode::text
