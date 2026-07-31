@@ -8,7 +8,7 @@
         public int? FpsYear { get; set; }
         public string? UpdatedBy { get; set; }      
         public DateTime UpdatedAt { get; set; }
-        public string FpsYearType { get; set; } = null!;
+        public string ExistsForPlannedYear { get; set; } = "No";
     }
 }
 

@@ -8,6 +8,6 @@ namespace Apha.Common.Contracts.FPS
         public int? FpsYear { get; set; }
         public string? UpdatedBy { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public string FpsYearType { get; set; } = string.Empty;
+        public string ExistsForPlannedYear { get; set; } = string.Empty;
     }
 }

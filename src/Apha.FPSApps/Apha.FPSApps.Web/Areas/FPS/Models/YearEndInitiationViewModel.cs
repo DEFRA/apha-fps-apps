@@ -31,9 +31,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         //[GridColumn(Order = 4, Width = 200, Type = GridColumnType.Text)]
         //public string? Notes { get; set; } = string.Empty;
 
-        [Display(Name = "FpsYearType")]
+        [Display(Name = "Exists For Planned Year")]
         [GridColumn(Order = 4, Width = 100, Type = GridColumnType.Text)]
-        public string FpsYearType { get; set; } = string.Empty;
+        public string ExistsForPlannedYear { get; set; } = string.Empty;
     }
 
     public class YearEndMonthWorkingItem
@@ -71,9 +71,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Order = 8, Width = 60, Type = GridColumnType.Text)]
         public short Month { get; set; }
 
-        [Display(Name = "FpsYearType")]
+        [Display(Name = "Exists For Planned Year")]
         [GridColumn(Order = 9, Width = 100, Type = GridColumnType.Text)]
-        public string FpsYearType { get; set; } = string.Empty;
+        public string ExistsForPlannedYear { get; set; } = string.Empty;
     }
 
     public class YearEndEditConfigValueModel

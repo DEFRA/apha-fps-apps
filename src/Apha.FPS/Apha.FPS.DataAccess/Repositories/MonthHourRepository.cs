@@ -135,7 +135,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         CvlHours = monthHour.CvlHours,
                         VidHours = monthHour.VidHours,
                         FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
-                        FpsYearType = "planned"
+                        ExistsForPlannedYear = "Yes"
                     });
                 }
                 else 
@@ -156,7 +156,7 @@ namespace Apha.FPS.DataAccess.Repositories
                             CvlHours = monthHour.CvlHours,
                             VidHours = monthHour.VidHours,
                             FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
-                            FpsYearType = "open"
+                            ExistsForPlannedYear = "No"
                         });
                     }
                     else
@@ -170,7 +170,7 @@ namespace Apha.FPS.DataAccess.Repositories
                             CvlHours = null,
                             VidHours = null,
                             FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
-                            FpsYearType = "new"
+                            ExistsForPlannedYear = "No"
                         });
                     }
                 }

@@ -141,8 +141,7 @@ namespace Apha.FPS.Application.Services
         private async Task ValidateSettingConfiguration(List<BusinessValidationError> errors)
         {
             var configs = await _fpsSettingRepository.GetYearEndSettingsAsync();
-            bool hasUnplannedOpenConfigs = configs.Any(x => string.Equals(x.FpsYearType, "open", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(x.FpsYearType, "new", StringComparison.OrdinalIgnoreCase));
+            bool hasUnplannedOpenConfigs = configs.Any(x => string.Equals(x.ExistsForPlannedYear, "No", StringComparison.OrdinalIgnoreCase));
 
             if (hasUnplannedOpenConfigs)
             {
@@ -177,8 +176,7 @@ namespace Apha.FPS.Application.Services
 
             var monthConfigs = await _monthHourRepository.GetYearEndMonthHoursAsync();
 
-            bool hasUnplannedMonthConfigs = monthConfigs.Any(x => string.Equals(x.FpsYearType, "open", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(x.FpsYearType, "new", StringComparison.OrdinalIgnoreCase));
+            bool hasUnplannedMonthConfigs = monthConfigs.Any(x => string.Equals(x.ExistsForPlannedYear, "No", StringComparison.OrdinalIgnoreCase));
 
             if (hasUnplannedMonthConfigs)
                 errors.Add(new BusinessValidationError($"Month Working days, VID hours and CVL hours are missing for the planned year. Please verify and add for each missing month.", "Missing_Config"));

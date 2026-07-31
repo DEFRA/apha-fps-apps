@@ -9,6 +9,6 @@ namespace Apha.Common.Contracts.FPS
         public decimal? VidHours { get; set; }
         public short? Fmonth { get; set; }
         public int FpsYear { get; set; }
-        public string FpsYearType { get; set; } = string.Empty;
+        public string ExistsForPlannedYear { get; set; } = string.Empty;
     }
 }

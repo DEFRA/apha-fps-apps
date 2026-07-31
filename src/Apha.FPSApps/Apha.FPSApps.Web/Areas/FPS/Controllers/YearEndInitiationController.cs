@@ -213,7 +213,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     Id = s.Id,
                     Setting = s.Setting,
                     //Notes = s.Notes,
-                    FpsYearType = s.FpsYearType
+                    ExistsForPlannedYear = s.ExistsForPlannedYear
                 }).ToList();
             }
             return grid;
@@ -235,7 +235,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     VidHours = m.VidHours,
                     Fmonth = m.Fmonth,
                     FpsYear = m.FpsYear,
-                    FpsYearType = m.FpsYearType
+                    ExistsForPlannedYear = m.ExistsForPlannedYear
                 }).ToList();
             }
             return grid;

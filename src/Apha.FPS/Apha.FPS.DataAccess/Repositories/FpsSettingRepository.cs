@@ -117,7 +117,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         Notes = setting.Notes,
                         UpdatedBy = setting.UpdatedBy,
                         UpdatedAt = setting.UpdatedAt,
-                        FpsYearType = setting.FpsYear == plannedYear ? "planned" : "open"
+                        ExistsForPlannedYear = setting.FpsYear == plannedYear ? "Yes" : "No"
                     });
                 }
                 else
@@ -130,7 +130,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         Notes = null,
                         UpdatedBy = null,
                         UpdatedAt = DateTime.MinValue,
-                        FpsYearType = "new"
+                        ExistsForPlannedYear = "No"
                     });
                 }
             }
