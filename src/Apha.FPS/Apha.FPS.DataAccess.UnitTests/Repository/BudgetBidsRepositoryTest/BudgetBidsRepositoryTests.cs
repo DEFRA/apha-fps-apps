@@ -26,6 +26,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
             IEnumerable<Bid>?             bids              = null,
             IEnumerable<AccountCategory>? accountCategories = null,
             IEnumerable<Purchase>?        purchases         = null,
+            IEnumerable<User>?            users             = null,
+            IEnumerable<UserProfitcentre>? userProfitCentres = null,
+            IEnumerable<Workgroup>?       workgroups        = null,
             int    fpsYear   = DefaultFpsYear,
             string userEmail = DefaultUserEmail)
         {
@@ -43,6 +46,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
 
             var purchaseSet = RepositoryTestHelper.CreateMockDbSet(purchases ?? Enumerable.Empty<Purchase>());
             mockContext.Setup(x => x.Purchases).Returns(purchaseSet.Object);
+
+            var userSet = RepositoryTestHelper.CreateMockDbSet(users ?? Enumerable.Empty<User>());
+            mockContext.Setup(x => x.Users).Returns(userSet.Object);
+
+            var userPcSet = RepositoryTestHelper.CreateMockDbSet(userProfitCentres ?? Enumerable.Empty<UserProfitcentre>());
+            mockContext.Setup(x => x.UserProfitcentres).Returns(userPcSet.Object);
+
+            var wgSet = RepositoryTestHelper.CreateMockDbSet(workgroups ?? Enumerable.Empty<Workgroup>());
+            mockContext.Setup(x => x.Workgroups).Returns(wgSet.Object);
 
             return new BudgetBidsRepository(mockContext.Object, mockCtx.Object);
         }
@@ -281,8 +293,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
         [Fact]
         public async Task AddBidAsync_WhenUserNotInBidViews_ThrowsUnauthorizedAccessException()
         {
-            // Arrange — no BidViews entry for this user, so ThrowIfNotOwnerAsync fires
-            var repo = CreateRepository(bidViews: new List<BidView>());
+            // Arrange — Users/UserProfitcentres/Workgroups are empty so the ownership join yields no match
+            var repo = CreateRepository();
             var bid  = new Bid { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
 
             // Act & Assert
@@ -292,8 +304,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
         [Fact]
         public async Task UpdateBidAsync_WhenUserNotInBidViews_ThrowsUnauthorizedAccessException()
         {
-            // Arrange
-            var repo = CreateRepository(bidViews: new List<BidView>());
+            // Arrange — Users/UserProfitcentres/Workgroups are empty so the ownership join yields no match
+            var repo = CreateRepository();
             var bid  = new Bid { WorkGroupName = "WG01", Account = "ACC1", GenBid = 200m };
 
             // Act & Assert
@@ -303,8 +315,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
         [Fact]
         public async Task DeleteBidAsync_WhenUserNotInBidViews_ThrowsUnauthorizedAccessException()
         {
-            // Arrange
-            var repo = CreateRepository(bidViews: new List<BidView>());
+            // Arrange — Users/UserProfitcentres/Workgroups are empty so the ownership join yields no match
+            var repo = CreateRepository();
 
             // Act & Assert
             await Assert.ThrowsAsync<UnauthorizedAccessException>(() => repo.DeleteBidAsync("WG01", "ACC1"));

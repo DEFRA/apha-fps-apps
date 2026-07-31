@@ -20,7 +20,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 from u in _context.Users
                 join up in _context.UserProfitcentres on u.UserId equals up.UserId
                 join w in _context.Workgroups on up.ProfitCentre equals w.ProfitCentre
-                where w.WorkGroupName == WorkGroupName && u.UserEmail != null && u.UserEmail.ToLower() == _requestContext.UserEmailId.ToLower()
+                where w.WorkGroupName == WorkGroupName
+                   && u.UserEmail != null
+                   && u.UserEmail.ToLower() == _requestContext.UserEmailId.ToLower()
                 select u
             ).AnyAsync();
 
