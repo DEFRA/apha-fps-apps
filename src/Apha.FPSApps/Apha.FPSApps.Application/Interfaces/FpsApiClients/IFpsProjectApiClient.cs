@@ -49,5 +49,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
             string? customer = null);
 
         Task<ApiResponseDto<List<ProjectStaffReplanDto>>> GetProjectGroupStaffReplanAsync(QueryParameters<string> query, string workgroup);
+
+        Task<ApiResponseDto<List<ProjectExceptionalCostViewDto>>> GetProjectExceptionalCostsPagedAsync(QueryParameters<string> query);
     }
 }
