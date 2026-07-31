@@ -91,6 +91,15 @@ namespace Apha.PACT.DataAccess.Repository
                 .ToDictionaryAsync(t => t.ItemCode, t => t.ItemDescription);
         }
 
+        public async Task<Dictionary<string, decimal?>> GetUnitPricesByCodesAsync(IEnumerable<string> itemCodes)
+        {
+            var codes = itemCodes.ToList();
+            return await _context.TestorProducts
+                .AsNoTracking()
+                .Where(t => codes.Contains(t.ItemCode))
+                .ToDictionaryAsync(t => t.ItemCode, t => t.UnitPriceVla);
+        }
+
         private static IQueryable<TestorProduct> ApplyTestOrProductFilter(IQueryable<TestorProduct> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))

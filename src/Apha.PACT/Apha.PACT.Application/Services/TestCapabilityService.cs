@@ -56,10 +56,14 @@ namespace Apha.PACT.Application.Services
             {
                 var testCodes = result.Data.Select(d => d.TestCode).Distinct().ToList();
                 var descriptions = await _testorProductRepository.GetDescriptionsByCodesAsync(testCodes);
+                var unitPrices = await _testorProductRepository.GetUnitPricesByCodesAsync(testCodes);
                 foreach (var dto in result.Data)
                 {
-                    if (descriptions.TryGetValue(dto.TestCode, out var desc))
+                    if (descriptions != null && descriptions.TryGetValue(dto.TestCode, out var desc))
                         dto.ItemDescription = desc;
+
+                    if (unitPrices != null && unitPrices.TryGetValue(dto.TestCode, out var unitPrice))
+                        dto.UnitCost = unitPrice;
                 }
 
                 if (HasItemDescriptionFilterOrSort(query))
