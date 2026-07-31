@@ -1606,6 +1606,30 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
 
         #endregion
 
+        #region GetPagedProjectSpecificQueryAsync
+
+        [Fact]
+        public async Task GetPagedProjectSpecificQueryAsync_ReturnsMappedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paramMapped = new PaginationParameters<string>(page: 1, pageSize: 10);
+            var pagedData = new PagedData<ProjectSpecificQueryItem>(
+                new List<ProjectSpecificQueryItem> { new() { ParentProject = "PP001", Account = "ACC1" } },
+                new PaginationData { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
+            var expected = new PaginatedResult<ProjectSpecificQueryDto>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paramMapped);
+            _mockRepository.GetPagedProjectSpecificQueryAsync(paramMapped).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProjectSpecificQueryDto>>(pagedData).Returns(expected);
+
+            var result = await _sut.GetPagedProjectSpecificQueryAsync(query);
+
+            result.Should().BeSameAs(expected);
+            await _mockRepository.Received(1).GetPagedProjectSpecificQueryAsync(paramMapped);
+        }
+
+        #endregion
+
         #region GetProjectExceptionalCostsPagedAsync
 
         [Fact]

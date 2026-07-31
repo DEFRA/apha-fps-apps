@@ -129,6 +129,17 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Retrieves a paginated list of project specific query rows
+        /// (project general + additional costs + account category) for the current FPS year.
+        /// </summary>
+        [HttpGet("specific-query/paged")]
+        public async Task<IActionResult> GetPagedProjectSpecificQueryAsync([FromQuery] QueryParameters<string> query)
+        {
+            var result = await _projectService.GetPagedProjectSpecificQueryAsync(query);
+            return Ok(_mapper.Map<PaginationRes<ProjectSpecificQueryRes>>(result));
+        }
+
+        /// <summary>
         /// Retrieves a paged, filtered and sorted list of project exceptional (additional) costs
         /// joined across projects, programmes and additional costs.
         /// </summary>
