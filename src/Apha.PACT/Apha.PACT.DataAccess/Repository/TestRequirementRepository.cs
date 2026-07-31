@@ -83,7 +83,7 @@ namespace Apha.PACT.DataAccess.Repository
                 : rows.OrderBy(t => t.TestCost);
             IEnumerable<TestSupplierView> result = sortByTestCost ? sortedByTestCost : rows;
 
-            return await ApplyPaging(result.AsQueryable(), query.Page, query.PageSize);
+            return ApplyPagingInMemory(result.ToList(), query.Page, query.PageSize);
         }
 
         public async Task<PagedData<TestRequirementDetail>> GetPagedWithDetailsAsync(
@@ -434,6 +434,15 @@ namespace Apha.PACT.DataAccess.Repository
             if (filters.TryGetValue(nameof(TestSupplierView.Buyer), out string? buyer)
                 && !string.IsNullOrWhiteSpace(buyer))
                 query = query.Where(t => EF.Functions.ILike(t.Buyer, $"%{buyer}%"));
+
+            if (filters.TryGetValue(nameof(TestSupplierView.TestCode), out string? testCode)
+                && !string.IsNullOrWhiteSpace(testCode))
+                query = query.Where(t => EF.Functions.ILike(t.TestCode, $"%{testCode}%"));
+
+            if (filters.TryGetValue(nameof(TestSupplierView.ProjectManager), out string? projectManager)
+                && !string.IsNullOrWhiteSpace(projectManager))
+                query = query.Where(t => t.ProjectManager != null
+                    && EF.Functions.ILike(t.ProjectManager, $"%{projectManager}%"));
 
             if (filters.TryGetValue(nameof(TestSupplierView.ProjectStatus), out string? status)
                 && !string.IsNullOrWhiteSpace(status))
