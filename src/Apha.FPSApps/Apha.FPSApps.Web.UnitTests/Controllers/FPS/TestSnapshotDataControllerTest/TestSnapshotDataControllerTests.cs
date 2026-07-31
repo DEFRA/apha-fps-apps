@@ -37,7 +37,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestSnapshotDataControllerT
                 TestCode = testCode,
                 UnitPrice = 10m,
                 NoTests = 5,
-                TestFee = 50m,
+                TestFee = 50d,
                 Owner = "Owner"
             };
 

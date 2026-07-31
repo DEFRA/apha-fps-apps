@@ -240,16 +240,15 @@ namespace Apha.FPS.DataAccess.Repositories
                      GradeCode = wgg.GradeCode,
                      Name = stf.Name,
                      Hours = sj.PlannedHours,
-                     HoursCost = excludedPrograms.Contains(prj.Program)
-                        ? 0
-                        : (decimal)sj.PlannedHours * (pcg.ChargeRate ?? 0)
+                     HoursCost = 0m //excludedPrograms.Contains(prj.Program)
+                         //? 0m
+                         //: (decimal)sj.PlannedHours * (pcg.ChargeRate ?? 0)
                  }).Distinct();
 
             planQuery = ApplyProgramPlanCostFilter(planQuery, query.Filter);
             planQuery = (IQueryable<ProgramPlanCostView>)ApplyProgramPlanCostSorting(planQuery, query.SortBy, query.Descending);
 
-            var result = await planQuery.ToListAsync();
-            return base.ApplyPaging(result, query.Page, query.PageSize);
+            return await base.ApplyPagingAsync(planQuery, query.Page, query.PageSize);
         }
 
         private static IQueryable ApplyProgramPlanCostSorting(IQueryable<ProgramPlanCostView> query, string? sortBy, bool descending)

@@ -31,11 +31,11 @@ namespace Apha.PACT.Application.UnitTests.Services.TestorProductServiceTest
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var entity = new TestFeePlanView { TestCode = "T001", Project = "JOB001", TestFee = 250m };
+            var entity = new TestFeePlanView { TestCode = "T001", Project = "JOB001", TestFee = 250d };
             var pagedData = new PagedData<TestFeePlanView>([entity], new PaginationData { TotalRecords = 1 });
             var expected = new PaginatedResult<TestFeePlanDto>
             {
-                Data = [new TestFeePlanDto { TestCode = "T001", Project = "JOB001", TestFee = 250m }]
+                Data = [new TestFeePlanDto { TestCode = "T001", Project = "JOB001", TestFee = 250d }]
             };
 
             _mapper.Map<PaginationParameters<string>>(query).Returns(parameters);

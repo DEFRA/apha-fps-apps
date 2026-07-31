@@ -333,7 +333,7 @@ namespace Apha.PACT.DataAccess.Repository
                         TestCode = tr.TestCode,
                         UnitPrice = tr.UnitPrice,
                         NoTests = tr.NoRequired,
-                        TestFee = (decimal?)tr.NoRequired * tr.UnitPrice,
+                        //TestFee = (double?)((decimal?)tr.NoRequired * tr.UnitPrice ?? 0m),
                         Owner = tp.Owner,
                         FpsYear = tr.FpsYear
                     }).Distinct().AsNoTracking();
@@ -391,7 +391,7 @@ namespace Apha.PACT.DataAccess.Repository
             if (dict.TryGetValue("Owner", out var ow) && ow != null)
                 query = query.Where(x => x.Owner != null && EF.Functions.ILike(x.Owner, $"%{ow}%"));
             if (dict.TryGetValue("TestFee", out var fee) && fee != null
-                && decimal.TryParse(fee.ToString(), out var feeVal))
+                && double.TryParse(fee.ToString(), out var feeVal))
                 query = query.Where(x => x.TestFee == feeVal);
 
             return query;

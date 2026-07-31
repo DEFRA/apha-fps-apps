@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [DataType(DataType.Currency)]
         [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
         [GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
-        public decimal? TestFee { get; set; }
+        public double? TestFee { get; set; }
 
         [Display(Name = "Owner")]
         [GridColumn(Width = 120, Type = GridColumnType.ReadOnly, IsFilterable = true)]

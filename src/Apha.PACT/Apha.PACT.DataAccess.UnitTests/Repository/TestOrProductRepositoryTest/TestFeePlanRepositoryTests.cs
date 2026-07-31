@@ -114,7 +114,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
 
             var t001 = Assert.Single(result.Data, x => x.TestCode == "T001");
             Assert.StartsWith("Plan - ", t001.Version);
-            Assert.Equal(250m, t001.TestFee);
+            Assert.Equal(250d, t001.TestFee);
         }
 
         [Fact]

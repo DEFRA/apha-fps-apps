@@ -12,7 +12,7 @@ namespace Apha.FPSApps.Application.Dtos.PACT
         public string TestCode { get; set; } = null!;
         public decimal? UnitPrice { get; set; }
         public double? NoTests { get; set; }
-        public decimal? TestFee { get; set; }
+        public double? TestFee { get; set; }
         public string? Owner { get; set; }
     }
 }

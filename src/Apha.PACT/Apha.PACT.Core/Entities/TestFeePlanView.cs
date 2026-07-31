@@ -18,7 +18,7 @@ namespace Apha.PACT.Core.Entities
         public decimal? UnitPrice { get; set; }
         public double? NoTests { get; set; }
         /// <summary>Computed: NoTests * UnitPrice.</summary>
-        public decimal? TestFee { get; set; }
+        public double? TestFee { get; set; }
         public string? Owner { get; set; }
         public int FpsYear { get; set; }
     }
