@@ -479,6 +479,25 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
         }
 
         [Fact]
+        public async Task AddBidAsync_WhenUserIsOwner_AddsBidAndReturnsIt()
+        {
+            // Arrange — wire up the join so ThrowIfNotOwnerAsync passes
+            var user   = new User   { UserId = 1, UserEmail = DefaultUserEmail };
+            var upc    = new UserProfitcentre { UserId = 1, ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var wg     = new Workgroup { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var bid    = new Bid { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var repo   = CreateRepository(users: [user], userProfitCentres: [upc], workgroups: [wg]);
+
+            // Act
+            var result = await repo.AddBidAsync(bid);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("WG01", result.WorkGroupName);
+            Assert.Equal(DefaultFpsYear, result.FpsYear);
+        }
+
+        [Fact]
         public async Task UpdateBidAsync_WhenUserNotInBidViews_ThrowsUnauthorizedAccessException()
         {
             // Arrange — Users/UserProfitcentres/Workgroups are empty so the ownership join yields no match
@@ -490,6 +509,26 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
         }
 
         [Fact]
+        public async Task UpdateBidAsync_WhenUserIsOwner_UpdatesGenBidAndReturnsEntity()
+        {
+            // Arrange
+            var user    = new User   { UserId = 1, UserEmail = DefaultUserEmail };
+            var upc     = new UserProfitcentre { UserId = 1, ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var wg      = new Workgroup { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var existing = new Bid { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear };
+            var updated  = new Bid { WorkGroupName = "WG01", Account = "ACC1", GenBid = 999m };
+            var repo     = CreateRepository(
+                users: [user], userProfitCentres: [upc], workgroups: [wg], bids: [existing]);
+
+            // Act
+            var result = await repo.UpdateBidAsync(updated);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(999m, result.GenBid);
+        }
+
+        [Fact]
         public async Task DeleteBidAsync_WhenUserNotInBidViews_ThrowsUnauthorizedAccessException()
         {
             // Arrange — Users/UserProfitcentres/Workgroups are empty so the ownership join yields no match
@@ -497,6 +536,40 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
 
             // Act & Assert
             await Assert.ThrowsAsync<UnauthorizedAccessException>(() => repo.DeleteBidAsync("WG01", "ACC1"));
+        }
+
+        [Fact]
+        public async Task DeleteBidAsync_WhenEntityNotFound_ReturnsFalse()
+        {
+            // Arrange — owner check passes but no bid exists to delete
+            var user = new User   { UserId = 1, UserEmail = DefaultUserEmail };
+            var upc  = new UserProfitcentre { UserId = 1, ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var wg   = new Workgroup { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var repo = CreateRepository(users: [user], userProfitCentres: [upc], workgroups: [wg]);
+
+            // Act
+            var result = await repo.DeleteBidAsync("WG01", "ACC1");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task DeleteBidAsync_WhenEntityFound_DeletesAndReturnsTrue()
+        {
+            // Arrange
+            var user   = new User   { UserId = 1, UserEmail = DefaultUserEmail };
+            var upc    = new UserProfitcentre { UserId = 1, ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var wg     = new Workgroup { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var bid    = new Bid { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear };
+            var repo   = CreateRepository(
+                users: [user], userProfitCentres: [upc], workgroups: [wg], bids: [bid]);
+
+            // Act
+            var result = await repo.DeleteBidAsync("WG01", "ACC1");
+
+            // Assert
+            Assert.True(result);
         }
 
         #endregion
