@@ -29,6 +29,14 @@ namespace Apha.FPS.Core.Interfaces
         /// Sum(NumberOfDays * NumberOfAnimals * DailyRate) JOIN tblAnimals ON AnimalType.
         /// </summary>
         Task<decimal> GetGlobalAnimalCostAsync();
+
+        // Animal Costs ASU View (AnimalCosts — frmAnimalCosts)
+        /// <summary>
+        /// Returns a paged list of all animal cost records for the current FPS year,
+        /// optionally filtered by animal type. No user-email guard — this is the ASU admin view.
+        /// Equivalent to qryJobAnimalCost filtered via the subform LinkMasterFields (AnimalType).
+        /// </summary>
+        Task<PagedData<AnimalCostView>> GetAnimalCostByAnimalTypeAsync(PaginationParameters<string> query, string animalType);
     }
 }
 

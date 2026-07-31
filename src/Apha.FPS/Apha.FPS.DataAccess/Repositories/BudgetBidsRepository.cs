@@ -3,7 +3,6 @@ using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
-
 namespace Apha.FPS.DataAccess.Repositories
 {
     public class BudgetBidsRepository : BaseRepository, IBudgetBidsRepository
@@ -17,10 +16,15 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private async Task ThrowIfNotOwnerAsync(string WorkGroupName)
         {
-            var isOwner = await _context.BidViews
-                .AnyAsync(b => b.WorkGroupName == WorkGroupName
-                            && b.UserEmail != null
-                            && b.UserEmail.ToLower() == _requestContext.UserEmailId);
+            var isOwner = await (
+                from u in _context.Users
+                join up in _context.UserProfitcentres on u.UserId equals up.UserId
+                join w in _context.Workgroups on up.ProfitCentre equals w.ProfitCentre
+                where w.WorkGroupName == WorkGroupName
+                   && u.UserEmail != null
+                   && u.UserEmail.ToLower() == _requestContext.UserEmailId.ToLower()
+                select u
+            ).AnyAsync();
 
             if (!isOwner)
                 throw new UnauthorizedAccessException(
@@ -31,8 +35,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var rows = await _context.BidViews
                 .AsNoTracking()
-                .Where(b => b.WorkGroupName == workgroup
-                         && b.UserEmail != null && b.UserEmail.ToLower() == _requestContext.UserEmailId)
+                .Where(b => b.WorkGroupName == workgroup && b.UserEmail != null && b.UserEmail.ToLower() == _requestContext.UserEmailId.ToLower())
                 .OrderBy(b => b.Account)
                 .ToListAsync();
 
@@ -43,8 +46,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var q = _context.BidViews
                 .AsNoTracking()
-                .Where(b => b.WorkGroupName == workgroup
-                         && b.UserEmail != null && b.UserEmail.ToLower() == _requestContext.UserEmailId)
+                .Where(b => b.WorkGroupName == workgroup && b.UserEmail != null && b.UserEmail.ToLower() == _requestContext.UserEmailId.ToLower())
                 .AsQueryable();
 
             q = ApplyBidViewFilter(q, query.Filter);
@@ -58,8 +60,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _context.Bids
                 .AsNoTracking()
-                .FirstOrDefaultAsync(b => b.WorkGroupName == WorkGroupName
-                    && b.Account == account);
+                .FirstOrDefaultAsync(b => b.WorkGroupName == WorkGroupName && b.Account == account);
         }
 
         public async Task<bool> HasRelatedPurchasesAsync(string WorkGroupName, string account)
@@ -162,22 +163,19 @@ namespace Apha.FPS.DataAccess.Repositories
             if (string.IsNullOrWhiteSpace(filter))
                 return query;
 
-            if (filter.TrimStart().StartsWith('{'))
-            {
-                try
-                {
-                    var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(filter,
-                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    if (dict != null)
-                    {
-                        if (dict.TryGetValue("WorkGroupName", out var wg) && !string.IsNullOrWhiteSpace(wg))
-                            query = query.Where(b => EF.Functions.ILike(b.WorkGroupName, $"%{wg}%"));
-                        if (dict.TryGetValue("Account", out var acc) && !string.IsNullOrWhiteSpace(acc))
-                            query = query.Where(b => EF.Functions.ILike(b.Account, $"%{acc}%"));
-                    }
-                }
-                catch { }
-            }
+            if (!filter.TrimStart().StartsWith('{'))
+                return query;
+
+            var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(filter,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                ?? [];
+
+            if (dict.TryGetValue("WorkGroupName", out var wg) && !string.IsNullOrWhiteSpace(wg))
+                query = query.Where(b => EF.Functions.ILike(b.WorkGroupName, $"%{wg}%"));
+
+            if (dict.TryGetValue("Account", out var acc) && !string.IsNullOrWhiteSpace(acc))
+                query = query.Where(b => EF.Functions.ILike(b.Account, $"%{acc}%"));
+
             return query;
         }
 
@@ -186,9 +184,9 @@ namespace Apha.FPS.DataAccess.Repositories
             return sortBy?.ToLower() switch
             {
                 "workgroupname" => descending ? query.OrderByDescending(b => b.WorkGroupName) : query.OrderBy(b => b.WorkGroupName),
-                "account"       => descending ? query.OrderByDescending(b => b.Account)       : query.OrderBy(b => b.Account),
-                "genbid"        => descending ? query.OrderByDescending(b => b.GenBid)        : query.OrderBy(b => b.GenBid),
-                _               => query.OrderBy(b => b.Account)
+                "account" => descending ? query.OrderByDescending(b => b.Account) : query.OrderBy(b => b.Account),
+                "genbid" => descending ? query.OrderByDescending(b => b.GenBid) : query.OrderBy(b => b.GenBid),
+                _ => query.OrderBy(b => b.Account)
             };
         }
     }

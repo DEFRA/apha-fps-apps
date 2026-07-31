@@ -63,6 +63,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
+        public async Task<ApiResponseDto<List<ProjectSpecificQueryDto>>> GetPagedProjectSpecificQueryAsync(QueryParameters<string> query)
+        {
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProjectSpecificQuery, query);
+            var response = await _http.GetAsync<List<ProjectSpecificQueryRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectSpecificQueryDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectSpecificQueryDto>>>(response);
+            return ApiResponseDto<List<ProjectSpecificQueryDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsByUserAsync(QueryParameters<string> query)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProjectsByUser, query);
@@ -366,6 +377,19 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve Project Profitability VLA data", Code = InternalCodeError } },
                     new ApiMetaDto());
             }
+        }
+
+        public async Task<ApiResponseDto<List<ProjectStaffReplanDto>>> GetProjectGroupStaffReplanAsync(QueryParameters<string> query, string workgroup)
+        {
+            var baseUrl = string.Format(FpsApiEndpoints.GetWorkgroupStaffReplan, Uri.EscapeDataString(workgroup));
+            var url = QueryStringHelper.AddQueryString(baseUrl, query);
+
+            var response = await _http.GetAsync<List<ProjectStaffReplanRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectStaffReplanDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectStaffReplanDto>>>(response);
+            return ApiResponseDto<List<ProjectStaffReplanDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
     }
 }

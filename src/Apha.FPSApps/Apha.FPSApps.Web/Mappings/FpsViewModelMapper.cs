@@ -30,12 +30,14 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();
+            CreateMap<ProjectSpecificQueryDto, ProjectSpecificQueryItem>().ReverseMap();
             CreateMap<ProjectDto, ProgramProjectEditViewModel>().ReverseMap();
             CreateMap<ProjectDto, ProgramProjectItem>()
                 .ForMember(d => d.TransferIncome, o => o.MapFrom(s => s.TransferIncome))
                 .ReverseMap();
             CreateMap<AnimalPlanItem, AnimalCostViewDto>().ReverseMap();
             CreateMap<AnimalPlanItem, AnimalRequestDto>().ReverseMap();
+            CreateMap<AnimalCostsItem, AnimalCostViewDto>().ReverseMap();
             CreateMap<CompareStaff2Item, TimeCostCalcsViewDto>().ReverseMap();
             CreateMap<ActualProjectCostItem, ProjectSubContractDto>().ReverseMap();
             CreateMap<DivisionViewModel, DivisionDto>().ReverseMap();
@@ -94,6 +96,9 @@ namespace Apha.FPSApps.Web.Mappings
 
             // Staff Plan view
             CreateMap<StaffPlanViewItem, ProjectStaffPlanViewDto>().ReverseMap();
+
+            // Staff Plan Details view
+            CreateMap<StaffPlanDetailsViewItem, ProjectStaffPlanDetailsViewDto>().ReverseMap();
 
             // Project Group Staff Plan view
             CreateMap<ProjectGroupStaffPlanViewItem, ProjectGroupStaffPlanViewDto>().ReverseMap();
@@ -192,6 +197,15 @@ namespace Apha.FPSApps.Web.Mappings
             // Modal form ViewModel: WorkgroupMaintenanceViewModel does not map 1:1 to Dto —
             // the ViewModel wraps DataGridConfig<WorkgroupMaintenanceItem>; modal binding uses
             // WorkgroupMaintenanceItem directly from the grid row item. No ViewModel <-> Dto map needed.
+
+            // ResourceMgmtReplan — Resource Re-allocation Screen (frmRM_RePlan)
+            CreateMap<ResourceMgmtReplanViewDto, ResourceMgmtReplanGridItem>().ReverseMap();
+            CreateMap<ProjectStaffReplanDto, ResourceMgmtReplanGridItem>()
+                .ForMember(d => d.StaffRowKey, o => o.MapFrom(s => $"{s.ParentProject}|{s.WgGrade}"));
+            CreateMap<ResourceMgmtReplanStaffJobDto, ResourceMgmtReplanAllTimeItem>().ReverseMap();
+            CreateMap<StaffJobViewDto, ResourceMgmtReplanAllTimeItem>()
+                .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID));
+            CreateMap<ResourceMgmtReplanStaffJobDto, ResourceMgmtReplanStagedItem>().ReverseMap();
         }
     }
 }

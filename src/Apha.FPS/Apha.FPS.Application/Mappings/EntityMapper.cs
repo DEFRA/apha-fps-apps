@@ -23,6 +23,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
             CreateMap<Program, ProgramDto>().ReverseMap();
             CreateMap<Project, ProjectDto>().ReverseMap();
+            CreateMap<ProjectSpecificQueryItem, ProjectSpecificQueryDto>().ReverseMap();
             CreateMap<ProjectView, Project>().ReverseMap();
             CreateMap<Contract, ContractDto>().ReverseMap();
             CreateMap<AnimalCostView, AnimalCostViewDto>().ReverseMap();
@@ -49,6 +50,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Agency, AgencyDto>().ReverseMap();
             CreateMap<TimeCostCalcsView, TimeCostCalcsViewDto>().ReverseMap();
             CreateMap<ProjectStaffPlanView, ProjectStaffPlanViewDto>().ReverseMap();
+            CreateMap<ProjectStaffPlanDetailsView, ProjectStaffPlanDetailsViewDto>().ReverseMap();
             CreateMap<ProjectGroupStaffPlanView, ProjectGroupStaffPlanViewDto>().ReverseMap();
             CreateMap<AdditionalCost, AdditionalCostDto>().ReverseMap();
             CreateMap<AccountCategory, AccountCategoryDto>().ReverseMap();
@@ -116,6 +118,16 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             CreateMap<ResourceStaffGeneralSummaryRow, ResourceStaffAllocationDto>().ReverseMap();
             CreateMap<ResourceStaffJobView, ResourceStaffJobDto>().ReverseMap();
             CreateMap<ResourceStaffJobDetailRow, ResourceStaffJobDetailDto>().ReverseMap();
+
+            // ResourceMgmtReplan — Resource Re-allocation Screen (frmRM_RePlan)
+            CreateMap<ResourceMgmtReplanView, ResourceMgmtReplanViewDto>().ReverseMap();
+            CreateMap<ProjectStaffReplanView, ProjectStaffReplanDto>().ReverseMap();
+            CreateMap<StaffJobRmView, ResourceMgmtReplanDto>()
+                .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffId))
+                .ForMember(d => d.JobCode, o => o.MapFrom(s => s.JobCode))
+                .ForMember(d => d.PlannedHours, o => o.MapFrom(s => s.PlannedHours ?? 0))
+                .ReverseMap();
+            CreateMap<ResourceMgmtReplanDto, ResourceMgmtReplanRow>().ReverseMap();
         }
     }
 }
