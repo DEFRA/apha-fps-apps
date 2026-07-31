@@ -123,6 +123,49 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProgramControllerTest
 
         #endregion
 
+        #region GetProgramPlanCostAsync
+
+        [Fact]
+        public async Task GetProgramPlanCostAsync_HappyPath_ReturnsOk()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            var planCostDtos = new List<ProgramPlanCostDto>
+            {
+                new ProgramPlanCostDto { Program = "P1", HoursCost = 1000m }
+            };
+            var paginationData = new PaginationDto
+            {
+                PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1
+            };
+            var serviceResult = new PaginatedResult<ProgramPlanCostDto>(planCostDtos, paginationData);
+
+            var expectedApiResponse = new PaginationRes<ProgramPlanCostRes>
+            {
+                Data = new List<ProgramPlanCostRes> { new ProgramPlanCostRes { Program = "P1", HoursCost = 1000m } },
+                PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }
+            };
+
+            _serviceMock.GetProgramPlanCostAsync(query).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProgramPlanCostRes>>(serviceResult).Returns(expectedApiResponse);
+
+            var result = await _controller.GetProgramPlanCostAsync(query);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(expectedApiResponse, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetProgramPlanCostAsync_NullResult_ThrowsArgumentException()
+        {
+            var query = new QueryParameters<string>();
+            _serviceMock.GetProgramPlanCostAsync(query).Returns((PaginatedResult<ProgramPlanCostDto>)null!);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetProgramPlanCostAsync(query));
+        }
+
+        #endregion
+
         #region GetProgramById
 
         [Fact]

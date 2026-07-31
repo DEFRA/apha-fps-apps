@@ -134,5 +134,13 @@ namespace Apha.PACT.Api.Controllers
             return Ok(updated);
         }
 
+        /// <summary>Returns paged Plan test-fee rows filtered and sorted.</summary>
+        [HttpGet("testfeeplan")]
+        public async Task<IActionResult> GetTestFeePlanPaged([FromQuery] QueryParameters<string> query)
+        {
+            var result = await _service.GetTestFeePlanPagedAsync(query);
+            return Ok(_mapper.Map<PaginationRes<TestFeePlanRes>>(result));
+        }
+
     }
 }

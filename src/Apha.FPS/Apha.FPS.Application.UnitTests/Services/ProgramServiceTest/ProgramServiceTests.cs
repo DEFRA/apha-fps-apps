@@ -95,6 +95,25 @@ namespace Apha.FPS.Application.UnitTests.Services.ProgramServiceTest
         }
 
         [Fact]
+        public async Task GetProgramPlanCostAsync_WithQuery_ReturnsPaginatedResult()
+        {
+            var query = new QueryParameters<string>();
+            var mappedParams = new PaginationParameters<string>();
+            var pagedData = new PagedData<ProgramPlanCostView>();
+            var pagedResult = new PaginatedResult<ProgramPlanCostDto>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetProgramPlanCostAsync(mappedParams).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProgramPlanCostDto>>(pagedData).Returns(pagedResult);
+
+            var result = await _sut.GetProgramPlanCostAsync(query);
+
+            result.Should().Be(pagedResult);
+            _mockMapper.Received(1).Map<PaginationParameters<string>>(query);
+            await _mockRepository.Received(1).GetProgramPlanCostAsync(mappedParams);
+        }
+
+        [Fact]
         public async Task GetProgramByIdAsync_ValidId_ReturnsMappedDto()
         {
             var program = new Program { ProgramNo = "P1" };

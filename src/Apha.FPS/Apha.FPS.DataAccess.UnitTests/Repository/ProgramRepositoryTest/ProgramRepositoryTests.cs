@@ -475,5 +475,180 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         }
 
         #endregion
+
+        #region GetProgramPlanCostAsync
+
+        /// <summary>
+        /// Creates a ProgramRepository with in-memory data for all six join sources used by
+        /// GetProgramPlanCostAsync. Filtering uses EF.Functions.ILike which is not translatable
+        /// in-memory, so filter-based scenarios are covered by integration tests.
+        /// </summary>
+        private static ProgramRepository CreatePlanCostRepository(
+            IEnumerable<Core.Entities.Program> programs,
+            IEnumerable<Project> projects,
+            IEnumerable<StaffJob> staffJobs,
+            IEnumerable<StaffGeneralView> staff,
+            IEnumerable<WorkgroupGradeGeneralView> workgroupGrades,
+            IEnumerable<ProfitCentreGradeView> profitCentreGrades,
+            int fpsYear = DefaultTestFpsYear,
+            string userEmailId = "test@example.com")
+        {
+            var requestContext = Substitute.For<IFpsRequestContext>();
+            requestContext.FpsYear.Returns(fpsYear);
+            requestContext.UserEmailId.Returns(userEmailId);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestContext);
+
+            var programsMockSet = RepositoryTestHelper.CreateMockDbSet(programs);
+            var projectsMockSet = RepositoryTestHelper.CreateMockDbSet(projects);
+            var staffJobsMockSet = RepositoryTestHelper.CreateMockDbSet(staffJobs);
+            var staffMockSet = RepositoryTestHelper.CreateMockDbSet(staff);
+            var workgroupGradesMockSet = RepositoryTestHelper.CreateMockDbSet(workgroupGrades);
+            var profitCentreGradesMockSet = RepositoryTestHelper.CreateMockDbSet(profitCentreGrades);
+
+            mockContext.Setup(x => x.Programs).Returns(programsMockSet.Object);
+            mockContext.Setup(x => x.Projects).Returns(projectsMockSet.Object);
+            mockContext.Setup(x => x.StaffJobs).Returns(staffJobsMockSet.Object);
+            mockContext.Setup(x => x.StaffGeneralViews).Returns(staffMockSet.Object);
+            mockContext.Setup(x => x.WorkgroupGradeGeneralViews).Returns(workgroupGradesMockSet.Object);
+            mockContext.Setup(x => x.ProfitCentreGradeViews).Returns(profitCentreGradesMockSet.Object);
+
+            return new ProgramRepository(mockContext.Object, requestContext);
+        }
+
+        private static (
+            IEnumerable<Core.Entities.Program> Programs,
+            IEnumerable<Project> Projects,
+            IEnumerable<StaffJob> StaffJobs,
+            IEnumerable<StaffGeneralView> Staff,
+            IEnumerable<WorkgroupGradeGeneralView> WorkgroupGrades,
+            IEnumerable<ProfitCentreGradeView> ProfitCentreGrades)
+            BuildPlanCostSeedData()
+        {
+            var programs = new List<Core.Entities.Program>
+            {
+                new() { ProgramNo = "P001", Directorate = "Dir A" },
+                new() { ProgramNo = "ZT_prog", Directorate = "Dir B" }
+            };
+
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "J001", Program = "P001", Customer = "Cust A", Contract = "C1", ProjectStatus = "Open" },
+                new() { ParentProject = "J002", Program = "ZT_prog", Customer = "Cust B", Contract = "C2", ProjectStatus = "Open" }
+            };
+
+            var staffJobs = new List<StaffJob>
+            {
+                new() { JobCode = "J001", StaffId = "1", PlannedHours = 10 },
+                new() { JobCode = "J002", StaffId = "2", PlannedHours = 5 }
+            };
+
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "1", Name = "Alice", WorkGroupGrade = "WG1" },
+                new() { StaffId = "2", Name = "Bob", WorkGroupGrade = "WG2" }
+            };
+
+            var workgroupGrades = new List<WorkgroupGradeGeneralView>
+            {
+                new() { WgGrade = "WG1", ProfitCentreGrade = "PC1", GradeCode = "G1", WorkGroup = "Group1" },
+                new() { WgGrade = "WG2", ProfitCentreGrade = "PC2", GradeCode = "G2", WorkGroup = "Group2" }
+            };
+
+            var profitCentreGrades = new List<ProfitCentreGradeView>
+            {
+                new() { PcGrade = "PC1", ProfitCentre = "RC1", ChargeRate = 100 },
+                new() { PcGrade = "PC2", ProfitCentre = "RC2", ChargeRate = 200 }
+            };
+
+            return (programs, projects, staffJobs, staff, workgroupGrades, profitCentreGrades);
+        }
+
+        [Fact]
+        public async Task GetProgramPlanCostAsync_ReturnsProjectedRows_ForMatchingJoins()
+        {
+            // Arrange
+            var seed = BuildPlanCostSeedData();
+            var repo = CreatePlanCostRepository(
+                seed.Programs, seed.Projects, seed.StaffJobs, seed.Staff, seed.WorkgroupGrades, seed.ProfitCentreGrades);
+            var query = new Core.Pagination.PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetProgramPlanCostAsync(query);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, i => Assert.StartsWith("Plan - ", i.Version));
+        }
+
+        [Fact]
+        public async Task GetProgramPlanCostAsync_ComputesHoursCost_UsingChargeRate()
+        {
+            // Arrange
+            var seed = BuildPlanCostSeedData();
+            var repo = CreatePlanCostRepository(
+                seed.Programs, seed.Projects, seed.StaffJobs, seed.Staff, seed.WorkgroupGrades, seed.ProfitCentreGrades);
+            var query = new Core.Pagination.PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetProgramPlanCostAsync(query);
+
+            // Assert — P001 row: 10 hours * 100 rate = 1000
+            var normalRow = result.Data.Single(i => i.Program == "P001");
+            Assert.Equal(1000m, normalRow.HoursCost);
+        }
+
+        [Fact]
+        public async Task GetProgramPlanCostAsync_ReturnsZeroHoursCost_ForExcludedPrograms()
+        {
+            // Arrange
+            var seed = BuildPlanCostSeedData();
+            var repo = CreatePlanCostRepository(
+                seed.Programs, seed.Projects, seed.StaffJobs, seed.Staff, seed.WorkgroupGrades, seed.ProfitCentreGrades);
+            var query = new Core.Pagination.PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetProgramPlanCostAsync(query);
+
+            // Assert — ZT_prog is an excluded program; cost must be zero regardless of charge rate
+            var excludedRow = result.Data.Single(i => i.Program == "ZT_prog");
+            Assert.Equal(0m, excludedRow.HoursCost);
+        }
+
+        [Fact]
+        public async Task GetProgramPlanCostAsync_OrdersByHoursCostDescending_ByDefault()
+        {
+            // Arrange
+            var seed = BuildPlanCostSeedData();
+            var repo = CreatePlanCostRepository(
+                seed.Programs, seed.Projects, seed.StaffJobs, seed.Staff, seed.WorkgroupGrades, seed.ProfitCentreGrades);
+            var query = new Core.Pagination.PaginationParameters<string> { Page = 1, PageSize = 10, Descending = true };
+
+            // Act
+            var result = await repo.GetProgramPlanCostAsync(query);
+
+            // Assert
+            var costs = result.Data.Select(i => i.HoursCost).ToList();
+            Assert.Equal(costs.OrderByDescending(c => c).ToList(), costs);
+        }
+
+        [Fact]
+        public async Task GetProgramPlanCostAsync_AppliesPaging()
+        {
+            // Arrange
+            var seed = BuildPlanCostSeedData();
+            var repo = CreatePlanCostRepository(
+                seed.Programs, seed.Projects, seed.StaffJobs, seed.Staff, seed.WorkgroupGrades, seed.ProfitCentreGrades);
+            var query = new Core.Pagination.PaginationParameters<string> { Page = 1, PageSize = 1 };
+
+            // Act
+            var result = await repo.GetProgramPlanCostAsync(query);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
     }
 }

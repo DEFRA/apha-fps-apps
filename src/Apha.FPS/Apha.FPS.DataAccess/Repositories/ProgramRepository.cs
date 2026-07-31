@@ -214,6 +214,127 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
+        public async Task<PagedData<ProgramPlanCostView>> GetProgramPlanCostAsync(PaginationParameters<string> query)
+        {
+            var version = "Plan - " + DateTime.Now.ToString("dd/MM/yyyy");
+            var excludedPrograms = new[] { "ZT_prog", "ZT_leave", "Pend_work" };
+
+            var planQuery =
+                (from prg in _dbContext.Programs
+                 join prj in _dbContext.Projects on prg.ProgramNo equals prj.Program
+                 join sj in _dbContext.StaffJobs on prj.ParentProject equals sj.JobCode
+                 join stf in _dbContext.StaffGeneralViews on sj.StaffId equals stf.StaffId
+                 join wgg in _dbContext.WorkgroupGradeGeneralViews on stf.WorkGroupGrade equals wgg.WgGrade
+                 join pcg in _dbContext.ProfitCentreGradeViews on wgg.ProfitCentreGrade equals pcg.PcGrade
+                 select new ProgramPlanCostView
+                 {
+                     Version = version,
+                     Directorate = prg.Directorate,
+                     Program = prj.Program,
+                     Customer = prj.Customer,
+                     Contract = prj.Contract,
+                     Project = prj.ParentProject,
+                     Status = prj.ProjectStatus,
+                     ResourceCentre = pcg.ProfitCentre,
+                     WorkGroup = wgg.WorkGroup,
+                     GradeCode = wgg.GradeCode,
+                     Name = stf.Name,
+                     Hours = sj.PlannedHours,
+                     HoursCost = excludedPrograms.Contains(prj.Program)
+                        ? 0
+                        : (decimal)sj.PlannedHours * (pcg.ChargeRate ?? 0)
+                 }).Distinct();
+
+            planQuery = ApplyProgramPlanCostFilter(planQuery, query.Filter);
+            planQuery = (IQueryable<ProgramPlanCostView>)ApplyProgramPlanCostSorting(planQuery, query.SortBy, query.Descending);
+
+            var result = await planQuery.ToListAsync();
+            return base.ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        private static IQueryable ApplyProgramPlanCostSorting(IQueryable<ProgramPlanCostView> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+            {
+                return descending ? query.OrderByDescending(x => x.HoursCost) : query.OrderBy(x => x.HoursCost);
+            }
+
+            return ApplyProgramPlanCostSortingByProperty(query, sortBy.ToLower(), descending);
+        }
+
+        private static IQueryable ApplyProgramPlanCostSortingByProperty(IQueryable<ProgramPlanCostView> query, string property, bool descending)
+        {
+            return property switch
+            {
+                "version" => ApplyPlanCostOrder(query, i => i.Version, descending),
+                "directorate" => ApplyPlanCostOrder(query, i => i.Directorate, descending),
+                "program" => ApplyPlanCostOrder(query, i => i.Program, descending),
+                "customer" => ApplyPlanCostOrder(query, i => i.Customer, descending),
+                "contract" => ApplyPlanCostOrder(query, i => i.Contract, descending),
+                "project" => ApplyPlanCostOrder(query, i => i.Project, descending),
+                "status" => ApplyPlanCostOrder(query, i => i.Status, descending),
+                "resourcecentre" => ApplyPlanCostOrder(query, i => i.ResourceCentre, descending),
+                "workgroup" => ApplyPlanCostOrder(query, i => i.WorkGroup, descending),
+                "gradecode" => ApplyPlanCostOrder(query, i => i.GradeCode, descending),
+                "name" => ApplyPlanCostOrder(query, i => i.Name, descending),
+                "hours" => ApplyPlanCostOrder(query, i => i.Hours, descending),
+                "hourscost" => ApplyPlanCostOrder(query, i => i.HoursCost, descending),
+                _ => query
+            };
+        }
+
+        private static IQueryable ApplyPlanCostOrder<T>(IQueryable<ProgramPlanCostView> query, Expression<Func<ProgramPlanCostView, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        }
+
+        private static IQueryable<ProgramPlanCostView> ApplyProgramPlanCostFilter(IQueryable<ProgramPlanCostView> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("Version", out var version) && version != null)
+                query = query.Where(x => EF.Functions.ILike(x.Version!, $"%{version}%"));
+
+            if (dict.TryGetValue("Directorate", out var directorate) && directorate != null)
+                query = query.Where(x => EF.Functions.ILike(x.Directorate!, $"%{directorate}%"));
+
+            if (dict.TryGetValue("Program", out var program) && program != null)
+                query = query.Where(x => EF.Functions.ILike(x.Program!, $"%{program}%"));
+
+            if (dict.TryGetValue("Customer", out var customer) && customer != null)
+                query = query.Where(x => EF.Functions.ILike(x.Customer!, $"%{customer}%"));
+
+            if (dict.TryGetValue("Contract", out var contract) && contract != null)
+                query = query.Where(x => EF.Functions.ILike(x.Contract!, $"%{contract}%"));
+
+            if (dict.TryGetValue("Project", out var project) && project != null)
+                query = query.Where(x => EF.Functions.ILike(x.Project!, $"%{project}%"));
+
+            if (dict.TryGetValue("Status", out var status) && status != null)
+                query = query.Where(x => EF.Functions.ILike(x.Status!, $"%{status}%"));
+
+            if (dict.TryGetValue("ResourceCentre", out var resourceCentre) && resourceCentre != null)
+                query = query.Where(x => EF.Functions.ILike(x.ResourceCentre!, $"%{resourceCentre}%"));
+
+            if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
+                query = query.Where(x => EF.Functions.ILike(x.WorkGroup!, $"%{workGroup}%"));
+
+            if (dict.TryGetValue("GradeCode", out var gradeCode) && gradeCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.GradeCode!, $"%{gradeCode}%"));
+
+            if (dict.TryGetValue("Name", out var name) && name != null)
+                query = query.Where(x => EF.Functions.ILike(x.Name!, $"%{name}%"));
+
+            return query;
+        }
+
         private static IQueryable ApplySorting(IQueryable<Program> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))

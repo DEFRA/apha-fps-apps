@@ -35,7 +35,7 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<ManagerDto, ManagerRes>().ReverseMap();
             CreateMap<ProgramReq, ProgramDto>().ReverseMap();
             CreateMap<ProgramRes, ProgramDto>().ReverseMap();
-
+            CreateMap<ProgramPlanCostRes, ProgramPlanCostDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectReq>()
                 .ForMember(d => d.BudgetExt, o => o.MapFrom(s => s.CustIncome)).ReverseMap()
                 .ForMember(d => d.CustIncome, o => o.MapFrom(s => s.BudgetExt));

@@ -64,6 +64,18 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<ProgramRes>>(programDto));
         }   
 
+        [HttpGet("plan-cost")]
+        public async Task<ActionResult> GetProgramPlanCostAsync(
+            [FromQuery] QueryParameters<string> query)
+        {
+            var planCostDto = await _programService.GetProgramPlanCostAsync(query);
+            if (planCostDto == null)
+            {
+                throw new ArgumentException("Program plan cost records not found");
+            }
+            return Ok(_mapper.Map<PaginationRes<ProgramPlanCostRes>>(planCostDto));
+        }
+
         [HttpGet("{programNo}")]
         public async Task<ActionResult<ProgramRes>> GetProgramById(
             string programNo)
