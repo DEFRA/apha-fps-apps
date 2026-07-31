@@ -62,7 +62,11 @@ namespace Apha.PACT.Application.Services
                     if (descriptions != null && descriptions.TryGetValue(dto.TestCode, out var desc))
                         dto.ItemDescription = desc;
 
-                    if (unitPrices != null && unitPrices.TryGetValue(dto.TestCode, out var unitPrice))
+                    // Only fall back to the TestorProduct price when the record has no stored
+                    // UnitCost, so user-edited unit costs are preserved on the grid.
+                    if (!dto.UnitCost.HasValue
+                        && unitPrices != null
+                        && unitPrices.TryGetValue(dto.TestCode, out var unitPrice))
                         dto.UnitCost = unitPrice;
                 }
 
@@ -97,17 +101,23 @@ namespace Apha.PACT.Application.Services
         {
             ValidateRequiredFields(dto);
 
-            var existing = await _testCapabilityRepository.GetByIdAsync(dto.TestCode, dto.WorkGroup);
+            // WorkGroup is part of the composite key. Use the original WorkGroup (when supplied)
+            // to locate the existing record; fall back to the current WorkGroup for backwards compatibility.
+            var lookupWorkGroup = string.IsNullOrWhiteSpace(dto.OriginalWorkGroup)
+                ? dto.WorkGroup
+                : dto.OriginalWorkGroup;
+
+            var existing = await _testCapabilityRepository.GetByIdAsync(dto.TestCode, lookupWorkGroup);
             if (existing is null)
                 throw new KeyNotFoundException(
-                    $"A Test Capability record with TestCode '{dto.TestCode}' and WorkGroup '{dto.WorkGroup}' was not found.");
+                    $"A Test Capability record with TestCode '{dto.TestCode}' and WorkGroup '{lookupWorkGroup}' was not found.");
 
-            var hasReqmts = await _testReqmtRepository.ExistsByTestBuyerCodeAsync(dto.TestCode + dto.WorkGroup);
+            var hasReqmts = await _testReqmtRepository.ExistsByTestBuyerCodeAsync(dto.TestCode + lookupWorkGroup);
             if (hasReqmts)
                 throw new InvalidOperationException("Cannot update, test requirements are dependant on this.");
 
             var entity = _mapper.Map<TestCapability>(dto);
-            var updated = await _testCapabilityRepository.UpdateAsync(entity);
+            var updated = await _testCapabilityRepository.UpdateAsync(entity, lookupWorkGroup);
             return _mapper.Map<TestCapabilityDto>(updated);
         }
 

@@ -5,6 +5,7 @@
     var isEdit = !string.IsNullOrEmpty(Model.TestCode) && !string.IsNullOrEmpty(Model.WorkGroup);
     var workGroupOptions = ViewBag.WorkGroupOptions as List<SelectListItem> ?? new List<SelectListItem>();
     var testorProductOptions = ViewBag.TestorProductOptions as List<SelectListItem> ?? new List<SelectListItem>();
+    var testorProductUnitCosts = ViewBag.TestorProductUnitCosts as Dictionary<string, decimal?> ?? new Dictionary<string, decimal?>();
 }
 
 <div class="modal-header flex-space-center">
@@ -17,6 +18,10 @@
 
         <input type="hidden" name="PlanPortfolio" value="@Model.PlanPortfolio" />
         <input type="hidden" name="FpsYear" value="@Model.FpsYear" />
+        @if (isEdit)
+        {
+            <input type="hidden" name="OriginalWorkGroup" value="@Model.WorkGroup" />
+        }
 
         <!-- Validation error summary -->
         <div class="govuk-error-summary" role="alert"
@@ -48,13 +53,16 @@
                             {
                                 var sepIdx = opt.Text.IndexOf(" \u2013 ");
                                 var optDesc = sepIdx >= 0 ? opt.Text.Substring(sepIdx + 3) : "";
+                                var optUnitCost = testorProductUnitCosts.TryGetValue(opt.Value, out var uc) && uc.HasValue
+                                    ? uc.Value.ToString("F2")
+                                    : "";
                                 if (opt.Value == Model.TestCode)
                                 {
-                                    <option value="@opt.Value" data-description="@optDesc" selected>@opt.Value</option>
+                                    <option value="@opt.Value" data-description="@optDesc" data-unitcost="@optUnitCost" selected>@opt.Value</option>
                                 }
                                 else
                                 {
-                                    <option value="@opt.Value" data-description="@optDesc">@opt.Value</option>
+                                    <option value="@opt.Value" data-description="@optDesc" data-unitcost="@optUnitCost">@opt.Value</option>
                                 }
                             }
                         </select>
@@ -66,35 +74,23 @@
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
                     <label class="govuk-label govuk-!-font-weight-bold" for="WorkGroup">Work Group <span class="sup_color_red">*</span></label>
-                    @if (isEdit)
-                    {
-                        var selectedWg = workGroupOptions.FirstOrDefault(o => o.Value == Model.WorkGroup);
-                        var wgDisplay = selectedWg?.Text ?? Model.WorkGroup;
-                        <input type="hidden" name="WorkGroup" value="@Model.WorkGroup" />
-                        <input class="govuk-input govuk-!-font-size-16" id="WorkGroup"
-                               value="@wgDisplay" readonly
-                               style="width:100%; background-color:#f3f2f1; cursor:default;" />
-                    }
-                    else
-                    {
-                        <select class="govuk-select govuk-!-font-size-16" id="WorkGroup" name="WorkGroup"
-                                style="width:100%;" required>
-                            <option value="">-- Select Work Group --</option>
-                            @foreach (var opt in workGroupOptions)
+                    <select class="govuk-select govuk-!-font-size-16" id="WorkGroup" name="WorkGroup"
+                            style="width:100%;" required>
+                        <option value="">-- Select Work Group --</option>
+                        @foreach (var opt in workGroupOptions)
+                        {
+                            if (opt.Value == Model.WorkGroup)
                             {
-                                if (opt.Value == Model.WorkGroup)
-                                {
-                                    <option value="@opt.Value" selected>@opt.Text</option>
-                                }
-                                else
-                                {
-                                    <option value="@opt.Value">@opt.Text</option>
-                                }
+                                <option value="@opt.Value" selected>@opt.Text</option>
                             }
-                        </select>
-                        <span data-valmsg-for="WorkGroup"
-                              class="govuk-error-message field-validation-valid" style="display:none;"></span>
-                    }
+                            else
+                            {
+                                <option value="@opt.Value">@opt.Text</option>
+                            }
+                        }
+                    </select>
+                    <span data-valmsg-for="WorkGroup"
+                          class="govuk-error-message field-validation-valid" style="display:none;"></span>
                 </div>
             </div>
         </div>
@@ -159,8 +155,11 @@
     function onTestCodeSelected(value) {
         if (!value) {
             $('#ItemDescriptionDisplay').val('');
+            $('#UnitCost').val('');
             return;
         }
-        $('#ItemDescriptionDisplay').val($('#TestCode option:selected').data('description') || '');
+        var selectedOption = $('#TestCode option:selected');
+        $('#ItemDescriptionDisplay').val(selectedOption.data('description') || '');
+        $('#UnitCost').val(selectedOption.data('unitcost') || '');
     }
 </script>

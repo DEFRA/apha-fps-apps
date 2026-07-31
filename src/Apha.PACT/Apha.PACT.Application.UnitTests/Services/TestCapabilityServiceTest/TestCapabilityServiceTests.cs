@@ -61,6 +61,29 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
         }
 
         [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_StoredUnitCost_IsPreservedOverProductPrice()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var entity = new TestCapability { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var pagedData = new PagedData<TestCapability>([entity], new PaginationData { TotalRecords = 1 });
+            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1", UnitCost = 99.99m };
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = [dto] };
+            var descriptions = new Dictionary<string, string?> { ["TC1"] = "Test Description" };
+            var unitPrices = new Dictionary<string, decimal?> { ["TC1"] = 42.50m };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+            _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
+            _testorProductRepo.GetUnitPricesByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(unitPrices);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            Assert.Equal(99.99m, result.Data!.First().UnitCost);
+        }
+
+        [Fact]
         public async Task GetPagedTestCapabilityByPortfolioAsync_EmptyData_DoesNotCallDescriptions()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
@@ -263,13 +286,40 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             _testCapabilityRepo.GetByIdAsync("TC1", "WG1").Returns(existing);
             _testReqmtRepo.ExistsByTestBuyerCodeAsync("TC1WG1").Returns(false);
             _mapper.Map<TestCapability>(dto).Returns(entity);
-            _testCapabilityRepo.UpdateAsync(entity).Returns(entity);
+            _testCapabilityRepo.UpdateAsync(entity, "WG1").Returns(entity);
             _mapper.Map<TestCapabilityDto>(entity).Returns(updated);
 
             var result = await _sut.UpdateTestCapabilityAsync(dto);
 
             result.Should().Be(updated);
-            await _testCapabilityRepo.Received(1).UpdateAsync(entity);
+            await _testCapabilityRepo.Received(1).UpdateAsync(entity, "WG1");
+        }
+
+        [Fact]
+        public async Task UpdateTestCapabilityAsync_WorkGroupChanged_UsesOriginalWorkGroupForLookup()
+        {
+            var dto = new TestCapabilityDto
+            {
+                TestCode = "TC1",
+                WorkGroup = "WG2",
+                OriginalWorkGroup = "WG1",
+                PlanPortfolio = "PP1"
+            };
+            var existing = new TestCapability { TestCode = "TC1", WorkGroup = "WG1" };
+            var entity = new TestCapability { TestCode = "TC1", WorkGroup = "WG2" };
+            var updated = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG2" };
+
+            _testCapabilityRepo.GetByIdAsync("TC1", "WG1").Returns(existing);
+            _testReqmtRepo.ExistsByTestBuyerCodeAsync("TC1WG1").Returns(false);
+            _mapper.Map<TestCapability>(dto).Returns(entity);
+            _testCapabilityRepo.UpdateAsync(entity, "WG1").Returns(entity);
+            _mapper.Map<TestCapabilityDto>(entity).Returns(updated);
+
+            var result = await _sut.UpdateTestCapabilityAsync(dto);
+
+            result.Should().Be(updated);
+            await _testCapabilityRepo.Received(1).GetByIdAsync("TC1", "WG1");
+            await _testCapabilityRepo.Received(1).UpdateAsync(entity, "WG1");
         }
 
         [Fact]

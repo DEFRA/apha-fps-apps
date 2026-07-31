@@ -22,6 +22,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Order = 3, Width = 150, Type = GridColumnType.Text, IsFilterable = true)]
         public string WorkGroup { get; set; } = null!;
 
+        // Holds the WorkGroup value the record was loaded with, so the update can
+        // locate the original row (WorkGroup is part of the composite key) even when
+        // the user changes the WorkGroup in the edit modal.
+        [GridColumn(IsVisible = false)]
+        public string? OriginalWorkGroup { get; set; }
+
         [Display(Name = "Portfolio")]
         [Required(ErrorMessage = "Plan Portfolio is required.")]
         [GridColumn(IsVisible = false)]
