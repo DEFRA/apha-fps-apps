@@ -15,46 +15,20 @@ namespace Apha.FPSApps.Application.Services.PACT
         private readonly IExcelImportService _excelImportService;
         private readonly IWorkGroupService _workGroupService;
         private readonly IMonthService _monthService;
-        private readonly ITestCapabilityService _testCapabilityService;
-        private readonly ITestRequirementService _testRequirementService;
 
         private static readonly string[] RequiredHeaders =
             ["Work Group", "Test Code", "Buyer", "Month", "Volume"];
-
-        public PactMonthlyOutputService(IPactApiClient pactApiClient)
-            : this(pactApiClient, new ExcelImportService())
-        {
-        }
-
-        public PactMonthlyOutputService(IPactApiClient pactApiClient, IExcelImportService excelImportService)
-            : this(pactApiClient, excelImportService, null!, null!, null!, null!)
-        {
-        }
-
-        public PactMonthlyOutputService(
-            IPactApiClient pactApiClient,
-            IWorkGroupService workGroupService,
-            IMonthService monthService,
-            ITestCapabilityService testCapabilityService,
-            ITestRequirementService testRequirementService)
-            : this(pactApiClient, new ExcelImportService(), workGroupService, monthService, testCapabilityService, testRequirementService)
-        {
-        }
 
         public PactMonthlyOutputService(
             IPactApiClient pactApiClient,
             IExcelImportService excelImportService,
             IWorkGroupService workGroupService,
-            IMonthService monthService,
-            ITestCapabilityService testCapabilityService,
-            ITestRequirementService testRequirementService)
+            IMonthService monthService)
         {
             _pactApiClient = pactApiClient;
             _excelImportService = excelImportService;
             _workGroupService = workGroupService;
             _monthService = monthService;
-            _testCapabilityService = testCapabilityService;
-            _testRequirementService = testRequirementService;
         }
 
         // ── Log ──────────────────────────────────────────────────────────────────

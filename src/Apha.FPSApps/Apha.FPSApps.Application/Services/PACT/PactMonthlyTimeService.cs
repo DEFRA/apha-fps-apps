@@ -24,25 +24,6 @@ namespace Apha.FPSApps.Application.Services.PACT
         [GeneratedRegex("^(?<workGroup>[A-Za-z0-9]+?)(?<month>\\d{2})TS", RegexOptions.IgnoreCase)]
         private static partial Regex TimeFileMetadataRegex();
 
-        public PactMonthlyTimeService(IPactApiClient pactApiClient)
-            : this(pactApiClient, new ExcelImportService())
-        {
-        }
-
-        public PactMonthlyTimeService(IPactApiClient pactApiClient, IExcelImportService excelImportService)
-            : this(pactApiClient, excelImportService, null!, null!, null!)
-        {
-        }
-
-        public PactMonthlyTimeService(
-            IPactApiClient pactApiClient,
-            IWorkGroupService workGroupService,
-            IPactTimeCodeValidService timeCodeValidService,
-            IMonthService monthService)
-            : this(pactApiClient, new ExcelImportService(), workGroupService, timeCodeValidService, monthService)
-        {
-        }
-
         public PactMonthlyTimeService(
             IPactApiClient pactApiClient,
             IExcelImportService excelImportService,

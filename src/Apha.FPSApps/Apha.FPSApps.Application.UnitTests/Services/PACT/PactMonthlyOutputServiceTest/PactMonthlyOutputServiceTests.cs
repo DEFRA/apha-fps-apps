@@ -1,5 +1,7 @@
+using Apha.Common.Utilities.ExcelImport;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.PACT;
@@ -13,14 +15,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServ
     {
         private readonly IPactApiClient _pactClient;
         private readonly IPactMonthlyOutputApiClient _pactMonthlyOutputApiClient;
+        private readonly IExcelImportService _excelImportService;
+        private readonly IWorkGroupService _workGroupService;
+        private readonly IMonthService _monthService;
         private readonly PactMonthlyOutputService _service;
 
         public PactMonthlyOutputServiceTests()
         {
             _pactClient = Substitute.For<IPactApiClient>();
             _pactMonthlyOutputApiClient = Substitute.For<IPactMonthlyOutputApiClient>();
+            _excelImportService = Substitute.For<IExcelImportService>();
+            _workGroupService = Substitute.For<IWorkGroupService>();
+            _monthService = Substitute.For<IMonthService>();
+
             _pactClient.PactMonthlyOutput.Returns(_pactMonthlyOutputApiClient);
-            _service = new PactMonthlyOutputService(_pactClient);
+            _service = new PactMonthlyOutputService(_pactClient, _excelImportService, _workGroupService, _monthService);
         }
 
         #region SearchAsync Tests

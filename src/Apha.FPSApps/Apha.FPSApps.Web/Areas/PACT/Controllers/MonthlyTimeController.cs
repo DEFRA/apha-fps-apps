@@ -276,8 +276,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var bulkUpdateResponse = await _monthlyTimeService.BulkUpdateStagingNamesAsync(new BulkUpdateStagingMonthlyTimeNamesDto
             {
                 ExcludeId = model.Id,
-                OriginalWorkGroup = existingRecord.WorkGroup,
-                OriginalPactStaffId = existingRecord.PactStaffId,
+                OriginalWorkGroup = existingRecord?.WorkGroup,
+                OriginalPactStaffId = existingRecord?.PactStaffId,
                 NewName = model.Name,
                 NewPactStaffId = model.PactStaffId,
                 NewPactId = model.PactId
