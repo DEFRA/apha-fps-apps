@@ -167,10 +167,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 return query;
 
             var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(filter,
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            if (dict is null)
-                return query;
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                ?? [];
 
             if (dict.TryGetValue("WorkGroupName", out var wg) && !string.IsNullOrWhiteSpace(wg))
                 query = query.Where(b => EF.Functions.ILike(b.WorkGroupName, $"%{wg}%"));
