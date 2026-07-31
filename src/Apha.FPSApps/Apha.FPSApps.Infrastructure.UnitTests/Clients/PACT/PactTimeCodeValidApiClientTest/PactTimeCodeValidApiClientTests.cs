@@ -35,7 +35,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
                 new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001" });
 
             _http.GetAsync<TimeCodeValidRes>(Arg.Is<string>(url =>
-                url.Contains("api/v1/timecodevalid/wgtimeprojectcode/byid") && 
+                url.Contains("api/v1/timecodevalid/wgtimecodeprojectcode") && 
                 url.Contains($"workGroup={Uri.EscapeDataString("WG001")}") && 
                 url.Contains($"timeCode={Uri.EscapeDataString("TC001")}") && 
                 url.Contains($"parentProject={Uri.EscapeDataString("PP001")}")))
