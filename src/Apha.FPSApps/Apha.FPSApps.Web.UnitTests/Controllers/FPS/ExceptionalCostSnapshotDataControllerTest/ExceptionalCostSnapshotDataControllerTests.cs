@@ -153,7 +153,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ExceptionalCostSnapshotData
 
             // Assert
             var partialView = Assert.IsType<PartialViewResult>(result);
+            Assert.NotNull(partialView.Model);
             var gridConfig = Assert.IsType<DataGridConfig<ExceptionalCostSnapshotItem>>(partialView.Model);
+            Assert.NotNull(gridConfig.CurrentFilters);
             Assert.True(gridConfig.CurrentFilters.ContainsKey("Directorate"));
             Assert.Equal("DIR1", gridConfig.CurrentFilters["Directorate"]);
         }
