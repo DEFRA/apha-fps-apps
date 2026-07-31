@@ -169,17 +169,18 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data." });
 
-            var validationErrors = await ValidateLiveRecordAsync(model);
-            if (validationErrors.Count > 0)
-                return Json(new { success = false, message = "Validation failed.", errors = validationErrors });
-
             var dto = _mapper.Map<PactMonthlyOutputDto>(model);
 
             var keyParts = (model.CompositeKey ?? string.Empty).Split('|');
-            dto.OriginalTestCode  = keyParts.ElementAtOrDefault(0);
-            dto.OriginalBuyer     = keyParts.ElementAtOrDefault(1);
-            dto.OriginalMonth     = double.TryParse(keyParts.ElementAtOrDefault(2), out var km) ? km : 0;
+            dto.OriginalTestCode = keyParts.ElementAtOrDefault(0);
+            dto.OriginalBuyer = keyParts.ElementAtOrDefault(1);
+            dto.OriginalMonth = double.TryParse(keyParts.ElementAtOrDefault(2), out var km) ? km : 0;
             dto.OriginalWorkGroup = keyParts.ElementAtOrDefault(3);
+
+            var validationResponse = await _monthlyOutputService.ValidateLiveAsync(dto);
+            var validationErrors = validationResponse.Data ?? [];
+            if (validationErrors.Count > 0)
+                return Json(new { success = false, message = "Validation failed.", errors = validationErrors.Select(e => new { field = e.Field, message = e.Message }) });
 
             var response = await _monthlyOutputService.UpdateLiveAsync(dto);
             if (response.Success)
@@ -205,10 +206,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetStagingRecord(int id)
         {
-            ViewBag.WorkGroups      = await GetWorkGroupOptionsAsync();
-            ViewBag.MonthOptions    = await GetMonthOptionsAsync();
+            ViewBag.WorkGroups = await GetWorkGroupOptionsAsync();
+            ViewBag.MonthOptions = await GetMonthOptionsAsync();
             ViewBag.TestCodeOptions = await GetAllTestCodesAsync();
-            ViewBag.BuyerOptions    = await GetAllBuyersAsync();
+            ViewBag.BuyerOptions = await GetAllBuyersAsync();
 
             var response = await _monthlyOutputService.GetStagingByIdAsync(id);
             if (!response.Success || response.Data == null)
@@ -221,10 +222,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> AddStagingRecord()
         {
-            ViewBag.WorkGroups      = await GetWorkGroupOptionsAsync();
-            ViewBag.MonthOptions    = await GetMonthOptionsAsync();
+            ViewBag.WorkGroups = await GetWorkGroupOptionsAsync();
+            ViewBag.MonthOptions = await GetMonthOptionsAsync();
             ViewBag.TestCodeOptions = await GetAllTestCodesAsync();
-            ViewBag.BuyerOptions    = await GetAllBuyersAsync();
+            ViewBag.BuyerOptions = await GetAllBuyersAsync();
             return PartialView("_AddEditStagingMonthlyOutput", new StagingMonthlyOutputItem());
         }
 
@@ -518,37 +519,5 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 .ToList();
         }
 
-        private async Task<List<object>> ValidateLiveRecordAsync(MonthlyOutputLiveItem model)
-        {
-            var errors = new List<object>();
-
-            if (model.Volume is null || model.Volume <= 0)
-                errors.Add(new { field = "Volume", message = "Volume must be greater than zero." });
-
-            var workGroup = model.WorkGroup?.Trim();
-            if (string.IsNullOrWhiteSpace(workGroup))
-            {
-                errors.Add(new { field = "WorkGroup", message = "The work group name is blank." });
-            }
-            else
-            {
-                var workGroups = await GetWorkGroupOptionsAsync();
-                if (!workGroups.Any(x => string.Equals(x.Value, workGroup, StringComparison.OrdinalIgnoreCase)))
-                    errors.Add(new { field = "WorkGroup", message = $"The work group name is invalid: {workGroup}" });
-            }
-
-            if (string.IsNullOrWhiteSpace(model.TestCode?.Trim()))
-                errors.Add(new { field = "TestCode", message = "The test code is blank." });
-
-            if (string.IsNullOrWhiteSpace(model.Buyer?.Trim()))
-                errors.Add(new { field = "Buyer", message = "The buyer is blank." });
-
-            var validMonths = await GetMonthOptionsAsync();
-            var monthValue = model.Month.ToString("0");
-            if (!validMonths.Any(x => string.Equals(x.Value, monthValue, StringComparison.OrdinalIgnoreCase)))
-                errors.Add(new { field = "Month", message = $"The month number is invalid: {model.Month}" });
-
-            return errors;
-        }
     }
 }

@@ -182,21 +182,22 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data." });
 
-            var validationErrors = await ValidateLiveRecordAsync(model);
+            var dto = _mapper.Map<MonthlyTimeDto>(model);
+
+            var keyParts = (model.CompositeKey ?? string.Empty).Split('|');
+            dto.OriginalPactStaffId = keyParts.ElementAtOrDefault(0);
+
+            var validationResponse = await _monthlyTimeService.ValidateLiveAsync(dto);
+            var validationErrors = validationResponse.Data ?? [];
             if (validationErrors.Count > 0)
             {
                 return Json(new
                 {
                     success = false,
                     message = "Validation failed.",
-                    errors = validationErrors
+                    errors = validationErrors.Select(e => new { field = e.Field, message = e.Message })
                 });
             }
-
-            var dto = _mapper.Map<MonthlyTimeDto>(model);
-
-            var keyParts = (model.CompositeKey ?? string.Empty).Split('|');
-            dto.OriginalPactStaffId = keyParts.ElementAtOrDefault(0);
 
             var response = await _monthlyTimeService.UpdateLiveAsync(dto);
             if (response.Success)
@@ -532,62 +533,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x.Monthnumber).Select(x => new SelectListItem(x.Monthname, x.Monthnumber.ToString())).ToList()
                 : [];
-        }
-
-        private async Task<List<object>> ValidateLiveRecordAsync(MonthlyTimeLiveItem model)
-        {
-            var errors = new List<object>();
-
-            var workGroup = model.WorkGroup?.Trim();
-            var staffId = model.PactStaffId?.Trim();
-            var timeCode = model.TimeCode?.Trim();
-            var parentProject = model.ParentProject?.Trim();
-
-            if (model.Hours is null || model.Hours <= 0)
-                errors.Add(new { field = "Hours", message = "The hours field must be greater than zero." });
-
-            if (string.IsNullOrWhiteSpace(workGroup))
-            {
-                errors.Add(new { field = "WorkGroup", message = "The work group name is blank." });
-            }
-            else
-            {
-                var workGroups = await GetWorkGroupOptionsAsync();
-                if (!workGroups.Any(x => string.Equals(x.Value, workGroup, StringComparison.OrdinalIgnoreCase)))
-                    errors.Add(new { field = "WorkGroup", message = $"The work group name is invalid: {workGroup}" });
-            }
-
-            if (string.IsNullOrWhiteSpace(staffId))
-                errors.Add(new { field = "PactStaffId", message = "Staff ID blank." });
-
-            if (string.IsNullOrWhiteSpace(timeCode))
-            {
-                errors.Add(new { field = "TimeCode", message = "The Timecode is blank." });
-            }
-            else if (!string.IsNullOrWhiteSpace(workGroup))
-            {
-                var validTimeCodes = await GetTimeCodeOptionsAsync(workGroup);
-                if (!validTimeCodes.Any(x => string.Equals(x.Value, timeCode, StringComparison.OrdinalIgnoreCase)))
-                    errors.Add(new { field = "TimeCode", message = $"Timecode not valid for this WG or invalid timecode: {timeCode}, {workGroup}" });
-            }
-
-            if (string.IsNullOrWhiteSpace(parentProject))
-            {
-                errors.Add(new { field = "ParentProject", message = "The Project is blank." });
-            }
-            else if (!string.IsNullOrWhiteSpace(workGroup) && !string.IsNullOrWhiteSpace(timeCode))
-            {
-                var validProjects = await GetProjectOptionsAsync(workGroup, timeCode);
-                if (!validProjects.Any(x => string.Equals(x.Value, parentProject, StringComparison.OrdinalIgnoreCase)))
-                    errors.Add(new { field = "ParentProject", message = $"Not valid timecode/Project/WG combination: {parentProject}, {timeCode}, {workGroup}" });
-            }
-
-            var validMonths = await GetMonthOptionsAsync();
-            var monthValue = model.Month.ToString("0");
-            if (!validMonths.Any(x => string.Equals(x.Value, monthValue, StringComparison.OrdinalIgnoreCase)))
-                errors.Add(new { field = "Month", message = $"The month No. invalid: {model.Month}" });
-
-            return errors;
         }
     }
 }

@@ -14,6 +14,9 @@ namespace Apha.FPSApps.Application.Services.PACT
     {
         private readonly IPactApiClient _pactApiClient;
         private readonly IExcelImportService _excelImportService;
+        private readonly IWorkGroupService _workGroupService;
+        private readonly IPactTimeCodeValidService _timeCodeValidService;
+        private readonly IMonthService _monthService;
 
         public PactMonthlyTimeService(IPactApiClient pactApiClient)
             : this(pactApiClient, new ExcelImportService())
@@ -21,9 +24,31 @@ namespace Apha.FPSApps.Application.Services.PACT
         }
 
         public PactMonthlyTimeService(IPactApiClient pactApiClient, IExcelImportService excelImportService)
+            : this(pactApiClient, excelImportService, null!, null!, null!)
+        {
+        }
+
+        public PactMonthlyTimeService(
+            IPactApiClient pactApiClient,
+            IWorkGroupService workGroupService,
+            IPactTimeCodeValidService timeCodeValidService,
+            IMonthService monthService)
+            : this(pactApiClient, new ExcelImportService(), workGroupService, timeCodeValidService, monthService)
+        {
+        }
+
+        public PactMonthlyTimeService(
+            IPactApiClient pactApiClient,
+            IExcelImportService excelImportService,
+            IWorkGroupService workGroupService,
+            IPactTimeCodeValidService timeCodeValidService,
+            IMonthService monthService)
         {
             _pactApiClient = pactApiClient;
             _excelImportService = excelImportService;
+            _workGroupService = workGroupService;
+            _timeCodeValidService = timeCodeValidService;
+            _monthService = monthService;
         }
 
         public async Task<ApiResponseDto<List<MonthlyTimeDto>>> GetLiveAsync(
@@ -40,6 +65,72 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<MonthlyTimeDto>> UpdateLiveAsync(MonthlyTimeDto dto)
             => await _pactApiClient.PactMonthlyTime.UpdateLiveAsync(dto);
+
+        public async Task<ApiResponseDto<List<ValidationFieldErrorDto>>> ValidateLiveAsync(MonthlyTimeDto dto)
+        {
+            var errors = new List<ValidationFieldErrorDto>();
+
+            var workGroup    = dto.WorkGroup?.Trim();
+            var staffId      = dto.PactStaffId?.Trim();
+            var timeCode     = dto.TimeCode?.Trim();
+            var parentProject = dto.ParentProject?.Trim();
+
+            if (dto.Hours is null || dto.Hours <= 0)
+                errors.Add(new ValidationFieldErrorDto { Field = "Hours", Message = "The hours field must be greater than zero." });
+
+            if (string.IsNullOrWhiteSpace(workGroup))
+            {
+                errors.Add(new ValidationFieldErrorDto { Field = "WorkGroup", Message = "The work group name is blank." });
+            }
+            else
+            {
+                var wgResponse = await _workGroupService.GetAllWorkGroupsAsync();
+                var validWorkGroups = wgResponse.Success && wgResponse.Data != null
+                    ? wgResponse.Data.Select(x => x.WorkGroupName)
+                    : [];
+                if (!validWorkGroups.Any(x => string.Equals(x, workGroup, StringComparison.OrdinalIgnoreCase)))
+                    errors.Add(new ValidationFieldErrorDto { Field = "WorkGroup", Message = $"The work group name is invalid: {workGroup}" });
+            }
+
+            if (string.IsNullOrWhiteSpace(staffId))
+                errors.Add(new ValidationFieldErrorDto { Field = "PactStaffId", Message = "Staff ID blank." });
+
+            if (string.IsNullOrWhiteSpace(timeCode))
+            {
+                errors.Add(new ValidationFieldErrorDto { Field = "TimeCode", Message = "The Timecode is blank." });
+            }
+            else if (!string.IsNullOrWhiteSpace(workGroup))
+            {
+                var tcResponse = await _timeCodeValidService.GetTimeCodeValidsByWorkGroupAsync(workGroup);
+                var validTimeCodes = tcResponse.Success && tcResponse.Data != null
+                    ? tcResponse.Data.Select(x => x.TimeCode).Distinct()
+                    : [];
+                if (!validTimeCodes.Any(x => string.Equals(x, timeCode, StringComparison.OrdinalIgnoreCase)))
+                    errors.Add(new ValidationFieldErrorDto { Field = "TimeCode", Message = $"Timecode not valid for this WG or invalid timecode: {timeCode}, {workGroup}" });
+            }
+
+            if (string.IsNullOrWhiteSpace(parentProject))
+            {
+                errors.Add(new ValidationFieldErrorDto { Field = "ParentProject", Message = "The Project is blank." });
+            }
+            else if (!string.IsNullOrWhiteSpace(workGroup) && !string.IsNullOrWhiteSpace(timeCode))
+            {
+                var projResponse = await _timeCodeValidService.GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync(workGroup, timeCode);
+                var validProjects = projResponse.Success && projResponse.Data != null ? projResponse.Data : [];
+                if (!validProjects.Any(x => string.Equals(x, parentProject, StringComparison.OrdinalIgnoreCase)))
+                    errors.Add(new ValidationFieldErrorDto { Field = "ParentProject", Message = $"Not valid timecode/Project/WG combination: {parentProject}, {timeCode}, {workGroup}" });
+            }
+
+            var monthResponse = await _monthService.GetAllMonthsAsync();
+            var validMonths = monthResponse.Success && monthResponse.Data != null
+                ? monthResponse.Data.Select(x => x.Monthnumber.ToString())
+                : [];
+            var monthValue = dto.Month.ToString("0");
+            if (!validMonths.Any(x => string.Equals(x, monthValue, StringComparison.OrdinalIgnoreCase)))
+                errors.Add(new ValidationFieldErrorDto { Field = "Month", Message = $"The month No. invalid: {dto.Month}" });
+
+            return ApiResponseDto<List<ValidationFieldErrorDto>>.SuccessResponse(errors);
+        }
 
         public async Task<ApiResponseDto<List<StagingMonthlyTimeDto>>> GetStagingAsync(QueryParameters<string> query, bool? passed)
             => await _pactApiClient.PactMonthlyTime.GetStagingAsync(query, passed);

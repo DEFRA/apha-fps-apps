@@ -275,7 +275,7 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<List<StagingMonthlyOutput>> GetStagingRecordsForValidationAsync(string importedBy)
         {
             return await _context.StagingMonthlyOutputs
-                .Where(x => x.ImportedBy == importedBy)
+                .Where(x => x.ImportedBy == importedBy && x.Passed == false)
                 .OrderBy(x => x.Id)
                 .ToListAsync();
         }

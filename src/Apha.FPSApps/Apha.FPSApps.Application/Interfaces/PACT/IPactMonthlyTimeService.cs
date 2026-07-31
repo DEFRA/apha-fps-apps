@@ -1,6 +1,5 @@
 using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.PACT;
-using Apha.FPSApps.Application.Pagination;
+using Apha.FPSApps.Application.Dtos.PACT;using Apha.FPSApps.Application.Pagination;
 using Microsoft.AspNetCore.Http;
 
 namespace Apha.FPSApps.Application.Interfaces.PACT
@@ -17,6 +16,7 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
 
         Task<ApiResponseDto<MonthlyTimeDto>> GetLiveByKeyAsync(string pactStaffId, string timeCode, double month, string parentProject);
         Task<ApiResponseDto<MonthlyTimeDto>> UpdateLiveAsync(MonthlyTimeDto dto);
+        Task<ApiResponseDto<List<ValidationFieldErrorDto>>> ValidateLiveAsync(MonthlyTimeDto dto);
         Task<ApiResponseDto<List<StagingMonthlyTimeDto>>> GetStagingAsync(QueryParameters<string> query, bool? passed);
         Task<ApiResponseDto<StagingMonthlyTimeDto>> GetStagingByIdAsync(int id);
         Task<ApiResponseDto<StagingMonthlyTimeDto>> CreateStagingAsync(StagingMonthlyTimeDto dto);

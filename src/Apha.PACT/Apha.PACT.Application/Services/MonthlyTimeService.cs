@@ -175,8 +175,6 @@ namespace Apha.PACT.Application.Services
                             existing.PactId = null;
                             existing.Passed = false;
                             existing.FailureComments = string.Empty;
-                            existing.Filename = request.FileName;
-                            existing.ImportedDate = importedDate;
                             rowsToUpdate.Add(existing);
                             continue;
                         }
@@ -374,26 +372,80 @@ namespace Apha.PACT.Application.Services
                 return;
             }
 
-            var matchedStaff = staffByWorkGroup
-                .Where(x => x.WorkGroup == workGroup &&
-                    ((!string.IsNullOrWhiteSpace(staffId) && x.SpNumber == staffId) ||
-                     (!string.IsNullOrWhiteSpace(staffId) && x.Name == staffId) ||
-                     (!string.IsNullOrWhiteSpace(name) && x.Name == name)))
-                .ToList();
+            // if staffId starts with a digit treat it as an SP number,
+            // otherwise treat it as a name
+            if (char.IsDigit(staffId[0]))
+            {
+                // Numeric branch: search by SP number
+                var matchBySpNumber = staffByWorkGroup
+                    .Where(x => x.WorkGroup == workGroup && x.SpNumber == staffId)
+                    .ToList();
 
-            if (matchedStaff.Count == 0)
-            {
-                failures.Add($"This staff ID not in this WG: {staffId}");
+                if (matchBySpNumber.Count == 0)
+                {
+                    failures.Add($"This staff ID not in this WG: {staffId}");
+                    return;
+                }
+
+                // VBA: FindNext reuses the same SPNumber filter — duplicate check is by SP number
+                if (matchBySpNumber.Count == 1)
+                {
+                    // Unique — populate the record
+                    record.PactStaffId = matchBySpNumber[0].SpNumber;
+                    record.PactId      = matchBySpNumber[0].PactId;
+                    record.Name        = matchBySpNumber[0].Name;
+                }
+                else
+                {
+                    // Duplicate SP number in workgroup
+                    if (string.IsNullOrWhiteSpace(record.PactId) || record.PactId == "0")
+                    {
+                        failures.Add($"There is more than one person with this name or SP number in {workGroup}, you will need to manually identify which is correct for this record.");
+                    }
+                    else
+                    {
+                        // PactId already set — populate from matched SP number entry
+                        record.PactStaffId = matchBySpNumber[0].SpNumber;
+                        record.Name        = matchBySpNumber[0].Name;
+                    }
+                }
             }
-            else if (matchedStaff.Count == 1)
+            else
             {
-                record.PactStaffId = matchedStaff[0].SpNumber;
-                record.PactId = matchedStaff[0].PactId;
-                record.Name = matchedStaff[0].Name;
-            }
-            else if (string.IsNullOrWhiteSpace(record.PactId) || record.PactId == "0")
-            {
-                failures.Add($"There is more than one person with this name or SP number in {workGroup}, you will need to manually identify which is correct for this record.");
+                // Non-numeric branch: search by name
+                var matchByName = staffByWorkGroup
+                    .Where(x => x.WorkGroup == workGroup && 
+                    (!string.IsNullOrWhiteSpace(staffId) && x.Name == staffId) || 
+                    (!string.IsNullOrWhiteSpace(name) && x.Name == name))
+                    .ToList();
+
+                if (matchByName.Count == 0)
+                {
+                    failures.Add($"This staff ID not in this WG: {staffId}");
+                    return;
+                }
+
+                if (matchByName.Count == 1)
+                {
+                    // Unique — populate the record
+                    record.PactStaffId = matchByName[0].SpNumber;
+                    record.PactId      = matchByName[0].PactId;
+                    record.Name        = matchByName[0].Name;
+                }
+                else
+                {
+                    // Duplicate name in workgroup
+                    if (string.IsNullOrWhiteSpace(record.PactId) || record.PactId == "0")
+                    {
+                        failures.Add($"There is more than one person with this name or SP number in {workGroup}, you will need to manually identify which is correct for this record.");
+                    }
+                    else
+                    {
+                        // PactId already set — populate from first matched name entry
+                        record.PactStaffId = matchByName[0].SpNumber;
+                        record.Name        = matchByName[0].Name;
+                    }
+                }
             }
         }
 

@@ -13,6 +13,10 @@ namespace Apha.FPSApps.Application.Services.PACT
     {
         private readonly IPactApiClient _pactApiClient;
         private readonly IExcelImportService _excelImportService;
+        private readonly IWorkGroupService _workGroupService;
+        private readonly IMonthService _monthService;
+        private readonly ITestCapabilityService _testCapabilityService;
+        private readonly ITestRequirementService _testRequirementService;
 
         private static readonly string[] RequiredHeaders =
             ["Work Group", "Test Code", "Buyer", "Month", "Volume"];
@@ -23,9 +27,34 @@ namespace Apha.FPSApps.Application.Services.PACT
         }
 
         public PactMonthlyOutputService(IPactApiClient pactApiClient, IExcelImportService excelImportService)
+            : this(pactApiClient, excelImportService, null!, null!, null!, null!)
+        {
+        }
+
+        public PactMonthlyOutputService(
+            IPactApiClient pactApiClient,
+            IWorkGroupService workGroupService,
+            IMonthService monthService,
+            ITestCapabilityService testCapabilityService,
+            ITestRequirementService testRequirementService)
+            : this(pactApiClient, new ExcelImportService(), workGroupService, monthService, testCapabilityService, testRequirementService)
+        {
+        }
+
+        public PactMonthlyOutputService(
+            IPactApiClient pactApiClient,
+            IExcelImportService excelImportService,
+            IWorkGroupService workGroupService,
+            IMonthService monthService,
+            ITestCapabilityService testCapabilityService,
+            ITestRequirementService testRequirementService)
         {
             _pactApiClient = pactApiClient;
             _excelImportService = excelImportService;
+            _workGroupService = workGroupService;
+            _monthService = monthService;
+            _testCapabilityService = testCapabilityService;
+            _testRequirementService = testRequirementService;
         }
 
         // ── Log ──────────────────────────────────────────────────────────────────
@@ -50,6 +79,48 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<PactMonthlyOutputDto>> UpdateLiveAsync(PactMonthlyOutputDto dto)
             => await _pactApiClient.PactMonthlyOutput.UpdateLiveAsync(dto);
+
+        public async Task<ApiResponseDto<List<ValidationFieldErrorDto>>> ValidateLiveAsync(PactMonthlyOutputDto dto)
+        {
+            var errors = new List<ValidationFieldErrorDto>();
+
+            var workGroup = dto.WorkGroup?.Trim();
+            var testCode  = dto.TestCode?.Trim();
+            var buyer     = dto.Buyer?.Trim();
+
+            if (dto.Volume is null || dto.Volume <= 0)
+                errors.Add(new ValidationFieldErrorDto { Field = "Volume", Message = "Volume must be greater than zero." });
+
+            if (string.IsNullOrWhiteSpace(workGroup))
+            {
+                errors.Add(new ValidationFieldErrorDto { Field = "WorkGroup", Message = "The work group name is blank." });
+            }
+            else
+            {
+                var wgResponse = await _workGroupService.GetAllWorkGroupsAsync();
+                var validWorkGroups = wgResponse.Success && wgResponse.Data != null
+                    ? wgResponse.Data.Select(x => x.WorkGroupName)
+                    : [];
+                if (!validWorkGroups.Any(x => string.Equals(x, workGroup, StringComparison.OrdinalIgnoreCase)))
+                    errors.Add(new ValidationFieldErrorDto { Field = "WorkGroup", Message = $"The work group name is invalid: {workGroup}" });
+            }
+
+            if (string.IsNullOrWhiteSpace(testCode))
+                errors.Add(new ValidationFieldErrorDto { Field = "TestCode", Message = "The test code is blank." });
+
+            if (string.IsNullOrWhiteSpace(buyer))
+                errors.Add(new ValidationFieldErrorDto { Field = "Buyer", Message = "The buyer is blank." });
+
+            var monthResponse = await _monthService.GetAllMonthsAsync();
+            var validMonths = monthResponse.Success && monthResponse.Data != null
+                ? monthResponse.Data.Select(x => x.Monthnumber.ToString())
+                : [];
+            var monthValue = dto.Month.ToString("0");
+            if (!validMonths.Any(x => string.Equals(x, monthValue, StringComparison.OrdinalIgnoreCase)))
+                errors.Add(new ValidationFieldErrorDto { Field = "Month", Message = $"The month number is invalid: {dto.Month}" });
+
+            return ApiResponseDto<List<ValidationFieldErrorDto>>.SuccessResponse(errors);
+        }
 
         public async Task<ApiResponseDto<bool>> DeleteLiveAsync(string testCode, string buyer, double month, string workGroup)
             => await _pactApiClient.PactMonthlyOutput.DeleteLiveAsync(testCode, buyer, month, workGroup);

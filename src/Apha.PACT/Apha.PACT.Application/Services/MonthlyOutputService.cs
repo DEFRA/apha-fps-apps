@@ -167,8 +167,6 @@ namespace Apha.PACT.Application.Services
                             existing.Volume = ExcelParseHelper.TryParseDouble(row.Volume);
                             existing.Passed = false;
                             existing.FailureComments = string.Empty;
-                            existing.Filename = request.FileName;
-                            existing.ImportedDate = importedDate;
                             rowsToUpdate.Add(existing);
                             continue;
                         }
