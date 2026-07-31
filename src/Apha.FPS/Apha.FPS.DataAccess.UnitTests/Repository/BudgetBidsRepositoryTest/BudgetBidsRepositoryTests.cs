@@ -337,6 +337,49 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
             Assert.Equal("ZZZ", result.Data.First().Account);
         }
 
+        [Fact]
+        public async Task GetBidViewPagedAsync_WithJsonNullFilter_ReturnsUnfilteredRows()
+        {
+            // Covers: dict == null branch - JSON literal "null" deserialises to a null dictionary
+            var bidViews = new List<BidView>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo  = CreateRepository(bidViews: bidViews);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, Filter = "null"
+            };
+
+            // Act
+            var result = await repo.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert - null JSON yields null dict, filter is ignored, row is returned
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_WithUnknownSortBy_SortsByAccountDefault()
+        {
+            // Covers: _ (default) branch in ApplyBidViewSort
+            var bidViews = new List<BidView>
+            {
+                new() { WorkGroupName = "WG01", Account = "ZZZ", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG01", Account = "AAA", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo  = CreateRepository(bidViews: bidViews);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, SortBy = "unknown"
+            };
+
+            // Act
+            var result = await repo.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert - default sort is by Account ascending
+            Assert.Equal("AAA", result.Data.First().Account);
+        }
+
         #endregion
 
         #region GetBidByIdAsync Tests
