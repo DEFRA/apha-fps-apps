@@ -10,13 +10,19 @@ using System.Text.RegularExpressions;
 
 namespace Apha.FPSApps.Application.Services.PACT
 {
-    public class PactMonthlyTimeService : IPactMonthlyTimeService
+    public partial class PactMonthlyTimeService : IPactMonthlyTimeService
     {
         private readonly IPactApiClient _pactApiClient;
         private readonly IExcelImportService _excelImportService;
         private readonly IWorkGroupService _workGroupService;
         private readonly IPactTimeCodeValidService _timeCodeValidService;
         private readonly IMonthService _monthService;
+
+        private static readonly string[] CrossTabRequiredHeaders = ["Time Code", "Parent Project"];
+        private static readonly string[] StagingIdHeader = ["StagingId"];
+
+        [GeneratedRegex("^(?<workGroup>[A-Za-z0-9]+?)(?<month>\\d{2})TS", RegexOptions.IgnoreCase)]
+        private static partial Regex TimeFileMetadataRegex();
 
         public PactMonthlyTimeService(IPactApiClient pactApiClient)
             : this(pactApiClient, new ExcelImportService())
@@ -184,7 +190,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             MonthlyTimeLogFilterDto filter)
             => await _pactApiClient.PactMonthlyTime.SearchAsync(query, filter);
 
-        private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportFlatFileAsync(string fileName, IXLWorkbook workbook)
+        private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportFlatFileAsync(string fileName, XLWorkbook workbook)
         {
             if (!TryGetTimeFileMetadata(fileName, out var workGroupFromFile, out var monthFromFile))
             {
@@ -215,7 +221,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             return await _pactApiClient.PactMonthlyTime.ImportStagingAsync(request);
         }
 
-        private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportCrossTabAsync(string fileName, IXLWorkbook workbook)
+        private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportCrossTabAsync(string fileName, XLWorkbook workbook)
         {
             if (!TryGetTimeFileMetadata(fileName, out var workGroupFromFile, out var monthFromFile))
             {
@@ -236,7 +242,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             }
 
             var headerMap = _excelImportService.BuildHeaderMap(usedRows[0]);
-            var missingHeaders = _excelImportService.GetMissingRequiredHeaders(headerMap, new[] { "Time Code", "Parent Project" }).ToList();
+            var missingHeaders = _excelImportService.GetMissingRequiredHeaders(headerMap, CrossTabRequiredHeaders).ToList();
             if (missingHeaders.Count > 0)
             {
                 return ApiResponseDto<MonthlyTimeImportResultDto>.FailureResponse(
@@ -290,7 +296,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             return await _pactApiClient.PactMonthlyTime.ImportStagingAsync(request);
         }
 
-        private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportOtlDataAsync(string fileName, IXLWorkbook workbook)
+        private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportOtlDataAsync(string fileName, XLWorkbook workbook)
         {
             var requiredHeaders = new[]
             {
@@ -325,7 +331,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             return await _pactApiClient.PactMonthlyTime.ImportStagingAsync(request);
         }
 
-        private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportExportedDataAsync(string fileName, IXLWorkbook workbook)
+        private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportExportedDataAsync(string fileName, XLWorkbook workbook)
         {
             var worksheet = workbook.Worksheet(1);
             var usedRows = worksheet.RangeUsed()?.RowsUsed().ToList() ?? [];
@@ -337,7 +343,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             }
 
             var headerMap = _excelImportService.BuildHeaderMap(usedRows[0]);
-            var missingStagingIdColumn = _excelImportService.GetMissingRequiredHeaders(headerMap, new[] { "StagingId" }).Any();
+            var missingStagingIdColumn = _excelImportService.GetMissingRequiredHeaders(headerMap, StagingIdHeader).Any();
             if (missingStagingIdColumn)
             {
                 return ApiResponseDto<MonthlyTimeImportResultDto>.FailureResponse(
@@ -438,7 +444,7 @@ namespace Apha.FPSApps.Application.Services.PACT
                 return false;
             }
 
-            var match = Regex.Match(name, "^(?<workGroup>[A-Za-z0-9]+?)(?<month>\\d{2})TS", RegexOptions.IgnoreCase);
+            var match = TimeFileMetadataRegex().Match(name);
             if (!match.Success)
             {
                 return false;

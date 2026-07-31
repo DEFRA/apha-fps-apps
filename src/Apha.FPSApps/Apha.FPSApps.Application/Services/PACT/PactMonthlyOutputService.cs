@@ -199,7 +199,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             return await _pactApiClient.PactMonthlyOutput.ImportStagingAsync(request);
         }
 
-        private async Task<ApiResponseDto<MonthlyOutputImportResultDto>> ImportExportedDataAsync(string fileName, IXLWorkbook workbook)
+        private async Task<ApiResponseDto<MonthlyOutputImportResultDto>> ImportExportedDataAsync(string fileName, XLWorkbook workbook)
         {
             var worksheet = workbook.Worksheet(1);
             var usedRows = worksheet.RangeUsed()?.RowsUsed().ToList() ?? [];
