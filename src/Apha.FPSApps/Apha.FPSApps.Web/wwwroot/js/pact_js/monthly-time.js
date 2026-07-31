@@ -648,6 +648,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem) {
+                if (window._stagingSkipTimeCodeOnSelect) return;
                 const timeCode = selectedItem?.value || '';
                 const workGroup = $('#StagingWorkGroup').val();
                 $('#StagingTimeCode').val(timeCode);
@@ -697,8 +698,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
     if (existingWorkGroup) {
         window.stagingWorkGroupDropdown.setValue(existingWorkGroup);
         loadStagingModalStaffByWorkGroup(existingWorkGroup, existingName, existingPactId);
-        loadAllStagingModalTimeCodes(existingTimeCode);
-        loadAllStagingModalProjects(existingParentProject);
+        loadAllStagingModalTimeCodes(existingTimeCode, existingParentProject);
     } else {
         loadStagingModalStaffByWorkGroup($('#StagingWorkGroup').val());
         loadAllStagingModalTimeCodes();
@@ -838,7 +838,7 @@ function loadAllStagingModalStaff() {
     });
 }
 
-function loadAllStagingModalTimeCodes(restoreTimeCode) {
+function loadAllStagingModalTimeCodes(restoreTimeCode, restoreParentProject) {
     resetStagingModalTimeCodeOptions();
     $.ajax({
         url: '/PACT/MonthlyTime/GetAllTimeCodes',
@@ -849,8 +849,19 @@ function loadAllStagingModalTimeCodes(restoreTimeCode) {
                 window.stagingTimeCodeDropdown.updateData(items);
 
                 if (restoreTimeCode && items.some(function (item) { return item.value === restoreTimeCode; })) {
+                    window._stagingSkipTimeCodeOnSelect = true;
                     window.stagingTimeCodeDropdown.setValue(restoreTimeCode);
+                    window._stagingSkipTimeCodeOnSelect = false;
                     $('#StagingTimeCode').val(restoreTimeCode);
+
+                    // Chain project restore after timecode is set, avoiding the race
+                    // with a concurrent loadAllStagingModalProjects call
+                    const workGroup = $('#StagingWorkGroup').val();
+                    if (workGroup) {
+                        loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, restoreTimeCode, restoreParentProject);
+                    } else if (restoreParentProject !== undefined) {
+                        loadAllStagingModalProjects(restoreParentProject);
+                    }
                 }
             }
         },

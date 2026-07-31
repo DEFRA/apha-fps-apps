@@ -1,15 +1,27 @@
 @model Apha.FPSApps.Web.Areas.PACT.Models.StagingMonthlyOutputItem
 
 @{
-    var isEdit       = Model.Id != 0;
-    var workGroups   = ViewBag.WorkGroups   as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
-    var monthOptions = ViewBag.MonthOptions as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
+    var isEdit          = Model.Id != 0;
+    var workGroups      = ViewBag.WorkGroups      as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
+    var monthOptions    = ViewBag.MonthOptions    as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
+    var testCodeOptions = ViewBag.TestCodeOptions as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
+    var buyerOptions    = ViewBag.BuyerOptions    as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
 }
 
 <script type="application/json" id="staging-modal-workgroups-data">
     @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
         workGroups.Where(x => !string.IsNullOrWhiteSpace(x.Value))
                   .Select(x => new { value = x.Value, text = x.Text })))
+</script>
+<script type="application/json" id="staging-modal-testcodes-data">
+    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        testCodeOptions.Where(x => !string.IsNullOrWhiteSpace(x.Value))
+                       .Select(x => new { value = x.Value, text = x.Text })))
+</script>
+<script type="application/json" id="staging-modal-buyers-data">
+    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        buyerOptions.Where(x => !string.IsNullOrWhiteSpace(x.Value))
+                    .Select(x => new { value = x.Value, text = x.Text })))
 </script>
 
 <div class="modal-header flex-space-center">
@@ -39,22 +51,16 @@
             </div>
 
             <div class="govuk-form-group sup_margin_bottom_10" id="fg-staging-testcode">
-                <label for="StagingTestCode" class="govuk-label govuk-!-font-weight-bold">
-                    Test Code <span class="app-required" aria-hidden="true">*</span>
-                </label>
-                <input type="text" class="govuk-input govuk-!-font-size-16"
-                       asp-for="TestCode" id="StagingTestCode" name="TestCode"
-                       placeholder="Enter Test Code" autocomplete="off" aria-required="true" required />
+                <div id="staging-modal-testcode-dropdown" class="modal-dropdown-container"></div>
+                <input type="hidden" asp-for="TestCode" id="StagingTestCode" name="TestCode"
+                       aria-required="true" required />
                 <span data-valmsg-for="TestCode" class="govuk-error-message" style="display:none;"></span>
             </div>
 
             <div class="govuk-form-group sup_margin_bottom_10" id="fg-staging-buyer">
-                <label for="StagingBuyer" class="govuk-label govuk-!-font-weight-bold">
-                    Buyer <span class="app-required" aria-hidden="true">*</span>
-                </label>
-                <input type="text" class="govuk-input govuk-!-font-size-16"
-                       asp-for="Buyer" id="StagingBuyer" name="Buyer"
-                       placeholder="Enter Buyer" autocomplete="off" aria-required="true" required />
+                <div id="staging-modal-buyer-dropdown" class="modal-dropdown-container"></div>
+                <input type="hidden" asp-for="Buyer" id="StagingBuyer" name="Buyer"
+                       aria-required="true" required />
                 <span data-valmsg-for="Buyer" class="govuk-error-message" style="display:none;"></span>
             </div>
 
@@ -82,15 +88,7 @@
                 </div>
             </div>
 
-            @if (isEdit)
-            {
-                <div class="govuk-form-group sup_margin_bottom_10">
-                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="FailureComments">Comments</label>
-                    <textarea class="govuk-textarea govuk-!-font-size-16" asp-for="FailureComments"
-                              id="StagingFailureComments" name="FailureComments" rows="3" readonly></textarea>
-                </div>
-            }
-        </fieldset>
+            </fieldset>
     </form>
 </div>
 

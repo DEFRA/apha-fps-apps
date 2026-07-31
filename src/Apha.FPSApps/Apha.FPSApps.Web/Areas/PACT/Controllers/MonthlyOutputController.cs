@@ -27,19 +27,25 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly IWorkGroupService _workGroupService;
         private readonly IMonthService _monthService;
         private readonly IExcelExportService _excelExportService;
+        private readonly ITestCapabilityService _testCapabilityService;
+        private readonly ITestRequirementService _testRequirementService;
 
         public MonthlyOutputController(
             IMapper mapper,
             IPactMonthlyOutputService monthlyOutputService,
             IWorkGroupService workGroupService,
             IMonthService monthService,
-            IExcelExportService excelExportService)
+            IExcelExportService excelExportService,
+            ITestCapabilityService testCapabilityService,
+            ITestRequirementService testRequirementService)
         {
             _mapper = mapper;
             _monthlyOutputService = monthlyOutputService;
             _workGroupService = workGroupService;
             _monthService = monthService;
             _excelExportService = excelExportService;
+            _testCapabilityService = testCapabilityService;
+            _testRequirementService = testRequirementService;
         }
 
         [HttpGet]
@@ -100,11 +106,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTestCodesByWorkGroup(string? workGroup)
         {
-            if (string.IsNullOrWhiteSpace(workGroup))
-                return Json(Array.Empty<object>());
-
-            var response = await _monthlyOutputService.GetLiveAsync(
-                new QueryParameters<string> { Page = -1 }, workGroup, null, null, null);
+            var response = await _testCapabilityService.GetPagedByWorkGroupAsync(
+                new QueryParameters<string> { Page = -1 },
+                string.IsNullOrWhiteSpace(workGroup) ? null : workGroup);
 
             if (!response.Success || response.Data == null)
                 return Json(Array.Empty<object>());
@@ -123,21 +127,21 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetBuyersByTestCode(string? workGroup, string? testCode)
         {
-            if (string.IsNullOrWhiteSpace(workGroup) || string.IsNullOrWhiteSpace(testCode))
-                return Json(Array.Empty<object>());
-
-            var response = await _monthlyOutputService.GetLiveAsync(
-                new QueryParameters<string> { Page = -1 }, workGroup, testCode, null, null);
+            var response = await _testRequirementService.GetAllActiveAsync();
 
             if (!response.Success || response.Data == null)
                 return Json(Array.Empty<object>());
 
-            var result = response.Data
-                .Where(x => !string.IsNullOrWhiteSpace(x.Buyer))
-                .Select(x => new { buyer = x.Buyer!, testCode = x.TestCode ?? string.Empty })
-                .DistinctBy(x => x.buyer)
-                .OrderBy(x => x.buyer)
-                .Select(x => new { value = x.buyer, text = x.buyer, testCode = x.testCode })
+            var buyers = response.Data
+                .Where(x => !string.IsNullOrWhiteSpace(x.Buyer));
+
+            if (!string.IsNullOrWhiteSpace(testCode))
+                buyers = buyers.Where(x => string.Equals(x.TestCode, testCode, StringComparison.OrdinalIgnoreCase));
+
+            var result = buyers
+                .DistinctBy(x => x.Buyer)
+                .OrderBy(x => x.Buyer)
+                .Select(x => new { value = x.Buyer!, text = x.Buyer!, testCode = x.TestCode ?? string.Empty })
                 .ToList();
 
             return Json(result);
@@ -201,8 +205,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetStagingRecord(int id)
         {
-            ViewBag.WorkGroups = await GetWorkGroupOptionsAsync();
-            ViewBag.MonthOptions = await GetMonthOptionsAsync();
+            ViewBag.WorkGroups      = await GetWorkGroupOptionsAsync();
+            ViewBag.MonthOptions    = await GetMonthOptionsAsync();
+            ViewBag.TestCodeOptions = await GetAllTestCodesAsync();
+            ViewBag.BuyerOptions    = await GetAllBuyersAsync();
 
             var response = await _monthlyOutputService.GetStagingByIdAsync(id);
             if (!response.Success || response.Data == null)
@@ -215,8 +221,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> AddStagingRecord()
         {
-            ViewBag.WorkGroups = await GetWorkGroupOptionsAsync();
-            ViewBag.MonthOptions = await GetMonthOptionsAsync();
+            ViewBag.WorkGroups      = await GetWorkGroupOptionsAsync();
+            ViewBag.MonthOptions    = await GetMonthOptionsAsync();
+            ViewBag.TestCodeOptions = await GetAllTestCodesAsync();
+            ViewBag.BuyerOptions    = await GetAllBuyersAsync();
             return PartialView("_AddEditStagingMonthlyOutput", new StagingMonthlyOutputItem());
         }
 
@@ -227,6 +235,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return Json(new { success = false, message = "Invalid request data." });
 
             var dto = _mapper.Map<StagingMonthlyOutputDto>(model);
+
+            if (model.Id != 0)
+            {
+                dto.Passed = false;
+                dto.FailureComments = "This record has been edited since being validated. It will need re-validating.";
+            }
 
             ApiResponseDto<StagingMonthlyOutputDto> response = model.Id == 0
                 ? await _monthlyOutputService.CreateStagingAsync(dto)
@@ -470,6 +484,38 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x.Monthnumber).Select(x => new SelectListItem(x.Monthname, x.Monthnumber.ToString())).ToList()
                 : [];
+        }
+
+        private async Task<List<SelectListItem>> GetAllTestCodesAsync()
+        {
+            var response = await _testCapabilityService.GetPagedByWorkGroupAsync(
+                new QueryParameters<string> { Page = -1 }, null);
+
+            if (!response.Success || response.Data == null)
+                return [];
+
+            return response.Data
+                .Where(x => !string.IsNullOrWhiteSpace(x.TestCode))
+                .Select(x => x.TestCode!)
+                .Distinct()
+                .OrderBy(x => x)
+                .Select(x => new SelectListItem(x, x))
+                .ToList();
+        }
+
+        private async Task<List<SelectListItem>> GetAllBuyersAsync()
+        {
+            var response = await _testRequirementService.GetAllActiveAsync();
+
+            if (!response.Success || response.Data == null)
+                return [];
+
+            return response.Data
+                .Where(x => !string.IsNullOrWhiteSpace(x.Buyer))
+                .DistinctBy(x => x.Buyer)
+                .OrderBy(x => x.Buyer)
+                .Select(x => new SelectListItem(x.Buyer!, x.Buyer!))
+                .ToList();
         }
 
         private async Task<List<object>> ValidateLiveRecordAsync(MonthlyOutputLiveItem model)

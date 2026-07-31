@@ -124,6 +124,7 @@ namespace Apha.Common.Constants
         public const string GetPagedBySupplierTestCode = "api/v1/testrequirement/supplier/paged/{0}";
         public const string GetPagedTestReqmtbyProject = "api/v1/testrequirement/pagedbyproject/{0}";
         public const string GetAllTestReqmtForExport = "api/v1/testrequirement/all/{0}";
+        public const string GetAllTestReqmtActive = "api/v1/testrequirement/active";
         public const string GetTestReqmtById = "api/v1/testrequirement/{0}/{1}";
         public const string CreateTestReqmt = "api/v1/testrequirement";
         public const string UpdateTestReqmt = "api/v1/testrequirement";

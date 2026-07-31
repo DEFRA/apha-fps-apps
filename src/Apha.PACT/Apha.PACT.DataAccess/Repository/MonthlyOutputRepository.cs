@@ -3,6 +3,9 @@ using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
+using System.Linq.Expressions;
 
 namespace Apha.PACT.DataAccess.Repository
 {
@@ -95,7 +98,7 @@ namespace Apha.PACT.DataAccess.Repository
             if (month.HasValue)
                 monthlyOutputs = monthlyOutputs.Where(x => (int)x.Month == (int)month.Value);
 
-            monthlyOutputs = monthlyOutputs.OrderBy(x => x.WorkGroup).ThenBy(x => x.TestCode).ThenBy(x => x.Buyer).ThenBy(x => x.Month);
+            monthlyOutputs = (IQueryable<MonthlyOutput>)ApplyLiveSorting(monthlyOutputs, query.SortBy, query.Descending);
 
             var pagedLiveData = await ApplyPaging(monthlyOutputs, query.Page, query.PageSize);
 
@@ -165,12 +168,21 @@ namespace Apha.PACT.DataAccess.Repository
                 .Where(x => x.ImportedBy == importedBy);
 
             if (passed.HasValue)
-                stagingQuery = stagingQuery.Where(x => x.Passed == passed.Value);
+            {
+                if (passed.Value)
+                {
+                    stagingQuery = stagingQuery.Where(x => x.Passed == true);
+                }
+                else
+                {
+                    stagingQuery = stagingQuery.Where(x => x.Passed == false);
+                }
+            }
 
-            stagingQuery = stagingQuery.OrderBy(x => x.Id);
+            stagingQuery = ApplyStagingFilter(stagingQuery, query.Filter);
+            stagingQuery = (IQueryable<StagingMonthlyOutput>)ApplyStagingSorting(stagingQuery, query.SortBy, query.Descending);
 
             var pagedStagingData = await ApplyPaging(stagingQuery, query.Page, query.PageSize);
-
             pagedStagingData.Total = await stagingQuery.SumAsync(x => (decimal)(x.Volume ?? 0));
             return pagedStagingData;
         }
@@ -200,8 +212,8 @@ namespace Apha.PACT.DataAccess.Repository
             existing.Month = stagingMonthlyOutput.Month;
             existing.WorkGroup = stagingMonthlyOutput.WorkGroup;
             existing.Volume = stagingMonthlyOutput.Volume;
-            existing.FailureComments = stagingMonthlyOutput.FailureComments;
-            existing.Passed = stagingMonthlyOutput.Passed;
+            existing.Passed = false;
+            existing.FailureComments = "This record has been edited since being validated. Needs re-validating.";
 
             await _context.SaveChangesAsync();
             return existing;
@@ -375,6 +387,101 @@ namespace Apha.PACT.DataAccess.Repository
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────────
+
+        private static IQueryable<StagingMonthlyOutput> ApplyStagingFilter(IQueryable<StagingMonthlyOutput> stagingQuery, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+            {
+                return stagingQuery;
+            }
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+            {
+                return stagingQuery;
+            }
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
+                stagingQuery = stagingQuery.Where(x => EF.Functions.ILike(x.WorkGroup!, $"%{workGroup}%"));
+
+            if (dict.TryGetValue("TestCode", out var testCode) && testCode != null)
+                stagingQuery = stagingQuery.Where(x => EF.Functions.ILike(x.TestCode!, $"%{testCode}%"));
+
+            if (dict.TryGetValue("Buyer", out var buyer) && buyer != null)
+                stagingQuery = stagingQuery.Where(x => EF.Functions.ILike(x.Buyer!, $"%{buyer}%"));
+
+            if (dict.TryGetValue("FailureComments", out var failureComments) && failureComments != null)
+                stagingQuery = stagingQuery.Where(x => EF.Functions.ILike(x.FailureComments!, $"%{failureComments}%"));
+
+            return stagingQuery;
+        }
+
+        private static IQueryable ApplyLiveSorting(IQueryable<MonthlyOutput> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+            {
+                return query.OrderBy(x => x.WorkGroup)
+                    .ThenBy(x => x.TestCode)
+                    .ThenBy(x => x.Buyer)
+                    .ThenBy(x => x.Month);
+            }
+
+            return ApplyLiveSortingByProperty(query, sortBy.ToLower(), descending);
+        }
+
+        private static IQueryable ApplyLiveSortingByProperty(IQueryable<MonthlyOutput> query, string property, bool descending)
+        {
+            return property switch
+            {
+                "workgroup" => ApplyLiveOrder(query, s => s.WorkGroup, descending),
+                "testcode" => ApplyLiveOrder(query, s => s.TestCode, descending),
+                "buyer" => ApplyLiveOrder(query, s => s.Buyer, descending),
+                "period" => ApplyLiveOrder(query, s => s.Month, descending),
+                "volume" => ApplyLiveOrder(query, s => s.Volume, descending),
+                _ => query.OrderBy(x => x.WorkGroup).ThenBy(x => x.TestCode).ThenBy(x => x.Buyer).ThenBy(x => x.Month)
+            };
+        }
+
+        private static IQueryable ApplyLiveOrder<T>(IQueryable<MonthlyOutput> query, Expression<Func<MonthlyOutput, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        }
+
+        private static IQueryable ApplyStagingSorting(IQueryable<StagingMonthlyOutput> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+            {
+                return query.OrderBy(x => x.WorkGroup)
+                    .ThenBy(x => x.TestCode)
+                    .ThenBy(x => x.Buyer)
+                    .ThenBy(x => x.Month)
+                    .ThenBy(x => x.Id);
+            }
+
+            return ApplyStagingSortingByProperty(query, sortBy.ToLower(), descending);
+        }
+
+        private static IQueryable ApplyStagingSortingByProperty(IQueryable<StagingMonthlyOutput> query, string property, bool descending)
+        {
+            return property switch
+            {
+                "workgroup" => ApplyStagingOrder(query, s => s.WorkGroup, descending),
+                "testcode" => ApplyStagingOrder(query, s => s.TestCode, descending),
+                "buyer" => ApplyStagingOrder(query, s => s.Buyer, descending),
+                "period" => ApplyStagingOrder(query, s => s.Month, descending),
+                "volume" => ApplyStagingOrder(query, s => s.Volume, descending),
+                "pass" => ApplyStagingOrder(query, s => s.Passed, descending),
+                "failurecomments" => ApplyStagingOrder(query, s => s.FailureComments, descending),
+                _ => query.OrderBy(x => x.WorkGroup).ThenBy(x => x.TestCode).ThenBy(x => x.Buyer).ThenBy(x => x.Month)
+            };
+        }
+
+        private static IQueryable ApplyStagingOrder<T>(IQueryable<StagingMonthlyOutput> query, Expression<Func<StagingMonthlyOutput, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        }
 
         private MonthlyOutputLog BuildLogEntry(MonthlyOutput row, string insertDelete)
         {

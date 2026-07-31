@@ -408,7 +408,7 @@ function addStagingMonthlyOutput() {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-            initStagingModalWorkGroupDropdown(null);
+            initStagingModalDropdowns(null, null, null);
         },
         error: function () {
             showAlertMessage('Failed to load add form.', AlertType.ERROR);
@@ -425,8 +425,10 @@ function editStagingMonthlyOutput(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-            const workGroup = $('#StagingWorkGroup').val();
-            initStagingModalWorkGroupDropdown(workGroup);
+            const workGroup  = $('#StagingWorkGroup').val();
+            const existingTestCode = $('#StagingTestCode').val();
+            const existingBuyer    = $('#StagingBuyer').val();
+            initStagingModalDropdowns(workGroup, existingTestCode, existingBuyer);
         },
         error: function () {
             showAlertMessage('Failed to load staging record.', AlertType.ERROR);
@@ -434,8 +436,11 @@ function editStagingMonthlyOutput(btn) {
     });
 }
 
-function initStagingModalWorkGroupDropdown(existingWorkGroup) {
-    const wgData = readDropdownJsonData('#staging-modal-workgroups-data');
+function initStagingModalDropdowns(existingWorkGroup, existingTestCode, existingBuyer) {
+    const wgData       = readDropdownJsonData('#staging-modal-workgroups-data');
+    const isEditMode   = !!(existingTestCode || existingBuyer || existingWorkGroup);
+    const allTestCodes = isEditMode ? readDropdownJsonData('#staging-modal-testcodes-data') : [];
+    const allBuyers    = isEditMode ? readDropdownJsonData('#staging-modal-buyers-data')    : [];
 
     window.stagingOutputWorkGroupDropdown = new MultiColumnDropdownComponent({
         dropdownId: 'stagingOutputWorkGroup',
@@ -454,10 +459,99 @@ function initStagingModalWorkGroupDropdown(existingWorkGroup) {
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem) {
-                $('#StagingWorkGroup').val(selectedItem?.value || '');
+                const selectedWorkGroup = selectedItem?.value || '';
+                $('#StagingWorkGroup').val(selectedWorkGroup);
+
+                const isInitialRestore = existingWorkGroup && selectedWorkGroup === existingWorkGroup;
+                if (isInitialRestore) return;
+
+                // User changed WorkGroup — filter TestCodes via AJAX, preserving existing selections in edit mode
+                loadStagingModalTestCodesByWorkGroup(
+                    selectedWorkGroup,
+                    isEditMode ? existingTestCode : null,
+                    isEditMode ? existingBuyer    : null
+                );
             },
             onClear: function () {
                 $('#StagingWorkGroup').val('');
+                if (isEditMode) {
+                    // Edit mode: restore full unfiltered lists from embedded data
+                    seedStagingModalTestCodesFromData(allTestCodes, null, allBuyers, null);
+                } else {
+                    // Add mode: clear both dropdowns
+                    resetStagingModalTestCodeOptions();
+                    resetStagingModalBuyerOptions();
+                }
+            }
+        }
+    });
+
+    window.stagingOutputTestCodeDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'stagingOutputTestCode',
+        containerSelector: '#staging-modal-testcode-dropdown',
+        placeholder: '--select--',
+        searchPlaceholder: 'Type to search',
+        labelText: 'Test Code <span class="app-required" aria-hidden="true">*</span>',
+        columns: [
+            { field: 'text', header: 'Test Code', width: '260px' }
+        ],
+        data: isEditMode ? allTestCodes : [],
+        displayField: function (row) { return row.text || ''; },
+        valueField: function (row) { return row.value || ''; },
+        enableSearch: true,
+        showSerialNumber: false,
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                if (window._stagingSkipTestCodeOnSelect) return;
+                const testCode  = selectedItem?.value || '';
+                const workGroup = $('#StagingWorkGroup').val() || null;
+                $('#StagingTestCode').val(testCode);
+                // User changed TestCode — filter Buyers via AJAX, preserving existing buyer in edit mode
+                loadStagingModalBuyersByTestCode(
+                    workGroup,
+                    testCode,
+                    isEditMode ? existingBuyer : null
+                );
+            },
+            onClear: function () {
+                $('#StagingTestCode').val('');
+                const workGroup = $('#StagingWorkGroup').val() || null;
+                if (workGroup) {
+                    // Reload buyers filtered to workGroup via AJAX
+                    loadStagingModalBuyersByTestCode(workGroup, null);
+                } else if (isEditMode) {
+                    // Edit mode, no workGroup: restore full buyer list from embedded data
+                    seedStagingModalBuyersFromData(allBuyers, null);
+                } else {
+                    // Add mode: clear buyers
+                    resetStagingModalBuyerOptions();
+                }
+            }
+        }
+    });
+
+    window.stagingOutputBuyerDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'stagingOutputBuyer',
+        containerSelector: '#staging-modal-buyer-dropdown',
+        placeholder: '--select--',
+        searchPlaceholder: 'Type to search',
+        labelText: 'Buyer <span class="app-required" aria-hidden="true">*</span>',
+        columns: [
+            { field: 'text', header: 'Buyer', width: '260px' }
+        ],
+        data: isEditMode ? allBuyers : [],
+        displayField: function (row) { return row.text || ''; },
+        valueField: function (row) { return row.value || ''; },
+        enableSearch: true,
+        showSerialNumber: false,
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                $('#StagingBuyer').val(selectedItem?.value || '');
+            },
+            onClear: function () {
+                $('#StagingBuyer').val('');
             }
         }
     });
@@ -465,6 +559,118 @@ function initStagingModalWorkGroupDropdown(existingWorkGroup) {
     if (existingWorkGroup) {
         window.stagingOutputWorkGroupDropdown.setValue(existingWorkGroup);
     }
+
+    if (isEditMode) {
+        // Edit mode: restore TestCode and Buyer synchronously from embedded data — no AJAX needed
+        if (existingTestCode) {
+            window._stagingSkipTestCodeOnSelect = true;
+            window.stagingOutputTestCodeDropdown.setValue(existingTestCode);
+            window._stagingSkipTestCodeOnSelect = false;
+            $('#StagingTestCode').val(existingTestCode);
+        }
+        if (existingBuyer) {
+            window.stagingOutputBuyerDropdown.setValue(existingBuyer);
+            $('#StagingBuyer').val(existingBuyer);
+        }
+    }
+}
+
+
+function resetStagingModalTestCodeOptions() {
+    $('#StagingTestCode').val('');
+    if (window.stagingOutputTestCodeDropdown) {
+        window.stagingOutputTestCodeDropdown.clear();
+        window.stagingOutputTestCodeDropdown.updateData([]);
+    }
+}
+
+function resetStagingModalBuyerOptions() {
+    $('#StagingBuyer').val('');
+    if (window.stagingOutputBuyerDropdown) {
+        window.stagingOutputBuyerDropdown.clear();
+        window.stagingOutputBuyerDropdown.updateData([]);
+    }
+}
+
+function seedStagingModalTestCodesFromData(testCodes, restoreTestCode, buyers, restoreBuyer) {
+    if (window.stagingOutputTestCodeDropdown) {
+        window.stagingOutputTestCodeDropdown.updateData(testCodes);
+        if (restoreTestCode && testCodes.some(function (item) { return item.value === restoreTestCode; })) {
+            window._stagingSkipTestCodeOnSelect = true;
+            window.stagingOutputTestCodeDropdown.setValue(restoreTestCode);
+            window._stagingSkipTestCodeOnSelect = false;
+            $('#StagingTestCode').val(restoreTestCode);
+        }
+    }
+    seedStagingModalBuyersFromData(buyers, restoreBuyer);
+}
+
+function seedStagingModalBuyersFromData(buyers, restoreBuyer) {
+    if (window.stagingOutputBuyerDropdown) {
+        window.stagingOutputBuyerDropdown.updateData(buyers);
+        if (restoreBuyer && buyers.some(function (item) { return item.value === restoreBuyer; })) {
+            window.stagingOutputBuyerDropdown.setValue(restoreBuyer);
+            $('#StagingBuyer').val(restoreBuyer);
+        }
+    }
+}
+
+function loadStagingModalTestCodesByWorkGroup(workGroup, restoreTestCode, restoreBuyer) {
+    resetStagingModalTestCodeOptions();
+    resetStagingModalBuyerOptions();
+
+    $.ajax({
+        url: '/PACT/MonthlyOutput/GetTestCodesByWorkGroup',
+        type: 'GET',
+        data: workGroup ? { workGroup: workGroup } : {},
+        success: function (data) {
+            const items = Array.isArray(data) ? data : [];
+            if (window.stagingOutputTestCodeDropdown) {
+                window.stagingOutputTestCodeDropdown.updateData(items);
+
+                if (restoreTestCode && items.some(function (item) { return item.value === restoreTestCode; })) {
+                    window._stagingSkipTestCodeOnSelect = true;
+                    window.stagingOutputTestCodeDropdown.setValue(restoreTestCode);
+                    window._stagingSkipTestCodeOnSelect = false;
+                    $('#StagingTestCode').val(restoreTestCode);
+                    loadStagingModalBuyersByTestCode(workGroup, restoreTestCode, restoreBuyer);
+                } else {
+                    loadStagingModalBuyersByTestCode(workGroup, null);
+                }
+            }
+        },
+        error: function () {
+            showAlertMessage('Failed to load test code options.', AlertType.ERROR);
+        }
+    });
+}
+
+function loadStagingModalBuyersByTestCode(workGroup, testCode, restoreBuyer) {
+    resetStagingModalBuyerOptions();
+
+    const params = {};
+    if (workGroup) params.workGroup = workGroup;
+    if (testCode)  params.testCode  = testCode;
+
+    $.ajax({
+        url: '/PACT/MonthlyOutput/GetBuyersByTestCode',
+        type: 'GET',
+        data: params,
+        success: function (data) {
+            const items = Array.isArray(data) ? data : [];
+            if (window.stagingOutputBuyerDropdown) {
+                window.stagingOutputBuyerDropdown.updateData(items);
+
+                if (restoreBuyer && items.some(function (item) { return item.value === restoreBuyer; })) {
+                    window.stagingOutputBuyerDropdown.setValue(restoreBuyer);
+                    $('#StagingBuyer').val(restoreBuyer);
+                }
+            }
+        },
+        error: function () {
+            showAlertMessage('Failed to load buyer options.', AlertType.ERROR);
+        }
+    });
 }
 
 function saveStagingMonthlyOutput() {
@@ -477,18 +683,6 @@ function saveStagingMonthlyOutput() {
     }
 
     const id = parseInt($('#Id').val()) || 0;
-
-    // Revalidation warning: if the record was previously passed, warn the user
-    const wasEdited = (id !== 0);
-    if (wasEdited) {
-        showGovukConfirm('This record has been edited since being validated. It will need re-validating. Do you want to continue?')
-            .then(function (shouldContinue) {
-                if (!shouldContinue) return;
-                submitStagingRecord(id);
-            });
-        return;
-    }
-
     submitStagingRecord(id);
 }
 

@@ -112,6 +112,7 @@ namespace Apha.PACT.Application.Services
         {
             var entity = _mapper.Map<StagingMonthlyOutput>(stagingMonthlyOutput);
             entity.ImportedBy = importedBy;
+            entity.ImportedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
             await ValidateSingleRecordAsync(entity);
             var created = await _repository.CreateStagingAsync(entity);
             return _mapper.Map<StagingMonthlyOutputDto>(created);
@@ -120,6 +121,7 @@ namespace Apha.PACT.Application.Services
         public async Task<StagingMonthlyOutputDto> UpdateStagingAsync(StagingMonthlyOutputDto stagingMonthlyOutput, string importedBy)
         {
             var entity = _mapper.Map<StagingMonthlyOutput>(stagingMonthlyOutput);
+            entity.ImportedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
             await ValidateSingleRecordAsync(entity);
             var updated = await _repository.UpdateStagingAsync(entity, importedBy);
             return _mapper.Map<StagingMonthlyOutputDto>(updated);

@@ -187,33 +187,15 @@ namespace Apha.PACT.DataAccess.Repository
                     stagingQuery = stagingQuery.Where(x => x.Passed == true);
                 }
                 else
-                {
-                    // If passed is false, get failed records from the latest import date
-                    var latestImportDate = await _context.StagingMonthlyTimes
-                        .AsNoTracking()
-                        .Where(x => x.ImportedBy == importedBy)
-                        .MaxAsync(x => x.ImportedDate);
-
-                    stagingQuery = stagingQuery.Where(x => x.Passed == false && x.ImportedDate == latestImportDate);
+                {  
+                    stagingQuery = stagingQuery.Where(x => x.Passed == false);
                 }
-            }
-            else
-            {
-                // If passed is null, get all passed records AND failed records from the latest import date
-                var latestImportDate = await _context.StagingMonthlyTimes
-                    .AsNoTracking()
-                    .Where(x => x.ImportedBy == importedBy)
-                    .MaxAsync(x => x.ImportedDate);
-
-                stagingQuery = stagingQuery.Where(x => x.Passed == true || (x.Passed == false && x.ImportedDate == latestImportDate));
             }
 
             // Apply filtering
             stagingQuery = ApplyStagingFilter(stagingQuery, query.Filter);
 
-            stagingQuery = (IQueryable<StagingMonthlyTime>)ApplyStagingSorting(stagingQuery, query.SortBy, query.Descending);
-
-            
+            stagingQuery = (IQueryable<StagingMonthlyTime>)ApplyStagingSorting(stagingQuery, query.SortBy, query.Descending);            
 
             var pagedStagingData = await ApplyPaging(stagingQuery, query.Page, query.PageSize);
             pagedStagingData.Total = await stagingQuery.SumAsync(x => (decimal)(x.Hours ?? 0));
@@ -227,17 +209,7 @@ namespace Apha.PACT.DataAccess.Repository
         }
 
         public async Task<StagingMonthlyTime> CreateStagingAsync(StagingMonthlyTime stagingMonthlyTime)
-        {          
-            var latestImportedDate = await _context.StagingMonthlyTimes
-                .AsNoTracking()
-                .Where(x => x.ImportedBy == stagingMonthlyTime.ImportedBy)
-                .MaxAsync(x => x.ImportedDate);
-
-            if(latestImportedDate == null)
-            {
-                stagingMonthlyTime.ImportedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
-            }
-
+        {            
             await _context.StagingMonthlyTimes.AddAsync(stagingMonthlyTime);
             await _context.SaveChangesAsync();
             return stagingMonthlyTime;
