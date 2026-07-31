@@ -52,7 +52,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalSnapshotDataControlle
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<SnapShotAnimalDataViewModel>(viewResult.Model);
+            var model = Assert.IsType<AnimalSnapshotDataViewModel>(viewResult.Model);
             Assert.Equal("snapShotAnimalDataGrid", model.SnapShotAnimalDataGrid.GridId);
             Assert.Empty(model.SnapShotAnimalDataGrid.Data);
             Assert.True(model.SnapShotAnimalDataGrid.ShowPagination);

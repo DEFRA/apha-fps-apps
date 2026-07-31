@@ -31,7 +31,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// </summary>
         public IActionResult Index()
         {
-            var viewModel = new SnapShotAnimalDataViewModel
+            var viewModel = new AnimalSnapshotDataViewModel
             {
                 SnapShotAnimalDataGrid = new DataGridConfig<AnimalSnapshotItem>
                 {
