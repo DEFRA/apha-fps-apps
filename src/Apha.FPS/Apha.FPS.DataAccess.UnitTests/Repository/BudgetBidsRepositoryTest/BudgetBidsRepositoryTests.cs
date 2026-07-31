@@ -647,6 +647,65 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
             Assert.True(result);
         }
 
+
+        [Fact]
+        public async Task AddBidAsync_WhenSaveChangesFails_RollsBackAndThrows()
+        {
+            // Covers: catch { RollbackAsync; throw } in AddBidAsync
+            var user = new User { UserId = 1, UserEmail = DefaultUserEmail };
+            var upc  = new UserProfitcentre { UserId = 1, ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var wg   = new Workgroup { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var bid  = new Bid { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var mockCtx = CreateMockRequestContext();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockCtx.Object);
+            mockContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new[] { user }).Object);
+            mockContext.Setup(x => x.UserProfitcentres).Returns(RepositoryTestHelper.CreateMockDbSet(new[] { upc }).Object);
+            mockContext.Setup(x => x.Workgroups).Returns(RepositoryTestHelper.CreateMockDbSet(new[] { wg }).Object);
+            mockContext.Setup(x => x.Bids).Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<Bid>()).Object);
+            mockContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db error"));
+            var repo = new BudgetBidsRepository(mockContext.Object, mockCtx.Object);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.AddBidAsync(bid));
+        }
+
+        [Fact]
+        public async Task UpdateBidAsync_WhenSaveChangesFails_RollsBackAndThrows()
+        {
+            // Covers: catch { RollbackAsync; throw } in UpdateBidAsync
+            var user     = new User { UserId = 1, UserEmail = DefaultUserEmail };
+            var upc      = new UserProfitcentre { UserId = 1, ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var wg       = new Workgroup { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var existing = new Bid { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear };
+            var updated  = new Bid { WorkGroupName = "WG01", Account = "ACC1", GenBid = 999m };
+            var mockCtx = CreateMockRequestContext();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockCtx.Object);
+            mockContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new[] { user }).Object);
+            mockContext.Setup(x => x.UserProfitcentres).Returns(RepositoryTestHelper.CreateMockDbSet(new[] { upc }).Object);
+            mockContext.Setup(x => x.Workgroups).Returns(RepositoryTestHelper.CreateMockDbSet(new[] { wg }).Object);
+            mockContext.Setup(x => x.Bids).Returns(RepositoryTestHelper.CreateMockDbSet(new[] { existing }).Object);
+            mockContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db error"));
+            var repo = new BudgetBidsRepository(mockContext.Object, mockCtx.Object);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.UpdateBidAsync(updated));
+        }
+
+        [Fact]
+        public async Task DeleteBidAsync_WhenSaveChangesFails_RollsBackAndThrows()
+        {
+            // Covers: catch { RollbackAsync; throw } in DeleteBidAsync
+            var user = new User { UserId = 1, UserEmail = DefaultUserEmail };
+            var upc  = new UserProfitcentre { UserId = 1, ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var wg   = new Workgroup { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear };
+            var bid  = new Bid { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear };
+            var mockCtx = CreateMockRequestContext();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockCtx.Object);
+            mockContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new[] { user }).Object);
+            mockContext.Setup(x => x.UserProfitcentres).Returns(RepositoryTestHelper.CreateMockDbSet(new[] { upc }).Object);
+            mockContext.Setup(x => x.Workgroups).Returns(RepositoryTestHelper.CreateMockDbSet(new[] { wg }).Object);
+            mockContext.Setup(x => x.Bids).Returns(RepositoryTestHelper.CreateMockDbSet(new[] { bid }).Object);
+            mockContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db error"));
+            var repo = new BudgetBidsRepository(mockContext.Object, mockCtx.Object);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.DeleteBidAsync("WG01", "ACC1"));
+        }
+
         #endregion
 
         #region GetAccountCategoriesAsync Tests
