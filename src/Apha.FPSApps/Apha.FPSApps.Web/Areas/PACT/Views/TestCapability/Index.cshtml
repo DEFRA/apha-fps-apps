@@ -315,6 +315,8 @@
             $.get('/PACT/TestCapability/CreateTestCapability', function (html) {
                 $('#modaPopupBody').html(html);
                 $('#modalPopup').addClass('show');
+                // Attach numeric validation
+                attachNumericValidation();
             });
         }
 
@@ -326,6 +328,8 @@
                 function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
+                    // Attach numeric validation
+                    attachNumericValidation();
                 });
         }
 
@@ -398,6 +402,8 @@
                 function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
+                    // Attach numeric validation
+                    attachNumericValidation();
                 });
         }
 
@@ -408,6 +414,8 @@
                 function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
+                    // Attach numeric validation
+                    attachNumericValidation();
                 });
         }
 

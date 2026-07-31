@@ -82,6 +82,11 @@
         populateOwnerDropdown();
         clearValidationErrors('#testModal');
         $('#testModal').modal('show');
+
+        // Attach numeric validation to decimal fields
+        if (typeof attachNumericValidation === 'function') {
+            attachNumericValidation();
+        }
     }
 
     function editTestOrProduct(btn) {
@@ -143,6 +148,11 @@
                         $('#testModal .govuk-form-group').removeClass('govuk-form-group--error');
                         $('#testModal .govuk-input').removeClass('govuk-input--error');
                         $('#testModal').modal('show');
+
+                        // Attach numeric validation to decimal fields
+                        if (typeof attachNumericValidation === 'function') {
+                            attachNumericValidation();
+                        }
                     }, 50);
                 } else {
                     setRequiredFields();

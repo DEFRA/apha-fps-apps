@@ -90,10 +90,10 @@
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
                     <label for="txtmodal-suppliernumber" class="govuk-label govuk-!-font-weight-bold">Supplier Number:</label>
-                    <input type="number" class="govuk-input govuk-!-font-size-16 decfmt-input"
+                    <input type="text" class="govuk-input govuk-!-font-size-16 decfmt-input"
                            id="txtmodal-suppliernumber" asp-for="SupplierNumber" placeholder="Enter supplier number">
                 </div>
-                <span asp-validation-for="SupplierNumber" class="govuk-error-message"></span>
+                <span asp-validation-for="SupplierNumber" class="govuk-error-message" style="display:none"></span>
             </div>
         </div>
         <div class="govuk-grid-row">
@@ -105,16 +105,16 @@
                         <input type="text" class="govuk-input govuk-!-font-size-16 decfmt-input"
                                id="txtmodal-dailyrate" asp-for="DailyRate" placeholder="0.00">
                     </div>
-                    <span asp-validation-for="DailyRate" class="govuk-error-message"></span>
+                    <span asp-validation-for="DailyRate" class="govuk-error-message" style="display:none"></span>
                 </div>
             </div>
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
                     <label for="txtmodal-animaldays" class="govuk-label govuk-!-font-weight-bold">Animal Days:</label>
-                    <input type="number" class="govuk-input govuk-!-font-size-16 decfmt-input"
-                           id="txtmodal-animaldays" asp-for="AnimalDays" placeholder="Enter animal days">
+                    <input type="text" class="govuk-input govuk-!-font-size-16 decfmt-input"
+                           id="txtmodal-animaldays" asp-for="AnimalDays" placeholder="e.g., 10">
                 </div>
-                <span asp-validation-for="AnimalDays" class="govuk-error-message"></span>
+                <span asp-validation-for="AnimalDays" class="govuk-error-message" style="display:none"></span>
             </div>
         </div>
     </form>
