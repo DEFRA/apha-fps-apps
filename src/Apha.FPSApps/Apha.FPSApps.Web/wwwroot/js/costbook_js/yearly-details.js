@@ -198,6 +198,12 @@ function bindAddYearForm(pid, year) {
     if (!form) return;
     form.addEventListener('submit', function (e) {
         e.preventDefault();
+
+        var $form = $('#addNewProjectYearForm');
+        var $modal = $('#project1ModalContent');
+        clearValidationErrors($modal);
+        if (!isFormValid($form)) { displayClientValidationErrors($form, $modal); return; }
+
         fetch(yearlyDetailsUrls.addProjectYear, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
@@ -206,8 +212,10 @@ function bindAddYearForm(pid, year) {
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.success) { closeModal(); selectYear(pid, data.year); }
-                else { showAlertMessage('Failed to add project year.', AlertType.ERROR); }
-            });
+                else if (data.errors) { _showModalErrors(data.errors, $modal); }
+                else { showAlertMessage(data.message || 'Failed to add project year.', AlertType.ERROR); }
+            })
+            .catch(function (err) { console.error('Add project year error:', err); showAlertMessage('Failed to add project year.', AlertType.ERROR); });
     });
     }
 
@@ -575,6 +583,12 @@ function bindMarkupAndProfitForm(pid, yearVal) {
     if (!form) return;
     form.addEventListener('submit', function (e) {
         e.preventDefault();
+
+        var $form = $('#addNewProjectYearForm');
+        var $modal = $('#project1ModalContent');
+        clearValidationErrors($modal);
+        if (!isFormValid($form)) { displayClientValidationErrors($form, $modal); return; }
+
         fetch(yearlyDetailsUrls.updateProjectYearRate + '?projectId=' + encodeURIComponent(pid) + '&year=' + yearVal, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
@@ -583,8 +597,10 @@ function bindMarkupAndProfitForm(pid, yearVal) {
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 if (d.success) { closeModal(); loadMarkupAndProfitGrid(); }
-                else { showAlertMessage('Failed to save markup and profit rates.', AlertType.ERROR); }
-            });
+                else if (d.errors) { _showModalErrors(d.errors, $modal); }
+                else { showAlertMessage(d.message || 'Failed to save markup and profit rates.', AlertType.ERROR); }
+            })
+            .catch(function (err) { console.error('Update markup and profit error:', err); showAlertMessage('Failed to save markup and profit rates.', AlertType.ERROR); });
     });
 }
 
@@ -848,9 +864,9 @@ function initWgGradeDropdown() {
             input.setAttribute('data-current-value', grade);
             document.getElementById('WgGrade').value = grade;
             document.getElementById('Chargerate').value = chargeRate;
-            document.getElementById('Payrate').value = row.getAttribute('data-payrate');
-            document.getElementById('Npr').value = row.getAttribute('data-npr');
-            document.getElementById('Ohr').value = row.getAttribute('data-ohr');
+            // document.getElementById('Payrate').value = row.getAttribute('data-payrate');
+            // document.getElementById('Npr').value = row.getAttribute('data-npr');
+            // document.getElementById('Ohr').value = row.getAttribute('data-ohr');
             input.dispatchEvent(new Event('input', { bubbles: true }));
             input.dispatchEvent(new Event('change', { bubbles: true }));
             calcStaffCost();
