@@ -16,7 +16,7 @@ namespace Apha.Common.Constants
 
         // Time Code Valid
         public const string GetTimeCodesByJobCode = "api/v1/timecodevalid/jobcode?jobCode={0}&parentProject={1}";
-        public const string GetTimeCodeValidById = "api/v1/timecodevalid/byid?workGroup={0}&timeCode={1}&parentProject={2}";
+        public const string GetTimeCodeValidById = "api/v1/timecodevalid/wgtimeprojectcode/byid?workGroup={0}&timeCode={1}&parentProject={2}";
         public const string GetPagedTimeCodes = "api/v1/timecodevalid/paged";
         public const string GetPagedTimeCodesByJobCode = "api/v1/timecodevalid/paged?jobCode={0}";
         public const string GetPagedTimeCodesByProject = "api/v1/timecodevalid/paged?parentProject={0}";
@@ -89,19 +89,19 @@ namespace Apha.Common.Constants
         public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
         public const string GetPagedProjectInvoiceManual = "api/v1/projectinvoice";
         public const string GetProjectInvoiceTotalAmount = "api/v1/projectinvoice/total";
-        public const string GetProjectInvoiceById = "api/v1/projectinvoice/id?id={0}";
+        public const string GetProjectInvoiceById = "api/v1/projectinvoice/invoice/id?id={0}";
         public const string CreateProjectInvoice = "api/v1/projectinvoice";
-        public const string UpdateProjectInvoice = "api/v1/projectinvoice/id?id={0}";
-        public const string DeleteProjectInvoice = "api/v1/projectinvoice/id?id={0}";
+        public const string UpdateProjectInvoice = "api/v1/projectinvoice/invoice/id?id={0}";
+        public const string DeleteProjectInvoice = "api/v1/projectinvoice/invoice/id?id={0}";
         public const string GetMonthlyInvoicesSummary = "api/v1/projectinvoice/monthly-summary";
         
         // Project SubContract
         public const string GetPagedProjectSubContracts = "api/v1/projectsubcontract";
         public const string GetProjectSubContractTotalAmount = "api/v1/projectsubcontract/total";
-        public const string GetProjectSubContractById = "api/v1/projectsubcontract/id?id={0}";
+        public const string GetProjectSubContractById = "api/v1/projectsubcontract/subcontract/id?id={0}";
         public const string CreateProjectSubContract = "api/v1/projectsubcontract";
-        public const string UpdateProjectSubContract = "api/v1/projectsubcontract/id?id={0}";
-        public const string DeleteProjectSubContract = "api/v1/projectsubcontract/id?id={0}";
+        public const string UpdateProjectSubContract = "api/v1/projectsubcontract/subcontract/id?id={0}";
+        public const string DeleteProjectSubContract = "api/v1/projectsubcontract/subcontract/id?id={0}";
         public const string GetFpsProjectSubContracts = "api/v1/projectsubcontract/animals";
         public const string GetFpsProjectSubContractTotalAmount = "api/v1/projectsubcontract/animals/total";
         public const string GetMonthlySubContractsSummary = "api/v1/projectsubcontract/monthly-summary";
@@ -133,14 +133,14 @@ namespace Apha.Common.Constants
         public const string GetPagedTestActualBreakdown = "api/v1/testrequirement/getactualstestswithplanneddatabyworkgroup";
 
         // Test Requirement
-        public const string GetPagedTestReqmt = "api/v1/testrequirement/paged?testCode={0}";
+        public const string GetPagedTestReqmt = "api/v1/testrequirement/testcode/paged?testCode={0}";
         public const string GetPagedBySupplierTestCode = "api/v1/testrequirement/supplier/paged?testCode={0}";
         public const string GetPagedTestReqmtbyProject = "api/v1/testrequirement/pagedbyproject?parentProject={0}";
-        public const string GetAllTestReqmtForExport = "api/v1/testrequirement/all?testCode={0}";
-        public const string GetTestReqmtById = "api/v1/testrequirement/byid?testCode={0}&buyer={1}";
+        public const string GetAllTestReqmtForExport = "api/v1/testrequirement/all/testcode?testCode={0}";
+        public const string GetTestReqmtById = "api/v1/testrequirement/testcodebuyer/byid?testCode={0}&buyer={1}";
         public const string CreateTestReqmt = "api/v1/testrequirement";
         public const string UpdateTestReqmt = "api/v1/testrequirement";
-        public const string DeleteTestReqmt = "api/v1/testrequirement/byid?testCode={0}&buyer={1}";
+        public const string DeleteTestReqmt = "api/v1/testrequirement/testcodebuyer/byid?testCode={0}&buyer={1}";
 
         // Lookups
         //public const string GetAllTestorProducts = "api/v1/testcapability/testorproducts";
@@ -148,14 +148,14 @@ namespace Apha.Common.Constants
 
         // Project Month (Cost Profile Grid)
         public const string GetProjectMonthsByProject = "api/v1/projectmonth/project?project={0}";
-        public const string GetProjectMonthById = "api/v1/projectmonth/byid?project={0}&monthNo={1}";
+        public const string GetProjectMonthById = "api/v1/projectmonth/project/byid?project={0}&monthNo={1}";
         public const string CreateProjectMonth = "api/v1/projectmonth";
         public const string UpdateProjectMonth = "api/v1/projectmonth";
-        public const string DeleteProjectMonth = "api/v1/projectmonth/byid?project={0}&monthNo={1}";
+        public const string DeleteProjectMonth = "api/v1/projectmonth/project/byid?project={0}&monthNo={1}";
 
         // Project Profile
-        public const string GetProjectProfile = "api/v1/projectprofile/data?project={0}";
-        public const string GetProjectProfileCumulative = "api/v1/projectprofile/data/cumulative?project={0}";
+        public const string GetProjectProfile = "api/v1/projectprofile/project/data?project={0}";
+        public const string GetProjectProfileCumulative = "api/v1/projectprofile/project/data/cumulative?project={0}";
 
         // Monthly Output Log
         public const string SearchMonthlyOutputLog = "api/v1/monthlyoutput/log/search";

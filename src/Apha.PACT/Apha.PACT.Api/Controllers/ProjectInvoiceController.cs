@@ -45,7 +45,7 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Retrieves a Project Invoice record by invoice counter.</summary>
-        [HttpGet("id")]
+        [HttpGet("invoice/id")]
         public async Task<IActionResult> GetById([FromQuery] int id)
         {
             ProjectInvoiceDto? item = await _service.GetByIdAsync(id);
@@ -64,7 +64,7 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Updates an existing Project Invoice record.</summary>
-        [HttpPut("id")]
+        [HttpPut("invoice/id")]
         public async Task<IActionResult> Update([FromQuery] int id, [FromBody] ProjectInvoiceReq request)
         {
             ProjectInvoiceDto dto = _mapper.Map<ProjectInvoiceDto>(request);
@@ -74,7 +74,7 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Deletes a Project Invoice record.</summary>
-        [HttpDelete("id")]
+        [HttpDelete("invoice/id")]
         public async Task<IActionResult> Delete([FromQuery] int id)
         {
             bool deleted = await _service.DeleteAsync(id);

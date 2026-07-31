@@ -47,7 +47,7 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<TimeCodeValidRes>>(pagedResult));
         }
 
-        [HttpGet("byid")]
+        [HttpGet("wgtimeprojectcode/byid")]
         public async Task<IActionResult> GetById([FromQuery] string workGroup, [FromQuery] string timeCode, [FromQuery] string parentProject)
         {
             var item = await _service.GetTimeCodeValidAsync(workGroup, timeCode, parentProject);
