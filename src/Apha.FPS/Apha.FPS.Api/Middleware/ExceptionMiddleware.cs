@@ -50,7 +50,7 @@ namespace Apha.FPS.Api.Middleware
             };
 
             var errorType = _configuration["ExceptionTypes:General"]
-                            ?? "FPS.GENERAL_EXCEPTION";
+                            ?? "FPSAPPS.EXCEPTION.FPS.GENERAL";
 
             switch (ex)
             {
