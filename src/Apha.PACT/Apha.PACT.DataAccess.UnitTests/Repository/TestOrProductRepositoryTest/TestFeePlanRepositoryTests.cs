@@ -78,15 +78,15 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
             new Program { ProgramNo = "PROG2", Directorate = "Dir2", FpsYear = DefaultFpsYear }
         ];
 
-        #region GetTestFeePlanPagedAsync
+        #region GetTestSnapshotPagedAsync
 
         [Fact]
-        public async Task GetTestFeePlanPagedAsync_ReturnsMatchingRows()
+        public async Task GetTestSnapshotPagedAsync_ReturnsMatchingRows()
         {
             var repo = CreateRepositoryWithMocks(SeedTestorProducts(), SeedRequirements(), SeedProjects(), SeedPrograms());
             var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var result = await repo.GetTestFeePlanPagedAsync(parameters);
+            var result = await repo.GetTestSnapshotPagedAsync(parameters);
 
             Assert.NotNull(result);
             // T001 and T003 pass NoRequired != 0; T002 is excluded.
@@ -94,23 +94,23 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
         }
 
         [Fact]
-        public async Task GetTestFeePlanPagedAsync_ExcludesZeroNoTestsRows()
+        public async Task GetTestSnapshotPagedAsync_ExcludesZeroNoTestsRows()
         {
             var repo = CreateRepositoryWithMocks(SeedTestorProducts(), SeedRequirements(), SeedProjects(), SeedPrograms());
             var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var result = await repo.GetTestFeePlanPagedAsync(parameters);
+            var result = await repo.GetTestSnapshotPagedAsync(parameters);
 
             Assert.All(result.Data, row => Assert.NotEqual(0d, row.NoTests));
         }
 
         [Fact]
-        public async Task GetTestFeePlanPagedAsync_SetsVersionAndTestFeeOnRows()
+        public async Task GetTestSnapshotPagedAsync_SetsVersionAndTestFeeOnRows()
         {
             var repo = CreateRepositoryWithMocks(SeedTestorProducts(), SeedRequirements(), SeedProjects(), SeedPrograms());
             var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var result = await repo.GetTestFeePlanPagedAsync(parameters);
+            var result = await repo.GetTestSnapshotPagedAsync(parameters);
 
             var t001 = Assert.Single(result.Data, x => x.TestCode == "T001");
             Assert.StartsWith("Plan - ", t001.Version);
@@ -118,7 +118,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
         }
 
         [Fact]
-        public async Task GetTestFeePlanPagedAsync_FilterByTestCode_ReturnsOnlyMatching()
+        public async Task GetTestSnapshotPagedAsync_FilterByTestCode_ReturnsOnlyMatching()
         {
             var repo = CreateRepositoryWithMocks(SeedTestorProducts(), SeedRequirements(), SeedProjects(), SeedPrograms());
             var parameters = new PaginationParameters<string>
@@ -128,14 +128,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
                 Filter = "{\"TestCode\":\"T001\"}"
             };
 
-            var result = await repo.GetTestFeePlanPagedAsync(parameters);
+            var result = await repo.GetTestSnapshotPagedAsync(parameters);
 
             var row = Assert.Single(result.Data);
             Assert.Equal("T001", row.TestCode);
         }
 
         [Fact]
-        public async Task GetTestFeePlanPagedAsync_SortByTestCodeDescending_OrdersRows()
+        public async Task GetTestSnapshotPagedAsync_SortByTestCodeDescending_OrdersRows()
         {
             var repo = CreateRepositoryWithMocks(SeedTestorProducts(), SeedRequirements(), SeedProjects(), SeedPrograms());
             var parameters = new PaginationParameters<string>
@@ -146,18 +146,18 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
                 Descending = true
             };
 
-            var result = await repo.GetTestFeePlanPagedAsync(parameters);
+            var result = await repo.GetTestSnapshotPagedAsync(parameters);
 
             Assert.Equal("T003", result.Data.First().TestCode);
         }
 
         [Fact]
-        public async Task GetTestFeePlanPagedAsync_NoMatchingData_ReturnsEmpty()
+        public async Task GetTestSnapshotPagedAsync_NoMatchingData_ReturnsEmpty()
         {
             var repo = CreateRepositoryWithMocks();
             var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var result = await repo.GetTestFeePlanPagedAsync(parameters);
+            var result = await repo.GetTestSnapshotPagedAsync(parameters);
 
             Assert.NotNull(result);
             Assert.Empty(result.Data);

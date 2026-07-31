@@ -74,6 +74,7 @@
         public const string GetAllPrograms = "api/v1/program";
         public const string GetAllProgramsForAllUsers = "api/v1/program/all";
         public const string GetPagedPrograms = "api/v1/program/paged";
+        public const string GetProgramTimeSnapshot = "api/v1/program/time-snapshot/paged";
         public const string GetProgramById = "api/v1/program/{0}";
         public const string CreateProgram = "api/v1/program";
         public const string UpdateProgram = "api/v1/program";
@@ -86,6 +87,7 @@
         public const string GetAllProjectsForAllUsers = "api/v1/project/all";
         public const string GetAllProjectsPaged = "api/v1/project/paged/all";
         public const string GetPagedProjectSpecificQuery = "api/v1/project/specific-query/paged";
+        public const string GetPagedProjectSnapshotData = "api/v1/project/project-snapshot/paged";
         public const string GetProjectExceptionalCostsPaged = "api/v1/project/exceptionalcosts/paged";
         public const string GetAllPactProjects = "api/v1/project/pactview/all";
         public const string GetPagedPactProjects = "api/v1/project/pactview";

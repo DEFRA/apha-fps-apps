@@ -129,13 +129,13 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves a paginated list of the project financial summary
+        /// Retrieves a paginated list of the project snapshot data
         /// (income and budget figures) across all projects.
         /// </summary>
-        [HttpGet("financial-summary/paged")]
-        public async Task<IActionResult> GetPagedProjectFinancialSummaryAsync([FromQuery] QueryParameters<string> query)
+        [HttpGet("project-snapshot/paged")]
+        public async Task<IActionResult> GetPagedProjectSnapshotDataAsync([FromQuery] QueryParameters<string> query)
         {
-            var result = await _projectService.GetPagedProjectFinancialSummaryAsync(query);
+            var result = await _projectService.GetPagedProjectSnapshotDataAsync(query);
             return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
         }
 

@@ -62,6 +62,7 @@ namespace Apha.Common.Constants
 
         // Test List
         public const string GetPagedTestOrProducts = "api/v1/testorproduct/paged";
+        public const string GetTestSnapshotPaged = "api/v1/testorproduct/test-snapshot/paged";
         public const string GetTestOrProductById = "api/v1/testorproduct/itemCode?itemCode={0}";
         public const string CreateTestOrProduct = "api/v1/testorproduct";
         public const string UpdateTestOrProduct = "api/v1/testorproduct/itemCode?itemCode={0}";

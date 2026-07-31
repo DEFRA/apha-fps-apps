@@ -22,6 +22,6 @@ namespace Apha.PACT.Application.Interfaces
         Task<bool> UpdateTestPriceCheckAsync(string testCode, string jobCode, TestPriceCheckDto dto);
 
         // TestFeePlan (Plan test-fee report)
-        Task<PaginatedResult<TestFeePlanDto>> GetTestFeePlanPagedAsync(QueryParameters<string> query);
+        Task<PaginatedResult<TestFeePlanDto>> GetTestSnapshotPagedAsync(QueryParameters<string> query);
     }
 }

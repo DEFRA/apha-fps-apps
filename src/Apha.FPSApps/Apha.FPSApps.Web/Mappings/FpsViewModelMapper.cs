@@ -39,6 +39,9 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<AnimalPlanItem, AnimalRequestDto>().ReverseMap();
             CreateMap<AnimalCostsItem, AnimalCostViewDto>().ReverseMap();
             CreateMap<AnimalSnapshotItem, AnimalSnapshotViewDto>().ReverseMap();
+            CreateMap<TimeSnapshotItem, ProgramPlanCostViewDto>().ReverseMap();
+            CreateMap<ProjectSnapshotItem, ProjectSnapshotViewDto>().ReverseMap();
+            CreateMap<TestSnapshotItem, TestFeePlanViewDto>().ReverseMap();
             CreateMap<GenericBidItem, GenericBidViewDto>().ReverseMap();
             CreateMap<ExceptionalCostSnapshotItem, ProjectExceptionalCostViewDto>().ReverseMap();
             CreateMap<CompareStaff2Item, TimeCostCalcsViewDto>().ReverseMap();

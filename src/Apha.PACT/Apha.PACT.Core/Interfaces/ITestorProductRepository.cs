@@ -22,8 +22,8 @@ namespace Apha.PACT.Core.Interfaces
         Task<TestPriceCheckView?> GetTestPriceCheckByKeyAsync(string testCode, string jobCode);
         Task<bool> UpdateTestPriceCheckAsync(string testCode, string jobCode, short isDefraProject, decimal? testPrice, decimal? defraUnitPrice);
 
-        // TestFeePlan (Plan test-fee report)
-        Task<PagedData<TestFeePlanView>> GetTestFeePlanPagedAsync(PaginationParameters<string> query);
+        // TestSnapshot (Plan test-fee report)
+        Task<PagedData<TestFeePlanView>> GetTestSnapshotPagedAsync(PaginationParameters<string> query);
     }
 }
 

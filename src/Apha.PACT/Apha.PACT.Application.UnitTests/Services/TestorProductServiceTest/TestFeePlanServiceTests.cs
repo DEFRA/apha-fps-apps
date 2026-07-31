@@ -24,10 +24,10 @@ namespace Apha.PACT.Application.UnitTests.Services.TestorProductServiceTest
             _sut = new TestorProductService(_repo, _testCapabilityRepo, _mapper);
         }
 
-        #region GetTestFeePlanPagedAsync
+        #region GetTestSnapshotPagedAsync
 
         [Fact]
-        public async Task GetTestFeePlanPagedAsync_ValidQuery_ReturnsMappedResult()
+        public async Task GetTestSnapshotPagedAsync_ValidQuery_ReturnsMappedResult()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10 };
@@ -39,19 +39,19 @@ namespace Apha.PACT.Application.UnitTests.Services.TestorProductServiceTest
             };
 
             _mapper.Map<PaginationParameters<string>>(query).Returns(parameters);
-            _repo.GetTestFeePlanPagedAsync(parameters).Returns(pagedData);
+            _repo.GetTestSnapshotPagedAsync(parameters).Returns(pagedData);
             _mapper.Map<PaginatedResult<TestFeePlanDto>>(pagedData).Returns(expected);
 
-            var result = await _sut.GetTestFeePlanPagedAsync(query);
+            var result = await _sut.GetTestSnapshotPagedAsync(query);
 
             Assert.NotNull(result);
             Assert.Single(result.Data!);
             Assert.Equal("T001", result.Data!.First().TestCode);
-            await _repo.Received(1).GetTestFeePlanPagedAsync(parameters);
+            await _repo.Received(1).GetTestSnapshotPagedAsync(parameters);
         }
 
         [Fact]
-        public async Task GetTestFeePlanPagedAsync_EmptyResult_ReturnsMappedEmptyResult()
+        public async Task GetTestSnapshotPagedAsync_EmptyResult_ReturnsMappedEmptyResult()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var parameters = new PaginationParameters<string>();
@@ -59,10 +59,10 @@ namespace Apha.PACT.Application.UnitTests.Services.TestorProductServiceTest
             var expected = new PaginatedResult<TestFeePlanDto> { Data = [] };
 
             _mapper.Map<PaginationParameters<string>>(query).Returns(parameters);
-            _repo.GetTestFeePlanPagedAsync(parameters).Returns(pagedData);
+            _repo.GetTestSnapshotPagedAsync(parameters).Returns(pagedData);
             _mapper.Map<PaginatedResult<TestFeePlanDto>>(pagedData).Returns(expected);
 
-            var result = await _sut.GetTestFeePlanPagedAsync(query);
+            var result = await _sut.GetTestSnapshotPagedAsync(query);
 
             Assert.Empty(result.Data!);
         }

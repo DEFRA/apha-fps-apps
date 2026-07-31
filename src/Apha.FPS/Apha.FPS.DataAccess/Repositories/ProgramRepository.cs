@@ -214,7 +214,7 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        public async Task<PagedData<ProgramPlanCostView>> GetProgramPlanCostAsync(PaginationParameters<string> query)
+        public async Task<PagedData<ProgramPlanCostView>> GetProgramTimeSnapshotAsync(PaginationParameters<string> query)
         {
             var version = "Plan - " + DateTime.Now.ToString("dd/MM/yyyy");
             var excludedPrograms = new[] { "ZT_prog", "ZT_leave", "Pend_work" };

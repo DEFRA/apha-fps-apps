@@ -1243,10 +1243,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
         #endregion
 
-        #region GetPagedProjectFinancialSummaryAsync Tests
+        #region GetPagedProjectSnapshotDataAsync Tests
 
         [Fact]
-        public async Task GetPagedProjectFinancialSummaryAsync_ReturnsPagedResults()
+        public async Task GetPagedProjectSnapshotDataAsync_ReturnsPagedResults()
         {
             var projects = Enumerable.Range(1, 15)
                 .Select(i => new Project
@@ -1258,7 +1258,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var repo = CreateRepository(projects: projects);
             var query = new PaginationParameters<string>(page: 1, pageSize: 10);
 
-            var result = await repo.GetPagedProjectFinancialSummaryAsync(query);
+            var result = await repo.GetPagedProjectSnapshotDataAsync(query);
 
             Assert.Equal(15, result.PaginationData.TotalRecords);
             Assert.Equal(10, result.Data.Count());
@@ -1266,19 +1266,19 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         [Fact]
-        public async Task GetPagedProjectFinancialSummaryAsync_ReturnsEmpty_WhenNoProjects()
+        public async Task GetPagedProjectSnapshotDataAsync_ReturnsEmpty_WhenNoProjects()
         {
             var repo = CreateRepository(projects: new List<Project>());
             var query = new PaginationParameters<string>(page: 1, pageSize: 10);
 
-            var result = await repo.GetPagedProjectFinancialSummaryAsync(query);
+            var result = await repo.GetPagedProjectSnapshotDataAsync(query);
 
             Assert.Empty(result.Data);
             Assert.Equal(0, result.PaginationData.TotalRecords);
         }
 
         [Fact]
-        public async Task GetPagedProjectFinancialSummaryAsync_ProjectsFinancialFields()
+        public async Task GetPagedProjectSnapshotDataAsync_ProjectsFinancialFields()
         {
             var projects = new List<Project>
             {
@@ -1293,7 +1293,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var repo = CreateRepository(projects: projects);
             var query = new PaginationParameters<string>(page: 1, pageSize: 10);
 
-            var result = await repo.GetPagedProjectFinancialSummaryAsync(query);
+            var result = await repo.GetPagedProjectSnapshotDataAsync(query);
 
             var item = Assert.Single(result.Data);
             Assert.Equal(100m, item.TransferIncome);
@@ -1305,7 +1305,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         [Fact]
-        public async Task GetPagedProjectFinancialSummaryAsync_SortsByParentProjectAscending_ByDefault()
+        public async Task GetPagedProjectSnapshotDataAsync_SortsByParentProjectAscending_ByDefault()
         {
             var projects = new List<Project>
             {
@@ -1316,7 +1316,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var repo = CreateRepository(projects: projects);
             var query = new PaginationParameters<string>(page: 1, pageSize: 10);
 
-            var result = await repo.GetPagedProjectFinancialSummaryAsync(query);
+            var result = await repo.GetPagedProjectSnapshotDataAsync(query);
 
             var items = result.Data.ToList();
             Assert.Equal("AA001", items[0].ParentProject);

@@ -295,7 +295,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         // ── TestFeePlan (Plan test-fee report) ─────────────────────────────────────
 
-        public async Task<PagedData<TestFeePlanView>> GetTestFeePlanPagedAsync(PaginationParameters<string> query)
+        public async Task<PagedData<TestFeePlanView>> GetTestSnapshotPagedAsync(PaginationParameters<string> query)
         {
             // Version is a per-run constant ("Plan - " & Date()); compute once and embed in the query.
             var version = $"Plan - {DateTime.Now:dd/MM/yyyy}";

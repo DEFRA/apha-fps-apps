@@ -168,7 +168,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        public async Task<PagedData<Project>> GetPagedProjectFinancialSummaryAsync(PaginationParameters<string> query)
+        public async Task<PagedData<Project>> GetPagedProjectSnapshotDataAsync(PaginationParameters<string> query)
         {
             var projectQuery = _dbContext.Projects
                 .Select(prj => new Project

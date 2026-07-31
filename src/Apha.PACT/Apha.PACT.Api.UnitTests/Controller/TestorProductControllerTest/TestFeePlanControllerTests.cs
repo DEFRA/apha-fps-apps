@@ -24,10 +24,10 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest
             _controller  = new TestorProductController(_serviceMock, _mapperMock);
         }
 
-        #region GetTestFeePlanPaged
+        #region GetTestSnapshotPaged
 
         [Fact]
-        public async Task GetTestFeePlanPaged_ValidQuery_ReturnsOkWithMappedResult()
+        public async Task GetTestSnapshotPaged_ValidQuery_ReturnsOkWithMappedResult()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var serviceResult = new PaginatedResult<TestFeePlanDto>(
@@ -38,10 +38,10 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest
                 Data = [new TestFeePlanRes { TestCode = "T001", Project = "JOB001" }]
             };
 
-            _serviceMock.GetTestFeePlanPagedAsync(query).Returns(serviceResult);
+            _serviceMock.GetTestSnapshotPagedAsync(query).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<TestFeePlanRes>>(serviceResult).Returns(mapped);
 
-            var result = await _controller.GetTestFeePlanPaged(query);
+            var result = await _controller.GetTestSnapshotPaged(query);
 
             var ok = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<PaginationRes<TestFeePlanRes>>(ok.Value);
@@ -50,41 +50,41 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest
         }
 
         [Fact]
-        public async Task GetTestFeePlanPaged_PassesQueryToService()
+        public async Task GetTestSnapshotPaged_PassesQueryToService()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var serviceResult = new PaginatedResult<TestFeePlanDto>([], new PaginationDto());
-            _serviceMock.GetTestFeePlanPagedAsync(query).Returns(serviceResult);
+            _serviceMock.GetTestSnapshotPagedAsync(query).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<TestFeePlanRes>>(serviceResult)
                 .Returns(new PaginationRes<TestFeePlanRes>());
 
-            await _controller.GetTestFeePlanPaged(query);
+            await _controller.GetTestSnapshotPaged(query);
 
-            await _serviceMock.Received(1).GetTestFeePlanPagedAsync(query);
+            await _serviceMock.Received(1).GetTestSnapshotPagedAsync(query);
         }
 
         [Fact]
-        public async Task GetTestFeePlanPaged_EmptyResult_ReturnsOkWithEmptyData()
+        public async Task GetTestSnapshotPaged_EmptyResult_ReturnsOkWithEmptyData()
         {
             var query = new QueryParameters<string>();
             var serviceResult = new PaginatedResult<TestFeePlanDto>([], new PaginationDto());
-            _serviceMock.GetTestFeePlanPagedAsync(query).Returns(serviceResult);
+            _serviceMock.GetTestSnapshotPagedAsync(query).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<TestFeePlanRes>>(serviceResult)
                 .Returns(new PaginationRes<TestFeePlanRes>());
 
-            var result = await _controller.GetTestFeePlanPaged(query);
+            var result = await _controller.GetTestSnapshotPaged(query);
 
             Assert.IsType<OkObjectResult>(result);
         }
 
         [Fact]
-        public async Task GetTestFeePlanPaged_ServiceThrows_PropagatesException()
+        public async Task GetTestSnapshotPaged_ServiceThrows_PropagatesException()
         {
             var query = new QueryParameters<string>();
-            _serviceMock.GetTestFeePlanPagedAsync(query)
+            _serviceMock.GetTestSnapshotPagedAsync(query)
                 .ThrowsAsync(new Exception("Service error"));
 
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetTestFeePlanPaged(query));
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetTestSnapshotPaged(query));
         }
 
         #endregion
