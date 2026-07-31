@@ -52,11 +52,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 120, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? JobCode { get; set; }
 
-        [Display(Name = "Days")]
+        [Display(Name = "Number of Days")]
         [GridColumn(Width = 80, Type = GridColumnType.DecimalNumber)]
         public double NumberOfDays { get; set; }
 
-        [Display(Name = "No. Required")]
+        [Display(Name = "Number of Animals")]
         [GridColumn(Width = 100, Type = GridColumnType.DecimalNumber)]
         public double NumberOfAnimals { get; set; }
 
