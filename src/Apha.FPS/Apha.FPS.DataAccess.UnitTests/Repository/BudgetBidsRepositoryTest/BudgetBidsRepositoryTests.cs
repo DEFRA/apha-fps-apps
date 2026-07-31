@@ -272,6 +272,25 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
         }
 
         [Fact]
+        public async Task GetBidViewPagedAsync_WithEmptyFilterValues_ReturnsUnfilteredRows()
+        {
+            // Covers: !string.IsNullOrWhiteSpace(wg) == false and !string.IsNullOrWhiteSpace(acc) == false
+            // i.e. filter keys present but values are empty strings - Where clauses are skipped
+            var bidViews = new List<BidView>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo  = CreateRepository(bidViews: bidViews);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, Filter = "{\"WorkGroupName\":\"\",\"Account\":\"\"}"
+            };
+            var result = await repo.GetBidViewPagedAsync(query, "WG01");
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
         public async Task GetBidViewPagedAsync_WithSortByAccount_ReturnsSortedRows()
         {
             // Covers: "account" sort branch
