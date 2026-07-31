@@ -96,7 +96,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<AnimalSnapshotItem>
             {
                 GridId = "snapShotAnimalDataGrid",
-                Title = "Snapshot Animal Data",
+                Title = "Snapshot Animal Requirement",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 AllowAdd = false,
