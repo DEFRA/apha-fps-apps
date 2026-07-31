@@ -16,7 +16,7 @@ namespace Apha.Common.Constants
 
         // Time Code Valid
         public const string GetTimeCodesByJobCode = "api/v1/timecodevalid/jobcode?jobCode={0}&parentProject={1}";
-        public const string GetTimeCodeValidById = "api/v1/timecodevalid/wgtimeprojectcode/byid?workGroup={0}&timeCode={1}&parentProject={2}";
+        public const string GetTimeCodeValidById = "api/v1/timecodevalid/wgtimecodeprojectcode/?workGroup={0}&timeCode={1}&parentProject={2}";
         public const string GetPagedTimeCodes = "api/v1/timecodevalid/paged";
         public const string GetPagedTimeCodesByJobCode = "api/v1/timecodevalid/paged?jobCode={0}";
         public const string GetPagedTimeCodesByProject = "api/v1/timecodevalid/paged?parentProject={0}";
@@ -136,11 +136,11 @@ namespace Apha.Common.Constants
         public const string GetPagedTestReqmt = "api/v1/testrequirement/testcode/paged?testCode={0}";
         public const string GetPagedBySupplierTestCode = "api/v1/testrequirement/supplier/paged?testCode={0}";
         public const string GetPagedTestReqmtbyProject = "api/v1/testrequirement/pagedbyproject?parentProject={0}";
-        public const string GetAllTestReqmtForExport = "api/v1/testrequirement/all/testcode?testCode={0}";
-        public const string GetTestReqmtById = "api/v1/testrequirement/testcodebuyer/byid?testCode={0}&buyer={1}";
+        public const string GetAllTestReqmtForExport = "api/v1/testrequirement/export?testCode={0}";
+        public const string GetTestReqmtById = "api/v1/testrequirement/testcodebuyer?testCode={0}&buyer={1}";
         public const string CreateTestReqmt = "api/v1/testrequirement";
         public const string UpdateTestReqmt = "api/v1/testrequirement";
-        public const string DeleteTestReqmt = "api/v1/testrequirement/testcodebuyer/byid?testCode={0}&buyer={1}";
+        public const string DeleteTestReqmt = "api/v1/testrequirement/testcodebuyer?testCode={0}&buyer={1}";
 
         // Lookups
         //public const string GetAllTestorProducts = "api/v1/testcapability/testorproducts";
@@ -148,10 +148,10 @@ namespace Apha.Common.Constants
 
         // Project Month (Cost Profile Grid)
         public const string GetProjectMonthsByProject = "api/v1/projectmonth/project?project={0}";
-        public const string GetProjectMonthById = "api/v1/projectmonth/project/byid?project={0}&monthNo={1}";
+        public const string GetProjectMonthById = "api/v1/projectmonth/project/month?project={0}&monthNo={1}";
         public const string CreateProjectMonth = "api/v1/projectmonth";
         public const string UpdateProjectMonth = "api/v1/projectmonth";
-        public const string DeleteProjectMonth = "api/v1/projectmonth/project/byid?project={0}&monthNo={1}";
+        public const string DeleteProjectMonth = "api/v1/projectmonth/project/month?project={0}&monthNo={1}";
 
         // Project Profile
         public const string GetProjectProfile = "api/v1/projectprofile/project/data?project={0}";

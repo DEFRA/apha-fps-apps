@@ -41,7 +41,7 @@ namespace Apha.PACT.Api.Controllers
         /// <param name="project">The project code the month record belongs to.</param>
         /// <param name="monthNo">The month number to retrieve.</param>
         /// <returns>Returns <c>200 OK</c> with the matching <see cref="ProjectMonthRes"/>, or throws <see cref="KeyNotFoundException"/> if not found.</returns>
-        [HttpGet("project/byid")]
+        [HttpGet("project/month")]
         public async Task<IActionResult> GetProjectMonth([FromQuery] string project, [FromQuery] int monthNo)
         {
             ProjectMonthDto? item = await _service.GetProjectMonthAsync(project, monthNo);
@@ -79,7 +79,7 @@ namespace Apha.PACT.Api.Controllers
         /// <param name="project">The project code the month record belongs to.</param>
         /// <param name="monthNo">The month number of the record to delete.</param>
         /// <returns>Returns <c>200 OK</c> with a success flag if deleted, or <c>404 Not Found</c> if the record does not exist.</returns>
-        [HttpDelete("project/byid")]
+        [HttpDelete("project/month")]
         public async Task<IActionResult> DeleteProjectMonth([FromQuery] string project, [FromQuery] int monthNo)
         {
             bool deleted = await _service.DeleteProjectMonthAsync(project, monthNo);

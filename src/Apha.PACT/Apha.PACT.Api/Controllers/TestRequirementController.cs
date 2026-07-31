@@ -60,7 +60,7 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Retrieves all TestReqmt records for a given TestCode without pagination (for export).</summary>
-        [HttpGet("all/testcode")]
+        [HttpGet("export")]
         public async Task<IActionResult> GetAllTestReqmtForExport([FromQuery] string testCode, [FromQuery] string? filter = null)
         {
             var items = await _service.GetAllTestReqmtForExportAsync(testCode, filter);
@@ -68,7 +68,7 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Retrieves a TestReqmt record by composite key.</summary>
-        [HttpGet("testcodebuyer/byid")]
+        [HttpGet("testcodebuyer")]
         public async Task<IActionResult> GetTestReqmtById([FromQuery] string testCode, [FromQuery] string buyer)
         {
             var result = await _service.GetTestReqmtByIdAsync(testCode, buyer);
@@ -96,7 +96,7 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Deletes a TestReqmt record by composite key.</summary>
-        [HttpDelete("testcodebuyer/byid")]
+        [HttpDelete("testcodebuyer")]
         public async Task<IActionResult> DeleteTestReqmt([FromQuery] string testCode, [FromQuery] string buyer)
         {
             var deleted = await _service.DeleteTestReqmtAsync(testCode, buyer);
