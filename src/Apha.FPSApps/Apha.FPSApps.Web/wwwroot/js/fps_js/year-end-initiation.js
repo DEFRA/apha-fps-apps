@@ -125,7 +125,8 @@
 
         var row         = $(btn).closest('tr')[0];
         var id          = getCellValue(row, 'Id');
-        var fpsYearType = getCellValue(row, 'FpsYearType');
+        //var fpsYearType = getCellValue(row, 'FpsYearType');
+        var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
 
         // if (fpsYearType && fpsYearType !== 'Planned') {
         //     showAlertMessage('Only Planned year values can be edited.', AlertType.WARNING);
@@ -151,7 +152,8 @@
         var id          = getCellValue(row, 'Id');
         var label       = getCellValue(row, 'Label');
         var value       = getCellValue(row, 'Value') || '';
-        var fpsYearType = getCellValue(row, 'FpsYearType');
+        //var fpsYearType = getCellValue(row, 'FpsYearType');
+        var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
         var fpsyear = getCellValue(row, 'FpsYear');
 
         // if (fpsYearType && fpsYearType !== 'Planned') {
@@ -200,7 +202,8 @@
         hidePageError();
 
         var row         = $(btn).closest('tr')[0];
-        var fpsYearType = getCellValue(row, 'FpsYearType');
+        //var fpsYearType = getCellValue(row, 'FpsYearType');
+        var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
         var year        = getCellValue(row, 'Year');    
         var month       = getCellValue(row, 'Month');
         var fpsyear = getCellValue(row, 'FpsYear');
@@ -227,7 +230,8 @@
         hidePageError();
 
         var row         = $(btn).closest('tr')[0];
-        var fpsYearType = getCellValue(row, 'FpsYearType');
+        //var fpsYearType = getCellValue(row, 'FpsYearType');
+        var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
         var monthName   = getCellValue(row, 'MonthName');
 
         // if (fpsYearType && fpsYearType !== 'Planned') {
@@ -290,8 +294,10 @@
 
     function applyConfigGridButtonStates() {
         $('#tbl_yearEndConfigValuesGrid tbody tr').each(function () {
-            var fpsYearType = getCellValue(this, 'FpsYearType').toLowerCase();
-            var isPlanned = (fpsYearType === 'planned');
+            //var fpsYearType = getCellValue(this, 'FpsYearType').toLowerCase();
+            var fpsYearType = getCellValue(this, 'ExistsForPlannedYear').toLowerCase();
+            //var isPlanned = (fpsYearType === 'planned');
+            var isPlanned = (fpsYearType === 'yes');
 
             $(this).find('.edit-row-btn').prop('disabled', !isPlanned);
             $(this).find('.delete-row-btn').prop('disabled', isPlanned);
@@ -300,7 +306,8 @@
 
     function applyMonthGridButtonStates() {
         $('#tbl_yearEndMonthHoursGrid tbody tr').each(function () {
-            var fpsYearType = getCellValue(this, 'FpsYearType').toLowerCase();
+           //var fpsYearType = getCellValue(this, 'FpsYearType').toLowerCase();
+            var fpsYearType = getCellValue(this, 'ExistsForPlannedYear').toLowerCase();
             var fmonth      = getCellValue(this, 'Fmonth').trim();
             var fmonthZero  = (fmonth === '0' || fmonth === '');
 
@@ -308,7 +315,8 @@
                 $(this).find('.edit-row-btn').prop('disabled', true);
                 $(this).find('.delete-row-btn').prop('disabled', true);
             } else {
-                var Planned = (fpsYearType == 'planned');
+               //var Planned = (fpsYearType == 'planned');
+                var Planned = (fpsYearType == 'yes');
                 $(this).find('.edit-row-btn').prop('disabled', !Planned);
                 $(this).find('.delete-row-btn').prop('disabled', Planned);
             }
