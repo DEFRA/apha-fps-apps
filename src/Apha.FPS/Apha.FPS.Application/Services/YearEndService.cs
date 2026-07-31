@@ -45,11 +45,8 @@ namespace Apha.FPS.Application.Services
 
         public async Task<bool> CanInitiateYearEndDataSetupRequestAsync(string jobName)
         {
-           // List<BusinessValidationError> errors = await Validation();
             return await _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(jobName);
         }
-
-        
 
         public async Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName)
         {
@@ -63,42 +60,41 @@ namespace Apha.FPS.Application.Services
             var note = $"'{YearEndDataSetupJobName}' is initiated for {plannedYear}.";
 
             await ValidateConfiguration(errors);
-            await ValidateDataSetupInput(plannedYear, requestedBy, errors, YearEndDataSetupJobName, false);
+            await ValidateDataSetupRequestInput(plannedYear, requestedBy, errors, YearEndDataSetupJobName, false);
 
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
             var queued = await _yearEndRepository.EnqueueDataSetupBatchJobAsync(YearEndDataSetupJobName, requestedBy, correlationId, note);
 
-            //var eventDetail = BuildReCreateJobEvent(requestedBy, correlationId, month, contextyear);
-
-            //var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
-
-            //var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
-            //result.EventId = eventId; 
             return _mapper.Map<BatchJobQueueDto>(queued);
-
-
         }
 
-        public async Task<BatchJobQueueDto> EnqueueYearEndDataSetupApprovalJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
+        public async Task<BatchJobEventTriggerDto> EnqueueYearEndDataSetupApprovalJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
 
             var note = $"'{YearEndDataSetupJobName}' is approved for {plannedYear}.";
  
             await ValidateConfiguration(errors);
-            await ValidateDataSetupInput(plannedYear, requestedBy, errors, YearEndDataSetupJobName, true);
+            await ValidateDataSetupRequestInput(plannedYear, requestedBy, errors, YearEndDataSetupJobName, true);
 
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
             var queued = await _yearEndRepository.EnqueueApprovedDataSetupBatchJobAsync(YearEndDataSetupJobName, requestedBy, correlationId, note);
 
-            return _mapper.Map<BatchJobQueueDto>(queued);
+            var eventDetail = BuildYearEndDataSetupJobEvent(requestedBy, correlationId, plannedYear);
+
+            var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
+
+            var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
+            result.EventId = eventId;
+
+            return _mapper.Map<BatchJobEventTriggerDto>(result);
         }
  
-        private async Task ValidateDataSetupInput(int plannedYear, string requestedBy, List<BusinessValidationError> errors, string jobName,bool isApprovalReq)
+        private async Task ValidateDataSetupRequestInput(int plannedYear, string requestedBy, List<BusinessValidationError> errors, string jobName,bool isApprovalReq)
         {
             if (plannedYear == 0 || (plannedYear < 1900 || plannedYear > 9999))
                 errors.Add(new BusinessValidationError($"PlannedYear is not valid.", "INVALID_PlannedYear"));
@@ -118,29 +114,32 @@ namespace Apha.FPS.Application.Services
                 var canRun = await _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(jobName);
                 if (!canRun)
                 {
-                    errors.Add(new BusinessValidationError($"Job '{jobName}' is already running or initiated., Please try after sometime.", "INVALID_Rerun"));
+                    errors.Add(new BusinessValidationError($"Job '{jobName}' is already running or initiated. Please try after sometime.", "INVALID_Rerun"));
                 }
             }
+
             if (jobName != null && jobName == YearEndDataSetupJobName && isApprovalReq)
             {
                 var canApprove = await _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(YearEndDataSetupJobName);
                 if (!canApprove)
-                    errors.Add(new BusinessValidationError($"There is no initiated request to approve for job '{YearEndDataSetupJobName}'.", "INVALID_Approve"));
+                    errors.Add(new BusinessValidationError($"There is no initiated request for approval of job '{YearEndDataSetupJobName}'.", "INVALID_Approve"));
 
                 var initiator = await _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(YearEndDataSetupJobName);
 
                 if(!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
                 {
-                    errors.Add(new BusinessValidationError($"Initiator and approver for job '{YearEndDataSetupJobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approve"));
+                    //errors.Add(new BusinessValidationError($"Initiator and approver for job '{YearEndDataSetupJobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approve"));
                 }
             }
-
-            //return errors;
         }
         private async Task ValidateConfiguration(List<BusinessValidationError> errors)
         {
-            //var errors = new List<BusinessValidationError>();
+            await ValidateSettingConfiguration( errors);
+            await ValidateMonthConfiguration(  errors);
+        }
 
+        private async Task ValidateSettingConfiguration(List<BusinessValidationError> errors)
+        {
             var configs = await _fpsSettingRepository.GetYearEndSettingsAsync();
             bool hasUnplannedOpenConfigs = configs.Any(x => string.Equals(x.FpsYearType, "open", StringComparison.OrdinalIgnoreCase)
             || string.Equals(x.FpsYearType, "new", StringComparison.OrdinalIgnoreCase));
@@ -170,8 +169,14 @@ namespace Apha.FPS.Application.Services
                         errors.Add(new BusinessValidationError($"Configuration values for the IDs CapApprovalReceivedForReset is not valid. Please provide 'Yes' or 'No'.", "Missing_CapApprovalReceivedForReset"));
                 }
             }
+ 
+        }
+
+        private async Task ValidateMonthConfiguration(List<BusinessValidationError> errors)
+        {
 
             var monthConfigs = await _monthHourRepository.GetYearEndMonthHoursAsync();
+
             bool hasUnplannedMonthConfigs = monthConfigs.Any(x => string.Equals(x.FpsYearType, "open", StringComparison.OrdinalIgnoreCase)
             || string.Equals(x.FpsYearType, "new", StringComparison.OrdinalIgnoreCase));
 
@@ -182,10 +187,9 @@ namespace Apha.FPS.Application.Services
 
             if (hasmissingMissingVal)
                 errors.Add(new BusinessValidationError($"Provided Month Working days, VID hours and CVL hours values are not valid for the planned year. Values should be non-negative and greater than zero.  Please verify and add valid value for each month.", "Missing_Config"));
-
-           // return errors;
         }
-        private static EventDetail BuildReCreateJobEvent(string requestedBy, string correlationId, int month, int contextYear)
+
+        private static EventDetail BuildYearEndDataSetupJobEvent(string requestedBy, string correlationId, int plannedYear)
         {
             return new EventDetail
             {
@@ -196,7 +200,7 @@ namespace Apha.FPS.Application.Services
                 RequestedAtUtc = DateTime.UtcNow,
                 ParametersJson = JsonSerializer.Serialize(new
                 {
-                    month = $"{contextYear:D4}-{month:D2}"
+                    plannedYear = $"{plannedYear:D4}"
                 })
             };
         }

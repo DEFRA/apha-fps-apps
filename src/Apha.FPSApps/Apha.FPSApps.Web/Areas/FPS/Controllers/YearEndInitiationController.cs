@@ -158,7 +158,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var result = await _yearEndService.TriggerYearEndInitiationJobAsync(plannedYear);
             if (result.Success)
             {
-                _logger.LogInformation("Year End Initiation job triggered. EventId: {EventId}", result?.Data?.EventId);
+                _logger.LogInformation("Year End Initiation job triggered.");
                 return Json(new { success = true });
             }
 

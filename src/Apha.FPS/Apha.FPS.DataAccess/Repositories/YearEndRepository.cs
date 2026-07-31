@@ -130,7 +130,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<BatchJobQueue> EnqueueApprovedDataSetupBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
         {
-            BatchJobQueue jobQueueEntry = null!;
+            BatchJobQueue queueRow = null!;
 
             var jobqueue= await (
                 from jm in _context.BatchJobs.AsNoTracking()
@@ -143,22 +143,14 @@ namespace Apha.FPS.DataAccess.Repositories
             
             if (jobqueue == null)
             {
-                throw new KeyNotFoundException($"Batch jobqueue for job '{jobName}' was not found.");
+                throw new KeyNotFoundException($"No request found for approval for job '{jobName}' was not found.");
             }
 
-            var approveStatusId = await _context.BatchJobStatuses
-    .AsNoTracking()
-    .Where(s => s.JobId == jobqueue.JobId &&
-                s.Status.ToLower() == "approved")
-    .Select(s => s.StatusId)
-    .FirstOrDefaultAsync();
-
-            //var approveStatusId = await _context.BatchJobStatuses
-            //    .AsNoTracking()
-            //    .FirstOrDefaultAsync(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "approved")
-                 
-                //?? throw new KeyNotFoundException($"Status 'approved' not found for job '{jobName}'.");
-
+            var approveStatus = await _context.BatchJobStatuses
+                .AsNoTracking()
+                .Where(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "approved")
+                .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'approved' not found for job '{jobName}'.");
+ 
             var strategy = _context.Database.CreateExecutionStrategy();
 
             await strategy.ExecuteAsync(async () =>
@@ -166,14 +158,13 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    var queueRow = await _context.BatchJobQueues
-                .AsNoTracking()
-                .FirstOrDefaultAsync(j => j.JobqueueId == jobqueue.JobqueueId)
-                ?? throw new KeyNotFoundException($"Batch jobqueue for job '{jobName}' was not found.");
+                    queueRow = await _context.BatchJobQueues
+                    .AsNoTracking().FirstOrDefaultAsync(j => j.JobqueueId == jobqueue.JobqueueId)
+                    ?? throw new KeyNotFoundException($"Batch jobqueue for job '{jobName}' was not found.");
 
                     if (queueRow != null)
                     {
-                        queueRow.StatusId = approveStatusId;
+                        queueRow.StatusId = approveStatus.StatusId;
                         queueRow.RequestedBy = requestedBy;
                         queueRow.RequestedAtUtc = DateTime.UtcNow;
                         queueRow.StartDateTime = DateTime.UtcNow;
@@ -181,7 +172,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         _context.BatchJobQueues.Update(queueRow);
                     }
 
-                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, approveStatusId);
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, approveStatus.StatusId);
                     _context.BatchJobQueueLogs.Add(logEntry);
 
                     await _context.SaveChangesAsync();
@@ -194,7 +185,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     throw;
                 }
             });
-            return jobQueueEntry;
+            return queueRow;
         }
         private static IQueryable ApplySorting(IQueryable<BatchJobHistory> query, string? sortBy, bool descending)
         {

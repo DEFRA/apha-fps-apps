@@ -67,17 +67,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var failDto = _mapper.Map<ApiResponseDto<bool>>(response);
             return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
         }
-        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndInitiationJobAsync(int plannedYear)
+        public async Task<ApiResponseDto<BatchJobQueueDto>> TriggerYearEndInitiationJobAsync(int plannedYear)
         {
             var request = new YearEndDataSetupReq { PlannedYear = plannedYear };
-            var response = await _http.PostAsync<YearEndDataSetupReq,BatchJobEventTriggerRes>(
+            var response = await _http.PostAsync<YearEndDataSetupReq, BatchJobQueueRes>(
                 FpsApiEndpoints.EnqueueYearEndDataSetupInitiationJob, request);
 
             if (response.Success && response.Data is not null)
-                return _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(response);
+                return _mapper.Map<ApiResponseDto<BatchJobQueueDto>>(response);
 
-            var failDto = _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(response);
-            return ApiResponseDto<BatchJobEventTriggerDto>.FailureResponse(failDto.Errors, failDto.Meta);
+            var failDto = _mapper.Map<ApiResponseDto<BatchJobQueueDto>>(response);
+            return ApiResponseDto<BatchJobQueueDto>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
         public async Task<ApiResponseDto<BatchJobEventTriggerDto>> ApproveYearEndInitiationJobAsync(int plannedYear)
