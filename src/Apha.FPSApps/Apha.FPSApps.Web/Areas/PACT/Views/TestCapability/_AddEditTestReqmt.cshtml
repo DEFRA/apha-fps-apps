@@ -115,8 +115,8 @@
                                type="text" value="@(Model.RecUnitPrice.HasValue ? Model.RecUnitPrice.Value.ToString("F2") : "")"
                         @(isEdit ? "disabled" : "") />
                     </div>
+                    <span asp-validation-for="RecUnitPrice" class="govuk-error-message"></span>
                 </div>
-                <span asp-validation-for="RecUnitPrice" class="govuk-error-message"></span>
             </div>
         </div>
 
