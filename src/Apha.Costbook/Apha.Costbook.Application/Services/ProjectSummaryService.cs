@@ -215,4 +215,28 @@ public class ProjectSummaryService : IProjectSummaryService
             AdditionalCostTotal = entity.AdditionalCostTotal
         };
     }
+
+    public async Task<ProjectAdditionalCostDto> GetProjectAdditionalCostsPagedAsync(QueryParameters<string>? query = null)
+    {
+        var parameters = query != null
+            ? _mapper.Map<PaginationParameters<string>>(query)
+            : new PaginationParameters<string>();
+
+        var data = await _projectRepo.GetProjectExceptionalCostsPagedAsync(parameters);
+
+        return new ProjectAdditionalCostDto
+        {
+            TotalCount = data.TotalCount,
+            Rows = data.Rows.Select(r => new ProjectAdditionalCostRowDto
+            {
+                Directorate    = r.Directorate,
+                Programme      = r.Programme,
+                ContractNumber = r.ContractNumber,
+                Project        = r.Project,
+                AccountCat     = r.AccountCat,
+                Description    = r.Description,
+                ItemCost       = r.ItemCost
+            }).ToList()
+        };
+    }
 }

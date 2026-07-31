@@ -94,6 +94,7 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
             CreateMap<GenericBidView, GenericBidViewDto>().ReverseMap();
+            CreateMap<ProjectExceptionalCostView, ProjectExceptionalCostViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
             //   All 5 log entities from fps schema partitioned tables.
             //   Property names are fully aligned between entity and DTO; no ForMember overrides needed.

@@ -769,9 +769,116 @@ namespace Apha.Costbook.DataAccess.Repositories
         }
 
         // Filtering logic similar to FPS ApplyEmployeeFilter
-        private static IQueryable<Project> ApplyProjectFilter(IQueryable<Project> queryProjects, string? filter)
+        public async Task<ProjectAdditionalCostData> GetProjectExceptionalCostsPagedAsync(PaginationParameters<string> query)
         {
-            if (string.IsNullOrEmpty(filter))
+            // Base join: Project → Program → AdditionalCost
+            // SELECT DISTINCT prg.Directorate, prj.Programme, prj.ContractNumber,
+            //                 prj.ProjectId AS Project, ac.AccountCat AS Account,
+            //                 ac.Description, ac.ItemCost
+            // FROM tblproject prj
+            // INNER JOIN tlkpprogram prg ON prj.programme = prg.programno
+            // INNER JOIN tbladditionalcosts ac ON prj.project = ac.project
+            // ORDER BY prg.Directorate, prj.Programme, prj.ProjectId
+            var rows = await (
+                from prj in _context.Projects.AsNoTracking()
+                join prg in _context.Programs.AsNoTracking()
+                    on prj.Programme equals prg.ProgramNo
+                join ac in _context.AdditionalCosts.AsNoTracking()
+                    on prj.ProjectId equals ac.Project
+                select new ProjectAdditionalCostRowData
+                {
+                    Directorate    = prg.Directorate,
+                    Programme      = prj.Programme,
+                    ContractNumber = prj.ContractNumber,
+                    Project        = prj.ProjectId,
+                    AccountCat     = ac.AccountCat,
+                    Description    = ac.Description,
+                    ItemCost       = ac.ItemCost
+                })
+                .Distinct()
+                .OrderBy(r => r.Directorate)
+                    .ThenBy(r => r.Programme)
+                    .ThenBy(r => r.Project)
+                .ToListAsync();
+
+            // Apply filter
+            rows = ApplyProjectAdditionalCostFilter(rows, query.Filter);
+
+            // Apply sorting
+            rows = ApplyProjectAdditionalCostSort(rows, query.SortBy, query.Descending);
+
+            var totalCount = rows.Count;
+
+            // Apply paging
+            if (query.Page > 0 && query.PageSize > 0)
+            {
+                rows = rows
+                    .Skip((query.Page - 1) * query.PageSize)
+                    .Take(query.PageSize)
+                    .ToList();
+            }
+
+            return new ProjectAdditionalCostData { Rows = rows, TotalCount = totalCount };
+        }
+
+        private static List<ProjectAdditionalCostRowData> ApplyProjectAdditionalCostFilter(
+            List<ProjectAdditionalCostRowData> rows, string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return rows;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return rows;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("Directorate", out var directorate) && directorate != null)
+                rows = rows.Where(r => r.Directorate != null &&
+                    r.Directorate.Contains(directorate.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (dict.TryGetValue("Programme", out var programme) && programme != null)
+                rows = rows.Where(r => r.Programme != null &&
+                    r.Programme.Contains(programme.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (dict.TryGetValue("ContractNumber", out var contract) && contract != null)
+                rows = rows.Where(r => r.ContractNumber != null &&
+                    r.ContractNumber.Contains(contract.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (dict.TryGetValue("Project", out var project) && project != null)
+                rows = rows.Where(r => r.Project != null &&
+                    r.Project.Contains(project.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (dict.TryGetValue("AccountCat", out var account) && account != null)
+                rows = rows.Where(r => r.AccountCat != null &&
+                    r.AccountCat.Contains(account.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (dict.TryGetValue("Description", out var description) && description != null)
+                rows = rows.Where(r => r.Description != null &&
+                    r.Description.Contains(description.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            return rows;
+        }
+
+        private static List<ProjectAdditionalCostRowData> ApplyProjectAdditionalCostSort(
+            List<ProjectAdditionalCostRowData> rows, string? sortBy, bool descending)
+        {
+            return sortBy?.ToLower() switch
+            {
+                "directorate"    => descending ? rows.OrderByDescending(r => r.Directorate).ToList()    : rows.OrderBy(r => r.Directorate).ToList(),
+                "programme"      => descending ? rows.OrderByDescending(r => r.Programme).ToList()      : rows.OrderBy(r => r.Programme).ToList(),
+                "contractnumber" => descending ? rows.OrderByDescending(r => r.ContractNumber).ToList() : rows.OrderBy(r => r.ContractNumber).ToList(),
+                "project"        => descending ? rows.OrderByDescending(r => r.Project).ToList()        : rows.OrderBy(r => r.Project).ToList(),
+                "accountcat"     => descending ? rows.OrderByDescending(r => r.AccountCat).ToList()     : rows.OrderBy(r => r.AccountCat).ToList(),
+                "description"    => descending ? rows.OrderByDescending(r => r.Description).ToList()    : rows.OrderBy(r => r.Description).ToList(),
+                "itemcost"       => descending ? rows.OrderByDescending(r => r.ItemCost).ToList()       : rows.OrderBy(r => r.ItemCost).ToList(),
+                _                => rows.OrderBy(r => r.Directorate).ThenBy(r => r.Programme).ThenBy(r => r.Project).ToList()
+            };
+        }
+
+        private static IQueryable<Project> ApplyProjectFilter(IQueryable<Project> queryProjects, string? filter)
+        { 
+        if (string.IsNullOrEmpty(filter))
             {
                 return queryProjects;
             }

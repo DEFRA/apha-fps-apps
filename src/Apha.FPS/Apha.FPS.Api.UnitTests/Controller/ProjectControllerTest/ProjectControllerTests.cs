@@ -776,5 +776,74 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
         }
 
         #endregion
+
+        #region GetProjectExceptionalCostsPagedAsync
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dtos = new List<ProjectExceptionalCostViewDto>
+            {
+                new() { Directorate = "DIR1", Programme = "P001", Project = "PP001", AccountCat = "ACC1", ItemCost = 100m },
+                new() { Directorate = "DIR2", Programme = "P002", Project = "PP002", AccountCat = "ACC2", ItemCost = 200m }
+            };
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 2 };
+            var serviceResult = new PaginatedResult<ProjectExceptionalCostViewDto>(dtos, paginationDto);
+            var mappedResult = new PaginationRes<ProjectExceptionalCostViewRes>
+            {
+                Data = new List<ProjectExceptionalCostViewRes>
+                {
+                    new() { Directorate = "DIR1", Programme = "P001", Project = "PP001", AccountCat = "ACC1", ItemCost = 100m },
+                    new() { Directorate = "DIR2", Programme = "P002", Project = "PP002", AccountCat = "ACC2", ItemCost = 200m }
+                }
+            };
+
+            _serviceMock.GetProjectExceptionalCostsPagedAsync(query).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProjectExceptionalCostViewRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+            await _serviceMock.Received(1).GetProjectExceptionalCostsPagedAsync(query);
+        }
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_EmptyResult_ReturnsOkWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var emptyResult = new PaginatedResult<ProjectExceptionalCostViewDto>(
+                Enumerable.Empty<ProjectExceptionalCostViewDto>(),
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 0, TotalRecords = 0 });
+            var mappedResult = new PaginationRes<ProjectExceptionalCostViewRes> { Data = new List<ProjectExceptionalCostViewRes>() };
+
+            _serviceMock.GetProjectExceptionalCostsPagedAsync(query).Returns(emptyResult);
+            _mapperMock.Map<PaginationRes<ProjectExceptionalCostViewRes>>(emptyResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _serviceMock.GetProjectExceptionalCostsPagedAsync(query).Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetProjectExceptionalCostsPagedAsync(query));
+        }
+
+        #endregion
     }
 }

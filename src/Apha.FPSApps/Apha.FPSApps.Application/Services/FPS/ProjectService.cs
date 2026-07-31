@@ -160,5 +160,8 @@ namespace Apha.FPSApps.Application.Services.FPS
         public Task<ApiResponseDto<List<ProjectStaffReplanDto>>> GetProjectGroupStaffReplanAsync(QueryParameters<string> query, string workgroup)
             => _fpsClient.FpsProject.GetProjectGroupStaffReplanAsync(query, workgroup);
 
+        public Task<ApiResponseDto<List<ProjectExceptionalCostViewDto>>> GetProjectExceptionalCostsPagedAsync(QueryParameters<string> query)
+            => _fpsClient.FpsProject.GetProjectExceptionalCostsPagedAsync(query);
+
     }
 }

@@ -1480,5 +1480,74 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
         }
 
         #endregion
+
+        #region GetProjectExceptionalCostsPagedAsync Tests
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_WithSuccessResponse_ReturnsMappedList()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var data = new List<ProjectExceptionalCostViewDto>
+            {
+                new() { Directorate = "DIR1", Programme = "P001", Project = "PP001", AccountCat = "ACC1", ItemCost = 100m },
+                new() { Directorate = "DIR2", Programme = "P002", Project = "PP002", AccountCat = "ACC2", ItemCost = 200m }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectExceptionalCostViewDto>>.SuccessResponse(
+                data, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 });
+
+            _fpsProjectApiClient.GetProjectExceptionalCostsPagedAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _fpsProjectApiClient.Received(1).GetProjectExceptionalCostsPagedAsync(query);
+        }
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expectedResponse = ApiResponseDto<List<ProjectExceptionalCostViewDto>>.SuccessResponse(
+                new List<ProjectExceptionalCostViewDto>());
+
+            _fpsProjectApiClient.GetProjectExceptionalCostsPagedAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+            await _fpsProjectApiClient.Received(1).GetProjectExceptionalCostsPagedAsync(query);
+        }
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<ProjectExceptionalCostViewDto>>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsProjectApiClient.GetProjectExceptionalCostsPagedAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        #endregion
     }
 }

@@ -72,6 +72,8 @@ public class RequestMapper : Profile
         CreateMap<ProjectCostsRowDto, ProjectCostsRowRes>().ReverseMap();
         CreateMap<ProjectCostsPivotDto, ProjectCostsPivotRes>().ReverseMap();
         CreateMap<ProjectYearCostSummaryDto, ProjectYearCostSummaryRes>().ReverseMap();
+        CreateMap<ProjectAdditionalCostRowDto, ProjectAdditionalCostRowRes>().ReverseMap();
+        CreateMap<ProjectAdditionalCostDto, ProjectAdditionalCostRes>().ReverseMap();
 
         // ── Maintenance: CapsStaff (Tab 5) ───────────────────────────────────────
         CreateMap<StaffDto, StaffRes>().ReverseMap();

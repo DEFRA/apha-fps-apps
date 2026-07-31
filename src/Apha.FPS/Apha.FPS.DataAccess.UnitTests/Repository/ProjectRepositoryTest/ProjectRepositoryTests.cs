@@ -30,6 +30,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             IEnumerable<ProjectSubContract>? projectSubContracts = null,
             IEnumerable<ProjectGroupView>? projectGroupViews = null,
             IEnumerable<Program>? programs = null,
+            IEnumerable<AdditionalCost>? additionalCosts = null,
             string userEmailId = "test@example.com", // always lowercase - matches middleware ToLowerInvariant()
             int fpsYear = 2024)
         {
@@ -114,6 +115,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             {
                 var mockSet = RepositoryTestHelper.CreateMockDbSet(programs);
                 mockContext.Setup(x => x.Programs).Returns(mockSet.Object);
+            }
+
+            if (additionalCosts != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(additionalCosts);
+                mockContext.Setup(x => x.AdditionalCosts).Returns(mockSet.Object);
             }
 
             return new ProjectRepository(mockContext.Object, mockRequestContext.Object);
@@ -3404,6 +3411,143 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal(30m, items[0].PlanCaseWorkDebit);
             Assert.Equal(20m, items[1].PlanCaseWorkDebit);
             Assert.Equal(10m, items[2].PlanCaseWorkDebit);
+        }
+
+        #endregion
+
+        #region GetProjectExceptionalCostsPagedAsync Tests
+
+        private static (List<Project> projects, List<FpsProgram> programs, List<AdditionalCost> additionalCosts) BuildExceptionalCostData()
+        {
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P001", Contract = "CON1", Customer = "DEFRA", ProjectStatus = "Active", IncomeAccountCode = "IA1", Disease = "TB" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta",  Program = "P002", Contract = "CON2", Customer = "DEFRA", ProjectStatus = "Active", IncomeAccountCode = "IA2", Disease = "FMD" }
+            };
+            var programs = new List<FpsProgram>
+            {
+                new() { ProgramNo = "P001", Directorate = "DIR1" },
+                new() { ProgramNo = "P002", Directorate = "DIR2" }
+            };
+            var additionalCosts = new List<AdditionalCost>
+            {
+                new() { JobCode = "PP001", Account = "ACC1", Description = "Travel",   ItemCost = 100m },
+                new() { JobCode = "PP002", Account = "ACC2", Description = "Equipment", ItemCost = 200m }
+            };
+            return (projects, programs, additionalCosts);
+        }
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_JoinsProjectsProgramsAndAdditionalCosts()
+        {
+            // Arrange
+            var (projects, programs, additionalCosts) = BuildExceptionalCostData();
+            var repo = CreateRepository(projects: projects, programs: programs, additionalCosts: additionalCosts);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            var first = result.Data.First(x => x.Project == "PP001");
+            Assert.Equal("DIR1", first.Directorate);
+            Assert.Equal("P001", first.Programme);
+            Assert.Equal("CON1", first.ContractNumber);
+            Assert.Equal("ACC1", first.AccountCat);
+            Assert.Equal("Travel", first.Description);
+            Assert.Equal(100m, first.ItemCost);
+        }
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_ExcludesProjectsWithoutMatchingAdditionalCost()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P001", Contract = "CON1", Customer = "DEFRA", ProjectStatus = "Active", IncomeAccountCode = "IA1", Disease = "TB" },
+                new() { ParentProject = "PPX",   ProjectTitle = "Ghost", Program = "P001", Contract = "CONX", Customer = "DEFRA", ProjectStatus = "Active", IncomeAccountCode = "IAX", Disease = "TB" }
+            };
+            var programs = new List<FpsProgram> { new() { ProgramNo = "P001", Directorate = "DIR1" } };
+            var additionalCosts = new List<AdditionalCost> { new() { JobCode = "PP001", Account = "ACC1", Description = "Travel", ItemCost = 100m } };
+            var repo = CreateRepository(projects: projects, programs: programs, additionalCosts: additionalCosts);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal("PP001", result.Data.Single().Project);
+        }
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_FiltersByDirectorate()
+        {
+            // Arrange
+            var (projects, programs, additionalCosts) = BuildExceptionalCostData();
+            var repo = CreateRepository(projects: projects, programs: programs, additionalCosts: additionalCosts);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                Filter = "{\"Directorate\":\"DIR1\"}"
+            };
+
+            // Act
+            var result = await repo.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal("DIR1", result.Data.Single().Directorate);
+        }
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_SortsByItemCostDescending()
+        {
+            // Arrange
+            var (projects, programs, additionalCosts) = BuildExceptionalCostData();
+            var repo = CreateRepository(projects: projects, programs: programs, additionalCosts: additionalCosts);
+            var query = new PaginationParameters<string>(sortBy: "itemcost", descending: true, page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            Assert.Equal(200m, result.Data.First().ItemCost);
+        }
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_AppliesPaging()
+        {
+            // Arrange
+            var (projects, programs, additionalCosts) = BuildExceptionalCostData();
+            var repo = CreateRepository(projects: projects, programs: programs, additionalCosts: additionalCosts);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 1);
+
+            // Act
+            var result = await repo.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.PaginationData.TotalPages);
+        }
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_WithNoData_ReturnsEmpty()
+        {
+            // Arrange
+            var repo = CreateRepository(
+                projects: new List<Project>(),
+                programs: new List<FpsProgram>(),
+                additionalCosts: new List<AdditionalCost>());
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
         }
 
         #endregion

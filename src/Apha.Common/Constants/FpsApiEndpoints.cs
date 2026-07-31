@@ -85,6 +85,7 @@
         public const string GetPagedProjectsByUser = "api/v1/project/paged/by-user";
         public const string GetAllProjectsForAllUsers = "api/v1/project/all";
         public const string GetAllProjectsPaged = "api/v1/project/paged/all";
+        public const string GetProjectExceptionalCostsPaged = "api/v1/project/exceptionalcosts/paged";
         public const string GetAllPactProjects = "api/v1/project/pactview/all";
         public const string GetPagedPactProjects = "api/v1/project/pactview";
         public const string GetPagedPactProjectsByProgram = "api/v1/project/pactview/by-program?programNo={0}";
