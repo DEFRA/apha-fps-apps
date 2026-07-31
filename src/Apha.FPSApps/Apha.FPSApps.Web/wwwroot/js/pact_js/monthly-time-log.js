@@ -147,5 +147,8 @@ $(function () {
         $('#dtDateImported').val('');
         $('#txtUserId').val('');
         $('#ddAction').val('');
+
+        var gm = getGridManager();
+        if (gm) { gm.reloadGrid({ page: 1 }); }
     });
 });

@@ -384,6 +384,8 @@ namespace Apha.PACT.DataAccess.Repository
                 "description" => ApplyOrder(query, s => s.Description, descending),
                 "supplier" => ApplyOrder(query, s => s.Supplier, descending),
                 "suppliernumber" => ApplyOrder(query, s => s.SupplierNumber, descending),
+                "dailyrate" => ApplyOrder(query, s => s.DailyRate, descending),
+                "animaldays" => ApplyOrder(query, s => s.AnimalDays, descending),
                 _ => query.OrderBy(e => e.SubContCounter)
             };
         }
