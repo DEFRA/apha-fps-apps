@@ -22,6 +22,5 @@ namespace Apha.Costbook.Core.Interfaces
         Task<ProjectSummaryExportData> GetProjectSummaryExportDataAsync(string projectId);
         Task<double> GetInflationFactorAsync(string infType, string projectId, int year, int currentYear);
         Task<ProjectYearCostSummary> GetProjectYearCostSummaryAsync(string projectId, int year);
-        Task<ProjectAdditionalCostData> GetProjectExceptionalCostsPagedAsync(PaginationParameters<string> query);
     }
 }

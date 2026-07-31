@@ -73,14 +73,6 @@ public class ProjectSummaryController : ControllerBase
         return Ok(BuildOk(_mapper.Map<ProjectYearCostSummaryRes>(dto)));
     }
 
-    /// <summary>Returns a paged, filtered and sorted list of additional costs joined across projects and programmes.</summary>
-    [HttpGet("additional-costs")]
-    public async Task<IActionResult> GetProjectAdditionalCostsPaged([FromQuery] QueryParameters<string>? query = null)
-    {
-        var dto = await _service.GetProjectAdditionalCostsPagedAsync(query);
-        return Ok(BuildOk(_mapper.Map<ProjectAdditionalCostRes>(dto)));
-    }
-
     private static ApiResponse<T> BuildOk<T>(T data) => new()
     {
         Success = true,
