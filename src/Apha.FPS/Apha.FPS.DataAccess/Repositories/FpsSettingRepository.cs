@@ -66,9 +66,9 @@ namespace Apha.FPS.DataAccess.Repositories
             await _dbContext.SaveChangesAsync();
             return existing ?? setting;
         }
+
         public async Task<List<YearEndFpsSetting>> GetYearEndSettingsAsync()
         {
-           
             var settingIds = new[]
                {
                     "HoursInDay",
@@ -93,7 +93,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Select(g => g.FirstOrDefault(x => x.FpsYear == plannedYear)
                 ?? g.First(x => x.FpsYear == openYear)).ToList();
 
-            var result = GetSettingList( settingIds, openYear, plannedYear, settings);
+            var result = GetSettingList(settingIds, openYear, plannedYear, settings);
 
             return result;
         }

@@ -36,6 +36,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnName("errormessage");
 
             entity.Property(e => e.JobExecutionId).HasColumnName("jobexecutionid");
+            
             entity.Property(e => e.JobId).HasColumnName("jobid");
 
             entity.Property(e => e.RequestedAtUtc).HasColumnName("requested_at_utc");
@@ -45,6 +46,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnName("requestedby");
 
             entity.Property(e => e.StartDateTime).HasColumnName("startdatetime");
+            
             entity.Property(e => e.StatusId).HasColumnName("statusid");
 
             entity.Property(e => e.UpdatedAt)

@@ -17,16 +17,21 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.JobqueueLogId)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("jobqueuelogid");
+           
             entity.Property(e => e.JobqueueId).HasColumnName("jobqueueid");
+            
             entity.Property(e => e.LogTime)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("logtime");
+           
             entity.Property(e => e.Note)
                 .HasMaxLength(500)
                 .HasColumnName("note");
+            
             entity.Property(e => e.PerformedBy)
                 .HasMaxLength(256)
                 .HasColumnName("performedby");
+           
             entity.Property(e => e.StatusId).HasColumnName("statusid");
         }
     }

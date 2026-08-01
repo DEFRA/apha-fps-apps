@@ -10,8 +10,7 @@ namespace Apha.FPS.DataAccess.Repositories
     public class MonthHourRepository : BaseRepository, IMonthHourRepository
     {
         public MonthHourRepository(FpsDbContext context) : base(context)
-        {
-        }
+        { }
 
         public async Task<PagedData<MonthHour>> GetAllAsync(PaginationParameters<string> query)
         {
@@ -85,9 +84,6 @@ namespace Apha.FPS.DataAccess.Repositories
 
             int? plannedYear = await GetPlannedYear();
 
-            List<(int Year, int Month, int Fmonth)> monthHourKeys = GetMonthHourKeys(openYear);
-
-            // Load records for Open + Planned
             var monthHours = await _context.MonthHours.IgnoreQueryFilters()
                 .AsNoTracking()
                 .Where(m => m.FpsYear == openYear || m.FpsYear == plannedYear)
@@ -105,17 +101,17 @@ namespace Apha.FPS.DataAccess.Repositories
 
                     // Prefer planned; fall back to open only when no planned record exists
                     return planned ?? g.First(x => x.FpsYear == openYear);
-                })
-                .ToList();
+                }).ToList();
 
-            var result = GetYearEndMonthHour( openYear, plannedYear, monthHourKeys, monthHours);
+            var result = GetYearEndMonthHour( openYear, plannedYear, monthHours);
 
             return result;
         }
 
-        private static List<YearEndMonthHour> GetYearEndMonthHour(int openYear, int? plannedYear, List<(int Year, int Month, int Fmonth)> monthHourKeys, List<MonthHour> monthHours)
+        private static List<YearEndMonthHour> GetYearEndMonthHour(int openYear, int? plannedYear, List<MonthHour> monthHours)
         {
             var result = new List<YearEndMonthHour>();
+            List<(int Year, int Month, int Fmonth)> monthHourKeys = GetMonthHourKeys(openYear);
 
             foreach (var key in monthHourKeys)
             {
@@ -179,6 +175,22 @@ namespace Apha.FPS.DataAccess.Repositories
             return result;
         }
 
+        private static List<(int Year, int Month, int Fmonth)> GetMonthHourKeys(int openYear)
+        {
+            var result = new List<(int Year, int Month, int Fmonth)>();
+
+            for (int i = 0; i < 15; i++)
+            {
+                int year = openYear + 1 + (i / 12);
+                int month = (i % 12) + 1;
+                int fmonth = Math.Max(0, i - 2);
+
+                result.Add((year, month, fmonth));
+            }
+
+            return result;
+        }
+
         private async Task<int> GetOpenYear()
         {
             var openFpsYears = await _context.YearMasters
@@ -201,29 +213,6 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var plannedYear = plannedFpsYears.FirstOrDefault()?.FpsYear;
             return plannedYear;
-        }
-
-        private static List<(int Year, int Month, int Fmonth)> GetMonthHourKeys(int openYear)
-        {
-            int keyYear = openYear + 1;
-            return new List<(int Year, int Month, int Fmonth)>
-            {
-                (keyYear , 1, 0),
-                (keyYear , 2, 0),
-                (keyYear , 3, 0),
-                (keyYear , 4, 1),
-                (keyYear , 5, 2),
-                (keyYear , 6, 3),
-                (keyYear , 7, 4),
-                (keyYear , 8, 5),
-                (keyYear , 9, 6),
-                (keyYear , 10, 7),
-                (keyYear , 11, 8),
-                (keyYear , 12, 9),
-                (keyYear+1, 1, 10),
-                (keyYear+1, 2, 11),
-                (keyYear+1, 3, 12),
-            };
         }
 
         private static IQueryable<MonthHour> ApplyMonthHourFilter(

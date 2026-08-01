@@ -42,8 +42,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> CanInitiateYearEndDataSetupRequestAsync(string jobName)
         {
-            // Returns true when no records exist for the job, OR every record is in a terminal
-            // status (rejected / failed / cancelled).
+            // Returns true when no records exist for the job, OR every record is in a terminal status (rejected / failed / cancelled).
             // Returns false when at least one record exists that is NOT in a terminal status.
             var hasNonTerminalRecord = await (
                 from jm in _context.BatchJobs.AsNoTracking()
@@ -88,7 +87,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return initiator??string.Empty;
         }
 
-        public async Task<BatchJobQueue> EnqueueDataSetupBatchJobAsync(string jobName, string requestedBy, string correlationId,string note)
+        public async Task<BatchJobQueue> EnqueueDataSetupInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId,string note)
         {
             BatchJobQueue jobQueueEntry = null!;
 
@@ -125,10 +124,11 @@ namespace Apha.FPS.DataAccess.Repositories
                     throw;
                 }
             });
+
             return jobQueueEntry;
         }
 
-        public async Task<BatchJobQueue> EnqueueApprovedDataSetupBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        public async Task<BatchJobQueue> EnqueueDataSetupApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
         {
             BatchJobQueue queueRow = null!;
 
@@ -143,7 +143,7 @@ namespace Apha.FPS.DataAccess.Repositories
             
             if (jobqueue == null)
             {
-                throw new KeyNotFoundException($"No request found for approval for job '{jobName}' was not found.");
+                throw new KeyNotFoundException($"No approval request was found for job '{jobName}'.");
             }
 
             var approveStatus = await _context.BatchJobStatuses
@@ -160,7 +160,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 {
                     queueRow = await _context.BatchJobQueues
                     .AsNoTracking().FirstOrDefaultAsync(j => j.JobqueueId == jobqueue.JobqueueId)
-                    ?? throw new KeyNotFoundException($"Batch jobqueue for job '{jobName}' was not found.");
+                    ?? throw new KeyNotFoundException($"Batch job queue for job '{jobName}' was not found.");
 
                     if (queueRow != null)
                     {
@@ -185,8 +185,10 @@ namespace Apha.FPS.DataAccess.Repositories
                     throw;
                 }
             });
+
             return queueRow;
         }
+        
         private static IQueryable ApplySorting(IQueryable<BatchJobHistory> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))

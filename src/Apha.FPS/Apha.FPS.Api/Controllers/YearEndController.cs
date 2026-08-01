@@ -47,7 +47,7 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Checks whether a batch job can be run (i.e. it is not currently running).
+        /// Checks whether year end datasetup batch job can be initiated.
         /// </summary>
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with <c>true</c> if the job can run; <c>false</c> if it is already running.</returns>
@@ -58,19 +58,24 @@ namespace Apha.FPS.Api.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Checks whether year end datasetup batch job can be Approved.
+        /// </summary>
+        /// <param name="jobName">The name of the batch job.</param>
+        /// <returns><c>200 OK</c> with <c>true</c> if initiate request exists for the job; <c>false</c> if no initiate request exists for the job.</returns>
         [HttpGet("dataSetup/canapprove")]
         public async Task<IActionResult> CanApproveYearEndDataSetupRequestAsync([FromQuery] string jobName)
         {
             var result = await _yearEndService.CanApproveYearEndDataSetupRequestAsync(jobName);
             return Ok(result);
         }
+
         /// <summary>
-        /// Triggers the YearEndInitiation batch job for the specified month.
-        /// Validates that <paramref name="request"/>.<c>Month</c> is between 1 and 12,
-        /// confirms a matching release period exists, verifies no instance is already running,
-        /// then enqueues the job. 
+        /// Enqueue the YearEndInitiation batch job for approval.
+        /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
+        /// all config exists, verifies no instance is already running, then enqueues the job. 
         /// </summary>
-        /// <param name="request">Request body containing the target month (1–12).</param>
+        /// <param name="request">Request body containing the planned year.</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
         [HttpPost("dataSetup/initiation")]
         public async Task<IActionResult> EnqueueYearEndDataSetupInitiationJob([FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
@@ -81,6 +86,13 @@ namespace Apha.FPS.Api.Controllers
 
         }
 
+        /// <summary>
+        /// Enqueue the YearEndInitiation batch job for approve and publish event for batch job.
+        /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
+        /// all config exists, aproval and initiator are not same, verifies no instance is already running, then enqueues the job. 
+        /// </summary>
+        /// <param name="request">Request body containing the planned year.</param>
+        /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
         [HttpPost("dataSetup/approval")]
         public async Task<IActionResult> EnqueueYearEndDataSetupApprovalJob([FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
