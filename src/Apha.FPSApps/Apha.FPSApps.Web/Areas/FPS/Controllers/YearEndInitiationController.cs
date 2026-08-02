@@ -155,7 +155,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpPost]
         public async Task<IActionResult> TriggerInitiate(int plannedYear)
         {
-            var result = await _yearEndService.TriggerYearEndInitiationJobAsync(plannedYear);
+            var result = await _yearEndService.EnqueueYearEndDataSetupInitiationJobAsync(plannedYear);
             if (result.Success)
             {
                 _logger.LogInformation("Year End Initiation job triggered.");
@@ -170,7 +170,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpPost]
         public async Task<IActionResult> TriggerApprove(int plannedYear)
         {
-            var result = await _yearEndService.ApproveYearEndInitiationJobAsync(plannedYear);
+            var result = await _yearEndService.TriggerYearEndDataSetupApprovalJobAsync(plannedYear);
             if (result.Success)
             {
                 _logger.LogInformation("Year End Approval job triggered. EventId: {EventId}", result?.Data?.EventId);
@@ -245,7 +245,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var grid = HistoryGridConfig();
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _yearEndService.GetYearEndInitiationBatchJobHistoryAsync(query, YearEndInitiationJobName);
+            var response = await _yearEndService.GetYearEndDataSetupBatchJobHistoryAsync(query, YearEndInitiationJobName);
 
             grid.Data = response.Data?.data != null
                 ? response.Data.data.Select(d => new YearEndHistoryItem

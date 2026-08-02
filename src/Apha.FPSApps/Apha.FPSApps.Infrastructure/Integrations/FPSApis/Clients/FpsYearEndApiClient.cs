@@ -1,6 +1,5 @@
 using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
-//using Apha.Common.Contracts.PACT;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
@@ -22,7 +21,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetYearEndInitiationBatchJobHistoryAsync(QueryParameters<string> query, string jobName)
+        public async Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetYearEndDataSetupBatchJobHistoryAsync(QueryParameters<string> query, string jobName)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetYearEndBatchJobHistory, query);
             url += $"&jobName={Uri.EscapeDataString(jobName)}";
@@ -67,7 +66,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var failDto = _mapper.Map<ApiResponseDto<bool>>(response);
             return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
         }
-        public async Task<ApiResponseDto<BatchJobQueueDto>> TriggerYearEndInitiationJobAsync(int plannedYear)
+        public async Task<ApiResponseDto<BatchJobQueueDto>> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear)
         {
             var request = new YearEndDataSetupReq { PlannedYear = plannedYear };
             var response = await _http.PostAsync<YearEndDataSetupReq, BatchJobQueueRes>(
@@ -80,7 +79,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<BatchJobQueueDto>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
-        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> ApproveYearEndInitiationJobAsync(int plannedYear)
+        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndDataSetupApprovalJobAsync(int plannedYear)
         {
             var request = new YearEndDataSetupReq { PlannedYear = plannedYear };
             var response = await _http.PostAsync<YearEndDataSetupReq, BatchJobEventTriggerRes>(

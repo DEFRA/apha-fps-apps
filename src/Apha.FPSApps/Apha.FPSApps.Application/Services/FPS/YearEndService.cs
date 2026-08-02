@@ -15,8 +15,8 @@ namespace Apha.FPSApps.Application.Services.FPS
             _fpsClient = fpsClient;
         }
 
-        public async Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetYearEndInitiationBatchJobHistoryAsync(QueryParameters<string> query, string jobName)
-            => await _fpsClient.FpsYearEnd.GetYearEndInitiationBatchJobHistoryAsync(query, jobName);
+        public async Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetYearEndDataSetupBatchJobHistoryAsync(QueryParameters<string> query, string jobName)
+            => await _fpsClient.FpsYearEnd.GetYearEndDataSetupBatchJobHistoryAsync(query, jobName);
 
         public async Task<ApiResponseDto<bool>> GetCanInitiateDataSetupRequestAsync(string jobName)
             => await _fpsClient.FpsYearEnd.GetCanInitiateDataSetupRequestAsync(jobName);
@@ -24,10 +24,10 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<bool>> GetCanApproveDataSetupRequestAsync(string jobName)
             => await _fpsClient.FpsYearEnd.GetCanApproveDataSetupRequestAsync(jobName);
 
-        public async Task<ApiResponseDto<BatchJobQueueDto>> TriggerYearEndInitiationJobAsync(int plannedYear)
-            => await _fpsClient.FpsYearEnd.TriggerYearEndInitiationJobAsync(plannedYear);
+        public async Task<ApiResponseDto<BatchJobQueueDto>> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear)
+            => await _fpsClient.FpsYearEnd.EnqueueYearEndDataSetupInitiationJobAsync(plannedYear);
 
-        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> ApproveYearEndInitiationJobAsync(int plannedYear)
-            => await _fpsClient.FpsYearEnd.ApproveYearEndInitiationJobAsync(plannedYear);
+        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndDataSetupApprovalJobAsync(int plannedYear)
+            => await _fpsClient.FpsYearEnd.TriggerYearEndDataSetupApprovalJobAsync(plannedYear);
     }
 }

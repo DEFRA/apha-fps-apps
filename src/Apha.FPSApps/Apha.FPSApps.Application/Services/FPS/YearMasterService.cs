@@ -35,7 +35,7 @@ namespace Apha.FPSApps.Application.Services.FPS
 
         public async Task<ApiResponseDto<int>> GetFpsPlannedYearAsync()
         {
-            int planYear;
+
             var yearMasters = await _fpsClient.FpsYearMaster.GetAllFpsYearsAsync();
 
             if(yearMasters.Success && yearMasters.Data != null)
@@ -54,7 +54,6 @@ namespace Apha.FPSApps.Application.Services.FPS
 
                 if (plannedFpsYears !=null && plannedYear.HasValue)
                 {
-                    planYear=   plannedYear.Value ;
                     return new ApiResponseDto<int> { Success=true, Data = plannedYear.Value };
                 }
                 else
@@ -63,6 +62,7 @@ namespace Apha.FPSApps.Application.Services.FPS
                 }
 
             }
+
             return new ApiResponseDto<int>{ Success = false, Errors = yearMasters.Errors, Meta = yearMasters.Meta};
         }
     }

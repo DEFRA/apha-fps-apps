@@ -6,11 +6,10 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
 {
     public interface IYearEndService
     {
-        Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetYearEndInitiationBatchJobHistoryAsync(QueryParameters<string> query, string jobName);
+        Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetYearEndDataSetupBatchJobHistoryAsync(QueryParameters<string> query, string jobName);
         Task<ApiResponseDto<bool>> GetCanInitiateDataSetupRequestAsync(string jobName);
         Task<ApiResponseDto<bool>> GetCanApproveDataSetupRequestAsync(string jobName);
-        Task<ApiResponseDto<BatchJobQueueDto>> TriggerYearEndInitiationJobAsync(int plannedYear);
-
-        Task<ApiResponseDto<BatchJobEventTriggerDto>> ApproveYearEndInitiationJobAsync(int plannedYear);
+        Task<ApiResponseDto<BatchJobQueueDto>> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear);
+        Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndDataSetupApprovalJobAsync(int plannedYear);
     }
 }
