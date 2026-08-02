@@ -98,7 +98,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var model = new YearEndEditConfigValueModel
             {
                 Id = setting.Id,
-                Label = label,
                 Value = value,
                 IsYesNo = isYesNo,
                 FpsYear = setting.FpsYear,
@@ -181,8 +180,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                          ?? [new { field = string.Empty, message = "Failed to trigger Year End Approval job." }];
             return Json(new { success = false, errors });
         }
-
-        // ?? Private helpers ??????????????????????????????????????????????????
 
         private async Task<int> GetPlannedYearAsync()
         {
@@ -280,7 +277,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             AllowEdit = true,
             EditFunction = "openConfigEditModal",
             AllowDelete = false,
-           // DeleteFunction = "confirmConfigValue",
             AllowView = false,
             AllowCopy = false,
             AllowConfirm = true,
@@ -300,7 +296,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             AllowEdit = true,
             EditFunction = "openMonthHourEditModal",
             AllowDelete = false,
-           // DeleteFunction = "confirmMonthHour",
             AllowView = false,
             AllowCopy = false,
             AllowConfirm = true,

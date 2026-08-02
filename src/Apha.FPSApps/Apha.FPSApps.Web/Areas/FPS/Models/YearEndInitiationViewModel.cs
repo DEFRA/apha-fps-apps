@@ -26,11 +26,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Order = 3, Width = 200, Type = GridColumnType.Text)]
         public string? Setting { get; set; }
 
-        // Supporting fields — hidden via CSS, readable by JS
-        //[Display(Name = "Notes")]
-        //[GridColumn(Order = 4, Width = 200, Type = GridColumnType.Text)]
-        //public string? Notes { get; set; } = string.Empty;
-
         [Display(Name = "Exists For Planned Year")]
         [GridColumn(Order = 4, Width = 100, Type = GridColumnType.Text)]
         public string ExistsForPlannedYear { get; set; } = string.Empty;
@@ -66,7 +61,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Order = 7, Width = 100, Type = GridColumnType.Text)]
         public decimal? VidHours { get; set; }
 
-        // Supporting fields — hidden via CSS, readable by JS
         [Display(Name = "Month")]
         [GridColumn(Order = 8, Width = 60, Type = GridColumnType.Text)]
         public short Month { get; set; }
@@ -79,7 +73,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class YearEndEditConfigValueModel
     {
         public string Id { get; set; } = string.Empty;
-        public string Label { get; set; } = string.Empty;
         public string? Value { get; set; }
         public bool IsYesNo { get; set; }
         public int FpsYear { get; set; }

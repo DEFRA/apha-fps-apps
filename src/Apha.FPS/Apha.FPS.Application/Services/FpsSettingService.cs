@@ -72,7 +72,7 @@ namespace Apha.FPS.Application.Services
             {
                 var value = dto?.Setting;
                 bool isValid = !string.IsNullOrWhiteSpace(value) &&
-                    decimal.TryParse(value, out var number) && number < 0;
+                    decimal.TryParse(value, out var number) && number > 0;
 
                 if (!isValid)
                     errors.Add(new BusinessValidationError($"Configuration values for the IDs HoursInDay is not valid. Please provide a numeric value.", "Missing_HoursInDay"));

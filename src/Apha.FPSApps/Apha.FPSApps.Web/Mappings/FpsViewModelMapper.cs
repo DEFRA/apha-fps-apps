@@ -206,6 +206,8 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<StaffJobViewDto, ResourceMgmtReplanAllTimeItem>()
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID));
             CreateMap<ResourceMgmtReplanStaffJobDto, ResourceMgmtReplanStagedItem>().ReverseMap();
+
+            CreateMap<Apha.FPSApps.Application.Dtos.FPS.BatchJobHistoryDto, YearEndHistoryItem>();
         }
     }
 }

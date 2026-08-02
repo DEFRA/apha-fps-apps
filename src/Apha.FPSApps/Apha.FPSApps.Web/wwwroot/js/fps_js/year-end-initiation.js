@@ -1,27 +1,9 @@
-/**
- * year-end-initiation.js
- *
- * Client-side logic for the Year End Initiation page.
- *
- * Edit pattern (matches PACT TestOrProduct):
- *   1. Edit button click  → $.get(url, params) → server returns partial HTML
- *   2. Partial HTML loads into #modaPopupBody  → #modalPopup shown
- *   3. Partial's Save button calls saveConfigValue() / saveMonthHour()
- *   4. Partial's Cancel/X button calls closeYeiModal()
- *   5. On success: close modal, reload grid via gridManager, show alert
- *
- * Confirm (delete) button:
- *   → showGovukConfirm() → on YES → POST save directly → reload grid
- *
- * URLs are set on window.YearEndInitiationConfig by Index.cshtml @section Scripts.
- */
+/*year-end-initiation.js */
 
 (function ($) {
     'use strict';
 
     var cfg = window.YearEndInitiationConfig || {};
-
-    // ── Modal open / close ────────────────────────────────────────────────────
 
     function openModalWithHtml(html) {
         $('#modaPopupBody').html(html);
@@ -118,20 +100,12 @@
     }
 
     // ── Config Value grid — Edit button ───────────────────────────────────────
-    // Loads _EditConfigValue partial for the row's Id via $.get → shows in #modalPopup
-
     window.openConfigEditModal = function (btn) {
         hidePageError();
 
         var row         = $(btn).closest('tr')[0];
         var id          = getCellValue(row, 'Id');
-        //var fpsYearType = getCellValue(row, 'FpsYearType');
         var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
-
-        // if (fpsYearType && fpsYearType !== 'Planned') {
-        //     showAlertMessage('Only Planned year values can be edited.', AlertType.WARNING);
-        //     return;
-        // }
 
         $.get(cfg.editConfigValueUrl, { id: id })
             .done(function (html) {
@@ -143,24 +117,15 @@
     };
 
     // ── Config Value grid — Delete/Confirm button ─────────────────────────────
-    // Ask for confirmation then POST-save the current displayed row value directly
-
     window.confirmConfigValue = function (btn) {
         hidePageError();
 
         var row         = $(btn).closest('tr')[0];
         var id          = getCellValue(row, 'Id');
-        var label       = getCellValue(row, 'Label');
         var value       = getCellValue(row, 'Value') || '';
-        //var fpsYearType = getCellValue(row, 'FpsYearType');
         var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
         var fpsyear = getCellValue(row, 'FpsYear');
-
-        // if (fpsYearType && fpsYearType !== 'Planned') {
-        //     showAlertMessage('Only Planned year values can be confirmed.', AlertType.WARNING);
-        //     return;
-        // }
-
+ 
         showGovukConfirm('Are you sure you want to confirm the config value for "' + id + '"?')
             .then(function (confirmed) {
                 if (!confirmed) return;
@@ -177,7 +142,6 @@
     // Called by the Save button inside _EditConfigValue.cshtml partial
     window.saveConfigValue = function () {
         var id    = $('#modaPopupBody #configModalId').val();
-        var label = $('#modaPopupBody #configModalLabel').val();
         var fpsYear = $('#modaPopupBody #configModalFpsYear').val();
 
         // Server renders either a <select id="configModalSelect"> or <input id="configModalInput">
@@ -197,22 +161,15 @@
 
     // ── Month Working Hours grid — Edit button ────────────────────────────────
     // Loads _EditMonthHour partial for the row's Year+Month via $.get → shows in #modalPopup
-
     window.openMonthHourEditModal = function (btn) {
         hidePageError();
 
         var row         = $(btn).closest('tr')[0];
-        //var fpsYearType = getCellValue(row, 'FpsYearType');
         var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
         var year        = getCellValue(row, 'Year');    
         var month       = getCellValue(row, 'Month');
         var fpsyear = getCellValue(row, 'FpsYear');
         var fmonth = getCellValue(row, 'Fmonth');
-
-        // if (fpsYearType && fpsYearType !== 'Planned') {
-        //     showAlertMessage('Only Planned year month hours can be edited.', AlertType.WARNING);
-        //     return;
-        // }
 
         $.get(cfg.editMonthHourUrl, { year: year, month: month, fpsyear: fpsyear, fmonth: fmonth })
             .done(function (html) {
@@ -224,20 +181,12 @@
     };
 
     // ── Month Working Hours grid — Delete/Confirm button ──────────────────────
-    // Ask for confirmation then POST-save the current displayed row values directly
-
     window.confirmMonthHour = function (btn) {
         hidePageError();
 
         var row         = $(btn).closest('tr')[0];
-        //var fpsYearType = getCellValue(row, 'FpsYearType');
         var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
         var monthName   = getCellValue(row, 'MonthName');
-
-        // if (fpsYearType && fpsYearType !== 'Planned') {
-        //     showAlertMessage('Only Planned year month hours can be confirmed.', AlertType.WARNING);
-        //     return;
-        // }
 
         showGovukConfirm('Are you sure you want to confirm the working hours for ' + monthName + '?')
             .then(function (confirmed) {
@@ -284,19 +233,9 @@
     };
 
     // ── Row button state enforcement ──────────────────────────────────────────
-    //
-    // Config grid rules (per row):
-    //   FpsYearType == "planned"  → edit enabled,  confirm enabled
-    //   FpsYearType != "planned"  → edit disabled, confirm disabled
-    //
-    // Month hours grid rules (per row):
-    //   Same as config grid PLUS: if Fmonth == "0" → both disabled regardless
-
     function applyConfigGridButtonStates() {
         $('#tbl_yearEndConfigValuesGrid tbody tr').each(function () {
-            //var fpsYearType = getCellValue(this, 'FpsYearType').toLowerCase();
             var fpsYearType = getCellValue(this, 'ExistsForPlannedYear').toLowerCase();
-            //var isPlanned = (fpsYearType === 'planned');
             var isPlanned = (fpsYearType === 'yes');
 
             $(this).find('.edit-row-btn').prop('disabled', !isPlanned);
@@ -306,7 +245,6 @@
 
     function applyMonthGridButtonStates() {
         $('#tbl_yearEndMonthHoursGrid tbody tr').each(function () {
-           //var fpsYearType = getCellValue(this, 'FpsYearType').toLowerCase();
             var fpsYearType = getCellValue(this, 'ExistsForPlannedYear').toLowerCase();
             var fmonth      = getCellValue(this, 'Fmonth').trim();
             var fmonthZero  = (fmonth === '0' || fmonth === '');
@@ -315,7 +253,6 @@
                 $(this).find('.edit-row-btn').prop('disabled', true);
                 $(this).find('.delete-row-btn').prop('disabled', true);
             } else {
-               //var Planned = (fpsYearType == 'planned');
                 var Planned = (fpsYearType == 'yes');
                 $(this).find('.edit-row-btn').prop('disabled', !Planned);
                 $(this).find('.delete-row-btn').prop('disabled', Planned);
@@ -334,7 +271,6 @@
     }
 
     // ── Initiate DataSetup Request button ─────────────────────────────────────
-
     $(function () {
         observeGridForButtonStates('gridContainer_yearEndConfigValuesGrid', applyConfigGridButtonStates);
         observeGridForButtonStates('gridContainer_yearEndMonthHoursGrid',   applyMonthGridButtonStates);
@@ -372,7 +308,6 @@
         }
 
         // ── Approve DataSetup Request button ──────────────────────────────────
-
         var btnApprove = document.getElementById('btnApproveDataSetupRequest');
         if (btnApprove) {
             btnApprove.addEventListener('click', function () {
