@@ -1,4 +1,5 @@
-﻿using Apha.Common.Utilities.EventPublisher;
+﻿using Apha.Common.Utilities.Email;
+using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPS.Application.Interfaces;
@@ -63,8 +64,10 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             services.AddScoped<IResourceAllocationService, ResourceAllocationService>();
             services.AddScoped<IYearEndService, YearEndService>();
-            services.AddSingleton<IEventPublisherService, EventBridgePublisherService>();
             services.AddScoped<IMonthHourService, MonthHourService>();
+            services.AddSingleton<IEventPublisherService, EventBridgePublisherService>();
+            services.AddSingleton<IGraphEmailService, GraphEmailService>();
+            
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
