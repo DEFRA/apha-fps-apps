@@ -27,7 +27,7 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.CommentText))
                 .ForMember(dest => dest.MadeBy, opt => opt.MapFrom(src => src.MadeBy))
                 .ForMember(dest => dest.DateEntered, opt => opt.MapFrom(src => src.DateEntered));
-            // TRANSFORMENGINE: AddEditCommentViewModel — modal add/edit form for frmtblComments standalone Comments page
+            
             // Maps CommentNo, Project, Year, Topic, CommentText → CommentDto fields; ReverseMap for pre-population on edit
             CreateMap<AddEditCommentViewModel, CommentDto>().ReverseMap();
             // Plan grid item — maps from plan fields on the shared DTO

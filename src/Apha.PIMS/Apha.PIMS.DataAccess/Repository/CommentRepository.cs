@@ -1,4 +1,4 @@
-﻿using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
@@ -167,7 +167,7 @@ namespace Apha.PIMS.DataAccess.Repository
                 "topic" => ApplyOrder(query, c => c.Topic, descending),
                 "dateentered" => ApplyOrder(query, c => c.DateEntered, descending),
                 "madeby" => ApplyOrder(query, c => c.MadeBy, descending),
-                _ => query
+                _ => query.OrderByDescending(c => c.Year).ThenByDescending(c => c.CommentNo)
             };
         }
 
@@ -177,3 +177,5 @@ namespace Apha.PIMS.DataAccess.Repository
         }
     }
 }
+
+

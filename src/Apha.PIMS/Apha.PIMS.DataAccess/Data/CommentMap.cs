@@ -26,7 +26,7 @@ namespace Apha.PIMS.DataAccess.Data
                 .HasColumnName("dateentered");
             
             entity.Property(e => e.MadeBy)
-                .HasMaxLength(20)
+                .HasMaxLength(255)
                 .HasColumnName("madeby");
             entity.Property(e => e.Project)
                 .HasMaxLength(20)
@@ -35,11 +35,6 @@ namespace Apha.PIMS.DataAccess.Data
                 .HasMaxLength(25)
                 .HasColumnName("topic");
             entity.Property(e => e.Year).HasColumnName("year");
-
-           
-            entity.HasIndex(e => new { e.Project, e.Year, e.Topic })
-                .IsUnique()
-                .HasDatabaseName("ix_tblcomments");
         }
     }
 }

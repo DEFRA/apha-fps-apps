@@ -341,7 +341,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
             await _controller.LoadCommentsGrid(request, project: "PP001", topic: "");
 
             // Assert
-            // TRANSFORMENGINE: empty topic string → null passed to service (whitespace guard in BuildCommentsGridAsync)
+            
             await _commentService.Received(1).GetCommentsByProjectAsync(
                 "PP001", Arg.Any<int?>(), null, Arg.Any<QueryParameters<string>>());
         }
@@ -675,7 +675,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
             await _controller.CreateComment(dto);
 
             // Assert
-            // TRANSFORMENGINE: MadeBy is set from User.Identity.Name (empty string in test = DefaultHttpContext no auth)
+            
             Assert.NotNull(captured);
             Assert.NotNull(captured.MadeBy); // could be empty string, but must not be null
         }

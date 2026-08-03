@@ -137,7 +137,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new();
 
             QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            // TRANSFORMENGINE: topic=null — ProjectDetails page does not expose a standalone topic filter;
+            
             //   topic filtering is used only on the standalone Comments page
             ApiResponseDto<List<CommentDto>> pagedData =
                 await _commentService.GetCommentsByProjectAsync(parentproject, year, null, queryParameters);

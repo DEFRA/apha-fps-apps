@@ -22,7 +22,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: topic parameter added — forwarded as optional query string parameter to backend GET /api/v1/projectcomment
+        
         public async Task<ApiResponseDto<List<CommentDto>>> GetCommentsByProjectAsync(string project, int? year, string? topic, QueryParameters<string> query)
         {
             try

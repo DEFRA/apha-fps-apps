@@ -39,7 +39,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
             var mappedResult = new PaginationRes<CommentRes>();
 
             _mapper.Map<QueryParameters<string>>(query).Returns(filter);
-            // TRANSFORMENGINE: topic argument added to service mock — matches updated ICommentService signature
+           
             _service.GetCommentsByProjectAsync(project, year, filter, topic).Returns(paginatedResult);
             _mapper.Map<PaginationRes<CommentRes>>(paginatedResult).Returns(mappedResult);
 
@@ -129,7 +129,6 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
             await _service.Received(1).GetCommentsByProjectAsync(project, year, filter, topic);
         }
 
-        // TRANSFORMENGINE: new test covering topic filter path added — validates topic parameter forwarded to service
         [Fact]
         public async Task GetCommentsByProject_WithTopicFilter_ReturnsOkResult_WithFilteredComments()
         {

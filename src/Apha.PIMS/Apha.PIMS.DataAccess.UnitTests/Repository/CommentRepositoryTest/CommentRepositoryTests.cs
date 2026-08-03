@@ -4,7 +4,9 @@ using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
 using Apha.PIMS.DataAccess.Repository;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using Moq;
+using System.Linq.Expressions;
 
 namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
 {
@@ -67,6 +69,115 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             return (repo, commentsMockSet, mockContext);
         }
 
+        private static CommentRepository CreateRepositoryForForecastSpend(IEnumerable<ProjectRadTrackData> projectRadTrackData)
+        {
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
+            var queryable = projectRadTrackData.AsQueryable();
+
+            var projectRadTrackDataMockSet = new Mock<DbSet<ProjectRadTrackData>>();
+            projectRadTrackDataMockSet.As<IQueryable<ProjectRadTrackData>>().Setup(m => m.Provider)
+                .Returns(new ForecastAsyncQueryProvider<ProjectRadTrackData>(queryable.Provider));
+            projectRadTrackDataMockSet.As<IQueryable<ProjectRadTrackData>>().Setup(m => m.Expression).Returns(queryable.Expression);
+            projectRadTrackDataMockSet.As<IQueryable<ProjectRadTrackData>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
+            projectRadTrackDataMockSet.As<IQueryable<ProjectRadTrackData>>().Setup(m => m.GetEnumerator()).Returns(() => queryable.GetEnumerator());
+            projectRadTrackDataMockSet.As<IAsyncEnumerable<ProjectRadTrackData>>()
+                .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
+                .Returns(() => new ForecastAsyncEnumerator<ProjectRadTrackData>(queryable.GetEnumerator()));
+
+            mockContext.Setup(x => x.ProjectRadTrackData).Returns(projectRadTrackDataMockSet.Object);
+
+            return new CommentRepository(mockContext.Object);
+        }
+
+        private sealed class ForecastAsyncQueryProvider<TEntity> : IAsyncQueryProvider
+        {
+            private readonly IQueryProvider _inner;
+
+            public ForecastAsyncQueryProvider(IQueryProvider inner)
+            {
+                _inner = inner;
+            }
+
+            public IQueryable CreateQuery(Expression expression)
+            {
+                var elementType = expression.Type.GetGenericArguments().First();
+                return (IQueryable)Activator.CreateInstance(typeof(ForecastAsyncEnumerable<>).MakeGenericType(elementType), expression)!;
+            }
+
+            public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
+            {
+                return new ForecastAsyncEnumerable<TElement>(expression);
+            }
+
+            public object? Execute(Expression expression)
+            {
+                return _inner.Execute(expression);
+            }
+
+            public TResult Execute<TResult>(Expression expression)
+            {
+                return _inner.Execute<TResult>(expression);
+            }
+
+            public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
+            {
+                var resultType = typeof(TResult).GetGenericArguments().First();
+                var executeMethod = typeof(IQueryProvider)
+                    .GetMethods()
+                    .First(m => m.Name == nameof(IQueryProvider.Execute) && m.IsGenericMethodDefinition)
+                    .MakeGenericMethod(resultType);
+
+                var executionResult = executeMethod.Invoke(_inner, new object[] { expression });
+
+                return (TResult)typeof(Task)
+                    .GetMethod(nameof(Task.FromResult))!
+                    .MakeGenericMethod(resultType)
+                    .Invoke(null, new[] { executionResult })!;
+            }
+        }
+
+        private sealed class ForecastAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
+        {
+            public ForecastAsyncEnumerable(IEnumerable<T> enumerable)
+                : base(enumerable)
+            {
+            }
+
+            public ForecastAsyncEnumerable(Expression expression)
+                : base(expression)
+            {
+            }
+
+            public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+            {
+                return new ForecastAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
+            }
+
+            IQueryProvider IQueryable.Provider => new ForecastAsyncQueryProvider<T>(this);
+        }
+
+        private sealed class ForecastAsyncEnumerator<T> : IAsyncEnumerator<T>
+        {
+            private readonly IEnumerator<T> _inner;
+
+            public ForecastAsyncEnumerator(IEnumerator<T> inner)
+            {
+                _inner = inner;
+            }
+
+            public T Current => _inner.Current;
+
+            public ValueTask DisposeAsync()
+            {
+                _inner.Dispose();
+                return ValueTask.CompletedTask;
+            }
+
+            public ValueTask<bool> MoveNextAsync()
+            {
+                return ValueTask.FromResult(_inner.MoveNext());
+            }
+        }
 
         #region GetCommentsByProjectAsync — project filter
 
@@ -240,7 +351,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
 
         #region GetCommentsByProjectAsync — topic filter
 
-        // TRANSFORMENGINE: topic filter region — covers optional string? topic parameter added to
+        
         //   GetCommentsByProjectAsync in Phase 4 (ICommentRepository / CommentRepository update)
 
         [Fact]
@@ -631,7 +742,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
 
         #region ExistsAsync
 
-        // TRANSFORMENGINE: ExistsAsync region added — covers unique-index guard (project, year, topic)
+        
         //   and excludeCommentNo update-path parameter (mirrors ix_tblcomments unique constraint)
 
         [Fact]
@@ -1007,7 +1118,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
 
         #region GetCommentTopicsAsync
 
-        // TRANSFORMENGINE: GetCommentTopicsAsync region added — covers lookup-table read used by
+        
         //   Topic combo-box RowSource on the Comments form (tlkpcommenttopics → DbSet<CommentTopic>)
 
         [Fact]
@@ -1097,7 +1208,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
                 new() { Parentproject = "PP001", Pcforecastspend = 1234.56 },
                 new() { Parentproject = "PP002", Pcforecastspend = 4321.00 }
             };
-            var repo = CreateRepository(projectRadTrackData: radTrackData);
+            var repo = CreateRepositoryForForecastSpend(radTrackData);
 
             // Act
             var result = await repo.GetForecastSpendByProjectAsync("PP001");
@@ -1114,7 +1225,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             {
                 new() { Parentproject = "PP002", Pcforecastspend = 4321.00 }
             };
-            var repo = CreateRepository(projectRadTrackData: radTrackData);
+            var repo = CreateRepositoryForForecastSpend(radTrackData);
 
             // Act
             var result = await repo.GetForecastSpendByProjectAsync("PP001");

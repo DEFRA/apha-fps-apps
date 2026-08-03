@@ -130,7 +130,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
             _mockMapper.DidNotReceive().Map<PaginatedResult<CommentDto>>(Arg.Any<PagedData<Comment>>());
         }
 
-        // TRANSFORMENGINE: topic filter parameter added in Phase 4 — new test scenario covers forwarding
+        
         [Fact]
         public async Task GetCommentsByProjectAsync_WithTopicFilter_ForwardsTopicToRepository()
         {
@@ -754,7 +754,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
 
         #region GetCommentTopicsAsync
 
-        // TRANSFORMENGINE: GetCommentTopicsAsync covers RowSource lookup for Topic combo-box — new test region
+       
         [Fact]
         public async Task GetCommentTopicsAsync_WhenTopicsExist_ReturnsMappedDtos()
         {
