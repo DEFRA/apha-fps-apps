@@ -8,6 +8,7 @@ using Apha.FPSApps.Application.Pagination;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 
 namespace Apha.FPSApps.Application.Services.PACT
@@ -22,6 +23,7 @@ namespace Apha.FPSApps.Application.Services.PACT
         private readonly IS3StorageService _s3StorageService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<PactMonthlyTimeService> _logger;
         private static readonly string[] CrossTabRequiredHeaders = ["Time Code", "Parent Project"];
         private static readonly string[] StagingIdHeader = ["StagingId"];
 
@@ -36,7 +38,8 @@ namespace Apha.FPSApps.Application.Services.PACT
             IMonthService monthService,
             IS3StorageService s3StorageService,
             IHttpContextAccessor httpContextAccessor,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ILogger<PactMonthlyTimeService> logger)
         {
             _pactApiClient = pactApiClient;
             _excelImportService = excelImportService;
@@ -46,6 +49,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             _s3StorageService = s3StorageService;
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task<ApiResponseDto<List<MonthlyTimeDto>>> GetLiveAsync(
@@ -179,12 +183,24 @@ namespace Apha.FPSApps.Application.Services.PACT
             }
 
             bufferStream.Position = 0;
-            var uploadResult = await UploadAuditFileAsync(file, bufferStream);
-            if (!uploadResult.Success && !string.IsNullOrWhiteSpace(uploadResult.Message))
+            try
             {
-                importResponse.Data.Message = string.IsNullOrWhiteSpace(importResponse.Data.Message)
-                    ? uploadResult.Message
-                    : $"{importResponse.Data.Message} {uploadResult.Message}";
+                var uploadResult = await UploadAuditFileAsync(file, bufferStream);
+                if (!uploadResult.Success)
+                {
+                    _logger.LogWarning(
+                        "Monthly time import succeeded but S3 audit upload failed. FileName: {FileName}, ErrorCode: {ErrorCode}, Message: {Message}",
+                        file.FileName,
+                        uploadResult.ErrorCode,
+                        uploadResult.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Monthly time import succeeded but S3 audit upload threw an exception. FileName: {FileName}",
+                    file.FileName);
             }
 
             return importResponse;

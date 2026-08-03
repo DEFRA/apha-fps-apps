@@ -8,6 +8,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.PACT;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
@@ -25,6 +26,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyTimeServic
         private readonly IS3StorageService _s3StorageService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<PactMonthlyTimeService> _logger;
         private readonly PactMonthlyTimeService _service;
 
         public PactMonthlyTimeServiceTests()
@@ -38,6 +40,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyTimeServic
             _s3StorageService = Substitute.For<IS3StorageService>();
             _httpContextAccessor = Substitute.For<IHttpContextAccessor>();
             _configuration = Substitute.For<IConfiguration>();
+            _logger = Substitute.For<ILogger<PactMonthlyTimeService>>();
 
             _pactClient.PactMonthlyTime.Returns(_pactMonthlyTimeApiClient);
             _service = new PactMonthlyTimeService(
@@ -48,7 +51,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyTimeServic
                 _monthService,
                 _s3StorageService,
                 _httpContextAccessor,
-                _configuration);
+                _configuration,
+                _logger);
         }
 
         #region SearchAsync Tests
