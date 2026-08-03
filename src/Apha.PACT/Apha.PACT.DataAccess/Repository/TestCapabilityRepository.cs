@@ -102,25 +102,6 @@ namespace Apha.PACT.DataAccess.Repository
         {
             entity.FpsYear = _fpsRequestContext.FpsYear;
 
-            // WorkGroup is part of the composite primary key (TestCode, WorkGroup, FpsYear).
-            // When the WorkGroup has been changed, the original row must be located using the
-            // original WorkGroup and replaced, since EF cannot modify a key column in place.
-            if (!string.IsNullOrWhiteSpace(originalWorkGroup) && originalWorkGroup != entity.WorkGroup)
-            {
-                var original = await _context.TestCapabilities
-                    .FirstOrDefaultAsync(t =>
-                        t.TestCode == entity.TestCode &&
-                        t.WorkGroup == originalWorkGroup &&
-                        t.FpsYear == entity.FpsYear);
-
-                if (original is not null)
-                    _context.TestCapabilities.Remove(original);
-
-                await _context.TestCapabilities.AddAsync(entity);
-                await _context.SaveChangesAsync();
-                return entity;
-            }
-
             _context.Entry(entity).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return entity;
