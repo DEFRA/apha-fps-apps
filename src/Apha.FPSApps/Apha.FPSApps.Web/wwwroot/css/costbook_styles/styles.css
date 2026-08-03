@@ -486,6 +486,7 @@
 
 .modal-title {
     font-size: 16px;
+    font-weight:bold;
 }
 
 .dropdown-menu {
@@ -1317,7 +1318,7 @@ main {
 
 .costbook-edit-page .edit-action-buttons {
     margin-bottom: 5px;
-    width: 75%;
+    overflow: hidden;
 }
 
 .costbook-edit-page .edit-action-buttons-alt {
@@ -1501,16 +1502,20 @@ main {
     gap: 8px;
 }
 
+.isFloatRight,
 .costbook-home-page .home-search-shell {
     float: right;
 
 }
-
-.costbook-home-page .home-search-shell input {
-    float: right;
-    max-width: 259px !important;
-    width: 240px;
+.isFloatLeft {
+    float: left;
 }
+
+    .costbook-home-page .home-search-shell input {
+        float: right;
+        max-width: 259px !important;
+        width: 240px;
+    }
 
 .costbook-home-page .home-input-group {
     flex-wrap: nowrap;
@@ -2873,12 +2878,21 @@ main {
     }
 }
 .isCustomInfo {
-    font-size: 0.90em;
+    margin-left: 32px;
+    font-weight: bold;
+    display: block;
+    font-size: 13px;
+    width: 308px;
+    color: #353535;
+    border: 1px dashed #0d6efd;
+    border-radius: 4px;
+    padding: 2px;
+    /*    font-size: 0.90em;
     width: 225px;
     color: #000;
     border: 1px dashed #0d6efd;
     border-radius: 4px;
-    padding: 2px;
+    padding: 2px;*/
 }
 .modal-dialog:has(.isAddNewYearModal) {
     max-width: 650px !important;
@@ -2952,4 +2966,17 @@ main {
 .sup_overflow_y_400 {
     overflow-y: unset;
     max-height: max-content;
+}
+.govuk-footer {
+    text-align: center;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+.btn-close {
+    opacity: 5;
+}
+.isDataGridWrapper {
+    .sup_flex_space_between{
+        padding: 10px;
+    }
 }

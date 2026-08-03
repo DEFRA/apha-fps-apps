@@ -135,10 +135,10 @@
         <div>
             <div class="govuk-grid-row sup_border-bottom sup_margin_bottom_0">
                 <div class="govuk-grid-column-full">
-                    <h1 class="govuk-heading-s" style="padding-top: 10px">
+                    <h1 class="govuk-heading-s isFloatLeft" style="padding-top: 10px">
                         Project Selection
-                        <a asp-area="CostBook" asp-controller="Projects" asp-action="Index" class="govuk-back-link sup_align_right">Back</a>
                     </h1>
+                    <a asp-area="CostBook" asp-controller="Projects" asp-action="Index" class="govuk-back-link sup_align_right isFloatRight">Back</a>
                 </div>
             </div>
         </div>
@@ -157,6 +157,14 @@
                         }
 
                         <div class="edit-form-container">
+                            <table class="govuk-table isProjectSeclectionGrid">
+                                <tbody class="govuk-table__body">
+                                    <tr class="govuk-table__row">
+                                        <td scope="row" class="govuk-table__header">
+                                         </td>
+                                    </tr>
+                                 </tbody>
+                            </table>
 
                             <!-- Costing Book Code (auto-generated on save, display-only) -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
@@ -393,10 +401,9 @@
 
                             <!-- Save / Cancel -->
                             <div class="action-buttons edit-action-buttons">
-                                <button type="submit" class="govuk-button">Save</button>
                                 <a asp-area="CostBook" asp-controller="Projects" asp-action="Index" class="govuk-button govuk-button--secondary">Cancel</a>
+                                <button type="submit" class="govuk-button">Save</button>                       
                             </div>
-
                         </div>
                     </form>
                 </div>
