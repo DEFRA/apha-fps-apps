@@ -126,7 +126,13 @@
         }
 
         function getWgStaffPlanExtraFilters() {
-            return {};
+            var resourceCentre = document.getElementById('resourceCentreDropdown')?.value || '';
+            var workGroup = document.getElementById('workGroupDropdown')?.value || '';
+
+            return {
+                resourceCentre: resourceCentre,
+                workGroup: workGroup
+            };
         }
 
         document.addEventListener('DOMContentLoaded', function () {

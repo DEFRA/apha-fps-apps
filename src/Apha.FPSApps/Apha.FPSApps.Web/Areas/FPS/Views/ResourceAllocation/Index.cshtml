@@ -27,6 +27,8 @@
                         <select class="govuk-select ssr-resource-select"
                                 id="workGroupSelect"
                                 aria-label="Select a Work Group"
+                                asp-for="SelectedWorkGroup"
+                                asp-items="Model.WorkGroupList"
                                 onchange="LoadGradeByGroup()">
                             <option value="">-- Select a Work Group --</option>
                         </select>
@@ -172,16 +174,33 @@
         };
 
         // Keep sideNavState in sync when dropdowns change.
-        document.getElementById('resourceCentreSelect').addEventListener('change', function () {
-            window.sideNavState.resourceCentre = this.value;
-            window.sideNavState.workGroup = '';
-            sideNavUpdateLinks();
-        });
+        (function() {
+            function attachDropdownListeners() {
+                const rcSelect = document.getElementById('resourceCentreSelect');
+                const wgSelect = document.getElementById('workGroupSelect');
 
-        document.getElementById('workGroupSelect').addEventListener('change', function () {
-            window.sideNavState.workGroup = this.value;
-            sideNavUpdateLinks();
-        });
+                if (rcSelect) {
+                    rcSelect.addEventListener('change', function () {
+                        window.sideNavState.resourceCentre = this.value;
+                        window.sideNavState.workGroup = '';
+                        sideNavUpdateLinks();
+                    });
+                }
+
+                if (wgSelect) {
+                    wgSelect.addEventListener('change', function () {
+                        window.sideNavState.workGroup = this.value;
+                        sideNavUpdateLinks();
+                    });
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', attachDropdownListeners);
+            } else {
+                attachDropdownListeners();
+            }
+        })();
 
         // Initialise the Resource Allocation (Stage 2) module with Razor-generated URLs.
         window.raConfig = {

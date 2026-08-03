@@ -129,6 +129,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowDelete    = false,
                 ShowPagination = true,
                 BindGridUrl    = "/FPS/WgStaffPlan/LoadGrid",
+                ExtraFilterMethod = "getWgStaffPlanExtraFilters",
                 Columns        = GridDataProvider.GetColumnsDefination<WgStaffPlanViewItem>(),
                 Data           = rows,
                 CurrentFilters = filterDict,
