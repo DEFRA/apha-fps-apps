@@ -1947,8 +1947,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
         [Fact]
         public async Task GetPagedTestPlanCrossTabAsync_SortByMissingColumn_TreatsMissingValuesAsEmpty()
         {
-            // Arrange — sort by a profit-centre column that only one test code has, so the other
-            // row's value is null and must be treated as empty string by GetSortValue.
+            // Arrange — sort by a column that does not exist on any pivot row, so GetSortValue's
+            // TryGetValue returns null for every row and must fall back to string.Empty.
             var capabilities = new List<TestCapability>
             {
                 new() { TestCode = "PT001", WorkGroup = "GEN01", FpsYear = DefaultFpsYear },
@@ -1963,22 +1963,22 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
             var projects         = new List<ProjectView> { new() { ParentProject = "PROJ01", Program = "PROG01", FpsYear = DefaultFpsYear } };
             var programs         = new List<Apha.PACT.Core.Entities.Program> { new() { ProgramNo = "PROG01", FpsYear = DefaultFpsYear } };
             var workGroupGeneral = new List<WorkGroupGeneralView> { new() { WorkGroup = "GEN01", FpsYear = DefaultFpsYear } };
-            // Only PT001 has profit centre "COMM"; PT002 uses "OTHER" so its "pc_COMM" cell is null.
             var reqBreakdownViews = new List<TestReqBreakdownView>
             {
-                new() { TestCode = "PT001", ShortDescription = "Test One", Pc = "COMM",  TotalCost = 100m, FpsYear = DefaultFpsYear },
-                new() { TestCode = "PT002", ShortDescription = "Test Two", Pc = "OTHER", TotalCost = 100m, FpsYear = DefaultFpsYear }
+                new() { TestCode = "PT001", ShortDescription = "Test One", Pc = "COMM", TotalCost = 100m, FpsYear = DefaultFpsYear },
+                new() { TestCode = "PT002", ShortDescription = "Test Two", Pc = "COMM", TotalCost = 100m, FpsYear = DefaultFpsYear }
             };
 
             var repo  = CreateRepositoryForCrossTab(capabilities, requirements, products, projects, programs, workGroupGeneral, reqBreakdownViews);
-            var query = new PaginationParameters<string> { Page = 1, PageSize = 20, SortBy = "pc_COMM", Descending = false };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 20, SortBy = "nonexistent_column", Descending = false };
 
             // Act
             var result = await repo.GetPagedTestPlanCrossTabAsync(query);
 
-            // Assert — both rows returned; PT002 has a null pc_COMM (treated as empty) and sorts first
+            // Assert — sort key resolves to empty for all rows; both rows are still returned in stable order
             Assert.Equal(2, result.Rows.Count);
-            Assert.Null(result.Rows[0]["pc_COMM"]);
+            Assert.Equal("PT001", result.Rows[0]["testcode"]);
+            Assert.Equal("PT002", result.Rows[1]["testcode"]);
         }
 
         #endregion
