@@ -128,65 +128,76 @@ namespace Apha.FPS.DataAccess.Repositories
             foreach (var key in monthHourKeys)
             {
                 var monthHour = monthHours.FirstOrDefault(m =>
-                    m.Year == key.Year &&
-                    m.Month == key.Month &&
-                    m.Fmonth == key.Fmonth);
-
+                    m.Year == key.Year && m.Month == key.Month && m.Fmonth == key.Fmonth);
+                
                 if (monthHour != null)
                 {
-                    result.Add(new YearEndMonthHour
-                    {
-                        Year = monthHour.Year,
-                        Month = monthHour.Month,
-                        Fmonth = monthHour.Fmonth,
-                        Days = monthHour.Days,
-                        CvlHours = monthHour.CvlHours,
-                        VidHours = monthHour.VidHours,
-                        FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
-                        ExistsForPlannedYear = (monthHour.Fmonth == 0 && monthHour.FpsYear < monthHour.Year)
-                        ? "No"
-                        : "Yes"
-                    });
+                    BuildPlannedYearEntity(openYear, plannedYear, result, monthHour);
                 }
                 else
                 {
                     monthHour = monthHours.FirstOrDefault(m =>
-                    m.Year == key.Year - 1 &&
-                    m.Month == key.Month &&
-                    m.Fmonth == key.Fmonth);
+                    m.Year == key.Year - 1 && m.Month == key.Month && m.Fmonth == key.Fmonth);
 
                     if (monthHour != null)
                     {
-                        result.Add(new YearEndMonthHour
-                        {
-                            Year = (short)(key.Year),
-                            Month = monthHour.Month,
-                            Fmonth = monthHour.Fmonth,
-                            Days = monthHour.Days,
-                            CvlHours = monthHour.CvlHours,
-                            VidHours = monthHour.VidHours,
-                            FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
-                            ExistsForPlannedYear = "No"
-                        });
+                        BuildldOpenYearEntity(openYear, plannedYear, result, key.Year, monthHour);
                     }
                     else
                     {
-                        result.Add(new YearEndMonthHour
-                        {
-                            Year = (short)(key.Year),
-                            Month = (short)key.Month,
-                            Fmonth = (short)key.Fmonth,
-                            Days = null,
-                            CvlHours = null,
-                            VidHours = null,
-                            FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
-                            ExistsForPlannedYear = "No"
-                        });
+                        BuildPlannedYearNonExistEntity(openYear, plannedYear, result, key);
                     }
                 }
             }
 
             return result;
+        }
+
+        private static void BuildPlannedYearEntity(int openYear, int? plannedYear, List<YearEndMonthHour> result, MonthHour monthHour)
+        {
+            result.Add(new YearEndMonthHour
+            {
+                Year = monthHour.Year,
+                Month = monthHour.Month,
+                Fmonth = monthHour.Fmonth,
+                Days = monthHour.Days,
+                CvlHours = monthHour.CvlHours,
+                VidHours = monthHour.VidHours,
+                FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
+                ExistsForPlannedYear = (monthHour.Fmonth == 0 && monthHour.FpsYear < monthHour.Year)
+                                    ? "No"
+                                    : "Yes"
+            });
+        }
+     
+        private static void BuildldOpenYearEntity(int openYear, int? plannedYear, List<YearEndMonthHour> result, int keyYear, MonthHour monthHour)
+        {
+            result.Add(new YearEndMonthHour
+            {
+                Year = (short)(keyYear),
+                Month = monthHour.Month,
+                Fmonth = monthHour.Fmonth,
+                Days = monthHour.Days,
+                CvlHours = monthHour.CvlHours,
+                VidHours = monthHour.VidHours,
+                FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
+                ExistsForPlannedYear = "No"
+            });
+        }
+
+        private static void BuildPlannedYearNonExistEntity(int openYear, int? plannedYear, List<YearEndMonthHour> result, (int Year, int Month, int Fmonth) key)
+        {
+            result.Add(new YearEndMonthHour
+            {
+                Year = (short)(key.Year),
+                Month = (short)key.Month,
+                Fmonth = (short)key.Fmonth,
+                Days = null,
+                CvlHours = null,
+                VidHours = null,
+                FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
+                ExistsForPlannedYear = "No"
+            });
         }
 
         private static List<(int Year, int Month, int Fmonth)> GetMonthHourKeys(int openYear)
