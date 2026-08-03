@@ -414,6 +414,52 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
 
         #endregion
 
+        #region GetUnitPricesByCodesAsync
+
+        [Fact]
+        public async Task GetUnitPricesByCodesAsync_WithMatchingCodes_ReturnsDictionary()
+        {
+            var products = new List<TestorProduct>
+            {
+                new() { ItemCode = "T001", UnitPriceVla = 10.50m, FpsYear = 2024 },
+                new() { ItemCode = "T002", UnitPriceVla = 20.75m, FpsYear = 2024 }
+            };
+            var repo = CreateRepository(products);
+
+            var result = await repo.GetUnitPricesByCodesAsync(["T001", "T002"]);
+
+            Assert.Equal(2, result.Count);
+            Assert.Equal(10.50m, result["T001"]);
+            Assert.Equal(20.75m, result["T002"]);
+        }
+
+        [Fact]
+        public async Task GetUnitPricesByCodesAsync_WithNoMatchingCodes_ReturnsEmptyDictionary()
+        {
+            var repo = CreateRepository([]);
+
+            var result = await repo.GetUnitPricesByCodesAsync(["NONE"]);
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetUnitPricesByCodesAsync_WithNullUnitPrice_ReturnsNullValue()
+        {
+            var products = new List<TestorProduct>
+            {
+                new() { ItemCode = "T001", UnitPriceVla = null, FpsYear = 2024 }
+            };
+            var repo = CreateRepository(products);
+
+            var result = await repo.GetUnitPricesByCodesAsync(["T001"]);
+
+            Assert.True(result.ContainsKey("T001"));
+            Assert.Null(result["T001"]);
+        }
+
+        #endregion
+
         #region GetOwnersAsync
 
         [Fact]
