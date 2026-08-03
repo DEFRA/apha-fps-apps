@@ -55,6 +55,8 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<MonthHour> SaveAsync(MonthHour monthHour)
         {
+            await SavePlannedYearFmonthHoursAsync();
+
             var existing = await _context.MonthHours.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(m =>
                     m.Year == monthHour.Year &&
@@ -84,10 +86,20 @@ namespace Apha.FPS.DataAccess.Repositories
 
             int? plannedYear = await GetPlannedYear();
 
-            var monthHours = await _context.MonthHours.IgnoreQueryFilters()
+            var openmonthHours = await _context.MonthHours.IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(m => m.FpsYear == openYear || m.FpsYear == plannedYear)
-                .ToListAsync();
+                .Where(m => m.FpsYear == openYear && m.Fmonth > 0).ToListAsync();
+
+            openmonthHours
+                .Where(m => m.Fmonth == 10 || m.Fmonth == 11 || m.Fmonth == 12)
+                .ToList()
+                .ForEach(m => m.Fmonth = 0);
+
+            var plannedHours = await _context.MonthHours.IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(m => m.FpsYear == plannedYear).ToListAsync();
+
+            var monthHours = openmonthHours.Concat(plannedHours).ToList();
 
             // Remove duplicates: prefer the plannedYear record for each (Year, Month, Fmonth) slot.
             // Only keep the openYear record when no plannedYear record exists for that slot.
@@ -103,7 +115,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     return planned ?? g.First(x => x.FpsYear == openYear);
                 }).ToList();
 
-            var result = GetYearEndMonthHour( openYear, plannedYear, monthHours);
+            var result = GetYearEndMonthHour(openYear, plannedYear, monthHours);
 
             return result;
         }
@@ -123,7 +135,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 if (monthHour != null)
                 {
                     result.Add(new YearEndMonthHour
-                    {   
+                    {
                         Year = monthHour.Year,
                         Month = monthHour.Month,
                         Fmonth = monthHour.Fmonth,
@@ -131,10 +143,12 @@ namespace Apha.FPS.DataAccess.Repositories
                         CvlHours = monthHour.CvlHours,
                         VidHours = monthHour.VidHours,
                         FpsYear = (int)(plannedYear.HasValue ? plannedYear.Value : openYear + 1),
-                        ExistsForPlannedYear = "Yes"
+                        ExistsForPlannedYear = (monthHour.Fmonth == 0 && monthHour.FpsYear < monthHour.Year)
+                        ? "No"
+                        : "Yes"
                     });
                 }
-                else 
+                else
                 {
                     monthHour = monthHours.FirstOrDefault(m =>
                     m.Year == key.Year - 1 &&
@@ -213,6 +227,43 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var plannedYear = plannedFpsYears.FirstOrDefault()?.FpsYear;
             return plannedYear;
+        }
+
+        private async Task SavePlannedYearFmonthHoursAsync()
+        {
+            var entity = new MonthHour();
+            var result = await GetYearEndMonthHoursAsync();
+
+            var filteredList = result.Where(x => x.Fmonth == 0
+            && string.Equals(x.ExistsForPlannedYear, "no", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (filteredList.Count > 0)
+            {
+                foreach (var item in filteredList)
+                {
+                    var existing = await _context.MonthHours.IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(m => m.Year == item.Year
+                        && m.Month == item.Month
+                        && m.FpsYear == item.FpsYear);
+
+                    if (existing == null)
+                    {
+                        if (existing is null)
+                        {
+                            entity.Year = item.Year;
+                            entity.Month = item.Month;
+                            entity.Days = item.Days;
+                            entity.CvlHours = item.CvlHours;
+                            entity.VidHours = item.VidHours;
+                            entity.Fmonth = item.Fmonth;
+                            entity.FpsYear = item.FpsYear;
+                            _context.MonthHours.Add(entity);
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+                }
+            }
         }
 
         private static IQueryable<MonthHour> ApplyMonthHourFilter(
