@@ -3,8 +3,11 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
+using Apha.Common.Utilities.Storage;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.PACT;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
@@ -19,6 +22,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyTimeServic
         private readonly IWorkGroupService _workGroupService;
         private readonly IPactTimeCodeValidService _timeCodeValidService;
         private readonly IMonthService _monthService;
+        private readonly IS3StorageService _s3StorageService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfiguration _configuration;
         private readonly PactMonthlyTimeService _service;
 
         public PactMonthlyTimeServiceTests()
@@ -29,9 +35,20 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyTimeServic
             _workGroupService = Substitute.For<IWorkGroupService>();
             _timeCodeValidService = Substitute.For<IPactTimeCodeValidService>();
             _monthService = Substitute.For<IMonthService>();
+            _s3StorageService = Substitute.For<IS3StorageService>();
+            _httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+            _configuration = Substitute.For<IConfiguration>();
 
             _pactClient.PactMonthlyTime.Returns(_pactMonthlyTimeApiClient);
-            _service = new PactMonthlyTimeService(_pactClient, _excelImportService, _workGroupService, _timeCodeValidService, _monthService);
+            _service = new PactMonthlyTimeService(
+                _pactClient,
+                _excelImportService,
+                _workGroupService,
+                _timeCodeValidService,
+                _monthService,
+                _s3StorageService,
+                _httpContextAccessor,
+                _configuration);
         }
 
         #region SearchAsync Tests

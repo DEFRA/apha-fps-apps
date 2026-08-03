@@ -1,4 +1,5 @@
 using Apha.Common.Utilities.ExcelImport;
+using Apha.Common.Utilities.Storage;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
@@ -6,6 +7,7 @@ using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using System.Text.RegularExpressions;
 
 namespace Apha.FPSApps.Application.Services.PACT
@@ -17,7 +19,9 @@ namespace Apha.FPSApps.Application.Services.PACT
         private readonly IWorkGroupService _workGroupService;
         private readonly IPactTimeCodeValidService _timeCodeValidService;
         private readonly IMonthService _monthService;
-
+        private readonly IS3StorageService _s3StorageService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfiguration _configuration;
         private static readonly string[] CrossTabRequiredHeaders = ["Time Code", "Parent Project"];
         private static readonly string[] StagingIdHeader = ["StagingId"];
 
@@ -29,13 +33,19 @@ namespace Apha.FPSApps.Application.Services.PACT
             IExcelImportService excelImportService,
             IWorkGroupService workGroupService,
             IPactTimeCodeValidService timeCodeValidService,
-            IMonthService monthService)
+            IMonthService monthService,
+            IS3StorageService s3StorageService,
+            IHttpContextAccessor httpContextAccessor,
+            IConfiguration configuration)
         {
             _pactApiClient = pactApiClient;
             _excelImportService = excelImportService;
             _workGroupService = workGroupService;
             _timeCodeValidService = timeCodeValidService;
             _monthService = monthService;
+            _s3StorageService = s3StorageService;
+            _httpContextAccessor = httpContextAccessor;
+            _configuration = configuration;
         }
 
         public async Task<ApiResponseDto<List<MonthlyTimeDto>>> GetLiveAsync(
@@ -145,10 +155,14 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportMonthlyTimeAsync(IFormFile file, short importType)
         {
-            using var stream = file.OpenReadStream();
-            using var workbook = new XLWorkbook(stream);
+            using var originalFileStream = file.OpenReadStream();
+            using var bufferStream = new MemoryStream();
+            await originalFileStream.CopyToAsync(bufferStream);
 
-            return importType switch
+            bufferStream.Position = 0;
+            using var workbook = new XLWorkbook(bufferStream);
+
+            var importResponse = importType switch
             {
                 1 => await ImportOtlDataAsync(file.FileName, workbook),
                 2 => await ImportFlatFileAsync(file.FileName, workbook),
@@ -158,6 +172,22 @@ namespace Apha.FPSApps.Application.Services.PACT
                     [new ApiErrorDto { Code = "INVALID_IMPORT_TYPE", Message = "Unsupported monthly time import type." }],
                     new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow })
             };
+
+            if (!importResponse.Success || importResponse.Data == null)
+            {
+                return importResponse;
+            }
+
+            bufferStream.Position = 0;
+            var uploadResult = await UploadAuditFileAsync(file, bufferStream);
+            if (!uploadResult.Success && !string.IsNullOrWhiteSpace(uploadResult.Message))
+            {
+                importResponse.Data.Message = string.IsNullOrWhiteSpace(importResponse.Data.Message)
+                    ? uploadResult.Message
+                    : $"{importResponse.Data.Message} {uploadResult.Message}";
+            }
+
+            return importResponse;
         }
 
         public async Task<ApiResponseDto<MonthlyTimeValidateResultDto>> ValidateStagingAsync()
@@ -435,6 +465,50 @@ namespace Apha.FPSApps.Application.Services.PACT
             month = match.Groups["month"].Value;
             return !string.IsNullOrWhiteSpace(workGroup) && !string.IsNullOrWhiteSpace(month);
         }
+
+        private async Task<S3UploadResult> UploadAuditFileAsync(IFormFile file, Stream fileStream)
+        {
+            var sourceFileName = Path.GetFileName(file.FileName);
+            if (string.IsNullOrWhiteSpace(sourceFileName))
+            {
+                sourceFileName = "monthly-time-import.xlsx";
+            }
+
+            var timestamp = DateTime.UtcNow;
+            var selectedYear = timestamp.Year;
+            var selectedYearItem = _httpContextAccessor.HttpContext?.Items["SelectedFPSYear"];
+            if (selectedYearItem != null && int.TryParse(selectedYearItem.ToString(), out var parsedYear) && parsedYear > 0)
+            {
+                selectedYear = parsedYear;
+            }
+
+            var folderPath = $"FPS{selectedYear}/MonthlyTime";
+
+            var originalName = Path.GetFileNameWithoutExtension(sourceFileName);
+            if (string.IsNullOrWhiteSpace(originalName))
+            {
+                originalName = "monthly-time-import";
+            }
+
+            var extension = Path.GetExtension(sourceFileName);
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                extension = ".xlsx";
+            }
+
+            var auditFileName = $"{originalName}_{timestamp:yyyyMMddHHmmss}{extension}";
+
+            return await _s3StorageService.UploadFileAsync(
+                fileStream,
+                GetAuditBucketName(),
+                folderPath,
+                auditFileName,
+                file.ContentType);
+        }
+
+        private string GetAuditBucketName()
+            => _configuration["AWS:S3:BucketName"]
+               ?? throw new InvalidOperationException("AWS:S3:BucketName is not configured.");
 
         private static ApiResponseDto<MonthlyTimeImportResultDto> BuildImportFailure<T>(ExcelImportResult<T> importResult, string invalidTemplateCode, string emptyFileCode)
         {

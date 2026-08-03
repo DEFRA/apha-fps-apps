@@ -1,10 +1,13 @@
 using Apha.Common.Utilities.ExcelImport;
+using Apha.Common.Utilities.Storage;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.PACT;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
@@ -18,6 +21,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServ
         private readonly IExcelImportService _excelImportService;
         private readonly IWorkGroupService _workGroupService;
         private readonly IMonthService _monthService;
+        private readonly IS3StorageService _s3StorageService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfiguration _configuration;
         private readonly PactMonthlyOutputService _service;
 
         public PactMonthlyOutputServiceTests()
@@ -27,9 +33,19 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServ
             _excelImportService = Substitute.For<IExcelImportService>();
             _workGroupService = Substitute.For<IWorkGroupService>();
             _monthService = Substitute.For<IMonthService>();
+            _s3StorageService = Substitute.For<IS3StorageService>();
+            _httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+            _configuration = Substitute.For<IConfiguration>();
 
             _pactClient.PactMonthlyOutput.Returns(_pactMonthlyOutputApiClient);
-            _service = new PactMonthlyOutputService(_pactClient, _excelImportService, _workGroupService, _monthService);
+            _service = new PactMonthlyOutputService(
+                _pactClient,
+                _excelImportService,
+                _workGroupService,
+                _monthService,
+                _s3StorageService,
+                _httpContextAccessor,
+                _configuration);
         }
 
         #region SearchAsync Tests
