@@ -82,7 +82,22 @@ namespace Apha.PACT.Application.Services
         public async Task<TestCapabilityDto?> GetTestCapabilityByIdAsync(string testCode, string workGroup)
         {
             var entity = await _testCapabilityRepository.GetByIdAsync(testCode, workGroup);
-            return entity is null ? null : _mapper.Map<TestCapabilityDto>(entity);
+            if (entity is null)
+                return null;
+
+            var dto = _mapper.Map<TestCapabilityDto>(entity);
+
+            // Fall back to the TestorProduct price when the record has no stored UnitCost or
+            // the stored value is 0 (the DB column defaults to 0), so editing shows the master
+            // unitpricevla instead of 0 while genuine user-edited unit costs (> 0) are kept.
+            if (!dto.UnitCost.HasValue || dto.UnitCost.Value == 0m)
+            {
+                var unitPrices = await _testorProductRepository.GetUnitPricesByCodesAsync([dto.TestCode]);
+                if (unitPrices != null && unitPrices.TryGetValue(dto.TestCode, out var unitPrice))
+                    dto.UnitCost = unitPrice;
+            }
+
+            return dto;
         }
 
         public async Task<TestCapabilityDto> AddTestCapabilityAsync(TestCapabilityDto dto)

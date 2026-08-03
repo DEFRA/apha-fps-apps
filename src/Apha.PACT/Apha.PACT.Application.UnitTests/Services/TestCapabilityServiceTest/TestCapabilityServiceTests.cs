@@ -283,6 +283,53 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             result.Should().BeNull();
         }
 
+        [Fact]
+        public async Task GetTestCapabilityByIdAsync_ZeroUnitCost_FallsBackToProductPrice()
+        {
+            var entity = new TestCapability { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1", UnitCost = 0m };
+            var unitPrices = new Dictionary<string, decimal?> { ["TC1"] = 42.50m };
+
+            _testCapabilityRepo.GetByIdAsync("TC1", "WG1").Returns(entity);
+            _mapper.Map<TestCapabilityDto>(entity).Returns(dto);
+            _testorProductRepo.GetUnitPricesByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(unitPrices);
+
+            var result = await _sut.GetTestCapabilityByIdAsync("TC1", "WG1");
+
+            Assert.Equal(42.50m, result!.UnitCost);
+        }
+
+        [Fact]
+        public async Task GetTestCapabilityByIdAsync_NullUnitCost_FallsBackToProductPrice()
+        {
+            var entity = new TestCapability { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1", UnitCost = null };
+            var unitPrices = new Dictionary<string, decimal?> { ["TC1"] = 42.50m };
+
+            _testCapabilityRepo.GetByIdAsync("TC1", "WG1").Returns(entity);
+            _mapper.Map<TestCapabilityDto>(entity).Returns(dto);
+            _testorProductRepo.GetUnitPricesByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(unitPrices);
+
+            var result = await _sut.GetTestCapabilityByIdAsync("TC1", "WG1");
+
+            Assert.Equal(42.50m, result!.UnitCost);
+        }
+
+        [Fact]
+        public async Task GetTestCapabilityByIdAsync_NonZeroUnitCost_IsPreserved()
+        {
+            var entity = new TestCapability { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1", UnitCost = 99.99m };
+
+            _testCapabilityRepo.GetByIdAsync("TC1", "WG1").Returns(entity);
+            _mapper.Map<TestCapabilityDto>(entity).Returns(dto);
+
+            var result = await _sut.GetTestCapabilityByIdAsync("TC1", "WG1");
+
+            Assert.Equal(99.99m, result!.UnitCost);
+            await _testorProductRepo.DidNotReceive().GetUnitPricesByCodesAsync(Arg.Any<IEnumerable<string>>());
+        }
+
         #endregion
 
         #region AddTestCapabilityAsync
