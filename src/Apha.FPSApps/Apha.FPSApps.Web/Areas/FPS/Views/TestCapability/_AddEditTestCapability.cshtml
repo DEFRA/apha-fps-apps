@@ -74,23 +74,35 @@
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
                     <label class="govuk-label govuk-!-font-weight-bold" for="WorkGroup">Work Group <span class="sup_color_red">*</span></label>
-                    <select class="govuk-select govuk-!-font-size-16" id="WorkGroup" name="WorkGroup"
-                            style="width:100%;" required>
-                        <option value="">-- Select Work Group --</option>
-                        @foreach (var opt in workGroupOptions)
-                        {
-                            if (opt.Value == Model.WorkGroup)
+                    @if (isEdit)
+                    {
+                        var selectedWorkGroupText = workGroupOptions
+                            .FirstOrDefault(o => o.Value == Model.WorkGroup)?.Text ?? Model.WorkGroup;
+                        <input type="hidden" name="WorkGroup" value="@Model.WorkGroup" />
+                        <input class="govuk-input govuk-!-font-size-16" id="WorkGroup"
+                               value="@selectedWorkGroupText" readonly
+                               style="width:100%; background-color:#f3f2f1; cursor:default;" />
+                    }
+                    else
+                    {
+                        <select class="govuk-select govuk-!-font-size-16" id="WorkGroup" name="WorkGroup"
+                                style="width:100%;" required>
+                            <option value="">-- Select Work Group --</option>
+                            @foreach (var opt in workGroupOptions)
                             {
-                                <option value="@opt.Value" selected>@opt.Text</option>
+                                if (opt.Value == Model.WorkGroup)
+                                {
+                                    <option value="@opt.Value" selected>@opt.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@opt.Value">@opt.Text</option>
+                                }
                             }
-                            else
-                            {
-                                <option value="@opt.Value">@opt.Text</option>
-                            }
-                        }
-                    </select>
-                    <span data-valmsg-for="WorkGroup"
-                          class="govuk-error-message field-validation-valid" style="display:none;"></span>
+                        </select>
+                        <span data-valmsg-for="WorkGroup"
+                              class="govuk-error-message field-validation-valid" style="display:none;"></span>
+                    }
                 </div>
             </div>
         </div>
