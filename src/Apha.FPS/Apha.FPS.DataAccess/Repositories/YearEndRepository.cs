@@ -22,7 +22,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
-               where  jm.JobName.ToLower() == jobName.ToLower()
+                where jm.JobName.ToLower() == jobName.ToLower()
                 select new BatchJobHistory
                 {
                     JobId = jm.JobId,
@@ -84,10 +84,10 @@ namespace Apha.FPS.DataAccess.Repositories
                 select jq.RequestedBy
             ).FirstOrDefaultAsync();
 
-            return initiator??string.Empty;
+            return initiator ?? string.Empty;
         }
 
-        public async Task<BatchJobQueue> EnqueueDataSetupInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId,string note)
+        public async Task<BatchJobQueue> EnqueueDataSetupInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
         {
             BatchJobQueue jobQueueEntry = null!;
 
@@ -132,7 +132,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             BatchJobQueue queueRow = null!;
 
-            var jobqueue= await (
+            var jobqueue = await (
                 from jm in _context.BatchJobs.AsNoTracking()
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
@@ -140,7 +140,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 where jm.JobName.ToLower() == jobName.ToLower() && (js.Status.ToLower() == "initiated")
                 select new { jq.JobqueueId, jq.JobId }
             ).FirstOrDefaultAsync();
-            
+
             if (jobqueue == null)
             {
                 throw new KeyNotFoundException($"No approval request was found for job '{jobName}'.");
@@ -150,7 +150,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsNoTracking()
                 .Where(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "approved")
                 .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'approved' not found for job '{jobName}'.");
- 
+
             var strategy = _context.Database.CreateExecutionStrategy();
 
             await strategy.ExecuteAsync(async () =>
@@ -162,15 +162,13 @@ namespace Apha.FPS.DataAccess.Repositories
                     .AsNoTracking().FirstOrDefaultAsync(j => j.JobqueueId == jobqueue.JobqueueId)
                     ?? throw new KeyNotFoundException($"Batch job queue for job '{jobName}' was not found.");
 
-                    if (queueRow != null)
-                    {
-                        queueRow.StatusId = approveStatus.StatusId;
-                        queueRow.RequestedBy = requestedBy;
-                        queueRow.RequestedAtUtc = DateTime.UtcNow;
-                        queueRow.StartDateTime = DateTime.UtcNow;
-                        queueRow.ErrorMessage = note;
-                        _context.BatchJobQueues.Update(queueRow);
-                    }
+                    //update the status of the job queue entry to "approved"
+                    queueRow.StatusId = approveStatus.StatusId;
+                    queueRow.RequestedBy = requestedBy;
+                    queueRow.RequestedAtUtc = DateTime.UtcNow;
+                    queueRow.StartDateTime = DateTime.UtcNow;
+                    queueRow.ErrorMessage = note;
+                    _context.BatchJobQueues.Update(queueRow);
 
                     BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, approveStatus.StatusId);
                     _context.BatchJobQueueLogs.Add(logEntry);
@@ -188,7 +186,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return queueRow;
         }
-        
+
         private static IQueryable ApplySorting(IQueryable<BatchJobHistory> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))

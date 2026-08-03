@@ -129,7 +129,7 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 var monthHour = monthHours.FirstOrDefault(m =>
                     m.Year == key.Year && m.Month == key.Month && m.Fmonth == key.Fmonth);
-                
+
                 if (monthHour != null)
                 {
                     BuildPlannedYearEntity(openYear, plannedYear, result, monthHour);
@@ -169,7 +169,7 @@ namespace Apha.FPS.DataAccess.Repositories
                                     : "Yes"
             });
         }
-     
+
         private static void BuildldOpenYearEntity(int openYear, int? plannedYear, List<YearEndMonthHour> result, int keyYear, MonthHour monthHour)
         {
             result.Add(new YearEndMonthHour
@@ -260,18 +260,15 @@ namespace Apha.FPS.DataAccess.Repositories
 
                     if (existing == null)
                     {
-                        if (existing is null)
-                        {
-                            entity.Year = item.Year;
-                            entity.Month = item.Month;
-                            entity.Days = item.Days;
-                            entity.CvlHours = item.CvlHours;
-                            entity.VidHours = item.VidHours;
-                            entity.Fmonth = item.Fmonth;
-                            entity.FpsYear = item.FpsYear;
-                            _context.MonthHours.Add(entity);
-                            await _context.SaveChangesAsync();
-                        }
+                        entity.Year = item.Year;
+                        entity.Month = item.Month;
+                        entity.Days = item.Days;
+                        entity.CvlHours = item.CvlHours;
+                        entity.VidHours = item.VidHours;
+                        entity.Fmonth = item.Fmonth;
+                        entity.FpsYear = item.FpsYear;
+                        _context.MonthHours.Add(entity);
+                        await _context.SaveChangesAsync();
                     }
                 }
             }
