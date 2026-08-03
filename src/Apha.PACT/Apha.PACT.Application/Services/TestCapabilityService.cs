@@ -62,9 +62,11 @@ namespace Apha.PACT.Application.Services
                     if (descriptions != null && descriptions.TryGetValue(dto.TestCode, out var desc))
                         dto.ItemDescription = desc;
 
-                    // Only fall back to the TestorProduct price when the record has no stored
-                    // UnitCost, so user-edited unit costs are preserved on the grid.
-                    if (!dto.UnitCost.HasValue
+                    // Fall back to the TestorProduct price when the record has no stored
+                    // UnitCost or the stored value is 0 (the DB column defaults to 0), so a
+                    // portfolio first shown with a 0 price is populated from the master table
+                    // while genuine user-edited unit costs (> 0) are preserved on the grid.
+                    if ((!dto.UnitCost.HasValue || dto.UnitCost.Value == 0m)
                         && unitPrices != null
                         && unitPrices.TryGetValue(dto.TestCode, out var unitPrice))
                         dto.UnitCost = unitPrice;
