@@ -367,7 +367,7 @@ namespace Apha.FPS.Application.Services
                 RunMode = "Manual",
                 RequestedBy = entry.RequestedBy,
                 RequestedAtUtc = entry.RequestedAtUtc,
-                ParametersJson = new BulkRatesEventParameters { Year = entry.FpsYear }
+                ParametersJson = $"{{\"targetFpsYear\":{entry.FpsYear}}}"
             };
 
             await _eventBridgePublisher.PublishApprovalEventAsync(payload, ct);

@@ -64,7 +64,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IBulkRatesValidationService, BulkRatesValidationService>();
             services.AddScoped<IStaffAnimalValidationService, StaffAnimalValidationService>();
             services.AddScoped<BulkRatesValidator>();
-            services.AddScoped<IEventBridgePublisher, NullEventBridgePublisher>();
+            services.AddScoped<IEventBridgePublisher, EventBridgePublisher>();
             services.AddScoped<IBulkRatesNotificationService, LogOnlyBulkRatesNotificationService>();
             return services;
         }

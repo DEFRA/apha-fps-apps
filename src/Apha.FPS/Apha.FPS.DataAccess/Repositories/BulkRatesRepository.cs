@@ -217,7 +217,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 JOIN fps.job_master m ON m.jobid = q.jobid
                 JOIN fps.job_status s ON s.statusid = q.statusid AND s.jobid = q.jobid
                 WHERE m.jobname = @jobname
-                  AND s.status IN ('Initiated','ReleasedForApproval','Approved','Running','Failed','Rejected')
+                  AND s.status IN ('Initiated','ReleasedForApproval','Approved','Running')
                 ORDER BY q.requested_at_utc DESC
                 LIMIT 1;";
             cmd.Parameters.AddWithValue("jobname", jobName);
