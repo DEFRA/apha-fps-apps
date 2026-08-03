@@ -1007,7 +1007,7 @@ function calcTestCost() {
     var noStr = noEl.value.trim();
     var no = parseFloat(noStr);
     var price = parseFloat(unitPriceEl.value);
-    costEl.value = (noStr !== '' && !isNaN(no) && !isNaN(price)) ? (no * price).toFixed(2) : '';
+    costEl.value = (noStr !== '' && !isNaN(no) && !isNaN(price)) ? (no * price) : '';
 }
 
 // ── Animal Type custom dropdown ────────────────────────────────────
@@ -1056,7 +1056,7 @@ function calcAnimalCost() {
     var days = parseFloat(daysStr);
     var rate = parseFloat(rateEl.value);
     costEl.value = (noStr !== '' && daysStr !== '' && !isNaN(no) && !isNaN(days) && !isNaN(rate))
-        ? (no * days * rate).toFixed(2) : '';
+        ? (no * days * rate) : '';
 }
 
 // ── Account Category custom dropdown ──────────────────────────────
