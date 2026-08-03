@@ -391,6 +391,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var dto = _mapper.Map<ApiResponseDto<List<ProjectStaffReplanDto>>>(response);
             return ApiResponseDto<List<ProjectStaffReplanDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
+
+        public async Task<ApiResponseDto<List<ProjectExceptionalCostViewDto>>> GetProjectExceptionalCostsPagedAsync(QueryParameters<string> query)
+        {
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetProjectExceptionalCostsPaged, query);
+
+            var response = await _http.GetAsync<IEnumerable<ProjectExceptionalCostViewRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectExceptionalCostViewDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectExceptionalCostViewDto>>>(response);
+            return ApiResponseDto<List<ProjectExceptionalCostViewDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
 }
 
