@@ -84,6 +84,52 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
         }
 
         [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_ZeroUnitCost_FallsBackToProductPrice()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var entity = new TestCapability { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var pagedData = new PagedData<TestCapability>([entity], new PaginationData { TotalRecords = 1 });
+            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1", UnitCost = 0m };
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = [dto] };
+            var descriptions = new Dictionary<string, string?> { ["TC1"] = "Test Description" };
+            var unitPrices = new Dictionary<string, decimal?> { ["TC1"] = 42.50m };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+            _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
+            _testorProductRepo.GetUnitPricesByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(unitPrices);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            Assert.Equal(42.50m, result.Data!.First().UnitCost);
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_NullUnitCost_FallsBackToProductPrice()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var entity = new TestCapability { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var pagedData = new PagedData<TestCapability>([entity], new PaginationData { TotalRecords = 1 });
+            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1", UnitCost = null };
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = [dto] };
+            var descriptions = new Dictionary<string, string?> { ["TC1"] = "Test Description" };
+            var unitPrices = new Dictionary<string, decimal?> { ["TC1"] = 42.50m };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+            _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
+            _testorProductRepo.GetUnitPricesByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(unitPrices);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            Assert.Equal(42.50m, result.Data!.First().UnitCost);
+        }
+
+        [Fact]
         public async Task GetPagedTestCapabilityByPortfolioAsync_EmptyData_DoesNotCallDescriptions()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
