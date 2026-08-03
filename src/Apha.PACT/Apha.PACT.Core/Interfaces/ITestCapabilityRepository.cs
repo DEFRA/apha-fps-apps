@@ -16,5 +16,9 @@ namespace Apha.PACT.Core.Interfaces
         Task<bool> ExistsAsync(string testCode, string portfolio);
         Task<List<TestCapability>> GetAllAsync();
         Task<PagedData<WgTestCapabilitiesWithDescription>> GetPagedWgTestCapabilitiesWithDescriptionAsync(PaginationParameters<string> query, string workGroup);
+
+        // Plan CrossTab
+        Task BuildTestPlanSummaryAsync();
+        Task<CrossTabPagedResult> GetPagedTestPlanCrossTabAsync(PaginationParameters<string> query);
     }
 }

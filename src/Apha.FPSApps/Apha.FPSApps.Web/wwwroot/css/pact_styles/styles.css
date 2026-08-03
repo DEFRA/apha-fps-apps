@@ -3625,6 +3625,7 @@ table#tblMonthPeriod > tbody > tr:hover {
 }
 
 .heading_with_txtbox {
+    padding: 0px 10px 0px 10px;
     display: flex;
     justify-content: space-between;
     margin-left: -15px;

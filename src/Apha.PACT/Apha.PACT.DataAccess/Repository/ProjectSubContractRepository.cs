@@ -360,10 +360,15 @@ namespace Apha.PACT.DataAccess.Repository
 
         private static IQueryable ApplySorting(IQueryable<ProjectSubContract> query, string? sortBy, bool descending)
         {
-            if (string.IsNullOrEmpty(sortBy))
+            if (string.IsNullOrWhiteSpace(sortBy))
                 return query.OrderBy(e => e.SubContCounter);
 
-            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
+            return ApplySortingByProperty(query, NormalizeSortProperty(sortBy), descending);
+        }
+
+        private static string NormalizeSortProperty(string property)
+        {
+            return new string(property.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
         }
 
         private static IQueryable ApplySortingByProperty(IQueryable<ProjectSubContract> query, string property, bool descending)
@@ -375,7 +380,10 @@ namespace Apha.PACT.DataAccess.Repository
                 "amount" => ApplyOrder(query, s => s.Amount, descending),
                 "acctcode" => ApplyOrder(query, s => s.AcctCode, descending),
                 "testjob" => ApplyOrder(query, s => s.TestJob, descending),
-                "subcontcounter" => ApplyOrder(query, s => s.SubContCounter, descending),
+                "subcontcounter" or "counter" => ApplyOrder(query, s => s.SubContCounter, descending),
+                "description" => ApplyOrder(query, s => s.Description, descending),
+                "supplier" => ApplyOrder(query, s => s.Supplier, descending),
+                "suppliernumber" => ApplyOrder(query, s => s.SupplierNumber, descending),
                 _ => query.OrderBy(e => e.SubContCounter)
             };
         }

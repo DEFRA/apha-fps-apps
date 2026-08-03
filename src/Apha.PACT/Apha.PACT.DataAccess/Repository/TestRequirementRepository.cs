@@ -83,7 +83,7 @@ namespace Apha.PACT.DataAccess.Repository
                 : rows.OrderBy(t => t.TestCost);
             IEnumerable<TestSupplierView> result = sortByTestCost ? sortedByTestCost : rows;
 
-            return await ApplyPaging(result.AsQueryable(), query.Page, query.PageSize);
+            return ApplyPagingInMemory(result.ToList(), query.Page, query.PageSize);
         }
 
         public async Task<PagedData<TestRequirementDetail>> GetPagedWithDetailsAsync(
@@ -253,6 +253,64 @@ namespace Apha.PACT.DataAccess.Repository
                           }).FirstOrDefaultAsync();
         }
 
+        // ── Actuals Tests with Planned Data (moved from TestActualBreakdownRepository) ──────
+
+        public async Task<PagedData<TestActualBreakdownView>> GetActualsTestsWithPlannedDataByWorkgroupAsync(
+            PaginationParameters<string> query)
+        {
+            var baseQuery = _context.TestActualBreakdownViews.AsNoTracking();
+            baseQuery = ApplyActualBreakdownFilter(baseQuery, query.Filter);
+            var sorted = ApplyActualBreakdownSorting(baseQuery, query.SortBy, query.Descending);
+            return await ApplyPaging(sorted, query.Page, query.PageSize);
+        }
+
+        private static IQueryable<TestActualBreakdownView> ApplyActualBreakdownSorting(
+            IQueryable<TestActualBreakdownView> source, string? sortBy, bool descending)
+        {
+            return sortBy?.ToLower() switch
+            {
+                "testcode"         => ApplyOrder(source, x => x.TestCode,         descending),
+                "shortdescription" => ApplyOrder(source, x => x.ShortDescription, descending),
+                "program"          => ApplyOrder(source, x => x.Program,          descending),
+                "buyer"            => ApplyOrder(source, x => x.Buyer,            descending),
+                "portfolio"        => ApplyOrder(source, x => x.Portfolio,        descending),
+                "workgroup"        => ApplyOrder(source, x => x.WorkGroup,        descending),
+                "month"            => ApplyOrder(source, x => x.Month,            descending),
+                "pcprice"          => ApplyOrder(source, x => x.PCPrice,          descending),
+                "pccost"           => ApplyOrder(source, x => x.PCCost,           descending),
+                "profitcentre"     => ApplyOrder(source, x => x.ProfitCentre,     descending),
+                _                  => ApplyOrder(source, x => x.TestCode,         descending)
+            };
+        }
+
+        private static IQueryable<TestActualBreakdownView> ApplyActualBreakdownFilter(
+            IQueryable<TestActualBreakdownView> query, string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return query;
+
+            var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filter);
+            if (filters is null)
+                return query;
+
+            if (filters.TryGetValue("TestCode", out var testCode) && !string.IsNullOrWhiteSpace(testCode))
+                query = query.Where(x => x.TestCode != null && EF.Functions.ILike(x.TestCode, $"%{testCode}%"));
+            if (filters.TryGetValue("ShortDescription", out var shortDesc) && !string.IsNullOrWhiteSpace(shortDesc))
+                query = query.Where(x => x.ShortDescription != null && EF.Functions.ILike(x.ShortDescription, $"%{shortDesc}%"));
+            if (filters.TryGetValue("Program", out var program) && !string.IsNullOrWhiteSpace(program))
+                query = query.Where(x => x.Program != null && EF.Functions.ILike(x.Program, $"%{program}%"));
+            if (filters.TryGetValue("Buyer", out var buyer) && !string.IsNullOrWhiteSpace(buyer))
+                query = query.Where(x => x.Buyer != null && EF.Functions.ILike(x.Buyer, $"%{buyer}%"));
+            if (filters.TryGetValue("Portfolio", out var portfolio) && !string.IsNullOrWhiteSpace(portfolio))
+                query = query.Where(x => x.Portfolio != null && EF.Functions.ILike(x.Portfolio, $"%{portfolio}%"));
+            if (filters.TryGetValue("WorkGroup", out var workGroup) && !string.IsNullOrWhiteSpace(workGroup))
+                query = query.Where(x => x.WorkGroup != null && EF.Functions.ILike(x.WorkGroup, $"%{workGroup}%"));
+            if (filters.TryGetValue("ProfitCentre", out var profitCentre) && !string.IsNullOrWhiteSpace(profitCentre))
+                query = query.Where(x => x.ProfitCentre != null && EF.Functions.ILike(x.ProfitCentre, $"%{profitCentre}%"));
+
+            return query;
+        }
+
         public async Task<TestRequirementDetail?> GetPricingAsync(string testCode, string? projectCode)
         {
             var tp = await _context.TestorProducts
@@ -384,6 +442,15 @@ namespace Apha.PACT.DataAccess.Repository
             if (filters.TryGetValue(nameof(TestSupplierView.Buyer), out string? buyer)
                 && !string.IsNullOrWhiteSpace(buyer))
                 query = query.Where(t => EF.Functions.ILike(t.Buyer, $"%{buyer}%"));
+
+            if (filters.TryGetValue(nameof(TestSupplierView.TestCode), out string? testCode)
+                && !string.IsNullOrWhiteSpace(testCode))
+                query = query.Where(t => EF.Functions.ILike(t.TestCode, $"%{testCode}%"));
+
+            if (filters.TryGetValue(nameof(TestSupplierView.ProjectManager), out string? projectManager)
+                && !string.IsNullOrWhiteSpace(projectManager))
+                query = query.Where(t => t.ProjectManager != null
+                    && EF.Functions.ILike(t.ProjectManager, $"%{projectManager}%"));
 
             if (filters.TryGetValue(nameof(TestSupplierView.ProjectStatus), out string? status)
                 && !string.IsNullOrWhiteSpace(status))

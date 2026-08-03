@@ -1,6 +1,9 @@
+using Apha.Common.Constants;
+using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Pagination;
+using static System.Net.WebRequestMethods;
 
 namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
 {
@@ -10,6 +13,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsForAllUsersAsync();
         Task<ApiResponseDto<List<ProjectDto>>> GetAllPactProjectsAsync();
         Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<List<ProjectSpecificQueryDto>>> GetPagedProjectSpecificQueryAsync(QueryParameters<string> query);
         Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsByUserAsync(QueryParameters<string> query);
         Task<ApiResponseDto<List<ProjectDto>>> GetPagedPactProjectsAsync(QueryParameters<string> query);
         Task<ApiResponseDto<List<ProjectDto>>> GetPagedPactProjectsByProgramAsync(QueryParameters<string> query, string programNo);
@@ -34,7 +38,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
 
-        // TRANSFORMENGINE: new method — maps to GET /api/v1/project/profitability-vla (Phase 5 backend endpoint)
         // All four filter params are optional; each maps to a filter dropdown on the VLA page
         // (filterProjectStatus, filterProgram, filterManager, filterCustomer in projectprofitability_vla.js).
         // QueryParameters<string> carries page + pageSize for server-side DataGrid pagination.
@@ -44,5 +47,9 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
             string? programNo = null,
             string? manager = null,
             string? customer = null);
+
+        Task<ApiResponseDto<List<ProjectStaffReplanDto>>> GetProjectGroupStaffReplanAsync(QueryParameters<string> query, string workgroup);
+
+        Task<ApiResponseDto<List<ProjectExceptionalCostViewDto>>> GetProjectExceptionalCostsPagedAsync(QueryParameters<string> query);
     }
 }

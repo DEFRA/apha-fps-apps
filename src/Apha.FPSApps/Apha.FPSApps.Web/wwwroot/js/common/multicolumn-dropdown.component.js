@@ -50,6 +50,9 @@
             containerSelector: '#dropdownContainer',
             placeholder: 'Select an option',
             searchPlaceholder: 'Type to search',
+            searchLabelText: '',
+            ariaLabel: '',
+            ariaLabelledBy: '',
             columns: [],
             data: [],
             displayField: 'name',
@@ -108,6 +111,12 @@
         var config = this.config;
         var dropdownId = config.dropdownId;
         var requiredMark = config.required ? '<span class="sup_color_red">*</span>' : '';
+        var inputLabelText = this.escapeHtml(config.labelText || this.getReferencedLabelText(config.ariaLabelledBy) || config.ariaLabel || config.placeholder || 'Select an option');
+        var inputAriaAttributes = config.labelText
+            ? ''
+            : config.ariaLabelledBy
+                ? `aria-labelledby="${config.ariaLabelledBy}"`
+                : `aria-label="${this.escapeHtml(config.ariaLabel || config.placeholder || 'Select an option')}"`;
 
         var html = `
             <div class="tableselectdropdown input-group searchfiels" data-dropdown-id="${dropdownId}">
@@ -115,7 +124,11 @@
                     <label for="${dropdownId}_input" class="govuk-label govuk-!-font-weight-bold">
                         ${config.labelText} ${requiredMark}
                     </label>
-                ` : ''}
+                ` : `
+                    <label for="${dropdownId}_input" class="govuk-label govuk-visually-hidden">
+                        ${inputLabelText} ${requiredMark}
+                    </label>
+                `}
                 <input 
                     type="text" 
                     id="${dropdownId}_input" 
@@ -124,6 +137,7 @@
                     class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16" 
                     ${config.disabled ? 'disabled' : ''}
                     ${config.required ? 'required' : ''}
+                    ${inputAriaAttributes}
                     readonly
                 />
                 <input type="hidden" id="${dropdownId}_value" />
@@ -131,11 +145,17 @@
                 <div class="multicolumn-dropdown-panel" id="${dropdownId}_panel">
                     ${config.enableSearch ? `
                         <div class="search-box-wrapper">
+                            ${config.searchLabelText ? `
+                                <label for="${dropdownId}_search" class="govuk-label govuk-visually-hidden">
+                                    ${this.escapeHtml(config.searchLabelText)}
+                                </label>
+                            ` : ''}
                             <input 
                                 type="text" 
                                 class="select-search-box" 
                                 id="${dropdownId}_search"
                                 placeholder="${config.searchPlaceholder}" 
+                                aria-label="Search by code or name"
                             />
                             <button 
                                 type="button" 
@@ -165,6 +185,15 @@
         `;
 
         return html;
+    };
+
+    MultiColumnDropdownComponent.prototype.getReferencedLabelText = function (labelId) {
+        if (!labelId) {
+            return '';
+        }
+
+        var labelElement = document.getElementById(labelId);
+        return labelElement ? (labelElement.textContent || '').trim() : '';
     };
 
     /**

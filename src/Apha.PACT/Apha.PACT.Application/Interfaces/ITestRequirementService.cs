@@ -19,5 +19,6 @@ namespace Apha.PACT.Application.Interfaces
 
         // TestReqBreakdown
         Task<PaginatedResult<TestReqBreakdownDto>> GetPlannedTestsByWorkgroupAsync(QueryParameters<string> query);
+        Task<PaginatedResult<TestActualBreakdownDto>> GetActualsTestsWithPlannedDataByWorkgroupAsync(QueryParameters<string> query);
     }
 }

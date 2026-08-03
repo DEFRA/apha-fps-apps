@@ -306,7 +306,7 @@ namespace Apha.PACT.Application.Services
             return new OutputValidationContext
             {
                 ValidWorkGroups = new HashSet<string>(
-                    await _workGroupRepository.GetValidWorkGroupsAsync(),
+                    await _workGroupRepository.GetAllWorkGroupNamesAsync(),
                     StringComparer.OrdinalIgnoreCase),
                 ValidMonths = new HashSet<double>(calenderMonths.Select(c => (double)(c.MonthNumber ?? 0))),
                 TestCapabilityKeys = new HashSet<string>(

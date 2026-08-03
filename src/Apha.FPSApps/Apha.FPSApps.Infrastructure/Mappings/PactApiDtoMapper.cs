@@ -16,6 +16,12 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TimeCodeValidDto, TimeCodeValidRes>().ReverseMap();
             CreateMap<WorkGroupDto, WorkGroupRes>().ReverseMap();
             CreateMap<WorkGroupViewDto, WorkGroupViewRes>().ReverseMap();
+
+            // WorkGroup Maintenance (CRUD + lookups)
+            CreateMap<WorkGroupDto, WorkGroupMaintenanceRes>().ReverseMap();
+            CreateMap<WorkGroupDto, WorkGroupMaintenanceReq>().ReverseMap();
+            CreateMap<OwnerDto, OwnerRes>().ReverseMap();
+
             CreateMap<MonthDto, MonthRes>().ReverseMap();
             CreateMap<CalenderMonthDto, CalenderMonthRes>().ReverseMap();
             CreateMap<ProjectInvoiceDto, ProjectInvoiceReq>().ReverseMap();
@@ -94,6 +100,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<BatchJobQueueDto, BatchJobQueueRes>().ReverseMap();
             CreateMap<BatchJobHistoryDto, BatchJobHistoryRes>().ReverseMap();
             CreateMap<BatchJobEventTriggerDto, BatchJobEventTriggerRes>().ReverseMap();
+            CreateMap<TestActualBreakdownRes, TestActualBreakdownDto>().ReverseMap();
+            CreateMap<TestPlanCostBreakdownRes, TestPlanCostBreakdownDto>().ReverseMap();
         }
     }
 }

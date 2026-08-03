@@ -19,8 +19,10 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<JobCode, JobCodeDto>().ReverseMap();
             CreateMap<TimeCodeValid, TimeCodeValidDto>().ReverseMap();
             CreateMap<WorkGroup, WorkGroupDto>().ReverseMap();
+            CreateMap<Owner, OwnerDto>().ReverseMap();
             CreateMap<WorkGroupView, WorkGroupViewDto>();
             CreateMap<Month, MonthDto>().ReverseMap();
+            CreateMap<MonthDto, MonthRes>().ReverseMap();
             CreateMap<ProjectInvoice, ProjectInvoiceDto>().ReverseMap();
             CreateMap<ProjectSubContract, ProjectSubContractDto>().ReverseMap();
             CreateMap<SubContractRmsImportRow, SubContractRmsImportRowDto>().ReverseMap();
@@ -69,6 +71,8 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<BatchJobQueue, BatchJobEventTriggerDto>()
                 .ForMember(dest => dest.Jobqueue, opt => opt.MapFrom(src => src))
                 .ForMember(dest => dest.EventId, opt => opt.Ignore());
+            CreateMap<TestActualBreakdownView, TestActualBreakdownDto>().ReverseMap();
+
         }
     }
 }
