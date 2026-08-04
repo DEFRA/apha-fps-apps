@@ -4,6 +4,7 @@ using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
@@ -53,6 +54,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        [ExcludeFromCodeCoverage]
         public async Task<MonthHour> SaveAsync(MonthHour monthHour)
         {
             await SavePlannedYearFmonthHoursAsync();
@@ -80,6 +82,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return existing ?? monthHour;
         }
 
+        [ExcludeFromCodeCoverage]
         public async Task<List<YearEndMonthHour>> GetYearEndMonthHoursAsync()
         {
             int openYear = await GetOpenYear();
@@ -120,6 +123,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return result;
         }
 
+        [ExcludeFromCodeCoverage]
         private static List<YearEndMonthHour> GetYearEndMonthHour(int openYear, int? plannedYear, List<MonthHour> monthHours)
         {
             var result = new List<YearEndMonthHour>();

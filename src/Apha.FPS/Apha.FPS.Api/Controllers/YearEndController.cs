@@ -40,7 +40,7 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with a list of <see cref="BatchJobHistoryRes"/>.</returns>
         [HttpGet("batchjob/history")]
-        public async Task<IActionResult> GetYearEndBatchJobHistory([FromQuery] QueryParameters<string> query, [FromQuery] string jobName)
+        public async Task<IActionResult> GetYearEndDataSetupBatchJobHistory([FromQuery] QueryParameters<string> query, [FromQuery] string jobName)
         {
             var result = await _yearEndService.GetBatchJobsHistoryAsync(query, jobName);
             return Ok(_mapper.Map<PaginationRes<BatchJobHistoryRes>>(result));
