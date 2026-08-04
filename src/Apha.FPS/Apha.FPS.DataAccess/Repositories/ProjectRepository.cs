@@ -554,6 +554,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     entity.WipLimit = project.WipLimit;
                     entity.WipCurrent = project.WipCurrent;
                     entity.FecCost = project.FecCost;
+                    entity.CustIncome = project.CustIncome;
 
                     NormalizeDateTimesToUnspecified(entity);
                     // Converted trigger logic — UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
