@@ -1,0 +1,117 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.YearEndCutOverViewModel
+
+@{
+    ViewData["Title"] = "Year End CutOver";
+    var btnIntDisabled = Model.CanInitiate ? (string?)null : "disabled";
+    var btnAppDisabled = Model.CanApprove ? (string?)null : "disabled";
+}
+
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
+            YearEnd CutOver
+        </h1>
+    </div>
+</div>
+
+<div class="govuk-grid-row">
+    <div class="cc-container-fluid">
+        <div class="cc-layout-row">
+            <div class="cc-content-column">
+                <div class="govuk-grid-row">
+                    <div class="govuk-grid-column-full">
+                        <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+
+                            @* Error summary *@
+                            <div class="govuk-grid-column-full sup_p_0">
+                                <div class="govuk-error-summary" role="alert" tabindex="-1" style="display:none;" aria-labelledby="yec-error-summary-title">
+                                    <h2 class="govuk-error-summary__title" id="yec-error-summary-title">There is a problem</h2>
+                                    <div class="govuk-error-summary__body">
+                                        <ul class="govuk-list govuk-error-summary__list" id="yec-error-list"></ul>
+                                    </div>
+                                </div>
+                                <div id="yec-success-banner"
+                                     class="govuk-notification-banner govuk-notification-banner--success"
+                                     role="alert"
+                                     aria-labelledby="yec-success-banner-title"
+                                     style="display:none;">
+                                    <div class="govuk-notification-banner__header">
+                                        <h2 class="govuk-notification-banner__title" id="yec-success-banner-title">Success</h2>
+                                    </div>
+                                    <div class="govuk-notification-banner__body">
+                                        <p id="yec-success-banner-message" class="govuk-body"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @* Process Rules *@
+                            <div class="govuk-grid-column-full sup_p_0">
+                                <section class="sup_border govuk-!-padding-3" aria-labelledby="process-rules-title">
+                                    <h2 class="govuk-heading-s govuk-!-margin-bottom-2" id="process-rules-title">Process Rules</h2>
+                                    <ul class="govuk-list govuk-list--bullet govuk-!-font-size-16 govuk-!-margin-bottom-0">
+                                        <li>Calendar Year-End Process is a two-step process consisting of Data Setup Initiation &amp; Approval and Year Cutover.</li>
+                                        <li>Only FPS Admin can perform Calendar Year-End process.</li>
+                                        <li>The initiator and approver for the Data Setup Initiation &amp; Approval and Year Cutover steps must be different users.</li>
+                                        <li>On Failure or Rejection, new request needs to be submitted.</li>
+                                    </ul>
+                                </section>
+                            </div>
+
+                            @* Calendar Year-End Process For *@
+                            <div class="govuk-grid-column-full sup_p_0 govuk-!-margin-top-3 govuk-!-margin-left-3">
+                                <div class="govuk-form-group govuk-!-margin-bottom-4" style="display:flex; align-items:center; gap:10px;">
+                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0" for="yearEndProcessYear">
+                                        Calendar Year-End Process For
+                                    </label>
+                                    <input class="govuk-input govuk-input--width-5" id="yearEndProcessYear"
+                                           type="text" value="@Model.PlannedYear" autocomplete="off" disabled>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        @* Request History Grid *@
+                        <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                            <div class="govuk-grid-column-full sup_p_0">
+                                <div id="gridContainer_yearEndCutOverHistoryGrid">
+                                    @await Html.PartialAsync("_DataGrid", Model.HistoryGrid)
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Action Buttons *@
+                        <div class="govuk-grid-row sup_margin_left_right_10 govuk-!-margin-top-2">
+                            <div class="govuk-grid-column-full govuk-!-padding-left-0 govuk-!-padding-right-0">
+                                <div class="approval-buttons-row">
+                                    <div class="govuk-button-group sup_flex_end_center approval-buttons-group">
+                                        <button type="button" class="govuk-button" data-module="govuk-button"
+                                                id="btnInitiateCutOverRequest"
+                                                disabled="@btnIntDisabled">
+                                            Initiate CutOver Request
+                                        </button>
+                                        <button type="button" class="govuk-button" data-module="govuk-button"
+                                                id="btnApproveCutOverRequest"
+                                                disabled="@btnAppDisabled">
+                                            Approve CutOver Request
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    window.YearEndCutOverConfig = {
+        triggerInitiateUrl: '@Url.Action("TriggerInitiate", "YearEndCutOver", new { area = "FPS" })',
+        triggerApproveUrl:  '@Url.Action("TriggerApprove",  "YearEndCutOver", new { area = "FPS" })'
+    };
+</script>
+<script src="~/js/fps_js/year-end-cutover.js"></script>
+}

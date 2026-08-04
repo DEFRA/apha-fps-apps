@@ -69,7 +69,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
             _mapper.Map<PaginationRes<BatchJobHistoryRes>>(serviceResult).Returns(mappedResult);
 
             // Act
-            var result = await _sut.GetYearEndBatchJobHistory(query, JobName);
+            var result = await _sut.GetYearEndDataSetupBatchJobHistory(query, JobName);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -92,7 +92,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
             _mapper.Map<PaginationRes<BatchJobHistoryRes>>(serviceResult).Returns(mappedResult);
 
             // Act
-            var result = await _sut.GetYearEndBatchJobHistory(query, JobName);
+            var result = await _sut.GetYearEndDataSetupBatchJobHistory(query, JobName);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -109,7 +109,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
             _yearEndService.GetBatchJobsHistoryAsync(query, JobName).Throws(new Exception("Database error"));
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.GetYearEndBatchJobHistory(query, JobName));
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.GetYearEndDataSetupBatchJobHistory(query, JobName));
             exception.Message.Should().Be("Database error");
             await _yearEndService.Received(1).GetBatchJobsHistoryAsync(query, JobName);
         }

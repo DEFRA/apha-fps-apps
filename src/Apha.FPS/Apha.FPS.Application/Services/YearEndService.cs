@@ -125,6 +125,75 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<BatchJobEventTriggerDto>(result);
         }
 
+        public async Task<bool> CanInitiateYearEndCutOverRequestAsync(string jobName)
+        {
+            return await _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(jobName);
+        }
+
+        public async Task<bool> CanApproveYearEndCutOverRequestAsync(string jobName)
+        {
+            return await _yearEndRepository.CanApproveYearEndCutOverRequestAsync(jobName);
+        }
+
+        public async Task<BatchJobQueueDto> EnqueueYearEndCutOverInitiationJobAsync(int plannedYear, int contextyear, string requestedBy, string correlationId)
+        {
+            var errors = new List<BusinessValidationError>();
+
+            var note = $"'{YearEndDataSetupJobName}' is initiated for {plannedYear}.";
+
+            await ValidateConfiguration(errors);
+            await ValidateDataSetupRequestInput(plannedYear, requestedBy, errors, YearEndDataSetupJobName, false);
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+
+            var queued = await _yearEndRepository.EnqueueDataSetupInitiationBatchJobAsync(YearEndDataSetupJobName, requestedBy, correlationId, note);
+
+            try
+            {
+                await SendEmailAsync(false, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send Year End initiation notification email.");
+            }
+
+            return _mapper.Map<BatchJobQueueDto>(queued);
+        }
+
+        public async Task<BatchJobEventTriggerDto> EnqueueYearEndCutOverApprovalJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
+        {
+            var errors = new List<BusinessValidationError>();
+
+            var note = $"'{YearEndDataSetupJobName}' is approved for {plannedYear}.";
+
+            await ValidateConfiguration(errors);
+            await ValidateDataSetupRequestInput(plannedYear, requestedBy, errors, YearEndDataSetupJobName, true);
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+
+            var queued = await _yearEndRepository.EnqueueDataSetupApprovalBatchJobAsync(YearEndDataSetupJobName, requestedBy, correlationId, note);
+
+            var eventDetail = BuildYearEndDataSetupJobEvent(requestedBy, correlationId, plannedYear);
+
+            var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
+
+            var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
+            result.EventId = eventId;
+
+            try
+            {
+                await SendEmailAsync(true, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send Year End approval notification email.");
+            }
+
+            return _mapper.Map<BatchJobEventTriggerDto>(result);
+        }
+        
         private async Task ValidateDataSetupRequestInput(int plannedYear, string requestedBy, List<BusinessValidationError> errors, string jobName, bool isApprovalReq)
         {
             if (plannedYear == 0 || (plannedYear < 1900 || plannedYear > 9999))

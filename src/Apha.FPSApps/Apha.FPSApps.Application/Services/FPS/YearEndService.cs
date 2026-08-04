@@ -29,5 +29,21 @@ namespace Apha.FPSApps.Application.Services.FPS
 
         public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndDataSetupApprovalJobAsync(int plannedYear)
             => await _fpsClient.FpsYearEnd.TriggerYearEndDataSetupApprovalJobAsync(plannedYear);
+
+        public async Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetYearEndCutOverBatchJobHistoryAsync(QueryParameters<string> query, string jobName)
+            => await _fpsClient.FpsYearEnd.GetYearEndCutOverBatchJobHistoryAsync(query, jobName);
+
+        public async Task<ApiResponseDto<bool>> GetCanInitiateCutOverRequestAsync(string jobName)
+            => await _fpsClient.FpsYearEnd.GetCanInitiateCutOverRequestAsync(jobName);
+
+        public async Task<ApiResponseDto<bool>> GetCanApproveCutOverRequestAsync(string jobName)
+            => await _fpsClient.FpsYearEnd.GetCanApproveCutOverRequestAsync(jobName);
+
+        public async Task<ApiResponseDto<BatchJobQueueDto>> EnqueueYearEndCutOverInitiationJobAsync(int plannedYear)
+       => await _fpsClient.FpsYearEnd.EnqueueYearEndCutOverInitiationJobAsync(plannedYear);
+
+        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndCutOverApprovalJobAsync(int plannedYear)
+            => await _fpsClient.FpsYearEnd.TriggerYearEndCutOverApprovalJobAsync(plannedYear);
+
     }
 }

@@ -39,8 +39,8 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with a list of <see cref="BatchJobHistoryRes"/>.</returns>
-        [HttpGet("batchjob/history")]
-        public async Task<IActionResult> GetYearEndBatchJobHistory([FromQuery] QueryParameters<string> query, [FromQuery] string jobName)
+        [HttpGet("datasetup/batchjob/history")]
+        public async Task<IActionResult> GetYearEndDataSetupBatchJobHistory([FromQuery] QueryParameters<string> query, [FromQuery] string jobName)
         {
             var result = await _yearEndService.GetBatchJobsHistoryAsync(query, jobName);
             return Ok(_mapper.Map<PaginationRes<BatchJobHistoryRes>>(result));
@@ -51,7 +51,7 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with <c>true</c> if the job can run; <c>false</c> if it is already running.</returns>
-        [HttpGet("dataSetup/caninitiate")]
+        [HttpGet("datasetup/caninitiate")]
         public async Task<IActionResult> CanInitiateYearEndDataSetupRequestAsync([FromQuery] string jobName)
         {
             var result = await _yearEndService.CanInitiateYearEndDataSetupRequestAsync(jobName);
@@ -63,7 +63,7 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with <c>true</c> if initiate request exists for the job; <c>false</c> if no initiate request exists for the job.</returns>
-        [HttpGet("dataSetup/canapprove")]
+        [HttpGet("datasetup/canapprove")]
         public async Task<IActionResult> CanApproveYearEndDataSetupRequestAsync([FromQuery] string jobName)
         {
             var result = await _yearEndService.CanApproveYearEndDataSetupRequestAsync(jobName);
@@ -77,7 +77,7 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="request">Request body containing the planned year.</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
-        [HttpPost("dataSetup/initiation")]
+        [HttpPost("datasetup/initiation")]
         public async Task<IActionResult> EnqueueYearEndDataSetupInitiationJob([FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
             var result = await _yearEndService.EnqueueYearEndDataSetupInitiationJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
@@ -93,11 +93,80 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="request">Request body containing the planned year.</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
-        [HttpPost("dataSetup/approval")]
+        [HttpPost("datasetup/approval")]
         public async Task<IActionResult> EnqueueYearEndDataSetupApprovalJob([FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
             var result = await _yearEndService.EnqueueYearEndDataSetupApprovalJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
 
             return Ok(_mapper.Map<BatchJobEventTriggerRes>(result));
         }
-    } }
+
+        /// <summary>
+        /// Retrieves the execution history for the year-end cut-over batch job.
+        /// </summary>
+        /// <param name="query">Pagination/filter query parameters.</param>
+        /// <param name="jobName">The name of the cut-over batch job.</param>
+        /// <returns><c>200 OK</c> with a paginated list of <see cref="BatchJobHistoryRes"/>.</returns>
+        [HttpGet("cutover/batchjob/history")]
+        public async Task<IActionResult> GetYearEndCutOverBatchJobHistory([FromQuery] QueryParameters<string> query, [FromQuery] string jobName)
+        {
+            var result = await _yearEndService.GetBatchJobsHistoryAsync(query, jobName);
+            return Ok(_mapper.Map<PaginationRes<BatchJobHistoryRes>>(result));
+        }
+
+        /// <summary>
+        /// Checks whether the year-end cut-over batch job can be initiated.
+        /// </summary>
+        /// <param name="jobName">The name of the cut-over batch job.</param>
+        /// <returns><c>200 OK</c> with <c>true</c> if the job can be initiated; otherwise <c>false</c>.</returns>
+        [HttpGet("cutover/caninitiate")]
+        public async Task<IActionResult> CanInitiateYearEndCutOverRequestAsync([FromQuery] string jobName)
+        {
+            var result = await _yearEndService.CanInitiateYearEndCutOverRequestAsync(jobName);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Checks whether the year-end cut-over batch job can be approved.
+        /// </summary>
+        /// <param name="jobName">The name of the cut-over batch job.</param>
+        /// <returns><c>200 OK</c> with <c>true</c> if an initiate request exists; otherwise <c>false</c>.</returns>
+        [HttpGet("cutover/canapprove")]
+        public async Task<IActionResult> CanApproveYearEndCutOverRequestAsync([FromQuery] string jobName)
+        {
+            var result = await _yearEndService.CanApproveYearEndCutOverRequestAsync(jobName);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Enqueue the YearEndCutOverInitiation batch job for approval.
+        /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
+        /// all config exists, verifies no instance is already running, then enqueues the job. 
+        /// </summary>
+        /// <param name="request">Request body containing the planned year.</param>
+        /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
+        [HttpPost("cutover/initiation")]
+        public async Task<IActionResult> EnqueueYearEndCutOverInitiationJob([FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
+        {
+            var result = await _yearEndService.EnqueueYearEndCutOverInitiationJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
+
+            return Ok(_mapper.Map<BatchJobQueueRes>(result));
+
+        }
+
+        /// <summary>
+        /// Enqueue the YearEndCutOverApproval batch job for approve and publish event for batch job.
+        /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
+        /// all config exists, aproval and initiator are not same, verifies no instance is already running, then enqueues the job. 
+        /// </summary>
+        /// <param name="request">Request body containing the planned year.</param>
+        /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
+        [HttpPost("cutover/approval")]
+        public async Task<IActionResult> EnqueueYearEndCutOverApprovalJob([FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
+        {
+            var result = await _yearEndService.EnqueueYearEndCutOverApprovalJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
+
+            return Ok(_mapper.Map<BatchJobEventTriggerRes>(result));
+        }
+    }
+}

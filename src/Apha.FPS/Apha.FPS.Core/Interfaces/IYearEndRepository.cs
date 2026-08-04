@@ -16,5 +16,15 @@ namespace Apha.FPS.Core.Interfaces
         Task<BatchJobQueue> EnqueueDataSetupInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
         
         Task<BatchJobQueue> EnqueueDataSetupApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
+
+        Task<bool> CanInitiateYearEndCutOverRequestAsync(string jobName);
+
+        Task<bool> CanApproveYearEndCutOverRequestAsync(string jobName);
+
+        Task<string> GetYearEndCutOverRequestInitiatorAsync(string jobName);
+
+        Task<BatchJobQueue> EnqueueCutOverInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
+
+        Task<BatchJobQueue> EnqueueCutOverApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
     }
 }
