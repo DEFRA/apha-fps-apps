@@ -86,7 +86,7 @@ var BulkRates = (function () {
             '/FPS/BulkRates/Create',
             { jobName: jobName.value, fpsYear: yearVal },
             function (result) {
-                window.location.href = '/FPS/BulkRates/Detail/' + result.id;
+                window.fpsNavigateTo('/FPS/BulkRates/Detail/' + result.id);
             },
             function (msg) {
                 if (errorText)    { errorText.textContent    = msg; }
@@ -221,7 +221,7 @@ var BulkRates = (function () {
             headers: { 'RequestVerificationToken': getAntiForgeryToken() },
             success: function (result) {
                 if (result && result.success) {
-                    window.location.href = '/FPS/BulkRates/Detail/' + _trackerUploadRequestId;
+                    window.fpsNavigateTo('/FPS/BulkRates/Detail/' + _trackerUploadRequestId);
                 } else {
                     if (btn)      { btn.disabled = false; }
                     if (progress) { progress.style.display = 'none'; }
@@ -261,7 +261,7 @@ var BulkRates = (function () {
 
     function viewBulkRatesRequest(btn) {
         var id = $(btn).data('id');
-        window.location.href = '/FPS/BulkRates/Detail/' + id;
+        window.fpsNavigateTo('/FPS/BulkRates/Detail/' + id);
     }
     window.viewBulkRatesRequest = viewBulkRatesRequest;
 
