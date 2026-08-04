@@ -42,9 +42,38 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> CanInitiateYearEndDataSetupRequestAsync(string jobName)
         {
+            bool hasNonTerminalRecord = await CanInitiateRequest(jobName);
+
+            return !hasNonTerminalRecord;
+        }
+
+        public async Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName)
+        {
+            bool hasRunningJob = await CanApproveRequest(jobName);
+
+            return hasRunningJob;
+        }
+
+        public async Task<string> GetYearEndDataSetupRequestInitiatorAsync(string jobName)
+        {
+            return await GetInitiator(jobName);
+        }
+
+        public async Task<BatchJobQueue> EnqueueDataSetupInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        {
+            return await EnqueueInitiationRequest(jobName, requestedBy, correlationId, note);
+        }
+
+        public async Task<BatchJobQueue> EnqueueDataSetupApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        {
+            return await EnqueueApprovalRequest(jobName, requestedBy, correlationId, note);
+        }
+        
+        private async Task<bool> CanInitiateRequest(string jobName)
+        {
             // Returns true when no records exist for the job, OR every record is in a terminal status (rejected / failed / cancelled).
             // Returns false when at least one record exists that is NOT in a terminal status.
-            var hasNonTerminalRecord = await (
+            return await (
                 from jm in _context.BatchJobs.AsNoTracking()
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
@@ -55,13 +84,11 @@ namespace Apha.FPS.DataAccess.Repositories
                    && js.Status.ToLower() != "cancelled"
                 select jq.JobqueueId
             ).AnyAsync();
-
-            return !hasNonTerminalRecord;
         }
 
-        public async Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName)
+        private async Task<bool> CanApproveRequest(string jobName)
         {
-            var hasRunningJob = await (
+            return await (
                 from jm in _context.BatchJobs.AsNoTracking()
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
@@ -69,11 +96,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 where jm.JobName.ToLower() == jobName.ToLower() && (js.Status.ToLower() == "initiated")
                 select jq.JobqueueId
             ).AnyAsync();
-
-            return hasRunningJob;
         }
 
-        public async Task<string> GetYearEndDataSetupRequestInitiatorAsync(string jobName)
+        private async Task<string> GetInitiator(string jobName)
         {
             var initiator = await (
                 from jm in _context.BatchJobs.AsNoTracking()
@@ -86,49 +111,8 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return initiator ?? string.Empty;
         }
-
-        public async Task<BatchJobQueue> EnqueueDataSetupInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
-        {
-            BatchJobQueue jobQueueEntry = null!;
-
-            var job = await _context.BatchJobs
-                .AsNoTracking()
-                .FirstOrDefaultAsync(j => j.JobName.ToLower() == jobName.ToLower())
-                ?? throw new KeyNotFoundException($"Batch job '{jobName}' was not found.");
-
-            var initiatedStatus = await _context.BatchJobStatuses
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.JobId == job.JobId && s.Status.ToLower() == "initiated")
-                ?? throw new KeyNotFoundException($"Status 'initiated' not found for job '{jobName}'.");
-
-            var strategy = _context.Database.CreateExecutionStrategy();
-
-            await strategy.ExecuteAsync(async () =>
-            {
-                await using var transaction = await _context.Database.BeginTransactionAsync();
-                try
-                {
-                    jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, _requestContext.FpsYear);
-                    _context.BatchJobQueues.Add(jobQueueEntry);
-
-                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId);
-                    _context.BatchJobQueueLogs.Add(logEntry);
-
-                    await _context.SaveChangesAsync();
-
-                    await transaction.CommitAsync();
-                }
-                catch
-                {
-                    await transaction.RollbackAsync();
-                    throw;
-                }
-            });
-
-            return jobQueueEntry;
-        }
-
-        public async Task<BatchJobQueue> EnqueueDataSetupApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        
+        private async Task<BatchJobQueue> EnqueueApprovalRequest(string jobName, string requestedBy, string correlationId, string note)
         {
             BatchJobQueue queueRow = null!;
 
@@ -185,6 +169,47 @@ namespace Apha.FPS.DataAccess.Repositories
             });
 
             return queueRow;
+        }
+        
+        private async Task<BatchJobQueue> EnqueueInitiationRequest(string jobName, string requestedBy, string correlationId, string note)
+        {
+            BatchJobQueue jobQueueEntry = null!;
+
+            var job = await _context.BatchJobs
+                .AsNoTracking()
+                .FirstOrDefaultAsync(j => j.JobName.ToLower() == jobName.ToLower())
+                ?? throw new KeyNotFoundException($"Batch job '{jobName}' was not found.");
+
+            var initiatedStatus = await _context.BatchJobStatuses
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.JobId == job.JobId && s.Status.ToLower() == "initiated")
+                ?? throw new KeyNotFoundException($"Status 'initiated' not found for job '{jobName}'.");
+
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+                try
+                {
+                    jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, _requestContext.FpsYear);
+                    _context.BatchJobQueues.Add(jobQueueEntry);
+
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId);
+                    _context.BatchJobQueueLogs.Add(logEntry);
+
+                    await _context.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+
+            return jobQueueEntry;
         }
 
         private static IQueryable ApplySorting(IQueryable<BatchJobHistory> query, string? sortBy, bool descending)
