@@ -1313,7 +1313,7 @@ main {
 }
 
 .costbook-edit-page .edit-form-container {
-    width: 1152px;
+    width: 928px;
     margin-bottom: 25px;
 }
 
@@ -2988,5 +2988,10 @@ main {
 .isDataGridWrapper {
     .sup_flex_space_between {
         padding: 10px;
+    }
+
+    .editable-grid-container h2 {
+        background-color: #f4f8fb;
+        border-bottom: 1px solid #8eb8dc;
     }
 }
