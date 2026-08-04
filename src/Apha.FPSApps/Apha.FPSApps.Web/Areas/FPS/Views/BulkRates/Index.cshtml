@@ -241,4 +241,12 @@
 
 @section Scripts {
     <script src="~/js/fps_js/fec_testmanagement.js" asp-append-version="true"></script>
+    @if (Model.ActiveRequest != null)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                BulkRates.startActiveRequestPolling('@Model.ActiveRequest.Status');
+            });
+        </script>
+    }
 }

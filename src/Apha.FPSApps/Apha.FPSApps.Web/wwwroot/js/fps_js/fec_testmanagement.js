@@ -270,6 +270,30 @@ var BulkRates = (function () {
         if (gm) { gm.reloadGrid({ page: 1 }); }
     }
 
+    // ── Active-request grid polling ─────────────────────────────────────────
+    // Approved/Running requests change status in the background (worker
+    // pickup, completion) with no user action to trigger a refresh. Poll the
+    // grid so the row catches up on its own. Bounded so an abandoned tab
+    // doesn't poll forever; stops itself once nothing is left to watch for.
+    var _pollTimer = null;
+
+    function startActiveRequestPolling(status) {
+        if (status !== 'Approved' && status !== 'Running') { return; }
+        if (_pollTimer) { return; }
+
+        var pollsRemaining = 40; // ~2 minutes at 3s intervals
+        _pollTimer = setInterval(function () {
+            pollsRemaining--;
+            if (pollsRemaining <= 0) {
+                clearInterval(_pollTimer);
+                _pollTimer = null;
+                return;
+            }
+            var gm = window['gridManager_bulkRatesGrid'];
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+        }, 3000);
+    }
+
     // ── Release for Approval ────────────────────────────────────────────────
 
     function release(requestId) {
@@ -300,10 +324,11 @@ var BulkRates = (function () {
             var btn = document.getElementById('btnApprove');
             if (btn) { btn.disabled = true; }
 
+            var returnUrl = btn ? (btn.getAttribute('data-return-url') || '/FPS/BulkRates') : '/FPS/BulkRates';
             ajaxPost(
                 '/FPS/BulkRates/Approve',
                 { id: requestId },
-                function () { window.location.reload(); },
+                function () { window.fpsNavigateTo(returnUrl); },
                 function (msg) {
                     showActionError(msg);
                     if (btn) { btn.disabled = false; }
@@ -315,9 +340,12 @@ var BulkRates = (function () {
     // ── Reject modal ─────────────────────────────────────────────────────────
 
     var _pendingRejectId = null;
+    var _pendingRejectReturnUrl = '/FPS/BulkRates';
 
     function showRejectModal(requestId) {
         _pendingRejectId = requestId;
+        var triggerBtn = document.getElementById('btnReject');
+        _pendingRejectReturnUrl = triggerBtn ? (triggerBtn.getAttribute('data-return-url') || '/FPS/BulkRates') : '/FPS/BulkRates';
         var overlay = document.getElementById('rejectModalOverlay');
         var reason  = document.getElementById('rejectReason');
         var errEl   = document.getElementById('rejectReasonError');
@@ -358,8 +386,9 @@ var BulkRates = (function () {
             '/FPS/BulkRates/Reject',
             { id: _pendingRejectId, reason: reasonVal },
             function () {
+                var returnUrl = _pendingRejectReturnUrl;
                 closeRejectModal();
-                window.location.reload();
+                window.fpsNavigateTo(returnUrl);
             },
             function (msg) {
                 if (btn) { btn.disabled = false; }
@@ -440,6 +469,7 @@ var BulkRates = (function () {
         closeCancelModal:       closeCancelModal,
         confirmCancel:          confirmCancel,
         filterGrid:             filterGrid,
+        startActiveRequestPolling: startActiveRequestPolling,
         downloadTestData:       downloadTestData,
         downloadStagingData:    downloadStagingData,
         showUploadTrackerModal: showUploadTrackerModal,

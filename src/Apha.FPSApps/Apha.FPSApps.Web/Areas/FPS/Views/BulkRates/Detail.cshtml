@@ -298,6 +298,7 @@
                                         @if (Model.CanApprove)
                                         {
                                             <button type="button" class="govuk-button" data-module="govuk-button" id="btnApprove"
+                                                    data-return-url="/FPS/BulkRates/@QueueAction(entry.JobName)"
                                                     onclick="BulkRates.approve('@entry.JobExecutionId')">
                                                 Approve
                                             </button>
@@ -307,6 +308,7 @@
                                         @if (Model.CanReject)
                                         {
                                             <button type="button" class="govuk-button govuk-button--warning" data-module="govuk-button" id="btnReject"
+                                                    data-return-url="/FPS/BulkRates/@QueueAction(entry.JobName)"
                                                     onclick="BulkRates.showRejectModal('@entry.JobExecutionId')">
                                                 Reject
                                             </button>
