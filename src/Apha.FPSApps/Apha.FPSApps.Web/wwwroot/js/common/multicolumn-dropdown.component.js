@@ -144,6 +144,7 @@
                                 class="select-search-box" 
                                 id="${dropdownId}_search"
                                 placeholder="${config.searchPlaceholder}" 
+                                aria-label="Search by code or name"
                             />
                             <button 
                                 type="button" 

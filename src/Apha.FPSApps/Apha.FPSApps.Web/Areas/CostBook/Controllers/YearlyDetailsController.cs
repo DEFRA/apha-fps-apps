@@ -126,6 +126,18 @@ public class YearlyDetailsController : Controller
         });
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetAdditionalCostinflamation(string projectId, int year)
+    {
+        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        var result = await _service.GetAdditionalCostinflamationAsync(decodedProjectId, year);
+
+        if (result.Success)
+            return Json(new { success = true, additionalCostInflamation = result.Data });
+
+        return Json(new { success = false, additionalCostInflamation = "0" });
+    }
+
     [HttpPost]
     public async Task<IActionResult> LoadStaffGrid(PaginationFilter<string> request, string projectId, int year)
     {
@@ -192,7 +204,13 @@ public class YearlyDetailsController : Controller
         dto.YearValue = year;
         var response = await _service.AddProjectYearAsync(decodedProjectId, year, dto);
         if (!response.Success)
+        {
+            if (response.Errors is not null && response.Errors.Count > 0)
+                return Json(new { success = false, errors = MapApiErrors(response.Errors) });
+
             return Json(new { success = false, message = "Failed to add project year." });
+        }
+
         return Json(new { success = true, year = response.Data?.YearValue });
     }
 
@@ -216,11 +234,11 @@ public class YearlyDetailsController : Controller
     public async Task<IActionResult> CreateStaff(string projectId, int year, bool isDefra)
     {
         await GetPayRateOptionsAsync(projectId, year,isDefra);
-        return PartialView("_AddEditStaffRequirement", new StaffRequirementItem { WgGrade = string.Empty });
+        return PartialView("_AddEditStaffRequirement", new StaffRequirementFormItem { WgGrade = string.Empty });
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateStaff(string projectId, int year, StaffRequirementItem item)
+    public async Task<IActionResult> CreateStaff(string projectId, int year, StaffRequirementFormItem item)
     {
         var validationResult = ValidateModel();
         if (validationResult is not null) return validationResult;
@@ -247,11 +265,11 @@ public class YearlyDetailsController : Controller
         var row = listResponse.Data?.data?.FirstOrDefault(s => s.SrIdentity == srIdentity);
         if (row is null) return NotFound();
 
-        return PartialView("_AddEditStaffRequirement", _mapper.Map<StaffRequirementItem>(row));
+        return PartialView("_AddEditStaffRequirement", _mapper.Map<StaffRequirementFormItem>(row));
     }
 
     [HttpPost]
-    public async Task<IActionResult> EditStaff(string projectId, int year, int srIdentity, StaffRequirementItem item)
+    public async Task<IActionResult> EditStaff(string projectId, int year, int srIdentity, StaffRequirementFormItem item)
     {
         var validationResult = ValidateModel();
         if (validationResult is not null) return validationResult;
@@ -490,7 +508,16 @@ public class YearlyDetailsController : Controller
         if (validationResult is not null) return validationResult;
         var dto = _mapper.Map<ProjectYearDto>(item);
         var response = await _service.UpdateProjectYearAsync(HttpUtility.UrlDecode(projectId), year, dto);
-        return Json(new { success = response.Success });
+
+        if (!response.Success)
+        {
+            if (response.Errors is not null && response.Errors.Count > 0)
+                return Json(new { success = false, errors = MapApiErrors(response.Errors) });
+
+            return Json(new { success = false, message = "Failed to save markup and profit rates." });
+        }
+
+        return Json(new { success = true });
     }
 
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────
@@ -726,7 +753,14 @@ public class YearlyDetailsController : Controller
             },
             EditFunction = "gridEditMarkupAndProfit",
             BindGridUrl = Url.Action("LoadMarkupAndProfitGrid", new { projectId, year }) ?? string.Empty,
-            Columns = GridDataProvider.GetColumnsDefination<ProjectYearRateItem>(null)
+            Columns = GridDataProvider.GetColumnsDefination<ProjectYearRateItem>(null),
+            ColumnGroups =
+                [
+                    new() { Label = "",                        Span = 1 },
+                    new() { Label = "Contingency Markup %",      Span = 4 },
+                    new() { Label = "Profit Margin %",    Span = 4 },
+
+                ]
         };
     }
 

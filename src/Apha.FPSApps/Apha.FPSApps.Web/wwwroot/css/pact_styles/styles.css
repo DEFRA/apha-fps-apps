@@ -1319,7 +1319,8 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
 .period-dropdown__table tbody td { padding: 0px 5px !important; }
 .period-dropdown__table thead { background: #f3f2f1; position: sticky; top: 0; z-index: 10; }
 .period-dropdown__table th,
-.period-dropdown__table td { padding: 6px 8px; border-bottom: 1px solid #f3f2f1; text-align: left; }
+.period-dropdown__table td { padding: 6px 8px; border-bottom: 1px solid #f3f2f1; text-align: left !important; }
+.period-dropdown__table .govuk-table__header { text-align: left !important; }
 .period-dropdown__table tr:hover { background: #e8f0fe; cursor: pointer; }
 
 .dropdown-panel > table > tbody > tr > td { padding: 6px 8px; border-bottom: 1px solid var(--govuk-border-colour); }
@@ -1339,7 +1340,15 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
 
 .clear-search-btn span { line-height: 10px !important; }
 
-.heading_with_txtbox {  display: flex; justify-content: space-between; margin-left: -15px; align-items: center; margin-right: -15px; flex-direction: row; }
+.heading_with_txtbox {
+    padding: 0px 10px 0px 10px;
+    display: flex;
+    justify-content: space-between;
+    margin-left: -15px;
+    align-items: center;
+    margin-right: -15px;
+    flex-direction: row;
+}
 
 .isTestPurchaseReqBtn{
   img{

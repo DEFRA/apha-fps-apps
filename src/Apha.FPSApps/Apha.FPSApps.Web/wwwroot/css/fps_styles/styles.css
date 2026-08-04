@@ -4608,3 +4608,690 @@ body,
     text-align: center;
     font-weight: 700;
 }
+
+
+/* Resource Re-allocation Screen */
+.resource-reallocation-page {
+    width: 790px;
+    margin: 4px 0 16px;
+    background: #efefef;
+}
+
+.resource-reallocation-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 78px;
+    margin-bottom: 4px;
+}
+
+.resource-reallocation-title {
+    width: 600px;
+    min-height: 28px;
+    margin: 0 !important;
+    padding: 2px 8px 4px !important;
+    border: 1px solid #b7b7b7;
+    background: #c6c6c6;
+    color: #0028ff;
+    font-size: 19px !important;
+    font-weight: 400 !important;
+    line-height: 1.1;
+}
+
+    .resource-reallocation-title span {
+        color: #0028ff;
+    }
+
+.resource-reallocation-icon-button {
+    width: 42px;
+    height: 38px;
+    padding: 4px;
+    border: 1px solid #8d8d8d;
+    background: #fff;
+    box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #c5c5c5;
+}
+
+    .resource-reallocation-icon-button img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+.resource-reallocation-top-row {
+    display: grid;
+    grid-template-columns: 118px 1fr;
+    gap: 10px;
+    align-items: start;
+}
+
+.resource-reallocation-bottom-row {
+    display: grid;
+    grid-template-columns: 388px 1fr;
+    gap: 14px;
+    align-items: start;
+    margin-top: 8px;
+}
+
+.resource-reallocation-step-title {
+    margin: 0 0 3px;
+    color: #000;
+    font-size: 14px !important;
+    line-height: 1.15;
+}
+
+.resource-reallocation-workgroup-box {
+    border: 1px solid #bcbcbc;
+    background: #fff;
+}
+
+.resource-reallocation-workgroup-select {
+    min-height: 18px;
+    height: 18px;
+    padding: 0 16px 0 4px;
+    border: 0;
+    border-bottom: 1px solid #d3d3d3;
+    font-size: 12px;
+    background-position: right 4px center;
+    background-size: 10px;
+}
+
+.resource-reallocation-workgroup-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 95px;
+    overflow-y: auto;
+}
+
+.resource-reallocation-workgroup-item {
+    padding: 1px 6px;
+    border-bottom: 1px solid #ececec;
+    font-size: 12px;
+    line-height: 1.25;
+    cursor: pointer;
+}
+
+    .resource-reallocation-workgroup-item.is-selected {
+        background: #f2a8aa;
+    }
+
+.resource-reallocation-grid-shell {
+    border: 1px solid #bcbcbc;
+    background: #fff;
+}
+
+.resource-reallocation-grid-shell--bottom {
+    margin-top: 10px;
+}
+
+.resource-reallocation-grid-container .editable-grid-container {
+    min-height: 0;
+    border: 0;
+}
+
+.resource-reallocation-grid-container .sup_border_bottom_0,
+.resource-reallocation-grid-container .grid-toolbar,
+.resource-reallocation-grid-container .sup_heading_bg_color,
+.resource-reallocation-grid-container .sup_pagination_footer {
+    display: none;
+}
+
+#resourceReallocationJobsGridContainer .grid-scroll-container {
+    height: 88px !important;
+    max-height: 88px !important;
+}
+
+#resourceReallocationProjectGridContainer .grid-scroll-container {
+    height: 110px !important;
+    max-height: 110px !important;
+}
+
+#resourceReallocationJobsGridContainer .editable-grid-table,
+#resourceReallocationProjectGridContainer .editable-grid-table {
+    font-size: 12px;
+    margin-bottom: 0;
+}
+
+    #resourceReallocationJobsGridContainer .editable-grid-table thead th,
+    #resourceReallocationProjectGridContainer .editable-grid-table thead th {
+        background: #ededed;
+        color: #000;
+        font-size: 12px;
+        font-weight: 400 !important;
+        text-align: center;
+        border-color: #c7c7c7;
+        padding: 1px 6px;
+    }
+
+    #resourceReallocationJobsGridContainer .editable-grid-table td,
+    #resourceReallocationProjectGridContainer .editable-grid-table td {
+        height: 20px;
+        padding: 1px 6px;
+        border-color: #dddddd;
+        white-space: nowrap;
+    }
+
+#resourceReallocationJobsGridContainer tbody tr.resource-reallocation-selected-row td,
+#resourceReallocationProjectGridContainer tbody tr.resource-reallocation-selected-row td {
+    background: #a6c7e5 !important;
+}
+
+.resource-reallocation-grid-footer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 18px;
+    padding: 1px 4px;
+    border-top: 1px solid #d2d2d2;
+    background: #f3f3f3;
+    font-size: 12px;
+}
+
+.resource-reallocation-grid-icons {
+    color: #888;
+    letter-spacing: 1px;
+}
+
+.resource-reallocation-grid-filter {
+    color: #8f8f8f;
+}
+
+.resource-reallocation-grid-search {
+    width: 76px;
+    min-height: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border: 1px solid #c8c8c8;
+    font-size: 12px;
+}
+
+.resource-reallocation-project-meta {
+    display: grid;
+    grid-template-columns: 118px 118px;
+    gap: 4px;
+    width: 240px;
+    margin: 0 0 10px 150px;
+}
+
+.resource-reallocation-meta-input,
+.resource-reallocation-total-input {
+    min-height: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border: 1px solid #c8c8c8;
+    font-size: 12px;
+}
+
+.resource-reallocation-total-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.resource-reallocation-total-label {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.resource-reallocation-total-input {
+    width: 68px;
+}
+
+.resource-reallocation-action-panel {
+    min-height: 212px;
+    padding: 6px 14px 14px 28px;
+    border: 1px solid #bcbcbc;
+    background: #efefef;
+}
+
+.resource-reallocation-action-grid {
+    display: grid;
+    grid-template-columns: 116px 116px;
+    gap: 14px 40px;
+    margin-top: 4px;
+}
+
+.resource-reallocation-action-button {
+    min-height: 20px;
+    margin: 0;
+    padding: 0 10px;
+    border: 1px solid #8e8e8e;
+    background: linear-gradient(#fff, #dfdfdf);
+    box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #c7c7c7;
+    color: #000;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 18px;
+}
+
+    .resource-reallocation-action-button--disabled,
+    .resource-reallocation-action-button:disabled {
+        color: #a0a0a0;
+        border-color: #bfbfbf;
+        background: linear-gradient(#f8f8f8, #ededed);
+    }
+
+@media (max-width: 900px) {
+    .resource-reallocation-page {
+        width: 100%;
+    }
+
+    .resource-reallocation-top-row,
+    .resource-reallocation-bottom-row {
+        grid-template-columns: 1fr;
+    }
+
+    .resource-reallocation-project-meta {
+        margin-left: 0;
+    }
+}
+
+/* ============================================================
+   Set Up Staff Resources (ssr-)
+   ============================================================ */
+
+/* Heading row with resource-centre selector on the right */
+.ssr-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 2px;
+    padding-bottom: 2px;
+}
+
+.ssr-main-title {
+    flex: 1 1 auto;
+    margin: 0 !important;
+    padding-bottom: 2px;
+}
+
+.ssr-heading-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    padding-bottom: 2px;
+}
+
+    .ssr-heading-controls .govuk-label {
+        margin-bottom: 0;
+        white-space: nowrap;
+        font-size: 16px !important;
+    }
+
+.ssr-resource-select {
+    min-width: 150px;
+    width: 230px;
+    height: 30px;
+    border: 2px solid;
+    font-size: 16px !important;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* ── WorkGroup section ─────────────────────────────────────── */
+.ssr-workgroup-section {
+    padding: 8px;
+    margin-bottom: 0;
+    background-color: #efefef;
+}
+
+.ssr-section-title {
+    margin-bottom: 8px;
+    font-size: 18px !important;
+}
+
+/* Two-column layout: grade list left, right panel */
+.ssr-top-layout {
+    display: flex;
+    gap: 0;
+    margin-bottom: 0;
+}
+
+/* Grade (WorkGroup) panel */
+.ssr-grade-panel {
+    flex: 0 0 160px;
+    border: 1px solid #b1b4b6;
+    background: #fff;
+    margin-right: 10px;
+}
+
+.ssr-grade-header {
+    background: #e2e2e2;
+    padding: 4px 8px;
+    border-bottom: 1px solid #b1b4b6;
+}
+
+.ssr-grade-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ssr-grade-item {
+    padding: 4px 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f2f1;
+    font-size: 16px !important;
+    color: #0b0c0c;
+}
+
+    .ssr-grade-item:last-child {
+        border-bottom: none;
+    }
+
+    .ssr-grade-item:hover {
+        background-color: #e8f0fe;
+    }
+
+.ssr-grade-item--active {
+    background-color: #b3d0f5;
+    font-weight: 600;
+}
+
+/* Right panel */
+.ssr-right-panel {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ssr-wg-input-group {
+    margin-bottom: 6px;
+}
+
+.ssr-wg-input {
+    max-width: 150px;
+    height: 26px;
+}
+
+/* Staff grid title row with Add Staff button */
+.ssr-table-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.ssr-add-btn {
+    background-color: #00703c;
+    padding: 6px 14px;
+    margin-bottom: 0 !important;
+    min-width: auto;
+}
+
+    .ssr-add-btn:hover,
+    .ssr-add-btn:focus {
+        background-color: #005a30;
+    }
+
+.ssr-grid-container {
+    margin-bottom: 2px;
+}
+
+    .ssr-grid-container .govuk-table__header,
+    .ssr-grid-container .govuk-table__cell {
+        padding: 5px 8px;
+        font-size: 16px !important;
+    }
+
+#ssrGrid_secondBtn {
+    background-color: #00703c;
+    border-color: #00703c;
+    color: #fff;
+    padding: 6px 14px;
+    font-size: 16px !important;
+    min-width: auto;
+    margin-bottom: 0 !important;
+}
+
+    #ssrGrid_secondBtn:hover,
+    #ssrGrid_secondBtn:focus {
+        background-color: #005a30;
+        border-color: #005a30;
+    }
+
+/* ── Mid row: section 3 and 4 ─────────────────────────────── */
+.ssr-mid-row {
+    display: block;
+    margin-top: 8px;
+}
+
+.ssr-alltime-box,
+.ssr-replan-box {
+    border: 1px solid #b1b4b6;
+    background: #efefef;
+    padding: 8px;
+}
+
+.ssr-alltime-box {
+    width: 100%;
+}
+
+.ssr-replan-box {
+    flex: 1 1 48%;
+}
+
+.ssr-mid-title {
+    margin-bottom: 6px;
+    font-size: 18px !important;
+}
+
+.ssr-alltime-fields {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.ssr-alltime-field {
+    display: grid;
+    grid-template-columns: 105px 1fr;
+    align-items: center;
+    gap: 8px;
+}
+
+    .ssr-alltime-field .govuk-label {
+        margin-bottom: 0;
+    }
+
+.ssr-mid-input {
+    max-width: 180px;
+    height: 30px;
+}
+
+.ssr-alltime-table-wrap {
+    border: 1px solid #b1b4b6;
+    background: #fff;
+    min-height: 180px;
+}
+
+.ssr-alltime-table {
+    margin-bottom: 0;
+}
+
+    .ssr-alltime-table .govuk-table__header,
+    .ssr-alltime-table .govuk-table__cell {
+        padding: 5px 8px;
+        font-size: 16px !important;
+    }
+
+.ssr-alltime-selected td {
+    background-color: #add8e6;
+}
+
+.ssr-alltime-total-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.ssr-total-input {
+    width: 70px;
+    height: 30px;
+}
+
+.ssr-replan-actions {
+    display: grid;
+    grid-template-columns: 120px 120px;
+    gap: 6px 10px;
+    align-content: start;
+}
+
+    .ssr-replan-actions .govuk-button {
+        width: 120px;
+    }
+
+/* ── Bottom summary row ─────────────────────────────────────── */
+.ssr-bottom-row {
+    display: flex;
+    gap: 20px;
+    padding: 12px 0 0;
+    background: transparent;
+    border: none;
+    align-items: stretch;
+}
+
+.ssr-summary-box {
+    flex: 1 1 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #f3f2f1;
+    border: 1px solid #b1b4b6;
+    padding: 10px;
+}
+
+.ssr-summary-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ssr-summary-label {
+    flex: 0 0 130px;
+    font-size: 1rem !important;
+    margin-bottom: 0;
+}
+
+.ssr-summary-input {
+    flex: 1 1 auto;
+    max-width: 110px;
+    text-align: right;
+    height: 30px;
+}
+
+/* Person Selected box */
+.ssr-person-box {
+    flex: 1 1 50%;
+    padding: 10px;
+    border: 1px solid #b1b4b6;
+    background-color: #f3f2f1;
+}
+
+.ssr-person-input {
+    font-weight: 600;
+    margin-bottom: 8px;
+    height: 30px;
+}
+
+.ssr-person-divider {
+    border: none;
+    border-top: 2px solid #b1b4b6;
+    margin: 6px 0 8px;
+}
+
+/* Grade (WorkGroup) panel */
+.ssr-grade-panel {
+    flex: 0 0 160px;
+    border: 1px solid #b1b4b6;
+    background: #fff;
+    margin-right: 10px;
+}
+
+.ssr-grade-header {
+    background: #e2e2e2;
+    padding: 4px 8px;
+    border-bottom: 1px solid #b1b4b6;
+}
+
+.ssr-grade-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ssr-grade-item {
+    padding: 4px 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f2f1;
+    font-size: 16px !important;
+    color: #0b0c0c;
+}
+
+    .ssr-grade-item:last-child {
+        border-bottom: none;
+    }
+
+    .ssr-grade-item:hover {
+        background-color: #e8f0fe;
+    }
+
+.ssr-grade-item--active {
+    background-color: #b3d0f5;
+    font-weight: 600;
+}
+
+/* Right panel */
+.ssr-right-panel {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ssr-wg-input-group {
+    margin-bottom: 6px;
+}
+
+.ssr-wg-input {
+    max-width: 150px;
+    height: 26px;
+}
+
+.asu-dropdown-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.asu-dropdown-wrapper {
+    position: relative;
+}
+
+.asu-side-card {
+    background-color: #f3f2f1;
+    border: 1px solid #b1b4b6;
+    border-radius: 4px;
+    padding: 16px;
+}
+
+.asu-side-button {
+    display: block;
+    width: 100%;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.asu-summary-row {
+    display: flex;
+    gap: 24px;
+    margin-top: 8px;
+}
+
+#gridContainer_asuUsageList .grid-scroll-container {
+    height: 340px;
+    max-height: 340px;
+}

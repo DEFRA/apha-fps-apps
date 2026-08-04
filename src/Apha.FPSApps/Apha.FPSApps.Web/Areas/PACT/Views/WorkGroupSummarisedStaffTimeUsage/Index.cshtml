@@ -9,7 +9,7 @@
 <div class="govuk-grid-row sup_margin_left_right_0">
     <div class="govuk-grid-column-full  sup_flex_space_center sup_border-bottom">
         <div class="sup_flex_center_start govuk-grid-column-full sup_p_0 sup_margin_0">
-            <h1 class="sup_padding_bottom_10 govuk-grid-column-one-third sup_p_0">Time Usage "Spreadsheet" for </h1>
+            <h1 class="govuk-heading-s sup_whitespace_nowrap govuk-!-margin-top-2">Time Usage "Spreadsheet" for </h1>
             <div class="govuk-grid-column-three-quarters sup_margin_tb_5 sup_padding_right_8 sup_flex_gap_10">
                 <div class="govuk-!-width-one-half">
                     <input type="text" id="txtselectedPersonname" class="govuk-input govuk-!-font-size-16" asp-for="@Model.SelectedPersonName" aria-label="Person Name" disabled>
@@ -53,7 +53,7 @@
 
                         
                                 <div id="columnTotalsContainer" class="column-totals-container">
-                                    <div class="column-total-label">Total time for the Month:</div>
+                                    <div class="column-total-label govuk-!-font-size-16">Total time for the Month:</div>
                                     @for (int i = 0; i < 12; i++)
                                     {
                                         <div class="column-total">@(totals[i].ToString("0.##"))</div>
@@ -64,7 +64,7 @@
                                 </div>
 
                         <div id="columnStandardHoursContainer" class="column-totals-container">
-                            <div class="column-total-label">Standard Hours:</div>
+                    <div class="column-total-label govuk-!-font-size-16">Standard Hours:</div>
                             @for (int i = 0; i < 12; i++)
                                     {
                                 <div class="column-total" id="stndHrs_april">
@@ -76,7 +76,7 @@
                          </div>
                      
                         <div id="columnStndHrsAllocatedContainer" class="column-totals-container">
-                            <div class="column-total-label">% of Standard Hrs Allocated</div>
+                    <div class="column-total-label govuk-!-font-size-16">% of Standard Hrs Allocated</div>
                     
                             
                    
@@ -94,8 +94,8 @@
             }
         </div>
     </div>
-    <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
-        <div class="govuk-grid-column-one-quarter sup_mr_0_pr_0">
+    <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10 ">
+        <div class="govuk-grid-column-one-quarter sup_mr_0_pr_0 govuk-!-margin-top-1">
             <div class="sup_flex_between_center">
                 <label for="txtJobCode" class="govuk-label govuk-!-font-weight-bold sup_visually_hidden">Selected Project:</label>
                 <input type="text" id="txtJobCode" class="govuk-input govuk-!-font-size-16" readonly="">
@@ -103,7 +103,7 @@
             </div>
         </div>
 
-        <div class="govuk-grid-column-one-half">
+        <div class="govuk-grid-column-one-half govuk-!-margin-top-1">
             <label for="txtJobTitle" class="govuk-label govuk-!-font-weight-bold sup_visually_hidden">Project Description:</label>
             <input type="text" id="txtJobTitle" class="govuk-input govuk-!-font-size-16" readonly="">
         </div>

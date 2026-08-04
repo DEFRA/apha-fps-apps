@@ -26,6 +26,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public IPactReleaseSummaryApiClient PactReleaseSummary { get; }
         public IPactBosworthInterfaceApiClient PactBosworthInterface { get; }
         public IPactTestActualBreakdownApiClient PactTestActualBreakdown { get; }
+        public IPactTestPlanCrossTabApiClient PactTestPlanCrossTab { get; }
 
         public PactApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -49,6 +50,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             PactReleaseSummary = new PactReleaseSummaryApiClient(http, mapper);
             PactBosworthInterface = new PactBosworthInterfaceApiClient(http, mapper);
             PactTestActualBreakdown = new PactTestActualBreakdownApiClient(http, mapper);
+            PactTestPlanCrossTab = new PactTestPlanCrossTabApiClient(http, mapper);
         }
     }
 }

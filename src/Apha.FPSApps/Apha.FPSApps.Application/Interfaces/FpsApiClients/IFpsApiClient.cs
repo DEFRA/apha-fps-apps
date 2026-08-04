@@ -22,6 +22,7 @@
         IFpsWorkGroupEmployeeApiClient FpsWorkGroupEmployee { get; }
         IFpsDivisionGradeApiClient FpsMaintDG { get; }
         IFpsProjectStaffPlanApiClient FpsProjectStaffPlan { get; }
+        IFpsProjectStaffPlanDetailsApiClient FpsProjectStaffPlanDetails { get; }
         IFpsProjectGroupStaffPlanApiClient FpsProjectGroupStaffPlan { get; }
         IFpsAnimalApiClient FpsAnimalMaster { get; }
         IFpsProjectGroupApiClient FpsProjectGroup { get; }
@@ -37,5 +38,6 @@
         IFpsCostCentreApiClient FpsCostCentre { get; }
         IFpsResourceAllocationApiClient FpsResourceAllocation { get; }
         IFpsBulkRatesApiClient FpsBulkRates { get; }
+        IFpsResourceMgmtReplanApiClient FpsResourceMgmtReplan { get; }
     }
 }
