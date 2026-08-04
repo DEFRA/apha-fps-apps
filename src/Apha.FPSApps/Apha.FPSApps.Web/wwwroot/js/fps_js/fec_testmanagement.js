@@ -275,18 +275,44 @@ var BulkRates = (function () {
     // pickup, completion) with no user action to trigger a refresh. Poll the
     // grid so the row catches up on its own. Bounded so an abandoned tab
     // doesn't poll forever; stops itself once nothing is left to watch for.
+    //
+    // The grid reload alone only replaces the grid's own HTML — it does not
+    // touch the "request already in progress" banner or the disabled "New
+    // Request" button above it, both server-rendered once from a separate
+    // GetActiveRequestAsync call at page load. So once the watched row
+    // reaches a terminal status, do a single full page reload instead of
+    // another grid-only refresh, so the banner/button catch up too.
     var _pollTimer = null;
+    var _pollJobExecutionId = null;
 
-    function startActiveRequestPolling(status) {
+    function onPollGridReloaded(e) {
+        if (!e.detail || e.detail.gridId !== 'bulkRatesGrid') { return; }
+        var $statusCell = $('tr[data-id="' + _pollJobExecutionId + '"] td[data-property="Status"]');
+        if ($statusCell.length === 0) { return; }
+        var currentStatus = $.trim($statusCell.text());
+        if (currentStatus !== 'Approved' && currentStatus !== 'Running') {
+            stopActiveRequestPolling();
+            window.location.reload();
+        }
+    }
+
+    function stopActiveRequestPolling() {
+        if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+        document.removeEventListener('gridReloaded', onPollGridReloaded);
+    }
+
+    function startActiveRequestPolling(jobExecutionId, status) {
         if (status !== 'Approved' && status !== 'Running') { return; }
         if (_pollTimer) { return; }
+
+        _pollJobExecutionId = jobExecutionId;
+        document.addEventListener('gridReloaded', onPollGridReloaded);
 
         var pollsRemaining = 40; // ~2 minutes at 3s intervals
         _pollTimer = setInterval(function () {
             pollsRemaining--;
             if (pollsRemaining <= 0) {
-                clearInterval(_pollTimer);
-                _pollTimer = null;
+                stopActiveRequestPolling();
                 return;
             }
             var gm = window['gridManager_bulkRatesGrid'];
