@@ -2976,7 +2976,27 @@ main {
     opacity: 5;
 }
 .isDataGridWrapper {
-    .sup_flex_space_between{
+    .sup_flex_space_between {
         padding: 10px;
     }
+
+    .editable-grid-container h2 {
+       background-color: #f4f8fb;
+       border-bottom: 1px solid #8eb8dc;
+    }
+}
+/* Active side-nav styling using the requested colour */
+.dropdown-item.active, 
+.dropdown-item:active,
+.sidenav .dropdown-item.active,
+.sidenav .dropdown-item[aria-current="true"] {
+    background-color: #0f4f80 !important;
+    color: #ffffff !important;
+    border-left: 4px solid #0f3f63 !important;
+}
+.dropdown-item:focus, .dropdown-item:focus,
+.sidenav .dropdown-item:focus,
+.sidenav .dropdown-item:hover {
+    background-color: #0f4f80;
+    color: #ffffff;
 }

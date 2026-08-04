@@ -1,21 +1,78 @@
 ﻿@model Apha.FPSApps.Web.Areas.CostBook.Models.YearlyDetailsViewModel
 
+@{
+    // determine current route to mark active nav item server-side when navigating
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
 <!-- ── Side Navigation ─────────────────────────────────────────── -->
 
-<nav class="sidenav flex-column flex-shrink-0" id="shortnav">
+<nav class="sidenav flex-column flex-shrink-0" id="shortnav" role="navigation" aria-label="CostBook side navigation">
     <button class="toggle-btn project-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle side navigation">
         <img src="~/images/chevron-left-solid-full.svg" alt="side nav menu arrow" width="24">
     </button>
     <ul>
-        <li><a class="dropdown-item sidenav-title">Reports</a></li>
-        <li><a class="dropdown-item" href="#">Summary Report</a></li>
-        <li><a class="dropdown-item" href="#">Detail Report</a></li>
-        <li><a class="dropdown-item" href="#">SID3 Staff Effort</a></li>
-        <li><a class="dropdown-item sidenav-title">Queries</a></li>
-            <li><a class="dropdown-item" asp-area="CostBook" asp-controller="ProjectCosts" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">Project Costs Query</a></li>
-        <li><a class="dropdown-item" asp-area="CostBook" asp-controller="StaffYears" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">CSG7 Staff Years</a></li>
-        <li><a class="dropdown-item" asp-area="CostBook" asp-controller="StaffEffort" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">SID3 Staff Effort</a></li>
-        <li><a class="dropdown-item" asp-area="CostBook" asp-controller="ProjectSummary" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">Project Summary</a></li>
-        <li><a class="dropdown-item" asp-area="CostBook" asp-controller="ProjectCosts" asp-action="ExportToExcel" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">Excel Report</a></li>
+        <li>
+            <a class="dropdown-item @(string.IsNullOrEmpty(currentController) ? "active" : "")" href="#" role="button" aria-current="false">Reports</a>
+        </li>
+        <li>
+            <a class="dropdown-item @(currentController == "" ? "active" : "")" href="#">Summary Report</a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">Detail Report</a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">SID3 Staff Effort</a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">Queries</a>
+        </li>
+        <li>
+            <a class="dropdown-item @(currentController == "ProjectCosts" ? "active" : "")" asp-area="CostBook" asp-controller="ProjectCosts" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">Project Costs Query</a>
+        </li>
+        <li>
+            <a class="dropdown-item @(currentController == "StaffYears" ? "active" : "")" asp-area="CostBook" asp-controller="StaffYears" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">CSG7 Staff Years</a>
+        </li>
+        <li>
+            <a class="dropdown-item @(currentController == "StaffEffort" ? "active" : "")" asp-area="CostBook" asp-controller="StaffEffort" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">SID3 Staff Effort</a>
+        </li>
+        <li>
+            <a class="dropdown-item @(currentController == "ProjectSummary" ? "active" : "")" asp-area="CostBook" asp-controller="ProjectSummary" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">Project Summary</a>
+        </li>
+        <li>
+            <a class="dropdown-item @(currentController == "ProjectCosts" && currentAction == "ExportToExcel" ? "active" : "")" asp-area="CostBook" asp-controller="ProjectCosts" asp-action="ExportToExcel" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">Excel Report</a>
+        </li>
     </ul>
 </nav>
+
+@* Client-side: ensure clicking a non-navigation item (href="#") visually marks it active without page reload. *@
+<script>
+    (function () {
+        var nav = document.getElementById('shortnav');
+        if (!nav) return;
+
+        nav.addEventListener('click', function (ev) {
+            var target = ev.target;
+            // walk up to anchor if image/text clicked
+            while (target && target !== nav && target.tagName !== 'A') {
+                target = target.parentElement;
+            }
+            if (!target || target === nav) return;
+
+            var href = target.getAttribute('href');
+            // if link is a placeholder (no navigation) mark active client-side
+            if (href === '#' || href === '' || href === null) {
+                ev.preventDefault();
+                var items = nav.querySelectorAll('.dropdown-item');
+                items.forEach(function (i) {
+                    i.classList.remove('active');
+                    i.removeAttribute('aria-current');
+                });
+                target.classList.add('active');
+                target.setAttribute('aria-current', 'true');
+            }
+            // else allow navigation - server will mark active on new page
+        }, false);
+    })();
+</script>
