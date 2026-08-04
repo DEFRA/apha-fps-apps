@@ -453,8 +453,8 @@ namespace Apha.PACT.DataAccess.Repository
         }
 
         public async Task<PagedData<MonthlyTimeLog>> SearchAsync(
-            PaginationParameters<string> query,
-            MonthlyTimeLogFilter monthlyTimeLogFilter)
+    PaginationParameters<string> query,
+    MonthlyTimeLogFilter monthlyTimeLogFilter)
         {
             string? workGroup = monthlyTimeLogFilter.WorkGroup;
             string? timeCode = monthlyTimeLogFilter.TimeCode;
@@ -465,7 +465,7 @@ namespace Apha.PACT.DataAccess.Repository
             string? userId = monthlyTimeLogFilter.UserId;
             string? insertDelete = monthlyTimeLogFilter.InsertDelete;
 
-            var baseQuery = _context.MonthlyTimeLogs.AsNoTracking();
+            IQueryable<MonthlyTimeLog> baseQuery = _context.MonthlyTimeLogs.AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(workGroup))
                 baseQuery = baseQuery.Where(x => x.WorkGroup == workGroup);
@@ -496,9 +496,105 @@ namespace Apha.PACT.DataAccess.Repository
                 baseQuery = baseQuery.Where(x => x.InsertDelete != null
                     && x.InsertDelete.StartsWith(insertDelete));
 
-            baseQuery = baseQuery.OrderByDescending(x => x.DateTime).ThenBy(x => x.SequenceNo);
+            baseQuery = ApplyMonthlyTimeFilter(baseQuery, query.Filter);
+            baseQuery = (IQueryable<MonthlyTimeLog>)ApplySorting(baseQuery, query.SortBy, query.Descending);
 
             return await ApplyPaging(baseQuery, query.Page, query.PageSize);
+        }
+
+        private static IQueryable<MonthlyTimeLog> ApplyMonthlyTimeFilter(IQueryable<MonthlyTimeLog> query, string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return query;
+
+            var dict = DeserializeFilterToDictionary(filter);
+            if (dict == null)
+                return query;
+
+            query = ApplyWhen(query, TryGetIntValue(dict, "SequenceNo", out var sequenceNoValue), x => x.SequenceNo == sequenceNoValue);
+            query = ApplyWhen(query, TryGetStringValue(dict, "TimeCode", out var timeCode), x => x.TimeCode != null && EF.Functions.ILike(x.TimeCode, $"%{timeCode}%"));
+            query = ApplyWhen(query, TryGetStringValue(dict, "ParentProject", out var parentProject), x => x.ParentProject != null && EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
+            query = ApplyWhen(query, TryGetDoubleValue(dict, "Month", out var monthValue), x => (int)x.Month == (int)monthValue);
+            query = ApplyWhen(query, TryGetStringValue(dict, "PactStaffId", out var pactStaffId), x => x.PactStaffId != null && EF.Functions.ILike(x.PactStaffId, $"%{pactStaffId}%"));
+            query = ApplyWhen(query, TryGetStringValue(dict, "WorkGroup", out var workGroup), x => x.WorkGroup != null && EF.Functions.ILike(x.WorkGroup, $"%{workGroup}%"));
+            query = ApplyWhen(query, TryGetDoubleValue(dict, "Hours", out var hoursValue), x => x.Hours.HasValue && x.Hours.Value == hoursValue);
+            query = ApplyWhen(query, TryGetDateValue(dict, "DateTime", out var importedDate), x => x.DateTime.HasValue && x.DateTime.Value.Date == importedDate.Date);
+            query = ApplyWhen(query, TryGetStringValue(dict, "UserId", out var userId), x => x.UserId != null && EF.Functions.ILike(x.UserId, $"%{userId}%"));
+            query = ApplyWhen(query, TryGetStringValue(dict, "InsertDelete", out var insertDelete), x => x.InsertDelete != null && EF.Functions.ILike(x.InsertDelete, $"%{insertDelete}%"));
+
+            return query;
+        }
+
+        private static IQueryable<MonthlyTimeLog> ApplyWhen(
+            IQueryable<MonthlyTimeLog> query,
+            bool condition,
+            Expression<Func<MonthlyTimeLog, bool>> predicate)
+            => condition ? query.Where(predicate) : query;
+
+        private static IDictionary<string, object>? DeserializeFilterToDictionary(string filter)
+        {
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            return filterModel as IDictionary<string, object>;
+        }
+
+        private static bool TryGetStringValue(IDictionary<string, object> dict, string key, out string value)
+        {
+            value = string.Empty;
+            if (!dict.TryGetValue(key, out var rawValue) || rawValue == null)
+                return false;
+
+            value = rawValue.ToString() ?? string.Empty;
+            return true;
+        }
+
+        private static bool TryGetIntValue(IDictionary<string, object> dict, string key, out int value)
+        {
+            value = default;
+            return dict.TryGetValue(key, out var rawValue)
+                && rawValue != null
+                && int.TryParse(rawValue.ToString(), out value);
+        }
+
+        private static bool TryGetDoubleValue(IDictionary<string, object> dict, string key, out double value)
+        {
+            value = default;
+            return dict.TryGetValue(key, out var rawValue)
+                && rawValue != null
+                && double.TryParse(rawValue.ToString(), out value);
+        }
+
+        private static bool TryGetDateValue(IDictionary<string, object> dict, string key, out DateTime value)
+        {
+            value = default;
+            return dict.TryGetValue(key, out var rawValue)
+                && rawValue != null
+                && DateTime.TryParse(rawValue.ToString(), out value);
+        }
+
+        private static IQueryable ApplySorting(IQueryable<MonthlyTimeLog> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+                return query.OrderByDescending(x => x.DateTime).ThenBy(x => x.SequenceNo);
+
+            return sortBy.ToLower() switch
+            {
+                "sequenceno" or "id" => ApplyOrder(query, x => x.SequenceNo, descending),
+                "timecode" => ApplyOrder(query, x => x.TimeCode, descending),
+                "parentproject" or "project" => ApplyOrder(query, x => x.ParentProject, descending),
+                "month" => ApplyOrder(query, x => x.Month, descending),
+                "pactstaffid" or "staffid" => ApplyOrder(query, x => x.PactStaffId, descending),
+                "workgroup" => ApplyOrder(query, x => x.WorkGroup, descending),
+                "hours" => ApplyOrder(query, x => x.Hours, descending),
+                "datetime" or "dateimported" => ApplyOrder(query, x => x.DateTime, descending),
+                "userid" => ApplyOrder(query, x => x.UserId, descending),
+                "insertdelete" or "action" => ApplyOrder(query, x => x.InsertDelete, descending),
+                _ => query.OrderByDescending(x => x.DateTime).ThenBy(x => x.SequenceNo)
+            };
+        }
+
+        private static IQueryable ApplyOrder<T>(IQueryable<MonthlyTimeLog> query, Expression<Func<MonthlyTimeLog, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
         private static IQueryable<StagingMonthlyTime> ApplyStagingFilter(IQueryable<StagingMonthlyTime> stagingQuery, string? filter)

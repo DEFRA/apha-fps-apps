@@ -100,9 +100,9 @@ namespace Apha.PACT.DataAccess.Repository
             return await _context.TimeCodeValids
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t =>
-                    t.WorkGroup == workGroup &&
-                    t.TimeCode == timeCode &&
-                    t.ParentProject == parentProject);
+                    t.WorkGroup.ToLower() == workGroup.ToLower() &&
+                    t.TimeCode.ToLower() == timeCode.ToLower() &&
+                    t.ParentProject.ToLower() == parentProject.ToLower());
         }
 
         public async Task<TimeCodeValid> CreateTimeCodeValidAsync(TimeCodeValid timeCodeValid)
