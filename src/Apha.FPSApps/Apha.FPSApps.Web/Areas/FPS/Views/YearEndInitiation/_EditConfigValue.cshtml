@@ -26,7 +26,7 @@
 
             @if (Model.IsYesNo)
             {
-                <select class="govuk-select govuk-!-font-size-16" id="configModalSelect" name="Value">
+                <select class="govuk-select govuk-!-font-size-16" id="configModalSelect" name="Value" for="configModalSelect">
                     @Html.Raw("<option value=\"Yes\"" + (Model.Value == "Yes" ? " selected" : "") + ">Yes</option>")
                     @Html.Raw("<option value=\"No\""  + (Model.Value == "No"  ? " selected" : "") + ">No</option>")
                 </select>
@@ -35,7 +35,7 @@
             {
                 <input class="govuk-input govuk-input--width-10 govuk-!-font-size-16"
                        id="configModalInput" name="Value" type="text"
-                       value="@Model.Value" autocomplete="off" />
+                       value="@Model.Value" autocomplete="off" for="configModalInput" />
             }
         </div>
     </form>
