@@ -958,7 +958,7 @@ function saveStagingMonthlyTime() {
 
 function deleteStagingMonthlyTime(btn) {
     const id = $(btn).data('id');
-    showGovukConfirm('Delete this imported record?').then(function (confirmed) {
+    showGovukConfirm('Are you sure you want to delete this staging record').then(function (confirmed) {
         if (!confirmed) return;
         $.ajax({
             url: '/PACT/MonthlyTime/DeleteStagingRecord',

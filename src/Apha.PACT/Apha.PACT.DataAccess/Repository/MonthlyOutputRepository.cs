@@ -319,71 +319,94 @@ namespace Apha.PACT.DataAccess.Repository
 
             foreach (var row in passedRows)
             {
-                if (string.IsNullOrWhiteSpace(row.TestCode)
-                    || string.IsNullOrWhiteSpace(row.Buyer)
-                    || row.Month == 0
-                    || string.IsNullOrWhiteSpace(row.WorkGroup))
+                if (!IsValidForMakeLive(row))
                 {
-                    row.Passed = false;
-                    row.FailureComments = noLongerValidMessage;
+                    await MarkRowAsInvalidAsync(row, noLongerValidMessage);
                     failedCount++;
-                    await _context.SaveChangesAsync();
                     continue;
                 }
 
-                MonthlyOutput? liveRow = null;
-                MonthlyOutputLog? logEntry = null;
-
-                try
-                {
-                    liveRow = new MonthlyOutput
-                    {
-                        TestCode = row.TestCode,
-                        Buyer = row.Buyer,
-                        Month = row.Month,
-                        WorkGroup = row.WorkGroup,
-                        Volume = row.Volume,
-                        FpsYear = _fpsRequestContext.FpsYear
-                    };
-
-                    logEntry = BuildLogEntry(liveRow, "I");
-
-                    await _context.MonthlyOutputs.AddAsync(liveRow);
-                    await _context.MonthlyOutputLogs.AddAsync(logEntry);
-                    _context.StagingMonthlyOutputs.Remove(row);
-
-                    await _context.SaveChangesAsync();
+                var imported = await TryImportRowToLiveAsync(row, noLongerValidMessage);
+                if (imported)
                     importedCount++;
-                }
-                catch
-                {
-                    if (liveRow != null)
-                    {
-                        var entry = _context.Entry(liveRow);
-                        if (entry.State != EntityState.Detached)
-                            entry.State = EntityState.Detached;
-                    }
-                    if (logEntry != null)
-                    {
-                        var entry = _context.Entry(logEntry);
-                        if (entry.State != EntityState.Detached)
-                            entry.State = EntityState.Detached;
-                    }
-
-                    var rowEntry = _context.Entry(row);
-                    if (rowEntry.State == EntityState.Deleted)
-                        rowEntry.State = EntityState.Unchanged;
-
-                    row.Passed = false;
-                    row.FailureComments = noLongerValidMessage;
-                    rowEntry.State = EntityState.Modified;
-
-                    await _context.SaveChangesAsync();
+                else
                     failedCount++;
-                }
             }
 
             return (passedRows.Count, importedCount, failedCount);
+        }
+
+        private static bool IsValidForMakeLive(StagingMonthlyOutput row)
+        {
+            return !string.IsNullOrWhiteSpace(row.TestCode)
+                && !string.IsNullOrWhiteSpace(row.Buyer)
+                && row.Month != 0
+                && !string.IsNullOrWhiteSpace(row.WorkGroup);
+        }
+
+        private async Task MarkRowAsInvalidAsync(StagingMonthlyOutput row, string failureMessage)
+        {
+            row.Passed = false;
+            row.FailureComments = failureMessage;
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task<bool> TryImportRowToLiveAsync(StagingMonthlyOutput row, string failureMessage)
+        {
+            MonthlyOutput? liveRow = null;
+            MonthlyOutputLog? logEntry = null;
+
+            try
+            {
+                liveRow = CreateLiveRow(row);
+                logEntry = BuildLogEntry(liveRow, "I");
+
+                await _context.MonthlyOutputs.AddAsync(liveRow);
+                await _context.MonthlyOutputLogs.AddAsync(logEntry);
+                _context.StagingMonthlyOutputs.Remove(row);
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                DetachIfTracked(liveRow);
+                DetachIfTracked(logEntry);
+
+                var rowEntry = _context.Entry(row);
+                if (rowEntry.State == EntityState.Deleted)
+                    rowEntry.State = EntityState.Unchanged;
+
+                row.Passed = false;
+                row.FailureComments = failureMessage;
+                rowEntry.State = EntityState.Modified;
+
+                await _context.SaveChangesAsync();
+                return false;
+            }
+        }
+
+        private MonthlyOutput CreateLiveRow(StagingMonthlyOutput row)
+        {
+            return new MonthlyOutput
+            {
+                TestCode = row.TestCode,
+                Buyer = row.Buyer,
+                Month = row.Month,
+                WorkGroup = row.WorkGroup,
+                Volume = row.Volume,
+                FpsYear = _fpsRequestContext.FpsYear
+            };
+        }
+
+        private void DetachIfTracked(object? entity)
+        {
+            if (entity == null)
+                return;
+
+            var entry = _context.Entry(entity);
+            if (entry.State != EntityState.Detached)
+                entry.State = EntityState.Detached;
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────────
@@ -438,7 +461,7 @@ namespace Apha.PACT.DataAccess.Repository
                 "workgroup" => ApplyLiveOrder(query, s => s.WorkGroup, descending),
                 "testcode" => ApplyLiveOrder(query, s => s.TestCode, descending),
                 "buyer" => ApplyLiveOrder(query, s => s.Buyer, descending),
-                "period" => ApplyLiveOrder(query, s => s.Month, descending),
+                "month" => ApplyLiveOrder(query, s => s.Month, descending),
                 "volume" => ApplyLiveOrder(query, s => s.Volume, descending),
                 _ => query.OrderBy(x => x.WorkGroup).ThenBy(x => x.TestCode).ThenBy(x => x.Buyer).ThenBy(x => x.Month)
             };
@@ -470,7 +493,7 @@ namespace Apha.PACT.DataAccess.Repository
                 "workgroup" => ApplyStagingOrder(query, s => s.WorkGroup, descending),
                 "testcode" => ApplyStagingOrder(query, s => s.TestCode, descending),
                 "buyer" => ApplyStagingOrder(query, s => s.Buyer, descending),
-                "period" => ApplyStagingOrder(query, s => s.Month, descending),
+                "month" => ApplyStagingOrder(query, s => s.Month, descending),
                 "volume" => ApplyStagingOrder(query, s => s.Volume, descending),
                 "pass" => ApplyStagingOrder(query, s => s.Passed, descending),
                 "failurecomments" => ApplyStagingOrder(query, s => s.FailureComments, descending),

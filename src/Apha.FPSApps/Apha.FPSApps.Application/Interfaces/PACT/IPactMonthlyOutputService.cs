@@ -21,8 +21,6 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
         Task<ApiResponseDto<PactMonthlyOutputDto>> GetLiveByKeyAsync(string testCode, string buyer, double month, string workGroup);
         Task<ApiResponseDto<PactMonthlyOutputDto>> UpdateLiveAsync(PactMonthlyOutputDto dto);
         Task<ApiResponseDto<List<ValidationFieldErrorDto>>> ValidateLiveAsync(PactMonthlyOutputDto dto);
-        Task<ApiResponseDto<bool>> DeleteLiveAsync(string testCode, string buyer, double month, string workGroup);
-
         Task<ApiResponseDto<List<StagingMonthlyOutputDto>>> GetStagingAsync(QueryParameters<string> query, bool? passed);
         Task<ApiResponseDto<StagingMonthlyOutputDto>> GetStagingByIdAsync(int id);
         Task<ApiResponseDto<StagingMonthlyOutputDto>> CreateStagingAsync(StagingMonthlyOutputDto dto);

@@ -102,25 +102,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
             var responseDto = _mapper.Map<ApiResponseDto<PactMonthlyOutputDto>>(response);
             return ApiResponseDto<PactMonthlyOutputDto>.FailureResponse(responseDto.Errors, responseDto.Meta ?? new ApiMetaDto());
-        }
-
-        public async Task<ApiResponseDto<bool>> DeleteLiveAsync(string testCode, string buyer, double month, string workGroup)
-        {
-            var url = string.Format(PactApiEndpoints.DeleteMonthlyOutputLive,
-                Uri.EscapeDataString(testCode),
-                Uri.EscapeDataString(buyer),
-                month,
-                Uri.EscapeDataString(workGroup));
-
-            var response = await _http.DeleteAsync<bool?>(url);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<bool>>(response);
-
-            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
-            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
-        }
-
-        // ── Staging ──────────────────────────────────────────────────────────────
+        }       
 
         public async Task<ApiResponseDto<List<StagingMonthlyOutputDto>>> GetStagingAsync(QueryParameters<string> query, bool? passed)
         {

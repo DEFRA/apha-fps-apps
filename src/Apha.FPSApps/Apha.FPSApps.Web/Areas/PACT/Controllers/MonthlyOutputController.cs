@@ -30,6 +30,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly ITestCapabilityService _testCapabilityService;
         private readonly ITestRequirementService _testRequirementService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MonthlyOutputController"/> class.
+        /// </summary>
         public MonthlyOutputController(
             IMapper mapper,
             IPactMonthlyOutputService monthlyOutputService,
@@ -48,6 +51,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             _testRequirementService = testRequirementService;
         }
 
+        /// <summary>
+        /// Displays the monthly output page with initial live and staging grids.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -72,10 +78,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             };
 
             return View(viewModel);
-        }
+        }       
 
-        // ── Grid loaders ─────────────────────────────────────────────────────────
-
+        /// <summary>
+        /// Loads the monthly output live grid using supplied filters.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> LoadLiveGrid(
             PaginationFilter<string> request,
@@ -91,6 +98,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_DataGrid", grid);
         }
 
+        /// <summary>
+        /// Loads the monthly output staging grid for the selected filter state.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> LoadStagingGrid(PaginationFilter<string> request, bool? passed)
         {
@@ -101,8 +111,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_DataGrid", grid);
         }
 
-        // ── Lookup endpoints (AJAX) ───────────────────────────────────────────────
-
+        /// <summary>
+        /// Returns test code options for the selected work group.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetTestCodesByWorkGroup(string? workGroup)
         {
@@ -124,6 +135,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(result);
         }
 
+        /// <summary>
+        /// Returns buyer options for the selected test code.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetBuyersByTestCode(string? workGroup, string? testCode)
         {
@@ -145,13 +159,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 .ToList();
 
             return Json(result);
-        }
+        }        
 
-        // ── Live record edit ─────────────────────────────────────────────────────
-
+        /// <summary>
+        /// Gets a monthly output live record by key and returns the edit partial view.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetLiveRecord(string testCode, string buyer, double month, string workGroup)
         {
+            if (!ModelState.IsValid)
+                return BadRequest("Invalid request data.");
+
             ViewBag.WorkGroups = await GetWorkGroupOptionsAsync();
             ViewBag.MonthOptions = await GetMonthOptionsAsync();
 
@@ -163,6 +181,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_EditMonthlyOutputLive", model);
         }
 
+        /// <summary>
+        /// Validates and saves a monthly output live record update.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> SaveLiveRecord([FromBody] MonthlyOutputLiveItem model)
         {
@@ -192,20 +213,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to update monthly output record.",
                 errors = response.Errors?.Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "Validation error" })
             });
-        }
+        }       
 
-        [HttpDelete]
-        public async Task<IActionResult> DeleteLiveRecord(string testCode, string buyer, double month, string workGroup)
-        {
-            var response = await _monthlyOutputService.DeleteLiveAsync(testCode, buyer, month, workGroup);
-            return Json(new { success = response.Success && response.Data });
-        }
-
-        // ── Staging record edit ──────────────────────────────────────────────────
-
+        /// <summary>
+        /// Gets a staging monthly output record by id and returns the edit partial view.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetStagingRecord(int id)
         {
+            if (!ModelState.IsValid)
+                return BadRequest("Invalid request data.");
+
             ViewBag.WorkGroups = await GetWorkGroupOptionsAsync();
             ViewBag.MonthOptions = await GetMonthOptionsAsync();
             ViewBag.TestCodeOptions = await GetAllTestCodesAsync();
@@ -219,6 +237,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_AddEditStagingMonthlyOutput", model);
         }
 
+        /// <summary>
+        /// Returns an empty staging monthly output editor partial for create flow.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> AddStagingRecord()
         {
@@ -229,6 +250,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_AddEditStagingMonthlyOutput", new StagingMonthlyOutputItem());
         }
 
+        /// <summary>
+        /// Creates or updates a staging monthly output record.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> SaveStagingRecord([FromBody] StagingMonthlyOutputItem model)
         {
@@ -261,13 +285,22 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             });
         }
 
+        /// <summary>
+        /// Deletes a single staging monthly output record.
+        /// </summary>
         [HttpDelete]
         public async Task<IActionResult> DeleteStagingRecord(int id)
         {
+            if (!ModelState.IsValid)
+                return BadRequest("Invalid request data.");
+
             var response = await _monthlyOutputService.DeleteStagingAsync(id);
             return Json(new { success = response.Success && response.Data });
         }
 
+        /// <summary>
+        /// Deletes all staging monthly output records for the current user.
+        /// </summary>
         [HttpDelete]
         public async Task<IActionResult> DeleteAllStagingRecords()
         {
@@ -275,6 +308,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(new { success = response.Success && response.Data });
         }
 
+        /// <summary>
+        /// Deletes failed staging monthly output records for the current user.
+        /// </summary>
         [HttpDelete]
         public async Task<IActionResult> DeleteFailedStagingRecords()
         {
@@ -284,13 +320,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 success = response.Success && response.Data,
                 message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to delete failed imported records."
             });
-        }
+        }        
 
-        // ── Export ────────────────────────────────────────────────────────────────
-
+        /// <summary>
+        /// Exports staging monthly output records to an Excel file.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> ExportStaging(bool? passed)
         {
+            if (!ModelState.IsValid)
+                return BadRequest("Invalid request data.");
+
             var response = await _monthlyOutputService.GetStagingAsync(new QueryParameters<string> { Page = -1 }, passed);
             if (!response.Success || response.Data == null)
                 return NotFound();
@@ -300,13 +340,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var fileName = $"ExportedOP_{DateTime.Now:ddMMyyyy}.xlsx";
 
             return File(excelBytes, ExcelContentType, fileName);
-        }
+        }        
 
-        // ── Import / Validate / Make Live ─────────────────────────────────────────
-
+        /// <summary>
+        /// Imports a monthly output file into staging.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Import(IFormFile file, short importType = 1)
         {
+            if (!ModelState.IsValid)
+                return BadRequest("Invalid request data.");
+
             if (file == null || file.Length == 0)
                 return Json(new { success = false, message = "Please select an Excel file to import." });
 
@@ -326,6 +370,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Import failed." });
         }
 
+        /// <summary>
+        /// Validates staged monthly output records.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Validate()
         {
@@ -344,6 +391,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Validation failed." });
         }
 
+        /// <summary>
+        /// Moves validated staged monthly output records to live.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> MakeLive()
         {
@@ -367,9 +417,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 errors = response.Errors
             });
         }
-
-        // ── Private helpers ───────────────────────────────────────────────────────
-
+        
+        /// <summary>
+        /// Builds live grid configuration and data for monthly output.
+        /// </summary>
         private async Task<DataGridConfig<MonthlyOutputLiveItem>> BuildLiveGridAsync(
             PaginationFilter<string> request,
             string? workGroup,
@@ -435,6 +486,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             };
         }
 
+        /// <summary>
+        /// Builds staging grid configuration and data for monthly output.
+        /// </summary>
         private async Task<DataGridConfig<StagingMonthlyOutputItem>> BuildStagingGridAsync(
             PaginationFilter<string> request,
             bool? passed)
@@ -471,6 +525,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             };
         }
 
+        /// <summary>
+        /// Gets work group dropdown options.
+        /// </summary>
         private async Task<List<SelectListItem>> GetWorkGroupOptionsAsync()
         {
             var response = await _workGroupService.GetAllWorkGroupsAsync();
@@ -479,6 +536,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 : [];
         }
 
+        /// <summary>
+        /// Gets month dropdown options.
+        /// </summary>
         private async Task<List<SelectListItem>> GetMonthOptionsAsync()
         {
             var response = await _monthService.GetAllMonthsAsync();
@@ -487,6 +547,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 : [];
         }
 
+        /// <summary>
+        /// Gets all distinct test code dropdown options.
+        /// </summary>
         private async Task<List<SelectListItem>> GetAllTestCodesAsync()
         {
             var response = await _testCapabilityService.GetPagedByWorkGroupAsync(
@@ -504,6 +567,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 .ToList();
         }
 
+        /// <summary>
+        /// Gets all distinct buyer dropdown options.
+        /// </summary>
         private async Task<List<SelectListItem>> GetAllBuyersAsync()
         {
             var response = await _testRequirementService.GetAllActiveAsync();

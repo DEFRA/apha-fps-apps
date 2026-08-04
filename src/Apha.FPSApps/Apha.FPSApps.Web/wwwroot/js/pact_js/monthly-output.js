@@ -776,6 +776,7 @@ function importMonthlyOutput(file) {
         contentType: false,
         success: function (response) {
             if (response.success) {
+                window.monthlyOutputPassedFilter = null;
                 reloadStagingGrid();
                 const msg = response.message ||
                     ('Imported: ' + response.importedCount +

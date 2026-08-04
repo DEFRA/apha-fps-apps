@@ -372,81 +372,80 @@ namespace Apha.PACT.Application.Services
                 return;
             }
 
-            // if staffId starts with a digit treat it as an SP number,
-            // otherwise treat it as a name
             if (char.IsDigit(staffId[0]))
             {
-                // Numeric branch: search by SP number
-                var matchBySpNumber = staffByWorkGroup
-                    .Where(x => x.WorkGroup == workGroup && x.SpNumber == staffId)
-                    .ToList();
-
-                if (matchBySpNumber.Count == 0)
-                {
-                    failures.Add($"This staff ID not in this WG: {staffId}");
-                    return;
-                }
-
-                // VBA: FindNext reuses the same SPNumber filter — duplicate check is by SP number
-                if (matchBySpNumber.Count == 1)
-                {
-                    // Unique — populate the record
-                    record.PactStaffId = matchBySpNumber[0].SpNumber;
-                    record.PactId      = matchBySpNumber[0].PactId;
-                    record.Name        = matchBySpNumber[0].Name;
-                }
-                else
-                {
-                    // Duplicate SP number in workgroup
-                    if (string.IsNullOrWhiteSpace(record.PactId) || record.PactId == "0")
-                    {
-                        failures.Add($"There is more than one person with this name or SP number in {workGroup}, you will need to manually identify which is correct for this record.");
-                    }
-                    else
-                    {
-                        // PactId already set — populate from matched SP number entry
-                        record.PactStaffId = matchBySpNumber[0].SpNumber;
-                        record.Name        = matchBySpNumber[0].Name;
-                    }
-                }
+                ValidateNumericStaff(staffId, workGroup, record, staffByWorkGroup, failures);
+                return;
             }
-            else
+
+            ValidateNamedStaff(staffId, name, workGroup, record, staffByWorkGroup, failures);
+        }
+
+        private static void ValidateNumericStaff(
+            string staffId,
+            string? workGroup,
+            StagingMonthlyTime record,
+            List<WorkGroupStaffItem> staffByWorkGroup,
+            List<string> failures)
+        {
+            var matchBySpNumber = staffByWorkGroup
+                .Where(x => x.WorkGroup == workGroup && x.SpNumber == staffId)
+                .ToList();
+
+            ProcessStaffMatches(matchBySpNumber, staffId, workGroup, record, failures);
+        }
+
+        private static void ValidateNamedStaff(
+            string staffId,
+            string? name,
+            string? workGroup,
+            StagingMonthlyTime record,
+            List<WorkGroupStaffItem> staffByWorkGroup,
+            List<string> failures)
+        {
+            var matchByName = staffByWorkGroup
+                .Where(x => x.WorkGroup == workGroup &&
+                (!string.IsNullOrWhiteSpace(staffId) && x.Name == staffId) ||
+                (!string.IsNullOrWhiteSpace(name) && x.Name == name))
+                .ToList();
+
+            ProcessStaffMatches(matchByName, staffId, workGroup, record, failures);
+        }
+
+        private static void ProcessStaffMatches(
+            List<WorkGroupStaffItem> matches,
+            string staffId,
+            string? workGroup,
+            StagingMonthlyTime record,
+            List<string> failures)
+        {
+            if (matches.Count == 0)
             {
-                // Non-numeric branch: search by name
-                var matchByName = staffByWorkGroup
-                    .Where(x => x.WorkGroup == workGroup && 
-                    (!string.IsNullOrWhiteSpace(staffId) && x.Name == staffId) || 
-                    (!string.IsNullOrWhiteSpace(name) && x.Name == name))
-                    .ToList();
-
-                if (matchByName.Count == 0)
-                {
-                    failures.Add($"This staff ID not in this WG: {staffId}");
-                    return;
-                }
-
-                if (matchByName.Count == 1)
-                {
-                    // Unique — populate the record
-                    record.PactStaffId = matchByName[0].SpNumber;
-                    record.PactId      = matchByName[0].PactId;
-                    record.Name        = matchByName[0].Name;
-                }
-                else
-                {
-                    // Duplicate name in workgroup
-                    if (string.IsNullOrWhiteSpace(record.PactId) || record.PactId == "0")
-                    {
-                        failures.Add($"There is more than one person with this name or SP number in {workGroup}, you will need to manually identify which is correct for this record.");
-                    }
-                    else
-                    {
-                        // PactId already set — populate from first matched name entry
-                        record.PactStaffId = matchByName[0].SpNumber;
-                        record.Name        = matchByName[0].Name;
-                    }
-                }
+                failures.Add($"This staff ID not in this WG: {staffId}");
+                return;
             }
+
+            if (matches.Count == 1)
+            {
+                PopulateUniqueStaffMatch(record, matches[0]);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(record.PactId) || record.PactId == "0")
+            {
+                failures.Add($"There is more than one person with this name or SP number in {workGroup}, you will need to manually identify which is correct for this record.");
+                return;
+            }
+
+            record.PactStaffId = matches[0].SpNumber;
+            record.Name = matches[0].Name;
+        }
+
+        private static void PopulateUniqueStaffMatch(StagingMonthlyTime record, WorkGroupStaffItem match)
+        {
+            record.PactStaffId = match.SpNumber;
+            record.PactId = match.PactId;
+            record.Name = match.Name;
         }
 
         private static void ValidateTimeCode(

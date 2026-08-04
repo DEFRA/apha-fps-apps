@@ -357,70 +357,18 @@ namespace Apha.PACT.DataAccess.Repository
             var importedCount = 0;
             foreach (var row in passedRows)
             {
-                if (string.IsNullOrWhiteSpace(row.PactId)
-                    || string.IsNullOrWhiteSpace(row.TimeCode)
-                    || !row.Month.HasValue
-                    || string.IsNullOrWhiteSpace(row.ParentProject))
+                if (!IsValidForMakeLive(row))
                 {
-                    row.Passed = false;
-                    row.FailureComments = noLongerValidMessage;
+                    MarkRowAsInvalid(row, noLongerValidMessage);
                     failedCount++;
                     continue;
                 }
 
-                MonthlyTime? liveRow = null;
-                MonthlyTimeLog? logEntry = null;
-
-                try
-                {
-                    liveRow = new MonthlyTime
-                    {
-                        PactStaffId = row.PactId,
-                        TimeCode = row.TimeCode,
-                        Month = row.Month.Value,
-                        ParentProject = row.ParentProject,
-                        WorkGroup = row.WorkGroup,
-                        Hours = row.Hours,
-                        FpsYear = _fpsRequestContext.FpsYear
-                    };
-
-                    logEntry = BuildLogEntry(liveRow, "I");
-
-                    await _context.MonthlyTimes.AddAsync(liveRow);
-                    // Log 'I' for each new live row - mirrors MT_LOG_ITrig
-                    await _context.MonthlyTimeLogs.AddAsync(logEntry);
-                    _context.StagingMonthlyTimes.Remove(row);
-
-                    await _context.SaveChangesAsync();
+                var imported = await TryImportRowToLiveAsync(row, noLongerValidMessage);
+                if (imported)
                     importedCount++;
-                }
-                catch
-                {
-                    if (liveRow != null)
-                    {
-                        var liveRowEntry = _context.Entry(liveRow);
-                        if (liveRowEntry.State != EntityState.Detached)
-                            liveRowEntry.State = EntityState.Detached;
-                    }
-
-                    if (logEntry != null)
-                    {
-                        var logEntryState = _context.Entry(logEntry);
-                        if (logEntryState.State != EntityState.Detached)
-                            logEntryState.State = EntityState.Detached;
-                    }
-
-                    var rowEntry = _context.Entry(row);
-                    if (rowEntry.State == EntityState.Deleted)
-                        rowEntry.State = EntityState.Unchanged;
-
-                    row.Passed = false;
-                    row.FailureComments = noLongerValidMessage;
-                    rowEntry.State = EntityState.Modified;
-
-                    await _context.SaveChangesAsync();
+                else
                     failedCount++;
-                }
             }
 
             await _context.SaveChangesAsync();
@@ -429,6 +377,79 @@ namespace Apha.PACT.DataAccess.Repository
                 await DeleteAllStagingByUserAsync(importedBy);
 
             return (passedRows.Count, importedCount, failedCount);
+        }
+
+        private static bool IsValidForMakeLive(StagingMonthlyTime row)
+        {
+            return !string.IsNullOrWhiteSpace(row.PactId)
+                && !string.IsNullOrWhiteSpace(row.TimeCode)
+                && row.Month.HasValue
+                && !string.IsNullOrWhiteSpace(row.ParentProject);
+        }
+
+        private static void MarkRowAsInvalid(StagingMonthlyTime row, string failureMessage)
+        {
+            row.Passed = false;
+            row.FailureComments = failureMessage;
+        }
+
+        private async Task<bool> TryImportRowToLiveAsync(StagingMonthlyTime row, string failureMessage)
+        {
+            MonthlyTime? liveRow = null;
+            MonthlyTimeLog? logEntry = null;
+
+            try
+            {
+                liveRow = CreateLiveRow(row);
+                logEntry = BuildLogEntry(liveRow, "I");
+
+                await _context.MonthlyTimes.AddAsync(liveRow);
+                await _context.MonthlyTimeLogs.AddAsync(logEntry);
+                _context.StagingMonthlyTimes.Remove(row);
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                DetachIfTracked(liveRow);
+                DetachIfTracked(logEntry);
+
+                var rowEntry = _context.Entry(row);
+                if (rowEntry.State == EntityState.Deleted)
+                    rowEntry.State = EntityState.Unchanged;
+
+                row.Passed = false;
+                row.FailureComments = failureMessage;
+                rowEntry.State = EntityState.Modified;
+
+                await _context.SaveChangesAsync();
+                return false;
+            }
+        }
+
+        private MonthlyTime CreateLiveRow(StagingMonthlyTime row)
+        {
+            return new MonthlyTime
+            {
+                PactStaffId = row.PactId ?? string.Empty,
+                TimeCode = row.TimeCode ?? string.Empty,
+                Month = row.Month!.Value,
+                ParentProject = row.ParentProject ?? string.Empty,
+                WorkGroup = row.WorkGroup ?? string.Empty,
+                Hours = row.Hours,
+                FpsYear = _fpsRequestContext.FpsYear
+            };
+        }
+
+        private void DetachIfTracked(object? entity)
+        {
+            if (entity == null)
+                return;
+
+            var entry = _context.Entry(entity);
+            if (entry.State != EntityState.Detached)
+                entry.State = EntityState.Detached;
         }
 
         public async Task<PagedData<MonthlyTimeLog>> SearchAsync(
@@ -532,11 +553,12 @@ namespace Apha.PACT.DataAccess.Repository
             return property switch
             {
                 "workgroup" => ApplyLiveOrder(query, s => s.WorkGroup, descending),
-                "pactstaffid" => ApplyLiveOrder(query, s => s.PactStaffId, descending),
+                "name" => ApplyLiveOrder(query, s => s.Name, descending),
                 "timecode" => ApplyLiveOrder(query, s => s.TimeCode, descending),
                 "parentproject" => ApplyLiveOrder(query, s => s.ParentProject, descending),
-                "period" => ApplyLiveOrder(query, s => s.Month, descending),
+                "month" => ApplyLiveOrder(query, s => s.Month, descending),
                 "hours" => ApplyLiveOrder(query, s => s.Hours, descending),
+                "pactstaffid" => ApplyLiveOrder(query, s => s.PactStaffId, descending),
                 _ => query.OrderBy(x => x.WorkGroup).ThenBy(x => x.PactStaffId).ThenBy(x => x.TimeCode).ThenBy(x => x.ParentProject).ThenBy(x => x.Month)
             };
         }
@@ -572,6 +594,7 @@ namespace Apha.PACT.DataAccess.Repository
                 "parentproject" => ApplyStagingOrder(query, s => s.ParentProject, descending),
                 "period" => ApplyStagingOrder(query, s => s.Month, descending),
                 "hours" => ApplyStagingOrder(query, s => s.Hours, descending),
+                "passed" => ApplyStagingOrder(query, s => s.Passed, descending),
                 "pactid" => ApplyStagingOrder(query, s => s.PactId, descending),
                 "failurecomments" => ApplyStagingOrder(query, s => s.FailureComments, descending),
                 _ => query.OrderBy(x => x.WorkGroup).ThenBy(x => x.PactStaffId).ThenBy(x => x.TimeCode).ThenBy(x => x.ParentProject).ThenBy(x => x.Month)

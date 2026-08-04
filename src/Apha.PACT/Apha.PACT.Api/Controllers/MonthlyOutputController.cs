@@ -21,6 +21,9 @@ namespace Apha.PACT.Api.Controllers
         private readonly IMapper _mapper;
         private readonly ICurrentUserContext _currentUserContext;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MonthlyOutputController"/> class.
+        /// </summary>
         public MonthlyOutputController(IMonthlyOutputService service, IMapper mapper, ICurrentUserContext currentUserContext)
         {
             _service = service;
@@ -30,6 +33,9 @@ namespace Apha.PACT.Api.Controllers
 
         // ── Log ──────────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Searches monthly output import log entries using optional filter criteria.
+        /// </summary>
         [HttpGet("log/search")]
         public async Task<IActionResult> SearchAsync(
             [FromQuery] QueryParameters<string> query,
@@ -45,10 +51,11 @@ namespace Apha.PACT.Api.Controllers
                 query, workGroup, testCode, buyer, dateImported, month, userId, insertDelete);
 
             return Ok(_mapper.Map<PaginationRes<MonthlyOutputLogRes>>(result));
-        }
+        }        
 
-        // ── Live ─────────────────────────────────────────────────────────────────
-
+        /// <summary>
+        /// Returns paged monthly output live records.
+        /// </summary>
         [HttpGet("live")]
         public async Task<IActionResult> GetLive(
             [FromQuery] QueryParameters<string> query,
@@ -61,6 +68,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<MonthlyOutputRes>>(result));
         }
 
+        /// <summary>
+        /// Gets a single monthly output live record by composite key.
+        /// </summary>
         [HttpGet("live/key")]
         public async Task<IActionResult> GetLiveByKey(
             [FromQuery] string testCode,
@@ -75,6 +85,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<MonthlyOutputRes>(item));
         }
 
+        /// <summary>
+        /// Updates an existing monthly output live record.
+        /// </summary>
         [HttpPut("live")]
         public async Task<IActionResult> UpdateLive([FromBody] MonthlyOutputReq request)
         {
@@ -83,6 +96,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<MonthlyOutputRes>(updated));
         }
 
+        /// <summary>
+        /// Deletes a monthly output live record by composite key.
+        /// </summary>
         [HttpDelete("live")]
         public async Task<IActionResult> DeleteLive(
             [FromQuery] string testCode,
@@ -94,8 +110,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(deleted);
         }
 
-        // ── Staging ──────────────────────────────────────────────────────────────
-
+        /// <summary>
+        /// Returns paged staging monthly output records for the current user.
+        /// </summary>
         [HttpGet("staging")]
         public async Task<IActionResult> GetStaging([FromQuery] QueryParameters<string> query, [FromQuery] bool? passed)
         {
@@ -104,6 +121,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<StagingMonthlyOutputRes>>(result));
         }
 
+        /// <summary>
+        /// Gets a staging monthly output record by identifier for the current user.
+        /// </summary>
         [HttpGet("staging/{id:int}")]
         public async Task<IActionResult> GetStagingById(int id)
         {
@@ -115,6 +135,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<StagingMonthlyOutputRes>(item));
         }
 
+        /// <summary>
+        /// Creates a staging monthly output record for the current user.
+        /// </summary>
         [HttpPost("staging")]
         public async Task<IActionResult> CreateStaging([FromBody] StagingMonthlyOutputReq request)
         {
@@ -124,6 +147,9 @@ namespace Apha.PACT.Api.Controllers
             return CreatedAtAction(nameof(GetStagingById), new { id = created.Id }, _mapper.Map<StagingMonthlyOutputRes>(created));
         }
 
+        /// <summary>
+        /// Updates a staging monthly output record for the current user.
+        /// </summary>
         [HttpPut("staging/{id:int}")]
         public async Task<IActionResult> UpdateStaging(int id, [FromBody] StagingMonthlyOutputReq request)
         {
@@ -134,6 +160,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<StagingMonthlyOutputRes>(updated));
         }
 
+        /// <summary>
+        /// Deletes a staging monthly output record for the current user.
+        /// </summary>
         [HttpDelete("staging/{id:int}")]
         public async Task<IActionResult> DeleteStaging(int id)
         {
@@ -142,6 +171,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(deleted);
         }
 
+        /// <summary>
+        /// Deletes all staging monthly output records for the current user.
+        /// </summary>
         [HttpDelete("staging/user")]
         public async Task<IActionResult> DeleteAllStagingByUser()
         {
@@ -150,6 +182,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(deletedCount > 0);
         }
 
+        /// <summary>
+        /// Deletes failed staging monthly output records for the current user.
+        /// </summary>
         [HttpDelete("staging/user/failed")]
         public async Task<IActionResult> DeleteFailedStagingByUser()
         {
@@ -158,6 +193,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(deletedCount > 0);
         }
 
+        /// <summary>
+        /// Imports monthly output rows into staging for the current user.
+        /// </summary>
         [HttpPost("staging/import")]
         public async Task<IActionResult> ImportStaging([FromBody] MonthlyOutputImportReq request)
         {
@@ -167,6 +205,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<MonthlyOutputImportRes>(result));
         }
 
+        /// <summary>
+        /// Validates staged monthly output records for the current user.
+        /// </summary>
         [HttpPost("staging/validate")]
         public async Task<IActionResult> ValidateStaging()
         {
@@ -175,6 +216,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<MonthlyOutputValidateRes>(result));
         }
 
+        /// <summary>
+        /// Moves validated staged monthly output records to live for the current user.
+        /// </summary>
         [HttpPost("staging/makelive")]
         public async Task<IActionResult> MakeLive()
         {

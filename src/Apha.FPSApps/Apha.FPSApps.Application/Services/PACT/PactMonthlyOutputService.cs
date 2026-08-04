@@ -110,11 +110,6 @@ namespace Apha.FPSApps.Application.Services.PACT
             return ApiResponseDto<List<ValidationFieldErrorDto>>.SuccessResponse(errors);
         }
 
-        public async Task<ApiResponseDto<bool>> DeleteLiveAsync(string testCode, string buyer, double month, string workGroup)
-            => await _pactApiClient.PactMonthlyOutput.DeleteLiveAsync(testCode, buyer, month, workGroup);
-
-        // ── Staging ──────────────────────────────────────────────────────────────
-
         public async Task<ApiResponseDto<List<StagingMonthlyOutputDto>>> GetStagingAsync(QueryParameters<string> query, bool? passed)
             => await _pactApiClient.PactMonthlyOutput.GetStagingAsync(query, passed);
 

@@ -27,17 +27,18 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly IWorkGroupService _workGroupService;
         private readonly IEmployeeService _employeeService;
         private readonly IPactTimeCodeValidService _timeCodeValidService;
-        private readonly IProjectService _projectService;
         private readonly IMonthService _monthService;
         private readonly IExcelExportService _excelExportService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MonthlyTimeController"/> class.
+        /// </summary>
         public MonthlyTimeController(
             IMapper mapper,
             IPactMonthlyTimeService monthlyTimeService,
             IWorkGroupService workGroupService,
             IEmployeeService employeeService,
             IPactTimeCodeValidService timeCodeValidService,
-            IProjectService projectService,
             IMonthService monthService,
             IExcelExportService excelExportService)
         {
@@ -46,11 +47,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             _workGroupService = workGroupService;
             _employeeService = employeeService;
             _timeCodeValidService = timeCodeValidService;
-            _projectService = projectService;
             _monthService = monthService;
             _excelExportService = excelExportService;
         }
 
+        /// <summary>
+        /// Displays the monthly time page with initial live and staging grids.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -72,6 +75,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return View(viewModel);
         }
 
+        /// <summary>
+        /// Loads the monthly time live grid using the supplied filters.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> LoadLiveGrid(
             PaginationFilter<string> request,
@@ -88,6 +94,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_DataGrid", grid);
         }
 
+        /// <summary>
+        /// Loads the staging monthly time grid for the current filter state.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> LoadStagingGrid(PaginationFilter<string> request, bool? passed)
         {
@@ -98,9 +107,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_DataGrid", grid);
         }
 
+        /// <summary>
+        /// Gets a monthly time live record by key and returns the edit partial view.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetLiveRecord(string pactStaffId, string timeCode, double month, string parentProject)
         {
+            if (!ModelState.IsValid)
+                return BadRequest("Invalid request data.");
+
             await PopulateViewBagsAsync();
             var response = await _monthlyTimeService.GetLiveByKeyAsync(pactStaffId, timeCode, month, parentProject);
             if (!response.Success || response.Data == null)
@@ -110,6 +125,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_EditMonthlyTimeLive", model);
         }
 
+        /// <summary>
+        /// Returns staff entries for the selected work group.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetStaffByWorkGroup(string? workGroup)
         {
@@ -132,6 +150,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(staff);
         }
 
+        /// <summary>
+        /// Returns time code options for the selected work group.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetTimeCodesByWorkGroup(string? workGroup)
         {
@@ -143,6 +164,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(result);
         }
 
+        /// <summary>
+        /// Returns project options for a selected work group and time code.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetProjectsByWorkGroupAndTimeCode(string? workGroup, string? timeCode)
         {
@@ -154,6 +178,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(result);
         }
 
+        /// <summary>
+        /// Returns all distinct time codes.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAllTimeCodes()
         {
@@ -165,6 +192,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(result);
         }
 
+        /// <summary>
+        /// Returns all distinct parent projects.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAllProjects()
         {
@@ -176,6 +206,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(result);
         }
 
+        /// <summary>
+        /// Validates and saves a monthly time live record update.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> SaveLiveRecord([FromBody] MonthlyTimeLiveItem model)
         {
@@ -211,9 +244,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             });
         }
 
+        /// <summary>
+        /// Gets a staging monthly time record by id and returns the edit partial view.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetStagingRecord(int id)
         {
+            if (!ModelState.IsValid)
+                return BadRequest("Invalid request data.");
+
             await PopulateViewBagsAsync();
             var response = await _monthlyTimeService.GetStagingByIdAsync(id);
             if (!response.Success || response.Data == null)
@@ -233,6 +272,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_AddEditStagingMonthlyTime", model);
         }
 
+        /// <summary>
+        /// Returns an empty staging monthly time editor partial for create flow.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> AddStagingRecord()
         {
@@ -240,6 +282,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_AddEditStagingMonthlyTime", new StagingMonthlyTimeItem());
         }
 
+        /// <summary>
+        /// Creates or updates a staging monthly time record.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> SaveStagingRecord([FromBody] StagingMonthlyTimeItem model)
         {
@@ -276,8 +321,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var bulkUpdateResponse = await _monthlyTimeService.BulkUpdateStagingNamesAsync(new BulkUpdateStagingMonthlyTimeNamesDto
             {
                 ExcludeId = model.Id,
-                OriginalWorkGroup = existingRecord?.WorkGroup,
-                OriginalPactStaffId = existingRecord?.PactStaffId,
+                OriginalWorkGroup = existingRecord.WorkGroup,
+                OriginalPactStaffId = existingRecord.PactStaffId,
                 NewName = model.Name,
                 NewPactStaffId = model.PactStaffId,
                 NewPactId = model.PactId
@@ -296,13 +341,22 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             });
         }
 
+        /// <summary>
+        /// Deletes a single staging monthly time record.
+        /// </summary>
         [HttpDelete]
         public async Task<IActionResult> DeleteStagingRecord(int id)
         {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid request data." });
+
             var response = await _monthlyTimeService.DeleteStagingAsync(id);
             return Json(new { success = response.Success && response.Data });
         }
 
+        /// <summary>
+        /// Deletes all staging monthly time records for the current user.
+        /// </summary>
         [HttpDelete]
         public async Task<IActionResult> DeleteAllStagingRecords()
         {
@@ -310,6 +364,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(new { success = response.Success && response.Data });
         }
 
+        /// <summary>
+        /// Deletes failed staging monthly time records for the current user.
+        /// </summary>
         [HttpDelete]
         public async Task<IActionResult> DeleteFailedStagingRecords()
         {
@@ -321,9 +378,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             });
         }
 
+        /// <summary>
+        /// Imports a monthly time file into staging.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Import(IFormFile file, short importType)
         {
+            if (!ModelState.IsValid)
+                return BadRequest("Invalid request data.");
+
             if (file == null || file.Length == 0)
                 return Json(new { success = false, message = "Please select an Excel file to import." });
 
@@ -343,6 +406,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Import failed." });
         }
 
+        /// <summary>
+        /// Validates staged monthly time records.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Validate()
         {
@@ -361,6 +427,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Validation failed." });
         }
 
+        /// <summary>
+        /// Moves validated staged monthly time records to live.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> MakeLive()
         {
@@ -380,9 +449,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Make live failed.", errors = response.Errors });
         }
 
+        /// <summary>
+        /// Exports staging monthly time records to an Excel file.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> ExportStaging(bool? passed)
         {
+            if (!ModelState.IsValid)
+                return BadRequest("Invalid request data.");
+
             var response = await _monthlyTimeService.GetStagingAsync(new QueryParameters<string> { Page = -1 }, passed);
             if (!response.Success || response.Data == null)
                 return NotFound();
@@ -395,6 +470,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return File(excelBytes, ExcelContentType, fileName);
         }
 
+        /// <summary>
+        /// Builds live grid configuration and data for monthly time.
+        /// </summary>
         private async Task<DataGridConfig<MonthlyTimeLiveItem>> BuildLiveGridAsync(
             PaginationFilter<string> request,
             string? workGroup,
@@ -462,6 +540,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             };
         }
 
+        /// <summary>
+        /// Builds staging grid configuration and data for monthly time.
+        /// </summary>
         private async Task<DataGridConfig<StagingMonthlyTimeItem>> BuildStagingGridAsync(PaginationFilter<string> request, bool? passed)
         {
             var query = _mapper.Map<QueryParameters<string>>(request);
@@ -494,6 +575,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             };
         }
 
+        /// <summary>
+        /// Populates view bag dropdown sources used by monthly time edit dialogs.
+        /// </summary>
         private async Task PopulateViewBagsAsync()
         {
             ViewBag.WorkGroups = await GetWorkGroupOptionsAsync();
@@ -503,6 +587,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             ViewBag.MonthOptions = await GetMonthOptionsAsync();
         }
 
+        /// <summary>
+        /// Gets work group dropdown options.
+        /// </summary>
         private async Task<List<SelectListItem>> GetWorkGroupOptionsAsync()
         {
             var response = await _workGroupService.GetAllWorkGroupsAsync();
@@ -511,6 +598,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 : [];
         }
 
+        /// <summary>
+        /// Gets time code dropdown options for a work group.
+        /// </summary>
         private async Task<List<SelectListItem>> GetTimeCodeOptionsAsync(string workGroup)
         {
             var response = await _timeCodeValidService.GetTimeCodeValidsByWorkGroupAsync(workGroup);
@@ -519,6 +609,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 : [];
         }
 
+        /// <summary>
+        /// Gets project dropdown options for a work group and time code.
+        /// </summary>
         private async Task<List<SelectListItem>> GetProjectOptionsAsync(string workGroup, string timeCode)
         {
             var response = await _timeCodeValidService.GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync(workGroup, timeCode);
@@ -527,6 +620,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 : [];
         }
 
+        /// <summary>
+        /// Gets month dropdown options.
+        /// </summary>
         private async Task<List<SelectListItem>> GetMonthOptionsAsync()
         {
             var response = await _monthService.GetAllMonthsAsync();
