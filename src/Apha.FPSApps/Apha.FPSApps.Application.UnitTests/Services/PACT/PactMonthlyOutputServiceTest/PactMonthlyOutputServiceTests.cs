@@ -180,5 +180,113 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServ
         }
 
         #endregion
+
+        #region Live Methods Tests
+
+        [Fact]
+        public async Task GetLiveAsync_WithValidFilters_DelegatesToApiClient()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected = ApiResponseDto<List<PactMonthlyOutputDto>>.SuccessResponse([]);
+            _pactMonthlyOutputApiClient.GetLiveAsync(query, "WG1", "TC1", "Buyer1", 6).Returns(expected);
+
+            var result = await _service.GetLiveAsync(query, "WG1", "TC1", "Buyer1", 6);
+
+            Assert.Same(expected, result);
+            await _pactMonthlyOutputApiClient.Received(1).GetLiveAsync(query, "WG1", "TC1", "Buyer1", 6);
+        }
+
+        [Fact]
+        public async Task GetLiveByKeyAsync_WithValidKey_DelegatesToApiClient()
+        {
+            var dto = new PactMonthlyOutputDto { TestCode = "TC1", Buyer = "Buyer1", Month = 6, WorkGroup = "WG1" };
+            var expected = ApiResponseDto<PactMonthlyOutputDto>.SuccessResponse(dto);
+            _pactMonthlyOutputApiClient.GetLiveByKeyAsync("TC1", "Buyer1", 6, "WG1").Returns(expected);
+
+            var result = await _service.GetLiveByKeyAsync("TC1", "Buyer1", 6, "WG1");
+
+            Assert.Same(expected, result);
+            await _pactMonthlyOutputApiClient.Received(1).GetLiveByKeyAsync("TC1", "Buyer1", 6, "WG1");
+        }
+
+        [Fact]
+        public async Task UpdateLiveAsync_WithDto_DelegatesToApiClient()
+        {
+            var dto = new PactMonthlyOutputDto { TestCode = "TC1", Buyer = "Buyer1", Month = 6, WorkGroup = "WG1", Volume = 10 };
+            var expected = ApiResponseDto<PactMonthlyOutputDto>.SuccessResponse(dto);
+            _pactMonthlyOutputApiClient.UpdateLiveAsync(dto).Returns(expected);
+
+            var result = await _service.UpdateLiveAsync(dto);
+
+            Assert.Same(expected, result);
+            await _pactMonthlyOutputApiClient.Received(1).UpdateLiveAsync(dto);
+        }
+
+        #endregion
+
+        #region ValidateLiveAsync Tests
+
+        [Fact]
+        public async Task ValidateLiveAsync_WithValidData_ReturnsNoErrors()
+        {
+            var dto = new PactMonthlyOutputDto
+            {
+                WorkGroup = "WG1",
+                TestCode = "TC1",
+                Buyer = "Buyer1",
+                Month = 6,
+                Volume = 100
+            };
+
+            _workGroupService.GetAllWorkGroupsAsync().Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse(
+            [
+                new WorkGroupDto { WorkGroupName = "WG1" }
+            ]));
+            _monthService.GetAllMonthsAsync().Returns(ApiResponseDto<List<MonthDto>>.SuccessResponse(
+            [
+                new MonthDto { Monthnumber = 6, Monthname = "June" }
+            ]));
+
+            var result = await _service.ValidateLiveAsync(dto);
+
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task ValidateLiveAsync_WithInvalidData_ReturnsExpectedErrors()
+        {
+            var dto = new PactMonthlyOutputDto
+            {
+                WorkGroup = "BAD-WG",
+                TestCode = "",
+                Buyer = "",
+                Month = 99,
+                Volume = 0
+            };
+
+            _workGroupService.GetAllWorkGroupsAsync().Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse(
+            [
+                new WorkGroupDto { WorkGroupName = "WG1" }
+            ]));
+            _monthService.GetAllMonthsAsync().Returns(ApiResponseDto<List<MonthDto>>.SuccessResponse(
+            [
+                new MonthDto { Monthnumber = 6, Monthname = "June" }
+            ]));
+
+            var result = await _service.ValidateLiveAsync(dto);
+
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            var fields = result.Data!.Select(x => x.Field).ToList();
+            Assert.Contains("Volume", fields);
+            Assert.Contains("WorkGroup", fields);
+            Assert.Contains("TestCode", fields);
+            Assert.Contains("Buyer", fields);
+            Assert.Contains("Month", fields);
+        }
+
+        #endregion
     }
 }

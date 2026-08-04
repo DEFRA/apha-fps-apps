@@ -413,6 +413,42 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
         }
 
         #endregion
+
+        #region GetLiveByKeyAsync
+
+        [Fact]
+        public async Task GetLiveByKeyAsync_WithMatchingCompositeKey_ReturnsEntity()
+        {
+            var monthlyTimes = new List<MonthlyTime>
+            {
+                new() { PactStaffId = "S1", TimeCode = "TC1", ParentProject = "PP1", Month = 6, WorkGroup = "WG1", FpsYear = DefaultFpsYear },
+                new() { PactStaffId = "S2", TimeCode = "TC2", ParentProject = "PP2", Month = 7, WorkGroup = "WG2", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(monthlyTimes);
+
+            var result = await repo.GetLiveByKeyAsync("S1", "TC1", 6, "PP1");
+
+            Assert.NotNull(result);
+            Assert.Equal("S1", result!.PactStaffId);
+            Assert.Equal("TC1", result.TimeCode);
+            Assert.Equal("PP1", result.ParentProject);
+        }
+
+        [Fact]
+        public async Task GetLiveByKeyAsync_WithNonMatchingCompositeKey_ReturnsNull()
+        {
+            var monthlyTimes = new List<MonthlyTime>
+            {
+                new() { PactStaffId = "S1", TimeCode = "TC1", ParentProject = "PP1", Month = 6, WorkGroup = "WG1", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(monthlyTimes);
+
+            var result = await repo.GetLiveByKeyAsync("S9", "TC1", 6, "PP1");
+
+            Assert.Null(result);
+        }
+
+        #endregion
     }
 }
 

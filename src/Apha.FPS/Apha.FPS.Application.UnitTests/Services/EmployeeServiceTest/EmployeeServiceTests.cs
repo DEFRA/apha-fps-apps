@@ -1042,5 +1042,70 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
         }
 
         #endregion
+
+        #region GetPactWorkGroupStaffAsync
+
+        [Fact]
+        public async Task GetPactWorkGroupStaffAsync_WithWorkGroup_ReturnsMappedPactStaff()
+        {
+            // Arrange
+            const string workGroup = "WG1";
+            var repositoryResult = new List<PactStaff>
+            {
+                new() { PactId = "P001", Name = "Alice", WorkGroupGrade = "WG1" }
+            };
+            var expectedDto = new List<PactStaffDto>
+            {
+                new() { PactId = "P001", Name = "Alice", WorkGroupGrade = "WG1" }
+            };
+
+            _mockRepository.GetPactWorkGroupStaffAsync(workGroup).Returns(repositoryResult);
+            _mockMapper.Map<IEnumerable<PactStaffDto>>(repositoryResult).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.GetPactWorkGroupStaffAsync(workGroup);
+
+            // Assert
+            result.Should().BeEquivalentTo(expectedDto);
+            await _mockRepository.Received(1).GetPactWorkGroupStaffAsync(workGroup);
+            _mockMapper.Received(1).Map<IEnumerable<PactStaffDto>>(repositoryResult);
+        }
+
+        [Fact]
+        public async Task GetPactWorkGroupStaffAsync_WithNullWorkGroup_ReturnsMappedPactStaff()
+        {
+            // Arrange
+            var repositoryResult = new List<PactStaff>();
+            var expectedDto = new List<PactStaffDto>();
+
+            _mockRepository.GetPactWorkGroupStaffAsync(null).Returns(repositoryResult);
+            _mockMapper.Map<IEnumerable<PactStaffDto>>(repositoryResult).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.GetPactWorkGroupStaffAsync(null);
+
+            // Assert
+            result.Should().BeEmpty();
+            await _mockRepository.Received(1).GetPactWorkGroupStaffAsync(null);
+            _mockMapper.Received(1).Map<IEnumerable<PactStaffDto>>(repositoryResult);
+        }
+
+        [Fact]
+        public async Task GetPactWorkGroupStaffAsync_WhenRepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            _mockRepository.GetPactWorkGroupStaffAsync(Arg.Any<string?>())
+                .Throws(new Exception("DB failure"));
+
+            // Act
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetPactWorkGroupStaffAsync("WG1"));
+
+            // Assert
+            exception.Message.Should().Be("DB failure");
+            _mockMapper.DidNotReceive().Map<IEnumerable<PactStaffDto>>(Arg.Any<IEnumerable<PactStaff>>());
+        }
+
+        #endregion
     }
 }

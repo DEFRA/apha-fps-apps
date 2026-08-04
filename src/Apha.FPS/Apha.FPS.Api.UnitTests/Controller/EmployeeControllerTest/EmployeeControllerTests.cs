@@ -669,5 +669,65 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
         }
 
         #endregion
+
+        #region GetPactWorkGroupStaffAsync
+
+        [Fact]
+        public async Task GetPactWorkGroupStaffAsync_WithWorkGroup_ReturnsOkResult()
+        {
+            // Arrange
+            const string workGroup = "WG1";
+            var serviceResult = new List<PactStaffDto>
+            {
+                new() { PactId = "P001", Name = "Alice", WorkGroupGrade = "WG1" }
+            };
+            var mappedResult = new List<PactStaffRes>
+            {
+                new() { PactId = "P001", Name = "Alice", WorkGroupGrade = "WG1" }
+            };
+
+            _serviceMock.GetPactWorkGroupStaffAsync(workGroup).Returns(serviceResult);
+            _mapperMock.Map<List<PactStaffRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetPactWorkGroupStaffAsync(workGroup);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+            await _serviceMock.Received(1).GetPactWorkGroupStaffAsync(workGroup);
+        }
+
+        [Fact]
+        public async Task GetPactWorkGroupStaffAsync_WithNullWorkGroup_ReturnsOkResult()
+        {
+            // Arrange
+            var serviceResult = new List<PactStaffDto>();
+            var mappedResult = new List<PactStaffRes>();
+
+            _serviceMock.GetPactWorkGroupStaffAsync(null).Returns(serviceResult);
+            _mapperMock.Map<List<PactStaffRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetPactWorkGroupStaffAsync(null);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+            await _serviceMock.Received(1).GetPactWorkGroupStaffAsync(null);
+        }
+
+        [Fact]
+        public async Task GetPactWorkGroupStaffAsync_WhenServiceThrows_ThrowsException()
+        {
+            // Arrange
+            _serviceMock.GetPactWorkGroupStaffAsync(Arg.Any<string?>())
+                .Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetPactWorkGroupStaffAsync("WG1"));
+        }
+
+        #endregion
     }
 }

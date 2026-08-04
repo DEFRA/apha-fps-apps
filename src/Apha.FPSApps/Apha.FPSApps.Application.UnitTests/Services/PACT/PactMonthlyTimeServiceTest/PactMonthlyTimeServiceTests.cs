@@ -184,5 +184,132 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyTimeServic
         }
 
         #endregion
+
+        #region Live Methods Tests
+
+        [Fact]
+        public async Task GetLiveAsync_WithValidFilters_DelegatesToApiClient()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected = ApiResponseDto<List<MonthlyTimeDto>>.SuccessResponse([]);
+            _pactMonthlyTimeApiClient.GetLiveAsync(query, "WG1", "TC1", "S001", "PP1", 6).Returns(expected);
+
+            var result = await _service.GetLiveAsync(query, "WG1", "TC1", "S001", "PP1", 6);
+
+            Assert.Same(expected, result);
+            await _pactMonthlyTimeApiClient.Received(1).GetLiveAsync(query, "WG1", "TC1", "S001", "PP1", 6);
+        }
+
+        [Fact]
+        public async Task GetLiveByKeyAsync_WithValidKey_DelegatesToApiClient()
+        {
+            var dto = new MonthlyTimeDto { PactStaffId = "S001", TimeCode = "TC1", Month = 6, ParentProject = "PP1" };
+            var expected = ApiResponseDto<MonthlyTimeDto>.SuccessResponse(dto);
+            _pactMonthlyTimeApiClient.GetLiveByKeyAsync("S001", "TC1", 6, "PP1").Returns(expected);
+
+            var result = await _service.GetLiveByKeyAsync("S001", "TC1", 6, "PP1");
+
+            Assert.Same(expected, result);
+            await _pactMonthlyTimeApiClient.Received(1).GetLiveByKeyAsync("S001", "TC1", 6, "PP1");
+        }
+
+        [Fact]
+        public async Task UpdateLiveAsync_WithDto_DelegatesToApiClient()
+        {
+            var dto = new MonthlyTimeDto { PactStaffId = "S001", TimeCode = "TC1", Month = 6, ParentProject = "PP1", Hours = 7 };
+            var expected = ApiResponseDto<MonthlyTimeDto>.SuccessResponse(dto);
+            _pactMonthlyTimeApiClient.UpdateLiveAsync(dto).Returns(expected);
+
+            var result = await _service.UpdateLiveAsync(dto);
+
+            Assert.Same(expected, result);
+            await _pactMonthlyTimeApiClient.Received(1).UpdateLiveAsync(dto);
+        }
+
+        #endregion
+
+        #region ValidateLiveAsync Tests
+
+        [Fact]
+        public async Task ValidateLiveAsync_WithValidData_ReturnsNoErrors()
+        {
+            var dto = new MonthlyTimeDto
+            {
+                WorkGroup = "WG1",
+                PactStaffId = "S001",
+                TimeCode = "TC1",
+                ParentProject = "PP1",
+                Month = 6,
+                Hours = 8
+            };
+
+            _workGroupService.GetAllWorkGroupsAsync().Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse(
+            [
+                new WorkGroupDto { WorkGroupName = "WG1" }
+            ]));
+            _timeCodeValidService.GetTimeCodeValidsByWorkGroupAsync("WG1").Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(
+            [
+                new TimeCodeValidDto { WorkGroup = "WG1", TimeCode = "TC1", ParentProject = "PP1" }
+            ]));
+            _timeCodeValidService.GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync("WG1", "TC1").Returns(ApiResponseDto<List<string>>.SuccessResponse(
+            [
+                "PP1"
+            ]));
+            _monthService.GetAllMonthsAsync().Returns(ApiResponseDto<List<MonthDto>>.SuccessResponse(
+            [
+                new MonthDto { Monthnumber = 6, Monthname = "June" }
+            ]));
+
+            var result = await _service.ValidateLiveAsync(dto);
+
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task ValidateLiveAsync_WithInvalidData_ReturnsExpectedErrors()
+        {
+            var dto = new MonthlyTimeDto
+            {
+                WorkGroup = "BAD-WG",
+                PactStaffId = "",
+                TimeCode = "BAD-TC",
+                ParentProject = "BAD-PP",
+                Month = 99,
+                Hours = 0
+            };
+
+            _workGroupService.GetAllWorkGroupsAsync().Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse(
+            [
+                new WorkGroupDto { WorkGroupName = "WG1" }
+            ]));
+            _timeCodeValidService.GetTimeCodeValidsByWorkGroupAsync("BAD-WG").Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(
+            [
+                new TimeCodeValidDto { WorkGroup = "WG1", TimeCode = "TC1", ParentProject = "PP1" }
+            ]));
+            _timeCodeValidService.GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync("BAD-WG", "BAD-TC").Returns(ApiResponseDto<List<string>>.SuccessResponse(
+            [
+                "PP1"
+            ]));
+            _monthService.GetAllMonthsAsync().Returns(ApiResponseDto<List<MonthDto>>.SuccessResponse(
+            [
+                new MonthDto { Monthnumber = 6, Monthname = "June" }
+            ]));
+
+            var result = await _service.ValidateLiveAsync(dto);
+
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            var fields = result.Data!.Select(x => x.Field).ToList();
+            Assert.Contains("Hours", fields);
+            Assert.Contains("WorkGroup", fields);
+            Assert.Contains("PactStaffId", fields);
+            Assert.Contains("TimeCode", fields);
+            Assert.Contains("ParentProject", fields);
+            Assert.Contains("Month", fields);
+        }
+
+        #endregion
     }
 }

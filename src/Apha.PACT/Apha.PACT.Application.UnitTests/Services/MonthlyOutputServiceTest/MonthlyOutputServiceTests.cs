@@ -428,5 +428,80 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyOutputServiceTest
         }
 
         #endregion
+
+        #region Live and Staging Operations
+
+        [Fact]
+        public async Task SearchLiveAsync_WithFilters_MapsAndDelegatesToRepository()
+        {
+            var query = DefaultQuery();
+            var paginationParams = DefaultPaginationParameters();
+            var paged = new PagedData<MonthlyOutput>([], new PaginationData());
+            var expected = new PaginatedResult<MonthlyOutputDto>([], new PaginationDto());
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.SearchLiveAsync(paginationParams, "WG1", "TC1", "B1", 6).Returns(paged);
+            _mockMapper.Map<PaginatedResult<MonthlyOutputDto>>(paged).Returns(expected);
+
+            var result = await _sut.SearchLiveAsync(query, "WG1", "TC1", "B1", 6);
+
+            result.Should().BeSameAs(expected);
+            await _mockRepository.Received(1).SearchLiveAsync(paginationParams, "WG1", "TC1", "B1", 6);
+        }
+
+        [Fact]
+        public async Task GetLiveByKeyAsync_WhenEntityExists_ReturnsMappedDto()
+        {
+            var entity = new MonthlyOutput { TestCode = "TC1", Buyer = "B1", WorkGroup = "WG1", Month = 6 };
+            var dto = new MonthlyOutputDto { TestCode = "TC1", Buyer = "B1", WorkGroup = "WG1", Month = 6 };
+
+            _mockRepository.GetLiveByKeyAsync("TC1", "B1", 6, "WG1").Returns(entity);
+            _mockMapper.Map<MonthlyOutputDto>(entity).Returns(dto);
+
+            var result = await _sut.GetLiveByKeyAsync("TC1", "B1", 6, "WG1");
+
+            result.Should().BeEquivalentTo(dto);
+        }
+
+        [Fact]
+        public async Task GetLiveByKeyAsync_WhenEntityMissing_ReturnsNull()
+        {
+            _mockRepository.GetLiveByKeyAsync("TC1", "B1", 6, "WG1").Returns((MonthlyOutput?)null);
+
+            var result = await _sut.GetLiveByKeyAsync("TC1", "B1", 6, "WG1");
+
+            result.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task DeleteLiveAsync_DelegatesToRepository()
+        {
+            _mockRepository.DeleteLiveAsync("TC1", "B1", 6, "WG1").Returns(true);
+
+            var result = await _sut.DeleteLiveAsync("TC1", "B1", 6, "WG1");
+
+            result.Should().BeTrue();
+            await _mockRepository.Received(1).DeleteLiveAsync("TC1", "B1", 6, "WG1");
+        }
+
+        [Fact]
+        public async Task SearchStagingAsync_WithFilters_MapsAndDelegatesToRepository()
+        {
+            var query = DefaultQuery();
+            var paginationParams = DefaultPaginationParameters();
+            var paged = new PagedData<StagingMonthlyOutput>([], new PaginationData());
+            var expected = new PaginatedResult<StagingMonthlyOutputDto>([], new PaginationDto());
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.SearchStagingAsync(paginationParams, "user1", true).Returns(paged);
+            _mockMapper.Map<PaginatedResult<StagingMonthlyOutputDto>>(paged).Returns(expected);
+
+            var result = await _sut.SearchStagingAsync(query, "user1", true);
+
+            result.Should().BeSameAs(expected);
+            await _mockRepository.Received(1).SearchStagingAsync(paginationParams, "user1", true);
+        }
+
+        #endregion
     }
 }

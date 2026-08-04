@@ -1809,6 +1809,113 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
 
         #endregion
 
+        #region GetPactWorkGroupStaffAsync Tests
+
+        [Fact]
+        public async Task GetPactWorkGroupStaffAsync_WithNullWorkGroup_ReturnsAllStaffOrderedByNameThenWorkGroupGrade()
+        {
+            // Arrange
+            var people = new List<PactStaff>
+            {
+                new() { Name = "Charlie", WorkGroupGrade = "WG2", PactId = "P003" },
+                new() { Name = "Alice", WorkGroupGrade = "WG2", PactId = "P002" },
+                new() { Name = "Alice", WorkGroupGrade = "WG1", PactId = "P001" }
+            };
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkGroupName = "Group A" },
+                new() { WorkGroupName = "Group B" }
+            };
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG1", WorkGroup = "Group A" },
+                new() { WgGrade = "WG2", WorkGroup = "Group B" }
+            };
+
+            var repo = CreateRepositoryForWorkGroupStaff(
+                people,
+                workgroups: workgroups,
+                pactWorkGroupGradeViews: pactGrades);
+
+            // Act
+            var result = (await repo.GetPactWorkGroupStaffAsync(null)).ToList();
+
+            // Assert
+            Assert.Equal(3, result.Count);
+            Assert.Equal("Alice", result[0].Name);
+            Assert.Equal("WG1", result[0].WorkGroupGrade);
+            Assert.Equal("Alice", result[1].Name);
+            Assert.Equal("WG2", result[1].WorkGroupGrade);
+            Assert.Equal("Charlie", result[2].Name);
+        }
+
+        [Fact]
+        public async Task GetPactWorkGroupStaffAsync_WithSpecificWorkGroup_ReturnsMatchingStaffOrderedByName()
+        {
+            // Arrange
+            var people = new List<PactStaff>
+            {
+                new() { Name = "Charlie", WorkGroupGrade = "WG2", PactId = "P003" },
+                new() { Name = "Bob", WorkGroupGrade = "WG1", PactId = "P002" },
+                new() { Name = "Alice", WorkGroupGrade = "WG1", PactId = "P001" }
+            };
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkGroupName = "Group A" },
+                new() { WorkGroupName = "Group B" }
+            };
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG1", WorkGroup = "Group A" },
+                new() { WgGrade = "WG2", WorkGroup = "Group B" }
+            };
+
+            var repo = CreateRepositoryForWorkGroupStaff(
+                people,
+                workgroups: workgroups,
+                pactWorkGroupGradeViews: pactGrades);
+
+            // Act
+            var result = (await repo.GetPactWorkGroupStaffAsync("Group A")).ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.All(result, x => Assert.Equal("WG1", x.WorkGroupGrade));
+            Assert.Equal("Alice", result[0].Name);
+            Assert.Equal("Bob", result[1].Name);
+        }
+
+        [Fact]
+        public async Task GetPactWorkGroupStaffAsync_WithUnknownWorkGroup_ReturnsEmptyList()
+        {
+            // Arrange
+            var people = new List<PactStaff>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1", PactId = "P001" }
+            };
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkGroupName = "Group A" }
+            };
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG1", WorkGroup = "Group A" }
+            };
+
+            var repo = CreateRepositoryForWorkGroupStaff(
+                people,
+                workgroups: workgroups,
+                pactWorkGroupGradeViews: pactGrades);
+
+            // Act
+            var result = await repo.GetPactWorkGroupStaffAsync("Group Z");
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        #endregion
+
         #region ApplyEmployeeFilter – missing branch coverage
 
         [Fact]
