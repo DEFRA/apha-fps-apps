@@ -63,7 +63,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class FecStagingGridItem : IHasValidationSummary
     {
         [Display(Name = "Status")]
-        [GridColumn(Order = 1, Width = 110, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 1, Width = 110, Type = GridColumnType.Text, IsFilterable = true)]
         public string Status { get; set; } = string.Empty;
 
         [Display(Name = "Test Code")]
@@ -83,23 +83,23 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal? FecNewRate { get; set; }
 
         [Display(Name = "Item Description")]
-        [GridColumn(Order = 6, Width = 200, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 6, Width = 200, Type = GridColumnType.Text, IsFilterable = true)]
         public string? ItemDescription { get; set; }
 
         [Display(Name = "Short Description")]
-        [GridColumn(Order = 7, Width = 160, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 7, Width = 160, Type = GridColumnType.Text, IsFilterable = true)]
         public string? ShortDescription { get; set; }
 
         [Display(Name = "Owner")]
-        [GridColumn(Order = 8, Width = 120, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 8, Width = 120, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Owner { get; set; }
 
         [Display(Name = "Comments")]
-        [GridColumn(Order = 9, Width = 200, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 9, Width = 200, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Comments { get; set; }
 
         [Display(Name = "Validation")]
-        [GridColumn(Order = 10, Width = 260, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 10, Width = 260, Type = GridColumnType.Text, IsFilterable = true)]
         public string? ValidationSummary { get; set; }
     }
 
@@ -107,7 +107,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class AgrupStagingGridItem : IHasValidationSummary
     {
         [Display(Name = "Status")]
-        [GridColumn(Order = 1, Width = 110, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 1, Width = 110, Type = GridColumnType.Text, IsFilterable = true)]
         public string Status { get; set; } = string.Empty;
 
         [Display(Name = "Test Code")]
@@ -139,11 +139,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public bool Active { get; set; }
 
         [Display(Name = "Comments")]
-        [GridColumn(Order = 9, Width = 200, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 9, Width = 200, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Comments { get; set; }
 
         [Display(Name = "Validation")]
-        [GridColumn(Order = 10, Width = 260, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 10, Width = 260, Type = GridColumnType.Text, IsFilterable = true)]
         public string? ValidationSummary { get; set; }
     }
 
@@ -151,7 +151,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class StaffStagingGridItem : IHasValidationSummary
     {
         [Display(Name = "Status")]
-        [GridColumn(Order = 1, Width = 110, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 1, Width = 110, Type = GridColumnType.Text, IsFilterable = true)]
         public string Status { get; set; } = string.Empty;
 
         [Display(Name = "PcGrade")]
@@ -183,7 +183,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal? OhrNew { get; set; }
 
         [Display(Name = "Validation")]
-        [GridColumn(Order = 9, Width = 260, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 9, Width = 260, Type = GridColumnType.Text, IsFilterable = true)]
         public string? ValidationSummary { get; set; }
     }
 
@@ -191,7 +191,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class AnimalStagingGridItem : IHasValidationSummary
     {
         [Display(Name = "Status")]
-        [GridColumn(Order = 1, Width = 110, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 1, Width = 110, Type = GridColumnType.Text, IsFilterable = true)]
         public string Status { get; set; } = string.Empty;
 
         [Display(Name = "Animal Type")]
@@ -199,11 +199,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string AnimalType { get; set; } = string.Empty;
 
         [Display(Name = "Species")]
-        [GridColumn(Order = 3, Width = 120, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 3, Width = 120, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Species { get; set; }
 
         [Display(Name = "Security Level")]
-        [GridColumn(Order = 4, Width = 130, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 4, Width = 130, Type = GridColumnType.Text, IsFilterable = true)]
         public string? SecurityLevel { get; set; }
 
         [Display(Name = "Daily Rate")]
@@ -227,7 +227,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public bool? PlanByWeek { get; set; }
 
         [Display(Name = "Validation")]
-        [GridColumn(Order = 10, Width = 260, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 10, Width = 260, Type = GridColumnType.Text, IsFilterable = true)]
         public string? ValidationSummary { get; set; }
     }
 }
