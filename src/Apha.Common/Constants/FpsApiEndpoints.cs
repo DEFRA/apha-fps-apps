@@ -33,6 +33,7 @@
         public const string GetAllPerson = "api/v1/employee/persons";
         public const string GetWorkGroupStaffPaginated = "api/v1/employee/WorkGroupStaff/paginated";
         public const string GetpactStaffs = "api/v1/employee/pactstaff";
+        public const string GetPactWorkGroupStaff = "api/v1/employee/PactWorkGroupStaff?workGroup={0}";
 
         // Lookup
         public const string GetAllStatuses = "api/v1/status";
@@ -197,6 +198,7 @@
         public const string GetAllProfitCentres = "api/v1/profitcentres/all";        
         public const string PatchProfitCentreSettings = "api/v1/profitcentres/settings";
         public const string GetPagedProfitCenterCostSummary = "api/v1/profitcentres/paged/costsummary";
+        public const string GetPagedWgStaffPlan = "api/v1/profitcentres/wgstaffplan";
 
         // Resource Set-Up — PC Grades
         public const string GetPcGrades = "api/v1/pcgrades?profitCentre={0}";

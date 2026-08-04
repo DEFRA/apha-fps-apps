@@ -134,6 +134,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Project Group Staff Plan view
             CreateMap<ProjectGroupStaffPlanViewDto, ProjectGroupStaffPlanViewRes>().ReverseMap();
 
+            // Workgroup Staff Plan view
+            CreateMap<WgStaffPlanViewDto, WgStaffPlanViewRes>().ReverseMap();
+
             CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
 
             // WorkgroupGrade

@@ -6,6 +6,7 @@
         public string Title { get; set; } = string.Empty;
         public List<DataGridColumn> Columns { get; set; }
         public List<T> Data { get; set; }
+        public decimal Total { get; set; }
         public bool ShowCheckboxColumn { get; set; }
         public bool ShowPagination { get; set; }
         public string KeyProperty { get; set; } = string.Empty;

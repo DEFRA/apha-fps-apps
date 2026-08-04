@@ -1,4 +1,5 @@
-﻿using Apha.FPSApps.Infrastructure.Mappings;
+﻿using Apha.Common.Utilities.Storage;
+using Apha.FPSApps.Infrastructure.Mappings;
 using Apha.FPSApps.Web.Mappings;
 using Apha.FPSApps.Web.Middleware;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -66,6 +67,9 @@ namespace Apha.FPSApps.Web.Extensions
 
             // Application services
             services.AddApplicationServices();
+
+            // Common AWS services
+            services.AddAwsS3Storage(configuration);
 
             // In-memory cache (used by FpsYearMiddleware)
             services.AddMemoryCache();
