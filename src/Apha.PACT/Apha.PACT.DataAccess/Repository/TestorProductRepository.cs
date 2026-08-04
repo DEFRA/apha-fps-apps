@@ -100,6 +100,26 @@ namespace Apha.PACT.DataAccess.Repository
                 .ToDictionaryAsync(t => t.ItemCode, t => t.UnitPriceVla);
         }
 
+        public async Task<bool> UpdateUnitPriceByCodeAsync(string itemCode, decimal? unitPrice)
+        {
+            // The Unit Cost shown on the Portfolio Components screen is the master price held on
+            // testorproduct.unitpricevla. Updating it here means every portfolio row for the same
+            // Test Code reflects the new value when the grid is displayed. All matching rows for
+            // the current FPS year are updated so the master price stays consistent.
+            var products = await _context.TestorProducts
+                .Where(t => t.ItemCode == itemCode && t.FpsYear == _fpsRequestContext.FpsYear)
+                .ToListAsync();
+
+            if (products.Count == 0)
+                return false;
+
+            foreach (var product in products)
+                product.UnitPriceVla = unitPrice;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         private static IQueryable<TestorProduct> ApplyTestOrProductFilter(IQueryable<TestorProduct> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))

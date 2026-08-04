@@ -103,6 +103,8 @@ namespace Apha.PACT.DataAccess.Repository
             entity.FpsYear = _fpsRequestContext.FpsYear;
 
             _context.Entry(entity).State = EntityState.Modified;
+            // Unit Cost is master data owned by testorproduct.unitpricevla and must not be persisted here.
+            _context.Entry(entity).Property(e => e.UnitCost).IsModified = false;
             await _context.SaveChangesAsync();
             return entity;
         }

@@ -1402,7 +1402,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
         }
 
         [Fact]
-        public async Task UpdateAsync_ExistingEntity_PersistsChangesAndReturnsEntity()
+        public async Task UpdateAsync_ExistingEntity_PersistsChangesButNotUnitCost()
         {
             // Arrange — in-memory context so Entry(...).State = Modified and SaveChangesAsync run for real
             var (context, repo) = CreateInMemoryContext(2025);
@@ -1426,7 +1426,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
             Assert.Equal(2025, result.FpsYear);
             context.ChangeTracker.Clear();
             var persisted = await context.TestCapabilities.FirstAsync(t => t.TestCode == "TC1" && t.WorkGroup == "WG1");
-            Assert.Equal(250m, persisted.UnitCost);
+            // Unit Cost is master data owned by testorproduct.unitpricevla and must not be persisted here.
+            Assert.Equal(100m, persisted.UnitCost);
         }
 
         #endregion

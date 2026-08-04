@@ -62,13 +62,10 @@ namespace Apha.PACT.Application.Services
                     if (descriptions != null && descriptions.TryGetValue(dto.TestCode, out var desc))
                         dto.ItemDescription = desc;
 
-                    // Fall back to the TestorProduct price when the record has no stored
-                    // UnitCost or the stored value is 0 (the DB column defaults to 0), so a
-                    // portfolio first shown with a 0 price is populated from the master table
-                    // while genuine user-edited unit costs (> 0) are preserved on the grid.
-                    if ((!dto.UnitCost.HasValue || dto.UnitCost.Value == 0m)
-                        && unitPrices != null
-                        && unitPrices.TryGetValue(dto.TestCode, out var unitPrice))
+                    // Unit Cost is sourced from the TestorProduct master (testorproduct.unitpricevla),
+                    // not from tlkptestcapability, so every portfolio row for the same Test Code shows
+                    // the same master price and reflects any update made to it.
+                    if (unitPrices != null && unitPrices.TryGetValue(dto.TestCode, out var unitPrice))
                         dto.UnitCost = unitPrice;
                 }
 
@@ -87,15 +84,11 @@ namespace Apha.PACT.Application.Services
 
             var dto = _mapper.Map<TestCapabilityDto>(entity);
 
-            // Fall back to the TestorProduct price when the record has no stored UnitCost or
-            // the stored value is 0 (the DB column defaults to 0), so editing shows the master
-            // unitpricevla instead of 0 while genuine user-edited unit costs (> 0) are kept.
-            if (!dto.UnitCost.HasValue || dto.UnitCost.Value == 0m)
-            {
-                var unitPrices = await _testorProductRepository.GetUnitPricesByCodesAsync([dto.TestCode]);
-                if (unitPrices != null && unitPrices.TryGetValue(dto.TestCode, out var unitPrice))
-                    dto.UnitCost = unitPrice;
-            }
+            // Unit Cost is sourced from the TestorProduct master (testorproduct.unitpricevla),
+            // not from tlkptestcapability, so the edit form always shows the master price.
+            var unitPrices = await _testorProductRepository.GetUnitPricesByCodesAsync([dto.TestCode]);
+            if (unitPrices != null && unitPrices.TryGetValue(dto.TestCode, out var unitPrice))
+                dto.UnitCost = unitPrice;
 
             return dto;
         }
@@ -132,6 +125,12 @@ namespace Apha.PACT.Application.Services
             var hasReqmts = await _testReqmtRepository.ExistsByTestBuyerCodeAsync(dto.TestCode + lookupWorkGroup);
             if (hasReqmts)
                 throw new InvalidOperationException("Cannot update, test requirements are dependant on this.");
+
+            // Unit Cost is the master price held on testorproduct.unitpricevla, not on
+            // tlkptestcapability. Persist any changed unit cost to the TestorProduct master so it
+            // is reflected for every portfolio row that shares the same Test Code.
+            if (dto.UnitCost.HasValue)
+                await _testorProductRepository.UpdateUnitPriceByCodeAsync(dto.TestCode, dto.UnitCost.Value);
 
             var entity = _mapper.Map<TestCapability>(dto);
             var updated = await _testCapabilityRepository.UpdateAsync(entity, lookupWorkGroup);
