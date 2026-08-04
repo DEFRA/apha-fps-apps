@@ -460,6 +460,83 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
 
         #endregion
 
+        #region UpdateUnitPriceByCodeAsync
+
+        [Fact]
+        public async Task UpdateUnitPriceByCodeAsync_MatchingRow_UpdatesPriceAndReturnsTrue()
+        {
+            // Arrange
+            var (context, repo) = CreateInMemoryContext(2024);
+            context.TestorProducts.Add(new TestorProduct { ItemCode = "T001", UnitPriceVla = 10m, FpsYear = 2024 });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            // Act
+            var result = await repo.UpdateUnitPriceByCodeAsync("T001", 55.25m);
+
+            // Assert
+            Assert.True(result);
+            context.ChangeTracker.Clear();
+            var row = await context.TestorProducts.FirstAsync(t => t.ItemCode == "T001");
+            Assert.Equal(55.25m, row.UnitPriceVla);
+        }
+
+        [Fact]
+        public async Task UpdateUnitPriceByCodeAsync_NoMatchingRows_ReturnsFalse()
+        {
+            // Arrange
+            var (context, repo) = CreateInMemoryContext(2024);
+            context.TestorProducts.Add(new TestorProduct { ItemCode = "T001", UnitPriceVla = 10m, FpsYear = 2024 });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            // Act
+            var result = await repo.UpdateUnitPriceByCodeAsync("MISSING", 55.25m);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task UpdateUnitPriceByCodeAsync_WrongFpsYear_ReturnsFalseAndLeavesRowsUnchanged()
+        {
+            // Arrange
+            var (context, repo) = CreateInMemoryContext(2024);
+            context.TestorProducts.Add(new TestorProduct { ItemCode = "T001", UnitPriceVla = 10m, FpsYear = 2023 });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            // Act
+            var result = await repo.UpdateUnitPriceByCodeAsync("T001", 55.25m);
+
+            // Assert
+            Assert.False(result);
+            context.ChangeTracker.Clear();
+            var row = await context.TestorProducts.IgnoreQueryFilters().FirstAsync(t => t.ItemCode == "T001");
+            Assert.Equal(10m, row.UnitPriceVla);
+        }
+
+        [Fact]
+        public async Task UpdateUnitPriceByCodeAsync_NullUnitPrice_SetsNullAndReturnsTrue()
+        {
+            // Arrange
+            var (context, repo) = CreateInMemoryContext(2024);
+            context.TestorProducts.Add(new TestorProduct { ItemCode = "T001", UnitPriceVla = 10m, FpsYear = 2024 });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            // Act
+            var result = await repo.UpdateUnitPriceByCodeAsync("T001", null);
+
+            // Assert
+            Assert.True(result);
+            context.ChangeTracker.Clear();
+            var row = await context.TestorProducts.FirstAsync(t => t.ItemCode == "T001");
+            Assert.Null(row.UnitPriceVla);
+        }
+
+        #endregion
+
         #region GetOwnersAsync
 
         [Fact]
