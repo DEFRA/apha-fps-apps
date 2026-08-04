@@ -54,11 +54,15 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public async Task<ApiResponseDto<List<TestRequirementDto>>> GetAllTestReqmtForExportAsync(
             string testCode, string? filter)
         {
-            var url = string.Format(PactApiEndpoints.GetAllTestReqmtForExport, Uri.EscapeDataString(testCode));
-            if (!string.IsNullOrWhiteSpace(filter))
-                url += $"?filter={Uri.EscapeDataString(filter)}";
+            var baseUrl = string.Format(PactApiEndpoints.GetAllTestReqmtForExport, Uri.EscapeDataString(testCode));
 
-            var response = await _http.GetAsync<List<TestRequirementtRes>>(url);
+            // Only add filter if it's not null, empty, or just empty JSON braces
+            if (!string.IsNullOrWhiteSpace(filter) && filter != "{}")
+            {
+                baseUrl += $"?filter={Uri.EscapeDataString(filter)}";
+            }
+
+            var response = await _http.GetAsync<List<TestRequirementtRes>>(baseUrl);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(response);
 
