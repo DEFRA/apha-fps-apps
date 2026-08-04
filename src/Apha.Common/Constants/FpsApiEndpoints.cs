@@ -185,6 +185,7 @@
         public const string GetAllProfitCentres = "api/v1/profitcentres/all";        
         public const string PatchProfitCentreSettings = "api/v1/profitcentres/settings";
         public const string GetPagedProfitCenterCostSummary = "api/v1/profitcentres/paged/costsummary";
+        public const string GetPagedWgStaffPlan = "api/v1/profitcentres/wgstaffplan";
 
         // Resource Set-Up — PC Grades
         public const string GetPcGrades = "api/v1/pcgrades?profitCentre={0}";
