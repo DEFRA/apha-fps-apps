@@ -2974,7 +2974,9 @@ th.sorted-desc {
 }
 /* Override button positioning to move Add button to rightmost */
 
-#gridContainer_milestonesGrid .editable-grid-container > div > h2 > .sup_flex_space_between, #gridContainer_milestoneFormDatesGrid .editable-grid-container > div > h2 > .sup_flex_space_between {
+#gridContainer_milestonesGrid .editable-grid-container > div > h2 > .sup_flex_space_between,
+#gridContainer_milestoneFormDatesGrid .editable-grid-container > div > h2 > .sup_flex_space_between, 
+#gridContainer_comments .editable-grid-container > div > h2 > .sup_flex_space_between {
     display: flex !important;
     justify-content: end !important;
 }
