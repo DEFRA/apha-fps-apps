@@ -111,8 +111,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WgStaffPlanControllerTest
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<WgStaffPlanViewModel>(viewResult.Model);
-            Assert.Empty(model.SelectedResourceCentre);
-            Assert.Empty(model.SelectedWorkGroup);
+            Assert.True(string.IsNullOrEmpty(model.SelectedResourceCentre));
+            Assert.True(string.IsNullOrEmpty(model.SelectedWorkGroup));
             Assert.NotNull(model.Grid);
         }
 
@@ -143,7 +143,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WgStaffPlanControllerTest
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<WgStaffPlanViewModel>(viewResult.Model);
             Assert.Equal(TestResourceCentre, model.SelectedResourceCentre);
-            Assert.Empty(model.SelectedWorkGroup);
+            Assert.True(string.IsNullOrEmpty(model.SelectedWorkGroup));
             Assert.Single(model.WorkGroupList);
         }
 
@@ -209,7 +209,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WgStaffPlanControllerTest
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<WgStaffPlanViewModel>(viewResult.Model);
-            Assert.Empty(model.SelectedResourceCentre);
+            Assert.True(string.IsNullOrEmpty(model.SelectedResourceCentre));
         }
 
         [Fact]
