@@ -16,6 +16,7 @@ namespace Apha.FPS.Core.Interfaces
         // Animal Cost (AnimalJob)
         Task<List<Animal>> GetAnimalLookup();
         Task<PagedData<AnimalCostView>> GetAnimalCostAsync(PaginationParameters<string> query, string jobCode);
+        Task<PagedData<AnimalSnapshotView>> GetAnimalSnapshotAsync(PaginationParameters<string> query);
         Task<decimal> GetTotalAnimalCostAsync(string jobCode);
         Task<AnimalCostView?> GetAnimalCostViewByIdAsync(int indCounter, string jobCode);
         Task<decimal?> GetAnimalRateByIdAsync(string animalType, string jobCode);

@@ -86,6 +86,14 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<PaginatedResult<AnimalCostViewDto>>(animalCostViews);
         }
 
+        public async Task<PaginatedResult<AnimalSnapshotViewDto>> GetAnimalSnapshotAsync(QueryParameters<string> query)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+            var filter = _mapper.Map<PaginationParameters<string>>(query);
+            var animalSnapshots = await _animalRepository.GetAnimalSnapshotAsync(filter);
+            return _mapper.Map<PaginatedResult<AnimalSnapshotViewDto>>(animalSnapshots);
+        }
+
         public async Task<List<AnimalDto>> GetAnimalLookupAsync()
         {
             var animalLookup = await _animalRepository.GetAnimalLookup();

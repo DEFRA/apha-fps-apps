@@ -28,6 +28,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<ProjectView, Project>().ReverseMap();
             CreateMap<Contract, ContractDto>().ReverseMap();
             CreateMap<AnimalCostView, AnimalCostViewDto>().ReverseMap();
+            CreateMap<AnimalSnapshotView, AnimalSnapshotViewDto>().ReverseMap();
             CreateMap<Animal, AnimalDto>().ReverseMap();
             CreateMap<AnimalRequest, AnimalRequestDto>().ReverseMap();
             CreateMap<AccountCode, AccountCodeDto>().ReverseMap();
@@ -94,6 +95,8 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             // BudgetResourceLevel
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
+            CreateMap<GenericBidView, GenericBidViewDto>().ReverseMap();
+            CreateMap<ProjectExceptionalCostView, ProjectExceptionalCostViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
             //   All 5 log entities from fps schema partitioned tables.
             //   Property names are fully aligned between entity and DTO; no ForMember overrides needed.

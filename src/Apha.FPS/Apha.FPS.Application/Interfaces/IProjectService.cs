@@ -37,5 +37,8 @@ namespace Apha.FPS.Application.Interfaces
 
         // Resource Replan — staff data for a workgroup, paged/filtered/sorted
         Task<PaginatedResult<ProjectStaffReplanDto>> GetProjectStaffReplanAsync(QueryParameters<string> query, string workgroup);
+
+        // Exceptional (additional) costs — paged/filtered/sorted
+        Task<PaginatedResult<ProjectExceptionalCostViewDto>> GetProjectExceptionalCostsPagedAsync(QueryParameters<string> query);
     }
 }

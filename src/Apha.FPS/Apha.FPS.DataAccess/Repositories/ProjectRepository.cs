@@ -280,6 +280,95 @@ namespace Apha.FPS.DataAccess.Repositories
             };
         }
 
+
+        public async Task<PagedData<ProjectExceptionalCostView>> GetProjectExceptionalCostsPagedAsync(PaginationParameters<string> query)
+        {
+            // Base join: Project → Program → AdditionalCost
+            // Directorate (Program), Programme/ContractNumber/Project (Project),
+            // AccountCat/Description/ItemCost (AdditionalCost)
+            var rows = await (
+                from prj in _dbContext.Projects.AsNoTracking()
+                join prg in _dbContext.Programs.AsNoTracking()
+                    on prj.Program equals prg.ProgramNo
+                join ac in _dbContext.AdditionalCosts.AsNoTracking()
+                    on prj.ParentProject equals ac.JobCode
+                select new ProjectExceptionalCostView
+                {
+                    Directorate    = prg.Directorate,
+                    Programme      = prj.Program,
+                    ContractNumber = prj.Contract,
+                    Project        = prj.ParentProject,
+                    AccountCat     = ac.Account,
+                    Description    = ac.Description,
+                    ItemCost       = ac.ItemCost
+                })
+                .Distinct()
+                .OrderBy(r => r.Directorate)
+                    .ThenBy(r => r.Programme)
+                    .ThenBy(r => r.Project)
+                .ToListAsync();
+
+            rows = ApplyProjectExceptionalCostFilter(rows, query.Filter);
+            rows = ApplyProjectExceptionalCostSort(rows, query.SortBy, query.Descending);
+
+            return ApplyPaging(rows, query.Page > 0 ? query.Page : 1, query.PageSize > 0 ? query.PageSize : 10);
+        }
+
+        private static List<ProjectExceptionalCostView> ApplyProjectExceptionalCostFilter(
+            List<ProjectExceptionalCostView> rows, string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return rows;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return rows;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("Directorate", out var directorate) && directorate != null)
+                rows = rows.Where(r => r.Directorate != null &&
+                    r.Directorate.Contains(directorate.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (dict.TryGetValue("Programme", out var programme) && programme != null)
+                rows = rows.Where(r => r.Programme != null &&
+                    r.Programme.Contains(programme.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (dict.TryGetValue("ContractNumber", out var contract) && contract != null)
+                rows = rows.Where(r => r.ContractNumber != null &&
+                    r.ContractNumber.Contains(contract.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (dict.TryGetValue("Project", out var project) && project != null)
+                rows = rows.Where(r => r.Project != null &&
+                    r.Project.Contains(project.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (dict.TryGetValue("AccountCat", out var account) && account != null)
+                rows = rows.Where(r => r.AccountCat != null &&
+                    r.AccountCat.Contains(account.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (dict.TryGetValue("Description", out var description) && description != null)
+                rows = rows.Where(r => r.Description != null &&
+                    r.Description.Contains(description.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            return rows;
+        }
+
+        private static List<ProjectExceptionalCostView> ApplyProjectExceptionalCostSort(
+            List<ProjectExceptionalCostView> rows, string? sortBy, bool descending)
+        {
+            return sortBy?.ToLower() switch
+            {
+                "directorate"    => descending ? rows.OrderByDescending(r => r.Directorate).ToList()    : rows.OrderBy(r => r.Directorate).ToList(),
+                "programme"      => descending ? rows.OrderByDescending(r => r.Programme).ToList()      : rows.OrderBy(r => r.Programme).ToList(),
+                "contractnumber" => descending ? rows.OrderByDescending(r => r.ContractNumber).ToList() : rows.OrderBy(r => r.ContractNumber).ToList(),
+                "project"        => descending ? rows.OrderByDescending(r => r.Project).ToList()        : rows.OrderBy(r => r.Project).ToList(),
+                "accountcat"     => descending ? rows.OrderByDescending(r => r.AccountCat).ToList()     : rows.OrderBy(r => r.AccountCat).ToList(),
+                "description"    => descending ? rows.OrderByDescending(r => r.Description).ToList()    : rows.OrderBy(r => r.Description).ToList(),
+                "itemcost"       => descending ? rows.OrderByDescending(r => r.ItemCost).ToList()       : rows.OrderBy(r => r.ItemCost).ToList(),
+                _                => rows
+            };
+        }
+
         public async Task<PagedData<ProjectView>> GetPagedProjectsByUserAsync(PaginationParameters<string> query)
         {
             var queryable = _dbContext.ProjectViews
