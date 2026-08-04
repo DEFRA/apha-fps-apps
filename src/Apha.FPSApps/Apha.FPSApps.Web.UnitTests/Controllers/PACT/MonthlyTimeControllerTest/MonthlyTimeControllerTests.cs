@@ -136,7 +136,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyTimeControllerTest
 
             var json = Assert.IsType<JsonResult>(result);
             var success = json.Value?.GetType().GetProperty("success")?.GetValue(json.Value);
-            Assert.Equal(false, success);
+            Assert.NotNull(success);
+            Assert.IsType<bool>(success);
+            Assert.False((bool)success);
         }
     }
 }

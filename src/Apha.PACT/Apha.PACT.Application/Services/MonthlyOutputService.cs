@@ -35,8 +35,6 @@ namespace Apha.PACT.Application.Services
             _testRequirementRepository = testRequirementRepository ?? throw new ArgumentNullException(nameof(testRequirementRepository));
         }
 
-        // ── Log ──────────────────────────────────────────────────────────────────
-
         public async Task<PaginatedResult<MonthlyOutputLogDto>> GetMonthlyOutputLogAsync(
             QueryParameters<string> query,
             string? workGroup,
@@ -51,8 +49,6 @@ namespace Apha.PACT.Application.Services
             var result = await _repository.GetMonthlyOutputLogAsync(filter, workGroup, testCode, buyer, dateImported, month, userId, insertDelete);
             return _mapper.Map<PaginatedResult<MonthlyOutputLogDto>>(result);
         }
-
-        // ── Live ─────────────────────────────────────────────────────────────────
 
         public async Task<PaginatedResult<MonthlyOutputDto>> SearchLiveAsync(
             QueryParameters<string> query,
@@ -89,8 +85,6 @@ namespace Apha.PACT.Application.Services
         {
             return await _repository.DeleteLiveAsync(testCode, buyer, month, workGroup);
         }
-
-        // ── Staging ──────────────────────────────────────────────────────────────
 
         public async Task<PaginatedResult<StagingMonthlyOutputDto>> SearchStagingAsync(
             QueryParameters<string> query,
@@ -141,8 +135,6 @@ namespace Apha.PACT.Application.Services
         {
             return await _repository.DeleteFailedStagingByUserAsync(importedBy);
         }
-
-        // ── Import ───────────────────────────────────────────────────────────────
 
         public async Task<MonthlyOutputImportResultDto> ImportStagingAsync(MonthlyOutputImportDto request, string importedBy)
         {
@@ -228,8 +220,6 @@ namespace Apha.PACT.Application.Services
             };
         }
 
-        // ── Validate ─────────────────────────────────────────────────────────────
-
         public async Task<MonthlyOutputValidateResultDto> ValidateStagingAsync(string importedBy)
         {
             await _repository.RemoveZeroAndNullVolumeRecordsAsync(importedBy);
@@ -253,8 +243,6 @@ namespace Apha.PACT.Application.Services
             return result;
         }
 
-        // ── Make Live ────────────────────────────────────────────────────────────
-
         public async Task<MonthlyOutputMakeLiveResultDto> MakeLiveAsync(string importedBy)
         {
             if (await _repository.HasFailedStagingAsync(importedBy))
@@ -276,7 +264,6 @@ namespace Apha.PACT.Application.Services
             };
         }
 
-        // ── Validation helpers ───────────────────────────────────────────────────
 
         private async Task ValidateSingleRecordAsync(StagingMonthlyOutput entity)
         {

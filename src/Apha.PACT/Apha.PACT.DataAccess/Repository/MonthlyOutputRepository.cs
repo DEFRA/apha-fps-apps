@@ -61,7 +61,6 @@ namespace Apha.PACT.DataAccess.Repository
             return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
-        // ── Live record helpers ──────────────────────────────────────────────────
 
         public async Task<bool> ExistsByTestCodeAndWorkGroupAsync(string testCode, string workGroup)
         {
@@ -78,7 +77,6 @@ namespace Apha.PACT.DataAccess.Repository
                             && (int)m.Month == (int)month && m.WorkGroup == workGroup);
         }
 
-        // ── Live CRUD ────────────────────────────────────────────────────────────
 
         public async Task<PagedData<MonthlyOutput>> SearchLiveAsync(
             PaginationParameters<string> query,
@@ -156,7 +154,6 @@ namespace Apha.PACT.DataAccess.Repository
             return true;
         }
 
-        // ── Staging CRUD ─────────────────────────────────────────────────────────
 
         public async Task<PagedData<StagingMonthlyOutput>> SearchStagingAsync(
             PaginationParameters<string> query,
@@ -297,7 +294,6 @@ namespace Apha.PACT.DataAccess.Repository
                 .AnyAsync(x => x.ImportedBy == importedBy && x.Passed == false);
         }
 
-        // ── Make Live ────────────────────────────────────────────────────────────
 
         public async Task<(int ProcessedCount, int ImportedCount, int FailedCount)> MakeLiveAsync(string importedBy)
         {
@@ -409,7 +405,6 @@ namespace Apha.PACT.DataAccess.Repository
                 entry.State = EntityState.Detached;
         }
 
-        // ── Helpers ──────────────────────────────────────────────────────────────
 
         private static IQueryable<StagingMonthlyOutput> ApplyStagingFilter(IQueryable<StagingMonthlyOutput> stagingQuery, string? filter)
         {

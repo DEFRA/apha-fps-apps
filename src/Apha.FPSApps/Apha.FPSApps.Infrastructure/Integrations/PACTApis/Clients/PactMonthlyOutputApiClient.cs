@@ -49,9 +49,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var dto = _mapper.Map<ApiResponseDto<List<MonthlyOutputLogDto>>>(response);
             return ApiResponseDto<List<MonthlyOutputLogDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
-
-        // ── Live ─────────────────────────────────────────────────────────────────
-
+        
         public async Task<ApiResponseDto<List<PactMonthlyOutputDto>>> GetLiveAsync(
             QueryParameters<string> query,
             string? workGroup,

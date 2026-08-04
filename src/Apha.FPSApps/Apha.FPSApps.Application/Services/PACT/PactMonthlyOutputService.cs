@@ -43,17 +43,13 @@ namespace Apha.FPSApps.Application.Services.PACT
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
             _logger = logger;
-        }
-
-        // ── Log ──────────────────────────────────────────────────────────────────
+        }        
 
         public async Task<ApiResponseDto<List<MonthlyOutputLogDto>>> SearchAsync(
             QueryParameters<string> query,
             MonthlyOutputLogFilterDto filter)
             => await _pactApiClient.PactMonthlyOutput.SearchAsync(query, filter);
-
-        // ── Live ─────────────────────────────────────────────────────────────────
-
+        
         public async Task<ApiResponseDto<List<PactMonthlyOutputDto>>> GetLiveAsync(
             QueryParameters<string> query,
             string? workGroup,
@@ -129,9 +125,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             => await _pactApiClient.PactMonthlyOutput.DeleteAllStagingByUserAsync();
 
         public async Task<ApiResponseDto<bool>> DeleteFailedStagingByUserAsync()
-            => await _pactApiClient.PactMonthlyOutput.DeleteFailedStagingByUserAsync();
-
-        // ── Import ───────────────────────────────────────────────────────────────
+            => await _pactApiClient.PactMonthlyOutput.DeleteFailedStagingByUserAsync();        
 
         public async Task<ApiResponseDto<MonthlyOutputImportResultDto>> ImportMonthlyOutputAsync(IFormFile file, short importType)
         {
@@ -277,8 +271,6 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<MonthlyOutputMakeLiveResultDto>> MakeLiveAsync()
             => await _pactApiClient.PactMonthlyOutput.MakeLiveAsync();
-
-        // ── Helpers ──────────────────────────────────────────────────────────────
 
         private MonthlyOutputImportRowDto MapOutputRow(IXLRangeRow row, Dictionary<string, int> headerMap)
         {

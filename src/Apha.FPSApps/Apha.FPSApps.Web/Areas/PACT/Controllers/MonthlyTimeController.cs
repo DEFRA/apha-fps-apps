@@ -318,11 +318,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!shouldApplyNameUpdating)
                 return Json(new { success = true, message = model.Id == 0 ? "Staging record added successfully." : "Staging record updated successfully." });
 
+            var originalWorkGroup = existingRecord!.WorkGroup;
+            var originalPactStaffId = existingRecord.PactStaffId;
+
             var bulkUpdateResponse = await _monthlyTimeService.BulkUpdateStagingNamesAsync(new BulkUpdateStagingMonthlyTimeNamesDto
             {
                 ExcludeId = model.Id,
-                OriginalWorkGroup = existingRecord.WorkGroup,
-                OriginalPactStaffId = existingRecord.PactStaffId,
+                OriginalWorkGroup = originalWorkGroup,
+                OriginalPactStaffId = originalPactStaffId,
                 NewName = model.Name,
                 NewPactStaffId = model.PactStaffId,
                 NewPactId = model.PactId
