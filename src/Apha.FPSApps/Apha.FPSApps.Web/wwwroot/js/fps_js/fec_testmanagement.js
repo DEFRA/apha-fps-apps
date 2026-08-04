@@ -398,7 +398,7 @@ var BulkRates = (function () {
         ajaxPost(
             '/FPS/BulkRates/Cancel',
             { id: _pendingCancelId, reason: reasonVal },
-            function () { window.location.href = '/FPS/BulkRates/Index'; },
+            function () { window.fpsNavigateTo('/FPS/BulkRates/Index'); },
             function (msg) {
                 if (btn) { btn.disabled = false; }
                 alert(msg);
