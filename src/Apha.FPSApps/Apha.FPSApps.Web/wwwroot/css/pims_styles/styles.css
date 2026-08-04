@@ -73,6 +73,11 @@
     text-align: right;
 }
 
+.sup_btn_input_height {
+    padding: 5px 10px;
+    line-height: 1.2;
+}
+
 /*menu*/
 
 :root {
@@ -929,10 +934,13 @@ select {
     line-height: normal;
 }
 
-.selectedProjectForm .headline {
-    margin-left: -5px;
-    background: aliceblue;
-    margin-top: -10px;
+    .selectedProjectForm .headline {
+        margin-left: -5px;
+       
+        margin-top: -10px;
+    }
+.selectedProjectForm h6 {
+    background: #f4f8fb !important;
 }
 
 .flexbox-column {
