@@ -45,7 +45,7 @@
                             </div>
 
                             @* Process Rules *@
-                            <div class="govuk-grid-column-full sup_p_0">
+                            <div class="govuk-grid-column-full">
                                 <section class="sup_border govuk-!-padding-3" aria-labelledby="process-rules-title">
                                     <h2 class="govuk-heading-s govuk-!-margin-bottom-2" id="process-rules-title">Process Rules</h2>
                                     <ul class="govuk-list govuk-list--bullet govuk-!-font-size-16 govuk-!-margin-bottom-0">
@@ -68,7 +68,7 @@
                                 </div>
 
                                 <div class="govuk-grid-row">
-                                    <div class="govuk-grid-column-one-half sup_p_0">
+                                    <div class="govuk-grid-column-one-half ">
                                         <div id="gridContainer_yearEndConfigValuesGrid">
                                             @await Html.PartialAsync("_DataGrid", Model.ConfigValuesGrid)
                                         </div>
@@ -83,7 +83,7 @@
                             </div>
 
                             @* Month Working Hours Grid *@
-                            <div class="govuk-grid-column-full sup_p_0 govuk-!-margin-top-3 govuk-!-margin-bottom-3">
+                            <div class="govuk-grid-column-full govuk-!-margin-top-3 govuk-!-margin-bottom-3">
                                 <div id="gridContainer_yearEndMonthHoursGrid">
                                     @await Html.PartialAsync("_DataGrid", Model.MonthHoursGrid)
                                 </div>
@@ -93,7 +93,7 @@
 
                         @* Release History Grid *@
                         <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
-                            <div class="govuk-grid-column-full sup_p_0">
+                            <div class="govuk-grid-column-full">
                                 <div id="gridContainer_yearEndInitiationHistoryGrid">
                                     @await Html.PartialAsync("_DataGrid", Model.HistoryGrid)
                                 </div>
@@ -102,7 +102,7 @@
 
                         @* Action Buttons *@
                         <div class="govuk-grid-row sup_margin_left_right_10 govuk-!-margin-top-2">
-                            <div class="govuk-grid-column-full govuk-!-padding-left-0 govuk-!-padding-right-0">
+                            <div class="govuk-grid-column-full">
                                 <div class="approval-buttons-row">
                                     <div class="govuk-button-group sup_flex_end_center approval-buttons-group">
                                         <button type="button" class="govuk-button" data-module="govuk-button"
