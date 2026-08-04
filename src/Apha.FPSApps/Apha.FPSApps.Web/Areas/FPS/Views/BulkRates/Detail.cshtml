@@ -283,7 +283,9 @@
                                    request never requires scrolling past a potentially long grid to reach them. ── *@
                                 @if (Model.CanRelease || Model.CanApprove || Model.CanReject || Model.CanCancel)
                                 {
-                                    <div class="govuk-button-group govuk-!-margin-bottom-4">
+                                    <section class="sup_border govuk-!-padding-3 govuk-!-margin-bottom-4" aria-labelledby="actions-section-title">
+                                    <h3 class="govuk-visually-hidden" id="actions-section-title">Actions</h3>
+                                    <div class="govuk-button-group govuk-!-margin-bottom-0">
 
                                         @* Release — initiator + Initiated + no blocking errors *@
                                         @if (Model.CanRelease)
@@ -324,6 +326,7 @@
                                         }
 
                                     </div>
+                                    </section>
                                 }
 
                                 @* ── FEC Data (Staging) / Agrup Details — staged rows for this request vs. live data ── *@
