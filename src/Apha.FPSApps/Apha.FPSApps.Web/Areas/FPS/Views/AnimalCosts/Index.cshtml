@@ -86,8 +86,27 @@
                            readonly
                            aria-label="Total cost">
                 </div>
+                <div class="govuk-form-group govuk-!-margin-bottom-0 govuk-!-margin-left-3">
+                   
+                </div>
             </div>
         </div>
+
+        <div class="govuk-grid-column-one-third govuk-!-padding-right-0">
+            <div class="pva-summary-card asu-side-card">
+                <div class="asu-side-actions">
+                     <button type="button"
+                            id="asuExportBtn"
+                            class="govuk-button govuk-button--primary asu-side-button"
+                            data-module="govuk-button"
+                            role="button"
+                            disabled
+                            onclick="exportAnimalCosts()">
+                        Download Animal data<br>For email attachement
+                    </button>
+                </div>
+            </div>
+       </div>
     </div>
 </div>
 
@@ -142,6 +161,9 @@
             document.getElementById('animal-type-input').value = label;
             document.getElementById('animal-type-panel').style.display = 'none';
 
+            // Enable the Excel export now that an animal type is selected
+            document.getElementById('asuExportBtn').disabled = !value;
+
             // Reset totals while grid reloads
             document.getElementById('asuTotalDays').value = '0';
             document.getElementById('asuTotalCost').value = '£0.00';
@@ -171,6 +193,14 @@
                 document.getElementById('animal-type-panel').style.display = 'none';
             }
         });
+
+        // ── Export the currently selected animal type's cost records to Excel ──
+
+        function exportAnimalCosts() {
+            if (!currentAnimalType) return;
+            const url = '@Url.Action("Export", "AnimalCosts", new { area = "FPS" })';
+            window.location.href = url;
+        }
 
         // ── Extra filter passed to LoadAnimalCostsGrid (mirrors fsubAnimalCosts LinkMasterFields) ──
 

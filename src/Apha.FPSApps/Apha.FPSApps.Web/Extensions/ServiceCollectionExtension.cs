@@ -1,5 +1,6 @@
 ﻿using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.ExcelImport;
+using Apha.Common.Utilities.GenericExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -63,6 +64,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ITestListVlaService, TestListVlaService>();
             services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IGenericExcelExporter, GenericExcelExporter>();
             services.AddScoped<IExcelImportService, ExcelImportService>();
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IAdditionalCostService, AdditionalCostService>();
