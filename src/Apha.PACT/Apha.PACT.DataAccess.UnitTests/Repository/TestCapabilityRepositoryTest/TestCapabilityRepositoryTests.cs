@@ -1538,7 +1538,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
         {
             var repo = CreateRepository([]);
 
-            await repo.BuildTestPlanSummaryAsync(); // should complete synchronously
+            var task = repo.BuildTestPlanSummaryAsync(); // should complete synchronously
+            await task;
+
+            Assert.True(task.IsCompletedSuccessfully);
         }
 
         #endregion
