@@ -66,7 +66,7 @@ namespace Apha.FPS.Application.Services
             return await _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(jobName);
         }
 
-        public async Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, int contextyear, string requestedBy, string correlationId)
+        public async Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
 
@@ -82,13 +82,13 @@ namespace Apha.FPS.Application.Services
 
             try
             {
-                await SendEmailAsync(false, CancellationToken.None);
+                await SendEmailAsync(YearEndDataSetupJobName, false, CancellationToken.None);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to send Year End initiation notification email.");
             }
-           
+
             return _mapper.Map<BatchJobQueueDto>(queued);
         }
 
@@ -106,7 +106,7 @@ namespace Apha.FPS.Application.Services
 
             var queued = await _yearEndRepository.EnqueueDataSetupApprovalBatchJobAsync(YearEndDataSetupJobName, requestedBy, correlationId, note);
 
-            var eventDetail = BuildYearEndDataSetupJobEvent(requestedBy, correlationId, plannedYear);
+            var eventDetail = BuildYearEndDataSetupJobEvent(YearEndDataSetupJobName, requestedBy, correlationId, plannedYear);
 
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
 
@@ -115,7 +115,7 @@ namespace Apha.FPS.Application.Services
 
             try
             {
-                await SendEmailAsync(true, CancellationToken.None);
+                await SendEmailAsync(YearEndDataSetupJobName, true, CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -125,47 +125,43 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<BatchJobEventTriggerDto>(result);
         }
 
-        private async Task ValidateDataSetupRequestInput(int plannedYear, string requestedBy, List<BusinessValidationError> errors, string jobName, bool isApprovalReq)
+        private async Task ValidateDataSetupRequestInput(int plannedYear, string requestedBy, List<BusinessValidationError> errors, string jobName, bool isApprovalRequest)
         {
             if (plannedYear == 0 || (plannedYear < 1900 || plannedYear > 9999))
                 errors.Add(new BusinessValidationError($"PlannedYear is not valid.", "INVALID_PlannedYear"));
 
-            if (string.IsNullOrEmpty(requestedBy) && !isApprovalReq)
+            if (string.IsNullOrEmpty(requestedBy))
             {
-                errors.Add(new BusinessValidationError($"Unable to identify the requester. Please sign in again and retry. If the issue persists, contact support.", "INVALID_User"));
-            }
-            else if (string.IsNullOrEmpty(requestedBy) && isApprovalReq)
-            {
-                errors.Add(new BusinessValidationError($"Unable to identify the approver. Please sign in again and retry. If the issue persists, contact support.", "INVALID_User"));
+                var userRole = isApprovalRequest ? "approver" : "requester";
+                errors.Add(new BusinessValidationError($"Unable to identify the {userRole}. Please sign in again and retry. If the issue persists, contact support.", "INVALID_User"));
             }
 
             var plannedYearEntity = await _yearMasterRepository.GetFpsYearByIdAsync(plannedYear);
 
-            if (plannedYearEntity != null)
+            if (plannedYearEntity != null && string.Equals(plannedYearEntity.YearStatus, "planned", StringComparison.OrdinalIgnoreCase))
             {
-               errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year {plannedYear}. You cannot reinitiate request.", "INVALID_Rerun"));
+                errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year {plannedYear}. You cannot reinitiate or approve request.", "INVALID_Rerun"));
             }
 
-            if (jobName != null && jobName == YearEndDataSetupJobName && !isApprovalReq)
+            if (isApprovalRequest)
+            {
+                var canApprove = await _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(jobName);
+                if (!canApprove)
+                    errors.Add(new BusinessValidationError($"There is no initiated request for approval for job '{jobName}'.", "INVALID_Approval"));
+
+                var initiator = await _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(jobName);
+
+                if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
+                {
+                    errors.Add(new BusinessValidationError($"Initiator and approver for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
+                }
+            }
+            else
             {
                 var canRun = await _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(jobName);
                 if (!canRun)
                 {
                     errors.Add(new BusinessValidationError($"Job '{jobName}' is already running or initiated. Please try after sometime.", "INVALID_Initiation"));
-                }
-            }
-
-            if (jobName != null && jobName == YearEndDataSetupJobName && isApprovalReq)
-            {
-                var canApprove = await _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(YearEndDataSetupJobName);
-                if (!canApprove)
-                    errors.Add(new BusinessValidationError($"There is no initiated request for approval for job '{YearEndDataSetupJobName}'.", "INVALID_Approval"));
-
-                var initiator = await _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(YearEndDataSetupJobName);
-
-                if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
-                {
-                    errors.Add(new BusinessValidationError($"Initiator and approver for job '{YearEndDataSetupJobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
                 }
             }
         }
@@ -196,7 +192,7 @@ namespace Apha.FPS.Application.Services
                     if (!isValid)
                         errors.Add(new BusinessValidationError($"Configuration values for the IDs HoursInDay is not valid. Please provide a numeric value.", "Missing_HoursInDay"));
                 }
-                
+
                 if (configs.Any(x => x.Id == "CapApprovalReceivedForReset"))
                 {
                     var value = configs.FirstOrDefault(x => x.Id == "CapApprovalReceivedForReset")?.Setting;
@@ -225,12 +221,12 @@ namespace Apha.FPS.Application.Services
                 errors.Add(new BusinessValidationError($"Provided Month( Working days, VID hours and CVL hours values are not valid for the planned year. Values should be non-negative and greater than zero.  Please verify and provide valid value for each month.", "Missing_Config"));
         }
 
-        private static EventDetail BuildYearEndDataSetupJobEvent(string requestedBy, string correlationId, int plannedYear)
+        private static EventDetail BuildYearEndDataSetupJobEvent(string jobName, string requestedBy, string correlationId, int plannedYear)
         {
             return new EventDetail
             {
                 JobExecutionId = correlationId,
-                JobName = YearEndDataSetupJobName,
+                JobName = jobName,
                 RunMode = "Manual",
                 RequestedBy = requestedBy,
                 RequestedAtUtc = DateTime.UtcNow,
@@ -241,31 +237,30 @@ namespace Apha.FPS.Application.Services
             };
         }
 
-        private async Task SendEmailAsync(bool isApprovalReq,CancellationToken cancellationToken)
+        private async Task SendEmailAsync(string jobName, bool isApprovalRequest, CancellationToken cancellationToken)
         {
-
-            if (!isApprovalReq)
+            if (string.Equals(jobName, YearEndDataSetupJobName, StringComparison.OrdinalIgnoreCase))
             {
-                await _emailService.SendEmailAsync(new EmailMessageModel
+                if (isApprovalRequest)
                 {
-                    To = _emailSettings.DataSetupInitiatedEmailRecipient!
-                    .Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
-                    Subject = _emailSettings.DataSetupInitiatedEmailSubject,
-                    Body = _emailSettings.DataSetupInitiatedEmailBody,
-                    IsBodyHtml = false,
-                }, cancellationToken);
-            }
-
-            if (isApprovalReq)
-            {
-                await _emailService.SendEmailAsync(new EmailMessageModel
+                    await _emailService.SendEmailAsync(new EmailMessageModel
+                    {
+                        To = _emailSettings.DataSetupApprovalEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                        Subject = _emailSettings.DataSetupApprovalEmailSubject,
+                        Body = _emailSettings.DataSetupApprovalEmailBody,
+                        IsBodyHtml = false,
+                    }, cancellationToken);
+                }
+                else
                 {
-                    To = _emailSettings.DataSetupApprovalEmailRecipient!
-                    .Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
-                    Subject = _emailSettings.DataSetupApprovalEmailSubject,
-                    Body = _emailSettings.DataSetupApprovalEmailBody,
-                    IsBodyHtml = false,
-                }, cancellationToken);
+                    await _emailService.SendEmailAsync(new EmailMessageModel
+                    {
+                        To = _emailSettings.DataSetupInitiatedEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                        Subject = _emailSettings.DataSetupInitiatedEmailSubject,
+                        Body = _emailSettings.DataSetupInitiatedEmailBody,
+                        IsBodyHtml = false,
+                    }, cancellationToken);
+                }
             }
         }
     }
