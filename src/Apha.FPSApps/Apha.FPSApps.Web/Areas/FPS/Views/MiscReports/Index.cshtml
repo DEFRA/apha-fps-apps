@@ -55,7 +55,10 @@
     @* getMiscReportsExtraFilters must be global before the _DataGrid grid manager is used *@
     <script>
         function getMiscReportsExtraFilters() {
-            return { profitCentre: document.getElementById('SelectedProfitCentre')?.value ?? '' };
+            return {
+                profitCentre: document.getElementById('SelectedProfitCentre')?.value ?? '',
+                report: '@Model.SelectedReport'
+            };
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -71,3 +74,4 @@
         });
     </script>
 }
+

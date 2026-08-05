@@ -15,10 +15,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class MiscReportsController : Controller
     {
         private readonly IProfitCentreService _profitCentreService;
+        private readonly ITestsRequiredByWgService _testsRequiredByWgService;
 
-        public MiscReportsController(IProfitCentreService profitCentreService)
+        public MiscReportsController(
+            IProfitCentreService profitCentreService,
+            ITestsRequiredByWgService testsRequiredByWgService)
         {
             _profitCentreService = profitCentreService;
+            _testsRequiredByWgService = testsRequiredByWgService;
         }
 
         /// <summary>
@@ -30,7 +34,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var profitCentreOptions = await GetProfitCentreSelectListAsync();
             var year = GetSelectedFpsYear();
 
-            var grid = BuildGrid(null);
+            var grid = await BuildGridAsync(null, report);
 
             return View(new MiscReportsViewModel
             {
@@ -47,26 +51,40 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// </summary>
         [HttpPost]
         [IgnoreAntiforgeryToken]
-        public IActionResult LoadGrid(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
+        public async Task<IActionResult> LoadGrid(string? profitCentre, string? report = null, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
         {
-            var grid = BuildGrid(profitCentre, sortBy, descending, filter, page, pageSize);
+            var grid = await BuildGridAsync(profitCentre, report, sortBy, descending, filter, page, pageSize);
             return PartialView("_DataGrid", grid);
         }
 
-        private static DataGridConfig<Dictionary<string, string?>> BuildGrid(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
+        private async Task<DataGridConfig<Dictionary<string, string?>>> BuildGridAsync(string? profitCentre, string? report, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
         {
             var rows = new List<Dictionary<string, string?>>();
             var columns = new List<DataGridColumn>
             {
-                new() { PropertyName = "ProfitCentre", DisplayName = "Resource Centre", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 200 },
-                new() { PropertyName = "Report",       DisplayName = "Report",          ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 240 }
+                new() { PropertyName = "ProfitCentre",    DisplayName = "Resource Centre", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 160 },
+                new() { PropertyName = "WorkGroup",       DisplayName = "Work Group",      ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 160 },
+                new() { PropertyName = "TestCode",        DisplayName = "Test Code",       ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 120 },
+                new() { PropertyName = "ItemDescription", DisplayName = "Item Description", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 260 },
+                new() { PropertyName = "ProjectedTotal",  DisplayName = "Projected Total", ColumnType = GridColumnType.ReadOnly, IsFilterable = false, Width = 120 },
+                new() { PropertyName = "UnitPrice",       DisplayName = "Unit Price",      ColumnType = GridColumnType.RoundTwoDecimal, IsFilterable = false, Width = 120 }
             };
 
-            if (!string.IsNullOrWhiteSpace(profitCentre))
+            var response = await _testsRequiredByWgService.GetTestsRequiredByWgAsync(profitCentre);
+            if (response.Success && response.Data != null)
             {
-                // TODO: Populate report rows for the selected Resource Centre once the
-                // Misc Reports data source is available. Left intentionally empty so the
-                // page renders the grid shell consistently with the Budget Bids Query page.
+                foreach (var item in response.Data)
+                {
+                    rows.Add(new Dictionary<string, string?>
+                    {
+                        ["ProfitCentre"]    = item.ProfitCentre,
+                        ["WorkGroup"]       = item.WorkGroup,
+                        ["TestCode"]        = item.TestCode,
+                        ["ItemDescription"] = item.ItemDescription,
+                        ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ["UnitPrice"]       = item.UnitPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                    });
+                }
             }
 
             var filters = ParseFilters(filter);
@@ -85,7 +103,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<Dictionary<string, string?>>
             {
                 GridId            = "miscReportsGrid",
-                KeyProperty       = "ProfitCentre",
+                KeyProperty       = "TestCode",
                 AllowAdd          = false,
                 AllowEdit         = false,
                 AllowDelete       = false,
