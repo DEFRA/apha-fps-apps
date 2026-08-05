@@ -35,10 +35,10 @@
             <div class="sub-dropdown-menu" id="pm-review-plans">
                 <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectProfitability" asp-action="Index">Project Profitability</a>
                 <a class="dropdown-item" asp-area="FPS" asp-controller="StaffPlan" asp-action="Index">Staff Plan Pivot</a>
-                        </div>
-                </div>
-                </div>
+            </div>
          </div>
+     </div>
+ </div>
 
 <!-- Resource Management -->
 <div class="nav-item dropdown">
@@ -191,7 +191,6 @@
     </div>
 </div>
 
-
 <!-- FPS Power Bi Report -->
 <div class="nav-item dropdown">
     <button class="nav-button dropdown-toggle" data-dropdown="Report" allow-edit="true">
@@ -209,4 +208,15 @@
             </a>
         }
     </div>
+</div>
+
+<!-- Management Account Menu -->
+<div class="nav-item dropdown">
+    <button class="nav-button dropdown-toggle" data-dropdown="management-account" allow-edit="true">
+            <div class="align-menu-text"><span>Management Account</span></div>
+            <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow" width="12" /></span>
+     </button>
+     <div class="dropdown-menu" id="management-account">
+         <a class="dropdown-item" asp-area="FPS" asp-controller="MiscReports" asp-action="Index">Misc Reports</a>
+     </div>
 </div>
