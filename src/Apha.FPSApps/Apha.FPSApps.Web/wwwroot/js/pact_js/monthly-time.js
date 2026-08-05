@@ -361,6 +361,10 @@ function editMonthlyTimeLive(btn) {
             const existingName = $('#LiveName').val();
             const existingPactId = $('#LivePactStaffId').val();
             initLiveModalDropdowns(workGroup, existingName, existingPactId);
+            // Attach numeric validation to decimal fields
+            if (typeof attachNumericValidation === 'function') {
+                attachNumericValidation();
+            }
         },
         error: function () {
             showAlertMessage('Failed to load monthly time record.', AlertType.ERROR);
@@ -389,6 +393,16 @@ function initLiveModalDropdowns(existingWorkGroup, existingName, existingPactId)
             onSelect: function (selectedItem) {
                 const selectedWorkGroup = selectedItem?.value || '';
                 $('#LiveWorkGroup').val(selectedWorkGroup);
+
+                // Clear validation error when a valid selection is made
+                const workGroupInput = $('#LiveWorkGroup');
+                const formGroup = workGroupInput.closest('.govuk-form-group');
+                const errorMsg = formGroup.find('[data-valmsg-for="WorkGroup"]');
+
+                formGroup.removeClass('govuk-form-group--error');
+                workGroupInput.removeClass('govuk-input--error');
+                errorMsg.hide().text('');
+
                 loadLiveModalStaffByWorkGroup(selectedWorkGroup);
             },
             onClear: function () {
@@ -422,6 +436,15 @@ function initLiveModalDropdowns(existingWorkGroup, existingName, existingPactId)
             onSelect: function (selectedItem) {
                 $('#LiveName').val(selectedItem?.name || '');
                 $('#LivePactStaffId').val(selectedItem?.pactId || '');
+
+                // Clear validation error when a valid selection is made
+                const nameInput = $('#LiveName');
+                const formGroup = nameInput.closest('.govuk-form-group');
+                const errorMsg = formGroup.find('[data-valmsg-for="Name"]');
+
+                formGroup.removeClass('govuk-form-group--error');
+                nameInput.removeClass('govuk-input--error');
+                errorMsg.hide().text('');
             },
             onClear: function () {
                 $('#LiveName').val('');
@@ -476,6 +499,19 @@ function loadLiveModalStaffByWorkGroup(workGroup, restoreName, restorePactId) {
 
 function saveMonthlyTimeLive() {
     const form = $('#monthlyTimeLiveForm');
+
+    // Trigger validation on all decfmt-input fields to ensure errors are shown
+    form.find('.decfmt-input').each(function() {
+        $(this).trigger('blur');
+    });
+
+    // Check for numeric validation errors BEFORE clearing validation messages
+    const hasNumericErrors = form.find('.govuk-input--error').length > 0;
+    if (hasNumericErrors) {
+        showAlertMessage('Please correct the validation errors before saving.', AlertType.ERROR);
+        return;
+    }
+
     clearValidationErrors(form);
 
     if (!isFormValid(form)) {
@@ -524,6 +560,10 @@ function addStagingMonthlyTime() {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             initStagingModalDropdowns(null);
+            // Attach numeric validation to decimal fields
+            if (typeof attachNumericValidation === 'function') {
+                attachNumericValidation();
+            }
         },
         error: function () {
             showAlertMessage('Failed to load add form.', AlertType.ERROR);
@@ -546,6 +586,10 @@ function editStagingMonthlyTime(btn) {
             const existingTimeCode = $('#StagingTimeCode').val();
             const existingParentProject = $('#StagingParentProject').val();
             initStagingModalDropdowns(workGroup, existingName, existingPactId, existingTimeCode, existingParentProject);
+            // Attach numeric validation to decimal fields
+            if (typeof attachNumericValidation === 'function') {
+                attachNumericValidation();
+            }
         },
         error: function () {
             showAlertMessage('Failed to load staging record.', AlertType.ERROR);
@@ -578,6 +622,15 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
                 const selectedWorkGroup = selectedItem?.value || '';
                 $('#StagingWorkGroup').val(selectedWorkGroup);
                 $('#StagingPactId').val('');
+
+                // Clear validation error when a valid selection is made
+                const workGroupInput = $('#StagingWorkGroup');
+                const formGroup = workGroupInput.closest('.govuk-form-group');
+                const errorMsg = formGroup.find('[data-valmsg-for="WorkGroup"]');
+
+                formGroup.removeClass('govuk-form-group--error');
+                workGroupInput.removeClass('govuk-input--error');
+                errorMsg.hide().text('');
 
                 const isInitialRestore = existingWorkGroup && selectedWorkGroup === existingWorkGroup;
                 if (isInitialRestore) {
@@ -622,6 +675,15 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
                 $('#StagingName').val(selectedItem?.name || '');
                 $('#StagingPactStaffId').val(selectedSpNumber);
                 $('#StagingPactId').val(selectedPactId);
+
+                // Clear validation error when a valid selection is made
+                const nameInput = $('#StagingName');
+                const formGroup = nameInput.closest('.govuk-form-group');
+                const errorMsg = formGroup.find('[data-valmsg-for="Name"]');
+
+                formGroup.removeClass('govuk-form-group--error');
+                nameInput.removeClass('govuk-input--error');
+                errorMsg.hide().text('');
             },
             onClear: function () {
                 $('#StagingName').val('');
@@ -652,6 +714,15 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
                 const timeCode = selectedItem?.value || '';
                 const workGroup = $('#StagingWorkGroup').val();
                 $('#StagingTimeCode').val(timeCode);
+
+                // Clear validation error when a valid selection is made
+                const timeCodeInput = $('#StagingTimeCode');
+                const formGroup = timeCodeInput.closest('.govuk-form-group');
+                const errorMsg = formGroup.find('[data-valmsg-for="TimeCode"]');
+
+                formGroup.removeClass('govuk-form-group--error');
+                timeCodeInput.removeClass('govuk-input--error');
+                errorMsg.hide().text('');
 
                 if (workGroup) {
                     loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, timeCode);
@@ -688,6 +759,15 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
         callbacks: {
             onSelect: function (selectedItem) {
                 $('#StagingParentProject').val(selectedItem?.value || '');
+
+                // Clear validation error when a valid selection is made
+                const parentProjectInput = $('#StagingParentProject');
+                const formGroup = parentProjectInput.closest('.govuk-form-group');
+                const errorMsg = formGroup.find('[data-valmsg-for="ParentProject"]');
+
+                formGroup.removeClass('govuk-form-group--error');
+                parentProjectInput.removeClass('govuk-input--error');
+                errorMsg.hide().text('');
             },
             onClear: function () {
                 $('#StagingParentProject').val('');
@@ -916,6 +996,19 @@ function submitStagingMonthlyTime(data) {
 
 function saveStagingMonthlyTime() {
     const form = $('#stagingMonthlyTimeForm');
+
+    // Trigger validation on all decfmt-input fields to ensure errors are shown
+    form.find('.decfmt-input').each(function() {
+        $(this).trigger('blur');
+    });
+
+    // Check for numeric validation errors BEFORE clearing validation messages
+    const hasNumericErrors = form.find('.govuk-input--error').length > 0;
+    if (hasNumericErrors) {
+        showAlertMessage('Please correct the validation errors before saving.', AlertType.ERROR);
+        return;
+    }
+
     clearValidationErrors(form);
 
     if (!isFormValid(form)) {

@@ -49,8 +49,21 @@ function getExtraFilters_moLogGrid() {
 
 // ── Button handlers ────────────────────────────────────────────────
 $(function () {
+    // Initialize numeric input validation for the Month field
+    if (typeof initializeNumericInputValidation === 'function') {
+        initializeNumericInputValidation();
+    }
+
     $('#btnSearch').on('click', function () {
         clearMoLogError();
+
+        // Check for numeric validation errors before searching
+        const hasNumericErrors = $('#txtMonth').hasClass('govuk-input--error');
+        if (hasNumericErrors) {
+            showMoLogError('Please correct the validation errors before searching.');
+            return;
+        }
+
         if (!hasMoLogCriteria()) {
             showMoLogError('Please enter some criteria before searching.');
             return;
@@ -71,6 +84,15 @@ $(function () {
         $('#dtDateImported').val('');
         $('#txtUserId').val('');
         $('#ddAction').val('');
+
+        // Clear any validation errors on the month field
+        const monthInput = $('#txtMonth');
+        const formGroup = monthInput.closest('.govuk-form-group');
+        const errorMsg = $('#txtMonth-error');
+
+        formGroup.removeClass('govuk-form-group--error');
+        monthInput.removeClass('govuk-input--error');
+        errorMsg.hide().text('');
 
         // Reload the grid with empty criteria to show empty grid (no records)
         var gm = getGridManager();
