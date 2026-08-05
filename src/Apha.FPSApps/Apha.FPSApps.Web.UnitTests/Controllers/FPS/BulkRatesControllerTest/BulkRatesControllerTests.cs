@@ -48,7 +48,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BulkRatesControllerTest
             var file = Assert.IsType<FileContentResult>(result);
             Assert.Same(bytes, file.FileContents);
             Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", file.ContentType);
-            Assert.Equal($"Staff_TestRates_{id}.xlsx", file.FileDownloadName);
+            Assert.Equal($"Staff_Rates_{id}.xlsx", file.FileDownloadName);
         }
 
         [Fact]
@@ -78,7 +78,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BulkRatesControllerTest
             var file = Assert.IsType<FileContentResult>(result);
             Assert.Same(bytes, file.FileContents);
             Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", file.ContentType);
-            Assert.Equal($"Animal_TestRates_{id}.xlsx", file.FileDownloadName);
+            Assert.Equal($"Animal_Rates_{id}.xlsx", file.FileDownloadName);
         }
 
         [Fact]

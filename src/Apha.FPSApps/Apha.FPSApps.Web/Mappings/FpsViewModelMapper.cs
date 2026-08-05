@@ -172,6 +172,9 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<BulkRatesStagingAnimalRowDto, AnimalStagingGridItem>()
                 .ForMember(d => d.ValidationSummary, o => o.Ignore());
 
+            // TestListVla grid row ↔ DTO (frmTestList / fsubTest_MainList):
+            CreateMap<TestorProductDto, TestListVlaItem>().ReverseMap();
+
             // TestRCCost grid row ↔ DTO (fsubTestRCPrice / Component Charges general tab):
             CreateMap<TestRCCostItem, TestRCCostDto>().ReverseMap();
 
