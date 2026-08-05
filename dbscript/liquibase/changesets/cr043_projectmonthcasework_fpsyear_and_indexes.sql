@@ -93,8 +93,8 @@ CREATE INDEX IF NOT EXISTS idx_timecodevalid_fpsyear_timecode
 CREATE INDEX IF NOT EXISTS idx_tlkpproject_fpsyear_parentproject
     ON fps.tlkpproject (fpsyear, parentproject);
 
-CREATE INDEX IF NOT EXISTS idx_tlkpprogram_fpsyear_program
-    ON fps.tlkpprogram (fpsyear, program);
+CREATE INDEX IF NOT EXISTS idx_tlkpprogram_fpsyear_programno
+    ON fps.tlkpprogram (fpsyear, programno);
 
 CREATE INDEX IF NOT EXISTS idx_workgroupgrade_fpsyear_workgroup_grade
     ON fps.workgroupgrade (fpsyear, workgroup, gradecode);
@@ -104,7 +104,7 @@ CREATE INDEX IF NOT EXISTS idx_profitcentregrade_fpsyear_profitcentre_grade
 
 --rollback DROP INDEX IF EXISTS fps.idx_profitcentregrade_fpsyear_profitcentre_grade;
 --rollback DROP INDEX IF EXISTS fps.idx_workgroupgrade_fpsyear_workgroup_grade;
---rollback DROP INDEX IF EXISTS fps.idx_tlkpprogram_fpsyear_program;
+--rollback DROP INDEX IF EXISTS fps.idx_tlkpprogram_fpsyear_programno;
 --rollback DROP INDEX IF EXISTS fps.idx_tlkpproject_fpsyear_parentproject;
 --rollback DROP INDEX IF EXISTS fps.idx_timecodevalid_fpsyear_timecode;
 --rollback DROP INDEX IF EXISTS fps.idx_monthlytime_fpsyear_project_month;
