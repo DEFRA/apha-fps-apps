@@ -344,6 +344,17 @@ function exportFailedSubContractRms() {
 
 $(document).ready(function () {
     updateSelectedMonthText();
+    debugger;
+    // Disable buttons and file input when year is closed
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+
+        // Disable Import file input and its label
+        $('#csvInput').prop('disabled', true);
+        $('label[for="csvInput"]')
+            .addClass('govuk-button--disabled')
+            .attr('aria-disabled', 'true')
+            .css('pointer-events', 'none');
+    }
 
     $('#dpSelectmonth').on('change', function () {
         const value = this.value;
