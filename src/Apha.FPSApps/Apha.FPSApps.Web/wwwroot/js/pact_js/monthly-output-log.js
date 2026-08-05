@@ -71,5 +71,11 @@ $(function () {
         $('#dtDateImported').val('');
         $('#txtUserId').val('');
         $('#ddAction').val('');
+
+        // Reload the grid with empty criteria to show empty grid (no records)
+        var gm = getGridManager();
+        if (gm) {
+            gm.reloadGrid({ page: 1 });
+        }
     });
 });

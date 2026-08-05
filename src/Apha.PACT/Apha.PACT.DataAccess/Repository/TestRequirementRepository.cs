@@ -366,6 +366,14 @@ namespace Apha.PACT.DataAccess.Repository
                 .AnyAsync(m => m.TestCode == testCode && m.Buyer == buyer);
         }
 
+        public async Task<List<TestRequirement>> GetAllActiveAsync()
+        {
+            return await _context.TestRequirements
+                .AsNoTracking()
+                .Where(x => x.Active != 0)
+                .ToListAsync();
+        }
+
         public async Task<TestRequirement> AddAsync(TestRequirement entity)
         {
             entity.FpsYear = _fpsRequestContext.FpsYear;
