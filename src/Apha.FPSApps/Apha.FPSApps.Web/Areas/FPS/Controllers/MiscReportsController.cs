@@ -16,31 +16,34 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     {
         private readonly IProfitCentreService _profitCentreService;
         private readonly ITestsRequiredByWgService _testsRequiredByWgService;
+        private readonly ITestsRequiredByRcService _testsRequiredByRcService;
 
         public MiscReportsController(
             IProfitCentreService profitCentreService,
-            ITestsRequiredByWgService testsRequiredByWgService)
+            ITestsRequiredByWgService testsRequiredByWgService,
+            ITestsRequiredByRcService testsRequiredByRcService)
         {
             _profitCentreService = profitCentreService;
             _testsRequiredByWgService = testsRequiredByWgService;
+            _testsRequiredByRcService = testsRequiredByRcService;
         }
 
         /// <summary>
         /// Displays the Misc Reports page. The grid stays empty until a Resource Centre is
         /// selected, mirroring the Budget Bids Query page behaviour.
         /// </summary>
-        public async Task<IActionResult> Index(string? report = null)
+        public async Task<IActionResult> Index(string? report = null, string? profitCentre = null)
         {
             var profitCentreOptions = await GetProfitCentreSelectListAsync();
             var year = GetSelectedFpsYear();
 
-            var grid = await BuildGridAsync(null, report);
+            var grid = await BuildGridAsync(profitCentre, report);
 
             return View(new MiscReportsViewModel
             {
                 Grid = grid,
                 ProfitCentreOptions = profitCentreOptions,
-                SelectedProfitCentre = null,
+                SelectedProfitCentre = profitCentre,
                 SelectedReport = report,
                 FpsYear = year
             });
@@ -60,30 +63,58 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private async Task<DataGridConfig<Dictionary<string, string?>>> BuildGridAsync(string? profitCentre, string? report, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
         {
             var rows = new List<Dictionary<string, string?>>();
+            var isRcReport = string.Equals(report, "TestManagerRcPivot", StringComparison.OrdinalIgnoreCase);
+
             var columns = new List<DataGridColumn>
             {
-                new() { PropertyName = "ProfitCentre",    DisplayName = "Resource Centre", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 160 },
-                new() { PropertyName = "WorkGroup",       DisplayName = "Work Group",      ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 160 },
-                new() { PropertyName = "TestCode",        DisplayName = "Test Code",       ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 120 },
-                new() { PropertyName = "ItemDescription", DisplayName = "Item Description", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 260 },
-                new() { PropertyName = "ProjectedTotal",  DisplayName = "Projected Total", ColumnType = GridColumnType.ReadOnly, IsFilterable = false, Width = 120 },
-                new() { PropertyName = "UnitPrice",       DisplayName = "Unit Price",      ColumnType = GridColumnType.RoundTwoDecimal, IsFilterable = false, Width = 120 }
+                new() { PropertyName = "ProfitCentre",    DisplayName = "Resource Centre", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 160 }
             };
 
-            var response = await _testsRequiredByWgService.GetTestsRequiredByWgAsync(profitCentre);
-            if (response.Success && response.Data != null)
+            if (!isRcReport)
             {
-                foreach (var item in response.Data)
+                columns.Add(new() { PropertyName = "WorkGroup", DisplayName = "Work Group", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 160 });
+            }
+
+            columns.Add(new() { PropertyName = "TestCode",        DisplayName = "Test Code",       ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 120 });
+            columns.Add(new() { PropertyName = "ItemDescription", DisplayName = "Item Description", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 260 });
+            columns.Add(new() { PropertyName = "ProjectedTotal",  DisplayName = "Projected Total", ColumnType = GridColumnType.ReadOnly, IsFilterable = false, Width = 120 });
+            columns.Add(new() { PropertyName = "UnitPrice",       DisplayName = "Unit Price",      ColumnType = GridColumnType.RoundTwoDecimal, IsFilterable = false, Width = 120 });
+
+            if (isRcReport)
+            {
+                var rcResponse = await _testsRequiredByRcService.GetTestsRequiredByRcAsync(profitCentre);
+                if (rcResponse.Success && rcResponse.Data != null)
                 {
-                    rows.Add(new Dictionary<string, string?>
+                    foreach (var item in rcResponse.Data)
                     {
-                        ["ProfitCentre"]    = item.ProfitCentre,
-                        ["WorkGroup"]       = item.WorkGroup,
-                        ["TestCode"]        = item.TestCode,
-                        ["ItemDescription"] = item.ItemDescription,
-                        ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                        ["UnitPrice"]       = item.UnitPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                    });
+                        rows.Add(new Dictionary<string, string?>
+                        {
+                            ["ProfitCentre"]    = item.ProfitCentre,
+                            ["TestCode"]        = item.TestCode,
+                            ["ItemDescription"] = item.ItemDescription,
+                            ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                            ["UnitPrice"]       = item.UnitPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                        });
+                    }
+                }
+            }
+            else
+            {
+                var response = await _testsRequiredByWgService.GetTestsRequiredByWgAsync(profitCentre);
+                if (response.Success && response.Data != null)
+                {
+                    foreach (var item in response.Data)
+                    {
+                        rows.Add(new Dictionary<string, string?>
+                        {
+                            ["ProfitCentre"]    = item.ProfitCentre,
+                            ["WorkGroup"]       = item.WorkGroup,
+                            ["TestCode"]        = item.TestCode,
+                            ["ItemDescription"] = item.ItemDescription,
+                            ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                            ["UnitPrice"]       = item.UnitPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                        });
+                    }
                 }
             }
 

@@ -239,6 +239,7 @@
 
         // Misc Reports — Tests Required By Work Group (Test Manager WG Pivot)
         public const string GetTestsRequiredByWg = "api/v1/testsrequiredbywg?profitCentre={0}";
+        public const string GetTestsRequiredByRc = "api/v1/testsrequiredbyrc?profitCentre={0}";
 
         // Income/Contribution from Time Sales (frmTimeSellerPC)
         public const string GetContributionSummaryRows   = "api/v1/timeseller/{0}/rows";

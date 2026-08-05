@@ -129,6 +129,7 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<BidDto, BidRes>().ReverseMap();
             CreateMap<BidViewDto, BidViewRes>().ReverseMap();
             CreateMap<TestsRequiredByWgDto, TestsRequiredByWgRes>().ReverseMap();
+            CreateMap<TestsRequiredByRcDto, TestsRequiredByRcRes>().ReverseMap();
             CreateMap<GenericBidViewDto, GenericBidViewRes>().ReverseMap();
             CreateMap<ProjectExceptionalCostViewDto, ProjectExceptionalCostViewRes>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();

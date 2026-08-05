@@ -45,6 +45,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsResourceAllocationApiClient FpsResourceAllocation { get; }
         public IFpsResourceMgmtReplanApiClient FpsResourceMgmtReplan { get; }
         public IFpsTestsRequiredByWgApiClient FpsTestsRequiredByWg { get; }
+        public IFpsTestsRequiredByRcApiClient FpsTestsRequiredByRc { get; }
 
         public IFpsTestRCCostApiClient FpsTestRCCost { get; }
         public IFpsTestRequirementRCCostApiClient FpsTestRequirementRCCost { get; }
@@ -94,6 +95,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsResourceAllocation = new FpsResourceAllocationApiClient(http, mapper);
             FpsResourceMgmtReplan = new FpsResourceMgmtReplanApiClient(http, mapper);
             FpsTestsRequiredByWg = new FpsTestsRequiredByWgApiClient(http, mapper);
+            FpsTestsRequiredByRc = new FpsTestsRequiredByRcApiClient(http, mapper);
         }
     }
 }
