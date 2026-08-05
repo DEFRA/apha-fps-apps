@@ -101,6 +101,11 @@ function initMultiColumnDropdown(wrapperId, inputId, hiddenId, panelId, bodyId, 
 // -- Button handlers --
 $(function () {
 
+    // Initialize numeric input validation for the Month field
+    if (typeof initializeNumericInputValidation === 'function') {
+        initializeNumericInputValidation();
+    }
+
     initMultiColumnDropdown(
         'projectPickerWrapper', 'txtProjectPick', 'hdnProject',
         'projectDropdownPanel', 'projectDropdownBody', null);
@@ -125,6 +130,14 @@ $(function () {
 
     $('#btnSearch').on('click', function () {
         clearMtLogError();
+
+        // Check for numeric validation errors before searching
+        const hasNumericErrors = $('#txtMonth').hasClass('govuk-input--error');
+        if (hasNumericErrors) {
+            showMtLogError('Please correct the validation errors before searching.');
+            return;
+        }
+
         if (!hasMtLogCriteria()) {
             showMtLogError('Please enter some criteria before searching.');
             return;
@@ -147,6 +160,15 @@ $(function () {
         $('#dtDateImported').val('');
         $('#txtUserId').val('');
         $('#ddAction').val('');
+
+        // Clear any validation errors on the month field
+        const monthInput = $('#txtMonth');
+        const formGroup = monthInput.closest('.govuk-form-group');
+        const errorMsg = $('#txtMonth-error');
+
+        formGroup.removeClass('govuk-form-group--error');
+        monthInput.removeClass('govuk-input--error');
+        errorMsg.hide().text('');
 
         var gm = getGridManager();
         if (gm) { gm.reloadGrid({ page: 1 }); }
