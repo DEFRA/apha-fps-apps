@@ -43,8 +43,23 @@ END $$;
 ALTER TABLE fps.projectmonthcasework
     ALTER COLUMN fpsyear SET NOT NULL;
 
-ALTER TABLE fps.projectmonthcasework
-    DROP CONSTRAINT IF EXISTS projectmonthcasework_pk;
+DO $$
+DECLARE
+    v_existing_pk_name text;
+BEGIN
+    SELECT conname
+    INTO v_existing_pk_name
+    FROM pg_constraint
+    WHERE conrelid = 'fps.projectmonthcasework'::regclass
+      AND contype = 'p';
+
+    IF v_existing_pk_name IS NOT NULL THEN
+        EXECUTE format(
+            'ALTER TABLE fps.projectmonthcasework DROP CONSTRAINT %I',
+            v_existing_pk_name
+        );
+    END IF;
+END $$;
 
 ALTER TABLE fps.projectmonthcasework
     ADD CONSTRAINT projectmonthcasework_pk
