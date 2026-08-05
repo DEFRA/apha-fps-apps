@@ -56,6 +56,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
             var wgSet = RepositoryTestHelper.CreateMockDbSet(workgroups ?? Enumerable.Empty<Workgroup>());
             mockContext.Setup(x => x.Workgroups).Returns(wgSet.Object);
 
+            var workgroupSet = RepositoryTestHelper.CreateMockDbSet(workgroups ?? Enumerable.Empty<Workgroup>());
+            mockContext.Setup(x => x.Workgroups).Returns(workgroupSet.Object);
+
             return new BudgetBidsRepository(mockContext.Object, mockCtx.Object);
         }
 
@@ -742,6 +745,120 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
 
             // Assert
             Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetGenericBidsPagedAsync Tests
+
+        private static (List<Bid> bids, List<Workgroup> workgroups, List<AccountCategory> categories) BuildGenericBidData()
+        {
+            var bids = new List<Bid>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear },
+                new() { WorkGroupName = "WG02", Account = "ACC2", GenBid = 200m, FpsYear = DefaultFpsYear }
+            };
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC1" },
+                new() { WorkGroupName = "WG02", ProfitCentre = "PC2" }
+            };
+            var categories = new List<AccountCategory>
+            {
+                new() { AccShortName = "ACC1", AccountType = "TYPE1" },
+                new() { AccShortName = "ACC2", AccountType = "TYPE2" }
+            };
+            return (bids, workgroups, categories);
+        }
+
+        [Fact]
+        public async Task GetGenericBidsPagedAsync_JoinsBidsWorkgroupsAndCategories()
+        {
+            // Arrange
+            var (bids, workgroups, categories) = BuildGenericBidData();
+            var repo = CreateRepository(bids: bids, workgroups: workgroups, accountCategories: categories);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetGenericBidsPagedAsync(query);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            var first = result.Data.First(x => x.WorkGroupName == "WG01");
+            Assert.Equal("PC1", first.ProfitCentre);
+            Assert.Equal("TYPE1", first.AccountType);
+        }
+
+        [Fact]
+        public async Task GetGenericBidsPagedAsync_ExcludesBidsWithoutMatchingWorkgroup()
+        {
+            // Arrange
+            var bids = new List<Bid>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear },
+                new() { WorkGroupName = "WGX", Account = "ACC1", GenBid = 150m, FpsYear = DefaultFpsYear }
+            };
+            var workgroups = new List<Workgroup> { new() { WorkGroupName = "WG01", ProfitCentre = "PC1" } };
+            var categories = new List<AccountCategory> { new() { AccShortName = "ACC1", AccountType = "TYPE1" } };
+            var repo = CreateRepository(bids: bids, workgroups: workgroups, accountCategories: categories);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetGenericBidsPagedAsync(query);
+
+            // Assert
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal("WG01", result.Data.Single().WorkGroupName);
+        }
+
+        [Fact]
+        public async Task GetGenericBidsPagedAsync_SortsByAccountDescending()
+        {
+            // Arrange
+            var (bids, workgroups, categories) = BuildGenericBidData();
+            var repo = CreateRepository(bids: bids, workgroups: workgroups, accountCategories: categories);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>(sortBy: "account", descending: true, page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetGenericBidsPagedAsync(query);
+
+            // Assert
+            Assert.Equal("ACC2", result.Data.First().Account);
+        }
+
+        [Fact]
+        public async Task GetGenericBidsPagedAsync_AppliesPaging()
+        {
+            // Arrange
+            var (bids, workgroups, categories) = BuildGenericBidData();
+            var repo = CreateRepository(bids: bids, workgroups: workgroups, accountCategories: categories);
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>(page: 1, pageSize: 1);
+
+            // Act
+            var result = await repo.GetGenericBidsPagedAsync(query);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.PaginationData.TotalPages);
+        }
+
+        [Fact]
+        public async Task GetGenericBidsPagedAsync_WithNoData_ReturnsEmpty()
+        {
+            // Arrange
+            var repo = CreateRepository(
+                bids: new List<Bid>(),
+                workgroups: new List<Workgroup>(),
+                accountCategories: new List<AccountCategory>());
+            var query = new Apha.FPS.Core.Pagination.PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetGenericBidsPagedAsync(query);
+
+            // Assert
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
         }
 
         #endregion
