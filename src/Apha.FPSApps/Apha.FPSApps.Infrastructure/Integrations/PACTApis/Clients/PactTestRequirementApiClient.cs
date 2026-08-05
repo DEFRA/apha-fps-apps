@@ -137,7 +137,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             var baseUrl = string.Format(PactApiEndpoints.GetPagedBySupplierTestCode,
                 Uri.EscapeDataString(testCode));
-            baseUrl += $"?showRejected={Uri.EscapeDataString(showRejected.ToString())}";
+            baseUrl += $"&showRejected={Uri.EscapeDataString(showRejected.ToString())}";
             var url = QueryStringHelper.AddQueryString(baseUrl, query);
             var response = await _http.GetAsync<List<TestSupplierViewRes>>(url);
             if (response.Success)
@@ -157,6 +157,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
             var dto = _mapper.Map<ApiResponseDto<List<TestReqBreakdownDto>>>(response);
             return ApiResponseDto<List<TestReqBreakdownDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<TestRequirementDto>>> GetAllActiveAsync()
+        {
+            var response = await _http.GetAsync<List<TestRequirementtRes>>(PactApiEndpoints.GetAllTestReqmtActive);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(response);
+            return ApiResponseDto<List<TestRequirementDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
     }
 }
