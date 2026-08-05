@@ -97,6 +97,10 @@
         };
     </script>
 
+    <script>
+        // Global variable for PACT year status (available to all PACT pages)
+        const isFPSYearClosed = @Html.Raw(FyContext.IsReadOnly.ToString().ToLower());
+    </script>
     <script src="~/js/common/headernav/navmenu.js"></script>
     <script src="~/js/site.js"></script>
     @await RenderSectionAsync("Scripts", required: false)

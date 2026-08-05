@@ -125,8 +125,7 @@ $(document).ready(function () {
         }
 
         // Navigate to Portfolio Time Codes page with selected portfolio
-        var url = '/PACT/PortfolioTimeCodes/Index?parentProject=' + encodeURIComponent(currentParentProject);
-        window.location.href = url;
+        window.fpsNavigateTo('/PACT/PortfolioTimeCodes/Index?parentProject=' + encodeURIComponent(currentParentProject));
     });
 
     // ── Modal submit ──────────────────────────────────────────────────────────
@@ -228,8 +227,10 @@ function loadPortfolioData(parentProject) {
 
 // ── Enable/disable buttons ───────────────────────────────────────────────
 function resetFormButtons(enabled) {
+    // If year is closed (isFPSYearClosed = true), always keep buttons disabled
+    var shouldEnable = enabled && (typeof isFPSYearClosed !== 'undefined' ? !isFPSYearClosed : true);
     $('#btnSavePortfolio, #btnPortfolioTimeCodes')
-        .prop('disabled', !enabled);
+        .prop('disabled', !shouldEnable);
 }
 
 // ── Constituent Tests grid ───────────────────────────────────────────────
