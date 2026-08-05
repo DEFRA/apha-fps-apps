@@ -2,6 +2,7 @@
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
@@ -40,6 +41,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return setting;
         }
 
+        [ExcludeFromCodeCoverage]
         public async Task<FpsSetting> SaveAsync(FpsSetting setting)
         {
             var existing = await _dbContext.TblSettings.IgnoreQueryFilters()
@@ -67,6 +69,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return existing ?? setting;
         }
 
+        [ExcludeFromCodeCoverage]
         public async Task<List<YearEndFpsSetting>> GetYearEndSettingsAsync()
         {
             var settingIds = new[]

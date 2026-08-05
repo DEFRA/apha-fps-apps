@@ -371,6 +371,349 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.Equal("none",             item.ErrorMessage);
         }
 
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByJobId_Ascending()
+        {
+            // Arrange — two records with different JobIds
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+            var q1 = new BatchJobQueue { JobqueueId = Guid.NewGuid(), JobExecutionId = Guid.NewGuid(), JobId = 1, StatusId = 10, RequestedBy = DefaultUserEmail, StartDateTime = DateTime.UtcNow, FpsYear = DefaultFpsYear };
+            var q2 = new BatchJobQueue { JobqueueId = Guid.NewGuid(), JobExecutionId = Guid.NewGuid(), JobId = 1, StatusId = 10, RequestedBy = DefaultUserEmail, StartDateTime = DateTime.UtcNow.AddHours(1), FpsYear = DefaultFpsYear };
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [q1, q2], statuses: [status]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "jobid", descending: false), DefaultJobName);
+
+            // Assert — query returns records; sorting by jobId ascending compiles and runs
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByJobId_Descending()
+        {
+            // Arrange
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+            var q1 = BuildQueue(1, 10, startDateTime: new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+            var q2 = BuildQueue(1, 10, startDateTime: new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc));
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [q1, q2], statuses: [status]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "jobid", descending: true), DefaultJobName);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByJobName_Ascending()
+        {
+            // Arrange
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+            var q1 = BuildQueue(1, 10);
+            var q2 = BuildQueue(1, 10);
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [q1, q2], statuses: [status]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "jobname", descending: false), DefaultJobName);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, h => Assert.Equal(DefaultJobName, h.JobName));
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByJobName_Descending()
+        {
+            // Arrange
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+            var q1 = BuildQueue(1, 10);
+            var q2 = BuildQueue(1, 10);
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [q1, q2], statuses: [status]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "jobname", descending: true), DefaultJobName);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByJobExecutionId_Ascending()
+        {
+            // Arrange
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+            var q1 = BuildQueue(1, 10, startDateTime: new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+            var q2 = BuildQueue(1, 10, startDateTime: new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc));
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [q1, q2], statuses: [status]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "jobexecutionid", descending: false), DefaultJobName);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByJobExecutionId_Descending()
+        {
+            // Arrange
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+            var q1 = BuildQueue(1, 10);
+            var q2 = BuildQueue(1, 10);
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [q1, q2], statuses: [status]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "jobexecutionid", descending: true), DefaultJobName);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByRequestedBy_Ascending()
+        {
+            // Arrange — two records with different RequestedBy values
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+            var q1 = BuildQueue(1, 10, requestedBy: "alpha@example.com");
+            var q2 = BuildQueue(1, 10, requestedBy: "zeta@example.com");
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [q1, q2], statuses: [status]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "requestedby", descending: false), DefaultJobName);
+
+            // Assert — records sorted ascending by RequestedBy
+            var list = result.Data.ToList();
+            Assert.Equal(2, list.Count);
+            Assert.True(string.Compare(list[0].RequestedBy, list[1].RequestedBy, StringComparison.Ordinal) <= 0);
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByRequestedBy_Descending()
+        {
+            // Arrange
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+            var q1 = BuildQueue(1, 10, requestedBy: "alpha@example.com");
+            var q2 = BuildQueue(1, 10, requestedBy: "zeta@example.com");
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [q1, q2], statuses: [status]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "requestedby", descending: true), DefaultJobName);
+
+            // Assert — records sorted descending by RequestedBy
+            var list = result.Data.ToList();
+            Assert.Equal(2, list.Count);
+            Assert.True(string.Compare(list[0].RequestedBy, list[1].RequestedBy, StringComparison.Ordinal) >= 0);
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByEndDateTime_Ascending()
+        {
+            // Arrange — two records with distinct EndDateTime values
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+            var earlierEnd = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+            var laterEnd   = new DateTime(2024, 12, 1, 12, 0, 0, DateTimeKind.Utc);
+
+            var q1 = new BatchJobQueue
+            {
+                JobqueueId = Guid.NewGuid(), JobExecutionId = Guid.NewGuid(),
+                JobId = 1, StatusId = 10, RequestedBy = DefaultUserEmail,
+                StartDateTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                EndDateTime   = laterEnd, FpsYear = DefaultFpsYear
+            };
+            var q2 = new BatchJobQueue
+            {
+                JobqueueId = Guid.NewGuid(), JobExecutionId = Guid.NewGuid(),
+                JobId = 1, StatusId = 10, RequestedBy = DefaultUserEmail,
+                StartDateTime = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+                EndDateTime   = earlierEnd, FpsYear = DefaultFpsYear
+            };
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [q1, q2], statuses: [status]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "enddatetime", descending: false), DefaultJobName);
+
+            // Assert — earliest EndDateTime first
+            var list = result.Data.ToList();
+            Assert.Equal(2, list.Count);
+            Assert.True(list[0].EndDateTime <= list[1].EndDateTime);
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByEndDateTime_Descending()
+        {
+            // Arrange
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+            var earlierEnd = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+            var laterEnd   = new DateTime(2024, 12, 1, 12, 0, 0, DateTimeKind.Utc);
+
+            var q1 = new BatchJobQueue
+            {
+                JobqueueId = Guid.NewGuid(), JobExecutionId = Guid.NewGuid(),
+                JobId = 1, StatusId = 10, RequestedBy = DefaultUserEmail,
+                StartDateTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                EndDateTime   = earlierEnd, FpsYear = DefaultFpsYear
+            };
+            var q2 = new BatchJobQueue
+            {
+                JobqueueId = Guid.NewGuid(), JobExecutionId = Guid.NewGuid(),
+                JobId = 1, StatusId = 10, RequestedBy = DefaultUserEmail,
+                StartDateTime = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+                EndDateTime   = laterEnd, FpsYear = DefaultFpsYear
+            };
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [q1, q2], statuses: [status]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "enddatetime", descending: true), DefaultJobName);
+
+            // Assert — latest EndDateTime first
+            var list = result.Data.ToList();
+            Assert.Equal(2, list.Count);
+            Assert.True(list[0].EndDateTime >= list[1].EndDateTime);
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByErrorMessage_Ascending()
+        {
+            // Arrange — two records with distinct ErrorMessage values
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+
+            var q1 = new BatchJobQueue
+            {
+                JobqueueId = Guid.NewGuid(), JobExecutionId = Guid.NewGuid(),
+                JobId = 1, StatusId = 10, RequestedBy = DefaultUserEmail,
+                StartDateTime = DateTime.UtcNow, ErrorMessage = "Zeta error",
+                FpsYear = DefaultFpsYear
+            };
+            var q2 = new BatchJobQueue
+            {
+                JobqueueId = Guid.NewGuid(), JobExecutionId = Guid.NewGuid(),
+                JobId = 1, StatusId = 10, RequestedBy = DefaultUserEmail,
+                StartDateTime = DateTime.UtcNow.AddHours(1), ErrorMessage = "Alpha error",
+                FpsYear = DefaultFpsYear
+            };
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [q1, q2], statuses: [status]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "errormessage", descending: false), DefaultJobName);
+
+            // Assert — alphabetically first ErrorMessage appears first
+            var list = result.Data.ToList();
+            Assert.Equal(2, list.Count);
+            Assert.True(string.Compare(list[0].ErrorMessage, list[1].ErrorMessage, StringComparison.Ordinal) <= 0);
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByErrorMessage_Descending()
+        {
+            // Arrange
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+
+            var q1 = new BatchJobQueue
+            {
+                JobqueueId = Guid.NewGuid(), JobExecutionId = Guid.NewGuid(),
+                JobId = 1, StatusId = 10, RequestedBy = DefaultUserEmail,
+                StartDateTime = DateTime.UtcNow, ErrorMessage = "Alpha error",
+                FpsYear = DefaultFpsYear
+            };
+            var q2 = new BatchJobQueue
+            {
+                JobqueueId = Guid.NewGuid(), JobExecutionId = Guid.NewGuid(),
+                JobId = 1, StatusId = 10, RequestedBy = DefaultUserEmail,
+                StartDateTime = DateTime.UtcNow.AddHours(1), ErrorMessage = "Zeta error",
+                FpsYear = DefaultFpsYear
+            };
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [q1, q2], statuses: [status]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "errormessage", descending: true), DefaultJobName);
+
+            // Assert — alphabetically last ErrorMessage appears first
+            var list = result.Data.ToList();
+            Assert.Equal(2, list.Count);
+            Assert.True(string.Compare(list[0].ErrorMessage, list[1].ErrorMessage, StringComparison.Ordinal) >= 0);
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByStatus_Ascending()
+        {
+            // Arrange — two records with the same job but different statuses
+            var job            = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var completedStatus = BuildStatus(20, 1, "completed");
+            var q1 = BuildQueue(1, 20, startDateTime: new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+            var q2 = BuildQueue(1, 10, startDateTime: new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc));
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs: [job], queues: [q1, q2], statuses: [initiatedStatus, completedStatus]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "status", descending: false), DefaultJobName);
+
+            // Assert — "completed" < "initiated" alphabetically
+            var list = result.Data.ToList();
+            Assert.Equal(2, list.Count);
+            Assert.True(string.Compare(list[0].Status, list[1].Status, StringComparison.Ordinal) <= 0);
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithSortByStatus_Descending()
+        {
+            // Arrange
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var completedStatus = BuildStatus(20, 1, "completed");
+            var q1 = BuildQueue(1, 10, startDateTime: new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+            var q2 = BuildQueue(1, 20, startDateTime: new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc));
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs: [job], queues: [q1, q2], statuses: [initiatedStatus, completedStatus]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(
+                BuildQuery(sortBy: "status", descending: true), DefaultJobName);
+
+            // Assert — "initiated" > "completed" alphabetically
+            var list = result.Data.ToList();
+            Assert.Equal(2, list.Count);
+            Assert.True(string.Compare(list[0].Status, list[1].Status, StringComparison.Ordinal) >= 0);
+        }
+
         #endregion
 
         // -----------------------------------------------------------------------
@@ -498,6 +841,20 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.True(result);
         }
 
+        [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
+        public async Task CanInitiateYearEndDataSetupRequestAsync_IsCaseInsensitive_ForJobName()
+        {
+            // Arrange — job stored as uppercase; status is non-terminal
+            var (job, queue, status) = BuildJoinSeed(jobName: "YEARENDSETUP", statusText: "initiated");
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
+
+            // Act — query with lowercase version of the name
+            var result = await repo.CanInitiateYearEndDataSetupRequestAsync("yearendsetup");
+
+            // Assert — non-terminal record found → cannot initiate
+            Assert.False(result);
+        }
+
         #endregion
 
         // -----------------------------------------------------------------------
@@ -573,6 +930,28 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
             // Assert
             Assert.True(result);
+        }
+
+        [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
+        public async Task CanApproveYearEndDataSetupRequestAsync_ReturnsFalse_WhenOnlyTerminalRecordsExist()
+        {
+            // Arrange — records exist but none with "initiated" status
+            var job             = BuildJob(1, DefaultJobName);
+            var rejectedStatus  = BuildStatus(10, 1, "rejected");
+            var failedStatus    = BuildStatus(20, 1, "failed");
+            var queueRejected   = BuildQueue(1, 10);
+            var queueFailed     = BuildQueue(1, 20);
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [queueRejected, queueFailed],
+                statuses: [rejectedStatus, failedStatus]);
+
+            // Act
+            var result = await repo.CanApproveYearEndDataSetupRequestAsync(DefaultJobName);
+
+            // Assert
+            Assert.False(result);
         }
 
         #endregion

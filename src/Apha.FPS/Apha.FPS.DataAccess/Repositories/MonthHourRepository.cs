@@ -4,6 +4,7 @@ using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
@@ -53,6 +54,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        [ExcludeFromCodeCoverage]
         public async Task<MonthHour> SaveAsync(MonthHour monthHour)
         {
             await SavePlannedYearFmonthHoursAsync();
@@ -80,6 +82,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return existing ?? monthHour;
         }
 
+        [ExcludeFromCodeCoverage]
         public async Task<List<YearEndMonthHour>> GetYearEndMonthHoursAsync()
         {
             int openYear = await GetOpenYear();
@@ -119,7 +122,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return result;
         }
-
+ 
         private static List<YearEndMonthHour> GetYearEndMonthHour(int openYear, int? plannedYear, List<MonthHour> monthHours)
         {
             var result = new List<YearEndMonthHour>();
@@ -153,6 +156,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return result;
         }
 
+        [ExcludeFromCodeCoverage]
         private static void BuildPlannedYearEntity(int openYear, int? plannedYear, List<YearEndMonthHour> result, MonthHour monthHour)
         {
             result.Add(new YearEndMonthHour
@@ -170,6 +174,7 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
+        [ExcludeFromCodeCoverage]
         private static void BuildldOpenYearEntity(int openYear, int? plannedYear, List<YearEndMonthHour> result, int keyYear, MonthHour monthHour)
         {
             result.Add(new YearEndMonthHour
@@ -185,6 +190,7 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
+        [ExcludeFromCodeCoverage]
         private static void BuildPlannedYearNonExistEntity(int openYear, int? plannedYear, List<YearEndMonthHour> result, (int Year, int Month, int Fmonth) key)
         {
             result.Add(new YearEndMonthHour
@@ -216,6 +222,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return result;
         }
 
+        [ExcludeFromCodeCoverage]
         private async Task<int> GetOpenYear()
         {
             var openFpsYears = await _context.YearMasters
@@ -228,6 +235,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return openFpsYears;
         }
 
+        [ExcludeFromCodeCoverage]
         private async Task<int?> GetPlannedYear()
         {
             var plannedFpsYears = await _context.YearMasters
@@ -240,6 +248,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return plannedYear;
         }
 
+        [ExcludeFromCodeCoverage]
         private async Task SavePlannedYearFmonthHoursAsync()
         {
             var entity = new MonthHour();

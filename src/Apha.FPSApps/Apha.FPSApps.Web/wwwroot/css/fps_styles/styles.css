@@ -4909,7 +4909,7 @@ body,
     min-width: 150px;
     width: 230px;
     height: 30px;
-    border: 2px solid #d4351c;
+    border: 2px solid;
     font-size: 16px !important;
     padding-top: 0;
     padding-bottom: 0;
@@ -5278,4 +5278,12 @@ body,
 #gridContainer_asuUsageList .grid-scroll-container {
     height: 340px;
     max-height: 340px;
+}
+#gridContainer_yearEndConfigValuesGrid .editable-grid-container {
+    min-height: 190px !important;
+    max-height: 190px !important;
+}
+#gridContainer_yearEndMonthHoursGrid > .editable-grid-container > div  >.grid-scroll-container {
+    min-height: 600px !important;
+    max-height: 600px !important;
 }
