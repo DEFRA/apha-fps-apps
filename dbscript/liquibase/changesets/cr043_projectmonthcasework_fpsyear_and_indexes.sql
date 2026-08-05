@@ -80,12 +80,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_job_lock_job_name_active
     ON fps.job_lock (job_name)
     WHERE is_active = true;
 
-CREATE INDEX IF NOT EXISTS idx_job_queue_jobid_fpsyear_statusid
-    ON fps.job_queue (jobid, fpsyear, statusid);
+CREATE INDEX IF NOT EXISTS idx_job_queue_jobid_statusid
+    ON fps.job_queue (jobid, statusid);
 
 -- 4. Year-leading indexes for CreateTimeCostCalcs source joins.
 CREATE INDEX IF NOT EXISTS idx_monthlytime_fpsyear_project_month
-    ON fps.monthlytime (fpsyear, project, month);
+    ON fps.monthlytime (fpsyear, parentproject, month);
 
 CREATE INDEX IF NOT EXISTS idx_timecodevalid_fpsyear_timecode
     ON fps.timecodevalid (fpsyear, timecode);
@@ -108,7 +108,7 @@ CREATE INDEX IF NOT EXISTS idx_profitcentregrade_fpsyear_profitcentre_grade
 --rollback DROP INDEX IF EXISTS fps.idx_tlkpproject_fpsyear_parentproject;
 --rollback DROP INDEX IF EXISTS fps.idx_timecodevalid_fpsyear_timecode;
 --rollback DROP INDEX IF EXISTS fps.idx_monthlytime_fpsyear_project_month;
---rollback DROP INDEX IF EXISTS fps.idx_job_queue_jobid_fpsyear_statusid;
+--rollback DROP INDEX IF EXISTS fps.idx_job_queue_jobid_statusid;
 --rollback DROP INDEX IF EXISTS fps.uq_job_lock_job_name_active;
 --rollback ALTER TABLE fps.projectmonthcasework DROP CONSTRAINT IF EXISTS projectmonthcasework_pk;
 --rollback ALTER TABLE fps.projectmonthcasework ALTER COLUMN fpsyear DROP NOT NULL;
