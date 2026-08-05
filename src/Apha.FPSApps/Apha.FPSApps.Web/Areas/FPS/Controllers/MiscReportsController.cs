@@ -80,40 +80,44 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             columns.Add(new() { PropertyName = "ProjectedTotal",  DisplayName = "Projected Total", ColumnType = GridColumnType.ReadOnly, IsFilterable = false, Width = 120 });
             columns.Add(new() { PropertyName = "UnitPrice",       DisplayName = "Unit Price",      ColumnType = GridColumnType.RoundTwoDecimal, IsFilterable = false, Width = 120 });
 
-            if (isRcReport)
+            // Only populate the grid once a report has been selected from the side navigation.
+            if (!string.IsNullOrWhiteSpace(report))
             {
-                var rcResponse = await _testsRequiredByRcService.GetTestsRequiredByRcAsync(profitCentre);
-                if (rcResponse.Success && rcResponse.Data != null)
+                if (isRcReport)
                 {
-                    foreach (var item in rcResponse.Data)
+                    var rcResponse = await _testsRequiredByRcService.GetTestsRequiredByRcAsync(profitCentre);
+                    if (rcResponse.Success && rcResponse.Data != null)
                     {
-                        rows.Add(new Dictionary<string, string?>
+                        foreach (var item in rcResponse.Data)
                         {
-                            ["ProfitCentre"]    = item.ProfitCentre,
-                            ["TestCode"]        = item.TestCode,
-                            ["ItemDescription"] = item.ItemDescription,
-                            ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                            ["UnitPrice"]       = item.UnitPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                        });
+                            rows.Add(new Dictionary<string, string?>
+                            {
+                                ["ProfitCentre"]    = item.ProfitCentre,
+                                ["TestCode"]        = item.TestCode,
+                                ["ItemDescription"] = item.ItemDescription,
+                                ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                                ["UnitPrice"]       = item.UnitPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                            });
+                        }
                     }
                 }
-            }
-            else
-            {
-                var response = await _testsRequiredByWgService.GetTestsRequiredByWgAsync(profitCentre);
-                if (response.Success && response.Data != null)
+                else
                 {
-                    foreach (var item in response.Data)
+                    var response = await _testsRequiredByWgService.GetTestsRequiredByWgAsync(profitCentre);
+                    if (response.Success && response.Data != null)
                     {
-                        rows.Add(new Dictionary<string, string?>
+                        foreach (var item in response.Data)
                         {
-                            ["ProfitCentre"]    = item.ProfitCentre,
-                            ["WorkGroup"]       = item.WorkGroup,
-                            ["TestCode"]        = item.TestCode,
-                            ["ItemDescription"] = item.ItemDescription,
-                            ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                            ["UnitPrice"]       = item.UnitPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                        });
+                            rows.Add(new Dictionary<string, string?>
+                            {
+                                ["ProfitCentre"]    = item.ProfitCentre,
+                                ["WorkGroup"]       = item.WorkGroup,
+                                ["TestCode"]        = item.TestCode,
+                                ["ItemDescription"] = item.ItemDescription,
+                                ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                                ["UnitPrice"]       = item.UnitPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                            });
+                        }
                     }
                 }
             }
