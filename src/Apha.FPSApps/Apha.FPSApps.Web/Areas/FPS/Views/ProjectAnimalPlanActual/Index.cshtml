@@ -12,12 +12,28 @@
                     <div class="col-md-6">
                         
                     </div>
-                    <div style="display: flex; justify-content: flex-end;" class="col-md-6">
-                        <label class="fw-bold mt-2 me-2" for="projectSelect">Select a Project:</label>
-                        <select id="projectSelect" asp-items="Model.ProjectList" asp-for="SelectedProjectCode"
-                                class="form-select form-select-sm" style="width: auto; min-width: 280px;">
-                            <option value="">-- Select Project --</option>
-                        </select>
+                    <div style="display: flex; justify-content: flex-end; align-items: center;" class="col-md-6">
+                        <label class="fw-bold me-2" style="white-space:nowrap;">Project:</label>
+                        <div style="position:relative;">
+                            <input type="text" id="projectNameInput" placeholder="Select Project" autocomplete="off"
+                                   class="govuk-input down-arrow-img" style="width:220px; cursor:pointer;"
+                                   value="@Model.SelectedProjectCode" aria-label="Filter project" readonly />
+                            <div id="ProjectDropdownPanel" style="display:none; position:fixed; width:420px;
+                                    max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
+                                    box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:9999;">
+                                <input type="text" id="ProjectSearchBox" placeholder="Type to search project"
+                                       style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
+                                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                                    <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
+                                        <tr>
+                                            <th style="padding:6px 8px; text-align:left;">Project</th>
+                                            <th style="padding:6px 8px; text-align:left;">Project Title</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ProjectDropdownBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -167,16 +183,16 @@
             }
         });
 
-        $('#projectSelect').on('change', function () {
-            currentProjectCode = $(this).val();
+        function onProjectSelected(projectCode, projectTitle) {
+            currentProjectCode = projectCode;
+            document.getElementById('projectNameInput').value = projectCode;
             $('#summary-project-code').val(currentProjectCode);
-            $('#summary-project-description').val('');
+            $('#summary-project-description').val(projectTitle || '');
             $('#summary-program').val('');
             $('#summary-contract').val('');
             $('#planned-total-cost').val('0.00');
             $('#project-total-cost').val('0.00');
             $('#project-percent-plan').val('0.00%');
-
             if (currentProjectCode) {
                 $.get('@Url.Action("GetProjectInfo", "ActualAnimalCost", new { area = "FPS" })',
                     { projectCode: currentProjectCode },
@@ -188,17 +204,48 @@
                         }
                     }
                 );
-
                 window['gridManager_@Model.AnimalPlanGrid.GridId'].reloadGrid({ page: 1 });
                 window['gridManager_@Model.ActualAnimalCostGrid.GridId'].reloadGrid({ page: 1 });
                 refreshPlannedCost();
                 refreshActualCost();
             }
+        }
+
+        $(document).ready(function () {
+            var allProjects = [], display = document.getElementById('projectNameInput'),
+                panel = document.getElementById('ProjectDropdownPanel'),
+                search = document.getElementById('ProjectSearchBox'),
+                body  = document.getElementById('ProjectDropdownBody');
+            if (!display || !panel || !search || !body) return;
+            function positionPanel() { var r = display.getBoundingClientRect(); panel.style.top = r.bottom + 'px'; panel.style.left = Math.max(0, r.right - 420) + 'px'; }
+            function renderRows(rows) {
+                body.innerHTML = '';
+                rows.forEach(function (item) {
+                    var tr = document.createElement('tr'); tr.style.cursor = 'pointer';
+                    tr.innerHTML = '<td style="padding:6px 8px;border-bottom:1px solid #f3f2f1">' + item.parentProject + '</td><td style="padding:6px 8px;border-bottom:1px solid #f3f2f1">' + item.projectTitle + '</td>';
+                    tr.addEventListener('click', function () { panel.style.display = 'none'; onProjectSelected(item.parentProject, item.projectTitle); });
+                    tr.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
+                    tr.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
+                    body.appendChild(tr);
+                });
+            }
+            function openPanel() {
+                if (allProjects.length === 0) {
+                    fetch('@Url.Action("GetProjectLookup","ProjectAnimalPlanActual",new{area="FPS"})')
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) { allProjects = data; search.value = ''; renderRows(allProjects); positionPanel(); panel.style.display = 'block'; search.focus(); })
+                        .catch(function (err) { console.error('Project lookup failed', err); });
+                } else { search.value = ''; renderRows(allProjects); positionPanel(); panel.style.display = 'block'; search.focus(); }
+            }
+            display.addEventListener('click', function (e) { e.stopPropagation(); if (panel.style.display !== 'none') { panel.style.display = 'none'; return; } openPanel(); });
+            search.addEventListener('input', function () {
+                var t = this.value.toLowerCase();
+                renderRows(t ? allProjects.filter(function (p) { return p.parentProject.toLowerCase().includes(t) || p.projectTitle.toLowerCase().includes(t); }) : allProjects);
+            });
+            document.addEventListener('click', function (e) { if (!display.contains(e.target) && !panel.contains(e.target)) panel.style.display = 'none'; });
         });
 
-        function getAnimalPlanExtraFilters() {
-            return { jobCode: currentProjectCode };
-        }
+        function getAnimalPlanExtraFilters() { return { jobCode: currentProjectCode }; }
 
         function getActualAnimalExtraFilters() {
             return { projectCode: currentProjectCode };
