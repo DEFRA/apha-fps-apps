@@ -36,8 +36,17 @@
 
 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
     <div class="govuk-grid-column-full">
-        <div id="gridContainer_miscReportsGrid">
-            @await Html.PartialAsync("_DataGrid", Model.Grid)
+        <div class="cc-container-fluid">
+            <div class="cc-layout-row">
+
+                @await Html.PartialAsync("_MiscReportsSideNav", Model.SelectedReport)
+
+                <div class="cc-content-column">
+                    <div id="gridContainer_miscReportsGrid">
+                        @await Html.PartialAsync("_DataGrid", Model.Grid)
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

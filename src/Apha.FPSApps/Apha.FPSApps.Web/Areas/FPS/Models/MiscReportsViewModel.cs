@@ -11,6 +11,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         public string? SelectedProfitCentre { get; set; }
 
+        public string? SelectedReport { get; set; }
+
         public int FpsYear { get; set; }
     }
 }

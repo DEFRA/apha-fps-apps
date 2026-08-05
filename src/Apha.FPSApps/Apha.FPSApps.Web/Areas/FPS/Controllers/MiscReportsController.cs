@@ -25,7 +25,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// Displays the Misc Reports page. The grid stays empty until a Resource Centre is
         /// selected, mirroring the Budget Bids Query page behaviour.
         /// </summary>
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? report = null)
         {
             var profitCentreOptions = await GetProfitCentreSelectListAsync();
             var year = GetSelectedFpsYear();
@@ -37,6 +37,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Grid = grid,
                 ProfitCentreOptions = profitCentreOptions,
                 SelectedProfitCentre = null,
+                SelectedReport = report,
                 FpsYear = year
             });
         }
