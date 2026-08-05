@@ -291,19 +291,24 @@
                     return;
                 }
 
-                btnInitiate.disabled = true;
-                postJson(cfg.triggerInitiateUrl + '?plannedYear=' + plannedYearVal, {},
-                    function () {
-                        showAlertMessage('Year End Initiation request submitted successfully.', AlertType.SUCCESS);
-                        reloadHistoryGrid();
-                        var btnapprove = document.getElementById('btnApproveDataSetupRequest');
-                        btnapprove.disabled = false;
-                    },
-                    function (msgs) {
-                        showPageError(msgs);
-                        btnInitiate.disabled = false;
-                    }
-                );
+                showGovukConfirm('Are you sure you want to initiate the DataSetup Request for year ' + plannedYearVal + '?')
+                    .then(function (confirmed) {
+                        if (!confirmed) return;
+
+                        btnInitiate.disabled = true;
+                        postJson(cfg.triggerInitiateUrl + '?plannedYear=' + plannedYearVal, {},
+                            function () {
+                                showAlertMessage('Year End Initiation request submitted successfully.', AlertType.SUCCESS);
+                                reloadHistoryGrid();
+                                var btnapprove = document.getElementById('btnApproveDataSetupRequest');
+                                btnapprove.disabled = false;
+                            },
+                            function (msgs) {
+                                showPageError(msgs);
+                                btnInitiate.disabled = false;
+                            }
+                        );
+                    });
             });
         }
 
@@ -324,17 +329,22 @@
                     return;
                 }
 
-                btnApprove.disabled = true;
-                postJson(cfg.triggerApproveUrl + '?plannedYear=' + plannedYearVal, {},
-                    function () {
-                        showAlertMessage('Year End Approval request submitted successfully.', AlertType.SUCCESS);
-                        reloadHistoryGrid();
-                    },
-                    function (msgs) {
-                        showPageError(msgs);
-                        btnApprove.disabled = false;
-                    }
-                );
+                showGovukConfirm('Are you sure you want to approve the DataSetup Request for year ' + plannedYearVal + '?')
+                    .then(function (confirmed) {
+                        if (!confirmed) return;
+
+                        btnApprove.disabled = true;
+                        postJson(cfg.triggerApproveUrl + '?plannedYear=' + plannedYearVal, {},
+                            function () {
+                                showAlertMessage('Year End Approval request submitted successfully.', AlertType.SUCCESS);
+                                reloadHistoryGrid();
+                            },
+                            function (msgs) {
+                                showPageError(msgs);
+                                btnApprove.disabled = false;
+                            }
+                        );
+                    });
             });
         }
     });
