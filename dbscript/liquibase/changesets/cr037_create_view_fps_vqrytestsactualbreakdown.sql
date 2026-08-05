@@ -4,7 +4,9 @@
 
 -- View: fps.vqryTestsActualBreakdown
 
-CREATE OR REPLACE VIEW fps.vqryTestsActualBreakdown AS
+DROP VIEW IF EXISTS fps.vqryTestsActualBreakdown;
+
+CREATE VIEW fps.vqryTestsActualBreakdown AS
 SELECT DISTINCT
     vtlkpProject_General.Program,
     MonthlyOutput.Buyer,
