@@ -233,7 +233,7 @@ namespace Apha.PACT.Application.Services
             ExcelValidationHelper.ValidateRequiredDecimal(row.Amount, "Amount", failures);
             ExcelValidationHelper.ValidateMonth(row.Month, failures);
             ExcelValidationHelper.ValidateNonNegativeInteger(row.SupplierNumber, "Supplier Number", failures, required: false);
-            ExcelValidationHelper.ValidateNonNegativeDecimal(row.DailyRate, "Daily Rate", failures, required: false);
+            ExcelValidationHelper.ValidateDecimal(row.DailyRate, "Daily Rate", failures, required: false);
             ExcelValidationHelper.ValidateNonNegativeInteger(row.AnimalDays, "Animal Days", failures, required: false);
 
             return failures;
@@ -298,8 +298,9 @@ namespace Apha.PACT.Application.Services
                         modelFieldName = mappedFieldName;
                     }
 
-                    // BusinessValidationError(message, code) - code is the field name
-                    return new BusinessValidationError(message, modelFieldName);
+                    // BusinessValidationError(message, code) - code is the field name.
+                    var finalMessage = string.IsNullOrEmpty(displayFieldName) ? message : $"{displayFieldName} {message}";
+                    return new BusinessValidationError(finalMessage, modelFieldName);
                 }).ToList();
 
                 throw new BusinessValidationErrorException(validationErrors);

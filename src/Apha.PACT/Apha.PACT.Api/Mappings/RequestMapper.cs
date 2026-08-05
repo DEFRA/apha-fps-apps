@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
@@ -50,6 +50,28 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<ProjectProfileDto, ProjectProfileRes>().ReverseMap();
             CreateMap<ProjectProfileCumulativeDto, ProjectProfileCumulativeRes>().ReverseMap();
             CreateMap<MonthlyOutputLogDto, MonthlyOutputLogRes>().ReverseMap();
+            CreateMap<MonthlyOutputDto, MonthlyOutputReq>().ReverseMap();
+            CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
+            CreateMap<StagingMonthlyOutputDto, StagingMonthlyOutputReq>().ReverseMap();
+            CreateMap<StagingMonthlyOutputDto, StagingMonthlyOutputRes>().ReverseMap();
+            CreateMap<MonthlyOutputImportRowDto, MonthlyOutputImportRowReq>().ReverseMap();
+            CreateMap<MonthlyOutputImportRowDto, MonthlyOutputImportRowRes>().ReverseMap();
+            CreateMap<MonthlyOutputImportDto, MonthlyOutputImportReq>().ReverseMap();
+            CreateMap<MonthlyOutputImportResultDto, MonthlyOutputImportRes>().ReverseMap();
+            CreateMap<MonthlyOutputValidateResultDto, MonthlyOutputValidateRes>().ReverseMap();
+            CreateMap<MonthlyOutputMakeLiveResultDto, MonthlyOutputMakeLiveRes>().ReverseMap();
+            CreateMap<MonthlyTimeDto, MonthlyTimeReq>().ReverseMap();
+            CreateMap<MonthlyTimeDto, MonthlyTimeRes>().ReverseMap();
+            CreateMap<StagingMonthlyTimeDto, StagingMonthlyTimeReq>().ReverseMap();
+            CreateMap<StagingMonthlyTimeDto, StagingMonthlyTimeRes>().ReverseMap();
+            CreateMap<BulkUpdateStagingMonthlyTimeNamesDto, BulkUpdateStagingMonthlyTimeNamesReq>().ReverseMap();
+            CreateMap<BulkUpdateStagingMonthlyTimeNamesResultDto, BulkUpdateStagingMonthlyTimeNamesRes>().ReverseMap();
+            CreateMap<MonthlyTimeImportRowDto, MonthlyTimeImportRowReq>().ReverseMap();
+            CreateMap<MonthlyTimeImportRowDto, MonthlyTimeImportRowRes>().ReverseMap();
+            CreateMap<MonthlyTimeImportDto, MonthlyTimeImportReq>().ReverseMap();
+            CreateMap<MonthlyTimeImportResultDto, MonthlyTimeImportRes>().ReverseMap();
+            CreateMap<MonthlyTimeValidateResultDto, MonthlyTimeValidateRes>().ReverseMap();
+            CreateMap<MonthlyTimeMakeLiveResultDto, MonthlyTimeMakeLiveRes>().ReverseMap();
             CreateMap<MonthlyTimeLogDto, MonthlyTimeLogRes>().ReverseMap();
             CreateMap<WorkGroupTimeCodeRes, WorkGroupTimeCodeDto>().ReverseMap();
             CreateMap<WorkGroupValidTimeCodeRes, WorkGroupValidTimeCodeDto>().ReverseMap();
@@ -81,6 +103,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<BatchJobQueueRes, BatchJobQueueDto>().ReverseMap();
             CreateMap<BatchJobEventTriggerRes, BatchJobEventTriggerDto>().ReverseMap();
             CreateMap<TestActualBreakdownDto, TestActualBreakdownRes>().ReverseMap();
+            CreateMap<TestPlanCostBreakdownDto, TestPlanCostBreakdownRes>().ReverseMap();
         }
     }
 }

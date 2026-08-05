@@ -100,6 +100,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ProjectStaffPlanView> ProjectStaffPlanViews { get; set; }
         public virtual DbSet<ProjectStaffPlanDetailsView> ProjectStaffPlanDetailsViews { get; set; }
         public virtual DbSet<ProjectGroupStaffPlanView> ProjectGroupStaffPlanViews { get; set; }
+        public virtual DbSet<WgStaffPlanView> WgStaffPlanViews { get; set; }
 
         public virtual DbSet<ProjectProfitabilityVlaView> ProjectProfitabilityVlaViews { get; set; }
 
@@ -299,6 +300,9 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new ProjectGroupStaffPlanViewMap());
             modelBuilder.Entity<ProjectGroupStaffPlanView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new WgStaffPlanViewMap());
+            modelBuilder.Entity<WgStaffPlanView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new ProjectProfitabilityVlaViewMap());
 

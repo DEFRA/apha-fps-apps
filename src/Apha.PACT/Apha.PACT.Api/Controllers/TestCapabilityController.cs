@@ -61,8 +61,8 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Retrieves a TestCapability record by composite key.</summary>
-        [HttpGet("testcapability/{testCode}/{workGroup}")]
-        public async Task<IActionResult> GetTestCapabilityById(string testCode, string workGroup)
+        [HttpGet("testcapability")]
+        public async Task<IActionResult> GetTestCapabilityById([FromQuery] string testCode, [FromQuery] string workGroup)
         {
             var result = await _service.GetTestCapabilityByIdAsync(testCode, workGroup);
             if (result is null)
@@ -89,8 +89,8 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Deletes a TestCapability record by composite key.</summary>
-        [HttpDelete("testcapability/{testCode}/{workGroup}")]
-        public async Task<IActionResult> DeleteTestCapability(string testCode, string workGroup)
+        [HttpDelete("testcapability")]
+        public async Task<IActionResult> DeleteTestCapability([FromQuery] string testCode, [FromQuery] string workGroup)
         {
             var deleted = await _service.DeleteTestCapabilityAsync(testCode, workGroup);
             return Ok(deleted);
@@ -108,6 +108,17 @@ namespace Apha.PACT.Api.Controllers
         {
             var result = await _service.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, workGroup);
             return Ok(_mapper.Map<PaginationRes<WgTestCapabilitiesWithDescriptionRes>>(result));
+        }
+
+        // ── PLAN CROSSTAB ────────────────────────────────────────────────────
+
+        /// <summary>Retrieves a paged list of Test Plan CrossTab records with all dynamic columns.</summary>
+        [HttpGet("paged/plantestcrosstab")]
+        public async Task<IActionResult> GetPagedTestPlanCrossTab(
+            [FromQuery] QueryParameters<string> query)
+        {
+            var result = await _service.GetPagedTestPlanCrossTabAsync(query);
+            return Ok(result);
         }
     }
 }

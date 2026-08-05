@@ -348,6 +348,7 @@
 .grid-column-group-cell--empty {
     background-color: transparent;
     border: none;
+}
 /* Disabled pagination links */
 .pagination--disabled,
 .pagination--disabled:hover,
@@ -369,7 +370,7 @@
 
 /* Truncate text with tooltip support */
 .grid-column-truncate-tooltip {
-    display: block;
+/*    display: block;*/
     max-width: 250px;
     white-space: nowrap;
     overflow: hidden;

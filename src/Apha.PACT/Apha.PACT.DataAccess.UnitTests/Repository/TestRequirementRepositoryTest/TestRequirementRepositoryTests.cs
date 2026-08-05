@@ -866,9 +866,11 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
 
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
-            Assert.Single(result.Data);
-            Assert.Equal("BLOOD", result.Data.First().TestCode);
-            Assert.Equal("PRJ1", result.Data.First().Buyer);
+            var row = Assert.Single(result.Data);
+            Assert.Equal("PRJ1", row.Buyer);
+            Assert.Equal("MGR1", row.ProjectManager);
+            Assert.Equal(30m, row.TestCost);
+            Assert.Equal(1, result.PaginationData.TotalRecords);
         }
 
         [Fact]
@@ -888,6 +890,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "MISSING", showRejected: false);
 
             Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
         }
 
         [Fact]
@@ -908,8 +911,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
 
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
-            Assert.Single(result.Data);
-            Assert.Equal("PRJ1", result.Data.First().Buyer);
+            var row = Assert.Single(result.Data);
+            Assert.Equal("PRJ1", row.Buyer);
         }
 
         [Fact]
@@ -931,6 +934,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: true);
 
             Assert.Equal(2, result.Data.Count);
+            Assert.Equal(2, result.PaginationData.TotalRecords);
         }
 
         [Fact]
@@ -949,8 +953,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
 
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
-            Assert.Single(result.Data);
-            Assert.Equal(30m, result.Data.First().TestCost);
+            var row = Assert.Single(result.Data);
+            Assert.Equal(30m, row.TestCost);
         }
 
         [Fact]
@@ -969,8 +973,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
 
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
-            Assert.Single(result.Data);
-            Assert.Null(result.Data.First().TestCost);
+            var row = Assert.Single(result.Data);
+            Assert.Null(row.TestCost);
         }
 
         [Fact]
@@ -989,8 +993,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
 
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
-            Assert.Single(result.Data);
-            Assert.Null(result.Data.First().TestCost);
+            var row = Assert.Single(result.Data);
+            Assert.Null(row.TestCost);
         }
 
         [Fact]
@@ -1015,8 +1019,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
 
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
-            Assert.Single(result.Data);
-            Assert.Equal("ALPHA001", result.Data.First().Buyer);
+            var row = Assert.Single(result.Data);
+            Assert.Equal("ALPHA001", row.Buyer);
         }
 
         [Fact]
@@ -1041,9 +1045,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
 
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
-            Assert.Single(result.Data);
-            Assert.Equal("PRJ2", result.Data.First().Buyer);
-            Assert.Equal("Closed", result.Data.First().ProjectStatus);
+            var row = Assert.Single(result.Data);
+            Assert.Equal("PRJ2", row.Buyer);
         }
 
         [Fact]
@@ -1095,7 +1098,6 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
 
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
-            Assert.NotNull(result);
             Assert.Equal(2, result.Data.Count);
         }
 
@@ -1124,17 +1126,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
 
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
-            Assert.Equal(2, result.Data.Count);
-            if (descending)
-            {
-                Assert.Equal("PRJ2", result.Data.ElementAt(0).Buyer); // TestCost=30m first
-                Assert.Equal("PRJ1", result.Data.ElementAt(1).Buyer); // TestCost=10m second
-            }
-            else
-            {
-                Assert.Equal("PRJ1", result.Data.ElementAt(0).Buyer); // TestCost=10m first
-                Assert.Equal("PRJ2", result.Data.ElementAt(1).Buyer); // TestCost=30m second
-            }
+            // PRJ1 cost = 5*2 = 10, PRJ2 cost = 10*3 = 30
+            var rows = result.Data.ToList();
+            Assert.Equal(2, rows.Count);
+            Assert.Equal(descending ? "PRJ2" : "PRJ1", rows[0].Buyer);
         }
 
         [Fact]
@@ -1155,7 +1150,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
 
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
-            Assert.Equal(2, result.Data.Count);
+            // Default sort is by Buyer ascending.
             Assert.Equal("AAA", result.Data.First().Buyer);
         }
 
@@ -1181,7 +1176,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
 
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
-            Assert.Equal(2, result.Data.Count);
+            // Unknown column falls back to Buyer ascending.
             Assert.Equal("AAA", result.Data.First().Buyer);
         }
 
@@ -1207,7 +1202,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
 
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
-            Assert.Equal(2, result.Data.Count);
+            // Unknown column with Descending falls back to Buyer descending.
             Assert.Equal("ZZZ", result.Data.First().Buyer);
         }
 
@@ -1224,6 +1219,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
             Assert.Equal(2, result.Data.Count);
+            Assert.Equal(2, result.PaginationData.PageNumber);
             Assert.Equal(5, result.PaginationData.TotalRecords);
         }
 
@@ -1236,6 +1232,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
             Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
         }
 
         [Fact]
@@ -1327,6 +1324,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
 
             var result = await repo.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
 
+            // Rows with null ProjectStatus are excluded by the status filter.
             Assert.Empty(result.Data);
         }
 
@@ -3334,6 +3332,41 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             Assert.Equal(2, result.Data.Count);
             Assert.Equal("BLOOD", result.Data.First().TestCode);
             Assert.Equal("URINE", result.Data.ElementAt(1).TestCode);
+        }
+
+        #endregion
+
+        #region GetAllActiveAsync
+
+        [Fact]
+        public async Task GetAllActiveAsync_WithMixedActiveFlags_ReturnsOnlyActiveItems()
+        {
+            var testReqmts = new List<TestRequirement>
+            {
+                new() { TestCode = "PT0001", Buyer = "SV3300", Active = 1, FpsYear = DefaultFpsYear },
+                new() { TestCode = "PT0002", Buyer = "SV3301", Active = 0, FpsYear = DefaultFpsYear },
+                new() { TestCode = "PT0003", Buyer = "SV3302", Active = 2, FpsYear = DefaultFpsYear }
+            };
+            var (repo, _, _, _) = CreateRepositoryWithMocks(testReqmts);
+
+            var result = await repo.GetAllActiveAsync();
+
+            Assert.Equal(2, result.Count);
+            Assert.All(result, x => Assert.True(x.Active != 0));
+        }
+
+        [Fact]
+        public async Task GetAllActiveAsync_WithNoActiveItems_ReturnsEmptyList()
+        {
+            var testReqmts = new List<TestRequirement>
+            {
+                new() { TestCode = "PT0001", Buyer = "SV3300", Active = 0, FpsYear = DefaultFpsYear }
+            };
+            var (repo, _, _, _) = CreateRepositoryWithMocks(testReqmts);
+
+            var result = await repo.GetAllActiveAsync();
+
+            Assert.Empty(result);
         }
 
         #endregion

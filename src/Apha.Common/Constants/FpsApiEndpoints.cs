@@ -12,6 +12,7 @@
 
         // Animal
         public const string GetAnimalCosts = "api/v1/animalrequest?jobCode={0}";
+        public const string GetAnimalCostsByAnimalType = "api/v1/animalrequest/byanimaltype";
         public const string GetAnimalLookup = "api/v1/animalrequest/lookup";
         public const string GetAnimalRate = "api/v1/animalrequest/rate?animalType={0}&jobCode={1}";
         public const string CreateAnimalCost = "api/v1/animalrequest";
@@ -19,6 +20,7 @@
         public const string DeleteAnimalCost = "api/v1/animalrequest?indCounter={0}";
         public const string GetTotalAnimalCost = "api/v1/animalrequest/totalanimalcost?jobCode={0}";
         public const string GetAnimalCostViewById = "api/v1/animalrequest/view?indCounter={0}&jobCode={1}";
+        public const string GetAnimalSnapshot = "api/v1/animalrequest/snapshot";
 
         // Employee
         public const string GetFilteredEmployees = "api/v1/employee/paginated?filterOption={0}";
@@ -31,6 +33,7 @@
         public const string GetAllPerson = "api/v1/employee/persons";
         public const string GetWorkGroupStaffPaginated = "api/v1/employee/WorkGroupStaff/paginated";
         public const string GetpactStaffs = "api/v1/employee/pactstaff";
+        public const string GetPactWorkGroupStaff = "api/v1/employee/PactWorkGroupStaff?workGroup={0}";
 
         // Lookup
         public const string GetAllStatuses = "api/v1/status";
@@ -83,6 +86,8 @@
         public const string GetPagedProjectsByUser = "api/v1/project/paged/by-user";
         public const string GetAllProjectsForAllUsers = "api/v1/project/all";
         public const string GetAllProjectsPaged = "api/v1/project/paged/all";
+        public const string GetPagedProjectSpecificQuery = "api/v1/project/specific-query/paged";
+        public const string GetProjectExceptionalCostsPaged = "api/v1/project/exceptionalcosts/paged";
         public const string GetAllPactProjects = "api/v1/project/pactview/all";
         public const string GetPagedPactProjects = "api/v1/project/pactview";
         public const string GetPagedPactProjectsByProgram = "api/v1/project/pactview/by-program?programNo={0}";
@@ -181,6 +186,7 @@
         public const string GetAllProfitCentres = "api/v1/profitcentres/all";        
         public const string PatchProfitCentreSettings = "api/v1/profitcentres/settings";
         public const string GetPagedProfitCenterCostSummary = "api/v1/profitcentres/paged/costsummary";
+        public const string GetPagedWgStaffPlan = "api/v1/profitcentres/wgstaffplan";
 
         // Resource Set-Up — PC Grades
         public const string GetPcGrades = "api/v1/pcgrades?profitCentre={0}";
@@ -225,6 +231,7 @@
         // Generic Bid — Budget Bids
         public const string GetBids = "api/v1/budgetbids?workgroup={0}";
         public const string GetBidsPagedView = "api/v1/budgetbids/paged";
+        public const string GetGenericBidsPaged = "api/v1/budgetbids/generic/paged";
         public const string GetBidByWorkgroupAccount = "api/v1/budgetbids/{0}/{1}";
         public const string CreateBudgetBid = "api/v1/budgetbids";
         public const string UpdateBudgetBid = "api/v1/budgetbids";
