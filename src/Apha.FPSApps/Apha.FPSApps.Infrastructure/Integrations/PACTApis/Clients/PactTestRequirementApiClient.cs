@@ -137,7 +137,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             var baseUrl = string.Format(PactApiEndpoints.GetPagedBySupplierTestCode,
                 Uri.EscapeDataString(testCode));
-            baseUrl += $"?showRejected={Uri.EscapeDataString(showRejected.ToString())}";
+            baseUrl += $"&showRejected={Uri.EscapeDataString(showRejected.ToString())}";
             var url = QueryStringHelper.AddQueryString(baseUrl, query);
             var response = await _http.GetAsync<List<TestSupplierViewRes>>(url);
             if (response.Success)

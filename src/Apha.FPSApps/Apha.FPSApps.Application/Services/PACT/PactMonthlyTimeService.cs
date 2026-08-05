@@ -523,8 +523,8 @@ namespace Apha.FPSApps.Application.Services.PACT
         }
 
         private string GetAuditBucketName()
-            => _configuration["AWS:S3:BucketName"]
-               ?? throw new InvalidOperationException("AWS:S3:BucketName is not configured.");
+            => _configuration["S3Storage:BucketName"]
+               ?? throw new InvalidOperationException("S3Storage:BucketName is not configured.");
 
         private static ApiResponseDto<MonthlyTimeImportResultDto> BuildImportFailure<T>(ExcelImportResult<T> importResult, string invalidTemplateCode, string emptyFileCode)
         {
