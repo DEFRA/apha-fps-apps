@@ -60,7 +60,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpPost]
         public async Task<IActionResult> TriggerInitiate(int plannedYear)
         {
-            var result = await _yearEndService.EnqueueYearEndDataSetupInitiationJobAsync(plannedYear);
+            var result = await _yearEndService.EnqueueYearEndCutOverInitiationJobAsync(plannedYear);
             if (result.Success)
             {
                 _logger.LogInformation("Year End CutOver initiation job triggered for year {PlannedYear}.", plannedYear);
@@ -75,7 +75,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpPost]
         public async Task<IActionResult> TriggerApprove(int plannedYear)
         {
-            var result = await _yearEndService.TriggerYearEndDataSetupApprovalJobAsync(plannedYear);
+            var result = await _yearEndService.TriggerYearEndCutOverApprovalJobAsync(plannedYear);
             if (result.Success)
             {
                 _logger.LogInformation("Year End CutOver approval job triggered. EventId: {EventId}", result?.Data?.EventId);
