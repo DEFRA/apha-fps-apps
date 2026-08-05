@@ -24,13 +24,13 @@ namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
 /// renewal of its own — that is a generic capability to be designed separately.
 /// </summary>
 
-public sealed class RecreateSummariesJob : IBatchJob
+public sealed class RecreateSummaryJob : IBatchJob
 {
     private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
     private readonly IRecreateSummariesStepCatalog _stepCatalog;
     private readonly IRecreateSummariesContext _jobContext;
     private readonly ICorrelationService _correlationService;
-    private readonly ILogger<RecreateSummariesJob> _logger;
+    private readonly ILogger<RecreateSummaryJob> _logger;
 
     /// <summary>Canonical job name.</summary>
     public string Name => "RecreateSummary";
@@ -52,14 +52,14 @@ public sealed class RecreateSummariesJob : IBatchJob
     public int? MaxExecutionSeconds => 3600;
 
     /// <summary>
-    /// Initializes a new instance of <see cref="RecreateSummariesJob"/>.
+    /// Initializes a new instance of <see cref="RecreateSummaryJob"/>.
     /// </summary>
-    public RecreateSummariesJob(
+    public RecreateSummaryJob(
         IDbContextFactory<BatchJobsDbContext> dbContextFactory,
         IRecreateSummariesStepCatalog stepCatalog,
         IRecreateSummariesContext jobContext,
         ICorrelationService correlationService,
-        ILogger<RecreateSummariesJob> logger)
+        ILogger<RecreateSummaryJob> logger)
     {
         _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _stepCatalog = stepCatalog ?? throw new ArgumentNullException(nameof(stepCatalog));

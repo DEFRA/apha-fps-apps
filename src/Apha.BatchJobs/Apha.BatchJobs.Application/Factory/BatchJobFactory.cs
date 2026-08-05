@@ -10,7 +10,8 @@ namespace Apha.BatchJobs.Application.Factory;
 public sealed class BatchJobFactory : IBatchJobFactory
 {
     private readonly IServiceProvider _serviceProvider;
-    private static readonly IReadOnlyDictionary<string, Type> ConventionalJobMap = BuildConventionalJobMap();
+    private static readonly IReadOnlyDictionary<string, Type> ConventionalJobMap =
+        BuildConventionalJobMap(GetCandidateJobTypes(typeof(IBatchJob).Assembly));
 
     /// <summary>
     /// Initializes a new instance of the BatchJobFactory.
@@ -27,56 +28,71 @@ public sealed class BatchJobFactory : IBatchJobFactory
         if (string.IsNullOrWhiteSpace(jobName))
             throw new ArgumentException("Job name cannot be null or empty.", nameof(jobName));
 
-        // Fast path: resolve only the requested job type (avoids constructing all handlers).
-        if (ConventionalJobMap.TryGetValue(jobName, out var jobType))
+        // Resolve only the requested job type. No fallback: an unresolvable job name is a
+        // registration/naming bug and must fail loudly here, not silently construct every
+        // other registered job (which can fail for reasons unrelated to the requested job).
+        if (!ConventionalJobMap.TryGetValue(jobName, out var jobType))
         {
-            if (_serviceProvider.GetService(jobType) is IBatchJob job)
-                return job;
+            throw new InvalidOperationException(
+                $"Job '{jobName}' is not registered. Available jobs: {string.Join(", ", ConventionalJobMap.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase))}");
         }
 
-        var jobs = _serviceProvider.GetServices<IBatchJob>().ToList();
-        var matches = jobs
-            .Where(j => string.Equals(j.Name, jobName, StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        if (_serviceProvider.GetService(jobType) is not IBatchJob job)
+        {
+            throw new InvalidOperationException(
+                $"Job '{jobName}' maps to {jobType.FullName} but it could not be resolved from the service container.");
+        }
 
-        if (matches.Count == 0)
-            throw new InvalidOperationException($"Job '{jobName}' is not registered. Available jobs: {string.Join(", ", jobs.Select(j => j.Name).Distinct(StringComparer.OrdinalIgnoreCase))}");
-
-        if (matches.Count > 1)
-            throw new InvalidOperationException($"Multiple job handlers are registered with Name='{jobName}'. Job names must be unique.");
-
-        return matches[0];
+        return job;
     }
 
     /// <inheritdoc />
     public IEnumerable<string> GetAvailableJobs() =>
-        _serviceProvider.GetServices<IBatchJob>()
-            .Select(j => j.Name)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
+        ConventionalJobMap.Keys
             .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-    private static IReadOnlyDictionary<string, Type> BuildConventionalJobMap()
+    private static IEnumerable<Type> GetCandidateJobTypes(System.Reflection.Assembly assembly)
     {
         var batchJobType = typeof(IBatchJob);
-        var assembly = batchJobType.Assembly;
-
         return assembly
             .GetTypes()
             .Where(t =>
                 t is { IsClass: true, IsAbstract: false } &&
-                batchJobType.IsAssignableFrom(t))
+                batchJobType.IsAssignableFrom(t));
+    }
+
+    /// <summary>
+    /// Builds the conventional-name lookup from a set of candidate <see cref="IBatchJob"/> types.
+    /// Internal (not private) so the collision-detection behavior is directly unit-testable
+    /// without relying on reflection over the real production assembly.
+    /// </summary>
+    internal static IReadOnlyDictionary<string, Type> BuildConventionalJobMap(IEnumerable<Type> candidateTypes)
+    {
+        var grouped = candidateTypes
             .Select(t => new
             {
                 Type = t,
                 Name = GetConventionalName(t)
             })
             .GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
-            .Where(g => g.Count() == 1)
-            .ToDictionary(g => g.Key, g => g.Single().Type, StringComparer.OrdinalIgnoreCase);
+            .ToList();
+
+        // No fallback here either: a naming collision between two job types must fail the
+        // process at startup, not silently drop both from the fast-path map.
+        var collisions = grouped.Where(g => g.Count() > 1).ToList();
+        if (collisions.Count > 0)
+        {
+            var detail = string.Join("; ", collisions.Select(g =>
+                $"'{g.Key}' -> {string.Join(", ", g.Select(x => x.Type.FullName))}"));
+            throw new InvalidOperationException(
+                $"Multiple IBatchJob types resolve to the same conventional name: {detail}. Job names must be unique.");
+        }
+
+        return grouped.ToDictionary(g => g.Key, g => g.Single().Type, StringComparer.OrdinalIgnoreCase);
     }
 
-    private static string GetConventionalName(Type type)
+    internal static string GetConventionalName(Type type)
     {
         var name = type.Name;
 
