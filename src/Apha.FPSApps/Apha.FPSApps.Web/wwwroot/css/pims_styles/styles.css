@@ -73,6 +73,11 @@
     text-align: right;
 }
 
+.sup_btn_input_height {
+    padding: 5px 10px;
+    line-height: 1.2;
+}
+
 /*menu*/
 
 :root {
@@ -929,10 +934,13 @@ select {
     line-height: normal;
 }
 
-.selectedProjectForm .headline {
-    margin-left: -5px;
-    background: aliceblue;
-    margin-top: -10px;
+    .selectedProjectForm .headline {
+        margin-left: -5px;
+       
+        margin-top: -10px;
+    }
+.selectedProjectForm h6 {
+    background: #f4f8fb !important;
 }
 
 .flexbox-column {
@@ -2974,7 +2982,9 @@ th.sorted-desc {
 }
 /* Override button positioning to move Add button to rightmost */
 
-#gridContainer_milestonesGrid .editable-grid-container > div > h2 > .sup_flex_space_between, #gridContainer_milestoneFormDatesGrid .editable-grid-container > div > h2 > .sup_flex_space_between {
+#gridContainer_milestonesGrid .editable-grid-container > div > h2 > .sup_flex_space_between,
+#gridContainer_milestoneFormDatesGrid .editable-grid-container > div > h2 > .sup_flex_space_between, 
+#gridContainer_comments .editable-grid-container > div > h2 > .sup_flex_space_between {
     display: flex !important;
     justify-content: end !important;
 }
