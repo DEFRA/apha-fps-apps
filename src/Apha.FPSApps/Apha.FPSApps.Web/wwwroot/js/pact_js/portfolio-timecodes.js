@@ -83,6 +83,24 @@ document.addEventListener('DOMContentLoaded', function () {
     if (typeof portfolioOptionsListData !== 'undefined') {
         initializePortfolioMultiDropdown();
     }
+
+    // Disable Test Purchase Requirements button if year is closed
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+        var $btn = $('#btnTestPurchaseRequirements');
+        if ($btn.length > 0) {
+            $btn.addClass('govuk-button--disabled')
+                .attr('aria-disabled', 'true')
+                .css({
+                    'pointer-events': 'none',
+                    'opacity': '0.5',
+                    'cursor': 'not-allowed'
+                })
+                .on('click', function(e) {
+                    e.preventDefault();
+                    return false;
+                });
+        }
+    }
 });
 
 function toggleSidebar() {
