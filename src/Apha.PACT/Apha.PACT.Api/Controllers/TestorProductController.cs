@@ -36,7 +36,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(items.Select(i => new TestorProductRes
             {
                 ItemCode = i.ItemCode,
-                ItemDescription = i.ItemDescription
+                ItemDescription = i.ItemDescription,
+                UnitPriceVla = i.UnitPriceVla,
+                FpsYear = i.FpsYear
             }).ToList());
         }
 

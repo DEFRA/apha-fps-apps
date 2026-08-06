@@ -486,6 +486,7 @@
 
 .modal-title {
     font-size: 16px;
+    font-weight: bold;
 }
 
 .dropdown-menu {
@@ -1312,13 +1313,13 @@ main {
 }
 
 .costbook-edit-page .edit-form-container {
-    width: 1152px;
+    width: 928px;
     margin-bottom: 25px;
 }
 
 .costbook-edit-page .edit-action-buttons {
     margin-bottom: 5px;
-    width: 75%;
+    overflow: hidden;
 }
 
 .costbook-edit-page .edit-action-buttons-alt {
@@ -1505,6 +1506,14 @@ main {
 .costbook-home-page .home-search-shell {
     float: right;
 
+}
+.isFloatRight,
+.costbook-home-page .home-search-shell {
+    float: right;
+}
+
+.isFloatLeft {
+    float: left;
 }
 
     .costbook-home-page .home-search-shell input {
@@ -2872,12 +2881,19 @@ main {
     .grid-scroll-container {
         max-height: 219px;
     }
+
+    .sup_border-bottom {
+        border-bottom: 1px solid #8eb8dc !important;
+    }
 }
 
 .isCustomInfo {
-    font-size: 0.90em;
-    width: 225px;
-    color: #000;
+    margin-left: 32px;
+    font-weight: bold;
+    display: block;
+    font-size: 13px;
+    width: 308px;
+    color: #353535;
     border: 1px dashed #0d6efd;
     border-radius: 4px;
     padding: 2px;
@@ -2962,4 +2978,49 @@ main {
 .sup_overflow_y_400 {
     overflow-y: unset;
     max-height: max-content;
+}
+.govuk-footer {
+    text-align: center;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.btn-close {
+    opacity: 5;
+}
+
+.isDataGridWrapper {
+    .sup_flex_space_between {
+        padding: 10px;
+    }
+
+    .editable-grid-container h2 {
+        background-color: #f4f8fb;
+        border-bottom: 1px solid #8eb8dc;
+    }
+}
+.isResultGrid {
+    label {
+        text-align: center;
+    }
+
+    .ps-tfoot__input {
+        width: 100%;
+    }
+
+    td:nth-child(1) {
+        width: 242px;
+    }
+
+    td:nth-child(2) {
+        width: 321px;
+    }
+
+    td:nth-child(3) {
+        width: 260px;
+    }
+
+    .isDislayBlock {
+        display: block !important;
+    }
 }
