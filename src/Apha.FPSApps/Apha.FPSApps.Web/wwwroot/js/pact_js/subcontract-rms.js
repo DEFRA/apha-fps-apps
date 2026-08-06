@@ -344,7 +344,6 @@ function exportFailedSubContractRms() {
 
 $(document).ready(function () {
     updateSelectedMonthText();
-    debugger;
     // Disable buttons and file input when year is closed
     if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
 
