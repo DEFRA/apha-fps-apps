@@ -35,7 +35,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
                 .ReverseMap()
                 .ForMember(d => d.CustIncome, o => o.MapFrom(s => s.BudgetExt));
             CreateMap<ProjectDto, ProjectRes>().ReverseMap();
-            
+            CreateMap<ProjectSpecificQueryDto, ProjectSpecificQueryRes>().ReverseMap();
+
             // FPS Lookups
             CreateMap<StatusDto, StatusRes>().ReverseMap();
             CreateMap<DiseaseDto, DiseaseRes>().ReverseMap();
@@ -45,6 +46,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             
             // FPS Animal Plan
             CreateMap<AnimalCostViewDto, AnimalCostViewRes>().ReverseMap();
+            CreateMap<AnimalSnapshotViewDto, AnimalSnapshotViewRes>().ReverseMap();
             CreateMap<AnimalDto, AnimalRes>().ReverseMap();
             CreateMap<AnimalRequestDto, AnimalRequestReq>().ReverseMap();
             CreateMap<AnimalRequestDto, AnimalRequestRes>().ReverseMap();
@@ -114,9 +116,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<WorkGroupEmployeeStaffDto, WorkGroupEmployeeRes>().ReverseMap();
 
             // ProjectProfitability
-            CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
-
-            // ProjectProfitabilityVla
+            CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();            // ProjectProfitabilityVla
             //   ForMember(Id) handles int->int? coercion: Id=GetValueOrDefault(0) on reverse.
             //   TotalCount is on Res only; silently ignored in Res->Dto direction (see DEFERRED note above).
             CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaRes>()
@@ -129,8 +129,14 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Staff Plan view
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
 
+            // Staff Plan Details view
+            CreateMap<ProjectStaffPlanDetailsViewDto, ProjectStaffPlanDetailsViewRes>().ReverseMap();
+
             // Project Group Staff Plan view
             CreateMap<ProjectGroupStaffPlanViewDto, ProjectGroupStaffPlanViewRes>().ReverseMap();
+
+            // Workgroup Staff Plan view
+            CreateMap<WgStaffPlanViewDto, WgStaffPlanViewRes>().ReverseMap();
 
             CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
 
@@ -149,6 +155,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<BidDto, BidReq>().ReverseMap();
             CreateMap<BidDto, BidRes>().ReverseMap();
             CreateMap<BidViewDto, BidViewRes>().ReverseMap();
+            CreateMap<GenericBidViewDto, GenericBidViewRes>().ReverseMap();
+            CreateMap<ProjectExceptionalCostViewDto, ProjectExceptionalCostViewRes>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
@@ -194,6 +202,13 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ResourceStaffAllocationDto, ResourceStaffAllocationRes>().ReverseMap();
             CreateMap<ResourceStaffJobDto, ResourceStaffJobRes>().ReverseMap();
             CreateMap<ResourceStaffJobDetailDto, ResourceStaffJobDetailRes>().ReverseMap();
+
+            // ResourceMgmtReplan — Resource Re-allocation Screen (frmRM_RePlan)
+            CreateMap<ResourceMgmtReplanViewDto, ResourceMgmtReplanViewRes>().ReverseMap();
+            CreateMap<ResourceMgmtReplanStaffJobDto, ResourceMgmtReplanStaffJobRes>().ReverseMap();
+
+            // Resource Replan — project staff replan
+            CreateMap<ProjectStaffReplanDto, ProjectStaffReplanRes>().ReverseMap();
         }
     }
 }

@@ -32,6 +32,7 @@ namespace Apha.Common.Constants
         public const string UpdateComment = "api/v1/projectcomment/{0}";
         public const string DeleteComment = "api/v1/projectcomment/{0}";
         public const string GetCommentTopics = "api/v1/projectcomment/commenttopics";
+        public const string GetCommentForecastSpend = "api/v1/projectcomment/forecastspend";
 
         // Project Year Costs
         public const string GetAdditionalActuals = "api/v1/projectyearcosts/{0}/{1}/additionalactuals";
@@ -81,6 +82,15 @@ namespace Apha.Common.Constants
         public const string GetRadTrackInvoiceYears = "api/v1/radtrackinvoice/lookups/years";
         public const string GetRadTrackInvoiceContracts = "api/v1/radtrackinvoice/lookups/contracts";
         public const string GetRadTrackInvoicePrograms = "api/v1/radtrackinvoice/lookups/programs";
+
+        // Yearly Financial Details
+        public const string GetAllYearlyFinancialData = "api/v1/yearlyfinancialdata/{0}";
+        public const string GetYearlyFinancialDataByKey = "api/v1/yearlyfinancialdata/{0}/{1}";
+        public const string CreateYearlyFinancialData = "api/v1/yearlyfinancialdata";
+        public const string UpdateYearlyFinancialData = "api/v1/yearlyfinancialdata/{0}/{1}";
+        public const string DeleteYearlyFinancialData = "api/v1/yearlyfinancialdata/{0}/{1}";
+        public const string GetYearlyFinancialDataPactCosts = "api/v1/yearlyfinancialdata/{0}/{1}/pactcosts";
+        public const string GetSettingValueById = "api/v1/yearlyfinancialdata/settings/{0}";
 
         // Staging / Import
         public const string GetStagingMilestones = "api/v1/milestone/staging";

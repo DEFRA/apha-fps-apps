@@ -27,6 +27,9 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsAsync(QueryParameters<string> query)
             => await _fpsClient.FpsProject.GetPagedProjectsAsync(query);
 
+        public async Task<ApiResponseDto<List<ProjectSpecificQueryDto>>> GetPagedProjectSpecificQueryAsync(QueryParameters<string> query)
+            => await _fpsClient.FpsProject.GetPagedProjectSpecificQueryAsync(query);
+
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsByUserAsync(QueryParameters<string> query)
             => await _fpsClient.FpsProject.GetPagedProjectsByUserAsync(query);
 
@@ -80,6 +83,20 @@ namespace Apha.FPSApps.Application.Services.FPS
 
         public async Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo)
             => await _fpsClient.FpsProject.GetProjectsByProgramAsync(query, programNo);
+
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetProjectLookupAsync()
+        {
+            var response = await _fpsClient.FpsProject.GetAllProjectsAsync();
+            if (!response.Success || response.Data == null)
+                return response;
+
+            var lookup = response.Data
+                .OrderBy(p => p.ParentProject)
+                .Select(p => new ProjectDto { ParentProject = p.ParentProject, Program = p.Program, ProjectGroup = p.ProjectGroup })
+                .ToList();
+
+            return ApiResponseDto<List<ProjectDto>>.SuccessResponse(lookup);
+        }
 
         public async Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProjectGroupAsync(QueryParameters<string> query, string projectGroup)
             => await _fpsClient.FpsProjectGroup.GetProjectsByProjectGroupAsync(query, projectGroup);
@@ -142,5 +159,12 @@ namespace Apha.FPSApps.Application.Services.FPS
             string? manager = null,
             string? customer = null)
             => _fpsClient.FpsProject.GetProjectProfitabilityVlaAsync(query, projectStatus, programNo, manager, customer);
+
+        public Task<ApiResponseDto<List<ProjectStaffReplanDto>>> GetProjectGroupStaffReplanAsync(QueryParameters<string> query, string workgroup)
+            => _fpsClient.FpsProject.GetProjectGroupStaffReplanAsync(query, workgroup);
+
+        public Task<ApiResponseDto<List<ProjectExceptionalCostViewDto>>> GetProjectExceptionalCostsPagedAsync(QueryParameters<string> query)
+            => _fpsClient.FpsProject.GetProjectExceptionalCostsPagedAsync(query);
+
     }
 }

@@ -13,6 +13,10 @@ on:
         description: "dev image version release"
         required: true
         type: boolean
+      environment:  
+        description: "Optional environment name"
+        required: false
+        type: string  
       tag_short_description:   
         description: "Short description for the git tag"
         required: true
@@ -21,16 +25,6 @@ on:
         description: "Relative path to the Dockerfile from repo root"
         required: true
         type: string
-      run_local_healthcheck:
-        description: "Run local container startup and healthcheck before push"
-        required: false
-        type: boolean
-        default: true
-      healthcheck_mode:
-        description: "Healthcheck mode: 'http' (default) for APIs with /health endpoint, 'worker' for console worker containers"
-        required: false
-        type: string
-        default: "http"
   
     secrets:
       AWS_ENV_REGION:
@@ -47,6 +41,7 @@ jobs:
   push-image:
     name: Push Docker Image
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || '' }} 
     permissions:
       id-token: write
       contents: write
@@ -124,26 +119,17 @@ jobs:
           labels: |
             org.opencontainers.image.licenses=OGL-UK-3.0
 
-      - name: Build local image for healthcheck
-        if: ${{ inputs.run_local_healthcheck }}
+      - name: Run container locally
         env:
           IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
         run: |
           docker build -t $REPOSITORY:$IMAGE_TAG --file $DOCKERFILE_PATH .
-
-      # ── HTTP mode (APIs) ──────────────────────────────────────────────────
-      - name: Run API container locally
-        if: ${{ inputs.run_local_healthcheck && inputs.healthcheck_mode == 'http' }}
-        env:
-          IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
-        run: |
           echo "Running local image: $IMAGE_TAG"
           docker run -d --name test-container -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=local $REPOSITORY:$IMAGE_TAG
-
       - name: Wait for service to start
-        if: ${{ inputs.run_local_healthcheck && inputs.healthcheck_mode == 'http' }}
-        run: |
+        run: >
           echo "Waiting for the service to start..."
+
           for i in {1..10}; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health || echo "000")
             echo "HTTP Status: $STATUS"
@@ -156,62 +142,13 @@ jobs:
             echo "---------------------------------------"
             sleep 3
           done
-
       - name: Test application response
-        if: ${{ inputs.run_local_healthcheck && inputs.healthcheck_mode == 'http' }}
         run: |
           curl -i http://localhost:8080/health
-
-      # ── Worker mode (console workers) ────────────────────────────────────
-      - name: Run worker HealthCheck job
-        if: ${{ inputs.run_local_healthcheck && inputs.healthcheck_mode == 'worker' }}
-        env:
-          IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
-        run: |
-          JOB_EXEC_ID=$(cat /proc/sys/kernel/random/uuid)
-          echo "Running worker startup healthcheck | JobExecutionId=$JOB_EXEC_ID"
-
-          set +e
-          docker run --name test-container \
-            -e ASPNETCORE_ENVIRONMENT=local \
-            -e ConnectionStrings__FPSConnectionString="Host=localhost;Port=5432;Username=ci;Password=ci;Database=ci" \
-            -e BATCH_JOB_NAME=HealthCheck \
-            -e BATCH_RUN_MODE=Manual \
-            -e BATCH_REQUESTED_BY=github-actions \
-            -e BATCH_JOB_EXECUTION_ID="$JOB_EXEC_ID" \
-            $REPOSITORY:$IMAGE_TAG
-          exit_code=$?
-          set -e
-
-          echo "Worker exit code: $exit_code"
-          docker logs test-container --tail 50 || true
-
-          # HealthCheck short-circuits before host startup; assert HealthCheck output.
-          if [ "${BATCH_JOB_NAME:-HealthCheck}" = "HealthCheck" ]; then
-            if ! docker logs test-container 2>&1 | grep -q "HealthCheck OK"; then
-              echo "Worker HealthCheck did not emit expected success marker"
-              exit 1
-            fi
-          else
-            # Non-HealthCheck worker runs should reach startup checkpoint.
-            if ! docker logs test-container 2>&1 | grep -q "Flow checkpoint: Program.Main -> Host.Started -> Resolving JobOrchestrator"; then
-              echo "Worker did not reach startup checkpoint"
-              exit 1
-            fi
-          fi
-
-          # Accept normal completion (0) and dependency-outage (5) in CI.
-          if [ "$exit_code" -ne 0 ] && [ "$exit_code" -ne 5 ]; then
-            echo "Worker failed before startup healthcheck could complete"
-            exit "$exit_code"
-          fi
-
-          echo "Worker startup healthcheck passed"
-
       - name: Cleanup container
-        if: ${{ always() && inputs.run_local_healthcheck }}
+        if: always()
         run: |
-          docker rm -f test-container 2>/dev/null || true
+          docker rm -f test-container
 
       - name: Build and push Docker image manually
         env:

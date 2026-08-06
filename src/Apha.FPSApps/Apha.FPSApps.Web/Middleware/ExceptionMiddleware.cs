@@ -39,7 +39,7 @@ namespace Apha.FPSApps.Web.Middleware
 
         private async Task HandleExceptionAsync(HttpContext context, Exception ex, int statusCode)
         {
-            // Unwrap: UnauthorizedAccessException may wrap MicrosoftIdentityWebChallengeUserException
+            // Unwrap: UnauthorizedAccessException may wrap MicrosoftIdentityWebChallengeUserException 
             var oidcChallenge = ex as MicrosoftIdentityWebChallengeUserException
                 ?? ex.InnerException as MicrosoftIdentityWebChallengeUserException;
 
@@ -70,7 +70,7 @@ namespace Apha.FPSApps.Web.Middleware
         private (string errorType, string errorCode, int statusCode) ClassifyException(Exception ex)
         {
             var errorType = _configuration["ExceptionTypes:General"]
-                            ?? "FPS.GENERAL_EXCEPTION";
+                            ?? "FPSAPPS.EXCEPTION.WEB.GENERAL";
             string errorCode;
             int statusCode;
 

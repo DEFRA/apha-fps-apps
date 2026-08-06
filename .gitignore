@@ -14,14 +14,6 @@ appsettings.local.json
 [Ll]og/
 *.log
 
-# Local scratch/diagnostic tools - never checked in
-/temp/
-/.tmp/
-
-# BatchJobs local docs and nested gitignore - not for source control
-src/Apha.BatchJobs/docs/
-src/Apha.BatchJobs/.gitignore
-
 # Visual Studio cache
 .vs/
 .vscode/

@@ -13,7 +13,7 @@ using System.Web;
 namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 {
     [Area("PIMS")]
-    [Authorize(Roles = "PIMSAdmin,PIMSUser")]
+    [Authorize(Roles = "PMDAdmin,PIMSProjectManager")]
     [AuthorizeForScopes(ScopeKeySection = "PIMSApiSettings:Scope")]
     public class PMDMilestoneController : Controller
     {
