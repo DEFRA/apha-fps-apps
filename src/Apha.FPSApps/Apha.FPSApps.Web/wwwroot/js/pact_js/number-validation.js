@@ -2,6 +2,47 @@
 // Handles numeric input validation for decimal/currency fields across PACT module
 // Usage: Add 'decfmt-input' class to any input field that needs numeric validation
 
+// Helper function to get clean label text from an input field
+// Uses the same approach as ajax-form-validation.js
+function getFieldLabel($input) {
+    var labelText = '';
+    var inputName = $input.attr('name') || '';
+    var inputId = $input.attr('id') || '';
+
+    // Try to find label by 'for' attribute matching the input's name
+    if (inputName) {
+        var $label = $('label[for="' + inputName + '"]');
+        if ($label.length > 0) {
+            // Clone label, remove child elements (like asterisk spans), get text, remove trailing colons
+            labelText = $label.clone().children().remove().end().text().trim().replace(/:\s*$/, '');
+        }
+    }
+
+    // If not found by name, try by id
+    if (!labelText && inputId) {
+        var $label = $('label[for="' + inputId + '"]');
+        if ($label.length > 0) {
+            labelText = $label.clone().children().remove().end().text().trim().replace(/:\s*$/, '');
+        }
+    }
+
+    // If no label found, try to get label from parent form-group
+    if (!labelText) {
+        var $formGroup = $input.closest('.govuk-form-group');
+        var $label = $formGroup.find('label').first();
+        if ($label.length > 0) {
+            labelText = $label.clone().children().remove().end().text().trim().replace(/:\s*$/, '');
+        }
+    }
+
+    // If still no label, use field name or id or a generic term
+    if (!labelText) {
+        labelText = inputName || inputId || 'This field';
+    }
+
+    return labelText;
+}
+
 // Numeric input validation - allows positive/negative numbers with decimal point
 function validateNumericInput(event) {
     var input = event.target;
@@ -89,7 +130,12 @@ function handleNumericPaste(event) {
     var max = 999999999999999.9999;
 
     if (!isNaN(parsedValue) && (parsedValue < min || parsedValue > max)) {
-        showAlertMessage('Value must be between -999,999,999,999,999.9999 and 999,999,999,999,999.9999', AlertType.ERROR);
+        // Get the input element to find its label
+        var input = event.target || event.currentTarget;
+        var $input = $(input);
+        var fieldName = getFieldLabel($input);
+
+        showAlertMessage(fieldName + ' must be between -999,999,999,999,999.9999 and 999,999,999,999,999.9999', AlertType.ERROR);
         return;
     }
 
@@ -115,6 +161,9 @@ function validateRangeOnInput(input) {
     var $input = $(input); // Use jQuery for consistency
     var value = $input.val().trim();
     var fieldName = $input.attr('name') || $input.attr('id');
+
+    // Get the label text for better error messages using the helper function
+    var labelText = getFieldLabel($input);
 
     // Sanitize the input value to fix invalid formats like "999-87.0000"
     // Only allow minus at the beginning, remove any other minus signs
@@ -184,7 +233,7 @@ function validateRangeOnInput(input) {
 
     // Check if value is within range
     if (parsedValue < min || parsedValue > max) {
-        var errorMessage = 'Value must be between -999,999,999,999,999.9999 and 999,999,999,999,999.9999';
+        var errorMessage = labelText + ' must be between -999,999,999,999,999.9999 and 999,999,999,999,999.9999';
         $input.addClass('govuk-input--error');
         $formGroup.addClass('govuk-form-group--error');
         $input.attr('title', errorMessage);

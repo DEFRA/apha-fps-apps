@@ -22,6 +22,29 @@
 (function ($) {
     'use strict';
 
+
+    // ── maxlength suppression for fields that also carry [Range] validation ──
+    //
+    // jQuery Validate reads the `maxlength` HTML attribute as a live validation
+    // rule at runtime (via attributeRules). When a field also has `data-val-range`
+    // (emitted by the ASP.NET [Range] data annotation), the maxlength rule fires
+    // first and shows a generic "no more than N characters" message, hiding the
+    // meaningful Range error message from the model.
+    //
+    // This patch wraps $.validator.methods.maxlength once, at script-load time,
+    // so it applies globally to every form on every page. For any field that has
+    // both a maxlength attribute AND a data-val-range attribute the maxlength
+    // check is skipped (returns true), allowing [Range] to be the sole validator.
+    // All other fields continue to use the original maxlength behaviour.
+    if (typeof $.validator !== 'undefined') {
+        var _origMaxlength = $.validator.methods.maxlength;
+        $.validator.methods.maxlength = function (value, element, param) {
+            if (element.maxLength > 0 && $(element).data('val-range') !== undefined) {
+                return true; // defer to [Range] — suppress the maxlength message
+            }
+            return _origMaxlength.call(this, value, element, param);
+        };
+    }
     // ── Private helpers ──────────────────────────────────────────────────────
 
     /** Resolve the optional container argument into a jQuery object. */
