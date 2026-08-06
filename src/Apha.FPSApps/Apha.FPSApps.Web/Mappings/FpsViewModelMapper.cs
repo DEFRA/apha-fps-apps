@@ -109,6 +109,9 @@ namespace Apha.FPSApps.Web.Mappings
             // Project Group Staff Plan view
             CreateMap<ProjectGroupStaffPlanViewItem, ProjectGroupStaffPlanViewDto>().ReverseMap();
 
+            // Workgroup Staff Plan view
+            CreateMap<WgStaffPlanViewItem, WgStaffPlanViewDto>().ReverseMap();
+
             // Test Supplier
             CreateMap<TestSupplierItem, Apha.FPSApps.Application.Dtos.PACT.TestSupplierViewDto>().ReverseMap();
             CreateMap<TestSupplierItem, TestRequirementDto>()
