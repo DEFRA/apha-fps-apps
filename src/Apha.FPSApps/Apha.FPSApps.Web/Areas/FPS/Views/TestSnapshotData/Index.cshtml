@@ -14,27 +14,31 @@
                 <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
                     SnapshotTests
                 </h1>
+
             </div>
+
         </div>
 
-        @* ── Sidenav + content layout (matches HTML prototype) ───────────────── *@
+        @* ── Sidenav + content layout ───────────────── *@
         <div class="govuk-grid-row">
             <div class="cc-container-fluid">
+
                 <div class="cc-layout-row">
 
-                    @* Side navigation — Snapshot queries (reusable partial) *@
+                    @* Side navigation *@
                     @await Html.PartialAsync("_SnapshotSideNav")
 
                     <div class="cc-content-column">
                         <div class="govuk-grid-row">
                             <div class="govuk-grid-column-full">
 
-                                @* ── DataGrid ──────────────────────────────────── *@
+                                @* ── DataGrid ────────── *@
                                 <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
                                     <div class="govuk-grid-column-full sup_p_0">
                                         <div id="gridContainer_snapShotTestDataGrid">
                                             @await Html.PartialAsync("_DataGrid", Model.SnapShotTestDataGrid)
                                         </div>
+
                                     </div>
                                 </div>
 

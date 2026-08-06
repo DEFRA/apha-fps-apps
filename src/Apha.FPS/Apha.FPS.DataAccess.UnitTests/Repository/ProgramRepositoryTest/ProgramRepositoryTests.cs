@@ -649,6 +649,117 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             Assert.Equal(2, result.PaginationData.TotalRecords);
         }
 
+        [Theory]
+        [InlineData("directorate", "P001")]
+        [InlineData("program", "P001")]
+        [InlineData("customer", "P001")]
+        [InlineData("contract", "P001")]
+        [InlineData("project", "P001")]
+        [InlineData("resourcecentre", "P001")]
+        [InlineData("workgroup", "P001")]
+        [InlineData("gradecode", "P001")]
+        [InlineData("name", "P001")]
+        [InlineData("hours", "ZT_prog")]
+        [InlineData("hourscost", "ZT_prog")]
+        public async Task GetProgramTimeSnapshotAsync_SortsAscending_ByProperty(string sortBy, string expectedFirstProgram)
+        {
+            // Arrange
+            var seed = BuildPlanCostSeedData();
+            var repo = CreatePlanCostRepository(
+                seed.Programs, seed.Projects, seed.StaffJobs, seed.Staff, seed.WorkgroupGrades, seed.ProfitCentreGrades);
+            var query = new Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = sortBy,
+                Descending = false
+            };
+
+            // Act
+            var result = await repo.GetProgramTimeSnapshotAsync(query);
+
+            // Assert
+            Assert.Equal(expectedFirstProgram, result.Data.First().Program);
+        }
+
+        [Theory]
+        [InlineData("directorate", "ZT_prog")]
+        [InlineData("program", "ZT_prog")]
+        [InlineData("customer", "ZT_prog")]
+        [InlineData("contract", "ZT_prog")]
+        [InlineData("project", "ZT_prog")]
+        [InlineData("resourcecentre", "ZT_prog")]
+        [InlineData("workgroup", "ZT_prog")]
+        [InlineData("gradecode", "ZT_prog")]
+        [InlineData("name", "ZT_prog")]
+        [InlineData("hours", "P001")]
+        [InlineData("hourscost", "P001")]
+        public async Task GetProgramTimeSnapshotAsync_SortsDescending_ByProperty(string sortBy, string expectedFirstProgram)
+        {
+            // Arrange
+            var seed = BuildPlanCostSeedData();
+            var repo = CreatePlanCostRepository(
+                seed.Programs, seed.Projects, seed.StaffJobs, seed.Staff, seed.WorkgroupGrades, seed.ProfitCentreGrades);
+            var query = new Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = sortBy,
+                Descending = true
+            };
+
+            // Act
+            var result = await repo.GetProgramTimeSnapshotAsync(query);
+
+            // Assert
+            Assert.Equal(expectedFirstProgram, result.Data.First().Program);
+        }
+
+        [Theory]
+        [InlineData("version")]
+        [InlineData("status")]
+        public async Task GetProgramTimeSnapshotAsync_SortsByTiedColumn_ReturnsAllRows(string sortBy)
+        {
+            // Arrange ? Version and Status are identical across the seed rows (tie); the sort branch
+            // is still exercised and all rows must be returned.
+            var seed = BuildPlanCostSeedData();
+            var repo = CreatePlanCostRepository(
+                seed.Programs, seed.Projects, seed.StaffJobs, seed.Staff, seed.WorkgroupGrades, seed.ProfitCentreGrades);
+            var query = new Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = sortBy
+            };
+
+            // Act
+            var result = await repo.GetProgramTimeSnapshotAsync(query);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetProgramTimeSnapshotAsync_WithUnknownSortColumn_ReturnsUnsortedRows()
+        {
+            // Arrange ? an unrecognised SortBy hits the default switch arm (no ordering applied).
+            var seed = BuildPlanCostSeedData();
+            var repo = CreatePlanCostRepository(
+                seed.Programs, seed.Projects, seed.StaffJobs, seed.Staff, seed.WorkgroupGrades, seed.ProfitCentreGrades);
+            var query = new Core.Pagination.PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "nonexistentcolumn"
+            };
+
+            // Act
+            var result = await repo.GetProgramTimeSnapshotAsync(query);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+        }
+
         #endregion
     }
 }

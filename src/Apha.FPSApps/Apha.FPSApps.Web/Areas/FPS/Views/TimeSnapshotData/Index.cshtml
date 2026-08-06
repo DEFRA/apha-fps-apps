@@ -7,7 +7,6 @@
 
 <main class="govuk-main-wrapper govuk-!-padding-top-0 asu-main-content" id="main-content" role="main">
     <div class="container-fluid">
-
         @* ── Page title ──────────────────────────────────────────────────────── *@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
@@ -16,15 +15,11 @@
                 </h1>
             </div>
         </div>
-
-        @* ── Sidenav + content layout (matches HTML prototype) ───────────────── *@
+        @* ── Sidenav layout (matches HTML prototype) ─ *@
         <div class="govuk-grid-row">
             <div class="cc-container-fluid">
                 <div class="cc-layout-row">
-
-                    @* Side navigation — Snapshot queries (reusable partial) *@
                     @await Html.PartialAsync("_SnapshotSideNav")
-
                     <div class="cc-content-column">
                         <div class="govuk-grid-row">
                             <div class="govuk-grid-column-full">
@@ -37,7 +32,6 @@
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </div>
