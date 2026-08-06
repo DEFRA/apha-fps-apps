@@ -20,5 +20,7 @@ namespace Apha.FPSApps.Application.Dtos.FPS
         public decimal? Profit { get; set; }
         public string? Disease { get; set; }
         public string? Contract { get; set; }
+        public decimal? CaseWorkSub { get; set; }
+        public decimal? PlanCaseWorkDebit { get; set; }
     }
 }

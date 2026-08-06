@@ -55,55 +55,22 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
         public decimal? BudgetCvl { get; set; }
 
-       
-        
-        //[Display(Name = "Budget Ext")]
-        //[DataType(DataType.Currency)]
-        //[DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
-        //[GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
-        //public decimal? BudgetExt { get; set; }
+
+        [DataType(DataType.Currency)]
+        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
+        public decimal? CaseWorkSub { get; set; }
 
 
-        //[Display(Name = "PVS Income")]
-        //[DataType(DataType.Currency)]
-        //[DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
-        //[GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
-        //public decimal? PvsIncome { get; set; }
+        [Display(Name = "PVS Income")]
+        [DataType(DataType.Currency)]
+        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
+        public decimal? PvsIncome { get; set; }
 
-        //[Display(Name = "WIP EOY")]
-        //[DataType(DataType.Currency)]
-        //[DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
-        //[GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
-        //public decimal? WipEoy { get; set; }
-
-        //[Display(Name = "WIP Limit")]
-        //[DataType(DataType.Currency)]
-        //[DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
-        //[GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
-        //public decimal? WipLimit { get; set; }
-
-        //[Display(Name = "WIP Current")]
-        //[DataType(DataType.Currency)]
-        //[DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
-        //[GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
-        //public decimal? WipCurrent { get; set; }
-
-        //[Display(Name = "FEC Cost")]
-        //[DataType(DataType.Currency)]
-        //[DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
-        //[GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
-        //public decimal? FecCost { get; set; }
-
-        //[Display(Name = "Profit")]
-        //[DataType(DataType.Currency)]
-        //[DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
-        //[GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
-        //public decimal? Profit { get; set; }
-
-        //[Display(Name = "Disease")]
-        //[GridColumn(Width = 110, Type = GridColumnType.ReadOnly, IsFilterable = true)]
-        //public string? Disease { get; set; }
-
-
+        [Display(Name = "PlanCaseWorkDebit")]
+        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
+        public decimal? PlanCaseWorkDebit { get; set; }
     }
 }
