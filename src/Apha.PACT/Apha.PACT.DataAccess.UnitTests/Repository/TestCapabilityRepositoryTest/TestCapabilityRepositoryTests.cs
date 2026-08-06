@@ -2131,5 +2131,43 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
 
         #endregion
 
+        #region GetAllAsync
+
+        [Fact]
+        public async Task GetAllAsync_WithData_ReturnsAllCapabilities()
+        {
+            // Arrange
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "PT0001", WorkGroup = "WG1", FpsYear = DefaultFpsYear },
+                new() { TestCode = "PT0002", WorkGroup = "WG2", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(capabilities);
+
+            // Act
+            var result = await repo.GetAllAsync();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, x => x.TestCode == "PT0001");
+            Assert.Contains(result, x => x.TestCode == "PT0002");
+        }
+
+        [Fact]
+        public async Task GetAllAsync_WithNoData_ReturnsEmptyList()
+        {
+            // Arrange
+            var repo = CreateRepository([]);
+
+            // Act
+            var result = await repo.GetAllAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        #endregion
+
             }
         }
