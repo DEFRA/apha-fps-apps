@@ -97,7 +97,6 @@
                             class="govuk-button govuk-button--primary asu-side-button"
                             data-module="govuk-button"
                             role="button"
-                            disabled
                             onclick="exportAnimalCosts()">
                         Download Animal data<br>For email attachement
                     </button>
@@ -158,8 +157,6 @@
             document.getElementById('animal-type-input').value = label;
             document.getElementById('animal-type-panel').style.display = 'none';
 
-            // Enable the Excel export now that an animal type is selected
-            document.getElementById('asuExportBtn').disabled = !value;
 
             // Reset totals while grid reloads
             document.getElementById('asuTotalDays').value = '0';
@@ -194,9 +191,9 @@
         // ── Export the currently selected animal type's cost records to Excel ──
 
         function exportAnimalCosts() {
-            if (!currentAnimalType) return;
-            const url = '@Url.Action("Export", "AnimalCosts", new { area = "FPS" })';
-            window.location.href = url;
+
+            const url = '@Url.Action("Export", "AnimalCosts", new { area = "FPS" })'
+            downloadFile(url, 'AnimalCosts.xlsx');
         }
 
         // ── Extra filter passed to LoadAnimalCostsGrid (mirrors fsubAnimalCosts LinkMasterFields) ──
