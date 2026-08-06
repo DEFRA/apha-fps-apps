@@ -329,21 +329,33 @@
                     return;
                 }
 
-                showGovukConfirm('Are you sure you want to approve the DataSetup Request for year ' + plannedYearVal + '?')
+                showGovukApproveReject('Are you sure you want to approve the DataSetup Request for year ' + plannedYearVal + '?')
                     .then(function (confirmed) {
-                        if (!confirmed) return;
-
-                        btnApprove.disabled = true;
-                        postJson(cfg.triggerApproveUrl + '?plannedYear=' + plannedYearVal, {},
-                            function () {
-                                showAlertMessage('Year End Approval request submitted successfully.', AlertType.SUCCESS);
-                                reloadHistoryGrid();
-                            },
-                            function (msgs) {
-                                showPageError(msgs);
-                                btnApprove.disabled = false;
-                            }
-                        );
+                        if (confirmed) {
+                            btnApprove.disabled = true;
+                            postJson(cfg.triggerApproveUrl + '?plannedYear=' + plannedYearVal, {},
+                                function () {
+                                    showAlertMessage('Year End Approval request submitted successfully.', AlertType.SUCCESS);
+                                    reloadHistoryGrid();
+                                },
+                                function (msgs) {
+                                    showPageError(msgs);
+                                    btnApprove.disabled = false;
+                                }
+                            );
+                        } else {
+                            btnApprove.disabled = true;
+                            postJson(cfg.triggerRejectUrl + '?plannedYear=' + plannedYearVal, {},
+                                function () {
+                                    showAlertMessage('Year End Reject request submitted successfully.', AlertType.SUCCESS);
+                                    reloadHistoryGrid();
+                                },
+                                function (msgs) {
+                                    showPageError(msgs);
+                                    btnApprove.disabled = false;
+                                }
+                            );
+                        }
                     });
             });
         }

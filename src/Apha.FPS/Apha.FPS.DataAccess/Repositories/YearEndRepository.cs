@@ -47,7 +47,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return !hasNonTerminalRecord;
         }
 
-        public async Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName)
+        public async Task<bool> CanApproveOrRejectYearEndDataSetupRequestAsync(string jobName)
         {
             bool hasRunningJob = await CanApproveRequest(jobName);
 
@@ -66,7 +66,12 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<BatchJobQueue> EnqueueDataSetupApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
         {
-            return await EnqueueApprovalRequest(jobName, requestedBy, correlationId, note);
+            return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, false);
+        }
+
+        public async Task<BatchJobQueue> EnqueueDataSetupRejectBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        {
+            return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, true);
         }
         
         private async Task<bool> CanInitiateRequest(string jobName)
@@ -112,9 +117,10 @@ namespace Apha.FPS.DataAccess.Repositories
             return initiator ?? string.Empty;
         }
         
-        private async Task<BatchJobQueue> EnqueueApprovalRequest(string jobName, string requestedBy, string correlationId, string note)
+        private async Task<BatchJobQueue> EnqueueApprovalOrRejectRequest(string jobName, string requestedBy, string correlationId, string note,bool isReject)
         {
             BatchJobQueue queueRow = null!;
+            BatchJobStatus approveStatus;
 
             var jobqueue = await (
                 from jm in _context.BatchJobs.AsNoTracking()
@@ -130,10 +136,21 @@ namespace Apha.FPS.DataAccess.Repositories
                 throw new KeyNotFoundException($"No approval request was found for job '{jobName}'.");
             }
 
-            var approveStatus = await _context.BatchJobStatuses
+            if(isReject)
+            {
+                 approveStatus = await _context.BatchJobStatuses
+                .AsNoTracking()
+                .Where(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "rejected")
+                .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'rejected' not found for job '{jobName}'.");
+            }
+            else
+            {
+                approveStatus = await _context.BatchJobStatuses
                 .AsNoTracking()
                 .Where(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "approved")
                 .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'approved' not found for job '{jobName}'.");
+            }
+            
 
             var strategy = _context.Database.CreateExecutionStrategy();
 

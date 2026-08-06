@@ -181,6 +181,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new { success = false, errors });
         }
 
+        [HttpPost]
+        public async Task<IActionResult> TriggerReject(int plannedYear)
+        {
+            var result = await _yearEndService.EnqueueYearEndDataSetupRejectJobAsync(plannedYear);
+            if (result.Success)
+            {
+                _logger.LogInformation("Year End Reject job triggered");
+                return Json(new { success = true });
+            }
+
+            var errors = result?.Errors?.Select(e => new { field = string.Empty, message = e.Message }).ToArray()
+                         ?? [new { field = string.Empty, message = "Failed to trigger Year End Approval job." }];
+            return Json(new { success = false, errors });
+        }
         private async Task<int> GetPlannedYearAsync()
         {
             var result = await _yearMasterService.GetFpsPlannedYearAsync();

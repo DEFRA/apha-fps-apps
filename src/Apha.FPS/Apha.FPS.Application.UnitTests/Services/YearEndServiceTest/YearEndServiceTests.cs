@@ -233,35 +233,35 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         public async Task CanApproveYearEndDataSetupRequestAsync_WhenRepositoryReturnsTrue_ReturnsTrue()
         {
             // Arrange
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
 
             // Act
             var result = await _sut.CanApproveYearEndDataSetupRequestAsync(JobName);
 
             // Assert
             result.Should().BeTrue();
-            await _yearEndRepository.Received(1).CanApproveYearEndDataSetupRequestAsync(JobName);
+            await _yearEndRepository.Received(1).CanApproveOrRejectYearEndDataSetupRequestAsync(JobName);
         }
 
         [Fact]
         public async Task CanApproveYearEndDataSetupRequestAsync_WhenRepositoryReturnsFalse_ReturnsFalse()
         {
             // Arrange
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(false);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(false);
 
             // Act
             var result = await _sut.CanApproveYearEndDataSetupRequestAsync(JobName);
 
             // Assert
             result.Should().BeFalse();
-            await _yearEndRepository.Received(1).CanApproveYearEndDataSetupRequestAsync(JobName);
+            await _yearEndRepository.Received(1).CanApproveOrRejectYearEndDataSetupRequestAsync(JobName);
         }
 
         [Fact]
         public async Task CanApproveYearEndDataSetupRequestAsync_WhenRepositoryThrows_PropagatesException()
         {
             // Arrange
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName)
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName)
                 .Throws(new Exception("Repository error"));
 
             // Act & Assert
@@ -563,7 +563,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             _yearMasterRepository.GetFpsYearByIdAsync(invalidYear).Returns((YearMaster?)null);
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
 
             // Act & Assert
@@ -579,7 +579,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear).Returns((YearMaster?)null);
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
 
             // Act & Assert
@@ -596,7 +596,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             SetupValidConfiguration();
             _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear)
                 .Returns(new YearMaster { FpsYear = PlannedYear, YearStatus = "Closed", Active = true });
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
 
             // Act & Assert
@@ -612,7 +612,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(false);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(false);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
 
             // Act & Assert
@@ -628,7 +628,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(RequestedBy);
 
             // Act & Assert
@@ -649,7 +649,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _fpsSettingRepository.GetYearEndSettingsAsync().Returns(missingSettings);
             _monthHourRepository.GetYearEndMonthHoursAsync().Returns(ValidMonthHours());
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
 
             // Act & Assert
@@ -673,7 +673,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
 
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
@@ -705,7 +705,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
 
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
@@ -733,7 +733,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange — email failure must be swallowed, not propagated
             SetupValidConfiguration();
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
 
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
@@ -762,7 +762,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
 
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };

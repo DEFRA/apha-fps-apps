@@ -870,7 +870,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var (repo, _, _, _) = CreateRepository();
 
             // Act
-            var result = await repo.CanApproveYearEndDataSetupRequestAsync(DefaultJobName);
+            var result = await repo.CanApproveOrRejectYearEndDataSetupRequestAsync(DefaultJobName);
 
             // Assert
             Assert.False(result);
@@ -884,7 +884,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
 
             // Act
-            var result = await repo.CanApproveYearEndDataSetupRequestAsync(DefaultJobName);
+            var result = await repo.CanApproveOrRejectYearEndDataSetupRequestAsync(DefaultJobName);
 
             // Assert
             Assert.True(result);
@@ -898,7 +898,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
 
             // Act
-            var result = await repo.CanApproveYearEndDataSetupRequestAsync(DefaultJobName);
+            var result = await repo.CanApproveOrRejectYearEndDataSetupRequestAsync(DefaultJobName);
 
             // Assert
             Assert.False(result);
@@ -912,7 +912,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
 
             // Act
-            var result = await repo.CanApproveYearEndDataSetupRequestAsync(DefaultJobName);
+            var result = await repo.CanApproveOrRejectYearEndDataSetupRequestAsync(DefaultJobName);
 
             // Assert
             Assert.False(result);
@@ -926,7 +926,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
 
             // Act
-            var result = await repo.CanApproveYearEndDataSetupRequestAsync("yearendsetup");
+            var result = await repo.CanApproveOrRejectYearEndDataSetupRequestAsync("yearendsetup");
 
             // Assert
             Assert.True(result);
@@ -948,7 +948,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
                 statuses: [rejectedStatus, failedStatus]);
 
             // Act
-            var result = await repo.CanApproveYearEndDataSetupRequestAsync(DefaultJobName);
+            var result = await repo.CanApproveOrRejectYearEndDataSetupRequestAsync(DefaultJobName);
 
             // Assert
             Assert.False(result);

@@ -297,7 +297,8 @@
         public const string GetCanApproveDataSetupRequest = "api/v1/yearend/dataSetup/canapprove";
         public const string EnqueueYearEndDataSetupInitiationJob = "api/v1/yearend/dataSetup/initiation";
         public const string EnqueueYearEndDataSetupApprovalJob    = "api/v1/yearend/dataSetup/approval";
-            
+        public const string EnqueueYearEndDataSetupRejectJob = "api/v1/yearend/dataSetup/reject";
+
         // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
         public const string GetAllCostCentres = "api/v1/costcentre";
         public const string GetPagedCostCentres = "api/v1/costcentre/paged";

@@ -63,7 +63,7 @@ namespace Apha.FPS.Application.Services
 
         public async Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName)
         {
-            return await _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(jobName);
+            return await _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(jobName);
         }
 
         public async Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
@@ -125,6 +125,43 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<BatchJobEventTriggerDto>(result);
         }
 
+        public async Task<bool> EnqueueYearEndDataSetupRejectJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
+        {
+            var errors = new List<BusinessValidationError>();
+            var jobName = YearEndDataSetupJobName;
+
+            var note = $"'{jobName}' is rejected for {plannedYear}.";
+
+            if (string.IsNullOrEmpty(requestedBy))
+                errors.Add(new BusinessValidationError($"Unable to identify the rejector. Please sign in again and retry. If the issue persists, contact support.", "INVALID_User"));
+
+            var canApprove = await _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(jobName);
+            if (!canApprove)
+                errors.Add(new BusinessValidationError($"There is no initiated request for rejection for job '{jobName}'.", "INVALID_Approval"));
+
+            var initiator = await _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(jobName);
+            if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
+                errors.Add(new BusinessValidationError($"Initiator and rejector for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+
+            var queued = await _yearEndRepository.EnqueueDataSetupRejectBatchJobAsync(YearEndDataSetupJobName, requestedBy, correlationId, note);
+
+            var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
+
+            try
+            {
+                await SendEmailAsync(YearEndDataSetupJobName, true, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send Year End approval notification email.");
+            }
+
+            return true;
+        }
+
         private async Task ValidateDataSetupRequestInput(int plannedYear, string requestedBy, List<BusinessValidationError> errors, string jobName, bool isApprovalRequest)
         {
             if (plannedYear == 0 || (plannedYear < 1900 || plannedYear > 9999))
@@ -145,7 +182,7 @@ namespace Apha.FPS.Application.Services
 
             if (isApprovalRequest)
             {
-                var canApprove = await _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(jobName);
+                var canApprove = await _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(jobName);
                 if (!canApprove)
                     errors.Add(new BusinessValidationError($"There is no initiated request for approval for job '{jobName}'.", "INVALID_Approval"));
 
