@@ -1124,13 +1124,13 @@ svg          { width: 100%; height: auto; background: #fff; }
 #btn-clear-pc { font-size: 1.25em !important; padding: 0.5em; line-height: 31px; max-width: 9em; }
 
 #btn-clear-all-workgroups,
-#btn-clear-pc { background-color: #b1b4b6 !important; color: #d4351c !important; border: 1px solid #595959 !important; }
+#btn-clear-pc { background-color: #e6e4e2 !important; color: #942514 !important; border: 1px solid #595959 !important; }
 
 #btn-clear-all-workgroups:hover, #btn-clear-pc:hover,
 #btn-clear-all-workgroups:focus, #btn-clear-pc:focus,
 #btn-clear-all-workgroups:visited, #btn-clear-pc:visited,
 #btn-clear-all-workgroups:active, #btn-clear-pc:active {
-  background-color: #b1b4b6 !important; color: #d4351c !important; border: 1px solid #595959 !important;
+  background-color: #d6d3d1 !important; color: #d4351c  !important; border: 1px solid #595959 !important;
 }
 
 /* ============================================================
@@ -1139,8 +1139,23 @@ svg          { width: 100%; height: auto; background: #fff; }
 .pc-actions-panel { margin-top: 8px; padding: 26px 12px 0; border: 1px solid #b1b4b6; background-color: #f3f2f1; }
 .pc-actions-panel .govuk-button { display: block; width: 100%; font-size: 1.25rem; padding-top: 0.9em; padding-bottom: 0.9em; }
 .pc-actions-panel .govuk-button + .govuk-button { margin-top: 1rem; }
-
-.isBtnSection .govuk-grid-column-full { display: flex; justify-content: space-between; align-items: center; flex-direction: row; }
+.pc-actions-panel-bc {
+    background-color: #f3f2f1;
+    border: 1px solid #b1b4b6;
+}
+.pc-actions-panel-new {
+    display: flex;
+    flex-direction: column;
+    margin-top: 8px;
+    padding: 26px 12px 0;
+    
+}
+.isBtnSection .govuk-grid-column-full {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+}
 
 /* ============================================================
    29. DATATABLES / WORKGROUPS
