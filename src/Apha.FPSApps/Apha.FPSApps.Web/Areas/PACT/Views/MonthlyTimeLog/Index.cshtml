@@ -20,7 +20,7 @@
 <div class="govuk-grid-row sup_margin_left_right_0">
     <div class="govuk-grid-column-full">
         <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom p-tb-10 p-l-10">
-            <span class="sup_flex_left_center">Monthly TIME Log of Imports</span>
+            <span class="sup_flex_left_center govuk-!-padding-top-2 govuk-!-padding-bottom-2">Monthly TIME Log of Imports</span>
         </h1>
     </div>
 </div>
@@ -72,7 +72,7 @@
                             <input type="hidden" id="hdnProject" />
                             <div class="multicolumn-dropdown-panel" id="projectDropdownPanel">
                                 <div class="search-box-wrapper">
-                                    <input type="text" class="search-box" placeholder="Search project..." />
+                                    <input type="text" class="search-box" placeholder="Search project..." aria-label="monthlysearchproject"/>
                                     <button type="button" class="govuk-button govuk-button--secondary clear-search-btn" aria-label="Clear">
                                         <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
                                     </button>
@@ -114,13 +114,14 @@
                         </label>
                         <div id="jobCodePickerWrapper" class="tableselectdropdown input-group">
                             <input type="text" id="txtJobCodePick"
+                                   aria-label="txtJobCodePick"
                                    placeholder="-- Select Jobcode --"
                                    class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
                                    autocomplete="off" readonly style="cursor:pointer;" />
-                            <input type="hidden" id="hdnJobCode" />
+                            <input type="hidden" id="hdnJobCode" aria-label="hdnJobCode" />
                             <div class="multicolumn-dropdown-panel" id="jobCodeDropdownPanel">
                                 <div class="search-box-wrapper">
-                                    <input type="text" class="search-box" placeholder="Search jobcode..." />
+                                    <input type="text" class="search-box" aria-label="txtJobCode" Pickplaceholder="Search jobcode..." />
                                     <button type="button" class="govuk-button govuk-button--secondary clear-search-btn" aria-label="Clear">
                                         <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
                                     </button>
@@ -169,7 +170,7 @@
                             <input type="hidden" id="hdnStaffId" />
                             <div class="multicolumn-dropdown-panel" id="staffDropdownPanel">
                                 <div class="search-box-wrapper">
-                                    <input type="text" class="search-box" placeholder="Search staff..." />
+                                    <input type="text" class="search-box" aria-label="staffSearchBox" placeholder="Search staff..." />
                                     <button type="button" class="govuk-button govuk-button--secondary clear-search-btn" aria-label="Clear">
                                         <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
                                     </button>
