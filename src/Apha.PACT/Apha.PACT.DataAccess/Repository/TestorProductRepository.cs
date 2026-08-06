@@ -362,7 +362,7 @@ namespace Apha.PACT.DataAccess.Repository
                         TestCode = tr.TestCode,
                         UnitPrice = tr.UnitPrice,
                         NoTests = tr.NoRequired,
-                        //TestFee = (double?)((decimal?)tr.NoRequired * tr.UnitPrice ?? 0m),
+                        TestFee = tr.NoRequired * (double?)tr.UnitPrice,
                         Owner = tp.Owner,
                         FpsYear = tr.FpsYear
                     }).Distinct().AsNoTracking();
