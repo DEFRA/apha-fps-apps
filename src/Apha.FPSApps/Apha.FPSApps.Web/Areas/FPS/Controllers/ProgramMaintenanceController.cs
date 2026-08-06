@@ -222,7 +222,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var programGridConfig = new DataGridConfig<ProgramViewModel>
             {
                 GridId = "programGrid",
-                Title = "Programs",
+                Title = "Program Maintenance",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "ProgramNo",
@@ -264,10 +264,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             // Manager dropdown — blank first item
             var managerResponse = await _employeeService.GetAllManagersAsync();
             model.ManagerList = (managerResponse.Data ?? new List<ManagerDto>())
+                .Where(m => !string.IsNullOrEmpty(m.Name))
                 .Select(m => new SelectListItem
                 {
                     Value = m.Name,
-                    Text = m.Name,
+                    Text = $"{m.Name} | {m.WorkGroup ?? string.Empty} | {m.GradeCode ?? string.Empty}",
                     Selected = string.Equals(model.Manager, m.Name, StringComparison.OrdinalIgnoreCase)
                 })
                 .Prepend(new SelectListItem { Value = string.Empty, Text = string.Empty, Selected = string.IsNullOrEmpty(model.Manager) })

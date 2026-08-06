@@ -16,6 +16,12 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TimeCodeValidDto, TimeCodeValidRes>().ReverseMap();
             CreateMap<WorkGroupDto, WorkGroupRes>().ReverseMap();
             CreateMap<WorkGroupViewDto, WorkGroupViewRes>().ReverseMap();
+
+            // WorkGroup Maintenance (CRUD + lookups)
+            CreateMap<WorkGroupDto, WorkGroupMaintenanceRes>().ReverseMap();
+            CreateMap<WorkGroupDto, WorkGroupMaintenanceReq>().ReverseMap();
+            CreateMap<OwnerDto, OwnerRes>().ReverseMap();
+
             CreateMap<MonthDto, MonthRes>().ReverseMap();
             CreateMap<CalenderMonthDto, CalenderMonthRes>().ReverseMap();
             CreateMap<ProjectInvoiceDto, ProjectInvoiceReq>().ReverseMap();
@@ -44,6 +50,27 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProjectProfileDto, ProjectProfileRes>().ReverseMap();
             CreateMap<ProjectProfileCumulativeDto, ProjectProfileCumulativeRes>().ReverseMap();
             CreateMap<MonthlyOutputLogDto, MonthlyOutputLogRes>().ReverseMap();
+            CreateMap<MonthlyOutputRes, PactMonthlyOutputDto>().ReverseMap();
+            CreateMap<PactMonthlyOutputDto, MonthlyOutputReq>();
+            CreateMap<MonthlyOutputImportReqDto, MonthlyOutputImportReq>();
+            CreateMap<MonthlyOutputImportRowDto, MonthlyOutputImportRowReq>();
+            CreateMap<MonthlyOutputImportRes, MonthlyOutputImportResultDto>();
+            CreateMap<StagingMonthlyOutputRes, StagingMonthlyOutputDto>().ReverseMap();
+            CreateMap<StagingMonthlyOutputDto, StagingMonthlyOutputReq>().ReverseMap();
+            CreateMap<MonthlyOutputValidateRes, MonthlyOutputValidateResultDto>().ReverseMap();
+            CreateMap<MonthlyOutputMakeLiveRes, MonthlyOutputMakeLiveResultDto>().ReverseMap();
+            CreateMap<MonthlyTimeDto, MonthlyTimeReq>().ReverseMap();
+            CreateMap<MonthlyTimeDto, MonthlyTimeRes>().ReverseMap();
+            CreateMap<StagingMonthlyTimeDto, StagingMonthlyTimeReq>().ReverseMap();
+            CreateMap<StagingMonthlyTimeDto, StagingMonthlyTimeRes>().ReverseMap();
+            CreateMap<BulkUpdateStagingMonthlyTimeNamesDto, BulkUpdateStagingMonthlyTimeNamesReq>().ReverseMap();
+            CreateMap<BulkUpdateStagingMonthlyTimeNamesResultDto, BulkUpdateStagingMonthlyTimeNamesRes>().ReverseMap();
+            CreateMap<MonthlyTimeImportRowDto, MonthlyTimeImportRowReq>().ReverseMap();
+            CreateMap<MonthlyTimeImportRowDto, MonthlyTimeImportRowRes>().ReverseMap();
+            CreateMap<MonthlyTimeImportReqDto, MonthlyTimeImportReq>().ReverseMap();
+            CreateMap<MonthlyTimeImportResultDto, MonthlyTimeImportRes>().ReverseMap();
+            CreateMap<MonthlyTimeValidateResultDto, MonthlyTimeValidateRes>().ReverseMap();
+            CreateMap<MonthlyTimeMakeLiveResultDto, MonthlyTimeMakeLiveRes>().ReverseMap();
             CreateMap<MonthlyTimeLogDto, MonthlyTimeLogRes>().ReverseMap();
             CreateMap<CalenderMonthDto, CalenderMonthRes>().ReverseMap();
             CreateMap<WorkGroupTimeCodeDto, WorkGroupTimeCodeRes>().ReverseMap();
@@ -74,6 +101,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<BatchJobHistoryDto, BatchJobHistoryRes>().ReverseMap();
             CreateMap<BatchJobEventTriggerDto, BatchJobEventTriggerRes>().ReverseMap();
             CreateMap<TestActualBreakdownRes, TestActualBreakdownDto>().ReverseMap();
+            CreateMap<TestPlanCostBreakdownRes, TestPlanCostBreakdownDto>().ReverseMap();
         }
     }
 }

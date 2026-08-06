@@ -1,5 +1,9 @@
 @* CostBook navigation items — referenced by Views/Shared/Components/AppNav/Default.cshtml *@
 
+@{
+    var hasMaintenanceAccess = User.IsInRole("CostbookAdmin");
+}
+
             <!-- Choose Project -->
             <div class="nav-item">
                 <a class="nav-button" asp-area="CostBook" asp-controller="Projects" asp-action="Index">
@@ -9,7 +13,16 @@
 
             <!-- Maintenance -->
            <div class="nav-item">
-                <a class="nav-button" asp-area="CostBook" asp-controller="Maintenance" asp-action="Index">
-                    <div class="align-menu-text"><span>Maintenance</span></div>
-                </a>
+                @if (hasMaintenanceAccess)
+                {
+                    <a class="nav-button" asp-area="CostBook" asp-controller="Maintenance" asp-action="Index">
+                        <div class="align-menu-text"><span>Maintenance</span></div>
+                    </a>
+                }
+                else
+                {
+                    <span class="nav-button" style="cursor: not-allowed; opacity: 0.5;">
+                        <div class="align-menu-text"><span>Maintenance</span></div>
+                    </span>
+                }
             </div>

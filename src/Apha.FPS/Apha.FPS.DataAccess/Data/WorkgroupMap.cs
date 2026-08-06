@@ -20,8 +20,8 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("workgroup");
             entity.Property(e => e.CentralOverhead)
-                .HasDefaultValueSql("0")
-                .HasColumnType("money")
+                .HasDefaultValue(0m)
+                .HasPrecision(19, 4)
                 .HasColumnName("centraloverhead");
             entity.Property(e => e.Cos90).HasColumnName("cos90");
             entity.Property(e => e.CostCentre).HasColumnName("costcentre");
@@ -40,6 +40,11 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("profitcentre");
             entity.Property(e => e.SendEmail).HasColumnName("sendemail");
+
+            // SysTimestamp has no matching column in the fps.workgroup DDL.
+            // Omitting a property does NOT unmap it (EF maps by convention),
+            // so it must be explicitly ignored to avoid a non-existent column in SQL.
+            entity.Ignore(e => e.SysTimestamp);
             }
     }
 }

@@ -8,7 +8,7 @@
 
 <div class="govuk-grid-row sup_border-bottom" style="padding: 0">
     <h5 class="govuk-heading-s sup_margin_0"
-        style="padding: 10px 0 5px 24px; border-bottom: 2px solid #1d70b8">
+        style="padding: 10px 0 5px 24px;">
         Project Details
     </h5>
 </div>
@@ -70,12 +70,12 @@
                                 {
                                     <div class="govuk-grid-row" style="align-items: flex-start">
                                         <div class="govuk-grid-column-one-quarter">
-                                            <label class="tab-font-bold-size"
+                                            <label class="tab-font-bold-size sup_font_weight_700"
                                                    asp-for="FpsProjectDetails.Parentproject">
                                                 Project
                                             </label>
                                         </div>
-                                        <div class="govuk-grid-column-three-quarters">
+                                        <div class="govuk-grid-column-three-quarters sup_font_weight_700">
                                             <p id="selected_project" class="tab-font-size">
                                                 @Model.FpsProjectDetails.Parentproject
                                             </p>
@@ -83,23 +83,23 @@
                                     </div>
                                     <div class="govuk-grid-row">
                                         <div class="govuk-grid-column-one-quarter">
-                                            <label class="tab-font-bold-size"
+                                            <label class="tab-font-bold-size sup_font_weight_700"
                                                    asp-for="FpsProjectDetails.Projecttitle">
                                                 Title
                                             </label>
                                         </div>
-                                        <div class="govuk-grid-column-three-quarters">
+                                        <div class="govuk-grid-column-three-quarters sup_font_weight_700">
                                             <p class="tab-font-size">@Model.FpsProjectDetails.Projecttitle</p>
                                         </div>
                                     </div>
                                     <div class="govuk-grid-row">
                                         <div class="govuk-grid-column-one-quarter">
-                                            <label class="tab-font-bold-size"
+                                            <label class="tab-font-bold-size sup_font_weight_700"
                                                    asp-for="FpsProjectDetails.Disease">
                                                 Disease
                                             </label>
                                         </div>
-                                        <div class="govuk-grid-column-three-quarters">
+                                        <div class="govuk-grid-column-three-quarters sup_font_weight_700">
                                             <p class="tab-font-size">
                                                 @(string.IsNullOrWhiteSpace(Model.FpsProjectDetails.Disease)
                                                     ? "Not Specified"
@@ -109,24 +109,24 @@
                                     </div>
                                     <div class="govuk-grid-row">
                                         <div class="govuk-grid-column-one-quarter">
-                                            <label class="tab-font-bold-size"
+                                            <label class="tab-font-bold-size sup_font_weight_700"
                                                    asp-for="FpsProjectDetails.Contract">
                                                 Contract
                                             </label>
                                         </div>
-                                        <div class="govuk-grid-column-three-quarters">
+                                        <div class="govuk-grid-column-three-quarters sup_font_weight_700">
                                             <p class="tab-font-size">@Model.FpsProjectDetails.Contract</p>
                                         </div>
                                     </div>
                                     <div class="govuk-grid-row">
                                         <div class="govuk-grid-column-one-quarter">
-                                            <label class="tab-font-bold-size"
+                                            <label class="tab-font-bold-size sup_font_weight_700"
                                                    asp-for="FpsProjectDetails.Projectstatus">
                                                 Status
                                             </label>
                                         </div>
-                                        <div class="govuk-grid-column-three-quarters">
-                                            <p class="green">@Model.FpsProjectDetails.Projectstatus</p>
+                                        <div class="govuk-grid-column-three-quarters sup_font_weight_700">
+                                            <p>@Model.FpsProjectDetails.Projectstatus</p>
                                         </div>
                                     </div>
                                 }
@@ -157,9 +157,10 @@
                                                 <div class="govuk-grid-row">
                                                     <div class="govuk-grid-column-one-half">
                                                         <div class="govuk-form-group mb-2">
-                                                            <label class="govuk-label govuk-!-font-size-16"
+                                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700"
                                                                    for="project-transfer">Project</label>
                                                             <input class="govuk-input govuk-!-font-size-16"
+                                                                   id="project-transfer"
                                                                    type="text"
                                                                    readonly="readonly"
                                                                    maxlength="20"
@@ -168,7 +169,7 @@
                                                     </div>
                                                     <div class="govuk-grid-column-one-half">
                                                         <div class="govuk-form-group mb-2">
-                                                            <label class="govuk-label govuk-!-font-size-16"
+                                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700"
                                                                    for="transfer-to">Transfer to</label>
                                                             <select class="govuk-select govuk-!-font-size-16"
                                                                     id="transfer-to"
@@ -180,12 +181,14 @@
                                                     </div>
                                                 </div>
                                                 <div class="govuk-form-group mb-2">
-                                                    <label class="govuk-label govuk-!-font-size-16"
-                                                           asp-for="ProposedProjectDetails.Projecttitle">
+                                                    <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700"
+                                                        aria-label="title-transfer"
+                                                        asp-for="ProposedProjectDetails.Projecttitle">
                                                         Title
                                                     </label>
                                                     <textarea class="govuk-textarea govuk-!-font-size-16"
                                                               id="title-transfer"
+                                                              aria-label="title-transfer"
                                                               asp-for="ProposedProjectDetails.Projecttitle"
                                                               rows="2"
                                                               style="margin-bottom: auto;">ProposedProjectDetails.Projecttitle</textarea>
@@ -193,7 +196,7 @@
                                                 <div class="govuk-grid-row">
                                                     <div class="govuk-grid-column-one-half">
                                                         <div class="govuk-form-group mb-2">
-                                                            <label class="govuk-label govuk-!-font-size-16"
+                                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700"
                                                                    for="costbook-transfer"
                                                                    asp-for="ProposedProjectDetails.Costbookno">
                                                                 Costbook No
@@ -206,12 +209,13 @@
                                                     </div>
                                                     <div class="govuk-grid-column-one-half">
                                                         <div class="govuk-form-group mb-2">
-                                                            <label class="govuk-label govuk-!-font-size-16"
+                                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700"
                                                                    asp-for="ProposedProjectDetails.Disease">
                                                                 Disease
                                                             </label>
                                                             <input class="govuk-input govuk-!-font-size-16"
                                                                    id="disease-transfer"
+                                                                   aria-label="disease-transfer"
                                                                    asp-for="ProposedProjectDetails.Disease"
                                                                    type="text" />
                                                         </div>
@@ -220,36 +224,40 @@
                                                 <div class="govuk-grid-row">
                                                     <div class="govuk-grid-column-one-half">
                                                         <div class="govuk-form-group mb-2">
-                                                            <label class="govuk-label govuk-!-font-size-16"
+                                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700"
                                                                    asp-for="ProposedProjectDetails.Program">
                                                                 Program
                                                             </label>
                                                             <input class="govuk-input govuk-!-font-size-16"
                                                                    id="program-transfer"
+                                                                   aria-label="program-transfer"
                                                                    asp-for="ProposedProjectDetails.Program"
                                                                    type="text" />
                                                         </div>
                                                     </div>
                                                     <div class="govuk-grid-column-one-half">
                                                         <div class="govuk-form-group mb-2">
-                                                            <label class="govuk-label govuk-!-font-size-16"
+                                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700"
                                                                    asp-for="ProposedProjectDetails.Customer">
                                                                 Customer
                                                             </label>
                                                             <input class="govuk-input govuk-!-font-size-16"
                                                                    id="customer-transfer"
+                                                                   aria-label="customer-transfer"
                                                                    asp-for="ProposedProjectDetails.Customer"
                                                                    type="text" />
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div class="govuk-form-group mb-2">
-                                                    <label class="govuk-label govuk-!-font-size-16"
+                                                    <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700"
                                                            asp-for="ProposedProjectDetails.Manager">
                                                         Manager
                                                     </label>
                                                     <input class="govuk-input govuk-!-font-size-16"
                                                            id="manager-transfer"
+                                                           aria-label="manager-transfer"
+                                                           asp-for="ProposedProjectDetails.Manager"
                                                            asp-for="ProposedProjectDetails.Manager"
                                                            type="text" />
                                                 </div>
@@ -326,7 +334,7 @@
                                     <!-- Left sub-column -->
                                     <div class="govuk-grid-column-one-half">
                                         <div class="govuk-form-group">
-                                            <label class="govuk-label govuk-!-font-size-16" for="pims-version">
+                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pims-version">
                                                 Version
                                             </label>
                                             <input class="govuk-input govuk-!-font-size-16"
@@ -336,7 +344,7 @@
                                                    maxlength="10" />
                                         </div>
                                         <div class="govuk-form-group">
-                                            <label class="govuk-label govuk-!-font-size-16" for="file-ref">
+                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="file-ref">
                                                 File Ref
                                             </label>
                                             <input class="govuk-input govuk-!-font-size-16"
@@ -346,7 +354,7 @@
                                                    maxlength="20" />
                                         </div>
                                         <div class="govuk-form-group">
-                                            <label class="govuk-label govuk-!-font-size-16" for="customer-ref">
+                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="customer-ref">
                                                 Customer Ref
                                             </label>
                                             <input class="govuk-input govuk-!-font-size-16"
@@ -356,7 +364,7 @@
                                                    maxlength="20" />
                                         </div>
                                         <div class="govuk-form-group">
-                                            <label class="govuk-label govuk-!-font-size-16" for="StartDateDisplay">
+                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="StartDateDisplay">
                                                 Start Date
                                             </label>
                                             <div style="position:relative; display:flex; align-items:center; width:100%;">
@@ -381,13 +389,14 @@
                                                 <input type="date"
                                                        id="StartDatePicker"
                                                        value="@(Model.ProjectDetails?.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                                                       aria-label="Start Date picker"
                                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
                                                        onchange="onStartDateChanged('StartDatePicker', 'StartDateDisplay', 'StartDateBinding', 'StartDateError')">
                                             </div>
                                             <span id="StartDateError" class="govuk-error-message" style="display:none;"></span>
                                         </div>
                                         <div class="govuk-form-group">
-                                            <label class="govuk-label govuk-!-font-size-16" for="EndDateDisplay">
+                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="EndDateDisplay">
                                                 End Date
                                             </label>
                                             <div style="position:relative; display:flex; align-items:center; width:100%;">
@@ -413,6 +422,7 @@
                                                 <input type="date"
                                                        id="EndDatePicker"
                                                        value="@(Model.ProjectDetails?.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                                                       aria-label="End Date picker"
                                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
                                                        onchange="onEndDateChanged('EndDatePicker', 'EndDateDisplay', 'EndDateBinding', 'EndDateError')">
                                             </div>
@@ -422,7 +432,7 @@
                                     <!-- Right sub-column -->
                                     <div class="govuk-grid-column-one-half">
                                         <div class="govuk-form-group">
-                                            <label class="govuk-label govuk-!-font-size-16" for="costbook-number">
+                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="costbook-number">
                                                 Costbook Number
                                             </label>
                                             <input class="govuk-input govuk-!-font-size-16"
@@ -432,7 +442,7 @@
                                                    maxlength="10" />
                                         </div>
                                         <div class="govuk-form-group">
-                                            <label class="govuk-label govuk-!-font-size-16" for="risk-rating">
+                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="risk-rating">
                                                 Risk Rating
                                             </label>
                                             <select class="govuk-select govuk-!-font-size-16"
@@ -450,14 +460,14 @@
                                                        asp-for="UseProjectYears"
                                                        type="checkbox"
                                                        value="true" />
-                                                <label class="govuk-label govuk-checkboxes__label govuk-!-font-size-16"
+                                                <label class="govuk-label govuk-checkboxes__label govuk-!-font-size-16 sup_font_weight_700"
                                                        for="use-project-yr">
                                                     Use Project Years?
                                                 </label>
                                             </div>
                                         </div>
                                         <div class="govuk-form-group" style="margin-top: 18px;">
-                                            <label class="govuk-label govuk-!-font-size-16"
+                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700"
                                                    for="RevisedEndDateDisplay">Revised End Date</label>
                                             <div style="position:relative; display:flex; align-items:center; width:100%;">
                                                 <input type="text"
@@ -482,13 +492,14 @@
                                                 <input type="date"
                                                        id="RevisedEndDatePicker"
                                                        value="@(Model.ProjectDetails?.RevisedEndDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                                                       aria-label="Revised End Date picker"
                                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
                                                        onchange="onRevisedEndDateChanged('RevisedEndDatePicker', 'RevisedEndDateDisplay', 'RevisedEndDateBinding', 'RevisedEndDateError')">
                                             </div>
                                             <span id="RevisedEndDateError" class="govuk-error-message" style="display:none;"></span>
                                         </div>
                                         <div class="govuk-form-group">
-                                            <label class="govuk-label govuk-!-font-size-16" for="ClosedDateDisplay">
+                                            <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="ClosedDateDisplay">
                                                 Closed Date
                                             </label>
                                             <div style="position:relative; display:flex; align-items:center; width:100%;">
@@ -513,6 +524,7 @@
                                                 <input type="date"
                                                        id="ClosedDatePicker"
                                                        value="@(Model.ProjectDetails?.ClosedDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                                                       aria-label="Closed Date picker"
                                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
                                                        onchange="syncDateToText('ClosedDatePicker', 'ClosedDateDisplay', 'ClosedDateBinding', 'ClosedDateError')">
                                             </div>
@@ -540,7 +552,7 @@
                         <div style="display: flex; justify-content: flex-start; gap: 30px;">
                             <div class="input-group searchfiels"
                                  style="flex-direction: column; align-items: flex-start; margin-right: -20px;">
-                                <label for="dpselectyear" class="govuk-label govuk-!-font-size-16">
+                                <label for="dpselectyear" class="govuk-label govuk-!-font-size-16 sup_font_weight_700">
                                     Select year
                                 </label>
                                 <select id="dpselectyear"
@@ -558,7 +570,7 @@
                                         onclick="openAddCommentModal()">
                                     <i class="fa-solid fa-comment govuk-!-font-size-16"
                                        style="color: #ffffff"></i>
-                                    &nbsp; Add comment
+                                    &nbsp; Add Comments
                                 </button>
                             </div>
                         </div>

@@ -1,4 +1,4 @@
-using Apha.FPS.Application.Dtos;
+﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
@@ -23,9 +23,11 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
             CreateMap<Program, ProgramDto>().ReverseMap();
             CreateMap<Project, ProjectDto>().ReverseMap();
+            CreateMap<ProjectSpecificQueryItem, ProjectSpecificQueryDto>().ReverseMap();
             CreateMap<ProjectView, Project>().ReverseMap();
             CreateMap<Contract, ContractDto>().ReverseMap();
             CreateMap<AnimalCostView, AnimalCostViewDto>().ReverseMap();
+            CreateMap<AnimalSnapshotView, AnimalSnapshotViewDto>().ReverseMap();
             CreateMap<Animal, AnimalDto>().ReverseMap();
             CreateMap<AnimalRequest, AnimalRequestDto>().ReverseMap();
             CreateMap<AccountCode, AccountCodeDto>().ReverseMap();
@@ -49,6 +51,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Agency, AgencyDto>().ReverseMap();
             CreateMap<TimeCostCalcsView, TimeCostCalcsViewDto>().ReverseMap();
             CreateMap<ProjectStaffPlanView, ProjectStaffPlanViewDto>().ReverseMap();
+            CreateMap<ProjectStaffPlanDetailsView, ProjectStaffPlanDetailsViewDto>().ReverseMap();
             CreateMap<ProjectGroupStaffPlanView, ProjectGroupStaffPlanViewDto>().ReverseMap();
             CreateMap<AdditionalCost, AdditionalCostDto>().ReverseMap();
             CreateMap<AccountCategory, AccountCategoryDto>().ReverseMap();
@@ -67,6 +70,7 @@ namespace Apha.FPS.Application.Mappings
                 .ForMember(d => d.EmailRecipient, o => o.MapFrom(s => s.EmailRecipient));
             CreateMap<ProfitCentreCostSummary, ProfitCentreCostDto>().ReverseMap();
             CreateMap<ProfitCentreGrade, ProfitCentreGradeDto>().ReverseMap();
+
             CreateMap<WorkgroupGrade, WorkgroupGradeDto>().ReverseMap();
             CreateMap<WorkGroupGradeView, WorkgroupGradeDto>().ReverseMap();
            
@@ -90,6 +94,8 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             // BudgetResourceLevel
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
+            CreateMap<GenericBidView, GenericBidViewDto>().ReverseMap();
+            CreateMap<ProjectExceptionalCostView, ProjectExceptionalCostViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
             //   All 5 log entities from fps schema partitioned tables.
             //   Property names are fully aligned between entity and DTO; no ForMember overrides needed.
@@ -110,6 +116,24 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             //TestListVLA
             CreateMap<TestRCCost, TestRCCostDto>().ReverseMap();
             CreateMap<TestRequirementRCCost, TestRequirementRCCostDto>().ReverseMap();
+
+            // ResourceAllocation — Stage 2 Check Resource Allocation
+            CreateMap<ResourceStaffGeneralSummaryRow, ResourceStaffAllocationDto>().ReverseMap();
+            CreateMap<ResourceStaffJobView, ResourceStaffJobDto>().ReverseMap();
+            CreateMap<ResourceStaffJobDetailRow, ResourceStaffJobDetailDto>().ReverseMap();
+
+            // ResourceMgmtReplan — Resource Re-allocation Screen (frmRM_RePlan)
+            CreateMap<ResourceMgmtReplanView, ResourceMgmtReplanViewDto>().ReverseMap();
+            CreateMap<ProjectStaffReplanView, ProjectStaffReplanDto>().ReverseMap();
+            CreateMap<StaffJobRmView, ResourceMgmtReplanDto>()
+                .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffId))
+                .ForMember(d => d.JobCode, o => o.MapFrom(s => s.JobCode))
+                .ForMember(d => d.PlannedHours, o => o.MapFrom(s => s.PlannedHours ?? 0))
+                .ReverseMap();
+            CreateMap<ResourceMgmtReplanDto, ResourceMgmtReplanRow>().ReverseMap();
+
+            // Workgroup Staff Plan view
+            CreateMap<WgStaffPlanView, WgStaffPlanViewDto>().ReverseMap();
         }
     }
 }

@@ -1,6 +1,7 @@
-using Apha.Common.Utilities.ExcelExport;
+﻿using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.ExcelImport;
 using Apha.Common.Utilities.StateManagement;
+using Apha.Common.Utilities.Storage;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
@@ -62,9 +63,13 @@ namespace Apha.FPSApps.Web.Extensions
             //   FpsYear filtering is handled by the PACT DbContext global query filter.
             services.AddScoped<ITestListVlaService, TestListVlaService>();
             services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
+
+            // Apha.Common services
+            services.AddScoped<IS3StorageService, S3StorageService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IExcelImportService, ExcelImportService>();
             services.AddScoped<IAppStateService, AppStateService>();
+
             services.AddScoped<IAdditionalCostService, AdditionalCostService>();
             services.AddScoped<IAccountCategoryService, AccountCategoryService>();
             services.AddScoped<ICostBookAccountGroupService, CostBookAccountGroupService>();
@@ -78,6 +83,8 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectYearCostsService, ProjectYearCostsService>();
             services.AddScoped<IMilestoneService, MilestoneService>();
             services.AddScoped<IRadTrackInvoiceService, RadTrackInvoiceService>();
+         
+            services.AddScoped<IYearlyFinancialDataService, YearlyFinancialDataService>();
 
             services.AddScoped<IProfitCentreService, ProfitCentreService>();
             services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();
@@ -91,11 +98,15 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
+           
+            services.AddScoped<IWorkgroupMaintenanceService, WorkgroupMaintenanceService>();
             services.AddScoped<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService, Apha.FPSApps.Application.Services.PACT.WorkGroupService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
+            services.AddScoped<IProjectStaffPlanDetailsService, ProjectStaffPlanDetailsService>();
             services.AddScoped<ITestReqBreakdownService, TestReqBreakdownService>();
             services.AddScoped<ITestActualBreakdownService, TestActualBreakdownService>();
+            services.AddScoped<ITestPlanCrossTabService, TestPlanCrossTabService>();
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();
@@ -109,6 +120,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IContributionSummaryService, ContributionSummaryService>();
             services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
             services.AddScoped<IBosworthInterfaceService, BosworthInterfaceService>();
+            services.AddScoped<IResourceAllocationService, ResourceAllocationService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

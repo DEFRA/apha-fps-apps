@@ -16,7 +16,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 {
     
     [Area("CostBook")]
-    [Authorize(Roles = "CostbookAdmin,CostbookUser")]
+    [Authorize(Roles = "CostbookAdmin")]
     [AuthorizeForScopes(ScopeKeySection = "CostBookApiSettings:Scope")]
     public class MaintenanceController : Controller
     {
@@ -102,7 +102,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             viewModel.CapsStaffGrid = new DataGridConfig<CapsStaffItem>
             {
                 GridId             = "capsStaffGrid",
-                Title              = string.Empty,
+                Title              = "CAPS Staff Members",
                 ShowCheckboxColumn = false,
                 ShowPagination     = true,
                 KeyProperty        = "MNumber",
@@ -350,9 +350,11 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             }
 
             var result = await _accountGroupService.AddAccountGroupAsync(dto);
-            return result.Success
-                ? Json(new { success = true, message = "CSG7 group saved successfully." })
-                : Json(new { success = false, errors = result.Errors });
+            if (result.Success)
+                return Json(new { success = true, message = "CSG7 group saved successfully." });
+
+            var errorMessage = result.Errors?.FirstOrDefault()?.Message ?? "Save failed.";
+            return Json(new { success = false, message = errorMessage, errors = result.Errors });
         }
 
        
@@ -454,7 +456,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             return new DataGridConfig<CapsStaffItem>
             {
                 GridId             = "capsStaffGrid",
-                Title              = string.Empty,
+                Title              = "CAPS Staff Members",
                 ShowCheckboxColumn = false,
                 ShowPagination     = true,
                 KeyProperty        = "MNumber",
@@ -497,9 +499,11 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             }
 
             var result = await _capsStaffService.AddCapsStaffAsync(dto);
-            return result.Success
-                ? Json(new { success = true, message = "Staff member saved successfully." })
-                : Json(new { success = false, errors = result.Errors });
+            if (result.Success)
+                return Json(new { success = true, message = "Staff member saved successfully." });
+
+            var errorMessage = result.Errors?.FirstOrDefault()?.Message ?? "Save failed.";
+            return Json(new { success = false, message = errorMessage, errors = result.Errors });
         }
 
         
