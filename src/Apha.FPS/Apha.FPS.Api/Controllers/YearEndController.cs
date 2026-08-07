@@ -113,7 +113,7 @@ namespace Apha.FPS.Api.Controllers
         {
             var result = await _yearEndService.EnqueueYearEndDataSetupRejectJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
 
-            return Ok(_mapper.Map<BatchJobEventTriggerRes>(result));
+            return Ok(result);
         }
     } 
 }

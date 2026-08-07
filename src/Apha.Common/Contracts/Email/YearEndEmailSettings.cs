@@ -10,5 +10,8 @@ namespace Apha.Common.Contracts.Email
         public string DataSetupApprovalEmailRecipient { get; set; } = string.Empty;
         public string DataSetupApprovalEmailSubject { get; set; } = string.Empty;
         public string DataSetupApprovalEmailBody     { get; set; } = string.Empty;
+        public string DataSetupRejectionEmailRecipient { get; set; } = string.Empty;
+        public string DataSetupRejectionEmailSubject { get; set; } = string.Empty;
+        public string DataSetupRejectionEmailBody { get; set; } = string.Empty;
     }
 }

@@ -82,7 +82,7 @@ namespace Apha.FPS.Application.Services
 
             try
             {
-                await SendEmailAsync(YearEndDataSetupJobName, false, CancellationToken.None);
+                await SendEmailAsync(YearEndDataSetupJobName, "Initiation", CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -115,7 +115,7 @@ namespace Apha.FPS.Application.Services
 
             try
             {
-                await SendEmailAsync(YearEndDataSetupJobName, true, CancellationToken.None);
+                await SendEmailAsync(YearEndDataSetupJobName, "Approval", CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -152,11 +152,11 @@ namespace Apha.FPS.Application.Services
 
             try
             {
-                await SendEmailAsync(YearEndDataSetupJobName, true, CancellationToken.None);
+                await SendEmailAsync(YearEndDataSetupJobName, "Rejection", CancellationToken.None);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send Year End approval notification email.");
+                _logger.LogError(ex, "Failed to send Year End rejection notification email.");
             }
 
             return true;
@@ -176,16 +176,7 @@ namespace Apha.FPS.Application.Services
             var plannedYearEntity = await _yearMasterRepository.GetFpsYearByIdAsync(plannedYear);
 
             if (plannedYearEntity != null)
-            {
-                if (!isApprovalRequest)
-                {
-                    errors.Add(new BusinessValidationError($"YearEnd Datasetup already initiated for the planned year {plannedYear}. You cannot reinitiate request.", "INVALID_Rerun"));
-                }
-                else if (isApprovalRequest)
-                {
-                    errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year {plannedYear}. You cannot approve request.", "INVALID_Rerun"));
-                }
-            }
+                errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year {plannedYear}. You cannot reinitiate/approve request.", "INVALID_Rerun"));
 
             if (isApprovalRequest)
             {
@@ -281,11 +272,11 @@ namespace Apha.FPS.Application.Services
             };
         }
 
-        private async Task SendEmailAsync(string jobName, bool isApprovalRequest, CancellationToken cancellationToken)
+        private async Task SendEmailAsync(string jobName, string notificationType, CancellationToken cancellationToken)
         {
             if (string.Equals(jobName, YearEndDataSetupJobName, StringComparison.OrdinalIgnoreCase))
             {
-                if (isApprovalRequest)
+                if (notificationType == "Approval")
                 {
                     await _emailService.SendEmailAsync(new EmailMessageModel
                     {
@@ -295,7 +286,19 @@ namespace Apha.FPS.Application.Services
                         IsBodyHtml = false,
                     }, cancellationToken);
                 }
-                else
+                
+                if (notificationType == "Rejection")
+                {
+                    await _emailService.SendEmailAsync(new EmailMessageModel
+                    {
+                        To = _emailSettings.DataSetupApprovalEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                        Subject = _emailSettings.DataSetupApprovalEmailSubject,
+                        Body = _emailSettings.DataSetupApprovalEmailBody,
+                        IsBodyHtml = false,
+                    }, cancellationToken);
+                }
+                
+                if (notificationType == "Initiation")
                 {
                     await _emailService.SendEmailAsync(new EmailMessageModel
                     {

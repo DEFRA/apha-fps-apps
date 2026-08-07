@@ -107,13 +107,17 @@
         var id          = getCellValue(row, 'Id');
         var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
 
-        $.get(cfg.editConfigValueUrl, { id: id })
-            .done(function (html) {
+        $.ajax({
+            url: cfg.editConfigValueUrl,
+            type: 'GET',
+            data: { id: id },
+            success: function (html) {
                 openModalWithHtml(html);
-            })
-            .fail(function () {
+            },
+            error: function () {
                 showAlertMessage('Failed to load the edit form.', AlertType.ERROR);
-            });
+            }
+        });
     };
 
     // ── Config Value grid — Delete/Confirm button ─────────────────────────────
@@ -171,13 +175,17 @@
         var fpsyear = getCellValue(row, 'FpsYear');
         var fmonth = getCellValue(row, 'Fmonth');
 
-        $.get(cfg.editMonthHourUrl, { year: year, month: month, fpsyear: fpsyear, fmonth: fmonth })
-            .done(function (html) {
+        $.ajax({
+            url: cfg.editMonthHourUrl,
+            type: 'GET',
+            data: { year: year, month: month, fpsyear: fpsyear, fmonth: fmonth },
+            success: function (html) {
                 openModalWithHtml(html);
-            })
-            .fail(function () {
+            },
+            error: function () {
                 showAlertMessage('Failed to load the edit form.', AlertType.ERROR);
-            });
+            }
+        });
     };
 
     // ── Month Working Hours grid — Delete/Confirm button ──────────────────────
@@ -347,8 +355,9 @@
                             btnApprove.disabled = true;
                             postJson(cfg.triggerRejectUrl + '?plannedYear=' + plannedYearVal, {},
                                 function () {
-                                    showAlertMessage('Year End Reject request submitted successfully.', AlertType.SUCCESS);
+                                    showAlertMessage('Year End datasetup request rejected successfully.', AlertType.SUCCESS);
                                     reloadHistoryGrid();
+                                    btnInitiate.disabled = false;
                                 },
                                 function (msgs) {
                                     showPageError(msgs);

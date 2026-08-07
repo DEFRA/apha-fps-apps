@@ -294,7 +294,7 @@
         // Year End Batch Job
         public const string GetYearEndBatchJobHistory = "api/v1/yearend/batchjob/history";
         public const string GetCanInitiateDataSetupRequest = "api/v1/yearend/dataSetup/caninitiate";
-        public const string GetCanApproveDataSetupRequest = "api/v1/yearend/dataSetup/canapprove";
+        public const string GetCanApproveDataSetupRequest = "api/v1/yearend/dataSetup/canapproveorreject";
         public const string EnqueueYearEndDataSetupInitiationJob = "api/v1/yearend/dataSetup/initiation";
         public const string EnqueueYearEndDataSetupApprovalJob    = "api/v1/yearend/dataSetup/approval";
         public const string EnqueueYearEndDataSetupRejectJob = "api/v1/yearend/dataSetup/reject";

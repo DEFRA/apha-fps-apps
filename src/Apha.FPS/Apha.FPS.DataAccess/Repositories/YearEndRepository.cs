@@ -120,7 +120,7 @@ namespace Apha.FPS.DataAccess.Repositories
         private async Task<BatchJobQueue> EnqueueApprovalOrRejectRequest(string jobName, string requestedBy, string correlationId, string note,bool isReject)
         {
             BatchJobQueue queueRow = null!;
-            BatchJobStatus approveStatus;
+            BatchJobStatus jobStatus;
 
             var jobqueue = await (
                 from jm in _context.BatchJobs.AsNoTracking()
@@ -138,14 +138,14 @@ namespace Apha.FPS.DataAccess.Repositories
 
             if(isReject)
             {
-                 approveStatus = await _context.BatchJobStatuses
+                jobStatus = await _context.BatchJobStatuses
                 .AsNoTracking()
                 .Where(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "rejected")
                 .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'rejected' not found for job '{jobName}'.");
             }
             else
             {
-                approveStatus = await _context.BatchJobStatuses
+                jobStatus = await _context.BatchJobStatuses
                 .AsNoTracking()
                 .Where(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "approved")
                 .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'approved' not found for job '{jobName}'.");
@@ -164,14 +164,14 @@ namespace Apha.FPS.DataAccess.Repositories
                     ?? throw new KeyNotFoundException($"Batch job queue for job '{jobName}' was not found.");
 
                     //update the status of the job queue entry to "approved"
-                    queueRow.StatusId = approveStatus.StatusId;
+                    queueRow.StatusId = jobStatus.StatusId;
                     queueRow.RequestedBy = requestedBy;
                     queueRow.RequestedAtUtc = DateTime.UtcNow;
                     queueRow.StartDateTime = DateTime.UtcNow;
                     queueRow.ErrorMessage = note;
                     _context.BatchJobQueues.Update(queueRow);
 
-                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, approveStatus.StatusId);
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, jobStatus.StatusId);
                     _context.BatchJobQueueLogs.Add(logEntry);
 
                     await _context.SaveChangesAsync();
