@@ -3,9 +3,6 @@
 
 --changeset repo-admin:CR056 labels:AnimalStaging context:all splitStatements:false
 
-
-SET search_path TO fps;
-
 -- CR056: Bring FEC Bulk Rates AGRUP/Staff/Animal staging up to parity with
 -- what the shipped application code requires, finishing what CR044 started.
 -- Uses numeric throughout (no money), matching every authoritative live
