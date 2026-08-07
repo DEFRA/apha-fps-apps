@@ -41,7 +41,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string ProjectStatus { get; set; } = null!;
 
         [Display(Name = "Transfer Income")]
-        [Range(typeof(decimal), "-999999999999999.9999", "999999999999999.9999", ErrorMessage = "Transfer Inc must be between -999,999,999,999,999.9999 and 999,999,999,999,999.9999.")]
+        [Range(typeof(decimal), "-999999999999999.9999", "999999999999999.9999", ErrorMessage = "Transfer Income must be between -999,999,999,999,999.9999 and 999,999,999,999,999.9999.")]
         [GridColumn(IsVisible = false)]
         public decimal TransferIncome { get; set; }
 
@@ -76,7 +76,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public decimal? WipCurrent { get; set; }
 
         [Display(Name = "FEC Cost")]
-        [Range(typeof(decimal), "-999999999999999.9999", "999999999999999.9999", ErrorMessage = "Forecast must be between -999,999,999,999,999.9999 and 999,999,999,999,999.9999.")]
+        [Range(typeof(decimal), "-999999999999999.9999", "999999999999999.9999", ErrorMessage = "FEC Cost must be between -999,999,999,999,999.9999 and 999,999,999,999,999.9999.")]
         [GridColumn(IsVisible = false)]
         public decimal? FecCost { get; set; }
 
