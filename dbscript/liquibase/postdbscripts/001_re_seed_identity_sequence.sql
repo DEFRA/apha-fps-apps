@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset repo-admin:001_re_seed_identity_sequences labels:ddl context:all
+--changeset repo-admin:001_re_seed_identity_sequences labels:ddl context:all runAlways:true
 
 DO $$ 
 DECLARE 
