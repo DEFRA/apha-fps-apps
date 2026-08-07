@@ -264,7 +264,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         {
             // Arrange
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
-            _http.GetAsync<bool>($"api/v1/yearend/dataSetup/canapprove?jobName={Uri.EscapeDataString(JobName)}")
+            _http.GetAsync<bool>($"api/v1/yearend/dataSetup/canapproveorreject?jobName={Uri.EscapeDataString(JobName)}")
                  .Returns(apiResponse);
 
             // Act
@@ -275,7 +275,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             Assert.True(result.Success);
             Assert.True(result.Data);
             await _http.Received(1).GetAsync<bool>(
-                $"api/v1/yearend/dataSetup/canapprove?jobName={Uri.EscapeDataString(JobName)}");
+                $"api/v1/yearend/dataSetup/canapproveorreject?jobName={Uri.EscapeDataString(JobName)}");
         }
 
         [Fact]

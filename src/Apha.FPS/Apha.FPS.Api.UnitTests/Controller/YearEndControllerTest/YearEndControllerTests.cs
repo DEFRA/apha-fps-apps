@@ -399,17 +399,15 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
         #region EnqueueYearEndDataSetupRejectJob
 
         [Fact]
-        public async Task EnqueueYearEndDataSetupRejectJob_WhenValid_ReturnsOkWithMappedResult()
+        public async Task EnqueueYearEndDataSetupRejectJob_WhenValid_ReturnsOkWithServiceResult()
         {
             // Arrange
             var request = new YearEndDataSetupReq { PlannedYear = PlannedYear };
             const bool serviceResult = true;
-            var mappedRes = new BatchJobEventTriggerRes { EventId = "evt-reject-001" };
 
             _yearEndService
                 .EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, FpsYear, UserEmail, CorrelationId)
                 .Returns(serviceResult);
-            _mapper.Map<BatchJobEventTriggerRes>(serviceResult).Returns(mappedRes);
 
             // Act
             var result = await _sut.EnqueueYearEndDataSetupRejectJob(request, CorrelationId);
@@ -417,11 +415,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             okResult.StatusCode.Should().Be(200);
-            okResult.Value.Should().BeEquivalentTo(mappedRes);
+            okResult.Value.Should().Be(serviceResult);
 
             await _yearEndService.Received(1).EnqueueYearEndDataSetupRejectJobAsync(
                 PlannedYear, FpsYear, UserEmail, CorrelationId);
-            _mapper.Received(1).Map<BatchJobEventTriggerRes>(serviceResult);
         }
 
         [Fact]
