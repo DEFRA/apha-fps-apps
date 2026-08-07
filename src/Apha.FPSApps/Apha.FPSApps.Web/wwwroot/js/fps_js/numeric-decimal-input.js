@@ -1,24 +1,14 @@
-// ── Numeric / decimal input constraint ────────────────────────────────
-// Apply the CSS class "js-numeric-decimal" to any <input> to restrict its
-// value to numbers only. A single decimal point is allowed, and a maximum
-// of 4 digits are permitted after the decimal point.
-//
-// Usage:
-//   <input type="text" class="js-numeric-decimal" />
-//
-// The behaviour is wired automatically on document ready and also works for
-// inputs added to the DOM later (via delegated events).
-
 (function () {
     'use strict';
 
     var NUMERIC_DECIMAL_SELECTOR = '.js-numeric-decimal';
     var MAX_DECIMAL_PLACES = 4;
 
-    // Matches an optional integer part, an optional single decimal point and
-    // up to MAX_DECIMAL_PLACES fractional digits. Empty string is allowed so
-    // the user can clear the field.
-    var VALID_PATTERN = new RegExp('^\\d*(?:\\.\\d{0,' + MAX_DECIMAL_PLACES + '})?$');
+    // Matches an optional leading minus sign, an optional integer part, an
+    // optional single decimal point and up to MAX_DECIMAL_PLACES fractional
+    // digits. Empty string (and a lone '-') is allowed so the user can type
+    // or clear the field.
+    var VALID_PATTERN = new RegExp('^-?\\d*(?:\\.\\d{0,' + MAX_DECIMAL_PLACES + '})?$');
 
     function isValidNumericValue(value) {
         return VALID_PATTERN.test(value);
@@ -34,8 +24,8 @@
         var input = e.target;
         var char = e.key;
 
-        // Only digits and a single decimal point are permitted.
-        if (!/[0-9.]/.test(char)) {
+        // Only digits, a single decimal point and a leading minus are permitted.
+        if (!/[0-9.\-]/.test(char)) {
             e.preventDefault();
             return;
         }

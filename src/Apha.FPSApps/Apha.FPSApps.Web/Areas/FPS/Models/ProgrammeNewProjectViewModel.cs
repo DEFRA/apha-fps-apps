@@ -12,24 +12,31 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string ProjectTitle { get; set; } = null!;
         public string Program { get; set; } = null!;
         public string Customer { get; set; } = null!;
+
         [Required]
         [Display(Name = "Manager")]
         public string? Manager { get; set; }
+
         [Display(Name = "Transfer Income")]
         [CurrencyRange]
         public decimal TransferIncome { get; set; }
+
         [Display(Name = "Cust Income")]
         [CurrencyRange]
         public decimal CustIncome { get; set; }
         [Display(Name = "Project Status")]
         public string ProjectStatus { get; set; } = null!;
+
         public string? CostBookNo { get; set; }
+
         [CurrencyRange]
         public decimal? Profit { get; set; }
+
         [Required]
         [Display(Name = "Budget")]
         [CurrencyRange]
         public decimal? BudgetCvl { get; set; }
+
         public string Disease { get; set; } = null!;
         public string Contract { get; set; } = null!;
         [Display(Name = "Short Title")]
