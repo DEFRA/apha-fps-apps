@@ -1,6 +1,9 @@
 --liquibase formatted sql
 
---changeset repo-admin:CR045 labels:ddl context:all splitStatements:false
+--changeset repo-admin:CR045 labels:job_queue_upload context:all
+
+
+BEGIN;
 
 -- A. Replace the generic configuration_json field with typed upload metadata.
 ALTER TABLE fps.job_queue
@@ -46,7 +49,7 @@ BEGIN
     END IF;
 END $$;
 
--- B. Create the immutable, versioned download snapshot model.
+-- B. Create the immutable, versioned download snapshot model (varchar, not citext).
 CREATE TABLE IF NOT EXISTS fps.bulk_rates_download (
     jobqueueid uuid NOT NULL,
     download_version integer NOT NULL,
@@ -67,18 +70,18 @@ CREATE TABLE IF NOT EXISTS fps.bulk_rates_downloaded_key (
     jobqueueid uuid NOT NULL,
     download_version integer NOT NULL,
     sheetname varchar(20) NOT NULL,
-    testcode fps.citext NOT NULL,
-    buyer fps.citext NULL,
-    source_rate numeric NULL,
+    testcode varchar(20) NOT NULL,
+    buyer varchar(20) NULL,
+    source_rate numeric(19,4)  NULL,
     itemdescription text NULL,
     shortdescription text NULL,
     owner varchar(10) NULL,
-    unitpricevla numeric NULL,
-    norequired numeric NULL,
+    unitpricevla numeric(19,4)  NULL,
+    norequired numeric(19,4)  NULL,
     datecreated timestamp NULL,
     active boolean NULL,
-    projectbuyercode fps.citext NULL,
-    testbuyercode fps.citext NULL,
+    projectbuyercode varchar(50) NULL,
+    testbuyercode varchar(50) NULL,
     downloaded_at_utc timestamptz NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_bulk_rates_downloaded_key_header
         FOREIGN KEY (jobqueueid, download_version)
@@ -87,10 +90,21 @@ CREATE TABLE IF NOT EXISTS fps.bulk_rates_downloaded_key (
         CHECK (sheetname IN ('FEC', 'AGRUP', 'Staff', 'Animal'))
 );
 
+-- Drop first: the existing index's expression casts to fps.citext, which
+-- would otherwise conflict with (or silently keep referencing) the old type
+-- while the column beneath it is retyped.
+DROP INDEX IF EXISTS fps.ux_bulk_rates_downloaded_key_identity;
+
+ALTER TABLE fps.bulk_rates_downloaded_key
+    ALTER COLUMN testcode         TYPE varchar(20) USING testcode::varchar(20),
+    ALTER COLUMN buyer            TYPE varchar(20) USING buyer::varchar(20),
+    ALTER COLUMN projectbuyercode TYPE varchar(50) USING projectbuyercode::varchar(50),
+    ALTER COLUMN testbuyercode    TYPE varchar(50) USING testbuyercode::varchar(50);
+
 CREATE UNIQUE INDEX IF NOT EXISTS ux_bulk_rates_downloaded_key_identity
     ON fps.bulk_rates_downloaded_key
        (jobqueueid, download_version, sheetname, testcode,
-        COALESCE(buyer, ''::fps.citext));
+        COALESCE(buyer, ''::varchar(20)));
 
 ALTER TABLE fps.job_queue
     ADD COLUMN IF NOT EXISTS active_download_version integer;
@@ -115,13 +129,6 @@ END $$;
 ALTER TABLE fps.job_queue
     DROP COLUMN IF EXISTS configuration_json;
 
---rollback ALTER TABLE fps.job_queue DROP CONSTRAINT IF EXISTS fk_job_queue_active_bulk_rates_download;
---rollback ALTER TABLE fps.job_queue DROP COLUMN IF EXISTS active_download_version;
---rollback DROP INDEX IF EXISTS fps.ux_bulk_rates_downloaded_key_identity;
---rollback DROP TABLE IF EXISTS fps.bulk_rates_downloaded_key;
---rollback DROP TABLE IF EXISTS fps.bulk_rates_download;
---rollback ALTER TABLE fps.job_queue DROP COLUMN IF EXISTS upload_row_counts_json;
---rollback ALTER TABLE fps.job_queue DROP COLUMN IF EXISTS upload_validated_at_utc;
---rollback ALTER TABLE fps.job_queue DROP COLUMN IF EXISTS upload_version;
---rollback ALTER TABLE fps.job_queue DROP COLUMN IF EXISTS upload_checksum_sha256;
---rollback ALTER TABLE fps.job_queue DROP COLUMN IF EXISTS upload_filename;
+COMMIT;
+
+--ROLLBACK

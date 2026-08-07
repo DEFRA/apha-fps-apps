@@ -1,8 +1,8 @@
 --liquibase formatted sql
 
---changeset repo-admin:CR044 labels:ddl context:all
+--changeset repo-admin:CR044 labels:bulk_rates_job context:all
 
-CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA fps;
+BEGIN;
 
 -- A. Register the three Bulk Rates jobs.
 INSERT INTO fps.job_master
@@ -46,13 +46,13 @@ AND NOT EXISTS (
       AND js.status = s.status
 );
 
--- B. Create the final staging tables.
+-- B. Create the final staging tables (varchar, not citext).
 CREATE TABLE IF NOT EXISTS fps.tblstagingtestorproduct (
     jobqueueid uuid NOT NULL,
-    testcode fps.citext NOT NULL,
-    unitpricevla numeric NULL,
-    defraunitprice numeric NULL,
-    fecnewrate numeric NULL,
+    testcode varchar(20) NOT NULL,
+    unitpricevla numeric(19,4)  NULL,
+    defraunitprice numeric(19,4)  NULL,
+    fecnewrate numeric(19,4)  NULL,
     change varchar(30) NULL,
     itemdescription text NULL,
     shortdescription text NULL,
@@ -60,8 +60,8 @@ CREATE TABLE IF NOT EXISTS fps.tblstagingtestorproduct (
     comments text NULL,
     validationcomments text NULL,
     calculated_action varchar(30) NULL,
-    effective_new_rate numeric NULL,
-    source_current_rate numeric NULL,
+    effective_new_rate numeric(19,4)  NULL,
+    source_current_rate numeric(19,4)  NULL,
     validation_version integer NULL,
     CONSTRAINT pk_tblstagingtestorproduct
         PRIMARY KEY (jobqueueid, testcode),
@@ -72,23 +72,25 @@ CREATE TABLE IF NOT EXISTS fps.tblstagingtestorproduct (
         CHECK (owner IS NULL OR owner IN ('PT', 'PA', 'SD', 'LT'))
 );
 
+
+
 CREATE TABLE IF NOT EXISTS fps.tblstagingtlkptestreqmt (
     jobqueueid uuid NOT NULL,
-    buyer fps.citext NOT NULL,
-    testcode fps.citext NOT NULL,
-    unitprice numeric NULL,
-    agrupnewrate numeric NULL,
-    norequired numeric NULL,
+    buyer varchar(20) NOT NULL,
+    testcode varchar(20) NOT NULL,
+    unitprice numeric(19,4)  NULL,
+    agrupnewrate numeric(19,4)  NULL,
+    norequired numeric(19,4)  NULL,
     datecreated timestamp NULL,
     active boolean NULL,
-    projectbuyercode fps.citext NULL,
-    testbuyercode fps.citext NULL,
-    testbuyerworkgroup fps.citext NULL,
+    projectbuyercode varchar(50) NULL,
+    testbuyercode varchar(50) NULL,
+    testbuyerworkgroup varchar(50) NULL,
     comments text NULL,
     validationcomments text NULL,
     calculated_action varchar(30) NULL,
-    effective_new_rate numeric NULL,
-    source_current_rate numeric NULL,
+    effective_new_rate numeric(19,4)  NULL,
+    source_current_rate numeric(19,4)  NULL,
     validation_version integer NULL,
     CONSTRAINT pk_tblstagingtlkptestreqmt
         PRIMARY KEY (jobqueueid, buyer, testcode),
@@ -97,11 +99,12 @@ CREATE TABLE IF NOT EXISTS fps.tblstagingtlkptestreqmt (
         REFERENCES fps.job_queue (jobqueueid)
 );
 
+
 CREATE TABLE IF NOT EXISTS fps.tblstagingprofitcentregrade (
     jobqueueid uuid NOT NULL,
-    pcgrade fps.citext NOT NULL,
-    currentrate numeric NULL,
-    newrate numeric NULL,
+    pcgrade varchar(20) NOT NULL,
+    currentrate numeric(19,4)  NULL,
+    newrate numeric(19,4)  NULL,
     comments text NULL,
     validationcomments text NULL,
     CONSTRAINT pk_tblstagingprofitcentregrade
@@ -111,11 +114,12 @@ CREATE TABLE IF NOT EXISTS fps.tblstagingprofitcentregrade (
         REFERENCES fps.job_queue (jobqueueid)
 );
 
+
 CREATE TABLE IF NOT EXISTS fps.tblstaginganimals (
     jobqueueid uuid NOT NULL,
-    animaltype fps.citext NOT NULL,
-    currentrate numeric NULL,
-    newrate numeric NULL,
+    animaltype varchar(50) NOT NULL,
+    currentrate numeric(19,4)  NULL,
+    newrate numeric(19,4)  NULL,
     comments text NULL,
     validationcomments text NULL,
     CONSTRAINT pk_tblstaginganimals
@@ -124,6 +128,7 @@ CREATE TABLE IF NOT EXISTS fps.tblstaginganimals (
         FOREIGN KEY (jobqueueid)
         REFERENCES fps.job_queue (jobqueueid)
 );
+
 
 -- The invalid cross-staging AGRUP-to-FEC FK is deliberately absent.
 ALTER TABLE fps.tblstagingtlkptestreqmt
@@ -152,6 +157,7 @@ CREATE INDEX IF NOT EXISTS idx_rate_change_history_jobqueueid
 
 CREATE INDEX IF NOT EXISTS idx_rate_change_history_businesskey
     ON fps.rate_change_history (ratecategory, businesskey);
+
 
 CREATE TABLE IF NOT EXISTS fps.staging_validation_error (
     validationerrorid bigserial PRIMARY KEY,
@@ -183,15 +189,6 @@ CREATE INDEX IF NOT EXISTS idx_staging_validation_error_blocking
     ON fps.staging_validation_error (jobqueueid, severity)
     WHERE severity = 'Error';
 
---rollback DROP INDEX IF EXISTS fps.idx_staging_validation_error_blocking;
---rollback DROP INDEX IF EXISTS fps.idx_staging_validation_error_jobqueue_upload;
---rollback DROP TABLE IF EXISTS fps.staging_validation_error;
---rollback DROP INDEX IF EXISTS fps.idx_rate_change_history_businesskey;
---rollback DROP INDEX IF EXISTS fps.idx_rate_change_history_jobqueueid;
---rollback DROP TABLE IF EXISTS fps.rate_change_history;
---rollback DROP TABLE IF EXISTS fps.tblstaginganimals;
---rollback DROP TABLE IF EXISTS fps.tblstagingprofitcentregrade;
---rollback DROP TABLE IF EXISTS fps.tblstagingtlkptestreqmt;
---rollback DROP TABLE IF EXISTS fps.tblstagingtestorproduct;
---rollback DELETE FROM fps.job_status WHERE jobid IN (SELECT jobid FROM fps.job_master WHERE jobname IN ('BulkTestRatesUpdate', 'BulkStaffRatesUpdate', 'BulkAnimalRatesUpdate'));
---rollback DELETE FROM fps.job_master WHERE jobname IN ('BulkTestRatesUpdate', 'BulkStaffRatesUpdate', 'BulkAnimalRatesUpdate');
+COMMIT;
+
+--ROLLBACK
