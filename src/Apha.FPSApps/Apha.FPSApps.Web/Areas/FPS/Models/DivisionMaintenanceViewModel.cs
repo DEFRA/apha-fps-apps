@@ -1,3 +1,4 @@
+using Apha.FPSApps.Web.Areas.FPS.Validation;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using System.ComponentModel.DataAnnotations;
 
@@ -50,6 +51,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Central Overhead")]
         [GridColumn(Width = 150, Type = GridColumnType.Number)]
+        [CurrencyRange]
         public decimal? CentOverhead { get; set; }
 
         /// <summary>

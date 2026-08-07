@@ -1,3 +1,4 @@
+using Apha.FPSApps.Web.Areas.FPS.Validation;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using System.ComponentModel.DataAnnotations;
 
@@ -51,6 +52,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Contribution Target")]
         [GridColumn(Width = 160, Type = GridColumnType.Number)]
+        [CurrencyRange]
         public decimal? ContTarget { get; set; }
 
         /// <summary>

@@ -1,3 +1,4 @@
+using Apha.FPSApps.Web.Areas.FPS.Validation;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
@@ -49,16 +50,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "Budget")]
         [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [CurrencyRange]
         public decimal? BudgetCvl { get; set; }
 
         [Display(Name = "Cost Inc")]
         [Required(ErrorMessage = "Cost Inc is required.")]
+        [CurrencyRange]
         public decimal? BudgetExt { get; set; }
 
         [Display(Name = "Trans Inc")]
         [Required(ErrorMessage = "Trans Inc is required.")]
+        [CurrencyRange]
         public decimal? TransferIncome { get; set; }
 
+        [CurrencyRange]
         public decimal? PlanCaseWorkDebit { get; set; }
 
         public short IsDefraProject { get; set; }
