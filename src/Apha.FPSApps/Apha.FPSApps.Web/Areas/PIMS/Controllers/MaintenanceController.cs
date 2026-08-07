@@ -27,7 +27,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             _service = service;
         }
 
-        private IActionResult BadModelStateResult() =>
+        private JsonResult BadModelStateResult() =>
             Json(new
             {
                 success = false,
@@ -1290,7 +1290,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         public async Task<IActionResult> DeleteAccessUser(int systemid, string ntlogin)
         {
             var accessLevelsResult = await _service.GetAccessUserLevelsByUserAsync(systemid, ntlogin);
-            if (accessLevelsResult is { Success: true, Data: not null } && accessLevelsResult.Data.Any())
+            if (accessLevelsResult is { Success: true, Data: not null } && accessLevelsResult.Data.Count > 0)
             {
                 return Json(new
                 {

@@ -1753,6 +1753,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
         public async Task DeleteAccessUser_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
+            _service.GetAccessUserLevelsByUserAsync(1, "jsmith")
+                .Returns(SuccessResponse(new List<AccessUserLevelDto>()));
             _service.DeleteAccessUserAsync(1, "jsmith").Returns(SuccessResponse(true));
 
             // Act
@@ -1762,6 +1764,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
             var json    = Assert.IsType<JsonResult>(result);
             var element = GetJsonElement(json);
             Assert.True(element.GetProperty("success").GetBoolean());
+            await _service.Received(1).GetAccessUserLevelsByUserAsync(1, "jsmith");
             await _service.Received(1).DeleteAccessUserAsync(1, "jsmith");
         }
 
@@ -1769,6 +1772,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
         public async Task DeleteAccessUser_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
+            _service.GetAccessUserLevelsByUserAsync(99, "nobody")
+                .Returns(SuccessResponse(new List<AccessUserLevelDto>()));
             _service.DeleteAccessUserAsync(99, "nobody").Returns(FailureResponse<bool>());
 
             // Act
@@ -1778,6 +1783,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
             var json    = Assert.IsType<JsonResult>(result);
             var element = GetJsonElement(json);
             Assert.False(element.GetProperty("success").GetBoolean());
+            await _service.Received(1).GetAccessUserLevelsByUserAsync(99, "nobody");
         }
 
         [Fact]
