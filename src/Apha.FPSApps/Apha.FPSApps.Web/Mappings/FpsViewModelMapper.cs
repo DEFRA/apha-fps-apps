@@ -33,6 +33,9 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<AnimalPlanItem, AnimalRequestDto>().ReverseMap();
             CreateMap<AnimalCostsItem, AnimalCostViewDto>().ReverseMap();
             CreateMap<AnimalSnapshotItem, AnimalSnapshotViewDto>().ReverseMap();
+            CreateMap<TimeSnapshotItem, ProgramPlanCostViewDto>().ReverseMap();
+            CreateMap<ProjectSnapshotItem, ProjectSnapshotViewDto>().ReverseMap();
+            CreateMap<TestSnapshotItem, TestFeePlanViewDto>().ReverseMap();
             CreateMap<GenericBidItem, GenericBidViewDto>().ReverseMap();
             CreateMap<ExceptionalCostSnapshotItem, ProjectExceptionalCostViewDto>().ReverseMap();
             CreateMap<CompareStaff2Item, TimeCostCalcsViewDto>().ReverseMap();
@@ -207,6 +210,8 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<StaffJobViewDto, ResourceMgmtReplanAllTimeItem>()
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID));
             CreateMap<ResourceMgmtReplanStaffJobDto, ResourceMgmtReplanStagedItem>().ReverseMap();
+
+            CreateMap<Apha.FPSApps.Application.Dtos.FPS.BatchJobHistoryDto, YearEndHistoryItem>();
         }
 
         // AutoMapper's MapFrom builds an expression tree, which cannot contain a switch

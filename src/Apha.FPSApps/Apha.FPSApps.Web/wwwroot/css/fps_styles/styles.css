@@ -5295,3 +5295,11 @@ body,
     height: 340px;
     max-height: 340px;
 }
+#gridContainer_yearEndConfigValuesGrid .editable-grid-container {
+    min-height: 190px !important;
+    max-height: 190px !important;
+}
+#gridContainer_yearEndMonthHoursGrid > .editable-grid-container > div  >.grid-scroll-container {
+    min-height: 600px !important;
+    max-height: 600px !important;
+}

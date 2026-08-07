@@ -75,6 +75,7 @@ namespace Apha.Common.Constants
         public const string GetAllPrograms = "api/v1/program";
         public const string GetAllProgramsForAllUsers = "api/v1/program/all";
         public const string GetPagedPrograms = "api/v1/program/paged";
+        public const string GetProgramTimeSnapshot = "api/v1/program/time-snapshot/paged";
         public const string GetProgramById = "api/v1/program/{0}";
         public const string CreateProgram = "api/v1/program";
         public const string UpdateProgram = "api/v1/program";
@@ -87,6 +88,7 @@ namespace Apha.Common.Constants
         public const string GetAllProjectsForAllUsers = "api/v1/project/all";
         public const string GetAllProjectsPaged = "api/v1/project/paged/all";
         public const string GetPagedProjectSpecificQuery = "api/v1/project/specific-query/paged";
+        public const string GetPagedProjectSnapshotData = "api/v1/project/project-snapshot/paged";
         public const string GetProjectExceptionalCostsPaged = "api/v1/project/exceptionalcosts/paged";
         public const string GetAllPactProjects = "api/v1/project/pactview/all";
         public const string GetPagedPactProjects = "api/v1/project/pactview";
@@ -123,6 +125,18 @@ namespace Apha.Common.Constants
 
         // Setting
         public const string GetHoursPerDay = "api/v1/setting/hoursperday";
+        public const string GetAllSettings = "api/v1/setting";
+        public const string GetYearEndSettings = "api/v1/setting/yearend";
+        public const string CreateSetting = "api/v1/setting";
+        public const string UpdateSetting = "api/v1/setting/{0}";
+        public const string SaveSetting = "api/v1/setting/save";
+
+        // Month Hour
+        public const string GetPagedMonthHours = "api/v1/monthhour";
+        public const string GetMonthHoursByYear = "api/v1/monthhour/year/{0}";
+        public const string GetDistinctMonthHourYears = "api/v1/monthhour/years";
+        public const string GetYearEndMonthHours = "api/v1/monthhour/yearend";
+        public const string SaveMonthHour = "api/v1/monthhour/save";
 
         // Project Staff Plan
         public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";
@@ -288,7 +302,26 @@ namespace Apha.Common.Constants
         public const string GetBulkRatesStagingData = "api/v1/bulk-rates/requests/{0}/staging";
         public const string ExportBulkRatesStagingData = "api/v1/bulk-rates/requests/{0}/staging/export";
 
-        // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre)
+        // TRANSFORMENGINE: WorkgroupMaintenance (frmMaintWorkGroup2 — fps.workgroup) — added Phase 6
+        // CRUD endpoints
+        public const string GetPagedWorkgroups = "api/v1/workgroup/paged";
+        public const string GetWorkgroupByName = "api/v1/workgroup/{0}";
+        public const string CreateWorkgroup = "api/v1/workgroup";
+        public const string UpdateWorkgroup = "api/v1/workgroup/{0}";
+        public const string DeleteWorkgroup = "api/v1/workgroup/{0}";
+        // Lookup endpoints (separate from CRUD resource family)
+        public const string GetWorkgroupProfitCentres = "api/v1/workgroup/profitcentres";
+        public const string GetWorkgroupOwners = "api/v1/workgroup/owners";
+        public const string GetWorkgroupCostCentres = "api/v1/workgroup/costcentres?profitCentre={0}";
+        // Year End Batch Job
+        public const string GetYearEndBatchJobHistory = "api/v1/yearend/batchjob/history";
+        public const string GetCanInitiateDataSetupRequest = "api/v1/yearend/dataSetup/caninitiate";
+        public const string GetCanApproveDataSetupRequest = "api/v1/yearend/dataSetup/canapproveorreject";
+        public const string EnqueueYearEndDataSetupInitiationJob = "api/v1/yearend/dataSetup/initiation";
+        public const string EnqueueYearEndDataSetupApprovalJob    = "api/v1/yearend/dataSetup/approval";
+        public const string EnqueueYearEndDataSetupRejectJob = "api/v1/yearend/dataSetup/reject";
+
+        // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
         public const string GetAllCostCentres = "api/v1/costcentre";
         public const string GetPagedCostCentres = "api/v1/costcentre/paged";
         public const string GetCostCentreById = "api/v1/costcentre/{0}";

@@ -1,7 +1,9 @@
 using Apha.Common.BulkRates.Validation;
 using Apha.Common.BulkRates.Validation.StaffAnimal;
-using Apha.Common.Utilities.StateManagement;
+using Apha.Common.Utilities.Email;
+using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Interfaces;
@@ -67,6 +69,16 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<BulkRatesValidator>();
             services.AddScoped<IEventBridgePublisher, EventBridgePublisher>();
             services.AddScoped<IBulkRatesNotificationService, LogOnlyBulkRatesNotificationService>();
+            services.AddScoped<ICostCentreService, CostCentreService>();
+            services.AddScoped<ITestRCCostService, TestRCCostService>();
+            services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();
+            services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
+            services.AddScoped<IResourceAllocationService, ResourceAllocationService>();
+            services.AddScoped<IYearEndService, YearEndService>();
+            services.AddScoped<IMonthHourService, MonthHourService>();
+            services.AddSingleton<IEventPublisherService, EventBridgePublisherService>();
+            services.AddSingleton<IGraphEmailService, GraphEmailService>();
+
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -112,6 +124,13 @@ namespace Apha.FPS.Api.Extensions
 
             // Bulk Rates
             services.AddScoped<IBulkRatesRepository, BulkRatesRepository>();
+            services.AddScoped<ICostCentreRepository, CostCentreRepository>();
+            services.AddScoped<ITestRCCostRepository, TestRCCostRepository>();
+            services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
+            services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
+            services.AddScoped<IResourceAllocationRepository, ResourceAllocationRepository>();
+            services.AddScoped<IMonthHourRepository, MonthHourRepository>();
+            services.AddScoped<IYearEndRepository, YearEndRepository>();
             return services;
 
         }
