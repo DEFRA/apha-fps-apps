@@ -24,6 +24,17 @@ namespace Apha.PIMS.DataAccess.Repository
                 var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(query.Filter)
                     ?? new Dictionary<string, string>();
 
+                if (filters.TryGetValue("UserName", out var userNameFilter)
+                    && !string.IsNullOrWhiteSpace(userNameFilter))
+                {
+                    var value = userNameFilter.Trim();
+                    // Resolve matching NtLogins via subquery against AccessUsers
+                    var matchingLogins = _dbContext.AccessUsers
+                        .Where(u => u.UserName != null && EF.Functions.ILike(u.UserName, $"%{value}%"))
+                        .Select(u => u.NtLogin);
+                    baseQuery = baseQuery.Where(ul => matchingLogins.Contains(ul.NtLogin));
+                }
+
                 if (filters.TryGetValue("NtLogin", out var ntloginFilter)
                     && !string.IsNullOrWhiteSpace(ntloginFilter))
                 {
@@ -42,6 +53,8 @@ namespace Apha.PIMS.DataAccess.Repository
             {
                 ("NtLogin", true)        => baseQuery.OrderByDescending(ul => ul.NtLogin),
                 ("NtLogin", false)       => baseQuery.OrderBy(ul => ul.NtLogin),
+                ("UserName", true)       => baseQuery.OrderByDescending(ul => ul.NtLogin),
+                ("UserName", false)      => baseQuery.OrderBy(ul => ul.NtLogin),
                 ("AccessLevelId", true)  => baseQuery.OrderByDescending(ul => ul.AccessLevelId),
                 ("AccessLevelId", false) => baseQuery.OrderBy(ul => ul.AccessLevelId),
                 ("SystemId", true)       => baseQuery.OrderByDescending(ul => ul.SystemId),

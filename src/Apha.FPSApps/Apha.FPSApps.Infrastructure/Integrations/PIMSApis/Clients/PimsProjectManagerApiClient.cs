@@ -14,9 +14,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
     {
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
-        // TRANSFORMENGINE: S1192 — repeated error code extracted to const
+        
         private const string InternalCodeError = "INTERNAL_ERROR";
-        // TRANSFORMENGINE: S1192 — base URL extracted to const; matches backend ProjectManagerController [Route("api/v{version:apiVersion}/projectmanager")]
+        
         private const string BaseUrl = "api/v1/projectmanager";
 
         public PimsProjectManagerApiClient(IPimsHttpExecutor http, IMapper mapper)
@@ -25,7 +25,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET /api/v1/projectmanager — supports paging/sorting/filter via query string
+        
         public async Task<ApiResponseDto<List<ProjectManagerDto>>> GetAllProjectManagersAsync(QueryParameters<string>? query = null)
         {
             try
@@ -47,7 +47,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/projectmanager/names — dropdown source for manager names
+        
         public async Task<ApiResponseDto<List<string>>> GetManagerNamesAsync()
         {
             try
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/projectmanager — paged list with search/sort/filter support
+        
         public async Task<ApiResponseDto<PaginatedResult<ProjectManagerDto>>> GetPagedProjectManagersAsync(QueryParameters<string> query)
         {
             try
@@ -96,7 +96,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/projectmanager/{projectmanager} — Uri.EscapeDataString applied to natural varchar PK
+        
         public async Task<ApiResponseDto<ProjectManagerDto>> GetProjectManagerByNameAsync(string projectManagerName)
         {
             try
@@ -117,7 +117,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST /api/v1/projectmanager
         public async Task<ApiResponseDto<ProjectManagerDto>> CreateProjectManagerAsync(ProjectManagerDto dto)
         {
             try
@@ -138,7 +137,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PUT /api/v1/projectmanager/{projectmanager} — route PK is authoritative; Uri.EscapeDataString applied
+        
         public async Task<ApiResponseDto<ProjectManagerDto>> UpdateProjectManagerAsync(string projectManagerName, ProjectManagerDto dto)
         {
             try
@@ -160,7 +159,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE /api/v1/projectmanager/{projectmanager} — Uri.EscapeDataString applied to natural varchar PK
+        
         public async Task<ApiResponseDto<bool>> DeleteProjectManagerAsync(string projectManagerName)
         {
             try

@@ -55,6 +55,13 @@ namespace Apha.PIMS.DataAccess.Repository
                     var value = mnumberFilter.Trim();
                     baseQuery = baseQuery.Where(m => m.Mnumber != null && EF.Functions.ILike(m.Mnumber, $"%{value}%"));
                 }
+
+                if (filters.TryGetValue("LoginEmail", out var loginEmailFilter)
+                    && !string.IsNullOrWhiteSpace(loginEmailFilter))
+                {
+                    var value = loginEmailFilter.Trim();
+                    baseQuery = baseQuery.Where(m => m.LoginEmail != null && EF.Functions.ILike(m.LoginEmail, $"%{value}%"));
+                }
             }
 
             baseQuery = (query.SortBy, query.Descending) switch
@@ -65,6 +72,8 @@ namespace Apha.PIMS.DataAccess.Repository
                 ("Email", false) => baseQuery.OrderBy(m => m.Email).ThenBy(m => m.Projectmanager),
                 ("Mnumber", true)  => baseQuery.OrderByDescending(m => m.Mnumber).ThenBy(m => m.Projectmanager),
                 ("Mnumber", false) => baseQuery.OrderBy(m => m.Mnumber).ThenBy(m => m.Projectmanager),
+                ("LoginEmail", true)  => baseQuery.OrderByDescending(m => m.LoginEmail).ThenBy(m => m.Projectmanager),
+                ("LoginEmail", false) => baseQuery.OrderBy(m => m.LoginEmail).ThenBy(m => m.Projectmanager),
                 (_, true)                  => baseQuery.OrderByDescending(m => m.Projectmanager),
                 _                          => baseQuery.OrderBy(m => m.Projectmanager)
             };

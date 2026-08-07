@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.PIMS.Api.UnitTests.Controllers
+namespace Apha.PIMS.Api.UnitTests.Controllers.ReportControllerTest
 {
     public class ReportControllerTests
     {
@@ -35,13 +35,13 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
         private static ReportRes MakeRes(int id = 1) => new ReportRes
         {
             Id         = id,
-            ReportName = $"Report {id}",   // TRANSFORMENGINE: ReportRes uses PascalCase ReportName
+            ReportName = $"Report {id}",   
             Type       = "R"
         };
 
         private static ReportReq MakeReq() => new ReportReq
         {
-            ReportName = "New Report",     // TRANSFORMENGINE: ReportReq uses PascalCase ReportName
+            ReportName = "New Report",     
             Type       = "R"
         };
 

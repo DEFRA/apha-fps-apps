@@ -13,9 +13,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
     {
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
-        // TRANSFORMENGINE: S1192 — repeated error code extracted to const
+        
         private const string InternalCodeError = "INTERNAL_ERROR";
-        // TRANSFORMENGINE: S1192 — base URL extracted to const; matches backend ReviewItemController [Route("api/v{version:apiVersion}/reviewitem")]
+        
         private const string BaseUrl = "api/v1/reviewitem";
 
         public PimsReviewItemApiClient(IPimsHttpExecutor http, IMapper mapper)
@@ -24,7 +24,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET /api/v1/reviewitem — full list
+        
         public async Task<ApiResponseDto<List<ReviewItemDto>>> GetAllReviewItemsAsync()
         {
             try
@@ -44,7 +44,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/reviewitem/paged
+       
         public async Task<ApiResponseDto<PaginatedResult<ReviewItemDto>>> GetPagedReviewItemsAsync(QueryParameters<string> query)
         {
             try
@@ -73,7 +73,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/reviewitem/{itemid:int}
+        
         public async Task<ApiResponseDto<ReviewItemDto>> GetReviewItemByIdAsync(int itemId)
         {
             try
@@ -94,7 +94,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST /api/v1/reviewitem
+       
         public async Task<ApiResponseDto<ReviewItemDto>> CreateReviewItemAsync(ReviewItemDto dto)
         {
             try
@@ -115,7 +115,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PUT /api/v1/reviewitem/{itemid:int} — route PK is authoritative
         public async Task<ApiResponseDto<ReviewItemDto>> UpdateReviewItemAsync(int itemId, ReviewItemDto dto)
         {
             try
@@ -137,7 +136,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE /api/v1/reviewitem/{itemid:int}
+       
         public async Task<ApiResponseDto<bool>> DeleteReviewItemAsync(int itemId)
         {
             try

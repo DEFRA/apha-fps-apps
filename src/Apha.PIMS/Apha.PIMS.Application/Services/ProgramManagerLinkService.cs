@@ -18,14 +18,14 @@ namespace Apha.PIMS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        // TRANSFORMENGINE: returns full list of all program-manager links
+        
         public async Task<List<ProgramManagerLinkDto>> GetAllProgramManagerLinksAsync()
         {
             List<ProgramManagerLink> entities = await _repository.GetAllProgramManagerLinksAsync();
             return _mapper.Map<List<ProgramManagerLinkDto>>(entities);
         }
 
-        // TRANSFORMENGINE: returns paged list of program-manager links for a given manager
+        
         public async Task<PaginatedResult<ProgramManagerLinkDto>> GetPagedByManagerAsync(QueryParameters<string> query, string manager)
         {
             if (query is null) throw new ArgumentNullException(nameof(query));
@@ -37,7 +37,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<PaginatedResult<ProgramManagerLinkDto>>(pagedData);
         }
 
-        // TRANSFORMENGINE: returns all manager links for a given program — used for sub-grid population
+        
         public async Task<List<ProgramManagerLinkDto>> GetByProgramAsync(string program)
         {
             if (string.IsNullOrWhiteSpace(program))
@@ -56,7 +56,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<List<ProgramManagerLinkDto>>(entities);
         }
 
-        // TRANSFORMENGINE: returns nullable — controller maps null to 404; composite PK lookup
+       
         public async Task<ProgramManagerLinkDto?> GetProgramManagerLinkByIdAsync(string program, string manager)
         {
             if (string.IsNullOrWhiteSpace(program))
@@ -68,7 +68,7 @@ namespace Apha.PIMS.Application.Services
             return entity is null ? null : _mapper.Map<ProgramManagerLinkDto>(entity);
         }
 
-        // TRANSFORMENGINE: duplicate-link guard — throws InvalidOperationException if link already exists
+        
         public async Task<ProgramManagerLinkDto> CreateProgramManagerLinkAsync(ProgramManagerLinkDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -87,7 +87,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<ProgramManagerLinkDto>(created);
         }
 
-        // TRANSFORMENGINE: throws KeyNotFoundException if link not found before delete
+       
         public async Task<bool> DeleteProgramManagerLinkAsync(string program, string manager)
         {
             if (string.IsNullOrWhiteSpace(program))

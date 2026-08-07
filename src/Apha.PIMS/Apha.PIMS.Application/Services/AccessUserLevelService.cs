@@ -8,7 +8,7 @@ using AutoMapper;
 
 namespace Apha.PIMS.Application.Services
 {
-    // TRANSFORMENGINE: service orchestrates IAccessUserLevelRepository; three-column composite PK (systemid, ntlogin, accesslevelid); no update — assignment table
+    
     public class AccessUserLevelService : IAccessUserLevelService
     {
         private readonly IAccessUserLevelRepository _repository;
@@ -20,7 +20,7 @@ namespace Apha.PIMS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        // TRANSFORMENGINE: paged access user levels with repository-level filter/sort/paging
+        
         public async Task<PaginatedResult<AccessUserLevelDto>> GetPagedAccessUserLevelAllAsync(QueryParameters<string> query)
         {
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
@@ -28,14 +28,14 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<PaginatedResult<AccessUserLevelDto>>(pagedData);
         }
 
-        // TRANSFORMENGINE: returns all user-level assignments for a given system
+       
         public async Task<List<AccessUserLevelDto>> GetBySystemIdAsync(int systemid)
         {
             List<AccessUserLevel> entities = await _repository.GetBySystemIdAsync(systemid);
             return _mapper.Map<List<AccessUserLevelDto>>(entities);
         }
 
-        // TRANSFORMENGINE: returns all level assignments for a given user — used for user access management grid
+        
         public async Task<List<AccessUserLevelDto>> GetByUserAsync(int systemid, string ntlogin)
         {
             if (string.IsNullOrWhiteSpace(ntlogin))
@@ -45,7 +45,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<List<AccessUserLevelDto>>(entities);
         }
 
-        // TRANSFORMENGINE: returns nullable — controller maps null to 404; three-column composite PK lookup
+        
         public async Task<AccessUserLevelDto?> GetByIdAsync(int systemid, string ntlogin, int accesslevelid)
         {
             if (string.IsNullOrWhiteSpace(ntlogin))
@@ -55,7 +55,7 @@ namespace Apha.PIMS.Application.Services
             return entity is null ? null : _mapper.Map<AccessUserLevelDto>(entity);
         }
 
-        // TRANSFORMENGINE: duplicate-assignment guard — throws InvalidOperationException if assignment already exists
+        
         public async Task<AccessUserLevelDto> CreateAsync(AccessUserLevelDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -76,7 +76,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<AccessUserLevelDto>(created);
         }
 
-        // TRANSFORMENGINE: throws KeyNotFoundException if assignment not found before delete
+       
         public async Task<bool> DeleteAsync(int systemid, string ntlogin, int accesslevelid)
         {
             if (string.IsNullOrWhiteSpace(ntlogin))

@@ -1,7 +1,9 @@
 using Apha.PIMS.Application.Dtos;
+using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Application.Services;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
+using Apha.PIMS.Core.Pagination;
 using AutoMapper;
 using NSubstitute;
 
@@ -23,10 +25,10 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         // ── helpers ───────────────────────────────────────────────────────────────
 
         private static AccessUser MakeEntity(int systemid = 1, string ntlogin = "DOM\\user1") =>
-            new AccessUser { SystemId = systemid, NtLogin = ntlogin, UserName = "User One" };
+            new AccessUser { SystemId = systemid, NtLogin = ntlogin, UserName = "User One", UserEmail = "user1@example.com" };
 
         private static AccessUserDto MakeDto(int systemid = 1, string ntlogin = "DOM\\user1") =>
-            new AccessUserDto { SystemId = systemid, NtLogin = ntlogin, UserName = "User One" };
+            new AccessUserDto { SystemId = systemid, NtLogin = ntlogin, UserName = "User One", UserEmail = "user1@example.com" };
 
         // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -42,6 +44,50 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         public void Constructor_NullMapper_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new AccessUserService(_repository, null!));
+        }
+
+        #endregion
+
+        // ── GetPagedAsync ─────────────────────────────────────────────────────────
+
+        #region GetPagedAsync
+
+        [Fact]
+        public async Task GetPagedAsync_ValidQuery_ReturnsMappedPaginatedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Search = "dom", Page = 1, PageSize = 10 };
+            var parameters = new PaginationParameters<string>(search: "dom", page: 1, pageSize: 10);
+            var entities = new List<AccessUser> { MakeEntity(1, "dom\\u1"), MakeEntity(1, "dom\\u2") };
+            var pagedData = new PagedData<AccessUser>(entities, new PaginationData { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 2 });
+            var resultDto = new PaginatedResult<AccessUserDto>(
+                new List<AccessUserDto> { MakeDto(1, "dom\\u1"), MakeDto(1, "dom\\u2") },
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 2 });
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(parameters);
+            _repository.GetPagedAsync(parameters).Returns(pagedData);
+            _mapper.Map<PaginatedResult<AccessUserDto>>(pagedData).Returns(resultDto);
+
+            // Act
+            var result = await _service.GetPagedAsync(query);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            await _repository.Received(1).GetPagedAsync(parameters);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_RepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var parameters = new PaginationParameters<string>(page: 1, pageSize: 10);
+            _mapper.Map<PaginationParameters<string>>(query).Returns(parameters);
+            _repository.GetPagedAsync(parameters).Returns<Task<PagedData<AccessUser>>>(_ => throw new Exception("db error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _service.GetPagedAsync(query));
         }
 
         #endregion

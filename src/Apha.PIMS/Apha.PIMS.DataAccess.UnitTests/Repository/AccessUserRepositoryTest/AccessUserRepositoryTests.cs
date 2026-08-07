@@ -44,7 +44,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserRepositoryTest
         // ── helpers ───────────────────────────────────────────────────────────────
 
         private static AccessUser MakeUser(int systemid = 1, string ntlogin = "DOM\\user1") =>
-            new AccessUser { SystemId = systemid, NtLogin = ntlogin, UserName = "User One" };
+            new AccessUser { SystemId = systemid, NtLogin = ntlogin, UserName = "User One", UserEmail = "user1@example.com" };
 
         // ── GetAllAsync ───────────────────────────────────────────────────────────
 

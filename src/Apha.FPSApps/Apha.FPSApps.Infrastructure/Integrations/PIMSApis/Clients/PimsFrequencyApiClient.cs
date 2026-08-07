@@ -13,9 +13,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
     {
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
-        // TRANSFORMENGINE: S1192 — repeated error code extracted to const
         private const string InternalCodeError = "INTERNAL_ERROR";
-        // TRANSFORMENGINE: S1192 — base URL extracted to const; matches backend FrequencyController [Route("api/v{version:apiVersion}/frequency")]
         private const string BaseUrl = "api/v1/frequency";
 
         public PimsFrequencyApiClient(IPimsHttpExecutor http, IMapper mapper)
@@ -24,7 +22,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET /api/v1/frequency — full list
+        
         public async Task<ApiResponseDto<List<FrequencyDto>>> GetAllFrequenciesAsync()
         {
             try
@@ -44,7 +42,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/frequency/paged
+        
         public async Task<ApiResponseDto<PaginatedResult<FrequencyDto>>> GetPagedFrequenciesAsync(QueryParameters<string> query)
         {
             try
@@ -73,7 +71,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/frequency/{frequencyId:int}
+       
         public async Task<ApiResponseDto<FrequencyDto>> GetFrequencyByIdAsync(int frequencyId)
         {
             try
@@ -94,7 +92,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST /api/v1/frequency
+        
         public async Task<ApiResponseDto<FrequencyDto>> CreateFrequencyAsync(FrequencyDto dto)
         {
             try
@@ -115,7 +113,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PUT /api/v1/frequency/{frequencyId:int} — route PK is authoritative
+        
         public async Task<ApiResponseDto<FrequencyDto>> UpdateFrequencyAsync(int frequencyId, FrequencyDto dto)
         {
             try
@@ -137,7 +135,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE /api/v1/frequency/{frequencyId:int}
         public async Task<ApiResponseDto<bool>> DeleteFrequencyAsync(int frequencyId)
         {
             try

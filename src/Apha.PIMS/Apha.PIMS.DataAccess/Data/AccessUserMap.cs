@@ -26,6 +26,10 @@ namespace Apha.PIMS.DataAccess.Data
             entity.Property(e => e.Dt2Login)
                 .HasMaxLength(50)
                 .HasColumnName("dt2login");
+
+            entity.Property(e => e.UserEmail)
+                .HasMaxLength(255)
+                .HasColumnName("useremail");
         }
     }
 }

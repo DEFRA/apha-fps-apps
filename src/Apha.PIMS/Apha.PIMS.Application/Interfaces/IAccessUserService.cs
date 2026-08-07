@@ -1,9 +1,13 @@
 using Apha.PIMS.Application.Dtos;
+using Apha.PIMS.Application.Pagination;
+using Apha.PIMS.Core.Pagination;
 
 namespace Apha.PIMS.Application.Interfaces
 {
     public interface IAccessUserService
     {
+        Task<PaginatedResult<AccessUserDto>> GetPagedAsync(QueryParameters<string> query);
+
         Task<List<AccessUserDto>> GetAllAsync();
 
         Task<List<AccessUserDto>> GetBySystemIdAsync(int systemid);

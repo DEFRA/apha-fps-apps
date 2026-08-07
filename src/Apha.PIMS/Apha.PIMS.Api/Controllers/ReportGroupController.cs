@@ -29,7 +29,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllReportGroups()
         {
-            // TRANSFORMENGINE: GetAllReportGroupsAsync -> GET /reportgroup (lookup list)
+            
             List<ReportGroupDto> result = await _service.GetAllReportGroupsAsync();
             return Ok(_mapper.Map<List<ReportGroupRes>>(result));
         }
@@ -73,7 +73,6 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> UpdateReportGroup(int groupId, [FromBody] ReportGroupReq request)
         {
             ReportGroupDto dto = _mapper.Map<ReportGroupDto>(request);
-            // TRANSFORMENGINE: Route groupid is authoritative — set before service call
             dto.GroupId = groupId;
             ReportGroupDto updated = await _service.UpdateReportGroupAsync(dto);
             return Ok(_mapper.Map<ReportGroupRes>(updated));

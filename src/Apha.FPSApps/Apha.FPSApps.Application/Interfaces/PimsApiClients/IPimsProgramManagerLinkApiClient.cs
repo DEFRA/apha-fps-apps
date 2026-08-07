@@ -5,7 +5,6 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
 {
-// TRANSFORMENGINE: mirrors ProgramManagerLinkController — composite natural PK (program + manager); URL-encoding in implementation
 public interface IPimsProgramManagerLinkApiClient
 {
     Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetAllProgramManagerLinksAsync();

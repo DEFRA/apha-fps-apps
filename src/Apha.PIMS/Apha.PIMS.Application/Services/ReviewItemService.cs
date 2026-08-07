@@ -20,14 +20,14 @@ namespace Apha.PIMS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        // TRANSFORMENGINE: returns full list for review-item dropdown / lookup usage
+        
         public async Task<List<ReviewItemDto>> GetAllReviewItemsAsync()
         {
             List<ReviewItem> entities = await _repository.GetAllReviewItemsAsync();
             return _mapper.Map<List<ReviewItemDto>>(entities);
         }
 
-        // TRANSFORMENGINE: paged review items with repository-level filter/sort/paging
+       
         public async Task<PaginatedResult<ReviewItemDto>> GetPagedReviewItemsAsync(QueryParameters<string> query)
         {
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
@@ -35,14 +35,14 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<PaginatedResult<ReviewItemDto>>(pagedData);
         }
 
-        // TRANSFORMENGINE: returns nullable — controller maps null to 404; single integer PK lookup
+       
         public async Task<ReviewItemDto?> GetReviewItemByIdAsync(int itemId)
         {
             ReviewItem? entity = await _repository.GetReviewItemByIdAsync(itemId);
             return entity is null ? null : _mapper.Map<ReviewItemDto>(entity);
         }
 
-        // TRANSFORMENGINE: validate non-null DTO before first await
+       
         public async Task<ReviewItemDto> CreateReviewItemAsync(ReviewItemDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -61,7 +61,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<ReviewItemDto>(created);
         }
 
-        // TRANSFORMENGINE: validate existence before update — throws BusinessValidationErrorException if not found
+       
         public async Task<ReviewItemDto> UpdateReviewItemAsync(ReviewItemDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -83,7 +83,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<ReviewItemDto>(updated);
         }
 
-        // TRANSFORMENGINE: throws BusinessValidationErrorException if not found before delete
+        
         public async Task<bool> DeleteReviewItemAsync(int itemId)
         {
             bool exists = await _repository.ReviewItemExistsAsync(itemId);

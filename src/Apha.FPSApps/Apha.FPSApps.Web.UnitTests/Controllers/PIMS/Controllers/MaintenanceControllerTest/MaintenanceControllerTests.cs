@@ -11,7 +11,7 @@ using NSubstitute;
 using System.Text.Json;
 using Xunit;
 
-namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
+namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceControllerTest
 {
     public class MaintenanceControllerTests
     {
@@ -42,43 +42,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
                 new List<ApiErrorDto> { new ApiErrorDto { Code = "ERR", Message = "Error" } },
                 new ApiMetaDto());
 
-        // TRANSFORMENGINE: SetupIndexMocks wires all 11 service calls needed by Index()
+        private static PaginatedResult<T> EmptyPaged<T>() =>
+            new(new List<T>(), 0, 1, 10);
+
+        private static PaginatedResult<T> Paged<T>(List<T> items) =>
+            new(items, items.Count, 1, 10);
+
         private void SetupIndexMocks()
         {
-            _service.GetAllReportsAsync()
-                .Returns(SuccessResponse(new List<ReportDto>()));
-            _service.GetAllReportGroupsAsync()
-                .Returns(SuccessResponse(new List<ReportGroupDto>()));
-            _service.GetAllRadTrackProgsAsync()
-                .Returns(SuccessResponse(new List<RadTrackProgDto>()));
-            _service.GetAllProjectManagersAsync()
-                .Returns(SuccessResponse(new List<ProjectManagerDto>()));
-            _service.GetAllProgramManagerLinksAsync()
-                .Returns(SuccessResponse(new List<ProgramManagerLinkDto>()));
-            _service.GetAllProfitCentreManagerLinksAsync()
-                .Returns(SuccessResponse(new List<ProfitCentreManagerLinkDto>()));
-            _service.GetAllAccessUsersAsync()
-                .Returns(SuccessResponse(new List<AccessUserDto>()));
-            _service.GetPagedAccessUserLevelsAsync(Arg.Any<QueryParameters<string>>())
-                .Returns(SuccessResponse(new PaginatedResult<AccessUserLevelDto>()));
-            _service.GetAllFrequenciesAsync()
-                .Returns(SuccessResponse(new List<FrequencyDto>()));
-            _service.GetAllReviewItemsAsync()
-                .Returns(SuccessResponse(new List<ReviewItemDto>()));
-            _service.GetAllUserUpdateableSettingsAsync()
+            _service.GetPagedReportsAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(EmptyPaged<ReportDto>()));
+            _service.GetAllSettingsAsync()
                 .Returns(SuccessResponse(new List<SettingDto>()));
 
-            // mapper returns empty lists for all collection maps
             _mapper.Map<List<ReportItem>>(Arg.Any<List<ReportDto>>()).Returns(new List<ReportItem>());
-            _mapper.Map<List<ReportGroupItem>>(Arg.Any<List<ReportGroupDto>>()).Returns(new List<ReportGroupItem>());
-            _mapper.Map<List<RadTrackProgItem>>(Arg.Any<List<RadTrackProgDto>>()).Returns(new List<RadTrackProgItem>());
-            _mapper.Map<List<ProjectManagerItem>>(Arg.Any<List<ProjectManagerDto>>()).Returns(new List<ProjectManagerItem>());
-            _mapper.Map<List<ProgramManagerLinkItem>>(Arg.Any<List<ProgramManagerLinkDto>>()).Returns(new List<ProgramManagerLinkItem>());
-            _mapper.Map<List<ProfitCentreManagerLinkItem>>(Arg.Any<List<ProfitCentreManagerLinkDto>>()).Returns(new List<ProfitCentreManagerLinkItem>());
-            _mapper.Map<List<AccessUserItem>>(Arg.Any<List<AccessUserDto>>()).Returns(new List<AccessUserItem>());
-            _mapper.Map<List<AccessUserLevelItem>>(Arg.Any<List<AccessUserLevelDto>>()).Returns(new List<AccessUserLevelItem>());
-            _mapper.Map<List<FrequencyItem>>(Arg.Any<List<FrequencyDto>>()).Returns(new List<FrequencyItem>());
-            _mapper.Map<List<ReviewItemItem>>(Arg.Any<List<ReviewItemDto>>()).Returns(new List<ReviewItemItem>());
         }
 
         // ════════════════════════════════════════════════════════════════════════════
@@ -115,7 +92,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         }
 
         [Fact]
-        public async Task Index_CallsGetAllReportsAsync()
+        public async Task Index_CallsGetPagedReportsAsync()
         {
             // Arrange
             SetupIndexMocks();
@@ -124,11 +101,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             await _controller.Index();
 
             // Assert
-            await _service.Received(1).GetAllReportsAsync();
+            await _service.Received(1).GetPagedReportsAsync(Arg.Any<QueryParameters<string>>());
         }
 
         [Fact]
-        public async Task Index_CallsGetAllProjectManagersAsync()
+        public async Task Index_CallsGetAllSettingsAsync()
         {
             // Arrange
             SetupIndexMocks();
@@ -137,11 +114,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             await _controller.Index();
 
             // Assert
-            await _service.Received(1).GetAllProjectManagersAsync();
+            await _service.Received(1).GetAllSettingsAsync();
         }
 
         [Fact]
-        public async Task Index_CallsGetAllUserUpdateableSettingsAsync()
+        public async Task Index_CallsGetAllSettingsAsync_Once()
         {
             // Arrange
             SetupIndexMocks();
@@ -150,7 +127,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             await _controller.Index();
 
             // Assert
-            await _service.Received(1).GetAllUserUpdateableSettingsAsync();
+            await _service.Received(1).GetAllSettingsAsync();
         }
 
         [Fact]
@@ -158,10 +135,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         {
             // Arrange
             SetupIndexMocks();
-            var settingDto = new SettingDto { Id = "WorkingHours", SettingValue = "7.4" };
-            _service.GetAllUserUpdateableSettingsAsync()
+            var settingDto = new SettingDto { Id = "HoursInDay", SettingValue = "7.4" };
+            _service.GetAllSettingsAsync()
                 .Returns(SuccessResponse(new List<SettingDto> { settingDto }));
-            var settingItem = new SettingItem { Id = "WorkingHours", SettingValue = "7.4" };
+            var settingItem = new SettingItem { Id = "HoursInDay", SettingValue = "7.4" };
             _mapper.Map<SettingItem>(settingDto).Returns(settingItem);
 
             // Act
@@ -185,7 +162,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadReportsGrid_ValidRequest_ReturnsPartialView()
         {
             // Arrange
-            _service.GetAllReportsAsync().Returns(SuccessResponse(new List<ReportDto>()));
+            _service.GetPagedReportsAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(EmptyPaged<ReportDto>()));
             _mapper.Map<List<ReportItem>>(Arg.Any<List<ReportDto>>()).Returns(new List<ReportItem>());
 
             var request = new PaginationFilter<string> { Filter = "{}" };
@@ -218,7 +196,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadReportsGrid_ServiceReturnsEmptyData_ReturnsPartialViewWithEmptyGrid()
         {
             // Arrange
-            _service.GetAllReportsAsync().Returns(SuccessResponse(new List<ReportDto>()));
+            _service.GetPagedReportsAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(EmptyPaged<ReportDto>()));
             _mapper.Map<List<ReportItem>>(Arg.Any<List<ReportDto>>()).Returns(new List<ReportItem>());
 
             var request = new PaginationFilter<string> { Filter = "{}" };
@@ -236,7 +215,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadReportsGrid_ServiceReturnsFailure_ReturnsPartialViewWithEmptyGrid()
         {
             // Arrange
-            _service.GetAllReportsAsync().Returns(FailureResponse<List<ReportDto>>());
+            _service.GetPagedReportsAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(FailureResponse<PaginatedResult<ReportDto>>());
             _mapper.Map<List<ReportItem>>(Arg.Any<List<ReportDto>>()).Returns(new List<ReportItem>());
 
             var request = new PaginationFilter<string> { Filter = "{}" };
@@ -432,7 +412,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadReportGroupsGrid_ValidRequest_ReturnsPartialView()
         {
             // Arrange
-            _service.GetAllReportGroupsAsync().Returns(SuccessResponse(new List<ReportGroupDto>()));
+            _service.GetPagedReportGroupsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int?>())
+                .Returns(SuccessResponse(EmptyPaged<ReportGroupDto>()));
             _mapper.Map<List<ReportGroupItem>>(Arg.Any<List<ReportGroupDto>>()).Returns(new List<ReportGroupItem>());
             var request = new PaginationFilter<string> { Filter = "{}" };
 
@@ -465,8 +446,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             // Arrange
             var dtos  = new List<ReportGroupDto> { new() { GroupId = 1, Description = "Group A" } };
             var items = new List<ReportGroupItem> { new() { GroupId = 1, Description = "Group A" } };
-            _service.GetAllReportGroupsAsync().Returns(SuccessResponse(dtos));
-            _mapper.Map<List<ReportGroupItem>>(dtos).Returns(items);
+            _service.GetPagedReportGroupsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int?>())
+                .Returns(SuccessResponse(Paged(dtos)));
+            _mapper.Map<List<ReportGroupItem>>(Arg.Any<List<ReportGroupDto>>()).Returns(items);
             var request = new PaginationFilter<string> { Filter = "{}" };
 
             // Act
@@ -482,7 +464,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadReportGroupsGrid_ServiceReturnsFailure_ReturnsEmptyGrid()
         {
             // Arrange
-            _service.GetAllReportGroupsAsync().Returns(FailureResponse<List<ReportGroupDto>>());
+            _service.GetPagedReportGroupsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int?>())
+                .Returns(FailureResponse<PaginatedResult<ReportGroupDto>>());
             _mapper.Map<List<ReportGroupItem>>(Arg.Any<List<ReportGroupDto>>()).Returns(new List<ReportGroupItem>());
             var request = new PaginationFilter<string> { Filter = "{}" };
 
@@ -506,13 +489,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         [Fact]
         public async Task GetAddEditReportGroupPartial_NoId_ReturnsPartialViewWithEmptyModel()
         {
+            // Arrange
+            _service.GetAllReportGroupsAsync().Returns(SuccessResponse(new List<ReportGroupDto>()));
+
             // Act
             var result = await _controller.GetAddEditReportGroupPartial(null);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditReportGroup", partial.ViewName);
-            Assert.IsType<ReportGroupItem>(partial.Model);
+            Assert.IsType<ReportGroupViewModel>(partial.Model);
         }
 
         [Fact]
@@ -520,16 +506,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         {
             // Arrange
             var dto  = new ReportGroupDto { GroupId = 2, Description = "Grp B" };
-            var item = new ReportGroupItem { GroupId = 2, Description = "Grp B" };
+            var item = new ReportGroupViewModel { GroupId = 2, Description = "Grp B" };
             _service.GetReportGroupByIdAsync(2).Returns(SuccessResponse(dto));
-            _mapper.Map<ReportGroupItem>(dto).Returns(item);
+            _service.GetAllReportGroupsAsync().Returns(SuccessResponse(new List<ReportGroupDto> { dto }));
+            _mapper.Map<ReportGroupViewModel>(dto).Returns(item);
 
             // Act
             var result = await _controller.GetAddEditReportGroupPartial(2);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            var model   = Assert.IsType<ReportGroupItem>(partial.Model);
+            var model   = Assert.IsType<ReportGroupViewModel>(partial.Model);
             Assert.Equal(2, model.GroupId);
         }
 
@@ -545,10 +532,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveReportGroup_NewGroup_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var item = new ReportGroupViewModel { GroupId = 0, Description = "New Group" };
-            var dto  = new ReportGroupDto { GroupId = 0, Description = "New Group" };
-            _mapper.Map<ReportGroupDto>(item).Returns(dto);
-            _service.CreateReportGroupAsync(dto).Returns(SuccessResponse(dto));
+            var item = new ReportGroupViewModel { GroupId = 0, Reportid = 1, Description = "New Group" };
+            var dto  = new ReportGroupLinkDto { GroupId = 0, ReportId = 1 };
+            _service.CreateReportGroupLinkAsync(Arg.Is<ReportGroupLinkDto>(x => x.GroupId == dto.GroupId && x.ReportId == dto.ReportId))
+                .Returns(SuccessResponse(dto));
 
             // Act
             var result = await _controller.SaveReportGroup(item);
@@ -563,10 +550,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveReportGroup_ExistingGroup_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var item = new ReportGroupViewModel { GroupId = 3, Description = "Existing Group" };
-            var dto  = new ReportGroupDto { GroupId = 3, Description = "Existing Group" };
-            _mapper.Map<ReportGroupDto>(item).Returns(dto);
-            _service.UpdateReportGroupAsync(3, dto).Returns(SuccessResponse(dto));
+            var item = new ReportGroupViewModel { GroupId = 3, Reportid = 9, Description = "Existing Group" };
+            var dto  = new ReportGroupLinkDto { GroupId = 3, ReportId = 9 };
+            _service.CreateReportGroupLinkAsync(Arg.Is<ReportGroupLinkDto>(x => x.GroupId == dto.GroupId && x.ReportId == dto.ReportId))
+                .Returns(SuccessResponse(dto));
 
             // Act
             var result = await _controller.SaveReportGroup(item);
@@ -597,10 +584,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveReportGroup_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
-            var item = new ReportGroupViewModel { GroupId = 0, Description = "Bad Group" };
-            var dto  = new ReportGroupDto { GroupId = 0, Description = "Bad Group" };
-            _mapper.Map<ReportGroupDto>(item).Returns(dto);
-            _service.CreateReportGroupAsync(dto).Returns(FailureResponse<ReportGroupDto>());
+            var item = new ReportGroupViewModel { GroupId = 0, Reportid = 1, Description = "Bad Group" };
+            _service.CreateReportGroupLinkAsync(Arg.Any<ReportGroupLinkDto>())
+                .Returns(FailureResponse<ReportGroupLinkDto>());
 
             // Act
             var result = await _controller.SaveReportGroup(item);
@@ -662,7 +648,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadRadTrackProgsGrid_ValidRequest_ReturnsPartialView()
         {
             // Arrange
-            _service.GetAllRadTrackProgsAsync().Returns(SuccessResponse(new List<RadTrackProgDto>()));
+            _service.GetPagedRadTrackProgsAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(EmptyPaged<RadTrackProgDto>()));
             _mapper.Map<List<RadTrackProgItem>>(Arg.Any<List<RadTrackProgDto>>()).Returns(new List<RadTrackProgItem>());
 
             var request = new PaginationFilter<string> { Filter = "{}" };
@@ -696,8 +683,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             // Arrange
             var dtos  = new List<RadTrackProgDto> { new() { Program = "PROG1" } };
             var items = new List<RadTrackProgItem> { new() { Program = "PROG1" } };
-            _service.GetAllRadTrackProgsAsync().Returns(SuccessResponse(dtos));
-            _mapper.Map<List<RadTrackProgItem>>(dtos).Returns(items);
+            _service.GetPagedRadTrackProgsAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(Paged(dtos)));
+            _mapper.Map<List<RadTrackProgItem>>(Arg.Any<List<RadTrackProgDto>>()).Returns(items);
             var request = new PaginationFilter<string> { Filter = "{}" };
 
             // Act
@@ -720,6 +708,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         [Fact]
         public async Task GetAddEditRadTrackProgPartial_NoProgram_ReturnsPartialViewWithEmptyModel()
         {
+            // Arrange
+            _service.GetRadTrackProgProgramsAsync().Returns(SuccessResponse(new List<string>()));
+
             // Act
             var result = await _controller.GetAddEditRadTrackProgPartial(null);
 
@@ -736,6 +727,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             var dto  = new RadTrackProgDto { Program = "PROG2" };
             var item = new RadTrackProgItem { Program = "PROG2" };
             _service.GetRadTrackProgByIdAsync("PROG2").Returns(SuccessResponse(dto));
+            _service.GetRadTrackProgProgramsAsync().Returns(SuccessResponse(new List<string> { "PROG2" }));
             _mapper.Map<RadTrackProgItem>(dto).Returns(item);
 
             // Act
@@ -756,21 +748,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         #region SaveRadTrackProg
 
         [Fact]
-        // TRANSFORMENGINE: Phase 14 — controller now calls GetRadTrackProgByIdAsync to determine
-        // Create vs Update. Existence check returns the existing record → Update path is taken.
         public async Task SaveRadTrackProg_ExistingProg_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var item       = new RadTrackProgItem { Program = "PROG3" };
-            var dto        = new RadTrackProgDto { Program = "PROG3" };
-            var existsDto  = new RadTrackProgDto { Program = "PROG3" };
+            var item = new RadTrackProgItem { Program = "PROG3" };
+            var dto  = new RadTrackProgDto { Program = "PROG3" };
             _mapper.Map<RadTrackProgDto>(item).Returns(dto);
-            // Existence check: record found → isNew = false → Update
-            _service.GetRadTrackProgByIdAsync("PROG3").Returns(SuccessResponse(existsDto));
             _service.UpdateRadTrackProgAsync("PROG3", dto).Returns(SuccessResponse(dto));
 
             // Act
-            var result = await _controller.SaveRadTrackProg(item);
+            var result = await _controller.SaveRadTrackProg(item, isEditMode: true);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -779,20 +766,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         }
 
         [Fact]
-        // TRANSFORMENGINE: Phase 14 — new programme: existence check returns null → Create path.
         public async Task SaveRadTrackProg_NewProg_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
             var item = new RadTrackProgItem { Program = "NEW_PROG" };
             var dto  = new RadTrackProgDto { Program = "NEW_PROG" };
             _mapper.Map<RadTrackProgDto>(item).Returns(dto);
-            // Existence check: record not found → isNew = true → Create
-            _service.GetRadTrackProgByIdAsync("NEW_PROG")
-                .Returns(ApiResponseDto<RadTrackProgDto>.SuccessResponse(null!));
             _service.CreateRadTrackProgAsync(dto).Returns(SuccessResponse(dto));
 
             // Act
-            var result = await _controller.SaveRadTrackProg(item);
+            var result = await _controller.SaveRadTrackProg(item, isEditMode: false);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -817,20 +800,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         }
 
         [Fact]
-        // TRANSFORMENGINE: Phase 14 — existence check returns record → Update path; Update fails.
         public async Task SaveRadTrackProg_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
-            var item      = new RadTrackProgItem { Program = "PROG_BAD" };
-            var dto       = new RadTrackProgDto { Program = "PROG_BAD" };
-            var existsDto = new RadTrackProgDto { Program = "PROG_BAD" };
+            var item = new RadTrackProgItem { Program = "PROG_BAD" };
+            var dto  = new RadTrackProgDto { Program = "PROG_BAD" };
             _mapper.Map<RadTrackProgDto>(item).Returns(dto);
-            // Existence check: record found → Update path
-            _service.GetRadTrackProgByIdAsync("PROG_BAD").Returns(SuccessResponse(existsDto));
             _service.UpdateRadTrackProgAsync("PROG_BAD", dto).Returns(FailureResponse<RadTrackProgDto>());
 
             // Act
-            var result = await _controller.SaveRadTrackProg(item);
+            var result = await _controller.SaveRadTrackProg(item, isEditMode: true);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -888,7 +867,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadProjectManagersGrid_ValidRequest_ReturnsPartialView()
         {
             // Arrange
-            _service.GetAllProjectManagersAsync().Returns(SuccessResponse(new List<ProjectManagerDto>()));
+            _service.GetPagedProjectManagersAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(EmptyPaged<ProjectManagerDto>()));
             _mapper.Map<List<ProjectManagerItem>>(Arg.Any<List<ProjectManagerDto>>()).Returns(new List<ProjectManagerItem>());
 
             var request = new PaginationFilter<string> { Filter = "{}" };
@@ -922,8 +902,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             // Arrange
             var dtos  = new List<ProjectManagerDto> { new() { Projectmanager = "Smith, J." } };
             var items = new List<ProjectManagerItem> { new() { Projectmanager = "Smith, J." } };
-            _service.GetAllProjectManagersAsync().Returns(SuccessResponse(dtos));
-            _mapper.Map<List<ProjectManagerItem>>(dtos).Returns(items);
+            _service.GetPagedProjectManagersAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(Paged(dtos)));
+            _mapper.Map<List<ProjectManagerItem>>(Arg.Any<List<ProjectManagerDto>>()).Returns(items);
 
             var request = new PaginationFilter<string> { Filter = "{}" };
 
@@ -947,6 +928,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         [Fact]
         public async Task GetAddEditProjectManagerPartial_NoId_ReturnsPartialViewWithEmptyModel()
         {
+            // Arrange
+            _service.GetManagerNamesAsync().Returns(SuccessResponse(new List<string>()));
+
             // Act
             var result = await _controller.GetAddEditProjectManagerPartial(null);
 
@@ -963,6 +947,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             var dto  = new ProjectManagerDto { Projectmanager = "Jones, B." };
             var item = new ProjectManagerItem { Projectmanager = "Jones, B." };
             _service.GetProjectManagerByIdAsync("Jones, B.").Returns(SuccessResponse(dto));
+            _service.GetManagerNamesAsync().Returns(SuccessResponse(new List<string> { "Jones, B." }));
             _mapper.Map<ProjectManagerItem>(dto).Returns(item);
 
             // Act
@@ -983,21 +968,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         #region SaveProjectManager
 
         [Fact]
-        // TRANSFORMENGINE: Phase 14 — controller now calls GetProjectManagerByIdAsync to determine
-        // Create vs Update. Existence check returns the existing record → Update path is taken.
         public async Task SaveProjectManager_ExistingManager_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var item       = new ProjectManagerItem { Projectmanager = "Smith, J." };
-            var dto        = new ProjectManagerDto { Projectmanager = "Smith, J." };
-            var existsDto  = new ProjectManagerDto { Projectmanager = "Smith, J." };
+            var item = new ProjectManagerItem { Projectmanager = "Smith, J." };
+            var dto  = new ProjectManagerDto { Projectmanager = "Smith, J." };
             _mapper.Map<ProjectManagerDto>(item).Returns(dto);
-            // Existence check: record found → isNew = false → Update
-            _service.GetProjectManagerByIdAsync("Smith, J.").Returns(SuccessResponse(existsDto));
             _service.UpdateProjectManagerAsync("Smith, J.", dto).Returns(SuccessResponse(dto));
 
             // Act
-            var result = await _controller.SaveProjectManager(item);
+            var result = await _controller.SaveProjectManager(item, isEditMode: true);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -1006,20 +986,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         }
 
         [Fact]
-        // TRANSFORMENGINE: Phase 14 — new manager: existence check returns null → Create path.
         public async Task SaveProjectManager_NewManager_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
             var item = new ProjectManagerItem { Projectmanager = "Jones, A." };
             var dto  = new ProjectManagerDto { Projectmanager = "Jones, A." };
             _mapper.Map<ProjectManagerDto>(item).Returns(dto);
-            // Existence check: record not found → isNew = true → Create
-            _service.GetProjectManagerByIdAsync("Jones, A.")
-                .Returns(ApiResponseDto<ProjectManagerDto>.SuccessResponse(null!));
             _service.CreateProjectManagerAsync(dto).Returns(SuccessResponse(dto));
 
             // Act
-            var result = await _controller.SaveProjectManager(item);
+            var result = await _controller.SaveProjectManager(item, isEditMode: false);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -1044,20 +1020,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         }
 
         [Fact]
-        // TRANSFORMENGINE: Phase 14 — existence check returns record → Update path; Update fails.
         public async Task SaveProjectManager_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
-            var item      = new ProjectManagerItem { Projectmanager = "Nobody" };
-            var dto       = new ProjectManagerDto { Projectmanager = "Nobody" };
-            var existsDto = new ProjectManagerDto { Projectmanager = "Nobody" };
+            var item = new ProjectManagerItem { Projectmanager = "Nobody" };
+            var dto  = new ProjectManagerDto { Projectmanager = "Nobody" };
             _mapper.Map<ProjectManagerDto>(item).Returns(dto);
-            // Existence check: record found → Update path
-            _service.GetProjectManagerByIdAsync("Nobody").Returns(SuccessResponse(existsDto));
             _service.UpdateProjectManagerAsync("Nobody", dto).Returns(FailureResponse<ProjectManagerDto>());
 
             // Act
-            var result = await _controller.SaveProjectManager(item);
+            var result = await _controller.SaveProjectManager(item, isEditMode: true);
 
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
@@ -1115,7 +1087,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadProgramManagerLinksGrid_ValidRequest_ReturnsPartialView()
         {
             // Arrange
-            _service.GetAllProgramManagerLinksAsync().Returns(SuccessResponse(new List<ProgramManagerLinkDto>()));
             _mapper.Map<List<ProgramManagerLinkItem>>(Arg.Any<List<ProgramManagerLinkDto>>())
                 .Returns(new List<ProgramManagerLinkItem>());
             var request = new PaginationFilter<string> { Filter = "{}" };
@@ -1152,8 +1123,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
                 new() { Program = "P1", Manager = "Smith" },
                 new() { Program = "P2", Manager = "Jones" }
             };
-            _service.GetAllProgramManagerLinksAsync().Returns(SuccessResponse(dtos));
-            // TRANSFORMENGINE: filtering is done in the build helper — mapper is called with the filtered subset
+            _service.GetPagedProgramManagerLinksByManagerAsync(Arg.Any<QueryParameters<string>>(), "Smith")
+                .Returns(SuccessResponse(Paged(dtos)));
             _mapper.Map<List<ProgramManagerLinkItem>>(Arg.Any<List<ProgramManagerLinkDto>>())
                 .Returns(new List<ProgramManagerLinkItem> { new() { Program = "P1", Manager = "Smith" } });
             var request = new PaginationFilter<string> { Filter = "{}" };
@@ -1419,8 +1390,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task SaveSetting_ValidDto_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var dto = new SettingDto { Id = "WorkingHours", SettingValue = "7.4" };
-            _service.UpdateSettingAsync("WorkingHours", dto).Returns(SuccessResponse(dto));
+            var dto = new SettingDto { Id = "HoursInDay", SettingValue = "7.4" };
+            _service.UpdateSettingAsync("HoursInDay", dto).Returns(SuccessResponse(dto));
 
             // Act
             var result = await _controller.SaveSetting(dto);
@@ -1483,15 +1454,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         #region LoadTimeTabSettings
 
         [Fact]
-        public async Task LoadTimeTabSettings_ServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
+        public async Task LoadTimeTabSettings_ServiceReturnsSuccess_ReturnsJsonWithWorkingHoursAndDays()
         {
             // Arrange
             var settings = new List<SettingDto>
             {
-                new() { Id = "WorkingHours", SettingValue = "7.2" },
-                new() { Id = "WorkingDays",  SettingValue = "220.5" }
+                new() { Id = "HoursInDay", SettingValue = "7.2" },
+                new() { Id = "DaysInYear",  SettingValue = "220.5" }
             };
-            _service.GetAllUserUpdateableSettingsAsync().Returns(SuccessResponse(settings));
+            _service.GetAllSettingsAsync().Returns(SuccessResponse(settings));
 
             // Act
             var result = await _controller.LoadTimeTabSettings();
@@ -1499,14 +1470,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
             var element = GetJsonElement(json);
-            Assert.True(element.GetProperty("success").GetBoolean());
+            Assert.Equal("7.2", element.GetProperty("workingHours").GetString());
+            Assert.Equal("220.5", element.GetProperty("workingDays").GetString());
         }
 
         [Fact]
-        public async Task LoadTimeTabSettings_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
+        public async Task LoadTimeTabSettings_ServiceReturnsFailure_ReturnsJsonWithNullValues()
         {
             // Arrange
-            _service.GetAllUserUpdateableSettingsAsync().Returns(FailureResponse<List<SettingDto>>());
+            _service.GetAllSettingsAsync().Returns(FailureResponse<List<SettingDto>>());
 
             // Act
             var result = await _controller.LoadTimeTabSettings();
@@ -1514,15 +1486,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
             var element = GetJsonElement(json);
-            Assert.False(element.GetProperty("success").GetBoolean());
+            Assert.True(element.TryGetProperty("workingHours", out var hoursProperty) && hoursProperty.ValueKind == System.Text.Json.JsonValueKind.Null);
+            Assert.True(element.TryGetProperty("workingDays", out var daysProperty) && daysProperty.ValueKind == System.Text.Json.JsonValueKind.Null);
         }
 
         [Fact]
-        public async Task LoadTimeTabSettings_ServiceReturnsNullData_ReturnsJsonWithSuccessFalse()
+        public async Task LoadTimeTabSettings_ServiceReturnsNullData_ReturnsJsonWithNullValues()
         {
             // Arrange
             var response = new ApiResponseDto<List<SettingDto>> { Success = false, Data = null };
-            _service.GetAllUserUpdateableSettingsAsync().Returns(response);
+            _service.GetAllSettingsAsync().Returns(response);
 
             // Act
             var result = await _controller.LoadTimeTabSettings();
@@ -1530,20 +1503,42 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             // Assert
             var json    = Assert.IsType<JsonResult>(result);
             var element = GetJsonElement(json);
-            Assert.False(element.GetProperty("success").GetBoolean());
+            Assert.True(element.TryGetProperty("workingHours", out var hoursProperty) && hoursProperty.ValueKind == System.Text.Json.JsonValueKind.Null);
+            Assert.True(element.TryGetProperty("workingDays", out var daysProperty) && daysProperty.ValueKind == System.Text.Json.JsonValueKind.Null);
         }
 
         [Fact]
-        public async Task LoadTimeTabSettings_CallsGetAllUserUpdateableSettingsAsync()
+        public async Task LoadTimeTabSettings_CallsGetAllSettingsAsync()
         {
             // Arrange
-            _service.GetAllUserUpdateableSettingsAsync().Returns(SuccessResponse(new List<SettingDto>()));
+            _service.GetAllSettingsAsync().Returns(SuccessResponse(new List<SettingDto>()));
 
             // Act
             await _controller.LoadTimeTabSettings();
 
             // Assert
-            await _service.Received(1).GetAllUserUpdateableSettingsAsync();
+            await _service.Received(1).GetAllSettingsAsync();
+        }
+
+        [Fact]
+        public async Task LoadTimeTabSettings_CaseInsensitiveIdMatch_ReturnsCorrectValues()
+        {
+            // Arrange
+            var settings = new List<SettingDto>
+            {
+                new() { Id = "hoursinday", SettingValue = "7.5" },  // lowercase
+                new() { Id = "DaysInYear",  SettingValue = "225" }   // mixed case
+            };
+            _service.GetAllSettingsAsync().Returns(SuccessResponse(settings));
+
+            // Act
+            var result = await _controller.LoadTimeTabSettings();
+
+            // Assert
+            var json    = Assert.IsType<JsonResult>(result);
+            var element = GetJsonElement(json);
+            Assert.Equal("7.5", element.GetProperty("workingHours").GetString());
+            Assert.Equal("225", element.GetProperty("workingDays").GetString());
         }
 
         #endregion
@@ -1558,7 +1553,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadAccessUsersGrid_ValidRequest_ReturnsPartialView()
         {
             // Arrange
-            _service.GetAllAccessUsersAsync().Returns(SuccessResponse(new List<AccessUserDto>()));
+            _service.GetAllAccessSystemsAsync()
+                .Returns(SuccessResponse(new List<AccessSystemDto> { new() { SystemId = 1, SystemName = "PIMS" } }));
+            _service.GetPagedAccessUsersAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(EmptyPaged<AccessUserDto>()));
             _mapper.Map<List<AccessUserItem>>(Arg.Any<List<AccessUserDto>>()).Returns(new List<AccessUserItem>());
             var request = new PaginationFilter<string> { Filter = "{}" };
 
@@ -1591,8 +1589,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             // Arrange
             var dtos  = new List<AccessUserDto> { new() { SystemId = 1, NtLogin = "jsmith" } };
             var items = new List<AccessUserItem> { new() { SystemId = 1, NtLogin = "jsmith" } };
-            _service.GetAllAccessUsersAsync().Returns(SuccessResponse(dtos));
-            _mapper.Map<List<AccessUserItem>>(dtos).Returns(items);
+            _service.GetAllAccessSystemsAsync()
+                .Returns(SuccessResponse(new List<AccessSystemDto> { new() { SystemId = 1, SystemName = "PIMS" } }));
+            _service.GetPagedAccessUsersAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(Paged(dtos)));
+            _mapper.Map<List<AccessUserItem>>(Arg.Any<List<AccessUserDto>>()).Returns(items);
             var request = new PaginationFilter<string> { Filter = "{}" };
 
             // Act
@@ -1608,7 +1609,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadAccessUsersGrid_ServiceReturnsFailure_ReturnsEmptyGrid()
         {
             // Arrange
-            _service.GetAllAccessUsersAsync().Returns(FailureResponse<List<AccessUserDto>>());
+            _service.GetAllAccessSystemsAsync()
+                .Returns(SuccessResponse(new List<AccessSystemDto> { new() { SystemId = 1, SystemName = "PIMS" } }));
+            _service.GetPagedAccessUsersAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(FailureResponse<PaginatedResult<AccessUserDto>>());
             _mapper.Map<List<AccessUserItem>>(Arg.Any<List<AccessUserDto>>()).Returns(new List<AccessUserItem>());
             var request = new PaginationFilter<string> { Filter = "{}" };
 
@@ -1774,6 +1778,27 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             var json    = Assert.IsType<JsonResult>(result);
             var element = GetJsonElement(json);
             Assert.False(element.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task DeleteAccessUser_UserHasAccessReferences_ReturnsGuidanceMessage_AndSkipsDelete()
+        {
+            // Arrange
+            _service.GetAccessUserLevelsByUserAsync(1, "jsmith")
+                .Returns(SuccessResponse(new List<AccessUserLevelDto>
+                {
+                    new() { SystemId = 1, NtLogin = "jsmith", AccessLevelId = 1 }
+                }));
+
+            // Act
+            var result = await _controller.DeleteAccessUser(1, "jsmith");
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var element = GetJsonElement(json);
+            Assert.False(element.GetProperty("success").GetBoolean());
+            Assert.Contains("Delete related records from the User Access grid first", element.GetProperty("message").GetString());
+            await _service.DidNotReceive().DeleteAccessUserAsync(1, "jsmith");
         }
 
         #endregion
@@ -1986,7 +2011,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadFrequenciesGrid_ValidRequest_ReturnsPartialView()
         {
             // Arrange
-            _service.GetAllFrequenciesAsync().Returns(SuccessResponse(new List<FrequencyDto>()));
+            _service.GetPagedFrequenciesAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(EmptyPaged<FrequencyDto>()));
             _mapper.Map<List<FrequencyItem>>(Arg.Any<List<FrequencyDto>>()).Returns(new List<FrequencyItem>());
             var request = new PaginationFilter<string> { Filter = "{}" };
 
@@ -2019,8 +2045,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             // Arrange
             var dtos  = new List<FrequencyDto>  { new() { Frequencyid = 1, FrequencyValue = "Monthly" } };
             var items = new List<FrequencyItem> { new() { Frequencyid = 1, FrequencyValue = "Monthly" } };
-            _service.GetAllFrequenciesAsync().Returns(SuccessResponse(dtos));
-            _mapper.Map<List<FrequencyItem>>(dtos).Returns(items);
+            _service.GetPagedFrequenciesAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(Paged(dtos)));
+            _mapper.Map<List<FrequencyItem>>(Arg.Any<List<FrequencyDto>>()).Returns(items);
             var request = new PaginationFilter<string> { Filter = "{}" };
 
             // Act
@@ -2036,7 +2063,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadFrequenciesGrid_ServiceReturnsFailure_ReturnsEmptyGrid()
         {
             // Arrange
-            _service.GetAllFrequenciesAsync().Returns(FailureResponse<List<FrequencyDto>>());
+            _service.GetPagedFrequenciesAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(FailureResponse<PaginatedResult<FrequencyDto>>());
             _mapper.Map<List<FrequencyItem>>(Arg.Any<List<FrequencyDto>>()).Returns(new List<FrequencyItem>());
             var request = new PaginationFilter<string> { Filter = "{}" };
 
@@ -2216,7 +2244,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadReviewItemsGrid_ValidRequest_ReturnsPartialView()
         {
             // Arrange
-            _service.GetAllReviewItemsAsync().Returns(SuccessResponse(new List<ReviewItemDto>()));
+            _service.GetPagedReviewItemsAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(EmptyPaged<ReviewItemDto>()));
             _mapper.Map<List<ReviewItemItem>>(Arg.Any<List<ReviewItemDto>>()).Returns(new List<ReviewItemItem>());
             var request = new PaginationFilter<string> { Filter = "{}" };
 
@@ -2249,8 +2278,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
             // Arrange
             var dtos  = new List<ReviewItemDto>  { new() { Itemid = 1, Item = "Design Review" } };
             var items = new List<ReviewItemItem> { new() { Itemid = 1, Item = "Design Review" } };
-            _service.GetAllReviewItemsAsync().Returns(SuccessResponse(dtos));
-            _mapper.Map<List<ReviewItemItem>>(dtos).Returns(items);
+            _service.GetPagedReviewItemsAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(SuccessResponse(Paged(dtos)));
+            _mapper.Map<List<ReviewItemItem>>(Arg.Any<List<ReviewItemDto>>()).Returns(items);
             var request = new PaginationFilter<string> { Filter = "{}" };
 
             // Act
@@ -2266,7 +2296,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS
         public async Task LoadReviewItemsGrid_ServiceReturnsFailure_ReturnsEmptyGrid()
         {
             // Arrange
-            _service.GetAllReviewItemsAsync().Returns(FailureResponse<List<ReviewItemDto>>());
+            _service.GetPagedReviewItemsAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(FailureResponse<PaginatedResult<ReviewItemDto>>());
             _mapper.Map<List<ReviewItemItem>>(Arg.Any<List<ReviewItemDto>>()).Returns(new List<ReviewItemItem>());
             var request = new PaginationFilter<string> { Filter = "{}" };
 

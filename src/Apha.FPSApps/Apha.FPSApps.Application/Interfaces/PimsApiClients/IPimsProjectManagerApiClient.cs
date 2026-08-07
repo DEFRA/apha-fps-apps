@@ -4,7 +4,6 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
 {
-    // TRANSFORMENGINE: mirrors ProjectManagerController — natural varchar PK (projectmanager); URL-encoding applied in implementation
     public interface IPimsProjectManagerApiClient
     {
         Task<ApiResponseDto<List<ProjectManagerDto>>> GetAllProjectManagersAsync(QueryParameters<string>? query = null);

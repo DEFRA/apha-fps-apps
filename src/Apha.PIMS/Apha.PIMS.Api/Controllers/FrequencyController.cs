@@ -29,7 +29,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllFrequencies()
         {
-            // TRANSFORMENGINE: GetAllFrequenciesAsync -> GET /frequency (full list)
+          
             List<FrequencyDto> result = await _service.GetAllFrequenciesAsync();
             return Ok(_mapper.Map<List<FrequencyRes>>(result));
         }
@@ -65,7 +65,6 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> UpdateFrequency(int frequencyId, [FromBody] FrequencyReq request)
         {
             FrequencyDto dto = _mapper.Map<FrequencyDto>(request);
-            // TRANSFORMENGINE: Route frequencyId is authoritative — set before service call
             dto.FrequencyId = frequencyId;
             FrequencyDto updated = await _service.UpdateFrequencyAsync(dto);
             return Ok(_mapper.Map<FrequencyRes>(updated));

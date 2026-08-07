@@ -1,6 +1,8 @@
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Pagination;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -28,9 +30,16 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            // TRANSFORMENGINE: GetAllAsync -> GET /accessuser (full list)
             List<AccessUserDto> result = await _service.GetAllAsync();
             return Ok(_mapper.Map<List<AccessUserRes>>(result));
+        }
+
+        /// <summary>Get paged access users.</summary>
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPaged([FromQuery] QueryParameters<string> query)
+        {
+            var result = await _service.GetPagedAsync(query);
+            return Ok(_mapper.Map<PaginationRes<AccessUserRes>>(result));
         }
 
         /// <summary>Get all access users for a specific system.</summary>
@@ -66,7 +75,6 @@ namespace Apha.PIMS.Api.Controllers
         {
             var decodedLogin = HttpUtility.UrlDecode(ntlogin);
             AccessUserDto dto = _mapper.Map<AccessUserDto>(request);
-            // TRANSFORMENGINE: Route composite PK is authoritative — set before service call
             dto.SystemId = systemid;
             dto.NtLogin = decodedLogin;
             AccessUserDto updated = await _service.UpdateAsync(dto);
@@ -77,7 +85,6 @@ namespace Apha.PIMS.Api.Controllers
         [HttpDelete("{systemid:int}/{ntlogin}")]
         public async Task<IActionResult> Delete(int systemid, string ntlogin)
         {
-            // TRANSFORMENGINE: Composite PK delete — systemid + URL-decoded ntlogin
             var decodedLogin = HttpUtility.UrlDecode(ntlogin);
             bool deleted = await _service.DeleteAsync(systemid, decodedLogin);
             return Ok(deleted);

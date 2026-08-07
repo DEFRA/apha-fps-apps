@@ -53,7 +53,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateSetting(string id, [FromBody] SettingReq request)
         {
-            // TRANSFORMENGINE TODO: Confirm admin-only guard requirement on update endpoint
+           
             var decoded = HttpUtility.UrlDecode(id);
             SettingDto dto = _mapper.Map<SettingDto>(request);
             dto.Id = decoded;

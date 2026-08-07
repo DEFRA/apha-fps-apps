@@ -4,7 +4,6 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
 {
-    // TRANSFORMENGINE: mirrors ProfitCentreManagerLinkController — composite natural PK (profitcentre + manager); URL-encoding in implementation
     public interface IPimsProfitCentreManagerLinkApiClient
     {
         Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetAllProfitCentreManagerLinksAsync();

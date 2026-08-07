@@ -11,9 +11,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
     {
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
-        // TRANSFORMENGINE: S1192 — repeated error code extracted to const
+        
         private const string InternalCodeError = "INTERNAL_ERROR";
-        // TRANSFORMENGINE: S1192 — base URL extracted to const; matches backend ReportGroupLinkController [Route("api/v{version:apiVersion}/reportgrouplink")]
+        
         private const string BaseUrl = "api/v1/reportgrouplink";
 
         public PimsReportGroupLinkApiClient(IPimsHttpExecutor http, IMapper mapper)
@@ -22,7 +22,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET /api/v1/reportgrouplink — full list
+        
         public async Task<ApiResponseDto<List<ReportGroupLinkDto>>> GetAllReportGroupLinksAsync()
         {
             try
@@ -42,7 +42,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/reportgrouplink/{reportid:int} — scoped by report
+        
         public async Task<ApiResponseDto<List<ReportGroupLinkDto>>> GetReportGroupLinksByReportIdAsync(int reportId)
         {
             try
@@ -63,7 +63,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/reportgrouplink/{reportid:int}/{groupid:int} — composite PK get
         public async Task<ApiResponseDto<ReportGroupLinkDto>> GetReportGroupLinkByIdAsync(int reportId, int groupId)
         {
             var url = $"{BaseUrl}/{reportId}/{groupId}";
@@ -75,7 +74,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             return ApiResponseDto<ReportGroupLinkDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        // TRANSFORMENGINE: POST /api/v1/reportgrouplink — create link
+        
         public async Task<ApiResponseDto<ReportGroupLinkDto>> CreateReportGroupLinkAsync(ReportGroupLinkDto dto)
         {
                 var request = _mapper.Map<ReportGroupLinkReq>(dto);
@@ -87,7 +86,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                 return ApiResponseDto<ReportGroupLinkDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        // TRANSFORMENGINE: DELETE /api/v1/reportgrouplink/{reportid:int}/{groupid:int} — composite PK delete; no PUT (no mutable fields)
+        
         public async Task<ApiResponseDto<bool>> DeleteReportGroupLinkAsync(int reportId, int groupId)
         {
             try

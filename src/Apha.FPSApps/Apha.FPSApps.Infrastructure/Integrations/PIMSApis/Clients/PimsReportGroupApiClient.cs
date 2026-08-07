@@ -13,9 +13,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
     {
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
-        // TRANSFORMENGINE: S1192 — repeated error code extracted to const
+        
         private const string InternalCodeError = "INTERNAL_ERROR";
-        // TRANSFORMENGINE: S1192 — base URL extracted to const; matches backend ReportGroupController [Route("api/v{version:apiVersion}/reportgroup")]
+        
         private const string BaseUrl = "api/v1/reportgroup";
 
         public PimsReportGroupApiClient(IPimsHttpExecutor http, IMapper mapper)
@@ -24,7 +24,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET /api/v1/reportgroup — full list (also used as Report dropdown source)
+        
         public async Task<ApiResponseDto<List<ReportGroupDto>>> GetAllReportGroupsAsync()
         {
             try
@@ -44,7 +44,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/reportgroup/byreport/{reportid:int} — groups linked to a specific report
+        
         public async Task<ApiResponseDto<List<ReportGroupDto>>> GetReportGroupsByReportIdAsync(int reportId)
         {
             try
@@ -65,7 +65,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/reportgroup/paged (+ optional reportid)
+        
         public async Task<ApiResponseDto<PaginatedResult<ReportGroupDto>>> GetPagedReportGroupsAsync(QueryParameters<string> query, int? reportId = null)
         {
             try
@@ -97,7 +97,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/reportgroup/{groupid:int}
+        
         public async Task<ApiResponseDto<ReportGroupDto>> GetReportGroupByIdAsync(int groupId)
         {
             try
@@ -118,7 +118,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST /api/v1/reportgroup
+        
         public async Task<ApiResponseDto<ReportGroupDto>> CreateReportGroupAsync(ReportGroupDto dto)
         {
             try
@@ -139,7 +139,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PUT /api/v1/reportgroup/{groupid:int} — route PK (groupid) is authoritative
+        
         public async Task<ApiResponseDto<ReportGroupDto>> UpdateReportGroupAsync(int groupId, ReportGroupDto dto)
         {
             try
@@ -161,7 +161,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE /api/v1/reportgroup/{groupid:int}
+        
         public async Task<ApiResponseDto<bool>> DeleteReportGroupAsync(int groupId)
         {
             var url = $"{BaseUrl}/{groupId}";

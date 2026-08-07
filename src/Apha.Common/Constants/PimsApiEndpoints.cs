@@ -106,5 +106,34 @@ namespace Apha.Common.Constants
         //PMD
         public const string GetProjectYearManagers = "api/v1/pmd/projectyearmanagers/{0}";
         public const string GetPMDMilestones = "api/v1/pmd/milestones";
+
+        // Access System
+        public const string GetAllAccessSystems = "api/v1/accesssystem";
+        public const string GetAccessSystemById = "api/v1/accesssystem/{0}";
+
+        // Access Level
+        public const string GetAllAccessLevels = "api/v1/accesslevel";
+        public const string GetAccessLevelsBySystemId = "api/v1/accesslevel/{0}";
+        public const string GetAccessLevelById = "api/v1/accesslevel/{0}/{1}";
+        public const string CreateAccessLevel = "api/v1/accesslevel";
+        public const string UpdateAccessLevel = "api/v1/accesslevel/{0}/{1}";
+        public const string DeleteAccessLevel = "api/v1/accesslevel/{0}/{1}";
+
+        // Access User
+        public const string GetAccessUsersPaged = "api/v1/accessuser/paged";
+        public const string GetAllAccessUsers = "api/v1/accessuser";
+        public const string GetAccessUsersBySystemId = "api/v1/accessuser/{0}";
+        public const string GetAccessUserById = "api/v1/accessuser/{0}/{1}";
+        public const string CreateAccessUser = "api/v1/accessuser";
+        public const string UpdateAccessUser = "api/v1/accessuser/{0}/{1}";
+        public const string DeleteAccessUser = "api/v1/accessuser/{0}/{1}";
+
+        // Access User Level
+        public const string GetAccessUserLevelsPaged = "api/v1/accessuserlevel/paged";
+        public const string GetAccessUserLevelsBySystemId = "api/v1/accessuserlevel/{0}";
+        public const string GetAccessUserLevelsByUser = "api/v1/accessuserlevel/{0}/{1}";
+        public const string GetAccessUserLevelById = "api/v1/accessuserlevel/{0}/{1}/{2}";
+        public const string CreateAccessUserLevel = "api/v1/accessuserlevel";
+        public const string DeleteAccessUserLevel = "api/v1/accessuserlevel/{0}/{1}/{2}";
     }
 }

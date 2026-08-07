@@ -9,7 +9,7 @@ using AutoMapper;
 
 namespace Apha.PIMS.Application.Services
 {
-    // TRANSFORMENGINE: service orchestrates IReportGroupRepository; backed by EF Core in Infrastructure layer
+    
     public class ReportGroupService : IReportGroupService
     {
         private readonly IReportGroupRepository _repository;
@@ -21,14 +21,14 @@ namespace Apha.PIMS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        // TRANSFORMENGINE: returns full list for report-group dropdown / lookup
+       
         public async Task<List<ReportGroupDto>> GetAllReportGroupsAsync()
         {
             List<ReportGroup> entities = await _repository.GetAllReportGroupsAsync();
             return _mapper.Map<List<ReportGroupDto>>(entities);
         }
 
-        // TRANSFORMENGINE: paged report groups with repository-level filter/sort/paging
+        
         public async Task<PaginatedResult<ReportGroupDto>> GetPagedReportGroupsAsync(QueryParameters<string> query, int? reportId = null)
         {
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
@@ -36,21 +36,21 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<PaginatedResult<ReportGroupDto>>(pagedData);
         }
 
-        // TRANSFORMENGINE: returns all report groups linked to the given reportid via tblreportgroup_link
+        
         public async Task<List<ReportGroupDto>> GetReportGroupsByReportIdAsync(int reportId)
         {
             List<ReportGroup> entities = await _repository.GetReportGroupsByReportIdAsync(reportId);
             return _mapper.Map<List<ReportGroupDto>>(entities);
         }
 
-        // TRANSFORMENGINE: returns nullable — controller maps null to 404
+        
         public async Task<ReportGroupDto?> GetReportGroupByIdAsync(int groupId)
         {
             ReportGroup? entity = await _repository.GetReportGroupByIdAsync(groupId);
             return entity is null ? null : _mapper.Map<ReportGroupDto>(entity);
         }
 
-        // TRANSFORMENGINE: validate non-null DTO before first await
+        
         public async Task<ReportGroupDto> CreateReportGroupAsync(ReportGroupDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -71,7 +71,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<ReportGroupDto>(created);
         }
 
-        // TRANSFORMENGINE: validate existence before update — throws BusinessValidationErrorException if not found
+        
         public async Task<ReportGroupDto> UpdateReportGroupAsync(ReportGroupDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -95,7 +95,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<ReportGroupDto>(updated);
         }
 
-        // TRANSFORMENGINE: throws BusinessValidationErrorException if not found before delete
+        
         public async Task<bool> DeleteReportGroupAsync(int groupId)
         {
             bool exists = await _repository.ReportGroupExistsAsync(groupId);

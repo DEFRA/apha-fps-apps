@@ -83,6 +83,22 @@
 
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
+                <div class="govuk-form-group sup_margin_bottom_10" id="mgrEditLoginEmailGroup">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="LoginEmail">
+                        Manager's login email:
+                    </label>
+                    <input class="govuk-input govuk-!-font-size-16"
+                           asp-for="LoginEmail"
+                           id="mgrEditLoginEmail"
+                           type="email"
+                           aria-describedby="mgrEditLoginEmailError" />
+                    <span asp-validation-for="LoginEmail" class="govuk-error-message" id="mgrEditLoginEmailError" style="display:none;"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
                 <div class="govuk-form-group sup_margin_bottom_10">
                     <div class="govuk-checkboxes govuk-checkboxes--small">
                         <div class="govuk-checkboxes__item">

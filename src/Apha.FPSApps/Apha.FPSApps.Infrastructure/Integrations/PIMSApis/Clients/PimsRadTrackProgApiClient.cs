@@ -13,9 +13,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
     {
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
-        // TRANSFORMENGINE: S1192 — repeated error code extracted to const
+        
         private const string InternalCodeError = "INTERNAL_ERROR";
-        // TRANSFORMENGINE: S1192 — base URL extracted to const; matches backend RadTrackProgController [Route("api/v{version:apiVersion}/radtrackprog")]
+       
         private const string BaseUrl = "api/v1/radtrackprog";
 
         public PimsRadTrackProgApiClient(IPimsHttpExecutor http, IMapper mapper)
@@ -24,7 +24,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET /api/v1/radtrackprog — full list for Programme Tab grid; no pagination needed
+        
         public async Task<ApiResponseDto<List<RadTrackProgDto>>> GetAllRadTrackProgsAsync()
         {
             try
@@ -44,7 +44,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // GET /api/v1/radtrackprog/paged — paged list with search/sort/filter support
+       
         public async Task<ApiResponseDto<PaginatedResult<RadTrackProgDto>>> GetPagedRadTrackProgsAsync(QueryParameters<string> query)
         {
             try
@@ -73,7 +73,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/radtrackprog/{program} — natural string PK lookup
+        
         public async Task<ApiResponseDto<RadTrackProgDto>> GetRadTrackProgByProgramAsync(string program)
         {
             try
@@ -94,7 +94,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST /api/v1/radtrackprog — create new programme; natural PK is client-supplied in request body
+        
         public async Task<ApiResponseDto<RadTrackProgDto>> CreateRadTrackProgAsync(RadTrackProgDto dto)
         {
             try
@@ -115,7 +115,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PUT /api/v1/radtrackprog/{program} — route PK is authoritative; mirrors backend dto.Program = program guard
+        
         public async Task<ApiResponseDto<RadTrackProgDto>> UpdateRadTrackProgAsync(string program, RadTrackProgDto dto)
         {
             try
@@ -137,7 +137,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE /api/v1/radtrackprog/{program} — delete by natural string PK
+        
         public async Task<ApiResponseDto<bool>> DeleteRadTrackProgAsync(string program)
         {
             try

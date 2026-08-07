@@ -23,7 +23,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<bool>> DeleteReportGroupAsync(int groupId);
 
         // ── ReportGroupLink ─────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: delegates to IPimsReportGroupLinkApiClient — composite PK (reportid int + groupid int); no PUT
+       
 
         Task<ApiResponseDto<List<ReportGroupLinkDto>>> GetAllReportGroupLinksAsync();
         Task<ApiResponseDto<List<ReportGroupLinkDto>>> GetReportGroupLinksByReportIdAsync(int reportid);
@@ -32,7 +32,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<bool>> DeleteReportGroupLinkAsync(int reportid, int groupid);
 
         // ── ProjectManager ──────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: delegates to IPimsProjectManagerApiClient — natural varchar PK (projectmanager)
+        
 
         Task<ApiResponseDto<List<ProjectManagerDto>>> GetAllProjectManagersAsync(QueryParameters<string>? query = null);
         Task<ApiResponseDto<PaginatedResult<ProjectManagerDto>>> GetPagedProjectManagersAsync(QueryParameters<string> query);
@@ -43,7 +43,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<bool>> DeleteProjectManagerAsync(string projectmanager);
 
         // ── ProgramManagerLink ──────────────────────────────────────────────────────
-        // TRANSFORMENGINE: delegates to IPimsProgramManagerLinkApiClient — composite natural PK (program string + manager string); no PUT
+        
 
         Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetAllProgramManagerLinksAsync();
         Task<ApiResponseDto<PaginatedResult<ProgramManagerLinkDto>>> GetPagedProgramManagerLinksByManagerAsync(QueryParameters<string> query, string manager);
@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<List<ProgramLookupDto>>> GetProgramsAsync();
 
         // ── ProfitCentreManagerLink ─────────────────────────────────────────────────
-        // TRANSFORMENGINE: delegates to IPimsProfitCentreManagerLinkApiClient — composite natural PK (profitcentre string + manager string); no PUT
+        
 
         Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetAllProfitCentreManagerLinksAsync();
         Task<ApiResponseDto<PaginatedResult<ProfitCentreManagerLinkDto>>> GetPagedProfitCentreManagerLinksByManagerAsync(QueryParameters<string> query, string manager);
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<bool>> DeleteProfitCentreManagerLinkAsync(string profitcentre, string manager);
 
         // ── Setting ─────────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: delegates to IPimsSettingApiClient — read/update only; string PK; no create/delete
+        
 
         Task<ApiResponseDto<List<SettingDto>>> GetAllSettingsAsync();
         Task<ApiResponseDto<List<SettingDto>>> GetAllUserUpdateableSettingsAsync();
@@ -75,9 +75,10 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<SettingDto>> UpdateSettingAsync(string id, SettingDto dto);
 
         // ── AccessUser ──────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: delegates to IPimsAccessUserApiClient — composite PK (systemid int + ntlogin string)
+        
 
         Task<ApiResponseDto<List<AccessUserDto>>> GetAllAccessUsersAsync();
+        Task<ApiResponseDto<PaginatedResult<AccessUserDto>>> GetPagedAccessUsersAsync(QueryParameters<string> request);
         Task<ApiResponseDto<List<AccessUserDto>>> GetAccessUsersBySystemIdAsync(int systemid);
         Task<ApiResponseDto<AccessUserDto>> GetAccessUserByIdAsync(int systemid, string ntlogin);
         Task<ApiResponseDto<AccessUserDto>> CreateAccessUserAsync(AccessUserDto dto);
@@ -85,7 +86,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<bool>> DeleteAccessUserAsync(int systemid, string ntlogin);
 
         // ── AccessLevel ─────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: delegates to IPimsAccessLevelApiClient — composite PK (systemid int + accesslevelid int)
+        
 
         Task<ApiResponseDto<List<AccessLevelDto>>> GetAllAccessLevelsAsync();
         Task<ApiResponseDto<List<AccessLevelDto>>> GetAccessLevelsBySystemIdAsync(int systemid);
@@ -95,7 +96,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<bool>> DeleteAccessLevelAsync(int systemid, int accesslevelid);
 
         // ── AccessUserLevel ─────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: delegates to IPimsAccessUserLevelApiClient — triple composite PK (systemid int + ntlogin string + accesslevelid int); no PUT
+        
 
         Task<ApiResponseDto<PaginatedResult<AccessUserLevelDto>>> GetPagedAccessUserLevelsAsync(QueryParameters<string> request);
         Task<ApiResponseDto<List<AccessUserLevelDto>>> GetAccessUserLevelsBySystemIdAsync(int systemid);
@@ -105,13 +106,13 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<bool>> DeleteAccessUserLevelAsync(int systemid, string ntlogin, int accesslevelid);
 
         // ── AccessSystem (lookup — read-only) ───────────────────────────────────────
-        // TRANSFORMENGINE: delegates to IPimsAccessSystemApiClient — reference lookup data; no create/update/delete
+        
 
         Task<ApiResponseDto<List<AccessSystemDto>>> GetAllAccessSystemsAsync();
         Task<ApiResponseDto<AccessSystemDto>> GetAccessSystemByIdAsync(int systemid);
 
         // ── Frequency ───────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: delegates to IPimsFrequencyApiClient — integer PK (frequencyid); full CRUD
+        
 
         Task<ApiResponseDto<List<FrequencyDto>>> GetAllFrequenciesAsync();
         Task<ApiResponseDto<PaginatedResult<FrequencyDto>>> GetPagedFrequenciesAsync(QueryParameters<string> query);
@@ -121,7 +122,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<bool>> DeleteFrequencyAsync(int frequencyId);
 
         // ── ReviewItem ──────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: delegates to IPimsReviewItemApiClient — integer PK (itemid); full CRUD; Other Tab lookup
+        
 
         Task<ApiResponseDto<List<ReviewItemDto>>> GetAllReviewItemsAsync();
         Task<ApiResponseDto<PaginatedResult<ReviewItemDto>>> GetPagedReviewItemsAsync(QueryParameters<string> query);
@@ -131,7 +132,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<bool>> DeleteReviewItemAsync(int itemId);
 
         // ── Risk ──────────────────────────────────────────────────────────────────────────────────────
-        // delegates to IPimsRiskApiClient — integer PK (riskid); full CRUD; Other Tab lookup
+        
 
         Task<ApiResponseDto<List<RiskDto>>> GetAllRiskRatingsAsync();
         Task<ApiResponseDto<PaginatedResult<RiskDto>>> GetPagedRiskRatingsAsync(QueryParameters<string> query);
@@ -141,7 +142,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<bool>> DeleteRiskRatingAsync(int riskId);
 
         // ── PublicationType ───────────────────────────────────────────────────────────────────────────
-        // delegates to IPimsPublicationTypeApiClient — string PK (type); full CRUD; Other Tab lookup
+        
 
         Task<ApiResponseDto<List<PublicationTypeDto>>> GetAllPublicationTypesAsync();
         Task<ApiResponseDto<PaginatedResult<PublicationTypeDto>>> GetPagedPublicationTypesAsync(QueryParameters<string> query);
@@ -151,7 +152,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<bool>> DeletePublicationTypeAsync(string type);
 
         // ── RadTrackProg
-        // TRANSFORMENGINE: delegates to IPimsRadTrackProgApiClient — natural string PK (program); full CRUD; Programme Tab
+        
 
         Task<ApiResponseDto<List<RadTrackProgDto>>> GetAllRadTrackProgsAsync();
         Task<ApiResponseDto<PaginatedResult<RadTrackProgDto>>> GetPagedRadTrackProgsAsync(QueryParameters<string> query);

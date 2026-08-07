@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.PIMS.Api.UnitTests.Controllers
+namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectManagerControllerTest
 {
     public class ProjectManagerControllerTests
     {
@@ -27,13 +27,13 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
         // ── helpers ───────────────────────────────────────────────────────────────
 
         private static ProjectManagerDto MakeDto(string name = "J. Smith") =>
-            new ProjectManagerDto { ProjectManager = name, Email = "j.smith@apha.gov.uk", Disable = false };
+            new ProjectManagerDto { ProjectManager = name, Email = "j.smith@apha.gov.uk", LoginEmail = "j.smith@login.apha.gov.uk", Disable = false };
 
         private static ProjectManagerRes MakeRes(string name = "J. Smith") =>
-            new ProjectManagerRes { ProjectManager = name, Email = "j.smith@apha.gov.uk", Disable = false };
+            new ProjectManagerRes { ProjectManager = name, Email = "j.smith@apha.gov.uk", LoginEmail = "j.smith@login.apha.gov.uk", Disable = false };
 
         private static ProjectManagerReq MakeReq(string name = "J. Smith") =>
-            new ProjectManagerReq { ProjectManager = name, Email = "j.smith@apha.gov.uk", Disable = false };
+            new ProjectManagerReq { ProjectManager = name, Email = "j.smith@apha.gov.uk", LoginEmail = "j.smith@login.apha.gov.uk", Disable = false };
 
         // ── GetAll ────────────────────────────────────────────────────────────────
 

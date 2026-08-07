@@ -2,6 +2,7 @@ using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
 using AutoMapper;
@@ -9,7 +10,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
 
-namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
+namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiClientTest
 {
     public class PimsAccessUserApiClientTests
     {
@@ -50,7 +51,93 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
         private static AccessUserDto MakeDto(int systemid = 1, string ntlogin = "DOM\\user1") =>
             new AccessUserDto { SystemId = systemid, NtLogin = ntlogin, UserName = "Test User" };
 
-        
+
+        #region GetPagedAsync
+
+        [Fact]
+        public async Task GetPagedAsync_HttpReturnsSuccess_ReturnsPaginatedResult()
+        {
+            // Arrange
+            var request = new QueryParameters<string> { Page = 2, PageSize = 5, Search = "dom" };
+            var apiResp = SuccessApiResponse(new List<AccessUserRes> { MakeRes(1, "dom\\u1"), MakeRes(1, "dom\\u2") });
+            apiResp.Pagination = new Pagination { PageNumber = 2, PageSize = 5, TotalRecords = 20, TotalPages = 4 };
+            var mappedItems = new List<AccessUserDto> { MakeDto(1, "dom\\u1"), MakeDto(1, "dom\\u2") };
+            _http.GetAsync<List<AccessUserRes>>(Arg.Is<string>(s => s.StartsWith("api/v1/accessuser/paged"))).Returns(apiResp);
+            _mapper.Map<List<AccessUserDto>>(apiResp.Data!).Returns(mappedItems);
+
+            // Act
+            var result = await _client.GetPagedAsync(request);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(20, result.Data!.TotalCount);
+            Assert.Equal(2, result.Data.PageNumber);
+            Assert.Equal(5, result.Data.PageSize);
+            Assert.Equal(2, result.Data.data.Count());
+            await _http.Received(1).GetAsync<List<AccessUserRes>>(Arg.Is<string>(s => s.StartsWith("api/v1/accessuser/paged")));
+            _mapper.Received(1).Map<List<AccessUserDto>>(apiResp.Data!);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_WhenPaginationMissing_UsesRequestPagingAndItemCount()
+        {
+            // Arrange
+            var request = new QueryParameters<string> { Page = 3, PageSize = 7 };
+            var apiResp = SuccessApiResponse(new List<AccessUserRes> { MakeRes(1, "dom\\u1") });
+            var mappedItems = new List<AccessUserDto> { MakeDto(1, "dom\\u1") };
+            _http.GetAsync<List<AccessUserRes>>(Arg.Any<string>()).Returns(apiResp);
+            _mapper.Map<List<AccessUserDto>>(apiResp.Data!).Returns(mappedItems);
+
+            // Act
+            var result = await _client.GetPagedAsync(request);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(3, result.Data!.PageNumber);
+            Assert.Equal(7, result.Data.PageSize);
+            Assert.Equal(1, result.Data.TotalCount);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_HttpReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var request = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResp = FailureApiResponse<List<AccessUserRes>>();
+            var errorDtos = new List<ApiErrorDto> { new ApiErrorDto { Code = "ERR", Message = "API error" } };
+            var metaDto = new ApiMetaDto();
+            _http.GetAsync<List<AccessUserRes>>(Arg.Any<string>()).Returns(apiResp);
+            _mapper.Map<List<ApiErrorDto>>(apiResp.Errors!).Returns(errorDtos);
+            _mapper.Map<ApiMetaDto>(apiResp.Meta).Returns(metaDto);
+
+            // Act
+            var result = await _client.GetPagedAsync(request);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Equal("ERR", result.Errors![0].Code);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_HttpThrowsException_ReturnsInternalErrorResponse()
+        {
+            // Arrange
+            var request = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _http.GetAsync<List<AccessUserRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("timeout"));
+
+            // Act
+            var result = await _client.GetPagedAsync(request);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
+        }
+
+        #endregion
+
         #region GetAllAsync
 
         [Fact]

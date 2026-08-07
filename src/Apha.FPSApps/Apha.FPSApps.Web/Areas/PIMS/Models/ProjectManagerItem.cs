@@ -18,8 +18,13 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         [GridColumn(Order = 3, Width = 120, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Mnumber { get; set; }
 
+        [Display(Name = "LoginEmail")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        [GridColumn(Order = 4, Width = 220, Type = GridColumnType.Text, IsFilterable = true)]
+        public string? LoginEmail { get; set; }
+
         [Display(Name = "Disabled")]
-        [GridColumn(Order = 4, Width = 80, Type = GridColumnType.Checkbox, IsFilterable = false)]
+        [GridColumn(Order = 5, Width = 80, Type = GridColumnType.Checkbox, IsFilterable = false)]
         public bool Disable { get; set; }
     }
 }

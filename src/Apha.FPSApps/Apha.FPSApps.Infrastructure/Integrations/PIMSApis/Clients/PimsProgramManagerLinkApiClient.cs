@@ -12,9 +12,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
     {
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
-        // TRANSFORMENGINE: S1192 — repeated error code extracted to const
+        
         private const string InternalCodeError = "INTERNAL_ERROR";
-        // TRANSFORMENGINE: S1192 — base URL extracted to const; matches backend ProgramManagerLinkController [Route("api/v{version:apiVersion}/programmanagerlink")]
+        
         private const string BaseUrl = "api/v1/programmanagerlink";
 
         public PimsProgramManagerLinkApiClient(IPimsHttpExecutor http, IMapper mapper)
@@ -23,7 +23,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET /api/v1/programmanagerlink — full list
+        
         public async Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetAllProgramManagerLinksAsync()
         {
             try
@@ -43,7 +43,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/programmanagerlink/paged — paged list scoped by manager
+        
         public async Task<ApiResponseDto<PaginatedResult<ProgramManagerLinkDto>>> GetPagedByManagerAsync(
             QueryParameters<string> query,
             string manager)
@@ -86,7 +86,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/programmanagerlink/{program} — scoped by program; Uri.EscapeDataString applied
+        
         public async Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetByProgramAsync(string program)
         {
             try
@@ -127,7 +127,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/programmanagerlink/{program}/{manager} — composite natural PK get; Uri.EscapeDataString on both segments
+        
         public async Task<ApiResponseDto<ProgramManagerLinkDto>> GetProgramManagerLinkByIdAsync(string program, string manager)
         {
             try
@@ -148,7 +148,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST /api/v1/programmanagerlink — create link
+        
         public async Task<ApiResponseDto<ProgramManagerLinkDto>> CreateProgramManagerLinkAsync(ProgramManagerLinkDto dto)
         {
             try
@@ -169,7 +169,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // GET /api/v1/programmanagerlink/programs — dropdown lookup for program codes
         public async Task<ApiResponseDto<List<ProgramLookupDto>>> GetProgramsAsync()
         {
             try
@@ -189,7 +188,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE /api/v1/programmanagerlink/{program}/{manager} — composite natural PK delete; no PUT (no mutable fields)
+        
         public async Task<ApiResponseDto<bool>> DeleteProgramManagerLinkAsync(string program, string manager)
         {
             try

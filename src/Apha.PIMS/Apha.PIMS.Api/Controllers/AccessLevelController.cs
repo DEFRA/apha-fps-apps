@@ -27,7 +27,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            // TRANSFORMENGINE: GetAllAsync -> GET /accesslevel (full lookup list)
+            
             List<AccessLevelDto> result = await _service.GetAllAsync();
             return Ok(_mapper.Map<List<AccessLevelRes>>(result));
         }
@@ -49,7 +49,7 @@ namespace Apha.PIMS.Api.Controllers
         }
 
         /// <summary>Create a new access level.</summary>
-        // TRANSFORMENGINE TODO: AccessLevelReq does not exist — body uses AccessLevelRes shape as workaround
+        
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] AccessLevelRes request)
         {
@@ -64,7 +64,6 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> Update(int systemid, int accesslevelid, [FromBody] AccessLevelRes request)
         {
             AccessLevelDto dto = _mapper.Map<AccessLevelDto>(request);
-            // TRANSFORMENGINE: Route composite PK is authoritative — set before service call
             dto.SystemId = systemid;
             dto.AccessLevelId = accesslevelid;
             AccessLevelDto updated = await _service.UpdateAsync(dto);

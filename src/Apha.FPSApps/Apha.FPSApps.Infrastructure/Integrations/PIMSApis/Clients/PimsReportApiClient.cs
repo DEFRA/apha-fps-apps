@@ -22,7 +22,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET /api/v1/report — full list; no required params (Reports Tab grid loads all)
+        
         public async Task<ApiResponseDto<List<ReportDto>>> GetAllReportsAsync()
         {
             try
@@ -71,7 +71,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/report/{id:int}
+        
         public async Task<ApiResponseDto<ReportDto>> GetReportByIdAsync(int id)
         {
             try
@@ -92,7 +92,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST /api/v1/report
+        
         public async Task<ApiResponseDto<ReportDto>> CreateReportAsync(ReportDto dto)
         {
             try
@@ -113,7 +113,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PUT /api/v1/report/{id:int} — route PK (id) is authoritative
+        
         public async Task<ApiResponseDto<ReportDto>> UpdateReportAsync(int id, ReportDto dto)
         {
             try
@@ -135,7 +135,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE /api/v1/report/{id:int}
+        
         public async Task<ApiResponseDto<bool>> DeleteReportAsync(int id)
         {
             try

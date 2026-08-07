@@ -29,7 +29,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllReports()
         {
-            // TRANSFORMENGINE: GetAllReportsAsync -> GET /report (list all reports)
+            
             List<ReportDto> result = await _service.GetAllReportsAsync();
             return Ok(_mapper.Map<List<ReportRes>>(result));
         }
@@ -66,7 +66,6 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> UpdateReport(int id, [FromBody] ReportReq request)
         {
             ReportDto dto = _mapper.Map<ReportDto>(request);
-            // TRANSFORMENGINE: Route id is authoritative — set before service call
             dto.Id = id;
             ReportDto updated = await _service.UpdateReportAsync(dto);
             return Ok(_mapper.Map<ReportRes>(updated));

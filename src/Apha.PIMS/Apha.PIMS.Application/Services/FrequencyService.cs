@@ -9,7 +9,7 @@ using AutoMapper;
 
 namespace Apha.PIMS.Application.Services
 {
-    // TRANSFORMENGINE: service orchestrates IFrequencyRepository; single integer PK (frequencyid); lookup/reference table
+    
     public class FrequencyService : IFrequencyService
     {
         private readonly IFrequencyRepository _repository;
@@ -21,14 +21,14 @@ namespace Apha.PIMS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        // TRANSFORMENGINE: returns full list for frequency dropdown / lookup usage
+        
         public async Task<List<FrequencyDto>> GetAllFrequenciesAsync()
         {
             List<Frequency> entities = await _repository.GetAllFrequenciesAsync();
             return _mapper.Map<List<FrequencyDto>>(entities);
         }
 
-        // TRANSFORMENGINE: paged frequencies with repository-level filter/sort/paging
+        
         public async Task<PaginatedResult<FrequencyDto>> GetPagedFrequenciesAsync(QueryParameters<string> query)
         {
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
@@ -36,14 +36,14 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<PaginatedResult<FrequencyDto>>(pagedData);
         }
 
-        // TRANSFORMENGINE: returns nullable — controller maps null to 404; single integer PK lookup
+        
         public async Task<FrequencyDto?> GetFrequencyByIdAsync(int frequencyId)
         {
             Frequency? entity = await _repository.GetFrequencyByIdAsync(frequencyId);
             return entity is null ? null : _mapper.Map<FrequencyDto>(entity);
         }
 
-        // TRANSFORMENGINE: validate non-null DTO before first await
+        
         public async Task<FrequencyDto> CreateFrequencyAsync(FrequencyDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -62,7 +62,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<FrequencyDto>(created);
         }
 
-        // TRANSFORMENGINE: validate existence before update — throws BusinessValidationErrorException if not found
+        
         public async Task<FrequencyDto> UpdateFrequencyAsync(FrequencyDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -84,7 +84,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<FrequencyDto>(updated);
         }
 
-        // TRANSFORMENGINE: throws BusinessValidationErrorException if not found before delete
+        
         public async Task<bool> DeleteFrequencyAsync(int frequencyId)
         {
             bool exists = await _repository.FrequencyExistsAsync(frequencyId);

@@ -29,7 +29,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllReviewItems()
         {
-            // TRANSFORMENGINE: GetAllReviewItemsAsync -> GET /reviewitem (full list)
+            
             List<ReviewItemDto> result = await _service.GetAllReviewItemsAsync();
             return Ok(_mapper.Map<List<ReviewItemRes>>(result));
         }
@@ -65,7 +65,6 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> UpdateReviewItem(int itemId, [FromBody] ReviewItemReq request)
         {
             ReviewItemDto dto = _mapper.Map<ReviewItemDto>(request);
-            // TRANSFORMENGINE: Route itemId is authoritative — set before service call
             dto.ItemId = itemId;
             ReviewItemDto updated = await _service.UpdateReviewItemAsync(dto);
             return Ok(_mapper.Map<ReviewItemRes>(updated));

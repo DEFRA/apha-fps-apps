@@ -30,7 +30,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet("paged")]
         public async Task<IActionResult> GetPagedAccessUserLevelAll([FromQuery] QueryParameters<string> query)
         {
-            // TRANSFORMENGINE: GetPagedAccessUserLevelAllAsync -> GET /accessuserlevel/paged (paged, sorted, filtered)
+            
             var result = await _service.GetPagedAccessUserLevelAllAsync(query);
             return Ok(_mapper.Map<PaginationRes<AccessUserLevelRes>>(result));
         }
@@ -75,7 +75,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpDelete("{systemid:int}/{ntlogin}/{accesslevelid:int}")]
         public async Task<IActionResult> Delete(int systemid, string ntlogin, int accesslevelid)
         {
-            // TRANSFORMENGINE: Triple composite PK delete — systemid + URL-decoded ntlogin + accesslevelid
+            
             var decodedLogin = HttpUtility.UrlDecode(ntlogin);
             bool deleted = await _service.DeleteAsync(systemid, decodedLogin, accesslevelid);
             return Ok(deleted);

@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.PIMS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -13,10 +14,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
     {
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
-        // TRANSFORMENGINE: S1192 — repeated error code extracted to const
         private const string InternalCodeError = "INTERNAL_ERROR";
-        // TRANSFORMENGINE: S1192 — base URL extracted to const; matches backend AccessUserLevelController [Route("api/v{version:apiVersion}/accessuserlevel")]
-        private const string BaseUrl = "api/v1/accessuserlevel";
 
         public PimsAccessUserLevelApiClient(IPimsHttpExecutor http, IMapper mapper)
         {
@@ -24,12 +22,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET /api/v1/accessuserlevel/paged — paged, sorted, filtered list; builds query string from QueryParameters
+        
         public async Task<ApiResponseDto<PaginatedResult<AccessUserLevelDto>>> GetPagedAsync(QueryParameters<string> request)
         {
             try
             {
-                string url = QueryStringHelper.AddQueryString($"{BaseUrl}/paged", request);
+                string url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetAccessUserLevelsPaged, request);
                 var response = await _http.GetAsync<List<AccessUserLevelRes>>(url);
                 if (response.Success)
                 {
@@ -53,12 +51,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/accessuserlevel/{systemid:int} — scoped by system
         public async Task<ApiResponseDto<List<AccessUserLevelDto>>> GetBySystemIdAsync(int systemid)
         {
             try
             {
-                var url = $"{BaseUrl}/{systemid}";
+                var url = string.Format(PimsApiEndpoints.GetAccessUserLevelsBySystemId, systemid);
                 var response = await _http.GetAsync<List<AccessUserLevelRes>>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<AccessUserLevelDto>>>(response);
@@ -74,12 +71,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/accessuserlevel/{systemid:int}/{ntlogin} — scoped by user within system; Uri.EscapeDataString on ntlogin
         public async Task<ApiResponseDto<List<AccessUserLevelDto>>> GetByUserAsync(int systemid, string ntlogin)
         {
             try
             {
-                var url = $"{BaseUrl}/{systemid}/{Uri.EscapeDataString(ntlogin)}";
+                var url = string.Format(PimsApiEndpoints.GetAccessUserLevelsByUser, systemid, Uri.EscapeDataString(ntlogin));
                 var response = await _http.GetAsync<List<AccessUserLevelRes>>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<AccessUserLevelDto>>>(response);
@@ -95,12 +91,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/accessuserlevel/{systemid:int}/{ntlogin}/{accesslevelid:int} — triple composite PK get; Uri.EscapeDataString on ntlogin
         public async Task<ApiResponseDto<AccessUserLevelDto>> GetByIdAsync(int systemid, string ntlogin, int accesslevelid)
         {
             try
             {
-                var url = $"{BaseUrl}/{systemid}/{Uri.EscapeDataString(ntlogin)}/{accesslevelid}";
+                var url = string.Format(PimsApiEndpoints.GetAccessUserLevelById, systemid, Uri.EscapeDataString(ntlogin), accesslevelid);
                 var response = await _http.GetAsync<AccessUserLevelRes>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<AccessUserLevelDto>>(response);
@@ -116,13 +111,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST /api/v1/accessuserlevel — create assignment
         public async Task<ApiResponseDto<AccessUserLevelDto>> CreateAsync(AccessUserLevelDto dto)
         {
             try
             {
                 var request = _mapper.Map<AccessUserLevelReq>(dto);
-                var response = await _http.PostAsync<AccessUserLevelReq, AccessUserLevelRes>(BaseUrl, request);
+                var response = await _http.PostAsync<AccessUserLevelReq, AccessUserLevelRes>(PimsApiEndpoints.CreateAccessUserLevel, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<AccessUserLevelDto>>(response);
 
@@ -137,12 +131,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE /api/v1/accessuserlevel/{systemid:int}/{ntlogin}/{accesslevelid:int} — triple composite PK delete; no PUT (no mutable fields)
         public async Task<ApiResponseDto<bool>> DeleteAsync(int systemid, string ntlogin, int accesslevelid)
         {
             try
             {
-                var url = $"{BaseUrl}/{systemid}/{Uri.EscapeDataString(ntlogin)}/{accesslevelid}";
+                var url = string.Format(PimsApiEndpoints.DeleteAccessUserLevel, systemid, Uri.EscapeDataString(ntlogin), accesslevelid);
                 var response = await _http.DeleteAsync<bool>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);

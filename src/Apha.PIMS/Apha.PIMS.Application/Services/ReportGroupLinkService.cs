@@ -6,7 +6,7 @@ using AutoMapper;
 
 namespace Apha.PIMS.Application.Services
 {
-    // TRANSFORMENGINE: service orchestrates IReportGroupLinkRepository; composite PK (reportid, groupid); no update — link table
+    
     public class ReportGroupLinkService : IReportGroupLinkService
     {
         private readonly IReportGroupLinkRepository _repository;
@@ -26,21 +26,21 @@ namespace Apha.PIMS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        // TRANSFORMENGINE: returns full list of all report-group links
+        
         public async Task<List<ReportGroupLinkDto>> GetAllReportGroupLinksAsync()
         {
             List<ReportGroupLink> entities = await _repository.GetAllReportGroupLinksAsync();
             return _mapper.Map<List<ReportGroupLinkDto>>(entities);
         }
 
-        // TRANSFORMENGINE: returns all group links for a given report — used for sub-grid population
+       
         public async Task<List<ReportGroupLinkDto>> GetReportGroupLinksByReportIdAsync(int reportId)
         {
             List<ReportGroupLink> entities = await _repository.GetReportGroupLinksByReportIdAsync(reportId);
             return _mapper.Map<List<ReportGroupLinkDto>>(entities);
         }
 
-        // TRANSFORMENGINE: returns nullable — controller maps null to 404; composite PK lookup
+        
         public async Task<ReportGroupLinkDto?> GetReportGroupLinkByIdAsync(int reportId, int groupId)
         {
             ReportGroupLink? entity = await _repository.GetReportGroupLinkByIdAsync(reportId, groupId);
@@ -58,7 +58,7 @@ namespace Apha.PIMS.Application.Services
             return (reportName, groupName);
         }
 
-        // TRANSFORMENGINE: duplicate-link guard — throws InvalidOperationException if link already exists
+        
         public async Task<ReportGroupLinkDto> CreateReportGroupLinkAsync(ReportGroupLinkDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -76,7 +76,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<ReportGroupLinkDto>(created);
         }
 
-        // TRANSFORMENGINE: throws KeyNotFoundException if link not found before delete
+        
         public async Task<bool> DeleteReportGroupLinkAsync(int reportId, int groupId)
         {
             bool exists = await _repository.ReportGroupLinkExistsAsync(reportId, groupId);

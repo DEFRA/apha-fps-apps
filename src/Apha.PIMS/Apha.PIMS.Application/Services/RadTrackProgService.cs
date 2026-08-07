@@ -40,7 +40,7 @@ namespace Apha.PIMS.Application.Services
             return entity is null ? null : _mapper.Map<RadTrackProgDto>(entity);
         }
 
-        // TRANSFORMENGINE: validate non-null DTO before first await
+        
         public async Task<RadTrackProgDto> CreateRadTrackProgAsync(RadTrackProgDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -56,7 +56,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<RadTrackProgDto>(created);
         }
 
-        // TRANSFORMENGINE: validate existence before update — throws KeyNotFoundException if not found
+        
         public async Task<RadTrackProgDto> UpdateRadTrackProgAsync(RadTrackProgDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -71,7 +71,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<RadTrackProgDto>(updated);
         }
 
-        // TRANSFORMENGINE: throws KeyNotFoundException if not found before delete
+        
         public async Task<bool> DeleteRadTrackProgAsync(string program)
         {
             if (string.IsNullOrWhiteSpace(program)) throw new ArgumentException("program must not be empty.", nameof(program));

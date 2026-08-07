@@ -50,7 +50,7 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<PactProjectYearCosts> PactProjectYearCosts { get; set; }
 
 
-        // TRANSFORMENGINE: Phase 4 — new DbSets for Report/ReportGroup/Link, ProgramManagerLink, ProfitCentreManagerLink, Setting, Access*, Frequency, ReviewItem
+        
         public virtual DbSet<Report> Reports { get; set; }
         public virtual DbSet<ReportGroup> ReportGroups { get; set; }
         public virtual DbSet<ReportGroupLink> ReportGroupLinks { get; set; }
@@ -103,7 +103,7 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new PactProjectYearCostsMap());
             modelBuilder.ApplyConfiguration(new RadTrackContractMap());
 
-            // TRANSFORMENGINE: Phase 4 batch — register 12 new map configurations
+            
             modelBuilder.ApplyConfiguration(new ReportMap());
             modelBuilder.ApplyConfiguration(new ReportGroupMap());
             modelBuilder.ApplyConfiguration(new ReportGroupLinkMap());

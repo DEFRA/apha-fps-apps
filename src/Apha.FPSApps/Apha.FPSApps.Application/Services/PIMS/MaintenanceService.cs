@@ -8,7 +8,6 @@ namespace Apha.FPSApps.Application.Services.PIMS
 {
     public class MaintenanceService : IMaintenanceService
     {
-        // TRANSFORMENGINE: S2933 — private readonly; injected via constructor DI
         private readonly IPimsApiClient _client;
 
         public MaintenanceService(IPimsApiClient client)
@@ -17,7 +16,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
         }
 
         // ── Report ──────────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsReport sub-client; integer PK (id)
+       
 
         public async Task<ApiResponseDto<List<ReportDto>>> GetAllReportsAsync()
             => await _client.PimsReport.GetAllReportsAsync();
@@ -38,7 +37,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsReport.DeleteReportAsync(id);
 
         // ── ReportGroup ─────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsReportGroup sub-client; integer PK (groupid); also serves as Report dropdown lookup
+        
 
         public async Task<ApiResponseDto<List<ReportGroupDto>>> GetAllReportGroupsAsync()
             => await _client.PimsReportGroup.GetAllReportGroupsAsync();
@@ -62,7 +61,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsReportGroup.DeleteReportGroupAsync(groupId);
 
         // ── ReportGroupLink ─────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsReportGroupLink sub-client; composite PK (reportid int + groupid int); no PUT
+        
 
         public async Task<ApiResponseDto<List<ReportGroupLinkDto>>> GetAllReportGroupLinksAsync()
             => await _client.PimsReportGroupLink.GetAllReportGroupLinksAsync();
@@ -80,7 +79,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsReportGroupLink.DeleteReportGroupLinkAsync(reportId, groupId);
 
         // ── ProjectManager ──────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsProjectManager sub-client; natural varchar PK (projectmanager)
+        
 
         public async Task<ApiResponseDto<List<ProjectManagerDto>>> GetAllProjectManagersAsync(QueryParameters<string>? query = null)
             => await _client.PimsProjectManager.GetAllProjectManagersAsync(query);
@@ -104,7 +103,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsProjectManager.DeleteProjectManagerAsync(projectManagerName);
 
         // ── ProgramManagerLink ──────────────────────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsProgramManagerLink sub-client; composite natural PK (program string + manager string); no PUT
+        
 
         public async Task<ApiResponseDto<List<ProgramManagerLinkDto>>> GetAllProgramManagerLinksAsync()
             => await _client.PimsProgramManagerLink.GetAllProgramManagerLinksAsync();
@@ -131,7 +130,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsProgramManagerLink.GetProgramsAsync();
 
         // ── ProfitCentreManagerLink ─────────────────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsProfitCentreManagerLink sub-client; composite natural PK (profitcentre string + manager string); no PUT
+        
 
         public async Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetAllProfitCentreManagerLinksAsync()
             => await _client.PimsProfitCentreManagerLink.GetAllProfitCentreManagerLinksAsync();
@@ -158,7 +157,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsProfitCentreManagerLink.DeleteProfitCentreManagerLinkAsync(profitCentre, manager);
 
         // ── Setting ─────────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsSetting sub-client; read/update only; string PK; no create/delete
+        
 
         public async Task<ApiResponseDto<List<SettingDto>>> GetAllSettingsAsync()
             => await _client.PimsSetting.GetAllSettingsAsync();
@@ -173,10 +172,13 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsSetting.UpdateSettingAsync(id, dto);
 
         // ── AccessUser ──────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsAccessUser sub-client; composite PK (systemid int + ntlogin string)
+        
 
         public async Task<ApiResponseDto<List<AccessUserDto>>> GetAllAccessUsersAsync()
             => await _client.PimsAccessUser.GetAllAsync();
+
+        public async Task<ApiResponseDto<PaginatedResult<AccessUserDto>>> GetPagedAccessUsersAsync(QueryParameters<string> request)
+            => await _client.PimsAccessUser.GetPagedAsync(request);
 
         public async Task<ApiResponseDto<List<AccessUserDto>>> GetAccessUsersBySystemIdAsync(int systemid)
             => await _client.PimsAccessUser.GetBySystemIdAsync(systemid);
@@ -232,7 +234,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsAccessUserLevel.DeleteAsync(systemid, ntlogin, accesslevelid);
 
         // ── AccessSystem (lookup — read-only) ───────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsAccessSystem sub-client; reference lookup; integer PK (systemid); no create/update/delete
+        
 
         public async Task<ApiResponseDto<List<AccessSystemDto>>> GetAllAccessSystemsAsync()
             => await _client.PimsAccessSystem.GetAllAsync();
@@ -241,7 +243,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsAccessSystem.GetByIdAsync(systemid);
 
         // ── Frequency ───────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsFrequency sub-client; integer PK (frequencyid); full CRUD
+        
 
         public async Task<ApiResponseDto<List<FrequencyDto>>> GetAllFrequenciesAsync()
             => await _client.PimsFrequency.GetAllFrequenciesAsync();
@@ -262,7 +264,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsFrequency.DeleteFrequencyAsync(frequencyId);
 
         // ── ReviewItem ──────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsReviewItem sub-client; integer PK (itemid); full CRUD; Other Tab lookup
+        
 
         public async Task<ApiResponseDto<List<ReviewItemDto>>> GetAllReviewItemsAsync()
             => await _client.PimsReviewItem.GetAllReviewItemsAsync();
@@ -283,7 +285,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsReviewItem.DeleteReviewItemAsync(itemId);
 
         // ── RadTrackProg ────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: thin delegates — PimsRadTrackProg sub-client; natural string PK (program); full CRUD; Programme Tab
+        
 
         public async Task<ApiResponseDto<List<RadTrackProgDto>>> GetAllRadTrackProgsAsync()
             => await _client.PimsRadTrackProg.GetAllRadTrackProgsAsync();
@@ -307,8 +309,6 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsRadTrackProg.GetAllProgramNamesAsync();
 
         // ── Risk ──
-        // thin delegates — PimsRisk sub-client; integer PK (riskid); full CRUD; Other Tab lookup
-
         public async Task<ApiResponseDto<List<RiskDto>>> GetAllRiskRatingsAsync()
             => await _client.PimsRisk.GetAllRiskRatingsAsync();
 
@@ -328,7 +328,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsRisk.DeleteRiskRatingAsync(riskId);
 
         // ── PublicationType ─────────────────────────────────────────────────────────────────────────
-        // thin delegates — PimsPublicationType sub-client; string PK (type); full CRUD; Other Tab lookup
+        
 
         public async Task<ApiResponseDto<List<PublicationTypeDto>>> GetAllPublicationTypesAsync()
             => await _client.PimsPublicationType.GetAllPublicationTypesAsync();

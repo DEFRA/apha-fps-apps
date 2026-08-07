@@ -9,8 +9,20 @@ var _currentReportId = null;
 function initializeTimeTabState() {
     var hwEl = document.getElementById('timeWorkingHours');
     var dwEl = document.getElementById('timeWorkingDays');
-    if (hwEl) _timeOrigWorkingHours = hwEl.value;
-    if (dwEl) _timeOrigWorkingDays = dwEl.value;
+    if (hwEl) {
+        _timeOrigWorkingHours = hwEl.value;
+        // Add change listener to clear errors when user starts typing
+        $(hwEl).off('input.timevalidation').on('input.timevalidation', function() {
+            validateTimeInput(this, 'timeWorkingHoursError', 'timeWorkingHoursErrorText', 'Working Hours in a Day');
+        });
+    }
+    if (dwEl) {
+        _timeOrigWorkingDays = dwEl.value;
+        // Add change listener to clear errors when user starts typing
+        $(dwEl).off('input.timevalidation').on('input.timevalidation', function() {
+            validateTimeInput(this, 'timeWorkingDaysError', 'timeWorkingDaysErrorText', 'Working Days in a Year');
+        });
+    }
 }
 
 function initializeOtherTabState() {
@@ -189,12 +201,34 @@ function loadMaintenanceTab(tabKey) {
     if (tabKey === 'time') {
         $.get('/PIMS/Maintenance/LoadTimeTabSettings')
             .done(function (data) {
-                $('#timeWorkingHours').val(data && data.workingHours ? data.workingHours : '');
-                $('#timeWorkingDays').val(data && data.workingDays ? data.workingDays : '');
+                console.log('LoadTimeTabSettings response:', data);
+
+                // Populate the input fields with the retrieved values
+                var hoursValue = (data && data.workingHours) ? data.workingHours : '';
+                var daysValue = (data && data.workingDays) ? data.workingDays : '';
+
+                console.log('Hours value:', hoursValue, 'Days value:', daysValue);
+
+                $('#timeWorkingHours').val(hoursValue);
+                $('#timeWorkingDays').val(daysValue);
+
+                // Clear any validation errors if values were loaded successfully
+                if (hoursValue) {
+                    $('#timeWorkingHoursGroup').removeClass('govuk-form-group--error');
+                    $('#timeWorkingHours').removeClass('govuk-input--error');
+                    $('#timeWorkingHoursError').addClass('ra-hidden');
+                }
+                if (daysValue) {
+                    $('#timeWorkingDaysGroup').removeClass('govuk-form-group--error');
+                    $('#timeWorkingDays').removeClass('govuk-input--error');
+                    $('#timeWorkingDaysError').addClass('ra-hidden');
+                }
+
                 initializeTimeTabState();
                 panel.setAttribute('data-tab-loaded', 'true');
             })
-            .fail(function () {
+            .fail(function (jqXHR, textStatus, errorThrown) {
+                console.error('LoadTimeTabSettings failed:', textStatus, errorThrown);
                 $('#timeDbErrorText').text('Unable to load time settings.');
                 $('#timeDbError').removeClass('ra-hidden');
             });
@@ -958,33 +992,88 @@ function saveProfitCentreManagerLink() {
 //  TIME TAB
 // ════════════════════════════════════════════════════════════════════════════
 
+// ── Time Tab Input Validation ────────────────────────────────────────────────
+// Align with Costbook validation: required, positive decimal only, max 999.99.
+function validateTimeInput(inputElement, errorElementId, errorTextElementId, fieldName) {
+    if (!inputElement) return true;
+
+    var value = inputElement.value;
+    var trimmed = (value || '').trim();
+    var errorElement = document.getElementById(errorElementId);
+    var errorTextElement = document.getElementById(errorTextElementId);
+    var formGroup = inputElement.closest('.govuk-form-group');
+
+    if (errorElement) errorElement.classList.add('ra-hidden');
+    if (formGroup) formGroup.classList.remove('govuk-form-group--error');
+    inputElement.classList.remove('govuk-input--error');
+
+    if (trimmed === '') {
+        if (errorTextElement) errorTextElement.textContent = fieldName + ' is required';
+        if (errorElement) errorElement.classList.remove('ra-hidden');
+        if (formGroup) formGroup.classList.add('govuk-form-group--error');
+        inputElement.classList.add('govuk-input--error');
+        return false;
+    }
+
+    if (!/^\d+(\.\d+)?$/.test(trimmed)) {
+        if (errorTextElement) errorTextElement.textContent = fieldName + ' must be a positive number (digits and decimal point only).';
+        if (errorElement) errorElement.classList.remove('ra-hidden');
+        if (formGroup) formGroup.classList.add('govuk-form-group--error');
+        inputElement.classList.add('govuk-input--error');
+        return false;
+    }
+
+    var numValue = parseFloat(trimmed);
+    if (numValue <= 0) {
+        if (errorTextElement) errorTextElement.textContent = fieldName + ' must be greater than zero';
+        if (errorElement) errorElement.classList.remove('ra-hidden');
+        if (formGroup) formGroup.classList.add('govuk-form-group--error');
+        inputElement.classList.add('govuk-input--error');
+        return false;
+    }
+
+    if (numValue > 999.99) {
+        if (errorTextElement) errorTextElement.textContent = fieldName + ' must not be greater than 999.99.';
+        if (errorElement) errorElement.classList.remove('ra-hidden');
+        if (formGroup) formGroup.classList.add('govuk-form-group--error');
+        inputElement.classList.add('govuk-input--error');
+        return false;
+    }
+
+    return true;
+}
+
 function saveTimeTab() {
-    var hoursVal = document.getElementById('timeWorkingHours')?.value || '';
-    var daysVal  = document.getElementById('timeWorkingDays')?.value  || '';
+    var hoursEl = document.getElementById('timeWorkingHours');
+    var daysEl = document.getElementById('timeWorkingDays');
+
+    var hoursVal = hoursEl?.value || '';
+    var daysVal = daysEl?.value || '';
 
     // IDs are injected by the Razor view into window._pimsHoursId / window._pimsDaysId
     var hoursId = window._pimsHoursId || 'WorkingHours';
-    var daysId  = window._pimsDaysId  || 'WorkingDays';
+    var daysId = window._pimsDaysId || 'WorkingDays';
 
-    var hoursError  = document.getElementById('timeWorkingHoursError');
-    var daysError   = document.getElementById('timeWorkingDaysError');
-    var dbError     = document.getElementById('timeDbError');
+    var dbError = document.getElementById('timeDbError');
     var dbErrorText = document.getElementById('timeDbErrorText');
 
-    if (hoursError) hoursError.classList.add('ra-hidden');
-    if (daysError)  daysError.classList.add('ra-hidden');
-    if (dbError)    dbError.classList.add('ra-hidden');
+    // Hide all errors initially
+    if (dbError) dbError.classList.add('ra-hidden');
 
-    var hasError = false;
-    if (!hoursVal) {
-        if (hoursError) hoursError.classList.remove('ra-hidden');
-        hasError = true;
+    // Validate both inputs using the validateTimeInput function
+    var hoursValid = validateTimeInput(hoursEl, 'timeWorkingHoursError', 'timeWorkingHoursErrorText', 'Working Hours in a Day');
+    var daysValid = validateTimeInput(daysEl, 'timeWorkingDaysError', 'timeWorkingDaysErrorText', 'Working Days in a Year');
+
+    if (!hoursValid || !daysValid) {
+        return;
     }
-    if (!daysVal) {
-        if (daysError) daysError.classList.remove('ra-hidden');
-        hasError = true;
+
+    // Disable save button during save
+    var btnSave = document.getElementById('btnSaveTime');
+    if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.textContent = 'Saving...';
     }
-    if (hasError) return;
 
     $.ajax({
         url: '/PIMS/Maintenance/SaveSetting',
@@ -996,6 +1085,10 @@ function saveTimeTab() {
             if (!data.success) {
                 if (dbErrorText) dbErrorText.textContent = data.message || 'Failed to save working hours.';
                 if (dbError) dbError.classList.remove('ra-hidden');
+                if (btnSave) {
+                    btnSave.disabled = false;
+                    btnSave.textContent = 'Save';
+                }
                 return;
             }
             // Save working days
@@ -1006,9 +1099,13 @@ function saveTimeTab() {
                 data: JSON.stringify({ id: daysId, settingValue: daysVal }),
                 headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').first().val() },
                 success: function (d2) {
+                    if (btnSave) {
+                        btnSave.disabled = false;
+                        btnSave.textContent = 'Save';
+                    }
                     if (d2.success) {
                         _timeOrigWorkingHours = hoursVal;
-                        _timeOrigWorkingDays  = daysVal;
+                        _timeOrigWorkingDays = daysVal;
                         showAlertMessage('Settings saved successfully.', AlertType.SUCCESS);
                     } else {
                         if (dbErrorText) dbErrorText.textContent = d2.message || 'Failed to save working days.';
@@ -1016,17 +1113,26 @@ function saveTimeTab() {
                     }
                 },
                 error: function () {
+                    if (btnSave) {
+                        btnSave.disabled = false;
+                        btnSave.textContent = 'Save';
+                    }
                     if (dbErrorText) dbErrorText.textContent = 'An error occurred while saving.';
                     if (dbError) dbError.classList.remove('ra-hidden');
                 }
             });
         },
         error: function () {
+            if (btnSave) {
+                btnSave.disabled = false;
+                btnSave.textContent = 'Save';
+            }
             if (dbErrorText) dbErrorText.textContent = 'An error occurred while saving.';
             if (dbError) dbError.classList.remove('ra-hidden');
         }
     });
 }
+
 
 function cancelTimeTab() {
     document.getElementById('timeWorkingHours').value = _timeOrigWorkingHours;
@@ -1051,19 +1157,30 @@ function addAccessUser() {
 }
 
 function editAccessUser(btn) {
-    var id = $(btn).data('id');
-    $.get('/PIMS/Maintenance/GetAddEditAccessUserPartial', { systemid: id }, function (html) {
-        $('#modaPopupBody').html(html);
-        $('#modalPopup').addClass('show');
-    });
+    var compositeKey = $(btn).data('id') || '';
+    var parts = compositeKey.split('|');
+    var ntlogin = parts[0] || '';
+    var systemid = parseInt(parts[1], 10) || 0;
+
+    $.get('/PIMS/Maintenance/GetAddEditAccessUserPartial',
+        { systemid: systemid, ntlogin: ntlogin },
+        function (html) {
+            $('#modaPopupBody').html(html);
+            $('#modalPopup').addClass('show');
+        });
 }
 
 function deleteAccessUser(btn) {
-    var id = $(btn).data('id');
+    var compositeKey = $(btn).data('id') || '';
+    var parts = compositeKey.split('|');
+    var ntlogin = parts[0] || '';
+    var systemid = parseInt(parts[1], 10) || 0;
+
     showGovukConfirm('Are you sure you want to delete this user?').then(function (result) {
         if (!result) return;
         $.ajax({
-            url: '/PIMS/Maintenance/DeleteAccessUser?systemid=' + encodeURIComponent(id),
+            url: '/PIMS/Maintenance/DeleteAccessUser?systemid=' + encodeURIComponent(systemid)
+                + '&ntlogin=' + encodeURIComponent(ntlogin),
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
@@ -1073,8 +1190,51 @@ function deleteAccessUser(btn) {
                     showAlertMessage(response.message || 'Delete failed.', AlertType.ERROR);
                 }
             },
-            error: function () { showAlertMessage('An error occurred while deleting the user.', AlertType.ERROR); }
+            error: function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message)
+                    ? xhr.responseJSON.message
+                    : 'An error occurred while deleting the user.';
+                showAlertMessage(msg, AlertType.ERROR);
+            }
         });
+    });
+}
+
+function saveAccessUser() {
+    var dbError = document.getElementById('adminUserDbError');
+    var dbErrorText = document.getElementById('adminUserDbErrorText');
+    if (dbError) dbError.classList.add('ra-hidden');
+
+    var $form = $('#formAccessUser');
+    displayClientValidationErrors($form, $form);
+    if (!isFormValid($form)) {
+        return;
+    }
+
+    $.post({
+        url: '/PIMS/Maintenance/SaveAccessUser',
+        data: $form.serialize(),
+        success: function (data) {
+            if (data.success) {
+                showAlertMessage(data.message || 'User saved successfully.', AlertType.SUCCESS)
+                    .then(function () {
+                        closeModal();
+                        reloadAccessUsersGrid();
+                    });
+            } else {
+                if (data.errors && data.errors.length > 0) {
+                    displayServerValidationErrors(data.errors, data.message || 'Save failed.', $form);
+                } else {
+                    if (dbErrorText) dbErrorText.textContent = data.message || 'Save failed.';
+                    if (dbError) dbError.classList.remove('ra-hidden');
+                }
+            }
+        },
+        error: function (xhr) {
+            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'An error occurred while saving.';
+            if (dbErrorText) dbErrorText.textContent = msg;
+            if (dbError) dbError.classList.remove('ra-hidden');
+        }
     });
 }
 
@@ -1105,11 +1265,24 @@ function saveAccessUserLevel() {
     var ntlogin       = $('#adminAccessUser').val() || '';
     var accesslevelid = parseInt($('#adminAccessLevel').val() || '0', 10);
 
+    var isEditMode = ($('#hdnAccessIsEdit').val() || '').toLowerCase() === 'true';
+    var originalSystemid = parseInt($('#hdnAccessOriginalSystemid').val() || '0', 10);
+    var originalNtlogin = $('#hdnAccessOriginalNtlogin').val() || '';
+    var originalAccesslevelid = parseInt($('#hdnAccessOriginalAccesslevelid').val() || '0', 10);
+
     $.ajax({
         url:         '/PIMS/Maintenance/SaveAccessUserLevel',
         type:        'POST',
         contentType: 'application/json; charset=utf-8',
-        data:        JSON.stringify({ Systemid: systemid, Ntlogin: ntlogin, Accesslevelid: accesslevelid }),
+        data:        JSON.stringify({
+            systemId: systemid,
+            ntLogin: ntlogin,
+            accessLevelId: accesslevelid,
+            isEditMode: isEditMode,
+            originalSystemId: originalSystemid,
+            originalNtLogin: originalNtlogin,
+            originalAccessLevelId: originalAccesslevelid
+        }),
         headers:     { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').first().val() },
         success: function (data) {
             if (data.success) {

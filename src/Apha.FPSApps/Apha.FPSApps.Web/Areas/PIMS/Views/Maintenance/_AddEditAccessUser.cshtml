@@ -15,7 +15,9 @@
         @Html.AntiForgeryToken()
 
         <input type="hidden" asp-for="SystemId" id="hdnUserSystemid" />
-        <input type="hidden" id="hdnUserIsEdit" value="@isEditMode.ToString().ToLower()" />
+        <input type="hidden" id="hdnUserOriginalSystemid" name="originalSystemid" value="@Model.SystemId" />
+        <input type="hidden" id="hdnUserOriginalNtlogin" name="originalNtlogin" value="@Model.NtLogin" />
+        <input type="hidden" id="hdnUserIsEdit" name="isEditMode" value="@isEditMode.ToString().ToLower()" />
 
         <div class="govuk-error-summary ra-form-error-banner ra-hidden"
              id="adminUserDbError" role="alert" aria-labelledby="adminUserDbErrorTitle" tabindex="-1">
@@ -35,7 +37,8 @@
                    type="text"
                    aria-required="true"
                    aria-describedby="adminUserNTLoginError"
-                   autocomplete="off" />
+                   autocomplete="off"
+                   readonly="@(isEditMode ? "readonly" : null)" />
             <span asp-validation-for="NtLogin" class="govuk-error-message" id="adminUserNTLoginError" style="display:none;"></span>
         </div>
 
@@ -53,6 +56,19 @@
             <span asp-validation-for="UserName" class="govuk-error-message" id="adminUserNameError" style="display:none;"></span>
         </div>
 
+        <div class="govuk-form-group sup_margin_bottom_10" id="adminUserEmailGroup">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="UserEmail">
+                UserEmail
+            </label>
+            <input class="govuk-input govuk-!-font-size-16"
+                   asp-for="UserEmail"
+                   id="adminUserEmail"
+                   type="email"
+                   aria-describedby="adminUserEmailError"
+                   autocomplete="off" />
+            <span asp-validation-for="UserEmail" class="govuk-error-message" id="adminUserEmailError" style="display:none;"></span>
+        </div>
+
         <div class="col-12" style="text-align: right; margin-top: 10px;">
             <button type="button"
                     class="govuk-button govuk-button--secondary sup_margin_0"
@@ -68,31 +84,3 @@
     </form>
 </div>
 
-@section Scripts {
-    <script>
-        function saveAccessUser() {
-            var dbError     = document.getElementById('adminUserDbError');
-            var dbErrorText = document.getElementById('adminUserDbErrorText');
-            if (dbError) dbError.classList.add('ra-hidden');
-
-            $.post({
-                url: '/PIMS/Maintenance/SaveAccessUser',
-                data: $('#formAccessUser').serialize(),
-                success: function (data) {
-                    if (data.success) {
-                        closeModal();
-                        reloadAccessUsersGrid();
-                    } else {
-                        var msg = data.message || 'Save failed.';
-                        if (dbErrorText) dbErrorText.textContent = msg;
-                        if (dbError) dbError.classList.remove('ra-hidden');
-                    }
-                },
-                error: function () {
-                    if (dbErrorText) dbErrorText.textContent = 'An error occurred while saving.';
-                    if (dbError) dbError.classList.remove('ra-hidden');
-                }
-            });
-        }
-    </script>
-}

@@ -1,7 +1,9 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
 @model Apha.FPSApps.Web.Areas.PIMS.Models.AccessUserLevelItem
 
 @{
-    var isEditMode = Model.SystemId != 0;
+    var isAddingNew = (ViewBag.IsAddingNew as bool?) ?? false;
+    var isEditMode = !isAddingNew;
     var title = isEditMode ? "Edit User Access" : "Add User Access";
     var saveLabel = isEditMode ? "Update" : "Save";
 }
@@ -15,6 +17,9 @@
         @Html.AntiForgeryToken()
 
         <input type="hidden" asp-for="SystemId" id="hdnAccessSystemid" />
+        <input type="hidden" id="hdnAccessOriginalSystemid" value="@Model.SystemId" />
+        <input type="hidden" id="hdnAccessOriginalNtlogin" value="@Model.NtLogin" />
+        <input type="hidden" id="hdnAccessOriginalAccesslevelid" value="@Model.AccessLevelId" />
         <input type="hidden" id="hdnAccessIsEdit" value="@isEditMode.ToString().ToLower()" />
 
         <div class="govuk-error-summary ra-form-error-banner ra-hidden"
@@ -39,26 +44,9 @@
                             aria-required="true"
                             aria-describedby="adminAccessUserError">
                         <option value="">-- Select User --</option>
-                        @{
-                            var userOptions = new[]
-                            {
-                                "Martin, Steve", "Gage, Amanda", "Fowler, Ayesha",
-                                "Ritchie, Stephanie", "Northcott, Emma", "Narayanan, Vidhya",
-                                "Butler, Tom", "Foxon, Janee", "Jackson, George",
-                                "Moran, Michaela", "Bateman, Rebecca", "Moore, Tony",
-                                "Bell, Howard", "Lambert, Abby"
-                            };
-                            foreach (var u in userOptions)
-                            {
-                                if (Model.NtLogin == u)
-                                {
-                                    <option value="@u" selected>@u</option>
-                                }
-                                else
-                                {
-                                    <option value="@u">@u</option>
-                                }
-                            }
+                        @foreach (var user in (IEnumerable<SelectListItem>)(ViewBag.AccessUserOptions ?? new List<SelectListItem>()))
+                        {
+                            <option value="@user.Value" selected="@(user.Selected ? "selected" : null)">@user.Text</option>
                         }
                     </select>
                     <span asp-validation-for="NtLogin" class="govuk-error-message" id="adminAccessUserError" data-valmsg-for="NtLogin" style="display:none;"></span>
@@ -77,20 +65,9 @@
                             aria-required="true"
                             aria-describedby="adminAccessLevelError">
                         <option value="0">-- Select --</option>
-                        @{
-                            var accessLevels = new[] { "Admin", "Maintenance", "Programme Manager", "Read Only" };
-                            for (int i = 0; i < accessLevels.Length; i++)
-                            {
-                                int levelId = i + 1;
-                                if (Model.AccessLevelId == levelId)
-                                {
-                                    <option value="@levelId" selected>@accessLevels[i]</option>
-                                }
-                                else
-                                {
-                                    <option value="@levelId">@accessLevels[i]</option>
-                                }
-                            }
+                        @foreach (var level in (IEnumerable<SelectListItem>)(ViewBag.AccessLevelOptions ?? new List<SelectListItem>()))
+                        {
+                            <option value="@level.Value" selected="@(level.Selected ? "selected" : null)">@level.Text</option>
                         }
                     </select>
                     <span asp-validation-for="AccessLevelId" class="govuk-error-message" id="adminAccessLevelError" data-valmsg-for="AccessLevelId" style="display:none;"></span>

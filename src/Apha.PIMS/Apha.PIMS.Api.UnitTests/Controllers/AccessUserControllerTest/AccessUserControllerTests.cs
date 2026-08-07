@@ -1,13 +1,15 @@
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Api.Controllers;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Pagination;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.PIMS.Api.UnitTests.Controllers
+namespace Apha.PIMS.Api.UnitTests.Controllers.AccessUserControllerTest
 {
     public class AccessUserControllerTests
     {
@@ -25,13 +27,13 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
         // ── helpers ───────────────────────────────────────────────────────────────
 
         private static AccessUserDto MakeDto(int systemid = 1, string ntlogin = "DOMAIN\\user1") =>
-            new AccessUserDto { SystemId = systemid, NtLogin = ntlogin, UserName = "User One" };
+            new AccessUserDto { SystemId = systemid, NtLogin = ntlogin, UserName = "User One", UserEmail = "user1@example.com" };
 
         private static AccessUserRes MakeRes(int systemid = 1, string ntlogin = "DOMAIN\\user1") =>
-            new AccessUserRes { SystemId = systemid, NtLogin = ntlogin, UserName = "User One" };
+            new AccessUserRes { SystemId = systemid, NtLogin = ntlogin, UserName = "User One", UserEmail = "user1@example.com" };
 
         private static AccessUserReq MakeReq(int systemid = 1, string ntlogin = "DOMAIN\\user1") =>
-            new AccessUserReq { SystemId = systemid, NtLogin = ntlogin, UserName = "User One" };
+            new AccessUserReq { SystemId = systemid, NtLogin = ntlogin, UserName = "User One", UserEmail = "user1@example.com" };
 
         // ── GetAll ────────────────────────────────────────────────────────────────
 
@@ -81,6 +83,66 @@ namespace Apha.PIMS.Api.UnitTests.Controllers
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.GetAll());
+        }
+
+        #endregion
+
+        // ── GetPaged ───────────────────────────────────────────────────────────────
+
+        #region GetPaged
+
+        [Fact]
+        public async Task GetPaged_ServiceReturnsData_ReturnsOkWithMappedPaginationResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, Search = "dom" };
+            var dtos = new List<AccessUserDto> { MakeDto(1, "dom\\u1"), MakeDto(1, "dom\\u2") };
+            var pagedDto = new PaginatedResult<AccessUserDto>(dtos, new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 2 });
+
+            var resList = new List<AccessUserRes> { MakeRes(1, "dom\\u1"), MakeRes(1, "dom\\u2") };
+            var pageRes = new PaginationRes<AccessUserRes>(resList, new Pagination { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 2 });
+
+            _service.GetPagedAsync(query).Returns(pagedDto);
+            _mapper.Map<PaginationRes<AccessUserRes>>(pagedDto).Returns(pageRes);
+
+            // Act
+            var result = await _controller.GetPaged(query);
+
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(pageRes, ok.Value);
+            await _service.Received(1).GetPagedAsync(query);
+            _mapper.Received(1).Map<PaginationRes<AccessUserRes>>(pagedDto);
+        }
+
+        [Fact]
+        public async Task GetPaged_ServiceReturnsEmptyData_ReturnsOkWithEmptyPaginationResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var pagedDto = new PaginatedResult<AccessUserDto>(new List<AccessUserDto>(), new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 0, TotalRecords = 0 });
+            var pageRes = new PaginationRes<AccessUserRes>(new List<AccessUserRes>(), new Pagination { PageNumber = 1, PageSize = 10, TotalPages = 0, TotalRecords = 0 });
+
+            _service.GetPagedAsync(query).Returns(pagedDto);
+            _mapper.Map<PaginationRes<AccessUserRes>>(pagedDto).Returns(pageRes);
+
+            // Act
+            var result = await _controller.GetPaged(query);
+
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(pageRes, ok.Value);
+        }
+
+        [Fact]
+        public async Task GetPaged_ServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _service.GetPagedAsync(query).ThrowsAsync(new Exception("db error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetPaged(query));
         }
 
         #endregion

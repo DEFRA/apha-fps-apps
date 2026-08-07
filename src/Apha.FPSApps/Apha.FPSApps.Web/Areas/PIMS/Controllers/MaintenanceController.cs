@@ -42,6 +42,32 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 ReportsGrid = await BuildReportsGridAsync(new PaginationFilter<string> { Filter = "{}" })
             };
 
+            // Load Time tab settings on page load
+            var settingsResult = await _service.GetAllSettingsAsync();
+            System.Diagnostics.Debug.WriteLine($"GetAllSettingsAsync Success: {settingsResult.Success}, Data Count: {settingsResult.Data?.Count ?? 0}");
+
+            if (settingsResult.Success && settingsResult.Data != null)
+            {
+                var hoursInDay = settingsResult.Data.FirstOrDefault(s =>
+                    s.Id != null && s.Id.Equals("HoursInDay", StringComparison.OrdinalIgnoreCase));
+                var daysInYear = settingsResult.Data.FirstOrDefault(s =>
+                    s.Id != null && s.Id.Equals("DaysInYear", StringComparison.OrdinalIgnoreCase));
+
+                System.Diagnostics.Debug.WriteLine($"HoursInDay found: {hoursInDay != null}, Value: {hoursInDay?.SettingValue}");
+                System.Diagnostics.Debug.WriteLine($"DaysInYear found: {daysInYear != null}, Value: {daysInYear?.SettingValue}");
+
+                if (hoursInDay != null)
+                {
+                    viewModel.WorkingHoursSettingItem = _mapper.Map<SettingItem>(hoursInDay);
+                    System.Diagnostics.Debug.WriteLine($"Mapped WorkingHoursSettingItem: {viewModel.WorkingHoursSettingItem?.SettingValue}");
+                }
+                if (daysInYear != null)
+                {
+                    viewModel.WorkingDaysSettingItem = _mapper.Map<SettingItem>(daysInYear);
+                    System.Diagnostics.Debug.WriteLine($"Mapped WorkingDaysSettingItem: {viewModel.WorkingDaysSettingItem?.SettingValue}");
+                }
+            }
+
             return View(viewModel);
         }
 
@@ -66,14 +92,14 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         [HttpGet]
         public async Task<IActionResult> LoadTimeTabSettings()
         {
-            var result = await _service.GetAllUserUpdateableSettingsAsync();
+            var result = await _service.GetAllSettingsAsync();
             if (!result.Success || result.Data == null)
                 return Json(new { workingHours = (string?)null, workingDays = (string?)null });
 
             var workingHours = result.Data.FirstOrDefault(s =>
-                s.Id != null && s.Id.Equals("WorkingHours", StringComparison.OrdinalIgnoreCase));
+                s.Id != null && s.Id.Equals("HoursInDay", StringComparison.OrdinalIgnoreCase));
             var workingDays = result.Data.FirstOrDefault(s =>
-                s.Id != null && s.Id.Equals("WorkingDays", StringComparison.OrdinalIgnoreCase));
+                s.Id != null && s.Id.Equals("DaysInYear", StringComparison.OrdinalIgnoreCase));
 
             return Json(new
             {
@@ -1116,6 +1142,20 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         //  ADMIN MAINTENANCE TAB
         // ════════════════════════════════════════════════════════════════════════════
 
+        private async Task<int> ResolveDefaultAccessSystemIdAsync()
+        {
+            var systemsResult = await _service.GetAllAccessSystemsAsync();
+            if (systemsResult is { Success: true, Data: not null } && systemsResult.Data.Count > 0)
+            {
+                var pimsSystem = systemsResult.Data.FirstOrDefault(x =>
+                    x.SystemName != null && x.SystemName.Equals("PIMS", StringComparison.OrdinalIgnoreCase));
+
+                return pimsSystem?.SystemId ?? systemsResult.Data[0].SystemId;
+            }
+
+            return 1;
+        }
+
         // ── Access Users Grid ────────────────────────────────────────────────────────
 
         [HttpPost]
@@ -1130,14 +1170,30 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
         private async Task<DataGridConfig<AccessUserItem>> BuildAccessUsersGridAsync(PaginationFilter<string> request)
         {
-            var result = await _service.GetAllAccessUsersAsync();
-
-            var items = result.Success && result.Data != null
-                ? _mapper.Map<List<AccessUserItem>>(result.Data)
-                : new List<AccessUserItem>();
+            var systemId = await ResolveDefaultAccessSystemIdAsync();
 
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(
                 request.Filter ?? "{}") ?? new Dictionary<string, string>();
+
+            filterDict["SystemId"] = systemId.ToString();
+
+            var query = new QueryParameters<string>
+            {
+                Page       = request.Page,
+                PageSize   = request.PageSize,
+                SortBy     = request.SortBy,
+                Descending = request.Descending,
+                Search     = request.Search,
+                Filter     = JsonConvert.SerializeObject(filterDict)
+            };
+
+            var result = await _service.GetPagedAccessUsersAsync(query);
+
+            var data = result is { Success: true, Data: not null }
+                ? result.Data
+                : new PaginatedResult<AccessUserDto>();
+
+            var items = _mapper.Map<List<AccessUserItem>>(data.data.ToList());
 
             return new DataGridConfig<AccessUserItem>
             {
@@ -1145,7 +1201,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 Title = "Users",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
-                KeyProperty = "Ntlogin",
+                KeyProperty = "CompositeKey",
                 AllowAdd = true,
                 AddFunction = "addAccessUser",
                 AllowEdit = true,
@@ -1156,7 +1212,14 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 BindGridUrl = "/PIMS/Maintenance/LoadAccessUsersGrid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<AccessUserItem>(),
-                Pagination = new PaginationModel(),
+                Pagination = new PaginationModel
+                {
+                    TotalRecords  = data.TotalCount,
+                    PageNumber    = data.PageNumber,
+                    PageSize      = data.PageSize,
+                    SortColumn    = request.SortBy,
+                    SortDirection = request.Descending
+                },
                 CurrentFilters = filterDict
             };
         }
@@ -1171,13 +1234,18 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 if (result is { Success: true, Data: not null })
                     model = _mapper.Map<AccessUserItem>(result.Data);
             }
+
             ViewBag.IsAddingNew = !systemid.HasValue;
             return PartialView("_AddEditAccessUser", model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveAccessUser(AccessUserItem item)
+        public async Task<IActionResult> SaveAccessUser(
+            AccessUserItem item,
+            bool isEditMode = false,
+            int? originalSystemid = null,
+            string? originalNtlogin = null)
         {
             if (!ModelState.IsValid)
             {
@@ -1191,23 +1259,55 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 });
             }
 
+            var shouldUpdate = isEditMode || item.SystemId > 0;
+            if (!shouldUpdate && item.SystemId <= 0)
+            {
+                item.SystemId = await ResolveDefaultAccessSystemIdAsync();
+            }
+
             var dto = _mapper.Map<AccessUserDto>(item);
-            ApiResponseDto<AccessUserDto> result = item.SystemId == 0
-                ? await _service.CreateAccessUserAsync(dto)
-                : await _service.UpdateAccessUserAsync(item.SystemId, item.NtLogin!, dto);
+
+            var routeSystemId = shouldUpdate ? (originalSystemid ?? item.SystemId) : item.SystemId;
+            var routeNtLogin = shouldUpdate
+                ? (string.IsNullOrWhiteSpace(originalNtlogin) ? item.NtLogin! : originalNtlogin)
+                : item.NtLogin!;
+
+            ApiResponseDto<AccessUserDto> result = shouldUpdate
+                ? await _service.UpdateAccessUserAsync(routeSystemId, routeNtLogin, dto)
+                : await _service.CreateAccessUserAsync(dto);
 
             return result.Success
-                ? Json(new { success = true, message = item.SystemId == 0 ? "User added successfully." : "User updated successfully." })
-                : Json(new { success = false, errors = result.Errors });
+                ? Json(new { success = true, message = shouldUpdate ? "User updated successfully." : "User added successfully." })
+                : Json(new
+                {
+                    success = false,
+                    message = result.Errors?.FirstOrDefault()?.Message ?? "Save failed.",
+                    errors = result.Errors
+                });
         }
 
         [HttpDelete]
         public async Task<IActionResult> DeleteAccessUser(int systemid, string ntlogin)
         {
+            var accessLevelsResult = await _service.GetAccessUserLevelsByUserAsync(systemid, ntlogin);
+            if (accessLevelsResult is { Success: true, Data: not null } && accessLevelsResult.Data.Any())
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "This user has User Access references. Delete related records from the User Access grid first, then delete the user."
+                });
+            }
+
             var result = await _service.DeleteAccessUserAsync(systemid, ntlogin);
             return result.Success
                 ? Json(new { success = true, message = "User deleted successfully." })
-                : Json(new { success = false, errors = result.Errors });
+                : Json(new
+                {
+                    success = false,
+                    message = result.Errors?.FirstOrDefault()?.Message ?? "Delete failed.",
+                    errors = result.Errors
+                });
         }
 
         // ── Access User Levels Grid ──────────────────────────────────────────────────
@@ -1224,6 +1324,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
         private async Task<DataGridConfig<AccessUserLevelItem>> BuildAccessUserLevelsGridAsync(PaginationFilter<string> request)
         {
+            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(
+                request.Filter ?? "{}") ?? new Dictionary<string, string>();
+
+            var systemId = await ResolveDefaultAccessSystemIdAsync();
+            filterDict["SystemId"] = systemId.ToString();
+
             var query = new QueryParameters<string>
             {
                 Page       = request.Page,
@@ -1231,19 +1337,45 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 SortBy     = request.SortBy,
                 Descending = request.Descending,
                 Search     = request.Search,
-                Filter     = request.Filter
+                Filter     = JsonConvert.SerializeObject(filterDict)
             };
 
             var result = await _service.GetPagedAccessUserLevelsAsync(query);
 
-            var data = result.Success && result.Data != null
+            var data = result is { Success: true, Data: not null }
                 ? result.Data
                 : new PaginatedResult<AccessUserLevelDto>();
 
             var items = _mapper.Map<List<AccessUserLevelItem>>(data.data.ToList());
 
-            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(
-                request.Filter ?? "{}") ?? new Dictionary<string, string>();
+            var usersResult = await _service.GetAccessUsersBySystemIdAsync(systemId);
+            var userNames = usersResult is { Success: true, Data: not null }
+                ? usersResult.Data.ToDictionary(x => x.NtLogin, x => string.IsNullOrWhiteSpace(x.UserName) ? x.NtLogin : x.UserName)
+                : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            var accessLevelsResult = await _service.GetAllAccessLevelsAsync();
+            var accessLevelNames = accessLevelsResult is { Success: true, Data: not null }
+                ? accessLevelsResult.Data
+                    .GroupBy(x => (x.SystemId, x.AccessLevelId))
+                    .ToDictionary(g => g.Key, g => g.First().AccessLevelName ?? string.Empty)
+                : new Dictionary<(int SystemId, int AccessLevelId), string>();
+
+            foreach (var item in items)
+            {
+                if (!string.IsNullOrWhiteSpace(item.NtLogin) && userNames.TryGetValue(item.NtLogin, out var userName))
+                {
+                    item.UserName = userName;
+                }
+                else
+                {
+                    item.UserName = item.NtLogin;
+                }
+
+                if (accessLevelNames.TryGetValue((item.SystemId, item.AccessLevelId), out var levelName))
+                {
+                    item.AccessLevelName = levelName;
+                }
+            }
 
             return new DataGridConfig<AccessUserLevelItem>
             {
@@ -1285,6 +1417,38 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 if (result is { Success: true, Data: not null })
                     model = _mapper.Map<AccessUserLevelItem>(result.Data);
             }
+            else
+            {
+                model.SystemId = await ResolveDefaultAccessSystemIdAsync();
+            }
+
+            var usersResult = await _service.GetAccessUsersBySystemIdAsync(model.SystemId);
+            ViewBag.AccessUserOptions = usersResult is { Success: true, Data: not null }
+                ? usersResult.Data
+                    .Select(x => new SelectListItem
+                    {
+                        Value = x.NtLogin,
+                        Text = string.IsNullOrWhiteSpace(x.UserName) ? x.NtLogin : x.UserName,
+                        Selected = string.Equals(x.NtLogin, model.NtLogin, StringComparison.OrdinalIgnoreCase)
+                    })
+                    .OrderBy(x => x.Text)
+                    .ToList()
+                : new List<SelectListItem>();
+
+            var accessLevelsResult = await _service.GetAllAccessLevelsAsync();
+            ViewBag.AccessLevelOptions = accessLevelsResult is { Success: true, Data: not null }
+                ? accessLevelsResult.Data
+                    .Where(x => x.SystemId == model.SystemId)
+                    .Select(x => new SelectListItem
+                    {
+                        Value = x.AccessLevelId.ToString(),
+                        Text = string.IsNullOrWhiteSpace(x.AccessLevelName) ? x.AccessLevelId.ToString() : x.AccessLevelName,
+                        Selected = x.AccessLevelId == model.AccessLevelId
+                    })
+                    .OrderBy(x => x.Text)
+                    .ToList()
+                : new List<SelectListItem>();
+
             ViewBag.IsAddingNew = !systemid.HasValue;
             return PartialView("_AddEditAccessUserLevel", model);
         }
@@ -1305,11 +1469,38 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 });
             }
 
+            if (item.IsEditMode)
+            {
+                var oldSystemId = item.OriginalSystemId ?? item.SystemId;
+                var oldNtLogin = string.IsNullOrWhiteSpace(item.OriginalNtLogin) ? item.NtLogin : item.OriginalNtLogin;
+                var oldAccessLevelId = item.OriginalAccessLevelId ?? item.AccessLevelId;
+
+                if (!string.Equals(oldNtLogin, item.NtLogin, StringComparison.OrdinalIgnoreCase)
+                    || oldSystemId != item.SystemId
+                    || oldAccessLevelId != item.AccessLevelId)
+                {
+                    var deleteOldResult = await _service.DeleteAccessUserLevelAsync(oldSystemId, oldNtLogin!, oldAccessLevelId);
+                    if (!deleteOldResult.Success)
+                    {
+                        return Json(new
+                        {
+                            success = false,
+                            message = deleteOldResult.Errors?.FirstOrDefault()?.Message ?? "Failed to update user access.",
+                            errors = deleteOldResult.Errors
+                        });
+                    }
+                }
+                else
+                {
+                    return Json(new { success = true, message = "User access updated successfully." });
+                }
+            }
+
             var dto = _mapper.Map<AccessUserLevelDto>(item);
             var result = await _service.CreateAccessUserLevelAsync(dto);
 
             return result.Success
-                ? Json(new { success = true, message = "User access added successfully." })
+                ? Json(new { success = true, message = item.IsEditMode ? "User access updated successfully." : "User access added successfully." })
                 : Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Save failed.", errors = result.Errors });
         }
 

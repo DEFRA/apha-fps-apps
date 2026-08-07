@@ -1,9 +1,12 @@
 using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Pagination;
 
 namespace Apha.PIMS.Core.Interfaces
 {
     public interface IAccessUserRepository
     {
+        Task<PagedData<AccessUser>> GetPagedAsync(PaginationParameters<string> query);
+
         Task<List<AccessUser>> GetAllAsync();
 
         Task<List<AccessUser>> GetBySystemIdAsync(int systemid);

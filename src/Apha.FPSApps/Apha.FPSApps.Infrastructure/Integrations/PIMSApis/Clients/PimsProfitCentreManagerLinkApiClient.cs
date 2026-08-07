@@ -13,9 +13,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
     {
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
-        // TRANSFORMENGINE: S1192 — repeated error code extracted to const
         private const string InternalCodeError = "INTERNAL_ERROR";
-        // TRANSFORMENGINE: S1192 — base URL extracted to const; matches backend ProfitCentreManagerLinkController [Route("api/v{version:apiVersion}/profitcentremanagerlink")]
+        
         private const string BaseUrl = "api/v1/profitcentremanagerlink";
 
         public PimsProfitCentreManagerLinkApiClient(IPimsHttpExecutor http, IMapper mapper)
@@ -24,7 +23,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        // TRANSFORMENGINE: GET /api/v1/profitcentremanagerlink — full list
+        
         public async Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetAllProfitCentreManagerLinksAsync()
         {
             try
@@ -44,7 +43,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/profitcentremanagerlink/profitcentres — dropdown lookup for profit centre codes
+        
         public async Task<ApiResponseDto<List<ProfitCentreLookupDto>>> GetProfitCentresAsync()
         {
             try
@@ -64,7 +63,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/profitcentremanagerlink/{profitcentre} — scoped by profit centre; Uri.EscapeDataString applied
+        
         public async Task<ApiResponseDto<List<ProfitCentreManagerLinkDto>>> GetByProfitCentreAsync(string profitCentre)
         {
             try
@@ -135,7 +134,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/profitcentremanagerlink/{profitcentre}/{manager} — composite natural PK get; Uri.EscapeDataString on both segments
+        
         public async Task<ApiResponseDto<ProfitCentreManagerLinkDto>> GetProfitCentreManagerLinkByIdAsync(string profitCentre, string manager)
         {
             try
@@ -156,7 +155,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST /api/v1/profitcentremanagerlink — create link
         public async Task<ApiResponseDto<ProfitCentreManagerLinkDto>> CreateProfitCentreManagerLinkAsync(ProfitCentreManagerLinkDto dto)
         {
             try
@@ -177,7 +175,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE /api/v1/profitcentremanagerlink/{profitcentre}/{manager} — composite natural PK delete; no PUT (no mutable fields)
+        
         public async Task<ApiResponseDto<bool>> DeleteProfitCentreManagerLinkAsync(string profitCentre, string manager)
         {
             try

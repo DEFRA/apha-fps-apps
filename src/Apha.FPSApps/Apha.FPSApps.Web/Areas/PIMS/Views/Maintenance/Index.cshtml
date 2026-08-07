@@ -150,14 +150,15 @@
                                     </label>
                                 </div>
                                 <div class="time-form-input-col">
-                                    <input type="number"
+                                    <input type="text"
                                            id="timeWorkingHours"
                                            name="timeWorkingHours"
                                            class="govuk-input govuk-!-font-size-16"
-                                           step="0.1" min="0.1" max="24"
+                                           required
                                            aria-required="true"
                                            aria-describedby="timeWorkingHoursError timeWorkingHoursHint"
-                                           value="" />
+                                           oninput="validateTimeInput(this, 'timeWorkingHoursError', 'timeWorkingHoursErrorText', 'Working Hours in a Day')"
+                                           value="@(Model.WorkingHoursSettingItem?.SettingValue ?? "")" />
                                     <p class="govuk-error-message ra-hidden" id="timeWorkingHoursError">
                                         <span class="govuk-visually-hidden">Error:</span>
                                         <span id="timeWorkingHoursErrorText">Working Hours in a Day is required</span>
@@ -179,14 +180,15 @@
                                     </label>
                                 </div>
                                 <div class="time-form-input-col">
-                                    <input type="number"
+                                    <input type="text"
                                            id="timeWorkingDays"
                                            name="timeWorkingDays"
                                            class="govuk-input govuk-!-font-size-16"
-                                           step="0.5" min="0.5" max="366"
+                                           required
                                            aria-required="true"
                                            aria-describedby="timeWorkingDaysError"
-                                           value="" />
+                                           oninput="validateTimeInput(this, 'timeWorkingDaysError', 'timeWorkingDaysErrorText', 'Working Days in a Year')"
+                                           value="@(Model.WorkingDaysSettingItem?.SettingValue ?? "")" />
                                     <p class="govuk-error-message ra-hidden" id="timeWorkingDaysError">
                                         <span class="govuk-visually-hidden">Error:</span>
                                         <span id="timeWorkingDaysErrorText">Working Days in a Year is required</span>
@@ -275,8 +277,8 @@
     <script src="~/js/common/_govuk_tabs.js"></script>
     <script>
         // Razor-generated setting IDs consumed by maintenance.js saveTimeTab()
-        window._pimsHoursId = '@(Model.WorkingHoursSettingItem?.Id ?? "WorkingHours")';
-        window._pimsDaysId  = '@(Model.WorkingDaysSettingItem?.Id  ?? "WorkingDays")';
+        window._pimsHoursId = '@(Model.WorkingHoursSettingItem?.Id ?? "HoursInDay")';
+        window._pimsDaysId  = '@(Model.WorkingDaysSettingItem?.Id  ?? "DaysInYear")';
     </script>
     <script src="~/js/pims/maintenance.js"></script>
 }

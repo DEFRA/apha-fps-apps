@@ -32,14 +32,14 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<PaginatedResult<ReportDto>>(pagedData);
         }
 
-        // TRANSFORMENGINE: returns nullable — controller maps null to 404
+       
         public async Task<ReportDto?> GetReportByIdAsync(int id)
         {
             Report? entity = await _repository.GetReportByIdAsync(id);
             return entity is null ? null : _mapper.Map<ReportDto>(entity);
         }
 
-        // TRANSFORMENGINE: validate non-null DTO before first await; maps to entity and persists
+       
         public async Task<ReportDto> CreateReportAsync(ReportDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -51,7 +51,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<ReportDto>(created);
         }
 
-        // TRANSFORMENGINE: validate existence before update — throws KeyNotFoundException if not found
+        
         public async Task<ReportDto> UpdateReportAsync(ReportDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -67,7 +67,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<ReportDto>(updated);
         }
 
-        // TRANSFORMENGINE: throws KeyNotFoundException if not found before delete
+        
         public async Task<bool> DeleteReportAsync(int id)
         {
             bool exists = await _repository.ReportExistsAsync(id);

@@ -48,6 +48,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             {
                 Projectmanager = name,
                 Email          = $"{name.Replace(". ", ".").Replace(" ", ".").ToLower()}@apha.gov.uk",
+                LoginEmail     = $"{name.Replace(". ", ".").Replace(" ", ".").ToLower()}@login.apha.gov.uk",
                 Disable        = disable
             };
 

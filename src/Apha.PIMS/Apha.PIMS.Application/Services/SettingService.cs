@@ -29,7 +29,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<List<SettingDto>>(entities);
         }
 
-        // TRANSFORMENGINE: returns nullable — controller maps null to 404; string PK lookup
+       
         public async Task<SettingDto?> GetSettingByIdAsync(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
@@ -39,7 +39,7 @@ namespace Apha.PIMS.Application.Services
             return entity is null ? null : _mapper.Map<SettingDto>(entity);
         }
 
-        // TRANSFORMENGINE: Userupdateable guard — throws InvalidOperationException if caller tries to update a non-user-updateable setting
+       
         public async Task<SettingDto> UpdateSettingAsync(SettingDto dto)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -50,8 +50,14 @@ namespace Apha.PIMS.Application.Services
             if (existing is null)
                 throw new KeyNotFoundException($"Setting '{dto.Id}' was not found.");
 
-            // TRANSFORMENGINE: enforce Userupdateable guard — protected settings may not be changed by standard update flow
-            if (existing.Userupdateable != true)
+            // Allow legacy Time-tab maintenance settings to be updated even when
+            // not flagged as user-updateable in source data (parity with Costbook/PIMS legacy behavior).
+            bool isLegacyTimeSetting =
+                string.Equals(existing.Id, "HoursInDay", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(existing.Id, "DaysInYear", StringComparison.OrdinalIgnoreCase);
+
+            
+            if (existing.Userupdateable != true && !isLegacyTimeSetting)
                 throw new InvalidOperationException(
                     $"Setting '{dto.Id}' is not user-updateable and cannot be modified through this operation.");
 

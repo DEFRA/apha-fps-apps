@@ -1,21 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ReportRepositoryTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-06
- *
- * CHANGED:
- *   - New xUnit test class for Apha.PIMS.DataAccess.Repository.ReportRepository
- *   - Uses RepositoryTestHelper + Moq (established pattern for DataAccess tests)
- *   - Covers: GetAllAsync, GetByIdAsync, AddAsync, UpdateAsync, DeleteAsync, ExistsAsync
- *
- * PRESERVED:
- *   - Integer PK (id) semantics
- *   - AsNoTracking for read operations; ExecuteDeleteAsync for set-based delete
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: ExecuteDeleteAsync and ExecuteUpdateAsync use Database.CreateExecutionStrategy
- *     which cannot be easily unit-tested; delete-path is tested via existence guard only
- */
 using Apha.Common.Helpers.Repository;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.DataAccess.Data;
