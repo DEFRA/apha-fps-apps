@@ -22,6 +22,13 @@ internal sealed class RefreshPeriodTccStep : RecreateSummariesExecutionStepBase
             .Where(x => x.Period == _period)
             .ExecuteDeleteAsync(cancellationToken);
 
+        // Keep the SERIAL sequence in sync with current table state.
+        await db.Database.ExecuteSqlRawAsync(@"
+            SELECT setval(
+                'fps.period_timecostcalcs_id_seq',
+                COALESCE((SELECT MAX(id) FROM fps.period_timecostcalcs), 0)
+            );", cancellationToken);
+
         return await db.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO fps.period_timecostcalcs
     (period, project, oracleprojectcode, subaccountcode, month, defraproject,

@@ -28,6 +28,13 @@ internal sealed class LogRecreateSummariesStep : RecreateSummariesExecutionStepB
             .Select(p => p.FpsYear)
             .FirstOrDefaultAsync(cancellationToken);
 
+        // Keep the SERIAL sequence in sync with current table state.
+        await db.Database.ExecuteSqlRawAsync(@"
+            SELECT setval(
+                'fps.recreatesummaries_log_id_seq',
+                COALESCE((SELECT MAX(id) FROM fps.recreatesummaries_log), 0)
+            );", cancellationToken);
+
         await db.RsRecreateSummariesLog.AddAsync(new RsRecreateSummariesLogTable
         {
             UserId = NormalizeTriggeredBy(_triggeredBy),
