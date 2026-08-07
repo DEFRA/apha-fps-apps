@@ -975,5 +975,90 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         #endregion
+
+        // -----------------------------------------------------------------------
+        // TriggerReject
+        // -----------------------------------------------------------------------
+
+        #region TriggerReject
+
+        [Fact]
+        public async Task TriggerReject_WhenServiceSucceeds_ReturnsJsonWithSuccessTrue()
+        {
+            // Arrange
+            const int plannedYear = 2025;
+            _yearEndService.EnqueueYearEndDataSetupRejectJobAsync(plannedYear)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.TriggerReject(plannedYear);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonElement(jsonResult);
+            Assert.True(value.GetProperty("success").GetBoolean());
+            await _yearEndService.Received(1).EnqueueYearEndDataSetupRejectJobAsync(plannedYear);
+        }
+
+        [Fact]
+        public async Task TriggerReject_WhenServiceFails_ReturnsJsonWithSuccessFalseAndErrors()
+        {
+            // Arrange
+            const int plannedYear = 2025;
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Message = "Rejection not allowed", Code = "VALIDATION_ERROR" }
+            };
+            _yearEndService.EnqueueYearEndDataSetupRejectJobAsync(plannedYear)
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.TriggerReject(plannedYear);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            var errorsArray = value.GetProperty("errors");
+            Assert.Equal(1, errorsArray.GetArrayLength());
+            Assert.Equal("Rejection not allowed", errorsArray[0].GetProperty("message").GetString());
+        }
+
+        [Fact]
+        public async Task TriggerReject_WhenServiceReturnsNullErrors_ReturnsDefaultErrorMessage()
+        {
+            // Arrange
+            const int plannedYear = 2025;
+            _yearEndService.EnqueueYearEndDataSetupRejectJobAsync(plannedYear)
+                .Returns(new ApiResponseDto<bool> { Success = false, Errors = null });
+
+            // Act
+            var result = await _controller.TriggerReject(plannedYear);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            var errorsArray = value.GetProperty("errors");
+            Assert.Equal("Failed to Reject Year End datasetup job.", errorsArray[0].GetProperty("message").GetString());
+        }
+
+        [Theory]
+        [InlineData(2025)]
+        [InlineData(2026)]
+        public async Task TriggerReject_PassesCorrectPlannedYearToService(int plannedYear)
+        {
+            // Arrange
+            _yearEndService.EnqueueYearEndDataSetupRejectJobAsync(plannedYear)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            await _controller.TriggerReject(plannedYear);
+
+            // Assert
+            await _yearEndService.Received(1).EnqueueYearEndDataSetupRejectJobAsync(plannedYear);
+        }
+
+        #endregion
     }
 }

@@ -420,5 +420,81 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
         }
 
         #endregion
+
+        // -----------------------------------------------------------------------
+        // EnqueueYearEndDataSetupRejectJobAsync
+        // -----------------------------------------------------------------------
+
+        #region EnqueueYearEndDataSetupRejectJobAsync
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenApiReturnsSuccess_ReturnsSuccessResponseWithTrue()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
+            _fpsYearEndApiClient.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _fpsYearEndApiClient.Received(1).EnqueueYearEndDataSetupRejectJobAsync(PlannedYear);
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Message = "Rejection not allowed", Code = "VALIDATION_ERROR" }
+            };
+            var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
+            _fpsYearEndApiClient.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+            await _fpsYearEndApiClient.Received(1).EnqueueYearEndDataSetupRejectJobAsync(PlannedYear);
+        }
+
+        [Theory]
+        [InlineData(2025)]
+        [InlineData(2026)]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_PassesPlannedYearToApiClient(int plannedYear)
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
+            _fpsYearEndApiClient.EnqueueYearEndDataSetupRejectJobAsync(plannedYear).Returns(expectedResponse);
+
+            // Act
+            await _sut.EnqueueYearEndDataSetupRejectJobAsync(plannedYear);
+
+            // Assert
+            await _fpsYearEndApiClient.Received(1).EnqueueYearEndDataSetupRejectJobAsync(plannedYear);
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenApiClientThrowsException_PropagatesException()
+        {
+            // Arrange
+            _fpsYearEndApiClient.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear)
+                .ThrowsAsync(new Exception("Reject failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                () => _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear));
+            Assert.Equal("Reject failed", exception.Message);
+            await _fpsYearEndApiClient.Received(1).EnqueueYearEndDataSetupRejectJobAsync(PlannedYear);
+        }
+
+        #endregion
     }
 }

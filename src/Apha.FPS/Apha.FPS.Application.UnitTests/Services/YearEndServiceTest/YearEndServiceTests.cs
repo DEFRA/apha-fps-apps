@@ -785,5 +785,127 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         }
 
         #endregion
+
+        // -----------------------------------------------------------------------
+        // EnqueueYearEndDataSetupRejectJobAsync — validation
+        // -----------------------------------------------------------------------
+
+        #region EnqueueYearEndDataSetupRejectJobAsync — validation
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenRequestedByIsEmpty_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, ContextYear, string.Empty, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_User");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenNoInitiatedRequestExists_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(false);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Approval");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenInitiatorAndRejectorAreSamePerson_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(RequestedBy);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Approval");
+        }
+
+        #endregion
+
+        // -----------------------------------------------------------------------
+        // EnqueueYearEndDataSetupRejectJobAsync — success
+        // -----------------------------------------------------------------------
+
+        #region EnqueueYearEndDataSetupRejectJobAsync — success
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenAllValid_ReturnsTrue()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueDataSetupRejectBatchJobAsync(JobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(new BatchJobEventTriggerDto());
+
+            // Act
+            var result = await _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            result.Should().BeTrue();
+            await _yearEndRepository.Received(1).EnqueueDataSetupRejectBatchJobAsync(
+                JobName, RequestedBy, CorrelationId, Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenAllValid_SendsEmail()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueDataSetupRejectBatchJobAsync(JobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(new BatchJobEventTriggerDto());
+
+            // Act
+            await _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            await _emailService.Received(1).SendEmailAsync(
+                Arg.Is<EmailMessageModel>(m => m.To.Contains("approval@example.com")),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenEmailFails_StillReturnsTrue()
+        {
+            // Arrange — email failure must be swallowed, not propagated
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
+            _yearEndRepository.EnqueueDataSetupRejectBatchJobAsync(JobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(new BatchJobEventTriggerDto());
+
+            _emailService.SendEmailAsync(Arg.Any<EmailMessageModel>(), Arg.Any<CancellationToken>())
+                .Throws(new Exception("SMTP failure"));
+
+            // Act
+            var result = await _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert — email failure swallowed; true still returned
+            result.Should().BeTrue();
+        }
+
+        #endregion
     }
 }

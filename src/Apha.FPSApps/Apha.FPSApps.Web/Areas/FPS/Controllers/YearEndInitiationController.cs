@@ -187,12 +187,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var result = await _yearEndService.EnqueueYearEndDataSetupRejectJobAsync(plannedYear);
             if (result.Success)
             {
-                _logger.LogInformation("Year End Reject job triggered");
+                _logger.LogInformation("Year End datasetup reject job triggered");
                 return Json(new { success = true });
             }
 
             var errors = result?.Errors?.Select(e => new { field = string.Empty, message = e.Message }).ToArray()
-                         ?? [new { field = string.Empty, message = "Failed to trigger Year End Approval job." }];
+                         ?? [new { field = string.Empty, message = "Failed to Reject Year End datasetup job." }];
             return Json(new { success = false, errors });
         }
         private async Task<int> GetPlannedYearAsync()
