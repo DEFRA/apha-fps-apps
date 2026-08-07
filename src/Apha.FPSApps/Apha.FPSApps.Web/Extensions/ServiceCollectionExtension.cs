@@ -1,5 +1,6 @@
 ﻿using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.ExcelImport;
+using Apha.Common.Utilities.GenericExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.Common.Utilities.Storage;
 using Apha.FPSApps.Application.Interfaces.Costbook;
@@ -67,6 +68,7 @@ namespace Apha.FPSApps.Web.Extensions
             // Apha.Common services
             services.AddScoped<IS3StorageService, S3StorageService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IGenericExcelExporter, GenericExcelExporter>();
             services.AddScoped<IExcelImportService, ExcelImportService>();
             services.AddScoped<IAppStateService, AppStateService>();
 
@@ -83,7 +85,8 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectYearCostsService, ProjectYearCostsService>();
             services.AddScoped<IMilestoneService, MilestoneService>();
             services.AddScoped<IRadTrackInvoiceService, RadTrackInvoiceService>();
-         
+            services.AddScoped<IMaintenanceService, MaintenanceService>();
+
             services.AddScoped<IYearlyFinancialDataService, YearlyFinancialDataService>();
 
             services.AddScoped<IProfitCentreService, ProfitCentreService>();
@@ -103,15 +106,17 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService, Apha.FPSApps.Application.Services.PACT.WorkGroupService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
-            services.AddScoped<IProjectStaffPlanDetailsService, ProjectStaffPlanDetailsService>();
             services.AddScoped<ITestReqBreakdownService, TestReqBreakdownService>();
             services.AddScoped<ITestActualBreakdownService, TestActualBreakdownService>();
             services.AddScoped<ITestPlanCrossTabService, TestPlanCrossTabService>();
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
+            services.AddScoped<IProjectStaffPlanDetailsService, ProjectStaffPlanDetailsService>();
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();
             services.AddScoped<Apha.FPSApps.Application.Interfaces.FPS.IUserService, Apha.FPSApps.Application.Services.FPS.UserService>();
             services.AddScoped<IRecreateSummaryService, RecreateSummaryService>();
+            services.AddScoped<IYearEndService, YearEndService>();
+            services.AddScoped<IMonthHourService, MonthHourService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
