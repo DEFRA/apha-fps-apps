@@ -1,6 +1,8 @@
 ﻿using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.ExcelImport;
+using Apha.Common.Utilities.GenericExcelExport;
 using Apha.Common.Utilities.StateManagement;
+using Apha.Common.Utilities.Storage;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
@@ -62,9 +64,14 @@ namespace Apha.FPSApps.Web.Extensions
             //   FpsYear filtering is handled by the PACT DbContext global query filter.
             services.AddScoped<ITestListVlaService, TestListVlaService>();
             services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
+
+            // Apha.Common services
+            services.AddScoped<IS3StorageService, S3StorageService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IGenericExcelExporter, GenericExcelExporter>();
             services.AddScoped<IExcelImportService, ExcelImportService>();
             services.AddScoped<IAppStateService, AppStateService>();
+
             services.AddScoped<IAdditionalCostService, AdditionalCostService>();
             services.AddScoped<IAccountCategoryService, AccountCategoryService>();
             services.AddScoped<ICostBookAccountGroupService, CostBookAccountGroupService>();
@@ -94,8 +101,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
-            
-            // FPS CRUD maintenance service for frmMaintWorkGroup2 (distinct from PACT IWorkGroupService read-only lookup)
+           
             services.AddScoped<IWorkgroupMaintenanceService, WorkgroupMaintenanceService>();
             services.AddScoped<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService, Apha.FPSApps.Application.Services.PACT.WorkGroupService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();

@@ -306,5 +306,12 @@ namespace Apha.FPS.Application.Services
                 _mapper.Map<PaginationParameters<string>>(query), workgroup);
             return _mapper.Map<PaginatedResult<ProjectStaffReplanDto>>(pagedResult);
         }
+
+        public async Task<PaginatedResult<ProjectExceptionalCostViewDto>> GetProjectExceptionalCostsPagedAsync(QueryParameters<string> query)
+        {
+            var pagedResult = await _projectRepository.GetProjectExceptionalCostsPagedAsync(
+                _mapper.Map<PaginationParameters<string>>(query));
+            return _mapper.Map<PaginatedResult<ProjectExceptionalCostViewDto>>(pagedResult);
+        }
     }
 }
