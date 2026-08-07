@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Apha.FPSApps.Application.Dtos.PACT
 {
     public class TimeSaleWorkGroupDto
@@ -7,7 +9,8 @@ namespace Apha.FPSApps.Application.Dtos.PACT
         public double? Time { get; set; }
         public double? Cost { get; set; }
         public double Month { get; set; }
-        public string? PlanCat { get; set; }
+        [Display(Name = "PlanCat")]
+        public string? PlanCategory { get; set; }
         public string? Program { get; set; }
         public string? Project { get; set; }
         public string? JobCode { get; set; }

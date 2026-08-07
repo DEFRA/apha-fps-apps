@@ -93,10 +93,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TestPriceCheckDto, TestPriceCheckReq>();
             CreateMap<TimePurchaseProjectDto, TimePurchaseProjectRes>().ReverseMap();
             CreateMap<TimeSaleProfitCentreDto, TimeSaleProfitCentreRes>().ReverseMap();
-            CreateMap<TimeSaleWorkGroupDto, TimeSaleWorkGroupRes>()
-                .ForMember(dest => dest.PlanCategory, opt => opt.MapFrom(src => src.PlanCat));
-            CreateMap<TimeSaleWorkGroupRes, TimeSaleWorkGroupDto>()
-                .ForMember(dest => dest.PlanCat, opt => opt.MapFrom(src => src.PlanCategory));
+            CreateMap<TimeSaleWorkGroupDto, TimeSaleWorkGroupRes>().ReverseMap();
             CreateMap<TestSaleSellingWorkgroupDto, TestSaleSellingWorkgroupRes>().ReverseMap();
             CreateMap<TestSaleBuyingProjectDto, TestSaleBuyingProjectRes>().ReverseMap();
             CreateMap<WgTestCapabilitiesWithDescriptionDto, WgTestCapabilitiesWithDescriptionRes>().ReverseMap();
