@@ -480,8 +480,7 @@
                 if (raw === '') {
                     data[field] = null;
                 } else {
-                    var parsed = Number(raw);
-                    data[field] = isNaN(parsed) ? null : parsed;
+                    data[field] = isNaN(raw) ? null : raw;
                 }
             });
             ['TransferIncome', 'CustIncome', 'IsDefraProject'].forEach(function (field) {
