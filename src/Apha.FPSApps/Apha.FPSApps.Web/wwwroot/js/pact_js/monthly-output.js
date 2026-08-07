@@ -290,6 +290,12 @@ function editMonthlyOutputLive(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            // Initialize jQuery Unobtrusive Validation
+            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
+                $.validator.unobtrusive.parse('#monthlyOutputLiveForm');
+            }
+            // Attach numeric validation
+            attachNumericValidation();
             initLiveModalWorkGroupDropdown();
         },
         error: function () {
@@ -335,6 +341,17 @@ function initLiveModalWorkGroupDropdown() {
 
 function saveMonthlyOutputLive() {
     const form = $('#monthlyOutputLiveForm');
+    // Trigger validation on all decfmt-input fields to ensure errors are shown
+    form.find('.decfmt-input').each(function () {
+        $(this).trigger('blur');
+    });
+
+    // Check for numeric validation errors BEFORE clearing validation messages
+    const hasNumericErrors = form.find('.govuk-input--error').length > 0;
+    if (hasNumericErrors) {
+        showAlertMessage('Please correct the validation errors before saving.', AlertType.ERROR);
+        return;
+    }
     clearValidationErrors(form);
 
     if (!isFormValid(form)) {
@@ -408,6 +425,12 @@ function addStagingMonthlyOutput() {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            // Initialize jQuery Unobtrusive Validation
+            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
+                $.validator.unobtrusive.parse('#monthlyOutputLiveForm');
+            }
+            // Attach numeric validation
+            attachNumericValidation();
             initStagingModalDropdowns(null, null, null);
         },
         error: function () {
@@ -425,6 +448,13 @@ function editStagingMonthlyOutput(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            $('#modalPopup').addClass('show');
+            // Initialize jQuery Unobtrusive Validation
+            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
+                $.validator.unobtrusive.parse('#monthlyOutputLiveForm');
+            }
+            // Attach numeric validation
+            attachNumericValidation();
             const workGroup  = $('#StagingWorkGroup').val();
             const existingTestCode = $('#StagingTestCode').val();
             const existingBuyer    = $('#StagingBuyer').val();
@@ -675,6 +705,17 @@ function loadStagingModalBuyersByTestCode(workGroup, testCode, restoreBuyer) {
 
 function saveStagingMonthlyOutput() {
     const form = $('#stagingMonthlyOutputForm');
+    // Trigger validation on all decfmt-input fields to ensure errors are shown
+    form.find('.decfmt-input').each(function () {
+        $(this).trigger('blur');
+    });
+
+    // Check for numeric validation errors BEFORE clearing validation messages
+    const hasNumericErrors = form.find('.govuk-input--error').length > 0;
+    if (hasNumericErrors) {
+        showAlertMessage('Please correct the validation errors before saving.', AlertType.ERROR);
+        return;
+    }
     clearValidationErrors(form);
 
     if (!isFormValid(form)) {
