@@ -322,5 +322,109 @@ namespace Apha.PACT.DataAccess.Repository
             return query;
         }
 
+        // ── TestFeePlan (Plan test-fee report) ─────────────────────────────────────
+
+        public async Task<PagedData<TestFeePlanView>> GetTestSnapshotPagedAsync(PaginationParameters<string> query)
+        {
+            // Version is a per-run constant ("Plan - " & Date()); compute once and embed in the query.
+            var version = $"Plan - {DateTime.Now:dd/MM/yyyy}";
+
+            // Step 1 — IQueryable: build base join query (Version and TestFee are part of the projection
+            // so that filtering and sorting can operate on them SQL-side).
+            var baseQuery = BuildTestFeePlanBaseQuery(version);
+
+            // Step 2 — SQL-side column filter.
+            baseQuery = ApplyTestFeePlanFilter(baseQuery, query.Filter);
+
+            // Step 3 — SQL-side sorting.
+            var sorted = ApplyTestFeePlanSorting(baseQuery, query.SortBy, query.Descending);
+
+            // Step 4 — SQL-side paging (COUNT + LIMIT/OFFSET).
+            return await ApplyPaging(sorted, query.Page, query.PageSize);
+        }
+
+        private IQueryable<TestFeePlanView> BuildTestFeePlanBaseQuery(string version)
+        {
+            return (from tp in _context.TestorProducts
+                    join tr in _context.TestRequirements on tp.ItemCode equals tr.TestCode
+                    join prj in _context.Projects on tr.Buyer equals prj.ParentProject
+                    join prg in _context.Programs on prj.Program equals prg.ProgramNo
+                    where tr.NoRequired != 0
+                    select new TestFeePlanView
+                    {
+                        Version = version,
+                        Directorate = prg.Directorate,
+                        Customer = prj.Customer,
+                        Program = prj.Program,
+                        Contract = prj.Contract,
+                        Project = prj.ParentProject,
+                        Status = prj.ProjectStatus,
+                        TestCode = tr.TestCode,
+                        UnitPrice = tr.UnitPrice,
+                        NoTests = tr.NoRequired,
+                        TestFee = tr.NoRequired * (double?)tr.UnitPrice,
+                        Owner = tp.Owner,
+                        FpsYear = tr.FpsYear
+                    }).Distinct().AsNoTracking();
+        }
+
+        private static IQueryable<TestFeePlanView> ApplyTestFeePlanSorting(
+            IQueryable<TestFeePlanView> source, string? sortBy, bool descending)
+        {
+            return sortBy?.ToLower() switch
+            {
+                "version" => ApplyOrder(source, x => x.Version, descending),
+                "directorate" => ApplyOrder(source, x => x.Directorate, descending),
+                "customer" => ApplyOrder(source, x => x.Customer, descending),
+                "program" => ApplyOrder(source, x => x.Program, descending),
+                "contract" => ApplyOrder(source, x => x.Contract, descending),
+                "project" => ApplyOrder(source, x => x.Project, descending),
+                "status" => ApplyOrder(source, x => x.Status, descending),
+                "testcode" => ApplyOrder(source, x => x.TestCode, descending),
+                "unitprice" => ApplyOrder(source, x => x.UnitPrice, descending),
+                "notests" => ApplyOrder(source, x => x.NoTests, descending),
+                "testfee" => ApplyOrder(source, x => x.TestFee, descending),
+                "owner" => ApplyOrder(source, x => x.Owner, descending),
+                _ => source.OrderBy(x => x.Directorate).ThenBy(x => x.Program).ThenBy(x => x.Project),
+            };
+        }
+
+        private static IQueryable<TestFeePlanView> ApplyTestFeePlanFilter(
+            IQueryable<TestFeePlanView> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("Version", out var ver) && ver != null)
+                query = query.Where(x => x.Version != null && EF.Functions.ILike(x.Version, $"%{ver}%"));
+            if (dict.TryGetValue("Directorate", out var dir) && dir != null)
+                query = query.Where(x => x.Directorate != null && EF.Functions.ILike(x.Directorate, $"%{dir}%"));
+            if (dict.TryGetValue("Customer", out var cust) && cust != null)
+                query = query.Where(x => x.Customer != null && EF.Functions.ILike(x.Customer, $"%{cust}%"));
+            if (dict.TryGetValue("Program", out var pg) && pg != null)
+                query = query.Where(x => x.Program != null && EF.Functions.ILike(x.Program, $"%{pg}%"));
+            if (dict.TryGetValue("Contract", out var con) && con != null)
+                query = query.Where(x => x.Contract != null && EF.Functions.ILike(x.Contract, $"%{con}%"));
+            if (dict.TryGetValue("Project", out var proj) && proj != null)
+                query = query.Where(x => x.Project != null && EF.Functions.ILike(x.Project, $"%{proj}%"));
+            if (dict.TryGetValue("Status", out var st) && st != null)
+                query = query.Where(x => x.Status != null && EF.Functions.ILike(x.Status, $"%{st}%"));
+            if (dict.TryGetValue("TestCode", out var tc) && tc != null)
+                query = query.Where(x => EF.Functions.ILike(x.TestCode, $"%{tc}%"));
+            if (dict.TryGetValue("Owner", out var ow) && ow != null)
+                query = query.Where(x => x.Owner != null && EF.Functions.ILike(x.Owner, $"%{ow}%"));
+            if (dict.TryGetValue("TestFee", out var fee) && fee != null
+                && double.TryParse(fee.ToString(), out var feeVal))
+                query = query.Where(x => x.TestFee == feeVal);
+
+            return query;
+        }
+
     }
 }
