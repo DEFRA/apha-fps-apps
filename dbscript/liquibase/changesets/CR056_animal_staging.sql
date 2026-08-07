@@ -1,7 +1,7 @@
 
 --liquibase formatted sql
 
---changeset repo-admin:CR056 labels:AnimalStaging context:all
+--changeset repo-admin:CR056 labels:AnimalStaging context:all splitStatements:false
 
 
 SET search_path TO fps;
