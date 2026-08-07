@@ -71,7 +71,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
             _yearEndService.GetCanInitiateDataSetupRequestAsync(JobName)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(canInitiate));
 
-            _yearEndService.GetCanApproveDataSetupRequestAsync(JobName)
+            _yearEndService.GetCanApproveOrRejectDataSetupRequestAsync(JobName)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(canApprove));
 
             _settingService.GetYearEndSettingsAsync()
@@ -186,7 +186,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
 
             _yearEndService.GetCanInitiateDataSetupRequestAsync(JobName)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(false));
-            _yearEndService.GetCanApproveDataSetupRequestAsync(JobName)
+            _yearEndService.GetCanApproveOrRejectDataSetupRequestAsync(JobName)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(false));
             _settingService.GetYearEndSettingsAsync()
                 .Returns(ApiResponseDto<List<YearEndSettingDto>>.SuccessResponse([]));

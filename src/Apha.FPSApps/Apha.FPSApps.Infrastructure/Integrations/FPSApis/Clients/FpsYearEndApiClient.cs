@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
-        public async Task<ApiResponseDto<bool>> GetCanApproveDataSetupRequestAsync(string jobName)
+        public async Task<ApiResponseDto<bool>> GetCanApproveOrRejectDataSetupRequestAsync(string jobName)
         {
             var url = $"{FpsApiEndpoints.GetCanApproveDataSetupRequest}?jobName={Uri.EscapeDataString(jobName)}";
             var response = await _http.GetAsync<bool>(url);

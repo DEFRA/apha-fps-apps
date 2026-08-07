@@ -236,7 +236,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
 
             // Act
-            var result = await _sut.CanApproveYearEndDataSetupRequestAsync(JobName);
+            var result = await _sut.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName);
 
             // Assert
             result.Should().BeTrue();
@@ -250,7 +250,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(false);
 
             // Act
-            var result = await _sut.CanApproveYearEndDataSetupRequestAsync(JobName);
+            var result = await _sut.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName);
 
             // Assert
             result.Should().BeFalse();
@@ -265,7 +265,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
                 .Throws(new Exception("Repository error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _sut.CanApproveYearEndDataSetupRequestAsync(JobName));
+            await Assert.ThrowsAsync<Exception>(() => _sut.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName));
         }
 
         #endregion
@@ -315,7 +315,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear)
-                .Returns(new YearMaster { FpsYear = PlannedYear, YearStatus = "Closed", Active = true });
+                .Returns(new YearMaster { FpsYear = PlannedYear, YearStatus = "planned", Active = true });
             _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(JobName).Returns(true);
 
             // Act & Assert
@@ -595,7 +595,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear)
-                .Returns(new YearMaster { FpsYear = PlannedYear, YearStatus = "Closed", Active = true });
+                .Returns(new YearMaster { FpsYear = PlannedYear, YearStatus = "close", Active = true });
             _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
 

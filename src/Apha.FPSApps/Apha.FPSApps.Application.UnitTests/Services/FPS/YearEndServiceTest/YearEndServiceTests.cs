@@ -195,16 +195,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
         {
             // Arrange
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
-            _fpsYearEndApiClient.GetCanApproveDataSetupRequestAsync(JobName).Returns(expectedResponse);
+            _fpsYearEndApiClient.GetCanApproveOrRejectDataSetupRequestAsync(JobName).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetCanApproveDataSetupRequestAsync(JobName);
+            var result = await _sut.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _fpsYearEndApiClient.Received(1).GetCanApproveDataSetupRequestAsync(JobName);
+            await _fpsYearEndApiClient.Received(1).GetCanApproveOrRejectDataSetupRequestAsync(JobName);
         }
 
         [Fact]
@@ -212,16 +212,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
         {
             // Arrange
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(false);
-            _fpsYearEndApiClient.GetCanApproveDataSetupRequestAsync(JobName).Returns(expectedResponse);
+            _fpsYearEndApiClient.GetCanApproveOrRejectDataSetupRequestAsync(JobName).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetCanApproveDataSetupRequestAsync(JobName);
+            var result = await _sut.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.False(result.Data);
-            await _fpsYearEndApiClient.Received(1).GetCanApproveDataSetupRequestAsync(JobName);
+            await _fpsYearEndApiClient.Received(1).GetCanApproveOrRejectDataSetupRequestAsync(JobName);
         }
 
         [Fact]
@@ -230,29 +230,29 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
             // Arrange
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Forbidden", Code = "FORBIDDEN" } };
             var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
-            _fpsYearEndApiClient.GetCanApproveDataSetupRequestAsync(JobName).Returns(expectedResponse);
+            _fpsYearEndApiClient.GetCanApproveOrRejectDataSetupRequestAsync(JobName).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetCanApproveDataSetupRequestAsync(JobName);
+            var result = await _sut.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            await _fpsYearEndApiClient.Received(1).GetCanApproveDataSetupRequestAsync(JobName);
+            await _fpsYearEndApiClient.Received(1).GetCanApproveOrRejectDataSetupRequestAsync(JobName);
         }
 
         [Fact]
         public async Task GetCanApproveDataSetupRequestAsync_WhenApiClientThrowsException_PropagatesException()
         {
             // Arrange
-            _fpsYearEndApiClient.GetCanApproveDataSetupRequestAsync(JobName)
+            _fpsYearEndApiClient.GetCanApproveOrRejectDataSetupRequestAsync(JobName)
                 .ThrowsAsync(new Exception("API unavailable"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(
-                () => _sut.GetCanApproveDataSetupRequestAsync(JobName));
+                () => _sut.GetCanApproveOrRejectDataSetupRequestAsync(JobName));
             Assert.Equal("API unavailable", exception.Message);
-            await _fpsYearEndApiClient.Received(1).GetCanApproveDataSetupRequestAsync(JobName);
+            await _fpsYearEndApiClient.Received(1).GetCanApproveOrRejectDataSetupRequestAsync(JobName);
         }
 
         #endregion

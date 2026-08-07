@@ -268,7 +268,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
                  .Returns(apiResponse);
 
             // Act
-            var result = await _client.GetCanApproveDataSetupRequestAsync(JobName);
+            var result = await _client.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
@@ -286,7 +286,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
-            var result = await _client.GetCanApproveDataSetupRequestAsync(JobName);
+            var result = await _client.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
@@ -311,7 +311,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            var result = await _client.GetCanApproveDataSetupRequestAsync(JobName);
+            var result = await _client.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
@@ -327,7 +327,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
-            await _client.GetCanApproveDataSetupRequestAsync(JobName);
+            await _client.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             await _http.Received(1).GetAsync<bool>(

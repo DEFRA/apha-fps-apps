@@ -21,8 +21,8 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<bool>> GetCanInitiateDataSetupRequestAsync(string jobName)
             => await _fpsClient.FpsYearEnd.GetCanInitiateDataSetupRequestAsync(jobName);
 
-        public async Task<ApiResponseDto<bool>> GetCanApproveDataSetupRequestAsync(string jobName)
-            => await _fpsClient.FpsYearEnd.GetCanApproveDataSetupRequestAsync(jobName);
+        public async Task<ApiResponseDto<bool>> GetCanApproveOrRejectDataSetupRequestAsync(string jobName)
+            => await _fpsClient.FpsYearEnd.GetCanApproveOrRejectDataSetupRequestAsync(jobName);
 
         public async Task<ApiResponseDto<BatchJobQueueDto>> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear)
             => await _fpsClient.FpsYearEnd.EnqueueYearEndDataSetupInitiationJobAsync(plannedYear);

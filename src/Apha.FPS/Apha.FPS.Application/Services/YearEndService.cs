@@ -61,7 +61,7 @@ namespace Apha.FPS.Application.Services
             return await _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(jobName);
         }
 
-        public async Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName)
+        public async Task<bool> CanApproveOrRejectYearEndDataSetupRequestAsync(string jobName)
         {
             return await _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(jobName);
         }
@@ -175,9 +175,16 @@ namespace Apha.FPS.Application.Services
 
             var plannedYearEntity = await _yearMasterRepository.GetFpsYearByIdAsync(plannedYear);
 
-            if (plannedYearEntity != null && string.Equals(plannedYearEntity.YearStatus, "planned", StringComparison.OrdinalIgnoreCase))
+            if (plannedYearEntity != null)
             {
-                errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year {plannedYear}. You cannot reinitiate or approve request.", "INVALID_Rerun"));
+                if (!isApprovalRequest)
+                {
+                    errors.Add(new BusinessValidationError($"YearEnd Datasetup already initiated for the planned year {plannedYear}. You cannot reinitiate request.", "INVALID_Rerun"));
+                }
+                else if (isApprovalRequest)
+                {
+                    errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year {plannedYear}. You cannot approve request.", "INVALID_Rerun"));
+                }
             }
 
             if (isApprovalRequest)

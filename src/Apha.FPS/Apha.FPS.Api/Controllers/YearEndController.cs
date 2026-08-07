@@ -63,10 +63,10 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with <c>true</c> if initiate request exists for the job; <c>false</c> if no initiate request exists for the job.</returns>
-        [HttpGet("dataSetup/canapprove")]
-        public async Task<IActionResult> CanApproveYearEndDataSetupRequestAsync([FromQuery] string jobName)
+        [HttpGet("dataSetup/canapproveorreject")]
+        public async Task<IActionResult> CanApproveOrRejectYearEndDataSetupRequestAsync([FromQuery] string jobName)
         {
-            var result = await _yearEndService.CanApproveYearEndDataSetupRequestAsync(jobName);
+            var result = await _yearEndService.CanApproveOrRejectYearEndDataSetupRequestAsync(jobName);
             return Ok(result);
         }
 

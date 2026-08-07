@@ -9,7 +9,7 @@ namespace Apha.FPS.Application.Interfaces
 
         Task<bool> CanInitiateYearEndDataSetupRequestAsync(string jobName);
 
-        Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName);
+        Task<bool> CanApproveOrRejectYearEndDataSetupRequestAsync(string jobName);
 
         Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, int contextyear, string requestedBy, string correlationId);
 

@@ -45,7 +45,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var plannedYear = await GetPlannedYearAsync();
             var canInitiate = await GetCanInitiateDataSetupRequestAsync();
-            var canApprove = await GetCanApproveDataSetupRequestAsync();
+            var canApprove = await GetCanApproveOrRejectDataSetupRequestAsync();
             var configValuesGrid = await BuildConfigValuesGridAsync();
             var monthHoursGrid = await BuildMonthHoursGridAsync();
             var historyGrid = await BuildHistoryGridAsync(new PaginationFilter<string> { Filter = "{}" });
@@ -207,9 +207,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return result.Success && result.Data;
         }
 
-        private async Task<bool> GetCanApproveDataSetupRequestAsync()
+        private async Task<bool> GetCanApproveOrRejectDataSetupRequestAsync()
         {
-            var result = await _yearEndService.GetCanApproveDataSetupRequestAsync(YearEndInitiationJobName);
+            var result = await _yearEndService.GetCanApproveOrRejectDataSetupRequestAsync(YearEndInitiationJobName);
             return result.Success && result.Data;
         }
         private async Task<DataGridConfig<YearEndConfigValueItem>> BuildConfigValuesGridAsync()
