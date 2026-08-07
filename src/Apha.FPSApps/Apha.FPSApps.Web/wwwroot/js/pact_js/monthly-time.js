@@ -1029,8 +1029,13 @@ function importMonthlyTime(file) {
                 showAlertMessage(response.message || 'Import failed.', AlertType.ERROR);
             }
         },
-        error: function () {
-            showAlertMessage('An error occurred while importing.', AlertType.ERROR);
+        error: function (xhr) {
+            const errorMessage = xhr?.responseJSON?.message
+                || xhr?.responseText
+                || xhr?.statusText
+                || 'An error occurred while importing.';
+
+            showAlertMessage(errorMessage, AlertType.ERROR);
         },
         complete: function () {
             hideLoader();

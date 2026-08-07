@@ -13,8 +13,8 @@ namespace Apha.Common.Utilities.ExcelImport
         {
             var result = new ExcelImportResult<T>();
 
-            try
-            {
+            //try
+            //{
                 var worksheet = workbook.Worksheet(worksheetIndex);
                 var usedRows = worksheet.RangeUsed()?.RowsUsed().ToList() ?? new List<IXLRangeRow>();
 
@@ -52,12 +52,12 @@ namespace Apha.Common.Utilities.ExcelImport
 
                 result.TotalRows = result.Rows.Count;
                 result.IsSuccess = true;
-            }
-            catch (Exception ex)
-            {
-                result.IsSuccess = false;
-                result.ErrorMessage = $"Error reading Excel file: {ex.Message}";
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    result.IsSuccess = false;
+            //    result.ErrorMessage = $"Error reading Excel file: {ex.Message}";
+            //}
 
             return result;
         }
