@@ -12,10 +12,10 @@ namespace Apha.Common.Utilities.ExcelImport
             string? invalidTemplateErrorMessage = null)
         {
             var result = new ExcelImportResult<T>();
-
+            Console.WriteLine($"ExcelImportService: 15 ");
             //try
             //{
-                var worksheet = workbook.Worksheet(worksheetIndex);
+            var worksheet = workbook.Worksheet(worksheetIndex);
                 var usedRows = worksheet.RangeUsed()?.RowsUsed().ToList() ?? new List<IXLRangeRow>();
 
                 if (usedRows.Count <= 1)
@@ -58,7 +58,7 @@ namespace Apha.Common.Utilities.ExcelImport
             //    result.IsSuccess = false;
             //    result.ErrorMessage = $"Error reading Excel file: {ex.Message}";
             //}
-
+            Console.WriteLine($"ExcelImportService: 61 completed ");
             return result;
         }
 

@@ -177,14 +177,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportStagingAsync(MonthlyTimeImportReqDto request)
         {
+            Console.WriteLine($"Api client: 180 ");
             var req = _mapper.Map<MonthlyTimeImportReq>(request);
             var response = await _http.PostAsync<MonthlyTimeImportReq, MonthlyTimeImportRes>(PactApiEndpoints.ImportStagingMonthlyTime, req);
             if (response.Success)
             {
+                Console.WriteLine($"Api client: 185 ImportStagingAsync succeeded");
                 var dto = _mapper.Map<MonthlyTimeImportResultDto>(response.Data);
                 return ApiResponseDto<MonthlyTimeImportResultDto>.SuccessResponse(dto);
             }
-
+            Console.WriteLine($"Api client: 190 ImportStagingAsync failed");
             var failDto = _mapper.Map<ApiResponseDto<MonthlyTimeImportResultDto>>(response);
             return ApiResponseDto<MonthlyTimeImportResultDto>.FailureResponse(failDto.Errors, failDto.Meta ?? new ApiMetaDto());
         }

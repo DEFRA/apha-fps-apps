@@ -165,7 +165,7 @@ namespace Apha.FPSApps.Application.Services.PACT
 
             bufferStream.Position = 0;
             using var workbook = new XLWorkbook(bufferStream);
-
+            Console.WriteLine($"Service:PactMonthlyTimeService: 168");
             var importResponse = importType switch
             {
                 1 => await ImportOtlDataAsync(file.FileName, workbook),
@@ -219,14 +219,17 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         private async Task<ApiResponseDto<MonthlyTimeImportResultDto>> ImportFlatFileAsync(string fileName, XLWorkbook workbook)
         {
+            Console.WriteLine($"Service:PactMonthlyTimeService: 222 ImportFlatFileAsync");
             if (!TryGetTimeFileMetadata(fileName, out var workGroupFromFile, out var monthFromFile))
             {
+                Console.WriteLine($"Service:PactMonthlyTimeService: 225 failed file structure");
                 return ApiResponseDto<MonthlyTimeImportResultDto>.FailureResponse(
                     [new ApiErrorDto { Code = "INVALID_FILENAME", Message = "Filename must contain WorkGroup and Month before TS (e.g. WorkGroup01TS.xlsx)." }],
                     new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
             }
 
             var requiredHeaders = new[] { "Work Group", "Name", "Time Code", "Parent Project", "Month", "Hours" };
+            Console.WriteLine($"Service:PactMonthlyTimeService: 232 ImportFlatFileAsync");
             var importResult = _excelImportService.ReadExcel(
                 workbook,
                 (row, headerMap) => MapFlatFileRow(row, headerMap, workGroupFromFile, monthFromFile),
@@ -235,6 +238,7 @@ namespace Apha.FPSApps.Application.Services.PACT
                 "The uploaded Excel file format is not correct. Please use the correct flat-file template.");
             if (!importResult.IsSuccess)
             {
+                Console.WriteLine($"Service:PactMonthlyTimeService: 241 failed import");
                 return BuildImportFailure(importResult, "INVALID_TEMPLATE", "EMPTY_FILE");
             }
 
@@ -244,7 +248,7 @@ namespace Apha.FPSApps.Application.Services.PACT
                 ImportType = 2,
                 Rows = importResult.Rows
             };
-
+            
             return await _pactApiClient.PactMonthlyTime.ImportStagingAsync(request);
         }
 

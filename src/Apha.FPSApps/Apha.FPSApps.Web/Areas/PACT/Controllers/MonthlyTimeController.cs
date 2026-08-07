@@ -392,21 +392,31 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             if (file == null || file.Length == 0)
                 return Json(new { success = false, message = "Please select an Excel file to import." });
-
-            var response = await _monthlyTimeService.ImportMonthlyTimeAsync(file, importType);
-            if (response.Success && response.Data != null)
+            try
             {
-                return Json(new
+                Console.WriteLine($"Importing file: {file.FileName}, Size: {file.Length} bytes, ImportType: {importType}");
+                var response = await _monthlyTimeService.ImportMonthlyTimeAsync(file, importType);
+                if (response.Success && response.Data != null)
                 {
-                    success = true,
-                    importedCount = response.Data.ImportedCount,
-                    passedCount = response.Data.PassedCount,
-                    failedCount = response.Data.FailedCount,
-                    message = response.Data.Message
-                });
+                    Console.WriteLine($"Import successful: ImportedCount={response.Data.ImportedCount}, PassedCount={response.Data.PassedCount}, FailedCount={response.Data.FailedCount}");
+                    return Json(new
+                    {
+                        success = true,
+                        importedCount = response.Data.ImportedCount,
+                        passedCount = response.Data.PassedCount,
+                        failedCount = response.Data.FailedCount,
+                        message = response.Data.Message
+                    });
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("Exception during import: " + ex.Message);
+                Console.WriteLine("Stack Trace: " + ex.StackTrace);
+                return Json(new { success = false, message = ex.Message });    
             }
 
-            return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Import failed." });
+            return Json(new { success = false, message = "Import failed." });
         }
 
         /// <summary>
