@@ -454,7 +454,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="edit-action-buttons govuk-!-text-align-right govuk-grid-column-two-thirds govuk-!-padding-right-9 govuk-!-margin-right-9">
+                                    <div class="edit-action-buttons  govuk-grid-column-two-thirds govuk-!-text-align-right">
                                         <a asp-area="CostBook" asp-controller="Projects" asp-action="Index" class="govuk-button govuk-button--secondary govuk-!-margin-right-3">Cancel</a>
                                         <button type="submit" class="govuk-button govuk-!-margin-right-2">Save</button>
                                     </div>
@@ -517,7 +517,7 @@
                     e.preventDefault();
                     $startFg.addClass('govuk-form-group--error');
                     $startDisplay.addClass('govuk-input--error');
-                    $startMsg.text('Please enter Start Date')
+                    $startMsg.text('Start Date is required.')
                              .removeClass('field-validation-valid')
                              .addClass('field-validation-error')
                              .show();

@@ -295,6 +295,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             var response = await _http.GetAsync<List<ProjectYearManagerRes>>(
                 string.Format(PimsApiEndpoints.GetProjectYearManagers, year));
+
+            if (response.Success && (response.Data == null || response.Data.Count == 0))
+                return ApiResponseDto<List<ProjectYearManagerDto>>.SuccessResponse([]);
+
             if (response.Success && response.Data != null)
                 return _mapper.Map<ApiResponseDto<List<ProjectYearManagerDto>>>(response);
 

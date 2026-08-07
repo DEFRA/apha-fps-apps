@@ -29,7 +29,7 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetProjectYearManagers(int year)
         {
             List<ProjectYearManagerDto> result = await _service.GetProjectYearManagersAsync(year);
-            return Ok(_mapper.Map<List<ProjectYearManagerRes>>(result));
+            return Ok(_mapper.Map<List<ProjectYearManagerRes>>(result) ?? []);
         }
 
         [HttpGet("milestones")]

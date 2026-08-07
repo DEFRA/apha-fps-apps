@@ -108,16 +108,21 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             Dictionary<string, string> filterDict =
                 JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new();
 
-            QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _milestoneService.GetPMDMilestonesAsync(queryParameters, parentproject);
-
             List<MilestoneItem> items = new();
-            if (pagedData.Success && pagedData.Data != null)
-                items = _mapper.Map<List<MilestoneItem>>(pagedData.Data);
+            PaginationModel paginationModel = new();
 
-            PaginationModel paginationModel = pagedData.Pagination is null
-                ? new PaginationModel()
-                : _mapper.Map<PaginationModel>(pagedData.Pagination);
+            if (!string.IsNullOrWhiteSpace(parentproject))
+            {
+                QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+                var pagedData = await _milestoneService.GetPMDMilestonesAsync(queryParameters, parentproject);
+
+                if (pagedData.Success && pagedData.Data != null)
+                    items = _mapper.Map<List<MilestoneItem>>(pagedData.Data);
+
+                if (pagedData.Pagination is not null)
+                    paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination);
+            }
+
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
