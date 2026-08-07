@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset repo-admin:CR045 labels:job_queue_upload context:all
+--changeset repo-admin:CR045 labels:job_queue_upload context:all splitStatements:false
 
 
 BEGIN;
