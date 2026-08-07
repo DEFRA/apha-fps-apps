@@ -63,12 +63,8 @@ function addInvoice() {
         function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-            // Initialize jQuery Unobtrusive Validation
-            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-                $.validator.unobtrusive.parse('#invoiceForm');
-            }
-            // Attach numeric validation
-            attachNumericValidation();
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#invoiceForm');
         })
         .fail(function(xhr, status, error) {
             showAlertMessage('Error loading form: ' + error, AlertType.ERROR);
@@ -80,12 +76,8 @@ function editInvoice(btn) {
     $.get('/PACT/Invoice/GetInvoice', { id: id }, function (html) {
         $('#modaPopupBody').html(html);
         $('#modalPopup').addClass('show');
-        // Initialize jQuery Unobtrusive Validation
-        if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-            $.validator.unobtrusive.parse('#invoiceForm');
-        }
-        // Attach numeric validation
-        attachNumericValidation();
+        // Initialize form validation (unobtrusive + numeric)
+        initializeFormValidation('#invoiceForm');
     })
     .fail(function(xhr, status, error) {
         showAlertMessage('Error loading form: ' + error, AlertType.ERROR);

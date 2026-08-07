@@ -361,10 +361,8 @@ function editMonthlyTimeLive(btn) {
             const existingName = $('#LiveName').val();
             const existingPactId = $('#LivePactStaffId').val();
             initLiveModalDropdowns(workGroup, existingName, existingPactId);
-            // Attach numeric validation to decimal fields
-            if (typeof attachNumericValidation === 'function') {
-                attachNumericValidation();
-            }
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#monthlyTimeLiveForm');
         },
         error: function () {
             showAlertMessage('Failed to load monthly time record.', AlertType.ERROR);
@@ -560,10 +558,8 @@ function addStagingMonthlyTime() {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             initStagingModalDropdowns(null);
-            // Attach numeric validation to decimal fields
-            if (typeof attachNumericValidation === 'function') {
-                attachNumericValidation();
-            }
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#monthlyTimeLiveForm');
         },
         error: function () {
             showAlertMessage('Failed to load add form.', AlertType.ERROR);

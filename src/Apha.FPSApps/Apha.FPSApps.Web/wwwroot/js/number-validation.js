@@ -1,47 +1,4 @@
 // Number Validation - Shared JavaScript Module
-// Handles numeric input validation for decimal/currency fields across PACT module
-// Usage: Add 'decfmt-input' class to any input field that needs numeric validation
-
-// // Helper function to get clean label text from an input field
-// // Uses the same approach as ajax-form-validation.js
-// function getFieldLabel($input) {
-//     var labelText = '';
-//     var inputName = $input.attr('name') || '';
-//     var inputId = $input.attr('id') || '';
-
-//     // Try to find label by 'for' attribute matching the input's name
-//     if (inputName) {
-//         var $label = $('label[for="' + inputName + '"]');
-//         if ($label.length > 0) {
-//             // Clone label, remove child elements (like asterisk spans), get text, remove trailing colons
-//             labelText = $label.clone().children().remove().end().text().trim().replace(/:\s*$/, '');
-//         }
-//     }
-
-//     // If not found by name, try by id
-//     if (!labelText && inputId) {
-//         var $label = $('label[for="' + inputId + '"]');
-//         if ($label.length > 0) {
-//             labelText = $label.clone().children().remove().end().text().trim().replace(/:\s*$/, '');
-//         }
-//     }
-
-//     // If no label found, try to get label from parent form-group
-//     if (!labelText) {
-//         var $formGroup = $input.closest('.govuk-form-group');
-//         var $label = $formGroup.find('label').first();
-//         if ($label.length > 0) {
-//             labelText = $label.clone().children().remove().end().text().trim().replace(/:\s*$/, '');
-//         }
-//     }
-
-//     // If still no label, use field name or id or a generic term
-//     if (!labelText) {
-//         labelText = inputName || inputId || 'This field';
-//     }
-
-//     return labelText;
-// }
 
 // Numeric input validation - allows positive/negative numbers with decimal point
 function validateNumericInput(event) {
@@ -96,13 +53,14 @@ function handleNumericPaste(event) {
 
     var pastedData = (originalEvent.clipboardData || window.clipboardData).getData('text');
 
-    // Check if pasted data contains any alphabetic characters
-    if (/[a-zA-Z]/.test(pastedData)) {
+    // Check if pasted data contains any invalid characters (anything other than digits, minus, decimal, and whitespace)
+    // This includes alphabetic characters AND special characters
+    if (/[^\d.\-\s]/.test(pastedData)) {
         showAlertMessage('You may have enter text in a numeric field or a number that is larger than the FieldSize Permits.', AlertType.ERROR);
         return;
     }
 
-    // Remove any non-numeric characters except minus and decimal point
+    // Remove any non-numeric characters except minus and decimal point (including spaces)
     var cleaned = pastedData.replace(/[^\d.-]/g, '');
 
     // If after cleaning, nothing remains, show error
@@ -124,18 +82,18 @@ function handleNumericPaste(event) {
         cleaned = parts[0] + '.' + parts.slice(1).join('');
     }
 
+    // Enforce maxlength of 20 characters
+    if (cleaned.length > 20) {
+        showAlertMessage('Value exceeds maximum length of 20 characters.', AlertType.ERROR);
+        return;
+    }
+
     // Validate range: -999999999999999.9999 to 999999999999999.9999
     var parsedValue = parseFloat(cleaned);
     var min = -999999999999999.9999;
     var max = 999999999999999.9999;
 
     if (!isNaN(parsedValue) && (parsedValue < min || parsedValue > max)) {
-        // // Get the input element to find its label
-        // var input = event.target || event.currentTarget;
-        // var $input = $(input);
-        // var fieldName = getFieldLabel($input);
-
-        // showAlertMessage(fieldName + ' must be between -999,999,999,999,999.9999 and 999,999,999,999,999.9999', AlertType.ERROR);
         showAlertMessage('Value must be between -999,999,999,999,999.9999 and 999,999,999,999,999.9999', AlertType.ERROR);
         return;
     }
@@ -163,10 +121,6 @@ function validateRangeOnInput(input) {
     var value = $input.val().trim();
     var fieldName = $input.attr('name') || $input.attr('id');
 
-    // // Get the label text for better error messages using the helper function
-    // var labelText = getFieldLabel($input);
-
-    // Sanitize the input value to fix invalid formats like "999-87.0000"
     // Only allow minus at the beginning, remove any other minus signs
     if (value.length > 0) {
         var sanitized = value;
@@ -234,7 +188,6 @@ function validateRangeOnInput(input) {
 
     // Check if value is within range
     if (parsedValue < min || parsedValue > max) {
-        // var errorMessage = labelText + ' must be between -999,999,999,999,999.9999 and 999,999,999,999,999.9999';
         var errorMessage = 'Value must be between -999,999,999,999,999.9999 and 999,999,999,999,999.9999';
         $input.addClass('govuk-input--error');
         $formGroup.addClass('govuk-form-group--error');
@@ -252,46 +205,65 @@ function validateRangeOnInput(input) {
     }
 }
 
-// Initialize numeric input validation for all fields with 'decfmt-input' class
-function initializeNumericInputValidation() {
-    var $decimalFields = $('.decfmt-input'); // Use jQuery selector
+// ══════════════════════════════════════════════════════════════════════════════
+// Numeric Validation Initialization
+// ══════════════════════════════════════════════════════════════════════════════
 
-    $decimalFields.each(function() {
-        var $field = $(this);
-        var fieldId = $field.attr('id') || $field.attr('name') || 'unknown';
-
+/**
+ * Attach numeric validation to all input fields with the 'decfmt-input' class.
+ * This function binds keydown, paste, and input event handlers to enable
+ * real-time numeric validation and range checking.
+ * Also sets maxlength="20" on fields that don't already have it set.
+ */
+function attachNumericValidation() {
+    // Find all input fields with decfmt-input class
+    $('.decfmt-input').each(function () {
+        var $input = $(this);
 
         // Set maxlength="20" for all decfmt-input fields if not already set
-        if (!$field.attr('maxlength')) {
-            $field.attr('maxlength', '20');
+        if (!$input.attr('maxlength')) {
+            $input.attr('maxlength', '20');
         }
 
-        // Remove existing handlers first to prevent duplicates
-        $field.off('keydown.numericValidation');
-        $field.off('paste.numericValidation');
-        $field.off('input.numericValidation');
-        $field.off('blur.numericValidation');
+        // Remove any existing handlers to prevent duplicate bindings
+        $input.off('keydown.numericValidation');
+        $input.off('paste.numericValidation');
+        $input.off('input.numericValidation');
+        $input.off('blur.numericValidation');
 
-        // Add event listeners using jQuery with namespaced events
-        $field.on('keydown.numericValidation', function(e) {
-            return validateNumericInput(e);
-        });
+        // Attach keydown event for character-by-character validation
+        $input.on('keydown.numericValidation', validateNumericInput);
 
-        $field.on('paste.numericValidation', function(e) {
-            handleNumericPaste(e);
-        });
+        // Attach paste event for clipboard data validation
+        $input.on('paste.numericValidation', handleNumericPaste);
 
-        $field.on('input.numericValidation', function() {
+        // Attach input event for range validation and real-time feedback
+        $input.on('input.numericValidation', function () {
             validateRangeOnInput(this);
         });
 
-        $field.on('blur.numericValidation', function() {
+        // Attach blur event for final validation
+        $input.on('blur.numericValidation', function() {
             validateRangeOnInput(this);
         });
     });
 }
 
-// Attach numeric validation to dynamically loaded elements
-function attachNumericValidation() {
-    initializeNumericInputValidation();
+/**
+ * Initialize form validation with both jQuery Unobtrusive Validation and numeric validation.
+ * This is a convenience wrapper that combines unobtrusive validation parsing with numeric validation attachment.
+ * 
+ * @param {string} formSelector - jQuery selector for the form (e.g., '#invoiceForm', '#monthlyOutputLiveForm')
+ * 
+ * Usage example:
+ *   initializeFormValidation('#invoiceForm');
+ */
+function initializeFormValidation(formSelector) {
+    // Initialize jQuery Unobtrusive Validation
+    if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
+        $.validator.unobtrusive.parse(formSelector);
+    }
+
+    // Attach numeric validation to all decfmt-input fields
+    attachNumericValidation();
 }

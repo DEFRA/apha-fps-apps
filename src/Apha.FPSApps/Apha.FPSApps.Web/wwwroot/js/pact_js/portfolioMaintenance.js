@@ -20,13 +20,8 @@ $(document).ready(function () {
     initializePortfolioMultiColumnDropdown();
     initializeProgramMultiColumnDropdown();
 
-    // Initialize numeric validation for decimal inputs
-    initializeNumericInputValidation(); // From number-validation.js
-
-    // Initialize jQuery Unobtrusive Validation for the portfolio form
-    if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-        $.validator.unobtrusive.parse('#portfolioDetailForm');
-    }
+   // Initialize form validation (unobtrusive + numeric)
+    initializeFormValidation('#portfolioDetailForm');
 
     var $panel = $('#portfolioDropdownPanel');
     var $input = $('#dpselectportfolio');

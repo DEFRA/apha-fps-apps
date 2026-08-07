@@ -53,12 +53,8 @@ function addSubContractRms() {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-            // Initialize jQuery Unobtrusive Validation
-            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-                $.validator.unobtrusive.parse('#formAddProjectCost');
-            }
-            // Attach numeric validation
-            attachNumericValidation();
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#formAddProjectCost');
         },
         error: function () {
             showAlertMessage('Error loading form.', AlertType.ERROR);
@@ -76,12 +72,8 @@ function editSubContractRms(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-            // Initialize jQuery Unobtrusive Validation
-            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-                $.validator.unobtrusive.parse('#formAddProjectCost');
-            }
-            // Attach numeric validation
-            attachNumericValidation();
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#formAddProjectCost');
         },
         error: function () {
             showAlertMessage('Error loading form.', AlertType.ERROR);

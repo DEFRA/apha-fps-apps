@@ -253,8 +253,8 @@ function openCostProfileModal(project, monthNo) {
             content.innerHTML = '';
             content.appendChild(document.createRange().createContextualFragment(html));
             document.getElementById('costProfileModal').classList.add('show');
-            // Attach numeric validation to decimal fields
-            attachNumericValidation();
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#projectMonthForm');
         },
         error: function (xhr) {
             showAlertMessage('Failed to load cost profile form: HTTP ' + xhr.status + ' – ' + url, AlertType.ERROR);

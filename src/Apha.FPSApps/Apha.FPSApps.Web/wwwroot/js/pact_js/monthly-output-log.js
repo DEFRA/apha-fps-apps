@@ -49,10 +49,9 @@ function getExtraFilters_moLogGrid() {
 
 // ── Button handlers ────────────────────────────────────────────────
 $(function () {
-    // Initialize numeric input validation for the Month field
-    if (typeof initializeNumericInputValidation === 'function') {
-        initializeNumericInputValidation();
-    }
+    // Attach numeric validation to all decfmt-input fields
+    // Note: This page doesn't have a form element, just individual filter inputs
+    attachNumericValidation();
 
     $('#btnSearch').on('click', function () {
         clearMoLogError();

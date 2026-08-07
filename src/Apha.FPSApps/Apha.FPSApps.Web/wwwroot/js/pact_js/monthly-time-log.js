@@ -101,10 +101,8 @@ function initMultiColumnDropdown(wrapperId, inputId, hiddenId, panelId, bodyId, 
 // -- Button handlers --
 $(function () {
 
-    // Initialize numeric input validation for the Month field
-    if (typeof initializeNumericInputValidation === 'function') {
-        initializeNumericInputValidation();
-    }
+    // Initialize form validation (unobtrusive + numeric)
+    initializeFormValidation('#invoiceForm');
 
     initMultiColumnDropdown(
         'projectPickerWrapper', 'txtProjectPick', 'hdnProject',

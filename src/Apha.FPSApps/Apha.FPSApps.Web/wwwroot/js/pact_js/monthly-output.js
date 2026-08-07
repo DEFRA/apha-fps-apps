@@ -290,12 +290,8 @@ function editMonthlyOutputLive(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-            // Initialize jQuery Unobtrusive Validation
-            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-                $.validator.unobtrusive.parse('#monthlyOutputLiveForm');
-            }
-            // Attach numeric validation
-            attachNumericValidation();
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#stagingMonthlyOutputForm');
             initLiveModalWorkGroupDropdown();
         },
         error: function () {
@@ -425,12 +421,8 @@ function addStagingMonthlyOutput() {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-            // Initialize jQuery Unobtrusive Validation
-            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-                $.validator.unobtrusive.parse('#monthlyOutputLiveForm');
-            }
-            // Attach numeric validation
-            attachNumericValidation();
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#stagingMonthlyOutputForm');
             initStagingModalDropdowns(null, null, null);
         },
         error: function () {
@@ -449,12 +441,8 @@ function editStagingMonthlyOutput(btn) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             $('#modalPopup').addClass('show');
-            // Initialize jQuery Unobtrusive Validation
-            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-                $.validator.unobtrusive.parse('#monthlyOutputLiveForm');
-            }
-            // Attach numeric validation
-            attachNumericValidation();
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#stagingMonthlyOutputForm');
             const workGroup  = $('#StagingWorkGroup').val();
             const existingTestCode = $('#StagingTestCode').val();
             const existingBuyer    = $('#StagingBuyer').val();

@@ -69,12 +69,8 @@ function addSubContract() {
         function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-            // Initialize jQuery Unobtrusive Validation
-            if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-                $.validator.unobtrusive.parse('#subContractForm');
-            }
-            // Attach numeric validation
-            attachNumericValidation();
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#subContractForm');
         })
         .fail(function(xhr, status, error) {
             showAlertMessage('Error loading form: ' + error, AlertType.ERROR);
@@ -86,12 +82,8 @@ function editSubContract(btn) {
     $.get('/PACT/SubContract/GetSubContract', { id: id }, function (html) {
         $('#modaPopupBody').html(html);
         $('#modalPopup').addClass('show');
-        // Initialize jQuery Unobtrusive Validation
-        if (typeof $.validator !== 'undefined' && $.validator.unobtrusive) {
-            $.validator.unobtrusive.parse('#subContractForm');
-        }
-        // Attach numeric validation
-        attachNumericValidation();
+        // Initialize form validation (unobtrusive + numeric)
+        initializeFormValidation('#subContractForm');
     })
     .fail(function(xhr, status, error) {
         showAlertMessage('Error loading form: ' + error, AlertType.ERROR);

@@ -31,7 +31,8 @@ function initializeProjectMaintenanceDetails(config) {
     $(document).ready(function () {
         initializeProgramDropdown();
         initializeContractDropdown();
-        initializeNumericInputValidation(); // From number-validation.js
+        // Initialize form validation (unobtrusive + numeric)
+        initializeFormValidation('#projectDetailForm');
     });
 }
 
