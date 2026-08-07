@@ -1,5 +1,6 @@
 ﻿using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.ExcelImport;
+using Apha.Common.Utilities.GenericExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.Common.Utilities.Storage;
 using Apha.FPSApps.Application.Interfaces.Costbook;
@@ -67,6 +68,7 @@ namespace Apha.FPSApps.Web.Extensions
             // Apha.Common services
             services.AddScoped<IS3StorageService, S3StorageService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IGenericExcelExporter, GenericExcelExporter>();
             services.AddScoped<IExcelImportService, ExcelImportService>();
             services.AddScoped<IAppStateService, AppStateService>();
 
