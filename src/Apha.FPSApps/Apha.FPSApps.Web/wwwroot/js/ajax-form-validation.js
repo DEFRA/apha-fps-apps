@@ -22,6 +22,29 @@
 (function ($) {
     'use strict';
 
+    // ── maxlength suppression for fields that also carry [Range] validation ──
+    //
+    // jQuery Validate reads the `maxlength` HTML attribute as a live validation
+    // rule at runtime (via attributeRules). When a field also has `data-val-range`
+    // (emitted by the ASP.NET [Range] data annotation), the maxlength rule fires
+    // first and shows a generic "no more than N characters" message, hiding the
+    // meaningful Range error message from the model.
+    //
+    // This patch wraps $.validator.methods.maxlength once, at script-load time,
+    // so it applies globally to every form on every page. For any field that has
+    // both a maxlength attribute AND a data-val-range attribute the maxlength
+    // check is skipped (returns true), allowing [Range] to be the sole validator.
+    // All other fields continue to use the original maxlength behaviour.
+    if (typeof $.validator !== 'undefined') {
+        var _origMaxlength = $.validator.methods.maxlength;
+        $.validator.methods.maxlength = function (value, element, param) {
+            if (element.maxLength > 0 && $(element).data('val-range') !== undefined) {
+                return true; // defer to [Range] — suppress the maxlength message
+            }
+            return _origMaxlength.call(this, value, element, param);
+        };
+    }
+
     // ── Private helpers ──────────────────────────────────────────────────────
 
     /** Resolve the optional container argument into a jQuery object. */
@@ -145,6 +168,20 @@
      */
     window.displayClientValidationErrors = function (form, container) {
         var $c = resolveContainer(container != null ? container : form);
+
+        // Collect [Range] and other jQuery Unobtrusive Validation errors BEFORE
+        // clearValidationErrors wipes the spans that $form.valid() just populated.
+        var jqueryValErrors = [];
+        form.find('[data-valmsg-for]').each(function () {
+            var $span = $(this);
+            if ($span.hasClass('field-validation-error') && $span.text().trim() !== '') {
+                jqueryValErrors.push({
+                    field: $span.attr('data-valmsg-for'),
+                    message: $span.text().trim()
+                });
+            }
+        });
+
         clearValidationErrors($c);
 
         var errors = [];
@@ -155,6 +192,14 @@
                 var label = $('label[for="' + name + '"]', $c).clone().children().remove().end().text().trim().replace(/:\s*$/, '') || name;
                 var requiredMessage = $field.attr('data-val-required') || $field.attr('data-msg-required');
                 errors.push({ field: name, message: requiredMessage || (label + ' is required') });
+            }
+        });
+
+        // Merge jQuery Unobtrusive Validation errors (e.g. [Range]) — avoid duplicates
+        jqueryValErrors.forEach(function (jqErr) {
+            var alreadyAdded = errors.some(function (e) { return e.field === jqErr.field; });
+            if (!alreadyAdded) {
+                errors.push(jqErr);
             }
         });
 
