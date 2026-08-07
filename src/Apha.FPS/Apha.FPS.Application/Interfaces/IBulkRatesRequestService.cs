@@ -69,14 +69,14 @@ namespace Apha.FPS.Application.Interfaces
         /// <summary>
         /// Request-scoped Staff workbook download, parity with
         /// DownloadFecTestDataAsync. Atomically captures an immutable snapshot of live
-        /// fps.profitcentregrade data (fps.bulk_rates_staff_downloaded_key) as the new
+        /// fps.profitcentregrade data (fps.bulk_rates_staff_download_detail) as the new
         /// active download version for this request before generating the workbook from that
         /// snapshot, and embeds the download version in protected workbook metadata. Only
         /// permitted while the request is Initiated or Rejected, and only for a Staff request.
         /// </summary>
         Task<byte[]> DownloadStaffTestDataAsync(Guid jobExecutionId, CancellationToken ct = default);
 
-        /// <summary>As DownloadStaffTestDataAsync, for Animal (fps.bulk_rates_animal_downloaded_key).</summary>
+        /// <summary>As DownloadStaffTestDataAsync, for Animal (fps.bulk_rates_animal_download_detail).</summary>
         Task<byte[]> DownloadAnimalTestDataAsync(Guid jobExecutionId, CancellationToken ct = default);
 
         /// <summary>Returns the currently active (blocking-status) request for jobName, or null if none exists.</summary>

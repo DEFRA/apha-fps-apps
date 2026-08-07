@@ -185,7 +185,7 @@ namespace Apha.FPS.Core.Interfaces
 
         /// <summary>
         /// Staff equivalent of CreateDownloadSnapshotAsync. Persists
-        /// to fps.bulk_rates_staff_downloaded_key — a dedicated table, not a widened
+        /// to fps.bulk_rates_staff_download_detail — a dedicated table, not a widened
         /// fps.bulk_rates_downloaded_key, since that table is hard-restricted to FEC/AGRUP by
         /// chk_bulk_rates_downloaded_key_sheetname (confirmed live). Both this and
         /// CreateAnimalDownloadSnapshotAsync reuse the shared fps.bulk_rates_download header via
@@ -196,17 +196,17 @@ namespace Apha.FPS.Core.Interfaces
             IReadOnlyList<StaffStagingRow> rows,
             CancellationToken ct = default);
 
-        /// <summary>Staff equivalent of GetFecSnapshotRowsAsync — reads back fps.bulk_rates_staff_downloaded_key.</summary>
+        /// <summary>Staff equivalent of GetFecSnapshotRowsAsync — reads back fps.bulk_rates_staff_download_detail.</summary>
         Task<IReadOnlyList<StaffStagingRow>> GetStaffSnapshotRowsAsync(
             Guid jobQueueId, int downloadVersion, CancellationToken ct = default);
 
-        /// <summary>Animal equivalent of CreateDownloadSnapshotAsync. Persists to fps.bulk_rates_animal_downloaded_key.</summary>
+        /// <summary>Animal equivalent of CreateDownloadSnapshotAsync. Persists to fps.bulk_rates_animal_download_detail.</summary>
         Task CreateAnimalDownloadSnapshotAsync(
             Guid jobQueueId, int downloadVersion,
             IReadOnlyList<AnimalStagingRow> rows,
             CancellationToken ct = default);
 
-        /// <summary>Animal equivalent of GetFecSnapshotRowsAsync — reads back fps.bulk_rates_animal_downloaded_key.</summary>
+        /// <summary>Animal equivalent of GetFecSnapshotRowsAsync — reads back fps.bulk_rates_animal_download_detail.</summary>
         Task<IReadOnlyList<AnimalStagingRow>> GetAnimalSnapshotRowsAsync(
             Guid jobQueueId, int downloadVersion, CancellationToken ct = default);
 

@@ -70,7 +70,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BulkRatesRepositoryTest
                 // side can be deleted.
                 cmd.CommandText = @"
                     UPDATE fps.job_queue SET active_download_version = NULL WHERE jobqueueid = @id;
-                    DELETE FROM fps.bulk_rates_staff_downloaded_key WHERE jobqueueid = @id;
+                    DELETE FROM fps.bulk_rates_staff_download_detail WHERE jobqueueid = @id;
                     DELETE FROM fps.bulk_rates_download WHERE jobqueueid = @id;
                     DELETE FROM fps.job_queue WHERE jobqueueid = @id;";
                 cmd.Parameters.AddWithValue("id", jobQueueId);

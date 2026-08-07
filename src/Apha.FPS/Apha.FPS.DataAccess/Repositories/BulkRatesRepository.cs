@@ -770,7 +770,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 ins.Transaction = tx;
                 ins.CommandText = @"
                     INSERT INTO fps.staging_validation_error
-                        (jobqueueid, uploadversion, sourcerownumber, fieldname,
+                        (jobqueueid, upload_version, sourcerownumber, fieldname,
                          validationcode, severity, validationmessage,
                          sheetname, testcode, buyer, currentvalue, expectedvalue, is_request_level)
                     VALUES
@@ -806,12 +806,12 @@ namespace Apha.FPS.DataAccess.Repositories
             var conn = await OpenAsync(ct);
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-                SELECT id, jobqueueid, uploadversion, sourcerownumber, fieldname,
+                SELECT validationerrorid, jobqueueid, upload_version, sourcerownumber, fieldname,
                        validationcode, severity, validationmessage,
                        sheetname, testcode, buyer, currentvalue, expectedvalue, is_request_level
                 FROM fps.staging_validation_error
                 WHERE jobqueueid = @jobqueueid
-                ORDER BY sourcerownumber, id;";
+                ORDER BY sourcerownumber, validationerrorid;";
             cmd.Parameters.AddWithValue("jobqueueid", jobQueueId);
 
             var results = new List<StagingValidationError>();
@@ -1043,7 +1043,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 ins.Parameters.AddWithValue("sourcerate", (object?)row.Agrup ?? DBNull.Value);
                 ins.Parameters.AddWithValue("norequired", (object?)row.NoRequired ?? DBNull.Value);
                 ins.Parameters.AddWithValue("datecreated", (object?)row.DateCreated ?? DBNull.Value);
-                ins.Parameters.AddWithValue("active", (object?)row.Active ?? DBNull.Value);
+                ins.Parameters.AddWithValue("active", row.Active.HasValue ? (object)(row.Active.Value != 0) : DBNull.Value);
                 ins.Parameters.AddWithValue("projectbuyercode", (object?)row.ProjectBuyerCode ?? DBNull.Value);
                 ins.Parameters.AddWithValue("testbuyercode", (object?)row.TestBuyerCode ?? DBNull.Value);
                 await ins.ExecuteNonQueryAsync(ct);
@@ -1166,7 +1166,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     Agrup = reader.IsDBNull(2) ? null : reader.GetDecimal(2),
                     NoRequired = reader.IsDBNull(3) ? null : reader.GetDouble(3),
                     DateCreated = reader.IsDBNull(4) ? null : reader.GetDateTime(4),
-                    Active = reader.IsDBNull(5) ? null : reader.GetInt16(5),
+                    Active = reader.IsDBNull(5) ? null : (short?)(reader.GetBoolean(5) ? 1 : 0),
                     ProjectBuyerCode = reader.IsDBNull(6) ? null : reader.GetString(6),
                     TestBuyerCode = reader.IsDBNull(7) ? null : reader.GetString(7)
                 });
@@ -1200,7 +1200,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var ins = conn.CreateCommand();
                 ins.Transaction = tx;
                 ins.CommandText = @"
-                    INSERT INTO fps.bulk_rates_staff_downloaded_key
+                    INSERT INTO fps.bulk_rates_staff_download_detail
                         (jobqueueid, download_version, pcgrade, source_payrate, source_npr, source_ohr)
                     VALUES
                         (@jobqueueid, @downloadversion, @pcgrade, @sourcepayrate, @sourcenpr, @sourceohr);";
@@ -1227,7 +1227,7 @@ namespace Apha.FPS.DataAccess.Repositories
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
                 SELECT pcgrade, source_payrate, source_npr, source_ohr
-                FROM fps.bulk_rates_staff_downloaded_key
+                FROM fps.bulk_rates_staff_download_detail
                 WHERE jobqueueid = @jobqueueid AND download_version = @downloadversion
                 ORDER BY id;";
             cmd.Parameters.AddWithValue("jobqueueid", jobQueueId);
@@ -1273,7 +1273,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var ins = conn.CreateCommand();
                 ins.Transaction = tx;
                 ins.CommandText = @"
-                    INSERT INTO fps.bulk_rates_animal_downloaded_key
+                    INSERT INTO fps.bulk_rates_animal_download_detail
                         (jobqueueid, download_version, animaltype, source_dailyrate,
                          source_defradailyrate, source_planbyweek, source_species, source_securitylevel)
                     VALUES
@@ -1305,7 +1305,7 @@ namespace Apha.FPS.DataAccess.Repositories
             cmd.CommandText = @"
                 SELECT animaltype, source_species, source_securitylevel, source_dailyrate,
                        source_defradailyrate, source_planbyweek
-                FROM fps.bulk_rates_animal_downloaded_key
+                FROM fps.bulk_rates_animal_download_detail
                 WHERE jobqueueid = @jobqueueid AND download_version = @downloadversion
                 ORDER BY id;";
             cmd.Parameters.AddWithValue("jobqueueid", jobQueueId);
