@@ -166,10 +166,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
 
         #endregion
 
-        #region GetCanInitiateDataSetupRequestAsync
+        #region CanInitiateDataSetupRequestAsync
 
         [Fact]
-        public async Task GetCanInitiateDataSetupRequestAsync_WhenApiReturnsTrue_ReturnsSuccessWithTrue()
+        public async Task CanInitiateDataSetupRequestAsync_WhenApiReturnsTrue_ReturnsSuccessWithTrue()
         {
             // Arrange
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
@@ -177,7 +177,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
                  .Returns(apiResponse);
 
             // Act
-            var result = await _client.GetCanInitiateDataSetupRequestAsync(JobName);
+            var result = await _client.CanInitiateDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
@@ -188,14 +188,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         }
 
         [Fact]
-        public async Task GetCanInitiateDataSetupRequestAsync_WhenApiReturnsFalse_ReturnsSuccessWithFalse()
+        public async Task CanInitiateDataSetupRequestAsync_WhenApiReturnsFalse_ReturnsSuccessWithFalse()
         {
             // Arrange
             var apiResponse = new ApiResponse<bool> { Success = true, Data = false };
             _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
-            var result = await _client.GetCanInitiateDataSetupRequestAsync(JobName);
+            var result = await _client.CanInitiateDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
@@ -204,7 +204,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         }
 
         [Fact]
-        public async Task GetCanInitiateDataSetupRequestAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        public async Task CanInitiateDataSetupRequestAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
             var errors = new List<ApiError> { new ApiError { Message = "Service error", Code = "SERVICE_ERROR" } };
@@ -220,7 +220,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            var result = await _client.GetCanInitiateDataSetupRequestAsync(JobName);
+            var result = await _client.CanInitiateDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
@@ -229,14 +229,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         }
 
         [Fact]
-        public async Task GetCanInitiateDataSetupRequestAsync_UrlContainsEscapedJobName()
+        public async Task CanInitiateDataSetupRequestAsync_UrlContainsEscapedJobName()
         {
             // Arrange
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
             _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
-            await _client.GetCanInitiateDataSetupRequestAsync(JobName);
+            await _client.CanInitiateDataSetupRequestAsync(JobName);
 
             // Assert
             await _http.Received(1).GetAsync<bool>(
@@ -245,10 +245,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
 
         #endregion
 
-        #region GetCanApproveOrRejectDataSetupRequestAsync
+        #region CanApproveOrRejectDataSetupRequestAsync
 
         [Fact]
-        public async Task GetCanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsTrue_ReturnsSuccessWithTrue()
+        public async Task ApproveOrRejectDataSetupRequestAsync_WhenApiReturnsTrue_ReturnsSuccessWithTrue()
         {
             // Arrange
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
@@ -256,7 +256,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
                  .Returns(apiResponse);
 
             // Act
-            var result = await _client.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
+            var result = await _client.CanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
@@ -267,14 +267,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         }
 
         [Fact]
-        public async Task GetCanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsFalse_ReturnsSuccessWithFalse()
+        public async Task CanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsFalse_ReturnsSuccessWithFalse()
         {
             // Arrange
             var apiResponse = new ApiResponse<bool> { Success = true, Data = false };
             _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
-            var result = await _client.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
+            var result = await _client.CanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
@@ -283,7 +283,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         }
 
         [Fact]
-        public async Task GetCanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        public async Task CanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
             var errors = new List<ApiError> { new ApiError { Message = "Forbidden", Code = "FORBIDDEN" } };
@@ -299,7 +299,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            var result = await _client.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
+            var result = await _client.CanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
@@ -308,14 +308,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         }
 
         [Fact]
-        public async Task GetCanApproveOrRejectDataSetupRequestAsync_UrlContainsEscapedJobName()
+        public async Task CanApproveOrRejectDataSetupRequestAsync_UrlContainsEscapedJobName()
         {
             // Arrange
             var apiResponse = new ApiResponse<bool> { Success = true, Data = false };
             _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
-            await _client.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
+            await _client.CanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             await _http.Received(1).GetAsync<bool>(

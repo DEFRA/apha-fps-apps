@@ -95,13 +95,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private async Task<bool> GetCanInitiateCutOverRequestAsync()
         {
-            var result = await _yearEndService.GetCanInitiateCutOverRequestAsync(YearEndCutOverJobName);
+            var result = await _yearEndService.CanInitiateCutOverRequestAsync(YearEndCutOverJobName);
+            return result.Success && result.Data;
+        }
+
+        private async Task<bool> CanInitiateCutOverRequestAsync()
+        {
+            var result = await _yearEndService.CanInitiateCutOverRequestAsync(YearEndCutOverJobName);
             return result.Success && result.Data;
         }
 
         private async Task<bool> GetCanApproveCutOverRequestAsync()
         {
-            var result = await _yearEndService.GetCanApproveCutOverRequestAsync(YearEndCutOverJobName);
+            var result = await _yearEndService.CanApproveOrRejectCutOverRequestAsync(YearEndCutOverJobName);
             return result.Success && result.Data;
         }
 

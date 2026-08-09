@@ -107,140 +107,140 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
 
         #endregion
 
-        #region GetCanInitiateDataSetupRequestAsync
+        #region CanInitiateDataSetupRequestAsync
 
         [Fact]
-        public async Task GetCanInitiateDataSetupRequestAsync_WhenApiReturnsTrue_ReturnsSuccessWithTrue()
+        public async Task CanInitiateDataSetupRequestAsync_WhenApiReturnsTrue_ReturnsSuccessWithTrue()
         {
             // Arrange
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
-            _fpsYearEndApiClient.GetCanInitiateDataSetupRequestAsync(JobName).Returns(expectedResponse);
+            _fpsYearEndApiClient.CanInitiateDataSetupRequestAsync(JobName).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetCanInitiateDataSetupRequestAsync(JobName);
+            var result = await _sut.CanInitiateDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _fpsYearEndApiClient.Received(1).GetCanInitiateDataSetupRequestAsync(JobName);
+            await _fpsYearEndApiClient.Received(1).CanInitiateDataSetupRequestAsync(JobName);
         }
 
         [Fact]
-        public async Task GetCanInitiateDataSetupRequestAsync_WhenApiReturnsFalse_ReturnsSuccessWithFalse()
+        public async Task CanInitiateDataSetupRequestAsync_WhenApiReturnsFalse_ReturnsSuccessWithFalse()
         {
             // Arrange
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(false);
-            _fpsYearEndApiClient.GetCanInitiateDataSetupRequestAsync(JobName).Returns(expectedResponse);
+            _fpsYearEndApiClient.CanInitiateDataSetupRequestAsync(JobName).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetCanInitiateDataSetupRequestAsync(JobName);
+            var result = await _sut.CanInitiateDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.False(result.Data);
-            await _fpsYearEndApiClient.Received(1).GetCanInitiateDataSetupRequestAsync(JobName);
+            await _fpsYearEndApiClient.Received(1).CanInitiateDataSetupRequestAsync(JobName);
         }
 
         [Fact]
-        public async Task GetCanInitiateDataSetupRequestAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        public async Task CanInitiateDataSetupRequestAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Service error", Code = "SERVICE_ERROR" } };
             var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
-            _fpsYearEndApiClient.GetCanInitiateDataSetupRequestAsync(JobName).Returns(expectedResponse);
+            _fpsYearEndApiClient.CanInitiateDataSetupRequestAsync(JobName).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetCanInitiateDataSetupRequestAsync(JobName);
+            var result = await _sut.CanInitiateDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            await _fpsYearEndApiClient.Received(1).GetCanInitiateDataSetupRequestAsync(JobName);
+            await _fpsYearEndApiClient.Received(1).CanInitiateDataSetupRequestAsync(JobName);
         }
 
         [Fact]
-        public async Task GetCanInitiateDataSetupRequestAsync_WhenApiClientThrowsException_PropagatesException()
+        public async Task CanInitiateDataSetupRequestAsync_WhenApiClientThrowsException_PropagatesException()
         {
             // Arrange
-            _fpsYearEndApiClient.GetCanInitiateDataSetupRequestAsync(JobName)
+            _fpsYearEndApiClient.CanInitiateDataSetupRequestAsync(JobName)
                 .ThrowsAsync(new Exception("API unavailable"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(
-                () => _sut.GetCanInitiateDataSetupRequestAsync(JobName));
+                () => _sut.CanInitiateDataSetupRequestAsync(JobName));
             Assert.Equal("API unavailable", exception.Message);
-            await _fpsYearEndApiClient.Received(1).GetCanInitiateDataSetupRequestAsync(JobName);
+            await _fpsYearEndApiClient.Received(1).CanInitiateDataSetupRequestAsync(JobName);
         }
 
         #endregion
 
-        #region GetCanApproveOrRejectDataSetupRequestAsync
+        #region CanApproveOrRejectDataSetupRequestAsync
 
         [Fact]
-        public async Task GetCanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsTrue_ReturnsSuccessWithTrue()
+        public async Task CanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsTrue_ReturnsSuccessWithTrue()
         {
             // Arrange
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
-            _fpsYearEndApiClient.GetCanApproveOrRejectDataSetupRequestAsync(JobName).Returns(expectedResponse);
+            _fpsYearEndApiClient.CanApproveOrRejectDataSetupRequestAsync(JobName).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
+            var result = await _sut.CanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _fpsYearEndApiClient.Received(1).GetCanApproveOrRejectDataSetupRequestAsync(JobName);
+            await _fpsYearEndApiClient.Received(1).CanApproveOrRejectDataSetupRequestAsync(JobName);
         }
 
         [Fact]
-        public async Task GetCanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsFalse_ReturnsSuccessWithFalse()
+        public async Task CanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsFalse_ReturnsSuccessWithFalse()
         {
             // Arrange
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(false);
-            _fpsYearEndApiClient.GetCanApproveOrRejectDataSetupRequestAsync(JobName).Returns(expectedResponse);
+            _fpsYearEndApiClient.CanApproveOrRejectDataSetupRequestAsync(JobName).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
+            var result = await _sut.CanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.False(result.Data);
-            await _fpsYearEndApiClient.Received(1).GetCanApproveOrRejectDataSetupRequestAsync(JobName);
+            await _fpsYearEndApiClient.Received(1).CanApproveOrRejectDataSetupRequestAsync(JobName);
         }
 
         [Fact]
-        public async Task GetCanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        public async Task CanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Forbidden", Code = "FORBIDDEN" } };
             var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
-            _fpsYearEndApiClient.GetCanApproveOrRejectDataSetupRequestAsync(JobName).Returns(expectedResponse);
+            _fpsYearEndApiClient.CanApproveOrRejectDataSetupRequestAsync(JobName).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
+            var result = await _sut.CanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            await _fpsYearEndApiClient.Received(1).GetCanApproveOrRejectDataSetupRequestAsync(JobName);
+            await _fpsYearEndApiClient.Received(1).CanApproveOrRejectDataSetupRequestAsync(JobName);
         }
 
         [Fact]
-        public async Task GetCanApproveOrRejectDataSetupRequestAsync_WhenApiClientThrowsException_PropagatesException()
+        public async Task CanApproveOrRejectDataSetupRequestAsync_WhenApiClientThrowsException_PropagatesException()
         {
             // Arrange
-            _fpsYearEndApiClient.GetCanApproveOrRejectDataSetupRequestAsync(JobName)
+            _fpsYearEndApiClient.CanApproveOrRejectDataSetupRequestAsync(JobName)
                 .ThrowsAsync(new Exception("API unavailable"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(
-                () => _sut.GetCanApproveOrRejectDataSetupRequestAsync(JobName));
+                () => _sut.CanApproveOrRejectDataSetupRequestAsync(JobName));
             Assert.Equal("API unavailable", exception.Message);
-            await _fpsYearEndApiClient.Received(1).GetCanApproveOrRejectDataSetupRequestAsync(JobName);
+            await _fpsYearEndApiClient.Received(1).CanApproveOrRejectDataSetupRequestAsync(JobName);
         }
 
         #endregion

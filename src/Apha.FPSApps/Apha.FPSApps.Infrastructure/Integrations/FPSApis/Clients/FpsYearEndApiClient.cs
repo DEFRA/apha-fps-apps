@@ -43,9 +43,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
-        public async Task<ApiResponseDto<bool>> GetCanInitiateDataSetupRequestAsync(string jobName)
+        public async Task<ApiResponseDto<bool>> CanInitiateDataSetupRequestAsync(string jobName)
         {
-            var url = $"{FpsApiEndpoints.GetCanInitiateDataSetupRequest}?jobName={Uri.EscapeDataString(jobName)}";
+            var url = $"{FpsApiEndpoints.CanInitiateDataSetupRequest}?jobName={Uri.EscapeDataString(jobName)}";
             var response = await _http.GetAsync<bool>(url);
 
             if (response.Success)
@@ -55,9 +55,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
-        public async Task<ApiResponseDto<bool>> GetCanApproveOrRejectDataSetupRequestAsync(string jobName)
+        public async Task<ApiResponseDto<bool>> CanApproveOrRejectDataSetupRequestAsync(string jobName)
         {
-            var url = $"{FpsApiEndpoints.GetCanApproveDataSetupRequest}?jobName={Uri.EscapeDataString(jobName)}";
+            var url = $"{FpsApiEndpoints.CanApproveOrRejectDataSetupRequest}?jobName={Uri.EscapeDataString(jobName)}";
             var response = await _http.GetAsync<bool>(url);
 
             if (response.Success)
@@ -127,9 +127,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
-        public async Task<ApiResponseDto<bool>> GetCanInitiateCutOverRequestAsync(string jobName)
+        public async Task<ApiResponseDto<bool>> CanInitiateCutOverRequestAsync(string jobName)
         {
-            var url = $"{FpsApiEndpoints.GetCanInitiateCutOverRequest}?jobName={Uri.EscapeDataString(jobName)}";
+            var url = $"{FpsApiEndpoints.CanInitiateCutOverRequest}?jobName={Uri.EscapeDataString(jobName)}";
             var response = await _http.GetAsync<bool>(url);
 
             if (response.Success)
@@ -139,9 +139,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
-        public async Task<ApiResponseDto<bool>> GetCanApproveCutOverRequestAsync(string jobName)
+        public async Task<ApiResponseDto<bool>> CanApproveOrRejectCutOverRequestAsync(string jobName)
         {
-            var url = $"{FpsApiEndpoints.GetCanApproveCutOverRequest}?jobName={Uri.EscapeDataString(jobName)}";
+            var url = $"{FpsApiEndpoints.CanApproveOrRejectCutOverRequest}?jobName={Uri.EscapeDataString(jobName)}";
             var response = await _http.GetAsync<bool>(url);
 
             if (response.Success)
