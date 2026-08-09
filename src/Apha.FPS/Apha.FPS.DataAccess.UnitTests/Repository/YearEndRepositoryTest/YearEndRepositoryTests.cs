@@ -128,10 +128,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.Throws<ArgumentNullException>(() => new YearEndRepository(null!, ctx));
         }
 
-        // -----------------------------------------------------------------------
-        // GetBatchJobsHistoryAsync
-        // -----------------------------------------------------------------------
-
         #region GetBatchJobsHistoryAsync
 
         [Fact]
@@ -716,10 +712,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // CanInitiateYearEndDataSetupRequestAsync
-        // -----------------------------------------------------------------------
-
         #region CanInitiateYearEndDataSetupRequestAsync
 
         [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
@@ -856,15 +848,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // CanApproveYearEndDataSetupRequestAsync
-        // -----------------------------------------------------------------------
-
-        #region CanApproveYearEndDataSetupRequestAsync
+            
+        #region CanApproveOrRejectYearEndDataSetupRequestAsync
 
         [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
-        public async Task CanApproveYearEndDataSetupRequestAsync_ReturnsFalse_WhenNoRecordsExist()
+        public async Task CanApproveOrRejYearEndDataSetupRequestAsync_ReturnsFalse_WhenNoRecordsExist()
         {
             // Arrange
             var (repo, _, _, _) = CreateRepository();
@@ -877,7 +865,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         }
 
         [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
-        public async Task CanApproveYearEndDataSetupRequestAsync_ReturnsTrue_WhenInitiatedRecordExists()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_ReturnsTrue_WhenInitiatedRecordExists()
         {
             // Arrange
             var (job, queue, status) = BuildJoinSeed(statusText: "initiated");
@@ -891,7 +879,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         }
 
         [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
-        public async Task CanApproveYearEndDataSetupRequestAsync_ReturnsFalse_WhenNoInitiatedRecord()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_ReturnsFalse_WhenNoInitiatedRecord()
         {
             // Arrange — only a completed record; no "initiated"
             var (job, queue, status) = BuildJoinSeed(statusText: "completed");
@@ -905,7 +893,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         }
 
         [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
-        public async Task CanApproveYearEndDataSetupRequestAsync_ReturnsFalse_WhenJobNameDoesNotMatch()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_ReturnsFalse_WhenJobNameDoesNotMatch()
         {
             // Arrange — "initiated" record exists but for a different job
             var (job, queue, status) = BuildJoinSeed(jobName: "OtherJob", statusText: "initiated");
@@ -919,7 +907,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         }
 
         [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
-        public async Task CanApproveYearEndDataSetupRequestAsync_IsCaseInsensitive_ForJobName()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_IsCaseInsensitive_ForJobName()
         {
             // Arrange — job stored in mixed case
             var (job, queue, status) = BuildJoinSeed(jobName: "YEARENDSETUP", statusText: "initiated");
@@ -933,7 +921,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         }
 
         [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
-        public async Task CanApproveYearEndDataSetupRequestAsync_ReturnsFalse_WhenOnlyTerminalRecordsExist()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_ReturnsFalse_WhenOnlyTerminalRecordsExist()
         {
             // Arrange — records exist but none with "initiated" status
             var job             = BuildJob(1, DefaultJobName);
@@ -955,10 +943,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // GetYearEndDataSetupRequestInitiatorAsync
-        // -----------------------------------------------------------------------
 
         #region GetYearEndDataSetupRequestInitiatorAsync
 
@@ -1036,10 +1020,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EnqueueDataSetupInitiationBatchJobAsync
-        // -----------------------------------------------------------------------
 
         #region EnqueueDataSetupInitiationBatchJobAsync
 
@@ -1220,10 +1200,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // EnqueueDataSetupApprovalBatchJobAsync
-        // -----------------------------------------------------------------------
-
         #region EnqueueDataSetupApprovalBatchJobAsync
 
         [Fact]
@@ -1393,10 +1369,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EnqueueDataSetupRejectBatchJobAsync
-        // -----------------------------------------------------------------------
 
         #region EnqueueDataSetupRejectBatchJobAsync
 

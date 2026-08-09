@@ -94,10 +94,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
                     new Apha.FPSApps.Application.Pagination.PaginatedResult<BatchJobHistoryDto>()));
         }
 
-        // -----------------------------------------------------------------------
-        // Index
-        // -----------------------------------------------------------------------
-
         #region Index
 
         [Fact]
@@ -240,10 +236,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // LoadConfigValuesGrid
-        // -----------------------------------------------------------------------
-
         #region LoadConfigValuesGrid
 
         [Fact]
@@ -316,10 +308,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // LoadMonthHoursGrid
-        // -----------------------------------------------------------------------
-
         #region LoadMonthHoursGrid
 
         [Fact]
@@ -375,10 +363,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // LoadHistoryGrid
-        // -----------------------------------------------------------------------
 
         #region LoadHistoryGrid
 
@@ -473,10 +457,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EditConfigValue
-        // -----------------------------------------------------------------------
 
         #region EditConfigValue
 
@@ -573,10 +553,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // EditMonthHour
-        // -----------------------------------------------------------------------
-
         #region EditMonthHour
 
         [Fact]
@@ -652,10 +628,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // SaveSetting
-        // -----------------------------------------------------------------------
 
         #region SaveSetting
 
@@ -735,10 +707,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // SaveMonthHour
-        // -----------------------------------------------------------------------
-
         #region SaveMonthHour
 
         [Fact]
@@ -803,10 +771,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // TriggerInitiate
-        // -----------------------------------------------------------------------
 
         #region TriggerInitiate
 
@@ -888,10 +852,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // TriggerApprove
-        // -----------------------------------------------------------------------
 
         #region TriggerApprove
 
@@ -975,10 +935,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // TriggerReject
-        // -----------------------------------------------------------------------
 
         #region TriggerReject
 

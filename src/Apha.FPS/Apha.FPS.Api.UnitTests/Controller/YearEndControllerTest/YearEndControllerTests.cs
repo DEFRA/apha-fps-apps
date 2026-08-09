@@ -39,14 +39,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
             _sut = new YearEndController(_yearEndService, _fpsRequestContext, _mapper);
         }
 
-        // -----------------------------------------------------------------------
-        // GetYearEndBatchJobHistory
-        // -----------------------------------------------------------------------
-
-        #region GetYearEndBatchJobHistory
+        #region GetYearEndDataSetupBatchJobHistory
 
         [Fact]
-        public async Task GetYearEndBatchJobHistory_WhenDataExists_ReturnsOkWithMappedPaginationRes()
+        public async Task GetYearEndDataSetupBatchJobHistory_WhenDataExists_ReturnsOkWithMappedPaginationRes()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
@@ -81,7 +77,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
         }
 
         [Fact]
-        public async Task GetYearEndBatchJobHistory_WhenNoData_ReturnsOkWithEmptyPaginationRes()
+        public async Task GetYearEndDataSetupBatchJobHistory_WhenNoData_ReturnsOkWithEmptyPaginationRes()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
@@ -102,7 +98,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
         }
 
         [Fact]
-        public async Task GetYearEndBatchJobHistory_WhenServiceThrowsException_PropagatesException()
+        public async Task GetYearEndDataSetupBatchJobHistory_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
             var query = new QueryParameters<string>();
@@ -115,10 +111,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // CanInitiateYearEndDataSetupRequestAsync
-        // -----------------------------------------------------------------------
 
         #region CanInitiateYearEndDataSetupRequestAsync
 
@@ -169,14 +161,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // CanApproveYearEndDataSetupRequestAsync
-        // -----------------------------------------------------------------------
-
-        #region CanApproveYearEndDataSetupRequestAsync
+        #region CanApproveOrRejectYearEndDataSetupRequestAsync
 
         [Fact]
-        public async Task CanApproveYearEndDataSetupRequestAsync_WhenServiceReturnsTrue_ReturnsOkWithTrue()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_WhenServiceReturnsTrue_ReturnsOkWithTrue()
         {
             // Arrange
             _yearEndService.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
@@ -193,7 +181,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
         }
 
         [Fact]
-        public async Task CanApproveYearEndDataSetupRequestAsync_WhenServiceReturnsFalse_ReturnsOkWithFalse()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_WhenServiceReturnsFalse_ReturnsOkWithFalse()
         {
             // Arrange
             _yearEndService.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(false);
@@ -209,7 +197,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
         }
 
         [Fact]
-        public async Task CanApproveYearEndDataSetupRequestAsync_WhenServiceThrowsException_PropagatesException()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
             _yearEndService.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Throws(new Exception("Service error"));
@@ -221,10 +209,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupInitiationJob
-        // -----------------------------------------------------------------------
 
         #region EnqueueYearEndDataSetupInitiationJob
 
@@ -307,10 +291,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupApprovalJob
-        // -----------------------------------------------------------------------
-
         #region EnqueueYearEndDataSetupApprovalJob
 
         [Fact]
@@ -391,10 +371,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupRejectJob
-        // -----------------------------------------------------------------------
 
         #region EnqueueYearEndDataSetupRejectJob
 

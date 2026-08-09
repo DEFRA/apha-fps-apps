@@ -26,10 +26,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
             _sut = new YearEndService(_fpsClient);
         }
 
-        // -----------------------------------------------------------------------
-        // GetYearEndDataSetupBatchJobHistoryAsync
-        // -----------------------------------------------------------------------
-
         #region GetYearEndDataSetupBatchJobHistoryAsync
 
         [Fact]
@@ -111,10 +107,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // GetCanInitiateDataSetupRequestAsync
-        // -----------------------------------------------------------------------
-
         #region GetCanInitiateDataSetupRequestAsync
 
         [Fact]
@@ -184,14 +176,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // GetCanApproveDataSetupRequestAsync
-        // -----------------------------------------------------------------------
-
-        #region GetCanApproveDataSetupRequestAsync
+        #region GetCanApproveOrRejectDataSetupRequestAsync
 
         [Fact]
-        public async Task GetCanApproveDataSetupRequestAsync_WhenApiReturnsTrue_ReturnsSuccessWithTrue()
+        public async Task GetCanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsTrue_ReturnsSuccessWithTrue()
         {
             // Arrange
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
@@ -208,7 +196,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
         }
 
         [Fact]
-        public async Task GetCanApproveDataSetupRequestAsync_WhenApiReturnsFalse_ReturnsSuccessWithFalse()
+        public async Task GetCanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsFalse_ReturnsSuccessWithFalse()
         {
             // Arrange
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(false);
@@ -225,7 +213,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
         }
 
         [Fact]
-        public async Task GetCanApproveDataSetupRequestAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        public async Task GetCanApproveOrRejectDataSetupRequestAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Forbidden", Code = "FORBIDDEN" } };
@@ -242,7 +230,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
         }
 
         [Fact]
-        public async Task GetCanApproveDataSetupRequestAsync_WhenApiClientThrowsException_PropagatesException()
+        public async Task GetCanApproveOrRejectDataSetupRequestAsync_WhenApiClientThrowsException_PropagatesException()
         {
             // Arrange
             _fpsYearEndApiClient.GetCanApproveOrRejectDataSetupRequestAsync(JobName)
@@ -256,10 +244,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupInitiationJobAsync
-        // -----------------------------------------------------------------------
 
         #region EnqueueYearEndDataSetupInitiationJobAsync
 
@@ -339,10 +323,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // TriggerYearEndDataSetupApprovalJobAsync
-        // -----------------------------------------------------------------------
-
         #region TriggerYearEndDataSetupApprovalJobAsync
 
         [Fact]
@@ -420,10 +400,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupRejectJobAsync
-        // -----------------------------------------------------------------------
 
         #region EnqueueYearEndDataSetupRejectJobAsync
 

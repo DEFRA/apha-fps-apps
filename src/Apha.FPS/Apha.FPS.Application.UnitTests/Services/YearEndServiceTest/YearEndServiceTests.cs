@@ -99,10 +99,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         private void SetupYearMasterNotFound() =>
             _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear).Returns((YearMaster?)null);
 
-        // -----------------------------------------------------------------------
-        // GetBatchJobsHistoryAsync
-        // -----------------------------------------------------------------------
-
         #region GetBatchJobsHistoryAsync
 
         [Fact]
@@ -176,10 +172,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // CanInitiateYearEndDataSetupRequestAsync
-        // -----------------------------------------------------------------------
-
         #region CanInitiateYearEndDataSetupRequestAsync
 
         [Fact]
@@ -223,14 +215,10 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // CanApproveYearEndDataSetupRequestAsync
-        // -----------------------------------------------------------------------
-
-        #region CanApproveYearEndDataSetupRequestAsync
+        #region CanApproveOrRejectYearEndDataSetupRequestAsync
 
         [Fact]
-        public async Task CanApproveYearEndDataSetupRequestAsync_WhenRepositoryReturnsTrue_ReturnsTrue()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_WhenRepositoryReturnsTrue_ReturnsTrue()
         {
             // Arrange
             _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
@@ -244,7 +232,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         }
 
         [Fact]
-        public async Task CanApproveYearEndDataSetupRequestAsync_WhenRepositoryReturnsFalse_ReturnsFalse()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_WhenRepositoryReturnsFalse_ReturnsFalse()
         {
             // Arrange
             _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(false);
@@ -258,7 +246,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         }
 
         [Fact]
-        public async Task CanApproveYearEndDataSetupRequestAsync_WhenRepositoryThrows_PropagatesException()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_WhenRepositoryThrows_PropagatesException()
         {
             // Arrange
             _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName)
@@ -269,10 +257,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupInitiationJobAsync — validation
-        // -----------------------------------------------------------------------
 
         #region EnqueueYearEndDataSetupInitiationJobAsync — validation
 
@@ -444,10 +428,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupInitiationJobAsync — success
-        // -----------------------------------------------------------------------
-
         #region EnqueueYearEndDataSetupInitiationJobAsync — success
 
         [Fact]
@@ -547,10 +527,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupApprovalJobAsync — validation
-        // -----------------------------------------------------------------------
 
         #region EnqueueYearEndDataSetupApprovalJobAsync — validation
 
@@ -660,10 +636,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupApprovalJobAsync — success
-        // -----------------------------------------------------------------------
 
         #region EnqueueYearEndDataSetupApprovalJobAsync — success
 
@@ -786,10 +758,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupRejectJobAsync — validation
-        // -----------------------------------------------------------------------
-
         #region EnqueueYearEndDataSetupRejectJobAsync — validation
 
         [Fact]
@@ -835,10 +803,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupRejectJobAsync — success
-        // -----------------------------------------------------------------------
 
         #region EnqueueYearEndDataSetupRejectJobAsync — success
 
