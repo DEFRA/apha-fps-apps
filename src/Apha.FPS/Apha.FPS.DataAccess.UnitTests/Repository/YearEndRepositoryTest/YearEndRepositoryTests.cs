@@ -870,7 +870,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var (repo, _, _, _) = CreateRepository();
 
             // Act
-            var result = await repo.CanApproveYearEndDataSetupRequestAsync(DefaultJobName);
+            var result = await repo.CanApproveOrRejectYearEndDataSetupRequestAsync(DefaultJobName);
 
             // Assert
             Assert.False(result);
@@ -884,7 +884,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
 
             // Act
-            var result = await repo.CanApproveYearEndDataSetupRequestAsync(DefaultJobName);
+            var result = await repo.CanApproveOrRejectYearEndDataSetupRequestAsync(DefaultJobName);
 
             // Assert
             Assert.True(result);
@@ -898,7 +898,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
 
             // Act
-            var result = await repo.CanApproveYearEndDataSetupRequestAsync(DefaultJobName);
+            var result = await repo.CanApproveOrRejectYearEndDataSetupRequestAsync(DefaultJobName);
 
             // Assert
             Assert.False(result);
@@ -912,7 +912,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
 
             // Act
-            var result = await repo.CanApproveYearEndDataSetupRequestAsync(DefaultJobName);
+            var result = await repo.CanApproveOrRejectYearEndDataSetupRequestAsync(DefaultJobName);
 
             // Assert
             Assert.False(result);
@@ -926,7 +926,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
 
             // Act
-            var result = await repo.CanApproveYearEndDataSetupRequestAsync("yearendsetup");
+            var result = await repo.CanApproveOrRejectYearEndDataSetupRequestAsync("yearendsetup");
 
             // Assert
             Assert.True(result);
@@ -948,7 +948,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
                 statuses: [rejectedStatus, failedStatus]);
 
             // Act
-            var result = await repo.CanApproveYearEndDataSetupRequestAsync(DefaultJobName);
+            var result = await repo.CanApproveOrRejectYearEndDataSetupRequestAsync(DefaultJobName);
 
             // Assert
             Assert.False(result);
@@ -1389,6 +1389,180 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(
                 () => repo.EnqueueDataSetupApprovalBatchJobAsync(
+                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+        }
+
+        #endregion
+
+        // -----------------------------------------------------------------------
+        // EnqueueDataSetupRejectBatchJobAsync
+        // -----------------------------------------------------------------------
+
+        #region EnqueueDataSetupRejectBatchJobAsync
+
+        [Fact]
+        public async Task EnqueueDataSetupRejectBatchJobAsync_ThrowsKeyNotFoundException_WhenNoInitiatedQueueEntry()
+        {
+            // Arrange — no records exist → no initiated entry found
+            var (repo, _, _, _) = CreateRepository();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => repo.EnqueueDataSetupRejectBatchJobAsync(
+                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+        }
+
+        [Fact]
+        public async Task EnqueueDataSetupRejectBatchJobAsync_ThrowsKeyNotFoundException_WhenRejectedStatusNotFound()
+        {
+            // Arrange — "initiated" queue entry found but no "rejected" status defined for the job
+            var queueId = Guid.NewGuid();
+            var (job, queue, initiatedStatus) = BuildJoinSeed(
+                statusText: "initiated", jobId: 1, statusId: 10, queueId: queueId);
+
+            // No "rejected" status — only "initiated" is defined
+            var (repo, _, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [queue],
+                statuses: [initiatedStatus]);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => repo.EnqueueDataSetupRejectBatchJobAsync(
+                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+        }
+
+        [Fact]
+        public async Task EnqueueDataSetupRejectBatchJobAsync_UpdatesQueueEntryStatus_OnSuccess()
+        {
+            // Arrange
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var rejectedStatus  = BuildStatus(30, 1, "rejected");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var (repo, _, queueSet, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, rejectedStatus]);
+
+            // Act
+            await repo.EnqueueDataSetupRejectBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "reject note");
+
+            // Assert — the existing queue row was updated
+            queueSet.Verify(x => x.Update(It.IsAny<BatchJobQueue>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task EnqueueDataSetupRejectBatchJobAsync_AddsLogEntry_OnSuccess()
+        {
+            // Arrange
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var rejectedStatus  = BuildStatus(30, 1, "rejected");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var (repo, _, _, logSet) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, rejectedStatus]);
+
+            // Act
+            await repo.EnqueueDataSetupRejectBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "reject note");
+
+            // Assert
+            logSet.Verify(x => x.Add(It.IsAny<BatchJobQueueLog>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task EnqueueDataSetupRejectBatchJobAsync_CallsSaveChangesAsync_OnSuccess()
+        {
+            // Arrange
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var rejectedStatus  = BuildStatus(30, 1, "rejected");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var (repo, mockContext, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, rejectedStatus]);
+
+            // Act
+            await repo.EnqueueDataSetupRejectBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note");
+
+            // Assert
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        [Fact]
+        public async Task EnqueueDataSetupRejectBatchJobAsync_ReturnsUpdatedQueueRow_WithRejectedStatus()
+        {
+            // Arrange
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var rejectedStatus  = BuildStatus(30, 1, "rejected");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, rejectedStatus]);
+
+            // Act
+            var result = await repo.EnqueueDataSetupRejectBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "reject note");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(30,               result.StatusId);
+            Assert.Equal(DefaultUserEmail, result.RequestedBy);
+            Assert.Equal("reject note",    result.ErrorMessage);
+        }
+
+        [Fact]
+        public async Task EnqueueDataSetupRejectBatchJobAsync_SaveFails_RollsBackTransaction()
+        {
+            // Arrange — SaveChangesAsync throws to simulate a DB error
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var rejectedStatus  = BuildStatus(30, 1, "rejected");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var requestCtx = Substitute.For<IFpsRequestContext>();
+            requestCtx.FpsYear.Returns(DefaultFpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx);
+
+            mockContext.Setup(x => x.BatchJobs)
+                .Returns(RepositoryTestHelper.CreateMockDbSet<BatchJobMaster>([job]).Object);
+            mockContext.Setup(x => x.BatchJobStatuses)
+                .Returns(RepositoryTestHelper.CreateMockDbSet<BatchJobStatus>([initiatedStatus, rejectedStatus]).Object);
+
+            var queueSet = RepositoryTestHelper.CreateMockDbSet<BatchJobQueue>([existingQueue]);
+            RepositoryTestHelper.SetupDbSetOperations(queueSet);
+            mockContext.Setup(x => x.BatchJobQueues).Returns(queueSet.Object);
+
+            var logSet = RepositoryTestHelper.CreateMockDbSet<BatchJobQueueLog>([]);
+            RepositoryTestHelper.SetupDbSetOperations(logSet);
+            mockContext.Setup(x => x.BatchJobQueueLogs).Returns(logSet.Object);
+
+            mockContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                       .ThrowsAsync(new InvalidOperationException("DB save failed"));
+
+            var repo = new YearEndRepository(mockContext.Object, requestCtx);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.EnqueueDataSetupRejectBatchJobAsync(
                     DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
         }
 

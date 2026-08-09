@@ -107,13 +107,17 @@
         var id          = getCellValue(row, 'Id');
         var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
 
-        $.get(cfg.editConfigValueUrl, { id: id })
-            .done(function (html) {
+        $.ajax({
+            url: cfg.editConfigValueUrl,
+            type: 'GET',
+            data: { id: id },
+            success: function (html) {
                 openModalWithHtml(html);
-            })
-            .fail(function () {
+            },
+            error: function () {
                 showAlertMessage('Failed to load the edit form.', AlertType.ERROR);
-            });
+            }
+        });
     };
 
     // ── Config Value grid — Delete/Confirm button ─────────────────────────────
@@ -171,13 +175,17 @@
         var fpsyear = getCellValue(row, 'FpsYear');
         var fmonth = getCellValue(row, 'Fmonth');
 
-        $.get(cfg.editMonthHourUrl, { year: year, month: month, fpsyear: fpsyear, fmonth: fmonth })
-            .done(function (html) {
+        $.ajax({
+            url: cfg.editMonthHourUrl,
+            type: 'GET',
+            data: { year: year, month: month, fpsyear: fpsyear, fmonth: fmonth },
+            success: function (html) {
                 openModalWithHtml(html);
-            })
-            .fail(function () {
+            },
+            error: function () {
                 showAlertMessage('Failed to load the edit form.', AlertType.ERROR);
-            });
+            }
+        });
     };
 
     // ── Month Working Hours grid — Delete/Confirm button ──────────────────────
@@ -329,21 +337,34 @@
                     return;
                 }
 
-                showGovukConfirm('Are you sure you want to approve the DataSetup Request for year ' + plannedYearVal + '?')
+                showGovukApproveReject('Are you sure you want to approve the DataSetup Request for year ' + plannedYearVal + '?')
                     .then(function (confirmed) {
-                        if (!confirmed) return;
-
-                        btnApprove.disabled = true;
-                        postJson(cfg.triggerApproveUrl + '?plannedYear=' + plannedYearVal, {},
-                            function () {
-                                showAlertMessage('Year End Approval request submitted successfully.', AlertType.SUCCESS);
-                                reloadHistoryGrid();
-                            },
-                            function (msgs) {
-                                showPageError(msgs);
-                                btnApprove.disabled = false;
-                            }
-                        );
+                        if (confirmed) {
+                            btnApprove.disabled = true;
+                            postJson(cfg.triggerApproveUrl + '?plannedYear=' + plannedYearVal, {},
+                                function () {
+                                    showAlertMessage('Year End Approval request submitted successfully.', AlertType.SUCCESS);
+                                    reloadHistoryGrid();
+                                },
+                                function (msgs) {
+                                    showPageError(msgs);
+                                    btnApprove.disabled = false;
+                                }
+                            );
+                        } else {
+                            btnApprove.disabled = true;
+                            postJson(cfg.triggerRejectUrl + '?plannedYear=' + plannedYearVal, {},
+                                function () {
+                                    showAlertMessage('Year End datasetup request rejected successfully.', AlertType.SUCCESS);
+                                    reloadHistoryGrid();
+                                    btnInitiate.disabled = false;
+                                },
+                                function (msgs) {
+                                    showPageError(msgs);
+                                    btnApprove.disabled = false;
+                                }
+                            );
+                        }
                     });
             });
         }

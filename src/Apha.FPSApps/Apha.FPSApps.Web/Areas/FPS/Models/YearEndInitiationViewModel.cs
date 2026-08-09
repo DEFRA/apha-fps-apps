@@ -45,25 +45,25 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Order = 3, Width = 120, Type = GridColumnType.Text)]
         public string MonthName { get; set; } = string.Empty;
 
-        [Display(Name = "Fmonth")]
+        [Display(Name = "Month")]
         [GridColumn(Order = 4, Width = 60, Type = GridColumnType.Text)]
+        public short Month { get; set; }
+
+        [Display(Name = "Fmonth")]
+        [GridColumn(Order = 5, Width = 60, Type = GridColumnType.Text)]
         public short? Fmonth { get; set; }
 
         [Display(Name = "Days")]
-        [GridColumn(Order = 5, Width = 80, Type = GridColumnType.Text)]
+        [GridColumn(Order = 6, Width = 80, Type = GridColumnType.Text)]
         public decimal? Days { get; set; }
 
         [Display(Name = "CVL Hours")]
-        [GridColumn(Order = 6, Width = 100, Type = GridColumnType.Text)]
+        [GridColumn(Order = 7, Width = 100, Type = GridColumnType.Text)]
         public decimal? CvlHours { get; set; }
 
         [Display(Name = "VID Hours")]
-        [GridColumn(Order = 7, Width = 100, Type = GridColumnType.Text)]
+        [GridColumn(Order = 8, Width = 100, Type = GridColumnType.Text)]
         public decimal? VidHours { get; set; }
-
-        [Display(Name = "Month")]
-        [GridColumn(Order = 8, Width = 60, Type = GridColumnType.Text)]
-        public short Month { get; set; }
 
         [Display(Name = "Exists For Planned Year")]
         [GridColumn(Order = 9, Width = 100, Type = GridColumnType.Text)]

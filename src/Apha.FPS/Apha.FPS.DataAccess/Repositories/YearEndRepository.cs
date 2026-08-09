@@ -47,7 +47,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return !hasNonTerminalRecord;
         }
 
-        public async Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName)
+        public async Task<bool> CanApproveOrRejectYearEndDataSetupRequestAsync(string jobName)
         {
             bool hasRunningJob = await CanApproveRequest(jobName);
 
@@ -66,7 +66,12 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<BatchJobQueue> EnqueueDataSetupApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
         {
-            return await EnqueueApprovalRequest(jobName, requestedBy, correlationId, note);
+            return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, false);
+        }
+
+        public async Task<BatchJobQueue> EnqueueDataSetupRejectBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        {
+            return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, true);
         }
 
         public async Task<bool> CanInitiateYearEndCutOverRequestAsync(string jobName)
@@ -95,9 +100,8 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<BatchJobQueue> EnqueueCutOverApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
         {
-            return await EnqueueApprovalRequest(jobName, requestedBy, correlationId, note);
+            return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, false);
         }
-
         private async Task<bool> CanInitiateRequest(string jobName)
         {
             // Returns true when no records exist for the job, OR every record is in a terminal status (rejected / failed / cancelled).
@@ -140,10 +144,11 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return initiator ?? string.Empty;
         }
-        
-        private async Task<BatchJobQueue> EnqueueApprovalRequest(string jobName, string requestedBy, string correlationId, string note)
+
+        private async Task<BatchJobQueue> EnqueueApprovalOrRejectRequest(string jobName, string requestedBy, string correlationId, string note, bool isReject)
         {
             BatchJobQueue queueRow = null!;
+            BatchJobStatus jobStatus;
 
             var jobqueue = await (
                 from jm in _context.BatchJobs.AsNoTracking()
@@ -159,10 +164,21 @@ namespace Apha.FPS.DataAccess.Repositories
                 throw new KeyNotFoundException($"No approval request was found for job '{jobName}'.");
             }
 
-            var approveStatus = await _context.BatchJobStatuses
+            if (isReject)
+            {
+                jobStatus = await _context.BatchJobStatuses
+                .AsNoTracking()
+                .Where(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "rejected")
+                .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'rejected' not found for job '{jobName}'.");
+            }
+            else
+            {
+                jobStatus = await _context.BatchJobStatuses
                 .AsNoTracking()
                 .Where(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "approved")
                 .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'approved' not found for job '{jobName}'.");
+            }
+
 
             var strategy = _context.Database.CreateExecutionStrategy();
 
@@ -176,14 +192,14 @@ namespace Apha.FPS.DataAccess.Repositories
                     ?? throw new KeyNotFoundException($"Batch job queue for job '{jobName}' was not found.");
 
                     //update the status of the job queue entry to "approved"
-                    queueRow.StatusId = approveStatus.StatusId;
+                    queueRow.StatusId = jobStatus.StatusId;
                     queueRow.RequestedBy = requestedBy;
                     queueRow.RequestedAtUtc = DateTime.UtcNow;
                     queueRow.StartDateTime = DateTime.UtcNow;
                     queueRow.ErrorMessage = note;
                     _context.BatchJobQueues.Update(queueRow);
 
-                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, approveStatus.StatusId);
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, jobStatus.StatusId);
                     _context.BatchJobQueueLogs.Add(logEntry);
 
                     await _context.SaveChangesAsync();
@@ -199,7 +215,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return queueRow;
         }
-        
+
         private async Task<BatchJobQueue> EnqueueInitiationRequest(string jobName, string requestedBy, string correlationId, string note)
         {
             BatchJobQueue jobQueueEntry = null!;

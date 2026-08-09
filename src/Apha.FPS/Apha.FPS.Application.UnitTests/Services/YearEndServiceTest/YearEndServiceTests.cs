@@ -233,39 +233,39 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         public async Task CanApproveYearEndDataSetupRequestAsync_WhenRepositoryReturnsTrue_ReturnsTrue()
         {
             // Arrange
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
 
             // Act
-            var result = await _sut.CanApproveYearEndDataSetupRequestAsync(JobName);
+            var result = await _sut.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName);
 
             // Assert
             result.Should().BeTrue();
-            await _yearEndRepository.Received(1).CanApproveYearEndDataSetupRequestAsync(JobName);
+            await _yearEndRepository.Received(1).CanApproveOrRejectYearEndDataSetupRequestAsync(JobName);
         }
 
         [Fact]
         public async Task CanApproveYearEndDataSetupRequestAsync_WhenRepositoryReturnsFalse_ReturnsFalse()
         {
             // Arrange
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(false);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(false);
 
             // Act
-            var result = await _sut.CanApproveYearEndDataSetupRequestAsync(JobName);
+            var result = await _sut.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName);
 
             // Assert
             result.Should().BeFalse();
-            await _yearEndRepository.Received(1).CanApproveYearEndDataSetupRequestAsync(JobName);
+            await _yearEndRepository.Received(1).CanApproveOrRejectYearEndDataSetupRequestAsync(JobName);
         }
 
         [Fact]
         public async Task CanApproveYearEndDataSetupRequestAsync_WhenRepositoryThrows_PropagatesException()
         {
             // Arrange
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName)
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName)
                 .Throws(new Exception("Repository error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _sut.CanApproveYearEndDataSetupRequestAsync(JobName));
+            await Assert.ThrowsAsync<Exception>(() => _sut.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName));
         }
 
         #endregion
@@ -315,7 +315,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear)
-                .Returns(new YearMaster { FpsYear = PlannedYear, YearStatus = "Closed", Active = true });
+                .Returns(new YearMaster { FpsYear = PlannedYear, YearStatus = "planned", Active = true });
             _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(JobName).Returns(true);
 
             // Act & Assert
@@ -563,7 +563,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             _yearMasterRepository.GetFpsYearByIdAsync(invalidYear).Returns((YearMaster?)null);
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
 
             // Act & Assert
@@ -579,7 +579,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear).Returns((YearMaster?)null);
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
 
             // Act & Assert
@@ -595,8 +595,8 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear)
-                .Returns(new YearMaster { FpsYear = PlannedYear, YearStatus = "Closed", Active = true });
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+                .Returns(new YearMaster { FpsYear = PlannedYear, YearStatus = "close", Active = true });
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
 
             // Act & Assert
@@ -612,7 +612,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(false);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(false);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
 
             // Act & Assert
@@ -628,7 +628,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(RequestedBy);
 
             // Act & Assert
@@ -649,7 +649,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _fpsSettingRepository.GetYearEndSettingsAsync().Returns(missingSettings);
             _monthHourRepository.GetYearEndMonthHoursAsync().Returns(ValidMonthHours());
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
 
             // Act & Assert
@@ -673,7 +673,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
 
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
@@ -705,7 +705,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
 
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
@@ -733,7 +733,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange — email failure must be swallowed, not propagated
             SetupValidConfiguration();
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
 
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
@@ -762,7 +762,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             // Arrange
             SetupValidConfiguration();
             SetupYearMasterNotFound();
-            _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
             _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
 
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
@@ -782,6 +782,128 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             await _eventPublisherService.Received(1).PublishAsync(
                 Arg.Is<EventDetail>(e => e.JobName == JobName && e.RequestedBy == RequestedBy),
                 Arg.Any<CancellationToken>());
+        }
+
+        #endregion
+
+        // -----------------------------------------------------------------------
+        // EnqueueYearEndDataSetupRejectJobAsync — validation
+        // -----------------------------------------------------------------------
+
+        #region EnqueueYearEndDataSetupRejectJobAsync — validation
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenRequestedByIsEmpty_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, ContextYear, string.Empty, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_User");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenNoInitiatedRequestExists_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(false);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(string.Empty);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Approval");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenInitiatorAndRejectorAreSamePerson_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns(RequestedBy);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Approval");
+        }
+
+        #endregion
+
+        // -----------------------------------------------------------------------
+        // EnqueueYearEndDataSetupRejectJobAsync — success
+        // -----------------------------------------------------------------------
+
+        #region EnqueueYearEndDataSetupRejectJobAsync — success
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenAllValid_ReturnsTrue()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueDataSetupRejectBatchJobAsync(JobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(new BatchJobEventTriggerDto());
+
+            // Act
+            var result = await _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            result.Should().BeTrue();
+            await _yearEndRepository.Received(1).EnqueueDataSetupRejectBatchJobAsync(
+                JobName, RequestedBy, CorrelationId, Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenAllValid_SendsEmail()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueDataSetupRejectBatchJobAsync(JobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(new BatchJobEventTriggerDto());
+
+            // Act
+            await _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            await _emailService.Received(1).SendEmailAsync(
+                Arg.Is<EmailMessageModel>(m => m.To.Contains("approval@example.com")),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenEmailFails_StillReturnsTrue()
+        {
+            // Arrange — email failure must be swallowed, not propagated
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
+            _yearEndRepository.EnqueueDataSetupRejectBatchJobAsync(JobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(new BatchJobEventTriggerDto());
+
+            _emailService.SendEmailAsync(Arg.Any<EmailMessageModel>(), Arg.Any<CancellationToken>())
+                .Throws(new Exception("SMTP failure"));
+
+            // Act
+            var result = await _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert — email failure swallowed; true still returned
+            result.Should().BeTrue();
         }
 
         #endregion

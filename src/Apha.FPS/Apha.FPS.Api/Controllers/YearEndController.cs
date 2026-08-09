@@ -63,10 +63,10 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with <c>true</c> if initiate request exists for the job; <c>false</c> if no initiate request exists for the job.</returns>
-        [HttpGet("datasetup/canapprove")]
-        public async Task<IActionResult> CanApproveYearEndDataSetupRequestAsync([FromQuery] string jobName)
+        [HttpGet("dataSetup/canapproveorreject")]
+        public async Task<IActionResult> CanApproveOrRejectYearEndDataSetupRequestAsync([FromQuery] string jobName)
         {
-            var result = await _yearEndService.CanApproveYearEndDataSetupRequestAsync(jobName);
+            var result = await _yearEndService.CanApproveOrRejectYearEndDataSetupRequestAsync(jobName);
             return Ok(result);
         }
 
@@ -99,6 +99,21 @@ namespace Apha.FPS.Api.Controllers
             var result = await _yearEndService.EnqueueYearEndDataSetupApprovalJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
 
             return Ok(_mapper.Map<BatchJobEventTriggerRes>(result));
+        }
+
+        /// <summary>
+        /// Enqueue the YearEndInitiation batch job for approve and publish event for batch job.
+        /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
+        /// all config exists, aproval and initiator are not same, verifies no instance is already running, then enqueues the job. 
+        /// </summary>
+        /// <param name="request">Request body containing the planned year.</param>
+        /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
+        [HttpPost("dataSetup/reject")]
+        public async Task<IActionResult> EnqueueYearEndDataSetupRejectJob([FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
+        {
+            var result = await _yearEndService.EnqueueYearEndDataSetupRejectJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
+
+            return Ok(result);
         }
 
         /// <summary>

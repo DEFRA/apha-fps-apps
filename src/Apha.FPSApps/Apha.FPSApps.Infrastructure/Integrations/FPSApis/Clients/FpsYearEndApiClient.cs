@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
-        public async Task<ApiResponseDto<bool>> GetCanApproveDataSetupRequestAsync(string jobName)
+        public async Task<ApiResponseDto<bool>> GetCanApproveOrRejectDataSetupRequestAsync(string jobName)
         {
             var url = $"{FpsApiEndpoints.GetCanApproveDataSetupRequest}?jobName={Uri.EscapeDataString(jobName)}";
             var response = await _http.GetAsync<bool>(url);
@@ -90,6 +90,19 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
             var failDto = _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(response);
             return ApiResponseDto<BatchJobEventTriggerDto>.FailureResponse(failDto.Errors, failDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<bool>> EnqueueYearEndDataSetupRejectJobAsync(int plannedYear)
+        {
+            var request = new YearEndDataSetupReq { PlannedYear = plannedYear };
+            var response = await _http.PostAsync<YearEndDataSetupReq, bool>(
+                FpsApiEndpoints.EnqueueYearEndDataSetupRejectJob, request);
+
+            if (response.Success)
+                return ApiResponseDto<bool>.SuccessResponse(response.Data); 
+
+            var failDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
         public async Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetYearEndCutOverBatchJobHistoryAsync(QueryParameters<string> query, string jobName)

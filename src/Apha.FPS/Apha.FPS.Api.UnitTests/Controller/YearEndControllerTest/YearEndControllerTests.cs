@@ -179,45 +179,45 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
         public async Task CanApproveYearEndDataSetupRequestAsync_WhenServiceReturnsTrue_ReturnsOkWithTrue()
         {
             // Arrange
-            _yearEndService.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndService.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
 
             // Act
-            var result = await _sut.CanApproveYearEndDataSetupRequestAsync(JobName);
+            var result = await _sut.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             okResult.StatusCode.Should().Be(200);
             okResult.Value.Should().Be(true);
 
-            await _yearEndService.Received(1).CanApproveYearEndDataSetupRequestAsync(JobName);
+            await _yearEndService.Received(1).CanApproveOrRejectYearEndDataSetupRequestAsync(JobName);
         }
 
         [Fact]
         public async Task CanApproveYearEndDataSetupRequestAsync_WhenServiceReturnsFalse_ReturnsOkWithFalse()
         {
             // Arrange
-            _yearEndService.CanApproveYearEndDataSetupRequestAsync(JobName).Returns(false);
+            _yearEndService.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(false);
 
             // Act
-            var result = await _sut.CanApproveYearEndDataSetupRequestAsync(JobName);
+            var result = await _sut.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             okResult.Value.Should().Be(false);
 
-            await _yearEndService.Received(1).CanApproveYearEndDataSetupRequestAsync(JobName);
+            await _yearEndService.Received(1).CanApproveOrRejectYearEndDataSetupRequestAsync(JobName);
         }
 
         [Fact]
         public async Task CanApproveYearEndDataSetupRequestAsync_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
-            _yearEndService.CanApproveYearEndDataSetupRequestAsync(JobName).Throws(new Exception("Service error"));
+            _yearEndService.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Throws(new Exception("Service error"));
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.CanApproveYearEndDataSetupRequestAsync(JobName));
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName));
             exception.Message.Should().Be("Service error");
-            await _yearEndService.Received(1).CanApproveYearEndDataSetupRequestAsync(JobName);
+            await _yearEndService.Received(1).CanApproveOrRejectYearEndDataSetupRequestAsync(JobName);
         }
 
         #endregion
@@ -388,6 +388,84 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
             var exception = await Assert.ThrowsAsync<Exception>(
                 () => _sut.EnqueueYearEndDataSetupApprovalJob(request, CorrelationId));
             exception.Message.Should().Be("Approval failed");
+        }
+
+        #endregion
+
+        // -----------------------------------------------------------------------
+        // EnqueueYearEndDataSetupRejectJob
+        // -----------------------------------------------------------------------
+
+        #region EnqueueYearEndDataSetupRejectJob
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJob_WhenValid_ReturnsOkWithServiceResult()
+        {
+            // Arrange
+            var request = new YearEndDataSetupReq { PlannedYear = PlannedYear };
+            const bool serviceResult = true;
+
+            _yearEndService
+                .EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, FpsYear, UserEmail, CorrelationId)
+                .Returns(serviceResult);
+
+            // Act
+            var result = await _sut.EnqueueYearEndDataSetupRejectJob(request, CorrelationId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.StatusCode.Should().Be(200);
+            okResult.Value.Should().Be(serviceResult);
+
+            await _yearEndService.Received(1).EnqueueYearEndDataSetupRejectJobAsync(
+                PlannedYear, FpsYear, UserEmail, CorrelationId);
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJob_PassesFpsRequestContextValuesToService()
+        {
+            // Arrange
+            var request = new YearEndDataSetupReq { PlannedYear = PlannedYear };
+            _yearEndService
+                .EnqueueYearEndDataSetupRejectJobAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(true);
+            _mapper.Map<BatchJobEventTriggerRes>(true).Returns(new BatchJobEventTriggerRes());
+
+            // Act
+            await _sut.EnqueueYearEndDataSetupRejectJob(request, CorrelationId);
+
+            // Assert — context values forwarded correctly
+            await _yearEndService.Received(1).EnqueueYearEndDataSetupRejectJobAsync(
+                PlannedYear, FpsYear, UserEmail, CorrelationId);
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJob_WhenServiceThrowsBusinessValidationException_PropagatesException()
+        {
+            // Arrange
+            var request = new YearEndDataSetupReq { PlannedYear = PlannedYear };
+            _yearEndService
+                .EnqueueYearEndDataSetupRejectJobAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>())
+                .Throws(new BusinessValidationErrorException([new BusinessValidationError("Same person", "INVALID_Approval")]));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndDataSetupRejectJob(request, CorrelationId));
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJob_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            var request = new YearEndDataSetupReq { PlannedYear = PlannedYear };
+            _yearEndService
+                .EnqueueYearEndDataSetupRejectJobAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>())
+                .Throws(new Exception("Rejection failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                () => _sut.EnqueueYearEndDataSetupRejectJob(request, CorrelationId));
+            exception.Message.Should().Be("Rejection failed");
         }
 
         #endregion

@@ -62,9 +62,9 @@ namespace Apha.FPS.Application.Services
             return await _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(jobName);
         }
 
-        public async Task<bool> CanApproveYearEndDataSetupRequestAsync(string jobName)
+        public async Task<bool> CanApproveOrRejectYearEndDataSetupRequestAsync(string jobName)
         {
-            return await _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(jobName);
+            return await _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(jobName);
         }
 
         public async Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
@@ -83,7 +83,7 @@ namespace Apha.FPS.Application.Services
 
             try
             {
-                await SendEmailAsync(YearEndDataSetupJobName, false, CancellationToken.None);
+                await SendEmailAsync(YearEndDataSetupJobName, "Initiation", CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -116,7 +116,7 @@ namespace Apha.FPS.Application.Services
 
             try
             {
-                await SendEmailAsync(YearEndDataSetupJobName, true, CancellationToken.None);
+                await SendEmailAsync(YearEndDataSetupJobName, "Approval", CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -124,6 +124,43 @@ namespace Apha.FPS.Application.Services
             }
 
             return _mapper.Map<BatchJobEventTriggerDto>(result);
+        }
+
+        public async Task<bool> EnqueueYearEndDataSetupRejectJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
+        {
+            var errors = new List<BusinessValidationError>();
+            var jobName = YearEndDataSetupJobName;
+
+            var note = $"'{jobName}' is rejected for {plannedYear}.";
+
+            if (string.IsNullOrEmpty(requestedBy))
+                errors.Add(new BusinessValidationError($"Unable to identify the rejector. Please sign in again and retry. If the issue persists, contact support.", "INVALID_User"));
+
+            var canApprove = await _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(jobName);
+            if (!canApprove)
+                errors.Add(new BusinessValidationError($"There is no initiated request for rejection for job '{jobName}'.", "INVALID_Approval"));
+
+            var initiator = await _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(jobName);
+            if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
+                errors.Add(new BusinessValidationError($"Initiator and rejector for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+
+            var queued = await _yearEndRepository.EnqueueDataSetupRejectBatchJobAsync(YearEndDataSetupJobName, requestedBy, correlationId, note);
+
+            var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
+
+            try
+            {
+                await SendEmailAsync(YearEndDataSetupJobName, "Rejection", CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send Year End rejection notification email.");
+            }
+
+            return true;
         }
 
         public async Task<bool> CanInitiateYearEndCutOverRequestAsync(string jobName)
@@ -151,7 +188,7 @@ namespace Apha.FPS.Application.Services
 
             try
             {
-                await SendEmailAsync(YearEndCutOverJobName, false, CancellationToken.None);
+                await SendEmailAsync(YearEndCutOverJobName, "XXXX", CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -183,7 +220,7 @@ namespace Apha.FPS.Application.Services
 
             try
             {
-                await SendEmailAsync(YearEndCutOverJobName, true, CancellationToken.None);
+                await SendEmailAsync(YearEndCutOverJobName, "XXXXX", CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -192,6 +229,7 @@ namespace Apha.FPS.Application.Services
 
             return _mapper.Map<BatchJobEventTriggerDto>(result);
         }
+
         private async Task ValidateDataSetupRequestInput(int plannedYear, string requestedBy, List<BusinessValidationError> errors, string jobName, bool isApprovalRequest)
         {
             if (plannedYear == 0 || (plannedYear < 1900 || plannedYear > 9999))
@@ -205,14 +243,12 @@ namespace Apha.FPS.Application.Services
 
             var plannedYearEntity = await _yearMasterRepository.GetFpsYearByIdAsync(plannedYear);
 
-            if (plannedYearEntity != null && string.Equals(plannedYearEntity.YearStatus, "planned", StringComparison.OrdinalIgnoreCase))
-            {
-                errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year {plannedYear}. You cannot reinitiate or approve request.", "INVALID_Rerun"));
-            }
+            if (plannedYearEntity != null)
+                errors.Add(new BusinessValidationError($"YearEnd Datasetup already completed for the planned year {plannedYear}. You cannot reinitiate/approve request.", "INVALID_Rerun"));
 
             if (isApprovalRequest)
             {
-                var canApprove = await _yearEndRepository.CanApproveYearEndDataSetupRequestAsync(jobName);
+                var canApprove = await _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(jobName);
                 if (!canApprove)
                     errors.Add(new BusinessValidationError($"There is no initiated request for approval for job '{jobName}'.", "INVALID_Approval"));
 
@@ -231,48 +267,6 @@ namespace Apha.FPS.Application.Services
                     errors.Add(new BusinessValidationError($"Job '{jobName}' is already running or initiated. Please try after sometime.", "INVALID_Initiation"));
                 }
             }
-        }
-
-        private async Task ValidateCutOverRequestInput(int plannedYear, string requestedBy, List<BusinessValidationError> errors, string jobName, bool isApprovalRequest)
-        {
-            if (plannedYear == 0 || (plannedYear < 1900 || plannedYear > 9999))
-                errors.Add(new BusinessValidationError($"PlannedYear is not valid.", "INVALID_PlannedYear"));
-
-            if (string.IsNullOrEmpty(requestedBy))
-            {
-                var userRole = isApprovalRequest ? "approver" : "requester";
-                errors.Add(new BusinessValidationError($"Unable to identify the {userRole}. Please sign in again and retry. If the issue persists, contact support.", "INVALID_User"));
-            }
-
-            var plannedYearEntity = await _yearMasterRepository.GetFpsYearByIdAsync(plannedYear);
-
-            if (plannedYearEntity != null && string.Equals(plannedYearEntity.YearStatus, "open", StringComparison.OrdinalIgnoreCase))
-            {
-                errors.Add(new BusinessValidationError($"YearEnd CutOver already completed and planned year {plannedYear} is live. You cannot reinitiate or approve request.", "INVALID_Rerun"));
-            }
-
-            if (isApprovalRequest)
-            {
-                var canApprove = await _yearEndRepository.CanApproveYearEndCutOverRequestAsync(jobName);
-                if (!canApprove)
-                    errors.Add(new BusinessValidationError($"There is no initiated request for approval for job '{jobName}'.", "INVALID_Approval"));
-
-                var initiator = await _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(jobName);
-
-                if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
-                {
-                    errors.Add(new BusinessValidationError($"Initiator and approver for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
-                }
-            }
-            else
-            {
-                var canRun = await _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(jobName);
-                if (!canRun)
-                {
-                    errors.Add(new BusinessValidationError($"Job '{jobName}' is already running or initiated. Please try after sometime.", "INVALID_Initiation"));
-                }
-            }
-
         }
 
         private async Task ValidateConfiguration(List<BusinessValidationError> errors)
@@ -330,6 +324,47 @@ namespace Apha.FPS.Application.Services
                 errors.Add(new BusinessValidationError($"Provided Month( Working days, VID hours and CVL hours values are not valid for the planned year. Values should be non-negative and greater than zero.  Please verify and provide valid value for each month.", "Missing_Config"));
         }
 
+        private async Task ValidateCutOverRequestInput(int plannedYear, string requestedBy, List<BusinessValidationError> errors, string jobName, bool isApprovalRequest)
+        {
+            if (plannedYear == 0 || (plannedYear < 1900 || plannedYear > 9999))
+                errors.Add(new BusinessValidationError($"PlannedYear is not valid.", "INVALID_PlannedYear"));
+
+            if (string.IsNullOrEmpty(requestedBy))
+            {
+                var userRole = isApprovalRequest ? "approver" : "requester";
+                errors.Add(new BusinessValidationError($"Unable to identify the {userRole}. Please sign in again and retry. If the issue persists, contact support.", "INVALID_User"));
+            }
+
+            var plannedYearEntity = await _yearMasterRepository.GetFpsYearByIdAsync(plannedYear);
+
+            if (plannedYearEntity != null && string.Equals(plannedYearEntity.YearStatus, "open", StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add(new BusinessValidationError($"YearEnd CutOver already completed and planned year {plannedYear} is live. You cannot reinitiate or approve request.", "INVALID_Rerun"));
+            }
+
+            if (isApprovalRequest)
+            {
+                var canApprove = await _yearEndRepository.CanApproveYearEndCutOverRequestAsync(jobName);
+                if (!canApprove)
+                    errors.Add(new BusinessValidationError($"There is no initiated request for approval for job '{jobName}'.", "INVALID_Approval"));
+
+                var initiator = await _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(jobName);
+
+                if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
+                {
+                    errors.Add(new BusinessValidationError($"Initiator and approver for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
+                }
+            }
+            else
+            {
+                var canRun = await _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(jobName);
+                if (!canRun)
+                {
+                    errors.Add(new BusinessValidationError($"Job '{jobName}' is already running or initiated. Please try after sometime.", "INVALID_Initiation"));
+                }
+            }
+
+        }
         private static EventDetail BuildYearEndJobEvent(string jobName, string requestedBy, string correlationId, int plannedYear)
         {
             return new EventDetail
@@ -345,12 +380,12 @@ namespace Apha.FPS.Application.Services
                 })
             };
         }
-
-        private async Task SendEmailAsync(string jobName, bool isApprovalRequest, CancellationToken cancellationToken)
+        
+        private async Task SendEmailAsync(string jobName, string notificationType, CancellationToken cancellationToken)
         {
             if (string.Equals(jobName, YearEndDataSetupJobName, StringComparison.OrdinalIgnoreCase))
             {
-                if (isApprovalRequest)
+                if (notificationType == "Approval")
                 {
                     await _emailService.SendEmailAsync(new EmailMessageModel
                     {
@@ -360,7 +395,19 @@ namespace Apha.FPS.Application.Services
                         IsBodyHtml = false,
                     }, cancellationToken);
                 }
-                else
+
+                if (notificationType == "Rejection")
+                {
+                    await _emailService.SendEmailAsync(new EmailMessageModel
+                    {
+                        To = _emailSettings.DataSetupApprovalEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                        Subject = _emailSettings.DataSetupApprovalEmailSubject,
+                        Body = _emailSettings.DataSetupApprovalEmailBody,
+                        IsBodyHtml = false,
+                    }, cancellationToken);
+                }
+
+                if (notificationType == "Initiation")
                 {
                     await _emailService.SendEmailAsync(new EmailMessageModel
                     {
@@ -369,30 +416,6 @@ namespace Apha.FPS.Application.Services
                         Body = _emailSettings.DataSetupInitiatedEmailBody,
                         IsBodyHtml = false,
                     }, cancellationToken);
-                }
-
-                if (string.Equals(jobName, YearEndCutOverJobName, StringComparison.OrdinalIgnoreCase))
-                {
-                    if (isApprovalRequest)
-                    {
-                        await _emailService.SendEmailAsync(new EmailMessageModel
-                        {
-                            To = _emailSettings.CutOverApprovalEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
-                            Subject = _emailSettings.CutOverApprovalEmailSubject,
-                            Body = _emailSettings.CutOverApprovalEmailBody,
-                            IsBodyHtml = false,
-                        }, cancellationToken);
-                    }
-                    else
-                    {
-                        await _emailService.SendEmailAsync(new EmailMessageModel
-                        {
-                            To = _emailSettings.CutOverInitiatedEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
-                            Subject = _emailSettings.CutOverInitiatedEmailSubject,
-                            Body = _emailSettings.CutOverInitiatedEmailBody,
-                            IsBodyHtml = false,
-                        }, cancellationToken);
-                    }
                 }
             }
         }

@@ -264,18 +264,18 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         {
             // Arrange
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
-            _http.GetAsync<bool>($"api/v1/yearend/dataSetup/canapprove?jobName={Uri.EscapeDataString(JobName)}")
+            _http.GetAsync<bool>($"api/v1/yearend/dataSetup/canapproveorreject?jobName={Uri.EscapeDataString(JobName)}")
                  .Returns(apiResponse);
 
             // Act
-            var result = await _client.GetCanApproveDataSetupRequestAsync(JobName);
+            var result = await _client.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
             await _http.Received(1).GetAsync<bool>(
-                $"api/v1/yearend/dataSetup/canapprove?jobName={Uri.EscapeDataString(JobName)}");
+                $"api/v1/yearend/dataSetup/canapproveorreject?jobName={Uri.EscapeDataString(JobName)}");
         }
 
         [Fact]
@@ -286,7 +286,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
-            var result = await _client.GetCanApproveDataSetupRequestAsync(JobName);
+            var result = await _client.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
@@ -311,7 +311,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            var result = await _client.GetCanApproveDataSetupRequestAsync(JobName);
+            var result = await _client.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             Assert.NotNull(result);
@@ -327,7 +327,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
-            await _client.GetCanApproveDataSetupRequestAsync(JobName);
+            await _client.GetCanApproveOrRejectDataSetupRequestAsync(JobName);
 
             // Assert
             await _http.Received(1).GetAsync<bool>(
@@ -567,6 +567,84 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             // Assert
             await _http.Received(1).PostAsync<YearEndDataSetupReq, BatchJobEventTriggerRes>(
                 "api/v1/yearend/dataSetup/approval",
+                Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == plannedYear));
+        }
+
+        #endregion
+
+        // -----------------------------------------------------------------------
+        // EnqueueYearEndDataSetupRejectJobAsync
+        // -----------------------------------------------------------------------
+
+        #region EnqueueYearEndDataSetupRejectJobAsync
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenApiReturnsSuccess_ReturnsSuccessWithTrue()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+
+            _http.PostAsync<YearEndDataSetupReq, bool>(
+                    "api/v1/yearend/dataSetup/reject",
+                    Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == PlannedYear))
+                 .Returns(apiResponse);
+
+            // Act
+            var result = await _client.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _http.Received(1).PostAsync<YearEndDataSetupReq, bool>(
+                "api/v1/yearend/dataSetup/reject",
+                Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == PlannedYear));
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError> { new ApiError { Message = "Rejection not allowed", Code = "VALIDATION_ERROR" } };
+            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var mappedFailure = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Rejection not allowed", Code = "VALIDATION_ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PostAsync<YearEndDataSetupReq, bool>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
+                 .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            var result = await _client.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+            Assert.Equal("VALIDATION_ERROR", result.Errors![0].Code);
+        }
+
+        [Theory]
+        [InlineData(2025)]
+        [InlineData(2026)]
+        public async Task EnqueueYearEndDataSetupRejectJobAsync_PostsRequestWithCorrectPlannedYear(int plannedYear)
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+
+            _http.PostAsync<YearEndDataSetupReq, bool>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
+                 .Returns(apiResponse);
+
+            // Act
+            await _client.EnqueueYearEndDataSetupRejectJobAsync(plannedYear);
+
+            // Assert
+            await _http.Received(1).PostAsync<YearEndDataSetupReq, bool>(
+                "api/v1/yearend/dataSetup/reject",
                 Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == plannedYear));
         }
 

@@ -168,6 +168,33 @@ namespace Apha.FPS.DataAccess.Repositories
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
+        public async Task<PagedData<Project>> GetPagedProjectSnapshotDataAsync(PaginationParameters<string> query)
+        {
+            var projectQuery = _dbContext.Projects
+                .Select(prj => new Project
+                {
+                    Program = prj.Program,
+                    ParentProject = prj.ParentProject,
+                    ProjectTitle = prj.ProjectTitle,
+                    Contract = prj.Contract,
+                    Customer = prj.Customer,
+                    Manager = prj.Manager,
+                    TransferIncome = prj.TransferIncome,
+                    CustIncome = prj.CustIncome,
+                    ProjectStatus = prj.ProjectStatus,
+                    BudgetCvl = prj.BudgetCvl,
+                    CaseWorkSub = prj.CaseWorkSub,
+                    PvsIncome = prj.PvsIncome,
+                    PlanCaseWorkDebit = prj.PlanCaseWorkDebit
+                }).Distinct();
+
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+            projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
+
+            var result = await projectQuery.ToListAsync();
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
         public async Task<PagedData<ProjectSpecificQueryItem>> GetPagedProjectSpecificQueryAsync(PaginationParameters<string> query)
         {
             var specificQuery = (from pv in _dbContext.ProjectViews
