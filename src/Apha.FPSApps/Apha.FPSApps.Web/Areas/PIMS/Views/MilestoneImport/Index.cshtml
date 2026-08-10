@@ -29,10 +29,10 @@
 
                         <!-- Step 1 — Select Project -->
                         <div class="sup_margin_bottom_10">
-                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16 sup_margin_bottom_10"
+                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0"
                                id="lbl-select-project">1. Select Project</p>
                             <div class="govuk-form-group sup_margin_bottom_10">
-                                <label class="govuk-visually-hidden govuk-!-font-size-16" for="selectProject">
+                                <label class="govuk-visually-hidden govuk-!-font-size-16 govuk-!-margin-bottom-0" for="selectProject">
                                     Select project
                                 </label>
                                 <select asp-for="Parentproject"
@@ -54,12 +54,12 @@
                         </div>
 
                         <!-- Step 3 — Check Data -->
-                        <div class="sup_margin_bottom_10">
-                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16">
+                        <div class="govuk-!-margin-bottom-4">
+                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0">
                                 3. Click to check data
                             </p>
                             <button type="button" id="btnValidate"
-                                    class="govuk-button govuk-button--secondary sup_margin_0 govuk-!-width-three-quarters"
+                                    class="govuk-button govuk-button--primary sup_margin_0 sup_select_option_width_100"
                                     data-module="govuk-button"
                                     onclick="validateImport()">
                                 Check Data
@@ -67,12 +67,12 @@
                         </div>
 
                         <!-- Step 3b — Overwrite? -->
-                        <div class="sup_margin_bottom_10">
+                        <div class="govuk-!-margin-bottom-3 ">
                             <fieldset class="govuk-fieldset" aria-required="true">
-                                <legend class="govuk-fieldset__legend govuk-!-font-weight-bold govuk-!-font-size-16"
+                                <p class="govuk-fieldset__legend govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0"
                                         id="lbl-overwrite">
                                     Overwrite?
-                                </legend>
+                                </p>
                                 <div class="govuk-radios govuk-radios--small govuk-radios--inline"
                                      data-module="govuk-radios">
                                     <div class="govuk-radios__item">
@@ -93,12 +93,12 @@
                         </div>
 
                         <!-- Step 4 — Import -->
-                        <div class="sup_margin_bottom_10">
-                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16" id="lbl-import">
+                        <div class="govuk-!-margin-bottom-4">
+                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0" id="lbl-import">
                                 4. Click to import &ndash; will not import any rows with any remark in the Error column.
                             </p>
                             <button type="button" id="btnImport"
-                                    class="govuk-button sup_margin_0 govuk-button--disabled govuk-!-width-three-quarters"
+                                    class="govuk-button sup_margin_0 govuk-button--disabled sup_select_option_width_100 "
                                     data-module="govuk-button"
                                     disabled aria-disabled="true"
                                     aria-label="Import validated milestone records"
@@ -108,12 +108,12 @@
                         </div>
 
                         <!-- Step 5 — Delete Unimported -->
-                        <div class="sup_margin_bottom_0">
-                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16">
+                        <div class="govuk-!-margin-bottom-4">
+                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0">
                                 5. Click to clear panel if necessary.
                             </p>
                             <button type="button" id="btnDeleteUnimported"
-                                    class="govuk-button govuk-button--warning sup_margin_0 govuk-!-width-three-quarters"
+                                    class="govuk-button govuk-button--warning sup_margin_0 sup_select_option_width_100 "
                                     data-module="govuk-button"
                                     onclick="clearImport()">
                                 Delete All Unimported
