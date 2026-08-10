@@ -106,17 +106,27 @@
 <script src="~/js/fps_js/TestPlanJob.js"></script>
 <script>
     var currentProjectCode = '@Html.Raw(Model.SelectedProjectCode)';
+    var _loaderPendingGrids = 0;
     TestPlanJobConfig.getJobCode = function () { return currentProjectCode; };
     TestPlanJobConfig.requireJobCodeForAdd = true;
     TestPlanJobConfig.onDeleted = function () { window['gridManager_@Model.TestPlanGrid.GridId'].reloadGrid({ page: 1 }); refreshPlannedCost(); };
     $(document).ready(function () {
         if (currentProjectCode) {
+            showLoader();
+            _loaderPendingGrids = 2;
             window['gridManager_@Model.TestPlanGrid.GridId'].reloadGrid({ page: 1 });
             window['gridManager_@Model.CompareTests2Grid.GridId'].reloadGrid({ page: 1 });
             refreshPlannedCost(); refreshActualTotals();
         }
         var el = document.getElementById('gridContainer_@Model.CompareTests2Grid.GridId');
         if (el) new MutationObserver(function () { refreshActualTotals(); }).observe(el, { childList: true, subtree: true });
+        document.addEventListener('gridReloaded', function (e) {
+            var tracked = ['@Model.TestPlanGrid.GridId', '@Model.CompareTests2Grid.GridId'];
+            if (tracked.indexOf(e.detail.gridId) !== -1 && _loaderPendingGrids > 0) {
+                _loaderPendingGrids--;
+                if (_loaderPendingGrids === 0) hideLoader();
+            }
+        });
     });
     $('#projectSelect').on('change', function () {
         currentProjectCode = $(this).val();
@@ -130,6 +140,8 @@
         $('#planned-total-cost').val('0.00'); $('#project-total-cost').val('0'); $('#project-percent-plan').val('0%');
         if (currentProjectCode) {
             $.get('@Url.Action("GetProjectInfo","ProjectTestPlanActual",new{area="FPS"})', { projectCode: currentProjectCode }, function (r) { if (r.success) { $('#summary-project-description').val(r.projectTitle); $('#summary-program').val(r.program); $('#summary-contract').val(r.contract); } });
+            showLoader();
+            _loaderPendingGrids = 2;
             window['gridManager_@Model.TestPlanGrid.GridId'].reloadGrid({ page: 1 });
             window['gridManager_@Model.CompareTests2Grid.GridId'].reloadGrid({ page: 1 });
             refreshPlannedCost(); refreshActualTotals();
