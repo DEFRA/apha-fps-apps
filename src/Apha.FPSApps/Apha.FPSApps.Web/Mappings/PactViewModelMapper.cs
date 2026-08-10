@@ -1,5 +1,6 @@
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Dtos.PACT;using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Web.Areas.PACT.Models;
 using AutoMapper;
 
 namespace Apha.FPSApps.Web.Mappings
@@ -153,7 +154,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<RecreateSummaryLogDto, RecreateSummaryLogItem>()
                 .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.Comments));
 
-            CreateMap<BatchJobHistoryDto, BatchJobHistoryItem>();
+            CreateMap<Apha.FPSApps.Application.Dtos.PACT.BatchJobHistoryDto, BatchJobHistoryItem>();
 
             CreateMap<ProfitCentreCostDto, ProfitCenterCostItem>().ReverseMap();
 
