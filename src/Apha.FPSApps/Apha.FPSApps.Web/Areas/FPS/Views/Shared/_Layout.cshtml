@@ -55,6 +55,9 @@
     <fps-year-script></fps-year-script>
 
     <script>
+        $(document).ready(function () {
+            $(document).ajaxStart(showLoader).ajaxStop(hideLoader);
+                });
         // ── Modal open / close helpers ────────────────────────────────────
         (function () {
             var modal = document.getElementById('modalPopup');
