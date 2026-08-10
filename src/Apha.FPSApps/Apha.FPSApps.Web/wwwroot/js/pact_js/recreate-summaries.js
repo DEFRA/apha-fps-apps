@@ -105,7 +105,7 @@
         .then(function (data) {
             if (data.success) {
                 // Show green success banner at the same position as the error summary
-                showSuccessBanner('Job triggered successfully.');
+                showSuccessBanner('Request submitted successfully. Summaries will be recreated shortly.');
                 refreshHistoryGrid();
             } else {
                 // Map ALL server errors — each gets a summary entry (field is empty

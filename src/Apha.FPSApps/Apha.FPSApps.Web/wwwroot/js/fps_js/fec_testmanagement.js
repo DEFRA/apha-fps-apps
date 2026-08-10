@@ -344,7 +344,7 @@ var BulkRates = (function () {
     // ── Approve ──────────────────────────────────────────────────────────────
 
     function approve(requestId) {
-        showGovukConfirm('Approve this request? The batch job will be triggered.').then(function (confirmed) {
+        showGovukConfirm('Approve this request? The changes will be processed and applied.').then(function (confirmed) {
             if (!confirmed) { return; }
             hideActionError();
             var btn = document.getElementById('btnApprove');
