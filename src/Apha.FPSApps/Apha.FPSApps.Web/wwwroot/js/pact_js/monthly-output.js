@@ -336,24 +336,30 @@ function initLiveModalWorkGroupDropdown() {
 }
 
 function saveMonthlyOutputLive() {
-    const form = $('#monthlyOutputLiveForm');
-    // Trigger validation on all decfmt-input fields to ensure errors are shown
-    form.find('.decfmt-input').each(function () {
-        $(this).trigger('blur');
+    var form = $('#monthlyOutputLiveForm');
+
+    // Validate all numeric fields before checking isFormValid
+    form.find('.decfmt-input').each(function() {
+        validateRangeOnInput(this);
     });
 
-    // Check for numeric validation errors BEFORE clearing validation messages
-    const hasNumericErrors = form.find('.govuk-input--error').length > 0;
-    if (hasNumericErrors) {
-        showAlertMessage('Please correct the validation errors before saving.', AlertType.ERROR);
+    // Check for numeric validation errors
+    if (hasNumericValidationErrors(form)) {
+        // Ensure validation messages are visible
+        if (typeof ensureValidationMessagesVisible === 'function') {
+            ensureValidationMessagesVisible(form);
+        }
+        displayClientValidationErrors(form, form);
         return;
     }
-    clearValidationErrors(form);
 
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, form);
         return;
     }
+
+    // Clear validation errors only after validation passes
+    clearValidationErrors(form);
 
     const data = {
         CompositeKey: $('#CompositeKey').val(),
@@ -692,24 +698,30 @@ function loadStagingModalBuyersByTestCode(workGroup, testCode, restoreBuyer) {
 }
 
 function saveStagingMonthlyOutput() {
-    const form = $('#stagingMonthlyOutputForm');
-    // Trigger validation on all decfmt-input fields to ensure errors are shown
-    form.find('.decfmt-input').each(function () {
-        $(this).trigger('blur');
+    var form = $('#stagingMonthlyOutputForm');
+
+    // Validate all numeric fields before checking isFormValid
+    form.find('.decfmt-input').each(function() {
+        validateRangeOnInput(this);
     });
 
-    // Check for numeric validation errors BEFORE clearing validation messages
-    const hasNumericErrors = form.find('.govuk-input--error').length > 0;
-    if (hasNumericErrors) {
-        showAlertMessage('Please correct the validation errors before saving.', AlertType.ERROR);
+    // Check for numeric validation errors
+    if (hasNumericValidationErrors(form)) {
+        // Ensure validation messages are visible
+        if (typeof ensureValidationMessagesVisible === 'function') {
+            ensureValidationMessagesVisible(form);
+        }
+        displayClientValidationErrors(form, form);
         return;
     }
-    clearValidationErrors(form);
 
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, form);
         return;
     }
+
+    // Clear validation errors only after validation passes
+    clearValidationErrors(form);
 
     const id = parseInt($('#Id').val()) || 0;
     submitStagingRecord(id);

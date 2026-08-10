@@ -101,7 +101,6 @@
 }
 
 @section Scripts {
-    <script src="~/js/number-validation.js"></script>
     <script src="~/js/ajax-form-validation.js"></script>
     <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script>
@@ -431,6 +430,12 @@
             form.find('.decfmt-input').each(function() {
                 validateRangeOnInput(this);
             });
+
+            // Check for numeric validation errors
+            if (hasNumericValidationErrors(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
 
             if (!isFormValid(form)) {
                 // Display validation errors without clearing them first

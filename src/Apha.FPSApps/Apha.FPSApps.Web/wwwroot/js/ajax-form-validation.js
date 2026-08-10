@@ -22,7 +22,6 @@
 (function ($) {
     'use strict';
 
-
     // ── maxlength suppression for fields that also carry [Range] validation ──
     //
     // jQuery Validate reads the `maxlength` HTML attribute as a live validation
@@ -45,12 +44,36 @@
             return _origMaxlength.call(this, value, element, param);
         };
     }
+
     // ── Private helpers ──────────────────────────────────────────────────────
 
     /** Resolve the optional container argument into a jQuery object. */
     function resolveContainer(container) {
         if (container == null) return $(document);
         return container instanceof $ ? container : $(container);
+    }
+
+    /**
+     * Wires up a one-shot input/change listener on `$field` that clears its
+     * inline error styling as soon as the user starts editing.
+     *
+     * @param {jQuery} $field     - The input/select element.
+     * @param {string} fieldName  - The field's `name` attribute value.
+     * @param {jQuery} $c         - The scoped container.
+     */
+    function clearFieldErrorOnInput($field, fieldName, $c) {
+        $field.off('input.valclear change.valclear')
+            .on('input.valclear change.valclear', function () {
+                var $fg = $field.closest('.govuk-form-group');
+                $fg.removeClass('govuk-form-group--error');
+                $field.removeClass('govuk-input--error');
+                $fg.find('[data-valmsg-for="' + fieldName + '"]')
+                    .text('')
+                    .hide()
+                    .removeClass('field-validation-error')
+                    .addClass('field-validation-valid');
+                $field.off('input.valclear change.valclear');
+            });
     }
 
     /**
@@ -92,15 +115,12 @@
     // ── Public API ───────────────────────────────────────────────────────────
 
     /**
-     * Returns true when every [required] field inside `form` has a non-blank value
-     * AND there are no validation errors (no .govuk-input--error classes).
+     * Returns true when every [required] field inside `form` has a non-blank value.
      * @param {jQuery} form - The form element to validate.
      * @returns {boolean}
      */
     window.isFormValid = function (form) {
         var valid = true;
-
-        // Check if all required fields have values
         form.find('[required]').each(function () {
             var v = $(this).val();
             if (!v || v.trim() === '') {
@@ -108,12 +128,6 @@
                 return false; // break $.each
             }
         });
-
-        // Check if there are any validation errors on any fields
-        if (valid && form.find('.govuk-input--error').length > 0) {
-            valid = false;
-        }
-
         return valid;
     };
 
@@ -155,14 +169,22 @@
     window.displayClientValidationErrors = function (form, container) {
         var $c = resolveContainer(container != null ? container : form);
 
-        // DON'T clear validation errors here - numeric validation has already set them!
-        // Only clear the error summary
-        $c.find('.govuk-error-summary').hide();
-        $c.find('.govuk-error-summary__list').empty();
+        // Collect [Range] and other jQuery Unobtrusive Validation errors BEFORE
+        // clearValidationErrors wipes the spans that $form.valid() just populated.
+        var jqueryValErrors = [];
+        form.find('[data-valmsg-for]').each(function () {
+            var $span = $(this);
+            if ($span.hasClass('field-validation-error') && $span.text().trim() !== '') {
+                jqueryValErrors.push({
+                    field: $span.attr('data-valmsg-for'),
+                    message: $span.text().trim()
+                });
+            }
+        });
+
+        clearValidationErrors($c);
 
         var errors = [];
-
-        // Check required fields
         form.find('[required]').each(function () {
             var $field = $(this);
             if (!$field.val() || $field.val().trim() === '') {
@@ -173,36 +195,27 @@
             }
         });
 
-        // Check fields with validation errors (numeric validation, etc.)
-        form.find('.govuk-input--error').each(function () {
-            var $field = $(this);
-            var name = $field.attr('name') || '';
-
-            // Skip if already added to errors array
-            var alreadyAdded = errors.some(function (err) { return err.field === name; });
-            if (alreadyAdded) return;
-
-            // Get the error message from the validation span
-            var $fg = $field.closest('.govuk-form-group');
-            var $errorSpan = $fg.find('[data-valmsg-for="' + name + '"]');
-            var errorMessage = $errorSpan.text().trim();
-
-            if (errorMessage) {
-                errors.push({ field: name, message: errorMessage });
+        // Merge jQuery Unobtrusive Validation errors (e.g. [Range]) — avoid duplicates
+        jqueryValErrors.forEach(function (jqErr) {
+            var alreadyAdded = errors.some(function (e) { return e.field === jqErr.field; });
+            if (!alreadyAdded) {
+                errors.push(jqErr);
             }
         });
 
         if (!errors.length) return;
 
         var $summary = $c.find('.govuk-error-summary');
+        $summary.find('.govuk-error-summary__title').text('There is a problem');
         var $list = $summary.find('.govuk-error-summary__list').empty();
+
         var hasSummaryErrors = false;
 
         errors.forEach(function (error) {
             var $field = $('[name="' + error.field + '"]', $c);
 
             if ($field.length) {
-                // Field found in the form — highlight inline ONLY (no summary)
+                // Field found in the form — highlight inline only
                 var $fg = $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
                 $field.addClass('govuk-input--error');
                 $fg.find('[data-valmsg-for="' + error.field + '"]')
@@ -210,7 +223,6 @@
                     .show()
                     .removeClass('field-validation-valid')
                     .addClass('field-validation-error');
-
                 clearFieldErrorOnInput($field, error.field, $c);
             } else {
                 // No matching field — show in summary only
@@ -221,11 +233,9 @@
             }
         });
 
-        // Only show error summary if there are errors for fields not found in the form
         if (hasSummaryErrors) {
-            $summary.find('.govuk-error-summary__title').text('There is a problem');
             $summary.show().focus();
-        } else {
+        } else if ($summary.length) {
             $summary.hide();
         }
     };

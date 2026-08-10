@@ -185,6 +185,16 @@
             validateRangeOnInput(this);
         });
 
+        // Check for numeric validation errors
+        if (hasNumericValidationErrors(form)) {
+            // Ensure validation messages are visible
+            if (typeof ensureValidationMessagesVisible === 'function') {
+                ensureValidationMessagesVisible(form);
+            }
+            displayClientValidationErrors(form, '#testModal');
+            return;
+        }
+
         if (!isFormValid(form)) {
             // Display validation errors without clearing them first
             displayClientValidationErrors(form, '#testModal');

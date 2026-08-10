@@ -250,8 +250,10 @@ function editFailedSubContractRms(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-            // Attach numeric validation to decimal fields
-            attachNumericValidation();
+            // Initialize form validation after modal is shown
+            setTimeout(function() {
+                initializeFormValidation('#formAddProjectCost');
+            }, 50);
         },
         error: function () {
             showAlertMessage('Error loading form.', AlertType.ERROR);

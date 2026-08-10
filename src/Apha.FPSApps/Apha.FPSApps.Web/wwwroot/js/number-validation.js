@@ -153,11 +153,16 @@ function validateRangeOnInput(input) {
 
     // Find the parent form-group and validation message span
     var $formGroup = $input.closest('.govuk-form-group');
-    var $validationSpan = $formGroup.find('span[data-valmsg-for="' + fieldName + '"], span[asp-validation-for="' + fieldName + '"]');
+    var $validationSpan = $formGroup.find('span[data-valmsg-for="' + fieldName + '"]');
 
-    // If validation span not found by name, try finding by class
+    // If not found, try with asp-validation-for
     if ($validationSpan.length === 0) {
-        $validationSpan = $formGroup.find('.govuk-error-message, .field-validation-error');
+        $validationSpan = $formGroup.find('span[asp-validation-for="' + fieldName + '"]');
+    }
+
+    // If still not found by name, try finding by class
+    if ($validationSpan.length === 0) {
+        $validationSpan = $formGroup.find('.govuk-error-message, .field-validation-error, .validation-message');
     }
 
     // Skip validation if field is empty
@@ -181,7 +186,11 @@ function validateRangeOnInput(input) {
         $formGroup.addClass('govuk-form-group--error');
         $input.attr('title', 'Please enter a valid number');
         if ($validationSpan.length > 0) {
-            $validationSpan.text('Please enter a valid number').show();
+            $validationSpan.removeClass('field-validation-valid')
+                          .addClass('field-validation-error')
+                          .text('Please enter a valid number')
+                          .show()
+                          .css('display', 'block');
         }
         return;
     }
@@ -193,14 +202,21 @@ function validateRangeOnInput(input) {
         $formGroup.addClass('govuk-form-group--error');
         $input.attr('title', errorMessage);
         if ($validationSpan.length > 0) {
-            $validationSpan.text(errorMessage).show();
+            $validationSpan.removeClass('field-validation-valid')
+                          .addClass('field-validation-error')
+                          .text(errorMessage)
+                          .show()
+                          .css('display', 'block');
         }
     } else {
         $input.removeClass('govuk-input--error');
         $formGroup.removeClass('govuk-form-group--error');
         $input.removeAttr('title');
         if ($validationSpan.length > 0) {
-            $validationSpan.text('').hide();
+            $validationSpan.removeClass('field-validation-error')
+                          .addClass('field-validation-valid')
+                          .text('')
+                          .hide();
         }
     }
 }
@@ -246,6 +262,59 @@ function attachNumericValidation() {
         $input.on('blur.numericValidation', function() {
             validateRangeOnInput(this);
         });
+    });
+}
+
+/**
+ * Check if a form has any numeric validation errors.
+ * This function checks for fields with the .govuk-input--error class within the given form.
+ * 
+ * @param {jQuery} form - The form element to check for numeric errors.
+ * @returns {boolean} - Returns true if there are numeric validation errors, false otherwise.
+ * 
+ * Usage example:
+ *   if (hasNumericValidationErrors(form)) {
+ *       // Handle validation errors
+ *   }
+ */
+function hasNumericValidationErrors(form) {
+    return form.find('.govuk-input--error').length > 0;
+}
+
+/**
+ * Ensure validation messages are visible for all fields with errors.
+ * This function makes sure that validation message spans are properly shown
+ * and marked with the correct validation classes.
+ * 
+ * @param {jQuery} form - The form element to process.
+ * 
+ * Usage example:
+ *   ensureValidationMessagesVisible(form);
+ */
+function ensureValidationMessagesVisible(form) {
+    form.find('.govuk-input--error').each(function() {
+        var $input = $(this);
+        var fieldName = $input.attr('name') || $input.attr('id');
+        var $formGroup = $input.closest('.govuk-form-group');
+        var $validationSpan = $formGroup.find('span[data-valmsg-for="' + fieldName + '"]');
+
+        // If not found, try with asp-validation-for
+        if ($validationSpan.length === 0) {
+            $validationSpan = $formGroup.find('span[asp-validation-for="' + fieldName + '"]');
+        }
+
+        // If still not found by name, try finding by class
+        if ($validationSpan.length === 0) {
+            $validationSpan = $formGroup.find('.govuk-error-message, .field-validation-error, .validation-message');
+        }
+
+        // Ensure the validation span is visible and has proper classes
+        if ($validationSpan.length > 0 && $validationSpan.text().trim() !== '') {
+            $validationSpan.removeClass('field-validation-valid')
+                          .addClass('field-validation-error')
+                          .show()
+                          .css('display', 'block');
+        }
     });
 }
 
