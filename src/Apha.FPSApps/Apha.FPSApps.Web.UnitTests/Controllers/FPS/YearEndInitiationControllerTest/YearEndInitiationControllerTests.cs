@@ -832,7 +832,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
             var value = GetJsonElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
             var errorsArray = value.GetProperty("errors");
-            Assert.Equal("Failed to trigger Year End Initiation job.", errorsArray[0].GetProperty("message").GetString());
+            Assert.Equal("Failed to enqueue Year End Datasetup initiation job.", errorsArray[0].GetProperty("message").GetString());
         }
 
         [Theory]

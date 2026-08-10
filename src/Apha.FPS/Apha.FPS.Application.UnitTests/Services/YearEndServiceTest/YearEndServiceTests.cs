@@ -53,7 +53,10 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
                 DataSetupInitiatedEmailBody = "Initiation body",
                 DataSetupApprovalEmailRecipient = "approval@example.com",
                 DataSetupApprovalEmailSubject = "Year End Approved",
-                DataSetupApprovalEmailBody = "Approval body"
+                DataSetupApprovalEmailBody = "Approval body",
+                DataSetupRejectionEmailRecipient = "rejection@example.com",
+                DataSetupRejectionEmailSubject = "Year End Rejected",
+                DataSetupRejectionEmailBody = "Rejection body"
             });
 
             _sut = new YearEndService(
@@ -844,7 +847,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
             // Assert
             await _emailService.Received(1).SendEmailAsync(
-                Arg.Is<EmailMessageModel>(m => m.To.Contains("approval@example.com")),
+                Arg.Is<EmailMessageModel>(m => m.To.Contains("rejection@example.com")),
                 Arg.Any<CancellationToken>());
         }
 
