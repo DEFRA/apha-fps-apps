@@ -207,12 +207,49 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (string.IsNullOrWhiteSpace(sortBy) || rows.Count == 0)
                 return rows;
 
-            Func<Dictionary<string, string?>, string?> keySelector =
+            Func<Dictionary<string, string?>, string?> cellSelector =
                 r => r.TryGetValue(sortBy, out var v) ? v : null;
 
+            // When every populated cell in the sorted column is numeric, order it as a
+            // number rather than text so values like 100 sort after 9 (not before).
+            if (IsNumericColumn(rows, cellSelector))
+            {
+                Func<Dictionary<string, string?>, decimal?> numericSelector =
+                    r => decimal.TryParse(cellSelector(r), System.Globalization.NumberStyles.Any,
+                             System.Globalization.CultureInfo.InvariantCulture, out var d)
+                        ? d
+                        : (decimal?)null;
+
+                return descending
+                    ? rows.OrderByDescending(numericSelector).ToList()
+                    : rows.OrderBy(numericSelector).ToList();
+            }
+
             return descending
-                ? rows.OrderByDescending(keySelector, StringComparer.OrdinalIgnoreCase).ToList()
-                : rows.OrderBy(keySelector, StringComparer.OrdinalIgnoreCase).ToList();
+                ? rows.OrderByDescending(cellSelector, StringComparer.OrdinalIgnoreCase).ToList()
+                : rows.OrderBy(cellSelector, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        private static bool IsNumericColumn(
+            List<Dictionary<string, string?>> rows,
+            Func<Dictionary<string, string?>, string?> cellSelector)
+        {
+            var hasValue = false;
+            foreach (var row in rows)
+            {
+                var value = cellSelector(row);
+                if (string.IsNullOrWhiteSpace(value))
+                    continue;
+
+                hasValue = true;
+                if (!decimal.TryParse(value, System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture, out _))
+                {
+                    return false;
+                }
+            }
+
+            return hasValue;
         }
 
         private int GetSelectedFpsYear()
