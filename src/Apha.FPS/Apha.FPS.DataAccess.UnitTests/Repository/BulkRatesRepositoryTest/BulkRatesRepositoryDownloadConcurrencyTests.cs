@@ -21,11 +21,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BulkRatesRepositoryTest
     /// shared by FEC/AGRUP and Staff/Animal alike — exercised here via a Staff request, but the fix
     /// and this test cover every job type that calls MarkDownloadReadyAsync.
     ///
-    /// Soft-skips (no assertions run, test still passes) when the local integration Postgres is
-    /// unreachable. CI safety does not rely on that self-skip — this class is named in
-    /// fps-api-ci.yaml's dataaccess_test_filter so it never runs where no Postgres is reachable,
-    /// matching this repo's established Apha.BatchJobs.UnitTests convention (explicit, auditable
-    /// exclusion, not reliance on runtime skip logic alone).
+    /// Soft-skips (no assertions run, test still passes) when Postgres is unreachable.
     /// </summary>
     public sealed class BulkRatesRepositoryDownloadConcurrencyTests : IAsyncLifetime
     {
