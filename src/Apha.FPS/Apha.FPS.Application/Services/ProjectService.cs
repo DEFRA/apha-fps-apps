@@ -246,6 +246,12 @@ namespace Apha.FPS.Application.Services
             if (farmFileDataExists)
                 errors.Add(new BusinessValidationError("Cannot change code, data exists in Farm File for old code.", "FARM_FILE_DATA_EXISTS"));
 
+            bool oldCodeHasJobCodes = await _projectRepository.HasAssociatedJobCodesAsync(oldCode);
+            if (oldCodeHasJobCodes)
+                errors.Add(new BusinessValidationError(
+                    "There are associated Jobcode(s) with the project, hence cannot change the project name.",
+                    "OLD_CODE_HAS_JOBCODES"));
+
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
