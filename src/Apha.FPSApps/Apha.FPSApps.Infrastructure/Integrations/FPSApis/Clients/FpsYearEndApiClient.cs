@@ -66,6 +66,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var failDto = _mapper.Map<ApiResponseDto<bool>>(response);
             return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
         }
+        
         public async Task<ApiResponseDto<BatchJobQueueDto>> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear)
         {
             var request = new YearEndDataSetupReq { PlannedYear = plannedYear };

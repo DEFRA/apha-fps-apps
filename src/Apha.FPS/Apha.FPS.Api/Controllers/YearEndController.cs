@@ -40,7 +40,8 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with a list of <see cref="BatchJobHistoryRes"/>.</returns>
         [HttpGet("datasetup/batchjob/history")]
-        public async Task<IActionResult> GetYearEndDataSetupBatchJobHistory([FromQuery] QueryParameters<string> query, [FromQuery] string jobName)
+        public async Task<IActionResult> GetYearEndDataSetupBatchJobHistory([FromQuery] QueryParameters<string> query, 
+            [FromQuery] string jobName)
         {
             var result = await _yearEndService.GetBatchJobsHistoryAsync(query, jobName);
             return Ok(_mapper.Map<PaginationRes<BatchJobHistoryRes>>(result));
@@ -59,7 +60,7 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Checks whether year end datasetup batch job can be Approved.
+        /// Checks whether year end datasetup batch job can be Approved or rejected.
         /// </summary>
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with <c>true</c> if initiate request exists for the job; <c>false</c> if no initiate request exists for the job.</returns>
@@ -87,7 +88,7 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Enqueue the YearEndInitiation batch job for approve and publish event for batch job.
+        /// Enqueue the YearEndInitiation approval for batch job and publish event for batch job.
         /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
         /// all config exists, aproval and initiator are not same, verifies no instance is already running, then enqueues the job. 
         /// </summary>
@@ -102,9 +103,9 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Enqueue the YearEndInitiation batch job for approve and publish event for batch job.
+        /// Enqueue the YearEnd rejection batch job for Initiation request.
         /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
-        /// all config exists, aproval and initiator are not same, verifies no instance is already running, then enqueues the job. 
+        ///  verifies initiation request is present, then enqueues the job. 
         /// </summary>
         /// <param name="request">Request body containing the planned year.</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
@@ -142,7 +143,7 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Checks whether the year-end cut-over batch job can be approved.
+        /// Checks whether the year-end cut-over batch job can be approved or rejected.
         /// </summary>
         /// <param name="jobName">The name of the cut-over batch job.</param>
         /// <returns><c>200 OK</c> with <c>true</c> if an initiate request exists; otherwise <c>false</c>.</returns>
@@ -154,9 +155,9 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Enqueue the YearEndCutOverInitiation batch job for approval.
+        /// Enqueue the YearEnd CutOver Initiation batch job for approval.
         /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
-        /// all config exists, verifies no instance is already running, then enqueues the job. 
+        /// verifies no instance is already running, then enqueues the job. 
         /// </summary>
         /// <param name="request">Request body containing the planned year.</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
@@ -166,13 +167,12 @@ namespace Apha.FPS.Api.Controllers
             var result = await _yearEndService.EnqueueYearEndCutOverInitiationJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
 
             return Ok(_mapper.Map<BatchJobQueueRes>(result));
-
         }
 
         /// <summary>
         /// Enqueue the YearEndCutOverApproval batch job for approve and publish event for batch job.
         /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
-        /// all config exists, aproval and initiator are not same, verifies no instance is already running, then enqueues the job. 
+        /// verifies no instance is already running and year not already processed, then enqueues the job. 
         /// </summary>
         /// <param name="request">Request body containing the planned year.</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
@@ -185,9 +185,9 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Enqueue the YearEndInitiation batch job for approve and publish event for batch job.
+        /// Enqueue the YearEnd CutOver Initiation rejection batch job for approval.
         /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
-        /// all config exists, aproval and initiator are not same, verifies no instance is already running, then enqueues the job. 
+        /// verifies initiation request is present, then enqueues the job. 
         /// </summary>
         /// <param name="request">Request body containing the planned year.</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>

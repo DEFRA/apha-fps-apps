@@ -167,7 +167,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             if (jobqueue == null)
             {
-                throw new KeyNotFoundException($"No approval request was found for job '{jobName}'.");
+                throw new KeyNotFoundException($"No initiated request was found for job '{jobName}'.");
             }
 
             if (isReject)

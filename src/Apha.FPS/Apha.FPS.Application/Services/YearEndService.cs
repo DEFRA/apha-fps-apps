@@ -67,23 +67,25 @@ namespace Apha.FPS.Application.Services
             return await _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(jobName);
         }
 
-        public async Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
+        public async Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, int contextYear, 
+            string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
+            var jobName = YearEndDataSetupJobName;
 
-            var note = $"'{YearEndDataSetupJobName}' is initiated for {plannedYear}.";
+            var note = $"'{jobName}' is initiated for {plannedYear}.";
 
             await ValidateConfiguration(errors);
-            await ValidateDataSetupRequestInput(plannedYear, requestedBy, errors, YearEndDataSetupJobName, false);
+            await ValidateDataSetupRequestInput(plannedYear, requestedBy, errors, jobName, false);
 
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            var queued = await _yearEndRepository.EnqueueDataSetupInitiationBatchJobAsync(YearEndDataSetupJobName, requestedBy, correlationId, note);
+            var queued = await _yearEndRepository.EnqueueDataSetupInitiationBatchJobAsync(jobName, requestedBy, correlationId, note);
 
             try
             {
-                await SendEmailAsync(YearEndDataSetupJobName, "Initiation", CancellationToken.None);
+                await SendEmailAsync(jobName, "Initiation", CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -93,7 +95,8 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<BatchJobQueueDto>(queued);
         }
 
-        public async Task<BatchJobEventTriggerDto> EnqueueYearEndDataSetupApprovalJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
+        public async Task<BatchJobEventTriggerDto> EnqueueYearEndDataSetupApprovalJobAsync(int plannedYear, int contextYear, 
+            string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
             var jobName = YearEndDataSetupJobName;
@@ -127,7 +130,8 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<BatchJobEventTriggerDto>(result);
         }
 
-        public async Task<bool> EnqueueYearEndDataSetupRejectJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
+        public async Task<bool> EnqueueYearEndDataSetupRejectJobAsync(int plannedYear, int contextYear, 
+            string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
             var jobName = YearEndDataSetupJobName;
@@ -148,13 +152,13 @@ namespace Apha.FPS.Application.Services
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            var queued = await _yearEndRepository.EnqueueDataSetupRejectBatchJobAsync(YearEndDataSetupJobName, requestedBy, correlationId, note);
+            var queued = await _yearEndRepository.EnqueueDataSetupRejectBatchJobAsync(jobName, requestedBy, correlationId, note);
 
             var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
 
             try
             {
-                await SendEmailAsync(YearEndDataSetupJobName, "Rejection", CancellationToken.None);
+                await SendEmailAsync(jobName, "Rejection", CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -177,19 +181,20 @@ namespace Apha.FPS.Application.Services
         public async Task<BatchJobQueueDto> EnqueueYearEndCutOverInitiationJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
+            var jobName = YearEndCutOverJobName;
 
-            var note = $"'{YearEndCutOverJobName}' is initiated for {plannedYear}.";
+            var note = $"'{jobName}' is initiated for {plannedYear}.";
 
-            await ValidateCutOverRequestInput(plannedYear, requestedBy, errors, YearEndCutOverJobName, false);
+            await ValidateCutOverRequestInput(plannedYear, requestedBy, errors, jobName, false);
 
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            var queued = await _yearEndRepository.EnqueueCutOverInitiationBatchJobAsync(YearEndCutOverJobName, requestedBy, correlationId, note);
+            var queued = await _yearEndRepository.EnqueueCutOverInitiationBatchJobAsync(jobName, requestedBy, correlationId, note);
 
             try
             {
-                await SendEmailAsync(YearEndCutOverJobName, "XXXX", CancellationToken.None);
+                await SendEmailAsync(jobName, "Initiation", CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -202,17 +207,18 @@ namespace Apha.FPS.Application.Services
         public async Task<BatchJobEventTriggerDto> EnqueueYearEndCutOverApprovalJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
+            var jobName = YearEndCutOverJobName;
 
-            var note = $"'{YearEndCutOverJobName}' is approved for {plannedYear}.";
+            var note = $"'{jobName}' is approved for {plannedYear}.";
 
-            await ValidateCutOverRequestInput(plannedYear, requestedBy, errors, YearEndCutOverJobName, true);
+            await ValidateCutOverRequestInput(plannedYear, requestedBy, errors, jobName, true);
 
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            var queued = await _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(YearEndCutOverJobName, requestedBy, correlationId, note);
+            var queued = await _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(jobName, requestedBy, correlationId, note);
 
-            var eventDetail = BuildYearEndJobEvent(YearEndCutOverJobName, requestedBy, correlationId, plannedYear);
+            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, correlationId, plannedYear);
 
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
 
@@ -221,7 +227,7 @@ namespace Apha.FPS.Application.Services
 
             try
             {
-                await SendEmailAsync(YearEndCutOverJobName, "XXXXX", CancellationToken.None);
+                await SendEmailAsync(jobName, "Approval", CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -354,7 +360,7 @@ namespace Apha.FPS.Application.Services
             bool hasUnplannedMonthConfigs = monthConfigs.Any(x => string.Equals(x.ExistsForPlannedYear, "No", StringComparison.OrdinalIgnoreCase));
 
             if (hasUnplannedMonthConfigs)
-                errors.Add(new BusinessValidationError($"Month(s) Working days, VID hours and CVL hours are missing for the planned year. Please verify and provide for each missing month.", "Missing_Config"));
+                errors.Add(new BusinessValidationError($"Month(s) Working days, VID hours and CVL hours are missing for the planned year. Please verify and provide value for each missing month.", "Missing_Config"));
 
             bool hasmissingMissingVal = monthConfigs.Any(x => x.Days < 0 || x.VidHours < 0 || x.CvlHours < 0);
 
@@ -375,7 +381,8 @@ namespace Apha.FPS.Application.Services
 
             var plannedYearEntity = await _yearMasterRepository.GetFpsYearByIdAsync(plannedYear);
 
-            if (plannedYearEntity != null && string.Equals(plannedYearEntity.YearStatus, "open", StringComparison.OrdinalIgnoreCase))
+            if (plannedYearEntity == null ||
+                (plannedYearEntity != null && string.Equals(plannedYearEntity.YearStatus, "open", StringComparison.OrdinalIgnoreCase)))
             {
                 errors.Add(new BusinessValidationError($"YearEnd CutOver already completed and planned year {plannedYear} is live. You cannot reinitiate or approve request.", "INVALID_Rerun"));
             }
@@ -401,7 +408,6 @@ namespace Apha.FPS.Application.Services
                     errors.Add(new BusinessValidationError($"Job '{jobName}' is already running or initiated. Please try after sometime.", "INVALID_Initiation"));
                 }
             }
-
         }
         
         private static EventDetail BuildYearEndJobEvent(string jobName, string requestedBy, string correlationId, int plannedYear)
@@ -450,9 +456,9 @@ namespace Apha.FPS.Application.Services
             {
                 await _emailService.SendEmailAsync(new EmailMessageModel
                 {
-                    To = _emailSettings.DataSetupApprovalEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
-                    Subject = _emailSettings.DataSetupApprovalEmailSubject,
-                    Body = _emailSettings.DataSetupApprovalEmailBody,
+                    To = _emailSettings.DataSetupRejectionEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                    Subject = _emailSettings.DataSetupRejectionEmailSubject,
+                    Body = _emailSettings.DataSetupRejectionEmailBody,
                     IsBodyHtml = false,
                 }, cancellationToken);
             }
