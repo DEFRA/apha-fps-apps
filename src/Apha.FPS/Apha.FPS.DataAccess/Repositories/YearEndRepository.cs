@@ -49,7 +49,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> CanApproveOrRejectYearEndDataSetupRequestAsync(string jobName)
         {
-            bool hasRunningJob = await CanApproveRequest(jobName);
+            bool hasRunningJob = await CanApproveOrRejectRequest(jobName);
 
             return hasRunningJob;
         }
@@ -81,9 +81,9 @@ namespace Apha.FPS.DataAccess.Repositories
             return !hasNonTerminalRecord;
         }
 
-        public async Task<bool> CanApproveYearEndCutOverRequestAsync(string jobName)
+        public async Task<bool> CanApproveOrRejectYearEndCutOverRequestAsync(string jobName)
         {
-            bool hasRunningJob = await CanApproveRequest(jobName);
+            bool hasRunningJob = await CanApproveOrRejectRequest(jobName);
 
             return hasRunningJob;
         }
@@ -102,6 +102,12 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, false);
         }
+
+        public async Task<BatchJobQueue> EnqueueCutOverRejectBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        {
+            return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, true);
+        }
+
         private async Task<bool> CanInitiateRequest(string jobName)
         {
             // Returns true when no records exist for the job, OR every record is in a terminal status (rejected / failed / cancelled).
@@ -119,7 +125,7 @@ namespace Apha.FPS.DataAccess.Repositories
             ).AnyAsync();
         }
 
-        private async Task<bool> CanApproveRequest(string jobName)
+        private async Task<bool> CanApproveOrRejectRequest(string jobName)
         {
             return await (
                 from jm in _context.BatchJobs.AsNoTracking()

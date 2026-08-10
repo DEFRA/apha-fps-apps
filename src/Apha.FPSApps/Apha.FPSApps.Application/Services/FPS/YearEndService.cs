@@ -48,5 +48,7 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndCutOverApprovalJobAsync(int plannedYear)
             => await _fpsClient.FpsYearEnd.TriggerYearEndCutOverApprovalJobAsync(plannedYear);
 
+        public async Task<ApiResponseDto<bool>> EnqueueYearEndCutOverRejectJobAsync(int plannedYear)
+            => await _fpsClient.FpsYearEnd.EnqueueYearEndCutOverRejectJobAsync(plannedYear);
     }
 }

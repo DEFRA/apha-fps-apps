@@ -105,10 +105,9 @@
                     return;
                 }
 
-                showGovukConfirm('Are you sure you want to approve the CutOver Request for year ' + plannedYearVal + '?')
+                showGovukApproveReject('Are you sure you want to approve the CutOver Request for year ' + plannedYearVal + '?')
                     .then(function (confirmed) {
-                        if (!confirmed) return;
-
+                        if (confirmed) {
                         btnApprove.disabled = true;
                         postJson(cfg.triggerApproveUrl + '?plannedYear=' + plannedYearVal, {},
                             function () {
@@ -120,6 +119,21 @@
                                 btnApprove.disabled = false;
                             }
                         );
+                        } else {
+                            btnApprove.disabled = true;
+                            postJson(cfg.triggerRejectUrl + '?plannedYear=' + plannedYearVal, {},
+                                function () {
+                                    showAlertMessage('Year End CutOver request rejected successfully.', AlertType.SUCCESS);
+                                    reloadHistoryGrid();
+                                    btnInitiate.disabled = false;
+                                },
+                                function (msgs) {
+                                    showPageError(msgs);
+                                    btnApprove.disabled = false;
+                                }
+                            );
+                        }
+
                     });
             });
         }

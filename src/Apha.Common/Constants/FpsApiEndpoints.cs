@@ -307,7 +307,8 @@
         public const string CanApproveOrRejectCutOverRequest = "api/v1/yearend/cutover/canapproveorreject";
         public const string EnqueueYearEndCutOverInitiationJob = "api/v1/yearend/cutover/initiation";
         public const string EnqueueYearEndCutOverApprovalJob = "api/v1/yearend/cutover/approval";
-    
+        public const string EnqueueYearEndCutOverRejectJob = "api/v1/yearend/cutover/reject";
+
         // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
         public const string GetAllCostCentres = "api/v1/costcentre";
         public const string GetPagedCostCentres = "api/v1/costcentre/paged";

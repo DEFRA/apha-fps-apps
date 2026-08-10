@@ -176,5 +176,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var failDto = _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(response);
             return ApiResponseDto<BatchJobEventTriggerDto>.FailureResponse(failDto.Errors, failDto.Meta);
         }
+
+        public async Task<ApiResponseDto<bool>> EnqueueYearEndCutOverRejectJobAsync(int plannedYear)
+        {
+            var request = new YearEndDataSetupReq { PlannedYear = plannedYear };
+            var response = await _http.PostAsync<YearEndDataSetupReq, bool>(
+                FpsApiEndpoints.EnqueueYearEndCutOverRejectJob, request);
+
+            if (response.Success)
+                return ApiResponseDto<bool>.SuccessResponse(response.Data);
+
+            var failDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
+        }
     }
 }

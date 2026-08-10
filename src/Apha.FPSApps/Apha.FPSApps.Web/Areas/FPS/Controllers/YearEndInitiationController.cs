@@ -157,12 +157,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var result = await _yearEndService.EnqueueYearEndDataSetupInitiationJobAsync(plannedYear);
             if (result.Success)
             {
-                _logger.LogInformation("Year End Initiation job triggered.");
+                _logger.LogInformation("Year End Datasetup initiation job enqueued.");
                 return Json(new { success = true });
             }
 
             var errors = result?.Errors?.Select(e => new { field = string.Empty, message = e.Message }).ToArray()
-                         ?? [new { field = string.Empty, message = "Failed to trigger Year End Initiation job." }];
+                         ?? [new { field = string.Empty, message = "Failed to enqueue Year End Datasetup initiation job." }];
             return Json(new { success = false, errors });
         }
 

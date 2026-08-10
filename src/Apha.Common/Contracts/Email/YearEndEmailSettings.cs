@@ -20,5 +20,8 @@ namespace Apha.Common.Contracts.Email
         public string CutOverApprovalEmailRecipient { get; set; } = string.Empty;
         public string CutOverApprovalEmailSubject { get; set; } = string.Empty;
         public string CutOverApprovalEmailBody { get; set; } = string.Empty;
+        public string CutOverRejectionEmailRecipient { get; set; } = string.Empty;
+        public string CutOverRejectionEmailSubject { get; set; } = string.Empty;
+        public string CutOverRejectionEmailBody { get; set; } = string.Empty;
     }
 }

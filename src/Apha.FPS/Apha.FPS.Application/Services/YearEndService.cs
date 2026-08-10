@@ -96,18 +96,19 @@ namespace Apha.FPS.Application.Services
         public async Task<BatchJobEventTriggerDto> EnqueueYearEndDataSetupApprovalJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
+            var jobName = YearEndDataSetupJobName;
 
-            var note = $"'{YearEndDataSetupJobName}' is approved for {plannedYear}.";
+            var note = $"'{jobName}' is approved for {plannedYear}.";
 
             await ValidateConfiguration(errors);
-            await ValidateDataSetupRequestInput(plannedYear, requestedBy, errors, YearEndDataSetupJobName, true);
+            await ValidateDataSetupRequestInput(plannedYear, requestedBy, errors, jobName, true);
 
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            var queued = await _yearEndRepository.EnqueueDataSetupApprovalBatchJobAsync(YearEndDataSetupJobName, requestedBy, correlationId, note);
+            var queued = await _yearEndRepository.EnqueueDataSetupApprovalBatchJobAsync(jobName, requestedBy, correlationId, note);
 
-            var eventDetail = BuildYearEndJobEvent(YearEndDataSetupJobName, requestedBy, correlationId, plannedYear);
+            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, correlationId, plannedYear);
 
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
 
@@ -116,7 +117,7 @@ namespace Apha.FPS.Application.Services
 
             try
             {
-                await SendEmailAsync(YearEndDataSetupJobName, "Approval", CancellationToken.None);
+                await SendEmailAsync(jobName, "Approval", CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -168,9 +169,9 @@ namespace Apha.FPS.Application.Services
             return await _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(jobName);
         }
 
-        public async Task<bool> CanApproveYearEndCutOverRequestAsync(string jobName)
+        public async Task<bool> CanApproveOrRejectYearEndCutOverRequestAsync(string jobName)
         {
-            return await _yearEndRepository.CanApproveYearEndCutOverRequestAsync(jobName);
+            return await _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(jobName);
         }
 
         public async Task<BatchJobQueueDto> EnqueueYearEndCutOverInitiationJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
@@ -230,6 +231,43 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<BatchJobEventTriggerDto>(result);
         }
 
+        public async Task<bool> EnqueueYearEndCutOverRejectJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
+        {
+            var errors = new List<BusinessValidationError>();
+            var jobName = YearEndCutOverJobName;
+
+            var note = $"'{jobName}' is rejected for {plannedYear}.";
+
+            if (string.IsNullOrEmpty(requestedBy))
+                errors.Add(new BusinessValidationError($"Unable to identify the rejector. Please sign in again and retry. If the issue persists, contact support.", "INVALID_User"));
+
+            var canApprove = await _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(jobName);
+            if (!canApprove)
+                errors.Add(new BusinessValidationError($"There is no initiated request for rejection for job '{jobName}'.", "INVALID_Approval"));
+
+            var initiator = await _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(jobName);
+            if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
+                errors.Add(new BusinessValidationError($"Initiator and rejector for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+
+            var queued = await _yearEndRepository.EnqueueCutOverRejectBatchJobAsync(jobName, requestedBy, correlationId, note);
+
+            var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
+
+            try
+            {
+                await SendEmailAsync(jobName, "Rejection", CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send Year End CutOver rejection notification email.");
+            }
+
+            return true;
+        }
+        
         private async Task ValidateDataSetupRequestInput(int plannedYear, string requestedBy, List<BusinessValidationError> errors, string jobName, bool isApprovalRequest)
         {
             if (plannedYear == 0 || (plannedYear < 1900 || plannedYear > 9999))
@@ -344,7 +382,7 @@ namespace Apha.FPS.Application.Services
 
             if (isApprovalRequest)
             {
-                var canApprove = await _yearEndRepository.CanApproveYearEndCutOverRequestAsync(jobName);
+                var canApprove = await _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(jobName);
                 if (!canApprove)
                     errors.Add(new BusinessValidationError($"There is no initiated request for approval for job '{jobName}'.", "INVALID_Approval"));
 
@@ -365,6 +403,7 @@ namespace Apha.FPS.Application.Services
             }
 
         }
+        
         private static EventDetail BuildYearEndJobEvent(string jobName, string requestedBy, string correlationId, int plannedYear)
         {
             return new EventDetail
@@ -385,38 +424,84 @@ namespace Apha.FPS.Application.Services
         {
             if (string.Equals(jobName, YearEndDataSetupJobName, StringComparison.OrdinalIgnoreCase))
             {
-                if (notificationType == "Approval")
-                {
-                    await _emailService.SendEmailAsync(new EmailMessageModel
-                    {
-                        To = _emailSettings.DataSetupApprovalEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
-                        Subject = _emailSettings.DataSetupApprovalEmailSubject,
-                        Body = _emailSettings.DataSetupApprovalEmailBody,
-                        IsBodyHtml = false,
-                    }, cancellationToken);
-                }
+                await SendDataSetupEmailAsyc(notificationType, cancellationToken);
+            }
+            
+            if (string.Equals(jobName, YearEndCutOverJobName, StringComparison.OrdinalIgnoreCase))
+            {
+                await SendCutOverEmailAsyc(notificationType, cancellationToken);
+            }
+        }
 
-                if (notificationType == "Rejection")
+        private async Task SendDataSetupEmailAsyc(string notificationType, CancellationToken cancellationToken)
+        {
+            if (notificationType == "Approval")
+            {
+                await _emailService.SendEmailAsync(new EmailMessageModel
                 {
-                    await _emailService.SendEmailAsync(new EmailMessageModel
-                    {
-                        To = _emailSettings.DataSetupApprovalEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
-                        Subject = _emailSettings.DataSetupApprovalEmailSubject,
-                        Body = _emailSettings.DataSetupApprovalEmailBody,
-                        IsBodyHtml = false,
-                    }, cancellationToken);
-                }
+                    To = _emailSettings.DataSetupApprovalEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                    Subject = _emailSettings.DataSetupApprovalEmailSubject,
+                    Body = _emailSettings.DataSetupApprovalEmailBody,
+                    IsBodyHtml = false,
+                }, cancellationToken);
+            }
 
-                if (notificationType == "Initiation")
+            if (notificationType == "Rejection")
+            {
+                await _emailService.SendEmailAsync(new EmailMessageModel
                 {
-                    await _emailService.SendEmailAsync(new EmailMessageModel
-                    {
-                        To = _emailSettings.DataSetupInitiatedEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
-                        Subject = _emailSettings.DataSetupInitiatedEmailSubject,
-                        Body = _emailSettings.DataSetupInitiatedEmailBody,
-                        IsBodyHtml = false,
-                    }, cancellationToken);
-                }
+                    To = _emailSettings.DataSetupApprovalEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                    Subject = _emailSettings.DataSetupApprovalEmailSubject,
+                    Body = _emailSettings.DataSetupApprovalEmailBody,
+                    IsBodyHtml = false,
+                }, cancellationToken);
+            }
+
+            if (notificationType == "Initiation")
+            {
+                await _emailService.SendEmailAsync(new EmailMessageModel
+                {
+                    To = _emailSettings.DataSetupInitiatedEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                    Subject = _emailSettings.DataSetupInitiatedEmailSubject,
+                    Body = _emailSettings.DataSetupInitiatedEmailBody,
+                    IsBodyHtml = false,
+                }, cancellationToken);
+            }
+        }
+
+        private async Task SendCutOverEmailAsyc(string notificationType, CancellationToken cancellationToken)
+        {
+            if (notificationType == "Approval")
+            {
+                await _emailService.SendEmailAsync(new EmailMessageModel
+                {
+                    To = _emailSettings.CutOverApprovalEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                    Subject = _emailSettings.CutOverApprovalEmailSubject,
+                    Body = _emailSettings.CutOverApprovalEmailBody,
+                    IsBodyHtml = false,
+                }, cancellationToken);
+            }
+
+            if (notificationType == "Rejection")
+            {
+                await _emailService.SendEmailAsync(new EmailMessageModel
+                {
+                    To = _emailSettings.CutOverRejectionEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                    Subject = _emailSettings.CutOverRejectionEmailSubject,
+                    Body = _emailSettings.CutOverRejectionEmailBody,
+                    IsBodyHtml = false,
+                }, cancellationToken);
+            }
+
+            if (notificationType == "Initiation")
+            {
+                await _emailService.SendEmailAsync(new EmailMessageModel
+                {
+                    To = _emailSettings.CutOverInitiatedEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                    Subject = _emailSettings.CutOverInitiatedEmailSubject,
+                    Body = _emailSettings.CutOverInitiatedEmailBody,
+                    IsBodyHtml = false,
+                }, cancellationToken);
             }
         }
     }
