@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using Apha.FPSApps.Web.Areas.FPS.Validation;
+using Apha.FPSApps.Web.Validation;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
