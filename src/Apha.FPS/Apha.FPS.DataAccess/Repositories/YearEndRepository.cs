@@ -3,6 +3,7 @@ using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace Apha.FPS.DataAccess.Repositories
@@ -74,6 +75,8 @@ namespace Apha.FPS.DataAccess.Repositories
             return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, true);
         }
 
+        [SuppressMessage("SonarAnalyzer.CSharp", "S4144:MethodsShouldNotHaveIdenticalImplementations",
+            Justification = "Intentionally identical: DataSetup and CutOver are distinct domain operations that must remain independently named for clarity and maintainability.")]
         public async Task<bool> CanInitiateYearEndCutOverRequestAsync(string jobName)
         {
             bool hasNonTerminalRecord = await CanInitiateRequest(jobName);
@@ -81,6 +84,8 @@ namespace Apha.FPS.DataAccess.Repositories
             return !hasNonTerminalRecord;
         }
 
+        [SuppressMessage("SonarAnalyzer.CSharp", "S4144:MethodsShouldNotHaveIdenticalImplementations",
+            Justification = "Intentionally identical: DataSetup and CutOver are distinct domain operations that must remain independently named for clarity and maintainability.")]
         public async Task<bool> CanApproveOrRejectYearEndCutOverRequestAsync(string jobName)
         {
             bool hasRunningJob = await CanApproveOrRejectRequest(jobName);
@@ -88,6 +93,8 @@ namespace Apha.FPS.DataAccess.Repositories
             return hasRunningJob;
         }
 
+        [SuppressMessage("SonarAnalyzer.CSharp", "S4144:MethodsShouldNotHaveIdenticalImplementations",
+            Justification = "Intentionally identical: DataSetup and CutOver are distinct domain operations that must remain independently named for clarity and maintainability.")]
         public async Task<string> GetYearEndCutOverRequestInitiatorAsync(string jobName)
         {
             return await GetInitiator(jobName);
