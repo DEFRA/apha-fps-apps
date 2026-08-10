@@ -4029,3 +4029,89 @@ table#tblMonthPeriod > tbody > tr:hover {
 #tbl_monthlyOutputStagingGrid tbody td:nth-child(5) {
     text-align: right !important;
 }
+
+.isClearfix {
+    overflow: hidden;
+}
+
+.isFloatRight {
+    float: right;
+}
+
+.isResourceManagementSection {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+}
+
+.tr-section-box {
+    position: static;
+    border-radius: 6px;
+    background: #ffffff;
+    margin-bottom: 18px;
+    padding: 14px;
+    box-shadow: 0 2px 0 rgba(11, 12, 12, 0.08);
+}
+
+.tr-section-box--compact {
+    overflow: visible;
+    display: flow-root;
+    margin-top: -4px;
+}
+
+.isTimeSaleSection {
+    margin-top: -5px;
+    width: 49% !important;
+    margin-right: 10px;
+
+    .govuk-grid-column-one-full {
+        height: 359px !important;
+    }
+}
+
+.period-dropdown.resource-dropdown {
+    position: static !important;
+    z-index: auto !important;
+    float: left;
+    width: 37vw;
+}
+
+.btnSec {
+    margin-right: 43px;
+}
+
+.isServiceManagementSection {
+    #select-project-input {
+        max-width: 708px !important;
+    }
+}
+
+.time-recordings-layout .govuk-table__cell {
+    vertical-align: top !important;
+}
+
+/* Pivot wizard excel button alignment */
+.isCustomPivotGrid .govuk-table__cell.sup_border_0 {
+    vertical-align: middle;
+}
+
+.isCustomPivotGrid .govuk-table__cell.sup_border_0 a {
+    float: left;
+    width: auto;
+    height: 100%;
+    margin-top: 26px;
+    margin-left: 10px;
+    display: block;
+}
+
+.isCustomPivotGrid .govuk-table__cell.sup_border_0 img.excel-icon {
+    width: 30px;
+    height: 30px;
+    margin: 0;
+}
+
+.tr-section-panel .govuk-grid-column-one-full {
+    border: 1px solid #d8dbe0;
+    border-radius: 4px;
+    padding: 12px;
+    background: #ffffff;
+}
