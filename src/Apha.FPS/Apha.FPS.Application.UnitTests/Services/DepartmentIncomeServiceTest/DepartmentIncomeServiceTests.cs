@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — DepartmentIncomeServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-10
- *
- * CHANGED:
- *   - New xUnit test class for DepartmentIncomeService (backend Application layer)
- *   - Covers all 6 public methods: GetTimeIncomeAsync, GetTestIncomeAsync, GetAnimalIncomeAsync,
- *     GetAdditionalIncomeAsync, GetTotalsAsync, GetPeriodsAsync
- *   - Tests: happy path, empty result, repository exception propagation per method
- *   - Verifies VBA month-default helpers (ResolveMonthFrom / ResolveMonthTo) via resolved int params to repo
- *   - NSubstitute mocks for IDepartmentIncomeRepository and IMapper
- *
- * PRESERVED:
- *   - Service is read-only (no write paths to test)
- *   - VBA default: monthFrom=null → 1; monthTo=null when monthFrom=1 → 12
- *
- * DEFERRED: none — fully automated.
- */
-
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Entities;
@@ -120,7 +100,6 @@ namespace Apha.FPS.Application.UnitTests.Services.DepartmentIncomeServiceTest
             var entities = MakeTimeEntities();
             var dtos     = MakeTimeDtos();
 
-            // TRANSFORMENGINE: VBA defaults: monthFrom=3 → 3, monthTo=6 → 6
             _repository.GetTimeIncomeAsync(TestProject, 3, 6).Returns(entities);
             _mapper.Map<List<DepartmentIncomeTimeDto>>(entities).Returns(dtos);
 
@@ -138,7 +117,6 @@ namespace Apha.FPS.Application.UnitTests.Services.DepartmentIncomeServiceTest
         public async Task GetTimeIncomeAsync_NullMonthFromAndNullMonthTo_AppliesVbaDefaults()
         {
             // Arrange
-            // TRANSFORMENGINE: VBA defaults: monthFrom=null→1, monthTo=null+monthFrom=1→12
             var entities = MakeTimeEntities();
             var dtos     = MakeTimeDtos();
 
@@ -157,7 +135,6 @@ namespace Apha.FPS.Application.UnitTests.Services.DepartmentIncomeServiceTest
         public async Task GetTimeIncomeAsync_NullMonthFromNonOneResult_AppliesMonthFromDefault()
         {
             // Arrange
-            // TRANSFORMENGINE: VBA defaults: monthFrom=null→1, monthTo=5→5
             var entities = MakeTimeEntities();
             var dtos     = MakeTimeDtos();
 
@@ -176,7 +153,7 @@ namespace Apha.FPS.Application.UnitTests.Services.DepartmentIncomeServiceTest
         public async Task GetTimeIncomeAsync_NonOneMonthFromNullMonthTo_MonthToDefaultsToMonthFrom()
         {
             // Arrange
-            // TRANSFORMENGINE: VBA defaults: monthFrom=4→4, monthTo=null+monthFrom≠1→4
+
             var entities = MakeTimeEntities();
             var dtos     = MakeTimeDtos();
 
@@ -438,8 +415,6 @@ namespace Apha.FPS.Application.UnitTests.Services.DepartmentIncomeServiceTest
             var entities = MakeTotalsEntities();
             var dtos     = MakeTotalsDtos();
 
-            // TRANSFORMENGINE: Service delegates directly to _repository.GetTotalsAsync (PIVOT logic
-            // lives inside the repository implementation, not the service)
             _repository.GetTotalsAsync(TestProject, 1, 12).Returns(entities);
             _mapper.Map<List<DepartmentIncomeTotalsDto>>(entities).Returns(dtos);
 
@@ -457,7 +432,6 @@ namespace Apha.FPS.Application.UnitTests.Services.DepartmentIncomeServiceTest
         public async Task GetTotalsAsync_NullParams_AppliesVbaDefaults()
         {
             // Arrange
-            // TRANSFORMENGINE: VBA defaults: monthFrom=null→1, monthTo=null+monthFrom=1→12
             _repository.GetTotalsAsync(null, 1, 12).Returns(MakeTotalsEntities());
             _mapper.Map<List<DepartmentIncomeTotalsDto>>(Arg.Any<List<DepartmentIncomeTotals>>())
                 .Returns(MakeTotalsDtos());

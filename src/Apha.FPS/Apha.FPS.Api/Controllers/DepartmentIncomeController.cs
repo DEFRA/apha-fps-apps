@@ -1,32 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — DepartmentIncomeController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-10
- *
- * CHANGED:
- *   - New [ApiController] created for the DepartmentIncome reporting resource family
- *   - Six GET endpoints derived from frmDeptIncome VBA query types and fnDeptIncome* helpers:
- *       GET /api/v1/department-income/time        — time-based income rows
- *       GET /api/v1/department-income/tests       — test-based income rows
- *       GET /api/v1/department-income/animals     — animal-based income rows
- *       GET /api/v1/department-income/additional  — additional/exceptional cost rows
- *       GET /api/v1/department-income/totals      — per-project pivot totals (all four areas)
- *       GET /api/v1/department-income/periods     — period dropdown lookup (no filter params)
- *   - Versioned lowercase REST route: api/v{version:apiVersion}/department-income
- *   - Injection of IDepartmentIncomeService and IMapper only (no repository injection per rules)
- *   - Exception-driven flow: throws ArgumentException / KeyNotFoundException; caught by ExceptionMiddleware
- *   - fnDeptIncomeMonthFrom / fnDeptIncomeMonthTo VBA default logic delegated to service layer
- *
- * PRESERVED:
- *   - Query parameter names match the transform-plan handoff notes: project, monthFrom, monthTo
- *   - All 6 query types from the original MS Access form retained as separate REST endpoints
- *   - Nullable project allows "all projects" scenario (no filter) — preserved from VBA fnDeptIncomeProject()
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: verify that [Authorize] roles ("API-FPSUser","API-FPSAdmin","API-FPSShared")
- *     match the actual Azure AD app roles configured for the FPS API application registration
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
@@ -74,7 +45,6 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="monthFrom">Optional period-from filter (1–12). Defaults to 1 when null.</param>
         /// <param name="monthTo">Optional period-to filter (1–12). Defaults to 12 (or monthFrom) when null.</param>
         /// <returns>List of time-based income rows.</returns>
-        // TRANSFORMENGINE: Maps frmDeptIncome "Time" query type — VBA month default logic applied in service layer
         [HttpGet("time")]
         public async Task<IActionResult> GetTimeAsync(
             [FromQuery] string? project,
@@ -93,7 +63,6 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="monthFrom">Optional period-from filter (1–12). Defaults to 1 when null.</param>
         /// <param name="monthTo">Optional period-to filter (1–12). Defaults to 12 (or monthFrom) when null.</param>
         /// <returns>List of test-based income rows.</returns>
-        // TRANSFORMENGINE: Maps frmDeptIncome "Tests" query type — mirrors qryDeptIncomeTests MS Access query
         [HttpGet("tests")]
         public async Task<IActionResult> GetTestsAsync(
             [FromQuery] string? project,
@@ -112,7 +81,6 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="monthFrom">Optional period-from filter (1–12). Defaults to 1 when null.</param>
         /// <param name="monthTo">Optional period-to filter (1–12). Defaults to 12 (or monthFrom) when null.</param>
         /// <returns>List of animal-based income rows.</returns>
-        // TRANSFORMENGINE: Maps frmDeptIncome "Animals" query type — fnAnimalDesc/fnAnimalDays/fnAnimalRate VBA helpers ported to service/repository
         [HttpGet("animals")]
         public async Task<IActionResult> GetAnimalsAsync(
             [FromQuery] string? project,
@@ -131,7 +99,6 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="monthFrom">Optional period-from filter (1–12). Defaults to 1 when null.</param>
         /// <param name="monthTo">Optional period-to filter (1–12). Defaults to 12 (or monthFrom) when null.</param>
         /// <returns>List of additional/exceptional income rows.</returns>
-        // TRANSFORMENGINE: Maps frmDeptIncome "Exceptional/Additional" query type — mirrors qryDeptIncomeExceptional MS Access query
         [HttpGet("additional")]
         public async Task<IActionResult> GetAdditionalAsync(
             [FromQuery] string? project,
@@ -150,7 +117,6 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="monthFrom">Optional period-from filter (1–12). Defaults to 1 when null.</param>
         /// <param name="monthTo">Optional period-to filter (1–12). Defaults to 12 (or monthFrom) when null.</param>
         /// <returns>List of per-project totals.</returns>
-        // TRANSFORMENGINE: Maps frmDeptIncome "Totals" query type — mirrors qryDeptIncomeTotals TRANSFORM/PIVOT MS Access query
         [HttpGet("totals")]
         public async Task<IActionResult> GetTotalsAsync(
             [FromQuery] string? project,
@@ -166,7 +132,6 @@ namespace Apha.FPS.Api.Controllers
         /// No filter parameters — always returns the full period list.
         /// </summary>
         /// <returns>List of available fiscal periods.</returns>
-        // TRANSFORMENGINE: Lookup endpoint — powers frmDeptIncome pickMonthFrom/pickMonthTo dropdown controls; no pagination needed
         [HttpGet("periods")]
         public async Task<IActionResult> GetPeriodsAsync(
             [FromQuery] double? accntsPeriod = null)

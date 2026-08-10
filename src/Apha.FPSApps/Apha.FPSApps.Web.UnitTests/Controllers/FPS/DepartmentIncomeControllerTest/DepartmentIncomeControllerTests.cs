@@ -1,21 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — DepartmentIncomeControllerTests.cs (FPS Web UnitTests)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-10
- *
- * CHANGED:
- *   - New xUnit test class for frontend FPS DepartmentIncomeController (MVC)
- *   - Covers: Index, LoadSnapshotGrid, GetTimeData, GetTestData, GetAnimalData, GetAdditionalData, GetTotalsData
- *   - NSubstitute mocks for IMapper, IDepartmentIncomeService, IProjectService
- *   - JSON result assertions use System.Text.Json + GetJsonResultElement helper
- *
- * PRESERVED:
- *   - Controller is read-only (no Create/Edit/Delete action tests)
- *   - LoadSnapshotGrid has a stub implementation — tests verify stub returns empty data without service error
- *
- * DEFERRED: none — fully automated.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.DepartmentIncome;
 using Apha.FPSApps.Application.Dtos.FPS;
@@ -182,7 +164,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
         public async Task LoadSnapshotGrid_ValidRequest_ReturnsPartialViewWithEmptySnapshotGrid()
         {
             // Arrange
-            // TRANSFORMENGINE: Snapshot grid is a stub — always returns empty items
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
             _departmentIncomeService.GetSnapshotPeriodsAsync()
                 .Returns(ApiResponseDto<List<PeriodSnapshotDto>>.SuccessResponse(new List<PeriodSnapshotDto>()));

@@ -1,22 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — DepartmentIncomeControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-10
- *
- * CHANGED:
- *   - New xUnit test class for DepartmentIncomeController (backend API)
- *   - Covers all 6 public actions: GetTimeAsync, GetTestsAsync, GetAnimalsAsync,
- *     GetAdditionalAsync, GetTotalsAsync, GetPeriodsAsync
- *   - NSubstitute mocks for IDepartmentIncomeService and IMapper
- *   - Tests: happy path, empty result, and exception propagation per method
- *
- * PRESERVED:
- *   - Controller is read-only (no CRUD test scenarios)
- *   - Uses OkObjectResult assertions matching controller Ok(...) return pattern
- *
- * DEFERRED: none — fully automated.
- */
-
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Dtos;
