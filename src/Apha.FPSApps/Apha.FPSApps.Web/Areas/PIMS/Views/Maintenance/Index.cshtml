@@ -23,7 +23,7 @@
         <div class="govuk-grid-row sup_margin_left_right_0 ra-full-width">
             <div class="govuk-grid-column-full">
 
-                <div class="govuk-tabs ra-tabs" id="mainTabs">
+                <div class="govuk-tabs " id="mainTabs">
                     <ul class="govuk-tabs__list">
                         <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
                             <a class="govuk-tabs__tab" href="#tab-reports">Reports</a>
@@ -62,11 +62,14 @@
 
                         <div class="sup_margin_top_20 sup_margin_bottom_20">
                             <div class="ra-grid-toolbar">
-                                <div class="ra-groups-row">
-                                    <span class="govuk-body ra-groups-heading">Report Groups that this report will appear in</span>
-                                </div>
-                                <div class="govuk-grid-column-full sup_padding_right_left_10 ra-groups-table-wrap">
-                                    <div id="gridContainer_reportGroupsGrid"></div>
+                                <div class="govuk-grid-row sup_margin_left_right_0 sup_p_0 sup_margin_bottom_10">
+                                    <div class="govuk-grid-column-full sup_p_0">
+                                        <span class="govuk-body ra-groups-heading sup_font_weight_700">Report Groups that this report will appear in</span>
+                                
+                                        <div class="ra-groups-table-wrap">
+                                            <div id="gridContainer_reportGroupsGrid"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -78,13 +81,11 @@
                     <!-- ═══════════════════════════════════════════════════════ -->
                     <div class="govuk-tabs__panel" id="tab-programme" data-tab-key="programme" data-tab-loaded="false">
                         <div class="govuk-grid-row">
-                            <div class="govuk-grid-column-two-thirds">
-                                <div class="prog-grid-wrapper">
-                                    <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
-                                        <div class="govuk-grid-column-full sup_p_0">
-                                            <div id="gridContainer_pimsRadTrackProgTable">
-                                                @await Html.PartialAsync("_DataGrid", Model.RadTrackProgsGrid)
-                                            </div>
+                            <div>
+                                <div class="govuk-grid-row sup_margin_left_right_0  sup_margin_bottom_10">
+                                    <div class="govuk-grid-column-full sup_padding_right_left_10">
+                                        <div id="gridContainer_pimsRadTrackProgTable">
+                                            @await Html.PartialAsync("_DataGrid", Model.RadTrackProgsGrid)
                                         </div>
                                     </div>
                                 </div>
@@ -97,7 +98,7 @@
                     <!-- ═══════════════════════════════════════════════════════ -->
                     <div class="govuk-tabs__panel" id="tab-manager" data-tab-key="manager" data-tab-loaded="false">
 
-                        <div class="sup_border mgr-grid-wrapper">
+                        <div class="mgr-grid-wrapper">
                             <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
                                 <div class="govuk-grid-column-full sup_p_0">
                                     <div id="gridContainer_mgrTable"></div>
@@ -109,7 +110,7 @@
                             <div class="govuk-grid-row">
                                 <div class="govuk-grid-column-one-half">
                                     <div class="mgr-sub-grid-box">
-                                        <div class="govuk-grid-column-full sup_p_0 mgr-sub-table-wrapper">
+                                        <div class="govuk-grid-column-full sup_p_0 ">
                                             <div id="gridContainer_mgrProgramTable"></div>
                                         </div>
                                     </div>
@@ -117,7 +118,7 @@
 
                                 <div class="govuk-grid-column-one-half">
                                     <div class="mgr-sub-grid-box">
-                                        <div class="govuk-grid-column-full sup_p_0 mgr-sub-table-wrapper">
+                                        <div class="govuk-grid-column-full sup_p_0">
                                             <div id="gridContainer_mgrResourceTable"></div>
                                         </div>
                                     </div>
@@ -217,15 +218,17 @@
                     <!-- ═══════════════════════════════════════════════════════ -->
                     <div class="govuk-tabs__panel" id="tab-admin-maintenance" data-tab-key="admin-maintenance" data-tab-loaded="false">
                         <div class="admin-layout">
-                            <div class="admin-users-panel">
-                                <div class="govuk-grid-column-full sup_p_0 admin-table-scroll">
-                                    <div id="gridContainer_adminUsersTable"></div>
+                            <div class="govuk-grid-row">
+                                <div class="govuk-grid-column-one-half">
+                                    <div class="govuk-grid-column-full sup_p_0 ">
+                                        <div id="gridContainer_adminUsersTable"></div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="admin-access-panel">
-                                <div class="govuk-grid-column-full sup_p_0 admin-table-scroll">
-                                    <div id="gridContainer_adminAccessTable"></div>
+                                <div class="govuk-grid-column-one-half">
+                                    <div class="govuk-grid-column-full sup_p_0 ">
+                                        <div id="gridContainer_adminAccessTable"></div>
+                                    </div>
                                 </div>
                             </div>
 
