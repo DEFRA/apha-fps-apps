@@ -149,7 +149,7 @@
                                        maxlength="20"
                                        inputmode="decimal"
                                        aria-describedby="err-modal-wg-overhead"
-                                       value="@(Model?.CentralOverhead.HasValue == true ? Model.CentralOverhead.Value.ToString("F2") : string.Empty)" />
+                                       value="@(Model?.CentralOverhead.HasValue == true ? Model.CentralOverhead.Value.ToString() : string.Empty)" />
                             </div>
                             <span data-valmsg-for="CentralOverhead" class="govuk-error-message field-validation-valid" id="err-modal-wg-overhead" style="display:none;"></span>
                         </div>
