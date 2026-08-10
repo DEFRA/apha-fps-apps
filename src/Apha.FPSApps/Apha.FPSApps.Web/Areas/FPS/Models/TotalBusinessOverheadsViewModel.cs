@@ -1,4 +1,4 @@
-using Apha.FPSApps.Web.Areas.FPS.Validation;
+using Apha.FPSApps.Web.Validation;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
 {

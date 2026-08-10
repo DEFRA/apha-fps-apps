@@ -1,5 +1,5 @@
-using Apha.FPSApps.Web.Areas.FPS.Validation;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
