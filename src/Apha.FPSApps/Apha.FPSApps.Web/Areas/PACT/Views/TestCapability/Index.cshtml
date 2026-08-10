@@ -101,6 +101,7 @@
 }
 
 @section Scripts {
+    <script src="~/js/number-validation.js"></script>
     <script src="~/js/ajax-form-validation.js"></script>
     <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script>
@@ -402,8 +403,10 @@
                 function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
-                    // Attach numeric validation
-                    attachNumericValidation();
+                    // Initialize form validation (unobtrusive + numeric)
+                    setTimeout(function() {
+                        initializeFormValidation('#testReqmtForm');
+                    }, 50);
                 });
         }
 
@@ -414,18 +417,30 @@
                 function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
-                    // Attach numeric validation
-                    attachNumericValidation();
+                    // Initialize form validation (unobtrusive + numeric)
+                    setTimeout(function() {
+                        initializeFormValidation('#testReqmtForm');
+                    }, 50);
                 });
         }
 
         function saveTestReqmt() {
-            clearValidationErrors('#modaPopupBody');
             var form = $('#testReqmtForm');
+
+            // Validate all numeric fields before checking isFormValid
+            form.find('.decfmt-input').each(function() {
+                validateRangeOnInput(this);
+            });
+
             if (!isFormValid(form)) {
+                // Display validation errors without clearing them first
                 displayClientValidationErrors(form, '#modaPopupBody');
                 return;
             }
+
+            // Clear validation errors only after validation passes
+            clearValidationErrors('#modaPopupBody');
+
             var isEdit        = form.find('[name="isEdit"]').val() === 'true';
             var rawUnitPrice  = form.find('[name="UnitPrice"]').val();
             var rawNoRequired = form.find('[name="NoRequired"]').val();

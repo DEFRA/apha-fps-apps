@@ -89,8 +89,8 @@
                         <input class="govuk-input govuk-!-font-size-16 decfmt-input" id="UnitPrice" name="UnitPrice"
                                type="text" value="@(Model.UnitPrice.HasValue ? Model.UnitPrice.Value : "")" />
                     </div>
-                    <span asp-validation-for="UnitPrice"
-                          class="govuk-error-message field-validation-valid" style="display:none;"></span>
+                    <span data-valmsg-for="UnitPrice"
+                          class="govuk-error-message validation-message" style="display:none;"></span>
                 </div>
             </div>
         </div>
@@ -110,12 +110,12 @@
                 <div class="govuk-form-group sup_margin_bottom_10">
                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="RecUnitPrice">Rec Unit Price</label>
                     <div class="govuk-input__wrapper">
-                        <div class="govuk-input__prefix" aria-hidden="true">>£</div>
-                        <input class="govuk-input govuk-!-font-size-16 decfmt-input" id="recUnitPrice" name="recUnitPrice"
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input govuk-!-font-size-16 decfmt-input" id="recUnitPrice" name="RecUnitPrice"
                                type="text" value="@(Model.RecUnitPrice.HasValue ? Model.RecUnitPrice.Value.ToString("F2") : "")"
                         @(isEdit ? "disabled" : "") />
                     </div>
-                    <span asp-validation-for="RecUnitPrice" class="govuk-error-message"></span>
+                    <span data-valmsg-for="RecUnitPrice" class="govuk-error-message validation-message" style="display:none;"></span>
                 </div>
             </div>
         </div>
