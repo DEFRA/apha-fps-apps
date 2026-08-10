@@ -84,27 +84,23 @@ namespace Apha.FPS.Api.Extensions
             // Application services
             services.AddApplicationServices();
 
-            // MS Graph Email — only required in non-local environments
-            var graphSettings = configuration.GetSection("GraphEmailSettings").Get<GraphEmailSettings>();
+            // MS Graph Email
+            var graphSettings = configuration.GetRequiredSection("GraphEmailSettings").Get<GraphEmailSettings>()
+                ?? throw new InvalidOperationException("GraphEmailSettings configuration section is missing or could not be bound.");
 
-            if (!builder.Environment.IsEnvironment("local"))
-            {
-                if (graphSettings is null)
-                    throw new InvalidOperationException("GraphEmailSettings configuration section is missing or could not be bound.");
-                if (string.IsNullOrWhiteSpace(graphSettings.TenantId))
-                    throw new InvalidOperationException("GraphEmailSettings:TenantId is required but was not configured.");
-                if (string.IsNullOrWhiteSpace(graphSettings.ClientId))
-                    throw new InvalidOperationException("GraphEmailSettings:ClientId is required but was not configured.");
-                if (string.IsNullOrWhiteSpace(graphSettings.ClientSecret))
-                    throw new InvalidOperationException("GraphEmailSettings:ClientSecret is required but was not configured.");
-            }
+            if (string.IsNullOrWhiteSpace(graphSettings.TenantId))
+                throw new InvalidOperationException("GraphEmailSettings:TenantId is required but was not configured.");
+            if (string.IsNullOrWhiteSpace(graphSettings.ClientId))
+                throw new InvalidOperationException("GraphEmailSettings:ClientId is required but was not configured.");
+            if (string.IsNullOrWhiteSpace(graphSettings.ClientSecret))
+                throw new InvalidOperationException("GraphEmailSettings:ClientSecret is required but was not configured.");
 
             services.AddSingleton<GraphServiceClient>(_ =>
             {
                 var credential = new ClientSecretCredential(
-                    graphSettings?.TenantId ?? string.Empty,
-                    graphSettings?.ClientId ?? string.Empty,
-                    graphSettings?.ClientSecret ?? string.Empty);
+                    graphSettings.TenantId,
+                    graphSettings.ClientId,
+                    graphSettings.ClientSecret);
 
                 return new GraphServiceClient(
                     credential,
@@ -112,7 +108,7 @@ namespace Apha.FPS.Api.Extensions
             });
 
             services.AddOptions<YearEndEmailSettings>()
-                .Bind(configuration.GetSection(YearEndEmailSettings.SectionName))
+                .Bind(configuration.GetRequiredSection(YearEndEmailSettings.SectionName))
                 .ValidateOnStart();
            
             builder.Services.AddSingleton<IAmazonEventBridge>(_ =>
@@ -120,7 +116,6 @@ namespace Apha.FPS.Api.Extensions
                RegionEndpoint.GetBySystemName(configuration.GetValue<string>("EventBridge:Region"))));
 
             builder.Services.AddScoped<IEventPublisherService, EventBridgePublisherService>();
-
             // Authentication
             services.AddAuthenticationServices(configuration);
 
