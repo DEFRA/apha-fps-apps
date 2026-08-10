@@ -208,6 +208,7 @@ namespace Apha.Common.Constants
         // Bosworth Interface
         public const string GetTimePurchaseProject = "api/v1/bosworth-interface/time-purchase-project";
         public const string GetTimeSaleProfitCentre = "api/v1/bosworth-interface/time-sale-profit-centre";
+        public const string GetTimeSaleWorkGroup = "api/v1/bosworth-interface/time-sale-workgroup";
         public const string GetTestSaleSellingWorkgroup = "api/v1/bosworth-interface/test-sale-selling-workgroup";
         public const string GetTestSaleBuyingProject = "api/v1/bosworth-interface/test-sale-buying-project";
     }
