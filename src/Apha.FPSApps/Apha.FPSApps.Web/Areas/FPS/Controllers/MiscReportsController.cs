@@ -76,7 +76,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             columns.Add(new() { PropertyName = "TestCode",        DisplayName = "Test Code",       ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 120 });
-            columns.Add(new() { PropertyName = "ItemDescription", DisplayName = "Item Description", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 260 });
+            columns.Add(new() { PropertyName = "ItemDescription", DisplayName = "Item Description", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 260, CssClass = "grid-column-wrap" });
             columns.Add(new() { PropertyName = "ProjectedTotal",  DisplayName = "Projected Total", ColumnType = GridColumnType.ReadOnly, IsFilterable = false, Width = 120 });
             columns.Add(new() { PropertyName = "UnitPrice",       DisplayName = "Unit Price",      ColumnType = GridColumnType.RoundTwoDecimal, IsFilterable = false, Width = 120 });
 
