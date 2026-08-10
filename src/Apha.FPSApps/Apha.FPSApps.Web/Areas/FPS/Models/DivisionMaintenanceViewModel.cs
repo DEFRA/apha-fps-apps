@@ -50,7 +50,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// Central overhead cost allocation.
         /// </summary>
         [Display(Name = "Central Overhead")]
-        [GridColumn(Width = 150, Type = GridColumnType.Number)]
+        [GridColumn(Width = 150, Type = GridColumnType.GbpValue)]
         [CurrencyRange]
         public decimal? CentOverhead { get; set; }
 
