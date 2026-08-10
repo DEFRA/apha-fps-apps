@@ -3,37 +3,16 @@
 @{
     ViewData["Title"] = "FPS Plan v. PACT Actuals - TESTS Bought";
 }
+@{
+    ViewData["SelectedProjectCode"] = Model.SelectedProjectCode;
+}
 <div class="container-fluid">
     <div class="govuk-grid-row">
         <div class="govuk-grid-column-full">
             <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
                 <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
-                    <div class="col-md-6">
-                        
-                    </div>
-                    <div style="display: flex; justify-content: flex-end; align-items: center;" class="col-md-6">
-                        <label class="fw-bold me-2" style="white-space:nowrap;">Project:</label>
-                        <div style="position:relative;">
-                            <input type="text" id="projectNameInput" placeholder="Select Project" autocomplete="off"
-                                   class="govuk-input down-arrow-img" style="width:220px; cursor:pointer;"
-                                   value="@Model.SelectedProjectCode" aria-label="Filter project" readonly />
-                            <div id="ProjectDropdownPanel" style="display:none; position:fixed; width:420px;
-                                    max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
-                                    box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:9999;">
-                                <input type="text" id="ProjectSearchBox" placeholder="Type to search project"
-                                       style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
-                                <table style="width:100%; border-collapse:collapse; font-size:14px;">
-                                    <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
-                                        <tr>
-                                            <th style="padding:6px 8px; text-align:left;">Project</th>
-                                            <th style="padding:6px 8px; text-align:left;">Project Title</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="ProjectDropdownBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="col-md-6"></div>
+                    @await Html.PartialAsync("_ProjectDropdownSelector")
                 </div>
             </div>
         </div>
@@ -50,26 +29,13 @@
             </div>
         </div>
     </div>
-    <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full mt-2">
-            <div style="background-color:#edf4ff; border:1px solid #1d70b8; border-radius:5px; padding:8px;">
-                <div class="row">
-                    <div class="col-lg-6">
-                        <div class="row">
-                            <div class="col-lg-5"><label class="govuk-label--s">Project</label><input type="text" id="summary-project-code" asp-for="SelectedProjectCode" class="govuk-input" readonly></div>
-                            <div class="col-lg-7"><label class="govuk-label--s">Project Description</label><input type="text" id="summary-project-description" asp-for="ProjectTitle" class="govuk-input" readonly></div>
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="row">
-                            <div class="col-lg-5"><label class="govuk-label--s">Program</label><input type="text" id="summary-program" asp-for="Program" class="govuk-input" readonly></div>
-                            <div class="col-lg-7"><label class="govuk-label--s">Contract</label><input type="text" id="summary-contract" asp-for="Contract" class="govuk-input" readonly></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    @{
+        ViewData["SummaryProjectCodeValue"]  = Model.SelectedProjectCode;
+        ViewData["SummaryProjectTitleValue"] = Model.ProjectTitle;
+        ViewData["SummaryProgramValue"]      = Model.Program;
+        ViewData["SummaryContractValue"]     = Model.Contract;
+    }
+    @await Html.PartialAsync("_PvaSummaryCard")
     <div class="govuk-grid-row">
         <div class="govuk-grid-column-one-half mt-2">
             <div id="gridContainer_@Model.TestPlanGrid.GridId" style="padding:5px;">@await Html.PartialAsync("_DataGrid", Model.TestPlanGrid)</div>
@@ -104,6 +70,7 @@
 @section Scripts {
 <script src="~/js/ajax-form-validation.js"></script>
 <script src="~/js/fps_js/TestPlanJob.js"></script>
+<script src="~/js/fps_js/project-dropdown.js" asp-append-version="true"></script>
 <script>
     var currentProjectCode = '@Html.Raw(Model.SelectedProjectCode)';
     var _loaderPendingGrids = 0;
@@ -148,37 +115,10 @@
         }
     }
     $(document).ready(function () {
-        var allProjects = [], display = document.getElementById('projectNameInput'),
-            panel = document.getElementById('ProjectDropdownPanel'),
-            search = document.getElementById('ProjectSearchBox'),
-            body  = document.getElementById('ProjectDropdownBody');
-        if (!display || !panel || !search || !body) return;
-        function positionPanel() { var r = display.getBoundingClientRect(); panel.style.top = r.bottom + 'px'; panel.style.left = Math.max(0, r.right - 420) + 'px'; }
-        function renderRows(rows) {
-            body.innerHTML = '';
-            rows.forEach(function (item) {
-                var tr = document.createElement('tr'); tr.style.cursor = 'pointer';
-                tr.innerHTML = '<td style="padding:6px 8px;border-bottom:1px solid #f3f2f1">' + item.parentProject + '</td><td style="padding:6px 8px;border-bottom:1px solid #f3f2f1">' + item.projectTitle + '</td>';
-                tr.addEventListener('click', function () { panel.style.display = 'none'; onProjectSelected(item.parentProject, item.projectTitle); });
-                tr.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
-                tr.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
-                body.appendChild(tr);
-            });
-        }
-        function openPanel() {
-            if (allProjects.length === 0) {
-                fetch('@Url.Action("GetProjectLookup","ProjectTestPlanActual",new{area="FPS"})')
-                    .then(function (r) { return r.json(); })
-                    .then(function (data) { allProjects = data; search.value = ''; renderRows(allProjects); positionPanel(); panel.style.display = 'block'; search.focus(); })
-                    .catch(function (err) { console.error('Project lookup failed', err); });
-            } else { search.value = ''; renderRows(allProjects); positionPanel(); panel.style.display = 'block'; search.focus(); }
-        }
-        display.addEventListener('click', function (e) { e.stopPropagation(); if (panel.style.display !== 'none') { panel.style.display = 'none'; return; } openPanel(); });
-        search.addEventListener('input', function () {
-            var t = this.value.toLowerCase();
-            renderRows(t ? allProjects.filter(function (p) { return p.parentProject.toLowerCase().includes(t) || p.projectTitle.toLowerCase().includes(t); }) : allProjects);
-        });
-        document.addEventListener('click', function (e) { if (!display.contains(e.target) && !panel.contains(e.target)) panel.style.display = 'none'; });
+        initProjectDropdown(
+            '@Url.Action("GetProjectLookup", "ProjectTestPlanActual", new { area = "FPS" })',
+            onProjectSelected
+        );
     });
     function getTestPlanExtraFilters()     { return { jobCode: currentProjectCode }; }
     function getCompareTests2ExtraFilters() { return { projectCode: currentProjectCode }; }
