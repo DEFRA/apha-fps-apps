@@ -78,12 +78,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var result = await _yearEndService.TriggerYearEndCutOverApprovalJobAsync(plannedYear);
             if (result.Success)
             {
-                _logger.LogInformation("Year End CutOver approval job triggered. EventId: {EventId}", result?.Data?.EventId);
+                var eventId = result?.Data?.EventId;
+                _logger.LogInformation("Year End CutOver approval job triggered. EventId: {EventId}", eventId);
                 return Json(new { success = true });
             }
 
             var errors = result?.Errors?.Select(e => new { field = string.Empty, message = e.Message }).ToArray()
-                         ?? [new { field = string.Empty, message = "Failed to trigger Year End CutOver approval job." }];
+                         ?? new[] { new { field = string.Empty, message = "Failed to trigger Year End CutOver approval job." } };
             return Json(new { success = false, errors });
         }
 
@@ -98,7 +99,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             var errors = result?.Errors?.Select(e => new { field = string.Empty, message = e.Message }).ToArray()
-                         ?? [new { field = string.Empty, message = "Failed to enqueue Year End CutOver reject job." }];
+                         ?? new[] { new { field = string.Empty, message = "Failed to enqueue Year End CutOver reject job." } };
             return Json(new { success = false, errors });
         }
         private async Task<int> GetPlannedYearAsync()
