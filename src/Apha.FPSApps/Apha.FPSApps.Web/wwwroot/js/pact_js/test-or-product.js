@@ -82,8 +82,11 @@
         populateOwnerDropdown();
         clearValidationErrors('#testModal');
         $('#testModal').modal('show');
-        // Initialize form validation (unobtrusive + numeric)
-        initializeFormValidation('#testForm');
+
+        // Initialize form validation after modal is shown
+        setTimeout(function() {
+            initializeFormValidation('#testForm');
+        }, 100);
     }
 
     function editTestOrProduct(btn) {
@@ -175,13 +178,21 @@
     }
 
     function saveTestOrProduct() {
-        clearValidationErrors('#testModal');
         var form = $('#testForm');
 
+        // Validate all numeric fields before checking isFormValid
+        form.find('.decfmt-input').each(function() {
+            validateRangeOnInput(this);
+        });
+
         if (!isFormValid(form)) {
+            // Display validation errors without clearing them first
             displayClientValidationErrors(form, '#testModal');
             return;
         }
+
+        // Clear validation errors only after validation passes
+        clearValidationErrors('#testModal');
 
         var isEdit = $('#isEdit').val() === 'true';
         var itemCode = $('#originalItemCode').val() || $('#itemCode').val();

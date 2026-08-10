@@ -116,7 +116,7 @@ function saveProjectCost() {
 
     const data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
 
-    // Convert empty strings to null for numeric fields, but parse valid numbers
+    // Convert empty strings to null for decimal fields, but parse valid numbers
     ['Amount', 'DailyRate'].forEach(function (field) {
         if (data[field] === '' || data[field] === undefined) {
             data[field] = null;
@@ -126,10 +126,13 @@ function saveProjectCost() {
         }
     });
 
-    // Handle other numeric/integer fields
+    // Convert empty strings to null for integer fields, but parse valid integers
     ['Month', 'SupplierNumber', 'AnimalDays'].forEach(function (field) {
         if (data[field] === '' || data[field] === undefined) {
             data[field] = null;
+        } else if (typeof data[field] === 'string') {
+            var parsed = parseInt(data[field], 10);
+            data[field] = isNaN(parsed) ? null : parsed;
         }
     });
 
