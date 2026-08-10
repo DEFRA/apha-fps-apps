@@ -180,6 +180,7 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<DepartmentIncomeAdditionalDto, DepartmentIncomeAdditionalRes>().ReverseMap();
             CreateMap<DepartmentIncomeTotalsDto, DepartmentIncomeTotalsRes>().ReverseMap();
             CreateMap<PeriodLookupDto, PeriodLookupRes>().ReverseMap();
+            CreateMap<PeriodSnapshotDto, PeriodSnapshotRes>().ReverseMap();
         }
     }
 }

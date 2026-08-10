@@ -11,13 +11,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string Project { get; set; } = null!;
 
         // DTO field: OracleProjectCode (AP prefix + project code)
-        [Display(Name = "OracleProject")]
-        [GridColumn(Width = 130, Type = GridColumnType.ReadOnly, IsFilterable = true)]
+        [Display(Name = "Oracle Project Code")]
+        [GridColumn(Width = 150, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? OracleProjectCode { get; set; }
 
         // DTO field: SubAccountCode
-        [Display(Name = "SubAccount")]
-        [GridColumn(Width = 120, Type = GridColumnType.ReadOnly, IsFilterable = true)]
+        [Display(Name = "Sub Account Code")]
+        [GridColumn(Width = 140, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? SubAccountCode { get; set; }
 
         [Display(Name = "Month")]
@@ -57,19 +57,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? SpNumber { get; set; }
 
         [Display(Name = "ChargeRate")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
         public decimal ChargeRate { get; set; }
 
         [Display(Name = "Pay")]
-        [GridColumn(Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
         public decimal Pay { get; set; }
 
         [Display(Name = "NonPay")]
-        [GridColumn(Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
         public decimal NonPay { get; set; }
 
         [Display(Name = "Overhead")]
-        [GridColumn(Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
         public decimal Overhead { get; set; }
 
         [Display(Name = "Time")]
@@ -77,7 +77,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal Time { get; set; }
 
         [Display(Name = "TotalCost")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
         public decimal TotalCost { get; set; }
     }
 }

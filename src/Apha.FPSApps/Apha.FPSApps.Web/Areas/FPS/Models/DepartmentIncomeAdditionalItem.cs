@@ -10,11 +10,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 110, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string Project { get; set; } = null!;
 
-        [Display(Name = "OracleProject")]
+        [Display(Name = "Oracle Project Code")]
         [GridColumn(Width = 130, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? OracleProjectCode { get; set; }
 
-        [Display(Name = "SubAccount")]
+        [Display(Name = "Sub Account Code")]
         [GridColumn(Width = 120, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? SubAccountCode { get; set; }
 
@@ -36,7 +36,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         // Maps to JS 'totalCost' column (width: 110)
         [Display(Name = "TotalCost")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
         public decimal TotalCost { get; set; }
     }
 }

@@ -22,6 +22,14 @@ namespace Apha.FPSApps.Web.Mappings
 
             // All 7 properties align by convention (nullable decimal? pivot columns preserved)
             CreateMap<DepartmentIncomeTotalsItem, DepartmentIncomeTotalsDto>().ReverseMap();
+
+            // Snapshot periods — PeriodName, FinalSummariesRun, PeriodLocked aligned from PeriodSnapshotDto
+            CreateMap<PeriodSnapshotDto, DepartmentIncomeSnapshotItem>()
+                .ForMember(d => d.PeriodName,         o => o.MapFrom(s => s.PeriodName))
+                .ForMember(d => d.FinalSummariesRun,  o => o.MapFrom(s => s.FinalSummariesRun))
+                .ForMember(d => d.PeriodLocked,       o => o.MapFrom(s => s.PeriodLocked))
+                .ForMember(d => d.Month,              o => o.MapFrom(s => (int)s.EndPeriod))
+                .ForMember(d => d.ProjectCode,        o => o.Ignore());
         }
     }
 }

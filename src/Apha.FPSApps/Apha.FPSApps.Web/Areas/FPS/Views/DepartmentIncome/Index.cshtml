@@ -7,6 +7,7 @@
 
 @section Styles {
     <!-- TRANSFORMENGINE: GOV.UK tabs present — include tab CSS conditionally in this view only, not in _Layout.cshtml -->
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
     <link rel="stylesheet" href="~/css/common/_govuk_tabs.css" />
     <link rel="stylesheet" href="~/css/common/_govuk_modal.css" />
 }
@@ -46,91 +47,51 @@
             <div class="govuk-grid-column-two-thirds">
                 <div class="govuk-grid-column-one-half">
                     <div class="govuk-form-group sup_margin_bottom_10">
-                        <label class="govuk-label govuk-!-font-weight-bold" for="monthFromSelect">Period from</label>
+                        <label class="govuk-label govuk-!-font-weight-bold" for="periodFromDropdown_input">Period from</label>
                         <!-- TRANSFORMENGINE: Backing hidden select — JS reads this value for monthFrom filter -->
                         <select id="monthFromSelect"
                                 asp-for="SelectedMonthFrom"
                                 class="govuk-select sup_select_option_width_100 govuk-!-font-size-16 govuk-visually-hidden"
                                 aria-hidden="true" tabindex="-1">
                             <option value="">From</option>
-                            @foreach (var period in Model.PeriodList)
+                            @foreach (var month in Model.MonthList)
                             {
-                                if (Model.SelectedMonthFrom.HasValue && Model.SelectedMonthFrom == period.AccntsPeriod)
+                                if (Model.SelectedMonthFrom.HasValue && Model.SelectedMonthFrom == month.MonthNumber)
                                 {
-                                    <option value="@period.AccntsPeriod" selected>@period.AccntsPeriod @period.MonthName</option>
+                                    <option value="@month.MonthNumber" selected>@month.MonthNumber @month.MonthName</option>
                                 }
                                 else
                                 {
-                                    <option value="@period.AccntsPeriod">@period.AccntsPeriod @period.MonthName</option>
+                                    <option value="@month.MonthNumber">@month.MonthNumber @month.MonthName</option>
                                 }
                             }
                         </select>
-                        <!-- TRANSFORMENGINE: Custom period-table-dropdown — rendered by JS initPeriodDropdownTables() -->
-                        <div class="period-table-dropdown" id="periodFromDropdown">
-                            <label for="periodFromInput" class="govuk-visually-hidden">Period from date selection</label>
-                            <input type="text" id="periodFromInput" value="--select--"
-                                   class="govuk-input govuk-!-font-size-16 dropdown-input" readonly>
-                            <div class="dropdown-panel" id="periodFromPanel" style="display:none;">
-                                <label for="periodFromSearch" class="govuk-visually-hidden">Search period from</label>
-                                <input type="text" class="search-box" id="periodFromSearch"
-                                       placeholder="Type to search and select period">
-                                <table class="period-table-dropdown__table">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">AccntsPeriod</th>
-                                            <th scope="col">MonthName</th>
-                                            <th scope="col">MonthNumber</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="periodFromBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <div id="periodFromDropdown"></div>
                     </div>
                 </div>
 
                 <div class="govuk-grid-column-one-half">
                     <div class="govuk-form-group sup_margin_bottom_10">
-                        <label class="govuk-label govuk-!-font-weight-bold" for="monthToSelect">Period to</label>
+                        <label class="govuk-label govuk-!-font-weight-bold" for="periodToDropdown_input">Period to</label>
                         <!-- TRANSFORMENGINE: Backing hidden select — JS reads this value for monthTo filter -->
                         <select id="monthToSelect"
                                 asp-for="SelectedMonthTo"
                                 class="govuk-select sup_select_option_width_100 govuk-!-font-size-16 govuk-visually-hidden"
                                 aria-hidden="true" tabindex="-1">
                             <option value="">To</option>
-                            @foreach (var period in Model.PeriodList)
+                            @foreach (var month in Model.MonthList)
                             {
-                                if (Model.SelectedMonthTo.HasValue && Model.SelectedMonthTo == period.AccntsPeriod)
+                                if (Model.SelectedMonthTo.HasValue && Model.SelectedMonthTo == month.MonthNumber)
                                 {
-                                    <option value="@period.AccntsPeriod" selected>@period.AccntsPeriod @period.MonthName</option>
+                                    <option value="@month.MonthNumber" selected>@month.MonthNumber @month.MonthName</option>
                                 }
                                 else
                                 {
-                                    <option value="@period.AccntsPeriod">@period.AccntsPeriod @period.MonthName</option>
+                                    <option value="@month.MonthNumber">@month.MonthNumber @month.MonthName</option>
                                 }
                             }
                         </select>
-                        <!-- TRANSFORMENGINE: Custom period-table-dropdown — rendered by JS initPeriodDropdownTables() -->
-                        <div class="period-table-dropdown" id="periodToDropdown">
-                            <label for="periodToInput" class="govuk-visually-hidden">Period to date selection</label>
-                            <input type="text" id="periodToInput" value="--select--"
-                                   class="govuk-input govuk-!-font-size-16 dropdown-input" readonly>
-                            <div class="dropdown-panel" id="periodToPanel" style="display:none;">
-                                <label for="periodToSearch" class="govuk-visually-hidden">Search period to</label>
-                                <input type="text" class="search-box" id="periodToSearch"
-                                       placeholder="Type to search and select period">
-                                <table class="period-table-dropdown__table">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">AccntsPeriod</th>
-                                            <th scope="col">MonthName</th>
-                                            <th scope="col">MonthNumber</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="periodToBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <div id="periodToDropdown"></div>
                     </div>
                 </div>
             </div>
@@ -194,8 +155,22 @@
                             <!-- TRANSFORMENGINE: Snapshot DataGrid — binds to LoadSnapshotGrid POST endpoint;
                                  showAddButton:false, AllowEdit:false, AllowDelete:false in controller config -->
                             <div class="govuk-grid-column-three-quarters">
-                                <div id="gridContainer_@(Model.SnapshotGrid.GridId)" role="region" aria-label="Snapshot query results">
-                                    @await Html.PartialAsync("_DataGrid", Model.SnapshotGrid)
+                                <!-- Snapshot periods summary grid — hidden when a query result is showing -->
+                                <div id="snapshotGridArea">
+                                    <div id="gridContainer_@(Model.SnapshotGrid.GridId)" role="region" aria-label="Snapshot query results">
+                                        @await Html.PartialAsync("_DataGrid", Model.SnapshotGrid)
+                                    </div>
+                                </div>
+                                <!-- Query results area — shown in place of the snapshot grid after Run Query -->
+                                <div id="snapshotQueryResultsArea" style="display:none; position:relative;" role="region" aria-label="Selected query results" aria-live="polite">
+                                    <button type="button" id="backToSnapshotBtn"
+                                            aria-label="Close query results and return to snapshot"
+                                            title="Close"
+                                            style="position:absolute; top:0; right:0; z-index:10; background:none; border:none; cursor:pointer; padding:0 6px; height:38px; display:flex; align-items:center; color:#000; font-size:1rem;">
+                                        &#x2715;
+                                    </button>
+                                    <div id="gridContainer_departmentIncomeSnapshotQueryGrid">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -227,6 +202,20 @@
                                     </button>
                                 </div>
                             </div>
+
+                            <!-- Current query results DataGrid (right 3/4) -->
+                            <div class="govuk-grid-column-three-quarters">
+                                <div id="currentQueryResultsArea" style="display:none; position:relative;" role="region" aria-label="Current data query results" aria-live="polite">
+                                    <button type="button" id="closeCurrentGridBtn"
+                                            aria-label="Close query results"
+                                            title="Close"
+                                            style="position:absolute; top:0; right:0; z-index:10; background:none; border:none; cursor:pointer; padding:0 6px; height:38px; display:flex; align-items:center; color:#000; font-size:1rem;">
+                                        &#x2715;
+                                    </button>
+                                    <div id="gridContainer_departmentIncomeCurrentGrid"></div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -237,27 +226,16 @@
     </div><!-- /.content-wrapper -->
 </main>
 
-<!-- ── Department Income query results modal ────────────────────────────── -->
-<!-- TRANSFORMENGINE: Custom query results modal (departmentIncomeQueryModal) is separate from the
-     shared #modalPopup in _Layout.cshtml. This modal holds the DataGridComponent query results grid.
-     HTML prototype uses a GOV.UK modal class (.govuk-modal) — CSS from ~/css/common/_govuk_modal.css -->
-<div class="govuk-modal" id="departmentIncomeQueryModal" aria-hidden="true">
-    <div class="govuk-modal__dialog department-income-query-modal-dialog"
-         role="dialog" aria-modal="true" aria-labelledby="departmentIncomeQueryModalTitle">
-        <div class="govuk-modal__header">
-            <h2 class="govuk-heading-m govuk-!-margin-bottom-0" id="departmentIncomeQueryModalTitle">
-                Department income query results
-            </h2>
-            <button type="button" class="govuk-modal__close" id="departmentIncomeQueryModalCloseBtn"
-                    aria-label="Close query results">&times;</button>
-        </div>
-        <div class="govuk-modal__body">
-            <!-- TRANSFORMENGINE: Client-side DataGridComponent renders query rows here (not _DataGrid partial);
-                 populated by ensureQueryGrid() / queryGrid.updateData() in JS below -->
-            <div id="gridContainer_departmentIncomeQuery" role="region" aria-label="Department income snapshot query results"></div>
+<!-- ── Snapshot Period Edit Modal ───────────────────────────────────────── -->
+<div class="modal" id="modalPopupDeptIncome" tabindex="-1" aria-labelledby="deptIncomeSnapshotModalTitle">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div id="modaPopupBodyDeptIncome"></div>
         </div>
     </div>
 </div>
+
+
 
 <!-- ── Popup overlay (showPopupMessage / closePopupMessage) ─────────────── -->
 <!-- TRANSFORMENGINE: Preserved from HTML prototype — used by showPopupMessage for non-modal notifications -->
@@ -268,11 +246,49 @@
 @section Scripts {
     <!-- TRANSFORMENGINE: GOV.UK tabs present — include tab JS conditionally; _govuk_tabs.js handles all
          tab-switching and panel activation; do NOT duplicate tab-wiring logic inline -->
-    <script src="~/js/common/_govuk_tabs.js"></script>
-    <!-- TRANSFORMENGINE TODO: Confirm DataGridComponent bundle path — used for query results modal grid -->
-    <script src="~/js/common/datagrid.component.js"></script>
+    <script src="~/js/common/_govuk_tabs.js" asp-append-version="true"></script>
+    <script src="~/js/common/multicolumn-dropdown.component.js" asp-append-version="true"></script>
+    <script src="~/js/fps_js/DepartmentIncome.js" asp-append-version="true"></script>
 
     <script>
+        // ── Snapshot Period Edit Modal ────────────────────────────────────────
+        function editDeptIncomeSnapshotPeriod(btn) {
+            var periodName = $(btn).data('id');
+            $.get('/FPS/DepartmentIncome/EditSnapshotPeriod', { periodName: periodName }, function (html) {
+                $('#modaPopupBodyDeptIncome').html(html);
+                $('#modalPopupDeptIncome').addClass('show');
+            });
+        }
+
+        function saveDeptIncomeSnapshotPeriod() {
+            var periodName = $('#hdnSnapshotPeriodName').val();
+            var periodLocked = $('#chkPeriodLocked').is(':checked');
+
+            $.ajax({
+                url: '/FPS/DepartmentIncome/UpdateSnapshotPeriod',
+                type: 'POST',
+                data: JSON.stringify({ periodName: periodName, periodLocked: periodLocked }),
+                contentType: 'application/json',
+                success: function (response) {
+                    if (response.success) {
+                        closeDeptIncomeSnapshotModal();
+                        showAlertMessage(response.message || 'Period locked updated successfully.', AlertType.SUCCESS);
+                        var gm = window['gridManager_departmentIncomeSnapshotGrid'];
+                        if (gm) gm.reloadGrid({ page: 1 });
+                    } else {
+                        showAlertMessage(response.message || 'Update failed.', AlertType.ERROR);
+                    }
+                },
+                error: function () {
+                    showAlertMessage('An error occurred while saving.', AlertType.ERROR);
+                }
+            });
+        }
+
+        function closeDeptIncomeSnapshotModal() {
+            $('#modaPopupBodyDeptIncome').html('');
+            $('#modalPopupDeptIncome').removeClass('show');
+        }
         // ── Snapshot DataGrid extra-filter callback ──────────────────────────
         //   ExtraFilterMethod = "getDepartmentIncomeSnapshotExtraFilters"
         // Called automatically by _DataGrid on every reload; passes project + period params
@@ -291,201 +307,134 @@
         }
 
         // ────────────────────────────────────────────────────────────────────
-        // Period-table-dropdown state and helpers
+        // Month data — serialized for Period From / Period To MultiColumnDropdownComponent (DepartmentIncome.js)
+        // Source: tblkpMonth (12 fiscal months: 1=April … 12=March)
+        // Matches Access combo box: SELECT DISTINCTROW MonthNumber, MonthName FROM tblkpMonth ORDER BY MonthNumber
         // ────────────────────────────────────────────────────────────────────
+        var departmentIncomePageMonths = @Html.Raw(
+            System.Text.Json.JsonSerializer.Serialize(Model.MonthList)
+        );
+        // Period data (snapshot periods) — retained for other potential uses
         var departmentIncomePagePeriods = @Html.Raw(
-            System.Text.Json.JsonSerializer.Serialize(
-                Model.PeriodList.Select(p => new {
-                    value    = p.AccntsPeriod,
-                    label    = p.AccntsPeriod.ToString() + " " + p.MonthName,
-                    monthNum = p.MonthNumber
-                })
-            )
+            System.Text.Json.JsonSerializer.Serialize(Model.PeriodList)
         );
 
-        function getDeptIncomeMonthDisplayName(label) {
-            return String(label || '').replace(/^\d+\s+/, '');
-        }
-
-        function closeDeptIncomeAllPeriodPanels() {
-            document.querySelectorAll('.period-table-dropdown .dropdown-panel').forEach(function (panel) {
-                panel.style.display = 'none';
-            });
-        }
-
-        function initDeptIncomeSinglePeriodDropdown(config) {
-            var dropdown = document.getElementById(config.dropdownId);
-            var input    = document.getElementById(config.inputId);
-            var panel    = document.getElementById(config.panelId);
-            var search   = document.getElementById(config.searchId);
-            var tbody    = document.getElementById(config.bodyId);
-            var backing  = document.getElementById(config.selectId);
-
-            if (!dropdown || !input || !panel || !search || !tbody || !backing) { return; }
-
-            function renderRows(filterTerm) {
-                var term = String(filterTerm || '').toLowerCase();
-                tbody.innerHTML = '';
-
-                departmentIncomePagePeriods
-                    .filter(function (p) {
-                        var periodText = String(p.value);
-                        var monthName  = getDeptIncomeMonthDisplayName(p.label);
-                        var monthNum   = String(p.monthNum);
-                        return periodText.indexOf(term) !== -1 ||
-                               monthName.toLowerCase().indexOf(term) !== -1 ||
-                               monthNum.indexOf(term) !== -1;
-                    })
-                    .forEach(function (p) {
-                        var tr          = document.createElement('tr');
-                        var tdPeriod    = document.createElement('td');
-                        var tdMonthName = document.createElement('td');
-                        var tdMonthNum  = document.createElement('td');
-
-                        tdPeriod.textContent    = String(p.value);
-                        tdMonthName.textContent = getDeptIncomeMonthDisplayName(p.label);
-                        tdMonthNum.textContent  = String(p.monthNum);
-
-                        tr.appendChild(tdPeriod);
-                        tr.appendChild(tdMonthName);
-                        tr.appendChild(tdMonthNum);
-
-                        tr.addEventListener('click', function () {
-                            backing.value = String(p.value);
-                            input.value   = getDeptIncomeMonthDisplayName(p.label);
-                            panel.style.display = 'none';
-                            backing.dispatchEvent(new Event('change', { bubbles: true }));
-                        });
-
-                        tbody.appendChild(tr);
-                    });
-            }
-
-            function syncInputFromSelect() {
-                var selected = backing.options[backing.selectedIndex];
-                if (selected && selected.value) {
-                    input.value = getDeptIncomeMonthDisplayName(selected.textContent);
-                } else {
-                    input.value = '--select--';
-                }
-            }
-
-            input.addEventListener('click', function (evt) {
-                evt.stopPropagation();
-                closeDeptIncomeAllPeriodPanels();
-                panel.style.display = 'block';
-                search.value = '';
-                renderRows('');
-                search.focus();
-            });
-
-            search.addEventListener('input', function (evt) {
-                renderRows(evt.target.value);
-            });
-
-            backing.addEventListener('change', syncInputFromSelect);
-
-            document.addEventListener('click', function (evt) {
-                if (!dropdown.contains(evt.target)) {
-                    panel.style.display = 'none';
-                }
-            });
-
-            syncInputFromSelect();
-        }
-
-        function initDeptIncomePeriodDropdownTables() {
-            initDeptIncomeSinglePeriodDropdown({
-                dropdownId: 'periodFromDropdown',
-                inputId:    'periodFromInput',
-                panelId:    'periodFromPanel',
-                searchId:   'periodFromSearch',
-                bodyId:     'periodFromBody',
-                selectId:   'monthFromSelect'
-            });
-
-            initDeptIncomeSinglePeriodDropdown({
-                dropdownId: 'periodToDropdown',
-                inputId:    'periodToInput',
-                panelId:    'periodToPanel',
-                searchId:   'periodToSearch',
-                bodyId:     'periodToBody',
-                selectId:   'monthToSelect'
-            });
+        // ────────────────────────────────────────────────────────────────────
+        // Unified extra-filter callback — ExtraFilterMethod = "getDeptIncomeCurrentExtraFilters"
+        // gridManager calls this on every paging/sort reload; returns project, period, and
+        // queryType so the single LoadGrid endpoint knows which query to execute.
+        // ────────────────────────────────────────────────────────────────────
+        function getDeptIncomeCurrentExtraFilters() {
+            var select  = document.getElementById('querySelect');
+            var queryType = (select && select.selectedIndex >= 0)
+                ? select.options[select.selectedIndex].value
+                : 'qryDeptIncomeTime';
+            return {
+                queryType: queryType,
+                project:   getDeptIncomeProject(),
+                monthFrom: getDeptIncomeMonthFromValue(),
+                monthTo:   getDeptIncomeMonthToValue()
+            };
         }
 
         // ────────────────────────────────────────────────────────────────────
-        // Query results grid (client-side DataGridComponent in modal)
+        // Unified LoadGrid endpoint — all query types routed through one POST.
+        // queryType maps directly to the controller's switch statement.
         // ────────────────────────────────────────────────────────────────────
-        var deptIncomeQueryGrid = null;
+        var deptIncomeLoadGridUrl = '@Url.Action("LoadGrid", "DepartmentIncome", new { area = "FPS" })';
 
-        function getDeptIncomeQueryColumns() {
-            return [
-                { field: 'project',          header: 'Project',        width: 110, sortable: true },
-                { field: 'oracleProjectCode', header: 'OracleProject',  width: 130, sortable: true },
-                { field: 'subAccountCode',    header: 'SubAccount',     width: 120, sortable: true },
-                { field: 'month',             header: 'Month',          width: 80,  sortable: true },
-                { field: 'defraProject',      header: 'DefraProject',   width: 120, sortable: true },
-                { field: 'oCC',               header: 'OCC',            width: 100, sortable: true },
-                { field: 'oPC',               header: 'OPC',            width: 80,  sortable: true },
-                { field: 'sPC',               header: 'SPC',            width: 80,  sortable: true },
-                { field: 'sCC',               header: 'SCC',            width: 100, sortable: true },
-                { field: 'name',              header: 'Name',           width: 170, sortable: true },
-                { field: 'gradeCode',         header: 'GradeCode',      width: 100, sortable: true },
-                { field: 'spNumber',          header: 'SPNumber',       width: 100, sortable: true },
-                { field: 'chargeRate',        header: 'ChargeRate',     width: 110, sortable: true },
-                { field: 'pay',               header: 'Pay',            width: 100, sortable: true },
-                { field: 'nonPay',            header: 'NonPay',         width: 100, sortable: true },
-                { field: 'overhead',          header: 'Overhead',       width: 100, sortable: true },
-                { field: 'time',              header: 'Time',           width: 90,  sortable: true },
-                { field: 'totalCost',         header: 'TotalCost',      width: 110, sortable: true }
-            ];
-        }
+        // Maps snapshot listbox short names to the queryType parameter expected by LoadGrid
+        var deptIncomeSnapshotQueryMap = {
+            'time':        'qryDeptIncomeTime',
+            'tests':       'qryDeptIncomeTest',
+            'animals':     'qryDeptIncomeAnimal',
+            'exceptional': 'qryDeptIncomeAdditional',
+            'totals':      'qryDeptIncomeTotals'
+        };
 
-        function ensureDeptIncomeQueryGrid(dataRows) {
-            if (!deptIncomeQueryGrid) {
-                if (typeof DataGridComponent === 'undefined') { return; }
-                deptIncomeQueryGrid = new DataGridComponent({
-                    gridId:               'departmentIncomeQueryGrid',
-                    containerSelector:    '#gridContainer_departmentIncomeQuery',
-                    title:                '',
-                    columns:              getDeptIncomeQueryColumns(),
-                    data:                 dataRows,
-                    pageSize:             10,
-                    enableSort:           true,
-                    enableFilter:         true,
-                    enableResize:         true,
-                    enableSelection:      false,
-                    enablePagination:     true,
-                    showAddButton:        false,
-                    scrollContainerHeight: 'calc(100vh - 230px)',
-                    pageSizeOptions:      [5, 10, 25, 50, 100]
+        function loadCurrentGrid(queryType) {
+            var container = document.getElementById('gridContainer_departmentIncomeCurrentGrid');
+            var resultsArea = document.getElementById('currentQueryResultsArea');
+            if (container) { container.innerHTML = '<p class="govuk-body-s">Loading...</p>'; }
+            if (resultsArea) { resultsArea.style.display = ''; }
+
+            var params = {
+                page:      1,
+                pageSize:  20,
+                queryType: queryType,
+                source:    'current',
+                project:   getDeptIncomeProject(),
+                monthFrom: getDeptIncomeMonthFromValue(),
+                monthTo:   getDeptIncomeMonthToValue()
+            };
+
+            $.post(deptIncomeLoadGridUrl, params)
+                .done(function (html) {
+                    if (container) { $(container).html(html); }
+                })
+                .fail(function () {
+                    showDeptIncomePopupMessage('Error', 'An error occurred while loading query data.');
+                    if (container) { $(container).html(''); }
+                    if (resultsArea) { resultsArea.style.display = 'none'; }
                 });
-                return;
-            }
-            deptIncomeQueryGrid.updateData(dataRows);
         }
 
-        // ────────────────────────────────────────────────────────────────────
-        // GOV.UK query results modal helpers
-        //   openModal / closeModal from ~/css/common/_govuk_modal.css conventions
-        // ────────────────────────────────────────────────────────────────────
-        function openDeptIncomeQueryModal() {
-            var modal = document.getElementById('departmentIncomeQueryModal');
-            if (modal) {
-                modal.setAttribute('aria-hidden', 'false');
-                modal.classList.add('govuk-modal--open');
-                modal.style.display = 'flex';
-            }
+        // Loads query results into the Snapshot tab's query-results area,
+        // hiding the snapshot summary grid and showing the results in its place.
+        function loadSnapshotQueryGrid(queryType) {
+            var container = document.getElementById('gridContainer_departmentIncomeSnapshotQueryGrid');
+            if (container) { container.innerHTML = '<p class="govuk-body-s">Loading...</p>'; }
+
+            // Show query results area; hide snapshot grid area
+            var snapshotGridArea    = document.getElementById('snapshotGridArea');
+            var snapshotQueryResultsArea = document.getElementById('snapshotQueryResultsArea');
+            if (snapshotGridArea)   { snapshotGridArea.style.display = 'none'; }
+            if (snapshotQueryResultsArea) { snapshotQueryResultsArea.style.display = ''; }
+
+            var params = {
+                page:      1,
+                pageSize:  20,
+                queryType: queryType,
+                source:    'snapshot',
+                project:   getDeptIncomeProject(),
+                monthFrom: getDeptIncomeMonthFromValue(),
+                monthTo:   getDeptIncomeMonthToValue()
+            };
+
+            $.post(deptIncomeLoadGridUrl, params)
+                .done(function (html) {
+                    if (container) { $(container).html(html); }
+                })
+                .fail(function () {
+                    showDeptIncomePopupMessage('Error', 'An error occurred while loading query data.');
+                    if (container) { $(container).html(''); }
+                    showSnapshotGrid();
+                });
         }
 
-        function closeDeptIncomeQueryModal() {
-            var modal = document.getElementById('departmentIncomeQueryModal');
-            if (modal) {
-                modal.setAttribute('aria-hidden', 'true');
-                modal.classList.remove('govuk-modal--open');
-                modal.style.display = '';
-            }
+        // Restores the snapshot summary grid and hides the query results area.
+        function showSnapshotGrid() {
+            var snapshotGridArea    = document.getElementById('snapshotGridArea');
+            var snapshotQueryResultsArea = document.getElementById('snapshotQueryResultsArea');
+            if (snapshotGridArea)   { snapshotGridArea.style.display = ''; }
+            if (snapshotQueryResultsArea) { snapshotQueryResultsArea.style.display = 'none'; }
+        }
+
+        // Extra-filter callback for the Snapshot tab query grid.
+        // ExtraFilterMethod = "getDeptIncomeSnapshotQueryExtraFilters"
+        // Called by _DataGrid gridManager on every paging/sort reload of the snapshot query results.
+        function getDeptIncomeSnapshotQueryExtraFilters() {
+            var select = document.getElementById('snapshotQuerySelect');
+            var shortKey = (select && select.selectedOptions.length > 0)
+                ? select.selectedOptions[0].value
+                : 'time';
+            return {
+                source:    'snapshot',
+                queryType: deptIncomeSnapshotQueryMap[shortKey] || 'qryDeptIncomeTime',
+                project:   getDeptIncomeProject(),
+                monthFrom: getDeptIncomeMonthFromValue(),
+                monthTo:   getDeptIncomeMonthToValue()
+            };
         }
 
         // ────────────────────────────────────────────────────────────────────
@@ -546,108 +495,38 @@
         }
 
         // ────────────────────────────────────────────────────────────────────
-        // AJAX data loaders — call MVC controller AJAX endpoints
+        // Snapshot tab — Run query (uses first selected query ID)
         // ────────────────────────────────────────────────────────────────────
-        var deptIncomeQueryIdToEndpoint = {
-            'time':                   '@Url.Action("GetTimeData",       "DepartmentIncome", new { area = "FPS" })',
-            'tests':                  '@Url.Action("GetTestData",        "DepartmentIncome", new { area = "FPS" })',
-            'animals':                '@Url.Action("GetAnimalData",      "DepartmentIncome", new { area = "FPS" })',
-            'exceptional':            '@Url.Action("GetAdditionalData",  "DepartmentIncome", new { area = "FPS" })',
-            'totals':                 '@Url.Action("GetTotalsData",      "DepartmentIncome", new { area = "FPS" })',
-            'qryDeptIncomeTime':      '@Url.Action("GetTimeData",       "DepartmentIncome", new { area = "FPS" })',
-            'qryDeptIncomeTest':      '@Url.Action("GetTestData",        "DepartmentIncome", new { area = "FPS" })',
-            'qryDeptIncomeAnimal':    '@Url.Action("GetAnimalData",      "DepartmentIncome", new { area = "FPS" })',
-            'qryDeptIncomeAdditional':'@Url.Action("GetAdditionalData",  "DepartmentIncome", new { area = "FPS" })',
-            'qryDeptIncomeTotals':    '@Url.Action("GetTotalsData",      "DepartmentIncome", new { area = "FPS" })'
-        };
-
-        function fetchDeptIncomeQueryData(queryId, callback) {
-            var endpoint = deptIncomeQueryIdToEndpoint[queryId];
-            if (!endpoint) {
-                callback([]);
+        function openSnapshotQueryModal() {
+            var monthFrom = document.getElementById('monthFromSelect')?.value;
+            var monthTo   = document.getElementById('monthToSelect')?.value;
+            if (!monthFrom || !monthTo) {
+                showAlertMessage('Please select Period From and Period To, and run the query again.', AlertType.WARNING);
                 return;
             }
-
-            var params = {
-                project:   getDeptIncomeProject(),
-                monthFrom: getDeptIncomeMonthFromValue(),
-                monthTo:   getDeptIncomeMonthToValue()
-            };
-
-            $.ajax({
-                url:  endpoint,
-                type: 'POST',
-                data: params,
-                success: function (response) {
-                    if (response && response.success && Array.isArray(response.data)) {
-                        callback(response.data);
-                    } else {
-                        showDeptIncomePopupMessage('Error', response.message || 'Failed to load query data.');
-                        callback([]);
-                    }
-                },
-                error: function () {
-                    showDeptIncomePopupMessage('Error', 'An error occurred while loading query data.');
-                    callback([]);
-                }
-            });
-        }
-
-        // ────────────────────────────────────────────────────────────────────
-        // Snapshot tab — Run query
-        //   merges rows from all selected snapshot query IDs then shows the modal
-        // ────────────────────────────────────────────────────────────────────
-        function getSelectedSnapshotQueryIds() {
             var select = document.getElementById('snapshotQuerySelect');
-            if (!select) { return []; }
-            return Array.from(select.selectedOptions).map(function (o) { return o.value; });
-        }
-
-        function openSnapshotQueryModal() {
-            var selectedIds = getSelectedSnapshotQueryIds();
-            var queryIds    = selectedIds.length ? selectedIds : ['time'];
-            var allRows     = [];
-            var pending     = queryIds.length;
-
-            function onDone(rows) {
-                allRows = allRows.concat(rows);
-                pending--;
-                if (pending === 0) {
-                    var titleEl = document.getElementById('departmentIncomeQueryModalTitle');
-                    if (titleEl) {
-                        titleEl.textContent = 'Department income query results: ' + queryIds.join(', ');
-                    }
-                    ensureDeptIncomeQueryGrid(allRows);
-                    openDeptIncomeQueryModal();
-                }
-            }
-
-            //   prototype also runs them sequentially via concat)
-            queryIds.forEach(function (queryId) {
-                fetchDeptIncomeQueryData(queryId, onDone);
-            });
+            var shortKey = (select && select.selectedOptions.length > 0)
+                ? select.selectedOptions[0].value
+                : 'time';
+            var queryType = deptIncomeSnapshotQueryMap[shortKey] || 'qryDeptIncomeTime';
+            loadSnapshotQueryGrid(queryType);
         }
 
         // ────────────────────────────────────────────────────────────────────
         // Current tab — Run query
         // ────────────────────────────────────────────────────────────────────
-        function getSelectedCurrentQueryId() {
-            var select = document.getElementById('querySelect');
-            if (!select || select.selectedIndex < 0) { return ''; }
-            return select.options[select.selectedIndex].value;
-        }
-
         function openCurrentQueryModal() {
-            var queryId = getSelectedCurrentQueryId() || 'qryDeptIncomeTime';
-
-            fetchDeptIncomeQueryData(queryId, function (rows) {
-                var titleEl = document.getElementById('departmentIncomeQueryModalTitle');
-                if (titleEl) {
-                    titleEl.textContent = 'Department income query results: ' + queryId;
-                }
-                ensureDeptIncomeQueryGrid(rows);
-                openDeptIncomeQueryModal();
-            });
+            var monthFrom = document.getElementById('monthFromSelect')?.value;
+            var monthTo   = document.getElementById('monthToSelect')?.value;
+            if (!monthFrom || !monthTo) {
+                showAlertMessage('Please select Period From and Period To, and run the query again.', AlertType.WARNING);
+                return;
+            }
+            var select    = document.getElementById('querySelect');
+            var queryType = (select && select.selectedIndex >= 0)
+                ? select.options[select.selectedIndex].value
+                : 'qryDeptIncomeTime';
+            loadCurrentGrid(queryType);
         }
 
         // ────────────────────────────────────────────────────────────────────
@@ -655,10 +534,11 @@
         // ────────────────────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', function () {
 
-            // Period dropdown tables
-            initDeptIncomePeriodDropdownTables();
+            // Period dropdowns — MultiColumnDropdownComponent (DepartmentIncome.js)
+            initializeDepartmentIncomePeriodDropdowns({ monthsData: departmentIncomePageMonths });
 
-            // Project / period change — reload snapshot grid
+            // Auto-load snapshot grid on initial page load
+            reloadDepartmentIncomeSnapshotGrid();
             var projectSelect   = document.getElementById('projectSelect');
             var monthFromSelect = document.getElementById('monthFromSelect');
             var monthToSelect   = document.getElementById('monthToSelect');
@@ -670,10 +550,30 @@
             // Run query buttons
             var runSnapshot = document.getElementById('runQueryBtnSnapshot');
             var runCurrent  = document.getElementById('runQueryBtnCurrent');
+            var backToSnapshot  = document.getElementById('backToSnapshotBtn');
+            var closeCurrentBtn = document.getElementById('closeCurrentGridBtn');
+
+            if (closeCurrentBtn) {
+                closeCurrentBtn.addEventListener('click', function () {
+                    var resultsArea = document.getElementById('currentQueryResultsArea');
+                    var container   = document.getElementById('gridContainer_departmentIncomeCurrentGrid');
+                    if (container)   { container.innerHTML = ''; }
+                    if (resultsArea) { resultsArea.style.display = 'none'; }
+
+                    // Switch back to Snapshot Data tab (the default page)
+                    var snapshotTab = document.querySelector('#department-income-tabs .govuk-tabs__tab[href="#department-income-snapshot"]');
+                    if (snapshotTab) { snapshotTab.click(); }
+                });
+            }
+
+            if (backToSnapshot) {
+                backToSnapshot.addEventListener('click', function () {
+                    showSnapshotGrid();
+                });
+            }
 
             if (runSnapshot) {
                 runSnapshot.addEventListener('click', function () {
-                    reloadDepartmentIncomeSnapshotGrid();
                     openSnapshotQueryModal();
                 });
             }
@@ -681,22 +581,6 @@
             if (runCurrent) {
                 runCurrent.addEventListener('click', function () {
                     openCurrentQueryModal();
-                });
-            }
-
-            // Modal close button
-            var modalCloseBtn = document.getElementById('departmentIncomeQueryModalCloseBtn');
-            if (modalCloseBtn) {
-                modalCloseBtn.addEventListener('click', closeDeptIncomeQueryModal);
-            }
-
-            // Click outside modal dialog to close
-            var modal = document.getElementById('departmentIncomeQueryModal');
-            if (modal) {
-                modal.addEventListener('click', function (evt) {
-                    if (evt.target && evt.target.id === 'departmentIncomeQueryModal') {
-                        closeDeptIncomeQueryModal();
-                    }
                 });
             }
 

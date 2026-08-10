@@ -138,7 +138,14 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             CreateMap<DepartmentIncomeAnimal,     DepartmentIncomeAnimalDto>().ReverseMap();
             CreateMap<DepartmentIncomeAdditional, DepartmentIncomeAdditionalDto>().ReverseMap();
             CreateMap<DepartmentIncomeTotals,     DepartmentIncomeTotalsDto>().ReverseMap();
-            CreateMap<PeriodLookup,               PeriodLookupDto>().ReverseMap();
+            CreateMap<PeriodLookup, PeriodLookupDto>()
+                .ForMember(d => d.AccntsPeriod, o => o.MapFrom(s => (int)s.AccntsPeriod))
+                .ForMember(d => d.MonthNumber,  o => o.MapFrom(s => (int)s.MonthNumber))
+                .ReverseMap();
+            CreateMap<Period, PeriodSnapshotDto>()
+                .ForMember(d => d.FinalSummariesRun, o => o.MapFrom(s => s.FinalSummariesRun == -1))
+                .ForMember(d => d.PeriodLocked,      o => o.MapFrom(s => s.PeriodLocked == -1))
+                .ReverseMap();
         }
     }
 }

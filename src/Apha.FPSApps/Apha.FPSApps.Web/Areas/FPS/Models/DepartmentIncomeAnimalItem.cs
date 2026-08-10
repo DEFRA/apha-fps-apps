@@ -10,11 +10,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 110, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string Project { get; set; } = null!;
 
-        [Display(Name = "OracleProject")]
+        [Display(Name = "Oracle Project Code")]
         [GridColumn(Width = 130, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? OracleProjectCode { get; set; }
 
-        [Display(Name = "SubAccount")]
+        [Display(Name = "Sub Account Code")]
         [GridColumn(Width = 120, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? SubAccountCode { get; set; }
 
@@ -43,19 +43,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? SCC { get; set; }
 
         [Display(Name = "AnimalType")]
-        [GridColumn(Width = 170, Type = GridColumnType.ReadOnly, IsFilterable = true)]
+        [GridColumn(Width = 140, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? AnimalType { get; set; }
 
         [Display(Name = "AnimalDays")]
-        [GridColumn(Width = 90, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public decimal AnimalDays { get; set; }
 
         [Display(Name = "Rate")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
         public decimal Rate { get; set; }
 
         [Display(Name = "TotalCost")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
         public decimal TotalCost { get; set; }
     }
 }

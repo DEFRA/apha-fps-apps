@@ -10,11 +10,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 110, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string Project { get; set; } = null!;
 
-        [Display(Name = "OracleProject")]
+        [Display(Name = "Oracle Project Code")]
         [GridColumn(Width = 130, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? OracleProjectCode { get; set; }
 
-        [Display(Name = "SubAccount")]
+        [Display(Name = "Sub Account Code")]
         [GridColumn(Width = 120, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? SubAccountCode { get; set; }
 
@@ -38,13 +38,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 80, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? SPC { get; set; }
 
-        [Display(Name = "WorkGroup")]
-        [GridColumn(Width = 170, Type = GridColumnType.ReadOnly, IsFilterable = true)]
-        public string? WorkGroup { get; set; }
-
         [Display(Name = "SCC")]
         [GridColumn(Width = 100, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? SCC { get; set; }
+
+        [Display(Name = "WorkGroup")]
+        [GridColumn(Width = 170, Type = GridColumnType.ReadOnly, IsFilterable = true)]
+        public string? WorkGroup { get; set; }
 
         [Display(Name = "TestCode")]
         [GridColumn(Width = 100, Type = GridColumnType.ReadOnly, IsFilterable = true)]
@@ -55,11 +55,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal Volume { get; set; }
 
         [Display(Name = "TestPrice")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
         public decimal TestPrice { get; set; }
 
         [Display(Name = "TotalCost")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
         public decimal TotalCost { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 using Apha.Common.Contracts.FPS;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.DepartmentIncome;
 using AutoMapper;
 
@@ -26,6 +27,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Dedicated lookup DTO — must NOT be handled by CRUD entity mappers above
             // AccntsPeriod, MonthName, MonthNumber align by convention
             CreateMap<PeriodLookupRes, PeriodLookupDto>().ReverseMap();
+
+            // Snapshot periods — EndPeriod, PeriodName, FinalSummariesRun, PeriodLocked align by convention
+            CreateMap<PeriodSnapshotRes, PeriodSnapshotDto>().ReverseMap();
         }
     }
 }

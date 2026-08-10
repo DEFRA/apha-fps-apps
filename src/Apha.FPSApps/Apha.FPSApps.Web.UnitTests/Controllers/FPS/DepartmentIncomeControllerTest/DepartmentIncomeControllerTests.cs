@@ -20,6 +20,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.DepartmentIncome;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
@@ -36,6 +37,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
         private readonly IMapper _mapper;
         private readonly IDepartmentIncomeService _departmentIncomeService;
         private readonly IProjectService _projectService;
+        private readonly IMonthService _monthService;
         private readonly DepartmentIncomeController _controller;
 
         private const string TestProject = "AH0033";
@@ -45,7 +47,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             _mapper                  = Substitute.For<IMapper>();
             _departmentIncomeService = Substitute.For<IDepartmentIncomeService>();
             _projectService          = Substitute.For<IProjectService>();
-            _controller              = new DepartmentIncomeController(_mapper, _departmentIncomeService, _projectService);
+            _monthService            = Substitute.For<IMonthService>();
+            _controller              = new DepartmentIncomeController(_mapper, _departmentIncomeService, _projectService, _monthService);
         }
 
         // ── JSON helper ─────────────────────────────────────────────────────────
@@ -79,6 +82,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects));
             _departmentIncomeService.GetPeriodsAsync()
                 .Returns(ApiResponseDto<List<PeriodLookupDto>>.SuccessResponse(periods));
+            _monthService.GetAllMonthsAsync()
+                .Returns(ApiResponseDto<List<Apha.FPSApps.Application.Dtos.PACT.MonthDto>>.SuccessResponse(new List<Apha.FPSApps.Application.Dtos.PACT.MonthDto>()));
 
             // Act
             var result = await _controller.Index();
@@ -102,6 +107,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
                     new ApiMetaDto()));
             _departmentIncomeService.GetPeriodsAsync()
                 .Returns(ApiResponseDto<List<PeriodLookupDto>>.SuccessResponse(new List<PeriodLookupDto>()));
+            _monthService.GetAllMonthsAsync()
+                .Returns(ApiResponseDto<List<Apha.FPSApps.Application.Dtos.PACT.MonthDto>>.SuccessResponse(new List<Apha.FPSApps.Application.Dtos.PACT.MonthDto>()));
 
             // Act
             var result = await _controller.Index();
@@ -122,6 +129,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
                 .Returns(ApiResponseDto<List<PeriodLookupDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Period API down", Code = "ERROR" } },
                     new ApiMetaDto()));
+            _monthService.GetAllMonthsAsync()
+                .Returns(ApiResponseDto<List<Apha.FPSApps.Application.Dtos.PACT.MonthDto>>.SuccessResponse(new List<Apha.FPSApps.Application.Dtos.PACT.MonthDto>()));
 
             // Act
             var result = await _controller.Index();
@@ -130,6 +139,37 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             var viewResult = Assert.IsType<ViewResult>(result);
             var viewModel  = Assert.IsType<DepartmentIncomeViewModel>(viewResult.Model);
             Assert.Empty(viewModel.PeriodList);
+        }
+
+        [Fact]
+        public async Task Index_SnapshotGridConfig_HasCorrectProperties()
+        {
+            // Arrange
+            _projectService.GetAllProjectsAsync()
+                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>()));
+            _departmentIncomeService.GetPeriodsAsync()
+                .Returns(ApiResponseDto<List<PeriodLookupDto>>.SuccessResponse(new List<PeriodLookupDto>()));
+            _monthService.GetAllMonthsAsync()
+                .Returns(ApiResponseDto<List<Apha.FPSApps.Application.Dtos.PACT.MonthDto>>.SuccessResponse(new List<Apha.FPSApps.Application.Dtos.PACT.MonthDto>()));
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var viewModel  = Assert.IsType<DepartmentIncomeViewModel>(viewResult.Model);
+            var grid       = viewModel.SnapshotGrid;
+
+            Assert.Equal("departmentIncomeSnapshotGrid",                        grid.GridId);
+            Assert.Equal("Snapshot data",                                       grid.Title);
+            Assert.False(grid.ShowCheckboxColumn);
+            Assert.True(grid.ShowPagination);
+            Assert.False(grid.AllowAdd);
+            Assert.False(grid.AllowEdit);
+            Assert.False(grid.AllowDelete);
+            Assert.Equal("PeriodName",                                          grid.KeyProperty);
+            Assert.Equal("getDepartmentIncomeSnapshotExtraFilters",             grid.ExtraFilterMethod);
+            Assert.Equal("/FPS/DepartmentIncome/LoadSnapshotGrid",              grid.BindGridUrl);
         }
 
         #endregion
@@ -144,6 +184,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             // Arrange
             // TRANSFORMENGINE: Snapshot grid is a stub — always returns empty items
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            _departmentIncomeService.GetSnapshotPeriodsAsync()
+                .Returns(ApiResponseDto<List<PeriodSnapshotDto>>.SuccessResponse(new List<PeriodSnapshotDto>()));
 
             // Act
             var result = await _controller.LoadSnapshotGrid(request, TestProject, 1, 12);
@@ -171,284 +213,233 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
 
         #endregion
 
-        // ── GetTimeData ──────────────────────────────────────────────────────────
+        // ── LoadGrid (unified cross-tab endpoint) ────────────────────────────────
 
-        #region GetTimeData
+        #region LoadGrid
 
         [Fact]
-        public async Task GetTimeData_ServiceReturnsData_ReturnsJsonWithSuccessTrue()
+        public async Task LoadGrid_QueryTypeTime_ServiceReturnsData_ReturnsPartialViewWithRows()
         {
             // Arrange
-            var dtos = new List<DepartmentIncomeTimeDto>
-            {
-                new() { Project = TestProject, Month = 1, TotalCost = 1000m }
-            };
-            var items = new List<DepartmentIncomeTimeItem>
-            {
-                new() { Project = TestProject, Month = 1, TotalCost = 1000m }
-            };
+            var dtos  = new List<DepartmentIncomeTimeDto> { new() { Project = TestProject, Month = 1, TotalCost = 1000m } };
+            var items = new List<DepartmentIncomeTimeItem> { new() { Project = TestProject, Month = 1, TotalCost = 1000m } };
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
 
             _departmentIncomeService.GetTimeIncomeAsync(TestProject, 1, 6)
                 .Returns(ApiResponseDto<List<DepartmentIncomeTimeDto>>.SuccessResponse(dtos));
             _mapper.Map<List<DepartmentIncomeTimeItem>>(dtos).Returns(items);
 
             // Act
-            var result = await _controller.GetTimeData(TestProject, 1, 6);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTime", TestProject, 1, 6);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
-            Assert.True(element.GetProperty("success").GetBoolean());
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
         }
 
         [Fact]
-        public async Task GetTimeData_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
+        public async Task LoadGrid_SourceCurrent_GridIdIsCurrentGrid()
         {
             // Arrange
-            _departmentIncomeService.GetTimeIncomeAsync(TestProject, 1, 6)
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            _departmentIncomeService.GetTimeIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(ApiResponseDto<List<DepartmentIncomeTimeDto>>.SuccessResponse(new List<DepartmentIncomeTimeDto>()));
+            _mapper.Map<List<DepartmentIncomeTimeItem>>(Arg.Any<List<DepartmentIncomeTimeDto>>())
+                .Returns(new List<DepartmentIncomeTimeItem>());
+
+            // Act
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTime", null, null, null, "current");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid    = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(partial.Model);
+            Assert.Equal("departmentIncomeCurrentGrid",           grid.GridId);
+            Assert.Equal("getDeptIncomeCurrentExtraFilters",      grid.ExtraFilterMethod);
+        }
+
+        [Fact]
+        public async Task LoadGrid_SourceSnapshot_GridIdIsSnapshotQueryGrid()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            _departmentIncomeService.GetTimeIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(ApiResponseDto<List<DepartmentIncomeTimeDto>>.SuccessResponse(new List<DepartmentIncomeTimeDto>()));
+            _mapper.Map<List<DepartmentIncomeTimeItem>>(Arg.Any<List<DepartmentIncomeTimeDto>>())
+                .Returns(new List<DepartmentIncomeTimeItem>());
+
+            // Act
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTime", null, null, null, "snapshot");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid    = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(partial.Model);
+            Assert.Equal("departmentIncomeSnapshotQueryGrid",          grid.GridId);
+            Assert.Equal("getDeptIncomeSnapshotQueryExtraFilters",     grid.ExtraFilterMethod);
+        }
+
+        [Fact]
+        public async Task LoadGrid_QueryTypeTime_ServiceReturnsFailure_ReturnsPartialViewWithEmptyGrid()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            _departmentIncomeService.GetTimeIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
                 .Returns(ApiResponseDto<List<DepartmentIncomeTimeDto>>.FailureResponse(
-                    new List<ApiErrorDto> { new() { Message = "Time data error", Code = "ERROR" } },
-                    new ApiMetaDto()));
+                    new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.GetTimeData(TestProject, 1, 6);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTime", TestProject, 1, 6);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
-            Assert.False(element.GetProperty("success").GetBoolean());
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
         }
 
         [Fact]
-        public async Task GetTimeData_ServiceReturnsNullData_ReturnsJsonWithSuccessFalse()
+        public async Task LoadGrid_QueryTypeTest_ServiceReturnsData_ReturnsPartialViewWithRows()
         {
             // Arrange
-            _departmentIncomeService.GetTimeIncomeAsync(null, null, null)
-                .Returns(new ApiResponseDto<List<DepartmentIncomeTimeDto>> { Success = true, Data = null });
-
-            // Act
-            var result = await _controller.GetTimeData(null, null, null);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
-            Assert.False(element.GetProperty("success").GetBoolean());
-        }
-
-        #endregion
-
-        // ── GetTestData ──────────────────────────────────────────────────────────
-
-        #region GetTestData
-
-        [Fact]
-        public async Task GetTestData_ServiceReturnsData_ReturnsJsonWithSuccessTrue()
-        {
-            // Arrange
-            var dtos = new List<DepartmentIncomeTestDto>
-            {
-                new() { Project = TestProject, Month = 1, TotalCost = 500m }
-            };
-            var items = new List<DepartmentIncomeTestItem>
-            {
-                new() { Project = TestProject, Month = 1, TotalCost = 500m }
-            };
+            var dtos  = new List<DepartmentIncomeTestDto> { new() { Project = TestProject, Month = 1, TotalCost = 500m } };
+            var items = new List<DepartmentIncomeTestItem> { new() { Project = TestProject, Month = 1, TotalCost = 500m } };
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
 
             _departmentIncomeService.GetTestIncomeAsync(TestProject, 1, 6)
                 .Returns(ApiResponseDto<List<DepartmentIncomeTestDto>>.SuccessResponse(dtos));
             _mapper.Map<List<DepartmentIncomeTestItem>>(dtos).Returns(items);
 
             // Act
-            var result = await _controller.GetTestData(TestProject, 1, 6);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTest", TestProject, 1, 6);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
-            Assert.True(element.GetProperty("success").GetBoolean());
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
         }
 
         [Fact]
-        public async Task GetTestData_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
+        public async Task LoadGrid_QueryTypeTest_ServiceReturnsFailure_ReturnsPartialViewWithEmptyGrid()
         {
             // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
             _departmentIncomeService.GetTestIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
                 .Returns(ApiResponseDto<List<DepartmentIncomeTestDto>>.FailureResponse(
-                    new List<ApiErrorDto> { new() { Message = "Test data error", Code = "ERROR" } },
-                    new ApiMetaDto()));
+                    new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.GetTestData(TestProject, 1, 6);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTest", TestProject, 1, 6);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
-            Assert.False(element.GetProperty("success").GetBoolean());
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
         }
 
-        #endregion
-
-        // ── GetAnimalData ────────────────────────────────────────────────────────
-
-        #region GetAnimalData
-
         [Fact]
-        public async Task GetAnimalData_ServiceReturnsData_ReturnsJsonWithSuccessTrue()
+        public async Task LoadGrid_QueryTypeAnimal_ServiceReturnsData_ReturnsPartialViewWithRows()
         {
             // Arrange
-            var dtos = new List<DepartmentIncomeAnimalDto>
-            {
-                new() { Project = TestProject, Month = 2, TotalCost = 750m }
-            };
-            var items = new List<DepartmentIncomeAnimalItem>
-            {
-                new() { Project = TestProject, Month = 2, TotalCost = 750m }
-            };
+            var dtos  = new List<DepartmentIncomeAnimalDto> { new() { Project = TestProject, Month = 2, TotalCost = 750m } };
+            var items = new List<DepartmentIncomeAnimalItem> { new() { Project = TestProject, Month = 2, TotalCost = 750m } };
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
 
             _departmentIncomeService.GetAnimalIncomeAsync(TestProject, 1, 12)
                 .Returns(ApiResponseDto<List<DepartmentIncomeAnimalDto>>.SuccessResponse(dtos));
             _mapper.Map<List<DepartmentIncomeAnimalItem>>(dtos).Returns(items);
 
             // Act
-            var result = await _controller.GetAnimalData(TestProject, 1, 12);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeAnimal", TestProject, 1, 12);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
-            Assert.True(element.GetProperty("success").GetBoolean());
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
         }
 
         [Fact]
-        public async Task GetAnimalData_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
+        public async Task LoadGrid_QueryTypeAnimal_ServiceReturnsFailure_ReturnsPartialViewWithEmptyGrid()
         {
             // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
             _departmentIncomeService.GetAnimalIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
                 .Returns(ApiResponseDto<List<DepartmentIncomeAnimalDto>>.FailureResponse(
-                    new List<ApiErrorDto> { new() { Message = "Animal data error", Code = "ERROR" } },
-                    new ApiMetaDto()));
+                    new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.GetAnimalData(TestProject, 1, 12);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeAnimal", TestProject, 1, 12);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
-            Assert.False(element.GetProperty("success").GetBoolean());
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
         }
 
-        #endregion
-
-        // ── GetAdditionalData ────────────────────────────────────────────────────
-
-        #region GetAdditionalData
-
         [Fact]
-        public async Task GetAdditionalData_ServiceReturnsData_ReturnsJsonWithSuccessTrue()
+        public async Task LoadGrid_QueryTypeAdditional_ServiceReturnsData_ReturnsPartialViewWithRows()
         {
             // Arrange
-            var dtos = new List<DepartmentIncomeAdditionalDto>
-            {
-                new() { Project = TestProject, Month = 3, TotalCost = 250m }
-            };
-            var items = new List<DepartmentIncomeAdditionalItem>
-            {
-                new() { Project = TestProject, Month = 3, TotalCost = 250m }
-            };
+            var dtos  = new List<DepartmentIncomeAdditionalDto> { new() { Project = TestProject, Month = 3, TotalCost = 300m } };
+            var items = new List<DepartmentIncomeAdditionalItem> { new() { Project = TestProject, Month = 3, TotalCost = 300m } };
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
 
             _departmentIncomeService.GetAdditionalIncomeAsync(TestProject, 1, 12)
                 .Returns(ApiResponseDto<List<DepartmentIncomeAdditionalDto>>.SuccessResponse(dtos));
             _mapper.Map<List<DepartmentIncomeAdditionalItem>>(dtos).Returns(items);
 
             // Act
-            var result = await _controller.GetAdditionalData(TestProject, 1, 12);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeAdditional", TestProject, 1, 12);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
-            Assert.True(element.GetProperty("success").GetBoolean());
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
         }
 
         [Fact]
-        public async Task GetAdditionalData_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
+        public async Task LoadGrid_QueryTypeAdditional_ServiceReturnsFailure_ReturnsPartialViewWithEmptyGrid()
         {
             // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
             _departmentIncomeService.GetAdditionalIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
                 .Returns(ApiResponseDto<List<DepartmentIncomeAdditionalDto>>.FailureResponse(
-                    new List<ApiErrorDto> { new() { Message = "Additional data error", Code = "ERROR" } },
-                    new ApiMetaDto()));
+                    new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.GetAdditionalData(TestProject, 1, 12);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeAdditional", TestProject, 1, 12);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
-            Assert.False(element.GetProperty("success").GetBoolean());
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
         }
 
-        #endregion
-
-        // ── GetTotalsData ────────────────────────────────────────────────────────
-
-        #region GetTotalsData
-
         [Fact]
-        public async Task GetTotalsData_ServiceReturnsData_ReturnsJsonWithSuccessTrue()
+        public async Task LoadGrid_QueryTypeTotals_ServiceReturnsData_ReturnsPartialViewWithRows()
         {
             // Arrange
-            var dtos = new List<DepartmentIncomeTotalsDto>
-            {
-                new() { Project = TestProject, TotalCosts = 2500m }
-            };
-            var items = new List<DepartmentIncomeTotalsItem>
-            {
-                new() { Project = TestProject, TotalCosts = 2500m }
-            };
+            var dtos  = new List<DepartmentIncomeTotalsDto> { new() { Project = TestProject, TotalCosts = 2500m } };
+            var items = new List<DepartmentIncomeTotalsItem> { new() { Project = TestProject, TotalCosts = 2500m } };
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
 
             _departmentIncomeService.GetTotalsAsync(TestProject, 1, 12)
                 .Returns(ApiResponseDto<List<DepartmentIncomeTotalsDto>>.SuccessResponse(dtos));
             _mapper.Map<List<DepartmentIncomeTotalsItem>>(dtos).Returns(items);
 
             // Act
-            var result = await _controller.GetTotalsData(TestProject, 1, 12);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTotals", TestProject, 1, 12);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
-            Assert.True(element.GetProperty("success").GetBoolean());
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
         }
 
         [Fact]
-        public async Task GetTotalsData_ServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
+        public async Task LoadGrid_QueryTypeTotals_ServiceReturnsFailure_ReturnsPartialViewWithEmptyGrid()
         {
             // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
             _departmentIncomeService.GetTotalsAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
                 .Returns(ApiResponseDto<List<DepartmentIncomeTotalsDto>>.FailureResponse(
-                    new List<ApiErrorDto> { new() { Message = "Totals error", Code = "ERROR" } },
-                    new ApiMetaDto()));
+                    new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.GetTotalsData(TestProject, 1, 12);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTotals", TestProject, 1, 12);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
-            Assert.False(element.GetProperty("success").GetBoolean());
-        }
-
-        [Fact]
-        public async Task GetTotalsData_ServiceReturnsNullData_ReturnsJsonWithSuccessFalse()
-        {
-            // Arrange
-            _departmentIncomeService.GetTotalsAsync(null, null, null)
-                .Returns(new ApiResponseDto<List<DepartmentIncomeTotalsDto>> { Success = true, Data = null });
-
-            // Act
-            var result = await _controller.GetTotalsData(null, null, null);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element    = GetJsonResultElement(jsonResult);
-            Assert.False(element.GetProperty("success").GetBoolean());
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
         }
 
         #endregion
