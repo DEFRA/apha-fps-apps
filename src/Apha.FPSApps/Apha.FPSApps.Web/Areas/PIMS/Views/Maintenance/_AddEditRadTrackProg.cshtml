@@ -40,6 +40,7 @@
                                id="progProgNameDisplay"
                                type="text"
                                value="@Model.Program"
+                               aria-label="Programme"
                                disabled />
                     }
                     else
@@ -48,6 +49,7 @@
                                 asp-for="Program"
                                 id="progProgName"
                                 aria-required="true"
+                                aria-label="Programme"
                                 aria-describedby="progProgNameError"
                                 asp-items="ViewBag.ProgramOptions"
                                 required="required">
@@ -66,12 +68,13 @@
                     <input class="govuk-input govuk-!-font-size-16"
                            asp-for="Publicationprefix"
                            id="progProgPrefix"
-                           type="text" />
+                           type="text"
+                           aria-label="Publication Prefix" />
                 </div>
             </div>
         </div>
 
-        <div class="col-12" style="text-align: right; margin-top: 10px;">
+        <div class="col-12" style="display: flex; justify-content: space-between; margin-top: 10px;">
             <button type="button"
                     class="govuk-button govuk-button--secondary sup_margin_0"
                     onclick="closeModal()">
