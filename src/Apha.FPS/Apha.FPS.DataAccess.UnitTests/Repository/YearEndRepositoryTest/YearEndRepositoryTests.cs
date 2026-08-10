@@ -1539,5 +1539,513 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         }
 
         #endregion
+
+        #region CanInitiateYearEndCutOverRequestAsync
+
+        [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
+        public async Task CanInitiateYearEndCutOverRequestAsync_WhenNoRecordsExist_ReturnsTrue()
+        {
+            // Arrange — no data at all
+            var (repo, _, _, _) = CreateRepository();
+
+            // Act
+            var result = await repo.CanInitiateYearEndCutOverRequestAsync(DefaultJobName);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
+        public async Task CanInitiateYearEndCutOverRequestAsync_WhenAllRecordsTerminal_ReturnsTrue()
+        {
+            // Arrange — every record is in a terminal status
+            var (job, queue, rejectedStatus) = BuildJoinSeed(statusText: "rejected", statusId: 30);
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [rejectedStatus]);
+
+            // Act
+            var result = await repo.CanInitiateYearEndCutOverRequestAsync(DefaultJobName);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
+        public async Task CanInitiateYearEndCutOverRequestAsync_WhenNonTerminalRecordExists_ReturnsFalse()
+        {
+            // Arrange — an "initiated" record is non-terminal
+            var (job, queue, status) = BuildJoinSeed(statusText: "initiated", statusId: 10);
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
+
+            // Act
+            var result = await repo.CanInitiateYearEndCutOverRequestAsync(DefaultJobName);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
+        public async Task CanInitiateYearEndCutOverRequestAsync_IsCaseInsensitiveOnJobName()
+        {
+            // Arrange — job stored upper, queried lower
+            var (job, queue, status) = BuildJoinSeed(jobName: DefaultJobName.ToUpper(), statusText: "initiated", statusId: 10);
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
+
+            // Act
+            var result = await repo.CanInitiateYearEndCutOverRequestAsync(DefaultJobName.ToLower());
+
+            // Assert
+            Assert.False(result);
+        }
+
+        #endregion
+
+        #region CanApproveOrRejectYearEndCutOverRequestAsync
+
+        [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
+        public async Task CanApproveOrRejectYearEndCutOverRequestAsync_WhenInitiatedRecordExists_ReturnsTrue()
+        {
+            // Arrange
+            var (job, queue, status) = BuildJoinSeed(statusText: "initiated", statusId: 10);
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
+
+            // Act
+            var result = await repo.CanApproveOrRejectYearEndCutOverRequestAsync(DefaultJobName);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
+        public async Task CanApproveOrRejectYearEndCutOverRequestAsync_WhenNoInitiatedRecord_ReturnsFalse()
+        {
+            // Arrange — only a rejected record exists
+            var (job, queue, status) = BuildJoinSeed(statusText: "rejected", statusId: 30);
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
+
+            // Act
+            var result = await repo.CanApproveOrRejectYearEndCutOverRequestAsync(DefaultJobName);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact(Skip = "select jq.JobqueueId projects Guid (value type); TestAsyncEnumerable<T> requires T : class — covered by integration tests.")]
+        public async Task CanApproveOrRejectYearEndCutOverRequestAsync_WhenNoRecordsExist_ReturnsFalse()
+        {
+            // Arrange
+            var (repo, _, _, _) = CreateRepository();
+
+            // Act
+            var result = await repo.CanApproveOrRejectYearEndCutOverRequestAsync(DefaultJobName);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        #endregion
+
+        #region GetYearEndCutOverRequestInitiatorAsync
+
+        [Fact]
+        public async Task GetYearEndCutOverRequestInitiatorAsync_WhenInitiatedRecordExists_ReturnsRequestedBy()
+        {
+            // Arrange
+            const string expectedUser = "initiator@example.com";
+            var (job, queue, status) = BuildJoinSeed(statusText: "initiated", statusId: 10, requestedBy: expectedUser);
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
+
+            // Act
+            var result = await repo.GetYearEndCutOverRequestInitiatorAsync(DefaultJobName);
+
+            // Assert
+            Assert.Equal(expectedUser, result);
+        }
+
+        [Fact]
+        public async Task GetYearEndCutOverRequestInitiatorAsync_WhenNoInitiatedRecord_ReturnsEmptyString()
+        {
+            // Arrange — no initiated record for this job
+            var (repo, _, _, _) = CreateRepository();
+
+            // Act
+            var result = await repo.GetYearEndCutOverRequestInitiatorAsync(DefaultJobName);
+
+            // Assert
+            Assert.Equal(string.Empty, result);
+        }
+
+        [Fact]
+        public async Task GetYearEndCutOverRequestInitiatorAsync_WhenJobNameDoesNotMatch_ReturnsEmptyString()
+        {
+            // Arrange — job name differs
+            var (job, queue, status) = BuildJoinSeed(jobName: "OtherJob", statusText: "initiated", statusId: 10);
+            var (repo, _, _, _) = CreateRepository(jobs: [job], queues: [queue], statuses: [status]);
+
+            // Act
+            var result = await repo.GetYearEndCutOverRequestInitiatorAsync(DefaultJobName);
+
+            // Assert
+            Assert.Equal(string.Empty, result);
+        }
+
+        #endregion
+
+        #region EnqueueCutOverInitiationBatchJobAsync
+
+        [Fact]
+        public async Task EnqueueCutOverInitiationBatchJobAsync_WhenJobExists_ReturnsQueuedEntry()
+        {
+            // Arrange
+            var job            = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], statuses: [initiatedStatus]);
+
+            // Act
+            var result = await repo.EnqueueCutOverInitiationBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "initiation note");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(DefaultUserEmail, result.RequestedBy);
+            Assert.Equal("initiation note",  result.ErrorMessage);
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverInitiationBatchJobAsync_WhenJobNotFound_ThrowsKeyNotFoundException()
+        {
+            // Arrange — empty seed; no job exists
+            var (repo, _, _, _) = CreateRepository();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => repo.EnqueueCutOverInitiationBatchJobAsync(
+                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverInitiationBatchJobAsync_WhenInitiatedStatusNotFound_ThrowsKeyNotFoundException()
+        {
+            // Arrange — job exists but no "initiated" status row
+            var job = BuildJob(1, DefaultJobName);
+            var (repo, _, _, _) = CreateRepository(jobs: [job]);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => repo.EnqueueCutOverInitiationBatchJobAsync(
+                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverInitiationBatchJobAsync_AddsQueueEntry()
+        {
+            // Arrange
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+
+            var (repo, _, queueSet, _) = CreateRepository(jobs: [job], statuses: [initiatedStatus]);
+
+            // Act
+            await repo.EnqueueCutOverInitiationBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note");
+
+            // Assert
+            queueSet.Verify(x => x.Add(It.IsAny<BatchJobQueue>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverInitiationBatchJobAsync_AddsLogEntry()
+        {
+            // Arrange
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+
+            var (repo, _, _, logSet) = CreateRepository(jobs: [job], statuses: [initiatedStatus]);
+
+            // Act
+            await repo.EnqueueCutOverInitiationBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note");
+
+            // Assert
+            logSet.Verify(x => x.Add(It.IsAny<BatchJobQueueLog>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverInitiationBatchJobAsync_CallsSaveChangesAsync_OnSuccess()
+        {
+            // Arrange
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var (repo, mockContext, _, _) = CreateRepository(jobs: [job], statuses: [initiatedStatus]);
+
+            // Act
+            await repo.EnqueueCutOverInitiationBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note");
+
+            // Assert
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        #endregion
+
+        #region EnqueueCutOverApprovalBatchJobAsync
+
+        [Fact]
+        public async Task EnqueueCutOverApprovalBatchJobAsync_WhenInitiatedQueueExists_ReturnsApprovedEntry()
+        {
+            // Arrange
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var approvedStatus  = BuildStatus(20, 1, "approved");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, approvedStatus]);
+
+            // Act
+            var result = await repo.EnqueueCutOverApprovalBatchJobAsync(
+                DefaultJobName, "approver@example.com", Guid.NewGuid().ToString(), "approval note");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(20,                    result.StatusId);
+            Assert.Equal("approver@example.com", result.RequestedBy);
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverApprovalBatchJobAsync_WhenNoInitiatedQueueRow_ThrowsKeyNotFoundException()
+        {
+            // Arrange — no initiated queue row
+            var job             = BuildJob(1, DefaultJobName);
+            var approvedStatus  = BuildStatus(20, 1, "approved");
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], statuses: [approvedStatus]);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => repo.EnqueueCutOverApprovalBatchJobAsync(
+                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverApprovalBatchJobAsync_WhenApprovedStatusNotFound_ThrowsKeyNotFoundException()
+        {
+            // Arrange — queue row exists but no "approved" status row
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus]);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => repo.EnqueueCutOverApprovalBatchJobAsync(
+                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverApprovalBatchJobAsync_AddsLogEntry()
+        {
+            // Arrange
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var approvedStatus  = BuildStatus(20, 1, "approved");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var (repo, _, _, logSet) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, approvedStatus]);
+
+            // Act
+            await repo.EnqueueCutOverApprovalBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note");
+
+            // Assert
+            logSet.Verify(x => x.Add(It.IsAny<BatchJobQueueLog>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverApprovalBatchJobAsync_CallsSaveChangesAsync_OnSuccess()
+        {
+            // Arrange
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var approvedStatus  = BuildStatus(20, 1, "approved");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var (repo, mockContext, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, approvedStatus]);
+
+            // Act
+            await repo.EnqueueCutOverApprovalBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note");
+
+            // Assert
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        #endregion
+
+        #region EnqueueCutOverRejectBatchJobAsync
+
+        [Fact]
+        public async Task EnqueueCutOverRejectBatchJobAsync_WhenInitiatedQueueExists_ReturnsRejectedEntry()
+        {
+            // Arrange
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var rejectedStatus  = BuildStatus(30, 1, "rejected");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, rejectedStatus]);
+
+            // Act
+            var result = await repo.EnqueueCutOverRejectBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "reject note");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(30,               result.StatusId);
+            Assert.Equal(DefaultUserEmail, result.RequestedBy);
+            Assert.Equal("reject note",    result.ErrorMessage);
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverRejectBatchJobAsync_WhenNoInitiatedQueueRow_ThrowsKeyNotFoundException()
+        {
+            // Arrange
+            var job            = BuildJob(1, DefaultJobName);
+            var rejectedStatus = BuildStatus(30, 1, "rejected");
+
+            var (repo, _, _, _) = CreateRepository(jobs: [job], statuses: [rejectedStatus]);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => repo.EnqueueCutOverRejectBatchJobAsync(
+                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverRejectBatchJobAsync_WhenRejectedStatusNotFound_ThrowsKeyNotFoundException()
+        {
+            // Arrange — queue row exists but no "rejected" status
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus]);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => repo.EnqueueCutOverRejectBatchJobAsync(
+                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverRejectBatchJobAsync_AddsLogEntry()
+        {
+            // Arrange
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var rejectedStatus  = BuildStatus(30, 1, "rejected");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var (repo, _, _, logSet) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, rejectedStatus]);
+
+            // Act
+            await repo.EnqueueCutOverRejectBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "reject note");
+
+            // Assert
+            logSet.Verify(x => x.Add(It.IsAny<BatchJobQueueLog>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverRejectBatchJobAsync_CallsSaveChangesAsync_OnSuccess()
+        {
+            // Arrange
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var rejectedStatus  = BuildStatus(30, 1, "rejected");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var (repo, mockContext, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, rejectedStatus]);
+
+            // Act
+            await repo.EnqueueCutOverRejectBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note");
+
+            // Assert
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverRejectBatchJobAsync_SaveFails_RollsBackTransaction()
+        {
+            // Arrange
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var rejectedStatus  = BuildStatus(30, 1, "rejected");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var requestCtx = Substitute.For<IFpsRequestContext>();
+            requestCtx.FpsYear.Returns(DefaultFpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx);
+
+            mockContext.Setup(x => x.BatchJobs)
+                .Returns(RepositoryTestHelper.CreateMockDbSet<BatchJobMaster>([job]).Object);
+            mockContext.Setup(x => x.BatchJobStatuses)
+                .Returns(RepositoryTestHelper.CreateMockDbSet<BatchJobStatus>([initiatedStatus, rejectedStatus]).Object);
+
+            var queueSet = RepositoryTestHelper.CreateMockDbSet<BatchJobQueue>([existingQueue]);
+            RepositoryTestHelper.SetupDbSetOperations(queueSet);
+            mockContext.Setup(x => x.BatchJobQueues).Returns(queueSet.Object);
+
+            var logSet = RepositoryTestHelper.CreateMockDbSet<BatchJobQueueLog>([]);
+            RepositoryTestHelper.SetupDbSetOperations(logSet);
+            mockContext.Setup(x => x.BatchJobQueueLogs).Returns(logSet.Object);
+
+            mockContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                       .ThrowsAsync(new InvalidOperationException("DB save failed"));
+
+            var repo = new YearEndRepository(mockContext.Object, requestCtx);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.EnqueueCutOverRejectBatchJobAsync(
+                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+        }
+
+        #endregion
     }
 }

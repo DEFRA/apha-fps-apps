@@ -558,12 +558,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenApiReturnsSuccess_ReturnsSuccessWithTrue()
         {
             // Arrange
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var mappedSuccess = new ApiResponseDto<bool> { Success = true, Data = true };
 
-            _http.PostAsync<YearEndDataSetupReq, bool>(
+            _http.PostAsync<YearEndDataSetupReq, bool?>(
                     "api/v1/yearend/dataSetup/reject",
                     Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == PlannedYear))
                  .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedSuccess);
 
             // Act
             var result = await _client.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear);
@@ -572,7 +574,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).PostAsync<YearEndDataSetupReq, bool>(
+            await _http.Received(1).PostAsync<YearEndDataSetupReq, bool?>(
                 "api/v1/yearend/dataSetup/reject",
                 Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == PlannedYear));
         }
@@ -582,7 +584,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         {
             // Arrange
             var errors = new List<ApiError> { new ApiError { Message = "Rejection not allowed", Code = "VALIDATION_ERROR" } };
-            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
             var mappedFailure = new ApiResponseDto<bool>
             {
                 Success = false,
@@ -590,7 +592,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
                 Meta = new ApiMetaDto()
             };
 
-            _http.PostAsync<YearEndDataSetupReq, bool>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
+            _http.PostAsync<YearEndDataSetupReq, bool?>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
                  .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedFailure);
 
@@ -610,17 +612,486 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         public async Task EnqueueYearEndDataSetupRejectJobAsync_PostsRequestWithCorrectPlannedYear(int plannedYear)
         {
             // Arrange
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var mappedSuccess = new ApiResponseDto<bool> { Success = true, Data = true };
 
-            _http.PostAsync<YearEndDataSetupReq, bool>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
+            _http.PostAsync<YearEndDataSetupReq, bool?>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
                  .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedSuccess);
 
             // Act
             await _client.EnqueueYearEndDataSetupRejectJobAsync(plannedYear);
 
             // Assert
-            await _http.Received(1).PostAsync<YearEndDataSetupReq, bool>(
+            await _http.Received(1).PostAsync<YearEndDataSetupReq, bool?>(
                 "api/v1/yearend/dataSetup/reject",
+                Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == plannedYear));
+        }
+
+        #endregion
+
+        #region GetYearEndCutOverBatchJobHistoryAsync
+
+        [Fact]
+        public async Task GetYearEndCutOverBatchJobHistoryAsync_WhenApiReturnsSuccess_ReturnsPaginatedResult()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var resList = new List<BatchJobHistoryRes>
+            {
+                new BatchJobHistoryRes { JobId = 1, JobName = cutOverJobName, Status = "Completed", RequestedBy = "user@test.com" }
+            };
+            var pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1 };
+            var apiResponse = new ApiResponse<List<BatchJobHistoryRes>>
+            {
+                Success = true,
+                Data = resList,
+                Pagination = pagination
+            };
+            var mappedDto = ApiResponseDto<List<BatchJobHistoryDto>>.SuccessResponse(
+            [
+                new BatchJobHistoryDto { JobId = 1, JobName = cutOverJobName, Status = "Completed" }
+            ]);
+
+            _http.GetAsync<List<BatchJobHistoryRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<BatchJobHistoryDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetYearEndCutOverBatchJobHistoryAsync(query, cutOverJobName);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(1, result.Data?.TotalCount);
+            await _http.Received(1).GetAsync<List<BatchJobHistoryRes>>(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetYearEndCutOverBatchJobHistoryAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiError> { new ApiError { Message = "Unauthorized", Code = "UNAUTHORIZED" } };
+            var apiResponse = new ApiResponse<List<BatchJobHistoryRes>> { Success = false, Errors = errors };
+            var mappedFailure = new ApiResponseDto<List<BatchJobHistoryDto>>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Unauthorized", Code = "UNAUTHORIZED" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<BatchJobHistoryRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<BatchJobHistoryDto>>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            var result = await _client.GetYearEndCutOverBatchJobHistoryAsync(query, cutOverJobName);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+        }
+
+        [Fact]
+        public async Task GetYearEndCutOverBatchJobHistoryAsync_UrlContainsJobNameQueryParam()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<BatchJobHistoryRes>> { Success = true, Data = [] };
+            var mappedDto = ApiResponseDto<List<BatchJobHistoryDto>>.SuccessResponse([]);
+
+            _http.GetAsync<List<BatchJobHistoryRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<BatchJobHistoryDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            await _client.GetYearEndCutOverBatchJobHistoryAsync(query, cutOverJobName);
+
+            // Assert
+            await _http.Received(1).GetAsync<List<BatchJobHistoryRes>>(
+                Arg.Is<string>(url => url.Contains("jobName=") && url.Contains(Uri.EscapeDataString(cutOverJobName))));
+        }
+
+        #endregion
+
+        #region CanInitiateCutOverRequestAsync
+
+        [Fact]
+        public async Task CanInitiateCutOverRequestAsync_WhenApiReturnsTrue_ReturnsSuccessWithTrue()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+
+            // Act
+            var result = await _client.CanInitiateCutOverRequestAsync(cutOverJobName);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+        }
+
+        [Fact]
+        public async Task CanInitiateCutOverRequestAsync_WhenApiReturnsFalse_ReturnsSuccessWithFalse()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            var apiResponse = new ApiResponse<bool> { Success = true, Data = false };
+            _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+
+            // Act
+            var result = await _client.CanInitiateCutOverRequestAsync(cutOverJobName);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.False(result.Data);
+        }
+
+        [Fact]
+        public async Task CanInitiateCutOverRequestAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            var errors = new List<ApiError> { new ApiError { Message = "Service error", Code = "SERVICE_ERROR" } };
+            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var mappedFailure = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Service error", Code = "SERVICE_ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            var result = await _client.CanInitiateCutOverRequestAsync(cutOverJobName);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+        }
+
+        [Fact]
+        public async Task CanInitiateCutOverRequestAsync_UrlContainsEscapedJobName()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+
+            // Act
+            await _client.CanInitiateCutOverRequestAsync(cutOverJobName);
+
+            // Assert
+            await _http.Received(1).GetAsync<bool>(
+                Arg.Is<string>(url => url.Contains("jobName=") && url.Contains(Uri.EscapeDataString(cutOverJobName))));
+        }
+
+        #endregion
+
+        #region CanApproveOrRejectCutOverRequestAsync
+
+        [Fact]
+        public async Task CanApproveOrRejectCutOverRequestAsync_WhenApiReturnsTrue_ReturnsSuccessWithTrue()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+
+            // Act
+            var result = await _client.CanApproveOrRejectCutOverRequestAsync(cutOverJobName);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+        }
+
+        [Fact]
+        public async Task CanApproveOrRejectCutOverRequestAsync_WhenApiReturnsFalse_ReturnsSuccessWithFalse()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            var apiResponse = new ApiResponse<bool> { Success = true, Data = false };
+            _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+
+            // Act
+            var result = await _client.CanApproveOrRejectCutOverRequestAsync(cutOverJobName);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.False(result.Data);
+        }
+
+        [Fact]
+        public async Task CanApproveOrRejectCutOverRequestAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            var errors = new List<ApiError> { new ApiError { Message = "Forbidden", Code = "FORBIDDEN" } };
+            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var mappedFailure = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Forbidden", Code = "FORBIDDEN" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            var result = await _client.CanApproveOrRejectCutOverRequestAsync(cutOverJobName);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+        }
+
+        [Fact]
+        public async Task CanApproveOrRejectCutOverRequestAsync_UrlContainsEscapedJobName()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            var apiResponse = new ApiResponse<bool> { Success = true, Data = false };
+            _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+
+            // Act
+            await _client.CanApproveOrRejectCutOverRequestAsync(cutOverJobName);
+
+            // Assert
+            await _http.Received(1).GetAsync<bool>(
+                Arg.Is<string>(url => url.Contains("jobName=") && url.Contains(Uri.EscapeDataString(cutOverJobName))));
+        }
+
+        #endregion
+
+        #region EnqueueYearEndCutOverInitiationJobAsync
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverInitiationJobAsync_WhenApiReturnsSuccess_ReturnsMappedBatchJobQueueDto()
+        {
+            // Arrange
+            var queueRes = new BatchJobQueueRes { JobId = 1, RequestedBy = "user@test.com" };
+            var apiResponse = new ApiResponse<BatchJobQueueRes> { Success = true, Data = queueRes };
+            var expectedDto = ApiResponseDto<BatchJobQueueDto>.SuccessResponse(
+                new BatchJobQueueDto { JobId = 1, RequestedBy = "user@test.com" });
+
+            _http.PostAsync<YearEndDataSetupReq, BatchJobQueueRes>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
+                 .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<BatchJobQueueDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.EnqueueYearEndCutOverInitiationJobAsync(PlannedYear);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(1, result.Data?.JobId);
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverInitiationJobAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError> { new ApiError { Message = "Job already running", Code = "CONFLICT" } };
+            var apiResponse = new ApiResponse<BatchJobQueueRes> { Success = false, Errors = errors };
+            var mappedFailure = new ApiResponseDto<BatchJobQueueDto>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Job already running", Code = "CONFLICT" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PostAsync<YearEndDataSetupReq, BatchJobQueueRes>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
+                 .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<BatchJobQueueDto>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            var result = await _client.EnqueueYearEndCutOverInitiationJobAsync(PlannedYear);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+            Assert.Equal("CONFLICT", result.Errors![0].Code);
+        }
+
+        [Theory]
+        [InlineData(2025)]
+        [InlineData(2026)]
+        public async Task EnqueueYearEndCutOverInitiationJobAsync_PostsRequestWithCorrectPlannedYear(int plannedYear)
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<BatchJobQueueRes> { Success = true, Data = new BatchJobQueueRes() };
+            var expectedDto = ApiResponseDto<BatchJobQueueDto>.SuccessResponse(new BatchJobQueueDto());
+
+            _http.PostAsync<YearEndDataSetupReq, BatchJobQueueRes>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
+                 .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<BatchJobQueueDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            await _client.EnqueueYearEndCutOverInitiationJobAsync(plannedYear);
+
+            // Assert
+            await _http.Received(1).PostAsync<YearEndDataSetupReq, BatchJobQueueRes>(
+                Arg.Any<string>(),
+                Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == plannedYear));
+        }
+
+        #endregion
+
+        #region TriggerYearEndCutOverApprovalJobAsync
+
+        [Fact]
+        public async Task TriggerYearEndCutOverApprovalJobAsync_WhenApiReturnsSuccess_ReturnsMappedBatchJobEventTriggerDto()
+        {
+            // Arrange
+            var triggerRes = new BatchJobEventTriggerRes
+            {
+                EventId = "evt-cutover-001",
+                Jobqueue = new BatchJobQueueRes { JobId = 1 }
+            };
+            var apiResponse = new ApiResponse<BatchJobEventTriggerRes> { Success = true, Data = triggerRes };
+            var expectedDto = ApiResponseDto<BatchJobEventTriggerDto>.SuccessResponse(
+                new BatchJobEventTriggerDto { EventId = "evt-cutover-001", Jobqueue = new BatchJobQueueDto { JobId = 1 } });
+
+            _http.PostAsync<YearEndDataSetupReq, BatchJobEventTriggerRes>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
+                 .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.TriggerYearEndCutOverApprovalJobAsync(PlannedYear);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal("evt-cutover-001", result.Data?.EventId);
+        }
+
+        [Fact]
+        public async Task TriggerYearEndCutOverApprovalJobAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError> { new ApiError { Message = "Approval not allowed", Code = "VALIDATION_ERROR" } };
+            var apiResponse = new ApiResponse<BatchJobEventTriggerRes> { Success = false, Errors = errors };
+            var mappedFailure = new ApiResponseDto<BatchJobEventTriggerDto>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Approval not allowed", Code = "VALIDATION_ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PostAsync<YearEndDataSetupReq, BatchJobEventTriggerRes>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
+                 .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            var result = await _client.TriggerYearEndCutOverApprovalJobAsync(PlannedYear);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+        }
+
+        [Theory]
+        [InlineData(2025)]
+        [InlineData(2026)]
+        public async Task TriggerYearEndCutOverApprovalJobAsync_PostsRequestWithCorrectPlannedYear(int plannedYear)
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<BatchJobEventTriggerRes>
+            {
+                Success = true,
+                Data = new BatchJobEventTriggerRes { Jobqueue = new BatchJobQueueRes() }
+            };
+            var expectedDto = ApiResponseDto<BatchJobEventTriggerDto>.SuccessResponse(
+                new BatchJobEventTriggerDto { Jobqueue = new BatchJobQueueDto() });
+
+            _http.PostAsync<YearEndDataSetupReq, BatchJobEventTriggerRes>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
+                 .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            await _client.TriggerYearEndCutOverApprovalJobAsync(plannedYear);
+
+            // Assert
+            await _http.Received(1).PostAsync<YearEndDataSetupReq, BatchJobEventTriggerRes>(
+                Arg.Any<string>(),
+                Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == plannedYear));
+        }
+
+        #endregion
+
+        #region EnqueueYearEndCutOverRejectJobAsync
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverRejectJobAsync_WhenApiReturnsSuccess_ReturnsSuccessWithTrue()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var mappedSuccess = new ApiResponseDto<bool> { Success = true, Data = true };
+
+            _http.PostAsync<YearEndDataSetupReq, bool?>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
+                 .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedSuccess);
+
+            // Act
+            var result = await _client.EnqueueYearEndCutOverRejectJobAsync(PlannedYear);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverRejectJobAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError> { new ApiError { Message = "Rejection not allowed", Code = "VALIDATION_ERROR" } };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
+            var mappedFailure = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Rejection not allowed", Code = "VALIDATION_ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PostAsync<YearEndDataSetupReq, bool?>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
+                 .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            var result = await _client.EnqueueYearEndCutOverRejectJobAsync(PlannedYear);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+            Assert.Equal("VALIDATION_ERROR", result.Errors![0].Code);
+        }
+
+        [Theory]
+        [InlineData(2025)]
+        [InlineData(2026)]
+        public async Task EnqueueYearEndCutOverRejectJobAsync_PostsRequestWithCorrectPlannedYear(int plannedYear)
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var mappedSuccess = new ApiResponseDto<bool> { Success = true, Data = true };
+
+            _http.PostAsync<YearEndDataSetupReq, bool?>(Arg.Any<string>(), Arg.Any<YearEndDataSetupReq>())
+                 .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedSuccess);
+
+            // Act
+            await _client.EnqueueYearEndCutOverRejectJobAsync(plannedYear);
+
+            // Assert
+            await _http.Received(1).PostAsync<YearEndDataSetupReq, bool?>(
+                Arg.Any<string>(),
                 Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == plannedYear));
         }
 
