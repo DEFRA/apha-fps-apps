@@ -112,7 +112,7 @@ namespace Apha.FPS.Api.Extensions
             });
 
             services.AddOptions<YearEndEmailSettings>()
-                .Bind(configuration.GetRequiredSection(YearEndEmailSettings.SectionName))
+                .Bind(configuration.GetSection(YearEndEmailSettings.SectionName))
                 .ValidateOnStart();
            
             builder.Services.AddSingleton<IAmazonEventBridge>(_ =>
