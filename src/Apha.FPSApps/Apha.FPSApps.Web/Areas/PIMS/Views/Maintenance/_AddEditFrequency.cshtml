@@ -39,6 +39,7 @@
                                type="number"
                                readonly
                                aria-required="true"
+                               aria-label="Frequency Id"
                                aria-describedby="editNameError" />
                     }
                     else
@@ -49,6 +50,7 @@
                                type="number"
                                required
                                aria-required="true"
+                               aria-label="Frequency Id"
                                aria-describedby="editNameError" />
                     }
                     <span asp-validation-for="Frequencyid"
@@ -70,6 +72,7 @@
                            type="text"
                            required
                            aria-required="true"
+                           aria-label="Frequency"
                            aria-describedby="editDescriptionError" />
                     <span asp-validation-for="FrequencyValue"
                     data-valmsg-for="FrequencyValue"
@@ -80,7 +83,7 @@
             </div>
         </div>
 
-        <div class="col-12" style="text-align: right; margin-top: 10px;">
+        <div class="col-12" style="display: flex; justify-content: space-between; margin-top: 10px;">
             <button type="button"
                     class="govuk-button govuk-button--secondary sup_margin_0"
                     onclick="closeModal()">

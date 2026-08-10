@@ -36,6 +36,7 @@
                    id="adminUserNTLogin"
                    type="text"
                    aria-required="true"
+                   aria-label="NTLogin"
                    aria-describedby="adminUserNTLoginError"
                    autocomplete="off"
                    readonly="@(isEditMode ? "readonly" : null)" />
@@ -51,6 +52,7 @@
                    id="adminUserName"
                    type="text"
                    aria-required="true"
+                   aria-label="UserName"
                    aria-describedby="adminUserNameError"
                    autocomplete="off" />
             <span asp-validation-for="UserName" class="govuk-error-message" id="adminUserNameError" style="display:none;"></span>
@@ -64,12 +66,13 @@
                    asp-for="UserEmail"
                    id="adminUserEmail"
                    type="email"
+                   aria-label="UserEmail"
                    aria-describedby="adminUserEmailError"
                    autocomplete="off" />
             <span asp-validation-for="UserEmail" class="govuk-error-message" id="adminUserEmailError" style="display:none;"></span>
         </div>
 
-        <div class="col-12" style="text-align: right; margin-top: 10px;">
+        <div class="col-12" style="display: flex; justify-content: space-between; margin-top: 10px;">
             <button type="button"
                     class="govuk-button govuk-button--secondary sup_margin_0"
                     onclick="closeModal()">
