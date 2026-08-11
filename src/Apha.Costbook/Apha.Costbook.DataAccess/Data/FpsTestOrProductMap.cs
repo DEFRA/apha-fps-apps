@@ -13,7 +13,7 @@ namespace Apha.Costbook.DataAccess.Data
         {
             entity.HasKey(e => new { e.ItemCode, e.FpsYear }).HasName("pk_testorproduct");
 
-            entity.ToTable("testorproduct", DbConstants.FpsSchemaName);
+            entity.ToTable("testorproduct", "fps");
 
             entity.Property(e => e.ItemCode)
                 .HasMaxLength(20)
@@ -23,8 +23,7 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasMaxLength(5)
                 .HasColumnName("chargemethod");
             entity.Property(e => e.DefraUnitPrice)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
                 .HasColumnName("defraunitprice");
             entity.Property(e => e.ItemDescription)
                 .HasMaxLength(200)
@@ -36,7 +35,7 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasMaxLength(2)
                 .HasColumnName("owner");
             entity.Property(e => e.PriceAhvg)
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
                 .HasColumnName("priceahvg");
             entity.Property(e => e.ShortDescription)
                 .HasMaxLength(18)
@@ -46,8 +45,8 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("testmanager");
             entity.Property(e => e.UnitPriceVla)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
+                .HasDefaultValue(0m)
                 .HasColumnName("unitpricevla");
         }
     }

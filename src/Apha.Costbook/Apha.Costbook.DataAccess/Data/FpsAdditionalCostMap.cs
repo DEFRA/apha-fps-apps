@@ -11,38 +11,29 @@ namespace Apha.Costbook.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<FpsAdditionalCost> entity)
         {
-            entity.HasKey(e => new { e.JobCode, e.Account, e.Description, e.FpsYear })
-                   .HasName("pk_tbladditionalcosts");
+            entity.HasKey(e => new { e.JobCode, e.Account, e.Description, e.FpsYear }).HasName("pk_tbladditionalcosts");
 
-            entity.ToTable("tbladditionalcosts", DbConstants.FpsSchemaName);
+            entity.ToTable("tbladditionalcosts", "fps");
 
             entity.Property(e => e.JobCode)
                 .HasMaxLength(20)
                 .HasColumnName("jobcode");
-
             entity.Property(e => e.Account)
                 .HasMaxLength(50)
                 .HasColumnName("account");
-
             entity.Property(e => e.Description)
                 .HasMaxLength(20)
                 .HasColumnName("description");
-
-            entity.Property(e => e.ItemCost)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
-                .HasColumnName("itemcost");
-
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Frequency)
                 .HasMaxLength(5)
                 .HasColumnName("freq");
-
+            entity.Property(e => e.ItemCost)
+                .HasPrecision(19, 4)
+                .HasColumnName("itemcost");
             entity.Property(e => e.Supplier)
                 .HasMaxLength(50)
                 .HasColumnName("supplier");
-
-            entity.Property(e => e.FpsYear)
-                .HasColumnName("fpsyear");
         }
     }
 }
