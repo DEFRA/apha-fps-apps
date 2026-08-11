@@ -396,5 +396,330 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DepartmentIncomeServic
         }
 
         #endregion
+
+        // ── Constructor Tests ────────────────────────────────────────────────────
+
+        #region Constructor Tests
+
+        [Fact]
+        public void Constructor_WithNullFpsClient_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                new DepartmentIncomeService(null!));
+        }
+
+        #endregion
+
+        // ── GetSnapshotPeriodsAsync ──────────────────────────────────────────────
+
+        #region GetSnapshotPeriodsAsync
+
+        [Fact]
+        public async Task GetSnapshotPeriodsAsync_ApiClientReturnsSuccess_ReturnsDelegatedSuccessResponse()
+        {
+            // Arrange
+            var expected = ApiResponseDto<List<PeriodSnapshotDto>>.SuccessResponse(
+                new List<PeriodSnapshotDto>
+                {
+                    new() { PeriodName = "April 2025 Only",  EndPeriod = 4, PeriodLocked = false },
+                    new() { PeriodName = "April - May 2025", EndPeriod = 5, PeriodLocked = false },
+                });
+            _fpsDepartmentIncomeApiClient.GetSnapshotPeriodsAsync().Returns(expected);
+
+            // Act
+            var result = await _service.GetSnapshotPeriodsAsync();
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+            await _fpsDepartmentIncomeApiClient.Received(1).GetSnapshotPeriodsAsync();
+        }
+
+        [Fact]
+        public async Task GetSnapshotPeriodsAsync_ApiClientReturnsFailure_ReturnsDelegatedFailureResponse()
+        {
+            // Arrange
+            var failure = ApiResponseDto<List<PeriodSnapshotDto>>.FailureResponse(Errors(), new ApiMetaDto());
+            _fpsDepartmentIncomeApiClient.GetSnapshotPeriodsAsync().Returns(failure);
+
+            // Act
+            var result = await _service.GetSnapshotPeriodsAsync();
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotEmpty(result.Errors!);
+        }
+
+        [Fact]
+        public async Task GetSnapshotPeriodsAsync_ApiClientReturnsEmptyList_ReturnsSuccessWithEmpty()
+        {
+            // Arrange
+            var empty = ApiResponseDto<List<PeriodSnapshotDto>>.SuccessResponse(new List<PeriodSnapshotDto>());
+            _fpsDepartmentIncomeApiClient.GetSnapshotPeriodsAsync().Returns(empty);
+
+            // Act
+            var result = await _service.GetSnapshotPeriodsAsync();
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        #endregion
+
+        // ── UpdatePeriodLockedAsync ──────────────────────────────────────────────
+
+        #region UpdatePeriodLockedAsync
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_ApiClientReturnsSuccess_ReturnsDelegatedSuccessResponse()
+        {
+            // Arrange
+            var expected = ApiResponseDto<bool>.SuccessResponse(true);
+            _fpsDepartmentIncomeApiClient.UpdatePeriodLockedAsync("April 2025 Only", true).Returns(expected);
+
+            // Act
+            var result = await _service.UpdatePeriodLockedAsync("April 2025 Only", true);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _fpsDepartmentIncomeApiClient.Received(1).UpdatePeriodLockedAsync("April 2025 Only", true);
+        }
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_ApiClientReturnsFailure_ReturnsDelegatedFailureResponse()
+        {
+            // Arrange
+            var failure = ApiResponseDto<bool>.FailureResponse(Errors(), new ApiMetaDto());
+            _fpsDepartmentIncomeApiClient.UpdatePeriodLockedAsync(Arg.Any<string>(), Arg.Any<bool>())
+                .Returns(failure);
+
+            // Act
+            var result = await _service.UpdatePeriodLockedAsync("NonExistent", true);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotEmpty(result.Errors!);
+        }
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_PeriodNameWithSlash_DelegatesWithUnchangedName()
+        {
+            // Arrange
+            const string slashPeriod = "April - August 2025/25";
+            var expected = ApiResponseDto<bool>.SuccessResponse(true);
+            _fpsDepartmentIncomeApiClient.UpdatePeriodLockedAsync(slashPeriod, true).Returns(expected);
+
+            // Act
+            var result = await _service.UpdatePeriodLockedAsync(slashPeriod, true);
+
+            // Assert
+            Assert.True(result.Success);
+            await _fpsDepartmentIncomeApiClient.Received(1).UpdatePeriodLockedAsync(slashPeriod, true);
+        }
+
+        #endregion
+
+        // ── GetTimeIncomeCurrentAsync ────────────────────────────────────────────
+
+        #region GetTimeIncomeCurrentAsync
+
+        [Fact]
+        public async Task GetTimeIncomeCurrentAsync_ApiClientReturnsSuccess_ReturnsDelegatedSuccessResponse()
+        {
+            // Arrange
+            var expected = TimeSuccess();
+            _fpsDepartmentIncomeApiClient.GetTimeIncomeCurrentAsync(TestProject, 1, 6).Returns(expected);
+
+            // Act
+            var result = await _service.GetTimeIncomeCurrentAsync(TestProject, 1, 6);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+            await _fpsDepartmentIncomeApiClient.Received(1).GetTimeIncomeCurrentAsync(TestProject, 1, 6);
+        }
+
+        [Fact]
+        public async Task GetTimeIncomeCurrentAsync_NullParams_DelegatesToApiClientWithNulls()
+        {
+            // Arrange
+            _fpsDepartmentIncomeApiClient.GetTimeIncomeCurrentAsync(null, null, null).Returns(TimeSuccess());
+
+            // Act
+            await _service.GetTimeIncomeCurrentAsync(null, null, null);
+
+            // Assert
+            await _fpsDepartmentIncomeApiClient.Received(1).GetTimeIncomeCurrentAsync(null, null, null);
+        }
+
+        [Fact]
+        public async Task GetTimeIncomeCurrentAsync_ApiClientReturnsFailure_ReturnsDelegatedFailureResponse()
+        {
+            // Arrange
+            var failure = ApiResponseDto<List<DepartmentIncomeTimeDto>>.FailureResponse(Errors(), new ApiMetaDto());
+            _fpsDepartmentIncomeApiClient.GetTimeIncomeCurrentAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(failure);
+
+            // Act
+            var result = await _service.GetTimeIncomeCurrentAsync(TestProject, 1, 6);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        // ── GetTestIncomeCurrentAsync ────────────────────────────────────────────
+
+        #region GetTestIncomeCurrentAsync
+
+        [Fact]
+        public async Task GetTestIncomeCurrentAsync_ApiClientReturnsSuccess_ReturnsDelegatedSuccessResponse()
+        {
+            // Arrange
+            var expected = TestSuccess();
+            _fpsDepartmentIncomeApiClient.GetTestIncomeCurrentAsync(TestProject, 1, 12).Returns(expected);
+
+            // Act
+            var result = await _service.GetTestIncomeCurrentAsync(TestProject, 1, 12);
+
+            // Assert
+            Assert.True(result.Success);
+            await _fpsDepartmentIncomeApiClient.Received(1).GetTestIncomeCurrentAsync(TestProject, 1, 12);
+        }
+
+        [Fact]
+        public async Task GetTestIncomeCurrentAsync_NullParams_DelegatesToApiClientWithNulls()
+        {
+            // Arrange
+            _fpsDepartmentIncomeApiClient.GetTestIncomeCurrentAsync(null, null, null).Returns(TestSuccess());
+
+            // Act
+            await _service.GetTestIncomeCurrentAsync(null, null, null);
+
+            // Assert
+            await _fpsDepartmentIncomeApiClient.Received(1).GetTestIncomeCurrentAsync(null, null, null);
+        }
+
+        #endregion
+
+        // ── GetAnimalIncomeCurrentAsync ──────────────────────────────────────────
+
+        #region GetAnimalIncomeCurrentAsync
+
+        [Fact]
+        public async Task GetAnimalIncomeCurrentAsync_ApiClientReturnsSuccess_ReturnsDelegatedSuccessResponse()
+        {
+            // Arrange
+            var expected = AnimalSuccess();
+            _fpsDepartmentIncomeApiClient.GetAnimalIncomeCurrentAsync(TestProject, 1, 12).Returns(expected);
+
+            // Act
+            var result = await _service.GetAnimalIncomeCurrentAsync(TestProject, 1, 12);
+
+            // Assert
+            Assert.True(result.Success);
+            await _fpsDepartmentIncomeApiClient.Received(1).GetAnimalIncomeCurrentAsync(TestProject, 1, 12);
+        }
+
+        [Fact]
+        public async Task GetAnimalIncomeCurrentAsync_NullParams_DelegatesToApiClientWithNulls()
+        {
+            // Arrange
+            _fpsDepartmentIncomeApiClient.GetAnimalIncomeCurrentAsync(null, null, null).Returns(AnimalSuccess());
+
+            // Act
+            await _service.GetAnimalIncomeCurrentAsync(null, null, null);
+
+            // Assert
+            await _fpsDepartmentIncomeApiClient.Received(1).GetAnimalIncomeCurrentAsync(null, null, null);
+        }
+
+        #endregion
+
+        // ── GetAdditionalIncomeCurrentAsync ─────────────────────────────────────
+
+        #region GetAdditionalIncomeCurrentAsync
+
+        [Fact]
+        public async Task GetAdditionalIncomeCurrentAsync_ApiClientReturnsSuccess_ReturnsDelegatedSuccessResponse()
+        {
+            // Arrange
+            var expected = AdditionalSuccess();
+            _fpsDepartmentIncomeApiClient.GetAdditionalIncomeCurrentAsync(TestProject, 1, 12).Returns(expected);
+
+            // Act
+            var result = await _service.GetAdditionalIncomeCurrentAsync(TestProject, 1, 12);
+
+            // Assert
+            Assert.True(result.Success);
+            await _fpsDepartmentIncomeApiClient.Received(1).GetAdditionalIncomeCurrentAsync(TestProject, 1, 12);
+        }
+
+        [Fact]
+        public async Task GetAdditionalIncomeCurrentAsync_NullParams_DelegatesToApiClientWithNulls()
+        {
+            // Arrange
+            _fpsDepartmentIncomeApiClient.GetAdditionalIncomeCurrentAsync(null, null, null).Returns(AdditionalSuccess());
+
+            // Act
+            await _service.GetAdditionalIncomeCurrentAsync(null, null, null);
+
+            // Assert
+            await _fpsDepartmentIncomeApiClient.Received(1).GetAdditionalIncomeCurrentAsync(null, null, null);
+        }
+
+        #endregion
+
+        // ── GetTotalsCurrentAsync ────────────────────────────────────────────────
+
+        #region GetTotalsCurrentAsync
+
+        [Fact]
+        public async Task GetTotalsCurrentAsync_ApiClientReturnsSuccess_ReturnsDelegatedSuccessResponse()
+        {
+            // Arrange
+            var expected = TotalsSuccess();
+            _fpsDepartmentIncomeApiClient.GetTotalsCurrentAsync(TestProject, 1, 12).Returns(expected);
+
+            // Act
+            var result = await _service.GetTotalsCurrentAsync(TestProject, 1, 12);
+
+            // Assert
+            Assert.True(result.Success);
+            await _fpsDepartmentIncomeApiClient.Received(1).GetTotalsCurrentAsync(TestProject, 1, 12);
+        }
+
+        [Fact]
+        public async Task GetTotalsCurrentAsync_NullParams_DelegatesToApiClientWithNulls()
+        {
+            // Arrange
+            _fpsDepartmentIncomeApiClient.GetTotalsCurrentAsync(null, null, null).Returns(TotalsSuccess());
+
+            // Act
+            await _service.GetTotalsCurrentAsync(null, null, null);
+
+            // Assert
+            await _fpsDepartmentIncomeApiClient.Received(1).GetTotalsCurrentAsync(null, null, null);
+        }
+
+        [Fact]
+        public async Task GetTotalsCurrentAsync_ApiClientReturnsFailure_ReturnsDelegatedFailureResponse()
+        {
+            // Arrange
+            var failure = ApiResponseDto<List<DepartmentIncomeTotalsDto>>.FailureResponse(Errors(), new ApiMetaDto());
+            _fpsDepartmentIncomeApiClient.GetTotalsCurrentAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(failure);
+
+            // Act
+            var result = await _service.GetTotalsCurrentAsync(TestProject, 1, 12);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        #endregion
     }
 }

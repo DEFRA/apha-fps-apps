@@ -428,5 +428,347 @@ namespace Apha.FPS.Api.UnitTests.Controllers.DepartmentIncomeControllerTest
         }
 
         #endregion
+
+        // ── Constructor Tests ────────────────────────────────────────────────────
+
+        #region Constructor Tests
+
+        [Fact]
+        public void Constructor_WithNullService_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                new DepartmentIncomeController(null!, _mapper));
+        }
+
+        [Fact]
+        public void Constructor_WithNullMapper_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                new DepartmentIncomeController(_service, null!));
+        }
+
+        #endregion
+
+        // ── GetSnapshotPeriodsAsync ──────────────────────────────────────────────
+
+        #region GetSnapshotPeriodsAsync
+
+        [Fact]
+        public async Task GetSnapshotPeriodsAsync_ServiceReturnsData_ReturnsOkWithMappedList()
+        {
+            // Arrange
+            var dtos = new List<PeriodSnapshotDto>
+            {
+                new() { PeriodName = "April 2025 Only",  EndPeriod = 4, PeriodLocked = false },
+                new() { PeriodName = "April - May 2025", EndPeriod = 5, PeriodLocked = false },
+            };
+            var res = new List<PeriodSnapshotRes>
+            {
+                new() { PeriodName = "April 2025 Only",  EndPeriod = 4, PeriodLocked = false },
+                new() { PeriodName = "April - May 2025", EndPeriod = 5, PeriodLocked = false },
+            };
+
+            _service.GetSnapshotPeriodsAsync().Returns(dtos);
+            _mapper.Map<List<PeriodSnapshotRes>>(dtos).Returns(res);
+
+            // Act
+            var result = await _controller.GetSnapshotPeriodsAsync();
+
+            // Assert
+            var ok   = Assert.IsType<OkObjectResult>(result);
+            var data = Assert.IsType<List<PeriodSnapshotRes>>(ok.Value);
+            Assert.Equal(2, data.Count);
+            await _service.Received(1).GetSnapshotPeriodsAsync();
+            _mapper.Received(1).Map<List<PeriodSnapshotRes>>(dtos);
+        }
+
+        [Fact]
+        public async Task GetSnapshotPeriodsAsync_ServiceReturnsEmpty_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            var dtos = new List<PeriodSnapshotDto>();
+            var res  = new List<PeriodSnapshotRes>();
+
+            _service.GetSnapshotPeriodsAsync().Returns(dtos);
+            _mapper.Map<List<PeriodSnapshotRes>>(dtos).Returns(res);
+
+            // Act
+            var result = await _controller.GetSnapshotPeriodsAsync();
+
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Empty(Assert.IsType<List<PeriodSnapshotRes>>(ok.Value));
+        }
+
+        [Fact]
+        public async Task GetSnapshotPeriodsAsync_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _service.GetSnapshotPeriodsAsync().ThrowsAsync(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetSnapshotPeriodsAsync());
+        }
+
+        #endregion
+
+        // ── UpdatePeriodLockedAsync ──────────────────────────────────────────────
+
+        #region UpdatePeriodLockedAsync
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_PeriodFound_ReturnsOkWithTrue()
+        {
+            // Arrange
+            _service.UpdatePeriodLockedAsync("April 2025 Only", true).Returns(1);
+
+            // Act
+            var result = await _controller.UpdatePeriodLockedAsync("April 2025 Only", true);
+
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)ok.Value!);
+            await _service.Received(1).UpdatePeriodLockedAsync("April 2025 Only", true);
+        }
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_PeriodNotFound_ReturnsNotFound()
+        {
+            // Arrange
+            _service.UpdatePeriodLockedAsync("NonExistent", true).Returns(0);
+
+            // Act
+            var result = await _controller.UpdatePeriodLockedAsync("NonExistent", true);
+
+            // Assert
+            Assert.IsType<NotFoundObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_UnlockPeriod_ReturnsOkWithTrue()
+        {
+            // Arrange
+            _service.UpdatePeriodLockedAsync("April 2025 Only", false).Returns(1);
+
+            // Act
+            var result = await _controller.UpdatePeriodLockedAsync("April 2025 Only", false);
+
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)ok.Value!);
+        }
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_PeriodNameWithSlash_PeriodFound_ReturnsOk()
+        {
+            // Arrange
+            const string slashPeriod = "April - August 2025/25";
+            _service.UpdatePeriodLockedAsync(slashPeriod, true).Returns(1);
+
+            // Act
+            var result = await _controller.UpdatePeriodLockedAsync(slashPeriod, true);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _service.UpdatePeriodLockedAsync(Arg.Any<string>(), Arg.Any<bool>())
+                .ThrowsAsync(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() =>
+                _controller.UpdatePeriodLockedAsync("April 2025 Only", true));
+        }
+
+        #endregion
+
+        // ── GetCurrentTimeAsync ──────────────────────────────────────────────────
+
+        #region GetCurrentTimeAsync
+
+        [Fact]
+        public async Task GetCurrentTimeAsync_ServiceReturnsData_ReturnsOkWithMappedList()
+        {
+            // Arrange
+            var dtos = MakeTimeDtos();
+            var res  = MakeTimeRes();
+
+            _service.GetTimeIncomeCurrentAsync(TestProject, TestMonthFrom, TestMonthTo).Returns(dtos);
+            _mapper.Map<List<DepartmentIncomeTimeRes>>(dtos).Returns(res);
+
+            // Act
+            var result = await _controller.GetCurrentTimeAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(2, Assert.IsType<List<DepartmentIncomeTimeRes>>(ok.Value).Count);
+            await _service.Received(1).GetTimeIncomeCurrentAsync(TestProject, TestMonthFrom, TestMonthTo);
+        }
+
+        [Fact]
+        public async Task GetCurrentTimeAsync_ServiceReturnsEmpty_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            _service.GetTimeIncomeCurrentAsync(null, null, null).Returns(new List<DepartmentIncomeTimeDto>());
+            _mapper.Map<List<DepartmentIncomeTimeRes>>(Arg.Any<List<DepartmentIncomeTimeDto>>())
+                .Returns(new List<DepartmentIncomeTimeRes>());
+
+            // Act
+            var result = await _controller.GetCurrentTimeAsync(null, null, null);
+
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Empty(Assert.IsType<List<DepartmentIncomeTimeRes>>(ok.Value));
+        }
+
+        #endregion
+
+        // ── GetCurrentTestsAsync ─────────────────────────────────────────────────
+
+        #region GetCurrentTestsAsync
+
+        [Fact]
+        public async Task GetCurrentTestsAsync_ServiceReturnsData_ReturnsOkWithMappedList()
+        {
+            // Arrange
+            var dtos = MakeTestDtos();
+            var res  = MakeTestRes();
+
+            _service.GetTestIncomeCurrentAsync(TestProject, TestMonthFrom, TestMonthTo).Returns(dtos);
+            _mapper.Map<List<DepartmentIncomeTestRes>>(dtos).Returns(res);
+
+            // Act
+            var result = await _controller.GetCurrentTestsAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(2, Assert.IsType<List<DepartmentIncomeTestRes>>(ok.Value).Count);
+        }
+
+        [Fact]
+        public async Task GetCurrentTestsAsync_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _service.GetTestIncomeCurrentAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .ThrowsAsync(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() =>
+                _controller.GetCurrentTestsAsync(TestProject, TestMonthFrom, TestMonthTo));
+        }
+
+        #endregion
+
+        // ── GetCurrentAnimalsAsync ───────────────────────────────────────────────
+
+        #region GetCurrentAnimalsAsync
+
+        [Fact]
+        public async Task GetCurrentAnimalsAsync_ServiceReturnsData_ReturnsOkWithMappedList()
+        {
+            // Arrange
+            var dtos = MakeAnimalDtos();
+            var res  = MakeAnimalRes();
+
+            _service.GetAnimalIncomeCurrentAsync(TestProject, TestMonthFrom, TestMonthTo).Returns(dtos);
+            _mapper.Map<List<DepartmentIncomeAnimalRes>>(dtos).Returns(res);
+
+            // Act
+            var result = await _controller.GetCurrentAnimalsAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(2, Assert.IsType<List<DepartmentIncomeAnimalRes>>(ok.Value).Count);
+        }
+
+        [Fact]
+        public async Task GetCurrentAnimalsAsync_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _service.GetAnimalIncomeCurrentAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .ThrowsAsync(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() =>
+                _controller.GetCurrentAnimalsAsync(TestProject, TestMonthFrom, TestMonthTo));
+        }
+
+        #endregion
+
+        // ── GetCurrentAdditionalAsync ────────────────────────────────────────────
+
+        #region GetCurrentAdditionalAsync
+
+        [Fact]
+        public async Task GetCurrentAdditionalAsync_ServiceReturnsData_ReturnsOkWithMappedList()
+        {
+            // Arrange
+            var dtos = MakeAdditionalDtos();
+            var res  = MakeAdditionalRes();
+
+            _service.GetAdditionalIncomeCurrentAsync(TestProject, TestMonthFrom, TestMonthTo).Returns(dtos);
+            _mapper.Map<List<DepartmentIncomeAdditionalRes>>(dtos).Returns(res);
+
+            // Act
+            var result = await _controller.GetCurrentAdditionalAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(2, Assert.IsType<List<DepartmentIncomeAdditionalRes>>(ok.Value).Count);
+        }
+
+        [Fact]
+        public async Task GetCurrentAdditionalAsync_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _service.GetAdditionalIncomeCurrentAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .ThrowsAsync(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() =>
+                _controller.GetCurrentAdditionalAsync(TestProject, TestMonthFrom, TestMonthTo));
+        }
+
+        #endregion
+
+        // ── GetCurrentTotalsAsync ────────────────────────────────────────────────
+
+        #region GetCurrentTotalsAsync
+
+        [Fact]
+        public async Task GetCurrentTotalsAsync_ServiceReturnsData_ReturnsOkWithMappedList()
+        {
+            // Arrange
+            var dtos = MakeTotalsDtos();
+            var res  = MakeTotalsRes();
+
+            _service.GetTotalsCurrentAsync(TestProject, TestMonthFrom, TestMonthTo).Returns(dtos);
+            _mapper.Map<List<DepartmentIncomeTotalsRes>>(dtos).Returns(res);
+
+            // Act
+            var result = await _controller.GetCurrentTotalsAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(2, Assert.IsType<List<DepartmentIncomeTotalsRes>>(ok.Value).Count);
+        }
+
+        [Fact]
+        public async Task GetCurrentTotalsAsync_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _service.GetTotalsCurrentAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .ThrowsAsync(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() =>
+                _controller.GetCurrentTotalsAsync(TestProject, TestMonthFrom, TestMonthTo));
+        }
+
+        #endregion
     }
 }

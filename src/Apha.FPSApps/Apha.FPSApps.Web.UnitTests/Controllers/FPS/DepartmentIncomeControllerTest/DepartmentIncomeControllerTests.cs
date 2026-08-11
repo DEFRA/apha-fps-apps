@@ -147,7 +147,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             Assert.False(grid.ShowCheckboxColumn);
             Assert.True(grid.ShowPagination);
             Assert.False(grid.AllowAdd);
-            Assert.False(grid.AllowEdit);
+            Assert.True(grid.AllowEdit);
             Assert.False(grid.AllowDelete);
             Assert.Equal("PeriodName",                                          grid.KeyProperty);
             Assert.Equal("getDepartmentIncomeSnapshotExtraFilters",             grid.ExtraFilterMethod);
@@ -167,6 +167,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
             _departmentIncomeService.GetSnapshotPeriodsAsync()
                 .Returns(ApiResponseDto<List<PeriodSnapshotDto>>.SuccessResponse(new List<PeriodSnapshotDto>()));
+            _mapper.Map<List<DepartmentIncomeSnapshotItem>>(Arg.Any<List<PeriodSnapshotDto>>())
+                .Returns(new List<DepartmentIncomeSnapshotItem>());
 
             // Act
             var result = await _controller.LoadSnapshotGrid(request, TestProject, 1, 12);
@@ -211,7 +213,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             _mapper.Map<List<DepartmentIncomeTimeItem>>(dtos).Returns(items);
 
             // Act
-            var result = await _controller.LoadGrid(request, "qryDeptIncomeTime", TestProject, 1, 6);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTime", TestProject, 1, 6, "snapshot");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -223,7 +225,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
-            _departmentIncomeService.GetTimeIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+            _departmentIncomeService.GetTimeIncomeCurrentAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
                 .Returns(ApiResponseDto<List<DepartmentIncomeTimeDto>>.SuccessResponse(new List<DepartmentIncomeTimeDto>()));
             _mapper.Map<List<DepartmentIncomeTimeItem>>(Arg.Any<List<DepartmentIncomeTimeDto>>())
                 .Returns(new List<DepartmentIncomeTimeItem>());
@@ -268,7 +270,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
                     new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.LoadGrid(request, "qryDeptIncomeTime", TestProject, 1, 6);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTime", TestProject, 1, 6, "snapshot");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -288,7 +290,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             _mapper.Map<List<DepartmentIncomeTestItem>>(dtos).Returns(items);
 
             // Act
-            var result = await _controller.LoadGrid(request, "qryDeptIncomeTest", TestProject, 1, 6);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTest", TestProject, 1, 6, "snapshot");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -305,7 +307,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
                     new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.LoadGrid(request, "qryDeptIncomeTest", TestProject, 1, 6);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTest", TestProject, 1, 6, "snapshot");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -325,7 +327,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             _mapper.Map<List<DepartmentIncomeAnimalItem>>(dtos).Returns(items);
 
             // Act
-            var result = await _controller.LoadGrid(request, "qryDeptIncomeAnimal", TestProject, 1, 12);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeAnimal", TestProject, 1, 12, "snapshot");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -342,7 +344,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
                     new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.LoadGrid(request, "qryDeptIncomeAnimal", TestProject, 1, 12);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeAnimal", TestProject, 1, 12, "snapshot");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -362,7 +364,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             _mapper.Map<List<DepartmentIncomeAdditionalItem>>(dtos).Returns(items);
 
             // Act
-            var result = await _controller.LoadGrid(request, "qryDeptIncomeAdditional", TestProject, 1, 12);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeAdditional", TestProject, 1, 12, "snapshot");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -379,7 +381,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
                     new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.LoadGrid(request, "qryDeptIncomeAdditional", TestProject, 1, 12);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeAdditional", TestProject, 1, 12, "snapshot");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -399,7 +401,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             _mapper.Map<List<DepartmentIncomeTotalsItem>>(dtos).Returns(items);
 
             // Act
-            var result = await _controller.LoadGrid(request, "qryDeptIncomeTotals", TestProject, 1, 12);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTotals", TestProject, 1, 12, "snapshot");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -416,11 +418,196 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
                     new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.LoadGrid(request, "qryDeptIncomeTotals", TestProject, 1, 12);
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTotals", TestProject, 1, 12, "snapshot");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
+        }
+
+        #endregion
+
+        // ── Constructor Tests ────────────────────────────────────────────────────
+
+        #region Constructor Tests
+
+        [Fact]
+        public void Constructor_WithNullMapper_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                new DepartmentIncomeController(null!, _departmentIncomeService, _projectService, _monthService));
+        }
+
+        [Fact]
+        public void Constructor_WithNullDepartmentIncomeService_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                new DepartmentIncomeController(_mapper, null!, _projectService, _monthService));
+        }
+
+        [Fact]
+        public void Constructor_WithNullProjectService_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                new DepartmentIncomeController(_mapper, _departmentIncomeService, null!, _monthService));
+        }
+
+        [Fact]
+        public void Constructor_WithNullMonthService_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                new DepartmentIncomeController(_mapper, _departmentIncomeService, _projectService, null!));
+        }
+
+        #endregion
+
+        // ── EditSnapshotPeriod ────────────────────────────────────────────────────
+
+        #region EditSnapshotPeriod
+
+        [Fact]
+        public async Task EditSnapshotPeriod_PeriodExists_ReturnsPartialViewWithModel()
+        {
+            // Arrange
+            const string periodName = "April 2025 Only";
+            var snapshotPeriods = new List<PeriodSnapshotDto>
+            {
+                new() { PeriodName = periodName, EndPeriod = 4, PeriodLocked = false, FinalSummariesRun = true }
+            };
+            _departmentIncomeService.GetSnapshotPeriodsAsync()
+                .Returns(ApiResponseDto<List<PeriodSnapshotDto>>.SuccessResponse(snapshotPeriods));
+
+            var snapshotItem = new DepartmentIncomeSnapshotItem
+            {
+                PeriodName       = periodName,
+                Month            = 4,
+                PeriodLocked     = false,
+                FinalSummariesRun = true
+            };
+            _mapper.Map<DepartmentIncomeSnapshotItem>(snapshotPeriods[0]).Returns(snapshotItem);
+
+            // Act
+            var result = await _controller.EditSnapshotPeriod(periodName);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Contains("_AddEditDepartmentIncome", partial.ViewName);
+            var model = Assert.IsType<DepartmentIncomeSnapshotItem>(partial.Model);
+            Assert.Equal(periodName, model.PeriodName);
+            await _departmentIncomeService.Received(1).GetSnapshotPeriodsAsync();
+        }
+
+        [Fact]
+        public async Task EditSnapshotPeriod_PeriodNotFound_ReturnsNotFound()
+        {
+            // Arrange
+            _departmentIncomeService.GetSnapshotPeriodsAsync()
+                .Returns(ApiResponseDto<List<PeriodSnapshotDto>>.SuccessResponse(new List<PeriodSnapshotDto>
+                {
+                    new() { PeriodName = "April - May 2025", EndPeriod = 5 }
+                }));
+
+            // Act
+            var result = await _controller.EditSnapshotPeriod("NonExistentPeriod");
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task EditSnapshotPeriod_ServiceReturnsNullData_ReturnsNotFound()
+        {
+            // Arrange
+            _departmentIncomeService.GetSnapshotPeriodsAsync()
+                .Returns(ApiResponseDto<List<PeriodSnapshotDto>>.FailureResponse(
+                    new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.EditSnapshotPeriod("April 2025 Only");
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        #endregion
+
+        // ── UpdateSnapshotPeriod ──────────────────────────────────────────────────
+
+        #region UpdateSnapshotPeriod
+
+        [Fact]
+        public async Task UpdateSnapshotPeriod_ValidModel_ServiceSucceeds_ReturnsJsonWithSuccessTrue()
+        {
+            // Arrange
+            var model = new DepartmentIncomeSnapshotUpdateDto { PeriodName = "April 2025 Only", PeriodLocked = true };
+            _departmentIncomeService.UpdatePeriodLockedAsync("April 2025 Only", true)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.UpdateSnapshotPeriod(model);
+
+            // Assert
+            var json    = Assert.IsType<JsonResult>(result);
+            var element = GetJsonResultElement(json);
+            Assert.True(element.GetProperty("success").GetBoolean());
+            Assert.Equal("Period locked updated successfully.", element.GetProperty("message").GetString());
+            await _departmentIncomeService.Received(1).UpdatePeriodLockedAsync("April 2025 Only", true);
+        }
+
+        [Fact]
+        public async Task UpdateSnapshotPeriod_ValidModel_ServiceFails_ReturnsJsonWithSuccessFalse()
+        {
+            // Arrange
+            var model = new DepartmentIncomeSnapshotUpdateDto { PeriodName = "April 2025 Only", PeriodLocked = false };
+            _departmentIncomeService.UpdatePeriodLockedAsync("April 2025 Only", false)
+                .Returns(ApiResponseDto<bool>.FailureResponse(
+                    new List<ApiErrorDto> { new() { Message = "Update failed.", Code = "ERROR" } },
+                    new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.UpdateSnapshotPeriod(model);
+
+            // Assert
+            var json    = Assert.IsType<JsonResult>(result);
+            var element = GetJsonResultElement(json);
+            Assert.False(element.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task UpdateSnapshotPeriod_InvalidModelState_ReturnsJsonWithSuccessFalse()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("PeriodName", "PeriodName is required");
+            var model = new DepartmentIncomeSnapshotUpdateDto();
+
+            // Act
+            var result = await _controller.UpdateSnapshotPeriod(model);
+
+            // Assert
+            var json    = Assert.IsType<JsonResult>(result);
+            var element = GetJsonResultElement(json);
+            Assert.False(element.GetProperty("success").GetBoolean());
+            await _departmentIncomeService.DidNotReceive()
+                .UpdatePeriodLockedAsync(Arg.Any<string>(), Arg.Any<bool>());
+        }
+
+        [Fact]
+        public async Task UpdateSnapshotPeriod_PeriodNameWithSlash_PassedToServiceUnchanged()
+        {
+            // Arrange
+            const string slashPeriod = "April - August 2025/25";
+            var model = new DepartmentIncomeSnapshotUpdateDto { PeriodName = slashPeriod, PeriodLocked = true };
+            _departmentIncomeService.UpdatePeriodLockedAsync(slashPeriod, true)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.UpdateSnapshotPeriod(model);
+
+            // Assert
+            var json    = Assert.IsType<JsonResult>(result);
+            var element = GetJsonResultElement(json);
+            Assert.True(element.GetProperty("success").GetBoolean());
+            await _departmentIncomeService.Received(1).UpdatePeriodLockedAsync(slashPeriod, true);
         }
 
         #endregion

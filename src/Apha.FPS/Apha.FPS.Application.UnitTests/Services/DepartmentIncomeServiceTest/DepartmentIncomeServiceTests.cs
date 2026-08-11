@@ -524,5 +524,347 @@ namespace Apha.FPS.Application.UnitTests.Services.DepartmentIncomeServiceTest
         }
 
         #endregion
+
+        // ── Constructor Tests ────────────────────────────────────────────────────
+
+        #region Constructor Tests
+
+        [Fact]
+        public void Constructor_WithNullRepository_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                new DepartmentIncomeService(null!, _mapper));
+        }
+
+        [Fact]
+        public void Constructor_WithNullMapper_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                new DepartmentIncomeService(_repository, null!));
+        }
+
+        #endregion
+
+        // ── GetSnapshotPeriodsAsync ──────────────────────────────────────────────
+
+        #region GetSnapshotPeriodsAsync
+
+        [Fact]
+        public async Task GetSnapshotPeriodsAsync_ServiceReturnsData_ReturnsMapperResult()
+        {
+            // Arrange
+            var entities = new List<Period>
+            {
+                new() { PeriodName = "April 2025 Only", FpsYear = 2025, EndPeriod = 4, FinalSummariesRun = 1, PeriodLocked = 0 },
+                new() { PeriodName = "April - May 2025", FpsYear = 2025, EndPeriod = 5, FinalSummariesRun = 0, PeriodLocked = 0 },
+            };
+            var dtos = new List<PeriodSnapshotDto>
+            {
+                new() { PeriodName = "April 2025 Only",  EndPeriod = 4, FinalSummariesRun = false, PeriodLocked = false },
+                new() { PeriodName = "April - May 2025", EndPeriod = 5, FinalSummariesRun = false, PeriodLocked = false },
+            };
+
+            _repository.GetSnapshotPeriodsAsync().Returns(entities);
+            _mapper.Map<List<PeriodSnapshotDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _service.GetSnapshotPeriodsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
+            await _repository.Received(1).GetSnapshotPeriodsAsync();
+            _mapper.Received(1).Map<List<PeriodSnapshotDto>>(entities);
+        }
+
+        [Fact]
+        public async Task GetSnapshotPeriodsAsync_ServiceReturnsEmpty_ReturnsEmptyList()
+        {
+            // Arrange
+            _repository.GetSnapshotPeriodsAsync().Returns(new List<Period>());
+            _mapper.Map<List<PeriodSnapshotDto>>(Arg.Any<List<Period>>())
+                .Returns(new List<PeriodSnapshotDto>());
+
+            // Act
+            var result = await _service.GetSnapshotPeriodsAsync();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetSnapshotPeriodsAsync_RepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            _repository.GetSnapshotPeriodsAsync().ThrowsAsync(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _service.GetSnapshotPeriodsAsync());
+        }
+
+        #endregion
+
+        // ── UpdatePeriodLockedAsync ──────────────────────────────────────────────
+
+        #region UpdatePeriodLockedAsync
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_PeriodExists_DelegatesToRepository()
+        {
+            // Arrange
+            _repository.UpdatePeriodLockedAsync("April 2025 Only", true).Returns(1);
+
+            // Act
+            var result = await _service.UpdatePeriodLockedAsync("April 2025 Only", true);
+
+            // Assert
+            Assert.Equal(1, result);
+            await _repository.Received(1).UpdatePeriodLockedAsync("April 2025 Only", true);
+        }
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_PeriodNotFound_ReturnsZero()
+        {
+            // Arrange
+            _repository.UpdatePeriodLockedAsync("NonExistent", false).Returns(0);
+
+            // Act
+            var result = await _service.UpdatePeriodLockedAsync("NonExistent", false);
+
+            // Assert
+            Assert.Equal(0, result);
+        }
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_RepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            _repository.UpdatePeriodLockedAsync(Arg.Any<string>(), Arg.Any<bool>())
+                .ThrowsAsync(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() =>
+                _service.UpdatePeriodLockedAsync("April 2025 Only", true));
+        }
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_PeriodNameWithSlash_PassedToRepositoryUnchanged()
+        {
+            // Arrange
+            const string slashPeriod = "April - August 2025/25";
+            _repository.UpdatePeriodLockedAsync(slashPeriod, true).Returns(1);
+
+            // Act
+            var result = await _service.UpdatePeriodLockedAsync(slashPeriod, true);
+
+            // Assert
+            Assert.Equal(1, result);
+            await _repository.Received(1).UpdatePeriodLockedAsync(slashPeriod, true);
+        }
+
+        #endregion
+
+        // ── GetTimeIncomeCurrentAsync ────────────────────────────────────────────
+
+        #region GetTimeIncomeCurrentAsync
+
+        [Fact]
+        public async Task GetTimeIncomeCurrentAsync_WithParams_ReturnsMapperResult()
+        {
+            // Arrange
+            var entities = MakeTimeEntities();
+            var dtos     = MakeTimeDtos();
+
+            _repository.GetTimeIncomeCurrentAsync(TestProject, 3, 6).Returns(entities);
+            _mapper.Map<List<DepartmentIncomeTimeDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _service.GetTimeIncomeCurrentAsync(TestProject, 3, 6);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
+            await _repository.Received(1).GetTimeIncomeCurrentAsync(TestProject, 3, 6);
+        }
+
+        [Fact]
+        public async Task GetTimeIncomeCurrentAsync_NullParams_AppliesVbaDefaults()
+        {
+            // Arrange
+            _repository.GetTimeIncomeCurrentAsync(null, 1, 12).Returns(MakeTimeEntities());
+            _mapper.Map<List<DepartmentIncomeTimeDto>>(Arg.Any<List<DepartmentIncomeTime>>()).Returns(MakeTimeDtos());
+
+            // Act
+            await _service.GetTimeIncomeCurrentAsync(null, null, null);
+
+            // Assert
+            await _repository.Received(1).GetTimeIncomeCurrentAsync(null, 1, 12);
+        }
+
+        [Fact]
+        public async Task GetTimeIncomeCurrentAsync_RepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            _repository.GetTimeIncomeCurrentAsync(Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>())
+                .ThrowsAsync(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() =>
+                _service.GetTimeIncomeCurrentAsync(TestProject, 1, 12));
+        }
+
+        #endregion
+
+        // ── GetTestIncomeCurrentAsync ────────────────────────────────────────────
+
+        #region GetTestIncomeCurrentAsync
+
+        [Fact]
+        public async Task GetTestIncomeCurrentAsync_WithParams_ReturnsMapperResult()
+        {
+            // Arrange
+            var entities = MakeTestEntities();
+            var dtos     = MakeTestDtos();
+
+            _repository.GetTestIncomeCurrentAsync(TestProject, 1, 6).Returns(entities);
+            _mapper.Map<List<DepartmentIncomeTestDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _service.GetTestIncomeCurrentAsync(TestProject, 1, 6);
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            await _repository.Received(1).GetTestIncomeCurrentAsync(TestProject, 1, 6);
+        }
+
+        [Fact]
+        public async Task GetTestIncomeCurrentAsync_NullParams_AppliesVbaDefaults()
+        {
+            // Arrange
+            _repository.GetTestIncomeCurrentAsync(null, 1, 12).Returns(MakeTestEntities());
+            _mapper.Map<List<DepartmentIncomeTestDto>>(Arg.Any<List<DepartmentIncomeTest>>()).Returns(MakeTestDtos());
+
+            // Act
+            await _service.GetTestIncomeCurrentAsync(null, null, null);
+
+            // Assert
+            await _repository.Received(1).GetTestIncomeCurrentAsync(null, 1, 12);
+        }
+
+        #endregion
+
+        // ── GetAnimalIncomeCurrentAsync ──────────────────────────────────────────
+
+        #region GetAnimalIncomeCurrentAsync
+
+        [Fact]
+        public async Task GetAnimalIncomeCurrentAsync_WithParams_ReturnsMapperResult()
+        {
+            // Arrange
+            var entities = MakeAnimalEntities();
+            var dtos     = MakeAnimalDtos();
+
+            _repository.GetAnimalIncomeCurrentAsync(TestProject, 1, 12).Returns(entities);
+            _mapper.Map<List<DepartmentIncomeAnimalDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _service.GetAnimalIncomeCurrentAsync(TestProject, 1, 12);
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            await _repository.Received(1).GetAnimalIncomeCurrentAsync(TestProject, 1, 12);
+        }
+
+        [Fact]
+        public async Task GetAnimalIncomeCurrentAsync_NullParams_AppliesVbaDefaults()
+        {
+            // Arrange
+            _repository.GetAnimalIncomeCurrentAsync(null, 1, 12).Returns(MakeAnimalEntities());
+            _mapper.Map<List<DepartmentIncomeAnimalDto>>(Arg.Any<List<DepartmentIncomeAnimal>>()).Returns(MakeAnimalDtos());
+
+            // Act
+            await _service.GetAnimalIncomeCurrentAsync(null, null, null);
+
+            // Assert
+            await _repository.Received(1).GetAnimalIncomeCurrentAsync(null, 1, 12);
+        }
+
+        #endregion
+
+        // ── GetAdditionalIncomeCurrentAsync ─────────────────────────────────────
+
+        #region GetAdditionalIncomeCurrentAsync
+
+        [Fact]
+        public async Task GetAdditionalIncomeCurrentAsync_WithParams_ReturnsMapperResult()
+        {
+            // Arrange
+            var entities = MakeAdditionalEntities();
+            var dtos     = MakeAdditionalDtos();
+
+            _repository.GetAdditionalIncomeCurrentAsync(TestProject, 1, 12).Returns(entities);
+            _mapper.Map<List<DepartmentIncomeAdditionalDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _service.GetAdditionalIncomeCurrentAsync(TestProject, 1, 12);
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            await _repository.Received(1).GetAdditionalIncomeCurrentAsync(TestProject, 1, 12);
+        }
+
+        [Fact]
+        public async Task GetAdditionalIncomeCurrentAsync_NullParams_AppliesVbaDefaults()
+        {
+            // Arrange
+            _repository.GetAdditionalIncomeCurrentAsync(null, 1, 12).Returns(MakeAdditionalEntities());
+            _mapper.Map<List<DepartmentIncomeAdditionalDto>>(Arg.Any<List<DepartmentIncomeAdditional>>()).Returns(MakeAdditionalDtos());
+
+            // Act
+            await _service.GetAdditionalIncomeCurrentAsync(null, null, null);
+
+            // Assert
+            await _repository.Received(1).GetAdditionalIncomeCurrentAsync(null, 1, 12);
+        }
+
+        #endregion
+
+        // ── GetTotalsCurrentAsync ────────────────────────────────────────────────
+
+        #region GetTotalsCurrentAsync
+
+        [Fact]
+        public async Task GetTotalsCurrentAsync_WithParams_ReturnsMapperResult()
+        {
+            // Arrange
+            var entities = MakeTotalsEntities();
+            var dtos     = MakeTotalsDtos();
+
+            _repository.GetTotalsCurrentAsync(TestProject, 1, 12).Returns(entities);
+            _mapper.Map<List<DepartmentIncomeTotalsDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _service.GetTotalsCurrentAsync(TestProject, 1, 12);
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            await _repository.Received(1).GetTotalsCurrentAsync(TestProject, 1, 12);
+        }
+
+        [Fact]
+        public async Task GetTotalsCurrentAsync_NullParams_AppliesVbaDefaults()
+        {
+            // Arrange
+            _repository.GetTotalsCurrentAsync(null, 1, 12).Returns(MakeTotalsEntities());
+            _mapper.Map<List<DepartmentIncomeTotalsDto>>(Arg.Any<List<DepartmentIncomeTotals>>()).Returns(MakeTotalsDtos());
+
+            // Act
+            await _service.GetTotalsCurrentAsync(null, null, null);
+
+            // Assert
+            await _repository.Received(1).GetTotalsCurrentAsync(null, 1, 12);
+        }
+
+        #endregion
     }
 }

@@ -423,6 +423,153 @@ namespace Apha.FPS.DataAccess.UnitTests.Repositories.DepartmentIncomeRepositoryT
 
         #endregion
 
+        // ── GetSnapshotPeriodsAsync ────────────────────────────────────────────
+
+        #region GetSnapshotPeriodsAsync
+
+        [Fact]
+        public async Task GetSnapshotPeriodsAsync_HappyPath_ReturnsPeriods()
+        {
+            // Arrange
+            var expected = new List<Period>
+            {
+                new() { PeriodName = "April 2025 Only",       FpsYear = TestFpsYear, EndPeriod = 4,  FinalSummariesRun = 1, PeriodLocked = 0 },
+                new() { PeriodName = "April - May 2025",      FpsYear = TestFpsYear, EndPeriod = 5,  FinalSummariesRun = 0, PeriodLocked = 0 },
+                new() { PeriodName = "April - August 2025/25",FpsYear = TestFpsYear, EndPeriod = 8,  FinalSummariesRun = 0, PeriodLocked = 1 },
+            };
+            _repositoryMock.GetSnapshotPeriodsAsync().Returns(expected);
+
+            // Act
+            var result = await _repositoryMock.GetSnapshotPeriodsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(3, result.Count);
+            Assert.Equal("April 2025 Only", result[0].PeriodName);
+            await _repositoryMock.Received(1).GetSnapshotPeriodsAsync();
+        }
+
+        [Fact]
+        public async Task GetSnapshotPeriodsAsync_EmptyResult_ReturnsEmptyList()
+        {
+            // Arrange
+            _repositoryMock.GetSnapshotPeriodsAsync().Returns(new List<Period>());
+
+            // Act
+            var result = await _repositoryMock.GetSnapshotPeriodsAsync();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetSnapshotPeriodsAsync_DatabaseError_ThrowsException()
+        {
+            // Arrange
+            _repositoryMock.GetSnapshotPeriodsAsync().Throws(new Exception("Database error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _repositoryMock.GetSnapshotPeriodsAsync());
+        }
+
+        [Fact]
+        public async Task GetSnapshotPeriodsAsync_ReturnedPeriods_HavePeriodNameAndEndPeriod()
+        {
+            // Arrange
+            var expected = new List<Period>
+            {
+                new() { PeriodName = "April 2025 Only", FpsYear = TestFpsYear, EndPeriod = 4, FinalSummariesRun = 1, PeriodLocked = 0 },
+            };
+            _repositoryMock.GetSnapshotPeriodsAsync().Returns(expected);
+
+            // Act
+            var result = await _repositoryMock.GetSnapshotPeriodsAsync();
+
+            // Assert
+            Assert.All(result, p =>
+            {
+                Assert.NotEmpty(p.PeriodName);
+                Assert.True(p.EndPeriod >= 1);
+                Assert.Equal(TestFpsYear, p.FpsYear);
+            });
+        }
+
+        #endregion
+
+        // ── UpdatePeriodLockedAsync ────────────────────────────────────────────
+
+        #region UpdatePeriodLockedAsync
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_PeriodExists_ReturnsRowCountGreaterThanZero()
+        {
+            // Arrange
+            _repositoryMock.UpdatePeriodLockedAsync("April 2025 Only", true).Returns(1);
+
+            // Act
+            var result = await _repositoryMock.UpdatePeriodLockedAsync("April 2025 Only", true);
+
+            // Assert
+            Assert.Equal(1, result);
+            await _repositoryMock.Received(1).UpdatePeriodLockedAsync("April 2025 Only", true);
+        }
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_PeriodNotFound_ReturnsZero()
+        {
+            // Arrange
+            _repositoryMock.UpdatePeriodLockedAsync("NonExistent Period", true).Returns(0);
+
+            // Act
+            var result = await _repositoryMock.UpdatePeriodLockedAsync("NonExistent Period", true);
+
+            // Assert
+            Assert.Equal(0, result);
+        }
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_UnlockPeriod_ReturnsRowCount()
+        {
+            // Arrange
+            _repositoryMock.UpdatePeriodLockedAsync("April 2025 Only", false).Returns(1);
+
+            // Act
+            var result = await _repositoryMock.UpdatePeriodLockedAsync("April 2025 Only", false);
+
+            // Assert
+            Assert.Equal(1, result);
+            await _repositoryMock.Received(1).UpdatePeriodLockedAsync("April 2025 Only", false);
+        }
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_DatabaseError_ThrowsException()
+        {
+            // Arrange
+            _repositoryMock.UpdatePeriodLockedAsync(Arg.Any<string>(), Arg.Any<bool>())
+                .Throws(new Exception("Database error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() =>
+                _repositoryMock.UpdatePeriodLockedAsync("April 2025 Only", true));
+        }
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_PeriodNameWithSlash_HandledCorrectly()
+        {
+            // Arrange — period names like "April - August 2025/25" contain a slash
+            const string slashPeriodName = "April - August 2025/25";
+            _repositoryMock.UpdatePeriodLockedAsync(slashPeriodName, true).Returns(1);
+
+            // Act
+            var result = await _repositoryMock.UpdatePeriodLockedAsync(slashPeriodName, true);
+
+            // Assert
+            Assert.Equal(1, result);
+            await _repositoryMock.Received(1).UpdatePeriodLockedAsync(slashPeriodName, true);
+        }
+
+        #endregion
+
         // ── GetPeriodsAsync ─────────────────────────────────────────────────────
 
         #region GetPeriodsAsync
