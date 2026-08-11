@@ -117,7 +117,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ResourceStaffAllocationView> ResourceStaffAllocationViews { get; set; }
         public virtual DbSet<ResourceStaffJobView> ResourceStaffJobViews { get; set; }
 
-        // TRANSFORMENGINE: DepartmentIncome reporting entities — keyless LINQ-projection DbSets
+       
         public virtual DbSet<DepartmentIncomeTime> DepartmentIncomeTimes { get; set; }
         public virtual DbSet<DepartmentIncomeTest> DepartmentIncomeTests { get; set; }
         public virtual DbSet<DepartmentIncomeAnimal> DepartmentIncomeAnimals { get; set; }
@@ -375,7 +375,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ResourceStaffAllocationViewMap());
             modelBuilder.ApplyConfiguration(new ResourceStaffJobViewMap());
 
-            // TRANSFORMENGINE: DepartmentIncome keyless view maps — no HasQueryFilter (keyless entities do not support it)
+            
             // Repository methods apply year-scoped joins via the underlying entity DbSets (TimeCostCalcs, ProjectSubContract, etc.)
             modelBuilder.ApplyConfiguration(new DepartmentIncomeTimeMap());
             modelBuilder.ApplyConfiguration(new DepartmentIncomeTestMap());

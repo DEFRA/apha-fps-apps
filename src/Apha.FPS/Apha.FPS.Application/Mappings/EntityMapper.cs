@@ -130,7 +130,7 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
                 .ReverseMap();
             CreateMap<ResourceMgmtReplanDto, ResourceMgmtReplanRow>().ReverseMap();
 
-            // TRANSFORMENGINE: DepartmentIncome entity <-> DTO mappings (Phase 3)
+            
             // All six pairs are property-name aligned between entity and DTO; no ForMember overrides required.
             // Covers all query types from frmDeptIncome: Time, Tests, Animals, Additional, Totals, plus PeriodLookup.
             CreateMap<DepartmentIncomeTime,       DepartmentIncomeTimeDto>().ReverseMap();

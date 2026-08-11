@@ -38,7 +38,7 @@
         IFpsCostCentreApiClient FpsCostCentre { get; }
         IFpsResourceAllocationApiClient FpsResourceAllocation { get; }
         IFpsResourceMgmtReplanApiClient FpsResourceMgmtReplan { get; }
-        // TRANSFORMENGINE: Phase 7 — new sub-client for DepartmentIncome read-only report resource
+        
         IFpsDepartmentIncomeApiClient FpsDepartmentIncome { get; }
     }
 }

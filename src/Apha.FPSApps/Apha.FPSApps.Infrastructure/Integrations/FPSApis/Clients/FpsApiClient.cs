@@ -35,7 +35,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsPurchasesApiClient FpsPurchases { get; }
         public IFpsUserApiClient FpsUserPermission { get; }
 
-        // TRANSFORMENGINE: FpsGrade added � Phase 9 (FpsGradeApiClient for frmMaintGrade ? api/v1/Grade)
+       
         public IFpsGradeApiClient FpsGrade { get; }
         public IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
         public IFpsCostCentreApiClient FpsCostCentre { get; }
@@ -48,7 +48,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsTestRCCostApiClient FpsTestRCCost { get; }
         public IFpsTestRequirementRCCostApiClient FpsTestRequirementRCCost { get; }
 
-        // TRANSFORMENGINE: Phase 7 — DepartmentIncome read-only report sub-client (stub; full impl Phase 8)
+       
         public IFpsDepartmentIncomeApiClient FpsDepartmentIncome { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
@@ -95,7 +95,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsCostCentre = new FpsCostCentreApiClient(http, mapper);
             FpsResourceAllocation = new FpsResourceAllocationApiClient(http, mapper);
             FpsResourceMgmtReplan = new FpsResourceMgmtReplanApiClient(http, mapper);
-            // TRANSFORMENGINE: Phase 7 — stub client; full implementation deferred to Phase 8
+           
             FpsDepartmentIncome = new FpsDepartmentIncomeApiClient(http, mapper);
         }
     }

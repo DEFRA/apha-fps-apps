@@ -172,7 +172,7 @@ namespace Apha.FPS.Api.Mappings
             // Resource Replan — project staff replan
             CreateMap<ProjectStaffReplanDto, ProjectStaffReplanRes>().ReverseMap();
 
-            // TRANSFORMENGINE: DepartmentIncome — 6 DTO<->Res mappings for GET /api/v1/department-income/* reporting endpoints
+           
             // All property names are identical across Dto and Res; .ReverseMap() covers both directions.
             CreateMap<DepartmentIncomeTimeDto, DepartmentIncomeTimeRes>().ReverseMap();
             CreateMap<DepartmentIncomeTestDto, DepartmentIncomeTestRes>().ReverseMap();

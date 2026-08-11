@@ -261,8 +261,7 @@
         public const string SaveUserPermissions = "api/v1/user/{0}/permissions";
         public const string GetPermissionOptions = "api/v1/user/options";
 
-        // TRANSFORMENGINE: WorkgroupMaintenance (frmMaintWorkGroup2 — fps.workgroup) — added Phase 6
-        // CRUD endpoints
+       
         public const string GetPagedWorkgroups = "api/v1/workgroup/paged";
         public const string GetWorkgroupByName = "api/v1/workgroup/{0}";
         public const string CreateWorkgroup = "api/v1/workgroup";
