@@ -218,6 +218,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private async Task<DataGridConfig<TestSupplierItem>> BuildTestSupplierGridAsync(
             PaginationFilter<string> request, string testCode, bool showRejected)
         {
+            var filterDict =
+                JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new();
+
             var query = _mapper.Map<QueryParameters<string>>(request);
             var response = await _testReqmtService.GetPagedBySupplierTestCodeAsync(query, testCode, showRejected);
 
@@ -234,11 +237,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<TestSupplierItem>
             {
                 GridId = "testSupplierGrid",
-                Title = "Test Supplier Entries",
+                Title = "Test Supplier View (Who is Buying TestX)",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 AllowRowSelection = false,
                 KeyProperty = "Buyer",
+                BindGridUrl = "/FPS/TestSupplier/LoadTestSupplierGrid",
+                ExtraFilterMethod = "getTestSupplierExtraFilters",
                 AddFunction = "addTestSupplier",
                 EditFunction = "editTestSupplier",
                 DeleteFunction = "deleteTestSupplier",
@@ -247,7 +252,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Pagination = paginationModel,
                 AllowAdd = false,
                 AllowEdit = true,
-                AllowDelete = true
+                AllowDelete = true,
+                CurrentFilters = filterDict
             };
         }
 

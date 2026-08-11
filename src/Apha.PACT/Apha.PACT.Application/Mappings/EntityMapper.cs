@@ -38,6 +38,13 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<ProjectMonth, ProjectMonthDto>().ReverseMap();
             CreateMap<ProjectMonthFinal, ProjectMonthFinalDto>().ReverseMap();
             CreateMap<MonthlyOutputLog, MonthlyOutputLogDto>().ReverseMap();
+            CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
+            CreateMap<StagingMonthlyOutput, StagingMonthlyOutputDto>().ReverseMap();
+            CreateMap<MonthlyOutputImportRowDto, StagingMonthlyOutputDto>().ReverseMap();
+            CreateMap<MonthlyTime, MonthlyTimeDto>().ReverseMap();
+            CreateMap<MonthlyTimeStaff, MonthlyTimeDto>();
+            CreateMap<StagingMonthlyTime, StagingMonthlyTimeDto>().ReverseMap();
+            CreateMap<MonthlyTimeImportRowDto, StagingMonthlyTimeDto>().ReverseMap();
             CreateMap<MonthlyTimeLog, MonthlyTimeLogDto>().ReverseMap();
             CreateMap<MonthlyTimeLogFilter, MonthlyTimeLogFilterDto>().ReverseMap();
             CreateMap<WorkGroupTimeCode, WorkGroupTimeCodeDto>().ReverseMap();
@@ -65,6 +72,7 @@ namespace Apha.PACT.Application.Mappings
                 .ForMember(dest => dest.Jobqueue, opt => opt.MapFrom(src => src))
                 .ForMember(dest => dest.EventId, opt => opt.Ignore());
             CreateMap<TestActualBreakdownView, TestActualBreakdownDto>().ReverseMap();
+
         }
     }
 }

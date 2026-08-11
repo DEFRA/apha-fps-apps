@@ -24,6 +24,195 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             _client = new PactTimeCodeValidApiClient(_http, _mapper);
         }
 
+        #region GetTimeCodeValidsByWorkGroupAsync Tests
+
+        [Fact]
+        public async Task GetTimeCodeValidsByWorkGroupAsync_WithSuccessResponse_ReturnsMappedList()
+        {
+            var apiResponse = new ApiResponse<List<TimeCodeValidRes>>
+            {
+                Success = true,
+                Data = [new TimeCodeValidRes { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001" }]
+            };
+            var expectedDto = ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(
+                [new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001" }]);
+
+            _http.GetAsync<List<TimeCodeValidRes>>(Arg.Is<string>(url =>
+                url.Contains("timecodevalid/workgroup") &&
+                url.Contains($"workGroup={Uri.EscapeDataString("WG001")}")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetTimeCodeValidsByWorkGroupAsync("WG001");
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetTimeCodeValidsByWorkGroupAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            var apiResponse = new ApiResponse<List<TimeCodeValidRes>>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "error", Code = "API_ERROR" }]
+            };
+            var mapped = new ApiResponseDto<List<TimeCodeValidDto>>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "error", Code = "API_ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<TimeCodeValidRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(apiResponse).Returns(mapped);
+
+            var result = await _client.GetTimeCodeValidsByWorkGroupAsync("WG001");
+
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync Tests
+
+        [Fact]
+        public async Task GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync_WithSuccessResponse_ReturnsMappedProjects()
+        {
+            var apiResponse = new ApiResponse<List<string>> { Success = true, Data = ["PP001", "PP002"] };
+            var expectedDto = ApiResponseDto<List<string>>.SuccessResponse(["PP001", "PP002"]);
+
+            _http.GetAsync<List<string>>(Arg.Is<string>(url =>
+                url.Contains("timecodevalid/projects") &&
+                url.Contains($"workgroup={Uri.EscapeDataString("WG001")}") &&
+                url.Contains($"timecode={Uri.EscapeDataString("TC001")}")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync("WG001", "TC001");
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+        }
+
+        [Fact]
+        public async Task GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            var apiResponse = new ApiResponse<List<string>>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "error", Code = "API_ERROR" }]
+            };
+            var mapped = new ApiResponseDto<List<string>>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "error", Code = "API_ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<string>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Returns(mapped);
+
+            var result = await _client.GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync("WG001", "TC001");
+
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetAllDistinctTimeCodesAsync Tests
+
+        [Fact]
+        public async Task GetAllDistinctTimeCodesAsync_WithSuccessResponse_ReturnsMappedList()
+        {
+            var apiResponse = new ApiResponse<List<string>> { Success = true, Data = ["TC001", "TC002"] };
+            var expectedDto = ApiResponseDto<List<string>>.SuccessResponse(["TC001", "TC002"]);
+
+            _http.GetAsync<List<string>>(Arg.Is<string>(url => url.Contains("timecodes/all"))).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetAllDistinctTimeCodesAsync();
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+        }
+
+        [Fact]
+        public async Task GetAllDistinctTimeCodesAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            var apiResponse = new ApiResponse<List<string>>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "error", Code = "API_ERROR" }]
+            };
+            var mapped = new ApiResponseDto<List<string>>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "error", Code = "API_ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<string>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Returns(mapped);
+
+            var result = await _client.GetAllDistinctTimeCodesAsync();
+
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetAllDistinctProjectsAsync Tests
+
+        [Fact]
+        public async Task GetAllDistinctProjectsAsync_WithSuccessResponse_ReturnsMappedList()
+        {
+            var apiResponse = new ApiResponse<List<string>> { Success = true, Data = ["PP001", "PP002"] };
+            var expectedDto = ApiResponseDto<List<string>>.SuccessResponse(["PP001", "PP002"]);
+
+            _http.GetAsync<List<string>>(Arg.Is<string>(url => url.Contains("projects/all"))).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetAllDistinctProjectsAsync();
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+        }
+
+        [Fact]
+        public async Task GetAllDistinctProjectsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            var apiResponse = new ApiResponse<List<string>>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "error", Code = "API_ERROR" }]
+            };
+            var mapped = new ApiResponseDto<List<string>>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "error", Code = "API_ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<string>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Returns(mapped);
+
+            var result = await _client.GetAllDistinctProjectsAsync();
+
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
         #region GetTimeCodeValidAsync Tests
 
         [Fact]
@@ -35,7 +224,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
                 new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001" });
 
             _http.GetAsync<TimeCodeValidRes>(Arg.Is<string>(url =>
-                url.Contains("api/v1/timecodevalid/WG001") && url.Contains("TC001") && url.Contains("PP001")))
+                url.Contains("api/v1/timecodevalid/wgtimecodeprojectcode") && 
+                url.Contains($"workGroup={Uri.EscapeDataString("WG001")}") && 
+                url.Contains($"timeCode={Uri.EscapeDataString("TC001")}") && 
+                url.Contains($"parentProject={Uri.EscapeDataString("PP001")}")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<TimeCodeValidDto>>(apiResponse).Returns(expectedDto);
 
@@ -89,9 +281,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
 
             _http.GetAsync<List<TimeCodeValidRes>>(Arg.Is<string>(url =>
-                url.Contains("api/v1/timecodevalid/paged/project/") &&
-                url.Contains(Uri.EscapeDataString("PP001")) &&
-                url.Contains(Uri.EscapeDataString("TST001"))))
+                url.Contains("api/v1/timecodevalid/paged/byprojectandtest") &&
+                url.Contains($"parentProject={Uri.EscapeDataString("PP001")}") &&
+                url.Contains($"testCode={Uri.EscapeDataString("TST001")}")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(apiResponse).Returns(expectedDto);
 
@@ -148,7 +340,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             );
 
             _http.GetAsync<List<TimeCodeValidRes>>(Arg.Is<string>(url =>
-                url.Contains($"api/v1/timecodevalid/jobcode/{Uri.EscapeDataString(jobCode)}/project/{Uri.EscapeDataString(parentProject)}")))
+                url.Contains("api/v1/timecodevalid/jobcode") &&
+                url.Contains($"jobCode={Uri.EscapeDataString(jobCode)}") &&
+                url.Contains($"parentProject={Uri.EscapeDataString(parentProject)}")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(apiResponse).Returns(expectedDto);
 
@@ -160,7 +354,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
             await _http.Received(1).GetAsync<List<TimeCodeValidRes>>(
-                Arg.Is<string>(url => url.Contains($"api/v1/timecodevalid/jobcode/{Uri.EscapeDataString(jobCode)}/project/{Uri.EscapeDataString(parentProject)}")));
+                Arg.Is<string>(url => 
+                    url.Contains("api/v1/timecodevalid/jobcode") &&
+                    url.Contains($"jobCode={Uri.EscapeDataString(jobCode)}") &&
+                    url.Contains($"parentProject={Uri.EscapeDataString(parentProject)}")));
         }
 
         [Fact]
@@ -186,6 +383,44 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
+        }
+
+        [Fact]
+        public async Task GetByJobCodeAsync_WithSpecialCharacters_UrlEncodesParams()
+        {
+            // Arrange
+            var jobCode = "JC&001";  // Contains special character &
+            var parentProject = "PP 001";  // Contains space
+            var timeCodeList = new List<TimeCodeValidRes>
+            {
+                new() { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = parentProject, JobCode = jobCode }
+            };
+            var apiResponse = new ApiResponse<List<TimeCodeValidRes>> { Success = true, Data = timeCodeList };
+            var expectedDto = ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(
+                new List<TimeCodeValidDto>
+                {
+                    new() { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = parentProject }
+                }
+            );
+
+            _http.GetAsync<List<TimeCodeValidRes>>(Arg.Is<string>(url =>
+                url.Contains("api/v1/timecodevalid/jobcode") &&
+                url.Contains($"jobCode={Uri.EscapeDataString(jobCode)}") &&
+                url.Contains($"parentProject={Uri.EscapeDataString(parentProject)}")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetByJobCodeAsync(jobCode, parentProject);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _http.Received(1).GetAsync<List<TimeCodeValidRes>>(
+                Arg.Is<string>(url =>
+                    url.Contains("jobCode=JC%26001") &&  // & should be encoded as %26
+                    url.Contains("parentProject=PP%20001")));  // space should be encoded as %20
         }
 
         #endregion
@@ -420,7 +655,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             var workGroup = "WG001";
             var timeCode = "TC001";
             var parentProject = "PP001";
-            var expectedUrl = $"api/v1/timecodevalid/{Uri.EscapeDataString(workGroup)}/{Uri.EscapeDataString(timeCode)}/{Uri.EscapeDataString(parentProject)}";
+            var expectedUrl = $"api/v1/timecodevalid/delete?workGroup={Uri.EscapeDataString(workGroup)}&timeCode={Uri.EscapeDataString(timeCode)}&parentProject={Uri.EscapeDataString(parentProject)}";
             var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
@@ -472,7 +707,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             // Arrange
             var jobCode = "JC001";
             var parentProject = "PP001";
-            var expectedUrl = $"api/v1/timecodevalid/jobcode/{Uri.EscapeDataString(jobCode)}/project/{Uri.EscapeDataString(parentProject)}";
+            var expectedUrl = $"api/v1/timecodevalid/deletebyjobcode?jobCode={Uri.EscapeDataString(jobCode)}&parentProject={Uri.EscapeDataString(parentProject)}";
             var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 

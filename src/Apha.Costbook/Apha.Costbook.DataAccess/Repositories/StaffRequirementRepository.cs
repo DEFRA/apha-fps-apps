@@ -76,6 +76,9 @@ public class StaffRequirementRepository : RepositoryBase, IStaffRequirementRepos
     {
         staffRequirement.Project = HttpUtility.UrlDecode(staffRequirement.Project);
 
+        // Assign Payrate, Ohr, Npr from pay rates lookup based on WgGrade
+        await AssignPayRateValuesAsync(staffRequirement);
+
         _context.StaffRequirements.Add(staffRequirement);
         await _context.SaveChangesAsync();
         return staffRequirement;
@@ -84,6 +87,9 @@ public class StaffRequirementRepository : RepositoryBase, IStaffRequirementRepos
     public async Task<StaffRequirement> UpdateStaffRequirementAsync(StaffRequirement staffRequirement)
     {
         staffRequirement.Project = HttpUtility.UrlDecode(staffRequirement.Project);
+
+        // Assign Payrate, Ohr, Npr from pay rates lookup based on WgGrade
+        await AssignPayRateValuesAsync(staffRequirement);
 
         _context.StaffRequirements.Update(staffRequirement);
         await _context.SaveChangesAsync();
@@ -134,6 +140,54 @@ public class StaffRequirementRepository : RepositoryBase, IStaffRequirementRepos
             };
         });
     }
+
+    private async Task AssignPayRateValuesAsync(StaffRequirement staffRequirement)
+    {
+        if (string.IsNullOrEmpty(staffRequirement.Project))
+        {
+            throw new InvalidOperationException("Staff requirement project cannot be null or empty.");
+        }
+
+        var decodedId = staffRequirement.Project;
+        var currentYearSetting = await _settingsRepo.GetSettingValueByIdAsync("CurrentYear");
+
+        if (string.IsNullOrEmpty(currentYearSetting) || !int.TryParse(currentYearSetting, out int fyear))
+        {
+            throw new InvalidOperationException("CurrentYear setting not found or invalid in settings table.");
+        }
+
+        // Retrieve pay rate data for the specific WgGrade
+        var payRateRow = await _context.WorkGroupGrades
+            .AsNoTracking()
+            .Join(
+                _context.ProfitCentreGrades.AsNoTracking(),
+                wg => new { ProfitCentreGrade = wg.ProfitCentreGrade, FpsYear = wg.FpsYear },
+                pc => new { ProfitCentreGrade = pc.PcGrade, FpsYear = (int?)pc.FpsYear },
+                (wg, pc) => new { wg.WgGrade, pc.PayRate, pc.Npr, pc.Ohr })
+            .Where(x => x.WgGrade == staffRequirement.WgGrade)
+            .FirstOrDefaultAsync();
+        double inflationFactor = await _projectRepo.GetInflationFactorAsync("InflationStaff", decodedId, staffRequirement.Year ?? 0, fyear);
+
+        // Assign retrieved values to the staff requirement with inflation factor applied
+        if (payRateRow != null)
+        {
+            if (payRateRow.PayRate.HasValue)
+            {
+                decimal payRateDecimal = payRateRow.PayRate.Value * (decimal)inflationFactor;
+                staffRequirement.Payrate = (double?)payRateDecimal;
+            }
+            if (payRateRow.Npr.HasValue)
+            {
+                decimal nprDecimal = payRateRow.Npr.Value * (decimal)inflationFactor;
+                staffRequirement.Npr = (double?)nprDecimal;
+            }
+            if (payRateRow.Ohr.HasValue)
+            {
+                decimal ohrDecimal = payRateRow.Ohr.Value * (decimal)inflationFactor;
+                staffRequirement.Ohr = (double?)ohrDecimal;
+            }
+        }
+    }
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private static IQueryable<StaffRequirementDetailView> ApplySorting(
@@ -149,6 +203,7 @@ public class StaffRequirementRepository : RepositoryBase, IStaffRequirementRepos
             "year"       => ApplyOrder(query, c => c.Year, descending),
             "wggrade"    => ApplyOrder(query, c => c.WgGrade, descending),
             "name"       => ApplyOrder(query, c => c.Name, descending),
+            "nodays"     => ApplyOrder(query, c => c.Nodays, descending),
             "nohours"    => ApplyOrder(query, c => c.Nohours, descending),
             "chargerate" => ApplyOrder(query, c => c.Chargerate, descending),
             _            => query.OrderBy(c => c.WgGrade)
