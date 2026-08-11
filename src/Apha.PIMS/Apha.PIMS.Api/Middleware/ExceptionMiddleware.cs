@@ -75,7 +75,8 @@ namespace Apha.PIMS.Api.Middleware
                             Message = err.Message,
                             Details = err.Details
                         });
-                    }                    
+                    }
+                    errorType = _configuration["ExceptionTypes:BusinessValidation"];
                     break;
                 case ArgumentException:
                     context.Response.StatusCode = StatusCodes.Status400BadRequest;
