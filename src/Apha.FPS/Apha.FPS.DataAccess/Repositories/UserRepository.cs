@@ -149,7 +149,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.UserProfitcentres
                 .AsNoTracking()
-                .Where(x => x.UserId == userId)
+                .Where(x => x.UserId == userId && x.FpsYear == _requestContext.FpsYear)
                 .Select(x => x.ProfitCentre)
                 .ToListAsync();
         }
@@ -158,7 +158,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.UserPrograms
                 .AsNoTracking()
-                .Where(x => x.UserID == userId)
+                .Where(x => x.UserID == userId && x.FpsYear == _requestContext.FpsYear)
                 .Select(x => x.ProgramNo)
                 .ToListAsync();
         }
@@ -167,7 +167,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.UserCategories
                 .AsNoTracking()
-                .Where(x => x.UserId == userId)
+                .Where(x => x.UserId == userId && x.FpsYear == _requestContext.FpsYear)
                 .Select(x => x.Category)
                 .ToListAsync();
         }
@@ -176,7 +176,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.UserTestOwners
                 .AsNoTracking()
-                .Where(x => x.UserId == userId)
+                .Where(x => x.UserId == userId && x.FpsYear == _requestContext.FpsYear)
                 .Select(x => x.TestOwner)
                 .ToListAsync();
         }
@@ -185,7 +185,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.UserProjectGroups
                 .AsNoTracking()
-                .Where(x => x.UserId == userId)
+                .Where(x => x.UserId == userId && x.FpsYear == _requestContext.FpsYear)
                 .Select(x => x.ProjectGroup)
                 .ToListAsync();
         }
@@ -202,15 +202,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 try
                 {
                     await _dbContext.UserProfitcentres
-                        .Where(x => x.UserId == userId).ExecuteDeleteAsync();
+                        .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
                     await _dbContext.UserPrograms
-                        .Where(x => x.UserID == userId).ExecuteDeleteAsync();
+                        .Where(x => x.UserID == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
                     await _dbContext.UserCategories
-                        .Where(x => x.UserId == userId).ExecuteDeleteAsync();
+                        .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
                     await _dbContext.UserTestOwners
-                        .Where(x => x.UserId == userId).ExecuteDeleteAsync();
+                        .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
                     await _dbContext.UserProjectGroups
-                        .Where(x => x.UserId == userId).ExecuteDeleteAsync();
+                        .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
 
                     if (profitCentres.Count > 0)
                     {
@@ -287,6 +287,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.Programs
                 .AsNoTracking()
+                .Where(p => p.FpsYear == _requestContext.FpsYear)
                 .Select(p => p.ProgramNo)
                 .Distinct()
                 .OrderBy(p => p)
@@ -308,6 +309,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return await _dbContext.UserTestOwners
                 .IgnoreQueryFilters()
                 .AsNoTracking()
+                .Where(p => p.FpsYear == _requestContext.FpsYear)
                 .Select(t => t.TestOwner)
                 .Distinct()
                 .OrderBy(t => t)
@@ -318,6 +320,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.ProjectGroups
                 .AsNoTracking()
+                .Where(p => p.FpsYear == _requestContext.FpsYear)
                 .Select(pg => pg.ProjectGroupName)
                 .Distinct()
                 .OrderBy(pg => pg)
