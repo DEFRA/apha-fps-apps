@@ -125,26 +125,7 @@ jobs:
         run: |
           docker build -t $REPOSITORY:$IMAGE_TAG --file $DOCKERFILE_PATH .
           echo "Running local image: $IMAGE_TAG"
-          docker run -d --name test-container -p 8080:8080 \
-            -e ASPNETCORE_ENVIRONMENT=local \
-            -e GraphEmailSettings__TenantId=ci-smoke-test \
-            -e GraphEmailSettings__ClientId=ci-smoke-test \
-            -e GraphEmailSettings__ClientSecret=ci-smoke-test \
-            -e GraphEmailSettings__SharedMailbox=ci@example.com \
-            -e YearEndEmailSettings__DataSetupInitiatedEmailRecipient=ci@example.com \
-            -e YearEndEmailSettings__DataSetupInitiatedEmailSubject=ci \
-            -e YearEndEmailSettings__DataSetupInitiatedEmailBody=ci \
-            -e YearEndEmailSettings__DataSetupApprovalEmailRecipient=ci@example.com \
-            -e YearEndEmailSettings__DataSetupApprovalEmailSubject=ci \
-            -e YearEndEmailSettings__DataSetupApprovalEmailBody=ci \
-            -e YearEndEmailSettings__DataSetupRejectionEmailRecipient=ci@example.com \
-            -e YearEndEmailSettings__DataSetupRejectionEmailSubject=ci \
-            -e YearEndEmailSettings__DataSetupRejectionEmailBody=ci \
-            -e EventBridge__Region=eu-west-2 \
-            -e EventBridge__EventBusName=default \
-            -e EventBridge__EventBusArn=arn:aws:events:eu-west-2:000000000000:event-bus/default \
-            -e EventBridge__Source=fps.api \
-            $REPOSITORY:$IMAGE_TAG
+          docker run -d --name test-container -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=local $REPOSITORY:$IMAGE_TAG
       - name: Wait for service to start
         run: >
           echo "Waiting for the service to start..."
