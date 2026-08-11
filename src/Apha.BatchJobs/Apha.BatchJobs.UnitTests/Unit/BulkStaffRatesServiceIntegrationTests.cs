@@ -21,6 +21,7 @@ namespace Apha.BatchJobs.UnitTests;
 /// explicit DELETE-based cleanup (not transaction rollback) because ExecuteAsync commits
 /// its own transaction internally.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
 {
     private const string DefaultConnectionString =

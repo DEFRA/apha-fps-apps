@@ -34,6 +34,7 @@ namespace Apha.BatchJobs.UnitTests;
 /// real O(n) round-trip count inside the FOR UPDATE-locked transaction, worth measuring rather
 /// than assuming away.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class BulkTestRatesServicePerformanceTests : IAsyncLifetime
 {
     private const string DefaultConnectionString =

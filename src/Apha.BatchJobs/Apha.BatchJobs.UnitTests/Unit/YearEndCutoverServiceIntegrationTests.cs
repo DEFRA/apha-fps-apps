@@ -16,6 +16,7 @@ namespace Apha.BatchJobs.UnitTests;
 /// since the service now requires that precondition (spec Section 20.1) before it will
 /// even look at fps.tblyearmaster.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
 {
     private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30";

@@ -19,53 +19,15 @@ namespace Apha.BatchJobs.Worker.Bootstrap;
 public static class WorkerHostExtensions
 {
     /// <summary>
-    /// Legacy single-underscore ECS environment variable names and the standard config keys
-    /// they map to. Used only as a fallback when the standard key has no value from any other
-    /// source (appsettings.json, appsettings.{Environment}.json, or the standard
-    /// <c>BatchJobs__GracefulShutdownWindowSeconds</c>-style double-underscore env var, which
-    /// the default <see cref="Host.CreateApplicationBuilder(string[])"/> configuration already
-    /// recognizes without any mapping).
-    /// </summary>
-    private static readonly (string LegacyEnvironmentVariable, string ConfigurationKey)[] LegacyEnvironmentVariableMap =
-    [
-        ("BATCH_JOB_TIMEOUT_SECONDS", "BatchJobs:WorkerOverallTimeoutSeconds"),
-        ("BATCH_GRACEFUL_SHUTDOWN_WINDOW_SECONDS", "BatchJobs:GracefulShutdownWindowSeconds"),
-        ("BATCH_DB_COMMAND_TIMEOUT_SECONDS", "BatchJobs:DbCommandTimeoutSeconds"),
-        ("BATCH_LOCK_TIMEOUT_SECONDS", "BatchJobs:LockTimeoutSeconds"),
-        ("BATCH_LOG_STREAM_PREFIX", "Logging:LogStreamPrefix"),
-    ];
-
-    /// <summary>
     /// Layers <c>appsettings.Local.json</c> in over what <see cref="Host.CreateApplicationBuilder(string[])"/>
     /// already loaded (appsettings.json, appsettings.{Environment}.json, environment variables),
-    /// re-asserts environment variables so they retain top precedence, then fills in any legacy
-    /// single-underscore ECS variable only where the standard config key is still unset.
+    /// then re-asserts environment variables so they retain top precedence.
     /// </summary>
     public static void ConfigureWorkerConfiguration(this HostApplicationBuilder builder)
     {
         builder.Configuration
             .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)
             .AddEnvironmentVariables();
-
-        ApplyLegacyEnvironmentVariableCompat(builder.Configuration);
-    }
-
-    private static void ApplyLegacyEnvironmentVariableCompat(ConfigurationManager configuration)
-    {
-        var fallbacks = new Dictionary<string, string?>();
-
-        foreach (var (legacyEnvironmentVariable, configurationKey) in LegacyEnvironmentVariableMap)
-        {
-            if (!string.IsNullOrWhiteSpace(configuration[configurationKey]))
-                continue;
-
-            var legacyValue = Environment.GetEnvironmentVariable(legacyEnvironmentVariable);
-            if (!string.IsNullOrWhiteSpace(legacyValue))
-                fallbacks[configurationKey] = legacyValue;
-        }
-
-        if (fallbacks.Count > 0)
-            configuration.AddInMemoryCollection(fallbacks);
     }
 
     /// <summary>

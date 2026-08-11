@@ -13,6 +13,7 @@ namespace Apha.BatchJobs.UnitTests;
 /// PostgreSQL-backed MABArchive integration tests with skip-safe semantics.
 /// Tests use transaction rollback to avoid persistent data/schema changes.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class MabArchivePostgresIntegrationTests : IAsyncLifetime
 {
     private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30";

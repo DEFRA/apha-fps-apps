@@ -16,6 +16,7 @@ namespace Apha.BatchJobs.UnitTests;
 /// out-of-range Closed sandbox row, and asserts the sandbox row is excluded from the
 /// result while the real Open year is still returned correctly.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class MabArchiveYearSelectionServiceIntegrationTests : IAsyncLifetime
 {
     private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30";

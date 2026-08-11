@@ -12,6 +12,7 @@ namespace Apha.BatchJobs.UnitTests;
 /// CR025 (fps.job_queue approval metadata columns) is assumed universally deployed — there is no
 /// compatibility path for a database that predates it.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class JobExecutionRepositoryApprovalMetadataIntegrationTests : IAsyncLifetime
 {
     private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30";

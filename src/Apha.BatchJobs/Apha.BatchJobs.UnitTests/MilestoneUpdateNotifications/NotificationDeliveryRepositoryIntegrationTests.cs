@@ -21,6 +21,7 @@ namespace Apha.BatchJobs.UnitTests.MilestoneUpdateNotifications;
 ///   environment variable ConnectionStrings__FPSConnectionString.
 /// Do NOT set RUN_INTEGRATION_TESTS in CI — the tests skip automatically when the DB is unreachable.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifetime
 {
     // ── Connection ──────────────────────────────────────────────────────────────

@@ -12,6 +12,7 @@ namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
 /// PostgreSQL-backed tests for RecreateSummaries step SQL translation and data-shaping behavior.
 /// Skips automatically when a test database is unavailable.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class RecreateSummariesPostgresStepIntegrationTests : IAsyncLifetime
 {
     private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30";
