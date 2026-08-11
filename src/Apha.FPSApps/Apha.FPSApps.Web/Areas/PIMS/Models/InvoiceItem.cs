@@ -21,12 +21,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 
         
         [Display(Name = "Planned Amount")]
-        [GridColumn(Order = 3, Width = 130, Type = GridColumnType.GbpValue, IsFilterable = false, CssClass = "sup_text_right_align")]
+        [GridColumn(Order = 3, Width = 130, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public double? PlannedAmount { get; set; }
 
         
         [Display(Name = "Amount Due")]
-        [GridColumn(Order = 4, Width = 120, Type = GridColumnType.GbpValue, IsFilterable = false, CssClass = "sup_text_right_align")]
+        [GridColumn(Order = 4, Width = 120, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public double? DueAmount { get; set; }
 
        
@@ -36,7 +36,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 
         
         [Display(Name = "Amount Invoiced")]
-        [GridColumn(Order = 6, Width = 130, Type = GridColumnType.GbpValue, IsFilterable = false, CssClass = "sup_text_right_align")]
+        [GridColumn(Order = 6, Width = 130, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public double? ActualAmount { get; set; }
 
        

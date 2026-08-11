@@ -101,11 +101,14 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ProjectStaffPlanView> ProjectStaffPlanViews { get; set; }
         public virtual DbSet<ProjectStaffPlanDetailsView> ProjectStaffPlanDetailsViews { get; set; }
         public virtual DbSet<ProjectGroupStaffPlanView> ProjectGroupStaffPlanViews { get; set; }
+        public virtual DbSet<WgStaffPlanView> WgStaffPlanViews { get; set; }
 
         public virtual DbSet<ProjectProfitabilityVlaView> ProjectProfitabilityVlaViews { get; set; }
 
         public virtual DbSet<Bid> Bids { get; set; }
         public virtual DbSet<BidView> BidViews { get; set; }
+        public virtual DbSet<TestsRequiredByWgView> TestsRequiredByWgViews { get; set; }
+        public virtual DbSet<TestsRequiredByRcView> TestsRequiredByRcViews { get; set; }
         public virtual DbSet<Purchase> Purchases { get; set; }
         public virtual DbSet<TestOrProduct> TestOrProducts { get; set; }
         public virtual DbSet<TestRCCost> TestRCCosts { get; set; }
@@ -116,6 +119,14 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<CostCentre> CostCentres { get; set; }
         public virtual DbSet<ResourceStaffAllocationView> ResourceStaffAllocationViews { get; set; }
         public virtual DbSet<ResourceStaffJobView> ResourceStaffJobViews { get; set; }
+
+        public virtual DbSet<BatchJobMaster> BatchJobs { get; set; }
+        public virtual DbSet<BatchJobQueue> BatchJobQueues { get; set; }
+        public virtual DbSet<BatchJobQueueLog> BatchJobQueueLogs { get; set; }
+        public virtual DbSet<BatchJobStatus> BatchJobStatuses { get; set; }
+        public virtual DbSet<MonthHour> MonthHours { get; set; }
+
+
 
        
         public virtual DbSet<DepartmentIncomeTime> DepartmentIncomeTimes { get; set; }
@@ -161,6 +172,9 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new UserProfitcentreMap());
             modelBuilder.Entity<UserProfitcentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TestsRequiredByWgViewMap());
+            modelBuilder.ApplyConfiguration(new TestsRequiredByRcViewMap());
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
             modelBuilder.ApplyConfiguration(new ProfitCentreViewMap());
@@ -316,6 +330,9 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectGroupStaffPlanViewMap());
             modelBuilder.Entity<ProjectGroupStaffPlanView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new WgStaffPlanViewMap());
+            modelBuilder.Entity<WgStaffPlanView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new ProjectProfitabilityVlaViewMap());
 
             modelBuilder.ApplyConfiguration(new TimeCostCalcsMap());
@@ -374,6 +391,15 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new ResourceStaffAllocationViewMap());
             modelBuilder.ApplyConfiguration(new ResourceStaffJobViewMap());
+
+            modelBuilder.ApplyConfiguration(new BatchJobMasterMap());
+            modelBuilder.ApplyConfiguration(new BatchJobQueueMap());
+            modelBuilder.Entity<BatchJobQueue>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new BatchJobQueueLogMap());
+            modelBuilder.ApplyConfiguration(new BatchJobStatusMap());
+
+            modelBuilder.ApplyConfiguration(new MonthHourMap());
+            modelBuilder.Entity<MonthHour>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             
             // Repository methods apply year-scoped joins via the underlying entity DbSets (TimeCostCalcs, ProjectSubContract, etc.)

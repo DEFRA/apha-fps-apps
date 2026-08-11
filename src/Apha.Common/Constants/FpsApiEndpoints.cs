@@ -12,6 +12,7 @@
 
         // Animal
         public const string GetAnimalCosts = "api/v1/animalrequest?jobCode={0}";
+        public const string GetAnimalCostsByAnimalType = "api/v1/animalrequest/byanimaltype";
         public const string GetAnimalLookup = "api/v1/animalrequest/lookup";
         public const string GetAnimalRate = "api/v1/animalrequest/rate?animalType={0}&jobCode={1}";
         public const string CreateAnimalCost = "api/v1/animalrequest";
@@ -19,6 +20,7 @@
         public const string DeleteAnimalCost = "api/v1/animalrequest?indCounter={0}";
         public const string GetTotalAnimalCost = "api/v1/animalrequest/totalanimalcost?jobCode={0}";
         public const string GetAnimalCostViewById = "api/v1/animalrequest/view?indCounter={0}&jobCode={1}";
+        public const string GetAnimalSnapshot = "api/v1/animalrequest/snapshot";
 
         // Employee
         public const string GetFilteredEmployees = "api/v1/employee/paginated?filterOption={0}";
@@ -31,6 +33,7 @@
         public const string GetAllPerson = "api/v1/employee/persons";
         public const string GetWorkGroupStaffPaginated = "api/v1/employee/WorkGroupStaff/paginated";
         public const string GetpactStaffs = "api/v1/employee/pactstaff";
+        public const string GetPactWorkGroupStaff = "api/v1/employee/PactWorkGroupStaff?workGroup={0}";
 
         // Lookup
         public const string GetAllStatuses = "api/v1/status";
@@ -72,6 +75,7 @@
         public const string GetAllPrograms = "api/v1/program";
         public const string GetAllProgramsForAllUsers = "api/v1/program/all";
         public const string GetPagedPrograms = "api/v1/program/paged";
+        public const string GetProgramTimeSnapshot = "api/v1/program/time-snapshot/paged";
         public const string GetProgramById = "api/v1/program/{0}";
         public const string CreateProgram = "api/v1/program";
         public const string UpdateProgram = "api/v1/program";
@@ -83,6 +87,9 @@
         public const string GetPagedProjectsByUser = "api/v1/project/paged/by-user";
         public const string GetAllProjectsForAllUsers = "api/v1/project/all";
         public const string GetAllProjectsPaged = "api/v1/project/paged/all";
+        public const string GetPagedProjectSpecificQuery = "api/v1/project/specific-query/paged";
+        public const string GetPagedProjectSnapshotData = "api/v1/project/project-snapshot/paged";
+        public const string GetProjectExceptionalCostsPaged = "api/v1/project/exceptionalcosts/paged";
         public const string GetAllPactProjects = "api/v1/project/pactview/all";
         public const string GetPagedPactProjects = "api/v1/project/pactview";
         public const string GetPagedPactProjectsByProgram = "api/v1/project/pactview/by-program?programNo={0}";
@@ -118,6 +125,18 @@
 
         // Setting
         public const string GetHoursPerDay = "api/v1/setting/hoursperday";
+        public const string GetAllSettings = "api/v1/setting";
+        public const string GetYearEndSettings = "api/v1/setting/yearend";
+        public const string CreateSetting = "api/v1/setting";
+        public const string UpdateSetting = "api/v1/setting/{0}";
+        public const string SaveSetting = "api/v1/setting/save";
+
+        // Month Hour
+        public const string GetPagedMonthHours = "api/v1/monthhour";
+        public const string GetMonthHoursByYear = "api/v1/monthhour/year/{0}";
+        public const string GetDistinctMonthHourYears = "api/v1/monthhour/years";
+        public const string GetYearEndMonthHours = "api/v1/monthhour/yearend";
+        public const string SaveMonthHour = "api/v1/monthhour/save";
 
         // Project Staff Plan
         public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";
@@ -181,6 +200,7 @@
         public const string GetAllProfitCentres = "api/v1/profitcentres/all";        
         public const string PatchProfitCentreSettings = "api/v1/profitcentres/settings";
         public const string GetPagedProfitCenterCostSummary = "api/v1/profitcentres/paged/costsummary";
+        public const string GetPagedWgStaffPlan = "api/v1/profitcentres/wgstaffplan";
 
         // Resource Set-Up — PC Grades
         public const string GetPcGrades = "api/v1/pcgrades?profitCentre={0}";
@@ -225,11 +245,16 @@
         // Generic Bid — Budget Bids
         public const string GetBids = "api/v1/budgetbids?workgroup={0}";
         public const string GetBidsPagedView = "api/v1/budgetbids/paged";
+        public const string GetGenericBidsPaged = "api/v1/budgetbids/generic/paged";
         public const string GetBidByWorkgroupAccount = "api/v1/budgetbids/{0}/{1}";
         public const string CreateBudgetBid = "api/v1/budgetbids";
         public const string UpdateBudgetBid = "api/v1/budgetbids";
         public const string DeleteBudgetBid = "api/v1/budgetbids?WorkGroupName={0}&account={1}";
         public const string GetBudgetBidsAccounts = "api/v1/budgetbids/accounts";
+
+        // Misc Reports — Tests Required By Work Group (Test Manager WG Pivot)
+        public const string GetTestsRequiredByWg = "api/v1/testsrequiredbywg?profitCentre={0}";
+        public const string GetTestsRequiredByRc = "api/v1/testsrequiredbyrc?profitCentre={0}";
 
         // Income/Contribution from Time Sales (frmTimeSellerPC)
         public const string GetContributionSummaryRows   = "api/v1/timeseller/{0}/rows";
@@ -271,6 +296,14 @@
         public const string GetWorkgroupProfitCentres = "api/v1/workgroup/profitcentres";
         public const string GetWorkgroupOwners = "api/v1/workgroup/owners";
         public const string GetWorkgroupCostCentres = "api/v1/workgroup/costcentres?profitCentre={0}";
+        // Year End Batch Job
+        public const string GetYearEndBatchJobHistory = "api/v1/yearend/batchjob/history";
+        public const string GetCanInitiateDataSetupRequest = "api/v1/yearend/dataSetup/caninitiate";
+        public const string GetCanApproveDataSetupRequest = "api/v1/yearend/dataSetup/canapproveorreject";
+        public const string EnqueueYearEndDataSetupInitiationJob = "api/v1/yearend/dataSetup/initiation";
+        public const string EnqueueYearEndDataSetupApprovalJob    = "api/v1/yearend/dataSetup/approval";
+        public const string EnqueueYearEndDataSetupRejectJob = "api/v1/yearend/dataSetup/reject";
+
         // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
         public const string GetAllCostCentres = "api/v1/costcentre";
         public const string GetPagedCostCentres = "api/v1/costcentre/paged";

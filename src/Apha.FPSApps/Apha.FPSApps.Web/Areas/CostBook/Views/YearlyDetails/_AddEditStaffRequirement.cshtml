@@ -14,9 +14,9 @@
     <form id="staffRequirementForm">
         @Html.AntiForgeryToken()
         <input asp-for="SrIdentity" type="hidden" />
-        <input asp-for="Payrate" type="hidden" />
+       @*  <input asp-for="Payrate" type="hidden" />
         <input asp-for="Npr" type="hidden" />
-        <input asp-for="Ohr" type="hidden" />
+        <input asp-for="Ohr" type="hidden" /> *@
         <input type="hidden" id="WgGrade" value="@Model.WgGrade" />
         <div class="govuk-error-summary" role="alert"
              aria-labelledby="staffFormErrorTitle" tabindex="-1" style="display: none;">
@@ -60,9 +60,9 @@
                                 <tr data-value="@p.WgGrade"
                                     data-chargerate="@(p.ChargeRate?.ToString() ?? "")"
                                     data-chargeratewithinflamation="@(p.ChargeRateWithInflamation?.ToString() ?? "")"
-                                    data-payrate="@(p.PayRate?.ToString("F2") ?? "")"
+                                   @*  data-payrate="@(p.PayRate?.ToString("F2") ?? "")"
                                     data-npr="@(p.Npr?.ToString("F2") ?? "")"
-                                    data-ohr="@(p.Ohr?.ToString("F2") ?? "")"
+                                    data-ohr="@(p.Ohr?.ToString("F2") ?? "")" *@
                                     tabindex="0"
                                     role="option"
                                     style="cursor:pointer;">

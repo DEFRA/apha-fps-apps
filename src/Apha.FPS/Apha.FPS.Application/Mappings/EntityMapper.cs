@@ -1,4 +1,5 @@
-﻿
+﻿using Apha.Common.Contracts.PACT;
+
 
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
@@ -24,10 +25,13 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<StaffJob, StaffJobDto>().ReverseMap();
             CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
             CreateMap<Program, ProgramDto>().ReverseMap();
+            CreateMap<ProgramPlanCostView, ProgramPlanCostDto>().ReverseMap();
             CreateMap<Project, ProjectDto>().ReverseMap();
+            CreateMap<ProjectSpecificQueryItem, ProjectSpecificQueryDto>().ReverseMap();
             CreateMap<ProjectView, Project>().ReverseMap();
             CreateMap<Contract, ContractDto>().ReverseMap();
             CreateMap<AnimalCostView, AnimalCostViewDto>().ReverseMap();
+            CreateMap<AnimalSnapshotView, AnimalSnapshotViewDto>().ReverseMap();
             CreateMap<Animal, AnimalDto>().ReverseMap();
             CreateMap<AnimalRequest, AnimalRequestDto>().ReverseMap();
             CreateMap<AccountCode, AccountCodeDto>().ReverseMap();
@@ -94,6 +98,10 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             // BudgetResourceLevel
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
+            CreateMap<TestsRequiredByWgView, TestsRequiredByWgDto>().ReverseMap();
+            CreateMap<TestsRequiredByRcView, TestsRequiredByRcDto>().ReverseMap();
+            CreateMap<GenericBidView, GenericBidViewDto>().ReverseMap();
+            CreateMap<ProjectExceptionalCostView, ProjectExceptionalCostViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
             //   All 5 log entities from fps schema partitioned tables.
             //   Property names are fully aligned between entity and DTO; no ForMember overrides needed.
@@ -129,6 +137,20 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
                 .ForMember(d => d.PlannedHours, o => o.MapFrom(s => s.PlannedHours ?? 0))
                 .ReverseMap();
             CreateMap<ResourceMgmtReplanDto, ResourceMgmtReplanRow>().ReverseMap();
+
+            // Workgroup Staff Plan view
+            CreateMap<WgStaffPlanView, WgStaffPlanViewDto>().ReverseMap();
+            CreateMap<BatchJobHistory, BatchJobHistoryDto>().ReverseMap();
+            CreateMap<BatchJobQueue, BatchJobQueueDto>().ReverseMap();
+            CreateMap<BatchJobQueue, BatchJobQueueRes>().ReverseMap();
+            CreateMap<BatchJobQueue, BatchJobEventTriggerDto>()
+                .ForMember(dest => dest.Jobqueue, opt => opt.MapFrom(src => src))
+                .ForMember(dest => dest.EventId, opt => opt.Ignore());
+
+            CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
+            CreateMap<YearEndFpsSetting, YearEndFpsSettingDto>().ReverseMap();
+            CreateMap<MonthHour, MonthHourDto>().ReverseMap();
+            CreateMap<YearEndMonthHour, YearEndMonthHourDto>().ReverseMap();
 
             
             // All six pairs are property-name aligned between entity and DTO; no ForMember overrides required.

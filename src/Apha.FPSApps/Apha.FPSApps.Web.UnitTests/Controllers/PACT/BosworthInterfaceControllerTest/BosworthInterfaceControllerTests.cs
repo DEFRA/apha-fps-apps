@@ -9,7 +9,9 @@ using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using NSubstitute;
 using System.Text.Json;
 
@@ -43,6 +45,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
                 _profitCentreService,
                 _excelExportService,
                 _testCapabilityService);
+
+            _controller.TempData = new TempDataDictionary(
+                new DefaultHttpContext(),
+                Substitute.For<ITempDataProvider>());
         }
 
         private void SetupDropdownsSuccess()
@@ -381,10 +387,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
             // Arrange
             var workGroup = "WG1";
             var fileBytes = new byte[] { 9, 10, 11 };
-            _bosworthInterfaceService.GetTimeSaleProfitCentreAsync(workGroup)
-                .Returns(ApiResponseDto<List<TimeSaleProfitCentreDto>>.SuccessResponse(
-                    [new TimeSaleProfitCentreDto { WorkGroup = "WG1" }]));
-            _excelExportService.ExportToExcel(Arg.Any<IEnumerable<TimeSaleProfitCentreDto>>(), "TimeSaleWorkgroup")
+            _bosworthInterfaceService.GetTimeSaleWorkGroupAsync(workGroup)
+                .Returns(ApiResponseDto<List<TimeSaleWorkGroupDto>>.SuccessResponse(
+                    [new TimeSaleWorkGroupDto { SellingWg = "WG1" }]));
+            _excelExportService.ExportToExcel(Arg.Any<IEnumerable<TimeSaleWorkGroupDto>>(), "TimeSaleWorkgroup")
                 .Returns(fileBytes);
 
             // Act
@@ -398,20 +404,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
         }
 
         [Fact]
-        public async Task GenerateTimeSaleWorkgroupReport_CallsGetTimeSaleProfitCentreAsyncWithWorkGroup()
+        public async Task GenerateTimeSaleWorkgroupReport_CallsGetTimeSaleWorkGroupAsyncWithWorkGroup()
         {
             // Arrange
             var workGroup = "WG1";
-            _bosworthInterfaceService.GetTimeSaleProfitCentreAsync(workGroup)
-                .Returns(ApiResponseDto<List<TimeSaleProfitCentreDto>>.SuccessResponse([]));
-            _excelExportService.ExportToExcel(Arg.Any<IEnumerable<TimeSaleProfitCentreDto>>(), "TimeSaleWorkgroup")
+            _bosworthInterfaceService.GetTimeSaleWorkGroupAsync(workGroup)
+                .Returns(ApiResponseDto<List<TimeSaleWorkGroupDto>>.SuccessResponse([]));
+            _excelExportService.ExportToExcel(Arg.Any<IEnumerable<TimeSaleWorkGroupDto>>(), "TimeSaleWorkgroup")
                 .Returns(new byte[] { 1 });
 
             // Act
             await _controller.GenerateTimeSaleWorkgroupReport(workGroup);
 
             // Assert
-            await _bosworthInterfaceService.Received(1).GetTimeSaleProfitCentreAsync(workGroup);
+            await _bosworthInterfaceService.Received(1).GetTimeSaleWorkGroupAsync(workGroup);
         }
 
         [Fact]
@@ -419,9 +425,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
         {
             // Arrange
             var workGroup = "WG1";
-            var response = new ApiResponseDto<List<TimeSaleProfitCentreDto>> { Success = false, Data = null };
-            _bosworthInterfaceService.GetTimeSaleProfitCentreAsync(workGroup).Returns(response);
-            _excelExportService.ExportToExcel(Arg.Any<IEnumerable<TimeSaleProfitCentreDto>>(), "TimeSaleWorkgroup")
+            var response = new ApiResponseDto<List<TimeSaleWorkGroupDto>> { Success = false, Data = null };
+            _bosworthInterfaceService.GetTimeSaleWorkGroupAsync(workGroup).Returns(response);
+            _excelExportService.ExportToExcel(Arg.Any<IEnumerable<TimeSaleWorkGroupDto>>(), "TimeSaleWorkgroup")
                 .Returns(new byte[] { 1 });
 
             // Act
@@ -430,7 +436,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
             // Assert
             Assert.IsType<FileContentResult>(result);
             _excelExportService.Received(1).ExportToExcel(
-                Arg.Is<IEnumerable<TimeSaleProfitCentreDto>>(d => !d.Any()), "TimeSaleWorkgroup");
+                Arg.Is<IEnumerable<TimeSaleWorkGroupDto>>(d => !d.Any()), "TimeSaleWorkgroup");
         }
 
         #endregion

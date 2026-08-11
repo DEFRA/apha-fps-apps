@@ -1,5 +1,7 @@
-﻿using Apha.Common.Utilities.StateManagement;
+﻿using Apha.Common.Utilities.Email;
+using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Interfaces;
@@ -61,6 +63,13 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             services.AddScoped<IResourceAllocationService, ResourceAllocationService>();
+            services.AddScoped<ITestsRequiredByWgService, TestsRequiredByWgService>();
+            services.AddScoped<ITestsRequiredByRcService, TestsRequiredByRcService>();
+            services.AddScoped<IYearEndService, YearEndService>();
+            services.AddScoped<IMonthHourService, MonthHourService>();
+            services.AddSingleton<IEventPublisherService, EventBridgePublisherService>();
+            services.AddSingleton<IGraphEmailService, GraphEmailService>();
+            
             services.AddScoped<IDepartmentIncomeService, DepartmentIncomeService>();
             return services;
         }
@@ -99,6 +108,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IGradeRepository, GradeRepository>();
             services.AddScoped<IProjectGroupStaffPlanRepository, ProjectGroupStaffPlanRepository>();
             services.AddScoped<IBudgetBidsRepository, BudgetBidsRepository>();
+            services.AddScoped<ITestsRequiredByWgRepository, TestsRequiredByWgRepository>();
+            services.AddScoped<ITestsRequiredByRcRepository, TestsRequiredByRcRepository>();
             services.AddScoped<IPurchasesRepository, PurchasesRepository>();
             services.AddScoped<IContributionSummaryRepository, ContributionSummaryRepository>();
             services.AddScoped<IProjectAuditTrailRepository, ProjectAuditTrailRepository>();
@@ -109,6 +120,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
             services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
             services.AddScoped<IResourceAllocationRepository, ResourceAllocationRepository>();
+            services.AddScoped<IMonthHourRepository, MonthHourRepository>();
+            services.AddScoped<IYearEndRepository, YearEndRepository>();
             services.AddScoped<IDepartmentIncomeRepository, DepartmentIncomeRepository>();
             return services;
 
