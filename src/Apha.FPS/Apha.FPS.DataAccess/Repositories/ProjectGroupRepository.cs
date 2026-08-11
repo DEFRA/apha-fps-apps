@@ -19,7 +19,9 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<IEnumerable<ProjectGroup>> GetAllProjectGroupsAsync()
         {
             return await _dbContext.ProjectGroups
-                .AsNoTracking()                
+                .Where(x => x.FpsYear == _requestContext.FpsYear)
+                .OrderBy(x => x.ProjectGroupName)
+                .AsNoTracking()
                 .ToListAsync();
         }
 
