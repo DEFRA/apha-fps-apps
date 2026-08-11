@@ -379,4 +379,19 @@
             return result;
         });
     };
+
+    window.showGovukApproveReject = function (message) {
+        pending = pending.then(function () {
+            return openDialog({
+                type: "confirm",
+                message: message,
+                okText: "Approve",
+                cancelText: "Reject"
+            });
+        });
+
+        return pending.then(function (result) {
+            return result;
+        });
+    };
 })();

@@ -38,6 +38,9 @@
                             id="groupReportGroup"
                             required
                             aria-required="true"
+                            aria-describedby="groupReportGroupError"
+                            data-val-required="Report Group is required">
+                            aria-label="Report Group"
                             aria-describedby="groupReportGroupError">
                         <option value="">-- Select Report Group --</option>
                     </select>
@@ -50,7 +53,7 @@
             </div>
         </div>
 
-        <div class="col-12" style="text-align: right; margin-top: 10px;">
+        <div class="col-12" style="display: flex; justify-content: space-between; margin-top: 10px;">
             <button type="button"
                     class="govuk-button govuk-button--secondary sup_margin_0"
                     onclick="closeModal()">

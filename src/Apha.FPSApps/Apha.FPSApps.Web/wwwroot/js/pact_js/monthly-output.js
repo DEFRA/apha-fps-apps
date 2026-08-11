@@ -290,6 +290,8 @@ function editMonthlyOutputLive(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#stagingMonthlyOutputForm');
             initLiveModalWorkGroupDropdown();
         },
         error: function () {
@@ -334,13 +336,30 @@ function initLiveModalWorkGroupDropdown() {
 }
 
 function saveMonthlyOutputLive() {
-    const form = $('#monthlyOutputLiveForm');
-    clearValidationErrors(form);
+    var form = $('#monthlyOutputLiveForm');
+
+    // Validate all numeric fields before checking isFormValid
+    form.find('.decfmt-input').each(function() {
+        validateRangeOnInput(this);
+    });
+
+    // Check for numeric validation errors
+    if (hasNumericValidationErrors(form)) {
+        // Ensure validation messages are visible
+        if (typeof ensureValidationMessagesVisible === 'function') {
+            ensureValidationMessagesVisible(form);
+        }
+        displayClientValidationErrors(form, form);
+        return;
+    }
 
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, form);
         return;
     }
+
+    // Clear validation errors only after validation passes
+    clearValidationErrors(form);
 
     const data = {
         CompositeKey: $('#CompositeKey').val(),
@@ -408,6 +427,8 @@ function addStagingMonthlyOutput() {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#stagingMonthlyOutputForm');
             initStagingModalDropdowns(null, null, null);
         },
         error: function () {
@@ -425,6 +446,9 @@ function editStagingMonthlyOutput(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            $('#modalPopup').addClass('show');
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#stagingMonthlyOutputForm');
             const workGroup  = $('#StagingWorkGroup').val();
             const existingTestCode = $('#StagingTestCode').val();
             const existingBuyer    = $('#StagingBuyer').val();
@@ -674,13 +698,30 @@ function loadStagingModalBuyersByTestCode(workGroup, testCode, restoreBuyer) {
 }
 
 function saveStagingMonthlyOutput() {
-    const form = $('#stagingMonthlyOutputForm');
-    clearValidationErrors(form);
+    var form = $('#stagingMonthlyOutputForm');
+
+    // Validate all numeric fields before checking isFormValid
+    form.find('.decfmt-input').each(function() {
+        validateRangeOnInput(this);
+    });
+
+    // Check for numeric validation errors
+    if (hasNumericValidationErrors(form)) {
+        // Ensure validation messages are visible
+        if (typeof ensureValidationMessagesVisible === 'function') {
+            ensureValidationMessagesVisible(form);
+        }
+        displayClientValidationErrors(form, form);
+        return;
+    }
 
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, form);
         return;
     }
+
+    // Clear validation errors only after validation passes
+    clearValidationErrors(form);
 
     const id = parseInt($('#Id').val()) || 0;
     submitStagingRecord(id);

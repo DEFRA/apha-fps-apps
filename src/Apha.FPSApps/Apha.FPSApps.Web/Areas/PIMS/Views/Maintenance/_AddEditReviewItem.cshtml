@@ -36,9 +36,13 @@
                                asp-for="Itemid"
                                id="editReviewItemid"
                                type="number"
+                               min="1"
+                               step="1"
                                readonly
                                aria-required="true"
-                               aria-describedby="editReviewItemidError" />
+                               aria-describedby="editReviewItemidError"
+                               data-val-required="Item Id is required" 
+                               aria-label="Item Id" />
                     }
                     else
                     {
@@ -46,9 +50,14 @@
                                asp-for="Itemid"
                                id="editReviewItemid"
                                type="number"
+                               min="1"
+                               step="1"
+                               value=""
                                required
                                aria-required="true"
-                               aria-describedby="editReviewItemidError" />
+                               aria-describedby="editReviewItemidError"
+                               data-val-required="Item Id is required" 
+                               aria-label="Item Id"/>
                     }   
                     <span asp-validation-for="Itemid"
                           data-valmsg-for="Itemid"
@@ -68,6 +77,7 @@
                            type="text"
                            required
                            aria-required="true"
+                           aria-label="Item"
                            aria-describedby="editReviewItemError" />
                     <span asp-validation-for="Item"
                           data-valmsg-for="Item"
@@ -78,7 +88,7 @@
             </div>
         </div>
 
-        <div class="col-12" style="text-align: right; margin-top: 10px;">
+        <div class="col-12" style="display: flex; justify-content: space-between; margin-top: 10px;">
             <button type="button"
                     class="govuk-button govuk-button--secondary sup_margin_0"
                     onclick="closeModal()">

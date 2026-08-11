@@ -37,9 +37,12 @@
                                asp-for="Frequencyid"
                                id="editName"
                                type="number"
+                               min="0"
+                               step="1"
                                readonly
                                aria-required="true"
-                               aria-describedby="editNameError" />
+                               aria-describedby="editNameError"
+                               data-val-required="Frequency Id is required" />
                     }
                     else
                     {
@@ -47,6 +50,9 @@
                                asp-for="Frequencyid"
                                id="editName"
                                type="number"
+                               min="0"
+                               step="1"
+                               value=""
                                required
                                aria-required="true"
                                aria-describedby="editNameError" />
@@ -70,6 +76,7 @@
                            type="text"
                            required
                            aria-required="true"
+                           aria-label="Frequency"
                            aria-describedby="editDescriptionError" />
                     <span asp-validation-for="FrequencyValue"
                     data-valmsg-for="FrequencyValue"
@@ -80,7 +87,7 @@
             </div>
         </div>
 
-        <div class="col-12" style="text-align: right; margin-top: 10px;">
+        <div class="col-12" style="display: flex; justify-content: space-between; margin-top: 10px;">
             <button type="button"
                     class="govuk-button govuk-button--secondary sup_margin_0"
                     onclick="closeModal()">

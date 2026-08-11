@@ -30,17 +30,45 @@
                     <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Riskid">
                         RiskID: <span class="ra-required-star" aria-hidden="true">*</span>
                     </label>
+                    @if (isEditMode)
+                    {
+                        <input class="govuk-input govuk-!-font-size-16"
+                               asp-for="Riskid"
+                               id="editRiskid"
+                               type="number"
+                               min="1"
+                               step="1"
+                               readonly
+                               aria-required="true"
+                               aria-describedby="editRiskidError"
+                               data-val-required="RiskID is required" />
+                    }
+                    else
+                    {
+                        <input class="govuk-input govuk-!-font-size-16"
+                               asp-for="Riskid"
+                               id="editRiskid"
+                               type="number"
+                               min="1"
+                               step="1"
+                               value=""
+                               required
+                               aria-required="true"
+                               aria-describedby="editRiskidError"
+                               data-val-required="RiskID is required" />
+                    }
                     <input class="govuk-input govuk-!-font-size-16"
                            asp-for="Riskid"
                            id="editRiskid"
                            type="number"
                            required
                            aria-required="true"
+                           aria-label="editRiskid"
                            aria-describedby="editRiskidError" />
                     <span asp-validation-for="Riskid"
                           data-valmsg-for="Riskid"
                           class="govuk-error-message"
-                          id="editRiskRatingError"
+                          id="editRiskidError"
                           style="display:none;"></span>
                 </div>
             </div>
@@ -56,6 +84,7 @@
                            type="text"
                            required
                            aria-required="true"
+                           aria-label="RiskRating"
                            aria-describedby="editRiskRatingError" />
                     <span asp-validation-for="Riskrating"
                           data-valmsg-for="Riskrating"
@@ -66,7 +95,7 @@
             </div>
         </div>
 
-        <div class="col-12" style="text-align: right; margin-top: 10px;">
+        <div class="col-12" style="display: flex; justify-content: space-between; margin-top: 10px;">
             <button type="button"
                     class="govuk-button govuk-button--secondary sup_margin_0"
                     onclick="closeModal()">

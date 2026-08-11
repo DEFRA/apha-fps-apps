@@ -39,7 +39,9 @@
                                maxlength="3"
                                readonly
                                aria-required="true"
-                               aria-describedby="editPublicationTypeCodeError" />
+                               aria-describedby="editPublicationTypeCodeError"
+                               data-val-required="Type is required" 
+                               aria-label="Type" />
                     }
                     else
                     {
@@ -50,7 +52,9 @@
                                maxlength="3"
                                required
                                aria-required="true"
-                               aria-describedby="editPublicationTypeCodeError" />
+                               aria-describedby="editPublicationTypeCodeError"
+                               data-val-required="Type is required"
+                               aria-label="Type" />
                     }
                     <span asp-validation-for="Type"
                     data-valmsg-for="Type"
@@ -70,6 +74,7 @@
                            id="editPublicationTypeDesc"
                            type="text"
                            maxlength="50"
+                           aria-label="Description"
                            aria-describedby="editPublicationTypeDescError" />
                     <span asp-validation-for="Description"
                     data-valmsg-for="Description"
@@ -80,7 +85,7 @@
             </div>
         </div>
 
-        <div class="col-12" style="text-align: right; margin-top: 10px;">
+        <div class="col-12" style="display: flex; justify-content: space-between; margin-top: 10px;">
             <button type="button"
                     class="govuk-button govuk-button--secondary sup_margin_0"
                     onclick="closeModal()">

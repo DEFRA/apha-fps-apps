@@ -2936,43 +2936,32 @@ svg {
 }
 
 #btn-clear-all-workgroups,
-#btn-clear-pc {
-    background-color: #b1b4b6 !important;
-    color: #d4351c !important;
-    border: 1px solid #595959 !important;
-}
+#btn-clear-pc { background-color: #e6e4e2 !important; color: #942514 !important; border: 1px solid #595959 !important; }
 
-    #btn-clear-all-workgroups:hover, #btn-clear-pc:hover,
-    #btn-clear-all-workgroups:focus, #btn-clear-pc:focus,
-    #btn-clear-all-workgroups:visited, #btn-clear-pc:visited,
-    #btn-clear-all-workgroups:active, #btn-clear-pc:active {
-        background-color: #b1b4b6 !important;
-        color: #d4351c !important;
-        border: 1px solid #595959 !important;
-    }
+#btn-clear-all-workgroups:hover, #btn-clear-pc:hover,
+#btn-clear-all-workgroups:focus, #btn-clear-pc:focus,
+#btn-clear-all-workgroups:visited, #btn-clear-pc:visited,
+#btn-clear-all-workgroups:active, #btn-clear-pc:active {
+  background-color: #d6d3d1 !important; color: #d4351c  !important; border: 1px solid #595959 !important;
+}
 
 /* ============================================================
    28. PC ACTIONS PANEL
    ============================================================ */
-.pc-actions-panel {
+.pc-actions-panel { margin-top: 8px; padding: 26px 12px 0; border: 1px solid #b1b4b6; background-color: #f3f2f1; }
+.pc-actions-panel .govuk-button { display: block; width: 100%; font-size: 1.25rem; padding-top: 0.9em; padding-bottom: 0.9em; }
+.pc-actions-panel .govuk-button + .govuk-button { margin-top: 1rem; }
+.pc-actions-panel-bc {
+    background-color: #f3f2f1;
+    border: 1px solid #b1b4b6;
+}
+.pc-actions-panel-new {
+    display: flex;
+    flex-direction: column;
     margin-top: 8px;
     padding: 26px 12px 0;
-    border: 1px solid #b1b4b6;
-    background-color: #f3f2f1;
+    
 }
-
-    .pc-actions-panel .govuk-button {
-        display: block;
-        width: 100%;
-        font-size: 1.25rem;
-        padding-top: 0.9em;
-        padding-bottom: 0.9em;
-    }
-
-        .pc-actions-panel .govuk-button + .govuk-button {
-            margin-top: 1rem;
-        }
-
 .isBtnSection .govuk-grid-column-full {
     display: flex;
     justify-content: space-between;
@@ -4028,4 +4017,90 @@ table#tblMonthPeriod > tbody > tr:hover {
 #tbl_monthlyOutputStagingGrid tbody td:nth-child(4),
 #tbl_monthlyOutputStagingGrid tbody td:nth-child(5) {
     text-align: right !important;
+}
+
+.isClearfix {
+    overflow: hidden;
+}
+
+.isFloatRight {
+    float: right;
+}
+
+.isResourceManagementSection {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+}
+
+.tr-section-box {
+    position: static;
+    border-radius: 6px;
+    background: #ffffff;
+    margin-bottom: 18px;
+    padding: 14px;
+    box-shadow: 0 2px 0 rgba(11, 12, 12, 0.08);
+}
+
+.tr-section-box--compact {
+    overflow: visible;
+    display: flow-root;
+    margin-top: -4px;
+}
+
+.isTimeSaleSection {
+    margin-top: -5px;
+    width: 49% !important;
+    margin-right: 10px;
+
+    .govuk-grid-column-one-full {
+        height: 359px !important;
+    }
+}
+
+.period-dropdown.resource-dropdown {
+    position: static !important;
+    z-index: auto !important;
+    float: left;
+    width: 37vw;
+}
+
+.btnSec {
+    margin-right: 43px;
+}
+
+.isServiceManagementSection {
+    #select-project-input {
+        max-width: 708px !important;
+    }
+}
+
+.time-recordings-layout .govuk-table__cell {
+    vertical-align: top !important;
+}
+
+/* Pivot wizard excel button alignment */
+.isCustomPivotGrid .govuk-table__cell.sup_border_0 {
+    vertical-align: middle;
+}
+
+.isCustomPivotGrid .govuk-table__cell.sup_border_0 a {
+    float: left;
+    width: auto;
+    height: 100%;
+    margin-top: 26px;
+    margin-left: 10px;
+    display: block;
+}
+
+.isCustomPivotGrid .govuk-table__cell.sup_border_0 img.excel-icon {
+    width: 30px;
+    height: 30px;
+    margin: 0;
+}
+
+.tr-section-panel .govuk-grid-column-one-full {
+    border: 1px solid #d8dbe0;
+    border-radius: 4px;
+    padding: 12px;
+    background: #ffffff;
 }
