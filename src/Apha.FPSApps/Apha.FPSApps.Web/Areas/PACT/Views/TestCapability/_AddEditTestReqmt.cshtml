@@ -59,7 +59,7 @@
                 <div class="govuk-form-group sup_margin_bottom_10">
                     <label class="govuk-label govuk-!-font-weight-bold" for="ProjectBuyerCode">Project <span class="sup_color_red">*</span></label>
                     <div id="projectBuyerCodeSelectMultiDropdown"></div>
-                    <input type="hidden" id="ProjectBuyerCode" name="ProjectBuyerCode" value="@Model.ProjectBuyerCode" @(!isEdit ? "required" : null) />
+                    <input type="hidden" id="ProjectBuyerCode" aria-label="ProjectBuyerCode" name="ProjectBuyerCode" value="@Model.ProjectBuyerCode" @(!isEdit ? "required" : null) />
                     <span data-valmsg-for="ProjectBuyerCode"
                           class="govuk-error-message field-validation-valid" style="display:none;"></span>
                 </div>
@@ -72,7 +72,7 @@
                 <div class="govuk-form-group sup_margin_bottom_10">
                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="Buyer">Buyer</label>
                     <input type="hidden" name="Buyer" id="BuyerHidden" value="@Model.Buyer" />
-                    <input class="govuk-input govuk-!-font-size-16" id="BuyerDisplay"
+                    <input class="govuk-input govuk-!-font-size-16" id="BuyerDisplay" aria-label="BuyerDisplay"
                            value="@Model.Buyer" disabled />
                     @if (!isEdit)
                     {
