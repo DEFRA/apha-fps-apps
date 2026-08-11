@@ -618,6 +618,8 @@ namespace Apha.FPS.DataAccess.Repositories
             entity.BudgetCvl = project.BudgetCvl;
             entity.TransferIncome = project.TransferIncome;
 
+            NormalizeDateTimesToUnspecified(entity);
+            _dbContext.ProjectLogs.Add(MapProjectToLog(entity, "U", _requestContext.UserEmailId));
             await _dbContext.SaveChangesAsync();
             return entity;
         }
