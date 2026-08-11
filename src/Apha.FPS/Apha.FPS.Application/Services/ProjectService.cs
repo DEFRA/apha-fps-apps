@@ -100,6 +100,17 @@ namespace Apha.FPS.Application.Services
                 ]);
             }
 
+            if (!string.IsNullOrWhiteSpace(projectDto.ParentProject) &&
+                await _projectRepository.CheckProjectExistsAsync(projectDto.ParentProject))
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot create project: Project Code '{projectDto.ParentProject}' already exists.",
+                        "CODE_ALREADY_EXISTS")
+                ]);
+            }
+
             var project = _mapper.Map<Project>(projectDto);
             var created = await _projectRepository.CreateProjectAsync(project);
             return _mapper.Map<ProjectDto>(created);

@@ -37,7 +37,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         // GET: ProgrammeNewProject/Add for new project (with model for dropdowns)
         public async Task<IActionResult> Add()
         {
-            var model = new ProgrammeNewProjectViewModel { Disease = "Not Specified" };
+            // Sentinel value (matches no dropdown option) so the "Select" placeholder stays selected
+            var model = new ProgrammeNewProjectViewModel { Disease = "Not Specified", IsDefraProject = -99 };
             await PopulateDropdownsAsync(model);
             ViewBag.IsEditMode = false;
             return View("ProjectAddEdit", model);
@@ -216,7 +217,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     $"{cc.CostCentre} | {cc.ProfitCentre ?? string.Empty} | {cc.WGs ?? string.Empty}",
                     cc.CostCentre?.ToString() ?? "",
                     cc.CostCentre == model.CostCentre))
-                .Prepend(new SelectListItem("", ""))
                 .ToList();
 
             var projectGroups = (await projectGroupTask).Data ?? new();
@@ -224,35 +224,30 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 .Where(pg => !string.IsNullOrEmpty(pg.ProjectGroupName))
                 .OrderBy(pg => pg.ProjectGroupName)
                 .Select(pg => new SelectListItem(pg.ProjectGroupName, pg.ProjectGroupName, pg.ProjectGroupName == model.ProjectGroup))
-                .Prepend(new SelectListItem("", ""))
                 .ToList();
 
             var accountCodes = (await accountCodeTask).Data ?? new();
             model.IncomeAccountCodeList = accountCodes
                 .Where(ac => !string.IsNullOrEmpty(ac.Code))
                 .Select(ac => new SelectListItem($"{ac.Code} - {ac.Description ?? string.Empty}", ac.Code, ac.Code == model.IncomeAccountCode))
-                .Prepend(new SelectListItem("", ""))
                 .ToList();
 
             var subAccounts = (await subAccountTask).Data ?? new();
             model.SubAccountCodeList = subAccounts
                 .Where(sa => !string.IsNullOrEmpty(sa.SubAccountCode))
                 .Select(sa => new SelectListItem($"{sa.SubAccountCode} - {sa.SubAccount ?? string.Empty}", sa.SubAccountCode, sa.SubAccountCode == model.SubAccountCode))
-                .Prepend(new SelectListItem("", ""))
                 .ToList();
 
             var statuses = (await statusTask).Data ?? new();
             model.ProjectStatusList = statuses
                 .Where(s => !string.IsNullOrEmpty(s.Status))
                 .Select(s => new SelectListItem(s.Status, s.Status, s.Status == model.ProjectStatus))
-                .Prepend(new SelectListItem("", ""))
                 .ToList();
 
             var diseases = (await diseaseTask).Data ?? new();
             model.DiseaseList = diseases
                 .Where(d => !string.IsNullOrEmpty(d.Disease))
                 .Select(d => new SelectListItem(d.Disease, d.Disease, d.Disease == model.Disease))
-                .Prepend(new SelectListItem("", ""))
                 .ToList();
 
             var customers = (await customerTask).Data ?? new();
@@ -260,28 +255,24 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 .Where(c => !string.IsNullOrEmpty(c.Customer))
                 .OrderBy(c => c.Customer.Trim())
                 .Select(c => new SelectListItem(c.Customer.Trim(), c.Customer.Trim(), c.Customer.Trim() == model.Customer?.Trim()))
-                .Prepend(new SelectListItem("", ""))
                 .ToList();
 
             var contracts = (await contractTask).Data ?? new();
             model.ContractList = contracts
                 .Where(c => !string.IsNullOrEmpty(c.ContractNo))
                 .Select(c => new SelectListItem(c.ContractNo, c.ContractNo, c.ContractNo == model.Contract))
-                .Prepend(new SelectListItem("", ""))
                 .ToList();
 
             var programs = (await programTask).Data ?? Enumerable.Empty<ProgramDto>();
             model.ProgramList = programs
                 .Where(p => !string.IsNullOrEmpty(p.ProgramNo))
                 .Select(p => new SelectListItem($"{p.ProgramNo} | {p.ProgramName ?? string.Empty}", p.ProgramNo, p.ProgramNo == model.Program))
-                .Prepend(new SelectListItem("", ""))
                 .ToList();
 
             model.IsDefraProjectList = new List<SelectListItem>
             {
-                new("", ""),
-                new("Yes", "-1", model.IsDefraProject == -1),
-                new("No", "0", model.IsDefraProject == 0)
+                new("Yes", "-1"),
+                new("No", "0")
             };
         }
     }
