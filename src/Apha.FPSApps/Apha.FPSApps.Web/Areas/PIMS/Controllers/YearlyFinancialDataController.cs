@@ -72,12 +72,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 {
                     ProjectDetailDto detail = detailResult.Data;
                     viewModel.StartDate = detail.StartDate.HasValue
-                        ? detail.StartDate.Value.ToString("M/d/yyyy")
+                        ? detail.StartDate.Value.ToString("dd/MM/yyyy")
                         : string.Empty;
                     viewModel.EndDate = detail.RevisedEndDate.HasValue
-                        ? detail.RevisedEndDate.Value.ToString("M/d/yyyy")
+                        ? detail.RevisedEndDate.Value.ToString("dd/MM/yyyy")
                         : (detail.EndDate.HasValue
-                            ? detail.EndDate.Value.ToString("M/d/yyyy")
+                            ? detail.EndDate.Value.ToString("dd/MM/yyyy")
                             : string.Empty);
                 }
             }
@@ -164,12 +164,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             ProjectDetailDto detail = detailResult.Data;
             string startDate = detail.StartDate.HasValue
-                ? detail.StartDate.Value.ToString("M/d/yyyy")
+                ? detail.StartDate.Value.ToString("dd/MM/yyyy")
                 : string.Empty;
             string endDate = detail.RevisedEndDate.HasValue
-                ? detail.RevisedEndDate.Value.ToString("M/d/yyyy")
+                ? detail.RevisedEndDate.Value.ToString("dd/MM/yyyy")
                 : (detail.EndDate.HasValue
-                    ? detail.EndDate.Value.ToString("M/d/yyyy")
+                    ? detail.EndDate.Value.ToString("dd/MM/yyyy")
                     : string.Empty);
 
             return Json(new { success = true, startDate, endDate });
