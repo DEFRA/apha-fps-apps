@@ -17,11 +17,11 @@
     {
         @if (Model.SelectedYearStatus.Equals("Closed", StringComparison.OrdinalIgnoreCase))
         {
-            <div class="app-log">The selected financial year has been closed and is no longer available for modification.</div>
+            <div class="year-end-message">The selected financial year has been closed and is no longer available for modification.</div>
         }
         else if (Model.SelectedYearStatus.Equals("Planned", StringComparison.OrdinalIgnoreCase))
         {
-            <div class="app-log">The selected financial year is in planing stage and is no longer available for modification.</div>
+            <div class="year-end-message">The selected financial year is in planing stage and is no longer available for modification.</div>
         }
     }
 </div>
