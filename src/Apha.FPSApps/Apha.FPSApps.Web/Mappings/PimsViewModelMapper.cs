@@ -42,6 +42,8 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<PactPayDto, PactPayItem>().ReverseMap();
             CreateMap<MonthlyPactDto, MonthlyPactItem>().ReverseMap();
             CreateMap<MilestoneItem, MilestoneDto>().ReverseMap();
+            CreateMap<PMDMilestoneItem, MilestoneDto>().ReverseMap();
+            CreateMap<MilestoneDto, PMDMilestoneItem>().ReverseMap();
             CreateMap<MilestoneFormDatesItem, MilestoneFormDatesDto>().ReverseMap();
             CreateMap<LogMilestoneItem, LogMilestoneDto>().ReverseMap();
             CreateMap<InvoiceItem, RadTrackInvoiceDto>().ReverseMap();

@@ -7,6 +7,7 @@ using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Web;
 
 namespace Apha.PIMS.Api.Controllers
 {
@@ -38,5 +39,28 @@ namespace Apha.PIMS.Api.Controllers
             PaginatedResult<MilestoneDto> result = await _service.GetPMDMilestonesAsync(parameters, project);
             return Ok(_mapper.Map<PaginationRes<MilestoneRes>>(result));
         }
+        [HttpPut("update")]
+        public async Task<IActionResult> UpdateMilestone_PMD(
+            [FromQuery] string? project,
+            [FromQuery] string? number,
+            [FromBody] MilestoneReq request)
+        {
+            if (string.IsNullOrWhiteSpace(project) || string.IsNullOrWhiteSpace(number))
+                return BadRequest(new { success = false, message = "Project and milestone number are required." });
+
+            MilestoneDto dto = _mapper.Map<MilestoneDto>(request);
+            string? changedBy = User.Identity?.Name is { } name ? name[..Math.Min(10, name.Length)] : null;
+            MilestoneDto result = await _service.UpdateMilestoneAsync_PMD(
+                project,
+                HttpUtility.UrlDecode(number),
+                dto.UnderSdReview,
+                dto.OnTarget ?? 0,
+                dto.DateCompleted,
+                dto.ProjectLeaderComment,
+                changedBy);
+
+            return Ok(_mapper.Map<MilestoneRes>(result));
+        }
+
     }
 }
