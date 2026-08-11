@@ -33,7 +33,7 @@
                             <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                     id="invFilterProject"
                                     onchange="onInvProjectChange()"
-                                    aria-label="invFilterProject">
+                                    aria-label="Filter by project">
                                 <option value="">       </option>
                                 @foreach (var item in Model.ProjectList)
                                 {
@@ -56,7 +56,7 @@
                             <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                     id="invFilterSurvContract"
                                     onchange="onInvContractChange()"
-                                    aria-label="invFilterSurvContract">
+                                    aria-label="Filter by surveillance contract">
                                 <option value="">       </option>
                                 @foreach (var item in Model.ContractList)
                                 {
@@ -78,7 +78,7 @@
                             <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                     id="invFilterYear"
                                     onchange="applyInvoiceFilters()"
-                                    aria-label="invFilterYear">
+                                    aria-label="Filter by year">
                                 <option value="">       </option>
                                 @foreach (var item in Model.YearList)
                                 {
@@ -101,7 +101,7 @@
                             <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                     id="invFilterProgram"
                                     onchange="onInvProgramChange()"
-                                    aria-label="invFilterProgram">
+                                    aria-label="Filter by program">
                                 <option value="">       </option>
                                 @foreach (var item in Model.ProgramList)
                                 {
