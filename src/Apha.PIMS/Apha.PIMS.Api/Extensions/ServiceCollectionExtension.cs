@@ -30,6 +30,40 @@ namespace Apha.PIMS.Api.Extensions
             services.AddScoped<IMilestoneService, MilestoneService>();
             services.AddScoped<IRadTrackInvoiceService, RadTrackInvoiceService>();       
             services.AddScoped<IYearlyFinancialDataService, YearlyFinancialDataService>();
+            services.AddScoped<IRadTrackInvoiceService, RadTrackInvoiceService>();
+
+           
+            services.AddScoped<IReportService, ReportService>();
+            services.AddScoped<IReportGroupService, ReportGroupService>();
+            services.AddScoped<IReportGroupLinkService, ReportGroupLinkService>();
+
+            
+            services.AddScoped<IProjectManagerService, ProjectManagerService>();
+            services.AddScoped<IProgramManagerLinkService, ProgramManagerLinkService>();
+            services.AddScoped<IProfitCentreManagerLinkService, ProfitCentreManagerLinkService>();
+
+           
+            services.AddScoped<ISettingService, SettingService>();
+
+           
+            services.AddScoped<IAccessUserService, AccessUserService>();
+            services.AddScoped<IAccessLevelService, AccessLevelService>();
+            services.AddScoped<IAccessUserLevelService, AccessUserLevelService>();
+            services.AddScoped<IAccessSystemService, AccessSystemService>();
+
+           
+            services.AddScoped<IFrequencyService, FrequencyService>();
+            services.AddScoped<IReviewItemService, ReviewItemService>();
+
+            
+            services.AddScoped<IRadTrackProgService, RadTrackProgService>();
+
+            // Risk rating lookup maintenance
+            services.AddScoped<IRiskService, RiskService>();
+
+            // Publication type lookup maintenance
+            services.AddScoped<IPublicationTypeService, PublicationTypeService>();
+
             return services;
         }
 
@@ -45,6 +79,39 @@ namespace Apha.PIMS.Api.Extensions
             services.AddScoped<IMilestoneRepository, MilestoneRepository>();
             services.AddScoped<IRadTrackInvoiceRepository, RadTrackInvoiceRepository>();
             services.AddScoped<IYearlyFinancialDataRepository, YearlyFinancialDataRepository>();
+
+            
+            services.AddScoped<IReportRepository, ReportRepository>();
+            services.AddScoped<IReportGroupRepository, ReportGroupRepository>();
+            services.AddScoped<IReportGroupLinkRepository, ReportGroupLinkRepository>();
+
+            
+            services.AddScoped<IProjectManagerRepository, ProjectManagerRepository>();
+            services.AddScoped<IProgramManagerLinkRepository, ProgramManagerLinkRepository>();
+            services.AddScoped<IProfitCentreManagerLinkRepository, ProfitCentreManagerLinkRepository>();
+
+            
+            services.AddScoped<ISettingRepository, SettingRepository>();
+
+            
+            services.AddScoped<IAccessUserRepository, AccessUserRepository>();
+            services.AddScoped<IAccessLevelRepository, AccessLevelRepository>();
+            services.AddScoped<IAccessUserLevelRepository, AccessUserLevelRepository>();
+            services.AddScoped<IAccessSystemRepository, AccessSystemRepository>();
+
+            
+            services.AddScoped<IFrequencyRepository, FrequencyRepository>();
+            services.AddScoped<IReviewItemRepository, ReviewItemRepository>();
+
+            
+            services.AddScoped<IRadTrackProgRepository, RadTrackProgRepository>();
+
+           
+            services.AddScoped<IRiskRepository, RiskRepository>();
+
+            
+            services.AddScoped<IPublicationTypeRepository, PublicationTypeRepository>();
+
             return services;
         }
     }

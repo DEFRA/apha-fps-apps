@@ -23,6 +23,8 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<StaffJobDto, StaffJobRes>().ReverseMap();
 
             CreateMap<FpsSettingRes, FpsSettingDto>().ReverseMap();
+            CreateMap<FpsSettingReq, FpsSettingDto>().ReverseMap();
+            CreateMap<FpsYearEndSettingRes, YearEndFpsSettingDto>().ReverseMap();
 
             CreateMap<AnimalCostViewDto, AnimalCostViewRes>().ReverseMap();
             CreateMap<AnimalSnapshotViewDto, AnimalSnapshotViewRes>().ReverseMap();
@@ -181,6 +183,12 @@ namespace Apha.FPS.Api.Mappings
 
             // Resource Replan — project staff replan
             CreateMap<ProjectStaffReplanDto, ProjectStaffReplanRes>().ReverseMap();
+            CreateMap<BatchJobHistoryRes, BatchJobHistoryDto>().ReverseMap();
+            CreateMap<BatchJobQueueRes, BatchJobQueueDto>().ReverseMap();
+            CreateMap<BatchJobEventTriggerRes, BatchJobEventTriggerDto>().ReverseMap();
+            CreateMap<MonthHourRes, MonthHourDto>().ReverseMap();
+            CreateMap<MonthHourReq, MonthHourDto>().ReverseMap();
+            CreateMap<YearEndMonthHourRes, YearEndMonthHourDto>().ReverseMap();
         }
     }
 }
