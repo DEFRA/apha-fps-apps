@@ -1,18 +1,30 @@
 @model Apha.FPSApps.Web.Models.Components.YearSelector.YearSelectorViewModel
 
-<select id="yearSelector"
-        class="app-log"
-        aria-label="Year"
-        data-area="@ViewContext.RouteData.Values["area"]">
-    @foreach (var item in Model.Years)
+<div style="display: flex; align-items: center; gap: 10px;">
+    <select id="yearSelector"
+            class="app-log"
+            aria-label="Year"
+            data-area="@ViewContext.RouteData.Values["area"]">
+        @foreach (var item in Model.Years)
+        {
+            var selectedAttr = item.Selected ? "selected" : null;
+            <option value="@item.Value" selected="@selectedAttr">
+                @item.Text
+            </option>
+        }
+    </select>
+    @if (!string.IsNullOrEmpty(Model.SelectedYearStatus))
     {
-        var selectedAttr = item.Selected ? "selected" : null;
-        <option value="@item.Value" selected="@selectedAttr">
-            @item.Text
-        </option>
+        @if (Model.SelectedYearStatus.Equals("Closed", StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="app-log">The selected financial year has been closed and is no longer available for modification.</div>
+        }
+        else if (Model.SelectedYearStatus.Equals("Planned", StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="app-log">The selected financial year is in planing stage and is no longer available for modification.</div>
+        }
     }
-</select>
-
+</div>
 <script>
     $('#yearSelector').on('change', function () {
         var area = $(this).data('area') || '';
