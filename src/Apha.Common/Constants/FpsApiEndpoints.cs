@@ -252,6 +252,10 @@
         public const string DeleteBudgetBid = "api/v1/budgetbids?WorkGroupName={0}&account={1}";
         public const string GetBudgetBidsAccounts = "api/v1/budgetbids/accounts";
 
+        // Misc Reports — Tests Required By Work Group (Test Manager WG Pivot)
+        public const string GetTestsRequiredByWg = "api/v1/testsrequiredbywg?profitCentre={0}";
+        public const string GetTestsRequiredByRc = "api/v1/testsrequiredbyrc?profitCentre={0}";
+
         // Income/Contribution from Time Sales (frmTimeSellerPC)
         public const string GetContributionSummaryRows   = "api/v1/timeseller/{0}/rows";
         public const string GetContributionSummaryTotals = "api/v1/timeseller/{0}/totals";

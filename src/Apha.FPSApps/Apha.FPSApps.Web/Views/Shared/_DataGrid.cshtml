@@ -353,7 +353,7 @@
          <div class="sup_pagination_footer sup_p_0">
              <div class="sup_pagination_wrapper">
                  <div class="sup_margin_top_bottom_5_10 sup_flex_center">
-                    <label for="recordsPerPage" class="sup_margin_right_5">Records per page  </label>
+                    <label for="recordsPerPage" class="sup_margin_right_5 sup_font_weight_700">Records per page</label>&nbsp;
                     <select id="@($"{Model.GridId}_pageSize")" class="sup_max_width_3 govuk-select govuk-!-font-size-16">
                          @{
                              var sizes = new[] { 5, 10, 20, 50, 100 };
@@ -366,8 +366,8 @@
                              </option>
                          }
                      </select>
-                      <span class="record-info ">
-                         Record: @(Model.Pagination.TotalRecords > 0 ? ((Model.Pagination.PageSize * (Model.Pagination.PageNumber - 1)) + 1) : 0) of @Model.Pagination.TotalRecords
+                      <span class="sup_font_weight_700">
+                        of @Model.Pagination.TotalRecords
                       </span>
                  </div>
 

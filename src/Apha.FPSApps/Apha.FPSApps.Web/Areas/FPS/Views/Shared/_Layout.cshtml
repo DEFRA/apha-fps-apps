@@ -55,10 +55,13 @@
     <fps-year-script></fps-year-script>
 
     <script>
-            // ── Modal open / close helpers ────────────────────────────────────
-            (function() {
-                var modal = document.getElementById('modalPopup');
-                if (!modal) return;
+        $(document).ready(function () {
+            $(document).ajaxStart(showLoader).ajaxStop(hideLoader);
+                });
+        // ── Modal open / close helpers ────────────────────────────────────
+        (function () {
+            var modal = document.getElementById('modalPopup');
+            if (!modal) return;
 
                 var observer = new MutationObserver(function() {
                     if (modal.classList.contains('show')) {
