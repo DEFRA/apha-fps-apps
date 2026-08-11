@@ -50,6 +50,7 @@
                            type="text"
                            required
                            aria-required="true"
+                           aria-label="Name"
                            aria-describedby="editNameError" />
                     <span asp-validation-for="ReportName"
                     data-valmsg-for="ReportName"
@@ -70,6 +71,7 @@
                            type="text"
                            required
                            aria-required="true"
+                           aria-label="Description"
                            aria-describedby="editDescriptionError" />
                     <span asp-validation-for="ReportDescription"
                     data-valmsg-for="ReportDescription"
@@ -92,6 +94,7 @@
                               rows="3"
                               required
                               aria-required="true"
+                              aria-label="Report Help"
                               aria-describedby="editReportHelpError"></textarea>
                     <span asp-validation-for="ReportHelp"
                     data-valmsg-for="ReportHelp"
@@ -114,6 +117,7 @@
                            type="text"
                            required
                            aria-required="true"
+                           aria-label="Mail Comment"
                            aria-describedby="editMailCommentError" />
                     <span asp-validation-for="MailComment" data-valmsg-for="MailComment" class="govuk-error-message" id="editMailCommentError" style="display:none;"></span>
                 </div>
@@ -130,6 +134,7 @@
                            type="text"
                            required
                            aria-required="true"
+                           aria-label="Mail Title"
                            aria-describedby="editMailTitleError" />
                     <span asp-validation-for="MailTitle"
                     data-valmsg-for="MailTitle"
@@ -151,6 +156,7 @@
                            id="editOrder"
                            type="number"
                            min="0"
+                           aria-label="Order"
                            aria-describedby="editOrderError" />
                     <span asp-validation-for="SortOrder"
                           data-valmsg-for="SortOrder"
@@ -166,6 +172,7 @@
                         <div class="govuk-checkboxes__item">
                             <input class="govuk-checkboxes__input"
                                    asp-for="Emailable"
+                                   aria-label="editEmailable"
                                    id="editEmailable"
                                    type="checkbox" />
                             <label class="govuk-label govuk-checkboxes__label govuk-!-font-size-16 sup_label_auto_width"
@@ -178,7 +185,7 @@
             </div>
         </div>
 
-        <div class="col-12" style="text-align: right; margin-top: 10px;">
+        <div class="col-12" style="display: flex; justify-content: space-between; margin-top: 10px;">
             <button type="button"
                     class="govuk-button govuk-button--secondary sup_margin_0"
                     onclick="closeModal()">
