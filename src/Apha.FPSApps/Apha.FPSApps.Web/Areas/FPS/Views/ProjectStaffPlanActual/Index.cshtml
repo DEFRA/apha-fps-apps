@@ -128,12 +128,8 @@
             refreshPlannedCost();
         };
 
-        var _loaderPendingGrids = 0;
-
         $(document).ready(function () {
             if (currentProjectCode) {
-                showLoader();
-                _loaderPendingGrids = 2;
                 setTimeout(function () {
                     window['gridManager_@Model.StaffPlanGrid.GridId'].reloadGrid({ page: 1 });
                     window['gridManager_@Model.CompareStaff2Grid.GridId'].reloadGrid({ page: 1 });
@@ -142,13 +138,6 @@
                 }, 0);
             }
 
-            document.addEventListener('gridReloaded', function (e) {
-                var tracked = ['@Model.StaffPlanGrid.GridId', '@Model.CompareStaff2Grid.GridId'];
-                if (tracked.indexOf(e.detail.gridId) !== -1 && _loaderPendingGrids > 0) {
-                    _loaderPendingGrids--;
-                    if (_loaderPendingGrids === 0) hideLoader();
-                }
-            });
             var actualGridContainer = document.getElementById('gridContainer_@Model.CompareStaff2Grid.GridId');
             if (actualGridContainer) {
                 new MutationObserver(function () {
@@ -190,8 +179,6 @@
                         }
                     );
 
-                    showLoader();
-                    _loaderPendingGrids = 2;
                     setTimeout(function () {
                         window['gridManager_@Model.StaffPlanGrid.GridId'].reloadGrid({ page: 1 });
                         window['gridManager_@Model.CompareStaff2Grid.GridId'].reloadGrid({ page: 1 });

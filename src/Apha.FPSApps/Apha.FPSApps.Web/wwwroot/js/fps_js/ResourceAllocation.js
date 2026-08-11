@@ -49,11 +49,9 @@ function ajaxPost(url, params) {
 
         if (nameEl) nameEl.textContent = centre;
         resetSelect(el('workGroupSelect'), WG_PLACEHOLDER);
-        showLoader();
 
         $.get(WG_URL, { resourceCentre: centre })
             .done(r => {
-                hideLoader();
                 if (r?.success) {
                     buildSelectOptions(el('workGroupSelect'), r.data, wg => wg, wg => wg);
                 } else {
@@ -61,7 +59,6 @@ function ajaxPost(url, params) {
                 }
             })
             .fail(() => {
-                hideLoader();
                 showAlertMessage(`Could not load work groups for '${centre}'. Please try selecting the Resource Centre again.`, AlertType.ERROR);
             });
     }
@@ -74,10 +71,8 @@ function ajaxPost(url, params) {
             return;
         }
 
-        showLoader();
         $.get(GRADE_URL, { workGroup: selectedGroup })
             .done(r => {
-                hideLoader();
                 if (r?.success) {
                     resetSelect(el('workGroupGradeSelect'), GRADE_PLACEHOLDER);
                     buildSelectOptions(el('workGroupGradeSelect'), r.data, wg => wg.wgGrade, wg => wg.wgGrade);
@@ -86,7 +81,6 @@ function ajaxPost(url, params) {
                 }
             })
             .fail(() => {
-                hideLoader();
                 showAlertMessage(`Could not load grades for work group '${selectedGroup}'. Please try selecting the work group again.`, AlertType.ERROR);
             });
     }
@@ -151,14 +145,12 @@ function ajaxPost(url, params) {
         currentGrade = grade;
         currentStaffId = '';
 
-        showLoader();
         try {
             const html = await ajaxPost(staffGridUrl, { workGroupGrade: grade, page: 1, pageSize: 10 });
             el('gridContainer_StaffAllocationGrid').innerHTML = html;
             SelectFirstStaffRow();
             await loadStaffAllocationTotals(grade);
         } catch {
-            hideLoader();
             showAlertMessage('Error loading staff allocation grid.', AlertType.ERROR);
         }
     }
@@ -182,8 +174,6 @@ function ajaxPost(url, params) {
             }
         } catch {
             clearSummaryPanel();
-        } finally {
-            hideLoader();
         }
     }
 
@@ -209,14 +199,11 @@ function ajaxPost(url, params) {
         if (!staffId) return;
         currentStaffId = staffId;
 
-        showLoader();
         try {
             const html = await ajaxPost(jobsGridUrl, { staffId, page: 1, pageSize: 10 });
             el('gridContainer_StaffJobsGrid').innerHTML = html;
         } catch {
             showAlertMessage('Error loading staff jobs grid.', AlertType.ERROR);
-        } finally {
-            hideLoader();
         }
     }
 
@@ -300,7 +287,6 @@ function ajaxPost(url, params) {
         if (!rcSelect || !Array.from(rcSelect.options).some(o => o.value === saved.centre)) return;
         rcSelect.value = saved.centre;
 
-        showLoader();
         try {
             // ── 1. Restore workgroup dropdown ─────────────────────────────
             const wgResp = await ajaxGet(WG_URL, { resourceCentre: saved.centre });
@@ -351,8 +337,6 @@ function ajaxPost(url, params) {
             SelectFirstStaffRow();
         } catch {
             showAlertMessage('Could not restore selections. Please re-select the Resource Centre manually.', AlertType.INFO);
-        } finally {
-            hideLoader();
         }
     }
 

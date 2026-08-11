@@ -17,17 +17,14 @@ function addAnimalPlan(btn) {
         showAlertMessage('Please select a project first.', AlertType.INFO);
         return;
     }
-    showLoader();
     $.ajax({
         url: '/FPS/AnimalJob/Create',
         type: 'GET',
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-            hideLoader();
         },
         error: function (xhr) {
-            hideLoader();
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
@@ -43,7 +40,6 @@ function saveAnimalPlan() {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;
     }
-    showLoader();
     var data = {
         IndCounter: 0,
         JobCode: AnimalJobConfig.getJobCode(),
@@ -59,7 +55,6 @@ function saveAnimalPlan() {
         data: JSON.stringify(data),
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
-            hideLoader();
             if (result.success) {
                 closeModal();
                 showAlertMessage(result.message, AlertType.SUCCESS).then(function () {                   
@@ -70,7 +65,6 @@ function saveAnimalPlan() {
             }
         },
         error: function (xhr) {
-            hideLoader();
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
@@ -81,7 +75,6 @@ function saveAnimalPlan() {
 }
 
 function editAnimalPlan(btn) {
-    showLoader();
     var indCounter = $(btn).data('id');
     $.ajax({
         url: '/FPS/AnimalJob/Edit',
@@ -90,10 +83,8 @@ function editAnimalPlan(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-            hideLoader();
         },
         error: function (xhr) {
-            hideLoader();
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
@@ -109,7 +100,6 @@ function updateAnimalPlan() {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;
     }
-    showLoader();
     var indCounter = $('#IndCounter').val();
     var jobCode = form.find('[name="JobCode"]').val();
     var data = {
@@ -127,7 +117,6 @@ function updateAnimalPlan() {
         data: JSON.stringify(data),
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
-            hideLoader();
             if (result.success) {
                 closeModal();
                 showAlertMessage(result.message, AlertType.SUCCESS).then(function () {                    
@@ -138,7 +127,6 @@ function updateAnimalPlan() {
             }
         },
         error: function (xhr) {
-            hideLoader();
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
@@ -152,13 +140,11 @@ function deleteAnimalPlan(btn) {
     var indCounter = $(btn).data('id');
     showGovukConfirm('Are you sure you want to delete this animal cost entry?').then(function (confirmed) {
         if (!confirmed) { return; }
-        showLoader();
         $.ajax({
             url: '/FPS/AnimalJob/Delete',
             type: 'DELETE',
             data: { indCounter: indCounter },
             success: function (response) {
-                hideLoader();
                 if (response.success) {
                     showAlertMessage('Deleted successfully.', AlertType.SUCCESS).then(function () {
                         AnimalJobConfig.onDeleted();
@@ -168,7 +154,6 @@ function deleteAnimalPlan(btn) {
                 }
             },
             error: function () {
-                hideLoader();
                 showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });

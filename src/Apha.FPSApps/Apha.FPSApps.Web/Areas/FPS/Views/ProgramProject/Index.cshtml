@@ -188,7 +188,6 @@
         $('#programmeSelect').on('change', function () {
             const val = $(this).val();
             currentProgramNo = val;
-            showLoader();
             // Persist selection to session for other pages
             $.ajax({
                 url: '@Url.Action("SaveProgrammeSession", "ProgrammeSelect", new { area = "FPS" })',
@@ -203,12 +202,9 @@
                         if (val) loadProjectTotals();
                     } catch (e) {
                         showAlertMessage('An error occurred while loading the projects.', AlertType.ERROR);
-                    } finally {
-                        hideLoader();
                     }
                 },
                 error: function () {
-                    hideLoader();
                     showAlertMessage('An error occurred while saving the programme selection.', AlertType.ERROR);
                 }
             });
@@ -217,7 +213,6 @@
         $('#projectGroupSelect').on('change', function () {
             const val = $(this).val();
             currentProjectGroup = val;
-            showLoader();
             $.ajax({
                 url: '@Url.Action("SaveProjectGroupSession", "ProgramProject", new { area = "FPS" })',
                 type: 'POST',
@@ -230,12 +225,9 @@
                         if (val) loadProjectTotals();
                     } catch (e) {
                         showAlertMessage('An error occurred while loading the projects.', AlertType.ERROR);
-                    } finally {
-                        hideLoader();
                     }
                 },
                 error: function () {
-                    hideLoader();
                     showAlertMessage('An error occurred while saving the project group selection.', AlertType.ERROR);
                 }
             });

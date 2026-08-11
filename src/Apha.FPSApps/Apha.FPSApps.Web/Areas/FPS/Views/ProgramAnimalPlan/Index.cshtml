@@ -130,7 +130,6 @@
 
         $(document).ready(function () {
             if (currentProgramNo) {
-                showLoader();
                 setTimeout(function () {
                     window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
                 }, 0);
@@ -148,12 +147,7 @@
                     var firstRow = $('#tbl_@Model.ProjectsGrid.GridId tbody tr.selectable-row:first');
                     if (firstRow.length) {
                         firstRow.trigger('click');
-                    } else {
-                        hideLoader();
                     }
-                }
-                if (e.detail.gridId === '@Model.AnimalCostGrid.GridId') {
-                    hideLoader();
                 }
             });
 
@@ -199,7 +193,6 @@
                 );
             }
 
-            showLoader();
             setTimeout(function () {
                 window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
             }, 0);
@@ -233,7 +226,6 @@
                 }
             );
 
-            showLoader();
             setTimeout(function () {
                 window['gridManager_@Model.AnimalCostGrid.GridId'].reloadGrid({ page: 1 });
             }, 0);

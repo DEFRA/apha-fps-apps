@@ -88,11 +88,9 @@
 
             if (!resourceCentre) return;
 
-            showLoader();
             $.get('@Url.Action("GetWorkGroupsByResourceCentre", "WgStaffPlan", new { area = "FPS" })',
                 { resourceCentre: resourceCentre },
                 function (response) {
-                    hideLoader();
                     if (response && response.success) {
                         (response.data || []).forEach(function (wg) {
                             var opt = document.createElement('option');
@@ -106,7 +104,6 @@
                     }
                 }
             ).fail(function () {
-                hideLoader();
                 showAlertMessage('Could not load work groups. Please try selecting the Resource Centre again.', AlertType.WARNING);
             });
         }
