@@ -683,22 +683,7 @@ function loadStagingModalBuyersByTestCode(workGroup, testCode, restoreBuyer) {
 }
 
 function saveStagingMonthlyOutput() {
-    var form = $('#stagingMonthlyOutputForm');
-
-    // Validate all numeric fields before checking isFormValid
-    // form.find('.decfmt-input').each(function() {
-    //     validateRangeOnInput(this);
-    // });
-
-    // Check for numeric validation errors
-    // if (hasNumericValidationErrors(form)) {
-    //     // Ensure validation messages are visible
-    //     if (typeof ensureValidationMessagesVisible === 'function') {
-    //         ensureValidationMessagesVisible(form);
-    //     }
-    //     displayClientValidationErrors(form, form);
-    //     return;
-    // }
+    var form = $('#stagingMonthlyOutputForm');   
 
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, form);
