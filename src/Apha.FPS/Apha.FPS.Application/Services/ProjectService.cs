@@ -145,6 +145,17 @@ namespace Apha.FPS.Application.Services
 
         public async Task<ProjectDto?> UpdatePactPortfolioDetailsAsync(ProjectDto projectDto)
         {
+            if (!string.IsNullOrWhiteSpace(projectDto.Program) &&
+                !await _projectRepository.CheckProgramExistsAsync(projectDto.Program))
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot update portfolio: Program '{projectDto.Program}' does not exist.",
+                        "PROGRAM_NOT_FOUND")
+                ]);
+            }
+
             var project = _mapper.Map<Project>(projectDto);
             var updated = await _projectRepository.UpdatePactPortfolioDetailsAsync(project);
             return updated == null ? null : _mapper.Map<ProjectDto>(updated);
