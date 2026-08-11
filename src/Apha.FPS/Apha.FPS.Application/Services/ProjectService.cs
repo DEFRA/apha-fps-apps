@@ -106,7 +106,7 @@ namespace Apha.FPS.Application.Services
                 throw new BusinessValidationErrorException(
                 [
                     new BusinessValidationError(
-                        $"Cannot create project: Project Code '{projectDto.ParentProject}' already exist.",
+                        $"Cannot create project: Project Code '{projectDto.ParentProject}' already exists.",
                         "CODE_ALREADY_EXISTS")
                 ]);
             }
