@@ -95,6 +95,11 @@
             });
             return obj;
         };
+
+        // ── AJAX Loader helpers ───────────────────────────────────────────
+        $(document).ready(function () {
+            $(document).ajaxStart(showLoader).ajaxStop(hideLoader);
+        });
     </script>
 
     <script src="~/js/common/headernav/navmenu.js"></script>

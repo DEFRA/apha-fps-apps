@@ -1109,7 +1109,6 @@ function importMonthlyTime(file) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('importType', window.monthlyTimeImportType || '2');
-    showLoader();
 
     $.ajax({
         url: '/PACT/MonthlyTime/Import',
@@ -1128,15 +1127,12 @@ function importMonthlyTime(file) {
         },
         error: function () {
             showAlertMessage('An error occurred while importing.', AlertType.ERROR);
-        },
-        complete: function () {
-            hideLoader();
         }
     });
 }
 
 function validateMonthlyTime() {
-    showLoader();
+
     $.ajax({
         url: '/PACT/MonthlyTime/Validate',
         type: 'POST',
@@ -1150,15 +1146,12 @@ function validateMonthlyTime() {
         },
         error: function () {
             showAlertMessage('An error occurred during validation.', AlertType.ERROR);
-        },
-        complete: function () {
-            hideLoader();
         }
     });
 }
 
 function makeLiveMonthlyTime() {
-    showLoader();
+   
     $.ajax({
         url: '/PACT/MonthlyTime/MakeLive',
         type: 'POST',
@@ -1173,9 +1166,6 @@ function makeLiveMonthlyTime() {
         },
         error: function (xhr) {
             showAlertMessage(xhr.responseJSON?.message || 'An error occurred during make live.', AlertType.ERROR);
-        },
-        complete: function () {
-            hideLoader();
         }
     });
 }
