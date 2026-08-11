@@ -1,4 +1,5 @@
-﻿using Amazon;
+﻿// FPS API startup extensions — service registration and middleware pipeline configuration.
+using Amazon;
 using Amazon.EventBridge;
 using Apha.Common.Contracts.Email;
 using Apha.Common.Utilities.EventPublisher;
