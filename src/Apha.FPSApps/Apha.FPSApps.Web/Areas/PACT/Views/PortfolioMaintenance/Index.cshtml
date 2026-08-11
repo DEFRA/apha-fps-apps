@@ -93,7 +93,7 @@
                 <div id="portfolioSelectMultiDropdown" class="govuk-grid-column-two-thirds sup_p_0"></div>
             </div>
         </div>
-        <h1>
+        <div>
              @if (!string.IsNullOrEmpty(ViewBag.SourceWorkGroup as string))
                 {
                     <a href="@Url.Action("Index", "WorkGroupTestCapability", new { area = "PACT", workgroup = ViewBag.SourceWorkGroup })" 
@@ -103,7 +103,7 @@
                         Back
                     </a>
                 }
-        </h1>
+        </div>
     </div>
 </div>
 
@@ -175,7 +175,7 @@
                             <label class="govuk-label govuk-!-font-weight-bold" asp-for="CurrentPortfolio.ParentProject">
                                 Parent Project
                             </label>
-                            <input class="govuk-input govuk-!-font-size-16" asp-for="CurrentPortfolio.ParentProject"
+                            <input class="govuk-input govuk-!-font-size-16" asp-for="CurrentPortfolio.ParentProject" aria-label="Select parent project"
                                    id="txtParentProject" disabled />
                             <span asp-validation-for="CurrentPortfolio.ParentProject" class="govuk-error-message"></span>
                         </div>
@@ -185,7 +185,7 @@
                                 Project Title <span class="sup_color_red">*</span>
                             </label>
                             <input class="govuk-input govuk-!-font-size-16" asp-for="CurrentPortfolio.ProjectTitle"
-                                   id="txtProjectTitle" />
+                                   id="txtProjectTitle" aria-label="Select project title" />
                             <span asp-validation-for="CurrentPortfolio.ProjectTitle" class="govuk-error-message"></span>
                         </div>
 
@@ -193,7 +193,7 @@
                              data-module="govuk-checkboxes">
                             <div class="govuk-checkboxes__item">
                                 <input class="govuk-checkboxes__input" asp-for="CurrentPortfolio.Finished"
-                                       id="chkFinished" type="checkbox" value="true" />
+                                       id="chkFinished" type="checkbox" value="true" aria-label="Finished checkbox" />
                                 <label class="govuk-label govuk-checkboxes__label govuk-!-font-weight-bold"
                                        asp-for="CurrentPortfolio.Finished">
                                     Finished
@@ -252,7 +252,7 @@
                                 Comments
                             </label>
                             <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_bottom_10"
-                                      asp-for="CurrentPortfolio.Comments" id="txtComments" rows="2"></textarea>
+                                      asp-for="CurrentPortfolio.Comments" id="txtComments" rows="2" aria-label="Enter Comments"></textarea>
                             <span asp-validation-for="CurrentPortfolio.Comments" class="govuk-error-message"></span>
                         </div>
 

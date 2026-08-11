@@ -96,6 +96,8 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             // BudgetResourceLevel
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
+            CreateMap<TestsRequiredByWgView, TestsRequiredByWgDto>().ReverseMap();
+            CreateMap<TestsRequiredByRcView, TestsRequiredByRcDto>().ReverseMap();
             CreateMap<GenericBidView, GenericBidViewDto>().ReverseMap();
             CreateMap<ProjectExceptionalCostView, ProjectExceptionalCostViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();

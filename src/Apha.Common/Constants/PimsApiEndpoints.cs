@@ -54,6 +54,7 @@ namespace Apha.Common.Constants
         public const string GetMilestone = "api/v1/milestone/{0}/milestones/{1}";
         public const string SaveMilestone = "api/v1/milestone/{0}/milestones";
         public const string UpdateMilestone = "api/v1/milestone/{0}/milestones/{1}";
+        public const string UpdateMilestoneAsync_PMD = "api/v1/pmd/update";
         public const string DeleteMilestone = "api/v1/milestone/{0}/milestones/{1}";
         public const string UpdateFormRequired = "api/v1/milestone/{0}/formrequired";
         public const string GetAllProjectsForMilestone = "api/v1/projectlist/AllProjectsMilestone";
