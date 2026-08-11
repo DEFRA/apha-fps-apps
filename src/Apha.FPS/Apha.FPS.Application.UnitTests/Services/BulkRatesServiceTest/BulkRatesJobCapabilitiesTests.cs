@@ -1,7 +1,8 @@
 using Apha.Common.Constants;
+using Apha.FPS.Application.Services;
 using FluentAssertions;
 
-namespace Apha.Common.UnitTests.Constants
+namespace Apha.FPS.Application.UnitTests.Services.BulkRatesServiceTest
 {
     /// <summary>
     /// Staff/Animal joined FEC in RequiresDownloadVersion once their request-scoped download

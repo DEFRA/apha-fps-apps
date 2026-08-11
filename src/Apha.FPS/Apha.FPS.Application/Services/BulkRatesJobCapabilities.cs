@@ -1,4 +1,6 @@
-namespace Apha.Common.Constants
+using Apha.Common.Constants;
+
+namespace Apha.FPS.Application.Services
 {
     /// <summary>
     /// A capability check, not a hardcoded or growing job-name
