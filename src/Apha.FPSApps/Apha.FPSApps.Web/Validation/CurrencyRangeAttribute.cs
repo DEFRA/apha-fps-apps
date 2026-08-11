@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Apha.FPSApps.Web.Areas.FPS.Validation
+namespace Apha.FPSApps.Web.Validation
 {
     /// <summary>
     /// Reusable range validation for currency/decimal fields.

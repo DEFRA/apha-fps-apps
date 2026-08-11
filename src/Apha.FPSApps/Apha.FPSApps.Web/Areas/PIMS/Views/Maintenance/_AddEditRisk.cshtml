@@ -36,11 +36,12 @@
                            type="number"
                            required
                            aria-required="true"
+                           aria-label="editRiskid"
                            aria-describedby="editRiskidError" />
                     <span asp-validation-for="Riskid"
                           data-valmsg-for="Riskid"
                           class="govuk-error-message"
-                          id="editRiskRatingError"
+                          id="editRiskidError"
                           style="display:none;"></span>
                 </div>
             </div>
@@ -56,6 +57,7 @@
                            type="text"
                            required
                            aria-required="true"
+                           aria-label="RiskRating"
                            aria-describedby="editRiskRatingError" />
                     <span asp-validation-for="Riskrating"
                           data-valmsg-for="Riskrating"
@@ -66,7 +68,7 @@
             </div>
         </div>
 
-        <div class="col-12" style="text-align: right; margin-top: 10px;">
+        <div class="col-12" style="display: flex; justify-content: space-between; margin-top: 10px;">
             <button type="button"
                     class="govuk-button govuk-button--secondary sup_margin_0"
                     onclick="closeModal()">
