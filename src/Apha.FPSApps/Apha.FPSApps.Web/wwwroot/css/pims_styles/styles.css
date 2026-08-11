@@ -1596,7 +1596,7 @@ th.sorted-desc {
 
 .yfd-totals-table .yfd-total-label {
     text-align: right;
-    color: #505a5f;
+    font-weight: bold;
 }
 
 
