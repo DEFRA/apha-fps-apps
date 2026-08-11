@@ -13,23 +13,23 @@ namespace Apha.Costbook.DataAccess.Data
         {
             entity.HasKey(e => new { e.WgGrade, e.FpsYear }).HasName("pk_workgroupgrade");
 
-            entity.ToTable("workgroupgrade", DbConstants.FpsSchemaName);
+            entity.ToTable("workgroupgrade", "fps");
 
             entity.Property(e => e.WgGrade)
                 .HasMaxLength(50)
                 .HasColumnName("wggrade");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.AvSalary)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
+                .HasDefaultValue(0m)
                 .HasColumnName("avsalary");
             entity.Property(e => e.ChargeRateWg)
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
                 .HasColumnName("chargeratewg");
             entity.Property(e => e.DirectRateWg)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
+                .HasDefaultValue(0m)
                 .HasColumnName("directratewg");
-            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.GradeCode)
                 .HasMaxLength(10)
                 .HasColumnName("gradecode");
@@ -37,16 +37,16 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("hrschangedby");
             entity.Property(e => e.NprWg)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
+                .HasDefaultValue(0m)
                 .HasColumnName("nprwg");
             entity.Property(e => e.OhrWg)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
+                .HasDefaultValue(0m)
                 .HasColumnName("ohrwg");
             entity.Property(e => e.PayRateWg)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
+                .HasDefaultValue(0m)
                 .HasColumnName("payratewg");
             entity.Property(e => e.ProfitCentreGrade)
                 .HasMaxLength(20)
@@ -54,8 +54,6 @@ namespace Apha.Costbook.DataAccess.Data
             entity.Property(e => e.WorkGroup)
                 .HasMaxLength(50)
                 .HasColumnName("workgroup");
-
-            
         }
     }
 }
