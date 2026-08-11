@@ -201,7 +201,10 @@ namespace Apha.PACT.DataAccess.Repository
                 "non-standard" => baseQuery.Where(x =>
                     x.TestPrice != 0m &&
                     x.TestPrice != (x.IsDefraProject != 0 ? x.DefraUnitPrice : x.UnitPriceVla)),
-                _ => baseQuery
+                // "all" (Both) => zero-rated OR non-standard, excluding standard-priced rows.
+                _ => baseQuery.Where(x =>
+                    x.TestPrice == 0m ||
+                    x.TestPrice != (x.IsDefraProject != 0 ? x.DefraUnitPrice : x.UnitPriceVla))
             };
 
             // Step 5 — SQL-side sorting
