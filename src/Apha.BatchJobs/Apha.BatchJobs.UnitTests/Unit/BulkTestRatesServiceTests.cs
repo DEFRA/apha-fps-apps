@@ -4,7 +4,6 @@ using Apha.BatchJobs.Domain.Entities.BulkRates;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Services.BulkRates;
-using Apha.Common.BulkRates.Validation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -39,13 +38,11 @@ public sealed class BulkTestRatesServiceTests
             UploadVersion:    uploadVersion);
 
     private static BulkTestRatesService CreateService(
-        IBulkRatesRepository? repo = null,
-        IBulkRatesValidationService? validationService = null)
+        IBulkRatesRepository? repo = null)
         => new(
             Substitute.For<IDbContextFactory<BatchJobsDbContext>>(),
             repo ?? Substitute.For<IBulkRatesRepository>(),
             Substitute.For<IJobExecutionRepository>(),
-            validationService ?? new BulkRatesValidationService(),
             NullLogger<BulkTestRatesService>.Instance);
 
     // ── GetRunningRequestAsync returns null ──────────────────────────────────
@@ -174,21 +171,6 @@ public sealed class BulkTestRatesServiceTests
             () => CreateService(repo).ExecuteAsync(ValidContext()));
 
         Assert.Contains("approval metadata", ex.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    // ── Precondition: UploadVersion (revalidation requires a known upload identity) ──
-
-    [Fact]
-    public async Task ExecuteAsync_WhenUploadVersionMissing_ShouldThrow()
-    {
-        var repo = Substitute.For<IBulkRatesRepository>();
-        repo.GetRunningRequestAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
-            .Returns(ApprovedEntry(uploadVersion: null));
-
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => CreateService(repo).ExecuteAsync(ValidContext()));
-
-        Assert.Contains("upload_version", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     // ── Staging guard ─────────────────────────────────────────────────────────

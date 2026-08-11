@@ -1,7 +1,6 @@
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Services;
 using Apha.BatchJobs.Domain.Entities.MilestoneUpdateNotifications;
-using Apha.Common.Contracts.Email;
-using Apha.Common.Utilities.Email;
+using Apha.BatchJobs.Infrastructure.Email;
 using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MilestoneUpdateNotifications;

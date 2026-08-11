@@ -3,7 +3,6 @@ using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.BulkRates;
 using Apha.BatchJobs.Infrastructure.Services.BulkRates;
-using Apha.Common.BulkRates.Validation.StaffAnimal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
@@ -81,7 +80,6 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
     private BulkAnimalRatesService CreateService() => new(
         new TestDbContextFactory(_connectionString),
         new BulkRatesRepository(new TestDbContextFactory(_connectionString), NullLogger<BulkRatesRepository>.Instance),
-        new StaffAnimalValidationService(),
         NullLogger<BulkAnimalRatesService>.Instance);
 
     private async Task<int> ResolveStatusIdAsync(NpgsqlConnection conn, string status)
@@ -232,10 +230,10 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
         await InsertFrozenStagingRowAsync(
             conn, jobQueueId, animalType,
             dailyRate: 15.00m, defraDailyRate: 10.00m, planByWeek: false, species: "Bovine", securityLevel: "High",
-            calculatedAction: StaffAnimalCalculatedAction.Update,
+            calculatedAction: "Update",
             sourceDailyRate: 10.00m, sourceDefraDailyRate: 10.00m, sourcePlanByWeek: false, sourceSpecies: "Bovine", sourceSecurityLevel: "Low",
             effectiveDailyRate: 15.00m, effectiveDefraDailyRate: 10.00m, effectivePlanByWeek: false, effectiveSpecies: "Bovine", effectiveSecurityLevel: "High",
-            validationVersion: StaffAnimalValidationVersion.Current);
+            validationVersion: 1);
 
         try
         {
@@ -299,10 +297,10 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
         await InsertFrozenStagingRowAsync(
             conn, jobQueueId, animalType,
             dailyRate: 10.00m, defraDailyRate: 10.00m, planByWeek: true, species: "Ovine", securityLevel: "Low",
-            calculatedAction: StaffAnimalCalculatedAction.NoChange,
+            calculatedAction: "NoChange",
             sourceDailyRate: 10.00m, sourceDefraDailyRate: 10.00m, sourcePlanByWeek: true, sourceSpecies: "Ovine", sourceSecurityLevel: "Low",
             effectiveDailyRate: 10.00m, effectiveDefraDailyRate: 10.00m, effectivePlanByWeek: true, effectiveSpecies: "Ovine", effectiveSecurityLevel: "Low",
-            validationVersion: StaffAnimalValidationVersion.Current);
+            validationVersion: 1);
 
         try
         {
@@ -320,157 +318,5 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
             await CleanupAsync(jobQueueId, fpsYear, [animalType]);
         }
     }
-
-    // ── Live source drifted since release → throws and applies nothing ─────────────
-    // Uses DefraDailyRate as the drifted field — one of the five mutable fields drift
-    // detection is required to cover, not just DailyRate.
-
-    [SkippableFact]
-    public async Task ExecuteAsync_WhenLiveSourceDrifts_ThrowsAndAppliesNothing()
-    {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-
-        const int fpsYear = 2093;
-        const string animalType = "SA5-A03";
-        var jobQueueId = Guid.NewGuid();
-        var jobExecutionId = Guid.NewGuid();
-
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
-
-        // Live DefraDailyRate has moved to 11.00 since release — the frozen source was 10.00.
-        await InsertLiveAnimalRowAsync(conn, animalType, fpsYear, dailyRate: 10.00m, defraDailyRate: 11.00m, planByWeek: false, species: "Bovine", securityLevel: "Low");
-        await InsertJobQueueAsync(conn, jobQueueId, jobExecutionId, fpsYear);
-        await InsertFrozenStagingRowAsync(
-            conn, jobQueueId, animalType,
-            dailyRate: 15.00m, defraDailyRate: 10.00m, planByWeek: false, species: "Bovine", securityLevel: "Low",
-            calculatedAction: StaffAnimalCalculatedAction.Update,
-            sourceDailyRate: 10.00m, sourceDefraDailyRate: 10.00m, sourcePlanByWeek: false, sourceSpecies: "Bovine", sourceSecurityLevel: "Low",
-            effectiveDailyRate: 15.00m, effectiveDefraDailyRate: 10.00m, effectivePlanByWeek: false, effectiveSpecies: "Bovine", effectiveSecurityLevel: "Low",
-            validationVersion: StaffAnimalValidationVersion.Current);
-
-        try
-        {
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => CreateService().ExecuteAsync(new BulkRatesExecutionContext(jobExecutionId, BatchJobNames.BulkAnimalRatesUpdate, fpsYear)));
-
-            Assert.Contains("drift", ex.Message, StringComparison.OrdinalIgnoreCase);
-
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = "SELECT dailyrate::numeric, defradailyrate::numeric FROM fps.tblanimals WHERE animaltype = @animaltype AND fpsyear = @year;";
-                cmd.Parameters.AddWithValue("animaltype", animalType);
-                cmd.Parameters.AddWithValue("year", fpsYear);
-                await using var r = await cmd.ExecuteReaderAsync();
-                Assert.True(await r.ReadAsync());
-                Assert.Equal(10.00m, r.GetDecimal(0));
-                Assert.Equal(11.00m, r.GetDecimal(1));
-            }
-
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = "SELECT COUNT(*)::int FROM fps.rate_change_history WHERE jobqueueid = @jqid;";
-                cmd.Parameters.AddWithValue("jqid", jobQueueId);
-                Assert.Equal(0, (int)(await cmd.ExecuteScalarAsync())!);
-            }
-        }
-        finally
-        {
-            await CleanupAsync(jobQueueId, fpsYear, [animalType]);
-        }
-    }
-
-    // ── Live row removed after freeze → hard failure, never skipped ────────────────
-
-    [SkippableFact]
-    public async Task ExecuteAsync_WhenLiveRowRemovedAfterFreeze_ThrowsAndAppliesNothing()
-    {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-
-        const int fpsYear = 2094;
-        const string animalType = "SA5-A04";
-        var jobQueueId = Guid.NewGuid();
-        var jobExecutionId = Guid.NewGuid();
-
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
-
-        // No live row inserted at all — simulates the animal type being removed between
-        // release and execution. Hard failure, never skip-and-log.
-        await InsertJobQueueAsync(conn, jobQueueId, jobExecutionId, fpsYear);
-        await InsertFrozenStagingRowAsync(
-            conn, jobQueueId, animalType,
-            dailyRate: 15.00m, defraDailyRate: 10.00m, planByWeek: false, species: "Bovine", securityLevel: "Low",
-            calculatedAction: StaffAnimalCalculatedAction.Update,
-            sourceDailyRate: 10.00m, sourceDefraDailyRate: 10.00m, sourcePlanByWeek: false, sourceSpecies: "Bovine", sourceSecurityLevel: "Low",
-            effectiveDailyRate: 15.00m, effectiveDefraDailyRate: 10.00m, effectivePlanByWeek: false, effectiveSpecies: "Bovine", effectiveSecurityLevel: "Low",
-            validationVersion: StaffAnimalValidationVersion.Current);
-
-        try
-        {
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => CreateService().ExecuteAsync(new BulkRatesExecutionContext(jobExecutionId, BatchJobNames.BulkAnimalRatesUpdate, fpsYear)));
-
-            Assert.Contains("drift", ex.Message, StringComparison.OrdinalIgnoreCase);
-
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = "SELECT COUNT(*)::int FROM fps.rate_change_history WHERE jobqueueid = @jqid;";
-                cmd.Parameters.AddWithValue("jqid", jobQueueId);
-                Assert.Equal(0, (int)(await cmd.ExecuteScalarAsync())!);
-            }
-        }
-        finally
-        {
-            await CleanupAsync(jobQueueId, fpsYear, [animalType]);
-        }
-    }
-
-    // ── Frozen validation_version no longer matches the deployed rule set ──────────
-
-    [SkippableFact]
-    public async Task ExecuteAsync_WhenValidationVersionMismatches_ThrowsAndAppliesNothing()
-    {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-
-        const int fpsYear = 2095;
-        const string animalType = "SA5-A05";
-        var jobQueueId = Guid.NewGuid();
-        var jobExecutionId = Guid.NewGuid();
-
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
-
-        await InsertLiveAnimalRowAsync(conn, animalType, fpsYear, dailyRate: 10.00m, defraDailyRate: 10.00m, planByWeek: false, species: "Bovine", securityLevel: "Low");
-        await InsertJobQueueAsync(conn, jobQueueId, jobExecutionId, fpsYear);
-        await InsertFrozenStagingRowAsync(
-            conn, jobQueueId, animalType,
-            dailyRate: 15.00m, defraDailyRate: 10.00m, planByWeek: false, species: "Bovine", securityLevel: "Low",
-            calculatedAction: StaffAnimalCalculatedAction.Update,
-            sourceDailyRate: 10.00m, sourceDefraDailyRate: 10.00m, sourcePlanByWeek: false, sourceSpecies: "Bovine", sourceSecurityLevel: "Low",
-            effectiveDailyRate: 15.00m, effectiveDefraDailyRate: 10.00m, effectivePlanByWeek: false, effectiveSpecies: "Bovine", effectiveSecurityLevel: "Low",
-            validationVersion: StaffAnimalValidationVersion.Current + 999);
-
-        try
-        {
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => CreateService().ExecuteAsync(new BulkRatesExecutionContext(jobExecutionId, BatchJobNames.BulkAnimalRatesUpdate, fpsYear)));
-
-            Assert.Contains("validation_version", ex.Message, StringComparison.OrdinalIgnoreCase);
-
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = "SELECT dailyrate::numeric FROM fps.tblanimals WHERE animaltype = @animaltype AND fpsyear = @year;";
-                cmd.Parameters.AddWithValue("animaltype", animalType);
-                cmd.Parameters.AddWithValue("year", fpsYear);
-                await using var r = await cmd.ExecuteReaderAsync();
-                Assert.True(await r.ReadAsync());
-                Assert.Equal(10.00m, r.GetDecimal(0));
-            }
-        }
-        finally
-        {
-            await CleanupAsync(jobQueueId, fpsYear, [animalType]);
-        }
-    }
 }
+

@@ -20,10 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Apha.Common\Apha.Common.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Remove="docs\**\*.cs" />
     <Compile Remove="docs\legacy\**\*.cs" />
     <Compile Remove="Apha.BatchJobs.UnitTests\**\*.cs" />
@@ -57,6 +53,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     <PackageReference Include="Azure.Identity" Version="1.14.2" />
+    <PackageReference Include="Microsoft.Graph" Version="5.103.0" />
+    <PackageReference Include="Microsoft.Kiota.Abstractions" Version="1.22.2" />
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />

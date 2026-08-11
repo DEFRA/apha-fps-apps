@@ -4,7 +4,6 @@ using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.BulkRates;
 using Apha.BatchJobs.Infrastructure.Services.BulkRates;
-using Apha.Common.BulkRates.Validation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
@@ -100,71 +99,7 @@ public sealed class BulkTestRatesServicePerformanceTests : IAsyncLifetime
         new TestDbContextFactory(_connectionString),
         new BulkRatesRepository(new TestDbContextFactory(_connectionString), NullLogger<BulkRatesRepository>.Instance),
         Substitute.For<IJobExecutionRepository>(),
-        new BulkRatesValidationService(),
         NullLogger<BulkTestRatesService>.Instance);
-
-    // ── In-memory: the shared validator at full volume, no database involved ───────────────────────────
-    // Runs unconditionally (no Postgres dependency) so it still catches a validation-side
-    // regression even in environments without the local integration DB.
-
-    [Fact]
-    public void Validate_FullVolume_ReturnsExpectedClassificationCount_WithinDiagnosticTimeBudget()
-    {
-        var context = BuildInMemoryValidationContext();
-        var service = new BulkRatesValidationService();
-
-        var sw = Stopwatch.StartNew();
-        var findings = service.Validate(context);
-        sw.Stop();
-
-        var classifications = findings.Count(f => f.ValidationCode == "ROW_CLASSIFIED");
-        _output.WriteLine($"[perf] DR-VAL-01 in-memory Validate: {FecRowCount + AgrupRowCount} rows, " +
-                           $"{findings.Count} findings ({classifications} classifications), {sw.ElapsedMilliseconds} ms.");
-
-        // Correctness floor, not a timing gate: every staged row must classify (each row is a
-        // clean "existing, rate changed" Update — see BuildInMemoryValidationContext).
-        Assert.Equal(FecRowCount + AgrupRowCount, classifications);
-        Assert.DoesNotContain(findings, f => f.Severity == ValidationSeverity.Error);
-    }
-
-    private static ValidationContext BuildInMemoryValidationContext()
-    {
-        var liveFec = new Dictionary<string, LiveFecRow>();
-        var stagedFec = new List<ValidationFecRow>();
-        for (var i = 0; i < FecRowCount; i++)
-        {
-            var code = $"PERF-FEC-{i:D4}";
-            liveFec[BulkRatesValidationKeys.TestCode(code)] = new LiveFecRow { TestCode = code, UnitPriceVla = 10.00m, DefraUnitPrice = 10.00m };
-            stagedFec.Add(new ValidationFecRow { TestCode = code, FecNewRate = 15.00m, SourceRow = i + 2 });
-        }
-
-        var liveAgrup = new Dictionary<(string, string), LiveAgrupRow>();
-        var stagedAgrup = new List<ValidationAgrupRow>();
-        for (var i = 0; i < AgrupRowCount; i++)
-        {
-            var fecCode = $"PERF-FEC-{i % FecRowCount:D4}";
-            var buyer = $"PERF-BUYER-{i:D4}";
-            var key = BulkRatesValidationKeys.AgrupKey(fecCode, buyer);
-            liveAgrup[key] = new LiveAgrupRow { TestCode = fecCode, Buyer = buyer, UnitPrice = 5.00m };
-            stagedAgrup.Add(new ValidationAgrupRow { TestCode = fecCode, Buyer = buyer, AgrupNew = 8.00m, SourceRow = i + 2 });
-        }
-
-        return new ValidationContext
-        {
-            JobQueueId = Guid.NewGuid(),
-            FpsYear = FpsYear,
-            DownloadVersion = null,
-            UploadVersion = 1,
-            LiveFecLookup = liveFec,
-            LiveAgrupLookup = liveAgrup,
-            ProjectLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase),
-            CapabilityLookup = new HashSet<(string, string)>(),
-            StagedFecRows = stagedFec,
-            StagedAgrupRows = stagedAgrup,
-            FrozenSnapshot = [],
-            IncludeWorkerOnlyChecks = true
-        };
-    }
 
     // ── Real Postgres: full worker pipeline at volume ─────────────────────────────────────────
 

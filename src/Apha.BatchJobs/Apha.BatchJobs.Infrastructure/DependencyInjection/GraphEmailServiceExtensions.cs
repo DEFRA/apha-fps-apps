@@ -1,5 +1,4 @@
-using Apha.Common.Contracts.Email;
-using Apha.Common.Utilities.Email;
+using Apha.BatchJobs.Infrastructure.Email;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

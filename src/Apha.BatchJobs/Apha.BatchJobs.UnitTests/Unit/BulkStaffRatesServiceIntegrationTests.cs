@@ -3,7 +3,6 @@ using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.BulkRates;
 using Apha.BatchJobs.Infrastructure.Services.BulkRates;
-using Apha.Common.BulkRates.Validation.StaffAnimal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
@@ -80,7 +79,6 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
     private BulkStaffRatesService CreateService() => new(
         new TestDbContextFactory(_connectionString),
         new BulkRatesRepository(new TestDbContextFactory(_connectionString), NullLogger<BulkRatesRepository>.Instance),
-        new StaffAnimalValidationService(),
         NullLogger<BulkStaffRatesService>.Instance);
 
     private async Task<int> ResolveStatusIdAsync(NpgsqlConnection conn, string status)
@@ -216,10 +214,10 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
         // raises PayRate only (12.00), leaving NPR/OHR unchanged.
         await InsertFrozenStagingRowAsync(
             conn, jobQueueId, pcGrade, payRate: 12.00m, npr: 5.00m, ohr: 2.00m,
-            calculatedAction: StaffAnimalCalculatedAction.Update,
+            calculatedAction: "Update",
             sourcePayRate: 10.00m, sourceNpr: 5.00m, sourceOhr: 2.00m,
             effectivePayRate: 12.00m, effectiveNpr: 5.00m, effectiveOhr: 2.00m,
-            validationVersion: StaffAnimalValidationVersion.Current);
+            validationVersion: 1);
 
         try
         {
@@ -281,10 +279,10 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
         await InsertJobQueueAsync(conn, jobQueueId, jobExecutionId, fpsYear);
         await InsertFrozenStagingRowAsync(
             conn, jobQueueId, pcGrade, payRate: 10.00m, npr: 5.00m, ohr: 2.00m,
-            calculatedAction: StaffAnimalCalculatedAction.NoChange,
+            calculatedAction: "NoChange",
             sourcePayRate: 10.00m, sourceNpr: 5.00m, sourceOhr: 2.00m,
             effectivePayRate: 10.00m, effectiveNpr: 5.00m, effectiveOhr: 2.00m,
-            validationVersion: StaffAnimalValidationVersion.Current);
+            validationVersion: 1);
 
         try
         {
@@ -302,152 +300,5 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
             await CleanupAsync(jobQueueId, fpsYear, [pcGrade]);
         }
     }
-
-    // ── Live source drifted since release → throws and applies nothing ─────────────
-
-    [SkippableFact]
-    public async Task ExecuteAsync_WhenLiveSourceDrifts_ThrowsAndAppliesNothing()
-    {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-
-        const int fpsYear = 2093;
-        const string pcGrade = "SA5-S03";
-        var jobQueueId = Guid.NewGuid();
-        var jobExecutionId = Guid.NewGuid();
-
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
-
-        // Live NPR has moved to 6.00 since release — the frozen source was 5.00.
-        await InsertLiveStaffRowAsync(conn, pcGrade, fpsYear, payRate: 10.00m, npr: 6.00m, ohr: 2.00m);
-        await InsertJobQueueAsync(conn, jobQueueId, jobExecutionId, fpsYear);
-        await InsertFrozenStagingRowAsync(
-            conn, jobQueueId, pcGrade, payRate: 12.00m, npr: 5.00m, ohr: 2.00m,
-            calculatedAction: StaffAnimalCalculatedAction.Update,
-            sourcePayRate: 10.00m, sourceNpr: 5.00m, sourceOhr: 2.00m,
-            effectivePayRate: 12.00m, effectiveNpr: 5.00m, effectiveOhr: 2.00m,
-            validationVersion: StaffAnimalValidationVersion.Current);
-
-        try
-        {
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => CreateService().ExecuteAsync(new BulkRatesExecutionContext(jobExecutionId, BatchJobNames.BulkStaffRatesUpdate, fpsYear)));
-
-            Assert.Contains("drift", ex.Message, StringComparison.OrdinalIgnoreCase);
-
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = "SELECT payrate::numeric, npr::numeric FROM fps.profitcentregrade WHERE pcgrade = @pcgrade AND fpsyear = @year;";
-                cmd.Parameters.AddWithValue("pcgrade", pcGrade);
-                cmd.Parameters.AddWithValue("year", fpsYear);
-                await using var r = await cmd.ExecuteReaderAsync();
-                Assert.True(await r.ReadAsync());
-                Assert.Equal(10.00m, r.GetDecimal(0));
-                Assert.Equal(6.00m, r.GetDecimal(1));
-            }
-
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = "SELECT COUNT(*)::int FROM fps.rate_change_history WHERE jobqueueid = @jqid;";
-                cmd.Parameters.AddWithValue("jqid", jobQueueId);
-                Assert.Equal(0, (int)(await cmd.ExecuteScalarAsync())!);
-            }
-        }
-        finally
-        {
-            await CleanupAsync(jobQueueId, fpsYear, [pcGrade]);
-        }
-    }
-
-    // ── Live row removed after freeze → hard failure, never skipped ────────────────
-
-    [SkippableFact]
-    public async Task ExecuteAsync_WhenLiveRowRemovedAfterFreeze_ThrowsAndAppliesNothing()
-    {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-
-        const int fpsYear = 2094;
-        const string pcGrade = "SA5-S04";
-        var jobQueueId = Guid.NewGuid();
-        var jobExecutionId = Guid.NewGuid();
-
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
-
-        // No live row inserted at all — simulates the grade being removed between release and
-        // execution. NotFound is a hard failure, never skip-and-log.
-        await InsertJobQueueAsync(conn, jobQueueId, jobExecutionId, fpsYear);
-        await InsertFrozenStagingRowAsync(
-            conn, jobQueueId, pcGrade, payRate: 12.00m, npr: 5.00m, ohr: 2.00m,
-            calculatedAction: StaffAnimalCalculatedAction.Update,
-            sourcePayRate: 10.00m, sourceNpr: 5.00m, sourceOhr: 2.00m,
-            effectivePayRate: 12.00m, effectiveNpr: 5.00m, effectiveOhr: 2.00m,
-            validationVersion: StaffAnimalValidationVersion.Current);
-
-        try
-        {
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => CreateService().ExecuteAsync(new BulkRatesExecutionContext(jobExecutionId, BatchJobNames.BulkStaffRatesUpdate, fpsYear)));
-
-            Assert.Contains("drift", ex.Message, StringComparison.OrdinalIgnoreCase);
-
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = "SELECT COUNT(*)::int FROM fps.rate_change_history WHERE jobqueueid = @jqid;";
-                cmd.Parameters.AddWithValue("jqid", jobQueueId);
-                Assert.Equal(0, (int)(await cmd.ExecuteScalarAsync())!);
-            }
-        }
-        finally
-        {
-            await CleanupAsync(jobQueueId, fpsYear, [pcGrade]);
-        }
-    }
-
-    // ── Frozen validation_version no longer matches the deployed rule set ──────────
-
-    [SkippableFact]
-    public async Task ExecuteAsync_WhenValidationVersionMismatches_ThrowsAndAppliesNothing()
-    {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-
-        const int fpsYear = 2095;
-        const string pcGrade = "SA5-S05";
-        var jobQueueId = Guid.NewGuid();
-        var jobExecutionId = Guid.NewGuid();
-
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync();
-
-        await InsertLiveStaffRowAsync(conn, pcGrade, fpsYear, payRate: 10.00m, npr: 5.00m, ohr: 2.00m);
-        await InsertJobQueueAsync(conn, jobQueueId, jobExecutionId, fpsYear);
-        await InsertFrozenStagingRowAsync(
-            conn, jobQueueId, pcGrade, payRate: 12.00m, npr: 5.00m, ohr: 2.00m,
-            calculatedAction: StaffAnimalCalculatedAction.Update,
-            sourcePayRate: 10.00m, sourceNpr: 5.00m, sourceOhr: 2.00m,
-            effectivePayRate: 12.00m, effectiveNpr: 5.00m, effectiveOhr: 2.00m,
-            validationVersion: StaffAnimalValidationVersion.Current + 999);
-
-        try
-        {
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => CreateService().ExecuteAsync(new BulkRatesExecutionContext(jobExecutionId, BatchJobNames.BulkStaffRatesUpdate, fpsYear)));
-
-            Assert.Contains("validation_version", ex.Message, StringComparison.OrdinalIgnoreCase);
-
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = "SELECT payrate::numeric FROM fps.profitcentregrade WHERE pcgrade = @pcgrade AND fpsyear = @year;";
-                cmd.Parameters.AddWithValue("pcgrade", pcGrade);
-                cmd.Parameters.AddWithValue("year", fpsYear);
-                await using var r = await cmd.ExecuteReaderAsync();
-                Assert.True(await r.ReadAsync());
-                Assert.Equal(10.00m, r.GetDecimal(0));
-            }
-        }
-        finally
-        {
-            await CleanupAsync(jobQueueId, fpsYear, [pcGrade]);
-        }
-    }
 }
+

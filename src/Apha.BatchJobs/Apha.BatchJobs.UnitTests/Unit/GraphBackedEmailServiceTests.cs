@@ -1,7 +1,6 @@
 using Apha.BatchJobs.Domain.Entities.MilestoneUpdateNotifications;
 using Apha.BatchJobs.Infrastructure.Repositories.MilestoneUpdateNotifications;
-using Apha.Common.Contracts.Email;
-using Apha.Common.Utilities.Email;
+using Apha.BatchJobs.Infrastructure.Email;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;

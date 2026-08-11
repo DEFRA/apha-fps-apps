@@ -5,7 +5,6 @@ using Apha.BatchJobs.Domain.Entities.BulkRates;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.BulkRates;
-using Apha.Common.BulkRates.Validation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Npgsql;
@@ -19,35 +18,25 @@ namespace Apha.BatchJobs.Infrastructure.Services.BulkRates;
 /// Applies FEC Test/Product (FEC before AGRUP, spec §15.2) annual rate changes
 /// inside a single database transaction, then writes permanent history and
 /// clears request-scoped staging rows on success.
-///
-/// Revalidates against the shared
-/// <see cref="IBulkRatesValidationService"/> inside the same transaction that
-/// applies the changes, against rows locked with SELECT ... FOR UPDATE — not
-/// before the transaction opens, and not against an unlocked read. The re-derived
-/// per-row classification is compared against the calculated_action frozen at release time;
-/// a disagreement means live reference data changed since release in a
-/// way that would alter what the approver reviewed, so the request fails rather than
-/// silently applying a different outcome.
+/// Drift detection and revalidation are the responsibility of the FPS approval flow;
+/// the worker applies frozen effective values directly.
 /// </summary>
 public sealed class BulkTestRatesService : IBulkTestRatesService
 {
     private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
     private readonly IBulkRatesRepository _repository;
     private readonly IJobExecutionRepository _executionRepository;
-    private readonly IBulkRatesValidationService _validationService;
     private readonly ILogger<BulkTestRatesService> _logger;
 
     public BulkTestRatesService(
         IDbContextFactory<BatchJobsDbContext> dbContextFactory,
         IBulkRatesRepository repository,
         IJobExecutionRepository executionRepository,
-        IBulkRatesValidationService validationService,
         ILogger<BulkTestRatesService> logger)
     {
         _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _executionRepository = executionRepository ?? throw new ArgumentNullException(nameof(executionRepository));
-        _validationService = validationService ?? throw new ArgumentNullException(nameof(validationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -106,150 +95,36 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
         var conn = (NpgsqlConnection)dbContext.Database.GetDbConnection();
         await using (var tx = await conn.BeginTransactionAsync(cancellationToken))
         {
-            // ── Lock the specific live rows this upload targets, then revalidate against
-            // them under that lock. ──────────────────────────
+            // Lock and read live rows for history (deterministic test-code order reduces deadlock risk).
             var testCodes = fecRows.Select(r => r.TestCode)
                 .Concat(agrupRows.Select(r => r.TestCode))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            var liveFecLookup = await GetFecRowsForUpdateAsync(conn, tx, testCodes, fpsYear, cancellationToken);
+            var liveFecLookup   = await GetFecRowsForUpdateAsync(conn, tx, testCodes, fpsYear, cancellationToken);
             var liveAgrupLookup = await GetAgrupRowsForUpdateAsync(conn, tx, testCodes, fpsYear, cancellationToken);
 
-            var projectCodes = agrupRows
-                .Where(r => !string.IsNullOrWhiteSpace(r.ProjectBuyerCode))
-                .Select(r => r.ProjectBuyerCode!)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var projectLookup = await GetExistingProjectCodesAsync(conn, tx, projectCodes, fpsYear, cancellationToken);
-
-            var capabilityPairs = agrupRows
-                .Where(r => !string.IsNullOrWhiteSpace(r.TestBuyerWorkGroup))
-                .Select(r => (r.TestCode, r.TestBuyerWorkGroup!))
-                .ToHashSet();
-            var capabilityLookup = await GetExistingCapabilityPairsAsync(conn, tx, capabilityPairs, fpsYear, cancellationToken);
-
-            IReadOnlyList<DownloadedSnapshotKey> frozenSnapshot = entry.ActiveDownloadVersion.HasValue
-                ? await GetSnapshotRowsAsync(conn, tx, jobQueueId, entry.ActiveDownloadVersion.Value, cancellationToken)
-                : [];
-
-            // SourceRow has no worksheet to point back to at execution time (this is a DB
-            // read-back, not a fresh parse) — synthetic index+2, matching BuildFreezeAsync's
-            // own release-time read-back convention. Findings here drive fail/apply decisions
-            // only, never a persisted per-row error, so the exact value is not user-facing.
-            var stagedFec = fecRows.Select((r, i) => new ValidationFecRow
-            {
-                TestCode = r.TestCode,
-                FecNewRate = r.FecNewRate,
-                ItemDescription = r.ItemDescription,
-                ShortDescription = r.ShortDescription,
-                Owner = r.Owner,
-                Comments = r.Comments,
-                SourceRow = i + 2
-            }).ToList();
-
-            var stagedAgrup = agrupRows.Select((r, i) => new ValidationAgrupRow
-            {
-                TestCode = r.TestCode,
-                Buyer = r.Buyer,
-                AgrupNew = r.AgrupNew,
-                ProjectBuyerCode = r.ProjectBuyerCode,
-                TestBuyerCode = r.TestBuyerCode,
-                TestBuyerWorkGroup = r.TestBuyerWorkGroup,
-                Comments = r.Comments,
-                SourceRow = i + 2
-            }).ToList();
-
-            var validationContext = new ValidationContext
-            {
-                JobQueueId = jobQueueId,
-                FpsYear = fpsYear,
-                DownloadVersion = entry.ActiveDownloadVersion,
-                UploadVersion = entry.UploadVersion!.Value,
-                LiveFecLookup = liveFecLookup,
-                LiveAgrupLookup = liveAgrupLookup,
-                ProjectLookup = projectLookup,
-                CapabilityLookup = capabilityLookup,
-                StagedFecRows = stagedFec,
-                StagedAgrupRows = stagedAgrup,
-                FrozenSnapshot = frozenSnapshot,
-                // Worker-only: BC-05 interim check for a live positive AGRUP row under a
-                // withdrawn FEC TestCode that was never part of the download snapshot —
-                // must never run at API release time (ValidationContext docs).
-                IncludeWorkerOnlyChecks = true
-            };
-
-            var findings = _validationService.Validate(validationContext);
-
-            var blockingErrors = findings.Where(f => f.Severity == ValidationSeverity.Error).ToList();
-            if (blockingErrors.Count > 0)
-            {
-                throw new InvalidOperationException(
-                    $"BulkTestRatesUpdate: worker revalidation blocked JobQueueId={jobQueueId:D} " +
-                    $"with {blockingErrors.Count} issue(s): {string.Join(" | ", blockingErrors.Select(f => f.Message))}");
-            }
-
-            // Every remaining staged row has exactly one ROW_CLASSIFIED finding at this point —
-            // any row that lacked one also carried a blocking Error above, which already threw.
-            var fecClassifications = findings
-                .Where(f => f.ValidationCode == "ROW_CLASSIFIED" && string.Equals(f.Sheet, "FEC", StringComparison.OrdinalIgnoreCase))
-                .ToDictionary(f => BulkRatesValidationKeys.TestCode(f.BusinessKey!));
-            var agrupClassifications = findings
-                .Where(f => f.ValidationCode == "ROW_CLASSIFIED" && string.Equals(f.Sheet, "AGRUP", StringComparison.OrdinalIgnoreCase))
-                .ToDictionary(f => SplitAgrupBusinessKey(f.BusinessKey!));
-
-            // Drift check — the frozen calculated_action must still
-            // match what re-derivation just computed against the locked live rows, AND the
-            // live source rate itself must still match what was frozen at release. The approver
-            // approved a specific decision against a specific source state (source_current_rate);
-            // if the live rate has since moved to a third value, that decision is stale even
-            // though the action label and approved rate haven't changed.
-            //
-            // FEC carries the source rate on two live columns (UnitPriceVla, DefraUnitPrice) —
-            // Bulk Rates always writes both together (UpdateFecRowAsync), but a live row could
-            // still have diverged between them via some other write path. Freezing only compares
-            // against DefraUnitPrice (BulkRatesValidator.BuildFreezeAsync), so a worker-time
-            // check against DefraUnitPrice alone could miss a row where UnitPriceVla is the one
-            // that moved — e.g. frozen=100, DefraUnitPrice=100 (looks unchanged), UnitPriceVla=110
-            // (actually drifted). Passing both live values in makes AssertNoDrift require each to
-            // still equal the frozen source, which also transitively requires them to equal each
-            // other. AGRUP has only one live rate column, so its call just passes that value twice.
-            foreach (var row in fecRows)
-            {
-                liveFecLookup.TryGetValue(BulkRatesValidationKeys.TestCode(row.TestCode), out var liveFec);
-                AssertNoDrift(row.TestCode, row.CalculatedAction, row.EffectiveNewRate,
-                    row.SourceCurrentRate, liveFec?.DefraUnitPrice, liveFec?.UnitPriceVla,
-                    fecClassifications[BulkRatesValidationKeys.TestCode(row.TestCode)], jobQueueId);
-            }
-            foreach (var row in agrupRows)
-            {
-                liveAgrupLookup.TryGetValue(BulkRatesValidationKeys.AgrupKey(row.TestCode, row.Buyer), out var liveAgrup);
-                AssertNoDrift($"{row.TestCode}/{row.Buyer}", row.CalculatedAction, row.EffectiveNewRate,
-                    row.SourceCurrentRate, liveAgrup?.UnitPrice, liveAgrup?.UnitPrice,
-                    agrupClassifications[BulkRatesValidationKeys.AgrupKey(row.TestCode, row.Buyer)], jobQueueId);
-            }
-
-            // FEC Test/Product — inserts first, then updates (spec §15.2, §2.4)
+            // FEC Test/Product — inserts first, then updates (spec §15.2)
             int fecInserted = 0, fecUpdated = 0, fecUnchanged = 0;
             foreach (var row in fecRows)
             {
-                var classification = fecClassifications[BulkRatesValidationKeys.TestCode(row.TestCode)];
-                liveFecLookup.TryGetValue(BulkRatesValidationKeys.TestCode(row.TestCode), out var live);
-                var effectiveRate = classification.EffectiveNewRate ?? 0m;
+                var effectiveRate = row.EffectiveNewRate ?? 0m;
+                liveFecLookup.TryGetValue(row.TestCode.ToUpperInvariant(), out var live);
 
-                switch (classification.CalculatedAction)
+                switch (row.CalculatedAction)
                 {
-                    case ValidationCalculatedAction.Insert:
+                    case "Insert":
                         await InsertFecRowAsync(conn, tx, row, fpsYear, effectiveRate, cancellationToken);
                         historyRows.AddRange(BuildFecInsertHistory(row, entry, appliedAt, effectiveRate));
                         fecInserted++;
                         break;
 
-                    case ValidationCalculatedAction.Update:
-                    case ValidationCalculatedAction.ZeroRateWithdrawal:
+                    case "Update":
+                    case "ZeroRateWithdrawal":
                         await UpdateFecRowAsync(conn, tx, row.TestCode, fpsYear, effectiveRate, cancellationToken);
                         historyRows.AddRange(BuildFecUpdateHistory(
-                            row, (live?.UnitPriceVla ?? 0m, live?.DefraUnitPrice ?? 0m),
-                            entry, appliedAt, effectiveRate, classification.CalculatedAction));
+                            row, (live.UnitPriceVla ?? 0m, live.DefraUnitPrice ?? 0m),
+                            entry, appliedAt, effectiveRate, row.CalculatedAction!));
                         fecUpdated++;
                         break;
 
@@ -263,13 +138,13 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
             int agrupInserted = 0, agrupUpdated = 0, agrupUnchanged = 0;
             foreach (var row in agrupRows)
             {
-                var classification = agrupClassifications[BulkRatesValidationKeys.AgrupKey(row.TestCode, row.Buyer)];
-                liveAgrupLookup.TryGetValue(BulkRatesValidationKeys.AgrupKey(row.TestCode, row.Buyer), out var live);
-                var effectiveRate = classification.EffectiveNewRate ?? 0m;
+                var agrupKey = (row.TestCode.ToUpperInvariant(), row.Buyer.ToUpperInvariant());
+                var effectiveRate = row.EffectiveNewRate ?? 0m;
+                liveAgrupLookup.TryGetValue(agrupKey, out var live);
 
-                switch (classification.CalculatedAction)
+                switch (row.CalculatedAction)
                 {
-                    case ValidationCalculatedAction.Insert:
+                    case "Insert":
                         await InsertAgrupRowAsync(conn, tx, row, fpsYear, effectiveRate, appliedAt, cancellationToken);
                         await WriteTestreqLogAsync(conn, tx,
                             row.TestCode, row.Buyer, fpsYear, effectiveRate,
@@ -279,15 +154,15 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
                         agrupInserted++;
                         break;
 
-                    case ValidationCalculatedAction.Update:
-                    case ValidationCalculatedAction.ZeroRateWithdrawal:
+                    case "Update":
+                    case "ZeroRateWithdrawal":
                         await UpdateAgrupRowAsync(conn, tx, row.TestCode, row.Buyer, fpsYear, effectiveRate, cancellationToken);
                         await WriteTestreqLogAsync(conn, tx,
                             row.TestCode, row.Buyer, fpsYear, effectiveRate,
-                            live?.NoRequired, live?.ProjectBuyerCode, live?.TestBuyerCode, live?.Active,
+                            live.NoRequired, live.ProjectBuyerCode, live.TestBuyerCode, live.Active,
                             appliedAt, approvedBy, "I", cancellationToken);
                         historyRows.AddRange(BuildAgrupUpdateHistory(
-                            row, live?.UnitPrice, entry, appliedAt, effectiveRate, classification.CalculatedAction));
+                            row, live.UnitPrice, entry, appliedAt, effectiveRate, row.CalculatedAction!));
                         agrupUpdated++;
                         break;
 
@@ -369,96 +244,16 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
             throw new InvalidOperationException(
                 $"BulkTestRatesUpdate: request {entry.JobQueueId:D} is missing approval metadata (approved_by/approved_at_utc).");
         }
-
-        if (!entry.UploadVersion.HasValue)
-        {
-            throw new InvalidOperationException(
-                $"BulkTestRatesUpdate: request {entry.JobQueueId:D} is missing upload_version — cannot revalidate (DR-WK-04) without a known upload identity.");
-        }
-    }
-
-    // ── Drift check ────────────────────────────────────────────────
-
-    private static void AssertNoDrift(
-        string businessKey, string? frozenAction, decimal? frozenEffectiveRate,
-        decimal? frozenSourceRate, decimal? currentSourceRatePrimary, decimal? currentSourceRateSecondary,
-        ValidationFinding rederived, Guid jobQueueId)
-    {
-        if (frozenAction is null)
-        {
-            throw new InvalidOperationException(
-                $"BulkTestRatesUpdate: staging row '{businessKey}' for JobQueueId={jobQueueId:D} has no frozen " +
-                "calculated_action — release-time freeze did not run for this row.");
-        }
-
-        // Source-drift check: the approver approved a specific decision against a
-        // specific source state — CalculatedAction/EffectiveNewRate alone can't detect the live
-        // rate moving to a third value, since EffectiveNewRate is deterministic from the staged
-        // rate (not the live baseline) and the action label doesn't change just because the
-        // baseline moved to some other number that's still "not equal to the new rate". This is
-        // the check that actually enforces "apply the approved change from the frozen source
-        // state, provided that state is still valid at execution time" — must run before the
-        // action/rate checks below, which cannot see this class of drift at all.
-        //
-        // Both live values must still equal the frozen source (for FEC, UnitPriceVla and
-        // DefraUnitPrice; for AGRUP, the same single value passed twice) — requiring each to
-        // match frozenSourceRate independently also transitively requires them to match each
-        // other, so a FEC row where only one of the two columns has drifted (e.g. DefraUnitPrice
-        // still 100 but UnitPriceVla now 110) is caught even though comparing DefraUnitPrice
-        // alone would have missed it.
-        if (frozenSourceRate != currentSourceRatePrimary || frozenSourceRate != currentSourceRateSecondary)
-        {
-            var currentDescription = currentSourceRatePrimary == currentSourceRateSecondary
-                ? $"'{currentSourceRatePrimary}'"
-                : $"'{currentSourceRatePrimary}' / '{currentSourceRateSecondary}'";
-            throw new InvalidOperationException(
-                $"BulkTestRatesUpdate: revalidation drift detected for '{businessKey}' in JobQueueId={jobQueueId:D} — " +
-                $"source rate at release was '{frozenSourceRate}' but the live rate(s) locked just now are {currentDescription}. " +
-                "Live rate changed after approval. The request was not applied. Download the latest rates and submit a new request.");
-        }
-
-        if (!string.Equals(frozenAction, rederived.CalculatedAction, StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException(
-                $"BulkTestRatesUpdate: revalidation drift detected for '{businessKey}' in JobQueueId={jobQueueId:D} — " +
-                $"approved action was '{frozenAction}' but re-derivation now computes '{rederived.CalculatedAction}'. " +
-                "Live reference data changed since release; failing rather than applying an unreviewed outcome.");
-        }
-
-        // Audit-completeness guarantee: the value about to be written to
-        // rate_change_history.newvalue must be provably identical to the value frozen at release
-        // time as "approved," not merely an action that happens to share a name. EffectiveNewRate is
-        // deterministic from the staged rate for a given CalculatedAction (see
-        // BulkRatesValidationService's classification branches), so this should never actually
-        // fire — it turns that implicit invariant into an enforced one rather than an inferred one.
-        if (frozenEffectiveRate != rederived.EffectiveNewRate)
-        {
-            throw new InvalidOperationException(
-                $"BulkTestRatesUpdate: revalidation drift detected for '{businessKey}' in JobQueueId={jobQueueId:D} — " +
-                $"approved effective rate was '{frozenEffectiveRate}' but re-derivation now computes '{rederived.EffectiveNewRate}'. " +
-                "Live reference data changed since release; failing rather than applying an unreviewed outcome.");
-        }
-    }
-
-    /// <summary>AGRUP ROW_CLASSIFIED findings carry "TestCode/Buyer" as a single BusinessKey string.</summary>
-    private static (string TestCode, string Buyer) SplitAgrupBusinessKey(string businessKey)
-    {
-        var parts = businessKey.Split('/', 2);
-        return BulkRatesValidationKeys.AgrupKey(parts[0], parts.Length > 1 ? parts[1] : string.Empty);
     }
 
     // ── FEC helpers ─────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Locks and reads the live fps.testorproduct rows this upload targets.
-    /// Scoped to only the TestCodes present in this request's staging, not the whole year.
-    /// </summary>
-    private static async Task<Dictionary<string, LiveFecRow>> GetFecRowsForUpdateAsync(
+    private static async Task<Dictionary<string, (decimal? UnitPriceVla, decimal? DefraUnitPrice)>> GetFecRowsForUpdateAsync(
         NpgsqlConnection conn, NpgsqlTransaction tx,
         IReadOnlyCollection<string> testCodes, int fpsYear,
         CancellationToken ct)
     {
-        var result = new Dictionary<string, LiveFecRow>();
+        var result = new Dictionary<string, (decimal? UnitPriceVla, decimal? DefraUnitPrice)>(StringComparer.OrdinalIgnoreCase);
         if (testCodes.Count == 0)
             return result;
 
@@ -479,12 +274,10 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
         while (await r.ReadAsync(ct))
         {
             var testCode = r.GetString(0);
-            result[BulkRatesValidationKeys.TestCode(testCode)] = new LiveFecRow
-            {
-                TestCode = testCode,
-                UnitPriceVla = r.IsDBNull(1) ? null : r.GetDecimal(1),
-                DefraUnitPrice = r.IsDBNull(2) ? null : r.GetDecimal(2)
-            };
+            result[testCode.ToUpperInvariant()] = (
+                r.IsDBNull(1) ? null : r.GetDecimal(1),
+                r.IsDBNull(2) ? null : r.GetDecimal(2)
+            );
         }
         return result;
     }
@@ -532,16 +325,14 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
 
     /// <summary>
     /// Locks and reads every live fps.tlkptestreqmt row under any TestCode this upload
-    /// targets — by TestCode, not by the exact staged (TestCode,Buyer)
-    /// keys, so the BC-05 interim check can see AGRUP buyers never present in
-    /// the upload at all, not only the ones the staged rows happen to touch.
+    /// targets — by TestCode, not by the exact staged (TestCode,Buyer) keys.
     /// </summary>
-    private static async Task<Dictionary<(string TestCode, string Buyer), LiveAgrupRow>> GetAgrupRowsForUpdateAsync(
+    private static async Task<Dictionary<(string TestCode, string Buyer), (decimal? UnitPrice, double? NoRequired, string? ProjectBuyerCode, string? TestBuyerCode, short? Active)>> GetAgrupRowsForUpdateAsync(
         NpgsqlConnection conn, NpgsqlTransaction tx,
         IReadOnlyCollection<string> testCodes, int fpsYear,
         CancellationToken ct)
     {
-        var result = new Dictionary<(string, string), LiveAgrupRow>();
+        var result = new Dictionary<(string, string), (decimal? UnitPrice, double? NoRequired, string? ProjectBuyerCode, string? TestBuyerCode, short? Active)>();
         if (testCodes.Count == 0)
             return result;
 
@@ -563,17 +354,14 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
         while (await r.ReadAsync(ct))
         {
             var testCode = r.GetString(0);
-            var buyer = r.GetString(1);
-            result[BulkRatesValidationKeys.AgrupKey(testCode, buyer)] = new LiveAgrupRow
-            {
-                TestCode = testCode,
-                Buyer = buyer,
-                UnitPrice = r.IsDBNull(2) ? null : r.GetDecimal(2),
-                ProjectBuyerCode = r.IsDBNull(3) ? null : r.GetString(3),
-                TestBuyerCode = r.IsDBNull(4) ? null : r.GetString(4),
-                NoRequired = r.IsDBNull(5) ? null : r.GetDouble(5),
-                Active = r.IsDBNull(6) ? null : r.GetInt16(6)
-            };
+            var buyer    = r.GetString(1);
+            result[(testCode.ToUpperInvariant(), buyer.ToUpperInvariant())] = (
+                r.IsDBNull(2) ? null : r.GetDecimal(2),
+                r.IsDBNull(5) ? null : r.GetDouble(5),
+                r.IsDBNull(3) ? null : r.GetString(3),
+                r.IsDBNull(4) ? null : r.GetString(4),
+                r.IsDBNull(6) ? null : r.GetInt16(6)
+            );
         }
         return result;
     }
@@ -622,99 +410,6 @@ public sealed class BulkTestRatesService : IBulkTestRatesService
         cmd.Parameters.AddWithValue("buyer",     buyer);
         cmd.Parameters.AddWithValue("fpsyear",   fpsYear);
         await cmd.ExecuteNonQueryAsync(ct);
-    }
-
-    // ── Reference lookups (bulk, scoped to this upload only) ──────
-
-    private static async Task<IReadOnlySet<string>> GetExistingProjectCodesAsync(
-        NpgsqlConnection conn, NpgsqlTransaction tx,
-        IReadOnlyCollection<string> parentProjectCodes, int fpsYear, CancellationToken ct)
-    {
-        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        if (parentProjectCodes.Count == 0)
-            return result;
-
-        await using var cmd = conn.CreateCommand();
-        cmd.Transaction = tx;
-        cmd.CommandText = @"
-            SELECT parentproject FROM fps.tlkpproject
-            WHERE fpsyear = @fpsyear AND parentproject = ANY(@codes);";
-        cmd.Parameters.AddWithValue("fpsyear", fpsYear);
-        cmd.Parameters.Add(new NpgsqlParameter("codes", NpgsqlDbType.Array | NpgsqlDbType.Text)
-        {
-            Value = parentProjectCodes.ToArray()
-        });
-
-        await using var r = await cmd.ExecuteReaderAsync(ct);
-        while (await r.ReadAsync(ct))
-            result.Add(r.GetString(0));
-        return result;
-    }
-
-    private static async Task<IReadOnlySet<(string TestCode, string WorkGroup)>> GetExistingCapabilityPairsAsync(
-        NpgsqlConnection conn, NpgsqlTransaction tx,
-        IReadOnlyCollection<(string TestCode, string WorkGroup)> pairs, int fpsYear, CancellationToken ct)
-    {
-        var result = new HashSet<(string, string)>();
-        if (pairs.Count == 0)
-            return result;
-
-        await using var cmd = conn.CreateCommand();
-        cmd.Transaction = tx;
-        // Two real columns (testcode, workgroup) — never a concatenated string.
-        cmd.CommandText = @"
-            SELECT c.testcode, c.workgroup
-            FROM fps.tlkptestcapability c
-            JOIN unnest(@testcodes::text[], @workgroups::text[]) AS v(tc, wg)
-              ON c.testcode = v.tc AND c.workgroup = v.wg
-            WHERE c.fpsyear = @fpsyear;";
-        cmd.Parameters.AddWithValue("fpsyear", fpsYear);
-        cmd.Parameters.Add(new NpgsqlParameter("testcodes", NpgsqlDbType.Array | NpgsqlDbType.Text)
-        {
-            Value = pairs.Select(p => p.TestCode).ToArray()
-        });
-        cmd.Parameters.Add(new NpgsqlParameter("workgroups", NpgsqlDbType.Array | NpgsqlDbType.Text)
-        {
-            Value = pairs.Select(p => p.WorkGroup).ToArray()
-        });
-
-        await using var r = await cmd.ExecuteReaderAsync(ct);
-        while (await r.ReadAsync(ct))
-            result.Add((r.GetString(0), r.GetString(1)));
-        return result;
-    }
-
-    /// <summary>
-    /// Reads the immutable download snapshot for the request's active download
-    /// version — never a live requery (reconciliation §2.6).
-    /// </summary>
-    private static async Task<List<DownloadedSnapshotKey>> GetSnapshotRowsAsync(
-        NpgsqlConnection conn, NpgsqlTransaction tx,
-        Guid jobQueueId, int downloadVersion, CancellationToken ct)
-    {
-        var result = new List<DownloadedSnapshotKey>();
-
-        await using var cmd = conn.CreateCommand();
-        cmd.Transaction = tx;
-        cmd.CommandText = @"
-            SELECT sheetname, testcode, buyer, source_rate::numeric
-            FROM fps.bulk_rates_downloaded_key
-            WHERE jobqueueid = @jobqueueid AND download_version = @downloadversion;";
-        cmd.Parameters.AddWithValue("jobqueueid", jobQueueId);
-        cmd.Parameters.AddWithValue("downloadversion", downloadVersion);
-
-        await using var r = await cmd.ExecuteReaderAsync(ct);
-        while (await r.ReadAsync(ct))
-        {
-            result.Add(new DownloadedSnapshotKey
-            {
-                Sheet = r.GetString(0),
-                TestCode = r.GetString(1),
-                Buyer = r.IsDBNull(2) ? null : r.GetString(2),
-                SourceRate = r.IsDBNull(3) ? null : r.GetDecimal(3)
-            });
-        }
-        return result;
     }
 
     // ── History builders ─────────────────────────────────────────────────────
