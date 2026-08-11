@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 

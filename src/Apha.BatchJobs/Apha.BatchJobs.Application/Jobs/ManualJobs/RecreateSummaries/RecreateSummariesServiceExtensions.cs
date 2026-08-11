@@ -4,7 +4,7 @@ using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
+namespace Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 
 public static class RecreateSummariesServiceExtensions
 {

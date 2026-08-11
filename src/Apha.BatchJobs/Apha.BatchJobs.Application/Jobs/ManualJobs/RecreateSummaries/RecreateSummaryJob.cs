@@ -1,5 +1,4 @@
 using Apha.BatchJobs.Application.Interfaces;
-using Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Exceptions;
 using Apha.BatchJobs.Domain.Interfaces;
@@ -10,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 
-namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
+namespace Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 
 /// <summary>
 /// RecreateSummaries batch job. Rebuilds monthly FPS summary/calculation data by executing

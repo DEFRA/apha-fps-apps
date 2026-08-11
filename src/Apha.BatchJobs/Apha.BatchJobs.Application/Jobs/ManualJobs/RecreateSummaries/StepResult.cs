@@ -1,6 +1,6 @@
 using Apha.BatchJobs.Domain.Enums;
 
-namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
+namespace Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 
 /// <summary>
 /// Captures the outcome of one RecreateSummaries execution step.
