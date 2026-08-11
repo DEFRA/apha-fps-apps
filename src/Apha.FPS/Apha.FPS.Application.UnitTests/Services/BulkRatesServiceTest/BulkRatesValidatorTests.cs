@@ -1,5 +1,5 @@
-using Apha.Common.BulkRates.Validation;
-using Apha.Common.BulkRates.Validation.StaffAnimal;
+using Apha.FPS.Application.Services.BulkRates.Validation;
+using Apha.FPS.Application.Services.BulkRates.Validation.StaffAnimal;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Entities.BulkRates;
 using Apha.FPS.Core.Interfaces;
@@ -13,7 +13,7 @@ namespace Apha.FPS.Application.UnitTests.Services.BulkRatesServiceTest;
 /// ValidationContext from repository bulk reads and call the real
 /// BulkRatesValidationService (not a mock) — these tests exercise that wiring end to end.
 /// The underlying rule behaviour itself is its
-/// own test responsibility (Apha.Common.UnitTests.BulkRates.Validation.BulkRatesValidationServiceTests).
+/// own test responsibility (<see cref="BulkRatesValidationServiceTests"/>).
 /// </summary>
 public class BulkRatesValidatorTests
 {

@@ -25,7 +25,7 @@ namespace Apha.FPS.Core.Entities.BulkRates
         /// True when this finding has no single uploaded row to attach to (e.g. a downloaded
         /// key missing from the re-upload) and must be surfaced as a request-level
         /// message, not rendered like an ordinary per-row error. Mirrors
-        /// Apha.Common.BulkRates.Validation.ValidationFinding.IsRequestLevel.
+        /// Apha.FPS.Application.Services.BulkRates.Validation.ValidationFinding.IsRequestLevel.
         /// </summary>
         public bool IsRequestLevel { get; set; }
     }

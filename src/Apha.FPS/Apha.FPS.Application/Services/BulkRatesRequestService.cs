@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
-using Apha.Common.BulkRates.Validation;
-using Apha.Common.BulkRates.Validation.StaffAnimal;
+using Apha.FPS.Application.Services.BulkRates.Validation;
+using Apha.FPS.Application.Services.BulkRates.Validation.StaffAnimal;
 using Apha.Common.Constants;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Dtos.BulkRates;

@@ -1,5 +1,5 @@
-using Apha.Common.BulkRates.Validation;
-using Apha.Common.BulkRates.Validation.StaffAnimal;
+using Apha.FPS.Application.Services.BulkRates.Validation;
+using Apha.FPS.Application.Services.BulkRates.Validation.StaffAnimal;
 using Apha.Common.Utilities.Email;
 using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;

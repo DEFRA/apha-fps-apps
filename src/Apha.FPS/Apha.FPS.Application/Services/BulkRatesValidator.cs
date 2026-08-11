@@ -1,5 +1,5 @@
-using Apha.Common.BulkRates.Validation;
-using Apha.Common.BulkRates.Validation.StaffAnimal;
+using Apha.FPS.Application.Services.BulkRates.Validation;
+using Apha.FPS.Application.Services.BulkRates.Validation.StaffAnimal;
 using Apha.Common.Constants;
 using Apha.FPS.Core.Entities.BulkRates;
 using Apha.FPS.Core.Interfaces;
@@ -8,13 +8,13 @@ namespace Apha.FPS.Application.Services
 {
     /// <summary>
     /// Orchestrates Bulk Rates upload/release validation. FEC/AGRUP business rules live in
-    /// Apha.Common.BulkRates.Validation.IBulkRatesValidationService —
+    /// <see cref="Services.BulkRates.Validation.IBulkRatesValidationService"/> —
     /// this class's job is to build that service's ValidationContext from bulk
     /// repository reads plus the parsed/staged rows, call it once, and map the returned
     /// ValidationFinding list onto StagingValidationError/BulkRatesRowCounts. It must not
     /// reimplement any FEC/AGRUP rule itself ("every item... calls the shared validator
     /// rather than implementing its own copy"). Staff/Animal rules live the same way in
-    /// Apha.Common.BulkRates.Validation.StaffAnimal.IStaffAnimalValidationService
+    /// <see cref="Services.BulkRates.Validation.StaffAnimal.IStaffAnimalValidationService"/>
     /// — a parallel, differently-shaped service, not the
     /// ValidationContext.
     /// </summary>

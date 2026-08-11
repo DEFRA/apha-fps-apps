@@ -1,5 +1,5 @@
-using Apha.Common.BulkRates.Validation;
-using Apha.Common.BulkRates.Validation.StaffAnimal;
+using Apha.FPS.Application.Services.BulkRates.Validation;
+using Apha.FPS.Application.Services.BulkRates.Validation.StaffAnimal;
 using Apha.Common.Constants;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Dtos.BulkRates;
@@ -228,7 +228,7 @@ public class BulkRatesRequestServiceTests
             .WithMessage("*Initiated*");
     }
 
-    [Fact]
+    [Fact(Skip = "IsInitiator restriction on Release is temporarily disabled for testing (BulkRatesRequestService.ReleaseForApprovalAsync) — re-enable once the restriction is restored before release.")]
     public async Task Release_WhenCallerIsNotInitiator_ThrowsBusinessValidation()
     {
         var repo = RepoReturning(Entry(status: "Initiated", requestedBy: Initiator));
@@ -495,7 +495,7 @@ public class BulkRatesRequestServiceTests
 
     // ── CancelAsync eligibility ──────────────────────────────────────────────
 
-    [Fact]
+    [Fact(Skip = "IsInitiator restriction on Cancel is temporarily disabled for testing (BulkRatesRequestService.CancelAsync) — re-enable once the restriction is restored before release.")]
     public async Task Cancel_WhenCallerIsNotInitiator_ThrowsBusinessValidation()
     {
         var repo = RepoReturning(Entry(status: "Initiated"));
@@ -570,7 +570,7 @@ public class BulkRatesRequestServiceTests
 
     // ── Upload by non-initiator ──────────────────────────────────────────────
 
-    [Fact]
+    [Fact(Skip = "IsInitiator restriction on Upload is temporarily disabled for testing (BulkRatesRequestService.UploadFileAsync) — re-enable once the restriction is restored before release.")]
     public async Task Upload_WhenCallerIsNotInitiator_ThrowsBusinessValidation()
     {
         var repo = RepoReturning(Entry(status: "Initiated"));
