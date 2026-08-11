@@ -83,10 +83,10 @@
                     </label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input type="number" class="govuk-input govuk-!-font-size-16"
-                               asp-for="Amount" step="0.01" placeholder="e.g., 1000" required />                      
-                    </div> 
-                    <span data-valmsg-for="Amount" class="govuk-error-message"></span>
+                        <input type="text" class="govuk-input govuk-!-font-size-16 decfmt-input"
+                               asp-for="Amount" placeholder="e.g., 1000" required />                      
+                    </div>
+                    <span asp-validation-for="Amount" class="govuk-error-message"></span>
                 </div>
             </div>
             <div class="govuk-grid-column-one-half">
@@ -94,9 +94,10 @@
                     <label class="govuk-label sup_font_weight_700" asp-for="CostOfWork">Cost of Work</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input type="number" class="govuk-input govuk-!-font-size-16"
-                               asp-for="CostOfWork" step="0.01" placeholder="e.g., 5000" />
+                        <input type="text" class="govuk-input govuk-!-font-size-16 decfmt-input"
+                               asp-for="CostOfWork" placeholder="e.g., 5000" />
                     </div>
+                    <span asp-validation-for="CostOfWork" class="govuk-error-message"></span>
                 </div>
             </div>
         </div>
@@ -107,9 +108,10 @@
                     <label class="govuk-label sup_font_weight_700" asp-for="Wip">WIP</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input type="number" class="govuk-input govuk-!-font-size-16"
-                               asp-for="Wip" step="0.01" placeholder="e.g., 2000" />
+                        <input type="text" class="govuk-input govuk-!-font-size-16 decfmt-input"
+                               asp-for="Wip" placeholder="e.g., 2000" />
                     </div>
+                    <span asp-validation-for="Wip" class="govuk-error-message"></span>
                 </div>
             </div>
             <div class="govuk-grid-column-one-half">
@@ -117,9 +119,10 @@
                     <label class="govuk-label sup_font_weight_700" asp-for="ProfitLoss">Profit/Loss</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input type="number" class="govuk-input govuk-!-font-size-16"
-                               asp-for="ProfitLoss" step="0.01" placeholder="e.g., 500" />
+                        <input type="text" class="govuk-input govuk-!-font-size-16 decfmt-input"
+                               asp-for="ProfitLoss" placeholder="e.g., 500" />
                     </div>
+                    <span asp-validation-for="ProfitLoss" class="govuk-error-message"></span>
                 </div>
             </div>
         </div>

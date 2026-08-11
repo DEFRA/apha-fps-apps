@@ -378,3 +378,24 @@
     cursor: help;
 }
 
+/* Fixed-width column that wraps long text instead of expanding the column */
+.grid-column-wrap {
+    display: block;
+    width: 100%;
+    max-width: 260px;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+/* Allow the wrapping cell to grow in height so the full description is visible */
+td.grid-column-wrap,
+td .grid-column-wrap {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    vertical-align: top;
+}
+
