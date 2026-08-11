@@ -135,6 +135,43 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
         }
 
         [Fact]
+        public async Task GetTestSnapshotPagedAsync_FilterByTestFee_ReturnsRowsWithinTolerance()
+        {
+            var repo = CreateRepositoryWithMocks(SeedTestorProducts(), SeedRequirements(), SeedProjects(), SeedPrograms());
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                // T001 has TestFee = 250; a near-exact value should still match via the tolerance range.
+                Filter = "{\"TestFee\":\"249.9995\"}"
+            };
+
+            var result = await repo.GetTestSnapshotPagedAsync(parameters);
+
+            var row = Assert.Single(result.Data);
+            Assert.Equal("T001", row.TestCode);
+            Assert.NotNull(row.TestFee);
+            Assert.Equal(250d, row.TestFee!.Value, 3);
+        }
+
+        [Fact]
+        public async Task GetTestSnapshotPagedAsync_FilterByTestFee_NoMatch_ReturnsEmpty()
+        {
+            var repo = CreateRepositoryWithMocks(SeedTestorProducts(), SeedRequirements(), SeedProjects(), SeedPrograms());
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                // No seeded row has a TestFee anywhere near this value.
+                Filter = "{\"TestFee\":\"9999\"}"
+            };
+
+            var result = await repo.GetTestSnapshotPagedAsync(parameters);
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
         public async Task GetTestSnapshotPagedAsync_SortByTestCodeDescending_OrdersRows()
         {
             var repo = CreateRepositoryWithMocks(SeedTestorProducts(), SeedRequirements(), SeedProjects(), SeedPrograms());
