@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPS.Application.Dtos.BulkRates
 {
-    public class StaffExportRow
+    public class BulkRatesStaffExportRow
     {
         [Display(Name = "PcGrade")]
         public string PcGrade { get; set; } = string.Empty;

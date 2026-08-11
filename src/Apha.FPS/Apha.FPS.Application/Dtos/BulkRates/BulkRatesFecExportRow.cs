@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPS.Application.Dtos.BulkRates
 {
-    public class FecExportRow
+    public class BulkRatesFecExportRow
     {
         [Display(Name = "TestCode")]
         public string TestCode { get; set; } = string.Empty;

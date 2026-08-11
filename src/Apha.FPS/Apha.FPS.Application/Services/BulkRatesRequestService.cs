@@ -1023,7 +1023,7 @@ namespace Apha.FPS.Application.Services
         private static List<ExcelSheetDefinition> BuildFecAgrupSheets(
             IReadOnlyList<FecStagingRow> fecRows, IReadOnlyList<AgrupStagingRow> agrupRows)
         {
-            var fecExportRows = fecRows.Select(r => new FecExportRow
+            var fecExportRows = fecRows.Select(r => new BulkRatesFecExportRow
             {
                 TestCode         = r.TestCode,
                 UnitPriceVla     = r.UnitPriceVla,
@@ -1036,7 +1036,7 @@ namespace Apha.FPS.Application.Services
                 Comments         = r.Comments
             }).ToList();
 
-            var agrupExportRows = agrupRows.Select(r => new AgrupExportRow
+            var agrupExportRows = agrupRows.Select(r => new BulkRatesAgrupExportRow
             {
                 TestCode           = r.TestCode,
                 Buyer              = r.Buyer,
@@ -1066,20 +1066,20 @@ namespace Apha.FPS.Application.Services
                 {
                     SheetName = "FEC",
                     Data = fecExportRows.Cast<object>(),
-                    DataType = typeof(FecExportRow),
+                    DataType = typeof(BulkRatesFecExportRow),
                     FormulaColumns = new Dictionary<string, string>
                     {
-                        [nameof(FecExportRow.Change)] = "IF({FecNew}=\"\",0-{DefraUnitPrice},{FecNew}-{DefraUnitPrice})"
+                        [nameof(BulkRatesFecExportRow.Change)] = "IF({FecNew}=\"\",0-{DefraUnitPrice},{FecNew}-{DefraUnitPrice})"
                     }
                 },
                 new()
                 {
                     SheetName = "AGRUP",
                     Data = agrupExportRows.Cast<object>(),
-                    DataType = typeof(AgrupExportRow),
+                    DataType = typeof(BulkRatesAgrupExportRow),
                     FormulaColumns = new Dictionary<string, string>
                     {
-                        [nameof(AgrupExportRow.Change)] = "IF({AgrupNew}=\"\",0-{Agrup},{AgrupNew}-{Agrup})"
+                        [nameof(BulkRatesAgrupExportRow.Change)] = "IF({AgrupNew}=\"\",0-{Agrup},{AgrupNew}-{Agrup})"
                     }
                 }
             ];
@@ -1089,7 +1089,7 @@ namespace Apha.FPS.Application.Services
         // template re-uploads without modification.
         private static List<ExcelSheetDefinition> BuildStaffSheet(IReadOnlyList<StaffStagingRow> rows)
         {
-            var exportRows = rows.Select(r => new StaffExportRow
+            var exportRows = rows.Select(r => new BulkRatesStaffExportRow
             {
                 PcGrade = r.PcGrade,
                 PayRate = r.PayRate,
@@ -1107,8 +1107,8 @@ namespace Apha.FPS.Application.Services
             {
                 SheetName = "Staff",
                 Data = exportRows.Cast<object>(),
-                DataType = typeof(StaffExportRow),
-                ProtectedColumnNames = [nameof(StaffExportRow.PcGrade)]
+                DataType = typeof(BulkRatesStaffExportRow),
+                ProtectedColumnNames = [nameof(BulkRatesStaffExportRow.PcGrade)]
             }];
         }
 
@@ -1116,7 +1116,7 @@ namespace Apha.FPS.Application.Services
         // template re-uploads without modification.
         private static List<ExcelSheetDefinition> BuildAnimalSheet(IReadOnlyList<AnimalStagingRow> rows)
         {
-            var exportRows = rows.Select(r => new AnimalExportRow
+            var exportRows = rows.Select(r => new BulkRatesAnimalExportRow
             {
                 AnimalType     = r.AnimalType,
                 Species        = r.Species,
@@ -1136,8 +1136,8 @@ namespace Apha.FPS.Application.Services
             {
                 SheetName = "Animals",
                 Data = exportRows.Cast<object>(),
-                DataType = typeof(AnimalExportRow),
-                ProtectedColumnNames = [nameof(AnimalExportRow.AnimalType)]
+                DataType = typeof(BulkRatesAnimalExportRow),
+                ProtectedColumnNames = [nameof(BulkRatesAnimalExportRow.AnimalType)]
             }];
         }
 

@@ -1157,7 +1157,7 @@ public class BulkRatesRequestServiceTests
         capturedSheets!.Should().HaveCountGreaterThanOrEqualTo(2);
         // FEC sheet rows come from snapshot only (T200 present)
         var fecSheet = capturedSheets[0];
-        fecSheet.Data.Cast<FecExportRow>().Should().Contain(r => r.TestCode == "T200");
+        fecSheet.Data.Cast<BulkRatesFecExportRow>().Should().Contain(r => r.TestCode == "T200");
     }
 
     // (9) Repeat download creates a higher version
@@ -1478,7 +1478,7 @@ public class BulkRatesRequestServiceTests
         await svc.DownloadStaffTestDataAsync(entry.JobExecutionId);
 
         capturedSheets.Should().ContainSingle();
-        capturedSheets![0].Data.Cast<StaffExportRow>().Should().ContainSingle(r => r.PcGrade == "G9");
+        capturedSheets![0].Data.Cast<BulkRatesStaffExportRow>().Should().ContainSingle(r => r.PcGrade == "G9");
     }
 
     [Fact]
@@ -1499,7 +1499,7 @@ public class BulkRatesRequestServiceTests
         await svc.DownloadAnimalTestDataAsync(entry.JobExecutionId);
 
         capturedSheets.Should().ContainSingle();
-        capturedSheets![0].Data.Cast<AnimalExportRow>().Should().ContainSingle(r => r.AnimalType == "Sheep");
+        capturedSheets![0].Data.Cast<BulkRatesAnimalExportRow>().Should().ContainSingle(r => r.AnimalType == "Sheep");
     }
 
     // ── Repeat download uses a higher version ──
@@ -1559,7 +1559,7 @@ public class BulkRatesRequestServiceTests
         await svc.ExportStaffTestDataAsync(FpsYear);
 
         capturedSheets.Should().ContainSingle();
-        capturedSheets![0].ProtectedColumnNames.Should().BeEquivalentTo(new[] { nameof(StaffExportRow.PcGrade) });
+        capturedSheets![0].ProtectedColumnNames.Should().BeEquivalentTo(new[] { nameof(BulkRatesStaffExportRow.PcGrade) });
     }
 
     [Fact]
@@ -1577,7 +1577,7 @@ public class BulkRatesRequestServiceTests
         await svc.ExportAnimalTestDataAsync(FpsYear);
 
         capturedSheets.Should().ContainSingle();
-        capturedSheets![0].ProtectedColumnNames.Should().BeEquivalentTo(new[] { nameof(AnimalExportRow.AnimalType) });
+        capturedSheets![0].ProtectedColumnNames.Should().BeEquivalentTo(new[] { nameof(BulkRatesAnimalExportRow.AnimalType) });
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
