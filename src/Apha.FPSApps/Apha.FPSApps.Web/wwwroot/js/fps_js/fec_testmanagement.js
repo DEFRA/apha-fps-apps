@@ -280,10 +280,12 @@ var BulkRates = (function () {
     // touch the "request already in progress" banner or the disabled "New
     // Request" button above it, both server-rendered once from a separate
     // GetActiveRequestAsync call at page load. So once the watched row
-    // reaches a terminal status, do a single full page reload instead of
-    // another grid-only refresh, so the banner/button catch up too.
+    // reaches a terminal status, update those two elements directly instead
+    // of a full page reload — the only thing gating them was this specific
+    // request being active, and we just learned it no longer is.
     var _pollTimer = null;
     var _pollJobExecutionId = null;
+    var _pollJobName = null;
 
     function onPollGridReloaded(e) {
         if (!e.detail || e.detail.gridId !== 'bulkRatesGrid') { return; }
@@ -292,7 +294,12 @@ var BulkRates = (function () {
         var currentStatus = $.trim($statusCell.text());
         if (currentStatus !== 'Approved' && currentStatus !== 'Running') {
             stopActiveRequestPolling();
-            window.location.reload();
+            $('#activeRequestBanner').remove();
+            var $btnArea = $('#newRequestButtonArea');
+            if ($btnArea.length) {
+                $btnArea.html('<a href="/FPS/BulkRates/Create?jobName=' + encodeURIComponent(_pollJobName) +
+                    '" class="govuk-button govuk-button--secondary sup_margin_0">New Request</a>');
+            }
         }
     }
 
@@ -301,11 +308,12 @@ var BulkRates = (function () {
         document.removeEventListener('gridReloaded', onPollGridReloaded);
     }
 
-    function startActiveRequestPolling(jobExecutionId, status) {
+    function startActiveRequestPolling(jobExecutionId, status, jobName) {
         if (status !== 'Approved' && status !== 'Running') { return; }
         if (_pollTimer) { return; }
 
         _pollJobExecutionId = jobExecutionId;
+        _pollJobName = jobName;
         document.addEventListener('gridReloaded', onPollGridReloaded);
 
         var pollsRemaining = 40; // ~2 minutes at 3s intervals
