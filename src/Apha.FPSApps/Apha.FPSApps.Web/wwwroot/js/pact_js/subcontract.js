@@ -115,10 +115,50 @@ function saveSubContract() {
     clearValidationErrors('#modaPopupBody');
     var form = $('#subContractForm');
 
+    // Check basic form validity (required fields)
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;
     }
+
+    // Check for numeric validation errors (out of range values)
+    if (hasNumericValidationErrors(form)) {
+        // Ensure validation messages are visible
+        ensureValidationMessagesVisible(form);
+
+        // Show error summary
+        var $errorSummary = $('#modaPopupBody').find('.govuk-error-summary');
+        var $errorList = $errorSummary.find('.govuk-error-summary__list');
+
+        $errorList.empty();
+
+        // Collect all error messages
+        form.find('.govuk-input--error').each(function() {
+            var $input = $(this);
+            var fieldName = $input.attr('name') || $input.attr('id');
+            var $formGroup = $input.closest('.govuk-form-group');
+            var $validationSpan = $formGroup.find('span[data-valmsg-for="' + fieldName + '"]');
+
+            if ($validationSpan.length === 0) {
+                $validationSpan = $formGroup.find('span[asp-validation-for="' + fieldName + '"]');
+            }
+
+            var errorMessage = $validationSpan.text().trim();
+            var label = $formGroup.find('label').first().text().replace('*', '').trim();
+
+            if (errorMessage) {
+                $errorList.append('<li><a href="#' + fieldName + '">' + label + ': ' + errorMessage + '</a></li>');
+            }
+        });
+
+        $errorSummary.show();
+
+        // Scroll to error summary
+        $errorSummary[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        return;
+    }
+
     var data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
 
     // Convert empty strings to null for numeric fields, but parse valid numbers
@@ -135,9 +175,12 @@ function saveSubContract() {
 
     if (data['SupplierNumber'] === '' || data['SupplierNumber'] === undefined) {
         data['SupplierNumber'] = null;
+    } else if (typeof data['SupplierNumber'] === 'string') {
+        var parsedInt = parseInt(data['SupplierNumber'], 10);
+        data['SupplierNumber'] = isNaN(parsedInt) ? null : parsedInt;
     }
 
-    
+
 
     $.ajax({
         url: '/PACT/SubContract/SaveSubContract',
