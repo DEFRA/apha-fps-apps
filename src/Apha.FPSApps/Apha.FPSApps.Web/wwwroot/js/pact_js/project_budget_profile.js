@@ -273,24 +273,6 @@ function saveProjectMonth() {
         validateRangeOnInput(this);
     });
 
-    // Check for numeric validation errors
-    if (hasNumericValidationErrors(form)) {
-        // Ensure validation messages are visible
-        if (typeof ensureValidationMessagesVisible === 'function') {
-            ensureValidationMessagesVisible(form);
-        }
-        displayClientValidationErrors(form, form);
-        return;
-    }
-
-    if (!isFormValid(form)) {
-        displayClientValidationErrors(form, form);
-        return;
-    }
-
-    // Clear validation errors only after validation passes
-    clearValidationErrors(form);
-
     const costProfileInput = form.find('[name="CostProfile"]').val() || '';
     const costProfileValue = costProfileInput.trim() === '' ? null : parseFloat(costProfileInput);
 

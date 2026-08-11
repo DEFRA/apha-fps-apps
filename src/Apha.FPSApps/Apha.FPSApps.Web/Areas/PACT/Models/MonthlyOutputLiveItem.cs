@@ -25,6 +25,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public double Month { get; set; }
 
         [Display(Name = "Volume")]
+        [Range(typeof(decimal), "-999999999999999.9999", "999999999999999.9999", ErrorMessage = "Volume must be between -999,999,999,999,999.9999 and 999,999,999,999,999.9999.")]
         [GridColumn(Order = 5, Width = 90, Type = GridColumnType.Number)]
         public double? Volume { get; set; }
 
