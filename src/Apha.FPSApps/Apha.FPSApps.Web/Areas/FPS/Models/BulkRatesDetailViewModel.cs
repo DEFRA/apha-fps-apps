@@ -24,12 +24,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public bool IsInitiator =>
             string.Equals(Request.Entry.RequestedBy, CurrentUserEmail, StringComparison.OrdinalIgnoreCase);
 
+        // TEMPORARILY DISABLED the initiator-only (IsInitiator) restriction so a single
+        // admin can drive the whole workflow during testing. Restore before release.
         public bool CanUpload =>
-            IsInitiator && Request.Entry.Status is "Initiated" or "Rejected";
+            Request.Entry.Status is "Initiated" or "Rejected";
 
+        // TEMPORARILY DISABLED the initiator-only (IsInitiator) restriction so a single
+        // admin can drive the whole workflow during testing. Restore before release.
         public bool CanRelease =>
-            IsInitiator
-            && Request.Entry.Status == "Initiated"
+            Request.Entry.Status == "Initiated"
             && !string.IsNullOrEmpty(UploadResult?.Filename)
             && UploadResult.RowCounts.Total > 0
             && !UploadResult.ValidationErrors.Any(e => string.Equals(e.Severity, "Error", StringComparison.OrdinalIgnoreCase));
@@ -44,8 +47,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public bool CanReject =>
             Request.Entry.Status == "ReleasedForApproval";
 
+        // TEMPORARILY DISABLED the initiator-only (IsInitiator) restriction so a single
+        // admin can self-cancel during testing. Restore before release.
         public bool CanCancel =>
-            IsInitiator && Request.Entry.Status is "Initiated" or "Rejected" or "Failed";
+            Request.Entry.Status is "Initiated" or "Rejected" or "Failed";
     }
 
     /// <summary>

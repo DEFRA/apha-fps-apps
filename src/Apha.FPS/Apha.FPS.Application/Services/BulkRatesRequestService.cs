@@ -109,9 +109,9 @@ namespace Apha.FPS.Application.Services
             var entry = await RequireRequestAsync(jobExecutionId, ct);
             var jobQueueId = entry.JobQueueId;
 
-            if (!string.Equals(entry.RequestedBy, requestedBy, StringComparison.OrdinalIgnoreCase))
-                throw new BusinessValidationErrorException([
-                    new("Only the original initiator may upload files for this request.", "NOT_INITIATOR")]);
+            // Initiator-only upload restriction.
+            // TEMPORARILY DISABLED at the requester's request so a single admin can
+            // drive the whole workflow during testing. Restore this check before release.
 
             // if Rejected, auto-transition back to Initiated before replacing staging
             if (string.Equals(entry.Status, StatusRejected, StringComparison.OrdinalIgnoreCase))
@@ -207,9 +207,9 @@ namespace Apha.FPS.Application.Services
             var entry = await RequireRequestAsync(jobExecutionId, ct);
             var jobQueueId = entry.JobQueueId;
 
-            if (!string.Equals(entry.RequestedBy, requestedBy, StringComparison.OrdinalIgnoreCase))
-                throw new BusinessValidationErrorException([
-                    new("Only the original initiator may view validation results.", "NOT_INITIATOR")]);
+            // Initiator-only view restriction.
+            // TEMPORARILY DISABLED at the requester's request so a single admin can
+            // drive the whole workflow during testing. Restore this check before release.
 
             var errors = await _repository.GetValidationErrorsAsync(jobQueueId, ct);
             var metadata = BuildUploadMetadata(entry);
@@ -233,9 +233,9 @@ namespace Apha.FPS.Application.Services
             var entry = await RequireRequestAsync(jobExecutionId, ct);
             var jobQueueId = entry.JobQueueId;
 
-            if (!string.Equals(entry.RequestedBy, requestedBy, StringComparison.OrdinalIgnoreCase))
-                throw new BusinessValidationErrorException([
-                    new("Only the original initiator may release this request.", "NOT_INITIATOR")]);
+            // Initiator-only release restriction.
+            // TEMPORARILY DISABLED at the requester's request so a single admin can
+            // drive the whole workflow during testing. Restore this check before release.
 
             RequireStatus(entry, StatusInitiated, "release for approval");
 
@@ -452,10 +452,9 @@ namespace Apha.FPS.Application.Services
             var entry = await RequireRequestAsync(jobExecutionId, ct);
             var jobQueueId = entry.JobQueueId;
 
-            // Only original initiator may cancel
-            if (!string.Equals(entry.RequestedBy, cancelledBy, StringComparison.OrdinalIgnoreCase))
-                throw new BusinessValidationErrorException([
-                    new("Only the original initiator may cancel this request.", "NOT_INITIATOR")]);
+            // Initiator-only cancel restriction.
+            // TEMPORARILY DISABLED at the requester's request so a single admin can
+            // drive the whole workflow during testing. Restore this check before release.
 
             if (!string.Equals(entry.Status, StatusInitiated, StringComparison.OrdinalIgnoreCase) &&
                 !string.Equals(entry.Status, StatusRejected, StringComparison.OrdinalIgnoreCase) &&
