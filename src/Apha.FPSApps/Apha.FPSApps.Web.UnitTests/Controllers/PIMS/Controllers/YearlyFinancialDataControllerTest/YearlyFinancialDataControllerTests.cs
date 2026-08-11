@@ -77,8 +77,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
                     Success = true,
                     Data    = new ProjectDetailDto
                     {
-                        StartDate = new DateTime(2023, 4, 1),
-                        EndDate   = new DateTime(2024, 3, 31)
+                        StartDate = new DateTime(2023, 04, 01),
+                        EndDate   = new DateTime(2024, 03, 31)
                     }
                 });
 
@@ -689,8 +689,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
             var json   = Assert.IsType<JsonResult>(result);
 
             Assert.True(GetJsonProperty<bool>(json, "success"));
-            Assert.Equal("4/1/2024", GetJsonProperty<string>(json, "startDate"));
-            Assert.Equal("6/30/2025", GetJsonProperty<string>(json, "endDate"));   // RevisedEndDate used
+            Assert.Equal("04/01/2024", GetJsonProperty<string>(json, "startDate"));
+            Assert.Equal("06/30/2025", GetJsonProperty<string>(json, "endDate"));   // RevisedEndDate used
         }
 
         [Fact]
@@ -712,7 +712,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
             var json   = Assert.IsType<JsonResult>(result);
 
             Assert.True(GetJsonProperty<bool>(json, "success"));
-            Assert.Equal("3/31/2025", GetJsonProperty<string>(json, "endDate"));  // EndDate fallback
+            Assert.Equal("03/31/2025", GetJsonProperty<string>(json, "endDate"));  // EndDate fallback
         }
 
         [Fact]
