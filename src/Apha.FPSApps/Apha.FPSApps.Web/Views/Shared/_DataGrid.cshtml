@@ -321,6 +321,15 @@
                                             <img src="~/images/view_icon.png" alt="View icon" width="20" height="20" title="View">
                                         </button>
                                     }
+                                    @if (Model.AllowConfirm)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm delete-row-btn"
+                                                data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
+                                                data-delete-function="@Model.ConfirmFunction" allow-edit="true">
+                                            <img src="~/images/circle-check-regular-full.svg"  class="isCustomSvg" alt="Confirm icon" width="20" height="20" title="Confirm">
+                                        </button>
+                                    }
                                 </td>
                             }
                         </tr>

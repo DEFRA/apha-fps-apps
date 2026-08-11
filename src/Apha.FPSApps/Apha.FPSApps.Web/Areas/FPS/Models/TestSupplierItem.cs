@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -30,6 +31,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "Test Price")]  // ✅ Renamed from "Unit Price" to "Test Price"
         [GridColumn(Order = 4, Width = 110, Type = GridColumnType.GbpValue)]
+        [CurrencyRange]
         public decimal? UnitPrice { get; set; }
 
         [Display(Name = "Test Cost")]

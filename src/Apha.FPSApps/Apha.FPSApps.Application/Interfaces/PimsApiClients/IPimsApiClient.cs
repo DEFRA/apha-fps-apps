@@ -11,5 +11,21 @@ namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
         IPimsRadTrackInvoiceApiClient PimsRadTrackInvoice { get; }
         
         IPimsYearlyFinancialDataApiClient PimsYearlyFinancialData { get; }
+        IPimsReportApiClient PimsReport { get; }
+        IPimsReportGroupApiClient PimsReportGroup { get; }
+        IPimsReportGroupLinkApiClient PimsReportGroupLink { get; }
+        IPimsProjectManagerApiClient PimsProjectManager { get; }
+        IPimsProgramManagerLinkApiClient PimsProgramManagerLink { get; }
+        IPimsProfitCentreManagerLinkApiClient PimsProfitCentreManagerLink { get; }
+        IPimsSettingApiClient PimsSetting { get; }
+        IPimsAccessUserApiClient PimsAccessUser { get; }
+        IPimsAccessLevelApiClient PimsAccessLevel { get; }
+        IPimsAccessUserLevelApiClient PimsAccessUserLevel { get; }
+        IPimsAccessSystemApiClient PimsAccessSystem { get; }
+        IPimsFrequencyApiClient PimsFrequency { get; }
+        IPimsReviewItemApiClient PimsReviewItem { get; }
+        IPimsRadTrackProgApiClient PimsRadTrackProg { get; }
+        IPimsRiskApiClient PimsRisk { get; }
+        IPimsPublicationTypeApiClient PimsPublicationType { get; }
     }
 }

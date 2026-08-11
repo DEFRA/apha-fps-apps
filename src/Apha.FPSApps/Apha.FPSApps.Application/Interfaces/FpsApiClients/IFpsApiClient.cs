@@ -38,5 +38,7 @@
         IFpsCostCentreApiClient FpsCostCentre { get; }
         IFpsResourceAllocationApiClient FpsResourceAllocation { get; }
         IFpsResourceMgmtReplanApiClient FpsResourceMgmtReplan { get; }
+        IFpsMonthHourApiClient FpsMonthHour { get; }
+        IFpsYearEndApiClient FpsYearEnd { get; }
     }
 }
