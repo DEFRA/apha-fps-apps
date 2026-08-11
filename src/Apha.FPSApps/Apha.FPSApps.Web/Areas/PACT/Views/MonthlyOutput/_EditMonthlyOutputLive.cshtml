@@ -62,9 +62,9 @@
                     <label for="LiveVolume" class="govuk-label govuk-!-font-weight-bold">
                         Volume <span class="app-required" aria-hidden="true">*</span>
                     </label>
-                    <input type="number" step="0.01" class="govuk-input govuk-!-font-size-16"
+                    <input type="text" class="govuk-input govuk-!-font-size-16 decfmt-input"
                            asp-for="Volume" id="LiveVolume" name="Volume" placeholder="Enter Volume"
-                           autocomplete="off" aria-required="true" required />
+                           autocomplete="off" aria-required="true" required/>
                     <span data-valmsg-for="Volume" class="govuk-error-message" style="display:none;"></span>
                 </div>
             </div>

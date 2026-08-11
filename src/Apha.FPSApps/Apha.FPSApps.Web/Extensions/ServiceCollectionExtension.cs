@@ -118,6 +118,8 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IYearEndService, YearEndService>();
             services.AddScoped<IMonthHourService, MonthHourService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
+            services.AddScoped<ITestsRequiredByWgService, TestsRequiredByWgService>();
+            services.AddScoped<ITestsRequiredByRcService, TestsRequiredByRcService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
             services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             services.AddScoped<IReleaseSummaryService, ReleaseSummaryService>();

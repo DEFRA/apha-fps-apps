@@ -1,5 +1,8 @@
 @* CostBook navigation items — referenced by Views/Shared/Components/AppNav/Default.cshtml *@
-
+@inject IConfiguration Configuration
+@{
+    var costbookPowerBiReportUrl = Configuration["PowerBiReports:CostBook"];
+}
 @{
     var hasMaintenanceAccess = User.IsInRole("CostbookAdmin");
 }
@@ -26,3 +29,9 @@
                     </span>
                 }
             </div>
+
+<!-- Power BIReports -->
+<div class="nav-item">
+    <a class="nav-button" href="@costbookPowerBiReportUrl"
+       target="_blank" rel="noopener noreferrer">Power BI Report</a>
+</div>

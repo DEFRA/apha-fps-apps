@@ -112,10 +112,10 @@
                     <label for="StagingHours" class="govuk-label govuk-!-font-weight-bold">
                         Hours <span class="app-required" aria-hidden="true">*</span>
                     </label>
-                    <input type="number" step="0.01" class="govuk-input govuk-!-font-size-16"
+                    <input type="text" class="govuk-input govuk-!-font-size-16 decfmt-input"
                            asp-for="Hours" id="StagingHours" name="Hours" placeholder="Enter Hours"
                            autocomplete="off" aria-describedby="staging-modal-hours-error" aria-required="true" required />
-                    <span data-valmsg-for="Hours" class="govuk-error-message" style="display:none;"></span>
+                    <span asp-validation-for="Hours" class="govuk-error-message"></span>
                 </div>
             </div>
 

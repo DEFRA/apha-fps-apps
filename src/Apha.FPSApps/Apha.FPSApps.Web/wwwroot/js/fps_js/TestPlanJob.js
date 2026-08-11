@@ -119,7 +119,7 @@ function updateTestPlan() {
         Buyer: form.find('[name="Buyer"]').val(),
         ProjectBuyerCode: form.find('[name="ProjectBuyerCode"]').val(),
         NoRequired: parseFloat($('#NoRequired').val()) || 0,
-        UnitPrice: parseFloat($('#UnitPrice').val()) || 0,
+        UnitPrice: $('#UnitPrice').val() || 0,
         Active: parseInt(form.find('[name="Active"]').val()) || 1
     };
     $.ajax({
@@ -244,7 +244,7 @@ function onTestCodeSelected(select) {
     var projectBuyerCode = $('#ProjectBuyerCode').val() || '';
     $.get('/FPS/TestPlanJob/GetRecUnitPrice', { testCode: testCode, projectBuyerCode: projectBuyerCode }, function (result) {
         if (result.success) {
-            var price = parseFloat(result.recUnitPrice || 0).toFixed(2);
+            var price = result.recUnitPrice || 0;
             $('#RecUnitPrice').val(price);
             $('#UnitPrice').val(price);
             calculateTestCost();
@@ -255,7 +255,7 @@ function onTestCodeSelected(select) {
 function calculateTestCost() {
     var noRequired = parseFloat($('#NoRequired').val()) || 0;
     var unitPrice = parseFloat($('#UnitPrice').val()) || 0;
-    $('#TotalCost').val((noRequired * unitPrice).toFixed(2));
+    $('#TotalCost').val((noRequired * unitPrice).toFixed(4));
 }
 
 $(document).on('change', '#NoRequired, #UnitPrice', function () {
