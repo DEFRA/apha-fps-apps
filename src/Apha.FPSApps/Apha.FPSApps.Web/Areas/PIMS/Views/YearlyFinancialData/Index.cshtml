@@ -23,7 +23,7 @@
         <div class="govuk-width-container">
         <!-- ── Toolbar: Project selector + date display ──────────────────── -->
         
-        <div class="yfd-toolbar govuk-!-margin-right-5 govuk-!-margin-left-2 govuk-!-padding-2">
+        <div class="yfd-toolbar govuk-!-margin-right-5 govuk-!-margin-left-3 govuk-!-padding-2">
             <div class="yfd-toolbar__left" style="display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap;">
 
                 
@@ -40,8 +40,8 @@
                 </div>
 
                 <div class="yfd-toolbar__item">
-                        <label class="govuk-label tab-font-size govuk-!-font-weight-bold" for="yfdStartDate">Start Date</label>
-                    <input class="govuk-input govuk-input--width-10 tab-font-size"
+                    <label class="govuk-label tab-font-size govuk-!-font-weight-bold" for="yfdStartDate">Start Date</label>
+                    <input class="govuk-input sup_select_option_width_100 tab-font-size"
                            id="yfdStartDate"
                            name="yfdStartDate"
                            type="text"
@@ -51,8 +51,8 @@
                 </div>
 
                 <div class="yfd-toolbar__item">
-                        <label class="govuk-label tab-font-size govuk-!-font-weight-bold" for="yfdEndDate">(Revised) End Date</label>
-                    <input class="govuk-input govuk-input--width-10 tab-font-size"
+                    <label class="govuk-label tab-font-size govuk-!-font-weight-bold" for="yfdEndDate">(Revised) End Date</label>
+                        <input class="govuk-input sup_select_option_width_100 tab-font-size"
                            id="yfdEndDate"
                            name="yfdEndDate"
                            type="text"
@@ -78,7 +78,7 @@
        
         <div class="govuk-grid-row govuk-!-margin-right-5 govuk-!-margin-left-2 sup_margin_bottom_10">
             <div class="govuk-grid-column-full sup_p_0">
-                <div id="yfdTotalsScrollWrapper" class="yfd-scroll-wrapper">
+                <div id="yfdTotalsScrollWrapper" class="yfd-scroll-wrapper govuk-!-margin-left-2">
                     <table id="tblYFDTotals"
                            class="govuk-table custom-table yfd-totals-table yfd-grid-table"
                            aria-label="Totals row">
@@ -105,8 +105,8 @@
                                 <td class="govuk-table__cell sup_text_right_align" id="totalCustomerIncome"></td>
                                 <td class="govuk-table__cell yfd-total-hidden"></td>
                                 <td class="govuk-table__cell sup_text_right_align" id="totalActualExp"></td>
-                                <td class="govuk-table__cell yfd-total-hidden"></td>
-                                <td class="govuk-table__cell yfd-total-hidden"></td>
+                                <td class="govuk-table__cell sup_text_right_align" id="totalSeedcorn"></td>
+                                <td class="govuk-table__cell sup_text_right_align" id="totalManHours"></td>
                                 <td class="govuk-table__cell sup_text_right_align" id="totalPayCosts"></td>
                                 <td class="govuk-table__cell sup_text_right_align" id="totalNonPay"></td>
                                 <td class="govuk-table__cell sup_text_right_align" id="totalTestCosts"></td>

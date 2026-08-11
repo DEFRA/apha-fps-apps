@@ -13,7 +13,7 @@ namespace Apha.Costbook.DataAccess.Data
         {
             entity.HasKey(e => new { e.PcGrade, e.FpsYear }).HasName("pk_profitcentregrade");
 
-            entity.ToTable("profitcentregrade", DbConstants.FpsSchemaName);
+            entity.ToTable("profitcentregrade", "fps");
 
             entity.HasIndex(e => e.ProfitCentre, "profitcentregrade_profitcentre")
                 .HasAnnotation("Npgsql:StorageParameter:deduplicate_items", "true")
@@ -24,14 +24,14 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasColumnName("pcgrade");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.ChargeRate)
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
                 .HasColumnName("chargerate");
             entity.Property(e => e.DefraChargeRate)
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
                 .HasColumnName("defrachargerate");
             entity.Property(e => e.DirectRate)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
+                .HasDefaultValue(0m)
                 .HasColumnName("directrate");
             entity.Property(e => e.DivisionGrade)
                 .HasMaxLength(10)
@@ -43,20 +43,20 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasDefaultValue(0.0)
                 .HasColumnName("hrsavailable");
             entity.Property(e => e.Npr)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
+                .HasDefaultValue(0m)
                 .HasColumnName("npr");
             entity.Property(e => e.Ohr)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
+                .HasDefaultValue(0m)
                 .HasColumnName("ohr");
             entity.Property(e => e.OldChargeRate)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
+                .HasDefaultValue(0m)
                 .HasColumnName("oldchargerate");
             entity.Property(e => e.PayRate)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
+                .HasDefaultValue(0m)
                 .HasColumnName("payrate");
             entity.Property(e => e.ProfitCentre)
                 .HasMaxLength(50)
