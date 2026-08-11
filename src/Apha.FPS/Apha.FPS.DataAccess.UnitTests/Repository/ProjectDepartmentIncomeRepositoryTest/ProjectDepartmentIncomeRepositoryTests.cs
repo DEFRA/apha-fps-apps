@@ -3,20 +3,20 @@ using Apha.FPS.Core.Interfaces;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.FPS.DataAccess.UnitTests.Repositories.DepartmentIncomeRepositoryTest
+namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeRepositoryTest
 {
-    public class DepartmentIncomeRepositoryTests
+    public class ProjectDepartmentIncomeRepositoryTests
     {
         private const string TestProject = "AH0033";
         private const int TestMonthFrom = 1;
         private const int TestMonthTo = 12;
         private const int TestFpsYear = 2024;
 
-        private readonly IDepartmentIncomeRepository _repositoryMock;
+        private readonly IProjectDepartmentIncomeRepository _repositoryMock;
 
-        public DepartmentIncomeRepositoryTests()
+        public ProjectDepartmentIncomeRepositoryTests()
         {
-            _repositoryMock = Substitute.For<IDepartmentIncomeRepository>();
+            _repositoryMock = Substitute.For<IProjectDepartmentIncomeRepository>();
         }
 
         // ── Helpers ─────────────────────────────────────────────────────────────

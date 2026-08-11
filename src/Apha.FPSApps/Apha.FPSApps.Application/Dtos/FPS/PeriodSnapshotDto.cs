@@ -1,4 +1,4 @@
-namespace Apha.FPSApps.Application.Dtos.DepartmentIncome
+namespace Apha.FPSApps.Application.Dtos.FPS
 {
     public class PeriodSnapshotDto
     {

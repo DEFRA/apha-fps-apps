@@ -73,7 +73,7 @@ var deptIncomeSnapshotQueryMap = {
     'time':        'qryDeptIncomeTime',
     'tests':       'qryDeptIncomeTest',
     'animals':     'qryDeptIncomeAnimal',
-    'exceptional': 'qryDeptIncomeAdditional',
+    'exceptional': 'qryDeptIncomeExceptional',
     'totals':      'qryDeptIncomeTotals'
 };
 

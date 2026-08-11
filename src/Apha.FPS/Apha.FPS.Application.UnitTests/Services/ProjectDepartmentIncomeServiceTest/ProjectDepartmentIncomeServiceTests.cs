@@ -1,4 +1,5 @@
 using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
@@ -6,21 +7,21 @@ using AutoMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.FPS.Application.UnitTests.Services.DepartmentIncomeServiceTest
+namespace Apha.FPS.Application.UnitTests.Services.ProjectDepartmentIncomeServiceTest
 {
-    public class DepartmentIncomeServiceTests
+    public class ProjectDepartmentIncomeServiceTests
     {
         private const string TestProject = "AH0033";
 
-        private readonly IDepartmentIncomeRepository _repository;
+        private readonly IProjectDepartmentIncomeRepository _repository;
         private readonly IMapper _mapper;
-        private readonly DepartmentIncomeService _service;
+        private readonly IProjectDepartmentIncomeService _service;
 
-        public DepartmentIncomeServiceTests()
+        public ProjectDepartmentIncomeServiceTests()
         {
-            _repository = Substitute.For<IDepartmentIncomeRepository>();
+            _repository = Substitute.For<IProjectDepartmentIncomeRepository>();
             _mapper     = Substitute.For<IMapper>();
-            _service    = new DepartmentIncomeService(_repository, _mapper);
+            _service    = new ProjectDepartmentIncomeService(_repository, _mapper);
         }
 
         // ── Helpers ─────────────────────────────────────────────────────────────
@@ -533,14 +534,14 @@ namespace Apha.FPS.Application.UnitTests.Services.DepartmentIncomeServiceTest
         public void Constructor_WithNullRepository_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new DepartmentIncomeService(null!, _mapper));
+                new ProjectDepartmentIncomeService(null!, _mapper));
         }
 
         [Fact]
         public void Constructor_WithNullMapper_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new DepartmentIncomeService(_repository, null!));
+                new ProjectDepartmentIncomeService(_repository, null!));
         }
 
         #endregion

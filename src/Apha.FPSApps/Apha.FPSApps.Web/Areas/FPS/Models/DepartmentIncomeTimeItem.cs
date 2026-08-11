@@ -57,19 +57,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? SpNumber { get; set; }
 
         [Display(Name = "ChargeRate")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.RoundTwoDecimal, IsFilterable = false)]
         public decimal ChargeRate { get; set; }
 
         [Display(Name = "Pay")]
-        [GridColumn(Width = 100, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.RoundTwoDecimal, IsFilterable = false)]
         public decimal Pay { get; set; }
 
         [Display(Name = "NonPay")]
-        [GridColumn(Width = 100, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.RoundTwoDecimal, IsFilterable = false)]
         public decimal NonPay { get; set; }
 
         [Display(Name = "Overhead")]
-        [GridColumn(Width = 100, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.RoundTwoDecimal, IsFilterable = false)]
         public decimal Overhead { get; set; }
 
         [Display(Name = "Time")]
@@ -77,7 +77,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal Time { get; set; }
 
         [Display(Name = "TotalCost")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.RoundTwoDecimal, IsFilterable = false)]
         public decimal TotalCost { get; set; }
     }
 }

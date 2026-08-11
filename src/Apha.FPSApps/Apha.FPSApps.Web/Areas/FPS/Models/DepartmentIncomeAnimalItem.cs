@@ -51,11 +51,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal AnimalDays { get; set; }
 
         [Display(Name = "Rate")]
-        [GridColumn(Width = 100, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.RoundTwoDecimal, IsFilterable = false)]
         public decimal Rate { get; set; }
 
         [Display(Name = "TotalCost")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.RoundTwoDecimal, IsFilterable = false)]
         public decimal TotalCost { get; set; }
     }
 }

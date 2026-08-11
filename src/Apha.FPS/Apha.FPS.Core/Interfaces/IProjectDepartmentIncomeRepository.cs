@@ -3,7 +3,7 @@ using Apha.FPS.Core.Pagination;
 
 namespace Apha.FPS.Core.Interfaces
 {
-    public interface IDepartmentIncomeRepository
+    public interface IProjectDepartmentIncomeRepository
     {
         // Snapshot variants — use fPeriod* period-diff functions (aggregated)
         Task<List<DepartmentIncomeTime>> GetTimeIncomeAsync(string? project, int monthFrom, int monthTo);

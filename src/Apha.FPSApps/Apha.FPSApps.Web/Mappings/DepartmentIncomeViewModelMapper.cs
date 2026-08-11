@@ -1,4 +1,4 @@
-using Apha.FPSApps.Application.Dtos.DepartmentIncome;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using AutoMapper;
 

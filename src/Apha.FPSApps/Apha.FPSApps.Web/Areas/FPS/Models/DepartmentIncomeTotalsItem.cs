@@ -17,23 +17,23 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? OracleProjectCode { get; set; }
 
         [Display(Name = "TotalCosts")]
-        [GridColumn(Width = 120, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
+        [GridColumn(Width = 120, Type = GridColumnType.RoundTwoDecimal, IsFilterable = false)]
         public decimal TotalCosts { get; set; }
 
         [Display(Name = "Time")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValueParens, IsFilterable = false, IsVisible = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.RoundTwoDecimal, IsFilterable = false, IsVisible = false)]
         public decimal? TimeCost { get; set; }
 
         [Display(Name = "Tests")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValueParens, IsFilterable = false, IsVisible = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.RoundTwoDecimal, IsFilterable = false, IsVisible = false)]
         public decimal? TestsCost { get; set; }
 
         [Display(Name = "Animals")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValueParens, IsFilterable = false, IsVisible = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.RoundTwoDecimal, IsFilterable = false, IsVisible = false)]
         public decimal? AnimalsCost { get; set; }
 
         [Display(Name = "Project-specifics")]
-        [GridColumn(Width = 130, Type = GridColumnType.GbpValueParens, IsFilterable = false, IsVisible = false)]
+        [GridColumn(Width = 130, Type = GridColumnType.RoundTwoDecimal, IsFilterable = false, IsVisible = false)]
         public decimal? ProjectSpecificsCost { get; set; }
     }
 }

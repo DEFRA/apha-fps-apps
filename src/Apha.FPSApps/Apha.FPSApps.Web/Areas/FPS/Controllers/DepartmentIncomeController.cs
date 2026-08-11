@@ -12,7 +12,7 @@ using System.Text.Json;
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
     [Area("FPS")]
-    [Authorize(Roles = "FPSAdmin,FPSUser")]
+    [Authorize(Roles = "FPSAdmin")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class DepartmentIncomeController : Controller
     {
@@ -238,7 +238,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         // ── Unified Current-Data Query Grid (CrossTab pattern) ───────────────────
         // Single endpoint for all five qryDeptIncome* query types.
         // queryType values: "qryDeptIncomeTime" | "qryDeptIncomeTest" | "qryDeptIncomeAnimal"
-        //                   | "qryDeptIncomeAdditional" | "qryDeptIncomeTotals"
+        //                   | "qryDeptIncomeExceptional" | "qryDeptIncomeTotals"
         // Columns are derived from the typed view-model's [GridColumn] attributes via GridDataProvider.
         // Rows are projected to Dictionary<string,string?> so _DataGrid can render any schema unchanged.
 
@@ -369,7 +369,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                             cols,
                             "Animals (qryDeptIncomeAnimal)");
                 }
-                case "qryDeptIncomeAdditional":
+                case "qryDeptIncomeExceptional":
                 {
                     var result = isCurrent
                         ? await _departmentIncomeService.GetAdditionalIncomeCurrentAsync(project, monthFrom, monthTo)
@@ -379,7 +379,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                         : new List<DepartmentIncomeAdditionalItem>();
                     return (items.Select(RowToDictionary<DepartmentIncomeAdditionalItem>).ToList(),
                             RemapCurrencyColumnsForDictionary(GridDataProvider.GetColumnsDefination<DepartmentIncomeAdditionalItem>()),
-                            "Exceptional (qryDeptIncomeAdditional)");
+                            "Exceptional (qryDeptIncomeExceptional)");
                 }
                 case "qryDeptIncomeTotals":
                 {

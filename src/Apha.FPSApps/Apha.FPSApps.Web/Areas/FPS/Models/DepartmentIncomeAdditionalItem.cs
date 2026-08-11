@@ -36,7 +36,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         // Maps to JS 'totalCost' column (width: 110)
         [Display(Name = "TotalCost")]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValueParens, IsFilterable = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.RoundTwoDecimal, IsFilterable = false)]
         public decimal TotalCost { get; set; }
     }
 }

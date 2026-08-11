@@ -1,4 +1,4 @@
-namespace Apha.FPSApps.Application.Dtos.DepartmentIncome
+namespace Apha.FPSApps.Application.Dtos.FPS
 {
     // Dedicated lookup type — never reuse for CRUD operations
     public class PeriodLookupDto

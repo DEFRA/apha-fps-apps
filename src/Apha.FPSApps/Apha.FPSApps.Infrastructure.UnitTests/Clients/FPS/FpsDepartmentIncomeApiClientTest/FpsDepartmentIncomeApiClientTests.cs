@@ -1,7 +1,7 @@
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.DepartmentIncome;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;

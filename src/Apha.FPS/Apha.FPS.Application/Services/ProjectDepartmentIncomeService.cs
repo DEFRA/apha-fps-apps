@@ -6,12 +6,12 @@ using AutoMapper;
 
 namespace Apha.FPS.Application.Services
 {
-    public class DepartmentIncomeService : IDepartmentIncomeService
+    public class ProjectDepartmentIncomeService : IProjectDepartmentIncomeService
     {
-        private readonly IDepartmentIncomeRepository _repository;
+        private readonly IProjectDepartmentIncomeRepository _repository;
         private readonly IMapper _mapper;
 
-        public DepartmentIncomeService(IDepartmentIncomeRepository repository, IMapper mapper)
+        public ProjectDepartmentIncomeService(IProjectDepartmentIncomeRepository repository, IMapper mapper)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _mapper     = mapper     ?? throw new ArgumentNullException(nameof(mapper));

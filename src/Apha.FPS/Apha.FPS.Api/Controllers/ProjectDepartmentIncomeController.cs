@@ -15,22 +15,22 @@ namespace Apha.FPS.Api.Controllers
     /// Provides read-only reporting endpoints for time, tests, animals,
     /// additional/exceptional costs, totals, and period lookups.
     /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
+    [Authorize(Roles = "API-FPSAdmin")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/department-income")]
-    public class DepartmentIncomeController : ControllerBase
+    public class ProjectDepartmentIncomeController : ControllerBase
     {
-        private readonly IDepartmentIncomeService _service;
+        private readonly IProjectDepartmentIncomeService _service;
         private readonly IMapper _mapper;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DepartmentIncomeController"/> class.
+        /// Initializes a new instance of the <see cref="ProjectDepartmentIncomeController"/> class.
         /// </summary>
-        /// <param name="service">The Department Income service.</param>
+        /// <param name="service">The Project Department Income service.</param>
         /// <param name="mapper">The AutoMapper instance.</param>
-        public DepartmentIncomeController(
-            IDepartmentIncomeService service,
+        public ProjectDepartmentIncomeController(
+            IProjectDepartmentIncomeService service,
             IMapper mapper)
         {
             _service = service ?? throw new ArgumentNullException(nameof(service));
@@ -38,7 +38,7 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Returns time-based department income rows for the specified project and period range.
+        /// Returns time-based project department income rows for the specified project and period range.
         /// Month defaults: monthFrom defaults to 1, monthTo defaults to 12 (or monthFrom) when null.
         /// </summary>
         /// <param name="project">Optional project code filter. When null, all projects are returned.</param>
@@ -56,7 +56,7 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Returns test-based department income rows for the specified project and period range.
+        /// Returns test-based projectdepartment income rows for the specified project and period range.
         /// Month defaults: monthFrom defaults to 1, monthTo defaults to 12 (or monthFrom) when null.
         /// </summary>
         /// <param name="project">Optional project code filter. When null, all projects are returned.</param>

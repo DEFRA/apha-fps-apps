@@ -7,23 +7,23 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.FPS.Api.UnitTests.Controllers.DepartmentIncomeControllerTest
+namespace Apha.FPS.Api.UnitTests.Controller.ProjectDepartmentIncomeControllerTest
 {
-    public class DepartmentIncomeControllerTests
+    public class ProjectDepartmentIncomeControllerTests
     {
         private const string TestProject = "AH0033";
         private const int TestMonthFrom = 1;
         private const int TestMonthTo = 6;
 
-        private readonly IDepartmentIncomeService _service;
+        private readonly IProjectDepartmentIncomeService _service;
         private readonly IMapper _mapper;
-        private readonly DepartmentIncomeController _controller;
+        private readonly ProjectDepartmentIncomeController _controller;
 
-        public DepartmentIncomeControllerTests()
+        public ProjectDepartmentIncomeControllerTests()
         {
-            _service    = Substitute.For<IDepartmentIncomeService>();
+            _service    = Substitute.For<IProjectDepartmentIncomeService>();
             _mapper     = Substitute.For<IMapper>();
-            _controller = new DepartmentIncomeController(_service, _mapper);
+            _controller = new ProjectDepartmentIncomeController(_service, _mapper);
         }
 
         // ── Helper factories ────────────────────────────────────────────────────
@@ -437,14 +437,14 @@ namespace Apha.FPS.Api.UnitTests.Controllers.DepartmentIncomeControllerTest
         public void Constructor_WithNullService_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new DepartmentIncomeController(null!, _mapper));
+                new ProjectDepartmentIncomeController(null!, _mapper));
         }
 
         [Fact]
         public void Constructor_WithNullMapper_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new DepartmentIncomeController(_service, null!));
+                new ProjectDepartmentIncomeController(_service, null!));
         }
 
         #endregion

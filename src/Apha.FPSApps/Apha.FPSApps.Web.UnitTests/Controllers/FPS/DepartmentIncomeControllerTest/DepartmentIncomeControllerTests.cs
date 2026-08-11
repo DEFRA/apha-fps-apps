@@ -1,5 +1,5 @@
 using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.DepartmentIncome;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
@@ -364,7 +364,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             _mapper.Map<List<DepartmentIncomeAdditionalItem>>(dtos).Returns(items);
 
             // Act
-            var result = await _controller.LoadGrid(request, "qryDeptIncomeAdditional", TestProject, 1, 12, "snapshot");
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeExceptional", TestProject, 1, 12, "snapshot");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -381,7 +381,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
                     new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.LoadGrid(request, "qryDeptIncomeAdditional", TestProject, 1, 12, "snapshot");
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeExceptional", TestProject, 1, 12, "snapshot");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);

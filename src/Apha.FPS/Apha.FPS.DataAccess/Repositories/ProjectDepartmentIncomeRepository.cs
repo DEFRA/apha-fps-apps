@@ -7,13 +7,13 @@ using Newtonsoft.Json;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
-    public class DepartmentIncomeRepository : BaseRepository, IDepartmentIncomeRepository
+    public class ProjectDepartmentIncomeRepository : BaseRepository, IProjectDepartmentIncomeRepository
     {
         private readonly IFpsRequestContext _requestContext;
 
         private static readonly string[] AnimalAcctCodes = { "LargeAnimals", "SmallAnimals", "Mice" };
 
-        public DepartmentIncomeRepository(FpsDbContext db, IFpsRequestContext requestContext) : base(db)
+        public ProjectDepartmentIncomeRepository(FpsDbContext db, IFpsRequestContext requestContext) : base(db)
         {
             _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }

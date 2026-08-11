@@ -3,7 +3,7 @@ using Apha.FPS.Application.Pagination;
 
 namespace Apha.FPS.Application.Interfaces
 {
-    public interface IDepartmentIncomeService
+    public interface IProjectDepartmentIncomeService
     {
         Task<List<DepartmentIncomeTimeDto>> GetTimeIncomeAsync(string? project, int? monthFrom, int? monthTo);
         Task<PaginatedResult<DepartmentIncomeTimeDto>> GetPagedTimeIncomeAsync(QueryParameters<string> query, string? project, int? monthFrom, int? monthTo);

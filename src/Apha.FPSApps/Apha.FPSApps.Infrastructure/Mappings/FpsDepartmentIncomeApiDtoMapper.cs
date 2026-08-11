@@ -1,6 +1,6 @@
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.DepartmentIncome;
+using Apha.FPSApps.Application.Dtos.FPS;
 using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Mappings

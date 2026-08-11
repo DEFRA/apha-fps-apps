@@ -1,6 +1,6 @@
-namespace Apha.FPSApps.Application.Dtos.DepartmentIncome
+namespace Apha.FPSApps.Application.Dtos.FPS
 {
-    public class DepartmentIncomeAnimalDto
+    public class DepartmentIncomeTestDto
     {
         public string Project { get; set; } = null!;
 
@@ -18,13 +18,15 @@ namespace Apha.FPSApps.Application.Dtos.DepartmentIncome
 
         public string? SPC { get; set; }
 
+        public string? WorkGroup { get; set; }
+
         public string? SCC { get; set; }
 
-        public string? AnimalType { get; set; }
+        public string? TestCode { get; set; }
 
-        public decimal AnimalDays { get; set; }
+        public decimal Volume { get; set; }
 
-        public decimal Rate { get; set; }
+        public decimal TestPrice { get; set; }
 
         public decimal TotalCost { get; set; }
     }

@@ -31,7 +31,6 @@
                 GridColumnType.GbpValueRounded => true,
                 GridColumnType.Percentage => true,
                 GridColumnType.RoundTwoDecimal => true,
-                GridColumnType.GbpValueParens => true,
                 _ => false
             };
         }
@@ -151,17 +150,7 @@
                             System.Globalization.CultureInfo.InvariantCulture, out var parsed))
                         return parsed.ToString("£#,##0.00;-£#,##0.00");
                     return raw ?? string.Empty;
-                case GridColumnType.GbpValueParens:
-                    if (value is decimal parensDecimal)
-                        return parensDecimal.ToString("£#,##0.00;(£#,##0.00)");
-                    if (value is double parensDouble)
-                        return parensDouble.ToString("£#,##0.00;(£#,##0.00)");
-                    var parensRaw = value.ToString();
-                    if (decimal.TryParse(parensRaw, System.Globalization.NumberStyles.Any,
-                            System.Globalization.CultureInfo.InvariantCulture, out var parensParsed))
-                        return parensParsed.ToString("£#,##0.00;(£#,##0.00)");
-                    return parensRaw ?? string.Empty;
-            }
+                }
 
             return value.ToString() ?? string.Empty;
         }
