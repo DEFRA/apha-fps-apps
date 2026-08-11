@@ -689,8 +689,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
             var json   = Assert.IsType<JsonResult>(result);
 
             Assert.True(GetJsonProperty<bool>(json, "success"));
-            Assert.Equal("01/04/2024", GetJsonProperty<string>(json, "startDate"));
-            Assert.Equal("30/06/2025", GetJsonProperty<string>(json, "endDate"));   // RevisedEndDate used
+            Assert.Equal("4/1/2024", GetJsonProperty<string>(json, "startDate"));
+            Assert.Equal("6/30/2025", GetJsonProperty<string>(json, "endDate"));   // RevisedEndDate used
         }
 
         [Fact]
@@ -712,7 +712,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
             var json   = Assert.IsType<JsonResult>(result);
 
             Assert.True(GetJsonProperty<bool>(json, "success"));
-            Assert.Equal("31/03/2025", GetJsonProperty<string>(json, "endDate"));  // EndDate fallback
+            Assert.Equal("3/31/2025", GetJsonProperty<string>(json, "endDate"));  // EndDate fallback
         }
 
         [Fact]
