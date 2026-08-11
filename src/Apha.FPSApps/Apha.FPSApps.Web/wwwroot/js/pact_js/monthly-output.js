@@ -337,29 +337,14 @@ function initLiveModalWorkGroupDropdown() {
 
 function saveMonthlyOutputLive() {
     var form = $('#monthlyOutputLiveForm');
-
-    // Validate all numeric fields before checking isFormValid
-    // form.find('.decfmt-input').each(function() {
-    //     validateRangeOnInput(this);
-    // });
-    debugger;
-    // // Check for numeric validation errors
-    // if (hasNumericValidationErrors(form)) {
-    //     // Ensure validation messages are visible
-    //     if (typeof ensureValidationMessagesVisible === 'function') {
-    //         ensureValidationMessagesVisible(form);
-    //     }
-    //     displayClientValidationErrors(form, form);
-    //     return;
-    // }
-
+    
     if (!isFormValid(form)) {
-        displayClientValidationErrors(form, form);
+        displayClientValidationErrors(form, '#monthlyOutputLiveForm');
         return;
     }
 
     // Clear validation errors only after validation passes
-    clearValidationErrors(form);
+    clearValidationErrors('#monthlyOutputLiveForm');
 
     const data = {
         CompositeKey: $('#CompositeKey').val(),

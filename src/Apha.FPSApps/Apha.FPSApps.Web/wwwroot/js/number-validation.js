@@ -42,12 +42,17 @@
  * @returns {string} - Formatted number string
  */
 function formatNumberWithoutRounding(num) {
-    if (num === null || num === undefined || isNaN(num)) {
+    if (num === null || num === undefined) {
         return '';
     }
 
     // Convert to string to preserve exact decimal places
     var numStr = num.toString();
+
+    // Check if it's a valid number string or number
+    if (isNaN(parseFloat(numStr))) {
+        return '';
+    }
     var isNegative = numStr.startsWith('-');
     if (isNegative) {
         numStr = numStr.substring(1);
@@ -68,6 +73,22 @@ function formatNumberWithoutRounding(num) {
     }
 
     return isNegative ? '-' + result : result;
+}
+
+/**
+ * Get the field label name from the associated label element.
+ * Falls back to 'Value' if no label is found.
+ * @param {jQuery} $input - The input element
+ * @returns {string} - The label text or 'Value' as fallback
+ */
+function getFieldLabelName($input) {
+    var fieldName = 'Value';
+    var $label = $('label[for="' + $input.attr('id') + '"]');
+    if ($label.length > 0) {
+        // Get label text and remove trailing asterisk (required field indicator)
+        fieldName = $label.text().trim().replace(/\*\s*$/, '').trim();
+    }
+    return fieldName;
 }
 
 // Numeric input validation - allows positive/negative numbers with decimal point
@@ -182,7 +203,8 @@ function handleNumericPaste(event) {
     if (!isNaN(parsedValue) && (parsedValue < min || parsedValue > max)) {
         var minFormatted = formatNumberWithoutRounding(min);
         var maxFormatted = formatNumberWithoutRounding(max);
-        showAlertMessage('Value must be between ' + minFormatted + ' and ' + maxFormatted, AlertType.ERROR);
+        var fieldName = getFieldLabelName($input);
+        showAlertMessage(fieldName + ' must be between ' + minFormatted + ' and ' + maxFormatted, AlertType.ERROR);
         return;
     }
 
@@ -266,20 +288,22 @@ function validateRangeOnInput(input) {
     var parsedValue = parseFloat(value);
 
     // Get custom min/max from data attributes or use defaults
-    var min = $input.data('min-value');
-    var max = $input.data('max-value');
+    var minStr = $input.data('min-value');
+    var maxStr = $input.data('max-value');
+    var minDefault = '-999999999999999.9999';
+    var maxDefault = '999999999999999.9999';
 
-    // Use default values if not specified
-    if (typeof min === 'undefined' || min === null || min === '') {
-        min = -999999999999999.9999;
+    // Use default string values if not specified
+    if (typeof minStr === 'undefined' || minStr === null || minStr === '') {
+        minStr = minDefault;
     }
-    if (typeof max === 'undefined' || max === null || max === '') {
-        max = 999999999999999.9999;
+    if (typeof maxStr === 'undefined' || maxStr === null || maxStr === '') {
+        maxStr = maxDefault;
     }
 
-    // Convert to numbers
-    min = parseFloat(min);
-    max = parseFloat(max);
+    // Convert to numbers for comparison
+    var min = parseFloat(minStr);
+    var max = parseFloat(maxStr);
 
     // Check if value is a valid number
     if (isNaN(parsedValue)) {
@@ -298,10 +322,11 @@ function validateRangeOnInput(input) {
 
     // Check if value is within range
     if (parsedValue < min || parsedValue > max) {
-        // Format numbers with thousand separators without rounding
-        var minFormatted = formatNumberWithoutRounding(min);
-        var maxFormatted = formatNumberWithoutRounding(max);
-        var errorMessage = 'Value must be between ' + minFormatted + ' and ' + maxFormatted;
+        // Format numbers with thousand separators without rounding using original string values
+        var minFormatted = formatNumberWithoutRounding(minStr);
+        var maxFormatted = formatNumberWithoutRounding(maxStr);
+        var fieldName = getFieldLabelName($input);
+        var errorMessage = fieldName + ' must be between ' + minFormatted + ' and ' + maxFormatted;
 
         $input.addClass('govuk-input--error');
         $formGroup.addClass('govuk-form-group--error');
@@ -418,16 +443,22 @@ function handleIntegerPaste(event) {
         max = 2147483647;
     }
 
-    min = parseInt(min, 10);
-    max = parseInt(max, 10);
+    // Preserve original string values before conversion
+    var minStr = min;
+    var maxStr = max;
+
+    min = parseInt(minStr, 10);
+    max = parseInt(maxStr, 10);
 
     // Validate range
     var parsedValue = parseInt(cleaned, 10);
 
     if (!isNaN(parsedValue) && (parsedValue < min || parsedValue > max)) {
-        var minFormatted = formatNumberWithoutRounding(min);
-        var maxFormatted = formatNumberWithoutRounding(max);
-        showAlertMessage('Value must be between ' + minFormatted + ' and ' + maxFormatted, AlertType.ERROR);
+        // Format using original string values to avoid precision loss
+        var minFormatted = formatNumberWithoutRounding(minStr.toString());
+        var maxFormatted = formatNumberWithoutRounding(maxStr.toString());
+        var fieldName = getFieldLabelName($(event.target || event.currentTarget));
+        showAlertMessage(fieldName + ' must be between ' + minFormatted + ' and ' + maxFormatted, AlertType.ERROR);
         return;
     }
 
@@ -508,20 +539,22 @@ function validateIntegerRangeOnInput(input) {
     var parsedValue = parseInt(value, 10);
 
     // Get custom min/max from data attributes or use defaults
-    var min = $input.data('min-value');
-    var max = $input.data('max-value');
+    var minStr = $input.data('min-value');
+    var maxStr = $input.data('max-value');
+    var minDefault = '-2147483648';
+    var maxDefault = '2147483647';
 
     // Use default Int32 values if not specified
-    if (typeof min === 'undefined' || min === null || min === '') {
-        min = -2147483648;
+    if (typeof minStr === 'undefined' || minStr === null || minStr === '') {
+        minStr = minDefault;
     }
-    if (typeof max === 'undefined' || max === null || max === '') {
-        max = 2147483647;
+    if (typeof maxStr === 'undefined' || maxStr === null || maxStr === '') {
+        maxStr = maxDefault;
     }
 
     // Convert to integers
-    min = parseInt(min, 10);
-    max = parseInt(max, 10);
+    var min = parseInt(minStr, 10);
+    var max = parseInt(maxStr, 10);
 
     // Check if value is a valid integer
     if (isNaN(parsedValue)) {
@@ -540,10 +573,11 @@ function validateIntegerRangeOnInput(input) {
 
     // Check if value is within range
     if (parsedValue < min || parsedValue > max) {
-        // Format numbers with thousand separators without rounding
-        var minFormatted = formatNumberWithoutRounding(min);
-        var maxFormatted = formatNumberWithoutRounding(max);
-        var errorMessage = 'Value must be between ' + minFormatted + ' and ' + maxFormatted;
+        // Format numbers with thousand separators without rounding using original string values
+        var minFormatted = formatNumberWithoutRounding(minStr);
+        var maxFormatted = formatNumberWithoutRounding(maxStr);
+        var fieldName = getFieldLabelName($input);
+        var errorMessage = fieldName + ' must be between ' + minFormatted + ' and ' + maxFormatted;
 
         $input.addClass('govuk-input--error');
         $formGroup.addClass('govuk-form-group--error');
