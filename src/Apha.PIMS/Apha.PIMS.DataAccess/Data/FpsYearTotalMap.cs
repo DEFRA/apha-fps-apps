@@ -6,8 +6,7 @@ namespace Apha.PIMS.DataAccess.Data
 {
     public class FpsYearTotalMap : IEntityTypeConfiguration<FpsYearTotal>
     {
-        private const string ColumnTypeMoney = "money";
-
+        
         public void Configure(EntityTypeBuilder<FpsYearTotal> entity)
         {
             entity.HasKey(e => new { e.Year, e.Parentproject }).HasName("pk_my_fpsyeartotals");

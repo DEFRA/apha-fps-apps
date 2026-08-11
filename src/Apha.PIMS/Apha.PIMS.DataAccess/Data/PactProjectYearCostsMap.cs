@@ -6,8 +6,7 @@ namespace Apha.PIMS.DataAccess.Data
 {
     public class PactProjectYearCostsMap : IEntityTypeConfiguration<PactProjectYearCosts>
     {
-        private const string ColumnTypeMoney = "money";
-        private const string ColumnTypeDouble = "double precision";
+      
 
         public void Configure(EntityTypeBuilder<PactProjectYearCosts> entity)
         {
