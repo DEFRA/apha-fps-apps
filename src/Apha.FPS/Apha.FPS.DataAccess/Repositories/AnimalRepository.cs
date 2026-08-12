@@ -129,13 +129,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var result = await queryAnimalCost.ToListAsync();
 
-            var animalCostViews = result.Select(e =>
-            {
-                e.AnimalCost = (decimal)e.NumberOfDays * (decimal)e.NumberOfAnimals * (e.DailyRate ?? 0m);
-                return e;
-            }).ToList();
-
-            return base.ApplyPaging(animalCostViews, query.Page, query.PageSize);
+            return base.ApplyPaging(result, query.Page, query.PageSize);
         }
 
         public async Task<decimal> GetTotalAnimalCostAsync(string jobCode)
@@ -308,7 +302,8 @@ namespace Apha.FPS.DataAccess.Repositories
                        NumberOfDays = animalReq.NumberOfDays,
                        NumberOfAnimals = animalReq.NumberOfAnimals,
                        DailyRate = dailyRate,
-                       TotalDays = animalReq.NumberOfAnimals * animalReq.NumberOfDays
+                       TotalDays = animalReq.NumberOfAnimals * animalReq.NumberOfDays,
+                       AnimalCost = Math.Round((decimal)animalReq.NumberOfDays * (decimal)animalReq.NumberOfAnimals * (dailyRate ?? 0m), 4)
                    };
         }
 
