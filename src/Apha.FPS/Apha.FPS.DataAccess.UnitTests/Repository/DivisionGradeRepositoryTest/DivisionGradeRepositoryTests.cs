@@ -272,6 +272,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionGradeRepositoryTest
         }
 
         [Fact]
+        public async Task CreateAsync_ThrowsInvalidOperationException_WhenCodeAlreadyExistsWithDifferentCasing()
+        {
+            var existing = BuildDivisionGrade("A-VSD");
+            var (repo, _, _) = CreateRepositoryWithMocks([existing]);
+            var duplicate = BuildDivisionGrade("a-vsd");
+            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.CreateAsync(duplicate));
+        }
+
+        [Fact]
         public async Task CreateAsync_SetsYearFromContext()
         {
             var (repo, dbSet, context) = CreateRepositoryWithMocks([]);

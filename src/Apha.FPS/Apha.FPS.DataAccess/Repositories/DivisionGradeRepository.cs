@@ -46,7 +46,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var existing = await _context.DivisionGrades
                 .AsNoTracking()
-                .FirstOrDefaultAsync(d => d.DivisionGradeCode == divisionGrade.DivisionGradeCode);
+                .FirstOrDefaultAsync(d => EF.Functions.ILike(d.DivisionGradeCode, divisionGrade.DivisionGradeCode));
 
             if (existing != null)
             {
