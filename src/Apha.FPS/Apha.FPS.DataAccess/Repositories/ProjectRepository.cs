@@ -25,12 +25,15 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<IEnumerable<ProjectView>> GetAllProjectsAsync()
         {
             return await _dbContext.ProjectViews
-                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId)).ToListAsync();
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId) && p.FpsYear== _requestContext.FpsYear)
+                .OrderBy(x=>x.ParentProject).ToListAsync();
         }
 
         public async Task<IEnumerable<Project>> GetAllProjectsForAllUsersAsync()
         {
             return await _dbContext.Projects
+                .Where(x=>x.FpsYear == _requestContext.FpsYear)
+                .OrderBy(x=>x.ParentProject)
                 .ToListAsync();
         }
 
@@ -615,6 +618,8 @@ namespace Apha.FPS.DataAccess.Repositories
             entity.BudgetCvl = project.BudgetCvl;
             entity.TransferIncome = project.TransferIncome;
 
+            NormalizeDateTimesToUnspecified(entity);
+            _dbContext.ProjectLogs.Add(MapProjectToLog(entity, "U", _requestContext.UserEmailId));
             await _dbContext.SaveChangesAsync();
             return entity;
         }
@@ -709,6 +714,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(p => p.ProgramNo == programNo);
         }
 
+        
         private static IQueryable ApplyOrder<T>(IQueryable<Project> query, Expression<Func<Project, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);

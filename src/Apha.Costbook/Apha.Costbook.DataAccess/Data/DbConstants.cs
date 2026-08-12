@@ -4,8 +4,7 @@ namespace Apha.Costbook.DataAccess.Data
     {
         public const string FpsYearColumnName = "fpsyear";
         public const string FpsSchemaName = "fps";
-        public const string MabArchiveSchemaName = "mabarchive";
-        public const string MoneyColumnType = "money";
+        public const string MabArchiveSchemaName = "mabarchive";        
         public const string CitextColumnType = "citext";
     }
 }

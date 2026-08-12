@@ -128,6 +128,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var (ctx, req) = MakeContext();
             var existing = MakeProject("PP001");
             SetupSet(ctx, new[] { existing }, x => x.Projects);
+            SetupSet(ctx, Enumerable.Empty<ProjectLog>(), x => x.ProjectLogs);
             RepositoryTestHelper.SetupSaveChanges(ctx);
 
             var repo  = CreateRepository(ctx, req);

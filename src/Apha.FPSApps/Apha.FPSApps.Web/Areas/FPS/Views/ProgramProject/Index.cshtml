@@ -86,12 +86,12 @@
                                             <div class="govuk-grid-column-full mt-2">
                                                 <div class="project-code-section" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
                                                     <label class="govuk-label--s" for="selected-project-input">Selected project</label>
-                                                    <input type="text" id="selected-project-input" value=""
+                                                    <input type="text" id="selected-project-input" value="@Model.SelectedProjectCode"
                                                            placeholder="Project" readonly
                                                            class="govuk-input govuk-!-font-size-16"
                                                            style="width:160px;">
-                                                    <input type="hidden" id="hdnSelectedProject" value="" />
-                                                        <button type="button" id="btnPlan" class="govuk-button sup_margin_0" style="display:none;" onclick="planThisProject()">
+                                                    <input type="hidden" id="hdnSelectedProject" value="@Model.SelectedProjectCode" />
+                                                        <button type="button" id="btnPlan" class="govuk-button sup_margin_0" style="@(string.IsNullOrWhiteSpace(Model.SelectedProjectCode) ? "display:none;" : "")" onclick="planThisProject()">
                                                         <i class="fa fa-cogs" aria-hidden="true"></i> Plan
                                                     </button>
                                                 </div>
@@ -170,6 +170,14 @@
         document.querySelectorAll('a.nav-updatable').forEach(function (link) {
             link.classList.add('nav-disabled');
         });
+
+        // If a project was already selected (restored from session), enable the nav links immediately.
+        if (currentProjectCode) {
+            updateNavLinks(currentProgramNo);
+            document.querySelectorAll('a.nav-updatable').forEach(function (link) {
+                link.classList.remove('nav-disabled');
+            });
+        }
 
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidenav');
@@ -333,10 +341,10 @@
                 Contract:          form.find('[name="Contract"]').val(),
                 Disease:           form.find('[name="Disease"]').val(),
                 ProjectStatus:     form.find('[name="ProjectStatus"]').val(),
-                BudgetCvl:         parseDecimal(form.find('[name="BudgetCvl"]').val()),
-                BudgetExt:         parseDecimal(form.find('[name="BudgetExt"]').val()),
-                TransferIncome:    parseDecimal(form.find('[name="TransferIncome"]').val()),
-                PlanCaseWorkDebit: parseDecimal(form.find('[name="PlanCaseWorkDebit"]').val()),
+                BudgetCvl:         emptyToNull(form.find('[name="BudgetCvl"]').val()),
+                BudgetExt:         emptyToNull(form.find('[name="BudgetExt"]').val()),
+                TransferIncome:    emptyToNull(form.find('[name="TransferIncome"]').val()),
+                PlanCaseWorkDebit: emptyToNull(form.find('[name="PlanCaseWorkDebit"]').val()),
                 IsDefraProject:    form.find('[name="IsDefraProject"]').val()
             };
 
@@ -397,9 +405,9 @@
             $('#modalPopup').removeClass("show");
         }
 
-        function parseDecimal(val) {
-            if (!val) return 0;
-            return parseFloat(val.replace(/[£,]/g, '').trim()) || 0;
+        function emptyToNull(val) {
+            var trimmed = (val || '').toString().trim();
+            return trimmed === '' ? null : trimmed;
         }
 
         function formatGbp(value) {
@@ -461,6 +469,11 @@
                 targetRow = document.querySelector(
                     '#gridContainer_@Model.ProjectsGrid.GridId .selectable-row[data-id="' + currentProjectCode + '"]'
                 );
+                // Restored project is not on the loaded grid page: keep the current
+                // selection rather than overriding it with the first project.
+                if (!targetRow) {
+                    return;
+                }
             }
             var rowToSelect = targetRow
                 || document.querySelector('#gridContainer_@Model.ProjectsGrid.GridId .selectable-row');
