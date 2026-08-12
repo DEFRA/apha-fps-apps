@@ -159,6 +159,24 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         [Fact]
+        public async Task GetProjectProfitabilityAsync_NoMatchingProgramme_ProgrammeTargetIsNull()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                MakeView("PP001", program: "P001", budget: 5000m, profit: 500m)
+            };
+            // No Program record matches "P001" — programme lookup returns null
+            var programs = new List<Program> { new() { ProgramNo = "P999", Target = 12000m } };
+            var repo  = CreateRepository(projectViews, programs);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetProjectProfitabilityAsync(query, "P001", "all");
+
+            var item = Assert.Single(result.Data);
+            Assert.Null(item.ProgrammeTarget);
+        }
+
+        [Fact]
         public async Task GetProjectProfitabilityAsync_PagingIsApplied()
         {
             var projectViews = Enumerable.Range(1, 5).Select(i =>
