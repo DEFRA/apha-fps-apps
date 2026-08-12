@@ -1884,3 +1884,6 @@ textarea {
         padding: 10px;
     }
 }
+.govuk-back-link{
+    font-weight: bold !important;
+}
