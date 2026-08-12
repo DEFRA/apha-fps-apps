@@ -1020,7 +1020,10 @@ function saveStagingMonthlyTime() {
     // Clear validation errors only after validation passes
     clearValidationErrors(form);
 
-    const isNameUpdatingChecked = $('#chkNameupdating').is(':checked');
+    // When year is closed, always set NameUpdating to false
+    const isNameUpdatingChecked = (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) 
+        ? false 
+        : $('#chkNameupdating').is(':checked');
 
     const data = {
         Id: $('#Id').val(),
@@ -1232,6 +1235,13 @@ function exportMonthlyTime() {
 
 $(function () {
     window.monthlyTimePassedFilter = null;
+
+    // Disable "Name updating" checkbox when year is closed
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+        $('#chkNameupdating')
+            .prop('disabled', true)
+            .attr('aria-disabled', 'true');
+    }
 
     initWorkGroupDropdown();
     initStaffDropdown();

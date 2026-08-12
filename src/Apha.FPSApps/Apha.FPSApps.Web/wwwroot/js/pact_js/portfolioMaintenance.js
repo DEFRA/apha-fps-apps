@@ -201,7 +201,6 @@ function loadPortfolioData(parentProject) {
     currentPortfolio = '';
     $('#txtSelectedPortfolioTest').val('');
     clearValidationErrors('#portfolioDetailForm');
-    resetFormButtons(false);
 
     $.get('/PACT/PortfolioMaintenance/GetPortfolio', { parentProject: parentProject })
         .done(function (res) {
@@ -226,7 +225,6 @@ function loadPortfolioData(parentProject) {
                 updateNavHref('#sideNavTimeCodes', parentProject);
                 updateNavHref('#sideNavInvoices', parentProject);
 
-                resetFormButtons(true);
                 loadConstituentTestGrid(parentProject);
             } else {
                 showAlertMessage(res.message || 'Portfolio not found.', AlertType.ERROR);
@@ -235,13 +233,6 @@ function loadPortfolioData(parentProject) {
         .fail(function () { showAlertMessage('An error occurred while loading portfolio data.', AlertType.ERROR); });
 }
 
-// ── Enable/disable buttons ───────────────────────────────────────────────
-function resetFormButtons(enabled) {
-    // If year is closed (isFPSYearClosed = true), always keep buttons disabled
-    var shouldEnable = enabled && (typeof isFPSYearClosed !== 'undefined' ? !isFPSYearClosed : true);
-    $('#btnSavePortfolio, #btnPortfolioTimeCodes')
-        .prop('disabled', !shouldEnable);
-}
 
 // ── Constituent Tests grid ───────────────────────────────────────────────
 function loadConstituentTestGrid(parentProject, page, pageSize, sortBy, desc) {

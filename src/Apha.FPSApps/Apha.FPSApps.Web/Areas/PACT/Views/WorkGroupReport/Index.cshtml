@@ -130,7 +130,7 @@
                                id="chk-timesheets"
                                name="SendTimeSheet"
                                type="checkbox"
-                               value="true"
+                               value="true" allow-edit="false"
                                @(Model.SendTimeSheet ? "checked" : "") />
                         <label class="govuk-label govuk-checkboxes__label" for="chk-timesheets">Time sheets</label>
                     </div>
@@ -139,7 +139,7 @@
                                id="chk-outputsheets"
                                name="SendOutputSheet"
                                type="checkbox"
-                               value="true"
+                               value="true" allow-edit="false"
                                @(Model.SendOutputSheet ? "checked" : "") />
                         <label class="govuk-label govuk-checkboxes__label" for="chk-outputsheets">Output sheets</label>
                     </div>

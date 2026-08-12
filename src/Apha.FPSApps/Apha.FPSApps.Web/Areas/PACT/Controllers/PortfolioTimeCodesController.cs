@@ -567,8 +567,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             // Set TempData to indicate navigation came from Portfolio Time Codes
             TempData["PactOrigin"] = "PortfolioTimeCodes";
 
-            // Redirect to Test Purchase Requirements
-            return RedirectToAction("Index", "TestPurchaseRequirement", new { area = "PACT", parentProject });
+            // Get current year from HttpContext to preserve it across navigation
+            var currentYear = HttpContext.Items["SelectedFPSYear"]?.ToString();
+
+            // Redirect to Test Purchase Requirements, preserving the year
+            return RedirectToAction("Index", "TestPurchaseRequirement", new { area = "PACT", parentProject, year = currentYear });
         }
 
     }

@@ -96,12 +96,8 @@
         <h1>
              @if (!string.IsNullOrEmpty(ViewBag.SourceWorkGroup as string))
                 {
-                    <a href="@Url.Action("Index", "WorkGroupTestCapability", new { area = "PACT", workgroup = ViewBag.SourceWorkGroup })" 
-                       id="backLink" 
-                       class="govuk-back-link" 
-                       style="margin-left: 140px; align-self: center;">
-                        Back
-                    </a>
+                <a asp-area="PACT" asp-controller="WorkGroupTestCapability" asp-action="Index" asp-route-workGroup="@ViewBag.SourceWorkGroup"
+                   class="govuk-back-link sup_align_right">Back</a>
                 }
         </h1>
     </div>
@@ -258,7 +254,7 @@
 
                         <div class="govuk-grid-row" style="text-align:right; margin:5px 0 5px 0;">
                             <button type="button" class="govuk-button sup_margin_0" id="btnSavePortfolio"
-                                    data-module="govuk-button" disabled>
+                                    data-module="govuk-button" allow-edit="false">
                                 Save
                             </button>
                         </div>
@@ -290,7 +286,7 @@
                     </div>
                     <div class="sup_margin_tb_20 sup_text_align_right sup_float_right govuk-grid-column-two-thirds">
                         <button type="button" class="govuk-button sup_margin_0" id="btnPortfolioTimeCodes"
-                                data-module="govuk-button" disabled>
+                                data-module="govuk-button" allow-edit="true">
                             Portfolio Time Codes
                         </button>
                     </div>

@@ -369,12 +369,12 @@ $(document).ready(function () {
     // Disable buttons and file input when year is closed
     if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
 
-        // Disable Import file input and its label
+        // Disable Import file input and its button
         $('#csvInput').prop('disabled', true);
-        $('label[for="csvInput"]')
+        $('#importBtn')
             .addClass('govuk-button--disabled')
             .attr('aria-disabled', 'true')
-            .css('pointer-events', 'none');
+            .prop('disabled', true);
     }
 
     $('#dpSelectmonth').on('change', function () {
@@ -387,6 +387,11 @@ $(document).ready(function () {
     $('#templateExcel').on('click', function (e) {
         e.preventDefault();
         downloadSubContractRmsTemplate();
+    });
+
+    $('#importBtn').on('click', function (e) {
+        e.preventDefault();
+        $('#csvInput').click();
     });
 
     $('#csvInput').on('change', function () {
