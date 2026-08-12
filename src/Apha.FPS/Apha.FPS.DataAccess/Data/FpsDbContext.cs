@@ -80,6 +80,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ProjectInvoice> ProjectInvoices { get; set; }
         public virtual DbSet<ProjectSubContract> ProjectSubContracts { get; set; }
         public virtual DbSet<PeriodProjSubContract> PeriodProjSubContracts { get; set; }
+        public virtual DbSet<PeriodMonthlyOutput> PeriodMonthlyOutputs { get; set; }
 
         public virtual DbSet<TimeCostCalcsView> TimeCostCalcsViews { get; set; }
         public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
@@ -395,6 +396,8 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new PeriodMap());
             modelBuilder.Entity<Period>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new PeriodMonthlyOutputMap());
         }
     }
 }

@@ -11,6 +11,9 @@ namespace Apha.FPS.Application.Interfaces
         Task<List<DepartmentIncomeTestDto>> GetTestIncomeAsync(string? project, int? monthFrom, int? monthTo);
         Task<PaginatedResult<DepartmentIncomeTestDto>> GetPagedTestIncomeAsync(QueryParameters<string> query, string? project, int? monthFrom, int? monthTo);
 
+        // Snapshot test income — uses period_monthlyoutput delta (equivalent to SQL Server fPeriodTests)
+        Task<List<DepartmentIncomeTestDto>> GetTestSnapshotIncomeAsync(string? project, int startPeriod, int endPeriod);
+
         Task<List<DepartmentIncomeAnimalDto>> GetAnimalIncomeAsync(string? project, int? monthFrom, int? monthTo);
         Task<PaginatedResult<DepartmentIncomeAnimalDto>> GetPagedAnimalIncomeAsync(QueryParameters<string> query, string? project, int? monthFrom, int? monthTo);
 

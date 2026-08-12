@@ -12,6 +12,10 @@ namespace Apha.FPS.Core.Interfaces
         Task<List<DepartmentIncomeTest>> GetTestIncomeAsync(string? project, int monthFrom, int monthTo);
         Task<PagedData<DepartmentIncomeTest>> GetPagedTestIncomeAsync(PaginationParameters<string> query, string? project, int monthFrom, int monthTo);
 
+        // Snapshot test income using period_monthlyoutput delta (fPeriodTests equivalent):
+        // end-period snapshot minus start-period snapshot, HAVING abs(sum(volume)) > 0
+        Task<List<DepartmentIncomeTest>> GetTestSnapshotIncomeAsync(string? project, int startPeriod, int endPeriod);
+
         // AcctCode IN ("LargeAnimals","SmallAnimals","Mice") filter enforced in implementation
         Task<List<DepartmentIncomeAnimal>> GetAnimalIncomeAsync(string? project, int monthFrom, int monthTo);
         Task<PagedData<DepartmentIncomeAnimal>> GetPagedAnimalIncomeAsync(PaginationParameters<string> query, string? project, int monthFrom, int monthTo);

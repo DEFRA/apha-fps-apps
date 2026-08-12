@@ -74,6 +74,24 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Returns snapshot test income using the period_monthlyoutput delta (equivalent to SQL Server fPeriodTests).
+        /// Computes end-period snapshot minus start-period snapshot; rows with net zero volume are excluded.
+        /// </summary>
+        /// <param name="project">Optional project code filter. When null, all projects are returned.</param>
+        /// <param name="startPeriod">The start (from) period number.</param>
+        /// <param name="endPeriod">The end (to) period number.</param>
+        /// <returns>List of test-based snapshot income rows.</returns>
+        [HttpGet("snapshot/tests")]
+        public async Task<IActionResult> GetSnapshotTestsAsync(
+            [FromQuery] string? project,
+            [FromQuery] int startPeriod,
+            [FromQuery] int endPeriod)
+        {
+            var dtos = await _service.GetTestSnapshotIncomeAsync(project, startPeriod, endPeriod);
+            return Ok(_mapper.Map<List<DepartmentIncomeTestRes>>(dtos));
+        }
+
+        /// <summary>
         /// Returns animal-based department income rows for the specified project and period range.
         /// Month defaults: monthFrom defaults to 1, monthTo defaults to 12 (or monthFrom) when null.
         /// </summary>

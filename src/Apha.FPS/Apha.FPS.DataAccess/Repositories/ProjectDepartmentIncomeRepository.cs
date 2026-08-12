@@ -238,6 +238,136 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
+        // GetTestSnapshotIncomeAsync — mirrors SQL Server fPeriodTests TVF
+        //
+        // SQL Server logic:
+        //   SELECT ..., Sum(Volume), Sum(TestPrice), Sum(TotalCost)
+        //   FROM (
+        //     SELECT ... FROM Period_MonthlyOutput WHERE period = @endPeriod
+        //     UNION ALL
+        //     SELECT ..., -Volume, -TestPrice, TotalCost FROM Period_MonthlyOutput WHERE period = @startPeriod
+        //   ) sq
+        //   GROUP BY Project, ..., Month, SPC, SCC, WorkGroup, TestCode
+        //   HAVING abs(sum(Volume)) > 0
+        //     AND Project = ISNULL(@project, Project)
+        //
+        // The delta (end - start) shows the net change between two period snapshots.
+        // Rows where volume cancelled out (abs(sum) == 0) are excluded by the HAVING clause.
+        // ─────────────────────────────────────────────────────────────────────────────
+        public async Task<List<DepartmentIncomeTest>> GetTestSnapshotIncomeAsync(
+            string? project, int startPeriod, int endPeriod)
+        {
+            // Fetch end-period and start-period rows from the snapshot table in memory,
+            // then apply the UNION ALL delta pattern (end rows positive, start rows negated).
+            // EF cannot translate UNION ALL of IQueryable with negated values in a single query,
+            // so we materialise both sides and combine in memory — matching the TVF approach.
+
+            var endRows = await _context.PeriodMonthlyOutputs
+                .AsNoTracking()
+                .Where(r => r.Period == endPeriod
+                         && (project == null || r.Project == project))
+                .ToListAsync();
+
+            var startRows = await _context.PeriodMonthlyOutputs
+                .AsNoTracking()
+                .Where(r => r.Period == startPeriod
+                         && (project == null || r.Project == project))
+                .ToListAsync();
+
+            // UNION ALL: end rows positive, start rows negated
+            var unionAll =
+                endRows.Select(r => new
+                {
+                    r.Project,
+                    r.OracleProjectCode,
+                    r.SubAccountCode,
+                    r.IsDefraProject,
+                    r.Opc,
+                    r.Occ,
+                    r.Month,
+                    r.Spc,
+                    r.Scc,
+                    r.WorkGroup,
+                    r.TestCode,
+                    Volume    = r.Volume ?? 0.0,
+                    TestPrice = r.TestPrice ?? 0m,
+                    TotalCost = r.TotalCost ?? 0m,
+                })
+                .Concat(startRows.Select(r => new
+                {
+                    r.Project,
+                    r.OracleProjectCode,
+                    r.SubAccountCode,
+                    r.IsDefraProject,
+                    r.Opc,
+                    r.Occ,
+                    r.Month,
+                    r.Spc,
+                    r.Scc,
+                    r.WorkGroup,
+                    r.TestCode,
+                    Volume    = -(r.Volume ?? 0.0),
+                    TestPrice = -(r.TestPrice ?? 0m),
+                    TotalCost = r.TotalCost ?? 0m,
+                }));
+
+            // GROUP BY then HAVING abs(sum(volume)) > 0
+            var grouped = unionAll
+                .GroupBy(r => new
+                {
+                    r.Project,
+                    r.OracleProjectCode,
+                    r.SubAccountCode,
+                    r.IsDefraProject,
+                    r.Opc,
+                    r.Occ,
+                    r.Month,
+                    r.Spc,
+                    r.Scc,
+                    r.WorkGroup,
+                    r.TestCode,
+                })
+                .Select(g => new
+                {
+                    g.Key.Project,
+                    g.Key.OracleProjectCode,
+                    g.Key.SubAccountCode,
+                    g.Key.IsDefraProject,
+                    g.Key.Opc,
+                    g.Key.Occ,
+                    g.Key.Month,
+                    g.Key.Spc,
+                    g.Key.Scc,
+                    g.Key.WorkGroup,
+                    g.Key.TestCode,
+                    Volume    = g.Sum(r => r.Volume),
+                    TestPrice = g.Sum(r => r.TestPrice),
+                    TotalCost = g.Sum(r => r.TotalCost),
+                })
+                .Where(r => Math.Abs(r.Volume) > 0)
+                .OrderBy(r => r.Project)
+                .ToList();
+
+            return grouped.Select(r => new DepartmentIncomeTest
+            {
+                Project           = r.Project,
+                OracleProjectCode = r.OracleProjectCode,
+                SubAccountCode    = r.SubAccountCode,
+                DefraProject      = r.IsDefraProject,
+                OPC               = r.Opc,
+                OCC               = r.Occ.HasValue ? ((long)r.Occ.Value).ToString() : null,
+                Month             = (int)r.Month,
+                SPC               = r.Spc,
+                WorkGroup         = r.WorkGroup,
+                SCC               = r.Scc.HasValue ? ((long)r.Scc.Value).ToString() : null,
+                TestCode          = r.TestCode,
+                Volume            = (decimal)r.Volume,
+                TestPrice         = r.TestPrice,
+                TotalCost         = r.TotalCost,
+            }).ToList();
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────────
         // GetAnimalIncomeAsync — mirrors qryDeptIncomeAnimals SELECT
         //
         // Access SQL:

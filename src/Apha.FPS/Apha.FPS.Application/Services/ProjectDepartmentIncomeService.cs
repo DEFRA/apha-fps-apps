@@ -43,6 +43,12 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<List<DepartmentIncomeTestDto>>(results);
         }
 
+        public async Task<List<DepartmentIncomeTestDto>> GetTestSnapshotIncomeAsync(string? project, int startPeriod, int endPeriod)
+        {
+            var results = await _repository.GetTestSnapshotIncomeAsync(project, startPeriod, endPeriod);
+            return _mapper.Map<List<DepartmentIncomeTestDto>>(results);
+        }
+
         public async Task<PaginatedResult<DepartmentIncomeTestDto>> GetPagedTestIncomeAsync(
             QueryParameters<string> query, string? project, int? monthFrom, int? monthTo)
         {
