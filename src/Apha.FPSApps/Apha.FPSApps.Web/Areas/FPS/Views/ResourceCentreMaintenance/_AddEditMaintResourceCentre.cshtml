@@ -69,10 +69,14 @@
 
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="ProfitCentreHead">RC Head</label>
-                <select asp-for="ProfitCentreHead" class="govuk-select sup_width_100">
-                    <option value="">-- Select RC Head --</option>
-                </select>
-                <span asp-validation-for="ProfitCentreHead" class="govuk-error-message field-validation-valid" style="display:none;"></span>
+                @await Html.PartialAsync("_ManagerPicker", new Apha.FPSApps.Web.Areas.FPS.Models.ManagerPickerViewModel
+                {
+                    ManagerList = Model.ManagerList,
+                    FieldName = "ProfitCentreHead",
+                    ShowGrade = true,
+                    Required = false,
+                    SelectCssClass = "govuk-select govuk-!-font-size-16 sup_width_100"
+                })
             </div>
 
             <div class="govuk-form-group sup_margin_0">
@@ -91,7 +95,6 @@
 <script>
     $(document).ready(function () {
         loadDivisions();
-        loadManagers();
     });
 
     function loadDivisions() {
@@ -130,36 +133,6 @@
             },
             error: function () {
                 $select.append($('<option value=""></option>').text('Error loading divisions'));
-            }
-        });
-    }
-
-    function loadManagers() {
-        var $select = $('#ProfitCentreHead');
-        var currentHead = '@(Model?.ProfitCentreHead ?? string.Empty)';
-
-        $.ajax({
-            url: '@Url.Action("GetManagers", "ResourceCentreMaintenance", new { area = "FPS" })',
-            type: 'GET',
-            success: function (response) {
-                if (response.success && response.data) {
-                    $select.find('option:not(:first)').remove();
-                    $.each(response.data, function (index, manager) {
-                        $select.append($('<option></option>')
-                            .attr('value', manager.name)
-                            .text(manager.name));
-                    });
-
-                    // Set the selected value after all options are appended
-                    if (currentHead) {
-                        $select.val(currentHead);
-                    } else {
-                        $select.val('');
-                    }
-                }
-            },
-            error: function () {
-                // Non-critical — leave the select empty if managers fail to load
             }
         });
     }
