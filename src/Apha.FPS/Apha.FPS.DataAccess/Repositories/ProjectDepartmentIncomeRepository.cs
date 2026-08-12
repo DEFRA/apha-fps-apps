@@ -163,15 +163,13 @@ namespace Apha.FPS.DataAccess.Repositories
             // Replicate that aggregation here so multiple workgroup rows per test+month
             // do not produce extra output rows.
             //
-            // Access MonthlyOutput stores CUMULATIVE period totals. The fPeriod* snapshot
-            // function reads only the row for the period boundary month (monthTo) — NOT all
-            // months in the range. Reading all months produces duplicate/inflated rows.
-            // Current Data (Old Style) uses qryDeptIncomeTests which reads all months; that
-            // path is handled separately by GetTestIncomeCurrentAsync.
+            // Filter: Month BETWEEN monthFrom AND monthTo (inclusive range), matching the
+            // Access qptGetPeriodData / qryDeptIncomeTests behaviour.
             var moAggregated =
                 from mo in _context.MonthlyOutputs.AsNoTracking()
                     .Where(m => m.FpsYear == fpsYear
-                             && (int)m.Month == monthTo)  // snapshot: period-boundary row only
+                             && (int)m.Month >= monthFrom
+                             && (int)m.Month <= monthTo)
                 group mo by new { mo.Buyer, mo.TestCode, mo.Month, mo.WorkGroup } into g
                 select new
                 {
