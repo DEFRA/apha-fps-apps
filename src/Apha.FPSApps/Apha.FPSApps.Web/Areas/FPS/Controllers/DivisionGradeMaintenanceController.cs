@@ -159,6 +159,31 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> CheckDivisionGradeCodeExists(string code, string? originalCode = null)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return Json(new { exists = false });
+            }
+
+            // When editing, re-casing the record's own code is allowed and must not count as a conflict.
+            if (!string.IsNullOrWhiteSpace(originalCode)
+                && code.Equals(originalCode, StringComparison.OrdinalIgnoreCase))
+            {
+                return Json(new { exists = false });
+            }
+
+            var result = await _maintDGService.GetAllDivisionGradeCodesAsync();
+            var exists = result.Success
+                && result.Data != null
+                && result.Data.Any(c =>
+                    !string.IsNullOrWhiteSpace(c)
+                    && c.Equals(code, StringComparison.OrdinalIgnoreCase));
+
+            return Json(new { exists });
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Edit(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
