@@ -216,8 +216,11 @@
         var params = { testCode: testCode };
         if (projectCode) params.projectCode = projectCode;
 
-        $.get('/PACT/TestCapability/GetTestReqmtPricing', params,
-            function (data) {
+        $.ajax({
+            url: '/PACT/TestCapability/GetTestReqmtPricing',
+            type: 'GET',
+            data: params,
+            success: function (data) {
                 if (data.success) {
                     var price = data.recUnitPrice !== null && data.recUnitPrice !== undefined ? parseFloat(data.recUnitPrice).toFixed(2) : '';
                     $('#recUnitPrice').val(price);
@@ -231,7 +234,9 @@
                     $('#UnitPrice').val('');
                     if (projectCode) $('#isDefraSelect').val('');
                 }
-            });
+            },
+            error: function () { showAlertMessage('An error occurred while fetching pricing.', AlertType.ERROR); }
+        });
     }
 
     function onTestReqmtProjectChange(projectValueOrElement, isEdit) {

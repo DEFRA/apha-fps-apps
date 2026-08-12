@@ -116,26 +116,34 @@ function addJobCode() {
         return;
     }
 
-    $.get('/PACT/PortfolioTimeCodes/CreateJobCode', { parentProject: currentParentProject })
-        .done(function (html) {
+    $.ajax({
+        url: '/PACT/PortfolioTimeCodes/CreateJobCode',
+        type: 'GET',
+        data: { parentProject: currentParentProject },
+        success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-        })
-        .fail(function (xhr, status, error) {
+        },
+        error: function () {
             showAlertMessage('Failed to load add job code form.', AlertType.ERROR);
-        });
+        }
+    });
 }
 
 function editJobCode(btn) {
     var jobCodeId = $(btn).data('id');
-    $.get('/PACT/PortfolioTimeCodes/EditJobCode', { jobCodeId: jobCodeId })
-        .done(function (html) {
+    $.ajax({
+        url: '/PACT/PortfolioTimeCodes/EditJobCode',
+        type: 'GET',
+        data: { jobCodeId: jobCodeId },
+        success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-        })
-        .fail(function () {
+        },
+        error: function () {
             showAlertMessage('Failed to load edit job code form.', AlertType.ERROR);
-        });
+        }
+    });
 }
 
 function deleteJobCode(btn) {
@@ -241,17 +249,21 @@ function addTimeCode() {
         return;
     }
 
-    $.get('/PACT/PortfolioTimeCodes/CreateTimeCode', {
-        parentProject: currentParentProject,
-        jobCodeId: currentJobCodeId
-    })
-        .done(function (html) {
+    $.ajax({
+        url: '/PACT/PortfolioTimeCodes/CreateTimeCode',
+        type: 'GET',
+        data: {
+            parentProject: currentParentProject,
+            jobCodeId: currentJobCodeId
+        },
+        success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-        })
-        .fail(function () {
+        },
+        error: function () {
             showAlertMessage('Failed to load add time code form.', AlertType.ERROR);
-        });
+        }
+    });
 }
 
 function editTimeCode(btn) {
@@ -282,12 +294,15 @@ function editTimeCode(btn) {
         parentProject: currentParentProject
     };
 
-    $.get(requestUrl, requestData)
-        .done(function (html) {
+    $.ajax({
+        url: requestUrl,
+        type: 'GET',
+        data: requestData,
+        success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-        })
-        .fail(function (xhr, status, error) {
+        },
+        error: function (xhr, status, error) {
             var errorMessage = 'Failed to load edit time code form.';
             if (xhr.status === 404) {
                 errorMessage = 'Time code not found. It may have been deleted.';
@@ -300,7 +315,8 @@ function editTimeCode(btn) {
             }
 
             showAlertMessage(errorMessage, AlertType.ERROR);
-        });
+        }
+    });
 }
 
 function deleteTimeCode(btn) {
@@ -413,14 +429,17 @@ function refreshJobCodeGrid() {
             filter: '{}'
         };
 
-        $.post('/PACT/PortfolioTimeCodes/LoadJobCodeGrid',
-            { ...request, parentProject: currentParentProject })
-            .done(function (html) {
+        $.ajax({
+            url: '/PACT/PortfolioTimeCodes/LoadJobCodeGrid',
+            type: 'POST',
+            data: { ...request, parentProject: currentParentProject },
+            success: function (html) {
                 $('#gridContainer_' + jobCodeGridId).html(html);
-            })
-            .fail(function () {
+            },
+            error: function () {
                 showAlertMessage('Failed to refresh job code grid.', AlertType.ERROR);
-            });
+            }
+        });
     }
 }
 
@@ -451,13 +470,17 @@ function refreshTimeCodeGrid() {
             testCode: currentTestCode || null
         };
 
-        $.post('/PACT/PortfolioTimeCodes/LoadTimeCodeGrid', postData)
-            .done(function (html) {
+        $.ajax({
+            url: '/PACT/PortfolioTimeCodes/LoadTimeCodeGrid',
+            type: 'POST',
+            data: postData,
+            success: function (html) {
                 $('#gridContainer_' + timeCodeGridId).html(html);
-            })
-            .fail(function (xhr, status, error) {
+            },
+            error: function () {
                 showAlertMessage('Failed to refresh time code grid.', AlertType.ERROR);
-            });
+            }
+        });
     }
 }
 
