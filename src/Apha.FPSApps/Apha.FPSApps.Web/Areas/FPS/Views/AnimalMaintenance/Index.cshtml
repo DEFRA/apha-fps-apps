@@ -75,79 +75,27 @@
                 PlanByWeek:     form.find('[name="PlanByWeek"]').is(':checked')
             };
 
-            checkAnimalTypeAvailable(data.AnimalType, function () {
-                    checkAnimalTypeAvailable(data.AnimalType, function () {
-                        $.ajax({
-                        url: '@Url.Action("Create", "AnimalMaintenance", new { area = "FPS" })',
-                            type: 'POST',
-                            data: JSON.stringify(data),
-                            contentType: 'application/json; charset=utf-8',
-                            success: function (result) {
-                                if (result.success) {
-                                    closeModal();
-                                    showAlertMessage(result.message || 'Animal data created successfully.', AlertType.SUCCESS);
-                                    window['gridManager_animalMasterGrid'].reloadGrid({ page: 1 });
-                                }
-                                else {
-                                    displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
-                                }
-                            },
-                            error: function (xhr) {
-                                if (xhr.status === 400 && xhr.responseJSON) {
-                                    displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
-                                } else {
-                                    showAlertMessage('An error occurred while saving', AlertType.ERROR);
-                                }
-                            }
-                        });
-                    });
-                }
-
-                // Checks Animal Type uniqueness (case-insensitive) before submitting the modal.
-                // Invokes onAvailable() when the type is free, otherwise shows an inline error.
-                function checkAnimalTypeAvailable(animalType, onAvailable) {
-                    $.ajax({
-                        url: '@Url.Action("CheckAnimalTypeExists", "AnimalMaintenance", new { area = "FPS" })',
-                        type: 'GET',
-                        data: { animalType: animalType },
-                        success: function (result) {
-                            if (result && result.exists) {
-                                displayServerValidationErrors(
-                                    [{ field: 'AnimalType', message: "Animal '" + animalType + "' already exists." }],
-                                    'There is a problem',
-                                    '#modaPopupBody');
-                            } else {
-                                onAvailable();
-                            }
-                        },
-                        error: function () {
-                            // If the availability check fails, fall back to server-side validation on submit.
-                            onAvailable();
-                        }
-                    });
-                }
-        }
-
-        // Checks Animal Type uniqueness (case-insensitive) before submitting the modal.
-        // Invokes onAvailable() when the type is free, otherwise shows an inline error.
-        function checkAnimalTypeAvailable(animalType, onAvailable) {
             $.ajax({
-                url: '@Url.Action("CheckAnimalTypeExists", "AnimalMaintenance", new { area = "FPS" })',
-                type: 'GET',
-                data: { animalType: animalType },
+            url: '@Url.Action("Create", "AnimalMaintenance", new { area = "FPS" })',
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json; charset=utf-8',
                 success: function (result) {
-                    if (result && result.exists) {
-                        displayServerValidationErrors(
-                            [{ field: 'AnimalType', message: "Animal '" + animalType + "' already exists." }],
-                            'There is a problem',
-                            '#modaPopupBody');
-                    } else {
-                        onAvailable();
+                    if (result.success) {
+                        closeModal();
+                        showAlertMessage(result.message || 'Animal data created successfully.', AlertType.SUCCESS);
+                        window['gridManager_animalMasterGrid'].reloadGrid({ page: 1 });
+                    }
+                    else {
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
                     }
                 },
-                error: function () {
-                    // If the availability check fails, fall back to server-side validation on submit.
-                    onAvailable();
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                    } else {
+                        showAlertMessage('An error occurred while saving', AlertType.ERROR);
+                    }
                 }
             });
         }
