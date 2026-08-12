@@ -12,20 +12,20 @@ namespace Apha.Costbook.DataAccess.Data
         {
             entity.HasKey(e => new { e.ProgramNo, e.FpScalYear }).HasName("pk_tlkpprogram");
 
-            entity.ToTable("tlkpprogram", DbConstants.FpsSchemaName);
+            entity.ToTable("tlkpprogram", "fps");
 
             entity.HasIndex(e => e.Minim, "tlkpprogram_minim");
 
             entity.Property(e => e.ProgramNo)
                 .HasMaxLength(10)
                 .HasColumnName("programno");
+            entity.Property(e => e.FpScalYear).HasColumnName("fpsyear");
             entity.Property(e => e.Customer)
                 .HasMaxLength(50)
                 .HasColumnName("customer");
             entity.Property(e => e.Directorate)
                 .HasMaxLength(15)
                 .HasColumnName("directorate");
-            entity.Property(e => e.FpScalYear).HasColumnName("fpsyear");
             entity.Property(e => e.Manager)
                 .HasMaxLength(50)
                 .HasColumnName("manager");
@@ -40,8 +40,8 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasDefaultValueSql("'Charge'::character varying")
                 .HasColumnName("sector_name");
             entity.Property(e => e.Target)
-                .HasDefaultValueSql("0")
-                .HasColumnType(DbConstants.MoneyColumnType)
+                .HasPrecision(19, 4)
+                .HasDefaultValue(0m)
                 .HasColumnName("target");
         }
     }

@@ -115,10 +115,12 @@ function saveSubContract() {
     clearValidationErrors('#modaPopupBody');
     var form = $('#subContractForm');
 
+    // Check basic form validity (required fields)
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;
     }
+
     var data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
 
     // Convert empty strings to null for numeric fields, but parse valid numbers
@@ -135,9 +137,12 @@ function saveSubContract() {
 
     if (data['SupplierNumber'] === '' || data['SupplierNumber'] === undefined) {
         data['SupplierNumber'] = null;
+    } else if (typeof data['SupplierNumber'] === 'string') {
+        var parsedInt = parseInt(data['SupplierNumber'], 10);
+        data['SupplierNumber'] = isNaN(parsedInt) ? null : parsedInt;
     }
 
-    
+
 
     $.ajax({
         url: '/PACT/SubContract/SaveSubContract',
@@ -151,6 +156,8 @@ function saveSubContract() {
                 reloadSubContractsGrid();
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
+                // Initialize form validation (unobtrusive + numeric)
+                initializeFormValidation('#subContractForm');
             }
         },
         error: function () { 
