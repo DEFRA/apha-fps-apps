@@ -198,6 +198,28 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.All(result.Data, item => Assert.Contains("PP", item.JobCode));
         }
 
+        [Fact]
+        public async Task GetProjectProfitabilityAsync_FilterByJobCode_WhitespaceValue_ReturnsAllProjects()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                MakeView("PP001", program: "P001"),
+                MakeView("PP002", program: "P001"),
+                MakeView("XX003", program: "P001")
+            };
+            var programs = new List<Program> { new() { ProgramNo = "P001", Target = 10000m } };
+            var repo  = CreateRepository(projectViews, programs);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"JobCode\":\"   \"}"
+            };
+
+            var result = await repo.GetProjectProfitabilityAsync(query, "P001", "all");
+
+            Assert.Equal(3, result.PaginationData.TotalRecords);
+        }
+
         // ── ApplyProfitabilityFilter — ProjectStatus branch ───────────────────
 
         [Fact]
@@ -221,6 +243,71 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
             Assert.Equal(2, result.PaginationData.TotalRecords);
             Assert.All(result.Data, item => Assert.Equal("Completed", item.ProjectStatus));
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityAsync_FilterByProjectStatus_WhitespaceValue_ReturnsAllProjects()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                MakeView("PP001", status: "Completed", program: "P001"),
+                MakeView("PP002", status: "Pending",   program: "P001")
+            };
+            var programs = new List<Program> { new() { ProgramNo = "P001", Target = 10000m } };
+            var repo  = CreateRepository(projectViews, programs);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ProjectStatus\":\"\"}"
+            };
+
+            var result = await repo.GetProjectProfitabilityAsync(query, "P001", "all");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityAsync_FilterByJobCodeAndProjectStatus_ReturnsProjectsMatchingBoth()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                MakeView("PP001", status: "Completed", program: "P001"),
+                MakeView("PP002", status: "Pending",   program: "P001"),
+                MakeView("XX003", status: "Completed", program: "P001")
+            };
+            var programs = new List<Program> { new() { ProgramNo = "P001", Target = 10000m } };
+            var repo  = CreateRepository(projectViews, programs);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"JobCode\":\"PP\",\"ProjectStatus\":\"Completed\"}"
+            };
+
+            var result = await repo.GetProjectProfitabilityAsync(query, "P001", "all");
+
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal("PP001", result.Data.First().JobCode);
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityAsync_FilterWithUnrelatedKey_ReturnsAllProjects()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                MakeView("PP001", program: "P001"),
+                MakeView("PP002", program: "P001")
+            };
+            var programs = new List<Program> { new() { ProgramNo = "P001", Target = 10000m } };
+            var repo  = CreateRepository(projectViews, programs);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"SomeOtherKey\":\"value\"}"
+            };
+
+            var result = await repo.GetProjectProfitabilityAsync(query, "P001", "all");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
         }
 
         // ── ApplyProfitabilityFilter — null/empty filter (early-exit branch) ──
