@@ -125,15 +125,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<BatchJobQueueLog> BatchJobQueueLogs { get; set; }
         public virtual DbSet<BatchJobStatus> BatchJobStatuses { get; set; }
         public virtual DbSet<MonthHour> MonthHours { get; set; }
-
-
-
-       
-        public virtual DbSet<DepartmentIncomeTime> DepartmentIncomeTimes { get; set; }
-        public virtual DbSet<DepartmentIncomeTest> DepartmentIncomeTests { get; set; }
-        public virtual DbSet<DepartmentIncomeAnimal> DepartmentIncomeAnimals { get; set; }
-        public virtual DbSet<DepartmentIncomeAdditional> DepartmentIncomeAdditionals { get; set; }
-        public virtual DbSet<DepartmentIncomeTotals> DepartmentIncomeTotals { get; set; }
+                       
         public virtual DbSet<PeriodLookup> PeriodLookups { get; set; }
         public virtual DbSet<Period> Periods { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -401,13 +393,6 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new MonthHourMap());
             modelBuilder.Entity<MonthHour>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-            
-            // Repository methods apply year-scoped joins via the underlying entity DbSets (TimeCostCalcs, ProjectSubContract, etc.)
-            modelBuilder.ApplyConfiguration(new DepartmentIncomeTimeMap());
-            modelBuilder.ApplyConfiguration(new DepartmentIncomeTestMap());
-            modelBuilder.ApplyConfiguration(new DepartmentIncomeAnimalMap());
-            modelBuilder.ApplyConfiguration(new DepartmentIncomeAdditionalMap());
-            modelBuilder.ApplyConfiguration(new DepartmentIncomeTotalsMap());
             modelBuilder.ApplyConfiguration(new PeriodMap());
             modelBuilder.Entity<Period>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
