@@ -98,6 +98,23 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             });
         }
 
+        // GET: Check whether an Animal Type already exists (case-insensitive)
+        [HttpGet]
+        public async Task<IActionResult> CheckAnimalTypeExists(string animalType)
+        {
+            if (string.IsNullOrWhiteSpace(animalType))
+            {
+                return Json(new { exists = false });
+            }
+
+            var response = await _animalMasterService.GetAnimalByIdAsync(animalType);
+            var exists = response.Success
+                && response.Data != null
+                && !string.IsNullOrWhiteSpace(response.Data.AnimalType);
+
+            return Json(new { exists });
+        }
+
         // GET: Edit
         public async Task<IActionResult> Edit(string animalType)
         {
