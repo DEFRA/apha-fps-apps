@@ -232,7 +232,9 @@ function initBuyerDropdown() {
 
 function loadTestCodesByWorkGroup(workGroup) {
     resetTestCodeOptions();
-    if (!workGroup) return;
+    if (!workGroup) {
+        return;
+    }
 
     $.ajax({
         url: '/PACT/MonthlyOutput/GetTestCodesByWorkGroup',
@@ -251,7 +253,9 @@ function loadTestCodesByWorkGroup(workGroup) {
 
 function loadBuyersByTestCode(workGroup, testCode) {
     resetBuyerOptions();
-    if (!workGroup || !testCode) return;
+    if (!workGroup || !testCode) {
+        return;
+    }
 
     $.ajax({
         url: '/PACT/MonthlyOutput/GetBuyersByTestCode',
@@ -336,7 +340,7 @@ function initLiveModalWorkGroupDropdown() {
 }
 
 function saveMonthlyOutputLive() {
-    var form = $('#monthlyOutputLiveForm');
+    const form = $('#monthlyOutputLiveForm');
     
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, '#monthlyOutputLiveForm');
@@ -365,11 +369,11 @@ function saveMonthlyOutputLive() {
                 $('#modalPopup').removeClass('show');
                 reloadLiveGrid();
                 showAlertMessage(response.message, AlertType.SUCCESS);
-            } else if (response.errors) {
-                displayServerValidationErrors(response.errors, response.message || 'Validation failed.', form);
             } else {
-                showAlertMessage(response.message || 'Update failed.', AlertType.ERROR);
-            }
+                displayServerValidationErrors(response.errors, response.message, '#monthlyOutputLiveForm');
+                // Initialize form validation (unobtrusive + numeric)
+                initializeFormValidation('#monthlyOutputLiveForm');
+            } 
         },
         error: function () {
             showAlertMessage('An error occurred while saving.', AlertType.ERROR);
@@ -382,7 +386,9 @@ function deleteLiveOutputRecord(btn) {
     const parsed = parseOutputCompositeKey(key);
 
     showGovukConfirm('Are you sure you want to delete this live record?').then(function (confirmed) {
-        if (!confirmed) return;
+        if (!confirmed) {
+            return;
+        }
 
         $.ajax({
             url: '/PACT/MonthlyOutput/DeleteLiveRecord',
@@ -683,15 +689,15 @@ function loadStagingModalBuyersByTestCode(workGroup, testCode, restoreBuyer) {
 }
 
 function saveStagingMonthlyOutput() {
-    var form = $('#stagingMonthlyOutputForm');   
+    const form = $('#stagingMonthlyOutputForm');   
 
     if (!isFormValid(form)) {
-        displayClientValidationErrors(form, form);
+        displayClientValidationErrors(form, '#stagingMonthlyOutputForm');
         return;
     }
 
     // Clear validation errors only after validation passes
-    clearValidationErrors(form);
+    clearValidationErrors('#stagingMonthlyOutputForm');
 
     const id = parseInt($('#Id').val()) || 0;
     submitStagingRecord(id);
@@ -717,11 +723,11 @@ function submitStagingRecord(id) {
                 $('#modalPopup').removeClass('show');
                 reloadStagingGrid();
                 showAlertMessage(response.message, AlertType.SUCCESS);
-            } else if (response.errors) {
-                displayServerValidationErrors(response.errors, response.message || 'Validation failed.', $('#stagingMonthlyOutputForm'));
             } else {
-                showAlertMessage(response.message || 'Save failed.', AlertType.ERROR);
-            }
+                displayServerValidationErrors(response.errors, response.message, '#stagingMonthlyOutputForm');
+                // Initialize form validation (unobtrusive + numeric)
+                initializeFormValidation('#stagingMonthlyOutputForm');
+            } 
         },
         error: function () {
             showAlertMessage('An error occurred while saving.', AlertType.ERROR);
@@ -733,7 +739,9 @@ function deleteStagingMonthlyOutput(btn) {
     const id = $(btn).data('id');
 
     showGovukConfirm('Are you sure you want to delete this staging record?').then(function (confirmed) {
-        if (!confirmed) return;
+        if (!confirmed) {
+            return;
+        }
 
         $.ajax({
             url: '/PACT/MonthlyOutput/DeleteStagingRecord',
@@ -771,7 +779,9 @@ function openImportFilePicker() {
 }
 
 function importMonthlyOutput(file) {
-    if (!file) return;
+    if (!file) {
+        return;
+    }
 
     const formData = new FormData();
     formData.append('file', file);
@@ -830,7 +840,9 @@ function validateMonthlyOutput() {
 
 function makeLiveMonthlyOutput() {
     showGovukConfirm('Are you sure you want to make all passed records live?').then(function (confirmed) {
-        if (!confirmed) return;
+        if (!confirmed) {
+            return;
+        }
 
         $.ajax({
             url: '/PACT/MonthlyOutput/MakeLive',
@@ -860,7 +872,9 @@ function makeLiveMonthlyOutput() {
 
 function deleteAllStagingRecords() {
     showGovukConfirm('Are you sure you want to delete all staging records?').then(function (confirmed) {
-        if (!confirmed) return;
+        if (!confirmed) {
+            return;
+        }
 
         $.ajax({
             url: '/PACT/MonthlyOutput/DeleteAllStagingRecords',
@@ -883,7 +897,9 @@ function deleteAllStagingRecords() {
 
 function deleteFailedStagingRecords() {
     showGovukConfirm('Are you sure you want to delete all failed staging records?').then(function (confirmed) {
-        if (!confirmed) return;
+        if (!confirmed) {
+            return;
+        }
 
         $.ajax({
             url: '/PACT/MonthlyOutput/DeleteFailedStagingRecords',

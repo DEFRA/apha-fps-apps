@@ -149,6 +149,8 @@ function saveProjectCost() {
                 reloadRmsGrid();
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
+                // Initialize form validation (unobtrusive + numeric)
+                initializeFormValidation('#formAddProjectCost');
             }
         },
         error: function () {
@@ -322,6 +324,8 @@ function saveFailedSubContractRms() {
                 }
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
+                // Initialize form validation (unobtrusive + numeric)
+                initializeFormValidation('#formEditFailedSubContractRms');
             }
         },
         error: function () {

@@ -183,6 +183,8 @@
                         showAlertMessage(response.message, AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#invoiceForm');
+                        // Initialize form validation (unobtrusive + numeric)
+                        initializeFormValidation('#invoiceForm');
                     }
                 },
         error: function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
@@ -261,6 +263,8 @@
                         showAlertMessage(response.message, AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#subContractForm');
+                        // Initialize form validation (unobtrusive + numeric)
+                        initializeFormValidation('#subContractForm');
                     }
                 },
         error: function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
