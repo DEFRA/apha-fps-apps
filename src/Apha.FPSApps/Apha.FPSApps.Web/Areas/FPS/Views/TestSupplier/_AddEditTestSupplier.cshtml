@@ -49,9 +49,9 @@
                     <label class="govuk-label govuk-!-font-weight-bold" for="UnitPrice">Test Price</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input class="govuk-input govuk-!-font-size-16" id="UnitPrice" name="UnitPrice"
-                               type="number" step="0.01" min="0"
-                               value="@(Model.UnitPrice.HasValue ? Model.UnitPrice.Value.ToString("F2") : "")"
+                        <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal" id="UnitPrice" name="UnitPrice"
+                               type="text" maxlength="20"
+                               value="@(Model.UnitPrice.HasValue ? Model.UnitPrice.Value.ToString() : "")"
                                oninput="calculateTestCost()" />
                     </div>
                     <span data-valmsg-for="UnitPrice"
@@ -82,7 +82,7 @@
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                         <input class="govuk-input govuk-!-font-size-16" id="TestCostDisplay"
-                               value="@(Model.TestCost.HasValue ? Model.TestCost.Value.ToString("F2") : "")" readonly />
+                               value="@(Model.TestCost.HasValue ? Model.TestCost.Value.ToString() : "")" readonly />
                     </div>
                 </div>
             </div>

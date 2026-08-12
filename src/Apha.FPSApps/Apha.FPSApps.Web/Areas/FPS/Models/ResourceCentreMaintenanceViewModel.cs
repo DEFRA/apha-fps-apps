@@ -1,4 +1,6 @@
+using Apha.FPSApps.Web.Validation;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -50,7 +52,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// Contribution target monetary value.
         /// </summary>
         [Display(Name = "Contribution Target")]
-        [GridColumn(Width = 160, Type = GridColumnType.Number)]
+        [GridColumn(Width = 160, Type = GridColumnType.GbpValue)]
+        [CurrencyRange]
         public decimal? ContTarget { get; set; }
 
         /// <summary>
@@ -74,6 +77,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 220, Type = GridColumnType.Text)]
         [EmailAddress(ErrorMessage = "Please enter a valid email address")]
         public string? EmailRecipient { get; set; }
+
+        /// <summary>
+        /// Options for the searchable RC Head (manager) picker.
+        /// </summary>
+        [GridColumn(IsVisible = false)]
+        public List<SelectListItem> ManagerList { get; set; } = new();
 
             }
         }

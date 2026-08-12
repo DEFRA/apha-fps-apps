@@ -348,6 +348,53 @@
         //document.getElementById("loader").style.display = "none";
     }
 
+    // Centralised loader handling for the native fetch API.
+    // Wraps window.fetch so every fetch call automatically shows the global
+    // loader while the request is in flight and hides it once the response is
+    // received (success or error). A counter keeps the loader visible while
+    // multiple concurrent requests are pending. Individual pages can opt out by
+    // passing { skipLoader: true } in the fetch init options.
+    if (window.fetch && !window.fetch.__loaderWrapped) {
+        var nativeFetch = window.fetch.bind(window);
+        var pendingRequests = 0;
+
+        var wrappedFetch = function (input, init) {
+            if (init && init.skipLoader) {
+                delete init.skipLoader;
+                return nativeFetch(input, init);
+            }
+
+            pendingRequests++;
+            showLoader();
+
+            var done = function () {
+                pendingRequests = Math.max(0, pendingRequests - 1);
+                if (pendingRequests === 0) {
+                    hideLoader();
+                }
+            };
+
+            return nativeFetch(input, init).then(
+                function (response) { done(); return response; },
+                function (error) { done(); throw error; }
+            );
+        };
+
+        wrappedFetch.__loaderWrapped = true;
+        window.fetch = wrappedFetch;
+    }
+
+    // Centralised loader handling for jQuery AJAX requests.
+    // Binds the global loader to jQuery's ajaxStart/ajaxStop so every $.ajax
+    // call shows the loader while in flight and hides it once all requests
+    // complete. Guarded so it only binds once and only when jQuery is present.
+    if (window.jQuery && !window.jQuery.__loaderBound) {
+        window.jQuery(function () {
+            window.jQuery(document).ajaxStart(showLoader).ajaxStop(hideLoader);
+        });
+        window.jQuery.__loaderBound = true;
+    }
+
     // Downloads a file from the given URL, showing the global loader until the
     // download completes. Reusable for any Excel/PDF/CSV export endpoint.
     window.downloadFile = function (url, fileName) {

@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -35,6 +36,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "Unit Cost")]
         [GridColumn(Order = 4, Width = 110, Type = GridColumnType.GbpValue)]
+        [CurrencyRange]
         public decimal? UnitCost { get; set; }
 
         // ── Hidden ────────────────────────────────────────────────────────────

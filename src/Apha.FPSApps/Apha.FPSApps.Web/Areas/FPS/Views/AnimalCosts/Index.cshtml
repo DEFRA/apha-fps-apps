@@ -117,10 +117,6 @@
         document.addEventListener('DOMContentLoaded', function () {
             loadAnimalTypes();
 
-            // Show the loader whenever an ajax request is in flight (grid sort/filter/pagination,
-            // dropdown reload) and hide it once all requests complete.
-            $(document).ajaxStart(showLoader).ajaxStop(hideLoader);
-
             // DataGrid dispatches 'gridReloaded' on document after each ajax replacement
             document.addEventListener('gridReloaded', function (e) {
                 if (e && e.detail && e.detail.gridId === '@Model.AnimalCostsGrid.GridId') {
@@ -218,7 +214,7 @@
             });
 
             document.getElementById('asuTotalDays').value = totalDays.toFixed(2);
-            document.getElementById('asuTotalCost').value = '£' + totalCost.toFixed(2)
+            document.getElementById('asuTotalCost').value = '£' + totalCost.toFixed(4)
                 .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
