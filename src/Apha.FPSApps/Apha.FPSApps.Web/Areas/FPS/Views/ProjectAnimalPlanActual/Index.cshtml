@@ -2,35 +2,9 @@
 @model Apha.FPSApps.Web.Areas.FPS.Models.ProjectAnimalPlanActualViewModel
 @{
     ViewData["Title"] = "Plan vs Actual - Animals";
-}
-
-@{
     ViewData["SelectedProjectCode"] = Model.SelectedProjectCode;
 }
 <div class="cgovuk-grid-column-one-full">
-    @* <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full">
-            <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
-                <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
-                    <div class="col-md-6"></div>
-                    @await Html.PartialAsync("_ProjectDropdownSelector")
-                </div>
-            </div>
-        </div>
-    </div> *@
-
-    <!-- Title section -->
-    @* <div class="govuk-grid-row">
-         <div class="govuk-grid-column-full">
-            <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom govuk-!-margin-top-2 
-                        govuk-!-padding-bottom-2 govuk-!-padding-left-4 ">
-                Compare FPS Plan with PACT Actuals
-                <a asp-area="FPS" asp-controller="ProgramProject" asp-action="Index" class="govuk-back-link
-                        sup_align_right govuk-!-margin-bottom-0 ">Back</a>
-            </h1>
-        </div>        
-    </div> *@
-
     <div class="">
         <div class="">
             <div class="govuk-grid-column-one-half isFloatLeft">
@@ -41,17 +15,8 @@
                 <table class="govuk-table govuk-!-margin-bottom-0 isFloatRight isHalfGrid isCompareFPSPlanAnimal govuk-!-margin-top-2">
                     <tbody class="govuk-table__body">
                         <tr class="govuk-table__row">
-                            @* <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-0 isNoBottomBorder govuk-!-text-align-right">
-                             <label class="fw-bold mt-2 me-2" for="projectSelect">Project:</label>
-                         </th> *@
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
                                 @await Html.PartialAsync("_ProjectDropdownSelector")
-                                @* <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
-                                 <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
-                                     <div class="col-md-6"></div>
-
-</div>
-                             </div> *@
                             </td>
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
                                 <a asp-area="FPS" asp-controller="ProgramProject" asp-action="Index" class="govuk-back-link sup_align_right govuk-!-margin-bottom-0 govuk-!-margin-top-0">Back</a>
@@ -61,19 +26,6 @@
                 </table>
             </div>
         </div>
-
-
-
-
-
-        @* <div class="govuk-grid-column-full">
-         <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
-             <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
-                 <div class="col-md-6"></div>
-                 @await Html.PartialAsync("_ProjectDropdownSelector")
-             </div>
-         </div>
-     </div> *@
     </div>
 
     <!-- Summary card -->
