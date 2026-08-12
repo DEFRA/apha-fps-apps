@@ -135,8 +135,7 @@ $(document).ready(function () {
         }
 
         // Navigate to Portfolio Time Codes page with selected portfolio
-        var url = '/PACT/PortfolioTimeCodes/Index?parentProject=' + encodeURIComponent(currentParentProject);
-        window.location.href = url;
+        window.fpsNavigateTo('/PACT/PortfolioTimeCodes/Index?parentProject=' + encodeURIComponent(currentParentProject));
     });
 
     // ── Modal submit ──────────────────────────────────────────────────────────
@@ -202,7 +201,6 @@ function loadPortfolioData(parentProject) {
     currentPortfolio = '';
     $('#txtSelectedPortfolioTest').val('');
     clearValidationErrors('#portfolioDetailForm');
-    resetFormButtons(false);
 
     $.get('/PACT/PortfolioMaintenance/GetPortfolio', { parentProject: parentProject })
         .done(function (res) {
@@ -227,7 +225,6 @@ function loadPortfolioData(parentProject) {
                 updateNavHref('#sideNavTimeCodes', parentProject);
                 updateNavHref('#sideNavInvoices', parentProject);
 
-                resetFormButtons(true);
                 loadConstituentTestGrid(parentProject);
             } else {
                 showAlertMessage(res.message || 'Portfolio not found.', AlertType.ERROR);
@@ -236,11 +233,6 @@ function loadPortfolioData(parentProject) {
         .fail(function () { showAlertMessage('An error occurred while loading portfolio data.', AlertType.ERROR); });
 }
 
-// ── Enable/disable buttons ───────────────────────────────────────────────
-function resetFormButtons(enabled) {
-    $('#btnSavePortfolio, #btnPortfolioTimeCodes')
-        .prop('disabled', !enabled);
-}
 
 // ── Constituent Tests grid ───────────────────────────────────────────────
 function loadConstituentTestGrid(parentProject, page, pageSize, sortBy, desc) {
