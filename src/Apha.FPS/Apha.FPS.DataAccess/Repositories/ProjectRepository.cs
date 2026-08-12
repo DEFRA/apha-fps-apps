@@ -795,8 +795,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 "parentproject"    => ApplyOrder(query, p => p.ParentProject, descending),
                 "projecttitle"     => ApplyOrder(query, p => p.ProjectTitle, descending),
                 "program"          => ApplyOrder(query, p => p.Program, descending),
-                "manager"          => ApplyOrder(query, p => string.IsNullOrWhiteSpace(p.Manager)
-                                        ? string.Empty : p.Manager.Trim(), descending),
+                "manager"          => ApplyOrder(query, p => p.Manager, descending),
                 "projectgroup"     => ApplyOrder(query, p => p.ProjectGroup, descending),
                 "customer"         => ApplyOrder(query, p => p.Customer, descending),
                 "contract"         => ApplyOrder(query, p => p.Contract, descending),
