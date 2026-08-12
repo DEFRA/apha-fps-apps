@@ -501,6 +501,11 @@ internal sealed class MaSrcTblDbVariable
     public string? DbVarValue { get; set; }
 }
 
+internal sealed class MaSrcTblCurrentMonth
+{
+    public int CurrentMonth { get; set; }
+}
+
 internal sealed class MaDstTlkpYear
 {
     public int Year { get; set; }

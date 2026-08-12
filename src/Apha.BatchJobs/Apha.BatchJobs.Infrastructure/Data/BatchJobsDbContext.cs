@@ -149,6 +149,7 @@ public class BatchJobsDbContext : DbContext
     internal DbSet<MaSrcTlkpTestReqmt> MaSrcTlkpTestReqmt { get; set; }
     internal DbSet<MaDstMyTlkpTestReqmt> MaDstMyTlkpTestReqmt { get; set; }
     internal DbSet<MaSrcTblDbVariable> MaSrcTblDbVariable { get; set; }
+    internal DbSet<MaSrcTblCurrentMonth> MaSrcTblCurrentMonth { get; set; }
     internal DbSet<MaDstTlkpYear> MaDstTlkpYear { get; set; }
     internal DbSet<MaSrcWorkGroupGrade> MaSrcWorkGroupGrade { get; set; }
     internal DbSet<MaDstMyWorkGroupGrade> MaDstMyWorkGroupGrade { get; set; }
@@ -1063,6 +1064,13 @@ public class BatchJobsDbContext : DbContext
             entity.HasKey(e => e.DbVarName);
             entity.Property(e => e.DbVarName).HasColumnName("db_var_name");
             entity.Property(e => e.DbVarValue).HasColumnName("db_var_value");
+        });
+
+        modelBuilder.Entity<MaSrcTblCurrentMonth>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToTable("tblcurrentmonth", schema: "fps");
+            entity.Property(e => e.CurrentMonth).HasColumnName("currentmonth");
         });
 
         modelBuilder.Entity<MaDstTlkpYear>(entity =>

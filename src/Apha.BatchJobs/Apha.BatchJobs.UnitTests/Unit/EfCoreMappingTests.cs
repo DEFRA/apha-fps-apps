@@ -371,6 +371,18 @@ public sealed class EfCoreMappingTests
         Assert.Equal(new[] { "Id" }, keyProps);
     }
 
+    [Fact]
+    public void TblCurrentMonth_IsKeyless_Table_In_Fps_Schema()
+    {
+        // fps.tblcurrentmonth is the authoritative source for latestmonthreleased in TlkpYearLoader.
+        using var ctx = new BatchJobsDbContext(_options);
+        var entity = GetEntityByTable(ctx, "tblcurrentmonth");
+        Assert.Equal("fps", entity.GetSchema());
+        Assert.Null(entity.FindPrimaryKey());
+        var storeObject = StoreObjectIdentifier.Table("tblcurrentmonth", "fps");
+        Assert.Equal("currentmonth", entity.FindProperty("CurrentMonth")!.GetColumnName(storeObject));
+    }
+
     // ─────────────────────────────────────────────────────────────
     // single-db / schema guardrails
     // ─────────────────────────────────────────────────────────────
