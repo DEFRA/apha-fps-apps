@@ -201,6 +201,47 @@ a {
     justify-content: space-between !important;
 }
 
+.sup_justify_end {
+    justify-content: flex-end !important;
+}
+
+.sup_flex_align_start {
+    display: flex;
+    align-items: flex-start;
+}
+
+.sup_label_width_150 {
+    min-width: 150px;
+}
+
+.sup_label_width_150_wrap {
+    min-width: 150px;
+    max-width: 150px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.sup_date_input_wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.sup_date_picker_btn {
+    margin-left: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    background: #f3f2f1;
+    border: 2px solid #0b0c0c;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.sup_label_nowrap {
+    white-space: nowrap;
+}
+
 .sup_justify_space_evenly {
     justify-content: space-evenly !important;
 }

@@ -33,75 +33,76 @@
             <input type="hidden" name="Number" value="@Model?.Number" />
           
 
-            <div class="govuk-form-group" id="fg-projectcode">
-                <span class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" style="display: inline-block; min-width: 150px;">Project:</span>
-                <span class="govuk-body govuk-!-font-size-16">@Model?.Project</span>
+            <div class="govuk-form-group sup_flex_row sup_flex_align_center sup_gap_8" id="fg-projectcode">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0 sup_label_width_150" for="ProjectDisplay">Project</label>
+                <input type="text" id="ProjectDisplay" class="govuk-input govuk-!-font-size-16" value="@Model?.Project" readonly>
             </div>
 
-            <div class="govuk-form-group" id="fg-milestone">
-                <span class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" style="display: inline-block; min-width: 150px;">Milestone :</span>
-                <span class="govuk-body govuk-!-font-size-16">@Model?.Number</span>
+            <div class="govuk-form-group sup_flex_row sup_flex_align_center sup_gap_8" id="fg-milestone">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0 sup_label_width_150" for="MilestoneDisplay">Milestone</label>
+                <input type="text" id="MilestoneDisplay" class="govuk-input govuk-!-font-size-16" value="@Model?.Number" readonly>
             </div>
 
-            <div class="govuk-form-group" id="fg-description">
-                <span class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" style="display: inline-block; min-width: 150px;">Description :</span>
-                <span class="govuk-body govuk-!-font-size-16">@Model?.Description</span>
+            <div class="govuk-form-group sup_flex_row sup_flex_align_start sup_gap_8" id="fg-description">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0 sup_label_width_150" for="DescriptionDisplay">Description</label>
+                <textarea id="DescriptionDisplay" class="govuk-textarea govuk-!-font-size-16 govuk-!-margin-bottom-0 sup_flex_one" rows="3" readonly>@Model?.Description</textarea>
             </div>
 
-            <div class="govuk-form-group" id="fg-datedue">
-                <span class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" style="display: inline-block; min-width: 150px;">Date Due :</span>
-                <span class="govuk-body govuk-!-font-size-16">@Model?.DateDue?.ToString("dd/MM/yyyy")</span>
-            </div>
-
-            <div class="govuk-form-group">
-                <div class="govuk-checkboxes govuk-checkboxes--small">
-                    <div class="govuk-checkboxes__item">
-                        <input class="govuk-checkboxes__input"
-                               id="underreview"
-                               name="UnderSdReview"
-                               type="checkbox"
-                               value="-1"
-                               @(Model?.UnderSdReview == -1 ? "checked" : "")
-                               onchange="onUnderReviewChanged(this)">
-                        <label class="govuk-checkboxes__label govuk-!-font-size-16" for="underreview">Under Review</label>
-                        <input type="hidden" name="UnderSdReview" value="0" />
+            <div class="sup_flex_row sup_gap_8">
+                <div class="sup_label_width_150"></div>
+                <div class="govuk-form-group">
+                    <div class="govuk-checkboxes govuk-checkboxes--small">
+                        <div class="govuk-checkboxes__item">
+                            <input class="govuk-checkboxes__input"
+                                   id="underreview"
+                                   name="UnderSdReview"
+                                   type="checkbox"
+                                   value="-1"
+                                   @(Model?.UnderSdReview == -1 ? "checked" : "")
+                                   onchange="onUnderReviewChanged(this)">
+                            <label class="govuk-checkboxes__label govuk-!-font-size-16 sup_label_nowrap" for="underreview">Under Review</label>
+                            <input type="hidden" name="UnderSdReview" value="0" />
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="govuk-form-group">
-                <div class="govuk-checkboxes govuk-checkboxes--small">
-                    <div class="govuk-checkboxes__item">
-                        <input class="govuk-checkboxes__input"
-                               id="ontarget"
-                               name="OnTarget"
-                               type="checkbox"
-                               value="-1"
-                               @(Model?.OnTarget == -1 ? "checked" : "")
-                               onchange="onOnTargetChanged(this)">
-                        <label class="govuk-checkboxes__label govuk-!-font-size-16" for="ontarget">On Target</label>
-                        <input type="hidden" name="OnTarget" value="0" />
+                <div class="govuk-form-group">
+                    <div class="govuk-checkboxes govuk-checkboxes--small">
+                        <div class="govuk-checkboxes__item">
+                            <input class="govuk-checkboxes__input"
+                                   id="ontarget"
+                                   name="OnTarget"
+                                   type="checkbox"
+                                   value="-1"
+                                   @(Model?.OnTarget == -1 ? "checked" : "")
+                                   onchange="onOnTargetChanged(this)">
+                            <label class="govuk-checkboxes__label govuk-!-font-size-16 sup_label_nowrap" for="ontarget">On Target</label>
+                            <input type="hidden" name="OnTarget" value="0" />
+                        </div>
                     </div>
                 </div>
-            </div>
+             </div>
 
-            <div class="govuk-form-group" id="fg-datecompleted">
-                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="DateCompletedDisplay">Date Completed</label>
-                <div style="position:relative; display:flex; align-items:center; width:stretch;">
+            <div class="govuk-form-group sup_flex_row sup_flex_align_center sup_gap_8" id="fg-datedue">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0 sup_label_width_150" for="DateDueDisplay">Date Due</label>
+                <input type="text" id="DateDueDisplay" class="govuk-input govuk-!-font-size-16" value="@Model?.DateDue?.ToString("dd/MM/yyyy")" readonly>
+            </div>
+            <div class="govuk-form-group sup_flex_row sup_flex_align_center sup_gap_8" id="fg-datecompleted">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0 sup_label_width_150" for="DateCompletedDisplay">Date Completed</label>
+                <div class="sup_date_input_wrapper">
                     <input type="text"
                            id="DateCompletedDisplay"
-                           class="govuk-input govuk-!-font-size-16"
+                           class="govuk-input govuk-!-font-size-16 sup_flex_one"
                            value="@(Model?.DateCompleted?.ToString("dd/MM/yyyy") ?? string.Empty)"
                            aria-label="DateCompletedDisplay"
                            placeholder="dd/mm/yyyy"
                            maxlength="10"
                            autocomplete="off"
                            oninput="formatDateInput(this)"
-                           onblur="validateAndSyncDate('DateCompletedDisplay', 'DateCompletedBinding', 'DateCompletedError')"
-                           style="flex:1;">
+                           onblur="validateAndSyncDate('DateCompletedDisplay', 'DateCompletedBinding', 'DateCompletedError')">
                     <button type="button"
                             onclick="openDatePicker('DateCompletedPicker')"
-                            style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                            class="sup_date_picker_btn"
                             aria-label="Open date picker for Date Completed">&#128197;</button>
                     <input type="hidden"
                            name="DateCompleted"
@@ -111,20 +112,22 @@
                            id="DateCompletedPicker"
                            value="@(Model?.DateCompleted?.ToString("yyyy-MM-dd") ?? string.Empty)"
                            onchange="syncDateToText('DateCompletedPicker', 'DateCompletedDisplay', 'DateCompletedBinding', 'DateCompletedError')"
-                           style="display:none;">
+                           class="sup_display_none">
                 </div>
-                <span id="DateCompletedError" class="govuk-error-message" style="display:none;"></span>
+                <span id="DateCompletedError" class="govuk-error-message sup_display_none"></span>
             </div>
 
-            <div class="govuk-form-group" id="fg-comment">
-                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="ProjectLeaderComment">
+            <div class="govuk-form-group sup_flex_row sup_flex_align_start sup_gap_8" id="fg-comment">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0 sup_label_width_150_wrap" asp-for="ProjectLeaderComment">
                     Project Leaders Comment <span class="app-required" aria-hidden="true">*</span>
                 </label>
-                <textarea class="govuk-textarea govuk-!-font-size-16" asp-for="ProjectLeaderComment" rows="4"></textarea>
-                <span asp-validation-for="ProjectLeaderComment" class="govuk-error-message govuk-!-display-none"></span>
+                <div class="sup_flex_one">
+                    <textarea class="govuk-textarea govuk-!-font-size-16" asp-for="ProjectLeaderComment" rows="4"></textarea>
+                    <span asp-validation-for="ProjectLeaderComment" class="govuk-error-message govuk-!-display-none"></span>
+                </div>
             </div>
 
-            <div class="govuk-button-group">
+            <div class="govuk-button-group sup_justify_end">
                 <button type="button" class="govuk-button govuk-!-font-size-16" onclick="submitMilestoneDetails()">Update</button>
                 <button type="button" class="govuk-button govuk-button--secondary govuk-!-font-size-16"
                         onclick="window.location.href='@Url.Action("Index", "PMDMilestone", new { area = "PIMS", parentproject })'">Cancel</button>
