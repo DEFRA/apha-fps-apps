@@ -146,7 +146,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             snapshotQuery = (IQueryable<AnimalSnapshotView>)ApplyAnimalSnapshotSorting(snapshotQuery, query.SortBy, query.Descending);
 
-            return base.ApplyPaging(snapshotQuery, query.Page, query.PageSize);
+            return await ApplyPagingAsync(snapshotQuery, query.Page, query.PageSize);
         }
 
         public async Task<AnimalCostView?> GetAnimalCostViewByIdAsync(int indCounter, string jobCode)
