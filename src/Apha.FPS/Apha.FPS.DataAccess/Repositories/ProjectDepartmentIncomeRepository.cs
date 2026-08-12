@@ -938,7 +938,6 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private static List<DepartmentIncomeTime> ApplyTimeFilter(List<DepartmentIncomeTime> rows, string? filterJson)
         {
-            if (string.IsNullOrWhiteSpace(filterJson)) return rows;
             var f = ParseFilterDict(filterJson);
             if (f is null) return rows;
 
@@ -959,7 +958,6 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private static List<DepartmentIncomeTest> ApplyTestFilter(List<DepartmentIncomeTest> rows, string? filterJson)
         {
-            if (string.IsNullOrWhiteSpace(filterJson)) return rows;
             var f = ParseFilterDict(filterJson);
             if (f is null) return rows;
 
@@ -979,7 +977,6 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private static List<DepartmentIncomeAnimal> ApplyAnimalFilter(List<DepartmentIncomeAnimal> rows, string? filterJson)
         {
-            if (string.IsNullOrWhiteSpace(filterJson)) return rows;
             var f = ParseFilterDict(filterJson);
             if (f is null) return rows;
 
@@ -996,7 +993,6 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private static List<DepartmentIncomeAdditional> ApplyAdditionalFilter(List<DepartmentIncomeAdditional> rows, string? filterJson)
         {
-            if (string.IsNullOrWhiteSpace(filterJson)) return rows;
             var f = ParseFilterDict(filterJson);
             if (f is null) return rows;
 

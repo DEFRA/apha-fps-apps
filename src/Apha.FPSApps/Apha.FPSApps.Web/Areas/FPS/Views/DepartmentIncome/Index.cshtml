@@ -39,7 +39,7 @@
             <div class="govuk-grid-column-two-thirds">
                 <div class="govuk-grid-column-one-half">
                     <div class="govuk-form-group sup_margin_bottom_10">
-                        <label class="govuk-label govuk-!-font-weight-bold" for="periodFromDropdown_input">Period from</label>
+                        <label class="govuk-label govuk-!-font-weight-bold" for="monthFromSelect">Period from</label>
                         <select id="monthFromSelect"
                                 asp-for="SelectedMonthFrom"
                                 class="govuk-select sup_select_option_width_100 govuk-!-font-size-16 govuk-visually-hidden"
@@ -63,7 +63,7 @@
 
                 <div class="govuk-grid-column-one-half">
                     <div class="govuk-form-group sup_margin_bottom_10">
-                        <label class="govuk-label govuk-!-font-weight-bold" for="periodToDropdown_input">Period to</label>
+                        <label class="govuk-label govuk-!-font-weight-bold" for="monthToSelect">Period to</label>
                         <select id="monthToSelect"
                                 asp-for="SelectedMonthTo"
                                 class="govuk-select sup_select_option_width_100 govuk-!-font-size-16 govuk-visually-hidden"
@@ -135,7 +135,7 @@
                             </div>
 
                             <div class="govuk-grid-column-three-quarters">
-                                <section id="snapshotGridArea">
+                                <section id="snapshotGridArea" aria-label="Snapshot data">
                                     <section id="gridContainer_@(Model.SnapshotGrid.GridId)" aria-label="Snapshot query results">
                                         @await Html.PartialAsync("_DataGrid", Model.SnapshotGrid)
                                     </section>
