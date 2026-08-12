@@ -329,6 +329,7 @@
         public const string GetDepartmentIncomeAdditional = "api/v1/department-income/additional";
         public const string GetDepartmentIncomeTotals     = "api/v1/department-income/totals";
         public const string GetDepartmentIncomePeriods    = "api/v1/department-income/periods";
+        public const string GetDepartmentIncomeSnapshotTests   = "api/v1/department-income/snapshot/tests";
         public const string GetDepartmentIncomeSnapshotPeriods = "api/v1/department-income/snapshot-periods";
         public const string UpdateDepartmentIncomeSnapshotPeriodLock = "api/v1/department-income/snapshot-periods/lock";
 

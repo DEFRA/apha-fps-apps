@@ -327,7 +327,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 {
                     var result = isCurrent
                         ? await _departmentIncomeService.GetTestIncomeCurrentAsync(project, monthFrom, monthTo)
-                        : await _departmentIncomeService.GetTestIncomeAsync(project, monthFrom, monthTo);
+                        : await _departmentIncomeService.GetTestSnapshotIncomeAsync(project, monthFrom, monthTo);
                     var items  = result.Success && result.Data != null
                         ? _mapper.Map<List<DepartmentIncomeTestItem>>(result.Data)
                         : new List<DepartmentIncomeTestItem>();

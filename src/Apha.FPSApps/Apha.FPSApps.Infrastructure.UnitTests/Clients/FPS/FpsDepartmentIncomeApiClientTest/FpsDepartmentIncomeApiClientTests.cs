@@ -290,6 +290,70 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDepartmentIncomeA
 
         #endregion
 
+        // ── GetTestSnapshotIncomeAsync ─────────────────────────────────────────
+
+        #region GetTestSnapshotIncomeAsync
+
+        [Fact]
+        public async Task GetTestSnapshotIncomeAsync_HttpReturnsSuccess_ReturnsMappedResponse()
+        {
+            // Arrange
+            var httpResponse = TestHttpSuccess();
+            var dto = ApiResponseDto<List<DepartmentIncomeTestDto>>.SuccessResponse(
+                new List<DepartmentIncomeTestDto> { new() { Project = "PROJ1" } });
+
+            _http.GetAsync<List<DepartmentIncomeTestRes>>(
+                    Arg.Is<string>(url => url.Contains($"{BaseUrl}/snapshot/tests")))
+                .Returns(httpResponse);
+            _mapper.Map<ApiResponseDto<List<DepartmentIncomeTestDto>>>(httpResponse).Returns(dto);
+
+            // Act
+            var result = await _client.GetTestSnapshotIncomeAsync(TestProject, 1, 6);
+
+            // Assert
+            Assert.True(result.Success);
+            _mapper.Received(1).Map<ApiResponseDto<List<DepartmentIncomeTestDto>>>(httpResponse);
+        }
+
+        [Fact]
+        public async Task GetTestSnapshotIncomeAsync_HttpThrowsException_PropagatesException()
+        {
+            // Arrange
+            _http.GetAsync<List<DepartmentIncomeTestRes>>(Arg.Any<string>())
+                .ThrowsAsync(new Exception("Network error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetTestSnapshotIncomeAsync(TestProject, 1, 6));
+        }
+
+        [Fact]
+        public async Task GetTestSnapshotIncomeAsync_HttpReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var httpResponse = new ApiResponse<List<DepartmentIncomeTestRes>>
+            {
+                Success = false,
+                Errors = new List<ApiError> { new() { Message = "Error", Code = "ERROR" } }
+            };
+            var mappedFailure = new ApiResponseDto<List<DepartmentIncomeTestDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<DepartmentIncomeTestRes>>(Arg.Any<string>()).Returns(httpResponse);
+            _mapper.Map<ApiResponseDto<List<DepartmentIncomeTestDto>>>(httpResponse).Returns(mappedFailure);
+
+            // Act
+            var result = await _client.GetTestSnapshotIncomeAsync(TestProject, 1, 6);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
         // ── GetAnimalIncomeAsync ────────────────────────────────────────────────
 
         #region GetAnimalIncomeAsync

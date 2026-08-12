@@ -52,6 +52,21 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<DepartmentIncomeTestDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
+        public async Task<ApiResponseDto<List<DepartmentIncomeTestDto>>> GetTestSnapshotIncomeAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null)
+        {
+            var url = BuildSnapshotTestUrl(FpsApiEndpoints.GetDepartmentIncomeSnapshotTests, project, startPeriod, endPeriod);
+            var response = await _http.GetAsync<List<DepartmentIncomeTestRes>>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<DepartmentIncomeTestDto>>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<List<DepartmentIncomeTestDto>>>(response);
+            return ApiResponseDto<List<DepartmentIncomeTestDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
         public async Task<ApiResponseDto<List<DepartmentIncomeAnimalDto>>> GetAnimalIncomeAsync(
             string? project = null,
             int? monthFrom = null,
@@ -219,6 +234,22 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                 queryParams["monthFrom"] = monthFrom.Value.ToString();
             if (monthTo.HasValue)
                 queryParams["monthTo"] = monthTo.Value.ToString();
+
+            return queryParams.Count > 0
+                ? QueryHelpers.AddQueryString(endpoint, queryParams)
+                : endpoint;
+        }
+
+        private static string BuildSnapshotTestUrl(string endpoint, string? project, int? startPeriod, int? endPeriod)
+        {
+            var queryParams = new Dictionary<string, string?>();
+
+            if (project is not null)
+                queryParams["project"] = project;
+            if (startPeriod.HasValue)
+                queryParams["startPeriod"] = startPeriod.Value.ToString();
+            if (endPeriod.HasValue)
+                queryParams["endPeriod"] = endPeriod.Value.ToString();
 
             return queryParams.Count > 0
                 ? QueryHelpers.AddQueryString(endpoint, queryParams)

@@ -15,6 +15,12 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
             int? monthFrom = null,
             int? monthTo = null);
 
+        // Snapshot test income — uses period_monthlyoutput delta (fPeriodTests equivalent)
+        Task<ApiResponseDto<List<DepartmentIncomeTestDto>>> GetTestSnapshotIncomeAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null);
+
         Task<ApiResponseDto<List<DepartmentIncomeAnimalDto>>> GetAnimalIncomeAsync(
             string? project = null,
             int? monthFrom = null,

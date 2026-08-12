@@ -26,6 +26,12 @@ namespace Apha.FPSApps.Application.Services.FPS
             int? monthTo = null)
             => await _fpsClient.FpsDepartmentIncome.GetTestIncomeAsync(project, monthFrom, monthTo);
 
+        public async Task<ApiResponseDto<List<DepartmentIncomeTestDto>>> GetTestSnapshotIncomeAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null)
+            => await _fpsClient.FpsDepartmentIncome.GetTestSnapshotIncomeAsync(project, startPeriod, endPeriod);
+
         public async Task<ApiResponseDto<List<DepartmentIncomeAnimalDto>>> GetAnimalIncomeAsync(
             string? project = null,
             int? monthFrom = null,
