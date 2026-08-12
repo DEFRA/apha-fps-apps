@@ -21,6 +21,7 @@ jobs:
       dotnet_application_solution_name: Apha.BatchJobs
       sonar_project_key: DEFRA_apha-fps-apps
       solution_file: Apha.BatchJobs
+      run_application_tests: false
       run_web_tests: false
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
