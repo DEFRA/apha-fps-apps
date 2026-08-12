@@ -5341,14 +5341,22 @@ body,
 .isPlanAllTestPurchases.isHalfGrid {
     width: 26vw;
 }
+
+.isPlanAllAdditionalCosts.isHalfGrid {
+    width: 54%;
+}
+
+.isCompareFPSPlanAnimal.isHalfGrid,
 .isCompareFPSPlan.isHalfGrid {
     td:nth-child(1) {
-        .col-md-6{
+        .col-md-6 {
             width: auto !important;
         }
     }
 }
-
+.isCompareFPSPlanAnimal.isHalfGrid{
+    width:50%;
+}
 #gridContainer_programProjectGrid {
     .grid-scroll-container {
         max-height: 400px;
@@ -5365,4 +5373,12 @@ body,
 #gridContainer_animalBookedGrid .grid-scroll-container {
     height: 255px;
     max-height: 255px;
-}   
+}
+#gridContainer_testPlanGrid .grid-scroll-container {
+    height: 255px;
+    max-height: 255px;
+}
+#gridContainer_@Model.AdditionalCostGrid.GridId .grid-scroll-container {
+    height: 255px;
+    max-height: 255px;
+} 
