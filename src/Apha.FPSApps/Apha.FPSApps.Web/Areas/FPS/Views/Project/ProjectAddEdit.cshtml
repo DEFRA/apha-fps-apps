@@ -15,7 +15,7 @@
             <div class="govuk-grid-column-full">
                 <div class="row" style="display:flex; align-items: center;">
                     <div class="col-sm-12" style="padding:0px;">
-                        <div style="border-bottom: 2px solid #1d70b8; min-height:42px;">
+                        <div class="sup_border-bottom" style="min-height:42px;">
                             <h1 style="padding: 0 17px; height:42px; font-size:16px; font-weight: 700; margin: 0; display:flex; align-items:center; justify-content:space-between;">
                                 <span>2025-2026 : @(isEditMode ? $"Edit Project - {Model.ParentProject}" : "Set Up New Project")</span>
                                 <a href="@(Context.Request.Query.ContainsKey("returnUrl") ? Context.Request.Query["returnUrl"].ToString() : "javascript:history.back()")" class="govuk-back-link sup_align_right sup_back_link_center_right">Back</a>
@@ -123,7 +123,9 @@
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="Customer">Customer:</label>
-                                    <select asp-for="Customer" asp-items="@Model.CustomerList" class="govuk-select sup_select_option_width_100" required></select>
+                                    <select asp-for="Customer" asp-items="@Model.CustomerList" class="govuk-select sup_select_option_width_100" required>
+                                        <option value="">Select Customer</option>
+                                    </select>
                                     <span asp-validation-for="Customer" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
@@ -159,7 +161,9 @@
                                             </table>
                                         </div>
                                     </div>
-                                    <select asp-for="Program" asp-items="@Model.ProgramList" class="govuk-select sup_select_option_width_100" required style="display:none;"></select>
+                                    <select asp-for="Program" asp-items="@Model.ProgramList" class="govuk-select sup_select_option_width_100" required style="display:none;">
+                                        <option value="">Select Programme</option>
+                                    </select>
                                     <span asp-validation-for="Program" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
@@ -177,7 +181,9 @@
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="Disease">Disease:</label>
-                                    <select asp-for="Disease" asp-items="@Model.DiseaseList" class="govuk-select sup_select_option_width_100" required></select>
+                                    <select asp-for="Disease" asp-items="@Model.DiseaseList" class="govuk-select sup_select_option_width_100" required>
+                                        <option value="">Select Disease</option>
+                                    </select>
                                     <span asp-validation-for="Disease" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
@@ -210,7 +216,9 @@
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="ProjectStatus">Status:</label>
-                                    <select asp-for="ProjectStatus" asp-items="@Model.ProjectStatusList" class="govuk-select sup_select_option_width_100" required></select>
+                                    <select asp-for="ProjectStatus" asp-items="@Model.ProjectStatusList" class="govuk-select sup_select_option_width_100" required>
+                                        <option value="">Select Status</option>
+                                    </select>
                                     <span asp-validation-for="ProjectStatus" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
@@ -222,13 +230,17 @@
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="Contract">Contract No:</label>
-                                    <select asp-for="Contract" asp-items="@Model.ContractList" class="govuk-select sup_select_option_width_100" required></select>
+                                    <select asp-for="Contract" asp-items="@Model.ContractList" class="govuk-select sup_select_option_width_100" required>
+                                        <option value="">Select Contract No</option>
+                                    </select>
                                     <span asp-validation-for="Contract" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="IsDefraProject">Is Defra Project?</label>
-                                    <select asp-for="IsDefraProject" asp-items="@Model.IsDefraProjectList" class="govuk-select sup_select_option_width_100" required></select>
+                                    <select asp-for="IsDefraProject" asp-items="@Model.IsDefraProjectList" class="govuk-select sup_select_option_width_100" required>
+                                        <option value="">Select Is Defra Project</option>
+                                    </select>
                                     <span asp-validation-for="IsDefraProject" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
@@ -267,7 +279,9 @@
                                             </table>
                                         </div>
                                     </div>
-                                    <select asp-for="CostCentre" asp-items="@Model.CostCentreList" class="govuk-select sup_select_option_width_100" required style="display:none;"></select>
+                                    <select asp-for="CostCentre" asp-items="@Model.CostCentreList" class="govuk-select sup_select_option_width_100" required style="display:none;">
+                                        <option value="">Select Cost Centre</option>
+                                    </select>
                                     <span asp-validation-for="CostCentre" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
@@ -279,19 +293,25 @@
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="ProjectGroup">Project Group:</label>
-                                    <select asp-for="ProjectGroup" asp-items="@Model.ProjectGroupList" class="govuk-select sup_select_option_width_100"></select>
+                                    <select asp-for="ProjectGroup" asp-items="@Model.ProjectGroupList" class="govuk-select sup_select_option_width_100">
+                                        <option value="">Select Project Group</option>
+                                    </select>
                                     <span asp-validation-for="ProjectGroup" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="IncomeAccountCode">Income Account Code:</label>
-                                    <select asp-for="IncomeAccountCode" asp-items="@Model.IncomeAccountCodeList" class="govuk-select sup_select_option_width_100" required></select>
+                                    <select asp-for="IncomeAccountCode" asp-items="@Model.IncomeAccountCodeList" class="govuk-select sup_select_option_width_100" required>
+                                        <option value="">Select Income Account Code</option>
+                                    </select>
                                     <span asp-validation-for="IncomeAccountCode" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="SubAccountCode">Objective Code:</label>
-                                    <select asp-for="SubAccountCode" asp-items="@Model.SubAccountCodeList" class="govuk-select sup_select_option_width_100" required></select>
+                                    <select asp-for="SubAccountCode" asp-items="@Model.SubAccountCodeList" class="govuk-select sup_select_option_width_100" required>
+                                        <option value="">Select Objective Code</option>
+                                    </select>
                                     <span asp-validation-for="SubAccountCode" class="govuk-error-message" style="display:none;"></span>
                                 </div>
                             </div>

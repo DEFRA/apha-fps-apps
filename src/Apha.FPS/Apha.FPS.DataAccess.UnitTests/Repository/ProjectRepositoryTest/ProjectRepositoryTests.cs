@@ -148,9 +148,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projectViews = new List<ProjectView>
             {
-                new() { ParentProject = "PP001", ProjectTitle = "Project One",   Program = "P001", Customer = "DEFRA", UserEmail = "test@example.com" },
-                new() { ParentProject = "PP002", ProjectTitle = "Project Two",   Program = "P002", Customer = "APHA",  UserEmail = "test@example.com" },
-                new() { ParentProject = "PP003", ProjectTitle = "Project Three", Program = "P003", Customer = "DEFRA", UserEmail = "other@example.com" } // different user â€” excluded
+                new() { ParentProject = "PP001", ProjectTitle = "Project One",   Program = "P001", Customer = "DEFRA", UserEmail = "test@example.com", FpsYear = 2024 },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two",   Program = "P002", Customer = "APHA",  UserEmail = "test@example.com", FpsYear = 2024 },
+                new() { ParentProject = "PP003", ProjectTitle = "Project Three", Program = "P003", Customer = "DEFRA", UserEmail = "other@example.com" } // different user
             };
             var repo = CreateRepository(projectViews: projectViews);
 
@@ -188,8 +188,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange — Projects table data; no user email filtering expected
             var projects = new List<Project>
             {
-                new() { ParentProject = "PP001", ProjectTitle = "Project One", Program = "P001", Customer = "DEFRA", Disease = "TB", Contract = "C001", ProjectStatus = "Active", IncomeAccountCode = "IAC01" },
-                new() { ParentProject = "PP002", ProjectTitle = "Project Two", Program = "P002", Customer = "APHA", Disease = "FMD", Contract = "C002", ProjectStatus = "Active", IncomeAccountCode = "IAC02" }
+                new() { ParentProject = "PP001", ProjectTitle = "Project One", Program = "P001", Customer = "DEFRA", Disease = "TB", Contract = "C001", ProjectStatus = "Active", IncomeAccountCode = "IAC01", FpsYear = 2024 },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two", Program = "P002", Customer = "APHA", Disease = "FMD", Contract = "C002", ProjectStatus = "Active", IncomeAccountCode = "IAC02", FpsYear = 2024 }
             };
             var repo = CreateRepository(projects: projects);
 
@@ -221,9 +221,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange — projects exist but current user email does not matter for unfiltered
             var projects = new List<Project>
             {
-                new() { ParentProject = "PP001", ProjectTitle = "Project One", Program = "P001", Customer = "DEFRA", Disease = "TB", Contract = "C001", ProjectStatus = "Active", IncomeAccountCode = "IAC01" },
-                new() { ParentProject = "PP002", ProjectTitle = "Project Two", Program = "P002", Customer = "APHA", Disease = "FMD", Contract = "C002", ProjectStatus = "Active", IncomeAccountCode = "IAC02" },
-                new() { ParentProject = "PP003", ProjectTitle = "Project Three", Program = "P003", Customer = "EA", Disease = "AI", Contract = "C003", ProjectStatus = "Closed", IncomeAccountCode = "IAC03" }
+                new() { ParentProject = "PP001", ProjectTitle = "Project One", Program = "P001", Customer = "DEFRA", Disease = "TB", Contract = "C001", ProjectStatus = "Active", IncomeAccountCode = "IAC01", FpsYear = 2024 },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two", Program = "P002", Customer = "APHA", Disease = "FMD", Contract = "C002", ProjectStatus = "Active", IncomeAccountCode = "IAC02", FpsYear = 2024 },
+                new() { ParentProject = "PP003", ProjectTitle = "Project Three", Program = "P003", Customer = "EA", Disease = "AI", Contract = "C003", ProjectStatus = "Closed", IncomeAccountCode = "IAC03", FpsYear = 2024 }
             };
             var repo = CreateRepository(projects: projects, userEmailId: "differentuser@example.com");
 
@@ -365,7 +365,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                     TransferIncome    = null,
                     CustIncome        = null,
                     IsDefraProject    = null,
-                    UserEmail         = "test@example.com"
+                    UserEmail         = "test@example.com",
+                    FpsYear           = 2024
                 }
             };
             var repo = CreateRepository(projectViews: projectViews);
@@ -393,9 +394,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projectViews = new List<ProjectView>
             {
-                new() { ParentProject = "PP001", ProjectTitle = "Project One",   Program = "P001", Customer = "DEFRA", UserEmail = "test@example.com" },
-                new() { ParentProject = "PP002", ProjectTitle = "Project Two",   Program = "P002", Customer = "APHA",  UserEmail = "test@example.com" },
-                new() { ParentProject = "PP003", ProjectTitle = "Project Three", Program = "P001", Customer = "DEFRA", UserEmail = "test@example.com" }
+                new() { ParentProject = "PP001", ProjectTitle = "Project One",   Program = "P001", Customer = "DEFRA", UserEmail = "test@example.com", FpsYear = 2024 },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two",   Program = "P002", Customer = "APHA",  UserEmail = "test@example.com", FpsYear = 2024 },
+                new() { ParentProject = "PP003", ProjectTitle = "Project Three", Program = "P001", Customer = "DEFRA", UserEmail = "test@example.com", FpsYear = 2024 }
             };
             var repo = CreateRepository(projectViews: projectViews);
 
@@ -1525,7 +1526,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                     Customer = "DEFRA", ProjectStatus = "A", Disease = "D", Contract = "C", IncomeAccountCode = "IA"
                 }
             };
-            var repo = CreateRepository(projects: projects, fpsYear: 2024);
+            var repo = CreateRepository(projects: projects, projectLogs: new List<ProjectLog>(), fpsYear: 2024);
             var updated = new Project
             {
                 ParentProject = "PP001", ProjectTitle = "New Title", Program = "P002", Manager = "New Manager",
@@ -1626,7 +1627,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                     Disease = "D", Contract = "C", IncomeAccountCode = "IA"
                 }
             };
-            var repo = CreateRepository(projects: projects, fpsYear: 2024);
+            var repo = CreateRepository(projects: projects, projectLogs: new List<ProjectLog>(), fpsYear: 2024);
             var updated = new Project
             {
                 ParentProject = "PP001", ProjectTitle = "Updated Title",

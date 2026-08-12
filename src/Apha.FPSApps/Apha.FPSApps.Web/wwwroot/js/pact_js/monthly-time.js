@@ -263,7 +263,9 @@ function initStaffDropdown() {
 }
 
 function loadStaffByWorkGroup(workGroup) {
-    if (!window.monthlyTimeStaffDropdown) return;
+    if (!window.monthlyTimeStaffDropdown) {
+        return;
+    }
 
     window.monthlyTimeStaffDropdown.clear();
 
@@ -458,7 +460,9 @@ function initLiveModalDropdowns(existingWorkGroup, existingName, existingPactId)
 }
 
 function loadLiveModalStaffByWorkGroup(workGroup, restoreName, restorePactId) {
-    if (!window.liveNameDropdown) return;
+    if (!window.liveNameDropdown) {
+        return;
+    }
 
     window.liveNameDropdown.clear();
     $('#LiveName').val('');
@@ -498,28 +502,13 @@ function loadLiveModalStaffByWorkGroup(workGroup, restoreName, restorePactId) {
 function saveMonthlyTimeLive() {
     const form = $('#monthlyTimeLiveForm');
 
-    // Validate all numeric fields before checking isFormValid
-    form.find('.decfmt-input').each(function() {
-        validateRangeOnInput(this);
-    });
-
-    // Check for numeric validation errors
-    if (hasNumericValidationErrors(form)) {
-        // Ensure validation messages are visible
-        if (typeof ensureValidationMessagesVisible === 'function') {
-            ensureValidationMessagesVisible(form);
-        }
-        displayClientValidationErrors(form, form);
-        return;
-    }
-
     if (!isFormValid(form)) {
-        displayClientValidationErrors(form, form);
+        displayClientValidationErrors(form, '#monthlyTimeLiveForm');
         return;
     }
 
     // Clear validation errors only after validation passes
-    clearValidationErrors(form);
+    clearValidationErrors('#monthlyTimeLiveForm');
 
     const data = {
         CompositeKey: $('#CompositeKey').val(),
@@ -542,10 +531,11 @@ function saveMonthlyTimeLive() {
                 $('#modalPopup').removeClass('show');
                 reloadLiveGrid();
                 showAlertMessage(response.message, AlertType.SUCCESS);
-            } else if (response.errors) {
-                displayServerValidationErrors(response.errors, response.message || 'Validation failed.', form);
-            } else {
-                showAlertMessage(response.message || 'Update failed.', AlertType.ERROR);
+            }
+            else {
+                displayServerValidationErrors(response.errors, response.message, '#monthlyTimeLiveForm');      
+                // Initialize form validation (unobtrusive + numeric)
+                initializeFormValidation('#monthlyTimeLiveForm');
             }
         },
         error: function () {
@@ -787,7 +777,9 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
 }
 
 function loadStagingModalStaffByWorkGroup(workGroup, restoreName, restorePactId) {
-    if (!window.stagingNameDropdown) return;
+    if (!window.stagingNameDropdown) {
+        return;
+    }
 
     window.stagingNameDropdown.clear();
     $('#StagingName').val('');
@@ -836,7 +828,9 @@ function loadStagingModalTimeCodesByWorkGroup(workGroup, restoreTimeCode, loadPr
     resetStagingModalTimeCodeOptions();
     resetStagingModalParentProjectOptions();
 
-    if (!workGroup) return;
+    if (!workGroup) {
+        return;
+    }
 
     $.ajax({
         url: '/PACT/MonthlyTime/GetTimeCodesByWorkGroup',
@@ -865,7 +859,9 @@ function loadStagingModalTimeCodesByWorkGroup(workGroup, restoreTimeCode, loadPr
 function loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, timeCode, restoreParentProject) {
     resetStagingModalParentProjectOptions();
 
-    if (!workGroup || !timeCode) return;
+    if (!workGroup || !timeCode) {
+        return;
+    }
 
     $.ajax({
         url: '/PACT/MonthlyTime/GetProjectsByWorkGroupAndTimeCode',
@@ -905,7 +901,10 @@ function resetStagingModalParentProjectOptions() {
 }
 
 function loadAllStagingModalStaff() {
-    if (!window.stagingNameDropdown) return;
+    if (!window.stagingNameDropdown) {
+        return;
+    }
+
     $.ajax({
         url: '/PACT/MonthlyTime/GetStaffByWorkGroup',
         type: 'GET',
@@ -985,7 +984,9 @@ function submitStagingMonthlyTime(data) {
                 reloadStagingGrid();
                 showAlertMessage(response.message, AlertType.SUCCESS);
             } else {
-                showAlertMessage(response.message || 'Save failed.', AlertType.ERROR);
+                displayServerValidationErrors(response.errors, response.message, '#stagingMonthlyTimeForm');
+                // Initialize form validation (unobtrusive + numeric)
+                initializeFormValidation('#stagingMonthlyTimeForm');
             }
         },
         error: function () {
@@ -997,28 +998,13 @@ function submitStagingMonthlyTime(data) {
 function saveStagingMonthlyTime() {
     const form = $('#stagingMonthlyTimeForm');
 
-    // Validate all numeric fields before checking isFormValid
-    form.find('.decfmt-input').each(function() {
-        validateRangeOnInput(this);
-    });
-
-    // Check for numeric validation errors
-    if (hasNumericValidationErrors(form)) {
-        // Ensure validation messages are visible
-        if (typeof ensureValidationMessagesVisible === 'function') {
-            ensureValidationMessagesVisible(form);
-        }
-        displayClientValidationErrors(form, form);
-        return;
-    }
-
     if (!isFormValid(form)) {
-        displayClientValidationErrors(form, form);
+        displayClientValidationErrors(form, '#stagingMonthlyTimeForm');
         return;
     }
 
     // Clear validation errors only after validation passes
-    clearValidationErrors(form);
+    clearValidationErrors('#stagingMonthlyTimeForm');
 
     const isNameUpdatingChecked = $('#chkNameupdating').is(':checked');
 
@@ -1056,7 +1042,9 @@ function saveStagingMonthlyTime() {
 function deleteStagingMonthlyTime(btn) {
     const id = $(btn).data('id');
     showGovukConfirm('Are you sure you want to delete this staging record').then(function (confirmed) {
-        if (!confirmed) return;
+        if (!confirmed) {
+            return;
+        }
         $.ajax({
             url: '/PACT/MonthlyTime/DeleteStagingRecord',
             type: 'DELETE',
@@ -1109,7 +1097,6 @@ function importMonthlyTime(file) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('importType', window.monthlyTimeImportType || '2');
-    showLoader();
 
     $.ajax({
         url: '/PACT/MonthlyTime/Import',
@@ -1128,15 +1115,12 @@ function importMonthlyTime(file) {
         },
         error: function () {
             showAlertMessage('An error occurred while importing.', AlertType.ERROR);
-        },
-        complete: function () {
-            hideLoader();
         }
     });
 }
 
 function validateMonthlyTime() {
-    showLoader();
+
     $.ajax({
         url: '/PACT/MonthlyTime/Validate',
         type: 'POST',
@@ -1150,15 +1134,12 @@ function validateMonthlyTime() {
         },
         error: function () {
             showAlertMessage('An error occurred during validation.', AlertType.ERROR);
-        },
-        complete: function () {
-            hideLoader();
         }
     });
 }
 
 function makeLiveMonthlyTime() {
-    showLoader();
+   
     $.ajax({
         url: '/PACT/MonthlyTime/MakeLive',
         type: 'POST',
@@ -1173,16 +1154,15 @@ function makeLiveMonthlyTime() {
         },
         error: function (xhr) {
             showAlertMessage(xhr.responseJSON?.message || 'An error occurred during make live.', AlertType.ERROR);
-        },
-        complete: function () {
-            hideLoader();
         }
     });
 }
 
 function deleteAllMonthlyTime() {
     showGovukConfirm('Delete all imported records for the current user?').then(function (confirmed) {
-        if (!confirmed) return;
+        if (!confirmed) {
+            return;
+        }
         $.ajax({
             url: '/PACT/MonthlyTime/DeleteAllStagingRecords',
             type: 'DELETE',
@@ -1203,7 +1183,9 @@ function deleteAllMonthlyTime() {
 
 function deleteFailedMonthlyTime() {
     showGovukConfirm('Delete failed imported records for the current user?').then(function (confirmed) {
-        if (!confirmed) return;
+        if (!confirmed) {
+            return;
+        }
         $.ajax({
             url: '/PACT/MonthlyTime/DeleteFailedStagingRecords',
             type: 'DELETE',
