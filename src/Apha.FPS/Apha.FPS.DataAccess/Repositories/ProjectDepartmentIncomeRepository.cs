@@ -13,6 +13,11 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private static readonly string[] AnimalAcctCodes = { "LargeAnimals", "SmallAnimals", "Mice" };
 
+        private const string AreaTime             = "Time";
+        private const string AreaTests            = "Tests";
+        private const string AreaAnimals          = "Animals";
+        private const string AreaProjectSpecifics = "Project-specifics";
+
         public ProjectDepartmentIncomeRepository(FpsDbContext db, IFpsRequestContext requestContext) : base(db)
         {
             _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
@@ -21,15 +26,12 @@ namespace Apha.FPS.DataAccess.Repositories
         // ─────────────────────────────────────────────────────────────────────────────
         // GetTimeIncomeAsync — mirrors qryDeptIncomeTime SELECT
         //
-        // Access SQL:
-        //   FROM tblWGEmployeeMAB
-        //     INNER JOIN ((tlkpProject_MAP LEFT JOIN CostCentre ON tlkpProject_MAP.CostCentre = CostCentre.CostCentre)
-        //       INNER JOIN (TimeCostCalcsMAP INNER JOIN WorkGroup_MAP ON TimeCostCalcsMAP.WorkGroup = WorkGroup_MAP.WorkGroup)
-        //       ON tlkpProject_MAP.ParentProject = TimeCostCalcsMAP.Project)
-        //     ON tblWGEmployeeMAB.PACTid = TimeCostCalcsMAP.StaffID
-        //   WHERE Class = "Charge" AND Month BETWEEN fnDeptIncomeMonthFrom() AND fnDeptIncomeMonthTo()
-        //         AND ParentProject Like nz(fnDeptIncomeProject(),"*")
-        //   ORDER BY ParentProject
+        // Access query reference (qryDeptIncomeTime):
+        //   Source tables: tblWGEmployeeMAB, tlkpProject_MAP, CostCentre,
+        //                  TimeCostCalcsMAP, WorkGroup_MAP
+        //   Filter:  Class = Charge, Month between MonthFrom and MonthTo,
+        //            ParentProject matches selected project
+        //   Order:   ParentProject
         // ─────────────────────────────────────────────────────────────────────────────
         public async Task<List<DepartmentIncomeTime>> GetTimeIncomeAsync(
             string? project, int monthFrom, int monthTo)
@@ -442,33 +444,33 @@ namespace Apha.FPS.DataAccess.Repositories
             var additionalRows = await GetAdditionalIncomeAsync(project, monthFrom, monthTo);
 
             var unionAll = timeRows
-                .Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = "Time" })
+                .Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaTime })
                 .Concat(testRows
-                    .Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = "Tests" }))
+                    .Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaTests }))
                 .Concat(animalRows
-                    .Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = "Animals" }))
+                    .Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaAnimals }))
                 .Concat(additionalRows
-                    .Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = "Project-specifics" }))
+                    .Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaProjectSpecifics }))
                 .ToList();
 
             var result = unionAll
                 .GroupBy(r => new { r.Project, r.OracleProjectCode })
                 .Select(g =>
                 {
-                    var timeCost = g.Where(r => r.Area == "Time").Sum(r => (decimal?)r.TotalCost);
-                    var testsCost = g.Where(r => r.Area == "Tests").Sum(r => (decimal?)r.TotalCost);
-                    var animalsCost = g.Where(r => r.Area == "Animals").Sum(r => (decimal?)r.TotalCost);
-                    var projSpecCost = g.Where(r => r.Area == "Project-specifics").Sum(r => (decimal?)r.TotalCost);
+                    var timeCost = g.Where(r => r.Area == AreaTime).Sum(r => (decimal?)r.TotalCost);
+                    var testsCost = g.Where(r => r.Area == AreaTests).Sum(r => (decimal?)r.TotalCost);
+                    var animalsCost = g.Where(r => r.Area == AreaAnimals).Sum(r => (decimal?)r.TotalCost);
+                    var projSpecCost = g.Where(r => r.Area == AreaProjectSpecifics).Sum(r => (decimal?)r.TotalCost);
 
                     return new DepartmentIncomeTotals
                     {
                         Project = g.Key.Project,
                         OracleProjectCode = g.Key.OracleProjectCode,
                         TotalCosts = g.Sum(r => r.TotalCost),
-                        TimeCost = timeCost == 0m ? null : timeCost,
-                        TestsCost = testsCost == 0m ? null : testsCost,
-                        AnimalsCost = animalsCost == 0m ? null : animalsCost,
-                        ProjectSpecificsCost = projSpecCost == 0m ? null : projSpecCost,
+                        TimeCost = timeCost is null or 0m ? null : timeCost,
+                        TestsCost = testsCost is null or 0m ? null : testsCost,
+                        AnimalsCost = animalsCost is null or 0m ? null : animalsCost,
+                        ProjectSpecificsCost = projSpecCost is null or 0m ? null : projSpecCost,
                     };
                 })
                 .OrderBy(r => r.Project)
@@ -789,30 +791,30 @@ namespace Apha.FPS.DataAccess.Repositories
             var additionalRows = await GetAdditionalIncomeCurrentAsync(project, monthFrom, monthTo);
 
             var unionAll =
-                timeRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = "Time" })
-                .Concat(testRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = "Tests" }))
-                .Concat(animalRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = "Animals" }))
-                .Concat(additionalRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = "Project-specifics" }))
+                timeRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaTime })
+                .Concat(testRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaTests }))
+                .Concat(animalRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaAnimals }))
+                .Concat(additionalRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaProjectSpecifics }))
                 .ToList();
 
             return unionAll
                 .GroupBy(r => new { r.Project, r.OracleProjectCode })
                 .Select(g =>
                 {
-                    var timeCost     = g.Where(r => r.Area == "Time").Sum(r => (decimal?)r.TotalCost);
-                    var testsCost    = g.Where(r => r.Area == "Tests").Sum(r => (decimal?)r.TotalCost);
-                    var animalsCost  = g.Where(r => r.Area == "Animals").Sum(r => (decimal?)r.TotalCost);
-                    var projSpecCost = g.Where(r => r.Area == "Project-specifics").Sum(r => (decimal?)r.TotalCost);
+                    var timeCost     = g.Where(r => r.Area == AreaTime).Sum(r => (decimal?)r.TotalCost);
+                    var testsCost    = g.Where(r => r.Area == AreaTests).Sum(r => (decimal?)r.TotalCost);
+                    var animalsCost  = g.Where(r => r.Area == AreaAnimals).Sum(r => (decimal?)r.TotalCost);
+                    var projSpecCost = g.Where(r => r.Area == AreaProjectSpecifics).Sum(r => (decimal?)r.TotalCost);
 
                     return new DepartmentIncomeTotals
                     {
                         Project           = g.Key.Project,
                         OracleProjectCode = g.Key.OracleProjectCode,
                         TotalCosts        = g.Sum(r => r.TotalCost),
-                        TimeCost          = timeCost    == 0m ? null : timeCost,
-                        TestsCost         = testsCost   == 0m ? null : testsCost,
-                        AnimalsCost       = animalsCost == 0m ? null : animalsCost,
-                        ProjectSpecificsCost = projSpecCost == 0m ? null : projSpecCost,
+                        TimeCost          = timeCost    is null or 0m ? null : timeCost,
+                        TestsCost         = testsCost   is null or 0m ? null : testsCost,
+                        AnimalsCost       = animalsCost is null or 0m ? null : animalsCost,
+                        ProjectSpecificsCost = projSpecCost is null or 0m ? null : projSpecCost,
                     };
                 })
                 .OrderBy(r => r.Project)
