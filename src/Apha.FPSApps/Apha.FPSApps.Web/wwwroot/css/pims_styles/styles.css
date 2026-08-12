@@ -3015,3 +3015,84 @@ th.sorted-desc {
     min-height: 500px;
 }
 
+/* ── Export Queries (PIMS Queries/Index) ───────────────────────────── */
+/* Only rules with no equivalent GOV.UK/supplement utility class remain here. */
+.qry-filter-row {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.qry-filter-row--end {
+    align-items: flex-end;
+}
+
+.qry-filter-row--start {
+    align-items: flex-start;
+}
+
+#qryFilterMonth,
+#qryFilterYear,
+#qryFilterContract
+{
+    width: 400px;
+}
+
+#qryExportQueriesBox {
+    border: 1px solid black;
+    width: 400px;
+    background: #ffffff;
+    max-height: 125px;
+    overflow-y: auto;
+}
+
+#qryExportQueriesBox label {
+    display: block;
+    padding: 8px 12px;
+    margin: 0;
+    cursor: pointer;
+    border-bottom: 1px solid var(--govuk-border-colour, #b1b4b6);
+}
+
+#qryExportQueriesBox label:last-child {
+    border-bottom: none;
+}
+
+#qryExportQueriesBox input[type="radio"] {
+    display: none;
+}
+
+#qryExportQueriesBox label:hover {
+    background-color: var(--govuk-hover-colour, #cecece);
+}
+
+#qryExportQueriesBox label:has(input:checked) {
+    background-color: var(--govuk-brand-colour, #1d70b8);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+#qryOpenQueryGroup {
+    margin-left: 40px;
+}
+
+#qryContractGroup {
+    margin-top: 35px;
+}
+
+#queryResultsContainer {
+    display: none;
+    margin-top: 30px;
+}
+
+#row1,
+#row2,
+#row3 {
+    display: none;
+}
+
+#qryResultsTableWrapper {
+    overflow-x: auto;
+    border: 1px solid var(--govuk-border-colour, #b1b4b6);
+}
+

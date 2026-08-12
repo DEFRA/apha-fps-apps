@@ -1,0 +1,208 @@
+﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PIMS.Models.QueriesViewModel
+
+@{
+    ViewData["Title"] = "PIMS : Export Queries";
+}
+
+<div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-1 govuk-!-padding-0">
+    <h5 class="govuk-heading-s sup_margin_0 govuk-!-padding-top-2 govuk-!-padding-right-0 govuk-!-padding-bottom-1 govuk-!-padding-left-5">
+        Export Queries
+    </h5>
+</div>
+
+<div class="sup_flex">
+    <main class="main-content govuk-!-padding-top-0 sup_overflow_hidden">
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+
+                <!-- ── Filter Section ──────────────────────────────────── -->
+                <div class="govuk-!-padding-top-3 govuk-!-padding-bottom-5 govuk-!-padding-left-5 govuk-!-padding-right-5">
+
+                    <!-- Month/Year/Contract/Export Queries Filter Rows -->
+                    <div>
+
+                        <!-- Row 1: Month, Year -->
+                        <div class="qry-filter-row qry-filter-row--end govuk-!-margin-bottom-6">
+                            <div>
+                                <label class="govuk-label govuk-!-font-weight-bold" for="qryFilterMonth">
+                                    Month
+                                </label>
+                                <select class="govuk-select"
+                                        id="qryFilterMonth"
+                                        aria-label="Filter by month">
+                                    <option value="">Select Month</option>
+                                    <option value="01">January</option>
+                                    <option value="02">February</option>
+                                    <option value="03">March</option>
+                                    <option value="04">April</option>
+                                    <option value="05">May</option>
+                                    <option value="06">June</option>
+                                    <option value="07">July</option>
+                                    <option value="08">August</option>
+                                    <option value="09">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="govuk-label govuk-!-font-weight-bold" for="qryFilterYear">
+                                    Year
+                                </label>
+                                <select class="govuk-select"
+                                        id="qryFilterYear"
+                                        aria-label="Filter by year">
+                                    <option value="">Year</option>
+                                    <option value="2024">2024</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026">2026</option>
+                                    <option value="2027">2027</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Export Queries, Contract, Open Query Button -->
+                        <div class="qry-filter-row qry-filter-row--start">
+                            <div>
+                                <label class="govuk-label govuk-!-font-weight-bold sup_p_0" style="display:block">Export Queries</label>
+                                <div id="qryExportQueriesBox" class="govuk-!-margin-top-1">
+                                    <label for="qryAllContractQuery">
+                                        <input type="radio" id="qryAllContractQuery" name="exportQuery" value="allContract">
+                                        All Contract Query
+                                    </label>
+                                    <label for="qryContractMonitoringQuery">
+                                        <input type="radio" id="qryContractMonitoringQuery" name="exportQuery" value="contractMonitoring">
+                                        Contracts Monitoring Query
+                                    </label>
+                                    <label for="qryProgramMonitoringQuery">
+                                        <input type="radio" id="qryProgramMonitoringQuery" name="exportQuery" value="programMonitoring">
+                                        Program and Customer Monitoring
+                                    </label>
+                                    <label for="qryFinancialSummaryQuery">
+                                        <input type="radio" id="qryFinancialSummaryQuery" name="exportQuery" value="financialSummary">
+                                        Financial Summary Query
+                                    </label>
+                                    <label for="qryInvoiceReconciliationQuery">
+                                        <input type="radio" id="qryInvoiceReconciliationQuery" name="exportQuery" value="invoiceReconciliation">
+                                        Invoice Reconciliation Query
+                                    </label>
+                                    <label for="qryMilestoneProgressQuery">
+                                        <input type="radio" id="qryMilestoneProgressQuery" name="exportQuery" value="milestoneProgress">
+                                        Milestone Progress Query
+                                    </label>
+                                    <label for="qryResourceUtilisationQuery">
+                                        <input type="radio" id="qryResourceUtilisationQuery" name="exportQuery" value="resourceUtilisation">
+                                        Resource Utilisation Query
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="qryContractGroup" class="govuk-!-margin-top-0">
+                                <label class="govuk-label govuk-!-font-weight-bold" for="qryFilterContract">
+                                    Contract
+                                </label>
+                                <select class="govuk-select"
+                                        id="qryFilterContract"
+                                        aria-label="Filter by contract">
+                                    <option value="">Select Contract</option>
+                                    <option value="NZ001">NZ001 - Contract 1</option>
+                                    <option value="NZ002">NZ002 - Contract 2</option>
+                                    <option value="NZ003">NZ003 - Contract 3</option>
+                                    <option value="NZ004">NZ004 - Contract 4</option>
+                                    <option value="NZ005">NZ005 - Contract 5</option>
+                                </select>
+
+                                <div id="qryOpenQueryGroup" class="govuk-!-margin-top-9 govuk-!-margin-left-0">
+                                    <button id="openQueryBtn"
+                                            type="button"
+                                            class="govuk-button"
+                                            onclick="openQuery()">
+                                        Open Query
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ── Query Results Section ────────────────────────────── -->
+                <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                    <div class="govuk-grid-column-full">
+                        <div id="queryResultsContainer" class="govuk-!-margin-top-0">
+                            <h6 class="govuk-heading-s sup_margin_bottom_15">Query Results</h6>
+                            <div id="@($"gridContainer_{Model.QueryResultsGrid.GridId}")">
+                                @await Html.PartialAsync("_DataGrid", Model.QueryResultsGrid)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+</div>
+
+@section Scripts {
+    <script>
+        function openQuery() {
+            const selectedQuery = document.querySelector('input[name="exportQuery"]:checked');
+            const month = document.getElementById('qryFilterMonth').value;
+            const year = document.getElementById('qryFilterYear').value;
+            const contract = document.getElementById('qryFilterContract').value;
+
+            // Validation
+            if (!selectedQuery) {
+                showAlertMessage('Please select an Export Query before opening the query.', AlertType.WARNING);
+                return;
+            }
+
+            if (!month || !year || !contract) {
+                showAlertMessage('Please select Month, Year, and Contract before opening the query.', AlertType.WARNING);
+                return;
+            }
+
+            // Show results container and reload the grid with the selected filters
+            document.getElementById('queryResultsContainer').style.display = 'block';
+
+            var gm = window['gridManager_@Model.QueryResultsGrid.GridId'];
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+
+            // Show success message
+            const queryLabel = selectedQuery.closest('label').textContent.trim();
+            showAlertMessage(`${queryLabel} - ${month}/${year} - Contract ${contract}`, AlertType.SUCCESS);
+        }
+
+        function getQueryExtraFilters() {
+            return {
+                month: document.getElementById('qryFilterMonth').value,
+                year: document.getElementById('qryFilterYear').value,
+                contract: document.getElementById('qryFilterContract').value
+            };
+        }
+
+        // Optional: Handle filter changes
+        document.getElementById('qryFilterMonth').addEventListener('change', function () {
+            console.log('Month selected: ' + this.value);
+        });
+
+        document.getElementById('qryFilterYear').addEventListener('change', function () {
+            console.log('Year selected: ' + this.value);
+        });
+
+        document.getElementById('qryFilterContract').addEventListener('change', function () {
+            console.log('Contract selected: ' + this.value);
+        });
+
+        // Handle Export Query selection
+        document.querySelectorAll('input[name="exportQuery"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                console.log('Export Query selected: ' + this.value);
+            });
+        });
+    </script>
+}
