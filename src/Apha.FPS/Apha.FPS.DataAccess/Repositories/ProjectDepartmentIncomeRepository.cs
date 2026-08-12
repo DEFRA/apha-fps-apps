@@ -158,20 +158,20 @@ namespace Apha.FPS.DataAccess.Repositories
 
             // Two-step: DB query returns raw anonymous type; in-memory projection formats strings.
             //
-            // Access qptGetPeriodData groups (sums) volume by (buyer, testcode, workgroup)
-            // across ALL months in the period range — Month is NOT part of the group key.
-            // This produces one row per (buyer, testcode, workgroup) with the net volume
-            // summed across monthFrom..monthTo, matching the 2-row Access output.
+            // Access qryDeptIncomeTest shows one row per (buyer, testcode, month, workgroup).
+            // Month IS part of the group key — each period month produces its own row.
+            // Any row-count difference vs Access reflects data differences between databases.
             var moAggregated =
                 from mo in _context.MonthlyOutputs.AsNoTracking()
                     .Where(m => m.FpsYear == fpsYear
                              && (int)m.Month >= monthFrom
                              && (int)m.Month <= monthTo)
-                group mo by new { mo.Buyer, mo.TestCode, mo.WorkGroup } into g
+                group mo by new { mo.Buyer, mo.TestCode, mo.Month, mo.WorkGroup } into g
                 select new
                 {
                     g.Key.Buyer,
                     g.Key.TestCode,
+                    g.Key.Month,
                     g.Key.WorkGroup,
                     Volume = g.Sum(x => x.Volume),
                 };
@@ -199,6 +199,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     proj.IsDefraProject,
                     OCC = cc != null ? (double?)cc.CostCentreNo : null,
                     OPC = cc != null ? cc.ProfitCentre : null,
+                    MoMonth = mo.Month,
                     WgProfitCentre = wg.ProfitCentre,
                     mo.WorkGroup,
                     WgCostCentre = wg.CostCentre,
@@ -224,7 +225,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     DefraProject = r.IsDefraProject != 0 ? "Yes" : "No",
                     OPC = r.OPC,
                     OCC = r.OCC.HasValue ? ((long)r.OCC.Value).ToString() : null,
-                    Month = 0,
+                    Month = (int)r.MoMonth,
                     SPC = r.WgProfitCentre,
                     WorkGroup = r.WorkGroup,
                     SCC = r.WgCostCentre.HasValue ? ((long)r.WgCostCentre.Value).ToString() : null,
