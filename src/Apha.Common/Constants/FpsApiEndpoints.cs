@@ -298,12 +298,20 @@
         public const string GetWorkgroupOwners = "api/v1/workgroup/owners";
         public const string GetWorkgroupCostCentres = "api/v1/workgroup/costcentres?profitCentre={0}";
         // Year End Batch Job
-        public const string GetYearEndBatchJobHistory = "api/v1/yearend/batchjob/history";
-        public const string GetCanInitiateDataSetupRequest = "api/v1/yearend/dataSetup/caninitiate";
-        public const string GetCanApproveDataSetupRequest = "api/v1/yearend/dataSetup/canapproveorreject";
+        public const string GetYearEndDataSetupBatchJobHistory = "api/v1/yearend/dataSetup/batchjob/history";
+        public const string CanInitiateDataSetupRequest = "api/v1/yearend/dataSetup/caninitiate";
+        public const string CanApproveOrRejectDataSetupRequest = "api/v1/yearend/dataSetup/canapproveorreject";
         public const string EnqueueYearEndDataSetupInitiationJob = "api/v1/yearend/dataSetup/initiation";
         public const string EnqueueYearEndDataSetupApprovalJob    = "api/v1/yearend/dataSetup/approval";
         public const string EnqueueYearEndDataSetupRejectJob = "api/v1/yearend/dataSetup/reject";
+
+        
+        public const string GetYearEndCutOverBatchJobHistory = "api/v1/yearend/cutover/batchjob/history";
+        public const string CanInitiateCutOverRequest = "api/v1/yearend/cutover/caninitiate";
+        public const string CanApproveOrRejectCutOverRequest = "api/v1/yearend/cutover/canapproveorreject";
+        public const string EnqueueYearEndCutOverInitiationJob = "api/v1/yearend/cutover/initiation";
+        public const string EnqueueYearEndCutOverApprovalJob = "api/v1/yearend/cutover/approval";
+        public const string EnqueueYearEndCutOverRejectJob = "api/v1/yearend/cutover/reject";
 
         // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
         public const string GetAllCostCentres = "api/v1/costcentre";

@@ -3,6 +3,7 @@ using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace Apha.FPS.DataAccess.Repositories
@@ -49,7 +50,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> CanApproveOrRejectYearEndDataSetupRequestAsync(string jobName)
         {
-            bool hasRunningJob = await CanApproveRequest(jobName);
+            bool hasRunningJob = await CanApproveOrRejectRequest(jobName);
 
             return hasRunningJob;
         }
@@ -73,7 +74,47 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, true);
         }
-        
+
+        [SuppressMessage("SonarAnalyzer.CSharp", "S4144:MethodsShouldNotHaveIdenticalImplementations",
+            Justification = "Intentionally identical: DataSetup and CutOver are distinct domain operations that must remain independently named for clarity and maintainability.")]
+        public async Task<bool> CanInitiateYearEndCutOverRequestAsync(string jobName)
+        {
+            bool hasNonTerminalRecord = await CanInitiateRequest(jobName);
+
+            return !hasNonTerminalRecord;
+        }
+
+        [SuppressMessage("SonarAnalyzer.CSharp", "S4144:MethodsShouldNotHaveIdenticalImplementations",
+            Justification = "Intentionally identical: DataSetup and CutOver are distinct domain operations that must remain independently named for clarity and maintainability.")]
+        public async Task<bool> CanApproveOrRejectYearEndCutOverRequestAsync(string jobName)
+        {
+            bool hasRunningJob = await CanApproveOrRejectRequest(jobName);
+
+            return hasRunningJob;
+        }
+
+        [SuppressMessage("SonarAnalyzer.CSharp", "S4144:MethodsShouldNotHaveIdenticalImplementations",
+            Justification = "Intentionally identical: DataSetup and CutOver are distinct domain operations that must remain independently named for clarity and maintainability.")]
+        public async Task<string> GetYearEndCutOverRequestInitiatorAsync(string jobName)
+        {
+            return await GetInitiator(jobName);
+        }
+
+        public async Task<BatchJobQueue> EnqueueCutOverInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        {
+            return await EnqueueInitiationRequest(jobName, requestedBy, correlationId, note);
+        }
+
+        public async Task<BatchJobQueue> EnqueueCutOverApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        {
+            return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, false);
+        }
+
+        public async Task<BatchJobQueue> EnqueueCutOverRejectBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        {
+            return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, true);
+        }
+
         private async Task<bool> CanInitiateRequest(string jobName)
         {
             // Returns true when no records exist for the job, OR every record is in a terminal status (rejected / failed / cancelled).
@@ -91,7 +132,7 @@ namespace Apha.FPS.DataAccess.Repositories
             ).AnyAsync();
         }
 
-        private async Task<bool> CanApproveRequest(string jobName)
+        private async Task<bool> CanApproveOrRejectRequest(string jobName)
         {
             return await (
                 from jm in _context.BatchJobs.AsNoTracking()
@@ -116,8 +157,8 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return initiator ?? string.Empty;
         }
-        
-        private async Task<BatchJobQueue> EnqueueApprovalOrRejectRequest(string jobName, string requestedBy, string correlationId, string note,bool isReject)
+
+        private async Task<BatchJobQueue> EnqueueApprovalOrRejectRequest(string jobName, string requestedBy, string correlationId, string note, bool isReject)
         {
             BatchJobQueue queueRow = null!;
             BatchJobStatus jobStatus;
@@ -133,10 +174,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
             if (jobqueue == null)
             {
-                throw new KeyNotFoundException($"No approval request was found for job '{jobName}'.");
+                throw new KeyNotFoundException($"No initiated request was found for job '{jobName}'.");
             }
 
-            if(isReject)
+            if (isReject)
             {
                 jobStatus = await _context.BatchJobStatuses
                 .AsNoTracking()
@@ -150,7 +191,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Where(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "approved")
                 .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'approved' not found for job '{jobName}'.");
             }
-            
+
 
             var strategy = _context.Database.CreateExecutionStrategy();
 
@@ -187,7 +228,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return queueRow;
         }
-        
+
         private async Task<BatchJobQueue> EnqueueInitiationRequest(string jobName, string requestedBy, string correlationId, string note)
         {
             BatchJobQueue jobQueueEntry = null!;
