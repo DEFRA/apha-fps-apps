@@ -1,26 +1,5 @@
 ﻿@model Apha.FPSApps.Web.Areas.CostBook.Models.YearlyDetailsViewModel
 
-@{
-    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
-
-    bool IsActive(string controller, string action = "Index")
-    {
-        return string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase);
-    }
-
-    // Project Costs is the default ONLY on YearlyDetails page
-    bool projectCostsActive =
-        IsActive("ProjectCosts") ||
-        string.Equals(currentController, "YearlyDetails", StringComparison.OrdinalIgnoreCase);
-
-    bool staffYearsActive = IsActive("StaffYears");
-    bool staffEffortActive = IsActive("StaffEffort");
-    bool projectSummaryActive = IsActive("ProjectSummary");
-    bool excelReportActive = IsActive("ProjectCosts", "ExportToExcel");
-}
-
 <!-- Side Navigation -->
 
 <nav class="sidenav flex-column flex-shrink-0" id="shortnav">
@@ -43,7 +22,8 @@
 
         <!-- Project Costs Query -->
         <li>
-            <a class="dropdown-item @(projectCostsActive ? "active" : "")"
+            <a class="dropdown-item sidenav-link"
+               data-nav="project-costs"
                asp-area="CostBook"
                asp-controller="ProjectCosts"
                asp-action="Index"
@@ -54,7 +34,8 @@
 
         <!-- CSG7 Staff Years -->
         <li>
-            <a class="dropdown-item @(staffYearsActive ? "active" : "")"
+            <a class="dropdown-item sidenav-link"
+               data-nav="staff-years"
                asp-area="CostBook"
                asp-controller="StaffYears"
                asp-action="Index"
@@ -65,7 +46,8 @@
 
         <!-- SID3 Staff Effort -->
         <li>
-            <a class="dropdown-item @(staffEffortActive ? "active" : "")"
+            <a class="dropdown-item sidenav-link"
+               data-nav="staff-effort"
                asp-area="CostBook"
                asp-controller="StaffEffort"
                asp-action="Index"
@@ -76,7 +58,8 @@
 
         <!-- Project Summary -->
         <li>
-            <a class="dropdown-item @(projectSummaryActive ? "active" : "")"
+            <a class="dropdown-item sidenav-link"
+               data-nav="project-summary"
                asp-area="CostBook"
                asp-controller="ProjectSummary"
                asp-action="Index"
@@ -87,7 +70,8 @@
 
         <!-- Excel Report -->
         <li>
-            <a class="dropdown-item @(excelReportActive ? "active" : "")"
+            <a class="dropdown-item sidenav-link"
+               data-nav="excel-report"
                asp-area="CostBook"
                asp-controller="ProjectCosts"
                asp-action="ExportToExcel"
@@ -98,3 +82,47 @@
 
     </ul>
 </nav>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const navLinks = document.querySelectorAll(".sidenav-link");
+        const storageKey = "costbook-active-nav";
+
+        // Get previously selected navigation
+        const activeNav = sessionStorage.getItem(storageKey);
+
+        // Restore active navigation after page reload
+        if (activeNav) {
+            navLinks.forEach(function (link) {
+                if (link.dataset.nav === activeNav) {
+                    link.classList.add("active");
+                }
+            });
+        }
+
+        // Handle navigation click
+        navLinks.forEach(function (link) {
+
+            link.addEventListener("click", function () {
+
+                // Remove active from all nav items
+                navLinks.forEach(function (item) {
+                    item.classList.remove("active");
+                });
+
+                // Add active to clicked item
+                this.classList.add("active");
+
+                // Remember selected navigation
+                sessionStorage.setItem(
+                    storageKey,
+                    this.dataset.nav
+                );
+            });
+
+        });
+
+    });
+</script>
