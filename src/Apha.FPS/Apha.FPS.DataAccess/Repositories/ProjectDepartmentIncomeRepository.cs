@@ -251,26 +251,36 @@ namespace Apha.FPS.DataAccess.Repositories
         //   HAVING abs(sum(Volume)) > 0
         //     AND Project = ISNULL(@project, Project)
         //
+        // period_monthlyoutput has no fpsyear column.  FpsYear is obtained by joining
+        // period_monthlyoutput.period → tblperiod.endperiod → tblperiod.fpsyear.
         // The delta (end - start) shows the net change between two period snapshots.
         // Rows where volume cancelled out (abs(sum) == 0) are excluded by the HAVING clause.
         // ─────────────────────────────────────────────────────────────────────────────
         public async Task<List<DepartmentIncomeTest>> GetTestSnapshotIncomeAsync(
             string? project, int startPeriod, int endPeriod)
         {
-            // Fetch end-period and start-period rows from the snapshot table in memory,
-            // then apply the UNION ALL delta pattern (end rows positive, start rows negated).
-            // EF cannot translate UNION ALL of IQueryable with negated values in a single query,
-            // so we materialise both sides and combine in memory — matching the TVF approach.
+            var fpsYear = _requestContext.FpsYear;
 
+            // Collect the period numbers (endperiod values) that belong to the current FpsYear.
+            // period_monthlyoutput.period stores the integer value of tblperiod.endperiod.
+            var validPeriodNumbers = await _context.Periods
+                .AsNoTracking()
+                .Where(p => p.FpsYear == fpsYear)
+                .Select(p => (int)p.EndPeriod)
+                .ToListAsync();
+
+            // Fetch end-period and start-period rows, scoped to the current FpsYear via the join.
             var endRows = await _context.PeriodMonthlyOutputs
                 .AsNoTracking()
                 .Where(r => r.Period == endPeriod
+                         && validPeriodNumbers.Contains(r.Period)
                          && (project == null || r.Project == project))
                 .ToListAsync();
 
             var startRows = await _context.PeriodMonthlyOutputs
                 .AsNoTracking()
                 .Where(r => r.Period == startPeriod
+                         && validPeriodNumbers.Contains(r.Period)
                          && (project == null || r.Project == project))
                 .ToListAsync();
 
