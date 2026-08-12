@@ -777,8 +777,6 @@ function importMonthlyOutput(file) {
     formData.append('file', file);
     formData.append('importType', window.monthlyOutputImportType || '1');
 
-    showLoader();
-
     $.ajax({
         url: '/PACT/MonthlyOutput/Import',
         type: 'POST',
@@ -800,17 +798,13 @@ function importMonthlyOutput(file) {
         },
         error: function () {
             showAlertMessage('An error occurred during import.', AlertType.ERROR);
-        },
-        complete: function () {
-            hideLoader();
         }
     });
 }
 
 // ── Validate ──────────────────────────────────────────────────────────────────
 
-function validateMonthlyOutput() {
-    showLoader();
+function validateMonthlyOutput() {    
 
     $.ajax({
         url: '/PACT/MonthlyOutput/Validate',
@@ -828,9 +822,6 @@ function validateMonthlyOutput() {
         },
         error: function () {
             showAlertMessage('An error occurred during validation.', AlertType.ERROR);
-        },
-        complete: function () {
-            hideLoader();
         }
     });
 }
@@ -840,8 +831,6 @@ function validateMonthlyOutput() {
 function makeLiveMonthlyOutput() {
     showGovukConfirm('Are you sure you want to make all passed records live?').then(function (confirmed) {
         if (!confirmed) return;
-
-        showLoader();
 
         $.ajax({
             url: '/PACT/MonthlyOutput/MakeLive',
@@ -862,9 +851,6 @@ function makeLiveMonthlyOutput() {
             },
             error: function () {
                 showAlertMessage('An error occurred during Make Live.', AlertType.ERROR);
-            },
-            complete: function () {
-                hideLoader();
             }
         });
     });
