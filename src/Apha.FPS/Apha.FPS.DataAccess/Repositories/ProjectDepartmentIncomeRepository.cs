@@ -880,94 +880,7 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
-        // VBA helper function ports
-        // ─────────────────────────────────────────────────────────────────────────────
-
-        //   If InStr(d, " x ") > 0 Then fnAnimalDesc = Left(d, p - 1) Else fnAnimalDesc = d
-        private static string? ParseAnimalDesc(string? description)
-        {
-            if (string.IsNullOrEmpty(description))
-                return description;
-
-            var idx = description.IndexOf(" x ", StringComparison.Ordinal);
-            if (idx > 0)
-                return description[..idx];
-
-            return description;
-        }
-
-        //   p = InStr(d, " x "), q = InStr(d, "@")
-        //   If p > 0 And q > 0 Then fnAnimalDays = Mid(d, p + 3, q - p - 4) Else Null
-        private static decimal ParseAnimalDays(string? description)
-        {
-            if (string.IsNullOrEmpty(description))
-                return 0m;
-
-            var p = description.IndexOf(" x ", StringComparison.Ordinal);
-            var q = description.IndexOf("@", StringComparison.Ordinal);
-
-            if (p >= 0 && q > p)
-            {
-                var startIndex = p + 3;           // skip " x "
-                var length = q - p - 4;           // VBA: q - p - 4 (one-based offset difference → zero-based length)
-                if (length > 0 && startIndex + length <= description.Length)
-                {
-                    var daysStr = description.Substring(startIndex, length).Trim();
-                    if (decimal.TryParse(daysStr, out var days))
-                        return days;
-                }
-            }
-
-            return 0m;
-        }
-
-        // ─────────────────────────────────────────────────────────────────────────────
-        // Snapshot period sort / filter helpers — mirrors BudgetBidsRepository pattern
-        // ─────────────────────────────────────────────────────────────────────────────
-
-        private static IQueryable<Period> ApplySnapshotFilter(IQueryable<Period> query, string? filter)
-        {
-            if (string.IsNullOrWhiteSpace(filter))
-                return query;
-
-            if (filter.TrimStart().StartsWith('{'))
-            {
-                try
-                {
-                    var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(filter,
-                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                    if (dict != null)
-                    {
-                        if (dict.TryGetValue("PeriodName", out var periodName) && !string.IsNullOrWhiteSpace(periodName))
-                            query = query.Where(p => p.PeriodName != null && p.PeriodName.Contains(periodName));
-                    }
-                }
-                catch { /* ignore malformed filter */ }
-            }
-
-            return query;
-        }
-
-        private static IQueryable<Period> ApplySnapshotSort(IQueryable<Period> query, string? sortBy, bool descending)
-        {
-            return sortBy?.ToLowerInvariant() switch
-            {
-                "periodname" => descending
-                    ? query.OrderByDescending(p => p.PeriodName)
-                    : query.OrderBy(p => p.PeriodName),
-                "periodlocked" => descending
-                    ? query.OrderByDescending(p => p.PeriodLocked)
-                    : query.OrderBy(p => p.PeriodLocked),
-                "finalsummariesrun" => descending
-                    ? query.OrderByDescending(p => p.FinalSummariesRun)
-                    : query.OrderBy(p => p.FinalSummariesRun),
-                _ => query.OrderBy(p => p.EndPeriod),
-            };
-        }
-
-        // ─────────────────────────────────────────────────────────────────────────────
-        // Paged variants — mirror TestRequirementRepository.GetPagedByTestCodeAsync pattern:
+        // Paged variants
         //   fetch all matching rows, apply filter helpers, apply sort, then base.ApplyPaging.
         // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1009,6 +922,20 @@ namespace Apha.FPS.DataAccess.Repositories
 
         // ── Per-entity filter helpers ─────────────────────────────────────────────
 
+        // Applies a single case-insensitive contains filter for one field.
+        // Encapsulates the TryGetValue + IsNullOrWhiteSpace guard so each
+        // Apply*Filter method stays flat (no nested boolean conditions).
+        private static IEnumerable<T> FilterByField<T>(
+            IEnumerable<T> q,
+            Dictionary<string, string> f,
+            string key,
+            Func<T, string?> selector)
+        {
+            if (!f.TryGetValue(key, out var v) || string.IsNullOrWhiteSpace(v))
+                return q;
+            return q.Where(r => { var val = selector(r); return val != null && val.Contains(v, StringComparison.OrdinalIgnoreCase); });
+        }
+
         private static List<DepartmentIncomeTime> ApplyTimeFilter(List<DepartmentIncomeTime> rows, string? filterJson)
         {
             if (string.IsNullOrWhiteSpace(filterJson)) return rows;
@@ -1016,17 +943,17 @@ namespace Apha.FPS.DataAccess.Repositories
             if (f is null) return rows;
 
             IEnumerable<DepartmentIncomeTime> q = rows;
-            if (f.TryGetValue(nameof(DepartmentIncomeTime.Project),          out var v) && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.Project.Contains(v,                              StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTime.OracleProjectCode), out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.OracleProjectCode != null && r.OracleProjectCode.Contains(v, StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTime.SubAccountCode),    out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.SubAccountCode     != null && r.SubAccountCode.Contains(v,    StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTime.DefraProject),      out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.DefraProject        != null && r.DefraProject.Contains(v,      StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTime.OCC),               out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.OCC                 != null && r.OCC.Contains(v,               StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTime.OPC),               out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.OPC                 != null && r.OPC.Contains(v,               StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTime.SPC),               out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.SPC                 != null && r.SPC.Contains(v,               StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTime.SCC),               out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.SCC                 != null && r.SCC.Contains(v,               StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTime.Name),              out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.Name                != null && r.Name.Contains(v,              StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTime.GradeCode),         out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.GradeCode           != null && r.GradeCode.Contains(v,         StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTime.SpNumber),          out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.SpNumber            != null && r.SpNumber.Contains(v,          StringComparison.OrdinalIgnoreCase));
+            q = FilterByField(q, f, nameof(DepartmentIncomeTime.Project),           r => r.Project);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTime.OracleProjectCode), r => r.OracleProjectCode);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTime.SubAccountCode),    r => r.SubAccountCode);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTime.DefraProject),      r => r.DefraProject);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTime.OCC),               r => r.OCC);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTime.OPC),               r => r.OPC);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTime.SPC),               r => r.SPC);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTime.SCC),               r => r.SCC);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTime.Name),              r => r.Name);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTime.GradeCode),         r => r.GradeCode);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTime.SpNumber),          r => r.SpNumber);
             return q.ToList();
         }
 
@@ -1037,16 +964,16 @@ namespace Apha.FPS.DataAccess.Repositories
             if (f is null) return rows;
 
             IEnumerable<DepartmentIncomeTest> q = rows;
-            if (f.TryGetValue(nameof(DepartmentIncomeTest.Project),          out var v) && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.Project.Contains(v,                              StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTest.OracleProjectCode), out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.OracleProjectCode != null && r.OracleProjectCode.Contains(v, StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTest.SubAccountCode),    out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.SubAccountCode     != null && r.SubAccountCode.Contains(v,    StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTest.DefraProject),      out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.DefraProject        != null && r.DefraProject.Contains(v,      StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTest.OCC),               out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.OCC                 != null && r.OCC.Contains(v,               StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTest.OPC),               out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.OPC                 != null && r.OPC.Contains(v,               StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTest.SPC),               out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.SPC                 != null && r.SPC.Contains(v,               StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTest.SCC),               out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.SCC                 != null && r.SCC.Contains(v,               StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTest.WorkGroup),         out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.WorkGroup           != null && r.WorkGroup.Contains(v,         StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeTest.TestCode),          out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.TestCode            != null && r.TestCode.Contains(v,          StringComparison.OrdinalIgnoreCase));
+            q = FilterByField(q, f, nameof(DepartmentIncomeTest.Project),           r => r.Project);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTest.OracleProjectCode), r => r.OracleProjectCode);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTest.SubAccountCode),    r => r.SubAccountCode);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTest.DefraProject),      r => r.DefraProject);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTest.OCC),               r => r.OCC);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTest.OPC),               r => r.OPC);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTest.SPC),               r => r.SPC);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTest.SCC),               r => r.SCC);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTest.WorkGroup),         r => r.WorkGroup);
+            q = FilterByField(q, f, nameof(DepartmentIncomeTest.TestCode),          r => r.TestCode);
             return q.ToList();
         }
 
@@ -1057,13 +984,13 @@ namespace Apha.FPS.DataAccess.Repositories
             if (f is null) return rows;
 
             IEnumerable<DepartmentIncomeAnimal> q = rows;
-            if (f.TryGetValue(nameof(DepartmentIncomeAnimal.Project),          out var v) && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.Project.Contains(v,                              StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeAnimal.OracleProjectCode), out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.OracleProjectCode != null && r.OracleProjectCode.Contains(v, StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeAnimal.SubAccountCode),    out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.SubAccountCode     != null && r.SubAccountCode.Contains(v,    StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeAnimal.DefraProject),      out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.DefraProject        != null && r.DefraProject.Contains(v,      StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeAnimal.OCC),               out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.OCC                 != null && r.OCC.Contains(v,               StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeAnimal.OPC),               out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.OPC                 != null && r.OPC.Contains(v,               StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeAnimal.AnimalType),        out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.AnimalType          != null && r.AnimalType.Contains(v,        StringComparison.OrdinalIgnoreCase));
+            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.Project),           r => r.Project);
+            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.OracleProjectCode), r => r.OracleProjectCode);
+            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.SubAccountCode),    r => r.SubAccountCode);
+            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.DefraProject),      r => r.DefraProject);
+            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.OCC),               r => r.OCC);
+            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.OPC),               r => r.OPC);
+            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.AnimalType),        r => r.AnimalType);
             return q.ToList();
         }
 
@@ -1074,12 +1001,12 @@ namespace Apha.FPS.DataAccess.Repositories
             if (f is null) return rows;
 
             IEnumerable<DepartmentIncomeAdditional> q = rows;
-            if (f.TryGetValue(nameof(DepartmentIncomeAdditional.Project),          out var v) && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.Project.Contains(v,                              StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeAdditional.OracleProjectCode), out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.OracleProjectCode != null && r.OracleProjectCode.Contains(v, StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeAdditional.SubAccountCode),    out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.SubAccountCode     != null && r.SubAccountCode.Contains(v,    StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeAdditional.DefraProject),      out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.DefraProject        != null && r.DefraProject.Contains(v,      StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeAdditional.OCC),               out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.OCC                 != null && r.OCC.Contains(v,               StringComparison.OrdinalIgnoreCase));
-            if (f.TryGetValue(nameof(DepartmentIncomeAdditional.OPC),               out v)   && !string.IsNullOrWhiteSpace(v)) q = q.Where(r => r.OPC                 != null && r.OPC.Contains(v,               StringComparison.OrdinalIgnoreCase));
+            q = FilterByField(q, f, nameof(DepartmentIncomeAdditional.Project),           r => r.Project);
+            q = FilterByField(q, f, nameof(DepartmentIncomeAdditional.OracleProjectCode), r => r.OracleProjectCode);
+            q = FilterByField(q, f, nameof(DepartmentIncomeAdditional.SubAccountCode),    r => r.SubAccountCode);
+            q = FilterByField(q, f, nameof(DepartmentIncomeAdditional.DefraProject),      r => r.DefraProject);
+            q = FilterByField(q, f, nameof(DepartmentIncomeAdditional.OCC),               r => r.OCC);
+            q = FilterByField(q, f, nameof(DepartmentIncomeAdditional.OPC),               r => r.OPC);
             return q.ToList();
         }
 

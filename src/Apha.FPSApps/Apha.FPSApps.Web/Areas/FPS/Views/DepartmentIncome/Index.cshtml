@@ -135,12 +135,12 @@
                             </div>
 
                             <div class="govuk-grid-column-three-quarters">
-                                <div id="snapshotGridArea">
-                                    <div id="gridContainer_@(Model.SnapshotGrid.GridId)" role="region" aria-label="Snapshot query results">
+                                <section id="snapshotGridArea">
+                                    <section id="gridContainer_@(Model.SnapshotGrid.GridId)" aria-label="Snapshot query results">
                                         @await Html.PartialAsync("_DataGrid", Model.SnapshotGrid)
-                                    </div>
-                                </div>
-                                <div id="snapshotQueryResultsArea" style="display:none; position:relative;" role="region" aria-label="Selected query results" aria-live="polite">
+                                    </section>
+                                </section>
+                                <section id="snapshotQueryResultsArea" style="display:none; position:relative;" aria-label="Selected query results" aria-live="polite">
                                     <button type="button" id="backToSnapshotBtn"
                                             aria-label="Close query results and return to snapshot"
                                             title="Close"
@@ -149,7 +149,7 @@
                                     </button>
                                     <div id="gridContainer_departmentIncomeSnapshotQueryGrid">
                                     </div>
-                                </div>
+                                </section>
                             </div>
                         </div>
                     </div>
@@ -179,7 +179,7 @@
                             </div>
 
                             <div class="govuk-grid-column-three-quarters">
-                                <div id="currentQueryResultsArea" style="display:none; position:relative;" role="region" aria-label="Current data query results" aria-live="polite">
+                                <section id="currentQueryResultsArea" style="display:none; position:relative;" aria-label="Current data query results" aria-live="polite">
                                     <button type="button" id="closeCurrentGridBtn"
                                             aria-label="Close query results"
                                             title="Close"
@@ -187,7 +187,7 @@
                                         &#x2715;
                                     </button>
                                     <div id="gridContainer_departmentIncomeCurrentGrid"></div>
-                                </div>
+                                </section>
                             </div>
 
                         </div>

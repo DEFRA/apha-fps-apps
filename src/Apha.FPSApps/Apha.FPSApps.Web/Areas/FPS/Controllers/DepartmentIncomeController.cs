@@ -16,6 +16,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class DepartmentIncomeController : Controller
     {
+        private static readonly System.Text.Json.JsonSerializerOptions CaseInsensitiveJsonOptions =
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
         private readonly IMapper _mapper;
 
         private readonly IDepartmentIncomeService _departmentIncomeService;
@@ -257,7 +260,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var filterDict = !string.IsNullOrEmpty(request.Filter)
                 ? System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(request.Filter,
-                      new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                      CaseInsensitiveJsonOptions)
                 : null;
 
             var (rows, columns, title) = await BuildCrossTabRowsAsync(queryType, project, monthFrom, monthTo, source);

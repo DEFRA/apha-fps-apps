@@ -15,7 +15,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectDepartmentIncomeService
 
         private readonly IProjectDepartmentIncomeRepository _repository;
         private readonly IMapper _mapper;
-        private readonly IProjectDepartmentIncomeService _service;
+        private readonly ProjectDepartmentIncomeService _service;
 
         public ProjectDepartmentIncomeServiceTests()
         {
