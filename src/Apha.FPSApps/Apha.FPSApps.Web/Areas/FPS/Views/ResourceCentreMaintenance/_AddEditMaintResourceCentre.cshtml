@@ -71,7 +71,7 @@
                 <label class="govuk-label" asp-for="ProfitCentreHead">RC Head</label>
                 @await Html.PartialAsync("_ManagerPicker", new Apha.FPSApps.Web.Areas.FPS.Models.ManagerPickerViewModel
                 {
-                    ManagerList = Model.ManagerList,
+                    ManagerList = Model?.ManagerList ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>(),
                     FieldName = "ProfitCentreHead",
                     ShowGrade = true,
                     Required = false,
