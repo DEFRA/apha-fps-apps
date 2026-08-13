@@ -19,21 +19,8 @@
 
     <div class="govuk-grid-column-one-third">
         <label for="testCodePick" class="govuk-label govuk-!-font-weight-bold">Select a Test:</label>
-        <select id="testCodePick" class="govuk-select govuk-!-font-size-16" style="width:100%;"
-                onchange="onTestCodeChange(this.value)">
-            <option value="">-- Select --</option>
-            @foreach (var item in Model.TestCodeList)
-            {
-                if (item.Value == Model.SelectedTestCode)
-                {
-                    <option value="@item.Value" selected>@item.Text</option>
-                }
-                else
-                {
-                    <option value="@item.Value">@item.Text</option>
-                }
-            }
-        </select>
+        <div id="testCodePickMultiDropdown"></div>
+        <input type="hidden" id="testCodePick" value="@Model.SelectedTestCode" />
     </div>
 </div>
 
@@ -56,13 +43,60 @@
     </div>
 </div>
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+}
+
 @section Scripts {
     <script src="~/js/ajax-form-validation.js"></script>
+    <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script>
     var currentTestCode = '@Model.SelectedTestCode';
     var currentShowRejected = @Model.ShowRejected.ToString().ToLower();
+    var testCodeSelectDropdown = null;
+    const testCodeOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TestCodeList));
 
-    $(function () { calculateTotals(); });
+    $(function () {
+        initializeTestCodeMultiColumnDropdown();
+        calculateTotals();
+    });
+
+    // Multi-column dropdown for Test selection (consistent with other lookup screens).
+    function initializeTestCodeMultiColumnDropdown() {
+        testCodeSelectDropdown = new MultiColumnDropdownComponent({
+            dropdownId: 'testCodePickDropdown',
+            containerSelector: '#testCodePickMultiDropdown',
+            placeholder: 'Select a Test',
+            showSerialNumber: false,
+            searchPlaceholder: 'Search by Test',
+            labelText: '',
+            columns: [
+                { field: 'Value', header: 'Test Code', width: '100px' },
+                { field: 'Text', header: 'Test Description', width: '180px' }
+            ],
+            data: testCodeOptionsListData,
+            displayField: 'Text',
+            valueField: 'Value',
+            clearButtonClearsSelection: true,
+            showClearButton: true,
+
+            callbacks: {
+                onSelect: function (selectedItem) {
+                    $('#testCodePick').val(selectedItem.Value);
+                    onTestCodeChange(selectedItem.Value);
+                },
+                onClear: function () {
+                    $('#testCodePick').val('');
+                    onTestCodeChange('');
+                }
+            }
+        });
+
+        // Preserve the selected value after reloads so the dropdown stays consistent.
+        if (currentTestCode) {
+            testCodeSelectDropdown.setValue(currentTestCode);
+        }
+    }
 
     // Extra filters merged into the grid's own sort/filter/pagination requests.
     function getTestSupplierExtraFilters() {
@@ -94,7 +128,7 @@
     function reloadGrid() {
         var request = {
             Page: 1,
-            PageSize: 20,
+            PageSize: 10,
             SortBy: '',
             Descending: false,
             Filter: '{}',

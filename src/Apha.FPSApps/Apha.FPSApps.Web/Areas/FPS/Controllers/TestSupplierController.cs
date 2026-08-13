@@ -37,14 +37,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> Index()
         {
             var testCodeOptions = await GetTestorProductSelectListAsync();
-            var defaultTestCode = testCodeOptions.FirstOrDefault()?.Value ?? string.Empty;
 
+            // No test is pre-selected: the page loads with "Select a Test" and an
+            // empty grid ("No records found") until the user picks a test.
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
-            var grid = await BuildTestSupplierGridAsync(defaultRequest, defaultTestCode, showRejected: false);
+            var grid = await BuildTestSupplierGridAsync(defaultRequest, string.Empty, showRejected: false);
 
             var viewModel = new TestSupplierViewModel
             {
-                SelectedTestCode = defaultTestCode,
+                SelectedTestCode = string.Empty,
                 ShowRejected = false,
                 TestCodeList = testCodeOptions,
                 TestSupplierGrid = grid
@@ -221,16 +222,30 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var filterDict =
                 JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new();
 
-            var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _testReqmtService.GetPagedBySupplierTestCodeAsync(query, testCode, showRejected);
+            // Until a test is selected, show an empty grid ("No records found")
+            // rather than fetching every supplier.
+            List<TestSupplierItem> items;
+            PaginationModel paginationModel;
 
-            var items = response.Success && response.Data != null
-                ? _mapper.Map<List<TestSupplierItem>>(response.Data)
-                : new List<TestSupplierItem>();
+            if (string.IsNullOrWhiteSpace(testCode))
+            {
+                items = new List<TestSupplierItem>();
+                paginationModel = new PaginationModel();
+            }
+            else
+            {
+                var query = _mapper.Map<QueryParameters<string>>(request);
+                var response = await _testReqmtService.GetPagedBySupplierTestCodeAsync(query, testCode, showRejected);
 
-            var paginationModel = response.Pagination is null
-                ? new PaginationModel()
-                : _mapper.Map<PaginationModel>(response.Pagination);
+                items = response.Success && response.Data != null
+                    ? _mapper.Map<List<TestSupplierItem>>(response.Data)
+                    : new List<TestSupplierItem>();
+
+                paginationModel = response.Pagination is null
+                    ? new PaginationModel()
+                    : _mapper.Map<PaginationModel>(response.Pagination);
+            }
+
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
