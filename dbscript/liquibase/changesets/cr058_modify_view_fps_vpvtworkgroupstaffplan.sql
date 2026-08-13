@@ -4,8 +4,11 @@
 
 -- View: fps.vpvtworkgroupstaffplan
 -- CR058: fee cast to numeric (was double precision) to match CR034's decimal(19,4) money conversion.
+-- CREATE OR REPLACE cannot change an existing view column's data type, so drop first.
 
-CREATE OR REPLACE VIEW fps.vpvtworkgroupstaffplan
+DROP VIEW IF EXISTS fps.vpvtworkgroupstaffplan;
+
+CREATE VIEW fps.vpvtworkgroupstaffplan
  AS
  SELECT DISTINCT wgg.workgroup,
     wgg.gradecode,
