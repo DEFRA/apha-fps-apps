@@ -481,7 +481,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         private async Task<List<ProjectDto>> GetProjectsAsync()
         {
-            var response = await _projectService.GetAllProjectsAsync();
+            var response = await _projectService.GetAllProjectsForAllUsersAsync();
             return response.Success && response.Data != null
                 ? response.Data
                 : new List<ProjectDto>();
