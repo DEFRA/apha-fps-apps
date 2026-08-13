@@ -343,50 +343,37 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (TryGetFilterValue(dict, "Directorate", out var directorate))
+            if (dict.TryGetValue("Directorate", out var directorate) && directorate != null)
                 query = query.Where(x => EF.Functions.ILike(x.Directorate!, $"%{directorate}%"));
 
-            if (TryGetFilterValue(dict, "Program", out var program))
+            if (dict.TryGetValue("Program", out var program) && program != null)
                 query = query.Where(x => EF.Functions.ILike(x.Program!, $"%{program}%"));
 
-            if (TryGetFilterValue(dict, "Contract", out var contract))
+            if (dict.TryGetValue("Contract", out var contract) && contract != null)
                 query = query.Where(x => EF.Functions.ILike(x.Contract!, $"%{contract}%"));
 
-            if (TryGetFilterValue(dict, "Project", out var project))
+            if (dict.TryGetValue("Project", out var project) && project != null)
                 query = query.Where(x => EF.Functions.ILike(x.Project!, $"%{project}%"));
 
-            if (TryGetFilterValue(dict, "ProjectStatus", out var projectStatus))
+            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && projectStatus != null)
                 query = query.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
 
-            if (TryGetFilterValue(dict, "Species", out var species))
+            if (dict.TryGetValue("Species", out var species) && species != null)
                 query = query.Where(x => EF.Functions.ILike(x.Species!, $"%{species}%"));
 
-            if (TryGetFilterValue(dict, "SecurityLevel", out var securityLevel))
+            if (dict.TryGetValue("SecurityLevel", out var securityLevel) && securityLevel != null)
                 query = query.Where(x => EF.Functions.ILike(x.SecurityLevel!, $"%{securityLevel}%"));
 
-            if (TryGetFilterValue(dict, "AnimalType", out var animalType))
+            if (dict.TryGetValue("AnimalType", out var animalType) && animalType != null)
                 query = query.Where(x => EF.Functions.ILike(x.AnimalType!, $"%{animalType}%"));
 
-            if (TryGetFilterValue(dict, "JobCode", out var jobCode))
+            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
                 query = query.Where(x => EF.Functions.ILike(x.JobCode!, $"%{jobCode}%"));
 
-            if (TryGetFilterValue(dict, "Cost", out var cost))
+            if (dict.TryGetValue("Cost", out var cost) && cost != null)
                 query = query.Where(x => EF.Functions.ILike((x.Cost ?? 0m).ToString(), $"%{cost}%"));
 
             return query;
-        }
-
-        /// <summary>
-        /// Retrieves a filter value from the dictionary, treating an explicit JSON null the
-        /// same as a missing key (both are "no filter for this key").
-        /// </summary>
-        private static bool TryGetFilterValue(IDictionary<string, object> dict, string key, out object? value)
-        {
-            if (dict.TryGetValue(key, out value) && value != null)
-                return true;
-
-            value = null;
-            return false;
         }
 
         private static IQueryable ApplyAnimalSnapshotSorting(IQueryable<AnimalSnapshotView> query, string? sortBy, bool descending)
