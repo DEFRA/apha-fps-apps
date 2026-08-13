@@ -107,6 +107,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private static string GetColumnDisplayName(string col) => col switch
         {
+            "testcode"         => "TestCode",
+            "shortdescription" => "ShortDescription",
             "plan_total"    => "Plan Total",
             "req_totalcost" => "PC Total Cost",
             _ when col.StartsWith("pc_", StringComparison.OrdinalIgnoreCase) => col[3..],
