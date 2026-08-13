@@ -66,8 +66,8 @@ $(document).ready(function () {
             showAlertMessage('Please select a project first.', AlertType.INFO);
             return;
         }
-        window.location.href = programMaintenanceConfig.projectMaintenanceUrl +
-            '/' + encodeURIComponent(selectedProjectCode);
+        window.fpsNavigateTo(programMaintenanceConfig.projectMaintenanceUrl +
+            '/' + encodeURIComponent(selectedProjectCode));
     });
     initializeMultiColumnDropdown();
 });

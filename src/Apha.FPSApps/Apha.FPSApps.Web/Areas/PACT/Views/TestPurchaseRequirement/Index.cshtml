@@ -182,6 +182,8 @@
                         getGridManager()?.reloadGrid({ page: 1 });
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#testPurchaseReqForm');
+                        // Initialize form validation (unobtrusive + numeric)
+                        initializeFormValidation('#testPurchaseReqForm');
                     }
                 },
                 error: function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }

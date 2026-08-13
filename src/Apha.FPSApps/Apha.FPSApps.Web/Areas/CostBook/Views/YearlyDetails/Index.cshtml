@@ -8,11 +8,23 @@
 }
 <div class="govuk-template__body govuk-frontend-supported project-requirement-page">
     <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2">
-        <div class="govuk-grid-column-full">
+        @* <div class="govuk-grid-column-full">
             <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom" style="padding:10px 0 0px 10px">
                 Project Requirements
                 <a asp-area="CostBook" asp-controller="Projects" asp-action="Index" class="govuk-back-link sup_align_right">Back</a>
             </h1>
+        </div> *@
+
+        <div class="govuk-grid-column-one-full sup_border-bottom sup_margin_bottom_0 govuk-!-margin-top-3 clearfix">
+            <div class="govuk-grid-column-one-half isFloatLeft">
+                <h1 class="govuk-heading-s govuk-!-margin-bottom-1">
+                    Project Requirements
+                </h1>
+            </div>
+            <div class="govuk-grid-column-one-quarter isFloatRight">
+                <a asp-area="CostBook" asp-controller="YearlyDetails" asp-action="Index"
+                   asp-route-projectId="@projectId" class="govuk-back-link sup_align_right">Back</a>
+            </div>
         </div>
     </div>
 

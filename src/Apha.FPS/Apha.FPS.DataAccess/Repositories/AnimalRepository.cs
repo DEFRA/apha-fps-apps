@@ -52,7 +52,7 @@ namespace Apha.FPS.DataAccess.Repositories
             ArgumentException.ThrowIfNullOrWhiteSpace(animalType);
             return await _dbContext.Animals
                 .AsNoTracking()
-                .FirstOrDefaultAsync(a => a.AnimalType == animalType && a.FpsYear == _requestContext.FpsYear);
+                .FirstOrDefaultAsync(a => EF.Functions.ILike(a.AnimalType, animalType) && a.FpsYear == _requestContext.FpsYear);
         }
 
         public async Task<Animal> AddAnimalAsync(Animal entity)
