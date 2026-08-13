@@ -38,12 +38,6 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var fpsYear = _requestContext.FpsYear;
 
-            // Two-step: (1) DB query returns intermediate anonymous type with raw double? CostCentre values;
-            // (2) in-memory projection converts them to strings (ToString is not SQL-translatable).
-            //
-            // Access's TimeCostCalcsMAP is a saved query that aggregates (sums) numeric values
-            // across JobCodes for the same (WorkGroup, Project, Month, StaffId) combination.
-            // We replicate that by grouping here before joining to the lookup tables.
             var tcAggregated =
                 from tc in _context.TimeCostCalcs.AsNoTracking()
                     .Where(t => t.FpsYear == fpsYear
@@ -969,7 +963,12 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Where(p => p.FpsYear == _requestContext.FpsYear);
 
             if (accntsPeriod.HasValue)
-                query = query.Where(p => p.AccntsPeriod == accntsPeriod.Value);
+            {
+                const double tolerance = 1e-9;
+                var lo = accntsPeriod.Value - tolerance;
+                var hi = accntsPeriod.Value + tolerance;
+                query = query.Where(p => p.AccntsPeriod >= lo && p.AccntsPeriod <= hi);
+            }
 
             var rows = await query
                 .OrderBy(p => p.AccntsPeriod)

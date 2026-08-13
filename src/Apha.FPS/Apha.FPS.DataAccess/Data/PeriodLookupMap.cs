@@ -12,7 +12,7 @@ namespace Apha.FPS.DataAccess.Data
             builder.ToView("tblkperiodmonth", "fps");
 
             builder.Property(e => e.FpsYear)
-                .HasColumnName("fpsyear");  // TODO: verify exact column name in fps.tblkperiodmonth
+                .HasColumnName("fpsyear");
 
             builder.Property(e => e.AccntsPeriod)
                 .HasColumnName("endmonth");
