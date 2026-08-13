@@ -44,8 +44,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> Index()
         {
             var plannedYear = await GetPlannedYearAsync();
-            var canInitiate = await GetCanInitiateDataSetupRequestAsync();
-            var canApprove = await GetCanApproveOrRejectDataSetupRequestAsync();
+            var canInitiate = await CanInitiateDataSetupRequestAsync();
+            var canApprove = await CanApproveOrRejectDataSetupRequestAsync();
             var configValuesGrid = await BuildConfigValuesGridAsync();
             var monthHoursGrid = await BuildMonthHoursGridAsync();
             var historyGrid = await BuildHistoryGridAsync(new PaginationFilter<string> { Filter = "{}" });
@@ -157,12 +157,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var result = await _yearEndService.EnqueueYearEndDataSetupInitiationJobAsync(plannedYear);
             if (result.Success)
             {
-                _logger.LogInformation("Year End Initiation job triggered.");
+                _logger.LogInformation("Year End Datasetup initiation job enqueued.");
                 return Json(new { success = true });
             }
 
             var errors = result?.Errors?.Select(e => new { field = string.Empty, message = e.Message }).ToArray()
-                         ?? [new { field = string.Empty, message = "Failed to trigger Year End Initiation job." }];
+                         ?? [new { field = string.Empty, message = "Failed to enqueue Year End Datasetup initiation job." }];
             return Json(new { success = false, errors });
         }
 
@@ -195,23 +195,25 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                          ?? [new { field = string.Empty, message = "Failed to Reject Year End datasetup job." }];
             return Json(new { success = false, errors });
         }
+        
         private async Task<int> GetPlannedYearAsync()
         {
             var result = await _yearMasterService.GetFpsPlannedYearAsync();
             return result.Success ? result.Data : 0;
         }
 
-        private async Task<bool> GetCanInitiateDataSetupRequestAsync()
+        private async Task<bool> CanInitiateDataSetupRequestAsync()
         {
-            var result = await _yearEndService.GetCanInitiateDataSetupRequestAsync(YearEndInitiationJobName);
+            var result = await _yearEndService.CanInitiateDataSetupRequestAsync(YearEndInitiationJobName);
             return result.Success && result.Data;
         }
 
-        private async Task<bool> GetCanApproveOrRejectDataSetupRequestAsync()
+        private async Task<bool> CanApproveOrRejectDataSetupRequestAsync()
         {
-            var result = await _yearEndService.GetCanApproveOrRejectDataSetupRequestAsync(YearEndInitiationJobName);
+            var result = await _yearEndService.CanApproveOrRejectDataSetupRequestAsync(YearEndInitiationJobName);
             return result.Success && result.Data;
         }
+        
         private async Task<DataGridConfig<YearEndConfigValueItem>> BuildConfigValuesGridAsync()
         {
             var grid = ConfigValuesGridConfig();

@@ -152,6 +152,16 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
+            List<DataGridColumn> columns = GridDataProvider.GetColumnsDefination<ProjectCommentItem>(null);
+            foreach (DataGridColumn column in columns)
+            {
+                if (column.PropertyName == nameof(ProjectCommentItem.MadeBy)
+                    || column.PropertyName == nameof(ProjectCommentItem.DateEntered))
+                {
+                    column.IsVisible = false;
+                }
+            }
+
             return new DataGridConfig<ProjectCommentItem>
             {
                 GridId = "projectCommentsGrid",
@@ -165,7 +175,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 ExtraFilterMethod = "getProjectDetailsExtraFilters",
                 BindGridUrl = "/PIMS/ProjectDetails/LoadCommentsGrid",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<ProjectCommentItem>(null),
+                Columns = columns,
                 Pagination = paginationModel,
                 CurrentFilters = filterDict
             };
@@ -287,6 +297,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             }
 
             dto.MadeBy = GetCurrentUser();
+            dto.CommentText = !string.IsNullOrWhiteSpace(dto.Comment)
+                ? dto.Comment.Trim()
+                : dto.CommentText?.Trim();
             ApiResponseDto<CommentDto> result = await _commentService.UpdateCommentAsync(dto.CommentNo, dto);
             return result.Success
                 ? Json(new { success = true, data = result.Data, message = "Comment updated successfully" })
