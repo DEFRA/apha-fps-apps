@@ -424,6 +424,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
         }
 
         [Fact]
+        public async Task GetAnimalByIdAsync_ReturnsAnimal_WhenCasingDiffers()
+        {
+            var repo = CreateRepository([BuildAnimal("CATTLE")]);
+            var result = await repo.GetAnimalByIdAsync("cattle");
+            Assert.NotNull(result);
+            Assert.Equal("CATTLE", result.AnimalType);
+        }
+
+        [Fact]
         public async Task GetAnimalByIdAsync_ReturnsNull_WhenNotFound()
         {
             var repo = CreateRepository([]);
