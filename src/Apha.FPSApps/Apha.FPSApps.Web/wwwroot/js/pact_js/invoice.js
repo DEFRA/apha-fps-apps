@@ -142,6 +142,8 @@ function saveInvoice() {
                 reloadInvoicesGrid();
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
+                // Initialize form validation (unobtrusive + numeric)
+                initializeFormValidation('#modaPopupBody');
             }
         },
         error: function () { 

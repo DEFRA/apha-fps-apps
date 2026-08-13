@@ -404,6 +404,7 @@
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
                     setTimeout(function() {
+                        // Initialize form validation (unobtrusive + numeric)
                         initializeFormValidation('#testReqmtForm');
                     }, 50);
                 });
@@ -418,6 +419,7 @@
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
                     setTimeout(function() {
+                        // Initialize form validation (unobtrusive + numeric)
                         initializeFormValidation('#testReqmtForm');
                     }, 50);
                 });
@@ -426,25 +428,14 @@
         function saveTestReqmt() {
             var form = $('#testReqmtForm');
 
-            // Validate all numeric fields before checking isFormValid
-            form.find('.decfmt-input').each(function() {
-                validateRangeOnInput(this);
-            });
-
-            // Check for numeric validation errors
-            if (hasNumericValidationErrors(form)) {
-                displayClientValidationErrors(form, '#modaPopupBody');
-                return;
-            }
-
             if (!isFormValid(form)) {
                 // Display validation errors without clearing them first
-                displayClientValidationErrors(form, '#modaPopupBody');
+                displayClientValidationErrors(form, '#testReqmtForm');
                 return;
             }
 
             // Clear validation errors only after validation passes
-            clearValidationErrors('#modaPopupBody');
+            clearValidationErrors('#testReqmtForm');
 
             var isEdit        = form.find('[name="isEdit"]').val() === 'true';
             var rawUnitPrice  = form.find('[name="UnitPrice"]').val();
@@ -472,7 +463,9 @@
                         reloadTestReqmtGrid(currentSelectedTestCode);
                         showAlertMessage(isEdit ? 'Record updated successfully.' : 'Record saved successfully.', AlertType.SUCCESS);
                     } else {
-                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
+                        displayServerValidationErrors(result.errors, result.message, '#testReqmtForm');
+                        // Initialize form validation (unobtrusive + numeric)
+                        initializeFormValidation('#testReqmtForm');
                     }
                 },
                 error: function () { showAlertMessage('Request failed. Please try again.', AlertType.ERROR); }

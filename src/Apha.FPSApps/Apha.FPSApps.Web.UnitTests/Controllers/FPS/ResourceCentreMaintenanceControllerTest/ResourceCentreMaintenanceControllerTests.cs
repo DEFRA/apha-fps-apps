@@ -191,10 +191,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceCentreMaintenanceCo
         #region Create GET Tests
 
         [Fact]
-        public void Create_Get_ReturnsPartialViewWithEmptyModel()
+        public async Task Create_Get_ReturnsPartialViewWithEmptyModel()
         {
             // Act
-            var result = _controller.Create();
+            var result = await _controller.Create();
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
