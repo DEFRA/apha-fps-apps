@@ -31,7 +31,7 @@ namespace Apha.FPS.DataAccess.Repositories
         //                  TimeCostCalcsMAP, WorkGroup_MAP
         //   Filter:  Class = Charge, Month between MonthFrom and MonthTo,
         //            ParentProject matches selected project
-        //   Order:   ParentProject
+        //   Order:   ParentProject 
         // ─────────────────────────────────────────────────────────────────────────────
         public async Task<List<DepartmentIncomeTime>> GetTimeIncomeAsync(
             string? project, int monthFrom, int monthTo)
