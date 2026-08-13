@@ -583,10 +583,8 @@ namespace Apha.PACT.DataAccess.Repository
         private static List<Dictionary<string, string?>> ApplyCrossTabSorting(
             List<Dictionary<string, string?>> pivotedRows, PaginationParameters<string> query)
         {
-            if (string.IsNullOrWhiteSpace(query.SortBy))
-                return pivotedRows;
-
-            var sortKey = query.SortBy.ToLowerInvariant();
+            // Caller only invokes this when SortBy has a value, so no null/blank guard is needed.
+            var sortKey = query.SortBy!.ToLowerInvariant();
 
             // Keep rows with a blank/null cell for the sort column at the bottom
             // regardless of sort direction. Sparse "pc_*" columns are mostly blank,
