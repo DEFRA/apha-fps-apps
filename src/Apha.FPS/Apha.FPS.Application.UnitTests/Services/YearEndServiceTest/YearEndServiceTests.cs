@@ -53,7 +53,19 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
                 DataSetupInitiatedEmailBody = "Initiation body",
                 DataSetupApprovalEmailRecipient = "approval@example.com",
                 DataSetupApprovalEmailSubject = "Year End Approved",
-                DataSetupApprovalEmailBody = "Approval body"
+                DataSetupApprovalEmailBody = "Approval body",
+                DataSetupRejectionEmailRecipient = "rejection@example.com",
+                DataSetupRejectionEmailSubject = "Year End Rejected",
+                DataSetupRejectionEmailBody = "Rejection body",
+                CutOverInitiatedEmailRecipient = "cutover-initiation@example.com",
+                CutOverInitiatedEmailSubject = "CutOver Initiated",
+                CutOverInitiatedEmailBody = "CutOver initiation body",
+                CutOverApprovalEmailRecipient = "cutover-approval@example.com",
+                CutOverApprovalEmailSubject = "CutOver Approved",
+                CutOverApprovalEmailBody = "CutOver approval body",
+                CutOverRejectionEmailRecipient = "cutover-rejection@example.com",
+                CutOverRejectionEmailSubject = "CutOver Rejected",
+                CutOverRejectionEmailBody = "CutOver rejection body"
             });
 
             _sut = new YearEndService(
@@ -98,10 +110,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
         private void SetupYearMasterNotFound() =>
             _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear).Returns((YearMaster?)null);
-
-        // -----------------------------------------------------------------------
-        // GetBatchJobsHistoryAsync
-        // -----------------------------------------------------------------------
 
         #region GetBatchJobsHistoryAsync
 
@@ -176,10 +184,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // CanInitiateYearEndDataSetupRequestAsync
-        // -----------------------------------------------------------------------
-
         #region CanInitiateYearEndDataSetupRequestAsync
 
         [Fact]
@@ -223,14 +227,10 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // CanApproveYearEndDataSetupRequestAsync
-        // -----------------------------------------------------------------------
-
-        #region CanApproveYearEndDataSetupRequestAsync
+        #region CanApproveOrRejectYearEndDataSetupRequestAsync
 
         [Fact]
-        public async Task CanApproveYearEndDataSetupRequestAsync_WhenRepositoryReturnsTrue_ReturnsTrue()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_WhenRepositoryReturnsTrue_ReturnsTrue()
         {
             // Arrange
             _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
@@ -244,7 +244,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         }
 
         [Fact]
-        public async Task CanApproveYearEndDataSetupRequestAsync_WhenRepositoryReturnsFalse_ReturnsFalse()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_WhenRepositoryReturnsFalse_ReturnsFalse()
         {
             // Arrange
             _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(false);
@@ -258,7 +258,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         }
 
         [Fact]
-        public async Task CanApproveYearEndDataSetupRequestAsync_WhenRepositoryThrows_PropagatesException()
+        public async Task CanApproveOrRejectYearEndDataSetupRequestAsync_WhenRepositoryThrows_PropagatesException()
         {
             // Arrange
             _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName)
@@ -269,10 +269,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupInitiationJobAsync — validation
-        // -----------------------------------------------------------------------
 
         #region EnqueueYearEndDataSetupInitiationJobAsync — validation
 
@@ -444,10 +440,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupInitiationJobAsync — success
-        // -----------------------------------------------------------------------
-
         #region EnqueueYearEndDataSetupInitiationJobAsync — success
 
         [Fact]
@@ -547,10 +539,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupApprovalJobAsync — validation
-        // -----------------------------------------------------------------------
 
         #region EnqueueYearEndDataSetupApprovalJobAsync — validation
 
@@ -660,10 +648,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupApprovalJobAsync — success
-        // -----------------------------------------------------------------------
 
         #region EnqueueYearEndDataSetupApprovalJobAsync — success
 
@@ -786,10 +770,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupRejectJobAsync — validation
-        // -----------------------------------------------------------------------
-
         #region EnqueueYearEndDataSetupRejectJobAsync — validation
 
         [Fact]
@@ -836,10 +816,6 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // EnqueueYearEndDataSetupRejectJobAsync — success
-        // -----------------------------------------------------------------------
-
         #region EnqueueYearEndDataSetupRejectJobAsync — success
 
         [Fact]
@@ -880,7 +856,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
             // Assert
             await _emailService.Received(1).SendEmailAsync(
-                Arg.Is<EmailMessageModel>(m => m.To.Contains("approval@example.com")),
+                Arg.Is<EmailMessageModel>(m => m.To.Contains("rejection@example.com")),
                 Arg.Any<CancellationToken>());
         }
 
@@ -903,6 +879,529 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             var result = await _sut.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
 
             // Assert — email failure swallowed; true still returned
+            result.Should().BeTrue();
+        }
+
+        #endregion
+
+        #region CanInitiateYearEndCutOverRequestAsync
+
+        [Fact]
+        public async Task CanInitiateYearEndCutOverRequestAsync_WhenRepositoryReturnsTrue_ReturnsTrue()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(cutOverJobName).Returns(true);
+
+            // Act
+            var result = await _sut.CanInitiateYearEndCutOverRequestAsync(cutOverJobName);
+
+            // Assert
+            result.Should().BeTrue();
+            await _yearEndRepository.Received(1).CanInitiateYearEndCutOverRequestAsync(cutOverJobName);
+        }
+
+        [Fact]
+        public async Task CanInitiateYearEndCutOverRequestAsync_WhenRepositoryReturnsFalse_ReturnsFalse()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(cutOverJobName).Returns(false);
+
+            // Act
+            var result = await _sut.CanInitiateYearEndCutOverRequestAsync(cutOverJobName);
+
+            // Assert
+            result.Should().BeFalse();
+            await _yearEndRepository.Received(1).CanInitiateYearEndCutOverRequestAsync(cutOverJobName);
+        }
+
+        [Fact]
+        public async Task CanInitiateYearEndCutOverRequestAsync_WhenRepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(cutOverJobName)
+                .Throws(new Exception("Repository error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _sut.CanInitiateYearEndCutOverRequestAsync(cutOverJobName));
+        }
+
+        #endregion
+
+        #region CanApproveOrRejectYearEndCutOverRequestAsync
+
+        [Fact]
+        public async Task CanApproveOrRejectYearEndCutOverRequestAsync_WhenRepositoryReturnsTrue_ReturnsTrue()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(cutOverJobName).Returns(true);
+
+            // Act
+            var result = await _sut.CanApproveOrRejectYearEndCutOverRequestAsync(cutOverJobName);
+
+            // Assert
+            result.Should().BeTrue();
+            await _yearEndRepository.Received(1).CanApproveOrRejectYearEndCutOverRequestAsync(cutOverJobName);
+        }
+
+        [Fact]
+        public async Task CanApproveOrRejectYearEndCutOverRequestAsync_WhenRepositoryReturnsFalse_ReturnsFalse()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(cutOverJobName).Returns(false);
+
+            // Act
+            var result = await _sut.CanApproveOrRejectYearEndCutOverRequestAsync(cutOverJobName);
+
+            // Assert
+            result.Should().BeFalse();
+            await _yearEndRepository.Received(1).CanApproveOrRejectYearEndCutOverRequestAsync(cutOverJobName);
+        }
+
+        [Fact]
+        public async Task CanApproveOrRejectYearEndCutOverRequestAsync_WhenRepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            const string cutOverJobName = "YearEnd-CutOver";
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(cutOverJobName)
+                .Throws(new Exception("Repository error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(
+                () => _sut.CanApproveOrRejectYearEndCutOverRequestAsync(cutOverJobName));
+        }
+
+        #endregion
+
+        #region EnqueueYearEndCutOverInitiationJobAsync — validation
+
+        private const string CutOverJobName = "YearEnd-CutOver";
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1899)]
+        [InlineData(10000)]
+        public async Task EnqueueYearEndCutOverInitiationJobAsync_WhenPlannedYearIsInvalid_ThrowsBusinessValidationError(int invalidYear)
+        {
+            // Arrange
+            _yearMasterRepository.GetFpsYearByIdAsync(invalidYear)
+                .Returns(new YearMaster { FpsYear = invalidYear, YearStatus = "planned", Active = true });
+            _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverInitiationJobAsync(invalidYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().Contain(e => e.Code == "INVALID_PlannedYear");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverInitiationJobAsync_WhenRequestedByIsEmpty_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear)
+                .Returns(new YearMaster { FpsYear = PlannedYear, YearStatus = "planned", Active = true });
+            _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverInitiationJobAsync(PlannedYear, ContextYear, string.Empty, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_User");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverInitiationJobAsync_WhenYearMasterIsNull_ThrowsBusinessValidationError()
+        {
+            // Arrange — null means CutOver not valid (no planned year found or status already open)
+            _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear).Returns((YearMaster?)null);
+            _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverInitiationJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Rerun");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverInitiationJobAsync_WhenYearStatusIsOpen_ThrowsBusinessValidationError()
+        {
+            // Arrange — "open" status means cutover already live
+            _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear)
+                .Returns(new YearMaster { FpsYear = PlannedYear, YearStatus = "open", Active = true });
+            _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverInitiationJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Rerun");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverInitiationJobAsync_WhenJobAlreadyRunning_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear)
+                .Returns(new YearMaster { FpsYear = PlannedYear, YearStatus = "planned", Active = true });
+            _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(CutOverJobName).Returns(false);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverInitiationJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Initiation");
+        }
+
+        #endregion
+
+        #region EnqueueYearEndCutOverInitiationJobAsync — success
+
+        private void SetupValidCutOverYearMaster() =>
+            _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear)
+                .Returns(new YearMaster { FpsYear = PlannedYear, YearStatus = "planned", Active = true });
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverInitiationJobAsync_WhenAllValid_ReturnsQueueDto()
+        {
+            // Arrange
+            SetupValidCutOverYearMaster();
+            _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueCutOverInitiationBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+
+            var expectedDto = new BatchJobQueueDto { RequestedBy = RequestedBy };
+            _mapper.Map<BatchJobQueueDto>(queueEntry).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.EnqueueYearEndCutOverInitiationJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.RequestedBy.Should().Be(RequestedBy);
+
+            await _yearEndRepository.Received(1).EnqueueCutOverInitiationBatchJobAsync(
+                CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverInitiationJobAsync_WhenAllValid_SendsInitiationEmail()
+        {
+            // Arrange
+            SetupValidCutOverYearMaster();
+            _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
+            _yearEndRepository.EnqueueCutOverInitiationBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _mapper.Map<BatchJobQueueDto>(queueEntry).Returns(new BatchJobQueueDto());
+
+            // Act
+            await _sut.EnqueueYearEndCutOverInitiationJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert — email sent to CutOver initiation recipient
+            await _emailService.Received(1).SendEmailAsync(
+                Arg.Is<EmailMessageModel>(m => m.To.Contains("cutover-initiation@example.com")),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverInitiationJobAsync_WhenEmailFails_StillReturnsQueueDto()
+        {
+            // Arrange
+            SetupValidCutOverYearMaster();
+            _yearEndRepository.CanInitiateYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
+            _yearEndRepository.EnqueueCutOverInitiationBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _mapper.Map<BatchJobQueueDto>(queueEntry).Returns(new BatchJobQueueDto { RequestedBy = RequestedBy });
+            _emailService.SendEmailAsync(Arg.Any<EmailMessageModel>(), Arg.Any<CancellationToken>())
+                .Throws(new Exception("SMTP failure"));
+
+            // Act
+            var result = await _sut.EnqueueYearEndCutOverInitiationJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            result.Should().NotBeNull();
+        }
+
+        #endregion
+
+        #region EnqueueYearEndCutOverApprovalJobAsync — validation
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1899)]
+        [InlineData(10000)]
+        public async Task EnqueueYearEndCutOverApprovalJobAsync_WhenPlannedYearIsInvalid_ThrowsBusinessValidationError(int invalidYear)
+        {
+            // Arrange
+            _yearMasterRepository.GetFpsYearByIdAsync(invalidYear)
+                .Returns(new YearMaster { FpsYear = invalidYear, YearStatus = "planned", Active = true });
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns(string.Empty);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(invalidYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().Contain(e => e.Code == "INVALID_PlannedYear");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverApprovalJobAsync_WhenRequestedByIsEmpty_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            SetupValidCutOverYearMaster();
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns(string.Empty);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, string.Empty, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_User");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverApprovalJobAsync_WhenNoInitiatedRequestExists_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            SetupValidCutOverYearMaster();
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(false);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns(string.Empty);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Approval");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverApprovalJobAsync_WhenInitiatorAndApproverAreSamePerson_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            SetupValidCutOverYearMaster();
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns(RequestedBy);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Approval");
+        }
+
+        #endregion
+
+        #region EnqueueYearEndCutOverApprovalJobAsync — success
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverApprovalJobAsync_WhenAllValid_ReturnsEventTriggerDto()
+        {
+            // Arrange
+            SetupValidCutOverYearMaster();
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+
+            _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
+                .Returns("evt-cutover-123");
+
+            var triggerDto = new BatchJobEventTriggerDto { EventId = "evt-cutover-123" };
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(triggerDto);
+            _mapper.Map<BatchJobEventTriggerDto>(triggerDto).Returns(triggerDto);
+
+            // Act
+            var result = await _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.EventId.Should().Be("evt-cutover-123");
+
+            await _yearEndRepository.Received(1).EnqueueCutOverApprovalBatchJobAsync(
+                CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>());
+            await _eventPublisherService.Received(1).PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverApprovalJobAsync_WhenAllValid_SendsApprovalEmail()
+        {
+            // Arrange
+            SetupValidCutOverYearMaster();
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
+            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
+                .Returns("evt-cutover-456");
+
+            var triggerDto = new BatchJobEventTriggerDto();
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(triggerDto);
+            _mapper.Map<BatchJobEventTriggerDto>(triggerDto).Returns(triggerDto);
+
+            // Act
+            await _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            await _emailService.Received(1).SendEmailAsync(
+                Arg.Is<EmailMessageModel>(m => m.To.Contains("cutover-approval@example.com")),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverApprovalJobAsync_WhenEmailFails_StillReturnsEventTriggerDto()
+        {
+            // Arrange
+            SetupValidCutOverYearMaster();
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
+            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
+                .Returns("evt-cutover-789");
+
+            var triggerDto = new BatchJobEventTriggerDto { EventId = "evt-cutover-789" };
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(triggerDto);
+            _mapper.Map<BatchJobEventTriggerDto>(triggerDto).Returns(triggerDto);
+
+            _emailService.SendEmailAsync(Arg.Any<EmailMessageModel>(), Arg.Any<CancellationToken>())
+                .Throws(new Exception("SMTP failure"));
+
+            // Act
+            var result = await _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            result.Should().NotBeNull();
+        }
+
+        #endregion
+
+        #region EnqueueYearEndCutOverRejectJobAsync — validation
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverRejectJobAsync_WhenRequestedByIsEmpty_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns(string.Empty);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, ContextYear, string.Empty, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_User");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverRejectJobAsync_WhenNoInitiatedRequestExists_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(false);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns(string.Empty);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Approval");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverRejectJobAsync_WhenInitiatorAndRejectorAreSamePerson_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns(RequestedBy);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Approval");
+        }
+
+        #endregion
+
+        #region EnqueueYearEndCutOverRejectJobAsync — success
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverRejectJobAsync_WhenAllValid_ReturnsTrue()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueCutOverRejectBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(new BatchJobEventTriggerDto());
+
+            // Act
+            var result = await _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            result.Should().BeTrue();
+            await _yearEndRepository.Received(1).EnqueueCutOverRejectBatchJobAsync(
+                CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverRejectJobAsync_WhenAllValid_SendsRejectionEmail()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueCutOverRejectBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(new BatchJobEventTriggerDto());
+
+            // Act
+            await _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            await _emailService.Received(1).SendEmailAsync(
+                Arg.Is<EmailMessageModel>(m => m.To.Contains("cutover-rejection@example.com")),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverRejectJobAsync_WhenEmailFails_StillReturnsTrue()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
+            _yearEndRepository.EnqueueCutOverRejectBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(new BatchJobEventTriggerDto());
+
+            _emailService.SendEmailAsync(Arg.Any<EmailMessageModel>(), Arg.Any<CancellationToken>())
+                .Throws(new Exception("SMTP failure"));
+
+            // Act
+            var result = await _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
             result.Should().BeTrue();
         }
 

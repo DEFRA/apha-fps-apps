@@ -46,7 +46,17 @@ namespace Apha.FPSApps.Web.Components
                         selected: y.FpsYear == _fyContext.Year))
                     .ToList();
 
-                return View(new YearSelectorViewModel { Years = items, SelectedYear = _fyContext.Year });
+                // Get the selected year's status
+                var selectedYear = allYears?.FirstOrDefault(y => y.FpsYear == _fyContext.Year);
+                var selectedYearStatus = selectedYear?.YearStatus;
+
+                return View(new YearSelectorViewModel
+                {
+                    Years = items,
+                    SelectedYear = _fyContext.Year,
+                    SelectedYearStatus = selectedYearStatus,
+                    IsReadOnly = _fyContext.IsReadOnly
+                });
             }
             catch
             {
@@ -54,7 +64,9 @@ namespace Apha.FPSApps.Web.Components
                 return View(new YearSelectorViewModel
                 {
                     Years = [],
-                    SelectedYear = _fyContext.Year
+                    SelectedYear = _fyContext.Year,
+                    SelectedYearStatus = null,
+                    IsReadOnly = _fyContext.IsReadOnly
                 });
             }
         }

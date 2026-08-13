@@ -100,9 +100,10 @@ function getTimeCodeGridManager() {
 // Portfolio Change Handler
 function onPortfolioChange(parentProject) {
     if (parentProject) {
-        window.location.href = '/PACT/PortfolioTimeCodes/Index?parentProject=' + encodeURIComponent(parentProject);
+        window.fpsNavigateTo('/PACT/PortfolioTimeCodes/Index?parentProject=' + encodeURIComponent(parentProject));
+
     } else {
-        window.location.href = '/PACT/PortfolioTimeCodes/Index';
+        window.fpsNavigateTo('/PACT/PortfolioTimeCodes/Index');
     }
 }
 
