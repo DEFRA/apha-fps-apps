@@ -168,13 +168,12 @@ namespace Apha.PACT.DataAccess.Repository
                 Expression<Func<TestorProduct, bool>> isBlank =
                     e => e.TestManager == null || e.TestManager.Trim() == string.Empty;
 
-                var blankGrouped = query
-                    .OrderBy(isBlank)
-                    .ThenBy(e => e.TestManager);
+                if (descending)
+                {
+                    return query.OrderBy(isBlank).ThenByDescending(e => e.TestManager);
+                }
 
-                return descending
-                    ? query.OrderBy(isBlank).ThenByDescending(e => e.TestManager)
-                    : blankGrouped;
+                return query.OrderBy(isBlank).ThenBy(e => e.TestManager);
             }
 
             var sortMap = new Dictionary<string, Expression<Func<TestorProduct, object?>>>
