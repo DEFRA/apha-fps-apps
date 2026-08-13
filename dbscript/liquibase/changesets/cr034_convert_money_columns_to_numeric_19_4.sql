@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 --changeset repo-admin:CR034 labels:ddl context:all splitStatements:false runOnChange:true
---comment Convert every money column in the fps and mabarchive schemas to decimal(19,4) and rebuild all dependent views in one self-contained, idempotent pass.
+--comment Convert every money column in the fps and mabarchive schemas to numeric(19,4) and rebuild all dependent views in one self-contained, idempotent pass.
 -- Remove any helper procedures left behind by earlier iterations of this changeset.
 DROP PROCEDURE IF EXISTS public._m2d_convert_money_batch(text, text[]);
 DROP PROCEDURE IF EXISTS public._m2d_convert_money_all(text[]);
@@ -133,7 +133,7 @@ BEGIN
             tablename,
             string_agg(
                 format(
-                    'ALTER COLUMN %I TYPE decimal(19,4) USING %I::decimal(19,4)',
+                    'ALTER COLUMN %I TYPE numeric(19,4) USING %I::numeric(19,4)',
                     a.attname,
                     a.attname
                 ),
@@ -158,8 +158,8 @@ BEGIN
     -- the views that reference them.
     -- pg_get_viewdef freezes any implicit money coercions into the definition
     -- text (e.g. a CASE/COALESCE literal becomes '(0)::money'). Since the
-    -- underlying columns are now decimal(19,4), those frozen '::money' casts
-    -- would fail to unify. Rewrite them to '::decimal(19,4)' so every branch
+    -- underlying columns are now numeric(19,4), those frozen '::money' casts
+    -- would fail to unify. Rewrite them to '::numeric(19,4)' so every branch
     -- matches the converted columns.
     FOR view_rec IN
         SELECT schemaname, viewname, view_definition
@@ -170,7 +170,7 @@ BEGIN
             'CREATE VIEW %I.%I AS %s',
             view_rec.schemaname,
             view_rec.viewname,
-            replace(view_rec.view_definition, '::money', '::decimal(19,4)')
+            replace(view_rec.view_definition, '::money', '::numeric(19,4)')
         );
         EXECUTE recreate_sql;
         RAISE NOTICE 'Recreated view %.%', view_rec.schemaname, view_rec.viewname;
