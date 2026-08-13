@@ -58,29 +58,33 @@ function getInvoiceFilters() {
 
 // ── CRUD Functions ─────────────────────────────────────────────────
 function addInvoice() {
-    $.get('/PACT/Invoice/GetInvoice',
-        { id: 0, parentProject: currentParentProject || '' },
-        function (html) {
+    $.ajax({
+        url: '/PACT/Invoice/GetInvoice',
+        type: 'GET',
+        data: { id: 0, parentProject: currentParentProject || '' },
+        success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             // Initialize form validation (unobtrusive + numeric)
             initializeFormValidation('#invoiceForm');
-        })
-        .fail(function(xhr, status, error) {
-            showAlertMessage('Error loading form: ' + error, AlertType.ERROR);
-        });
+        },
+        error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+    });
 }
 
 function editInvoice(btn) {
     var id = $(btn).data('id');
-    $.get('/PACT/Invoice/GetInvoice', { id: id }, function (html) {
-        $('#modaPopupBody').html(html);
-        $('#modalPopup').addClass('show');
-        // Initialize form validation (unobtrusive + numeric)
-        initializeFormValidation('#invoiceForm');
-    })
-    .fail(function(xhr, status, error) {
-        showAlertMessage('Error loading form: ' + error, AlertType.ERROR);
+    $.ajax({
+        url: '/PACT/Invoice/GetInvoice',
+        type: 'GET',
+        data: { id: id },
+        success: function (html) {
+            $('#modaPopupBody').html(html);
+            $('#modalPopup').addClass('show');
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#invoiceForm');
+        },
+        error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
 }
 
