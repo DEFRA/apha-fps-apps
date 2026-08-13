@@ -191,6 +191,74 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DepartmentIncomeServic
 
         #endregion
 
+        // ── GetTestSnapshotIncomeAsync ──────────────────────────────────────────
+
+        #region GetTestSnapshotIncomeAsync
+
+        [Fact]
+        public async Task GetTestSnapshotIncomeAsync_ApiClientReturnsSuccess_ReturnsDelegatedSuccessResponse()
+        {
+            // Arrange
+            var expected = TestSuccess();
+            _fpsDepartmentIncomeApiClient.GetTestSnapshotIncomeAsync(TestProject, 1, 6).Returns(expected);
+
+            // Act
+            var result = await _service.GetTestSnapshotIncomeAsync(TestProject, 1, 6);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _fpsDepartmentIncomeApiClient.Received(1).GetTestSnapshotIncomeAsync(TestProject, 1, 6);
+        }
+
+        [Fact]
+        public async Task GetTestSnapshotIncomeAsync_ApiClientReturnsFailure_ReturnsDelegatedFailureResponse()
+        {
+            // Arrange
+            var failure = ApiResponseDto<List<DepartmentIncomeTestDto>>.FailureResponse(Errors(), new ApiMetaDto());
+            _fpsDepartmentIncomeApiClient
+                .GetTestSnapshotIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(failure);
+
+            // Act
+            var result = await _service.GetTestSnapshotIncomeAsync(TestProject, 1, 6);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotEmpty(result.Errors!);
+        }
+
+        [Fact]
+        public async Task GetTestSnapshotIncomeAsync_NullParams_DelegatesToApiClientWithNulls()
+        {
+            // Arrange
+            _fpsDepartmentIncomeApiClient.GetTestSnapshotIncomeAsync(null, null, null)
+                .Returns(ApiResponseDto<List<DepartmentIncomeTestDto>>.SuccessResponse(new List<DepartmentIncomeTestDto>()));
+
+            // Act
+            await _service.GetTestSnapshotIncomeAsync(null, null, null);
+
+            // Assert
+            await _fpsDepartmentIncomeApiClient.Received(1).GetTestSnapshotIncomeAsync(null, null, null);
+        }
+
+        [Fact]
+        public async Task GetTestSnapshotIncomeAsync_ApiClientReturnsEmptyList_ReturnsSuccessWithEmpty()
+        {
+            // Arrange
+            var empty = ApiResponseDto<List<DepartmentIncomeTestDto>>.SuccessResponse(new List<DepartmentIncomeTestDto>());
+            _fpsDepartmentIncomeApiClient.GetTestSnapshotIncomeAsync(null, null, null).Returns(empty);
+
+            // Act
+            var result = await _service.GetTestSnapshotIncomeAsync(null, null, null);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        #endregion
+
         // ── GetAnimalIncomeAsync ────────────────────────────────────────────────
 
         #region GetAnimalIncomeAsync

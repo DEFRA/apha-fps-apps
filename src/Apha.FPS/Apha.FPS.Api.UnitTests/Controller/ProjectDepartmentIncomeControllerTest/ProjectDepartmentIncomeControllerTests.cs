@@ -374,6 +374,65 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectDepartmentIncomeControllerTes
 
         #endregion
 
+        // ── GetSnapshotTestsAsync ───────────────────────────────────────────────
+
+        #region GetSnapshotTestsAsync
+
+        [Fact]
+        public async Task GetSnapshotTestsAsync_ServiceReturnsData_ReturnsOkWithMappedList()
+        {
+            // Arrange
+            const int startPeriod = 1;
+            const int endPeriod   = 6;
+            var dtos = MakeTestDtos();
+            var res  = MakeTestRes();
+
+            _service.GetTestSnapshotIncomeAsync(TestProject, startPeriod, endPeriod).Returns(dtos);
+            _mapper.Map<List<DepartmentIncomeTestRes>>(dtos).Returns(res);
+
+            // Act
+            var result = await _controller.GetSnapshotTestsAsync(TestProject, startPeriod, endPeriod);
+
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result);
+            var data = Assert.IsType<List<DepartmentIncomeTestRes>>(ok.Value);
+            Assert.Equal(2, data.Count);
+            await _service.Received(1).GetTestSnapshotIncomeAsync(TestProject, startPeriod, endPeriod);
+            _mapper.Received(1).Map<List<DepartmentIncomeTestRes>>(dtos);
+        }
+
+        [Fact]
+        public async Task GetSnapshotTestsAsync_ServiceReturnsEmpty_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            var dtos = new List<DepartmentIncomeTestDto>();
+            var res  = new List<DepartmentIncomeTestRes>();
+
+            _service.GetTestSnapshotIncomeAsync(null, 1, 12).Returns(dtos);
+            _mapper.Map<List<DepartmentIncomeTestRes>>(dtos).Returns(res);
+
+            // Act
+            var result = await _controller.GetSnapshotTestsAsync(null, 1, 12);
+
+            // Assert
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Empty(Assert.IsType<List<DepartmentIncomeTestRes>>(ok.Value));
+        }
+
+        [Fact]
+        public async Task GetSnapshotTestsAsync_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _service.GetTestSnapshotIncomeAsync(Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>())
+                .ThrowsAsync(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() =>
+                _controller.GetSnapshotTestsAsync(TestProject, TestMonthFrom, TestMonthTo));
+        }
+
+        #endregion
+
         // ── GetPeriodsAsync ─────────────────────────────────────────────────────
 
         #region GetPeriodsAsync

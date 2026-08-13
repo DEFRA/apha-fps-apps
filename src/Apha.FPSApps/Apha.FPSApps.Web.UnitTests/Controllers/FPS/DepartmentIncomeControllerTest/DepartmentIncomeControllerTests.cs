@@ -284,7 +284,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             var items = new List<DepartmentIncomeTestItem> { new() { Project = TestProject, Month = 1, TotalCost = 500m } };
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
 
-            _departmentIncomeService.GetTestIncomeAsync(TestProject, 1, 6)
+            _departmentIncomeService.GetTestSnapshotIncomeAsync(TestProject, 1, 6)
                 .Returns(ApiResponseDto<List<DepartmentIncomeTestDto>>.SuccessResponse(dtos));
             _mapper.Map<List<DepartmentIncomeTestItem>>(dtos).Returns(items);
 
@@ -301,12 +301,49 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
-            _departmentIncomeService.GetTestIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+            _departmentIncomeService.GetTestSnapshotIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
                 .Returns(ApiResponseDto<List<DepartmentIncomeTestDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
             // Act
             var result = await _controller.LoadGrid(request, "qryDeptIncomeTest", TestProject, 1, 6, "snapshot");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
+        }
+
+        [Fact]
+        public async Task LoadGrid_QueryTypeTest_SourceCurrent_ServiceReturnsData_ReturnsPartialViewWithRows()
+        {
+            // Arrange
+            var dtos  = new List<DepartmentIncomeTestDto> { new() { Project = TestProject, Month = 1, TotalCost = 500m } };
+            var items = new List<DepartmentIncomeTestItem> { new() { Project = TestProject, Month = 1, TotalCost = 500m } };
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+
+            _departmentIncomeService.GetTestIncomeCurrentAsync(TestProject, 1, 6)
+                .Returns(ApiResponseDto<List<DepartmentIncomeTestDto>>.SuccessResponse(dtos));
+            _mapper.Map<List<DepartmentIncomeTestItem>>(dtos).Returns(items);
+
+            // Act
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTest", TestProject, 1, 6, "current");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
+        }
+
+        [Fact]
+        public async Task LoadGrid_QueryTypeTest_SourceCurrent_ServiceReturnsFailure_ReturnsPartialViewWithEmptyGrid()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            _departmentIncomeService.GetTestIncomeCurrentAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(ApiResponseDto<List<DepartmentIncomeTestDto>>.FailureResponse(
+                    new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTest", TestProject, 1, 6, "current");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
