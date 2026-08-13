@@ -16,12 +16,8 @@ public sealed class MyFpsYearlyDataService : IMyFpsYearlyDataService
     private readonly BatchJobsDbContext _context;
     private readonly ILogger<MyFpsYearlyDataService> _logger;
     private readonly IReadOnlyList<IMabArchiveLoader> _orderedLoaders;
-    private readonly IMabArchiveLoader _gTlkpProjectLoader;
-    private readonly IMabArchiveLoader _myTlkpProjectLoader;
     private readonly IMabArchiveLoader _projectAllLoader;
     private const int ExpectedLoaderCount = 24;
-    private const int GTlkpProjectSequence = 2;
-    private const int MyTlkpProjectSequence = 3;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MyFpsYearlyDataService"/> class.
@@ -63,8 +59,6 @@ public sealed class MyFpsYearlyDataService : IMyFpsYearlyDataService
             throw new InvalidOperationException("MABArchive loader sequence must be contiguous from 1 to 24.");
         }
 
-        _gTlkpProjectLoader = loaderList.Single(l => l.Sequence == GTlkpProjectSequence);
-        _myTlkpProjectLoader = loaderList.Single(l => l.Sequence == MyTlkpProjectSequence);
         _projectAllLoader = loaderList.Single(l => l.Sequence == ExpectedLoaderCount);
         _orderedLoaders = loaderList;
     }
@@ -202,48 +196,33 @@ public sealed class MyFpsYearlyDataService : IMyFpsYearlyDataService
     }
 
     /// <summary>
-    /// Refreshes project master (g_tlkpproject), project lookup (my_tlkpproject), and
-    /// project cross-reference (my_tlkpproject_all) data for the specified year.
-    /// Does not touch FPS totals or MABArchive transactional archive data.
+    /// Refreshes project cross-reference (my_tlkpproject_all) data for the specified year.
+    /// Does not touch FPS totals, MABArchive transactional archive data, g_tlkpproject, or my_tlkpproject.
+    /// Matches legacy sp_LoadFromFPS parity: the future/Planned-year branch only ever called
+    /// sp_AddMY_tlkpProject_All. g_tlkpproject and my_tlkpproject are refreshed only as part of the
+    /// Open year's full LoadYearDataAsync fan-out.
     /// Must be executed inside the caller's orchestration transaction.
     /// </summary>
     /// <param name="year">Target year to refresh.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Total rows affected across g_tlkpproject, my_tlkpproject, and my_tlkpproject_all.</returns>
+    /// <returns>Total rows affected in my_tlkpproject_all.</returns>
     public async Task<int> RefreshProjectsOnlyAsync(int year, CancellationToken cancellationToken)
     {
         var targetYear = year;
 
-        _logger.LogInformation("Refreshing project master/lookup/cross-reference data for year {Year}", targetYear);
+        _logger.LogInformation("Refreshing project cross-reference data (my_tlkpproject_all) for year {Year}", targetYear);
 
         try
         {
-            var totalRowsAffected = 0;
-
-            // g_tlkpproject is global (no year column) and upsert-only; never delete it.
-            var projectMasterRows = await _gTlkpProjectLoader.LoadAsync(_context, targetYear, cancellationToken);
-            totalRowsAffected += projectMasterRows;
-            _logger.LogInformation("Refreshed {RowCount} rows in g_tlkpproject for year {Year}", projectMasterRows, targetYear);
-
-            var deletedProjectRows = await _context.MaDstMyTlkpProject
-                .Where(x => x.Year == targetYear)
-                .ExecuteDeleteAsync(cancellationToken);
-            _logger.LogInformation("Deleted {RowCount} rows in my_tlkpproject for year {Year} prior to refresh", deletedProjectRows, targetYear);
-
-            var projectLookupRows = await _myTlkpProjectLoader.LoadAsync(_context, targetYear, cancellationToken);
-            totalRowsAffected += projectLookupRows;
-            _logger.LogInformation("Refreshed {RowCount} rows in my_tlkpproject for year {Year}", projectLookupRows, targetYear);
-
             var deletedProjectAllRows = await _context.MaDstMyTlkpProjectAll
                 .Where(x => x.Year == targetYear)
                 .ExecuteDeleteAsync(cancellationToken);
             _logger.LogInformation("Deleted {RowCount} rows in my_tlkpproject_all for year {Year} prior to refresh", deletedProjectAllRows, targetYear);
 
             var projectAllRows = await _projectAllLoader.LoadAsync(_context, targetYear, cancellationToken);
-            totalRowsAffected += projectAllRows;
             _logger.LogInformation("Refreshed {RowCount} rows in my_tlkpproject_all for year {Year}", projectAllRows, targetYear);
 
-            return totalRowsAffected;
+            return projectAllRows;
         }
         catch (Exception ex)
         {

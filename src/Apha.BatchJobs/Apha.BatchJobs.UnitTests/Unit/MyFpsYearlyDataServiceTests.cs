@@ -164,7 +164,7 @@ public sealed class MyFpsYearlyDataServiceTests
     }
 
     [Fact]
-    public async Task RefreshProjectsOnlyAsync_WhenLoaders2And3And24ReturnRows_ShouldAggregateRows_AndRollback()
+    public async Task RefreshProjectsOnlyAsync_WhenLoader24ReturnsRows_ShouldReturnRows_AndRollback()
     {
         await using var context = CreatePostgresContext(GetConnectionString());
         await AssertCanConnectAsync(context);
@@ -174,7 +174,7 @@ public sealed class MyFpsYearlyDataServiceTests
         var loaders = Enumerable.Range(1, 24)
             .Select(i => CreateLoader(i, $"Loader-{i}", (_, year, _) =>
             {
-                if (i is 2 or 3 or 24)
+                if (i == 24)
                 {
                     invokedSequenceYears[i] = year;
                     return Task.FromResult(i);
@@ -193,11 +193,12 @@ public sealed class MyFpsYearlyDataServiceTests
         var rows = await subject.RefreshProjectsOnlyAsync(1900, CancellationToken.None);
         await transaction.RollbackAsync();
 
-        Assert.Equal(2 + 3 + 24, rows);
-        Assert.Equal(new Dictionary<int, int> { [2] = 1900, [3] = 1900, [24] = 1900 }, invokedSequenceYears);
+        Assert.Equal(24, rows);
 
-        // Only loaders 2, 3, and 24 (project master/lookup/cross-reference) run; nothing else does.
-        Assert.Equal(3, invokedSequenceYears.Count);
+        // Legacy sp_LoadFromFPS parity: only loader 24 (my_tlkpproject_all) runs for the
+        // Planned-year path. g_tlkpproject (loader 2) and my_tlkpproject (loader 3) are
+        // never touched here — they only refresh as part of the Open year's full load.
+        Assert.Equal(new Dictionary<int, int> { [24] = 1900 }, invokedSequenceYears);
     }
 
     [Fact]
