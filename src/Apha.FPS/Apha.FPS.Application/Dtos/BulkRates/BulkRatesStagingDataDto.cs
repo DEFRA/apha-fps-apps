@@ -7,9 +7,9 @@ namespace Apha.FPS.Application.Dtos.BulkRates
     /// </summary>
     public class BulkRatesStagingDataDto
     {
-        public IReadOnlyList<BulkRatesStagingFecRowDto> FecRows { get; set; } = [];
-        public IReadOnlyList<BulkRatesStagingAgrupRowDto> AgrupRows { get; set; } = [];
-        public IReadOnlyList<BulkRatesStagingStaffRowDto> StaffRows { get; set; } = [];
-        public IReadOnlyList<BulkRatesStagingAnimalRowDto> AnimalRows { get; set; } = [];
+        public IReadOnlyList<BulkRatesFecStagingRowDto> FecRows { get; set; } = [];
+        public IReadOnlyList<BulkRatesAgrupStagingRowDto> AgrupRows { get; set; } = [];
+        public IReadOnlyList<BulkRatesStaffStagingRowDto> StaffRows { get; set; } = [];
+        public IReadOnlyList<BulkRatesAnimalStagingRowDto> AnimalRows { get; set; } = [];
     }
 }

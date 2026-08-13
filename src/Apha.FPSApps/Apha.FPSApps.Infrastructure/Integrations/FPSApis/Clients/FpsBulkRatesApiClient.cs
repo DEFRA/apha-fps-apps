@@ -1,4 +1,5 @@
 using Apha.Common.Constants;
+using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS.BulkRates;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
@@ -10,7 +11,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
     /// <summary>
     /// Infrastructure implementation of <see cref="IFpsBulkRatesApiClient"/>.
-    /// Calls the FPS API Bulk Rates endpoints (Phase 3).
+    /// Calls the FPS API Bulk Rates endpoints (Phase 3). Deserializes the shared
+    /// <c>Apha.Common.Contracts.FPS.BulkRates*</c> wire contracts and maps them onto this app's
+    /// own <c>Apha.FPSApps.Application.Dtos.FPS.BulkRates*</c> shapes via AutoMapper.
     /// </summary>
     public class FpsBulkRatesApiClient : IFpsBulkRatesApiClient
     {
@@ -27,9 +30,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<BulkRatesRequestDetailDto>> CreateRequestAsync(
             string jobName, int fpsYear)
         {
-            var response = await _http.PostAsync<object, BulkRatesRequestDetailDto>(
+            var response = await _http.PostAsync<CreateBulkRatesRequestReq, BulkRatesRequestDetailRes>(
                 FpsApiEndpoints.CreateBulkRatesRequest,
-                new { JobName = jobName, FpsYear = fpsYear });
+                new CreateBulkRatesRequestReq { JobName = jobName, FpsYear = fpsYear });
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
@@ -49,7 +52,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             content.Add(fileContent, "file", fileName);
 
             var url = string.Format(FpsApiEndpoints.UploadBulkRatesFile, jobExecutionId);
-            var response = await _http.PostMultipartAsync<BulkRatesUploadResultDto>(url, content);
+            var response = await _http.PostMultipartAsync<BulkRatesUploadResultRes>(url, content);
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<BulkRatesUploadResultDto>>(response);
@@ -62,7 +65,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<BulkRatesUploadResultDto>> GetValidationResultsAsync(Guid jobExecutionId)
         {
             var url = string.Format(FpsApiEndpoints.GetBulkRatesValidation, jobExecutionId);
-            var response = await _http.GetAsync<BulkRatesUploadResultDto>(url);
+            var response = await _http.GetAsync<BulkRatesUploadResultRes>(url);
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<BulkRatesUploadResultDto>>(response);
@@ -75,7 +78,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<BulkRatesRequestDetailDto>> ReleaseForApprovalAsync(Guid jobExecutionId)
         {
             var url = string.Format(FpsApiEndpoints.ReleaseBulkRatesRequest, jobExecutionId);
-            var response = await _http.PostAsync<object, BulkRatesRequestDetailDto>(url, new { });
+            var response = await _http.PostAsync<object, BulkRatesRequestDetailRes>(url, new { });
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
@@ -88,7 +91,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<BulkRatesRequestDetailDto>> ApproveAsync(Guid jobExecutionId)
         {
             var url = string.Format(FpsApiEndpoints.ApproveBulkRatesRequest, jobExecutionId);
-            var response = await _http.PostAsync<object, BulkRatesRequestDetailDto>(url, new { });
+            var response = await _http.PostAsync<object, BulkRatesRequestDetailRes>(url, new { });
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
@@ -101,8 +104,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<BulkRatesRequestDetailDto>> RejectAsync(Guid jobExecutionId, string reason)
         {
             var url = string.Format(FpsApiEndpoints.RejectBulkRatesRequest, jobExecutionId);
-            var response = await _http.PostAsync<object, BulkRatesRequestDetailDto>(
-                url, new { Reason = reason });
+            var response = await _http.PostAsync<RejectBulkRatesRequestReq, BulkRatesRequestDetailRes>(
+                url, new RejectBulkRatesRequestReq { Reason = reason });
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
@@ -115,8 +118,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<BulkRatesRequestDetailDto>> CancelAsync(Guid jobExecutionId, string? reason)
         {
             var url = string.Format(FpsApiEndpoints.CancelBulkRatesRequest, jobExecutionId);
-            var response = await _http.PostAsync<object, BulkRatesRequestDetailDto>(
-                url, new { Reason = reason });
+            var response = await _http.PostAsync<CancelBulkRatesRequestReq, BulkRatesRequestDetailRes>(
+                url, new CancelBulkRatesRequestReq { Reason = reason });
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
@@ -129,7 +132,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<BulkRatesRequestDetailDto?>> GetRequestAsync(Guid jobExecutionId)
         {
             var url = string.Format(FpsApiEndpoints.GetBulkRatesRequest, jobExecutionId);
-            var response = await _http.GetAsync<BulkRatesRequestDetailDto?>(url);
+            var response = await _http.GetAsync<BulkRatesRequestDetailRes?>(url);
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto?>>(response);
@@ -143,7 +146,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             QueryParameters<string> query, string? jobName = null, int? fpsYear = null, string? status = null)
         {
             var url = BuildGetRequestsUrl(jobName, fpsYear, status, query);
-            var response = await _http.GetAsync<List<BulkRatesQueueEntryDto>>(url);
+            var response = await _http.GetAsync<List<BulkRatesQueueEntryRes>>(url);
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<BulkRatesQueueEntryDto>>>(response);
@@ -156,7 +159,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<BulkRatesQueueEntryDto?>> GetActiveRequestAsync(string jobName)
         {
             var url = string.Format(FpsApiEndpoints.GetActiveBulkRatesRequest, Uri.EscapeDataString(jobName));
-            var response = await _http.GetAsync<BulkRatesQueueEntryDto?>(url);
+            var response = await _http.GetAsync<BulkRatesQueueEntryRes?>(url);
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<BulkRatesQueueEntryDto?>>(response);
@@ -169,7 +172,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<BulkRatesStagingDataDto>> GetStagingDataAsync(Guid jobExecutionId)
         {
             var url = string.Format(FpsApiEndpoints.GetBulkRatesStagingData, jobExecutionId);
-            var response = await _http.GetAsync<BulkRatesStagingDataDto>(url);
+            var response = await _http.GetAsync<BulkRatesStagingDataRes>(url);
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<BulkRatesStagingDataDto>>(response);

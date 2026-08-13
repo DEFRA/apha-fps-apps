@@ -1,6 +1,5 @@
 using Apha.FPS.Application.Dtos.BulkRates;
 using Apha.FPS.Application.Pagination;
-using Apha.FPS.Core.Entities.BulkRates;
 
 namespace Apha.FPS.Application.Interfaces
 {
@@ -44,7 +43,7 @@ namespace Apha.FPS.Application.Interfaces
             Guid jobExecutionId, CancellationToken ct = default);
 
         /// <summary>Server-side paged/sorted list, optionally filtered by job name, year and status.</summary>
-        Task<PaginatedResult<BulkRatesQueueEntry>> GetRequestsAsync(
+        Task<PaginatedResult<BulkRatesQueueEntryDto>> GetRequestsAsync(
             string? jobName, int? fpsYear, string? status,
             QueryParameters<string> query, CancellationToken ct = default);
 
@@ -80,7 +79,7 @@ namespace Apha.FPS.Application.Interfaces
         Task<byte[]> DownloadAnimalTestDataAsync(Guid jobExecutionId, CancellationToken ct = default);
 
         /// <summary>Returns the currently active (blocking-status) request for jobName, or null if none exists.</summary>
-        Task<BulkRatesQueueEntry?> GetActiveRequestAsync(string jobName, CancellationToken ct = default);
+        Task<BulkRatesQueueEntryDto?> GetActiveRequestAsync(string jobName, CancellationToken ct = default);
 
         /// <summary>
         /// Returns the staged FEC/AGRUP rows for a request's "FEC Data (Staging)" / "Agrup Details" grids,

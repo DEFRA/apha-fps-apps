@@ -1,20 +1,18 @@
-using Apha.FPS.Application.Services.BulkRates.Validation;
-using Apha.FPS.Application.Services.BulkRates.Validation.StaffAnimal;
 using Apha.Common.Constants;
-using Apha.FPS.Core.Entities.BulkRates;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 
 namespace Apha.FPS.Application.Services
 {
     /// <summary>
     /// Orchestrates Bulk Rates upload/release validation. FEC/AGRUP business rules live in
-    /// <see cref="Services.BulkRates.Validation.IBulkRatesValidationService"/> —
+    /// <see cref="IBulkRatesValidationService"/> —
     /// this class's job is to build that service's ValidationContext from bulk
     /// repository reads plus the parsed/staged rows, call it once, and map the returned
     /// ValidationFinding list onto StagingValidationError/BulkRatesRowCounts. It must not
     /// reimplement any FEC/AGRUP rule itself ("every item... calls the shared validator
     /// rather than implementing its own copy"). Staff/Animal rules live the same way in
-    /// <see cref="Services.BulkRates.Validation.StaffAnimal.IStaffAnimalValidationService"/>
+    /// <see cref="IStaffAnimalValidationService"/>
     /// — a parallel, differently-shaped service, not the
     /// ValidationContext.
     /// </summary>
@@ -88,11 +86,11 @@ namespace Apha.FPS.Application.Services
         /// This is a safety net: live reference data can drift between upload and release, so
         /// release must not blindly trust the validation errors recorded at upload time.
         /// </summary>
-        public async Task<BulkRatesFreezeResult> BuildFreezeAsync(
+        public async Task<BulkRatesTestFreezeResult> BuildFreezeAsync(
             Guid jobQueueId, int fpsYear, int uploadVersion, int? downloadVersion, CancellationToken ct = default)
         {
-            var fecRows = await _repository.GetFecStagingRowsAsync(jobQueueId, ct);
-            var agrupRows = await _repository.GetAgrupStagingRowsAsync(jobQueueId, ct);
+            var fecRows = await _repository.GetTestOrProductStagingRowsAsync(jobQueueId, ct);
+            var agrupRows = await _repository.GetTestRequirementStagingRowsAsync(jobQueueId, ct);
 
             var context = await BuildContextAsync(
                 jobQueueId, fpsYear, uploadVersion, downloadVersion, fecRows, agrupRows,
@@ -106,7 +104,7 @@ namespace Apha.FPS.Application.Services
                 .Select(f =>
                 {
                     context.LiveFecLookup.TryGetValue(BulkRatesValidationKeys.TestCode(f.BusinessKey!), out var live);
-                    return new BulkRatesFreezeEntry(f.BusinessKey!, null, f.CalculatedAction!, f.EffectiveNewRate, live?.DefraUnitPrice);
+                    return new TestFreezeEntry(f.BusinessKey!, null, f.CalculatedAction!, f.EffectiveNewRate, live?.DefraUnitPrice);
                 })
                 .ToList();
 
@@ -116,11 +114,11 @@ namespace Apha.FPS.Application.Services
                 {
                     var (testCode, buyer) = SplitBusinessKey(f.Sheet, f.BusinessKey);
                     context.LiveAgrupLookup.TryGetValue(BulkRatesValidationKeys.AgrupKey(testCode!, buyer!), out var live);
-                    return new BulkRatesFreezeEntry(testCode!, buyer, f.CalculatedAction!, f.EffectiveNewRate, live?.UnitPrice);
+                    return new TestFreezeEntry(testCode!, buyer, f.CalculatedAction!, f.EffectiveNewRate, live?.UnitPrice);
                 })
                 .ToList();
 
-            return new BulkRatesFreezeResult
+            return new BulkRatesTestFreezeResult
             {
                 BlockingErrors = blockingErrors,
                 FecFreezes = fecFreezes,
@@ -138,7 +136,7 @@ namespace Apha.FPS.Application.Services
         public async Task<BulkRatesStaffFreezeResult> BuildStaffFreezeAsync(
             Guid jobQueueId, int fpsYear, CancellationToken ct = default)
         {
-            var stagedRows = await _repository.GetStaffStagingRowsAsync(jobQueueId, ct);
+            var stagedRows = await _repository.GetProfitCentreGradeStagingRowsAsync(jobQueueId, ct);
             var context = await BuildStaffAnimalContextAsync(jobQueueId, fpsYear, stagedRows, [], ct);
             var result = _staffAnimalValidationService.Validate(context);
 
@@ -189,8 +187,8 @@ namespace Apha.FPS.Application.Services
         public async Task<IReadOnlyList<ValidationFinding>> GetCalculatedActionsAsync(
             Guid jobQueueId, int fpsYear, int uploadVersion, int? downloadVersion, CancellationToken ct = default)
         {
-            var fecRows = await _repository.GetFecStagingRowsAsync(jobQueueId, ct);
-            var agrupRows = await _repository.GetAgrupStagingRowsAsync(jobQueueId, ct);
+            var fecRows = await _repository.GetTestOrProductStagingRowsAsync(jobQueueId, ct);
+            var agrupRows = await _repository.GetTestRequirementStagingRowsAsync(jobQueueId, ct);
 
             var context = await BuildContextAsync(
                 jobQueueId, fpsYear, uploadVersion, downloadVersion, fecRows, agrupRows,
@@ -205,7 +203,7 @@ namespace Apha.FPS.Application.Services
 
         private async Task<BulkRatesValidationResult> ValidateFecAsync(
             Guid jobQueueId, int fpsYear, int uploadVersion, int? downloadVersion,
-            IReadOnlyList<FecStagingRow> fecRows, IReadOnlyList<AgrupStagingRow> agrupRows,
+            IReadOnlyList<TestOrProductStagingRow> fecRows, IReadOnlyList<TestRequirementStagingRow> agrupRows,
             CancellationToken ct)
         {
             var context = await BuildContextAsync(
@@ -234,7 +232,7 @@ namespace Apha.FPS.Application.Services
         /// </summary>
         private async Task<ValidationContext> BuildContextAsync(
             Guid jobQueueId, int fpsYear, int uploadVersion, int? downloadVersion,
-            IReadOnlyList<FecStagingRow> fecRows, IReadOnlyList<AgrupStagingRow> agrupRows,
+            IReadOnlyList<TestOrProductStagingRow> fecRows, IReadOnlyList<TestRequirementStagingRow> agrupRows,
             bool includeWorkerOnlyChecks, CancellationToken ct)
         {
             var liveFecRows = await _repository.GetFecRowsForExportAsync(fpsYear, ct);
@@ -398,7 +396,7 @@ namespace Apha.FPS.Application.Services
         // so those findings stay in the unmatched/top-of-page list by design, not by omission.
 
         private async Task<BulkRatesValidationResult> ValidateStaffAsync(
-            Guid jobQueueId, int fpsYear, IReadOnlyList<StaffStagingRow> rows, int uploadVersion, CancellationToken ct)
+            Guid jobQueueId, int fpsYear, IReadOnlyList<ProfitCentreGradeStagingRow> rows, int uploadVersion, CancellationToken ct)
         {
             var context = await BuildStaffAnimalContextAsync(jobQueueId, fpsYear, rows, [], ct);
             var result = _staffAnimalValidationService.Validate(context);
@@ -440,7 +438,7 @@ namespace Apha.FPS.Application.Services
         /// </summary>
         private async Task<StaffAnimalValidationContext> BuildStaffAnimalContextAsync(
             Guid jobQueueId, int fpsYear,
-            IReadOnlyList<StaffStagingRow> stagedStaffRows,
+            IReadOnlyList<ProfitCentreGradeStagingRow> stagedStaffRows,
             IReadOnlyList<AnimalStagingRow> stagedAnimalRows,
             CancellationToken ct)
         {

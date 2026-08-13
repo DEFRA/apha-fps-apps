@@ -15,7 +15,7 @@ namespace Apha.FPSApps.Application.Dtos.FPS.BulkRates
     }
 
     /// <summary>
-    /// Mirrors <c>BulkRatesQueueEntry</c> (Apha.FPS.Core) as serialised over the wire.
+    /// Mirrors <c>BulkRatesQueueEntryDto</c> (Apha.FPS.Application) as serialised over the wire.
     /// </summary>
     public class BulkRatesQueueEntryDto
     {
@@ -47,6 +47,7 @@ namespace Apha.FPSApps.Application.Dtos.FPS.BulkRates
         public DateTime? EndDateTime { get; set; }
         public string? ErrorMessage { get; set; }
         public string? FailureReason { get; set; }
+        public int? ActiveDownloadVersion { get; set; }
     }
 
     /// <summary>
@@ -72,7 +73,7 @@ namespace Apha.FPSApps.Application.Dtos.FPS.BulkRates
     }
 
     /// <summary>
-    /// Mirrors <c>BulkRatesQueueLog</c> as serialised over the wire.
+    /// Mirrors <c>BulkRatesQueueLogDto</c> (Apha.FPS.Application) as serialised over the wire.
     /// </summary>
     public class BulkRatesQueueLogDto
     {
@@ -86,14 +87,14 @@ namespace Apha.FPSApps.Application.Dtos.FPS.BulkRates
     /// <summary>Mirrors <c>BulkRatesStagingDataDto</c> (Apha.FPS.Application) as serialised over the wire.</summary>
     public class BulkRatesStagingDataDto
     {
-        public List<BulkRatesStagingFecRowDto> FecRows { get; set; } = [];
-        public List<BulkRatesStagingAgrupRowDto> AgrupRows { get; set; } = [];
-        public List<BulkRatesStagingStaffRowDto> StaffRows { get; set; } = [];
-        public List<BulkRatesStagingAnimalRowDto> AnimalRows { get; set; } = [];
+        public List<BulkRatesFecStagingRowDto> FecRows { get; set; } = [];
+        public List<BulkRatesAgrupStagingRowDto> AgrupRows { get; set; } = [];
+        public List<BulkRatesStaffStagingRowDto> StaffRows { get; set; } = [];
+        public List<BulkRatesAnimalStagingRowDto> AnimalRows { get; set; } = [];
     }
 
-    /// <summary>Mirrors <c>BulkRatesStagingFecRowDto</c> (Apha.FPS.Application) as serialised over the wire.</summary>
-    public class BulkRatesStagingFecRowDto
+    /// <summary>Mirrors <c>BulkRatesFecStagingRowDto</c> (Apha.FPS.Application) as serialised over the wire.</summary>
+    public class BulkRatesFecStagingRowDto
     {
         public string Status { get; set; } = string.Empty;
         public string TestCode { get; set; } = string.Empty;
@@ -106,8 +107,8 @@ namespace Apha.FPSApps.Application.Dtos.FPS.BulkRates
         public string? Comments { get; set; }
     }
 
-    /// <summary>Mirrors <c>BulkRatesStagingAgrupRowDto</c> (Apha.FPS.Application) as serialised over the wire.</summary>
-    public class BulkRatesStagingAgrupRowDto
+    /// <summary>Mirrors <c>BulkRatesAgrupStagingRowDto</c> (Apha.FPS.Application) as serialised over the wire.</summary>
+    public class BulkRatesAgrupStagingRowDto
     {
         public string Status { get; set; } = string.Empty;
         public string TestCode { get; set; } = string.Empty;
@@ -120,8 +121,8 @@ namespace Apha.FPSApps.Application.Dtos.FPS.BulkRates
         public string? Comments { get; set; }
     }
 
-    /// <summary>Mirrors <c>BulkRatesStagingStaffRowDto</c> (Apha.FPS.Application) as serialised over the wire.</summary>
-    public class BulkRatesStagingStaffRowDto
+    /// <summary>Mirrors <c>BulkRatesStaffStagingRowDto</c> (Apha.FPS.Application) as serialised over the wire.</summary>
+    public class BulkRatesStaffStagingRowDto
     {
         public string Status { get; set; } = string.Empty;
         public string PcGrade { get; set; } = string.Empty;
@@ -133,8 +134,8 @@ namespace Apha.FPSApps.Application.Dtos.FPS.BulkRates
         public decimal? OhrNew { get; set; }
     }
 
-    /// <summary>Mirrors <c>BulkRatesStagingAnimalRowDto</c> (Apha.FPS.Application) as serialised over the wire.</summary>
-    public class BulkRatesStagingAnimalRowDto
+    /// <summary>Mirrors <c>BulkRatesAnimalStagingRowDto</c> (Apha.FPS.Application) as serialised over the wire.</summary>
+    public class BulkRatesAnimalStagingRowDto
     {
         public string Status { get; set; } = string.Empty;
         public string AnimalType { get; set; } = string.Empty;

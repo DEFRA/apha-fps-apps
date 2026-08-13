@@ -245,19 +245,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Request = requestData,
                 CurrentUserEmail = GetCurrentUserEmail(),
                 UploadResult = uploadResult,
-                FecStagingGrid = BuildStagingGridConfig<BulkRatesStagingFecRowDto, FecStagingGridItem>(
+                FecStagingGrid = BuildStagingGridConfig<BulkRatesFecStagingRowDto, FecStagingGridItem>(
                     staging.FecRows, defaultRequest, "fecStagingGrid", "TestCode",
                     FecStagingGridUrl(id), FecSortSelector,
                     BuildFecValidationLookup(uploadResult), r => r.TestCode),
-                AgrupStagingGrid = BuildStagingGridConfig<BulkRatesStagingAgrupRowDto, AgrupStagingGridItem>(
+                AgrupStagingGrid = BuildStagingGridConfig<BulkRatesAgrupStagingRowDto, AgrupStagingGridItem>(
                     staging.AgrupRows, defaultRequest, "agrupStagingGrid", "TestCode",
                     AgrupStagingGridUrl(id), AgrupSortSelector,
                     BuildAgrupValidationLookup(uploadResult), AgrupValidationKey),
-                StaffStagingGrid = BuildStagingGridConfig<BulkRatesStagingStaffRowDto, StaffStagingGridItem>(
+                StaffStagingGrid = BuildStagingGridConfig<BulkRatesStaffStagingRowDto, StaffStagingGridItem>(
                     staging.StaffRows, defaultRequest, "staffStagingGrid", "PcGrade",
                     StaffStagingGridUrl(id), StaffSortSelector,
                     BuildStaffValidationLookup(uploadResult), r => r.PcGrade),
-                AnimalStagingGrid = BuildStagingGridConfig<BulkRatesStagingAnimalRowDto, AnimalStagingGridItem>(
+                AnimalStagingGrid = BuildStagingGridConfig<BulkRatesAnimalStagingRowDto, AnimalStagingGridItem>(
                     staging.AnimalRows, defaultRequest, "animalStagingGrid", "AnimalType",
                     AnimalStagingGridUrl(id), AnimalSortSelector,
                     BuildAnimalValidationLookup(uploadResult), r => r.AnimalType)
@@ -279,7 +279,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var staging = await GetStagingDataOrEmptyAsync(jobExecutionId);
             var validationResponse = await _bulkRatesService.GetValidationResultsAsync(jobExecutionId);
-            var gridConfig = BuildStagingGridConfig<BulkRatesStagingFecRowDto, FecStagingGridItem>(
+            var gridConfig = BuildStagingGridConfig<BulkRatesFecStagingRowDto, FecStagingGridItem>(
                 staging.FecRows, request, "fecStagingGrid", "TestCode",
                 FecStagingGridUrl(jobExecutionId), FecSortSelector,
                 BuildFecValidationLookup(validationResponse.Success ? validationResponse.Data : null), r => r.TestCode);
@@ -294,7 +294,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var staging = await GetStagingDataOrEmptyAsync(jobExecutionId);
             var validationResponse = await _bulkRatesService.GetValidationResultsAsync(jobExecutionId);
-            var gridConfig = BuildStagingGridConfig<BulkRatesStagingAgrupRowDto, AgrupStagingGridItem>(
+            var gridConfig = BuildStagingGridConfig<BulkRatesAgrupStagingRowDto, AgrupStagingGridItem>(
                 staging.AgrupRows, request, "agrupStagingGrid", "TestCode",
                 AgrupStagingGridUrl(jobExecutionId), AgrupSortSelector,
                 BuildAgrupValidationLookup(validationResponse.Success ? validationResponse.Data : null), AgrupValidationKey);
@@ -309,7 +309,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var staging = await GetStagingDataOrEmptyAsync(jobExecutionId);
             var validationResponse = await _bulkRatesService.GetValidationResultsAsync(jobExecutionId);
-            var gridConfig = BuildStagingGridConfig<BulkRatesStagingStaffRowDto, StaffStagingGridItem>(
+            var gridConfig = BuildStagingGridConfig<BulkRatesStaffStagingRowDto, StaffStagingGridItem>(
                 staging.StaffRows, request, "staffStagingGrid", "PcGrade",
                 StaffStagingGridUrl(jobExecutionId), StaffSortSelector,
                 BuildStaffValidationLookup(validationResponse.Success ? validationResponse.Data : null), r => r.PcGrade);
@@ -324,7 +324,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var staging = await GetStagingDataOrEmptyAsync(jobExecutionId);
             var validationResponse = await _bulkRatesService.GetValidationResultsAsync(jobExecutionId);
-            var gridConfig = BuildStagingGridConfig<BulkRatesStagingAnimalRowDto, AnimalStagingGridItem>(
+            var gridConfig = BuildStagingGridConfig<BulkRatesAnimalStagingRowDto, AnimalStagingGridItem>(
                 staging.AnimalRows, request, "animalStagingGrid", "AnimalType",
                 AnimalStagingGridUrl(jobExecutionId), AnimalSortSelector,
                 BuildAnimalValidationLookup(validationResponse.Success ? validationResponse.Data : null), r => r.AnimalType);
@@ -342,7 +342,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private static string StaffStagingGridUrl(Guid id) => $"/FPS/BulkRates/LoadStaffStagingGrid?jobExecutionId={id}";
         private static string AnimalStagingGridUrl(Guid id) => $"/FPS/BulkRates/LoadAnimalStagingGrid?jobExecutionId={id}";
 
-        private static string AgrupValidationKey(BulkRatesStagingAgrupRowDto r) => $"{r.TestCode}|{r.Buyer}";
+        private static string AgrupValidationKey(BulkRatesAgrupStagingRowDto r) => $"{r.TestCode}|{r.Buyer}";
 
         // Row-level findings are matched onto a staged row by business key (TestCode for FEC,
         // TestCode+Buyer for AGRUP) so they can render inline in the grid instead of a separate
@@ -399,7 +399,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     StringComparer.OrdinalIgnoreCase);
         }
 
-        private static Func<BulkRatesStagingFecRowDto, object?> FecSortSelector(string? sortBy) => sortBy?.ToLowerInvariant() switch
+        private static Func<BulkRatesFecStagingRowDto, object?> FecSortSelector(string? sortBy) => sortBy?.ToLowerInvariant() switch
         {
             "status" => r => r.Status,
             "unitpricevla" => r => r.UnitPriceVla,
@@ -412,7 +412,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             _ => r => r.TestCode
         };
 
-        private static Func<BulkRatesStagingAgrupRowDto, object?> AgrupSortSelector(string? sortBy) => sortBy?.ToLowerInvariant() switch
+        private static Func<BulkRatesAgrupStagingRowDto, object?> AgrupSortSelector(string? sortBy) => sortBy?.ToLowerInvariant() switch
         {
             "status" => r => r.Status,
             "buyer" => r => r.Buyer,
@@ -425,7 +425,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             _ => r => r.TestCode
         };
 
-        private static Func<BulkRatesStagingStaffRowDto, object?> StaffSortSelector(string? sortBy) => sortBy?.ToLowerInvariant() switch
+        private static Func<BulkRatesStaffStagingRowDto, object?> StaffSortSelector(string? sortBy) => sortBy?.ToLowerInvariant() switch
         {
             "status" => r => r.Status,
             "payrate" => r => r.PayRate,
@@ -437,7 +437,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             _ => r => r.PcGrade
         };
 
-        private static Func<BulkRatesStagingAnimalRowDto, object?> AnimalSortSelector(string? sortBy) => sortBy?.ToLowerInvariant() switch
+        private static Func<BulkRatesAnimalStagingRowDto, object?> AnimalSortSelector(string? sortBy) => sortBy?.ToLowerInvariant() switch
         {
             "status" => r => r.Status,
             "species" => r => r.Species,

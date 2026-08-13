@@ -1,6 +1,7 @@
 using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Core.Interfaces;
+using AutoMapper;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -19,13 +20,15 @@ namespace Apha.FPS.Api.UnitTests.Controller.BulkRatesControllerTest
 
         private readonly IBulkRatesRequestService _service;
         private readonly IFpsRequestContext _requestContext;
+        private readonly IMapper _mapper;
         private readonly BulkRatesController _sut;
 
         public BulkRatesControllerTests()
         {
             _service = Substitute.For<IBulkRatesRequestService>();
             _requestContext = Substitute.For<IFpsRequestContext>();
-            _sut = new BulkRatesController(_service, _requestContext);
+            _mapper = Substitute.For<IMapper>();
+            _sut = new BulkRatesController(_service, _requestContext, _mapper);
         }
 
         [Fact]

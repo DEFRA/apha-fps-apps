@@ -1,5 +1,5 @@
 using Apha.Common.Constants;
-using Apha.FPS.Core.Entities.BulkRates;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
@@ -132,10 +132,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BulkRatesRepositoryTest
             // Two downloads both start Generating for the same request (e.g. one slow initial
             // load, one quick retry from a second tab) — version 1 starts first, version 2 second.
             var v1 = await repo.GetNextDownloadVersionAsync(jobQueueId);
-            await repo.CreateStaffDownloadSnapshotAsync(jobQueueId, v1, Array.Empty<StaffStagingRow>());
+            await repo.CreateStaffDownloadSnapshotAsync(jobQueueId, v1, Array.Empty<ProfitCentreGradeStagingRow>());
 
             var v2 = await repo.GetNextDownloadVersionAsync(jobQueueId);
-            await repo.CreateStaffDownloadSnapshotAsync(jobQueueId, v2, Array.Empty<StaffStagingRow>());
+            await repo.CreateStaffDownloadSnapshotAsync(jobQueueId, v2, Array.Empty<ProfitCentreGradeStagingRow>());
 
             // v2 (the newer, faster one) finishes and activates first.
             await repo.MarkDownloadReadyAsync(jobQueueId, v2);
@@ -159,12 +159,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BulkRatesRepositoryTest
             var jobQueueId = await CreateStaffRequestAsync(repo, fpsYear: 2024);
 
             var v1 = await repo.GetNextDownloadVersionAsync(jobQueueId);
-            await repo.CreateStaffDownloadSnapshotAsync(jobQueueId, v1, Array.Empty<StaffStagingRow>());
+            await repo.CreateStaffDownloadSnapshotAsync(jobQueueId, v1, Array.Empty<ProfitCentreGradeStagingRow>());
             await repo.MarkDownloadReadyAsync(jobQueueId, v1);
             Assert.Equal(v1, await ReadActiveDownloadVersionAsync(jobQueueId));
 
             var v2 = await repo.GetNextDownloadVersionAsync(jobQueueId);
-            await repo.CreateStaffDownloadSnapshotAsync(jobQueueId, v2, Array.Empty<StaffStagingRow>());
+            await repo.CreateStaffDownloadSnapshotAsync(jobQueueId, v2, Array.Empty<ProfitCentreGradeStagingRow>());
             await repo.MarkDownloadReadyAsync(jobQueueId, v2);
             Assert.Equal(v2, await ReadActiveDownloadVersionAsync(jobQueueId));
         }

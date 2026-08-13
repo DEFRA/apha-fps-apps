@@ -1,13 +1,12 @@
-using Apha.FPS.Application.Services.BulkRates.Validation;
-using Apha.FPS.Application.Services.BulkRates.Validation.StaffAnimal;
 using Apha.Common.Constants;
+using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Dtos.BulkRates;
 using Apha.FPS.Application.Services;
 using NSubstitute.ExceptionExtensions;
 using Apha.FPS.Application.Dtos.BulkRates;
 using Apha.FPS.Application.Validation;
-using Apha.FPS.Core.Entities.BulkRates;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -34,7 +33,7 @@ public class BulkRatesRequestServiceTests
 
     // Entry helpers
 
-    private static BulkRatesQueueEntry Entry(
+    private static BulkRatesQueueRow Entry(
         string status = "Initiated",
         string requestedBy = Initiator,
         string? approvedBy = null,
@@ -71,11 +70,11 @@ public class BulkRatesRequestServiceTests
 
     private static BulkRatesRequestService CreateService(
         IBulkRatesRepository? repo = null,
-        IEventBridgePublisher? eb = null,
+        IEventPublisherService? eb = null,
         IBulkRatesNotificationService? notif = null)
     {
         var r  = repo  ?? Substitute.For<IBulkRatesRepository>();
-        var e  = eb    ?? Substitute.For<IEventBridgePublisher>();
+        var e  = eb    ?? Substitute.For<IEventPublisherService>();
         var n  = notif ?? Substitute.For<IBulkRatesNotificationService>();
         return new BulkRatesRequestService(
             r,
@@ -88,7 +87,7 @@ public class BulkRatesRequestServiceTests
 
     // Repo stub that returns an entry and resolves status IDs
 
-    private static IBulkRatesRepository RepoReturning(BulkRatesQueueEntry entry)
+    private static IBulkRatesRepository RepoReturning(BulkRatesQueueRow entry)
     {
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetRequestAsync(QueueId, Arg.Any<CancellationToken>()).Returns(entry);
@@ -96,25 +95,25 @@ public class BulkRatesRequestServiceTests
         repo.GetFpsYearStatusAsync(FpsYear, Arg.Any<CancellationToken>()).Returns("Open");
         repo.GetStatusIdByNameAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((int?)42);
         repo.GetValidationErrorsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<StagingValidationError>() as IReadOnlyList<StagingValidationError>);
-        repo.GetJobQueueLogsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<BulkRatesQueueLog>() as IReadOnlyList<BulkRatesQueueLog>);
+        repo.GetJobQueueLogsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<BatchJobQueueLog>() as IReadOnlyList<BatchJobQueueLog>);
 
         // wiring (BulkRatesValidator.BuildContextAsync / BuildFreezeAsync) — default
         // to empty so Upload/Release exercise the real BulkRatesValidationService without any
         // live/staged data unless a test overrides one of these.
-        repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>()).Returns(Array.Empty<FecStagingRow>() as IReadOnlyList<FecStagingRow>);
-        repo.GetAgrupRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>()).Returns(Array.Empty<AgrupStagingRow>() as IReadOnlyList<AgrupStagingRow>);
+        repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>()).Returns(Array.Empty<TestOrProductStagingRow>() as IReadOnlyList<TestOrProductStagingRow>);
+        repo.GetAgrupRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>()).Returns(Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
         repo.GetExistingProjectCodesAsync(Arg.Any<IEnumerable<string>>(), FpsYear, Arg.Any<CancellationToken>()).Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) as IReadOnlySet<string>);
         repo.GetExistingCapabilityPairsAsync(Arg.Any<IEnumerable<(string, string)>>(), FpsYear, Arg.Any<CancellationToken>()).Returns(new HashSet<(string, string)>() as IReadOnlySet<(string, string)>);
-        repo.GetFecSnapshotRowsAsync(QueueId, Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<FecStagingRow>() as IReadOnlyList<FecStagingRow>);
-        repo.GetAgrupSnapshotRowsAsync(QueueId, Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<AgrupStagingRow>() as IReadOnlyList<AgrupStagingRow>);
-        repo.GetFecStagingRowsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<FecStagingRow>() as IReadOnlyList<FecStagingRow>);
-        repo.GetAgrupStagingRowsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<AgrupStagingRow>() as IReadOnlyList<AgrupStagingRow>);
+        repo.GetFecSnapshotRowsAsync(QueueId, Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<TestOrProductStagingRow>() as IReadOnlyList<TestOrProductStagingRow>);
+        repo.GetAgrupSnapshotRowsAsync(QueueId, Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
+        repo.GetTestOrProductStagingRowsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<TestOrProductStagingRow>() as IReadOnlyList<TestOrProductStagingRow>);
+        repo.GetTestRequirementStagingRowsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
 
         // (BulkRatesValidator.BuildStaffAnimalContextAsync) — same
         // "default empty" reasoning as the FEC/AGRUP stubs above.
-        repo.GetStaffRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>()).Returns(Array.Empty<StaffStagingRow>() as IReadOnlyList<StaffStagingRow>);
+        repo.GetStaffRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>()).Returns(Array.Empty<ProfitCentreGradeStagingRow>() as IReadOnlyList<ProfitCentreGradeStagingRow>);
         repo.GetAnimalRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>()).Returns(Array.Empty<AnimalStagingRow>() as IReadOnlyList<AnimalStagingRow>);
-        repo.GetStaffStagingRowsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<StaffStagingRow>() as IReadOnlyList<StaffStagingRow>);
+        repo.GetProfitCentreGradeStagingRowsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<ProfitCentreGradeStagingRow>() as IReadOnlyList<ProfitCentreGradeStagingRow>);
         repo.GetAnimalStagingRowsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<AnimalStagingRow>() as IReadOnlyList<AnimalStagingRow>);
         return repo;
     }
@@ -199,13 +198,13 @@ public class BulkRatesRequestServiceTests
     {
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetJobIdByNameAsync(BulkRatesJobNames.Fec, Arg.Any<CancellationToken>()).Returns((int?)10);
-        repo.GetActiveRequestAsync(BulkRatesJobNames.Fec, Arg.Any<CancellationToken>()).Returns((BulkRatesQueueEntry?)null);
+        repo.GetActiveRequestAsync(BulkRatesJobNames.Fec, Arg.Any<CancellationToken>()).Returns((BulkRatesQueueRow?)null);
         repo.GetFpsYearStatusAsync(FpsYear, Arg.Any<CancellationToken>()).Returns("Open");
         repo.GetStatusIdByNameAsync(10, "Initiated", Arg.Any<CancellationToken>()).Returns((int?)1);
         repo.CreateRequestAsync(
                 Arg.Any<Guid>(), Arg.Any<Guid>(), 10, 1, Initiator, Arg.Any<DateTime>(), FpsYear, Arg.Any<CancellationToken>())
             .Returns(Entry(status: "Initiated"));
-        repo.GetJobQueueLogsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<BulkRatesQueueLog>() as IReadOnlyList<BulkRatesQueueLog>);
+        repo.GetJobQueueLogsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<BatchJobQueueLog>() as IReadOnlyList<BatchJobQueueLog>);
         repo.GetValidationErrorsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<StagingValidationError>() as IReadOnlyList<StagingValidationError>);
 
         var svc = CreateService(repo);
@@ -269,19 +268,19 @@ public class BulkRatesRequestServiceTests
     public async Task Release_WhenFecJobValidationClean_FreezesCalculatedActionsAndTransitions()
     {
         var repo = RepoReturning(Entry(status: "Initiated", uploadChecksum: "abc"));
-        repo.GetFecStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(new[] { new FecStagingRow { TestCode = "TC001", FecNewRate = 15m } } as IReadOnlyList<FecStagingRow>);
+        repo.GetTestOrProductStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "TC001", FecNewRate = 15m } } as IReadOnlyList<TestOrProductStagingRow>);
         repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 10m, DefraUnitPrice = 10m } } as IReadOnlyList<FecStagingRow>);
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 10m, DefraUnitPrice = 10m } } as IReadOnlyList<TestOrProductStagingRow>);
         var svc = CreateService(repo);
 
         await svc.ReleaseForApprovalAsync(QueueId, Initiator);
 
         await repo.Received(1).FreezeStagingCalculatedActionsAsync(
             QueueId, 1,
-            Arg.Is<IReadOnlyList<BulkRatesFreezeEntry>>(list =>
+            Arg.Is<IReadOnlyList<TestFreezeEntry>>(list =>
                 list.Count == 1 && list[0].TestCode == "TC001" && list[0].CalculatedAction == ValidationCalculatedAction.Update),
-            Arg.Any<IReadOnlyList<BulkRatesFreezeEntry>>(),
+            Arg.Any<IReadOnlyList<TestFreezeEntry>>(),
             Arg.Any<CancellationToken>());
         await repo.Received(1).TransitionStatusAsync(QueueId, 1, 42, Arg.Any<CancellationToken>());
     }
@@ -293,8 +292,8 @@ public class BulkRatesRequestServiceTests
         // a fresh re-validation against current data catches this even though the errors
         // recorded at upload time (GetValidationErrorsAsync, stubbed empty) were clean.
         var repo = RepoReturning(Entry(status: "Initiated", uploadChecksum: "abc"));
-        repo.GetAgrupStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(new[] { new AgrupStagingRow { TestCode = "GONE", Buyer = "B1", AgrupNew = 10m } } as IReadOnlyList<AgrupStagingRow>);
+        repo.GetTestRequirementStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new TestRequirementStagingRow { TestCode = "GONE", Buyer = "B1", AgrupNew = 10m } } as IReadOnlyList<TestRequirementStagingRow>);
         var svc = CreateService(repo);
 
         await svc.Invoking(s => s.ReleaseForApprovalAsync(QueueId, Initiator))
@@ -303,7 +302,7 @@ public class BulkRatesRequestServiceTests
         await repo.DidNotReceive().TransitionStatusAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         await repo.DidNotReceive().FreezeStagingCalculatedActionsAsync(
             Arg.Any<Guid>(), Arg.Any<int>(),
-            Arg.Any<IReadOnlyList<BulkRatesFreezeEntry>>(), Arg.Any<IReadOnlyList<BulkRatesFreezeEntry>>(),
+            Arg.Any<IReadOnlyList<TestFreezeEntry>>(), Arg.Any<IReadOnlyList<TestFreezeEntry>>(),
             Arg.Any<CancellationToken>());
     }
 
@@ -318,7 +317,7 @@ public class BulkRatesRequestServiceTests
         // Downloaded snapshot recorded "TC-MISSING" at download time; staged FEC rows default
         // to empty (RepoReturning) — the re-upload silently dropped it.
         repo.GetFecSnapshotRowsAsync(QueueId, 1, Arg.Any<CancellationToken>())
-            .Returns(new[] { new FecStagingRow { TestCode = "TC-MISSING", DefraUnitPrice = 12m } } as IReadOnlyList<FecStagingRow>);
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "TC-MISSING", DefraUnitPrice = 12m } } as IReadOnlyList<TestOrProductStagingRow>);
         var svc = CreateService(repo);
 
         var ex = await svc.Invoking(s => s.ReleaseForApprovalAsync(QueueId, Initiator))
@@ -328,7 +327,7 @@ public class BulkRatesRequestServiceTests
         await repo.DidNotReceive().TransitionStatusAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         await repo.DidNotReceive().FreezeStagingCalculatedActionsAsync(
             Arg.Any<Guid>(), Arg.Any<int>(),
-            Arg.Any<IReadOnlyList<BulkRatesFreezeEntry>>(), Arg.Any<IReadOnlyList<BulkRatesFreezeEntry>>(),
+            Arg.Any<IReadOnlyList<TestFreezeEntry>>(), Arg.Any<IReadOnlyList<TestFreezeEntry>>(),
             Arg.Any<CancellationToken>());
     }
 
@@ -340,10 +339,10 @@ public class BulkRatesRequestServiceTests
         var entry = Entry(status: "Initiated", uploadChecksum: "abc");
         entry.JobName = Apha.Common.Constants.BulkRatesJobNames.Staff;
         var repo = RepoReturning(entry);
-        repo.GetStaffStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(new[] { new StaffStagingRow { PcGrade = "G1", PayRate = 150m } } as IReadOnlyList<StaffStagingRow>);
+        repo.GetProfitCentreGradeStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 150m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
         repo.GetStaffRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(new[] { new StaffStagingRow { PcGrade = "G1", PayRate = 100m } } as IReadOnlyList<StaffStagingRow>);
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 100m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
         var svc = CreateService(repo);
 
         await svc.ReleaseForApprovalAsync(QueueId, Initiator);
@@ -362,8 +361,8 @@ public class BulkRatesRequestServiceTests
         var entry = Entry(status: "Initiated", uploadChecksum: "abc");
         entry.JobName = Apha.Common.Constants.BulkRatesJobNames.Staff;
         var repo = RepoReturning(entry);
-        repo.GetStaffStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(new[] { new StaffStagingRow { PcGrade = "GONE", PayRate = 100m } } as IReadOnlyList<StaffStagingRow>);
+        repo.GetProfitCentreGradeStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "GONE", PayRate = 100m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
         // GetStaffRowsForExportAsync default (empty) — the grade no longer exists live.
         var svc = CreateService(repo);
 
@@ -540,12 +539,92 @@ public class BulkRatesRequestServiceTests
     public async Task GetRequest_WhenNotFound_ReturnsNull()
     {
         var repo = Substitute.For<IBulkRatesRepository>();
-        repo.GetRequestAsync(QueueId, Arg.Any<CancellationToken>()).Returns((BulkRatesQueueEntry?)null);
+        repo.GetRequestAsync(QueueId, Arg.Any<CancellationToken>()).Returns((BulkRatesQueueRow?)null);
         var svc = CreateService(repo);
 
         var result = await svc.GetRequestAsync(QueueId);
 
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetRequest_MapsEveryEntryLogAndMetadataFieldToTheApiDto()
+    {
+        // Every field populated with a distinct value so a swapped/dropped/blank mapping
+        // is caught — guards the Core.Entities -> Dto boundary fix (API-boundary correction).
+        var entry = new BulkRatesQueueRow
+        {
+            JobQueueId = QueueId,
+            JobId = 10,
+            JobName = JobName,
+            StatusId = 42,
+            Status = "Initiated",
+            JobExecutionId = ExecId,
+            RequestedBy = Initiator,
+            RequestedAtUtc = new DateTime(2027, 1, 1, 9, 0, 0, DateTimeKind.Utc),
+            FpsYear = FpsYear,
+            UploadFilename = "rates.xlsx",
+            UploadChecksumSha256 = "abc123",
+            UploadVersion = 3,
+            UploadValidatedAtUtc = new DateTime(2027, 1, 2, 9, 0, 0, DateTimeKind.Utc),
+            UploadRowCountsJson = """{"total":5,"valid":4,"invalid":1,"insert":2,"update":2,"unchanged":1}""",
+            ApprovedBy = Approver,
+            ApprovedAtUtc = new DateTime(2027, 1, 3, 9, 0, 0, DateTimeKind.Utc),
+            RejectedBy = "carol@test.com",
+            RejectedAtUtc = new DateTime(2027, 1, 4, 9, 0, 0, DateTimeKind.Utc),
+            RejectionReason = "rejection reason",
+            CancelledBy = "dave@test.com",
+            CancelledAtUtc = new DateTime(2027, 1, 5, 9, 0, 0, DateTimeKind.Utc),
+            CancellationReason = "cancellation reason",
+            TriggeredBy = "worker",
+            TriggeredAtUtc = new DateTime(2027, 1, 6, 9, 0, 0, DateTimeKind.Utc),
+            StartDateTime = new DateTime(2027, 1, 6, 9, 5, 0, DateTimeKind.Utc),
+            EndDateTime = new DateTime(2027, 1, 6, 9, 10, 0, DateTimeKind.Utc),
+            ErrorMessage = "error message",
+            FailureReason = "failure reason",
+            ActiveDownloadVersion = 7,
+        };
+        var logs = new List<BatchJobQueueLog>
+        {
+            new()
+            {
+                JobqueueLogId = 99,
+                JobqueueId = QueueId,
+                StatusId = 42,
+                PerformedBy = "eve@test.com",
+                Note = "log note",
+                LogTime = new DateTime(2027, 1, 1, 8, 0, 0, DateTimeKind.Utc),
+            },
+        };
+
+        var repo = Substitute.For<IBulkRatesRepository>();
+        repo.GetRequestAsync(QueueId, Arg.Any<CancellationToken>()).Returns(entry);
+        repo.GetJobQueueLogsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(logs as IReadOnlyList<BatchJobQueueLog>);
+        repo.GetValidationErrorsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<StagingValidationError>() as IReadOnlyList<StagingValidationError>);
+        var svc = CreateService(repo);
+
+        var result = await svc.GetRequestAsync(QueueId);
+
+        result.Should().NotBeNull();
+        result!.Entry.Should().BeEquivalentTo(entry, "BulkRatesQueueEntryDto must carry every Entry field through unchanged");
+        // BatchJobQueueLog -> BulkRatesQueueLogDto deliberately renames (JobqueueLogId->LogId,
+        // PerformedBy->Actor, LogTime->CreatedAtUtc), so field-by-field, not BeEquivalentTo(logs).
+        result.Log.Should().ContainSingle();
+        var resultLog = result.Log[0];
+        var sourceLog = logs[0];
+        resultLog.LogId.Should().Be(sourceLog.JobqueueLogId);
+        resultLog.JobQueueId.Should().Be(sourceLog.JobqueueId);
+        resultLog.Note.Should().Be(sourceLog.Note);
+        resultLog.Actor.Should().Be(sourceLog.PerformedBy);
+        resultLog.CreatedAtUtc.Should().Be(sourceLog.LogTime);
+        result.UploadMetadata.Should().NotBeNull();
+        result.UploadMetadata!.Filename.Should().Be(entry.UploadFilename);
+        result.UploadMetadata.ChecksumSha256.Should().Be(entry.UploadChecksumSha256);
+        result.UploadMetadata.UploadVersion.Should().Be(entry.UploadVersion);
+        result.UploadMetadata.ValidationCompletedAtUtc.Should().Be(entry.UploadValidatedAtUtc);
+        result.UploadMetadata.RowCounts.Should().BeEquivalentTo(new { Total = 5, Valid = 4, Invalid = 1, Insert = 2, Update = 2, Unchanged = 1 });
     }
 
     // ── UploadFileAsync re-open semantics ────────────────────────────────────
@@ -690,19 +769,19 @@ public class BulkRatesRequestServiceTests
 
         result.FecRows.Should().BeEmpty();
         result.AgrupRows.Should().BeEmpty();
-        await repo.DidNotReceive().GetFecStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await repo.DidNotReceive().GetTestOrProductStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task GetStagingData_ClassifiesNewTestCodeAsInserted()
     {
         var repo = RepoReturning(Entry(status: "Initiated", uploadChecksum: "abc"));
-        repo.GetFecStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(new[] { new FecStagingRow { TestCode = "T001", FecNewRate = 10.1m } } as IReadOnlyList<FecStagingRow>);
-        repo.GetAgrupStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(Array.Empty<AgrupStagingRow>() as IReadOnlyList<AgrupStagingRow>);
+        repo.GetTestOrProductStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "T001", FecNewRate = 10.1m } } as IReadOnlyList<TestOrProductStagingRow>);
+        repo.GetTestRequirementStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
         repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(Array.Empty<FecStagingRow>() as IReadOnlyList<FecStagingRow>);
+            .Returns(Array.Empty<TestOrProductStagingRow>() as IReadOnlyList<TestOrProductStagingRow>);
         var svc = CreateService(repo);
 
         var result = await svc.GetStagingDataAsync(QueueId);
@@ -714,12 +793,12 @@ public class BulkRatesRequestServiceTests
     public async Task GetStagingData_ClassifiesChangedRateAsUpdated()
     {
         var repo = RepoReturning(Entry(status: "Initiated", uploadChecksum: "abc"));
-        repo.GetFecStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(new[] { new FecStagingRow { TestCode = "T002", FecNewRate = 20.2m } } as IReadOnlyList<FecStagingRow>);
-        repo.GetAgrupStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(Array.Empty<AgrupStagingRow>() as IReadOnlyList<AgrupStagingRow>);
+        repo.GetTestOrProductStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "T002", FecNewRate = 20.2m } } as IReadOnlyList<TestOrProductStagingRow>);
+        repo.GetTestRequirementStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
         repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(new[] { new FecStagingRow { TestCode = "T002", DefraUnitPrice = 15.0m } } as IReadOnlyList<FecStagingRow>);
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "T002", DefraUnitPrice = 15.0m } } as IReadOnlyList<TestOrProductStagingRow>);
         var svc = CreateService(repo);
 
         var result = await svc.GetStagingDataAsync(QueueId);
@@ -733,12 +812,12 @@ public class BulkRatesRequestServiceTests
         // No Change rows are shown too (not hidden), labelled from the same
         // classification as Insert/Update/Zero-Rate Withdrawal.
         var repo = RepoReturning(Entry(status: "Initiated", uploadChecksum: "abc"));
-        repo.GetFecStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(new[] { new FecStagingRow { TestCode = "T003", FecNewRate = 30.0m } } as IReadOnlyList<FecStagingRow>);
-        repo.GetAgrupStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(Array.Empty<AgrupStagingRow>() as IReadOnlyList<AgrupStagingRow>);
+        repo.GetTestOrProductStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "T003", FecNewRate = 30.0m } } as IReadOnlyList<TestOrProductStagingRow>);
+        repo.GetTestRequirementStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
         repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(new[] { new FecStagingRow { TestCode = "T003", UnitPriceVla = 30.0m, DefraUnitPrice = 30.0m } } as IReadOnlyList<FecStagingRow>);
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "T003", UnitPriceVla = 30.0m, DefraUnitPrice = 30.0m } } as IReadOnlyList<TestOrProductStagingRow>);
         var svc = CreateService(repo);
 
         var result = await svc.GetStagingDataAsync(QueueId);
@@ -750,12 +829,12 @@ public class BulkRatesRequestServiceTests
     public async Task GetStagingData_ClassifiesLiveTestCodeMissingFromUploadAsDeleted()
     {
         var repo = RepoReturning(Entry(status: "Initiated", uploadChecksum: "abc"));
-        repo.GetFecStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(Array.Empty<FecStagingRow>() as IReadOnlyList<FecStagingRow>);
-        repo.GetAgrupStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(Array.Empty<AgrupStagingRow>() as IReadOnlyList<AgrupStagingRow>);
+        repo.GetTestOrProductStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<TestOrProductStagingRow>() as IReadOnlyList<TestOrProductStagingRow>);
+        repo.GetTestRequirementStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
         repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(new[] { new FecStagingRow { TestCode = "T004", DefraUnitPrice = 40.0m } } as IReadOnlyList<FecStagingRow>);
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "T004", DefraUnitPrice = 40.0m } } as IReadOnlyList<TestOrProductStagingRow>);
         var svc = CreateService(repo);
 
         var result = await svc.GetStagingDataAsync(QueueId);
@@ -767,13 +846,13 @@ public class BulkRatesRequestServiceTests
     public async Task GetStagingData_WhenRequestIsCompleted_DoesNotFloodGridWithLiveRowsAsDeleted()
     {
         // Staging rows are purged after a successful commit (BulkTestRatesService step 5,
-        // spec §10.6), so GetFecStagingRowsAsync/GetAgrupStagingRowsAsync legitimately come
+        // spec §10.6), so GetTestOrProductStagingRowsAsync/GetTestRequirementStagingRowsAsync legitimately come
         // back empty here — that must not be read as "every live row was deleted": nothing
         // was actually removed, the diff source data is just gone. The live catalog must not
         // even be queried, since the diff is skipped entirely once Completed.
         var repo = RepoReturning(Entry(status: "Completed", uploadChecksum: "abc"));
         repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(new[] { new FecStagingRow { TestCode = "T005", DefraUnitPrice = 50.0m } } as IReadOnlyList<FecStagingRow>);
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "T005", DefraUnitPrice = 50.0m } } as IReadOnlyList<TestOrProductStagingRow>);
         var svc = CreateService(repo);
 
         var result = await svc.GetStagingDataAsync(QueueId);
@@ -786,8 +865,8 @@ public class BulkRatesRequestServiceTests
 
     // ── GetStagingDataAsync classification — Staff/Animal (No Change/Updated/Not Found) ──
     //
-    // Staff/Animal are update-only (no Insert/Deleted concept — see BulkRatesStagingStaffRowDto/
-    // BulkRatesStagingAnimalRowDto), and parity means every staged row is now shown,
+    // Staff/Animal are update-only (no Insert/Deleted concept — see BulkRatesStaffStagingRowDto/
+    // BulkRatesAnimalStagingRowDto), and parity means every staged row is now shown,
     // including rows where nothing changed ("No Change"), not just Updated/Not Found.
 
     [Fact]
@@ -796,10 +875,10 @@ public class BulkRatesRequestServiceTests
         var entry = Entry(status: "Initiated", uploadChecksum: "abc");
         entry.JobName = Apha.Common.Constants.BulkRatesJobNames.Staff;
         var repo = RepoReturning(entry);
-        repo.GetStaffStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(new[] { new StaffStagingRow { PcGrade = "G1", PayRate = 100.00m, Npr = 5m, Ohr = 2m } } as IReadOnlyList<StaffStagingRow>);
+        repo.GetProfitCentreGradeStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 100.00m, Npr = 5m, Ohr = 2m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
         repo.GetStaffRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(new[] { new StaffStagingRow { PcGrade = "G1", PayRate = 100.00m, Npr = 5m, Ohr = 2m } } as IReadOnlyList<StaffStagingRow>);
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 100.00m, Npr = 5m, Ohr = 2m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
         var svc = CreateService(repo);
 
         var result = await svc.GetStagingDataAsync(QueueId);
@@ -819,10 +898,10 @@ public class BulkRatesRequestServiceTests
         var entry = Entry(status: "Initiated", uploadChecksum: "abc");
         entry.JobName = Apha.Common.Constants.BulkRatesJobNames.Staff;
         var repo = RepoReturning(entry);
-        repo.GetStaffStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(new[] { new StaffStagingRow { PcGrade = "G2", PayRate = 150.00m } } as IReadOnlyList<StaffStagingRow>);
+        repo.GetProfitCentreGradeStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "G2", PayRate = 150.00m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
         repo.GetStaffRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(new[] { new StaffStagingRow { PcGrade = "G2", PayRate = 100.00m } } as IReadOnlyList<StaffStagingRow>);
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "G2", PayRate = 100.00m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
         var svc = CreateService(repo);
 
         var result = await svc.GetStagingDataAsync(QueueId);
@@ -836,10 +915,10 @@ public class BulkRatesRequestServiceTests
         var entry = Entry(status: "Initiated", uploadChecksum: "abc");
         entry.JobName = Apha.Common.Constants.BulkRatesJobNames.Staff;
         var repo = RepoReturning(entry);
-        repo.GetStaffStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(new[] { new StaffStagingRow { PcGrade = "G9", PayRate = 100.00m } } as IReadOnlyList<StaffStagingRow>);
+        repo.GetProfitCentreGradeStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "G9", PayRate = 100.00m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
         repo.GetStaffRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(Array.Empty<StaffStagingRow>() as IReadOnlyList<StaffStagingRow>);
+            .Returns(Array.Empty<ProfitCentreGradeStagingRow>() as IReadOnlyList<ProfitCentreGradeStagingRow>);
         var svc = CreateService(repo);
 
         var result = await svc.GetStagingDataAsync(QueueId);
@@ -856,8 +935,8 @@ public class BulkRatesRequestServiceTests
         var entry = Entry(status: "Completed", uploadChecksum: "abc");
         entry.JobName = Apha.Common.Constants.BulkRatesJobNames.Staff;
         var repo = RepoReturning(entry);
-        repo.GetStaffStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(Array.Empty<StaffStagingRow>() as IReadOnlyList<StaffStagingRow>);
+        repo.GetProfitCentreGradeStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<ProfitCentreGradeStagingRow>() as IReadOnlyList<ProfitCentreGradeStagingRow>);
         var svc = CreateService(repo);
 
         var result = await svc.GetStagingDataAsync(QueueId);
@@ -950,24 +1029,24 @@ public class BulkRatesRequestServiceTests
     // (10) single-active-request guard: non-Initiated/Rejected status throws
 
     private static IBulkRatesRepository RepoForDownload(
-        BulkRatesQueueEntry entry,
+        BulkRatesQueueRow entry,
         int nextVersion = 1,
-        IReadOnlyList<FecStagingRow>? liveFec = null,
-        IReadOnlyList<AgrupStagingRow>? liveAgrup = null,
-        IReadOnlyList<FecStagingRow>? snapshotFec = null,
-        IReadOnlyList<AgrupStagingRow>? snapshotAgrup = null)
+        IReadOnlyList<TestOrProductStagingRow>? liveFec = null,
+        IReadOnlyList<TestRequirementStagingRow>? liveAgrup = null,
+        IReadOnlyList<TestOrProductStagingRow>? snapshotFec = null,
+        IReadOnlyList<TestRequirementStagingRow>? snapshotAgrup = null)
     {
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetRequestAsync(entry.JobExecutionId, Arg.Any<CancellationToken>()).Returns(entry);
         repo.GetNextDownloadVersionAsync(entry.JobQueueId, Arg.Any<CancellationToken>()).Returns(nextVersion);
         repo.GetFecRowsForExportAsync(entry.FpsYear, Arg.Any<CancellationToken>())
-            .Returns(liveFec ?? Array.Empty<FecStagingRow>() as IReadOnlyList<FecStagingRow>);
+            .Returns(liveFec ?? Array.Empty<TestOrProductStagingRow>() as IReadOnlyList<TestOrProductStagingRow>);
         repo.GetAgrupRowsForExportAsync(entry.FpsYear, Arg.Any<CancellationToken>())
-            .Returns(liveAgrup ?? Array.Empty<AgrupStagingRow>() as IReadOnlyList<AgrupStagingRow>);
+            .Returns(liveAgrup ?? Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
         repo.GetFecSnapshotRowsAsync(entry.JobQueueId, nextVersion, Arg.Any<CancellationToken>())
-            .Returns(snapshotFec ?? liveFec ?? Array.Empty<FecStagingRow>() as IReadOnlyList<FecStagingRow>);
+            .Returns(snapshotFec ?? liveFec ?? Array.Empty<TestOrProductStagingRow>() as IReadOnlyList<TestOrProductStagingRow>);
         repo.GetAgrupSnapshotRowsAsync(entry.JobQueueId, nextVersion, Arg.Any<CancellationToken>())
-            .Returns(snapshotAgrup ?? liveAgrup ?? Array.Empty<AgrupStagingRow>() as IReadOnlyList<AgrupStagingRow>);
+            .Returns(snapshotAgrup ?? liveAgrup ?? Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
         return repo;
     }
 
@@ -976,7 +1055,7 @@ public class BulkRatesRequestServiceTests
         IExcelExportService? excel = null)
     {
         var r  = repo;
-        var e  = Substitute.For<IEventBridgePublisher>();
+        var e  = Substitute.For<IEventPublisherService>();
         var n  = Substitute.For<IBulkRatesNotificationService>();
         var ex = excel ?? DefaultExcel();
         return new BulkRatesRequestService(
@@ -1027,8 +1106,8 @@ public class BulkRatesRequestServiceTests
         await repo.Received(1).CreateDownloadSnapshotAsync(
             entry.JobQueueId,
             1,
-            Arg.Any<IReadOnlyList<FecStagingRow>>(),
-            Arg.Any<IReadOnlyList<AgrupStagingRow>>(),
+            Arg.Any<IReadOnlyList<TestOrProductStagingRow>>(),
+            Arg.Any<IReadOnlyList<TestRequirementStagingRow>>(),
             Arg.Any<CancellationToken>());
     }
 
@@ -1037,8 +1116,8 @@ public class BulkRatesRequestServiceTests
     [Fact]
     public async Task Download_PersistsLiveDataToSnapshot()
     {
-        var liveFec   = new[] { new FecStagingRow { TestCode = "T100", FecNewRate = 99.9m } } as IReadOnlyList<FecStagingRow>;
-        var liveAgrup = new[] { new AgrupStagingRow { TestCode = "T100", Buyer = "B1", Agrup = 5.0m } } as IReadOnlyList<AgrupStagingRow>;
+        var liveFec   = new[] { new TestOrProductStagingRow { TestCode = "T100", FecNewRate = 99.9m } } as IReadOnlyList<TestOrProductStagingRow>;
+        var liveAgrup = new[] { new TestRequirementStagingRow { TestCode = "T100", Buyer = "B1", Agrup = 5.0m } } as IReadOnlyList<TestRequirementStagingRow>;
         var entry = Entry(status: "Initiated");
         var repo  = RepoForDownload(entry, liveFec: liveFec, liveAgrup: liveAgrup);
         var svc   = CreateServiceWithExcel(repo);
@@ -1047,8 +1126,8 @@ public class BulkRatesRequestServiceTests
 
         await repo.Received(1).CreateDownloadSnapshotAsync(
             entry.JobQueueId, 1,
-            Arg.Is<IReadOnlyList<FecStagingRow>>(rows => rows.Count == 1 && rows[0].TestCode == "T100"),
-            Arg.Is<IReadOnlyList<AgrupStagingRow>>(rows => rows.Count == 1 && rows[0].Buyer == "B1"),
+            Arg.Is<IReadOnlyList<TestOrProductStagingRow>>(rows => rows.Count == 1 && rows[0].TestCode == "T100"),
+            Arg.Is<IReadOnlyList<TestRequirementStagingRow>>(rows => rows.Count == 1 && rows[0].Buyer == "B1"),
             Arg.Any<CancellationToken>());
     }
 
@@ -1138,8 +1217,8 @@ public class BulkRatesRequestServiceTests
     [Fact]
     public async Task Download_WorkbookSheets_ContainExactlySnapshotRows()
     {
-        var snapshotFec   = new[] { new FecStagingRow { TestCode = "T200", FecNewRate = 11.1m } } as IReadOnlyList<FecStagingRow>;
-        var snapshotAgrup = new[] { new AgrupStagingRow { TestCode = "T200", Buyer = "VLA", Agrup = 2.0m } } as IReadOnlyList<AgrupStagingRow>;
+        var snapshotFec   = new[] { new TestOrProductStagingRow { TestCode = "T200", FecNewRate = 11.1m } } as IReadOnlyList<TestOrProductStagingRow>;
+        var snapshotAgrup = new[] { new TestRequirementStagingRow { TestCode = "T200", Buyer = "VLA", Agrup = 2.0m } } as IReadOnlyList<TestRequirementStagingRow>;
         var entry = Entry(status: "Initiated");
         var repo  = RepoForDownload(entry, snapshotFec: snapshotFec, snapshotAgrup: snapshotAgrup);
 
@@ -1157,7 +1236,7 @@ public class BulkRatesRequestServiceTests
         capturedSheets!.Should().HaveCountGreaterThanOrEqualTo(2);
         // FEC sheet rows come from snapshot only (T200 present)
         var fecSheet = capturedSheets[0];
-        fecSheet.Data.Cast<BulkRatesFecExportRow>().Should().Contain(r => r.TestCode == "T200");
+        fecSheet.Data.Cast<BulkRatesFecExportRowDto>().Should().Contain(r => r.TestCode == "T200");
     }
 
     // (9) Repeat download creates a higher version
@@ -1171,12 +1250,12 @@ public class BulkRatesRequestServiceTests
         var repoV1 = RepoForDownload(entry, nextVersion: 1);
         var svcV1  = CreateServiceWithExcel(repoV1);
         await svcV1.DownloadFecTestDataAsync(entry.JobExecutionId);
-        await repoV1.Received(1).CreateDownloadSnapshotAsync(entry.JobQueueId, 1, Arg.Any<IReadOnlyList<FecStagingRow>>(), Arg.Any<IReadOnlyList<AgrupStagingRow>>(), Arg.Any<CancellationToken>());
+        await repoV1.Received(1).CreateDownloadSnapshotAsync(entry.JobQueueId, 1, Arg.Any<IReadOnlyList<TestOrProductStagingRow>>(), Arg.Any<IReadOnlyList<TestRequirementStagingRow>>(), Arg.Any<CancellationToken>());
 
         var repoV2 = RepoForDownload(entry, nextVersion: 2);
         var svcV2  = CreateServiceWithExcel(repoV2);
         await svcV2.DownloadFecTestDataAsync(entry.JobExecutionId);
-        await repoV2.Received(1).CreateDownloadSnapshotAsync(entry.JobQueueId, 2, Arg.Any<IReadOnlyList<FecStagingRow>>(), Arg.Any<IReadOnlyList<AgrupStagingRow>>(), Arg.Any<CancellationToken>());
+        await repoV2.Received(1).CreateDownloadSnapshotAsync(entry.JobQueueId, 2, Arg.Any<IReadOnlyList<TestOrProductStagingRow>>(), Arg.Any<IReadOnlyList<TestRequirementStagingRow>>(), Arg.Any<CancellationToken>());
     }
 
     // ── DownloadStaffTestDataAsync / DownloadAnimalTestDataAsync ──────────────
@@ -1187,23 +1266,23 @@ public class BulkRatesRequestServiceTests
     // rejected explicitly — see RequireJobName).
 
     private static IBulkRatesRepository RepoForStaffDownload(
-        BulkRatesQueueEntry entry,
+        BulkRatesQueueRow entry,
         int nextVersion = 1,
-        IReadOnlyList<StaffStagingRow>? liveRows = null,
-        IReadOnlyList<StaffStagingRow>? snapshotRows = null)
+        IReadOnlyList<ProfitCentreGradeStagingRow>? liveRows = null,
+        IReadOnlyList<ProfitCentreGradeStagingRow>? snapshotRows = null)
     {
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetRequestAsync(entry.JobExecutionId, Arg.Any<CancellationToken>()).Returns(entry);
         repo.GetNextDownloadVersionAsync(entry.JobQueueId, Arg.Any<CancellationToken>()).Returns(nextVersion);
         repo.GetStaffRowsForExportAsync(entry.FpsYear, Arg.Any<CancellationToken>())
-            .Returns(liveRows ?? Array.Empty<StaffStagingRow>() as IReadOnlyList<StaffStagingRow>);
+            .Returns(liveRows ?? Array.Empty<ProfitCentreGradeStagingRow>() as IReadOnlyList<ProfitCentreGradeStagingRow>);
         repo.GetStaffSnapshotRowsAsync(entry.JobQueueId, nextVersion, Arg.Any<CancellationToken>())
-            .Returns(snapshotRows ?? liveRows ?? Array.Empty<StaffStagingRow>() as IReadOnlyList<StaffStagingRow>);
+            .Returns(snapshotRows ?? liveRows ?? Array.Empty<ProfitCentreGradeStagingRow>() as IReadOnlyList<ProfitCentreGradeStagingRow>);
         return repo;
     }
 
     private static IBulkRatesRepository RepoForAnimalDownload(
-        BulkRatesQueueEntry entry,
+        BulkRatesQueueRow entry,
         int nextVersion = 1,
         IReadOnlyList<AnimalStagingRow>? liveRows = null,
         IReadOnlyList<AnimalStagingRow>? snapshotRows = null)
@@ -1218,14 +1297,14 @@ public class BulkRatesRequestServiceTests
         return repo;
     }
 
-    private static BulkRatesQueueEntry StaffEntry(string status = "Initiated")
+    private static BulkRatesQueueRow StaffEntry(string status = "Initiated")
     {
         var entry = Entry(status: status);
         entry.JobName = Apha.Common.Constants.BulkRatesJobNames.Staff;
         return entry;
     }
 
-    private static BulkRatesQueueEntry AnimalEntry(string status = "Initiated")
+    private static BulkRatesQueueRow AnimalEntry(string status = "Initiated")
     {
         var entry = Entry(status: status);
         entry.JobName = Apha.Common.Constants.BulkRatesJobNames.Animal;
@@ -1297,7 +1376,7 @@ public class BulkRatesRequestServiceTests
     [Fact]
     public async Task DownloadStaff_CreatesSnapshotFromLiveData()
     {
-        var liveRows = new[] { new StaffStagingRow { PcGrade = "G1", PayRate = 42m } } as IReadOnlyList<StaffStagingRow>;
+        var liveRows = new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 42m } } as IReadOnlyList<ProfitCentreGradeStagingRow>;
         var entry = StaffEntry();
         var repo  = RepoForStaffDownload(entry, liveRows: liveRows);
         var svc   = CreateServiceWithExcel(repo);
@@ -1306,7 +1385,7 @@ public class BulkRatesRequestServiceTests
 
         await repo.Received(1).CreateStaffDownloadSnapshotAsync(
             entry.JobQueueId, 1,
-            Arg.Is<IReadOnlyList<StaffStagingRow>>(rows => rows.Count == 1 && rows[0].PcGrade == "G1"),
+            Arg.Is<IReadOnlyList<ProfitCentreGradeStagingRow>>(rows => rows.Count == 1 && rows[0].PcGrade == "G1"),
             Arg.Any<CancellationToken>());
     }
 
@@ -1463,7 +1542,7 @@ public class BulkRatesRequestServiceTests
     [Fact]
     public async Task DownloadStaff_WorkbookSheet_ContainsExactlySnapshotRows()
     {
-        var snapshotRows = new[] { new StaffStagingRow { PcGrade = "G9", PayRate = 5m } } as IReadOnlyList<StaffStagingRow>;
+        var snapshotRows = new[] { new ProfitCentreGradeStagingRow { PcGrade = "G9", PayRate = 5m } } as IReadOnlyList<ProfitCentreGradeStagingRow>;
         var entry = StaffEntry();
         var repo  = RepoForStaffDownload(entry, snapshotRows: snapshotRows);
 
@@ -1478,7 +1557,7 @@ public class BulkRatesRequestServiceTests
         await svc.DownloadStaffTestDataAsync(entry.JobExecutionId);
 
         capturedSheets.Should().ContainSingle();
-        capturedSheets![0].Data.Cast<BulkRatesStaffExportRow>().Should().ContainSingle(r => r.PcGrade == "G9");
+        capturedSheets![0].Data.Cast<BulkRatesStaffExportRowDto>().Should().ContainSingle(r => r.PcGrade == "G9");
     }
 
     [Fact]
@@ -1499,7 +1578,7 @@ public class BulkRatesRequestServiceTests
         await svc.DownloadAnimalTestDataAsync(entry.JobExecutionId);
 
         capturedSheets.Should().ContainSingle();
-        capturedSheets![0].Data.Cast<BulkRatesAnimalExportRow>().Should().ContainSingle(r => r.AnimalType == "Sheep");
+        capturedSheets![0].Data.Cast<BulkRatesAnimalExportRowDto>().Should().ContainSingle(r => r.AnimalType == "Sheep");
     }
 
     // ── Repeat download uses a higher version ──
@@ -1512,12 +1591,12 @@ public class BulkRatesRequestServiceTests
         var repoV1 = RepoForStaffDownload(entry, nextVersion: 1);
         var svcV1  = CreateServiceWithExcel(repoV1);
         await svcV1.DownloadStaffTestDataAsync(entry.JobExecutionId);
-        await repoV1.Received(1).CreateStaffDownloadSnapshotAsync(entry.JobQueueId, 1, Arg.Any<IReadOnlyList<StaffStagingRow>>(), Arg.Any<CancellationToken>());
+        await repoV1.Received(1).CreateStaffDownloadSnapshotAsync(entry.JobQueueId, 1, Arg.Any<IReadOnlyList<ProfitCentreGradeStagingRow>>(), Arg.Any<CancellationToken>());
 
         var repoV2 = RepoForStaffDownload(entry, nextVersion: 2);
         var svcV2  = CreateServiceWithExcel(repoV2);
         await svcV2.DownloadStaffTestDataAsync(entry.JobExecutionId);
-        await repoV2.Received(1).CreateStaffDownloadSnapshotAsync(entry.JobQueueId, 2, Arg.Any<IReadOnlyList<StaffStagingRow>>(), Arg.Any<CancellationToken>());
+        await repoV2.Received(1).CreateStaffDownloadSnapshotAsync(entry.JobQueueId, 2, Arg.Any<IReadOnlyList<ProfitCentreGradeStagingRow>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -1549,7 +1628,7 @@ public class BulkRatesRequestServiceTests
     {
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetStaffRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(new[] { new StaffStagingRow { PcGrade = "G1", PayRate = 100m } } as IReadOnlyList<StaffStagingRow>);
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 100m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
         IReadOnlyList<ExcelSheetDefinition>? capturedSheets = null;
         var excel = Substitute.For<IExcelExportService>();
         excel.ExportToExcelMultiSheet(Arg.Do<IEnumerable<ExcelSheetDefinition>>(s => capturedSheets = s.ToList()))
@@ -1559,7 +1638,7 @@ public class BulkRatesRequestServiceTests
         await svc.ExportStaffTestDataAsync(FpsYear);
 
         capturedSheets.Should().ContainSingle();
-        capturedSheets![0].ProtectedColumnNames.Should().BeEquivalentTo(new[] { nameof(BulkRatesStaffExportRow.PcGrade) });
+        capturedSheets![0].ProtectedColumnNames.Should().BeEquivalentTo(new[] { nameof(BulkRatesStaffExportRowDto.PcGrade) });
     }
 
     [Fact]
@@ -1577,7 +1656,7 @@ public class BulkRatesRequestServiceTests
         await svc.ExportAnimalTestDataAsync(FpsYear);
 
         capturedSheets.Should().ContainSingle();
-        capturedSheets![0].ProtectedColumnNames.Should().BeEquivalentTo(new[] { nameof(BulkRatesAnimalExportRow.AnimalType) });
+        capturedSheets![0].ProtectedColumnNames.Should().BeEquivalentTo(new[] { nameof(BulkRatesAnimalExportRowDto.AnimalType) });
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -1659,22 +1738,22 @@ public class BulkRatesRequestServiceTests
     // entry.JobName, producing an empty workbook for every Staff/Animal request.
 
     [Fact]
-    public async Task ExportStagingDataAsync_WhenJobIsStaff_ExportsStaffStagingRowsOnly()
+    public async Task ExportStagingDataAsync_WhenJobIsStaff_ExportsProfitCentreGradeStagingRowsOnly()
     {
         var entry = Entry(status: "Completed", uploadChecksum: "hash");
         entry.JobName = BulkRatesJobNames.Staff;
         var repo = RepoReturning(entry);
-        var staffRows = new List<StaffStagingRow> { new() { PcGrade = "A-ASU", PayRate = 10m } };
-        repo.GetStaffStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(staffRows as IReadOnlyList<StaffStagingRow>);
+        var staffRows = new List<ProfitCentreGradeStagingRow> { new() { PcGrade = "A-ASU", PayRate = 10m } };
+        repo.GetProfitCentreGradeStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(staffRows as IReadOnlyList<ProfitCentreGradeStagingRow>);
 
         var svc = CreateService(repo);
 
         await svc.ExportStagingDataAsync(QueueId);
 
-        await repo.Received(1).GetStaffStagingRowsAsync(QueueId, Arg.Any<CancellationToken>());
-        await repo.DidNotReceive().GetFecStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
-        await repo.DidNotReceive().GetAgrupStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await repo.Received(1).GetProfitCentreGradeStagingRowsAsync(QueueId, Arg.Any<CancellationToken>());
+        await repo.DidNotReceive().GetTestOrProductStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await repo.DidNotReceive().GetTestRequirementStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
         await repo.DidNotReceive().GetAnimalStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
@@ -1693,13 +1772,13 @@ public class BulkRatesRequestServiceTests
         await svc.ExportStagingDataAsync(QueueId);
 
         await repo.Received(1).GetAnimalStagingRowsAsync(QueueId, Arg.Any<CancellationToken>());
-        await repo.DidNotReceive().GetFecStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
-        await repo.DidNotReceive().GetAgrupStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
-        await repo.DidNotReceive().GetStaffStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await repo.DidNotReceive().GetTestOrProductStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await repo.DidNotReceive().GetTestRequirementStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await repo.DidNotReceive().GetProfitCentreGradeStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task ExportStagingDataAsync_WhenJobIsFec_ExportsFecAndAgrupStagingRowsOnly()
+    public async Task ExportStagingDataAsync_WhenJobIsFec_ExportsFecAndTestRequirementStagingRowsOnly()
     {
         // JobName defaults to the class-level JobName const ("BulkTestRatesUpdate" == Fec).
         var entry = Entry(status: "Completed", uploadChecksum: "hash");
@@ -1709,9 +1788,9 @@ public class BulkRatesRequestServiceTests
 
         await svc.ExportStagingDataAsync(QueueId);
 
-        await repo.Received(1).GetFecStagingRowsAsync(QueueId, Arg.Any<CancellationToken>());
-        await repo.Received(1).GetAgrupStagingRowsAsync(QueueId, Arg.Any<CancellationToken>());
-        await repo.DidNotReceive().GetStaffStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await repo.Received(1).GetTestOrProductStagingRowsAsync(QueueId, Arg.Any<CancellationToken>());
+        await repo.Received(1).GetTestRequirementStagingRowsAsync(QueueId, Arg.Any<CancellationToken>());
+        await repo.DidNotReceive().GetProfitCentreGradeStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
         await repo.DidNotReceive().GetAnimalStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 }

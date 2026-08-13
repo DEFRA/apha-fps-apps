@@ -64,7 +64,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         string? ValidationSummary { get; set; }
     }
 
-    /// <summary>DataGrid row model for the "FEC Data (Staging)" grid. Property names must match BulkRatesStagingFecRowDto.</summary>
+    /// <summary>DataGrid row model for the "FEC Data (Staging)" grid. Property names must match BulkRatesFecStagingRowDto.</summary>
     public class FecStagingGridItem : IHasValidationSummary
     {
         [Display(Name = "Status")]
@@ -108,7 +108,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? ValidationSummary { get; set; }
     }
 
-    /// <summary>DataGrid row model for the "Agrup Details" grid. Property names must match BulkRatesStagingAgrupRowDto.</summary>
+    /// <summary>DataGrid row model for the "Agrup Details" grid. Property names must match BulkRatesAgrupStagingRowDto.</summary>
     public class AgrupStagingGridItem : IHasValidationSummary
     {
         [Display(Name = "Status")]
@@ -152,7 +152,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? ValidationSummary { get; set; }
     }
 
-    /// <summary>DataGrid row model for the "Staff Data (Staging)" grid. Property names must match BulkRatesStagingStaffRowDto.</summary>
+    /// <summary>DataGrid row model for the "Staff Data (Staging)" grid. Property names must match BulkRatesStaffStagingRowDto.</summary>
     public class StaffStagingGridItem : IHasValidationSummary
     {
         [Display(Name = "Status")]
@@ -192,7 +192,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? ValidationSummary { get; set; }
     }
 
-    /// <summary>DataGrid row model for the "Animal Data (Staging)" grid. Property names must match BulkRatesStagingAnimalRowDto.</summary>
+    /// <summary>DataGrid row model for the "Animal Data (Staging)" grid. Property names must match BulkRatesAnimalStagingRowDto.</summary>
     public class AnimalStagingGridItem : IHasValidationSummary
     {
         [Display(Name = "Status")]

@@ -1,4 +1,4 @@
-using Apha.FPS.Core.Entities.BulkRates;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 
 namespace Apha.FPS.Core.Interfaces
@@ -14,19 +14,19 @@ namespace Apha.FPS.Core.Interfaces
         Task<int?> GetStatusIdByNameAsync(int jobId, string statusName, CancellationToken ct = default);
 
         // ── Queue entry CRUD ─────────────────────────────────────────────────────
-        Task<BulkRatesQueueEntry> CreateRequestAsync(
+        Task<BulkRatesQueueRow> CreateRequestAsync(
             Guid jobQueueId, Guid jobExecutionId, int jobId, int initiatedStatusId,
             string requestedBy, DateTime requestedAtUtc, int fpsYear,
             CancellationToken ct = default);
 
-        Task<BulkRatesQueueEntry?> GetRequestAsync(Guid jobExecutionId, CancellationToken ct = default);
+        Task<BulkRatesQueueRow?> GetRequestAsync(Guid jobExecutionId, CancellationToken ct = default);
 
         /// <summary>
         /// Server-side paged/sorted list, matching the app-wide DataGrid pagination convention.
         /// <paramref name="sortBy"/> is validated against a column whitelist internally — never
         /// interpolated directly into SQL.
         /// </summary>
-        Task<PagedData<BulkRatesQueueEntry>> GetRequestsAsync(
+        Task<PagedData<BulkRatesQueueRow>> GetRequestsAsync(
             string? jobName, int? fpsYear, string? status,
             int page, int pageSize, string? sortBy, bool descending,
             CancellationToken ct = default);
@@ -36,7 +36,7 @@ namespace Apha.FPS.Core.Interfaces
         /// blocking status (Initiated, ReleasedForApproval, Approved, Running, or Failed), or
         /// null if none exists. Used to enforce the single-active-request-per-job-type rule.
         /// </summary>
-        Task<BulkRatesQueueEntry?> GetActiveRequestAsync(string jobName, CancellationToken ct = default);
+        Task<BulkRatesQueueRow?> GetActiveRequestAsync(string jobName, CancellationToken ct = default);
 
         // ── Status transitions ───────────────────────────────────────────────────
         /// <summary>
@@ -73,19 +73,19 @@ namespace Apha.FPS.Core.Interfaces
         Task WriteJobQueueLogAsync(
             Guid jobQueueId, string note, string? actor, CancellationToken ct = default);
 
-        Task<IReadOnlyList<BulkRatesQueueLog>> GetJobQueueLogsAsync(
+        Task<IReadOnlyList<BatchJobQueueLog>> GetJobQueueLogsAsync(
             Guid jobQueueId, CancellationToken ct = default);
 
         // ── Staging — replace semantics (delete-then-insert within transaction) ──
         Task ReplaceStagingFecAsync(
             Guid jobQueueId,
-            IReadOnlyList<FecStagingRow> fecRows,
-            IReadOnlyList<AgrupStagingRow> agrupRows,
+            IReadOnlyList<TestOrProductStagingRow> fecRows,
+            IReadOnlyList<TestRequirementStagingRow> agrupRows,
             CancellationToken ct = default);
 
         Task ReplaceStagingStaffAsync(
             Guid jobQueueId,
-            IReadOnlyList<StaffStagingRow> rows,
+            IReadOnlyList<ProfitCentreGradeStagingRow> rows,
             CancellationToken ct = default);
 
         Task ReplaceStagingAnimalAsync(
@@ -97,9 +97,9 @@ namespace Apha.FPS.Core.Interfaces
         Task ClearStagingByJobQueueIdAsync(
             Guid jobQueueId, string jobName, CancellationToken ct = default);
 
-        Task<IReadOnlyList<FecStagingRow>> GetFecStagingRowsAsync(Guid jobQueueId, CancellationToken ct = default);
-        Task<IReadOnlyList<AgrupStagingRow>> GetAgrupStagingRowsAsync(Guid jobQueueId, CancellationToken ct = default);
-        Task<IReadOnlyList<StaffStagingRow>> GetStaffStagingRowsAsync(Guid jobQueueId, CancellationToken ct = default);
+        Task<IReadOnlyList<TestOrProductStagingRow>> GetTestOrProductStagingRowsAsync(Guid jobQueueId, CancellationToken ct = default);
+        Task<IReadOnlyList<TestRequirementStagingRow>> GetTestRequirementStagingRowsAsync(Guid jobQueueId, CancellationToken ct = default);
+        Task<IReadOnlyList<ProfitCentreGradeStagingRow>> GetProfitCentreGradeStagingRowsAsync(Guid jobQueueId, CancellationToken ct = default);
         Task<IReadOnlyList<AnimalStagingRow>> GetAnimalStagingRowsAsync(Guid jobQueueId, CancellationToken ct = default);
 
         // ── Validation errors ────────────────────────────────────────────────────
@@ -155,7 +155,7 @@ namespace Apha.FPS.Core.Interfaces
         /// </summary>
         Task CreateDownloadSnapshotAsync(
             Guid jobQueueId, int downloadVersion,
-            IReadOnlyList<FecStagingRow> fecRows, IReadOnlyList<AgrupStagingRow> agrupRows,
+            IReadOnlyList<TestOrProductStagingRow> fecRows, IReadOnlyList<TestRequirementStagingRow> agrupRows,
             CancellationToken ct = default);
 
         /// <summary>
@@ -176,11 +176,11 @@ namespace Apha.FPS.Core.Interfaces
         /// Step 3: reads back the just-persisted snapshot rows for a download version —
         /// never a live requery of fps.testorproduct.
         /// </summary>
-        Task<IReadOnlyList<FecStagingRow>> GetFecSnapshotRowsAsync(
+        Task<IReadOnlyList<TestOrProductStagingRow>> GetFecSnapshotRowsAsync(
             Guid jobQueueId, int downloadVersion, CancellationToken ct = default);
 
         /// <summary>As GetFecSnapshotRowsAsync, for AGRUP — never a live requery of fps.tlkptestreqmt.</summary>
-        Task<IReadOnlyList<AgrupStagingRow>> GetAgrupSnapshotRowsAsync(
+        Task<IReadOnlyList<TestRequirementStagingRow>> GetAgrupSnapshotRowsAsync(
             Guid jobQueueId, int downloadVersion, CancellationToken ct = default);
 
         /// <summary>
@@ -193,11 +193,11 @@ namespace Apha.FPS.Core.Interfaces
         /// </summary>
         Task CreateStaffDownloadSnapshotAsync(
             Guid jobQueueId, int downloadVersion,
-            IReadOnlyList<StaffStagingRow> rows,
+            IReadOnlyList<ProfitCentreGradeStagingRow> rows,
             CancellationToken ct = default);
 
         /// <summary>Staff equivalent of GetFecSnapshotRowsAsync — reads back fps.bulk_rates_staff_download_detail.</summary>
-        Task<IReadOnlyList<StaffStagingRow>> GetStaffSnapshotRowsAsync(
+        Task<IReadOnlyList<ProfitCentreGradeStagingRow>> GetStaffSnapshotRowsAsync(
             Guid jobQueueId, int downloadVersion, CancellationToken ct = default);
 
         /// <summary>Animal equivalent of CreateDownloadSnapshotAsync. Persists to fps.bulk_rates_animal_download_detail.</summary>
@@ -211,9 +211,9 @@ namespace Apha.FPS.Core.Interfaces
             Guid jobQueueId, int downloadVersion, CancellationToken ct = default);
 
         // ── Export (live table reads for Excel download) ──────────────────────────
-        Task<IReadOnlyList<FecStagingRow>> GetFecRowsForExportAsync(int fpsYear, CancellationToken ct = default);
-        Task<IReadOnlyList<AgrupStagingRow>> GetAgrupRowsForExportAsync(int fpsYear, CancellationToken ct = default);
-        Task<IReadOnlyList<StaffStagingRow>> GetStaffRowsForExportAsync(int fpsYear, CancellationToken ct = default);
+        Task<IReadOnlyList<TestOrProductStagingRow>> GetFecRowsForExportAsync(int fpsYear, CancellationToken ct = default);
+        Task<IReadOnlyList<TestRequirementStagingRow>> GetAgrupRowsForExportAsync(int fpsYear, CancellationToken ct = default);
+        Task<IReadOnlyList<ProfitCentreGradeStagingRow>> GetStaffRowsForExportAsync(int fpsYear, CancellationToken ct = default);
         Task<IReadOnlyList<AnimalStagingRow>> GetAnimalRowsForExportAsync(int fpsYear, CancellationToken ct = default);
 
         // ── Freeze reviewed classification onto staging ──────────────────────────
@@ -228,8 +228,8 @@ namespace Apha.FPS.Core.Interfaces
         /// </summary>
         Task FreezeStagingCalculatedActionsAsync(
             Guid jobQueueId, int validationVersion,
-            IReadOnlyList<BulkRatesFreezeEntry> fecFreezes,
-            IReadOnlyList<BulkRatesFreezeEntry> agrupFreezes,
+            IReadOnlyList<TestFreezeEntry> fecFreezes,
+            IReadOnlyList<TestFreezeEntry> agrupFreezes,
             CancellationToken ct = default);
 
         /// <summary>

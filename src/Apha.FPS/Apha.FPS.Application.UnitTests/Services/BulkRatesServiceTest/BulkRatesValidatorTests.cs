@@ -1,7 +1,5 @@
-using Apha.FPS.Application.Services.BulkRates.Validation;
-using Apha.FPS.Application.Services.BulkRates.Validation.StaffAnimal;
 using Apha.FPS.Application.Services;
-using Apha.FPS.Core.Entities.BulkRates;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using FluentAssertions;
 using NSubstitute;
@@ -24,36 +22,36 @@ public class BulkRatesValidatorTests
     // ── Fixtures ──────────────────────────────────────────────────────────────
 
     private static IBulkRatesRepository CreateRepo(
-        IReadOnlyList<FecStagingRow>? liveFec = null,
-        IReadOnlyList<AgrupStagingRow>? liveAgrup = null,
+        IReadOnlyList<TestOrProductStagingRow>? liveFec = null,
+        IReadOnlyList<TestRequirementStagingRow>? liveAgrup = null,
         IReadOnlySet<string>? projectCodes = null,
         IReadOnlySet<(string, string)>? capabilityPairs = null,
-        IReadOnlyList<FecStagingRow>? snapshotFec = null,
-        IReadOnlyList<AgrupStagingRow>? snapshotAgrup = null,
-        IReadOnlyList<StaffStagingRow>? liveStaff = null,
+        IReadOnlyList<TestOrProductStagingRow>? snapshotFec = null,
+        IReadOnlyList<TestRequirementStagingRow>? snapshotAgrup = null,
+        IReadOnlyList<ProfitCentreGradeStagingRow>? liveStaff = null,
         IReadOnlyList<AnimalStagingRow>? liveAnimal = null,
-        IReadOnlyList<StaffStagingRow>? stagedStaff = null,
+        IReadOnlyList<ProfitCentreGradeStagingRow>? stagedStaff = null,
         IReadOnlyList<AnimalStagingRow>? stagedAnimal = null)
     {
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(liveFec ?? Array.Empty<FecStagingRow>() as IReadOnlyList<FecStagingRow>);
+            .Returns(liveFec ?? Array.Empty<TestOrProductStagingRow>() as IReadOnlyList<TestOrProductStagingRow>);
         repo.GetAgrupRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(liveAgrup ?? Array.Empty<AgrupStagingRow>() as IReadOnlyList<AgrupStagingRow>);
+            .Returns(liveAgrup ?? Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
         repo.GetExistingProjectCodesAsync(Arg.Any<IEnumerable<string>>(), FpsYear, Arg.Any<CancellationToken>())
             .Returns(projectCodes ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase));
         repo.GetExistingCapabilityPairsAsync(Arg.Any<IEnumerable<(string, string)>>(), FpsYear, Arg.Any<CancellationToken>())
             .Returns(capabilityPairs ?? new HashSet<(string, string)>());
         repo.GetFecSnapshotRowsAsync(QueueId, Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(snapshotFec ?? Array.Empty<FecStagingRow>() as IReadOnlyList<FecStagingRow>);
+            .Returns(snapshotFec ?? Array.Empty<TestOrProductStagingRow>() as IReadOnlyList<TestOrProductStagingRow>);
         repo.GetAgrupSnapshotRowsAsync(QueueId, Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(snapshotAgrup ?? Array.Empty<AgrupStagingRow>() as IReadOnlyList<AgrupStagingRow>);
+            .Returns(snapshotAgrup ?? Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
         repo.GetStaffRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
-            .Returns(liveStaff ?? Array.Empty<StaffStagingRow>() as IReadOnlyList<StaffStagingRow>);
+            .Returns(liveStaff ?? Array.Empty<ProfitCentreGradeStagingRow>() as IReadOnlyList<ProfitCentreGradeStagingRow>);
         repo.GetAnimalRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
             .Returns(liveAnimal ?? Array.Empty<AnimalStagingRow>() as IReadOnlyList<AnimalStagingRow>);
-        repo.GetStaffStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
-            .Returns(stagedStaff ?? Array.Empty<StaffStagingRow>() as IReadOnlyList<StaffStagingRow>);
+        repo.GetProfitCentreGradeStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(stagedStaff ?? Array.Empty<ProfitCentreGradeStagingRow>() as IReadOnlyList<ProfitCentreGradeStagingRow>);
         repo.GetAnimalStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
             .Returns(stagedAnimal ?? Array.Empty<AnimalStagingRow>() as IReadOnlyList<AnimalStagingRow>);
         return repo;
@@ -62,13 +60,13 @@ public class BulkRatesValidatorTests
     private static BulkRatesValidator CreateValidator(IBulkRatesRepository repo)
         => new(repo, new BulkRatesValidationService(), new StaffAnimalValidationService());
 
-    private static BulkRatesParseResult FecParse(params FecStagingRow[] rows)
+    private static BulkRatesParseResult FecParse(params TestOrProductStagingRow[] rows)
         => new() { JobName = JobName, JobQueueId = QueueId, FecRows = rows, AgrupRows = [] };
 
-    private static BulkRatesParseResult AgrupParse(params AgrupStagingRow[] rows)
+    private static BulkRatesParseResult AgrupParse(params TestRequirementStagingRow[] rows)
         => new() { JobName = JobName, JobQueueId = QueueId, FecRows = [], AgrupRows = rows };
 
-    private static BulkRatesParseResult MixedParse(FecStagingRow[] fec, AgrupStagingRow[] agrup)
+    private static BulkRatesParseResult MixedParse(TestOrProductStagingRow[] fec, TestRequirementStagingRow[] agrup)
         => new() { JobName = JobName, JobQueueId = QueueId, FecRows = fec, AgrupRows = agrup };
 
     private static Task<BulkRatesValidationResult> Validate(
@@ -81,8 +79,8 @@ public class BulkRatesValidatorTests
     public async Task ValidateFec_WhenDuplicateTestCode_AddsErrorForEachOccurrence()
     {
         var parse = FecParse(
-            new FecStagingRow { TestCode = "TC001", FecNewRate = 10m, ItemDescription = "d", ShortDescription = "s", Owner = "o" },
-            new FecStagingRow { TestCode = "TC001", FecNewRate = 11m, ItemDescription = "d", ShortDescription = "s", Owner = "o" });
+            new TestOrProductStagingRow { TestCode = "TC001", FecNewRate = 10m, ItemDescription = "d", ShortDescription = "s", Owner = "o" },
+            new TestOrProductStagingRow { TestCode = "TC001", FecNewRate = 11m, ItemDescription = "d", ShortDescription = "s", Owner = "o" });
 
         var result = await Validate(CreateValidator(CreateRepo()), parse);
 
@@ -94,7 +92,7 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateFec_NewRow_WhenFecNewRateNull_AddsError()
     {
-        var parse = FecParse(new FecStagingRow { TestCode = "TC999", FecNewRate = null, ItemDescription = "d", ShortDescription = "s", Owner = "o" });
+        var parse = FecParse(new TestOrProductStagingRow { TestCode = "TC999", FecNewRate = null, ItemDescription = "d", ShortDescription = "s", Owner = "o" });
 
         var result = await Validate(CreateValidator(CreateRepo()), parse);
 
@@ -104,8 +102,8 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateFec_ExistingRow_WhenRateBlank_ClassifiesAsZeroRateWithdrawal_NotAnError()
     {
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 10m, DefraUnitPrice = 10m } };
-        var parse = FecParse(new FecStagingRow { TestCode = "TC001", FecNewRate = null });
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 10m, DefraUnitPrice = 10m } };
+        var parse = FecParse(new TestOrProductStagingRow { TestCode = "TC001", FecNewRate = null });
 
         var result = await Validate(CreateValidator(CreateRepo(liveFec: liveFec)), parse);
 
@@ -118,7 +116,7 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateFec_WhenNegativeRate_AddsError()
     {
-        var parse = FecParse(new FecStagingRow { TestCode = "TC001", FecNewRate = -5m, ItemDescription = "d", ShortDescription = "s", Owner = "o" });
+        var parse = FecParse(new TestOrProductStagingRow { TestCode = "TC001", FecNewRate = -5m, ItemDescription = "d", ShortDescription = "s", Owner = "o" });
 
         var result = await Validate(CreateValidator(CreateRepo()), parse);
 
@@ -128,7 +126,7 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateFec_NewRow_WhenZeroRate_NoNegativeRateError_ClassifiesAsInsert()
     {
-        var parse = FecParse(new FecStagingRow { TestCode = "TC001", FecNewRate = 0m, ItemDescription = "d", ShortDescription = "s", Owner = "o" });
+        var parse = FecParse(new TestOrProductStagingRow { TestCode = "TC001", FecNewRate = 0m, ItemDescription = "d", ShortDescription = "s", Owner = "o" });
 
         var result = await Validate(CreateValidator(CreateRepo()), parse);
 
@@ -141,7 +139,7 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateFec_NewRow_WhenDescriptionMissing_AddsError()
     {
-        var parse = FecParse(new FecStagingRow
+        var parse = FecParse(new TestOrProductStagingRow
         {
             TestCode = "TC999", FecNewRate = 10m,
             ItemDescription = null, ShortDescription = "short", Owner = "owner"
@@ -155,7 +153,7 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateFec_NewRow_WhenOwnerMissing_AddsError()
     {
-        var parse = FecParse(new FecStagingRow
+        var parse = FecParse(new TestOrProductStagingRow
         {
             TestCode = "TC999", FecNewRate = 10m,
             ItemDescription = "desc", ShortDescription = "short", Owner = null
@@ -171,8 +169,8 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateFec_ExistingRow_WhenDescriptionProvided_AddsWarning()
     {
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
-        var parse = FecParse(new FecStagingRow { TestCode = "TC001", FecNewRate = 10m, ItemDescription = "some changed description" });
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
+        var parse = FecParse(new TestOrProductStagingRow { TestCode = "TC001", FecNewRate = 10m, ItemDescription = "some changed description" });
 
         var result = await Validate(CreateValidator(CreateRepo(liveFec: liveFec)), parse);
 
@@ -184,9 +182,9 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateAgrup_ExistingRow_WhenAgrupNewIsNull_ClassifiesAsZeroRateWithdrawal()
     {
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
-        var liveAgrup = new[] { new AgrupStagingRow { TestCode = "TC001", Buyer = "BUYER1", Agrup = 12m } };
-        var parse = AgrupParse(new AgrupStagingRow { TestCode = "TC001", Buyer = "BUYER1", AgrupNew = null });
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
+        var liveAgrup = new[] { new TestRequirementStagingRow { TestCode = "TC001", Buyer = "BUYER1", Agrup = 12m } };
+        var parse = AgrupParse(new TestRequirementStagingRow { TestCode = "TC001", Buyer = "BUYER1", AgrupNew = null });
 
         var result = await Validate(CreateValidator(CreateRepo(liveFec: liveFec, liveAgrup: liveAgrup)), parse);
 
@@ -199,8 +197,8 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateAgrup_NewRow_WhenAgrupNewIsZero_AddsBlockedError()
     {
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
-        var parse = AgrupParse(new AgrupStagingRow { TestCode = "TC001", Buyer = "NEWBUYER", AgrupNew = 0m });
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
+        var parse = AgrupParse(new TestRequirementStagingRow { TestCode = "TC001", Buyer = "NEWBUYER", AgrupNew = 0m });
 
         var result = await Validate(CreateValidator(CreateRepo(liveFec: liveFec)), parse);
 
@@ -212,8 +210,8 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateAgrup_NewRow_WhenNoRoutingFieldSupplied_AddsMissingRoutingFieldError()
     {
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
-        var parse = AgrupParse(new AgrupStagingRow { TestCode = "TC001", Buyer = "NEWBUYER", AgrupNew = 15m });
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
+        var parse = AgrupParse(new TestRequirementStagingRow { TestCode = "TC001", Buyer = "NEWBUYER", AgrupNew = 15m });
 
         var result = await Validate(CreateValidator(CreateRepo(liveFec: liveFec)), parse);
 
@@ -223,8 +221,8 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateAgrup_NewRow_WhenProjectBuyerCodeInvalid_AddsError()
     {
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
-        var parse = AgrupParse(new AgrupStagingRow { TestCode = "TC001", Buyer = "NEWBUYER", AgrupNew = 15m, ProjectBuyerCode = "BADPROJ" });
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
+        var parse = AgrupParse(new TestRequirementStagingRow { TestCode = "TC001", Buyer = "NEWBUYER", AgrupNew = 15m, ProjectBuyerCode = "BADPROJ" });
         var repo = CreateRepo(liveFec: liveFec, projectCodes: new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "GOODPROJ" });
 
         var result = await Validate(CreateValidator(repo), parse);
@@ -235,8 +233,8 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateAgrup_NewRow_WhenProjectBuyerCodeValid_NoRoutingError()
     {
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
-        var parse = AgrupParse(new AgrupStagingRow { TestCode = "TC001", Buyer = "NEWBUYER", AgrupNew = 15m, ProjectBuyerCode = "GOODPROJ" });
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
+        var parse = AgrupParse(new TestRequirementStagingRow { TestCode = "TC001", Buyer = "NEWBUYER", AgrupNew = 15m, ProjectBuyerCode = "GOODPROJ" });
         var repo = CreateRepo(liveFec: liveFec, projectCodes: new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "GOODPROJ" });
 
         var result = await Validate(CreateValidator(repo), parse);
@@ -248,8 +246,8 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateAgrup_NewRow_WhenTestBuyerWorkGroupInvalid_AddsError()
     {
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
-        var parse = AgrupParse(new AgrupStagingRow { TestCode = "TC001", Buyer = "NEWBUYER", AgrupNew = 15m, TestBuyerWorkGroup = "WG1" });
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
+        var parse = AgrupParse(new TestRequirementStagingRow { TestCode = "TC001", Buyer = "NEWBUYER", AgrupNew = 15m, TestBuyerWorkGroup = "WG1" });
         var repo = CreateRepo(liveFec: liveFec); // capability pairs empty -> WG1 not recognised
 
         var result = await Validate(CreateValidator(repo), parse);
@@ -262,8 +260,8 @@ public class BulkRatesValidatorTests
     {
         // BC-03 (can both routing fields be populated) is still open — the shared validator
         // does not block this today, only "at least one" is enforced.
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
-        var parse = AgrupParse(new AgrupStagingRow
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
+        var parse = AgrupParse(new TestRequirementStagingRow
         {
             TestCode = "TC001", Buyer = "NEWBUYER", AgrupNew = 15m,
             ProjectBuyerCode = "GOODPROJ", TestBuyerWorkGroup = "WG1"
@@ -283,9 +281,9 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateAgrup_ExistingRow_WhenAssertedProjectBuyerCodeDiffersFromLive_AddsRoutingFieldChangedError()
     {
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
-        var liveAgrup = new[] { new AgrupStagingRow { TestCode = "TC001", Buyer = "BUYER1", Agrup = 12m, ProjectBuyerCode = "PROJA" } };
-        var parse = AgrupParse(new AgrupStagingRow { TestCode = "TC001", Buyer = "BUYER1", AgrupNew = 12m, ProjectBuyerCode = "PROJB" });
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
+        var liveAgrup = new[] { new TestRequirementStagingRow { TestCode = "TC001", Buyer = "BUYER1", Agrup = 12m, ProjectBuyerCode = "PROJA" } };
+        var parse = AgrupParse(new TestRequirementStagingRow { TestCode = "TC001", Buyer = "BUYER1", AgrupNew = 12m, ProjectBuyerCode = "PROJB" });
 
         var result = await Validate(CreateValidator(CreateRepo(liveFec: liveFec, liveAgrup: liveAgrup)), parse);
 
@@ -298,9 +296,9 @@ public class BulkRatesValidatorTests
         // The workbook has no column yet to assert a routing-field value (Phase
         // D5) — an ordinary rate-only re-upload must not trip the routing-field check just because the live
         // row happens to carry routing data this upload never asserted anything about.
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
-        var liveAgrup = new[] { new AgrupStagingRow { TestCode = "TC001", Buyer = "BUYER1", Agrup = 12m, ProjectBuyerCode = "PROJA", TestBuyerCode = "TBC1" } };
-        var parse = AgrupParse(new AgrupStagingRow { TestCode = "TC001", Buyer = "BUYER1", AgrupNew = 20m }); // no routing fields supplied
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
+        var liveAgrup = new[] { new TestRequirementStagingRow { TestCode = "TC001", Buyer = "BUYER1", Agrup = 12m, ProjectBuyerCode = "PROJA", TestBuyerCode = "TBC1" } };
+        var parse = AgrupParse(new TestRequirementStagingRow { TestCode = "TC001", Buyer = "BUYER1", AgrupNew = 20m }); // no routing fields supplied
 
         var result = await Validate(CreateValidator(CreateRepo(liveFec: liveFec, liveAgrup: liveAgrup)), parse);
 
@@ -313,13 +311,13 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateFec_WhenDownloadedKeyMissingFromUpload_AddsRequestLevelError()
     {
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
         var snapshotFec = new[]
         {
-            new FecStagingRow { TestCode = "TC001", DefraUnitPrice = 5m },
-            new FecStagingRow { TestCode = "TC002", DefraUnitPrice = 8m } // downloaded, but not re-uploaded
+            new TestOrProductStagingRow { TestCode = "TC001", DefraUnitPrice = 5m },
+            new TestOrProductStagingRow { TestCode = "TC002", DefraUnitPrice = 8m } // downloaded, but not re-uploaded
         };
-        var parse = FecParse(new FecStagingRow { TestCode = "TC001", FecNewRate = null });
+        var parse = FecParse(new TestOrProductStagingRow { TestCode = "TC001", FecNewRate = null });
         var repo = CreateRepo(liveFec: liveFec, snapshotFec: snapshotFec);
 
         var result = await Validate(CreateValidator(repo), parse, downloadVersion: 3);
@@ -334,7 +332,7 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateFec_WhenNoDownloadHasHappenedYet_SkipsSnapshotCheck()
     {
-        var parse = FecParse(new FecStagingRow { TestCode = "TC001", FecNewRate = 10m, ItemDescription = "d", ShortDescription = "s", Owner = "o" });
+        var parse = FecParse(new TestOrProductStagingRow { TestCode = "TC001", FecNewRate = 10m, ItemDescription = "d", ShortDescription = "s", Owner = "o" });
 
         var result = await Validate(CreateValidator(CreateRepo()), parse, downloadVersion: null);
 
@@ -346,11 +344,11 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateAgrup_WhenFecWithdrawnInSameUpload_AndAgrupStillPositive_AddsConflictError()
     {
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
-        var liveAgrup = new[] { new AgrupStagingRow { TestCode = "TC001", Buyer = "BUYER1", Agrup = 12m } };
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
+        var liveAgrup = new[] { new TestRequirementStagingRow { TestCode = "TC001", Buyer = "BUYER1", Agrup = 12m } };
         var parse = MixedParse(
-            fec: [new FecStagingRow { TestCode = "TC001", FecNewRate = 0m }], // withdrawal
-            agrup: [new AgrupStagingRow { TestCode = "TC001", Buyer = "BUYER1", AgrupNew = 12m }]); // still positive
+            fec: [new TestOrProductStagingRow { TestCode = "TC001", FecNewRate = 0m }], // withdrawal
+            agrup: [new TestRequirementStagingRow { TestCode = "TC001", Buyer = "BUYER1", AgrupNew = 12m }]); // still positive
 
         var result = await Validate(CreateValidator(CreateRepo(liveFec: liveFec, liveAgrup: liveAgrup)), parse);
 
@@ -382,13 +380,13 @@ public class BulkRatesValidatorTests
         // Unlike the pre-D3 validator, a row only counts toward Insert/Update/Unchanged when
         // the validator actually classified it — an invalid new row with no rate (TC_EXISTING2)
         // gets an error but no calculated action, so it counts toward Total/Invalid only.
-        var liveFec = new[] { new FecStagingRow { TestCode = "TC_EXISTING", UnitPriceVla = 20m, DefraUnitPrice = 20m } };
+        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC_EXISTING", UnitPriceVla = 20m, DefraUnitPrice = 20m } };
         var parse = FecParse(
-            new FecStagingRow { TestCode = "TC_NEW", FecNewRate = 10m, ItemDescription = "d", ShortDescription = "s", Owner = "o" },
-            new FecStagingRow { TestCode = "TC_EXISTING", FecNewRate = 20m },  // unchanged: matches live rate
+            new TestOrProductStagingRow { TestCode = "TC_NEW", FecNewRate = 10m, ItemDescription = "d", ShortDescription = "s", Owner = "o" },
+            new TestOrProductStagingRow { TestCode = "TC_EXISTING", FecNewRate = 20m },  // unchanged: matches live rate
             // Unknown TestCode (so classified new) but otherwise insert-ready, isolating the
             // one deliberate defect (no rate) so Invalid reflects exactly that one error.
-            new FecStagingRow { TestCode = "TC_EXISTING2", FecNewRate = null, ItemDescription = "d", ShortDescription = "s", Owner = "o" }
+            new TestOrProductStagingRow { TestCode = "TC_EXISTING2", FecNewRate = null, ItemDescription = "d", ShortDescription = "s", Owner = "o" }
         );
 
         var result = await Validate(CreateValidator(CreateRepo(liveFec: liveFec)), parse);
@@ -421,8 +419,8 @@ public class BulkRatesValidatorTests
             JobQueueId = QueueId,
             StaffRows =
             [
-                new StaffStagingRow { PcGrade = "G1", PayRate = 100m },
-                new StaffStagingRow { PcGrade = "G1", PayRate = 110m }
+                new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 100m },
+                new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 110m }
             ]
         };
 
@@ -439,7 +437,7 @@ public class BulkRatesValidatorTests
         {
             JobName = Apha.Common.Constants.BulkRatesJobNames.Staff,
             JobQueueId = QueueId,
-            StaffRows = [new StaffStagingRow { PcGrade = "G2", PayRate = -5m }]
+            StaffRows = [new ProfitCentreGradeStagingRow { PcGrade = "G2", PayRate = -5m }]
         };
 
         var result = await ValidateJob(CreateValidator(CreateRepo()), parse, Apha.Common.Constants.BulkRatesJobNames.Staff);
@@ -454,7 +452,7 @@ public class BulkRatesValidatorTests
         {
             JobName = Apha.Common.Constants.BulkRatesJobNames.Staff,
             JobQueueId = QueueId,
-            StaffRows = [new StaffStagingRow { PcGrade = "", PayRate = 100m }]
+            StaffRows = [new ProfitCentreGradeStagingRow { PcGrade = "", PayRate = 100m }]
         };
 
         var result = await ValidateJob(CreateValidator(CreateRepo()), parse, Apha.Common.Constants.BulkRatesJobNames.Staff);
@@ -526,7 +524,7 @@ public class BulkRatesValidatorTests
         {
             JobName = Apha.Common.Constants.BulkRatesJobNames.Staff,
             JobQueueId = QueueId,
-            StaffRows = [new StaffStagingRow { PcGrade = "GHOST", PayRate = 50m }]
+            StaffRows = [new ProfitCentreGradeStagingRow { PcGrade = "GHOST", PayRate = 50m }]
         };
 
         var result = await ValidateJob(CreateValidator(CreateRepo()), parse, Apha.Common.Constants.BulkRatesJobNames.Staff);
@@ -540,12 +538,12 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateStaff_WhenLiveMatchesExactly_ClassifiesAsUnchanged_NotUpdate()
     {
-        var liveStaff = new[] { new StaffStagingRow { PcGrade = "G1", PayRate = 100m, Npr = 10m, Ohr = 5m } };
+        var liveStaff = new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 100m, Npr = 10m, Ohr = 5m } };
         var parse = new BulkRatesParseResult
         {
             JobName = Apha.Common.Constants.BulkRatesJobNames.Staff,
             JobQueueId = QueueId,
-            StaffRows = [new StaffStagingRow { PcGrade = "G1", PayRate = 100m, Npr = 10m, Ohr = 5m }]
+            StaffRows = [new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 100m, Npr = 10m, Ohr = 5m }]
         };
 
         var result = await ValidateJob(CreateValidator(CreateRepo(liveStaff: liveStaff)), parse, Apha.Common.Constants.BulkRatesJobNames.Staff);
@@ -558,12 +556,12 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task ValidateStaff_WhenRateDiffersFromLive_ClassifiesAsUpdate()
     {
-        var liveStaff = new[] { new StaffStagingRow { PcGrade = "G1", PayRate = 100m, Npr = 10m, Ohr = 5m } };
+        var liveStaff = new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 100m, Npr = 10m, Ohr = 5m } };
         var parse = new BulkRatesParseResult
         {
             JobName = Apha.Common.Constants.BulkRatesJobNames.Staff,
             JobQueueId = QueueId,
-            StaffRows = [new StaffStagingRow { PcGrade = "G1", PayRate = 150m, Npr = 10m, Ohr = 5m }]
+            StaffRows = [new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 150m, Npr = 10m, Ohr = 5m }]
         };
 
         var result = await ValidateJob(CreateValidator(CreateRepo(liveStaff: liveStaff)), parse, Apha.Common.Constants.BulkRatesJobNames.Staff);
@@ -613,8 +611,8 @@ public class BulkRatesValidatorTests
     [Fact]
     public async Task BuildStaffFreezeAsync_WhenClean_ReturnsFreezeEntryWithSourceAndEffectiveState()
     {
-        var liveStaff = new[] { new StaffStagingRow { PcGrade = "G1", PayRate = 100m, Npr = 10m, Ohr = 5m } };
-        var stagedStaff = new[] { new StaffStagingRow { PcGrade = "G1", PayRate = 150m, Npr = 10m, Ohr = 5m } };
+        var liveStaff = new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 100m, Npr = 10m, Ohr = 5m } };
+        var stagedStaff = new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 150m, Npr = 10m, Ohr = 5m } };
         var validator = CreateValidator(CreateRepo(liveStaff: liveStaff, stagedStaff: stagedStaff));
 
         var freeze = await validator.BuildStaffFreezeAsync(QueueId, FpsYear);
@@ -633,7 +631,7 @@ public class BulkRatesValidatorTests
         // Live drift: the grade existed at upload time but was deleted before release —
         // BuildStaffFreezeAsync re-validates against *current* live data, so this must surface
         // as NotFound here even though it wasn't the case when the row was originally staged.
-        var stagedStaff = new[] { new StaffStagingRow { PcGrade = "GONE", PayRate = 100m } };
+        var stagedStaff = new[] { new ProfitCentreGradeStagingRow { PcGrade = "GONE", PayRate = 100m } };
         var validator = CreateValidator(CreateRepo(stagedStaff: stagedStaff)); // no live rows
 
         var freeze = await validator.BuildStaffFreezeAsync(QueueId, FpsYear);

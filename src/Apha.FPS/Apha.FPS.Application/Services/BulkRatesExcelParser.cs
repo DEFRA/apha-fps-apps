@@ -1,6 +1,6 @@
 using ClosedXML.Excel;
 using Apha.Common.Utilities.ExcelExport;
-using Apha.FPS.Core.Entities.BulkRates;
+using Apha.FPS.Core.Entities;
 
 namespace Apha.FPS.Application.Services
 {
@@ -105,7 +105,7 @@ namespace Apha.FPS.Application.Services
             if (parseErrors.Count > 0)
                 return new BulkRatesParseResult { JobName = jobName, JobQueueId = jobQueueId, ParseErrors = parseErrors };
 
-            var fecRows = new List<FecStagingRow>();
+            var fecRows = new List<TestOrProductStagingRow>();
             foreach (var row in fecSheet.RowsUsed().Skip(1))
             {
                 var testCode = CellString(row, fecHeaders, "TestCode");
@@ -115,7 +115,7 @@ namespace Apha.FPS.Application.Services
                 var defraUnitPrice = CellDecimalOrNull(row, fecHeaders, "Defra Unit Price");
                 var fecNew = CellDecimalOrNull(row, fecHeaders, "FEC New");
 
-                fecRows.Add(new FecStagingRow
+                fecRows.Add(new TestOrProductStagingRow
                 {
                     JobQueueId = jobQueueId,
                     TestCode = testCode.Trim(),
@@ -132,7 +132,7 @@ namespace Apha.FPS.Application.Services
                 });
             }
 
-            var agrupRows = new List<AgrupStagingRow>();
+            var agrupRows = new List<TestRequirementStagingRow>();
             foreach (var row in agrupSheet.RowsUsed().Skip(1))
             {
                 var testCode = CellString(row, agrupHeaders, "Test Code");
@@ -141,7 +141,7 @@ namespace Apha.FPS.Application.Services
                 var agrup = CellDecimalOrNull(row, agrupHeaders, "Agrup");
                 var agrupNew = CellDecimalOrNull(row, agrupHeaders, "Agrup New");
 
-                agrupRows.Add(new AgrupStagingRow
+                agrupRows.Add(new TestRequirementStagingRow
                 {
                     JobQueueId = jobQueueId,
                     TestCode = testCode.Trim(),
@@ -185,13 +185,13 @@ namespace Apha.FPS.Application.Services
             if (headerErrors.Count > 0)
                 return new BulkRatesParseResult { JobName = jobName, JobQueueId = jobQueueId, ParseErrors = headerErrors };
 
-            var rows = new List<StaffStagingRow>();
+            var rows = new List<ProfitCentreGradeStagingRow>();
             foreach (var row in sheet.RowsUsed().Skip(1))
             {
                 var grade = CellString(row, headers, "PcGrade");
                 if (string.IsNullOrWhiteSpace(grade)) continue;
 
-                rows.Add(new StaffStagingRow
+                rows.Add(new ProfitCentreGradeStagingRow
                 {
                     JobQueueId = jobQueueId,
                     PcGrade = grade.Trim(),

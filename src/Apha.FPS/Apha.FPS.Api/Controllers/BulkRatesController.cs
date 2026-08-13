@@ -1,10 +1,10 @@
 using Apha.Common.Contracts;
-using Apha.FPS.Application.Dtos.BulkRates;
+using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
-using Apha.FPS.Core.Entities.BulkRates;
 using Apha.FPS.Core.Interfaces;
 using Asp.Versioning;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,28 +23,30 @@ namespace Apha.FPS.Api.Controllers
     {
         private readonly IBulkRatesRequestService _service;
         private readonly IFpsRequestContext _requestContext;
+        private readonly IMapper _mapper;
 
-        public BulkRatesController(IBulkRatesRequestService service, IFpsRequestContext requestContext)
+        public BulkRatesController(IBulkRatesRequestService service, IFpsRequestContext requestContext, IMapper mapper)
         {
             _service = service ?? throw new ArgumentNullException(nameof(service));
             _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         /// <summary>Create a new Bulk Rates request in Initiated status.</summary>
         [HttpPost("requests")]
-        public async Task<ActionResult<BulkRatesRequestDto>> CreateRequestAsync(
-            [FromBody] CreateBulkRatesReq req,
+        public async Task<ActionResult<BulkRatesRequestDetailRes>> CreateRequestAsync(
+            [FromBody] CreateBulkRatesRequestReq req,
             CancellationToken ct)
         {
             var result = await _service.CreateRequestAsync(
                 req.JobName, req.FpsYear, _requestContext.UserEmailId, ct);
-            return Ok(result);
+            return Ok(_mapper.Map<BulkRatesRequestDetailRes>(result));
         }
 
         /// <summary>Upload (or re-upload) an Excel file, replacing previous staging and re-running validation.</summary>
         [HttpPost("requests/{jobExecutionId:guid}/upload")]
         [Consumes("multipart/form-data")]
-        public async Task<ActionResult<BulkRatesUploadResultDto>> UploadFileAsync(
+        public async Task<ActionResult<BulkRatesUploadResultRes>> UploadFileAsync(
             Guid jobExecutionId, IFormFile file, CancellationToken ct)
         {
             if (file == null || file.Length == 0)
@@ -55,68 +57,68 @@ namespace Apha.FPS.Api.Controllers
 
             var result = await _service.UploadFileAsync(
                 jobExecutionId, ms.ToArray(), file.FileName, _requestContext.UserEmailId, ct);
-            return Ok(result);
+            return Ok(_mapper.Map<BulkRatesUploadResultRes>(result));
         }
 
         /// <summary>Retrieve structured validation results for a request.</summary>
         [HttpGet("requests/{jobExecutionId:guid}/validation")]
-        public async Task<ActionResult<BulkRatesUploadResultDto>> GetValidationResultsAsync(
+        public async Task<ActionResult<BulkRatesUploadResultRes>> GetValidationResultsAsync(
             Guid jobExecutionId, CancellationToken ct)
         {
             var result = await _service.GetValidationResultsAsync(
                 jobExecutionId, _requestContext.UserEmailId, ct);
-            return Ok(result);
+            return Ok(_mapper.Map<BulkRatesUploadResultRes>(result));
         }
 
         /// <summary>Release a fully-valid request for approval.</summary>
         [HttpPost("requests/{jobExecutionId:guid}/release")]
-        public async Task<ActionResult<BulkRatesRequestDto>> ReleaseForApprovalAsync(
+        public async Task<ActionResult<BulkRatesRequestDetailRes>> ReleaseForApprovalAsync(
             Guid jobExecutionId, CancellationToken ct)
         {
             var result = await _service.ReleaseForApprovalAsync(
                 jobExecutionId, _requestContext.UserEmailId, ct);
-            return Ok(result);
+            return Ok(_mapper.Map<BulkRatesRequestDetailRes>(result));
         }
 
         /// <summary>Approve and publish EventBridge trigger.</summary>
         [HttpPost("requests/{jobExecutionId:guid}/approve")]
-        public async Task<ActionResult<BulkRatesRequestDto>> ApproveAsync(
+        public async Task<ActionResult<BulkRatesRequestDetailRes>> ApproveAsync(
             Guid jobExecutionId, CancellationToken ct)
         {
             var result = await _service.ApproveAsync(
                 jobExecutionId, _requestContext.UserEmailId, ct);
-            return Ok(result);
+            return Ok(_mapper.Map<BulkRatesRequestDetailRes>(result));
         }
 
         /// <summary>Reject with mandatory reason.</summary>
         [HttpPost("requests/{jobExecutionId:guid}/reject")]
-        public async Task<ActionResult<BulkRatesRequestDto>> RejectAsync(
-            Guid jobExecutionId, [FromBody] RejectBulkRatesReq req, CancellationToken ct)
+        public async Task<ActionResult<BulkRatesRequestDetailRes>> RejectAsync(
+            Guid jobExecutionId, [FromBody] RejectBulkRatesRequestReq req, CancellationToken ct)
         {
             var result = await _service.RejectAsync(
                 jobExecutionId, _requestContext.UserEmailId, req.Reason, ct);
-            return Ok(result);
+            return Ok(_mapper.Map<BulkRatesRequestDetailRes>(result));
         }
 
         /// <summary>Cancel an Initiated or Rejected request (initiator only).</summary>
         [HttpPost("requests/{jobExecutionId:guid}/cancel")]
-        public async Task<ActionResult<BulkRatesRequestDto>> CancelAsync(
-            Guid jobExecutionId, [FromBody] CancelBulkRatesReq req, CancellationToken ct)
+        public async Task<ActionResult<BulkRatesRequestDetailRes>> CancelAsync(
+            Guid jobExecutionId, [FromBody] CancelBulkRatesRequestReq req, CancellationToken ct)
         {
             var result = await _service.CancelAsync(
                 jobExecutionId, _requestContext.UserEmailId, req.Reason, ct);
-            return Ok(result);
+            return Ok(_mapper.Map<BulkRatesRequestDetailRes>(result));
         }
 
         /// <summary>Get full request detail including log history.</summary>
         [HttpGet("requests/{jobExecutionId:guid}")]
-        public async Task<ActionResult<BulkRatesRequestDto>> GetRequestAsync(
+        public async Task<ActionResult<BulkRatesRequestDetailRes>> GetRequestAsync(
             Guid jobExecutionId, CancellationToken ct)
         {
             var result = await _service.GetRequestAsync(jobExecutionId, ct);
             if (result == null)
                 return NotFound($"Bulk Rates request {jobExecutionId} not found.");
-            return Ok(result);
+            return Ok(_mapper.Map<BulkRatesRequestDetailRes>(result));
         }
 
         /// <summary>Server-side paged/sorted list, optionally filtered by job name, year and status.</summary>
@@ -129,35 +131,25 @@ namespace Apha.FPS.Api.Controllers
             CancellationToken ct)
         {
             var result = await _service.GetRequestsAsync(jobName, fpsYear, status, query, ct);
-            return Ok(new PaginationRes<BulkRatesQueueEntry>
-            {
-                Data = result.Data,
-                PaginationData = new Pagination
-                {
-                    PageNumber = result.PaginationData.PageNumber,
-                    PageSize = result.PaginationData.PageSize,
-                    TotalPages = result.PaginationData.TotalPages,
-                    TotalRecords = result.PaginationData.TotalRecords
-                }
-            });
+            return Ok(_mapper.Map<PaginationRes<BulkRatesQueueEntryRes>>(result));
         }
 
         /// <summary>Returns the currently active (blocking-status) request for a job name, or null if none exists.</summary>
         [HttpGet("requests/active")]
-        public async Task<ActionResult<BulkRatesQueueEntry?>> GetActiveRequestAsync(
+        public async Task<ActionResult<BulkRatesQueueEntryRes?>> GetActiveRequestAsync(
             [FromQuery] string jobName, CancellationToken ct)
         {
             var result = await _service.GetActiveRequestAsync(jobName, ct);
-            return Ok(result);
+            return Ok(_mapper.Map<BulkRatesQueueEntryRes?>(result));
         }
 
         /// <summary>Returns the staged FEC/AGRUP rows for a request's staging grids, classified against live data.</summary>
         [HttpGet("requests/{jobExecutionId:guid}/staging")]
-        public async Task<ActionResult<BulkRatesStagingDataDto>> GetStagingDataAsync(
+        public async Task<ActionResult<BulkRatesStagingDataRes>> GetStagingDataAsync(
             Guid jobExecutionId, CancellationToken ct)
         {
             var result = await _service.GetStagingDataAsync(jobExecutionId, ct);
-            return Ok(result);
+            return Ok(_mapper.Map<BulkRatesStagingDataRes>(result));
         }
 
         /// <summary>Exports the staged (not-yet-approved) FEC/AGRUP rows for a request as an Excel file.</summary>
@@ -239,16 +231,4 @@ namespace Apha.FPS.Api.Controllers
                 fileName);
         }
     }
-
-    // ── Request body records ─────────────────────────────────────────────────────
-
-    /// <param name="JobName">Job type name matching fps.job_master.jobname (e.g. "FEC", "Animal", "Staff").</param>
-    /// <param name="FpsYear">The FPS year the bulk rates update applies to.</param>
-    public record CreateBulkRatesReq(string JobName, int FpsYear);
-
-    /// <param name="Reason">Mandatory rejection reason visible to the initiator.</param>
-    public record RejectBulkRatesReq(string Reason);
-
-    /// <param name="Reason">Optional cancellation reason.</param>
-    public record CancelBulkRatesReq(string? Reason);
 }

@@ -1,5 +1,4 @@
-using Apha.FPS.Application.Services.BulkRates.Validation;
-using Apha.FPS.Application.Services.BulkRates.Validation.StaffAnimal;
+using Apha.FPS.Application.Services;
 using FluentAssertions;
 
 namespace Apha.FPS.Application.UnitTests.Services.BulkRatesServiceTest

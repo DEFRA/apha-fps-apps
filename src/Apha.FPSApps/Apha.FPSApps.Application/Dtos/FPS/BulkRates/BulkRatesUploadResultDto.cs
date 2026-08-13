@@ -17,7 +17,9 @@ namespace Apha.FPSApps.Application.Dtos.FPS.BulkRates
 
     /// <summary>
     /// A single row-level validation error returned by the upload / validation endpoints.
-    /// Mirrors <c>StagingValidationError</c> as serialised over the wire.
+    /// Mirrors <c>BulkRatesValidationErrorDto</c> (Apha.FPS.Application) as serialised over the
+    /// wire, minus <c>Id</c>/<c>JobQueueId</c>/<c>UploadVersion</c> (redundant once nested under
+    /// a parent already scoped to those — a deliberate Web-side narrowing, not a gap).
     /// </summary>
     public class BulkRatesValidationErrorDto
     {

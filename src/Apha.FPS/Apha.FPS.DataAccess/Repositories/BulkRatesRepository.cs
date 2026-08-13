@@ -1,4 +1,4 @@
-using Apha.FPS.Core.Entities.BulkRates;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -58,7 +58,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         // ── Queue entry CRUD ─────────────────────────────────────────────────────
 
-        public async Task<BulkRatesQueueEntry> CreateRequestAsync(
+        public async Task<BulkRatesQueueRow> CreateRequestAsync(
             Guid jobQueueId, Guid jobExecutionId, int jobId, int initiatedStatusId,
             string requestedBy, DateTime requestedAtUtc, int fpsYear,
             CancellationToken ct = default)
@@ -86,7 +86,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 ?? throw new InvalidOperationException($"Row just inserted (jobExecutionId={jobExecutionId}) could not be read back.");
         }
 
-        public async Task<BulkRatesQueueEntry?> GetRequestAsync(Guid jobExecutionId, CancellationToken ct = default)
+        public async Task<BulkRatesQueueRow?> GetRequestAsync(Guid jobExecutionId, CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
             await using var cmd = conn.CreateCommand();
@@ -126,7 +126,7 @@ namespace Apha.FPS.DataAccess.Repositories
             ["requestedatutc"] = "q.requested_at_utc"
         };
 
-        public async Task<PagedData<BulkRatesQueueEntry>> GetRequestsAsync(
+        public async Task<PagedData<BulkRatesQueueRow>> GetRequestsAsync(
             string? jobName, int? fpsYear, string? status,
             int page, int pageSize, string? sortBy, bool descending,
             CancellationToken ct = default)
@@ -162,7 +162,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 : "q.requested_at_utc";
             var sortDirection = descending ? "DESC" : "ASC";
 
-            var results = new List<BulkRatesQueueEntry>();
+            var results = new List<BulkRatesQueueRow>();
             await using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = @"
@@ -189,7 +189,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     results.Add(ReadQueueEntry(reader));
             }
 
-            return new PagedData<BulkRatesQueueEntry>(results, new PaginationData
+            return new PagedData<BulkRatesQueueRow>(results, new PaginationData
             {
                 PageNumber = page,
                 PageSize = pageSize,
@@ -198,7 +198,7 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        public async Task<BulkRatesQueueEntry?> GetActiveRequestAsync(string jobName, CancellationToken ct = default)
+        public async Task<BulkRatesQueueRow?> GetActiveRequestAsync(string jobName, CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
             await using var cmd = conn.CreateCommand();
@@ -381,29 +381,36 @@ namespace Apha.FPS.DataAccess.Repositories
             await cmd.ExecuteNonQueryAsync(ct);
         }
 
-        public async Task<IReadOnlyList<BulkRatesQueueLog>> GetJobQueueLogsAsync(
+        public async Task<IReadOnlyList<BatchJobQueueLog>> GetJobQueueLogsAsync(
             Guid jobQueueId, CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-                SELECT jobqueuelogid, jobqueueid, note, performedby, logtime
+                SELECT jobqueuelogid, jobqueueid, statusid, performedby, logtime, note
                 FROM fps.job_queue_log
                 WHERE jobqueueid = @jobqueueid
                 ORDER BY logtime ASC;";
             cmd.Parameters.AddWithValue("jobqueueid", jobQueueId);
 
-            var results = new List<BulkRatesQueueLog>();
+            // BatchJobQueueLog is the existing EF entity for fps.job_queue_log — reused here
+            // rather than maintaining a second near-identical raw-ADO type (see
+            // BulkRatesRequestService.ToDto(BatchJobQueueLog) for the persistence-name ->
+            // consumer-friendly-name mapping onto BulkRatesQueueLogDto). Reading all six
+            // columns, not a subset, since anything less would misrepresent this as the
+            // complete entity while silently leaving a persisted column unset.
+            var results = new List<BatchJobQueueLog>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
-                results.Add(new BulkRatesQueueLog
+                results.Add(new BatchJobQueueLog
                 {
-                    LogId       = reader.GetInt64(0),
-                    JobQueueId  = reader.GetGuid(1),
-                    Note        = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                    Actor       = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    CreatedAtUtc = reader.GetDateTime(4)
+                    JobqueueLogId = reader.GetInt32(0),
+                    JobqueueId    = reader.GetGuid(1),
+                    StatusId      = reader.GetInt32(2),
+                    PerformedBy   = reader.GetString(3),
+                    LogTime       = reader.GetDateTime(4),
+                    Note          = reader.IsDBNull(5) ? null : reader.GetString(5)
                 });
             }
             return results;
@@ -413,8 +420,8 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task ReplaceStagingFecAsync(
             Guid jobQueueId,
-            IReadOnlyList<FecStagingRow> fecRows,
-            IReadOnlyList<AgrupStagingRow> agrupRows,
+            IReadOnlyList<TestOrProductStagingRow> fecRows,
+            IReadOnlyList<TestRequirementStagingRow> agrupRows,
             CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -500,7 +507,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task ReplaceStagingStaffAsync(
             Guid jobQueueId,
-            IReadOnlyList<StaffStagingRow> rows,
+            IReadOnlyList<ProfitCentreGradeStagingRow> rows,
             CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -602,7 +609,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         // ── Staging read ─────────────────────────────────────────────────────────
 
-        public async Task<IReadOnlyList<FecStagingRow>> GetFecStagingRowsAsync(
+        public async Task<IReadOnlyList<TestOrProductStagingRow>> GetTestOrProductStagingRowsAsync(
             Guid jobQueueId, CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -618,11 +625,11 @@ namespace Apha.FPS.DataAccess.Repositories
                 ORDER BY testcode;";
             cmd.Parameters.AddWithValue("jobqueueid", jobQueueId);
 
-            var rows = new List<FecStagingRow>();
+            var rows = new List<TestOrProductStagingRow>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
-                rows.Add(new FecStagingRow
+                rows.Add(new TestOrProductStagingRow
                 {
                     JobQueueId       = reader.GetGuid(0),
                     TestCode         = reader.GetString(1),
@@ -643,7 +650,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return rows;
         }
 
-        public async Task<IReadOnlyList<AgrupStagingRow>> GetAgrupStagingRowsAsync(
+        public async Task<IReadOnlyList<TestRequirementStagingRow>> GetTestRequirementStagingRowsAsync(
             Guid jobQueueId, CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -660,11 +667,11 @@ namespace Apha.FPS.DataAccess.Repositories
                 ORDER BY testcode, buyer;";
             cmd.Parameters.AddWithValue("jobqueueid", jobQueueId);
 
-            var rows = new List<AgrupStagingRow>();
+            var rows = new List<TestRequirementStagingRow>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
-                rows.Add(new AgrupStagingRow
+                rows.Add(new TestRequirementStagingRow
                 {
                     JobQueueId  = reader.GetGuid(0),
                     TestCode    = reader.GetString(1),
@@ -688,7 +695,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return rows;
         }
 
-        public async Task<IReadOnlyList<StaffStagingRow>> GetStaffStagingRowsAsync(
+        public async Task<IReadOnlyList<ProfitCentreGradeStagingRow>> GetProfitCentreGradeStagingRowsAsync(
             Guid jobQueueId, CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -700,11 +707,11 @@ namespace Apha.FPS.DataAccess.Repositories
                 WHERE jobqueueid = @jobqueueid;";
             cmd.Parameters.AddWithValue("jobqueueid", jobQueueId);
 
-            var rows = new List<StaffStagingRow>();
+            var rows = new List<ProfitCentreGradeStagingRow>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
-                rows.Add(new StaffStagingRow
+                rows.Add(new ProfitCentreGradeStagingRow
                 {
                     JobQueueId = reader.GetGuid(0),
                     PcGrade    = reader.GetString(1),
@@ -981,7 +988,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task CreateDownloadSnapshotAsync(
             Guid jobQueueId, int downloadVersion,
-            IReadOnlyList<FecStagingRow> fecRows, IReadOnlyList<AgrupStagingRow> agrupRows,
+            IReadOnlyList<TestOrProductStagingRow> fecRows, IReadOnlyList<TestRequirementStagingRow> agrupRows,
             CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -1109,7 +1116,7 @@ namespace Apha.FPS.DataAccess.Repositories
             await cmd.ExecuteNonQueryAsync(ct);
         }
 
-        public async Task<IReadOnlyList<FecStagingRow>> GetFecSnapshotRowsAsync(
+        public async Task<IReadOnlyList<TestOrProductStagingRow>> GetFecSnapshotRowsAsync(
             Guid jobQueueId, int downloadVersion, CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -1122,11 +1129,11 @@ namespace Apha.FPS.DataAccess.Repositories
             cmd.Parameters.AddWithValue("jobqueueid", jobQueueId);
             cmd.Parameters.AddWithValue("downloadversion", downloadVersion);
 
-            var result = new List<FecStagingRow>();
+            var result = new List<TestOrProductStagingRow>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
-                result.Add(new FecStagingRow
+                result.Add(new TestOrProductStagingRow
                 {
                     JobQueueId = jobQueueId,
                     TestCode = reader.GetString(0),
@@ -1140,7 +1147,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return result;
         }
 
-        public async Task<IReadOnlyList<AgrupStagingRow>> GetAgrupSnapshotRowsAsync(
+        public async Task<IReadOnlyList<TestRequirementStagingRow>> GetAgrupSnapshotRowsAsync(
             Guid jobQueueId, int downloadVersion, CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -1154,11 +1161,11 @@ namespace Apha.FPS.DataAccess.Repositories
             cmd.Parameters.AddWithValue("jobqueueid", jobQueueId);
             cmd.Parameters.AddWithValue("downloadversion", downloadVersion);
 
-            var result = new List<AgrupStagingRow>();
+            var result = new List<TestRequirementStagingRow>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
-                result.Add(new AgrupStagingRow
+                result.Add(new TestRequirementStagingRow
                 {
                     JobQueueId = jobQueueId,
                     TestCode = reader.GetString(0),
@@ -1178,7 +1185,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task CreateStaffDownloadSnapshotAsync(
             Guid jobQueueId, int downloadVersion,
-            IReadOnlyList<StaffStagingRow> rows,
+            IReadOnlyList<ProfitCentreGradeStagingRow> rows,
             CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -1220,7 +1227,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 jobQueueId, downloadVersion, rows.Count);
         }
 
-        public async Task<IReadOnlyList<StaffStagingRow>> GetStaffSnapshotRowsAsync(
+        public async Task<IReadOnlyList<ProfitCentreGradeStagingRow>> GetStaffSnapshotRowsAsync(
             Guid jobQueueId, int downloadVersion, CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -1233,11 +1240,11 @@ namespace Apha.FPS.DataAccess.Repositories
             cmd.Parameters.AddWithValue("jobqueueid", jobQueueId);
             cmd.Parameters.AddWithValue("downloadversion", downloadVersion);
 
-            var result = new List<StaffStagingRow>();
+            var result = new List<ProfitCentreGradeStagingRow>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
-                result.Add(new StaffStagingRow
+                result.Add(new ProfitCentreGradeStagingRow
                 {
                     JobQueueId = jobQueueId,
                     PcGrade    = reader.GetString(0),
@@ -1331,7 +1338,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         // ── Export: live table reads ──────────────────────────────────────────────
 
-        public async Task<IReadOnlyList<FecStagingRow>> GetFecRowsForExportAsync(
+        public async Task<IReadOnlyList<TestOrProductStagingRow>> GetFecRowsForExportAsync(
             int fpsYear, CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -1350,11 +1357,11 @@ namespace Apha.FPS.DataAccess.Repositories
                 ORDER BY itemcode;";
             cmd.Parameters.AddWithValue("fpsyear", fpsYear);
 
-            var rows = new List<FecStagingRow>();
+            var rows = new List<TestOrProductStagingRow>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
-                rows.Add(new FecStagingRow
+                rows.Add(new TestOrProductStagingRow
                 {
                     JobQueueId       = Guid.Empty,
                     TestCode         = reader.GetString(0),
@@ -1371,7 +1378,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return rows;
         }
 
-        public async Task<IReadOnlyList<AgrupStagingRow>> GetAgrupRowsForExportAsync(
+        public async Task<IReadOnlyList<TestRequirementStagingRow>> GetAgrupRowsForExportAsync(
             int fpsYear, CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -1388,11 +1395,11 @@ namespace Apha.FPS.DataAccess.Repositories
                 ORDER BY testcode, buyer;";
             cmd.Parameters.AddWithValue("fpsyear", fpsYear);
 
-            var rows = new List<AgrupStagingRow>();
+            var rows = new List<TestRequirementStagingRow>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
-                rows.Add(new AgrupStagingRow
+                rows.Add(new TestRequirementStagingRow
                 {
                     JobQueueId  = Guid.Empty,
                     TestCode    = reader.GetString(0),
@@ -1411,7 +1418,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return rows;
         }
 
-        public async Task<IReadOnlyList<StaffStagingRow>> GetStaffRowsForExportAsync(
+        public async Task<IReadOnlyList<ProfitCentreGradeStagingRow>> GetStaffRowsForExportAsync(
             int fpsYear, CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -1423,11 +1430,11 @@ namespace Apha.FPS.DataAccess.Repositories
                 ORDER BY pcgrade;";
             cmd.Parameters.AddWithValue("fpsyear", fpsYear);
 
-            var rows = new List<StaffStagingRow>();
+            var rows = new List<ProfitCentreGradeStagingRow>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
             {
-                rows.Add(new StaffStagingRow
+                rows.Add(new ProfitCentreGradeStagingRow
                 {
                     JobQueueId = Guid.Empty,
                     PcGrade    = reader.GetString(0),
@@ -1474,8 +1481,8 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task FreezeStagingCalculatedActionsAsync(
             Guid jobQueueId, int validationVersion,
-            IReadOnlyList<BulkRatesFreezeEntry> fecFreezes,
-            IReadOnlyList<BulkRatesFreezeEntry> agrupFreezes,
+            IReadOnlyList<TestFreezeEntry> fecFreezes,
+            IReadOnlyList<TestFreezeEntry> agrupFreezes,
             CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -1625,7 +1632,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         // ── Private helpers ──────────────────────────────────────────────────────
 
-        private static BulkRatesQueueEntry ReadQueueEntry(NpgsqlDataReader reader) =>
+        private static BulkRatesQueueRow ReadQueueEntry(NpgsqlDataReader reader) =>
             new()
             {
                 JobQueueId       = reader.GetGuid(0),

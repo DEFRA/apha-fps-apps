@@ -216,6 +216,7 @@ namespace Apha.Common.Constants
 
         // Resource Set-Up — WG Grades
         public const string GetWgGrades = "api/v1/wggrades?pcGrade={0}";
+        public const string GetWgGradesByWorkGroup = "api/v1/wggrades/byworkgroup?workGroup={0}";
 
         // Resource Set-Up — WG Staff
         public const string GetWgStaff = "api/v1/wgstaff?wgGrade={0}";
@@ -240,7 +241,6 @@ namespace Apha.Common.Constants
         public const string UpdateWorkgroupGrade = "api/v1/wggrades/{0}";
         public const string DeleteWorkgroupGrade = "api/v1/wggrades/maintain/{0}";
         public const string GetAllGradeCodes = "api/v1/wggrades/gradecodes";
-        public const string GetWgGradesByWorkGroup = "api/v1/wggrades/byworkgroup?workGroup={0}";
 
         // Generic Bid — Budget Bids
         public const string GetBids = "api/v1/budgetbids?workgroup={0}";

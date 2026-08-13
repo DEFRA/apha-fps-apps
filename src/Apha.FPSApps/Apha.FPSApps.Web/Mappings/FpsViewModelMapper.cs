@@ -165,14 +165,14 @@ namespace Apha.FPSApps.Web.Mappings
             // Bulk Rates — staging grids (Detail page). ValidationSummary has no source member —
             // it's populated after mapping, from BulkRatesUploadResultDto, by
             // BulkRatesController.BuildStagingGridConfig.
-            CreateMap<BulkRatesStagingFecRowDto, FecStagingGridItem>()
+            CreateMap<BulkRatesFecStagingRowDto, FecStagingGridItem>()
                 .ForMember(d => d.ValidationSummary, o => o.Ignore());
-            CreateMap<BulkRatesStagingAgrupRowDto, AgrupStagingGridItem>()
+            CreateMap<BulkRatesAgrupStagingRowDto, AgrupStagingGridItem>()
                 .ForMember(d => d.Active, o => o.MapFrom(s => s.Active == 1))
                 .ForMember(d => d.ValidationSummary, o => o.Ignore());
-            CreateMap<BulkRatesStagingStaffRowDto, StaffStagingGridItem>()
+            CreateMap<BulkRatesStaffStagingRowDto, StaffStagingGridItem>()
                 .ForMember(d => d.ValidationSummary, o => o.Ignore());
-            CreateMap<BulkRatesStagingAnimalRowDto, AnimalStagingGridItem>()
+            CreateMap<BulkRatesAnimalStagingRowDto, AnimalStagingGridItem>()
                 .ForMember(d => d.ValidationSummary, o => o.Ignore());
 
             // TestListVla grid row ↔ DTO (frmTestList / fsubTest_MainList):

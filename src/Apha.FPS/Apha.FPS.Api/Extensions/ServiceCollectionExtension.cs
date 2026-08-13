@@ -1,5 +1,3 @@
-using Apha.FPS.Application.Services.BulkRates.Validation;
-using Apha.FPS.Application.Services.BulkRates.Validation.StaffAnimal;
 using Apha.Common.Utilities.Email;
 using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
@@ -67,7 +65,6 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IBulkRatesValidationService, BulkRatesValidationService>();
             services.AddScoped<IStaffAnimalValidationService, StaffAnimalValidationService>();
             services.AddScoped<BulkRatesValidator>();
-            services.AddScoped<IEventBridgePublisher, EventBridgePublisher>();
             services.AddScoped<IBulkRatesNotificationService, LogOnlyBulkRatesNotificationService>();
             services.AddScoped<ICostCentreService, CostCentreService>();
             services.AddScoped<ITestRCCostService, TestRCCostService>();

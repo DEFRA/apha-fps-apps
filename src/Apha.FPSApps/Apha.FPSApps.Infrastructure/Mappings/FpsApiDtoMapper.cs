@@ -2,6 +2,7 @@ using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Dtos.FPS.BulkRates;
 using Apha.FPSApps.Application.Pagination;
 using AutoMapper;
 namespace Apha.FPSApps.Infrastructure.Mappings
@@ -225,6 +226,23 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<BatchJobHistoryDto, BatchJobHistoryRes>().ReverseMap();
             CreateMap<BatchJobEventTriggerDto, BatchJobEventTriggerRes>().ReverseMap();
 
+            // Bulk Rates — Common Res -> Web DTO. One-directional: the Web app never builds a
+            // Res from its own Dto (nothing serializes these back out), so a ReverseMap would
+            // declare an unused equivalence. BulkRatesValidationErrorRes deliberately maps onto
+            // a narrower BulkRatesValidationErrorDto (no Id/JobQueueId/UploadVersion) — a valid,
+            // ordinary AutoMapper mapping since only unmapped *destination* members are an error.
+            CreateMap<BulkRatesQueueEntryRes, BulkRatesQueueEntryDto>();
+            CreateMap<BulkRatesUploadMetadataRes, BulkRatesUploadMetadataDto>();
+            CreateMap<BulkRatesRowCountsRes, BulkRatesRowCountsDto>();
+            CreateMap<BulkRatesQueueLogRes, BulkRatesQueueLogDto>();
+            CreateMap<BulkRatesValidationErrorRes, BulkRatesValidationErrorDto>();
+            CreateMap<BulkRatesFecStagingRowRes, BulkRatesFecStagingRowDto>();
+            CreateMap<BulkRatesAgrupStagingRowRes, BulkRatesAgrupStagingRowDto>();
+            CreateMap<BulkRatesAnimalStagingRowRes, BulkRatesAnimalStagingRowDto>();
+            CreateMap<BulkRatesStaffStagingRowRes, BulkRatesStaffStagingRowDto>();
+            CreateMap<BulkRatesRequestDetailRes, BulkRatesRequestDetailDto>();
+            CreateMap<BulkRatesUploadResultRes, BulkRatesUploadResultDto>();
+            CreateMap<BulkRatesStagingDataRes, BulkRatesStagingDataDto>();
         }
     }
 }

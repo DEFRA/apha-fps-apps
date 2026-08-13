@@ -1,5 +1,4 @@
-using Apha.FPS.Application.Services.BulkRates.Validation;
-using Apha.FPS.Core.Entities.BulkRates;
+using Apha.FPS.Core.Entities;
 
 namespace Apha.FPS.Application.Services
 {
@@ -13,11 +12,11 @@ namespace Apha.FPS.Application.Services
         public Guid JobQueueId { get; init; }
 
         // FEC / Test stream
-        public IReadOnlyList<FecStagingRow> FecRows { get; init; } = [];
-        public IReadOnlyList<AgrupStagingRow> AgrupRows { get; init; } = [];
+        public IReadOnlyList<TestOrProductStagingRow> FecRows { get; init; } = [];
+        public IReadOnlyList<TestRequirementStagingRow> AgrupRows { get; init; } = [];
 
         // Staff stream
-        public IReadOnlyList<StaffStagingRow> StaffRows { get; init; } = [];
+        public IReadOnlyList<ProfitCentreGradeStagingRow> StaffRows { get; init; } = [];
 
         // Animal stream
         public IReadOnlyList<AnimalStagingRow> AnimalRows { get; init; } = [];
@@ -49,16 +48,16 @@ namespace Apha.FPS.Application.Services
     /// classification to freeze onto staging via
     /// IBulkRatesRepository.FreezeStagingCalculatedActionsAsync.
     /// </summary>
-    public sealed record BulkRatesFreezeResult
+    public sealed record BulkRatesTestFreezeResult
     {
         public IReadOnlyList<ValidationFinding> BlockingErrors { get; init; } = [];
-        public IReadOnlyList<BulkRatesFreezeEntry> FecFreezes { get; init; } = [];
-        public IReadOnlyList<BulkRatesFreezeEntry> AgrupFreezes { get; init; } = [];
+        public IReadOnlyList<TestFreezeEntry> FecFreezes { get; init; } = [];
+        public IReadOnlyList<TestFreezeEntry> AgrupFreezes { get; init; } = [];
     }
 
     /// <summary>
     /// Output of BulkRatesValidator.BuildStaffFreezeAsync — the
-    /// Staff-only equivalent of BulkRatesFreezeResult (a Staff request never has an AGRUP-like
+    /// Staff-only equivalent of BulkRatesTestFreezeResult (a Staff request never has an AGRUP-like
     /// second sheet, so this doesn't need FEC's two-list shape).
     /// </summary>
     public sealed record BulkRatesStaffFreezeResult
