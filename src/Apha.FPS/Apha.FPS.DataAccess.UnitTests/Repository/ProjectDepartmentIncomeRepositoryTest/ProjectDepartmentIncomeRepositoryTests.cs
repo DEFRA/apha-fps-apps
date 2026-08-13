@@ -1342,10 +1342,607 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
         }
 
         #endregion
+
+        #region Filter helpers
+
+        [Fact]
+        public async Task GetPagedTimeIncomeAsync_WithProjectFilter_ReturnsFilteredResult()
+        {
+            var repo = CreateRepository(
+                timeCostCalcs:      [MakeTimeCostCalc()],
+                workgroups:         [MakeWorkgroup()],
+                projects:           [MakeProject()],
+                workGroupEmployees: [MakeEmployee()],
+                costCentres:        [MakeCostCentre()]);
+
+            var filter = $"{{\"Project\":\"{TestProject}\"}}";
+            var result = await repo.GetPagedTimeIncomeAsync(DefaultQuery(filter: filter), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeIncomeAsync_WithProjectFilter_ExcludesNonMatchingRows()
+        {
+            var repo = CreateRepository(
+                timeCostCalcs:      [MakeTimeCostCalc(project: "PROJ1"), MakeTimeCostCalc(project: "PROJ2", staffId: "S02")],
+                workgroups:         [MakeWorkgroup()],
+                projects:           [MakeProject("PROJ1"), MakeProject("PROJ2")],
+                workGroupEmployees: [MakeEmployee(), MakeEmployee(pactId: "S02")],
+                costCentres:        [MakeCostCentre()]);
+
+            var filter = "{\"Project\":\"PROJ1\"}";
+            var result = await repo.GetPagedTimeIncomeAsync(DefaultQuery(filter: filter), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Single(result.Data);
+            Assert.Equal("PROJ1", result.Data.ElementAt(0).Project);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeIncomeAsync_WithUnmatchedFilter_ReturnsEmpty()
+        {
+            var repo = CreateRepository(
+                timeCostCalcs:      [MakeTimeCostCalc()],
+                workgroups:         [MakeWorkgroup()],
+                projects:           [MakeProject()],
+                workGroupEmployees: [MakeEmployee()],
+                costCentres:        [MakeCostCentre()]);
+
+            var filter = "{\"Project\":\"NOMATCH\"}";
+            var result = await repo.GetPagedTimeIncomeAsync(DefaultQuery(filter: filter), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedTestIncomeAsync_WithProjectFilter_ReturnsFilteredResult()
+        {
+            var repo = CreateRepository(
+                workgroups:       [MakeWorkgroup()],
+                projects:         [MakeProject()],
+                costCentres:      [MakeCostCentre()],
+                monthlyOutputs:   [MakeMonthlyOutput()],
+                testRequirements: [MakeTestRequirement()]);
+
+            var filter = $"{{\"Project\":\"{TestProject}\"}}";
+            var result = await repo.GetPagedTestIncomeAsync(DefaultQuery(filter: filter), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedAnimalIncomeAsync_WithData_ReturnsResult()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(acctCode: "LargeAnimals")]);
+
+            var result = await repo.GetPagedAnimalIncomeAsync(DefaultQuery(), TestProject, TestMonthFrom, TestMonthTo);
+
+            Assert.NotNull(result);
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedAnimalIncomeAsync_WithProjectFilter_ReturnsFilteredResult()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(acctCode: "LargeAnimals")]);
+
+            var filter = $"{{\"Project\":\"{TestProject}\"}}";
+            var result = await repo.GetPagedAnimalIncomeAsync(DefaultQuery(filter: filter), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedAdditionalIncomeAsync_WithData_ReturnsResult()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(acctCode: "Consumables")]);
+
+            var result = await repo.GetPagedAdditionalIncomeAsync(DefaultQuery(), TestProject, TestMonthFrom, TestMonthTo);
+
+            Assert.NotNull(result);
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedAdditionalIncomeAsync_WithProjectFilter_ReturnsFilteredResult()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(acctCode: "Consumables")]);
+
+            var filter = $"{{\"Project\":\"{TestProject}\"}}";
+            var result = await repo.GetPagedAdditionalIncomeAsync(DefaultQuery(filter: filter), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Single(result.Data);
+        }
+
+        #endregion
+
+        #region Sort helpers
+
+        [Fact]
+        public async Task GetPagedTimeIncomeAsync_SortByProjectAscending_ReturnsSortedResult()
+        {
+            var repo = CreateRepository(
+                timeCostCalcs:      [MakeTimeCostCalc(project: "ZZZ"), MakeTimeCostCalc(project: "AAA", staffId: "S02")],
+                workgroups:         [MakeWorkgroup()],
+                projects:           [MakeProject("ZZZ"), MakeProject("AAA")],
+                workGroupEmployees: [MakeEmployee(), MakeEmployee(pactId: "S02")],
+                costCentres:        [MakeCostCentre()]);
+
+            var result = await repo.GetPagedTimeIncomeAsync(DefaultQuery(sortBy: "Project", descending: false), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Equal("AAA", result.Data.ElementAt(0).Project);
+            Assert.Equal("ZZZ", result.Data.ElementAt(1).Project);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeIncomeAsync_SortByProjectDescending_ReturnsSortedResult()
+        {
+            var repo = CreateRepository(
+                timeCostCalcs:      [MakeTimeCostCalc(project: "AAA"), MakeTimeCostCalc(project: "ZZZ", staffId: "S02")],
+                workgroups:         [MakeWorkgroup()],
+                projects:           [MakeProject("AAA"), MakeProject("ZZZ")],
+                workGroupEmployees: [MakeEmployee(), MakeEmployee(pactId: "S02")],
+                costCentres:        [MakeCostCentre()]);
+
+            var result = await repo.GetPagedTimeIncomeAsync(DefaultQuery(sortBy: "Project", descending: true), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Equal("ZZZ", result.Data.ElementAt(0).Project);
+            Assert.Equal("AAA", result.Data.ElementAt(1).Project);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeIncomeAsync_SortByNameAscending_ReturnsSortedResult()
+        {
+            var tc1 = MakeTimeCostCalc(project: "P1");
+            tc1.Name = "Alice";
+            var tc2 = MakeTimeCostCalc(project: "P2", staffId: "S02");
+            tc2.Name = "Zara";
+
+            var repo = CreateRepository(
+                timeCostCalcs:      [tc2, tc1],
+                workgroups:         [MakeWorkgroup()],
+                projects:           [MakeProject("P1"), MakeProject("P2")],
+                workGroupEmployees: [MakeEmployee(), MakeEmployee(pactId: "S02")],
+                costCentres:        [MakeCostCentre()]);
+
+            var result = await repo.GetPagedTimeIncomeAsync(DefaultQuery(sortBy: "Name", descending: false), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Equal("Alice", result.Data.ElementAt(0).Name);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeIncomeAsync_SortByNameDescending_ReturnsSortedResult()
+        {
+            var tc1 = MakeTimeCostCalc(project: "P1");
+            tc1.Name = "Alice";
+            var tc2 = MakeTimeCostCalc(project: "P2", staffId: "S02");
+            tc2.Name = "Zara";
+
+            var repo = CreateRepository(
+                timeCostCalcs:      [tc1, tc2],
+                workgroups:         [MakeWorkgroup()],
+                projects:           [MakeProject("P1"), MakeProject("P2")],
+                workGroupEmployees: [MakeEmployee(), MakeEmployee(pactId: "S02")],
+                costCentres:        [MakeCostCentre()]);
+
+            var result = await repo.GetPagedTimeIncomeAsync(DefaultQuery(sortBy: "Name", descending: true), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Equal("Zara", result.Data.ElementAt(0).Name);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeIncomeAsync_SortByUnknownColumn_ReturnsUnsortedResult()
+        {
+            var repo = CreateRepository(
+                timeCostCalcs:      [MakeTimeCostCalc()],
+                workgroups:         [MakeWorkgroup()],
+                projects:           [MakeProject()],
+                workGroupEmployees: [MakeEmployee()],
+                costCentres:        [MakeCostCentre()]);
+
+            var result = await repo.GetPagedTimeIncomeAsync(DefaultQuery(sortBy: "UnknownColumn"), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedTestIncomeAsync_SortByProjectDescending_ReturnsSortedResult()
+        {
+            var repo = CreateRepository(
+                workgroups:       [MakeWorkgroup()],
+                projects:         [MakeProject("AAA"), MakeProject("ZZZ")],
+                costCentres:      [MakeCostCentre()],
+                monthlyOutputs:   [MakeMonthlyOutput(buyer: "AAA"), MakeMonthlyOutput(buyer: "ZZZ")],
+                testRequirements: [MakeTestRequirement(buyer: "AAA"), MakeTestRequirement(buyer: "ZZZ")]);
+
+            var result = await repo.GetPagedTestIncomeAsync(DefaultQuery(sortBy: "Project", descending: true), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Equal("ZZZ", result.Data.ElementAt(0).Project);
+        }
+
+        [Fact]
+        public async Task GetPagedTestIncomeAsync_SortByProjectAscending_ReturnsSortedResult()
+        {
+            var repo = CreateRepository(
+                workgroups:       [MakeWorkgroup()],
+                projects:         [MakeProject("AAA"), MakeProject("ZZZ")],
+                costCentres:      [MakeCostCentre()],
+                monthlyOutputs:   [MakeMonthlyOutput(buyer: "ZZZ"), MakeMonthlyOutput(buyer: "AAA")],
+                testRequirements: [MakeTestRequirement(buyer: "AAA"), MakeTestRequirement(buyer: "ZZZ")]);
+
+            var result = await repo.GetPagedTestIncomeAsync(DefaultQuery(sortBy: "Project", descending: false), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Equal("AAA", result.Data.ElementAt(0).Project);
+        }
+
+        [Fact]
+        public async Task GetPagedAnimalIncomeAsync_SortByProjectDescending_ReturnsSortedResult()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject("AAA"), MakeProject("ZZZ")],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(project: "AAA", acctCode: "LargeAnimals"),
+                                      MakeProjectSubContract(project: "ZZZ", acctCode: "SmallAnimals")]);
+
+            var result = await repo.GetPagedAnimalIncomeAsync(DefaultQuery(sortBy: "Project", descending: true), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Equal("ZZZ", result.Data.ElementAt(0).Project);
+        }
+
+        [Fact]
+        public async Task GetPagedAnimalIncomeAsync_SortByProjectAscending_ReturnsSortedResult()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject("AAA"), MakeProject("ZZZ")],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(project: "ZZZ", acctCode: "LargeAnimals"),
+                                      MakeProjectSubContract(project: "AAA", acctCode: "SmallAnimals")]);
+
+            var result = await repo.GetPagedAnimalIncomeAsync(DefaultQuery(sortBy: "Project", descending: false), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Equal("AAA", result.Data.ElementAt(0).Project);
+        }
+
+        [Fact]
+        public async Task GetPagedAdditionalIncomeAsync_SortByProjectDescending_ReturnsSortedResult()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject("AAA"), MakeProject("ZZZ")],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(project: "AAA", acctCode: "Consumables"),
+                                      MakeProjectSubContract(project: "ZZZ", acctCode: "Consumables")]);
+
+            var result = await repo.GetPagedAdditionalIncomeAsync(DefaultQuery(sortBy: "Project", descending: true), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Equal("ZZZ", result.Data.ElementAt(0).Project);
+        }
+
+        [Fact]
+        public async Task GetPagedAdditionalIncomeAsync_SortByProjectAscending_ReturnsSortedResult()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject("AAA"), MakeProject("ZZZ")],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(project: "ZZZ", acctCode: "Consumables"),
+                                      MakeProjectSubContract(project: "AAA", acctCode: "Consumables")]);
+
+            var result = await repo.GetPagedAdditionalIncomeAsync(DefaultQuery(sortBy: "Project", descending: false), null, TestMonthFrom, TestMonthTo);
+
+            Assert.Equal("AAA", result.Data.ElementAt(0).Project);
+        }
+
+        #endregion
+
+        #region GetTotalsCurrentAsync
+
+        [Fact]
+        public async Task GetTotalsCurrentAsync_WithAllCostTypes_ReturnsTotals()
+        {
+            var repo = CreateRepository(
+                timeCostCalcs:       [MakeTimeCostCalc()],
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                workGroupEmployees:  [MakeEmployee()],
+                costCentres:         [MakeCostCentre()],
+                monthlyOutputs:      [MakeMonthlyOutput()],
+                testRequirements:    [MakeTestRequirement()],
+                projectSubContracts: [MakeProjectSubContract(acctCode: "Consumables"),
+                                      MakeProjectSubContract(acctCode: "LargeAnimals")]);
+
+            var result = await repo.GetTotalsCurrentAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            Assert.NotNull(result);
+            Assert.NotEmpty(result);
+        }
+
+        [Fact]
+        public async Task GetTotalsCurrentAsync_NullProject_ReturnsTotalsForAll()
+        {
+            var repo = CreateRepository(
+                timeCostCalcs:       [MakeTimeCostCalc()],
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                workGroupEmployees:  [MakeEmployee()],
+                costCentres:         [MakeCostCentre()],
+                monthlyOutputs:      [MakeMonthlyOutput()],
+                testRequirements:    [MakeTestRequirement()],
+                projectSubContracts: [MakeProjectSubContract(acctCode: "Consumables")]);
+
+            var result = await repo.GetTotalsCurrentAsync(null, TestMonthFrom, TestMonthTo);
+
+            Assert.NotEmpty(result);
+        }
+
+        #endregion
+
+        #region GetTestSnapshotIncomeAsync extended
+
+        [Fact]
+        public async Task GetTestSnapshotIncomeAsync_NullProject_ReturnsAllProjects()
+        {
+            var repo = CreateRepository(
+                workgroups:           [MakeWorkgroup()],
+                projects:             [MakeProject("PROJ1"), MakeProject("PROJ2")],
+                costCentres:          [MakeCostCentre()],
+                periodMonthlyOutputs: [
+                    new PeriodMonthlyOutput
+                    {
+                        Id = 1, Period = 2, Project = "PROJ1", OracleProjectCode = "OPC001",
+                        SubAccountCode = "SAC001", IsDefraProject = "Yes", Month = 1,
+                        WorkGroup = "WG1", Spc = "PC1", TestCode = "TC01", Volume = 5.0,
+                        TestPrice = 25m, TotalCost = 125m
+                    },
+                    new PeriodMonthlyOutput
+                    {
+                        Id = 2, Period = 2, Project = "PROJ2", OracleProjectCode = "OPC001",
+                        SubAccountCode = "SAC001", IsDefraProject = "Yes", Month = 1,
+                        WorkGroup = "WG1", Spc = "PC1", TestCode = "TC01", Volume = 3.0,
+                        TestPrice = 10m, TotalCost = 30m
+                    }
+                ],
+                periods: [MakePeriod(endPeriod: 2)]);
+
+            var result = await repo.GetTestSnapshotIncomeAsync(null, 1, 2);
+
+            Assert.Equal(2, result.Count);
+        }
+
+        [Fact]
+        public async Task GetTestSnapshotIncomeAsync_ZeroNetVolume_RowExcluded()
+        {
+            var repo = CreateRepository(
+                periodMonthlyOutputs: [
+                    new PeriodMonthlyOutput
+                    {
+                        Id = 1, Period = 2, Project = TestProject, OracleProjectCode = "OPC001",
+                        SubAccountCode = "SAC001", IsDefraProject = "Yes", Month = 1,
+                        WorkGroup = "WG1", Spc = "PC1", TestCode = "TC01", Volume = 5.0,
+                        TestPrice = 25m, TotalCost = 125m
+                    },
+                    new PeriodMonthlyOutput
+                    {
+                        Id = 2, Period = 1, Project = TestProject, OracleProjectCode = "OPC001",
+                        SubAccountCode = "SAC001", IsDefraProject = "Yes", Month = 1,
+                        WorkGroup = "WG1", Spc = "PC1", TestCode = "TC01", Volume = 5.0,
+                        TestPrice = 25m, TotalCost = 125m
+                    }
+                ],
+                periods: [MakePeriod(endPeriod: 1), MakePeriod("Period2", endPeriod: 2)]);
+
+            var result = await repo.GetTestSnapshotIncomeAsync(TestProject, 1, 2);
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetAnimalIncomeCurrentAsync extended
+
+        [Fact]
+        public async Task GetAnimalIncomeCurrentAsync_WithMatchingAnimalData_ReturnsRows()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(acctCode: "LargeAnimals")]);
+
+            var result = await repo.GetAnimalIncomeCurrentAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            Assert.Single(result);
+            Assert.Equal(TestProject, result[0].Project);
+        }
+
+        [Fact]
+        public async Task GetAnimalIncomeCurrentAsync_NullProject_ReturnsAllProjects()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject("PROJ1"), MakeProject("PROJ2")],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(project: "PROJ1", acctCode: "LargeAnimals"),
+                                      MakeProjectSubContract(project: "PROJ2", acctCode: "SmallAnimals")]);
+
+            var result = await repo.GetAnimalIncomeCurrentAsync(null, TestMonthFrom, TestMonthTo);
+
+            Assert.Equal(2, result.Count);
+        }
+
+        #endregion
+
+        #region GetAdditionalIncomeAsync extended
+
+        [Fact]
+        public async Task GetAdditionalIncomeAsync_NullProject_ReturnsAllProjects()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject("PROJ1"), MakeProject("PROJ2")],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(project: "PROJ1", acctCode: "Consumables"),
+                                      MakeProjectSubContract(project: "PROJ2", acctCode: "Consumables")]);
+
+            var result = await repo.GetAdditionalIncomeAsync(null, TestMonthFrom, TestMonthTo);
+
+            Assert.Equal(2, result.Count);
+        }
+
+        [Fact]
+        public async Task GetAdditionalIncomeAsync_NegativeAmount_ExcludedByHavingFilter()
+        {
+            var sc = MakeProjectSubContract(acctCode: "Consumables", amount: -50m);
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [sc]);
+
+            var result = await repo.GetAdditionalIncomeAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetAdditionalIncomeCurrentAsync extended
+
+        [Fact]
+        public async Task GetAdditionalIncomeCurrentAsync_NullProject_ReturnsAllProjects()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject("PROJ1"), MakeProject("PROJ2")],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(project: "PROJ1", acctCode: "Consumables"),
+                                      MakeProjectSubContract(project: "PROJ2", acctCode: "Consumables")]);
+
+            var result = await repo.GetAdditionalIncomeCurrentAsync(null, TestMonthFrom, TestMonthTo);
+
+            Assert.Equal(2, result.Count);
+        }
+
+        [Fact]
+        public async Task GetAdditionalIncomeCurrentAsync_NegativeAmount_IncludedUnlikeSnapshot()
+        {
+            var sc = MakeProjectSubContract(acctCode: "Consumables", amount: -50m);
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [sc]);
+
+            var result = await repo.GetAdditionalIncomeCurrentAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            Assert.Single(result);
+        }
+
+        #endregion
+
+        #region GetTotalsAsync extended
+
+        [Fact]
+        public async Task GetTotalsAsync_WithTestData_ReturnsTestsCost()
+        {
+            var repo = CreateRepository(
+                workgroups:       [MakeWorkgroup()],
+                projects:         [MakeProject()],
+                costCentres:      [MakeCostCentre()],
+                monthlyOutputs:   [MakeMonthlyOutput()],
+                testRequirements: [MakeTestRequirement()],
+                timeCostCalcs:    [],
+                workGroupEmployees: [],
+                projectSubContracts: []);
+
+            var result = await repo.GetTotalsAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            Assert.Single(result);
+            Assert.NotNull(result[0].TestsCost);
+        }
+
+        [Fact]
+        public async Task GetTotalsAsync_WithAnimalData_ReturnsAnimalsCost()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(acctCode: "LargeAnimals")],
+                timeCostCalcs:       [],
+                workGroupEmployees:  [],
+                monthlyOutputs:      [],
+                testRequirements:    []);
+
+            var result = await repo.GetTotalsAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            Assert.Single(result);
+            Assert.NotNull(result[0].AnimalsCost);
+        }
+
+        [Fact]
+        public async Task GetTotalsAsync_WithAdditionalData_ReturnsProjectSpecificsCost()
+        {
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                costCentres:         [MakeCostCentre()],
+                projectSubContracts: [MakeProjectSubContract(acctCode: "Consumables")],
+                timeCostCalcs:       [],
+                workGroupEmployees:  [],
+                monthlyOutputs:      [],
+                testRequirements:    []);
+
+            var result = await repo.GetTotalsAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            Assert.Single(result);
+            Assert.NotNull(result[0].ProjectSpecificsCost);
+        }
+
+        #endregion
+
+        #region UpdatePeriodLockedAsync extended
+
+        [Fact]
+        public async Task UpdatePeriodLockedAsync_SetLockedFalse_SetsPeriodLockedToZero()
+        {
+            var period = MakePeriod("Period1", TestFpsYear, 1, periodLocked: -1);
+            var mockRequestContext = new Mock<IFpsRequestContext>();
+            mockRequestContext.Setup(x => x.FpsYear).Returns(TestFpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
+            var periodsMockSet = RepositoryTestHelper.CreateMockDbSet(new[] { period });
+            RepositoryTestHelper.SetupDbSetOperations(periodsMockSet);
+            mockContext.Setup(x => x.Periods).Returns(periodsMockSet.Object);
+            RepositoryTestHelper.SetupSaveChanges(mockContext, returnValue: 1);
+
+            var repo = new ProjectDepartmentIncomeRepository(mockContext.Object, mockRequestContext.Object);
+
+            var result = await repo.UpdatePeriodLockedAsync("Period1", false);
+
+            Assert.Equal(1, result);
+            Assert.Equal((short)0, period.PeriodLocked);
+        }
+
+        #endregion
     }
 }
-
-
-
-
 
