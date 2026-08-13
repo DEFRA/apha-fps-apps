@@ -1,0 +1,65 @@
+@model Apha.FPSApps.Web.Areas.PIMS.Models.ProfitCentreManagerLinkItem
+
+@{
+    var isEditMode = ViewBag.IsEditMode as bool? ?? false;
+    var originalProfitCentre = ViewBag.OriginalProfitCentre as string;
+    var title = isEditMode ? "Edit Resource Centre" : "Add Resource Centre";
+    var profitCentreDropdownData = ViewBag.ProfitCentreDropdownData as dynamic ?? new List<object>();
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="modal-title" style="margin: 0;">@title</h3>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+<div class="modal-body" style="padding-top: 5px;">
+    <form class="row" id="formProfitCentreManagerLink">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" asp-for="Manager" id="hdnPcLinkManager" />
+        <input type="hidden" id="hdnOriginalProfitCentre" value="@originalProfitCentre" />
+        <input type="hidden" id="hdnIsProfitCentreEditMode" value="@(isEditMode ? "true" : "false")" />
+
+        <div class="govuk-error-summary ra-form-error-banner ra-hidden"
+             id="pcAssignDbError" role="alert" aria-labelledby="pcAssignDbErrorTitle" tabindex="-1">
+            <h2 class="govuk-error-summary__title govuk-!-font-size-14" id="pcAssignDbErrorTitle">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+                <p class="govuk-body govuk-!-font-size-14" id="pcAssignDbErrorText"></p>
+            </div>
+        </div>
+
+        <div class="govuk-form-group" id="pcAssignValueGroup">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="pcAssignProfitCentreDropdown_input">
+                <span id="pcAssignLabel">Resource Centre:</span> <span class="ra-required-star" aria-hidden="true">*</span>
+            </label>
+            <!-- Multi-column dropdown container -->
+            <div id="pcAssignProfitCentreDropdownContainer" class="ra-select-full"></div>
+
+            <!-- Hidden input to store selected profit centre value -->
+            <input type="hidden" id="pcAssignValue" name="ProfitCentre" value="@Model.ProfitCentre" />
+
+            <!-- Hidden data element with dropdown options -->
+            <script type="application/json" id="pcAssignProfitCentreOptionsData">@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(profitCentreDropdownData))</script>
+
+            <span asp-validation-for="ProfitCentre" 
+                  data-valmsg-for="ProfitCentre"
+                  class="govuk-error-message" 
+                  id="pcAssignValueError" 
+                  style="display:none;"></span>
+        </div>
+
+        <div class="col-12" style="display: flex; justify-content: space-between; margin-top: 10px;">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary sup_margin_0"
+                    onclick="closeModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button sup_margin_0"
+                    onclick="saveProfitCentreManagerLink()">
+                Save
+            </button>
+        </div>
+    </form>
+</div>
+

@@ -4,36 +4,29 @@
     ViewData["Title"] = "Programme Animal Plan";
 }
 
-<style type="text/css">
-    #gridContainer_animalBookedGrid .grid-scroll-container {
-        height: 255px;
-        max-height: 255px;
-    }   
-</style>
-
 <div class="container-fluid">
     <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full">
-            <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
-                <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
-                    <div class="col-md-6">
-                        
-                    </div>
-                    <div style="display: flex; justify-content: flex-end;" class="col-md-6">
-                        <label class="fw-bold mt-2" for="programmeSelect">Programme:</label>
-                        <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
-                                class="govuk-select govuk-!-font-size-16">
-                            <option value="">-- Select Programme --</option>
-                        </select>
-                    </div>
-                </div>
+        <div class="govuk-grid-column-one-full isClearFix sup_border-bottom">
+            <div class="govuk-grid-column-one-half isFloatLeft">
+                <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-2 govuk-!-margin-left-0 isCustomPageHeadings">Plan All Animal Costs for Programme</h1>
             </div>
-        </div>
-    </div>
-    <!-- Title section -->
-    <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full">
-            <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">Plan All Animal Costs for Programme</h1>
+
+            <div class="govuk-grid-column-one-half isFloatRight">
+                <table class="govuk-table govuk-!-margin-bottom-0 govuk-!-margin-top-2 isFloatRight isHalfGrid isPlanAllAnimalCosts">
+                    <tbody class="govuk-table__body">
+                        <tr class="govuk-table__row">
+                            <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-0 isNoBottomBorder govuk-!-text-align-right">
+                                <label class="fw-bold me-2" for="programmeSelect">Programme:</label>
+                            </th>
+                            <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
+                                <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo" class="govuk-select govuk-!-font-size-16 govuk-input--width-20">
+                                    <option value="">-- Select Project --</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -116,8 +109,8 @@
 
 
 @section Scripts {
-    <script src="~/js/ajax-form-validation.js"></script>
-    <script src="~/js/fps_js/AnimalJob.js"></script>
+    <script src="~/js/ajax-form-validation.js" asp-append-version="true"></script>
+    <script src="~/js/fps_js/AnimalJob.js" asp-append-version="true"></script>
     <script>
         var currentProgramNo = '@Html.Raw(Model.SelectedProgramNo)';
         var currentJobCode = '';
@@ -130,7 +123,10 @@
 
         $(document).ready(function () {
             if (currentProgramNo) {
-                window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+                showLoader();
+                setTimeout(function () {
+                    window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+                }, 0);
             }
 
             var animalGridContainer = document.getElementById('gridContainer_@Model.AnimalCostGrid.GridId');
@@ -145,7 +141,12 @@
                     var firstRow = $('#tbl_@Model.ProjectsGrid.GridId tbody tr.selectable-row:first');
                     if (firstRow.length) {
                         firstRow.trigger('click');
+                    } else {
+                        hideLoader();
                     }
+                }
+                if (e.detail.gridId === '@Model.AnimalCostGrid.GridId') {
+                    hideLoader();
                 }
             });
 
@@ -191,7 +192,10 @@
                 );
             }
 
-            window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+            showLoader();
+            setTimeout(function () {
+                window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+            }, 0);
         });
 
         function selectProject(btn) {
@@ -222,7 +226,10 @@
                 }
             );
 
-            window['gridManager_@Model.AnimalCostGrid.GridId'].reloadGrid({ page: 1 });
+            showLoader();
+            setTimeout(function () {
+                window['gridManager_@Model.AnimalCostGrid.GridId'].reloadGrid({ page: 1 });
+            }, 0);
         }
 
         function getProjectExtraFilters() {

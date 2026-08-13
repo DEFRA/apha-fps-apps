@@ -44,6 +44,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ? projectCode
                 : projectList.FirstOrDefault()?.Value ?? string.Empty;
 
+            // Keep the session in sync so the Back link retains the selected project.
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProjectCode, selectedProjectCode);
+
             ProjectDto? projectInfo = await GetProjectInfoAsync(selectedProjectCode);
 
             var animalPlanGrid = new DataGridConfig<AnimalPlanItem>
@@ -125,6 +128,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     message = e.Message ?? "An unexpected error occurred."
                 })
             });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetProjectLookup()
+        {
+            var response = await _projectService.GetAllProjectsAsync();
+            if (!response.Success || response.Data == null)
+                return Json(new List<object>());
+            var data = response.Data
+                .Select(p => new { parentProject = p.ParentProject, projectTitle = p.ProjectTitle ?? string.Empty })
+                .ToList();
+            return Json(data);
         }
 
         private async Task<List<SelectListItem>> GetProjectListAsync()

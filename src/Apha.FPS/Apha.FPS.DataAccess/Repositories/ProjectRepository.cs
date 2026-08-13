@@ -25,12 +25,15 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<IEnumerable<ProjectView>> GetAllProjectsAsync()
         {
             return await _dbContext.ProjectViews
-                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId)).ToListAsync();
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId) && p.FpsYear== _requestContext.FpsYear)
+                .OrderBy(x=>x.ParentProject).ToListAsync();
         }
 
         public async Task<IEnumerable<Project>> GetAllProjectsForAllUsersAsync()
         {
             return await _dbContext.Projects
+                .Where(x=>x.FpsYear == _requestContext.FpsYear)
+                .OrderBy(x=>x.ParentProject)
                 .ToListAsync();
         }
 
@@ -160,6 +163,33 @@ namespace Apha.FPS.DataAccess.Repositories
                     IsDefraProject = pv.IsDefraProject ?? 0,
                     IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
                 }).AsQueryable();
+
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+            projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
+
+            var result = await projectQuery.ToListAsync();
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<PagedData<Project>> GetPagedProjectSnapshotDataAsync(PaginationParameters<string> query)
+        {
+            var projectQuery = _dbContext.Projects
+                .Select(prj => new Project
+                {
+                    Program = prj.Program,
+                    ParentProject = prj.ParentProject,
+                    ProjectTitle = prj.ProjectTitle,
+                    Contract = prj.Contract,
+                    Customer = prj.Customer,
+                    Manager = prj.Manager,
+                    TransferIncome = prj.TransferIncome,
+                    CustIncome = prj.CustIncome,
+                    ProjectStatus = prj.ProjectStatus,
+                    BudgetCvl = prj.BudgetCvl,
+                    CaseWorkSub = prj.CaseWorkSub,
+                    PvsIncome = prj.PvsIncome,
+                    PlanCaseWorkDebit = prj.PlanCaseWorkDebit
+                }).Distinct();
 
             projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
             projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
@@ -588,6 +618,8 @@ namespace Apha.FPS.DataAccess.Repositories
             entity.BudgetCvl = project.BudgetCvl;
             entity.TransferIncome = project.TransferIncome;
 
+            NormalizeDateTimesToUnspecified(entity);
+            _dbContext.ProjectLogs.Add(MapProjectToLog(entity, "U", _requestContext.UserEmailId));
             await _dbContext.SaveChangesAsync();
             return entity;
         }
@@ -682,6 +714,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(p => p.ProgramNo == programNo);
         }
 
+        
         private static IQueryable ApplyOrder<T>(IQueryable<Project> query, Expression<Func<Project, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
@@ -720,7 +753,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return query;
         }
 
-        private static IQueryable<ProjectView> ApplyProfitabilityFilter(IQueryable<ProjectView> query, string? filter)
+        private static List<ProjectProfitabilityView> ApplyProfitabilityFilter(List<ProjectProfitabilityView> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
                 return query;
@@ -731,11 +764,17 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
-                query = query.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{jobCode}%"));
+            if (dict.TryGetValue("JobCode", out var jobCode) && !string.IsNullOrWhiteSpace(jobCode?.ToString()))
+            {
+                var jobCodeValue = jobCode.ToString()!;
+                query = query.Where(x => x.JobCode.Contains(jobCodeValue, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
 
-            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && projectStatus != null)
-                query = query.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
+            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && !string.IsNullOrWhiteSpace(projectStatus?.ToString()))
+            {
+                var projectStatusValue = projectStatus.ToString()!;
+                query = query.Where(x => x.ProjectStatus!.Contains(projectStatusValue, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
 
             return query;
         }
@@ -1600,8 +1639,6 @@ namespace Apha.FPS.DataAccess.Repositories
             else if (workTypeFilter == "not-approved")
                 projectQuery = projectQuery.Where(p => p.ProjectStatus == "Not Approved");
 
-            projectQuery = ApplyProfitabilityFilter(projectQuery, query.Filter);
-
             var projects = await projectQuery
                 .Select(p => new ProjectProfitabilityEntry(p.ParentProject, p.BudgetCvl, p.Profit, p.ProjectStatus, p.Program))
                 .ToListAsync();
@@ -1642,8 +1679,6 @@ namespace Apha.FPS.DataAccess.Repositories
                 projectQuery = projectQuery.Where(p => p.ProjectStatus == "Approved");
             else if (workTypeFilter == "not-approved")
                 projectQuery = projectQuery.Where(p => p.ProjectStatus == "Not Approved");
-
-            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
 
             var projects = await projectQuery
                 .Select(p => new ProjectProfitabilityEntry(p.ParentProject, p.BudgetCvl, p.Profit, p.ProjectStatus, p.Program))
@@ -1792,6 +1827,8 @@ namespace Apha.FPS.DataAccess.Repositories
             var results = projects
                 .Select(p => BuildProfitabilityRow(p, staffMap, additionalMap, testMap, animalCostByJob, programmeTargetMap))
                 .ToList();
+
+            results = ApplyProfitabilityFilter(results, query.Filter);
 
             // Apply sorting
             results = query.SortBy?.ToLower() switch

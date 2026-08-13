@@ -160,7 +160,7 @@ namespace Apha.PACT.DataAccess.Repository
             if (!latestImportedDate.HasValue)
             {
                 return new PagedData<SubContractRmsImportRow>(
-                    Array.Empty<SubContractRmsImportRow>(),
+                    Array.Empty<SubContractRmsImportRow>(),                   
                     new PaginationData
                     {
                         PageNumber = query.Page,

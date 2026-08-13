@@ -7,42 +7,40 @@
 
 <main id="main-content">
     <div class="container-fluid">
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
-                    <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
-                        <div class="col-md-8">
-                            
-                        </div>
-                        <div style="display: flex; justify-content: flex-end;" class="col-md-4">
-                            @if (Model.IsProjectGroupMode)
-                            {
-                                <label class="fw-bold mt-2" for="projectGroupSelect">Project Group: </label>
-                                <select id="projectGroupSelect" asp-items="Model.ProjectGroupList" asp-for="SelectedProjectGroup"
-                                        class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
-                                    <option value="">-- Select Project Group --</option>
-                                </select>
-                            }
-                            else
-                            {
-                                <label class="fw-bold mt-2" for="programmeSelect">Programme: </label>
-                                <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
-                                        class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
-                                    <option value="">-- Select Programme --</option>
-                                </select>
-                            }
-                        </div>
-                    </div>
+        <div class="">
+            <div class="govuk-grid-column-one-full sup_border-bottom isClearFix">
+                <div class="govuk-grid-column-one-half govuk-!-padding-left-0">
+                    <h1 class="govuk-heading-s govuk-!-margin-top-3 govuk-!-margin-bottom-2 govuk-!-padding-bottom-0 govuk-!-padding-left-0">
+                        @(Model.IsProjectGroupMode ? "Plan Project Group Individually" : "Plan Projects Individually")
+                    </h1>
                 </div>
-            </div>
-        </div>
 
-        <!-- Title section -->
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
-                    @(Model.IsProjectGroupMode ? "Plan Project Group Individually" : "Plan Projects Individually")
-                </h1>
+                <div class="govuk-grid-column-one-third isFloatRight govuk-!-padding-right-0 isPlanProjectIndividually">
+                    <table class="govuk-table govuk-!-margin-bottom-0">
+                        <tbody class="govuk-table__body">
+                            <tr class="govuk-table__row">
+                                <td class="govuk-table__cell govuk-!-padding-bottom-2 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
+                                    @if (Model.IsProjectGroupMode)
+                                    {
+                                        <label class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-0 govuk-!-font-weight-bold isNoWrap" for="projectGroupSelect">Project Group: </label>
+                                        <select id="projectGroupSelect" asp-items="Model.ProjectGroupList" asp-for="SelectedProjectGroup"
+                                                class="govuk-select govuk-!-font-size-16 govuk-input--width-10">
+                                            <option value="">-- Select Project Group --</option>
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <label class="fw-bold mt-2" for="programmeSelect">Programme: </label>
+                                        <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
+                                                class="govuk-select govuk-!-font-size-16 govuk-input--width-10">
+                                            <option value="">-- Select Programme --</option>
+                                        </select>
+                                    }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -86,12 +84,12 @@
                                             <div class="govuk-grid-column-full mt-2">
                                                 <div class="project-code-section" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
                                                     <label class="govuk-label--s" for="selected-project-input">Selected project</label>
-                                                    <input type="text" id="selected-project-input" value=""
+                                                    <input type="text" id="selected-project-input" value="@Model.SelectedProjectCode"
                                                            placeholder="Project" readonly
                                                            class="govuk-input govuk-!-font-size-16"
                                                            style="width:160px;">
-                                                    <input type="hidden" id="hdnSelectedProject" value="" />
-                                                        <button type="button" id="btnPlan" class="govuk-button sup_margin_0" style="display:none;" onclick="planThisProject()">
+                                                    <input type="hidden" id="hdnSelectedProject" value="@Model.SelectedProjectCode" />
+                                                        <button type="button" id="btnPlan" class="govuk-button sup_margin_0" style="@(string.IsNullOrWhiteSpace(Model.SelectedProjectCode) ? "display:none;" : "")" onclick="planThisProject()">
                                                         <i class="fa fa-cogs" aria-hidden="true"></i> Plan
                                                     </button>
                                                 </div>
@@ -171,6 +169,14 @@
             link.classList.add('nav-disabled');
         });
 
+        // If a project was already selected (restored from session), enable the nav links immediately.
+        if (currentProjectCode) {
+            updateNavLinks(currentProgramNo);
+            document.querySelectorAll('a.nav-updatable').forEach(function (link) {
+                link.classList.remove('nav-disabled');
+            });
+        }
+
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidenav');
             if (sidebar) sidebar.classList.toggle('collapsed');
@@ -187,7 +193,6 @@
 
         $('#programmeSelect').on('change', function () {
             const val = $(this).val();
-            if (!val) return;
             currentProgramNo = val;
             showLoader();
             // Persist selection to session for other pages
@@ -196,27 +201,50 @@
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(val),
-                complete: function () { hideLoader(); }
+                success: function () {
+                    try {
+                        updateNavLinks(val);
+                        resetSelectedProject();
+                        window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+                        if (val) loadProjectTotals();
+                    } catch (e) {
+                        showAlertMessage('An error occurred while loading the projects.', AlertType.ERROR);
+                    } finally {
+                        hideLoader();
+                    }
+                },
+                error: function () {
+                    hideLoader();
+                    showAlertMessage('An error occurred while saving the programme selection.', AlertType.ERROR);
+                }
             });
-            updateNavLinks(val);
-            resetSelectedProject();
-            window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
-            loadProjectTotals();
         });
 
         $('#projectGroupSelect').on('change', function () {
             const val = $(this).val();
-            if (!val) return;
             currentProjectGroup = val;
+            showLoader();
             $.ajax({
                 url: '@Url.Action("SaveProjectGroupSession", "ProgramProject", new { area = "FPS" })',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify(val)
+                data: JSON.stringify(val),
+                success: function () {
+                    try {
+                        resetSelectedProject();
+                        window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+                        if (val) loadProjectTotals();
+                    } catch (e) {
+                        showAlertMessage('An error occurred while loading the projects.', AlertType.ERROR);
+                    } finally {
+                        hideLoader();
+                    }
+                },
+                error: function () {
+                    hideLoader();
+                    showAlertMessage('An error occurred while saving the project group selection.', AlertType.ERROR);
+                }
             });
-            resetSelectedProject();
-            window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
-            loadProjectTotals();
         });
 
         function getProgramProjectExtraFilters() {
@@ -311,10 +339,10 @@
                 Contract:          form.find('[name="Contract"]').val(),
                 Disease:           form.find('[name="Disease"]').val(),
                 ProjectStatus:     form.find('[name="ProjectStatus"]').val(),
-                BudgetCvl:         parseDecimal(form.find('[name="BudgetCvl"]').val()),
-                BudgetExt:         parseDecimal(form.find('[name="BudgetExt"]').val()),
-                TransferIncome:    parseDecimal(form.find('[name="TransferIncome"]').val()),
-                PlanCaseWorkDebit: parseDecimal(form.find('[name="PlanCaseWorkDebit"]').val()),
+                BudgetCvl:         emptyToNull(form.find('[name="BudgetCvl"]').val()),
+                BudgetExt:         emptyToNull(form.find('[name="BudgetExt"]').val()),
+                TransferIncome:    emptyToNull(form.find('[name="TransferIncome"]').val()),
+                PlanCaseWorkDebit: emptyToNull(form.find('[name="PlanCaseWorkDebit"]').val()),
                 IsDefraProject:    form.find('[name="IsDefraProject"]').val()
             };
 
@@ -375,9 +403,9 @@
             $('#modalPopup').removeClass("show");
         }
 
-        function parseDecimal(val) {
-            if (!val) return 0;
-            return parseFloat(val.replace(/[£,]/g, '').trim()) || 0;
+        function emptyToNull(val) {
+            var trimmed = (val || '').toString().trim();
+            return trimmed === '' ? null : trimmed;
         }
 
         function formatGbp(value) {
@@ -399,7 +427,7 @@
                     document.getElementById('summary-total-cw-debit').value  = formatGbp(data.planCaseWorkDebit);
                 })
                 .fail(function () {
-                    console.error('Failed to load project totals.');
+                    showAlertMessage('An error occurred while loading project totals.', AlertType.ERROR);
                 });
         }
 
@@ -439,6 +467,11 @@
                 targetRow = document.querySelector(
                     '#gridContainer_@Model.ProjectsGrid.GridId .selectable-row[data-id="' + currentProjectCode + '"]'
                 );
+                // Restored project is not on the loaded grid page: keep the current
+                // selection rather than overriding it with the first project.
+                if (!targetRow) {
+                    return;
+                }
             }
             var rowToSelect = targetRow
                 || document.querySelector('#gridContainer_@Model.ProjectsGrid.GridId .selectable-row');

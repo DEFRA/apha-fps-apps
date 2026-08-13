@@ -1,0 +1,65 @@
+@model Apha.FPSApps.Web.Areas.PIMS.Models.ProgramManagerLinkItem
+
+@{
+    var isEditMode = ViewBag.IsEditMode as bool? ?? false;
+    var originalProgram = ViewBag.OriginalProgram as string;
+    var title = isEditMode ? "Edit Program" : "Add Program";
+    var programDropdownData = ViewBag.ProgramDropdownData as dynamic ?? new List<object>();
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="modal-title" style="margin: 0;">@title</h3>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+<div class="modal-body" style="padding-top: 5px;">
+    <form class="row" id="formProgramManagerLink">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" asp-for="Manager" id="hdnLinkManager" />
+        <input type="hidden" id="hdnOriginalProgram" value="@originalProgram" />
+        <input type="hidden" id="hdnIsProgramEditMode" value="@(isEditMode ? "true" : "false")" />
+
+        <div class="govuk-error-summary ra-form-error-banner ra-hidden"
+             id="mgrAssignDbError" role="alert" aria-labelledby="mgrAssignDbErrorTitle" tabindex="-1">
+            <h2 class="govuk-error-summary__title govuk-!-font-size-14" id="mgrAssignDbErrorTitle">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+                <p class="govuk-body govuk-!-font-size-14" id="mgrAssignDbErrorText"></p>
+            </div>
+        </div>
+
+        <div class="govuk-form-group" id="mgrAssignValueGroup">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="mgrAssignProgramDropdown_input">
+                <span id="mgrAssignLabel">Program:</span> <span class="ra-required-star" aria-hidden="true">*</span>
+            </label>
+            <!-- Multi-column dropdown container -->
+            <div id="mgrAssignProgramDropdownContainer" class="ra-select-full"></div>
+
+            <!-- Hidden input to store selected program value -->
+            <input type="hidden" id="mgrAssignValue" name="Program" value="@Model.Program" />
+
+            <!-- Hidden data element with dropdown options -->
+            <script type="application/json" id="mgrAssignProgramOptionsData">@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(programDropdownData))</script>
+
+            <span asp-validation-for="Program" 
+                  data-valmsg-for="Program"
+                  class="govuk-error-message" 
+                  id="mgrAssignValueError" 
+                  style="display:none;"></span>
+        </div>
+
+        <div class="col-12" style="display: flex; justify-content: space-between; margin-top: 10px;">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary sup_margin_0"
+                    onclick="closeModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button sup_margin_0"
+                    onclick="saveProgramManagerLink()">
+                Save
+            </button>
+        </div>
+    </form>
+</div>
+

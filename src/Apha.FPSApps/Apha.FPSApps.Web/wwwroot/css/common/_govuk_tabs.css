@@ -40,11 +40,17 @@
     padding-left: 19px;
     border: 1px solid #b1b4b6;
     border-bottom: 0;
+    border-top: 3px solid #1d70b8;
     background-color: #ffffff;
 }
 
+.govuk-tabs__list-item--selected .govuk-tabs__tab {
+    color: #1d70b8 !important;
+    font-weight: 700;
+}
+
 .govuk-tabs__tab {
-    color: #1d70b8;
+    color: #0b0c0c !important;
     text-decoration: none !important;
     font-weight: 600;
 }

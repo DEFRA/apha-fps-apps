@@ -42,7 +42,7 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return await _context.TestorProducts
                 .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.ItemCode.ToLower() == itemCode.ToLower());
+                .FirstOrDefaultAsync(t => EF.Functions.ILike(t.ItemCode, itemCode));
         }
 
         public async Task<TestorProduct> CreateTestOrProductAsync(TestorProduct entity)
@@ -91,6 +91,35 @@ namespace Apha.PACT.DataAccess.Repository
                 .ToDictionaryAsync(t => t.ItemCode, t => t.ItemDescription);
         }
 
+        public async Task<Dictionary<string, decimal?>> GetUnitPricesByCodesAsync(IEnumerable<string> itemCodes)
+        {
+            var codes = itemCodes.ToList();
+            return await _context.TestorProducts
+                .AsNoTracking()
+                .Where(t => codes.Contains(t.ItemCode))
+                .ToDictionaryAsync(t => t.ItemCode, t => t.UnitPriceVla);
+        }
+
+        public async Task<bool> UpdateUnitPriceByCodeAsync(string itemCode, decimal? unitPrice)
+        {
+            // The Unit Cost shown on the Portfolio Components screen is the master price held on
+            // testorproduct.unitpricevla. Updating it here means every portfolio row for the same
+            // Test Code reflects the new value when the grid is displayed. All matching rows for
+            // the current FPS year are updated so the master price stays consistent.
+            var products = await _context.TestorProducts
+                .Where(t => t.ItemCode == itemCode && t.FpsYear == _fpsRequestContext.FpsYear)
+                .ToListAsync();
+
+            if (products.Count == 0)
+                return false;
+
+            foreach (var product in products)
+                product.UnitPriceVla = unitPrice;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         private static IQueryable<TestorProduct> ApplyTestOrProductFilter(IQueryable<TestorProduct> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
@@ -129,6 +158,24 @@ namespace Apha.PACT.DataAccess.Repository
 
         private static IQueryable<TestorProduct> ApplySorting(IQueryable<TestorProduct> query, string? sortBy, bool descending)
         {
+            var key = sortBy?.ToLower() ?? string.Empty;
+
+            // Manager column holds a mix of NULL, empty and whitespace-only values. Ordering only by
+            // the raw value causes blanks to split around the populated names (empty strings sort to the
+            // top, NULLs to the bottom). Group all blanks together first so they stay contiguous.
+            if (key == "testmanager")
+            {
+                Expression<Func<TestorProduct, bool>> isBlank =
+                    e => e.TestManager == null || e.TestManager.Trim() == string.Empty;
+
+                if (descending)
+                {
+                    return query.OrderBy(isBlank).ThenByDescending(e => e.TestManager);
+                }
+
+                return query.OrderBy(isBlank).ThenBy(e => e.TestManager);
+            }
+
             var sortMap = new Dictionary<string, Expression<Func<TestorProduct, object?>>>
             {
                 ["itemcode"] = e => e.ItemCode,
@@ -141,7 +188,6 @@ namespace Apha.PACT.DataAccess.Repository
                 ["defraunitprice"] = e => e.DefraUnitPrice,
             };
 
-            var key = sortBy?.ToLower() ?? string.Empty;
             if (!sortMap.TryGetValue(key, out var keySelector))
                 keySelector = e => e.ItemCode;
 
@@ -172,7 +218,10 @@ namespace Apha.PACT.DataAccess.Repository
                 "non-standard" => baseQuery.Where(x =>
                     x.TestPrice != 0m &&
                     x.TestPrice != (x.IsDefraProject != 0 ? x.DefraUnitPrice : x.UnitPriceVla)),
-                _ => baseQuery
+                // "all" (Both) => zero-rated OR non-standard, excluding standard-priced rows.
+                _ => baseQuery.Where(x =>
+                    x.TestPrice == 0m ||
+                    x.TestPrice != (x.IsDefraProject != 0 ? x.DefraUnitPrice : x.UnitPriceVla))
             };
 
             // Step 5 — SQL-side sorting
@@ -289,6 +338,124 @@ namespace Apha.PACT.DataAccess.Repository
                 query = query.Where(x => x.Program != null && EF.Functions.ILike(x.Program, $"%{pg}%"));
             if (dict.TryGetValue("Manager", out var mg) && mg != null)
                 query = query.Where(x => x.Manager != null && EF.Functions.ILike(x.Manager, $"%{mg}%"));
+
+            return query;
+        }
+
+        // ── TestFeePlan (Plan test-fee report) ─────────────────────────────────────
+
+        public async Task<PagedData<TestFeePlanView>> GetTestSnapshotPagedAsync(PaginationParameters<string> query)
+        {
+            // Version is a per-run constant ("Plan - " & Date()); compute once and embed in the query.
+            var version = $"Plan - {DateTime.Now:dd/MM/yyyy}";
+
+            // Step 1 — IQueryable: build base join query (Version and TestFee are part of the projection
+            // so that filtering and sorting can operate on them SQL-side).
+            var baseQuery = BuildTestFeePlanBaseQuery(version);
+
+            // Step 2 — SQL-side column filter.
+            baseQuery = ApplyTestFeePlanFilter(baseQuery, query.Filter);
+
+            // Step 3 — SQL-side sorting.
+            var sorted = ApplyTestFeePlanSorting(baseQuery, query.SortBy, query.Descending);
+
+            // Step 4 — SQL-side paging (COUNT + LIMIT/OFFSET).
+            return await ApplyPaging(sorted, query.Page, query.PageSize);
+        }
+
+        private IQueryable<TestFeePlanView> BuildTestFeePlanBaseQuery(string version)
+        {
+            return (from tp in _context.TestorProducts
+                    join tr in _context.TestRequirements on tp.ItemCode equals tr.TestCode
+                    join prj in _context.Projects on tr.Buyer equals prj.ParentProject
+                    join prg in _context.Programs on prj.Program equals prg.ProgramNo
+                    where tr.NoRequired != 0
+                    select new TestFeePlanView
+                    {
+                        Version = version,
+                        Directorate = prg.Directorate,
+                        Customer = prj.Customer,
+                        Program = prj.Program,
+                        Contract = prj.Contract,
+                        Project = prj.ParentProject,
+                        Status = prj.ProjectStatus,
+                        TestCode = tr.TestCode,
+                        UnitPrice = tr.UnitPrice,
+                        NoTests = tr.NoRequired,
+                        TestFee = tr.NoRequired * (double?)tr.UnitPrice,
+                        Owner = tp.Owner,
+                        FpsYear = tr.FpsYear
+                    }).Distinct().AsNoTracking();
+        }
+
+        private static IQueryable<TestFeePlanView> ApplyTestFeePlanSorting(
+            IQueryable<TestFeePlanView> source, string? sortBy, bool descending)
+        {
+            return sortBy?.ToLower() switch
+            {
+                "version" => ApplyOrder(source, x => x.Version, descending),
+                "directorate" => ApplyOrder(source, x => x.Directorate, descending),
+                "customer" => ApplyOrder(source, x => x.Customer, descending),
+                "program" => ApplyOrder(source, x => x.Program, descending),
+                "contract" => ApplyOrder(source, x => x.Contract, descending),
+                "project" => ApplyOrder(source, x => x.Project, descending),
+                "status" => ApplyOrder(source, x => x.Status, descending),
+                "testcode" => ApplyOrder(source, x => x.TestCode, descending),
+                "unitprice" => ApplyOrder(source, x => x.UnitPrice, descending),
+                "notests" => ApplyOrder(source, x => x.NoTests, descending),
+                "testfee" => ApplyOrder(source, x => x.TestFee, descending),
+                "owner" => ApplyOrder(source, x => x.Owner, descending),
+                _ => source.OrderBy(x => x.Directorate).ThenBy(x => x.Program).ThenBy(x => x.Project),
+            };
+        }
+
+        private static IQueryable<TestFeePlanView> ApplyTestFeePlanFilter(
+            IQueryable<TestFeePlanView> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            var textFilters = new (string Key, Func<IQueryable<TestFeePlanView>, string, IQueryable<TestFeePlanView>> Apply)[]
+            {
+                ("Version",     (q, v) => q.Where(x => x.Version != null && EF.Functions.ILike(x.Version, v))),
+                ("Directorate", (q, v) => q.Where(x => x.Directorate != null && EF.Functions.ILike(x.Directorate, v))),
+                ("Customer",    (q, v) => q.Where(x => x.Customer != null && EF.Functions.ILike(x.Customer, v))),
+                ("Program",     (q, v) => q.Where(x => x.Program != null && EF.Functions.ILike(x.Program, v))),
+                ("Contract",    (q, v) => q.Where(x => x.Contract != null && EF.Functions.ILike(x.Contract, v))),
+                ("Project",     (q, v) => q.Where(x => x.Project != null && EF.Functions.ILike(x.Project, v))),
+                ("Status",      (q, v) => q.Where(x => x.Status != null && EF.Functions.ILike(x.Status, v))),
+                ("TestCode",    (q, v) => q.Where(x => EF.Functions.ILike(x.TestCode, v))),
+                ("Owner",       (q, v) => q.Where(x => x.Owner != null && EF.Functions.ILike(x.Owner, v))),
+            };
+
+            foreach (var (key, apply) in textFilters)
+            {
+                if (dict.TryGetValue(key, out var value) && value != null)
+                    query = apply(query, $"%{value}%");
+            }
+
+            query = ApplyTestFeeValueFilter(dict, query);
+
+            return query;
+        }
+
+        private static IQueryable<TestFeePlanView> ApplyTestFeeValueFilter(
+            IDictionary<string, object> dict, IQueryable<TestFeePlanView> query)
+        {
+            if (dict.TryGetValue("TestFee", out var fee) && fee != null
+                && double.TryParse(fee.ToString(), out var feeVal))
+            {
+                const double tolerance = 0.001;
+                query = query.Where(x => x.TestFee != null
+                    && x.TestFee >= feeVal - tolerance
+                    && x.TestFee <= feeVal + tolerance);
+            }
 
             return query;
         }

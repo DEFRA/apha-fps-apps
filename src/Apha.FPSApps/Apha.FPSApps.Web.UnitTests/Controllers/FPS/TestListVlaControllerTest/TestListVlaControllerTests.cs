@@ -237,7 +237,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         {
             // Arrange
             var response = ApiResponseDto<List<TestRCCostDto>>.SuccessResponse(new List<TestRCCostDto>());
-            _fpsTestRCCostApiClient.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear).Returns(response);
+            _fpsTestRCCostApiClient.GetByTestCodePagedAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode).Returns(response);
             _mapper.Map<List<TestRCCostItem>>(Arg.Any<List<TestRCCostDto>>())
                 .Returns(new List<TestRCCostItem>());
 
@@ -245,7 +245,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
             await _controller.LoadComponentChargesGeneralGrid(new PaginationFilter<string>(), DefaultTestCode);
 
             // Assert
-            await _fpsTestRCCostApiClient.Received(1).GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
+            await _fpsTestRCCostApiClient.Received(1).GetByTestCodePagedAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode);
         }
 
         #endregion
@@ -257,7 +257,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         {
             // Arrange
             var response = ApiResponseDto<List<TestRequirementRCCostDto>>.SuccessResponse(new List<TestRequirementRCCostDto>());
-            _fpsTestRequirementRCCostApiClient.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear).Returns(response);
+            _fpsTestRequirementRCCostApiClient.GetByTestCodePagedAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode).Returns(response);
             _mapper.Map<List<TestRequirementRCCostItem>>(Arg.Any<List<TestRequirementRCCostDto>>())
                 .Returns(new List<TestRequirementRCCostItem>());
 
@@ -265,7 +265,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
             await _controller.LoadComponentChargesProjectGrid(new PaginationFilter<string>(), DefaultTestCode);
 
             // Assert
-            await _fpsTestRequirementRCCostApiClient.Received(1).GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
+            await _fpsTestRequirementRCCostApiClient.Received(1).GetByTestCodePagedAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode);
         }
 
         [Fact]

@@ -53,6 +53,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ? projectCode
                 : projectList.FirstOrDefault()?.Value ?? string.Empty;
 
+            // Keep the session in sync so the Back link retains the selected project.
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProjectCode, selectedProjectCode);
+
             var projectInfo = await GetProjectInfoAsync(selectedProjectCode);
 
             var testPlanGrid = new DataGridConfig<TestPlanActualItem>
@@ -264,6 +267,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = true, message = "Record deleted successfully" });
 
             return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Delete failed.", errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." }) });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetProjectLookup()
+        {
+            var response = await _projectService.GetAllProjectsAsync();
+            if (!response.Success || response.Data == null)
+                return Json(new List<object>());
+            var data = response.Data
+                .Select(p => new { parentProject = p.ParentProject, projectTitle = p.ProjectTitle ?? string.Empty })
+                .ToList();
+            return Json(data);
         }
 
         private async Task<List<SelectListItem>> GetProjectListAsync()

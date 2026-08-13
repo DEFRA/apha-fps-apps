@@ -45,6 +45,13 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<PaginatedResult<ProjectDto>>(pagedProjects);
         }
 
+        public async Task<PaginatedResult<ProjectDto>> GetPagedProjectSnapshotDataAsync(QueryParameters<string> query)
+        {
+            var pagedProjects = await _projectRepository.GetPagedProjectSnapshotDataAsync(
+                _mapper.Map<PaginationParameters<string>>(query));
+            return _mapper.Map<PaginatedResult<ProjectDto>>(pagedProjects);
+        }
+
         public async Task<PaginatedResult<ProjectSpecificQueryDto>> GetPagedProjectSpecificQueryAsync(QueryParameters<string> query)
         {
             var pagedItems = await _projectRepository.GetPagedProjectSpecificQueryAsync(
@@ -93,6 +100,17 @@ namespace Apha.FPS.Application.Services
                 ]);
             }
 
+            if (!string.IsNullOrWhiteSpace(projectDto.ParentProject) &&
+                await _projectRepository.CheckProjectExistsAsync(projectDto.ParentProject))
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot create project: Project Code '{projectDto.ParentProject}' already exists.",
+                        "CODE_ALREADY_EXISTS")
+                ]);
+            }
+
             var project = _mapper.Map<Project>(projectDto);
             var created = await _projectRepository.CreateProjectAsync(project);
             return _mapper.Map<ProjectDto>(created);
@@ -138,6 +156,17 @@ namespace Apha.FPS.Application.Services
 
         public async Task<ProjectDto?> UpdatePactPortfolioDetailsAsync(ProjectDto projectDto)
         {
+            if (!string.IsNullOrWhiteSpace(projectDto.Program) &&
+                !await _projectRepository.CheckProgramExistsAsync(projectDto.Program))
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot update portfolio: Program '{projectDto.Program}' does not exist.",
+                        "PROGRAM_NOT_FOUND")
+                ]);
+            }
+
             var project = _mapper.Map<Project>(projectDto);
             var updated = await _projectRepository.UpdatePactPortfolioDetailsAsync(project);
             return updated == null ? null : _mapper.Map<ProjectDto>(updated);
@@ -238,6 +267,12 @@ namespace Apha.FPS.Application.Services
             bool farmFileDataExists = await _projectRepository.CheckProjectExistsInFarmFileAsync(oldCode);
             if (farmFileDataExists)
                 errors.Add(new BusinessValidationError("Cannot change code, data exists in Farm File for old code.", "FARM_FILE_DATA_EXISTS"));
+
+            bool oldCodeHasJobCodes = await _projectRepository.HasAssociatedJobCodesAsync(oldCode);
+            if (oldCodeHasJobCodes)
+                errors.Add(new BusinessValidationError(
+                    "There are associated Jobcode(s) with the project, hence cannot change the project name.",
+                    "OLD_CODE_HAS_JOBCODES"));
 
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);

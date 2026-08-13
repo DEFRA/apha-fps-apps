@@ -315,6 +315,8 @@
             $.get('/PACT/TestCapability/CreateTestCapability', function (html) {
                 $('#modaPopupBody').html(html);
                 $('#modalPopup').addClass('show');
+                // Attach numeric validation
+                attachNumericValidation();
             });
         }
 
@@ -326,6 +328,8 @@
                 function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
+                    // Attach numeric validation
+                    attachNumericValidation();
                 });
         }
 
@@ -398,6 +402,11 @@
                 function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
+                    // Initialize form validation (unobtrusive + numeric)
+                    setTimeout(function() {
+                        // Initialize form validation (unobtrusive + numeric)
+                        initializeFormValidation('#testReqmtForm');
+                    }, 50);
                 });
         }
 
@@ -408,16 +417,26 @@
                 function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
+                    // Initialize form validation (unobtrusive + numeric)
+                    setTimeout(function() {
+                        // Initialize form validation (unobtrusive + numeric)
+                        initializeFormValidation('#testReqmtForm');
+                    }, 50);
                 });
         }
 
         function saveTestReqmt() {
-            clearValidationErrors('#modaPopupBody');
             var form = $('#testReqmtForm');
+
             if (!isFormValid(form)) {
-                displayClientValidationErrors(form, '#modaPopupBody');
+                // Display validation errors without clearing them first
+                displayClientValidationErrors(form, '#testReqmtForm');
                 return;
             }
+
+            // Clear validation errors only after validation passes
+            clearValidationErrors('#testReqmtForm');
+
             var isEdit        = form.find('[name="isEdit"]').val() === 'true';
             var rawUnitPrice  = form.find('[name="UnitPrice"]').val();
             var rawNoRequired = form.find('[name="NoRequired"]').val();
@@ -444,7 +463,9 @@
                         reloadTestReqmtGrid(currentSelectedTestCode);
                         showAlertMessage(isEdit ? 'Record updated successfully.' : 'Record saved successfully.', AlertType.SUCCESS);
                     } else {
-                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
+                        displayServerValidationErrors(result.errors, result.message, '#testReqmtForm');
+                        // Initialize form validation (unobtrusive + numeric)
+                        initializeFormValidation('#testReqmtForm');
                     }
                 },
                 error: function () { showAlertMessage('Request failed. Please try again.', AlertType.ERROR); }

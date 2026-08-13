@@ -2,6 +2,7 @@
 @using Apha.FPSApps.Web.Constants
 @inject Apha.FPSApps.Web.Handler.IFpsYearContext FyContext
 @inject Apha.Common.Utilities.StateManagement.IAppStateService AppStateService
+@inject Apha.FPSApps.Web.Handler.IFpsYearContext FyContext
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -95,6 +96,7 @@
             });
             return obj;
         };
+        
     </script>
 
     <script>
@@ -102,6 +104,7 @@
         const isFPSYearClosed = @Html.Raw(FyContext.IsReadOnly.ToString().ToLower());
     </script>
     <script src="~/js/common/headernav/navmenu.js"></script>
+    <script src="~/js/number-validation.js"></script>
     <script src="~/js/site.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

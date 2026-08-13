@@ -2,79 +2,37 @@
 @model Apha.FPSApps.Web.Areas.FPS.Models.ProjectStaffPlanActualViewModel
 @{
     ViewData["Title"] = "Plan vs Actual - Staff";
+     ViewData["SelectedProjectCode"] = Model.SelectedProjectCode;
 }
-
 <div class="container-fluid">
     <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full">
-            <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
-                <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
-                    <div class="col-md-6">
-                        
-                    </div>
-                    <div style="display: flex; justify-content: flex-end;" class="col-md-6">
-                        <label class="fw-bold mt-2 me-2" for="projectSelect">Project:</label>
-                        <select id="projectSelect" asp-items="Model.ProjectList" asp-for="SelectedProjectCode"
-                                class="form-select form-select-sm" style="width: auto; min-width: 280px;">
-                            <option value="">-- Select Project --</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+        <div class="govuk-grid-column-one-half isFloatLeft">
+            <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-top-3 govuk-!-margin-bottom-0 govuk-!-margin-left-0 isCustomPageHeadings">Compare FPS Plan with PACT Actuals</h1>
         </div>
-    </div>
-
-    <!-- Title section -->
-    <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full">
-            <div style="display:flex; align-items:center; justify-content:space-between;"
-                 class="sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
-                <h1 class="govuk-heading-s govuk-!-margin-bottom-0">Compare FPS Plan with PACT Actuals</h1>
-                <a asp-area="FPS"
-                   asp-controller="ProgramProject"
-                   asp-action="Index"
-                   class="govuk-back-link" style="margin-bottom:0;">Back</a>
+        <div class="govuk-grid-column-one-half isFloatRight">
+                <table class="govuk-table govuk-!-margin-bottom-0 isFloatRight isHalfGrid isCompareFPSPlan govuk-!-margin-top-2">
+                    <tbody class="govuk-table__body">
+                        <tr class="govuk-table__row">
+                            <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
+                                @await Html.PartialAsync("_ProjectDropdownSelector")
+                            </td>
+                            <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
+                                <a asp-area="FPS" asp-controller="ProgramProject" asp-action="Index" class="govuk-back-link">Back</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-        </div>
     </div>
-
+</div>
     <!-- Summary card -->
-    <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full mt-2">
-            <div class="pva-summary-card" style="background-color:#edf4ff; border:1px solid #1d70b8; border-radius:5px; padding:8px;">
-                <div class="row">
-                    <div class="col-lg-6">
-                        <div class="row">
-                            <div class="col-lg-5">
-                                <label class="govuk-label--s" for="summary-project-code">Project</label>
-                                <input type="text" id="summary-project-code" asp-for="SelectedProjectCode"
-                                       class="govuk-input" readonly>
-                            </div>
-                            <div class="col-lg-7">
-                                <label class="govuk-label--s" for="summary-project-description">Project Description</label>
-                                <input type="text" id="summary-project-description" asp-for="ProjectTitle"
-                                       class="govuk-input" readonly>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="row">
-                            <div class="col-lg-5">
-                                <label class="govuk-label--s" for="summary-program">Program</label>
-                                <input type="text" id="summary-program" asp-for="Program"
-                                       class="govuk-input" readonly>
-                            </div>
-                            <div class="col-lg-7">
-                                <label class="govuk-label--s" for="summary-contract">Contract</label>
-                                <input type="text" id="summary-contract" asp-for="Contract"
-                                       class="govuk-input" readonly>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    @{
+        ViewData["SummaryProjectCodeValue"]  = Model.SelectedProjectCode;
+        ViewData["SummaryProjectTitleValue"] = Model.ProjectTitle;
+        ViewData["SummaryProgramValue"]      = Model.Program;
+        ViewData["SummaryContractValue"]     = Model.Contract;
+    }
+    @await Html.PartialAsync("_PvaSummaryCard")
 
     <!-- Two-column grid area -->
     <div class="govuk-grid-row">
@@ -143,6 +101,7 @@
 @section Scripts {
     <script src="~/js/ajax-form-validation.js"></script>
     <script src="~/js/fps_js/StaffJob.js"></script>
+    <script src="~/js/fps_js/project-dropdown.js" asp-append-version="true"></script>
     <script>
         var currentProjectCode = '@Html.Raw(Model.SelectedProjectCode)';
 
@@ -161,14 +120,27 @@
             refreshPlannedCost();
         };
 
+        var _loaderPendingGrids = 0;
+
         $(document).ready(function () {
             if (currentProjectCode) {
-                window['gridManager_@Model.StaffPlanGrid.GridId'].reloadGrid({ page: 1 });
-                window['gridManager_@Model.CompareStaff2Grid.GridId'].reloadGrid({ page: 1 });
-                refreshPlannedCost();
-                refreshActualTotals();
+                showLoader();
+                _loaderPendingGrids = 2;
+                setTimeout(function () {
+                    window['gridManager_@Model.StaffPlanGrid.GridId'].reloadGrid({ page: 1 });
+                    window['gridManager_@Model.CompareStaff2Grid.GridId'].reloadGrid({ page: 1 });
+                    refreshPlannedCost();
+                    refreshActualTotals();
+                }, 0);
             }
 
+            document.addEventListener('gridReloaded', function (e) {
+                var tracked = ['@Model.StaffPlanGrid.GridId', '@Model.CompareStaff2Grid.GridId'];
+                if (tracked.indexOf(e.detail.gridId) !== -1 && _loaderPendingGrids > 0) {
+                    _loaderPendingGrids--;
+                    if (_loaderPendingGrids === 0) hideLoader();
+                }
+            });
             var actualGridContainer = document.getElementById('gridContainer_@Model.CompareStaff2Grid.GridId');
             if (actualGridContainer) {
                 new MutationObserver(function () {
@@ -177,42 +149,49 @@
             }
         });
 
-        $('#projectSelect').on('change', function () {
-            currentProjectCode = $(this).val();
-            // Persist project code to session
-            $.ajax({
-                url: '@Url.Action("SaveProjectSession", "ProgramProject", new { area = "FPS" })',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(currentProjectCode)
-            });
-            $('#summary-project-code').val(currentProjectCode);
-            $('#summary-project-description').val('');
-            $('#summary-program').val('');
-            $('#summary-contract').val('');
-            $('#planned-total-cost').val('0.00');
-            $('#project-total-hrs').val('0.00');
-            $('#project-total-cost').val('0');
-            $('#project-percent-plan').val('0%');
 
-            if (currentProjectCode) {
-                $.get('@Url.Action("GetProjectInfo", "ProjectStaffPlanActual", new { area = "FPS" })',
-                    { projectCode: currentProjectCode },
-                    function (result) {
-                        if (result.success) {
-                            $('#summary-project-description').val(result.projectTitle);
-                            $('#summary-program').val(result.program);
-                            $('#summary-contract').val(result.contract);
+            function onProjectSelected(projectCode, projectTitle) {
+                currentProjectCode = projectCode;
+                // Update display input
+                document.getElementById('projectNameInput').value = projectCode;
+                // Persist project code to session
+                $.ajax({
+                    url: '@Url.Action("SaveProjectSession", "ProgramProject", new { area = "FPS" })',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(currentProjectCode)
+                });
+                $('#summary-project-code').val(currentProjectCode);
+                $('#summary-project-description').val(projectTitle || '');
+                $('#summary-program').val('');
+                $('#summary-contract').val('');
+                $('#planned-total-cost').val('0.00');
+                $('#project-total-hrs').val('0.00');
+                $('#project-total-cost').val('0');
+                $('#project-percent-plan').val('0%');
+
+                if (currentProjectCode) {
+                    $.get('@Url.Action("GetProjectInfo", "ProjectStaffPlanActual", new { area = "FPS" })',
+                        { projectCode: currentProjectCode },
+                        function (result) {
+                            if (result.success) {
+                                $('#summary-project-description').val(result.projectTitle);
+                                $('#summary-program').val(result.program);
+                                $('#summary-contract').val(result.contract);
+                            }
                         }
-                    }
-                );
+                    );
 
-                window['gridManager_@Model.StaffPlanGrid.GridId'].reloadGrid({ page: 1 });
-                window['gridManager_@Model.CompareStaff2Grid.GridId'].reloadGrid({ page: 1 });
-                refreshPlannedCost();
-                refreshActualTotals();
+                    showLoader();
+                    _loaderPendingGrids = 2;
+                    setTimeout(function () {
+                        window['gridManager_@Model.StaffPlanGrid.GridId'].reloadGrid({ page: 1 });
+                        window['gridManager_@Model.CompareStaff2Grid.GridId'].reloadGrid({ page: 1 });
+                        refreshPlannedCost();
+                        refreshActualTotals();
+                    }, 0);
+                }
             }
-        });
 
         function getStaffPlanExtraFilters() {
             return { jobCode: currentProjectCode };
@@ -259,6 +238,15 @@
             var pct = plannedRaw > 0 ? (actualRaw / plannedRaw) * 100 : 0;
             $('#project-percent-plan').val(Math.round(pct) + '%');
         }
+
+        // ── Multi-column Project dropdown ────────────────────────────────────
+        $(document).ready(function () {
+            initProjectDropdown(
+                '@Url.Action("GetProjectLookup", "ProjectStaffPlanActual", new { area = "FPS" })',
+                onProjectSelected
+            );
+        });
+        // ────────────────────────────────────────────────────────────────────
 
         function deleteCompareStaff2(btn) {
             var rowKey = $(btn).data('id');

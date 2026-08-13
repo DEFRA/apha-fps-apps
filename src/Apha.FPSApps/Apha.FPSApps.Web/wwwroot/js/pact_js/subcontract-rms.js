@@ -53,6 +53,8 @@ function addSubContractRms() {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#formAddProjectCost');
         },
         error: function () {
             showAlertMessage('Error loading form.', AlertType.ERROR);
@@ -70,6 +72,8 @@ function editSubContractRms(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#formAddProjectCost');
         },
         error: function () {
             showAlertMessage('Error loading form.', AlertType.ERROR);
@@ -105,6 +109,7 @@ function saveProjectCost() {
     clearValidationErrors('#modaPopupBody');
     const form = $('#formAddProjectCost');
 
+    // Check basic form validity (required fields)
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;
@@ -112,9 +117,23 @@ function saveProjectCost() {
 
     const data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
 
-    ['Month', 'Amount', 'SupplierNumber', 'DailyRate', 'AnimalDays'].forEach(function (field) {
+    // Convert empty strings to null for decimal fields, but parse valid numbers
+    ['Amount', 'DailyRate'].forEach(function (field) {
         if (data[field] === '' || data[field] === undefined) {
             data[field] = null;
+        } else if (typeof data[field] === 'string') {
+            var parsed = parseFloat(data[field]);
+            data[field] = isNaN(parsed) ? null : parsed;
+        }
+    });
+
+    // Convert empty strings to null for integer fields, but parse valid integers
+    ['Month', 'SupplierNumber', 'AnimalDays'].forEach(function (field) {
+        if (data[field] === '' || data[field] === undefined) {
+            data[field] = null;
+        } else if (typeof data[field] === 'string') {
+            var parsed = parseInt(data[field], 10);
+            data[field] = isNaN(parsed) ? null : parsed;
         }
     });
 
@@ -130,6 +149,8 @@ function saveProjectCost() {
                 reloadRmsGrid();
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
+                // Initialize form validation (unobtrusive + numeric)
+                initializeFormValidation('#formAddProjectCost');
             }
         },
         error: function () {
@@ -232,6 +253,10 @@ function editFailedSubContractRms(btn) {
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            // Initialize form validation after modal is shown
+            setTimeout(function() {
+                initializeFormValidation('#formEditFailedSubContractRms');
+            }, 50);
         },
         error: function () {
             showAlertMessage('Error loading form.', AlertType.ERROR);
@@ -267,6 +292,7 @@ function saveFailedSubContractRms() {
     clearValidationErrors('#modaPopupBody');
     const form = $('#formEditFailedSubContractRms');
 
+    // Check basic form validity (required fields)
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;
@@ -274,7 +300,9 @@ function saveFailedSubContractRms() {
 
     const data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
 
-    // Convert empty strings to null for optional numeric fields
+    // Note: SubContractRmsFailedItem model uses string? for all fields
+    // Do NOT parse to numbers - keep as strings and let server handle validation
+    // Only convert empty strings to null for optional fields
     ['SupplierNumber', 'DailyRate', 'AnimalDays'].forEach(function (field) {
         if (data[field] === '' || data[field] === undefined) {
             data[field] = null;
@@ -296,6 +324,8 @@ function saveFailedSubContractRms() {
                 }
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
+                // Initialize form validation (unobtrusive + numeric)
+                initializeFormValidation('#formEditFailedSubContractRms');
             }
         },
         error: function () {
@@ -347,12 +377,12 @@ $(document).ready(function () {
     // Disable buttons and file input when year is closed
     if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
 
-        // Disable Import file input and its label
+        // Disable Import file input and its button
         $('#csvInput').prop('disabled', true);
-        $('label[for="csvInput"]')
+        $('#importBtn')
             .addClass('govuk-button--disabled')
             .attr('aria-disabled', 'true')
-            .css('pointer-events', 'none');
+            .prop('disabled', true);
     }
 
     $('#dpSelectmonth').on('change', function () {
@@ -365,6 +395,11 @@ $(document).ready(function () {
     $('#templateExcel').on('click', function (e) {
         e.preventDefault();
         downloadSubContractRmsTemplate();
+    });
+
+    $('#importBtn').on('click', function (e) {
+        e.preventDefault();
+        $('#csvInput').click();
     });
 
     $('#csvInput').on('change', function () {

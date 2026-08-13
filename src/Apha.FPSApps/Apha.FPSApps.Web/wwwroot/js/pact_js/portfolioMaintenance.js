@@ -19,7 +19,10 @@ function toggleSidebar() {
 $(document).ready(function () {
     initializePortfolioMultiColumnDropdown();
     initializeProgramMultiColumnDropdown();
-    
+
+   // Initialize form validation (unobtrusive + numeric)
+    initializeFormValidation('#portfolioDetailForm');
+
     var $panel = $('#portfolioDropdownPanel');
     var $input = $('#dpselectportfolio');
     var $rows  = $('#portfolioDropdownBody tr');
@@ -84,14 +87,21 @@ $(document).ready(function () {
     $('#btnSavePortfolio').on('click', function () {
         clearValidationErrors('#portfolioDetailForm');
 
+        // Parse decimal fields as numbers (consistent with project-maintenance-details.js)
+        var budgetCvlValue = $('#txtBudgetCvl').val();
+        var transferIncomeValue = $('#txtTransferIncome').val();
+
+        var budgetCvlParsed = parseFloat(budgetCvlValue);
+        var transferIncomeParsed = parseFloat(transferIncomeValue);
+
         var payload = {
             parentProject: $('#hdnParentProject').val(),
             projectTitle: $('#txtProjectTitle').val(),
             finished: $('#chkFinished').is(':checked'),
             program: $('#dpProgramme').val(),
             projectManager: $('#dpManager').val(),
-            budgetCvl: $('#txtBudgetCvl').val() || null,
-            transferIncome: $('#txtTransferIncome').val() || null,
+            budgetCvl: isNaN(budgetCvlParsed) ? null : budgetCvlParsed,
+            transferIncome: isNaN(transferIncomeParsed) ? null : transferIncomeParsed,
             comments: $('#txtComments').val()
         };
 
@@ -191,7 +201,6 @@ function loadPortfolioData(parentProject) {
     currentPortfolio = '';
     $('#txtSelectedPortfolioTest').val('');
     clearValidationErrors('#portfolioDetailForm');
-    resetFormButtons(false);
 
     $.get('/PACT/PortfolioMaintenance/GetPortfolio', { parentProject: parentProject })
         .done(function (res) {
@@ -216,7 +225,6 @@ function loadPortfolioData(parentProject) {
                 updateNavHref('#sideNavTimeCodes', parentProject);
                 updateNavHref('#sideNavInvoices', parentProject);
 
-                resetFormButtons(true);
                 loadConstituentTestGrid(parentProject);
             } else {
                 showAlertMessage(res.message || 'Portfolio not found.', AlertType.ERROR);
@@ -225,13 +233,6 @@ function loadPortfolioData(parentProject) {
         .fail(function () { showAlertMessage('An error occurred while loading portfolio data.', AlertType.ERROR); });
 }
 
-// ── Enable/disable buttons ───────────────────────────────────────────────
-function resetFormButtons(enabled) {
-    // If year is closed (isFPSYearClosed = true), always keep buttons disabled
-    var shouldEnable = enabled && (typeof isFPSYearClosed !== 'undefined' ? !isFPSYearClosed : true);
-    $('#btnSavePortfolio, #btnPortfolioTimeCodes')
-        .prop('disabled', !shouldEnable);
-}
 
 // ── Constituent Tests grid ───────────────────────────────────────────────
 function loadConstituentTestGrid(parentProject, page, pageSize, sortBy, desc) {
@@ -273,6 +274,7 @@ function addConstituentTest() {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             $('#modaPopupBody').data('submitFn', 'saveConstituentTest');
+           
             initializeTestCodeMultiColumnDropdown();
         });
 }
@@ -416,6 +418,7 @@ function editPortfolioTimeCode(btn) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             $('#modaPopupBody').data('submitFn', 'updatePortfolioTimeCode');
+          
         });
 }
 

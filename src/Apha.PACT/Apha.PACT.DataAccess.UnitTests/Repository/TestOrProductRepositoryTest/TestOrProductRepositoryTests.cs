@@ -92,6 +92,74 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
             Assert.Equal(3, result.PaginationData.TotalPages);
         }
 
+        [Fact]
+        public async Task GetPagedTestOrProductsAsync_SortByManagerAscending_GroupsBlanksTogether()
+        {
+            // Arrange - mix of null, empty, whitespace-only and populated managers
+            var testorProducts = new[]
+            {
+                new TestorProduct { ItemCode = "T1", TestManager = "Charlie", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T2", TestManager = null, FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T3", TestManager = "Alice", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T4", TestManager = "   ", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T5", TestManager = "", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T6", TestManager = "Bob", FpsYear = 2024 }
+            };
+            var repo = CreateRepository(testorProducts);
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "TestManager",
+                Descending = false
+            };
+
+            // Act
+            var result = await repo.GetPagedTestOrProductsAsync(parameters);
+
+            // Assert - populated names sorted ascending, all blanks grouped contiguously at the end
+            var managers = result.Data.Select(x => x.TestManager).ToList();
+            var populated = managers.Where(m => !string.IsNullOrWhiteSpace(m)).ToList();
+            var firstBlankIndex = managers.FindIndex(m => string.IsNullOrWhiteSpace(m));
+            Assert.All(managers.Take(firstBlankIndex), m => Assert.False(string.IsNullOrWhiteSpace(m)));
+            Assert.All(managers.Skip(firstBlankIndex), m => Assert.True(string.IsNullOrWhiteSpace(m)));
+            Assert.Equal(new[] { "Alice", "Bob", "Charlie" }, populated);
+        }
+
+        [Fact]
+        public async Task GetPagedTestOrProductsAsync_SortByManagerDescending_GroupsBlanksTogether()
+        {
+            // Arrange
+            var testorProducts = new[]
+            {
+                new TestorProduct { ItemCode = "T1", TestManager = "Charlie", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T2", TestManager = null, FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T3", TestManager = "Alice", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T4", TestManager = "   ", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T5", TestManager = "", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T6", TestManager = "Bob", FpsYear = 2024 }
+            };
+            var repo = CreateRepository(testorProducts);
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "TestManager",
+                Descending = true
+            };
+
+            // Act
+            var result = await repo.GetPagedTestOrProductsAsync(parameters);
+
+            // Assert - populated names sorted descending, all blanks grouped contiguously at the end
+            var managers = result.Data.Select(x => x.TestManager).ToList();
+            var populated = managers.Where(m => !string.IsNullOrWhiteSpace(m)).ToList();
+            var firstBlankIndex = managers.FindIndex(m => string.IsNullOrWhiteSpace(m));
+            Assert.All(managers.Take(firstBlankIndex), m => Assert.False(string.IsNullOrWhiteSpace(m)));
+            Assert.All(managers.Skip(firstBlankIndex), m => Assert.True(string.IsNullOrWhiteSpace(m)));
+            Assert.Equal(new[] { "Charlie", "Bob", "Alice" }, populated);
+        }
+
         #endregion
 
         #region GetTestOrProductByIdAsync
@@ -410,6 +478,129 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
 
             Assert.True(result.ContainsKey("T001"));
             Assert.Null(result["T001"]);
+        }
+
+        #endregion
+
+        #region GetUnitPricesByCodesAsync
+
+        [Fact]
+        public async Task GetUnitPricesByCodesAsync_WithMatchingCodes_ReturnsDictionary()
+        {
+            var products = new List<TestorProduct>
+            {
+                new() { ItemCode = "T001", UnitPriceVla = 10.50m, FpsYear = 2024 },
+                new() { ItemCode = "T002", UnitPriceVla = 20.75m, FpsYear = 2024 }
+            };
+            var repo = CreateRepository(products);
+
+            var result = await repo.GetUnitPricesByCodesAsync(["T001", "T002"]);
+
+            Assert.Equal(2, result.Count);
+            Assert.Equal(10.50m, result["T001"]);
+            Assert.Equal(20.75m, result["T002"]);
+        }
+
+        [Fact]
+        public async Task GetUnitPricesByCodesAsync_WithNoMatchingCodes_ReturnsEmptyDictionary()
+        {
+            var repo = CreateRepository([]);
+
+            var result = await repo.GetUnitPricesByCodesAsync(["NONE"]);
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetUnitPricesByCodesAsync_WithNullUnitPrice_ReturnsNullValue()
+        {
+            var products = new List<TestorProduct>
+            {
+                new() { ItemCode = "T001", UnitPriceVla = null, FpsYear = 2024 }
+            };
+            var repo = CreateRepository(products);
+
+            var result = await repo.GetUnitPricesByCodesAsync(["T001"]);
+
+            Assert.True(result.ContainsKey("T001"));
+            Assert.Null(result["T001"]);
+        }
+
+        #endregion
+
+        #region UpdateUnitPriceByCodeAsync
+
+        [Fact]
+        public async Task UpdateUnitPriceByCodeAsync_MatchingRow_UpdatesPriceAndReturnsTrue()
+        {
+            // Arrange
+            var (context, repo) = CreateInMemoryContext(2024);
+            context.TestorProducts.Add(new TestorProduct { ItemCode = "T001", UnitPriceVla = 10m, FpsYear = 2024 });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            // Act
+            var result = await repo.UpdateUnitPriceByCodeAsync("T001", 55.25m);
+
+            // Assert
+            Assert.True(result);
+            context.ChangeTracker.Clear();
+            var row = await context.TestorProducts.FirstAsync(t => t.ItemCode == "T001");
+            Assert.Equal(55.25m, row.UnitPriceVla);
+        }
+
+        [Fact]
+        public async Task UpdateUnitPriceByCodeAsync_NoMatchingRows_ReturnsFalse()
+        {
+            // Arrange
+            var (context, repo) = CreateInMemoryContext(2024);
+            context.TestorProducts.Add(new TestorProduct { ItemCode = "T001", UnitPriceVla = 10m, FpsYear = 2024 });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            // Act
+            var result = await repo.UpdateUnitPriceByCodeAsync("MISSING", 55.25m);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task UpdateUnitPriceByCodeAsync_WrongFpsYear_ReturnsFalseAndLeavesRowsUnchanged()
+        {
+            // Arrange
+            var (context, repo) = CreateInMemoryContext(2024);
+            context.TestorProducts.Add(new TestorProduct { ItemCode = "T001", UnitPriceVla = 10m, FpsYear = 2023 });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            // Act
+            var result = await repo.UpdateUnitPriceByCodeAsync("T001", 55.25m);
+
+            // Assert
+            Assert.False(result);
+            context.ChangeTracker.Clear();
+            var row = await context.TestorProducts.IgnoreQueryFilters().FirstAsync(t => t.ItemCode == "T001");
+            Assert.Equal(10m, row.UnitPriceVla);
+        }
+
+        [Fact]
+        public async Task UpdateUnitPriceByCodeAsync_NullUnitPrice_SetsNullAndReturnsTrue()
+        {
+            // Arrange
+            var (context, repo) = CreateInMemoryContext(2024);
+            context.TestorProducts.Add(new TestorProduct { ItemCode = "T001", UnitPriceVla = 10m, FpsYear = 2024 });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            // Act
+            var result = await repo.UpdateUnitPriceByCodeAsync("T001", null);
+
+            // Assert
+            Assert.True(result);
+            context.ChangeTracker.Clear();
+            var row = await context.TestorProducts.FirstAsync(t => t.ItemCode == "T001");
+            Assert.Null(row.UnitPriceVla);
         }
 
         #endregion

@@ -102,7 +102,8 @@
                     <input type="text"
                            class="search-box govuk-input govuk-!-font-size-16"
                            id="for-period-search"
-                           placeholder="Type to search and select period" />
+                           placeholder="Type to search and select period" 
+                           aria-label="for-period-search" />
                     <table class="period-dropdown__table govuk-table govuk-!-font-size-16">
                         <thead class="govuk-table__head">
                             <tr class="govuk-table__row">
@@ -130,7 +131,7 @@
                                id="chk-timesheets"
                                name="SendTimeSheet"
                                type="checkbox"
-                               value="true"
+                               value="true" allow-edit="false"
                                @(Model.SendTimeSheet ? "checked" : "") />
                         <label class="govuk-label govuk-checkboxes__label" for="chk-timesheets">Time sheets</label>
                     </div>
@@ -139,7 +140,7 @@
                                id="chk-outputsheets"
                                name="SendOutputSheet"
                                type="checkbox"
-                               value="true"
+                               value="true" allow-edit="false"
                                @(Model.SendOutputSheet ? "checked" : "") />
                         <label class="govuk-label govuk-checkboxes__label" for="chk-outputsheets">Output sheets</label>
                     </div>
@@ -185,7 +186,7 @@
 <div class="govuk-grid-row">
 
     @* Left: work-groups DataGrid + action buttons *@
-    <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-grid-column-two-thirds  govuk-!-padding-left-6">
 
         <div id="gridContainer_@Model.WorkGroupGrid.GridId" class="govuk-!-margin-top-2">
             @await Html.PartialAsync("_DataGrid", Model.WorkGroupGrid)
@@ -210,14 +211,15 @@
     </div>
 
     @* Right: For the current profit centre *@
-    <div class="govuk-grid-column-one-third">
-        <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_align_flexheading sup_decrease_font_size_s">
-            For the current profit centre
-        </h2>
+    <div class="govuk-grid-column-one-third govuk-!-margin-top-2">
 
-        <div class="govuk-body govuk-!-margin-top-4 pc-actions-panel">
-
-            <button id="btn-select-pc" class="govuk-button" type="button" data-module="govuk-button">
+        <div class="govuk-body pc-actions-panel-bc">
+         
+            <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_align_flexheading sup_decrease_font_size_s">
+                For the current profit centre
+            </h2>
+            <div class="pc-actions-panel-new">
+                <button id="btn-select-pc" class="govuk-button" type="button" data-module="govuk-button">
                     Select PC&rsquo;s Work Groups
                 </button>
 
@@ -225,6 +227,7 @@
                     Clear PC&rsquo;s Work Groups
                 </button>
 
+            </div>
         </div>
     </div>
 </div>

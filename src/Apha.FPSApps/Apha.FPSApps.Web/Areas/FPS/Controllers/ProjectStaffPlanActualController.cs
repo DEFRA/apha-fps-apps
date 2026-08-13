@@ -52,6 +52,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ? projectCode
                 : projectList.FirstOrDefault()?.Value ?? string.Empty;
 
+            // Keep the session in sync so the Back link retains the selected project.
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProjectCode, selectedProjectCode);
+
             var projectInfo = await GetProjectInfoAsync(selectedProjectCode);
 
             var staffPlanGrid = new DataGridConfig<StaffJobItemViewModel>
@@ -266,6 +269,23 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     message = e.Message ?? "An unexpected error occurred."
                 })
             });
+        }
+
+        /// <summary>
+        /// Returns a lightweight list of all projects (ParentProject + ProjectTitle) for the multi-column dropdown.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetProjectLookup()
+        {
+            var response = await _projectService.GetAllProjectsAsync();
+            if (!response.Success || response.Data == null)
+                return Json(new List<object>());
+
+            var data = response.Data
+                .Select(p => new { parentProject = p.ParentProject, projectTitle = p.ProjectTitle ?? string.Empty })
+                .ToList();
+
+            return Json(data);
         }
 
         private async Task<List<SelectListItem>> GetProjectListAsync()
