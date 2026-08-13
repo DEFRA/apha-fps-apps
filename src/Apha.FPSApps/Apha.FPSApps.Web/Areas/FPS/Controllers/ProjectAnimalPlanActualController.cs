@@ -44,6 +44,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ? projectCode
                 : projectList.FirstOrDefault()?.Value ?? string.Empty;
 
+            // Keep the session in sync so the Back link retains the selected project.
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProjectCode, selectedProjectCode);
+
             ProjectDto? projectInfo = await GetProjectInfoAsync(selectedProjectCode);
 
             var animalPlanGrid = new DataGridConfig<AnimalPlanItem>

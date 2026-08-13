@@ -43,7 +43,7 @@ namespace Apha.Costbook.DataAccess.Repositories
             // Apply sorting (defaults to Mnumber)
             query = (IQueryable<Staff>)ApplySorting(query, queryFilter.SortBy, queryFilter.Descending);
 
-            return await ApplyPaging(query.OrderBy(c => c.Mnumber), queryFilter.Page, queryFilter.PageSize);
+            return await ApplyPaging(query, queryFilter.Page, queryFilter.PageSize);
         }
 
         public async Task<Staff?> GetByMNumberAsync(string mNumber)

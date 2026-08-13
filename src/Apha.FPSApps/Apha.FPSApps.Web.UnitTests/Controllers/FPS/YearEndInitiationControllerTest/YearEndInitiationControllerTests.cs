@@ -68,10 +68,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
             _yearMasterService.GetFpsPlannedYearAsync()
                 .Returns(ApiResponseDto<int>.SuccessResponse(plannedYear));
 
-            _yearEndService.GetCanInitiateDataSetupRequestAsync(JobName)
+            _yearEndService.CanInitiateDataSetupRequestAsync(JobName)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(canInitiate));
 
-            _yearEndService.GetCanApproveOrRejectDataSetupRequestAsync(JobName)
+            _yearEndService.CanApproveOrRejectDataSetupRequestAsync(JobName)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(canApprove));
 
             _settingService.GetYearEndSettingsAsync()
@@ -93,10 +93,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
                 .Returns(ApiResponseDto<Apha.FPSApps.Application.Pagination.PaginatedResult<BatchJobHistoryDto>>.SuccessResponse(
                     new Apha.FPSApps.Application.Pagination.PaginatedResult<BatchJobHistoryDto>()));
         }
-
-        // -----------------------------------------------------------------------
-        // Index
-        // -----------------------------------------------------------------------
 
         #region Index
 
@@ -184,9 +180,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
             _yearMasterService.GetFpsPlannedYearAsync()
                 .Returns(new ApiResponseDto<int> { Success = false });
 
-            _yearEndService.GetCanInitiateDataSetupRequestAsync(JobName)
+            _yearEndService.CanInitiateDataSetupRequestAsync(JobName)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(false));
-            _yearEndService.GetCanApproveOrRejectDataSetupRequestAsync(JobName)
+            _yearEndService.CanApproveOrRejectDataSetupRequestAsync(JobName)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(false));
             _settingService.GetYearEndSettingsAsync()
                 .Returns(ApiResponseDto<List<YearEndSettingDto>>.SuccessResponse([]));
@@ -239,10 +235,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // LoadConfigValuesGrid
-        // -----------------------------------------------------------------------
 
         #region LoadConfigValuesGrid
 
@@ -316,10 +308,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // LoadMonthHoursGrid
-        // -----------------------------------------------------------------------
-
         #region LoadMonthHoursGrid
 
         [Fact]
@@ -375,10 +363,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // LoadHistoryGrid
-        // -----------------------------------------------------------------------
 
         #region LoadHistoryGrid
 
@@ -473,10 +457,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // EditConfigValue
-        // -----------------------------------------------------------------------
 
         #region EditConfigValue
 
@@ -573,10 +553,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // EditMonthHour
-        // -----------------------------------------------------------------------
-
         #region EditMonthHour
 
         [Fact]
@@ -652,10 +628,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // SaveSetting
-        // -----------------------------------------------------------------------
 
         #region SaveSetting
 
@@ -735,10 +707,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // SaveMonthHour
-        // -----------------------------------------------------------------------
-
         #region SaveMonthHour
 
         [Fact]
@@ -804,10 +772,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // TriggerInitiate
-        // -----------------------------------------------------------------------
-
         #region TriggerInitiate
 
         [Fact]
@@ -868,7 +832,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
             var value = GetJsonElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
             var errorsArray = value.GetProperty("errors");
-            Assert.Equal("Failed to trigger Year End Initiation job.", errorsArray[0].GetProperty("message").GetString());
+            Assert.Equal("Failed to enqueue Year End Datasetup initiation job.", errorsArray[0].GetProperty("message").GetString());
         }
 
         [Theory]
@@ -888,10 +852,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // TriggerApprove
-        // -----------------------------------------------------------------------
 
         #region TriggerApprove
 
@@ -975,10 +935,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         #endregion
-
-        // -----------------------------------------------------------------------
-        // TriggerReject
-        // -----------------------------------------------------------------------
 
         #region TriggerReject
 
