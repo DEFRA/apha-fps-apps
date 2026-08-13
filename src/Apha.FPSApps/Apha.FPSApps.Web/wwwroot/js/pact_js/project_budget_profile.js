@@ -297,14 +297,14 @@ function saveProjectMonth() {
                 loadCumulativeData(_modalProject);
                 showAlertMessage(res.message || 'Saved successfully.', AlertType.SUCCESS);
             } else if (res.errors) {
-                displayServerValidationErrors(res.errors, res.message || 'Validation failed.', form);
+                displayServerValidationErrors(res.errors, res.message || 'Validation failed.', '#projectMonthForm');
             } else {
                 showAlertMessage(res.message || 'Failed to save.', AlertType.ERROR);
             }
         },
         error: function (xhr) {
             if (xhr.status === 400 && xhr.responseJSON) {
-                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message || 'There is a problem', form);
+                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message || 'There is a problem', '#projectMonthForm');
             } else {
                 var message = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred while saving';
                 showAlertMessage('Error: ' + message, AlertType.ERROR);

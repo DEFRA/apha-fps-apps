@@ -96,6 +96,30 @@
             });
         }
 
+        // Checks Division Grade Code uniqueness (case-insensitive) before submitting the modal.
+        // Invokes onAvailable() when the code is free, otherwise shows an inline error.
+        function checkDivisionGradeCodeAvailable(code, originalCode, onAvailable) {
+            $.ajax({
+                url: '/FPS/DivisionGradeMaintenance/CheckDivisionGradeCodeExists',
+                type: 'GET',
+                data: { code: code, originalCode: originalCode || '' },
+                success: function (result) {
+                    if (result && result.exists) {
+                        displayServerValidationErrors(
+                            [{ field: 'DivisionGradeCode', message: "Division grade '" + code + "' already exists." }],
+                            'There is a problem',
+                            '#modaPopupBody');
+                    } else {
+                        onAvailable();
+                    }
+                },
+                error: function () {
+                    // If the availability check fails, fall back to server-side validation on submit.
+                    onAvailable();
+                }
+            });
+        }
+
         function saveDivisionGrade() {
             clearValidationErrors('#modaPopupBody');
             var form = $('#addDivisionGradeForm');
@@ -116,27 +140,29 @@
                 Ohr: parseDecimalOrNull($('#Ohr').val())
             };
 
-            $.ajax({
-                url: '/FPS/DivisionGradeMaintenance/Create',
-                type: 'POST',
-                data: JSON.stringify(dto),
-                contentType: 'application/json; charset=utf-8',
-                success: function (data) {
-                    if (data.success) {
-                        showAlertMessage(data.message || 'Division grade created successfully.', AlertType.SUCCESS);
-                        closeModal();
-                        reloadDivisionGradeGrid();
-                    } else {
-                        displayServerValidationErrors(data.errors, data.message, '#modaPopupBody');
+            checkDivisionGradeCodeAvailable(dto.DivisionGradeCode, null, function () {
+                $.ajax({
+                    url: '/FPS/DivisionGradeMaintenance/Create',
+                    type: 'POST',
+                    data: JSON.stringify(dto),
+                    contentType: 'application/json; charset=utf-8',
+                    success: function (data) {
+                        if (data.success) {
+                            showAlertMessage(data.message || 'Division grade created successfully.', AlertType.SUCCESS);
+                            closeModal();
+                            reloadDivisionGradeGrid();
+                        } else {
+                            displayServerValidationErrors(data.errors, data.message, '#modaPopupBody');
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 400 && xhr.responseJSON) {
+                            displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                        } else {
+                            showAlertMessage('An error occurred while saving.', AlertType.ERROR);
+                        }
                     }
-                },
-                error: function (xhr) {
-                    if (xhr.status === 400 && xhr.responseJSON) {
-                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
-                    } else {
-                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
-                    }
-                }
+                });
             });
         }
 
