@@ -307,7 +307,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 BindGridUrl        = "/FPS/DepartmentIncome/LoadGrid",
                 Columns            = columns,
                 Data               = paged,
-                Pagination         = pagination
+                Pagination         = pagination,
+                CurrentFilters     = filterDict
             };
 
             return PartialView("_DataGrid", config);

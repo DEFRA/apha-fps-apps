@@ -104,31 +104,12 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var rows = await dbQuery.OrderBy(r => r.ParentProject).ToListAsync();
 
-            return rows.Select(r => new DepartmentIncomeTime
-            {
-                Project = r.ParentProject,
-                OracleProjectCode = r.OracleProjectCode,
-                SubAccountCode = r.SubAccountCode,
-                Month = (int)r.TcMonth,
-                DefraProject = r.IsDefraProject != 0 ? "Yes" : "No",
-                OCC = r.OCC.HasValue ? ((long)r.OCC.Value).ToString() : null,
-                OPC = r.OPC,
-                SPC = r.WgProfitCentre,
-                SCC = r.WgCostCentre.HasValue ? ((long)r.WgCostCentre.Value).ToString() : null,
-                Name = r.Name,
-                GradeCode = r.GradeCode,
-                SpNumber = r.SpNumber,
-                ChargeRate = r.ChargeRate ?? 0m,
-                Pay = r.Pay ?? 0m,
-                NonPay = r.NonPay ?? 0m,
-                Overhead = r.Overhead ?? 0m,
-                Time = (decimal)(r.Time ?? 0.0),
-                TotalCost = (decimal)(r.Cost ?? 0.0),
-            }).ToList();
+            return rows.Select(r => BuildTimeRow(
+                r.ParentProject, r.OracleProjectCode, r.SubAccountCode, r.TcMonth,
+                r.IsDefraProject, r.OCC, r.OPC, r.WgProfitCentre, r.WgCostCentre,
+                r.Name, r.GradeCode, r.SpNumber,
+                r.ChargeRate, r.Pay, r.NonPay, r.Overhead, r.Time, r.Cost)).ToList();
         }
-
-        // ─────────────────────────────────────────────────────────────────────────────
-        // GetTestIncomeAsync — mirrors qryDeptIncomeTests SELECT
         //
         // Access SQL:
         //   FROM ((tlkpProject_MAP LEFT JOIN CostCentre ON tlkpProject_MAP.CostCentre = CostCentre.CostCentre)
@@ -207,32 +188,14 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var rows = await dbQuery.OrderBy(r => r.ParentProject).ToListAsync();
 
-            return rows.Select(r =>
-            {
-                var unitPrice = r.UnitPrice ?? 0m;
-                var volume = (decimal)(r.Volume ?? 0.0);
-                return new DepartmentIncomeTest
-                {
-                    Project = r.ParentProject,
-                    OracleProjectCode = r.OracleProjectCode,
-                    SubAccountCode = r.SubAccountCode,
-                    DefraProject = r.IsDefraProject != 0 ? "Yes" : "No",
-                    OPC = r.OPC,
-                    OCC = r.OCC.HasValue ? ((long)r.OCC.Value).ToString() : null,
-                    Month = (int)r.MoMonth,
-                    SPC = r.WgProfitCentre,
-                    WorkGroup = r.WorkGroup,
-                    SCC = r.WgCostCentre.HasValue ? ((long)r.WgCostCentre.Value).ToString() : null,
-                    TestCode = r.TestCode,
-                    Volume = volume,
-                    TestPrice = unitPrice,
-                    TotalCost = unitPrice * volume,
-                };
-            }).ToList();
+            return rows.Select(r => BuildTestRow(
+                r.ParentProject, r.OracleProjectCode, r.SubAccountCode, r.IsDefraProject,
+                r.OCC, r.OPC, r.MoMonth, r.WgProfitCentre, r.WorkGroup,
+                r.WgCostCentre, r.TestCode, r.Volume, r.UnitPrice)).ToList();
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
-        // GetTestSnapshotIncomeAsync — mirrors SQL Server fPeriodTests TVF
+        // GetTestSnapshotIncomeAsync
         //
         // SQL Server logic:
         //   SELECT ..., Sum(Volume), Sum(TestPrice), Sum(TotalCost)
@@ -360,11 +323,11 @@ namespace Apha.FPS.DataAccess.Repositories
                 SubAccountCode    = r.SubAccountCode,
                 DefraProject      = r.IsDefraProject,
                 OPC               = r.Opc,
-                OCC               = r.Occ.HasValue ? ((long)r.Occ.Value).ToString() : null,
+                OCC               = FmtDouble(r.Occ),
                 Month             = (int)r.Month,
                 SPC               = r.Spc,
                 WorkGroup         = r.WorkGroup,
-                SCC               = r.Scc.HasValue ? ((long)r.Scc.Value).ToString() : null,
+                SCC               = FmtDouble(r.Scc),
                 TestCode          = r.TestCode,
                 Volume            = (decimal)r.Volume,
                 TestPrice         = r.TestPrice,
@@ -448,9 +411,9 @@ namespace Apha.FPS.DataAccess.Repositories
                     Project           = g.Key.ParentProject,
                     OracleProjectCode = g.Key.OracleProjectCode,
                     SubAccountCode    = g.Key.SubAccountCode,
-                    DefraProject      = g.Key.IsDefraProject != 0 ? "Yes" : "No",
+                    DefraProject      = DefraFlag(g.Key.IsDefraProject),
                     OPC               = g.Key.OPC,
-                    OCC               = g.Key.OCC.HasValue ? ((long)g.Key.OCC.Value).ToString() : null,
+                    OCC               = FmtDouble(g.Key.OCC),
                     Month             = g.Key.Month,
                     SPC               = "SSSD",
                     SCC               = "35227",
@@ -482,71 +445,7 @@ namespace Apha.FPS.DataAccess.Repositories
         // ─────────────────────────────────────────────────────────────────────────────
         public async Task<List<DepartmentIncomeAdditional>> GetAdditionalIncomeAsync(
             string? project, int monthFrom, int monthTo)
-        {
-            // Mirrors fPeriodDeptIncomeExceptional snapshot behaviour (Access).
-            var fpsYear = _requestContext.FpsYear;
-
-            var query =
-                from sc in _context.ProjectSubContracts.AsNoTracking()
-                    .Where(s => s.FpsYear == fpsYear
-                             && s.AcctCode != null
-                             && !AnimalAcctCodes.Contains(s.AcctCode)
-                             && s.Month.HasValue
-                             && (int)s.Month.Value >= monthFrom
-                             && (int)s.Month.Value <= monthTo)
-                join proj in _context.Projects.AsNoTracking()
-                    .Where(p => p.FpsYear == fpsYear)
-                    on sc.Project equals proj.ParentProject
-                join cc in _context.CostCentres.AsNoTracking()
-                    .Where(c => c.FpsYear == fpsYear)
-                    on proj.CostCentre equals (double?)cc.CostCentreNo into ccJoin
-                from cc in ccJoin.DefaultIfEmpty()
-                select new
-                {
-                    proj.ParentProject,
-                    proj.OracleProjectCode,
-                    proj.SubAccountCode,
-                    proj.IsDefraProject,
-                    OCC = cc != null ? (double?)cc.CostCentreNo : null,
-                    OPC = cc != null ? cc.ProfitCentre : (string?)null,
-                    Month = (int)(sc.Month ?? 0),
-                    Amount = sc.Amount ?? 0m,
-                };
-
-            if (!string.IsNullOrEmpty(project))
-                query = query.Where(r => r.ParentProject == project);
-
-            var grouped = await query.ToListAsync();
-
-            var result = grouped
-                .GroupBy(r => new
-                {
-                    r.ParentProject,
-                    r.OracleProjectCode,
-                    r.SubAccountCode,
-                    r.IsDefraProject,
-                    r.OCC,
-                    r.OPC,
-                    r.Month,
-                })
-                .Select(g => new { Key = g.Key, TotalCost = g.Sum(r => r.Amount) })
-                .Where(g => g.TotalCost > 0)          // HAVING Sum(Amount) > 0 — snapshot only
-                .Select(g => new DepartmentIncomeAdditional
-                {
-                    Project           = g.Key.ParentProject,
-                    OracleProjectCode = g.Key.OracleProjectCode,
-                    SubAccountCode    = g.Key.SubAccountCode,
-                    DefraProject      = g.Key.IsDefraProject != 0 ? "Yes" : "No",
-                    OPC               = g.Key.OPC,
-                    OCC               = g.Key.OCC.HasValue ? ((long)g.Key.OCC.Value).ToString() : null,
-                    Month             = g.Key.Month,
-                    TotalCost         = g.TotalCost,
-                })
-                .OrderBy(r => r.Project)
-                .ToList();
-
-            return result;
-        }
+            => await QueryAdditionalIncomeAsync(project, monthFrom, monthTo, positiveOnly: true);
 
         // ─────────────────────────────────────────────────────────────────────────────
         // GetTotalsAsync — mirrors qryDeptIncomeTotals TRANSFORM/PIVOT
@@ -567,45 +466,11 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<List<DepartmentIncomeTotals>> GetTotalsAsync(
             string? project, int monthFrom, int monthTo)
         {
-            var timeRows = await GetTimeIncomeAsync(project, monthFrom, monthTo);
-            var testRows = await GetTestIncomeAsync(project, monthFrom, monthTo);
-            var animalRows = await GetAnimalIncomeAsync(project, monthFrom, monthTo);
+            var timeRows       = await GetTimeIncomeAsync(project, monthFrom, monthTo);
+            var testRows       = await GetTestIncomeAsync(project, monthFrom, monthTo);
+            var animalRows     = await GetAnimalIncomeAsync(project, monthFrom, monthTo);
             var additionalRows = await GetAdditionalIncomeAsync(project, monthFrom, monthTo);
-
-            var unionAll = timeRows
-                .Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaTime })
-                .Concat(testRows
-                    .Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaTests }))
-                .Concat(animalRows
-                    .Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaAnimals }))
-                .Concat(additionalRows
-                    .Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaProjectSpecifics }))
-                .ToList();
-
-            var result = unionAll
-                .GroupBy(r => new { r.Project, r.OracleProjectCode })
-                .Select(g =>
-                {
-                    var timeCost = g.Where(r => r.Area == AreaTime).Sum(r => (decimal?)r.TotalCost);
-                    var testsCost = g.Where(r => r.Area == AreaTests).Sum(r => (decimal?)r.TotalCost);
-                    var animalsCost = g.Where(r => r.Area == AreaAnimals).Sum(r => (decimal?)r.TotalCost);
-                    var projSpecCost = g.Where(r => r.Area == AreaProjectSpecifics).Sum(r => (decimal?)r.TotalCost);
-
-                    return new DepartmentIncomeTotals
-                    {
-                        Project = g.Key.Project,
-                        OracleProjectCode = g.Key.OracleProjectCode,
-                        TotalCosts = g.Sum(r => r.TotalCost),
-                        TimeCost = timeCost is null or 0m ? null : timeCost,
-                        TestsCost = testsCost is null or 0m ? null : testsCost,
-                        AnimalsCost = animalsCost is null or 0m ? null : animalsCost,
-                        ProjectSpecificsCost = projSpecCost is null or 0m ? null : projSpecCost,
-                    };
-                })
-                .OrderBy(r => r.Project)
-                .ToList();
-
-            return result;
+            return ComputeTotals(timeRows, testRows, animalRows, additionalRows);
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
@@ -667,31 +532,15 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var rows = await dbQuery.OrderBy(r => r.ParentProject).ToListAsync();
 
-            return rows.Select(r => new DepartmentIncomeTime
-            {
-                Project = r.ParentProject,
-                OracleProjectCode = r.OracleProjectCode,
-                SubAccountCode = r.SubAccountCode,
-                Month = (int)r.TcMonth,
-                DefraProject = r.IsDefraProject != 0 ? "Yes" : "No",
-                OCC = r.OCC.HasValue ? ((long)r.OCC.Value).ToString() : null,
-                OPC = r.OPC,
-                SPC = r.WgProfitCentre,
-                SCC = r.WgCostCentre.HasValue ? ((long)r.WgCostCentre.Value).ToString() : null,
-                Name = r.Name,
-                GradeCode = r.GradeCode,
-                SpNumber = r.SpNumber,
-                ChargeRate = r.ChargeRate ?? 0m,
-                Pay = r.Pay ?? 0m,
-                NonPay = r.NonPay ?? 0m,
-                Overhead = r.Overhead ?? 0m,
-                Time = (decimal)(r.Time ?? 0.0),
-                TotalCost = (decimal)(r.Cost ?? 0.0),
-            }).ToList();
+            return rows.Select(r => BuildTimeRow(
+                r.ParentProject, r.OracleProjectCode, r.SubAccountCode, r.TcMonth,
+                r.IsDefraProject, r.OCC, r.OPC, r.WgProfitCentre, r.WgCostCentre,
+                r.Name, r.GradeCode, r.SpNumber,
+                r.ChargeRate, r.Pay, r.NonPay, r.Overhead, r.Time, r.Cost)).ToList();
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
-        // GetTestIncomeCurrentAsync — mirrors qryDeptIncomeTests (Current Data Old Style)
+        // GetTestIncomeCurrentAsync
         //
         // Unlike GetTestIncomeAsync (snapshot), this does NOT aggregate volume by buyer+testcode+month.
         // qryDeptIncomeTests uses raw MonthlyOutput rows joined to WorkGroup and vtblTestRequ_TM.
@@ -741,32 +590,14 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var rows = await dbQuery.OrderBy(r => r.ParentProject).ToListAsync();
 
-            return rows.Select(r =>
-            {
-                var unitPrice = r.UnitPrice ?? 0m;
-                var volume = (decimal)(r.Volume ?? 0.0);
-                return new DepartmentIncomeTest
-                {
-                    Project = r.ParentProject,
-                    OracleProjectCode = r.OracleProjectCode,
-                    SubAccountCode = r.SubAccountCode,
-                    DefraProject = r.IsDefraProject != 0 ? "Yes" : "No",
-                    OPC = r.OPC,
-                    OCC = r.OCC.HasValue ? ((long)r.OCC.Value).ToString() : null,
-                    Month = (int)r.MoMonth,
-                    SPC = r.WgProfitCentre,
-                    WorkGroup = r.WorkGroup,
-                    SCC = r.WgCostCentre.HasValue ? ((long)r.WgCostCentre.Value).ToString() : null,
-                    TestCode = r.TestCode,
-                    Volume = volume,
-                    TestPrice = unitPrice,
-                    TotalCost = unitPrice * volume,
-                };
-            }).ToList();
+            return rows.Select(r => BuildTestRow(
+                r.ParentProject, r.OracleProjectCode, r.SubAccountCode, r.IsDefraProject,
+                r.OCC, r.OPC, r.MoMonth, r.WgProfitCentre, r.WorkGroup,
+                r.WgCostCentre, r.TestCode, r.Volume, r.UnitPrice)).ToList();
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
-        // GetAnimalIncomeCurrentAsync — mirrors qryDeptIncomeAnimals (Current Data Old Style)
+        // GetAnimalIncomeCurrentAsync
         //
         // Unlike GetAnimalIncomeAsync (snapshot), the Access qryDeptIncomeAnimals current
         // path returns one row per Proj_SubContract entry — NOT grouped by month.
@@ -820,9 +651,9 @@ namespace Apha.FPS.DataAccess.Repositories
                     Project           = r.ParentProject,
                     OracleProjectCode = r.OracleProjectCode,
                     SubAccountCode    = r.SubAccountCode,
-                    DefraProject      = r.IsDefraProject != 0 ? "Yes" : "No",
+                    DefraProject      = DefraFlag(r.IsDefraProject),
                     OPC               = r.OPC,
-                    OCC               = r.OCC.HasValue ? ((long)r.OCC.Value).ToString() : null,
+                    OCC               = FmtDouble(r.OCC),
                     Month             = r.Month,
                     SPC               = "SSSD",
                     SCC               = "35227",
@@ -845,67 +676,7 @@ namespace Apha.FPS.DataAccess.Repositories
         // ─────────────────────────────────────────────────────────────────────────────
         public async Task<List<DepartmentIncomeAdditional>> GetAdditionalIncomeCurrentAsync(
             string? project, int monthFrom, int monthTo)
-        {
-            // Mirrors qryDeptIncomeExceptional (Access) — no positivity filter.
-            var fpsYear = _requestContext.FpsYear;
-
-            var query =
-                from sc in _context.ProjectSubContracts.AsNoTracking()
-                    .Where(s => s.FpsYear == fpsYear
-                             && s.AcctCode != null
-                             && !AnimalAcctCodes.Contains(s.AcctCode)
-                             && s.Month.HasValue
-                             && (int)s.Month.Value >= monthFrom
-                             && (int)s.Month.Value <= monthTo)
-                join proj in _context.Projects.AsNoTracking()
-                    .Where(p => p.FpsYear == fpsYear)
-                    on sc.Project equals proj.ParentProject
-                join cc in _context.CostCentres.AsNoTracking()
-                    .Where(c => c.FpsYear == fpsYear)
-                    on proj.CostCentre equals (double?)cc.CostCentreNo into ccJoin
-                from cc in ccJoin.DefaultIfEmpty()
-                select new
-                {
-                    proj.ParentProject,
-                    proj.OracleProjectCode,
-                    proj.SubAccountCode,
-                    proj.IsDefraProject,
-                    OCC   = cc != null ? (double?)cc.CostCentreNo : null,
-                    OPC   = cc != null ? cc.ProfitCentre          : (string?)null,
-                    Month = (int)(sc.Month ?? 0),
-                    Amount = sc.Amount ?? 0m,
-                };
-
-            if (!string.IsNullOrEmpty(project))
-                query = query.Where(r => r.ParentProject == project);
-
-            var grouped = await query.ToListAsync();
-
-            return grouped
-                .GroupBy(r => new
-                {
-                    r.ParentProject,
-                    r.OracleProjectCode,
-                    r.SubAccountCode,
-                    r.IsDefraProject,
-                    r.OCC,
-                    r.OPC,
-                    r.Month,
-                })
-                .Select(g => new DepartmentIncomeAdditional
-                {
-                    Project           = g.Key.ParentProject,
-                    OracleProjectCode = g.Key.OracleProjectCode,
-                    SubAccountCode    = g.Key.SubAccountCode,
-                    DefraProject      = g.Key.IsDefraProject != 0 ? "Yes" : "No",
-                    OPC               = g.Key.OPC,
-                    OCC               = g.Key.OCC.HasValue ? ((long)g.Key.OCC.Value).ToString() : null,
-                    Month             = g.Key.Month,
-                    TotalCost         = g.Sum(r => r.Amount),   // all rows, including negatives
-                })
-                .OrderBy(r => r.Project)
-                .ToList();
-        }
+            => await QueryAdditionalIncomeAsync(project, monthFrom, monthTo, positiveOnly: false);
 
         // ─────────────────────────────────────────────────────────────────────────────
         // GetTotalsCurrentAsync — mirrors qryDeptIncomeTotals (Current Data Old Style)
@@ -918,36 +689,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var testRows       = await GetTestIncomeCurrentAsync(project, monthFrom, monthTo);
             var animalRows     = await GetAnimalIncomeCurrentAsync(project, monthFrom, monthTo);
             var additionalRows = await GetAdditionalIncomeCurrentAsync(project, monthFrom, monthTo);
-
-            var unionAll =
-                timeRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaTime })
-                .Concat(testRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaTests }))
-                .Concat(animalRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaAnimals }))
-                .Concat(additionalRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaProjectSpecifics }))
-                .ToList();
-
-            return unionAll
-                .GroupBy(r => new { r.Project, r.OracleProjectCode })
-                .Select(g =>
-                {
-                    var timeCost     = g.Where(r => r.Area == AreaTime).Sum(r => (decimal?)r.TotalCost);
-                    var testsCost    = g.Where(r => r.Area == AreaTests).Sum(r => (decimal?)r.TotalCost);
-                    var animalsCost  = g.Where(r => r.Area == AreaAnimals).Sum(r => (decimal?)r.TotalCost);
-                    var projSpecCost = g.Where(r => r.Area == AreaProjectSpecifics).Sum(r => (decimal?)r.TotalCost);
-
-                    return new DepartmentIncomeTotals
-                    {
-                        Project           = g.Key.Project,
-                        OracleProjectCode = g.Key.OracleProjectCode,
-                        TotalCosts        = g.Sum(r => r.TotalCost),
-                        TimeCost          = timeCost    is null or 0m ? null : timeCost,
-                        TestsCost         = testsCost   is null or 0m ? null : testsCost,
-                        AnimalsCost       = animalsCost is null or 0m ? null : animalsCost,
-                        ProjectSpecificsCost = projSpecCost is null or 0m ? null : projSpecCost,
-                    };
-                })
-                .OrderBy(r => r.Project)
-                .ToList();
+            return ComputeTotals(timeRows, testRows, animalRows, additionalRows);
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
@@ -1052,6 +794,162 @@ namespace Apha.FPS.DataAccess.Repositories
             var filtered = ApplyAdditionalFilter(rows, query.Filter);
             var sorted   = ApplyAdditionalSort(filtered, query.SortBy, query.Descending);
             return base.ApplyPaging(sorted, Math.Max(query.Page, 1), Math.Max(query.PageSize, 10));
+        }
+
+        // ── Shared formatting helpers ─────────────────────────────────────────────────
+
+        private static string? FmtDouble(double? v) => v.HasValue ? ((long)v.Value).ToString() : null;
+        private static string DefraFlag(short v) => v != 0 ? "Yes" : "No";
+
+        // ── Shared row builders ───────────────────────────────────────────────────────
+
+        private static DepartmentIncomeTime BuildTimeRow(
+            string? project, string? oracleCode, string? subAccount, double tcMonth,
+            short isDefra, double? occ, string? opc, string? wgPc, double? wgCc,
+            string? name, string? gradeCode, string? spNumber,
+            decimal? chargeRate, decimal? pay, decimal? nonPay, decimal? overhead,
+            double? time, double? cost) => new()
+        {
+            Project           = project,
+            OracleProjectCode = oracleCode,
+            SubAccountCode    = subAccount,
+            Month             = (int)tcMonth,
+            DefraProject      = DefraFlag(isDefra),
+            OCC               = FmtDouble(occ),
+            OPC               = opc,
+            SPC               = wgPc,
+            SCC               = FmtDouble(wgCc),
+            Name              = name,
+            GradeCode         = gradeCode,
+            SpNumber          = spNumber,
+            ChargeRate        = chargeRate ?? 0m,
+            Pay               = pay        ?? 0m,
+            NonPay            = nonPay     ?? 0m,
+            Overhead          = overhead   ?? 0m,
+            Time              = (decimal)(time ?? 0.0),
+            TotalCost         = (decimal)(cost ?? 0.0),
+        };
+
+        private static DepartmentIncomeTest BuildTestRow(
+            string? project, string? oracleCode, string? subAccount, short isDefra,
+            double? occ, string? opc, double moMonth, string? wgPc, string? workGroup,
+            double? wgCc, string? testCode, double? volume, decimal? unitPrice)
+        {
+            var up  = unitPrice ?? 0m;
+            var vol = (decimal)(volume ?? 0.0);
+            return new DepartmentIncomeTest
+            {
+                Project           = project,
+                OracleProjectCode = oracleCode,
+                SubAccountCode    = subAccount,
+                DefraProject      = DefraFlag(isDefra),
+                OPC               = opc,
+                OCC               = FmtDouble(occ),
+                Month             = (int)moMonth,
+                SPC               = wgPc,
+                WorkGroup         = workGroup,
+                SCC               = FmtDouble(wgCc),
+                TestCode          = testCode,
+                Volume            = vol,
+                TestPrice         = up,
+                TotalCost         = up * vol,
+            };
+        }
+
+        // ── Shared Totals aggregation ─────────────────────────────────────────────────
+
+        private static List<DepartmentIncomeTotals> ComputeTotals(
+            List<DepartmentIncomeTime>       timeRows,
+            List<DepartmentIncomeTest>       testRows,
+            List<DepartmentIncomeAnimal>     animalRows,
+            List<DepartmentIncomeAdditional> additionalRows)
+            => timeRows
+                .Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaTime })
+                .Concat(testRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaTests }))
+                .Concat(animalRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaAnimals }))
+                .Concat(additionalRows.Select(r => new { r.Project, r.OracleProjectCode, r.TotalCost, Area = AreaProjectSpecifics }))
+                .GroupBy(r => new { r.Project, r.OracleProjectCode })
+                .Select(g =>
+                {
+                    var t = g.Where(r => r.Area == AreaTime).Sum(r => (decimal?)r.TotalCost);
+                    var s = g.Where(r => r.Area == AreaTests).Sum(r => (decimal?)r.TotalCost);
+                    var a = g.Where(r => r.Area == AreaAnimals).Sum(r => (decimal?)r.TotalCost);
+                    var p = g.Where(r => r.Area == AreaProjectSpecifics).Sum(r => (decimal?)r.TotalCost);
+                    return new DepartmentIncomeTotals
+                    {
+                        Project              = g.Key.Project,
+                        OracleProjectCode    = g.Key.OracleProjectCode,
+                        TotalCosts           = g.Sum(r => r.TotalCost),
+                        TimeCost             = t is null or 0m ? null : t,
+                        TestsCost            = s is null or 0m ? null : s,
+                        AnimalsCost          = a is null or 0m ? null : a,
+                        ProjectSpecificsCost = p is null or 0m ? null : p,
+                    };
+                })
+                .OrderBy(r => r.Project)
+                .ToList();
+
+        // ── Shared Additional income query (snapshot uses positiveOnly:true) ──────────
+
+        private async Task<List<DepartmentIncomeAdditional>> QueryAdditionalIncomeAsync(
+            string? project, int monthFrom, int monthTo, bool positiveOnly)
+        {
+            var fpsYear = _requestContext.FpsYear;
+            var query =
+                from sc in _context.ProjectSubContracts.AsNoTracking()
+                    .Where(s => s.FpsYear == fpsYear
+                             && s.AcctCode != null
+                             && !AnimalAcctCodes.Contains(s.AcctCode)
+                             && s.Month.HasValue
+                             && (int)s.Month.Value >= monthFrom
+                             && (int)s.Month.Value <= monthTo)
+                join proj in _context.Projects.AsNoTracking()
+                    .Where(p => p.FpsYear == fpsYear)
+                    on sc.Project equals proj.ParentProject
+                join cc in _context.CostCentres.AsNoTracking()
+                    .Where(c => c.FpsYear == fpsYear)
+                    on proj.CostCentre equals (double?)cc.CostCentreNo into ccJoin
+                from cc in ccJoin.DefaultIfEmpty()
+                select new
+                {
+                    proj.ParentProject,
+                    proj.OracleProjectCode,
+                    proj.SubAccountCode,
+                    proj.IsDefraProject,
+                    OCC    = cc != null ? (double?)cc.CostCentreNo : null,
+                    OPC    = cc != null ? cc.ProfitCentre          : (string?)null,
+                    Month  = (int)(sc.Month ?? 0),
+                    Amount = sc.Amount ?? 0m,
+                };
+
+            if (!string.IsNullOrEmpty(project))
+                query = query.Where(r => r.ParentProject == project);
+
+            var rows = await query.ToListAsync();
+            var grouped = rows
+                .GroupBy(r => new
+                {
+                    r.ParentProject, r.OracleProjectCode, r.SubAccountCode,
+                    r.IsDefraProject, r.OCC, r.OPC, r.Month,
+                })
+                .Select(g => new { Key = g.Key, TotalCost = g.Sum(r => r.Amount) });
+
+            var filtered = positiveOnly ? grouped.Where(g => g.TotalCost > 0) : grouped;
+
+            return filtered
+                .Select(g => new DepartmentIncomeAdditional
+                {
+                    Project           = g.Key.ParentProject,
+                    OracleProjectCode = g.Key.OracleProjectCode,
+                    SubAccountCode    = g.Key.SubAccountCode,
+                    DefraProject      = DefraFlag(g.Key.IsDefraProject),
+                    OPC               = g.Key.OPC,
+                    OCC               = FmtDouble(g.Key.OCC),
+                    Month             = g.Key.Month,
+                    TotalCost         = g.TotalCost,
+                })
+                .OrderBy(r => r.Project)
+                .ToList();
         }
 
         // ── Generic filter/sort helpers ───────────────────────────────────────────

@@ -312,11 +312,34 @@ function showDeptIncomePopupMessage(title, message) {
     if (closeBtn) { closeBtn.addEventListener('click', closeDeptIncomePopupMessage); }
 }
 
+// ── Filter Enter-key support ──────────────────────────────────────────────
+// Attach a delegated keydown handler to a static grid container so that
+// pressing Enter in any .grid-filter text box triggers the same reload as
+// blur/change — without modifying the shared _DataGrid.cshtml partial.
+
+function attachDeptIncomeFilterEnterKey(containerId, gridManagerKey) {
+    $(document).off('keydown.deptIncomeFilter_' + containerId)
+               .on('keydown.deptIncomeFilter_' + containerId,
+                   '#' + containerId + ' .grid-filter',
+                   function (e) {
+                       if (e.key === 'Enter') {
+                           e.preventDefault();
+                           var gm = window[gridManagerKey];
+                           if (gm) { gm.reloadGrid({ page: 1 }); }
+                       }
+                   });
+}
+
 // ── DOMContentLoaded: wire events and initialise period dropdowns ─────────
 
 function deptIncomeInit() {
 
     initializeDepartmentIncomePeriodDropdowns({ monthsData: departmentIncomePageMonths });
+
+    // Attach Enter-key filter handler for each Department Income grid
+    attachDeptIncomeFilterEnterKey('gridContainer_departmentIncomeSnapshotGrid',      'gridManager_departmentIncomeSnapshotGrid');
+    attachDeptIncomeFilterEnterKey('gridContainer_departmentIncomeSnapshotQueryGrid', 'gridManager_departmentIncomeSnapshotQueryGrid');
+    attachDeptIncomeFilterEnterKey('gridContainer_departmentIncomeCurrentGrid',       'gridManager_departmentIncomeCurrentGrid');
 
     reloadDepartmentIncomeSnapshotGrid();
 
