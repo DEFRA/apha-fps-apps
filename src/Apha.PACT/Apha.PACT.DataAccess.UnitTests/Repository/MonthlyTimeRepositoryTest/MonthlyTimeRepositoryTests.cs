@@ -425,7 +425,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter());
 
             Assert.Equal(10, result.PaginationData.TotalRecords);
-            Assert.Equal(3, result.Data.Count());
+            Assert.Equal(3, result.Data.Count);
         }
 
         #endregion

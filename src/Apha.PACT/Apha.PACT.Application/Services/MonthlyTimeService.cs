@@ -393,7 +393,7 @@ namespace Apha.PACT.Application.Services
         }
 
         private static void ValidateNamedStaff(
-            string staffId,
+            string? staffId,
             string? name,
             string? workGroup,
             StagingMonthlyTime record,
@@ -411,14 +411,14 @@ namespace Apha.PACT.Application.Services
 
         private static void ProcessStaffMatches(
             List<WorkGroupStaffItem> matches,
-            string staffId,
+            string? staffId,
             string? workGroup,
             StagingMonthlyTime record,
             List<string> failures)
         {
             if (matches.Count == 0)
             {
-                failures.Add($"This staff ID not in this WG: {staffId}");
+                failures.Add($"This staff ID not in this WG: {staffId ?? string.Empty}");
                 return;
             }
 
