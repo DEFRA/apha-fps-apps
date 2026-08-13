@@ -6,7 +6,7 @@ using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Moq;
-using Xunit;
+using System.Linq.Expressions;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
 {
@@ -1427,6 +1427,357 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
 
             RepositoryTestHelper.SetupSaveChanges(dbContext);
             return (new AnimalRepository(dbContext.Object, requestCtx.Object), requestSet, logSet, dbContext);
+        }
+
+        #endregion
+
+        #region ApplyAnimalSnapshotFilter Tests
+
+        // ApplyAnimalSnapshotFilter is a private static method whose predicates use
+        // EF.Functions.ILike. The shared TestAsyncQueryProvider (via TestAsyncEnumerable)
+        // rewrites EF.Functions.ILike(col, "%pattern%") into col.ToLower().Contains(pattern)
+        // for client-side evaluation, so these tests invoke the method via reflection over a
+        // real in-memory queryable and assert on the ACTUAL filtered results.
+
+        private static IQueryable<AnimalSnapshotView> InvokeApplyAnimalSnapshotFilter(
+            IQueryable<AnimalSnapshotView> query, string? filter)
+        {
+            var method = typeof(AnimalRepository).GetMethod(
+                "ApplyAnimalSnapshotFilter",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            Assert.NotNull(method);
+            return (IQueryable<AnimalSnapshotView>)method!.Invoke(null, new object?[] { query, filter })!;
+        }
+
+        private static IQueryable<AnimalSnapshotView> SnapshotQueryable(IEnumerable<AnimalSnapshotView> rows)
+            => new TestAsyncEnumerable<AnimalSnapshotView>(rows);
+
+        private static AnimalSnapshotView SnapshotRow(
+            string? directorate = "DirA",
+            string? program = "P001",
+            string? contract = "C001",
+            string? project = "PP001",
+            string? projectStatus = "Active",
+            string? species = "Bovine",
+            string? securityLevel = "Low",
+            string? animalType = "CATTLE",
+            string? jobCode = "J001",
+            decimal? cost = 0m) =>
+            new()
+            {
+                Directorate = directorate,
+                Program = program,
+                Contract = contract,
+                Project = project,
+                ProjectStatus = projectStatus,
+                Species = species,
+                SecurityLevel = securityLevel,
+                AnimalType = animalType,
+                JobCode = jobCode,
+                Cost = cost
+            };
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        public async Task ApplyAnimalSnapshotFilter_ReturnsAllRows_WhenFilterNullOrEmpty(string? filter)
+        {
+            var source = SnapshotQueryable([SnapshotRow(directorate: "DirA"), SnapshotRow(directorate: "DirB")]);
+
+            var result = InvokeApplyAnimalSnapshotFilter(source, filter);
+
+            Assert.Equal(2, (await result.ToListAsync()).Count);
+        }
+
+        [Fact]
+        public async Task ApplyAnimalSnapshotFilter_ReturnsAllRows_WhenFilterModelIsNull()
+        {
+            // "null" deserialises to a null ExpandoObject, exercising the null-model guard.
+            var source = SnapshotQueryable([SnapshotRow(), SnapshotRow()]);
+
+            var result = InvokeApplyAnimalSnapshotFilter(source, "null");
+
+            Assert.Equal(2, (await result.ToListAsync()).Count);
+        }
+
+        [Fact]
+        public async Task ApplyAnimalSnapshotFilter_ReturnsAllRows_WhenNoKnownKeys()
+        {
+            var source = SnapshotQueryable([SnapshotRow(), SnapshotRow()]);
+
+            var result = InvokeApplyAnimalSnapshotFilter(source, "{\"Unknown\":\"abc\"}");
+
+            Assert.Equal(2, (await result.ToListAsync()).Count);
+        }
+
+        [Fact]
+        public async Task ApplyAnimalSnapshotFilter_ReturnsAllRows_WhenValueIsExplicitNull()
+        {
+            var source = SnapshotQueryable([SnapshotRow(directorate: "DirA"), SnapshotRow(directorate: "DirB")]);
+
+            var result = InvokeApplyAnimalSnapshotFilter(source, "{\"Directorate\":null}");
+
+            Assert.Equal(2, (await result.ToListAsync()).Count);
+        }
+
+        [Fact]
+        public async Task ApplyAnimalSnapshotFilter_FiltersByDirectorate_CaseInsensitivePartialMatch()
+        {
+            var source = SnapshotQueryable(
+            [
+                SnapshotRow(directorate: "Animal Health"),
+                SnapshotRow(directorate: "Plant Health"),
+                SnapshotRow(directorate: "Marine")
+            ]);
+
+            var result = InvokeApplyAnimalSnapshotFilter(source, "{\"Directorate\":\"health\"}");
+
+            var rows = await result.ToListAsync();
+            Assert.Equal(2, rows.Count);
+            Assert.All(rows, r => Assert.Contains("Health", r.Directorate!));
+        }
+
+        [Theory]
+        [InlineData("Program", "P002")]
+        [InlineData("Contract", "C002")]
+        [InlineData("Project", "PP002")]
+        [InlineData("ProjectStatus", "Closed")]
+        [InlineData("Species", "Porcine")]
+        [InlineData("SecurityLevel", "High")]
+        [InlineData("AnimalType", "SHEEP")]
+        [InlineData("JobCode", "J002")]
+        public async Task ApplyAnimalSnapshotFilter_FiltersBySupportedKey_ReturnsMatchingRow(string key, string value)
+        {
+            var match = SnapshotRow(
+                program: "P002", contract: "C002", project: "PP002", projectStatus: "Closed",
+                species: "Porcine", securityLevel: "High", animalType: "SHEEP", jobCode: "J002");
+            var nonMatch = SnapshotRow(
+                program: "P001", contract: "C001", project: "PP001", projectStatus: "Active",
+                species: "Bovine", securityLevel: "Low", animalType: "CATTLE", jobCode: "J001");
+            var source = SnapshotQueryable([match, nonMatch]);
+
+            var result = InvokeApplyAnimalSnapshotFilter(source, $"{{\"{key}\":\"{value}\"}}");
+
+            Assert.Single(await result.ToListAsync());
+        }
+
+        [Fact]
+        public async Task ApplyAnimalSnapshotFilter_FiltersByCost_ReturnsMatchingRow()
+        {
+            var source = SnapshotQueryable(
+            [
+                SnapshotRow(cost: 125m),
+                SnapshotRow(cost: 300m)
+            ]);
+
+            var result = InvokeApplyAnimalSnapshotFilter(source, "{\"Cost\":\"125\"}");
+
+            var rows = await result.ToListAsync();
+            Assert.Single(rows);
+            Assert.Equal(125m, rows[0].Cost);
+        }
+
+        [Fact]
+        public async Task ApplyAnimalSnapshotFilter_AppliesAllKeys_AsAndCondition()
+        {
+            var match = SnapshotRow(directorate: "DirA", program: "P001", animalType: "CATTLE");
+            var partial = SnapshotRow(directorate: "DirA", program: "P001", animalType: "SHEEP");
+            var source = SnapshotQueryable([match, partial]);
+
+            var filter = "{\"Directorate\":\"DirA\",\"Program\":\"P001\",\"AnimalType\":\"CATTLE\"}";
+            var result = InvokeApplyAnimalSnapshotFilter(source, filter);
+
+            Assert.Single(await result.ToListAsync());
+        }
+
+        [Fact]
+        public async Task ApplyAnimalSnapshotFilter_IgnoresUnknownKeys_WhenMixedWithKnownKeys()
+        {
+            var match = SnapshotRow(directorate: "DirA", jobCode: "J001");
+            var nonMatch = SnapshotRow(directorate: "DirB", jobCode: "J002");
+            var source = SnapshotQueryable([match, nonMatch]);
+
+            var filter = "{\"Directorate\":\"DirA\",\"Unknown\":\"x\",\"JobCode\":\"J001\"}";
+            var result = InvokeApplyAnimalSnapshotFilter(source, filter);
+
+            Assert.Single(await result.ToListAsync());
+        }
+
+        [Fact]
+        public async Task ApplyAnimalSnapshotFilter_ReturnsEmpty_WhenNoRowMatches()
+        {
+            var source = SnapshotQueryable([SnapshotRow(directorate: "DirA"), SnapshotRow(directorate: "DirB")]);
+
+            var result = InvokeApplyAnimalSnapshotFilter(source, "{\"Directorate\":\"NOMATCH\"}");
+
+            Assert.Empty(await result.ToListAsync());
+        }
+
+        #endregion
+
+        #region SnapshotFilterMap Tests
+
+        // SnapshotFilterMap is a private static readonly field holding the (key, predicate)
+        // pairs used by ApplyAnimalSnapshotFilter. These tests read it via reflection and
+        // assert on its shape and that each predicate filters the expected column. Predicates
+        // use EF.Functions.ILike, so they are executed through TestAsyncEnumerable (which
+        // rewrites ILike to a client-side Contains) rather than compiled directly.
+
+        private static IReadOnlyList<(string Key, Func<string, Expression<Func<AnimalSnapshotView, bool>>> Predicate)>
+            GetSnapshotFilterMap()
+        {
+            var field = typeof(AnimalRepository).GetField(
+                "SnapshotFilterMap",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            Assert.NotNull(field);
+            return (IReadOnlyList<(string, Func<string, Expression<Func<AnimalSnapshotView, bool>>>)>)field!.GetValue(null)!;
+        }
+
+        private static async Task<List<AnimalSnapshotView>> ApplyPredicateAsync(
+            Func<string, Expression<Func<AnimalSnapshotView, bool>>> predicate,
+            string value,
+            IEnumerable<AnimalSnapshotView> rows)
+        {
+            var query = SnapshotQueryable(rows).Where(predicate(value));
+            return await query.ToListAsync();
+        }
+
+        [Fact]
+        public void SnapshotFilterMap_ContainsExpectedKeys_InOrder()
+        {
+            var map = GetSnapshotFilterMap();
+
+            var keys = map.Select(e => e.Key).ToArray();
+
+            Assert.Equal(
+                new[]
+                {
+                    "Directorate", "Program", "Contract", "Project", "ProjectStatus",
+                    "Species", "SecurityLevel", "AnimalType", "JobCode", "Cost"
+                },
+                keys);
+        }
+
+        [Fact]
+        public void SnapshotFilterMap_HasUniqueKeys_AndNonNullPredicates()
+        {
+            var map = GetSnapshotFilterMap();
+
+            Assert.Equal(map.Count, map.Select(e => e.Key).Distinct().Count());
+            Assert.All(map, e => Assert.NotNull(e.Predicate));
+        }
+
+        [Fact]
+        public void SnapshotFilterMap_PredicateFactory_ProducesLambdaExpression()
+        {
+            var map = GetSnapshotFilterMap();
+
+            foreach (var (key, predicate) in map)
+            {
+                var expression = predicate("x");
+                Assert.NotNull(expression);
+                Assert.Single(expression.Parameters);
+                Assert.Equal(typeof(bool), expression.ReturnType);
+            }
+        }
+
+        [Fact]
+        public async Task SnapshotFilterMap_DirectoratePredicate_FiltersDirectorateColumn()
+        {
+            var predicate = GetSnapshotFilterMap().Single(e => e.Key == "Directorate").Predicate;
+
+            var result = await ApplyPredicateAsync(
+                predicate,
+                "health",
+                [
+                    SnapshotRow(directorate: "Animal Health"),
+                    SnapshotRow(directorate: "Marine")
+                ]);
+
+            Assert.Single(result);
+            Assert.Equal("Animal Health", result[0].Directorate);
+        }
+
+        [Fact]
+        public async Task SnapshotFilterMap_AnimalTypePredicate_IsCaseInsensitive()
+        {
+            var predicate = GetSnapshotFilterMap().Single(e => e.Key == "AnimalType").Predicate;
+
+            var result = await ApplyPredicateAsync(
+                predicate,
+                "cattle",
+                [
+                    SnapshotRow(animalType: "CATTLE"),
+                    SnapshotRow(animalType: "SHEEP")
+                ]);
+
+            Assert.Single(result);
+            Assert.Equal("CATTLE", result[0].AnimalType);
+        }
+
+        [Fact]
+        public async Task SnapshotFilterMap_CostPredicate_FiltersOnStringifiedCost()
+        {
+            var predicate = GetSnapshotFilterMap().Single(e => e.Key == "Cost").Predicate;
+
+            var result = await ApplyPredicateAsync(
+                predicate,
+                "125",
+                [
+                    SnapshotRow(cost: 125m),
+                    SnapshotRow(cost: 300m)
+                ]);
+
+            Assert.Single(result);
+            Assert.Equal(125m, result[0].Cost);
+        }
+
+        [Fact]
+        public async Task SnapshotFilterMap_EachPredicate_MatchesItsOwnColumnOnly()
+        {
+            var map = GetSnapshotFilterMap();
+
+            // A row whose every filterable column has a distinct sentinel value.
+            var target = new AnimalSnapshotView
+            {
+                Directorate = "DIR_VAL",
+                Program = "PRG_VAL",
+                Contract = "CON_VAL",
+                Project = "PRJ_VAL",
+                ProjectStatus = "STA_VAL",
+                Species = "SPE_VAL",
+                SecurityLevel = "SEC_VAL",
+                AnimalType = "ANI_VAL",
+                JobCode = "JOB_VAL",
+                Cost = 777m
+            };
+            var other = SnapshotRow(
+                directorate: "zzz", program: "zzz", contract: "zzz", project: "zzz",
+                projectStatus: "zzz", species: "zzz", securityLevel: "zzz",
+                animalType: "zzz", jobCode: "zzz", cost: 111m);
+
+            var searchValues = new Dictionary<string, string>
+            {
+                ["Directorate"] = "DIR_VAL",
+                ["Program"] = "PRG_VAL",
+                ["Contract"] = "CON_VAL",
+                ["Project"] = "PRJ_VAL",
+                ["ProjectStatus"] = "STA_VAL",
+                ["Species"] = "SPE_VAL",
+                ["SecurityLevel"] = "SEC_VAL",
+                ["AnimalType"] = "ANI_VAL",
+                ["JobCode"] = "JOB_VAL",
+                ["Cost"] = "777"
+            };
+
+            foreach (var (key, predicate) in map)
+            {
+                var result = await ApplyPredicateAsync(predicate, searchValues[key], [target, other]);
+                Assert.Single(result);
+                Assert.Same(target, result[0]);
+            }
         }
 
         #endregion
