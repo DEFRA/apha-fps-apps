@@ -150,6 +150,16 @@ namespace Apha.PACT.DataAccess.Repository
                             && (int)m.Month == (int)month && m.WorkGroup == workGroup);
         }
 
+        public async Task<HashSet<string>> GetExistingLiveKeysAsync()
+        {
+            var keys = await _context.MonthlyOutputs
+                .AsNoTracking()
+                .Select(x => x.TestCode + "|" + x.Buyer + "|" + (int)x.Month + "|" + x.WorkGroup)
+                .ToListAsync();
+
+            return new HashSet<string>(keys, StringComparer.OrdinalIgnoreCase);
+        }
+
 
         public async Task<PagedData<MonthlyOutput>> SearchLiveAsync(
             PaginationParameters<string> query,
@@ -266,6 +276,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<StagingMonthlyOutput> CreateStagingAsync(StagingMonthlyOutput stagingMonthlyOutput)
         {
+            stagingMonthlyOutput.Passed = false;
             await _context.StagingMonthlyOutputs.AddAsync(stagingMonthlyOutput);
             await _context.SaveChangesAsync();
             return stagingMonthlyOutput;
@@ -350,6 +361,17 @@ namespace Apha.PACT.DataAccess.Repository
                 .ToListAsync();
         }
 
+        public async Task<HashSet<string>> GetPassedStagingKeysAsync(string importedBy)
+        {
+            var keys = await _context.StagingMonthlyOutputs
+                .AsNoTracking()
+                .Where(x => x.ImportedBy == importedBy && x.Passed == true)
+                .Select(x => (x.TestCode ?? string.Empty) + "|" + (x.Buyer ?? string.Empty) + "|" + (int)x.Month + "|" + (x.WorkGroup ?? string.Empty))
+                .ToListAsync();
+
+            return new HashSet<string>(keys, StringComparer.OrdinalIgnoreCase);
+        }
+
         public async Task UpdateStagingRecordsAsync(IEnumerable<StagingMonthlyOutput> records)
         {
             foreach (var record in records)
@@ -390,7 +412,7 @@ namespace Apha.PACT.DataAccess.Repository
             {
                 if (!IsValidForMakeLive(row))
                 {
-                    await MarkRowAsInvalidAsync(row, noLongerValidMessage);
+                    await MarkRowAsInvalidAsync(row.Id, noLongerValidMessage);
                     failedCount++;
                     continue;
                 }
@@ -413,8 +435,12 @@ namespace Apha.PACT.DataAccess.Repository
                 && !string.IsNullOrWhiteSpace(row.WorkGroup);
         }
 
-        private async Task MarkRowAsInvalidAsync(StagingMonthlyOutput row, string failureMessage)
+        private async Task MarkRowAsInvalidAsync(int rowId, string failureMessage)
         {
+            var row = await _context.StagingMonthlyOutputs.FirstOrDefaultAsync(x => x.Id == rowId);
+            if (row == null)
+                return;
+
             row.Passed = false;
             row.FailureComments = failureMessage;
             await _context.SaveChangesAsync();
@@ -442,15 +468,8 @@ namespace Apha.PACT.DataAccess.Repository
                 DetachIfTracked(liveRow);
                 DetachIfTracked(logEntry);
 
-                var rowEntry = _context.Entry(row);
-                if (rowEntry.State == EntityState.Deleted)
-                    rowEntry.State = EntityState.Unchanged;
-
-                row.Passed = false;
-                row.FailureComments = failureMessage;
-                rowEntry.State = EntityState.Modified;
-
-                await _context.SaveChangesAsync();
+                _context.ChangeTracker.Clear();
+                await MarkRowAsInvalidAsync(row.Id, failureMessage);
                 return false;
             }
         }

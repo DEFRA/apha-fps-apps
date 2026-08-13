@@ -1126,6 +1126,7 @@ function validateMonthlyTime() {
         type: 'POST',
         success: function (response) {
             if (response.success) {
+                window.monthlyTimePassedFilter = null;
                 reloadStagingGrid();
                 showAlertMessage(response.message, AlertType.SUCCESS);
             } else {
@@ -1145,6 +1146,7 @@ function makeLiveMonthlyTime() {
         type: 'POST',
         success: function (response) {
             if (response.success) {
+                window.monthlyTimePassedFilter = null;
                 reloadLiveGrid();
                 reloadStagingGrid();
                 showAlertMessage(response.message, AlertType.SUCCESS);
@@ -1168,6 +1170,7 @@ function deleteAllMonthlyTime() {
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
+                    window.monthlyTimePassedFilter = null;
                     reloadStagingGrid();
                     showAlertMessage('Imported records deleted successfully.', AlertType.SUCCESS);
                 } else {
@@ -1191,6 +1194,7 @@ function deleteFailedMonthlyTime() {
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
+                    window.monthlyTimePassedFilter = null;
                     reloadStagingGrid();
                     showAlertMessage('Failed imported records deleted successfully.', AlertType.SUCCESS);
                 } else {

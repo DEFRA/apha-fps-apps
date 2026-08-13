@@ -821,6 +821,7 @@ function validateMonthlyOutput() {
         type: 'POST',
         success: function (response) {
             if (response.success) {
+                window.monthlyOutputPassedFilter = null;
                 reloadStagingGrid();
                 const msg = response.message ||
                     ('Passed: ' + response.passedCount + ' | Failed: ' + response.failedCount);
@@ -849,6 +850,7 @@ function makeLiveMonthlyOutput() {
             type: 'POST',
             success: function (response) {
                 if (response.success) {
+                    window.monthlyOutputPassedFilter = null;
                     reloadLiveGrid();
                     reloadStagingGrid();
                     document.getElementById('failedmsg').style.display = 'none';
@@ -881,6 +883,7 @@ function deleteAllStagingRecords() {
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
+                    window.monthlyOutputPassedFilter = null;
                     reloadStagingGrid();
                     document.getElementById('failedmsg').style.display = 'none';
                     showAlertMessage('All staging records deleted.', AlertType.SUCCESS);
@@ -906,6 +909,7 @@ function deleteFailedStagingRecords() {
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
+                    window.monthlyOutputPassedFilter = null;
                     reloadStagingGrid();
                     document.getElementById('failedmsg').style.display = 'none';
                     showAlertMessage('Failed staging records deleted.', AlertType.SUCCESS);

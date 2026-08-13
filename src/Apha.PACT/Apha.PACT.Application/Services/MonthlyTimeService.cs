@@ -7,6 +7,7 @@ using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
+using System.Globalization;
 
 namespace Apha.PACT.Application.Services
 {
@@ -89,7 +90,6 @@ namespace Apha.PACT.Application.Services
             var entity = _mapper.Map<StagingMonthlyTime>(stagingMonthlyTime);
             entity.ImportedBy = importedBy;
             entity.ImportedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
-            await ValidateSingleRecordAsync(entity);
             var created = await _repository.CreateStagingAsync(entity);
             return _mapper.Map<StagingMonthlyTimeDto>(created);
         }
@@ -98,7 +98,6 @@ namespace Apha.PACT.Application.Services
         {
             var entity = _mapper.Map<StagingMonthlyTime>(stagingMonthlyTime);
             entity.ImportedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
-            await ValidateSingleRecordAsync(entity);
             var updated = await _repository.UpdateStagingAsync(entity, importedBy);
             return _mapper.Map<StagingMonthlyTimeDto>(updated);
         }
@@ -120,17 +119,6 @@ namespace Apha.PACT.Application.Services
                 request.ExcludeId);
 
             return new BulkUpdateStagingMonthlyTimeNamesResultDto { UpdatedCount = updatedCount };
-        }
-
-        private async Task ValidateSingleRecordAsync(StagingMonthlyTime entity)
-        {
-            var context = await LoadValidationContextAsync();
-            var stagingKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var failures = ValidateRecord(entity, context, stagingKeys);
-            entity.Passed = failures.Count == 0;
-            entity.FailureComments = failures.Count == 0
-                ? string.Empty
-                : string.Join(Environment.NewLine, failures);
         }
 
         public async Task<bool> DeleteStagingAsync(int id, string importedBy)
@@ -259,7 +247,7 @@ namespace Apha.PACT.Application.Services
                 };
             }
 
-            var validationContext = await LoadValidationContextAsync();
+            var validationContext = await LoadValidationContextAsync(importedBy);
 
             var validationResult = await ValidateRecordsAsync(records, validationContext);
 
@@ -268,7 +256,7 @@ namespace Apha.PACT.Application.Services
             return validationResult;
         }
 
-        private async Task<ValidationContext> LoadValidationContextAsync()
+        private async Task<ValidationContext> LoadValidationContextAsync(string importedBy)
         {
             var calenderMonths = await _calenderMonthRepository.GetCalenderMonthsAsync();
             return new ValidationContext
@@ -279,7 +267,10 @@ namespace Apha.PACT.Application.Services
                 ValidMonths = new HashSet<double>(calenderMonths.Select(c => (double)(c.MonthNumber ?? 0))),
                 StaffByWorkGroup = await _workGroupRepository.GetStaffByWorkGroupAsync(),
                 TimeCodeRows = await _timeCodeValidRepository.GetTimeCodeValidsAsync(),
-                ExistingLiveKeys = await _repository.GetExistingLiveKeysAsync()
+                ExistingLiveKeys = new HashSet<string>(
+                    await _repository.GetExistingLiveKeysAsync(),
+                    StringComparer.OrdinalIgnoreCase),
+                PassedStagingKeys = await _repository.GetPassedStagingKeysAsync(importedBy)
             };
         }
 
@@ -287,7 +278,7 @@ namespace Apha.PACT.Application.Services
             List<StagingMonthlyTime> records,
             ValidationContext context)
         {
-            var stagingKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var stagingKeys = new HashSet<string>(context.PassedStagingKeys, StringComparer.OrdinalIgnoreCase);
             var passedCount = 0;
             var failedCount = 0;
 
@@ -329,6 +320,12 @@ namespace Apha.PACT.Application.Services
             var month = record.Month;
             var hours = record.Hours;
 
+            record.WorkGroup = workGroup;
+            record.PactStaffId = staffId;
+            record.Name = name;
+            record.TimeCode = timeCode;
+            record.ParentProject = parentProject;
+
             ValidateHours(hours, failures);
             ValidateWorkGroup(workGroup, context.ValidWorkGroups, failures);
             ValidateStaff(staffId, name, workGroup, record, context.StaffByWorkGroup, failures);
@@ -342,7 +339,7 @@ namespace Apha.PACT.Application.Services
 
         private static void ValidateHours(double? hours, List<string> failures)
         {
-            if (!hours.HasValue || hours.Value <= 0)
+            if (!hours.HasValue || hours.Value == 0)
                 failures.Add($"The hours field is not a number -\"{hours}\"");
         }
 
@@ -366,13 +363,13 @@ namespace Apha.PACT.Application.Services
             List<WorkGroupStaffItem> staffByWorkGroup,
             List<string> failures)
         {
-            if (string.IsNullOrWhiteSpace(staffId))
+            if (string.IsNullOrWhiteSpace(staffId) && string.IsNullOrWhiteSpace(name))
             {
-                failures.Add("Staff ID blank.");
+                failures.Add("Staff ID/Name blank.");
                 return;
             }
 
-            if (char.IsDigit(staffId[0]))
+            if (!string.IsNullOrWhiteSpace(staffId) && char.IsDigit(staffId[0]))
             {
                 ValidateNumericStaff(staffId, workGroup, record, staffByWorkGroup, failures);
                 return;
@@ -405,8 +402,8 @@ namespace Apha.PACT.Application.Services
         {
             var matchByName = staffByWorkGroup
                 .Where(x => x.WorkGroup == workGroup &&
-                (!string.IsNullOrWhiteSpace(staffId) && x.Name == staffId) ||
-                (!string.IsNullOrWhiteSpace(name) && x.Name == name))
+                ((!string.IsNullOrWhiteSpace(staffId) && x.Name == staffId) ||
+                (!string.IsNullOrWhiteSpace(name) && x.Name == name)))
                 .ToList();
 
             ProcessStaffMatches(matchByName, staffId, workGroup, record, failures);
@@ -526,7 +523,13 @@ namespace Apha.PACT.Application.Services
 
         private static string BuildRecordKey(StagingMonthlyTime record)
         {
-            return $"{record.PactStaffId}|{record.TimeCode}|{record.ParentProject}|{record.WorkGroup}|{record.Month}";
+            var pactId = (record.PactId ?? string.Empty).Trim();
+            var timeCode = (record.TimeCode ?? string.Empty).Trim();
+            var parentProject = (record.ParentProject ?? string.Empty).Trim();
+            var workGroup = (record.WorkGroup ?? string.Empty).Trim();
+            var month = record.Month?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+
+            return $"{pactId}|{timeCode}|{parentProject}|{workGroup}|{month}";
         }
 
         public async Task<MonthlyTimeMakeLiveResultDto> MakeLiveAsync(string importedBy)
@@ -546,7 +549,7 @@ namespace Apha.PACT.Application.Services
                 ProcessedCount = result.ProcessedCount,
                 ImportedCount = result.ImportedCount,
                 FailedCount = result.FailedCount,
-                Message = $"Make live completed. {result.ImportedCount} records moved into MonthlyTime."
+                Message = $"Make Live completed: {result.ImportedCount} of {result.ProcessedCount} records were successfully moved to MonthlyTime. {result.FailedCount} records remain in the Imported Records and require revalidation."
             };
         }
 
@@ -572,6 +575,7 @@ namespace Apha.PACT.Application.Services
         public required List<WorkGroupStaffItem> StaffByWorkGroup { get; init; }
         public required List<TimeCodeValid> TimeCodeRows { get; init; }
         public required HashSet<string> ExistingLiveKeys { get; init; }
+        public required HashSet<string> PassedStagingKeys { get; init; }
     }
 }
 
