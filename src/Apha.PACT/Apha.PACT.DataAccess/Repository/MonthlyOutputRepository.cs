@@ -73,41 +73,105 @@ namespace Apha.PACT.DataAccess.Repository
 
             IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("SequenceNo", out object? sequenceNo)
-                && sequenceNo != null
-                && int.TryParse(sequenceNo.ToString(), out int sequenceNoValue))
-            {
-                query = query.Where(x => x.SequenceNo == sequenceNoValue);
-            }
-
-            if (dict.TryGetValue("TestCode", out object? testCode) && testCode != null)
-                query = query.Where(x => x.TestCode != null && EF.Functions.ILike(x.TestCode, $"%{testCode}%"));
-
-            if (dict.TryGetValue("Buyer", out object? buyer) && buyer != null)
-                query = query.Where(x => x.Buyer != null && EF.Functions.ILike(x.Buyer, $"%{buyer}%"));
-
-            if (dict.TryGetValue("WorkGroup", out object? workGroup) && workGroup != null)
-                query = query.Where(x => x.WorkGroup != null && EF.Functions.ILike(x.WorkGroup, $"%{workGroup}%"));
-
-            if (dict.TryGetValue("Month", out object? month) && month != null && double.TryParse(month.ToString(), out double monthValue))
-                query = query.Where(x => x.Month.HasValue && (int)x.Month.Value == (int)monthValue);
-
-            if (dict.TryGetValue("Volume", out object? volume) && volume != null && double.TryParse(volume.ToString(), out double volumeValue))
-                query = query.Where(x => x.Volume.HasValue && x.Volume.Value == volumeValue);
-
-            if (dict.TryGetValue("DateTime", out object? dateImported) && dateImported != null && DateTime.TryParse(dateImported.ToString(), out DateTime importedDate))
-            {
-                var dateOnly = importedDate.Date;
-                query = query.Where(x => x.DateTime.HasValue && x.DateTime.Value.Date == dateOnly);
-            }
-
-            if (dict.TryGetValue("UserId", out object? userId) && userId != null)
-                query = query.Where(x => x.UserId != null && EF.Functions.ILike(x.UserId, $"%{userId}%"));
-
-            if (dict.TryGetValue("InsertDelete", out object? insertDelete) && insertDelete != null)
-                query = query.Where(x => x.InsertDelete != null && EF.Functions.ILike(x.InsertDelete, $"%{insertDelete}%"));
+            query = ApplySequenceNoFilter(query, dict);
+            query = ApplyContainsFilter(query, dict, "TestCode", x => x.TestCode);
+            query = ApplyContainsFilter(query, dict, "Buyer", x => x.Buyer);
+            query = ApplyContainsFilter(query, dict, "WorkGroup", x => x.WorkGroup);
+            query = ApplyMonthFilter(query, dict);
+            query = ApplyVolumeFilter(query, dict);
+            query = ApplyDateImportedFilter(query, dict);
+            query = ApplyContainsFilter(query, dict, "UserId", x => x.UserId);
+            query = ApplyContainsFilter(query, dict, "InsertDelete", x => x.InsertDelete);
 
             return query;
+        }
+
+        private static IQueryable<MonthlyOutputLog> ApplySequenceNoFilter(IQueryable<MonthlyOutputLog> query, IDictionary<string, object> dict)
+        {
+            if (TryGetInt(dict, "SequenceNo", out var sequenceNoValue))
+                return query.Where(x => x.SequenceNo == sequenceNoValue);
+
+            return query;
+        }
+
+        private static IQueryable<MonthlyOutputLog> ApplyMonthFilter(IQueryable<MonthlyOutputLog> query, IDictionary<string, object> dict)
+        {
+            if (TryGetDouble(dict, "Month", out var monthValue))
+                return query.Where(x => x.Month.HasValue && (int)x.Month.Value == (int)monthValue);
+
+            return query;
+        }
+
+        private static IQueryable<MonthlyOutputLog> ApplyVolumeFilter(IQueryable<MonthlyOutputLog> query, IDictionary<string, object> dict)
+        {
+            if (TryGetDouble(dict, "Volume", out var volumeValue))
+                return query.Where(x => x.Volume.HasValue && x.Volume.Value == volumeValue);
+
+            return query;
+        }
+
+        private static IQueryable<MonthlyOutputLog> ApplyDateImportedFilter(IQueryable<MonthlyOutputLog> query, IDictionary<string, object> dict)
+        {
+            if (TryGetDateTime(dict, "DateTime", out var importedDate))
+            {
+                var dateOnly = importedDate.Date;
+                return query.Where(x => x.DateTime.HasValue && x.DateTime.Value.Date == dateOnly);
+            }
+
+            return query;
+        }
+
+        private static IQueryable<MonthlyOutputLog> ApplyContainsFilter(
+            IQueryable<MonthlyOutputLog> query,
+            IDictionary<string, object> dict,
+            string key,
+            Expression<Func<MonthlyOutputLog, string?>> selector)
+        {
+            if (!TryGetString(dict, key, out var value))
+                return query;
+
+            return query.Where(x => EF.Functions.ILike(EF.Property<string?>(x, GetMemberName(selector))!, $"%{value}%"));
+        }
+
+        private static string GetMemberName(Expression<Func<MonthlyOutputLog, string?>> selector)
+        {
+            return selector.Body is MemberExpression memberExpression
+                ? memberExpression.Member.Name
+                : throw new ArgumentException("Selector must be a member expression.", nameof(selector));
+        }
+
+        private static bool TryGetString(IDictionary<string, object> dict, string key, out string value)
+        {
+            value = string.Empty;
+            if (!dict.TryGetValue(key, out object? raw) || raw == null)
+                return false;
+
+            value = raw.ToString() ?? string.Empty;
+            return !string.IsNullOrWhiteSpace(value);
+        }
+
+        private static bool TryGetInt(IDictionary<string, object> dict, string key, out int value)
+        {
+            value = default;
+            return dict.TryGetValue(key, out object? raw)
+                && raw != null
+                && int.TryParse(raw.ToString(), out value);
+        }
+
+        private static bool TryGetDouble(IDictionary<string, object> dict, string key, out double value)
+        {
+            value = default;
+            return dict.TryGetValue(key, out object? raw)
+                && raw != null
+                && double.TryParse(raw.ToString(), out value);
+        }
+
+        private static bool TryGetDateTime(IDictionary<string, object> dict, string key, out DateTime value)
+        {
+            value = default;
+            return dict.TryGetValue(key, out object? raw)
+                && raw != null
+                && DateTime.TryParse(raw.ToString(), out value);
         }
 
         private static IQueryable ApplySorting(IQueryable<MonthlyOutputLog> query, string? sortBy, bool descending)

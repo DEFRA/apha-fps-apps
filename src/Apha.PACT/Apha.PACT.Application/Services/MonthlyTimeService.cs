@@ -249,7 +249,7 @@ namespace Apha.PACT.Application.Services
 
             var validationContext = await LoadValidationContextAsync(importedBy);
 
-            var validationResult = await ValidateRecordsAsync(records, validationContext);
+            var validationResult = ValidateRecords(records, validationContext);
 
             await _repository.UpdateStagingRecordsAsync(records);
 
@@ -274,7 +274,7 @@ namespace Apha.PACT.Application.Services
             };
         }
 
-        private async Task<MonthlyTimeValidateResultDto> ValidateRecordsAsync(
+        private static MonthlyTimeValidateResultDto ValidateRecords(
             List<StagingMonthlyTime> records,
             ValidationContext context)
         {

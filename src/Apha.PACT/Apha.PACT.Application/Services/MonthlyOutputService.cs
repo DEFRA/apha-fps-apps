@@ -286,7 +286,7 @@ namespace Apha.PACT.Application.Services
             };
         }
 
-        private MonthlyOutputValidateResultDto ValidateRecords(
+        private static MonthlyOutputValidateResultDto ValidateRecords(
             List<StagingMonthlyOutput> records,
             OutputValidationContext context)
         {
