@@ -2,6 +2,7 @@
 @using Apha.FPSApps.Web.Constants
 @inject Apha.FPSApps.Web.Handler.IFpsYearContext FyContext
 @inject Apha.Common.Utilities.StateManagement.IAppStateService AppStateService
+@inject Apha.FPSApps.Web.Handler.IFpsYearContext FyContext
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -98,6 +99,10 @@
         
     </script>
 
+    <script>
+        // Global variable for PACT year status (available to all PACT pages)
+        const isFPSYearClosed = @Html.Raw(FyContext.IsReadOnly.ToString().ToLower());
+    </script>
     <script src="~/js/common/headernav/navmenu.js"></script>
     <script src="~/js/number-validation.js"></script>
     <script src="~/js/site.js"></script>

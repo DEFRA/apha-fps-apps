@@ -5,10 +5,11 @@
     var csg7GroupList = ViewBag.Csg7GroupList as List<SelectListItem> ?? new List<SelectListItem>();
 }
 
-<div class="modal-header">
-    <h5 class="modal-title">Edit Account Category</h5>
-    <button type="button" class="btn-close"  onclick="closeModal()" aria-label="Close">&#x2715;</button>
-</div>
+<div role="dialog" aria-labelledby="modal-acccat-title" aria-modal="true" tabindex="-1">
+    <div class="modal-header">
+        <h2 class="modal-title" id="modal-acccat-title">Edit Account Category</h2>
+        <button type="button" class="btn-close" onclick="closeModal()" aria-label="Close">&#x2715;</button>
+    </div>
 <div class="modal-body">
     
     <form class="govuk-grid-column-full" id="formTblAccCat" novalidate>
@@ -36,6 +37,7 @@
                    value="@Model?.AccShortName"
                    readonly
                    aria-describedby="modal-acccat-shortname-error" />
+            <span id="modal-acccat-shortname-error" class="govuk-error-message" aria-live="polite" style="display:none;"></span>
         </div>
 
         <div class="govuk-form-group govuk-!-margin-bottom-4" id="fg-acccat-description">
@@ -51,6 +53,7 @@
                   readonly
                    maxlength="50"
                    aria-describedby="modal-acccat-description-error" />
+            <span id="modal-acccat-description-error" class="govuk-error-message" aria-live="polite" style="display:none;"></span>
         </div>
 
         <div class="govuk-form-group govuk-!-margin-bottom-4" id="fg-acccat-csg7group">
@@ -78,16 +81,17 @@
                     }
                 }
             </select>
-            <span data-valmsg-for="csg7Group" class="govuk-error-message field-validation-valid" style="display:none;"></span>
+            <span id="modal-acccat-csg7group-error" data-valmsg-for="csg7Group" class="govuk-error-message field-validation-valid" aria-live="polite" style="display:none;"></span>
         </div>
 
     </form>
 </div>
-<div class="modal-footer">
+    <div class="modal-footer">
     <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
             data-module="govuk-button" onclick="closeModal()">Cancel</button>
     <button type="button" class="govuk-button sup_margin_0"
             data-module="govuk-button"
             id="tblAccCatUpdateBtn"
             onclick="saveAccountCategory()">Update</button>
+</div>
 </div>

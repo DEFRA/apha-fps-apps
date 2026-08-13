@@ -35,7 +35,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "Fee")]
         [DisplayFormat(DataFormatString = "{0:F4}", ApplyFormatInEditMode = false)]
         [GridColumn(Order = 6, Width = 110, Type = GridColumnType.GbpValue)]
-        public decimal? TestCost => (UnitPrice ?? 0) * (decimal)NoRequired;  
+        public decimal? TestCost { get; set; }
 
         [GridColumn(IsVisible = false)]
         public bool IsEdit { get; set; }
