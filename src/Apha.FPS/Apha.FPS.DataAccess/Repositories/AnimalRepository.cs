@@ -332,6 +332,21 @@ namespace Apha.FPS.DataAccess.Repositories
                    };
         }
 
+        private static readonly IReadOnlyList<(string Key, Func<string, Expression<Func<AnimalSnapshotView, bool>>> Predicate)>
+            SnapshotFilterMap = new (string, Func<string, Expression<Func<AnimalSnapshotView, bool>>>)[]
+            {
+                ("Directorate", v => x => EF.Functions.ILike(x.Directorate!, $"%{v}%")),
+                ("Program", v => x => EF.Functions.ILike(x.Program!, $"%{v}%")),
+                ("Contract", v => x => EF.Functions.ILike(x.Contract!, $"%{v}%")),
+                ("Project", v => x => EF.Functions.ILike(x.Project!, $"%{v}%")),
+                ("ProjectStatus", v => x => EF.Functions.ILike(x.ProjectStatus!, $"%{v}%")),
+                ("Species", v => x => EF.Functions.ILike(x.Species!, $"%{v}%")),
+                ("SecurityLevel", v => x => EF.Functions.ILike(x.SecurityLevel!, $"%{v}%")),
+                ("AnimalType", v => x => EF.Functions.ILike(x.AnimalType!, $"%{v}%")),
+                ("JobCode", v => x => EF.Functions.ILike(x.JobCode!, $"%{v}%")),
+                ("Cost", v => x => EF.Functions.ILike((x.Cost ?? 0m).ToString(), $"%{v}%")),
+            };
+
         private static IQueryable<AnimalSnapshotView> ApplyAnimalSnapshotFilter(IQueryable<AnimalSnapshotView> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
@@ -343,35 +358,11 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("Directorate", out var directorate) && directorate != null)
-                query = query.Where(x => EF.Functions.ILike(x.Directorate!, $"%{directorate}%"));
-
-            if (dict.TryGetValue("Program", out var program) && program != null)
-                query = query.Where(x => EF.Functions.ILike(x.Program!, $"%{program}%"));
-
-            if (dict.TryGetValue("Contract", out var contract) && contract != null)
-                query = query.Where(x => EF.Functions.ILike(x.Contract!, $"%{contract}%"));
-
-            if (dict.TryGetValue("Project", out var project) && project != null)
-                query = query.Where(x => EF.Functions.ILike(x.Project!, $"%{project}%"));
-
-            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && projectStatus != null)
-                query = query.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
-
-            if (dict.TryGetValue("Species", out var species) && species != null)
-                query = query.Where(x => EF.Functions.ILike(x.Species!, $"%{species}%"));
-
-            if (dict.TryGetValue("SecurityLevel", out var securityLevel) && securityLevel != null)
-                query = query.Where(x => EF.Functions.ILike(x.SecurityLevel!, $"%{securityLevel}%"));
-
-            if (dict.TryGetValue("AnimalType", out var animalType) && animalType != null)
-                query = query.Where(x => EF.Functions.ILike(x.AnimalType!, $"%{animalType}%"));
-
-            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
-                query = query.Where(x => EF.Functions.ILike(x.JobCode!, $"%{jobCode}%"));
-
-            if (dict.TryGetValue("Cost", out var cost) && cost != null)
-                query = query.Where(x => EF.Functions.ILike((x.Cost ?? 0m).ToString(), $"%{cost}%"));
+            foreach (var (key, predicate) in SnapshotFilterMap)
+            {
+                if (dict.TryGetValue(key, out var value) && value != null)
+                    query = query.Where(predicate(value.ToString()!));
+            }
 
             return query;
         }
