@@ -2,6 +2,7 @@ using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Mappings;
@@ -41,10 +42,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRequirementRC
 
         // ── GetByTestCodeAsync ────────────────────────────────────────────────
 
-        #region GetByTestCodeAsync
+        #region GetPagedByTestCodeAsync
 
         [Fact]
-        public async Task GetByTestCodeAsync_HttpReturnsSuccess_ReturnsMappedResponse()
+        public async Task GetPagedByTestCodeAsync_HttpReturnsSuccess_ReturnsMappedResponse()
         {
             // Arrange
             var resList     = new List<TestRequirementRCCostRes> { new() { TestCode = DefaultTestCode } };
@@ -56,7 +57,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRequirementRC
             _mapper.Map<ApiResponseDto<List<TestRequirementRCCostDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
+            var result = await _client.GetPagedByTestCodeAsync(new QueryParameters<string>(), DefaultTestCode);
 
             // Assert
             Assert.True(result.Success);
@@ -64,7 +65,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRequirementRC
         }
 
         [Fact]
-        public async Task GetByTestCodeAsync_UrlContainsTestCode_CorrectRouteCalled()
+        public async Task GetPagedByTestCodeAsync_UrlContainsTestCode_CorrectRouteCalled()
         {
             // Arrange
             var apiResponse = SuccessResponse(new List<TestRequirementRCCostRes>());
@@ -77,14 +78,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRequirementRC
             _mapper.Map<ApiResponseDto<List<TestRequirementRCCostDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
+            await _client.GetPagedByTestCodeAsync(new QueryParameters<string>(), DefaultTestCode);
 
             // Assert
-            Assert.Equal($"{BaseUrl}/{DefaultTestCode}", capturedUrl);
+            Assert.StartsWith($"{BaseUrl}/{DefaultTestCode}", capturedUrl);
         }
 
         [Fact]
-        public async Task GetByTestCodeAsync_HttpReturnsFailure_ReturnsFailureResponse()
+        public async Task GetPagedByTestCodeAsync_HttpReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
             var apiResponse = FailureResponse<List<TestRequirementRCCostRes>>();
@@ -95,7 +96,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRequirementRC
             _mapper.Map<ApiResponseDto<List<TestRequirementRCCostDto>>>(apiResponse).Returns(failureDto);
 
             // Act
-            var result = await _client.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
+            var result = await _client.GetPagedByTestCodeAsync(new QueryParameters<string>(), DefaultTestCode);
 
             // Assert
             Assert.False(result.Success);

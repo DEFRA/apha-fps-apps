@@ -237,7 +237,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         {
             // Arrange
             var response = ApiResponseDto<List<TestRCCostDto>>.SuccessResponse(new List<TestRCCostDto>());
-            _fpsTestRCCostApiClient.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear).Returns(response);
+            _fpsTestRCCostApiClient.GetPagedByTestCodeAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode).Returns(response);
             _mapper.Map<List<TestRCCostItem>>(Arg.Any<List<TestRCCostDto>>())
                 .Returns(new List<TestRCCostItem>());
 
@@ -245,7 +245,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
             await _controller.LoadComponentChargesGeneralGrid(new PaginationFilter<string>(), DefaultTestCode);
 
             // Assert
-            await _fpsTestRCCostApiClient.Received(1).GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
+            await _fpsTestRCCostApiClient.Received(1).GetPagedByTestCodeAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode);
         }
 
         #endregion
@@ -257,7 +257,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         {
             // Arrange
             var response = ApiResponseDto<List<TestRequirementRCCostDto>>.SuccessResponse(new List<TestRequirementRCCostDto>());
-            _fpsTestRequirementRCCostApiClient.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear).Returns(response);
+            _fpsTestRequirementRCCostApiClient.GetPagedByTestCodeAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode).Returns(response);
             _mapper.Map<List<TestRequirementRCCostItem>>(Arg.Any<List<TestRequirementRCCostDto>>())
                 .Returns(new List<TestRequirementRCCostItem>());
 
@@ -265,7 +265,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
             await _controller.LoadComponentChargesProjectGrid(new PaginationFilter<string>(), DefaultTestCode);
 
             // Assert
-            await _fpsTestRequirementRCCostApiClient.Received(1).GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
+            await _fpsTestRequirementRCCostApiClient.Received(1).GetPagedByTestCodeAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode);
         }
 
         [Fact]
@@ -375,259 +375,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
             var jsonResult = Assert.IsType<JsonResult>(result);
             var element    = GetJsonResultElement(jsonResult);
             Assert.False(element.GetProperty("success").GetBoolean());
-        }
-
-        #endregion
-
-        #region Component Charges filter / sort / paging
-
-        private void SetupComponentChargesGeneral(List<TestRCCostItem> items)
-        {
-            var response = ApiResponseDto<List<TestRCCostDto>>.SuccessResponse(new List<TestRCCostDto>());
-            _fpsTestRCCostApiClient.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear).Returns(response);
-            _mapper.Map<List<TestRCCostItem>>(Arg.Any<List<TestRCCostDto>>()).Returns(items);
-        }
-
-        private void SetupComponentChargesProject(List<TestRequirementRCCostItem> items)
-        {
-            var response = ApiResponseDto<List<TestRequirementRCCostDto>>.SuccessResponse(new List<TestRequirementRCCostDto>());
-            _fpsTestRequirementRCCostApiClient.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear).Returns(response);
-            _mapper.Map<List<TestRequirementRCCostItem>>(Arg.Any<List<TestRequirementRCCostDto>>()).Returns(items);
-        }
-
-        [Fact]
-        public async Task LoadComponentChargesGeneralGrid_WithFilter_ReturnsOnlyMatchingRows()
-        {
-            // Arrange
-            SetupComponentChargesGeneral(new List<TestRCCostItem>
-            {
-                new() { ProfitCentre = "PC001", Price = 10m },
-                new() { ProfitCentre = "PC002", Price = 20m },
-                new() { ProfitCentre = "PC003", Price = 30m }
-            });
-
-            var request = new PaginationFilter<string>
-            {
-                Filter = "{\"ProfitCentre\":\"PC002\"}"
-            };
-
-            // Act
-            var result = await _controller.LoadComponentChargesGeneralGrid(request, DefaultTestCode);
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            var config = Assert.IsType<DataGridConfig<TestRCCostItem>>(partialView.Model);
-            Assert.Single(config.Data);
-            Assert.Equal("PC002", config.Data.First().ProfitCentre);
-            Assert.Equal(1, config.Pagination.TotalRecords);
-        }
-
-        [Fact]
-        public async Task LoadComponentChargesGeneralGrid_WithBlankFilterValue_ReturnsAllRows()
-        {
-            // Arrange
-            SetupComponentChargesGeneral(new List<TestRCCostItem>
-            {
-                new() { ProfitCentre = "PC001", Price = 10m },
-                new() { ProfitCentre = "PC002", Price = 20m }
-            });
-
-            var request = new PaginationFilter<string>
-            {
-                Filter = "{\"ProfitCentre\":\"\"}"
-            };
-
-            // Act
-            var result = await _controller.LoadComponentChargesGeneralGrid(request, DefaultTestCode);
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            var config = Assert.IsType<DataGridConfig<TestRCCostItem>>(partialView.Model);
-            Assert.Equal(2, config.Data.Count);
-        }
-
-        [Fact]
-        public async Task LoadComponentChargesGeneralGrid_WithUnknownFilterColumn_ReturnsAllRows()
-        {
-            // Arrange
-            SetupComponentChargesGeneral(new List<TestRCCostItem>
-            {
-                new() { ProfitCentre = "PC001", Price = 10m },
-                new() { ProfitCentre = "PC002", Price = 20m }
-            });
-
-            var request = new PaginationFilter<string>
-            {
-                Filter = "{\"DoesNotExist\":\"x\"}"
-            };
-
-            // Act
-            var result = await _controller.LoadComponentChargesGeneralGrid(request, DefaultTestCode);
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            var config = Assert.IsType<DataGridConfig<TestRCCostItem>>(partialView.Model);
-            Assert.Equal(2, config.Data.Count);
-        }
-
-        [Fact]
-        public async Task LoadComponentChargesGeneralGrid_SortDescending_OrdersRows()
-        {
-            // Arrange
-            SetupComponentChargesGeneral(new List<TestRCCostItem>
-            {
-                new() { ProfitCentre = "PC001", Price = 10m },
-                new() { ProfitCentre = "PC003", Price = 30m },
-                new() { ProfitCentre = "PC002", Price = 20m }
-            });
-
-            var request = new PaginationFilter<string>
-            {
-                SortBy = "ProfitCentre",
-                Descending = true
-            };
-
-            // Act
-            var result = await _controller.LoadComponentChargesGeneralGrid(request, DefaultTestCode);
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            var config = Assert.IsType<DataGridConfig<TestRCCostItem>>(partialView.Model);
-            Assert.Equal("PC003", config.Data.First().ProfitCentre);
-            Assert.Equal("PC001", config.Data.Last().ProfitCentre);
-        }
-
-        [Fact]
-        public async Task LoadComponentChargesGeneralGrid_SortAscending_OrdersRows()
-        {
-            // Arrange
-            SetupComponentChargesGeneral(new List<TestRCCostItem>
-            {
-                new() { ProfitCentre = "PC003", Price = 30m },
-                new() { ProfitCentre = "PC001", Price = 10m },
-                new() { ProfitCentre = "PC002", Price = 20m }
-            });
-
-            var request = new PaginationFilter<string>
-            {
-                SortBy = "ProfitCentre",
-                Descending = false
-            };
-
-            // Act
-            var result = await _controller.LoadComponentChargesGeneralGrid(request, DefaultTestCode);
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            var config = Assert.IsType<DataGridConfig<TestRCCostItem>>(partialView.Model);
-            Assert.Equal("PC001", config.Data.First().ProfitCentre);
-            Assert.Equal("PC003", config.Data.Last().ProfitCentre);
-        }
-
-        [Fact]
-        public async Task LoadComponentChargesGeneralGrid_UnknownSortColumn_ReturnsRowsUnsorted()
-        {
-            // Arrange
-            SetupComponentChargesGeneral(new List<TestRCCostItem>
-            {
-                new() { ProfitCentre = "PC003", Price = 30m },
-                new() { ProfitCentre = "PC001", Price = 10m }
-            });
-
-            var request = new PaginationFilter<string>
-            {
-                SortBy = "DoesNotExist"
-            };
-
-            // Act
-            var result = await _controller.LoadComponentChargesGeneralGrid(request, DefaultTestCode);
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            var config = Assert.IsType<DataGridConfig<TestRCCostItem>>(partialView.Model);
-            Assert.Equal("PC003", config.Data.First().ProfitCentre);
-        }
-
-        [Fact]
-        public async Task LoadComponentChargesGeneralGrid_WithPaging_ReturnsRequestedPage()
-        {
-            // Arrange
-            SetupComponentChargesGeneral(new List<TestRCCostItem>
-            {
-                new() { ProfitCentre = "PC001", Price = 10m },
-                new() { ProfitCentre = "PC002", Price = 20m },
-                new() { ProfitCentre = "PC003", Price = 30m }
-            });
-
-            var request = new PaginationFilter<string>
-            {
-                SortBy = "ProfitCentre",
-                Page = 2,
-                PageSize = 1
-            };
-
-            // Act
-            var result = await _controller.LoadComponentChargesGeneralGrid(request, DefaultTestCode);
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            var config = Assert.IsType<DataGridConfig<TestRCCostItem>>(partialView.Model);
-            Assert.Single(config.Data);
-            Assert.Equal("PC002", config.Data.First().ProfitCentre);
-            Assert.Equal(3, config.Pagination.TotalRecords);
-            Assert.Equal(2, config.Pagination.PageNumber);
-        }
-
-        [Fact]
-        public async Task LoadComponentChargesProjectGrid_WithProfitCentre_ReturnsOnlyMatchingRows()
-        {
-            // Arrange
-            SetupComponentChargesProject(new List<TestRequirementRCCostItem>
-            {
-                new() { ProfitCentre = "PC001", Buyer = "B1", Price = 10m },
-                new() { ProfitCentre = "PC002", Buyer = "B2", Price = 20m }
-            });
-
-            // Act
-            var result = await _controller.LoadComponentChargesProjectGrid(
-                new PaginationFilter<string>(), DefaultTestCode, "PC002");
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            var config = Assert.IsType<DataGridConfig<TestRequirementRCCostItem>>(partialView.Model);
-            Assert.Single(config.Data);
-            Assert.Equal("PC002", config.Data.First().ProfitCentre);
-        }
-
-        [Fact]
-        public async Task LoadComponentChargesProjectGrid_WithFilterSortAndPaging_ReturnsExpectedRows()
-        {
-            // Arrange
-            SetupComponentChargesProject(new List<TestRequirementRCCostItem>
-            {
-                new() { ProfitCentre = "PC001", Buyer = "B3", Price = 30m },
-                new() { ProfitCentre = "PC001", Buyer = "B1", Price = 10m },
-                new() { ProfitCentre = "PC001", Buyer = "B2", Price = 20m }
-            });
-
-            var request = new PaginationFilter<string>
-            {
-                Filter = "{\"ProfitCentre\":\"PC001\"}",
-                SortBy = "Buyer",
-                Descending = false,
-                Page = 1,
-                PageSize = 2
-            };
-
-            // Act
-            var result = await _controller.LoadComponentChargesProjectGrid(request, DefaultTestCode, null);
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            var config = Assert.IsType<DataGridConfig<TestRequirementRCCostItem>>(partialView.Model);
-            Assert.Equal(2, config.Data.Count);
-            Assert.Equal("B1", config.Data.First().Buyer);
-            Assert.Equal(3, config.Pagination.TotalRecords);
         }
 
         #endregion

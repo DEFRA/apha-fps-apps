@@ -1,5 +1,6 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
 {
@@ -11,7 +12,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
     /// </summary>
     public interface IFpsTestRCCostApiClient
     {
-        Task<ApiResponseDto<List<TestRCCostDto>>> GetByTestCodeAsync(string testCode, int fpsYear);
+        Task<ApiResponseDto<List<TestRCCostDto>>> GetPagedByTestCodeAsync(QueryParameters<string> query, string testCode);
 
         Task<ApiResponseDto<TestRCCostDto>> GetByKeyAsync(string testCode, string profitCentre, int fpsYear);
 

@@ -301,35 +301,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                              ?? new Dictionary<string, string>();
             var fpsYear = _fpsYearContext.Year;
 
+            var query = _mapper.Map<QueryParameters<string>>(request);
             var items = new List<TestRCCostItem>();
+            var paginationModel = new PaginationModel();
 
             if (!string.IsNullOrEmpty(testCode))
             {
-                var response = await _fpsApiClient.FpsTestRCCost.GetByTestCodeAsync(testCode, fpsYear);
+                var response = await _fpsApiClient.FpsTestRCCost.GetPagedByTestCodeAsync(query, testCode);
                 if (response.Success && response.Data != null)
                     items = _mapper.Map<List<TestRCCostItem>>(response.Data);
+                if (response.Pagination is not null)
+                    paginationModel = _mapper.Map<PaginationModel>(response.Pagination);
             }
 
-            items = ApplyFilters(items, filterDict);
-            items = ApplySorting(items, request.SortBy, request.Descending);
-
-            var totalRecords = items.Count;
-            var pageNumber = request.Page > 0 ? request.Page : 1;
-            var pageSize = request.PageSize > 0 ? request.PageSize : 10;
-
-            items = items
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            var paginationModel = new PaginationModel
-            {
-                TotalRecords  = totalRecords,
-                PageNumber    = pageNumber,
-                PageSize      = pageSize,
-                SortColumn    = request.SortBy,
-                SortDirection = request.Descending
-            };
+            paginationModel.SortColumn = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
 
             return new DataGridConfig<TestRCCostItem>
             {
@@ -378,42 +364,33 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                              ?? new Dictionary<string, string>();
             var fpsYear = _fpsYearContext.Year;
 
+            var query = _mapper.Map<QueryParameters<string>>(request);
+
+            // profitCentre is contextual (selected RC cost row); push it into the
+            // server-side filter so paging is applied against the filtered set.
+            if (!string.IsNullOrWhiteSpace(profitCentre))
+            {
+                var serverFilter = new Dictionary<string, string>(filterDict)
+                {
+                    ["ProfitCentre"] = profitCentre
+                };
+                query.Filter = JsonConvert.SerializeObject(serverFilter);
+            }
+
             var items = new List<TestRequirementRCCostItem>();
+            var paginationModel = new PaginationModel();
 
             if (!string.IsNullOrEmpty(testCode))
             {
-                var response = await _fpsApiClient.FpsTestRequirementRCCost.GetByTestCodeAsync(testCode, fpsYear);
+                var response = await _fpsApiClient.FpsTestRequirementRCCost.GetPagedByTestCodeAsync(query, testCode);
                 if (response.Success && response.Data != null)
                     items = _mapper.Map<List<TestRequirementRCCostItem>>(response.Data);
+                if (response.Pagination is not null)
+                    paginationModel = _mapper.Map<PaginationModel>(response.Pagination);
             }
 
-            if (!string.IsNullOrWhiteSpace(profitCentre))
-            {
-                items = items
-                    .Where(x => string.Equals(x.ProfitCentre, profitCentre, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-
-            items = ApplyFilters(items, filterDict);
-            items = ApplySorting(items, request.SortBy, request.Descending);
-
-            var totalRecords = items.Count;
-            var pageNumber = request.Page > 0 ? request.Page : 1;
-            var pageSize = request.PageSize > 0 ? request.PageSize : 10;
-
-            items = items
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            var paginationModel = new PaginationModel
-            {
-                TotalRecords  = totalRecords,
-                PageNumber    = pageNumber,
-                PageSize      = pageSize,
-                SortColumn    = request.SortBy,
-                SortDirection = request.Descending
-            };
+            paginationModel.SortColumn = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
 
             return new DataGridConfig<TestRequirementRCCostItem>
             {
@@ -436,53 +413,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             };
         }
 
-        // ── IN-MEMORY FILTER / SORT HELPERS ────────────────────────────────
-        // The Component Charges grids fetch their full result set from the API by
-        // test code, so the DataGrid's filter/sort must be applied in-memory here.
+        // COMPONENT CHARGES - SERVER-SIDE PAGING
+        // The Component Charges grids delegate filtering, sorting and paging to the
+        // backend repository (via the paged API clients), so no in-memory helpers are needed.
 
-        private static List<T> ApplyFilters<T>(List<T> items, Dictionary<string, string>? filters)
-        {
-            if (items.Count == 0 || filters == null || filters.Count == 0)
-                return items;
-
-            var active = filters
-                .Where(f => !string.IsNullOrWhiteSpace(f.Value))
-                .ToList();
-
-            if (active.Count == 0)
-                return items;
-
-            return items
-                .Where(item => active.All(f => ItemMatchesFilter(item, f.Key, f.Value)))
-                .ToList();
-        }
-
-        private static bool ItemMatchesFilter<T>(T item, string propertyName, string value)
-        {
-            var prop = typeof(T).GetProperty(propertyName);
-            if (prop == null)
-                return true;
-
-            var cellValue = prop.GetValue(item)?.ToString();
-            return cellValue != null &&
-                   cellValue.Contains(value, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static List<T> ApplySorting<T>(List<T> items, string? sortBy, bool descending)
-        {
-            if (items.Count == 0 || string.IsNullOrWhiteSpace(sortBy))
-                return items;
-
-            var prop = typeof(T).GetProperty(sortBy);
-            if (prop == null)
-                return items;
-
-            Func<T, object?> selector = item => prop.GetValue(item);
-
-            return descending
-                ? items.OrderByDescending(selector).ToList()
-                : items.OrderBy(selector).ToList();
-        }
 
         // ── SUPPLIERS / WORKGROUPS TAB GRID ────────────────────────────────
 
