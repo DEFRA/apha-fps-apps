@@ -26,7 +26,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var model = await BuildViewModelAsync(new PaginationFilter<string> { PageSize = 20 });
+            var model = await BuildViewModelAsync(new PaginationFilter<string> { PageSize = 10 });
             return View(model);
         }
 
@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var pagination = new PaginationModel
             {
                 PageNumber    = request.Page > 0 ? request.Page : 1,
-                PageSize      = request.PageSize > 0 ? request.PageSize : 20,
+                PageSize      = request.PageSize > 0 ? request.PageSize : 10,
                 SortColumn    = request.SortBy,
                 SortDirection = request.Descending
             };
