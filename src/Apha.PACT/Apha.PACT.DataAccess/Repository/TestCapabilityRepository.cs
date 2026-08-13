@@ -452,7 +452,7 @@ namespace Apha.PACT.DataAccess.Repository
         /// decimal with a string, which would make the default comparer throw
         /// and silently break sorting for every dynamic column.
         /// </summary>
-        private static IComparable GetSortValue(Dictionary<string, string?> row, string key)
+        private static CrossTabSortKey GetSortValue(Dictionary<string, string?> row, string key)
         {
             var raw = row.TryGetValue(key, out var val) ? val : null;
             if (raw != null && decimal.TryParse(raw, System.Globalization.NumberStyles.Any,
@@ -468,7 +468,7 @@ namespace Apha.PACT.DataAccess.Repository
         /// every cell, the default comparer never throws when a column mixes
         /// numeric values with blanks (the sparse "pc_*" columns).
         /// </summary>
-        private readonly struct CrossTabSortKey : IComparable
+        private readonly struct CrossTabSortKey : IComparable<CrossTabSortKey>
         {
             private readonly decimal? _number;
             private readonly string? _text;
@@ -481,11 +481,8 @@ namespace Apha.PACT.DataAccess.Repository
 
             private bool HasValue => _number.HasValue || _text != null;
 
-            public int CompareTo(object? obj)
+            public int CompareTo(CrossTabSortKey other)
             {
-                if (obj is not CrossTabSortKey other)
-                    return 1;
-
                 // Blank/null cells always sort last, regardless of direction target.
                 if (!HasValue && !other.HasValue) return 0;
                 if (!HasValue) return 1;
