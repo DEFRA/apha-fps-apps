@@ -61,17 +61,26 @@ public sealed class TlkpYearLoaderTests : IAsyncLifetime
     public void Loader_DoesNotReferenceObsoleteTblDbVariableSource()
     {
         // fps.tbldb_variables is an orphaned legacy config table with no active writer.
-        // TlkpYearLoader must use fps.tblcurrentmonth exclusively.
-        var loaderType = typeof(TlkpYearLoader);
+        // TlkpYearLoader must use fps.tblcurrentmonth exclusively in its executable code.
+        // Comments may still mention the legacy table name for context (e.g. explaining
+        // why it must not be used) — only code lines are checked here, not comments.
         var loaderSource = System.IO.File.ReadAllText(
             System.IO.Path.Combine(
                 AppContext.BaseDirectory,
                 $"../../../../Apha.BatchJobs.Infrastructure/Repositories/MabArchive/Loaders/TlkpYearLoader.cs"));
 
-        Assert.DoesNotContain("MaSrcTblDbVariable", loaderSource, StringComparison.Ordinal);
-        Assert.DoesNotContain("DbVarName", loaderSource, StringComparison.Ordinal);
-        Assert.DoesNotContain("DbVarValue", loaderSource, StringComparison.Ordinal);
-        Assert.DoesNotContain("tbldb_variables", loaderSource, StringComparison.OrdinalIgnoreCase);
+        var codeOnly = string.Join(
+            '\n',
+            loaderSource.Split('\n').Select(line =>
+            {
+                var commentIndex = line.IndexOf("//", StringComparison.Ordinal);
+                return commentIndex >= 0 ? line[..commentIndex] : line;
+            }));
+
+        Assert.DoesNotContain("MaSrcTblDbVariable", codeOnly, StringComparison.Ordinal);
+        Assert.DoesNotContain("DbVarName", codeOnly, StringComparison.Ordinal);
+        Assert.DoesNotContain("DbVarValue", codeOnly, StringComparison.Ordinal);
+        Assert.DoesNotContain("tbldb_variables", codeOnly, StringComparison.OrdinalIgnoreCase);
     }
 
     // ─────────────────────────────────────────────────────────────

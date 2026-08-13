@@ -22,10 +22,10 @@ public interface IMyFpsYearlyDataService
     Task<int> LoadYearDataAsync(int year, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Refreshes project master (g_tlkpproject), project lookup (my_tlkpproject), and
-    /// project cross-reference (my_tlkpproject_all) data for the specified year, without
-    /// touching FPS totals or MABArchive transactional archive data. Used for the
-    /// Planned-year project-only refresh.
+    /// Refreshes project cross-reference (my_tlkpproject_all) data for the specified year, without
+    /// touching FPS totals, MABArchive transactional archive data, g_tlkpproject, or my_tlkpproject.
+    /// Used for the Planned-year project-only refresh (legacy sp_LoadFromFPS parity: the
+    /// future/Planned-year branch only ever called sp_AddMY_tlkpProject_All).
     /// </summary>
     /// <param name="year">The year to refresh project data for.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
