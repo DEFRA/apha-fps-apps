@@ -5381,4 +5381,23 @@ body,
 #gridContainer_@Model.AdditionalCostGrid.GridId .grid-scroll-container {
     height: 255px;
     max-height: 255px;
-} 
+}
+
+#ProjectDropdownPanel {
+/*    left: 1333.98px !important;
+    width: 25.2vw !important;*/
+
+    table > tbody > tr > th,
+    table > tbody > tr > td {
+        text-align: left;
+    }
+}
+.isPlanProjectIndividually {
+    table {
+        width: 19vw;
+        float: right;
+    }
+}
+/*#programmeSelect {
+    max-width: 25em;
+}*/
