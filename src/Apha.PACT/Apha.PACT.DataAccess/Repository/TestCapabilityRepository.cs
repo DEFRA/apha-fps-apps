@@ -16,6 +16,29 @@ namespace Apha.PACT.DataAccess.Repository
             _fpsRequestContext = fpsRequestContext;
         }
 
+        private static readonly HashSet<string> AllowedSortColumns = new(StringComparer.OrdinalIgnoreCase)
+        {
+            nameof(TestCapability.TestCode),
+            nameof(TestCapability.WorkGroup),
+            nameof(TestCapability.PlanPortfolio),
+            nameof(TestCapability.UnitCost),
+            nameof(TestCapability.PredOutturn),
+            nameof(TestCapability.Sop),
+            nameof(TestCapability.SmsCode),
+            nameof(TestCapability.FpsYear)
+        };
+
+        private static IQueryable<TestCapability> ApplyTestCapabilitySort(
+            IQueryable<TestCapability> baseQuery, PaginationParameters<string> query)
+        {
+            if (!string.IsNullOrWhiteSpace(query.SortBy) && AllowedSortColumns.Contains(query.SortBy))
+                return query.Descending
+                    ? baseQuery.OrderByDescending(e => EF.Property<object>(e, query.SortBy))
+                    : baseQuery.OrderBy(e => EF.Property<object>(e, query.SortBy));
+
+            return baseQuery.OrderBy(t => t.TestCode);
+        }
+
         public async Task<PagedData<TestCapability>> GetPagedByWorkGroupAsync(
             PaginationParameters<string> query, string? workGroup)
         {
@@ -26,12 +49,7 @@ namespace Apha.PACT.DataAccess.Repository
 
             baseQuery = ApplyTestCapabilityFilter(baseQuery, query.Filter);
 
-            if (!string.IsNullOrWhiteSpace(query.SortBy))
-                baseQuery = query.Descending
-                    ? baseQuery.OrderByDescending(e => EF.Property<object>(e, query.SortBy))
-                    : baseQuery.OrderBy(e => EF.Property<object>(e, query.SortBy));
-            else
-                baseQuery = baseQuery.OrderBy(t => t.TestCode);
+            baseQuery = ApplyTestCapabilitySort(baseQuery, query);
 
             return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
@@ -46,12 +64,7 @@ namespace Apha.PACT.DataAccess.Repository
 
             baseQuery = ApplyTestCapabilityFilter(baseQuery, query.Filter);
 
-            if (!string.IsNullOrWhiteSpace(query.SortBy))
-                baseQuery = query.Descending
-                    ? baseQuery.OrderByDescending(e => EF.Property<object>(e, query.SortBy))
-                    : baseQuery.OrderBy(e => EF.Property<object>(e, query.SortBy));
-            else
-                baseQuery = baseQuery.OrderBy(t => t.TestCode);
+            baseQuery = ApplyTestCapabilitySort(baseQuery, query);
 
             return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
@@ -66,12 +79,7 @@ namespace Apha.PACT.DataAccess.Repository
 
             baseQuery = ApplyTestCapabilityFilter(baseQuery, query.Filter);
 
-            if (!string.IsNullOrWhiteSpace(query.SortBy) && query.SortBy != "ItemDescription")
-                baseQuery = query.Descending
-                    ? baseQuery.OrderByDescending(e => EF.Property<object>(e, query.SortBy))
-                    : baseQuery.OrderBy(e => EF.Property<object>(e, query.SortBy));
-            else
-                baseQuery = baseQuery.OrderBy(t => t.TestCode);
+            baseQuery = ApplyTestCapabilitySort(baseQuery, query);
 
             return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
