@@ -257,11 +257,12 @@ namespace Apha.FPS.DataAccess.Repositories
 
             // Collect the period numbers (endperiod values) that belong to the current FpsYear.
             // period_monthlyoutput.period stores the integer value of tblperiod.endperiod.
-            var validPeriodNumbers = await _context.Periods
+            var validPeriodNumbers = (await _context.Periods
                 .AsNoTracking()
                 .Where(p => p.FpsYear == fpsYear)
+                .ToListAsync())
                 .Select(p => (int)p.EndPeriod)
-                .ToListAsync();
+                .ToList();
 
             // Fetch end-period and start-period rows, scoped to the current FpsYear via the join.
             var endRows = await _context.PeriodMonthlyOutputs
