@@ -468,6 +468,48 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
             Assert.Equal(3, result.PaginationData.TotalPages);
         }
 
+        [Fact]
+        public async Task GetPagedByWorkGroupAsync_SortByInvalidColumn_DefaultsToOrderByTestCode()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "ZZZ", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { TestCode = "AAA", WorkGroup = "WG1", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(capabilities);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "ItemDescription", Descending = false
+            };
+
+            var result = await repo.GetPagedByWorkGroupAsync(query, null);
+
+            Assert.Equal("AAA", result.Data.ElementAt(0).TestCode);
+            Assert.Equal("ZZZ", result.Data.ElementAt(1).TestCode);
+        }
+
+        [Fact]
+        public async Task GetPagedByWorkGroupAsync_SortByInvalidColumnDescending_DefaultsToOrderByTestCode()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "ZZZ", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { TestCode = "AAA", WorkGroup = "WG1", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(capabilities);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "ItemDescription", Descending = true
+            };
+
+            var result = await repo.GetPagedByWorkGroupAsync(query, null);
+
+            Assert.Equal("AAA", result.Data.ElementAt(0).TestCode);
+            Assert.Equal("ZZZ", result.Data.ElementAt(1).TestCode);
+        }
+
         #endregion
 
         #region GetPagedByTestCodeAsync
@@ -637,6 +679,46 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
             Assert.Equal(2, result.Data.Count);
             Assert.Equal(5, result.PaginationData.TotalRecords);
             Assert.Equal(2, result.PaginationData.PageNumber);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByInvalidColumn_DefaultsToOrderByTestCode()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "ZZZ", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { TestCode = "AAA", WorkGroup = "WG2", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(capabilities);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "ItemDescription", Descending = false
+            };
+
+            var result = await repo.GetPagedByTestCodeAsync(query, null);
+
+            Assert.Equal("AAA", result.Data.ElementAt(0).TestCode);
+            Assert.Equal("ZZZ", result.Data.ElementAt(1).TestCode);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByValidColumnAscending_UsesEfPropertySort()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { TestCode = "TC2", WorkGroup = "WG2", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(capabilities);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "WorkGroup", Descending = false
+            };
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedByTestCodeAsync(query, null));
         }
 
         #endregion
