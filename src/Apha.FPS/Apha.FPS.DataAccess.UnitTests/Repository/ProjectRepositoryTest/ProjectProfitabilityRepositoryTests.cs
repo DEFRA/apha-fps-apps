@@ -194,6 +194,29 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         // ── ApplyProfitabilityFilter — JobCode branch ─────────────────────────
 
         [Fact]
+        public async Task GetProjectProfitabilityAsync_FilterByJobCode_ExplicitNullValue_ReturnsAllProjects()
+        {
+            // JSON explicit null ("JobCode":null) — dict.TryGetValue returns true with a null value,
+            // exercising the jobCode?.ToString() null branch distinct from a missing key or blank string.
+            var projectViews = new List<ProjectView>
+            {
+                MakeView("PP001", program: "P001"),
+                MakeView("PP002", program: "P001")
+            };
+            var programs = new List<Program> { new() { ProgramNo = "P001", Target = 10000m } };
+            var repo  = CreateRepository(projectViews, programs);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"JobCode\":null}"
+            };
+
+            var result = await repo.GetProjectProfitabilityAsync(query, "P001", "all");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
         public async Task GetProjectProfitabilityAsync_FilterByJobCode_ReturnsMatchingProjects()
         {
             var projectViews = new List<ProjectView>
@@ -277,6 +300,29 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             {
                 Page = 1, PageSize = 10,
                 Filter = "{\"ProjectStatus\":\"\"}"
+            };
+
+            var result = await repo.GetProjectProfitabilityAsync(query, "P001", "all");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityAsync_FilterByProjectStatus_ExplicitNullValue_ReturnsAllProjects()
+        {
+            // JSON explicit null ("ProjectStatus":null) — dict.TryGetValue returns true with a null value,
+            // exercising the projectStatus?.ToString() null branch distinct from a missing key or blank string.
+            var projectViews = new List<ProjectView>
+            {
+                MakeView("PP001", status: "Completed", program: "P001"),
+                MakeView("PP002", status: "Pending",   program: "P001")
+            };
+            var programs = new List<Program> { new() { ProgramNo = "P001", Target = 10000m } };
+            var repo  = CreateRepository(projectViews, programs);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ProjectStatus\":null}"
             };
 
             var result = await repo.GetProjectProfitabilityAsync(query, "P001", "all");
