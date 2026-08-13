@@ -1054,177 +1054,139 @@ namespace Apha.FPS.DataAccess.Repositories
             return base.ApplyPaging(sorted, Math.Max(query.Page, 1), Math.Max(query.PageSize, 10));
         }
 
-        // ── Per-entity filter helpers ─────────────────────────────────────────────
+        // ── Generic filter/sort helpers ───────────────────────────────────────────
 
-        // Applies a single case-insensitive contains filter for one field.
-        // Encapsulates the TryGetValue + IsNullOrWhiteSpace guard so each
-        // Apply*Filter method stays flat (no nested boolean conditions).
-        private static IEnumerable<T> FilterByField<T>(
-            IEnumerable<T> q,
-            Dictionary<string, string> f,
-            string key,
-            Func<T, string?> selector)
+        private static List<T> ApplyFilter<T>(
+            List<T> rows,
+            string? filterJson,
+            Dictionary<string, Func<T, string?>> fieldMap)
         {
-            if (!f.TryGetValue(key, out var v) || string.IsNullOrWhiteSpace(v))
-                return q;
-            return q.Where(r => { var val = selector(r); return val != null && val.Contains(v, StringComparison.OrdinalIgnoreCase); });
+            var f = ParseFilterDict(filterJson);
+            if (f is null) return rows;
+            IEnumerable<T> q = rows;
+            foreach (var (key, selector) in fieldMap)
+            {
+                if (!f.TryGetValue(key, out var v) || string.IsNullOrWhiteSpace(v))
+                    continue;
+                q = q.Where(r => { var val = selector(r); return val != null && val.Contains(v, StringComparison.OrdinalIgnoreCase); });
+            }
+            return q.ToList();
         }
+
+        private static List<T> ApplySort<T>(
+            List<T> rows,
+            string? sortBy,
+            bool descending,
+            Dictionary<string, Func<T, object?>> keyMap)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy) || !keyMap.TryGetValue(sortBy, out var keySelector))
+                return rows;
+            return descending
+                ? rows.OrderByDescending(keySelector).ToList()
+                : rows.OrderBy(keySelector).ToList();
+        }
+
+        // ── Per-entity filter wrappers ────────────────────────────────────────────
 
         private static List<DepartmentIncomeTime> ApplyTimeFilter(List<DepartmentIncomeTime> rows, string? filterJson)
-        {
-            var f = ParseFilterDict(filterJson);
-            if (f is null) return rows;
-
-            IEnumerable<DepartmentIncomeTime> q = rows;
-            q = FilterByField(q, f, nameof(DepartmentIncomeTime.Project),           r => r.Project);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTime.OracleProjectCode), r => r.OracleProjectCode);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTime.SubAccountCode),    r => r.SubAccountCode);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTime.DefraProject),      r => r.DefraProject);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTime.OCC),               r => r.OCC);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTime.OPC),               r => r.OPC);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTime.SPC),               r => r.SPC);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTime.SCC),               r => r.SCC);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTime.Name),              r => r.Name);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTime.GradeCode),         r => r.GradeCode);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTime.SpNumber),          r => r.SpNumber);
-            return q.ToList();
-        }
+            => ApplyFilter(rows, filterJson, new Dictionary<string, Func<DepartmentIncomeTime, string?>>
+            {
+                [nameof(DepartmentIncomeTime.Project)]           = r => r.Project,
+                [nameof(DepartmentIncomeTime.OracleProjectCode)] = r => r.OracleProjectCode,
+                [nameof(DepartmentIncomeTime.SubAccountCode)]    = r => r.SubAccountCode,
+                [nameof(DepartmentIncomeTime.DefraProject)]      = r => r.DefraProject,
+                [nameof(DepartmentIncomeTime.OCC)]               = r => r.OCC,
+                [nameof(DepartmentIncomeTime.OPC)]               = r => r.OPC,
+                [nameof(DepartmentIncomeTime.SPC)]               = r => r.SPC,
+                [nameof(DepartmentIncomeTime.SCC)]               = r => r.SCC,
+                [nameof(DepartmentIncomeTime.Name)]              = r => r.Name,
+                [nameof(DepartmentIncomeTime.GradeCode)]         = r => r.GradeCode,
+                [nameof(DepartmentIncomeTime.SpNumber)]          = r => r.SpNumber,
+            });
 
         private static List<DepartmentIncomeTest> ApplyTestFilter(List<DepartmentIncomeTest> rows, string? filterJson)
-        {
-            var f = ParseFilterDict(filterJson);
-            if (f is null) return rows;
-
-            IEnumerable<DepartmentIncomeTest> q = rows;
-            q = FilterByField(q, f, nameof(DepartmentIncomeTest.Project),           r => r.Project);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTest.OracleProjectCode), r => r.OracleProjectCode);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTest.SubAccountCode),    r => r.SubAccountCode);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTest.DefraProject),      r => r.DefraProject);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTest.OCC),               r => r.OCC);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTest.OPC),               r => r.OPC);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTest.SPC),               r => r.SPC);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTest.SCC),               r => r.SCC);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTest.WorkGroup),         r => r.WorkGroup);
-            q = FilterByField(q, f, nameof(DepartmentIncomeTest.TestCode),          r => r.TestCode);
-            return q.ToList();
-        }
+            => ApplyFilter(rows, filterJson, new Dictionary<string, Func<DepartmentIncomeTest, string?>>
+            {
+                [nameof(DepartmentIncomeTest.Project)]           = r => r.Project,
+                [nameof(DepartmentIncomeTest.OracleProjectCode)] = r => r.OracleProjectCode,
+                [nameof(DepartmentIncomeTest.SubAccountCode)]    = r => r.SubAccountCode,
+                [nameof(DepartmentIncomeTest.DefraProject)]      = r => r.DefraProject,
+                [nameof(DepartmentIncomeTest.OCC)]               = r => r.OCC,
+                [nameof(DepartmentIncomeTest.OPC)]               = r => r.OPC,
+                [nameof(DepartmentIncomeTest.SPC)]               = r => r.SPC,
+                [nameof(DepartmentIncomeTest.SCC)]               = r => r.SCC,
+                [nameof(DepartmentIncomeTest.WorkGroup)]         = r => r.WorkGroup,
+                [nameof(DepartmentIncomeTest.TestCode)]          = r => r.TestCode,
+            });
 
         private static List<DepartmentIncomeAnimal> ApplyAnimalFilter(List<DepartmentIncomeAnimal> rows, string? filterJson)
-        {
-            var f = ParseFilterDict(filterJson);
-            if (f is null) return rows;
-
-            IEnumerable<DepartmentIncomeAnimal> q = rows;
-            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.Project),           r => r.Project);
-            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.OracleProjectCode), r => r.OracleProjectCode);
-            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.SubAccountCode),    r => r.SubAccountCode);
-            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.DefraProject),      r => r.DefraProject);
-            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.OCC),               r => r.OCC);
-            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.OPC),               r => r.OPC);
-            q = FilterByField(q, f, nameof(DepartmentIncomeAnimal.AnimalType),        r => r.AnimalType);
-            return q.ToList();
-        }
+            => ApplyFilter(rows, filterJson, new Dictionary<string, Func<DepartmentIncomeAnimal, string?>>
+            {
+                [nameof(DepartmentIncomeAnimal.Project)]           = r => r.Project,
+                [nameof(DepartmentIncomeAnimal.OracleProjectCode)] = r => r.OracleProjectCode,
+                [nameof(DepartmentIncomeAnimal.SubAccountCode)]    = r => r.SubAccountCode,
+                [nameof(DepartmentIncomeAnimal.DefraProject)]      = r => r.DefraProject,
+                [nameof(DepartmentIncomeAnimal.OCC)]               = r => r.OCC,
+                [nameof(DepartmentIncomeAnimal.OPC)]               = r => r.OPC,
+                [nameof(DepartmentIncomeAnimal.AnimalType)]        = r => r.AnimalType,
+            });
 
         private static List<DepartmentIncomeAdditional> ApplyAdditionalFilter(List<DepartmentIncomeAdditional> rows, string? filterJson)
-        {
-            var f = ParseFilterDict(filterJson);
-            if (f is null) return rows;
+            => ApplyFilter(rows, filterJson, new Dictionary<string, Func<DepartmentIncomeAdditional, string?>>
+            {
+                [nameof(DepartmentIncomeAdditional.Project)]           = r => r.Project,
+                [nameof(DepartmentIncomeAdditional.OracleProjectCode)] = r => r.OracleProjectCode,
+                [nameof(DepartmentIncomeAdditional.SubAccountCode)]    = r => r.SubAccountCode,
+                [nameof(DepartmentIncomeAdditional.DefraProject)]      = r => r.DefraProject,
+                [nameof(DepartmentIncomeAdditional.OCC)]               = r => r.OCC,
+                [nameof(DepartmentIncomeAdditional.OPC)]               = r => r.OPC,
+            });
 
-            IEnumerable<DepartmentIncomeAdditional> q = rows;
-            q = FilterByField(q, f, nameof(DepartmentIncomeAdditional.Project),           r => r.Project);
-            q = FilterByField(q, f, nameof(DepartmentIncomeAdditional.OracleProjectCode), r => r.OracleProjectCode);
-            q = FilterByField(q, f, nameof(DepartmentIncomeAdditional.SubAccountCode),    r => r.SubAccountCode);
-            q = FilterByField(q, f, nameof(DepartmentIncomeAdditional.DefraProject),      r => r.DefraProject);
-            q = FilterByField(q, f, nameof(DepartmentIncomeAdditional.OCC),               r => r.OCC);
-            q = FilterByField(q, f, nameof(DepartmentIncomeAdditional.OPC),               r => r.OPC);
-            return q.ToList();
-        }
-
-        // ── Per-entity sort helpers ───────────────────────────────────────────────
+        // ── Per-entity sort wrappers ──────────────────────────────────────────────
 
         private static List<DepartmentIncomeTime> ApplyTimeSort(List<DepartmentIncomeTime> rows, string? sortBy, bool descending)
-        {
-            if (string.IsNullOrWhiteSpace(sortBy)) return rows;
-            return (sortBy, descending) switch
+            => ApplySort(rows, sortBy, descending, new Dictionary<string, Func<DepartmentIncomeTime, object?>>
             {
-                (nameof(DepartmentIncomeTime.Project),          true)  => rows.OrderByDescending(r => r.Project).ToList(),
-                (nameof(DepartmentIncomeTime.OracleProjectCode),true)  => rows.OrderByDescending(r => r.OracleProjectCode).ToList(),
-                (nameof(DepartmentIncomeTime.SubAccountCode),   true)  => rows.OrderByDescending(r => r.SubAccountCode).ToList(),
-                (nameof(DepartmentIncomeTime.Month),            true)  => rows.OrderByDescending(r => r.Month).ToList(),
-                (nameof(DepartmentIncomeTime.DefraProject),     true)  => rows.OrderByDescending(r => r.DefraProject).ToList(),
-                (nameof(DepartmentIncomeTime.Name),             true)  => rows.OrderByDescending(r => r.Name).ToList(),
-                (nameof(DepartmentIncomeTime.GradeCode),        true)  => rows.OrderByDescending(r => r.GradeCode).ToList(),
-                (nameof(DepartmentIncomeTime.SpNumber),         true)  => rows.OrderByDescending(r => r.SpNumber).ToList(),
-                (nameof(DepartmentIncomeTime.ChargeRate),       true)  => rows.OrderByDescending(r => r.ChargeRate).ToList(),
-                (nameof(DepartmentIncomeTime.TotalCost),        true)  => rows.OrderByDescending(r => r.TotalCost).ToList(),
-                (nameof(DepartmentIncomeTime.Project),          false) => rows.OrderBy(r => r.Project).ToList(),
-                (nameof(DepartmentIncomeTime.OracleProjectCode),false) => rows.OrderBy(r => r.OracleProjectCode).ToList(),
-                (nameof(DepartmentIncomeTime.SubAccountCode),   false) => rows.OrderBy(r => r.SubAccountCode).ToList(),
-                (nameof(DepartmentIncomeTime.Month),            false) => rows.OrderBy(r => r.Month).ToList(),
-                (nameof(DepartmentIncomeTime.DefraProject),     false) => rows.OrderBy(r => r.DefraProject).ToList(),
-                (nameof(DepartmentIncomeTime.Name),             false) => rows.OrderBy(r => r.Name).ToList(),
-                (nameof(DepartmentIncomeTime.GradeCode),        false) => rows.OrderBy(r => r.GradeCode).ToList(),
-                (nameof(DepartmentIncomeTime.SpNumber),         false) => rows.OrderBy(r => r.SpNumber).ToList(),
-                (nameof(DepartmentIncomeTime.ChargeRate),       false) => rows.OrderBy(r => r.ChargeRate).ToList(),
-                (nameof(DepartmentIncomeTime.TotalCost),        false) => rows.OrderBy(r => r.TotalCost).ToList(),
-                _                                                      => rows,
-            };
-        }
+                [nameof(DepartmentIncomeTime.Project)]           = r => r.Project,
+                [nameof(DepartmentIncomeTime.OracleProjectCode)] = r => r.OracleProjectCode,
+                [nameof(DepartmentIncomeTime.SubAccountCode)]    = r => r.SubAccountCode,
+                [nameof(DepartmentIncomeTime.Month)]             = r => r.Month,
+                [nameof(DepartmentIncomeTime.DefraProject)]      = r => r.DefraProject,
+                [nameof(DepartmentIncomeTime.Name)]              = r => r.Name,
+                [nameof(DepartmentIncomeTime.GradeCode)]         = r => r.GradeCode,
+                [nameof(DepartmentIncomeTime.SpNumber)]          = r => r.SpNumber,
+                [nameof(DepartmentIncomeTime.ChargeRate)]        = r => r.ChargeRate,
+                [nameof(DepartmentIncomeTime.TotalCost)]         = r => r.TotalCost,
+            });
 
         private static List<DepartmentIncomeTest> ApplyTestSort(List<DepartmentIncomeTest> rows, string? sortBy, bool descending)
-        {
-            if (string.IsNullOrWhiteSpace(sortBy)) return rows;
-            return (sortBy, descending) switch
+            => ApplySort(rows, sortBy, descending, new Dictionary<string, Func<DepartmentIncomeTest, object?>>
             {
-                (nameof(DepartmentIncomeTest.Project),          true)  => rows.OrderByDescending(r => r.Project).ToList(),
-                (nameof(DepartmentIncomeTest.OracleProjectCode),true)  => rows.OrderByDescending(r => r.OracleProjectCode).ToList(),
-                (nameof(DepartmentIncomeTest.TestCode),         true)  => rows.OrderByDescending(r => r.TestCode).ToList(),
-                (nameof(DepartmentIncomeTest.Month),            true)  => rows.OrderByDescending(r => r.Month).ToList(),
-                (nameof(DepartmentIncomeTest.TotalCost),        true)  => rows.OrderByDescending(r => r.TotalCost).ToList(),
-                (nameof(DepartmentIncomeTest.Project),          false) => rows.OrderBy(r => r.Project).ToList(),
-                (nameof(DepartmentIncomeTest.OracleProjectCode),false) => rows.OrderBy(r => r.OracleProjectCode).ToList(),
-                (nameof(DepartmentIncomeTest.TestCode),         false) => rows.OrderBy(r => r.TestCode).ToList(),
-                (nameof(DepartmentIncomeTest.Month),            false) => rows.OrderBy(r => r.Month).ToList(),
-                (nameof(DepartmentIncomeTest.TotalCost),        false) => rows.OrderBy(r => r.TotalCost).ToList(),
-                _                                                      => rows,
-            };
-        }
+                [nameof(DepartmentIncomeTest.Project)]           = r => r.Project,
+                [nameof(DepartmentIncomeTest.OracleProjectCode)] = r => r.OracleProjectCode,
+                [nameof(DepartmentIncomeTest.TestCode)]          = r => r.TestCode,
+                [nameof(DepartmentIncomeTest.Month)]             = r => r.Month,
+                [nameof(DepartmentIncomeTest.TotalCost)]         = r => r.TotalCost,
+            });
 
         private static List<DepartmentIncomeAnimal> ApplyAnimalSort(List<DepartmentIncomeAnimal> rows, string? sortBy, bool descending)
-        {
-            if (string.IsNullOrWhiteSpace(sortBy)) return rows;
-            return (sortBy, descending) switch
+            => ApplySort(rows, sortBy, descending, new Dictionary<string, Func<DepartmentIncomeAnimal, object?>>
             {
-                (nameof(DepartmentIncomeAnimal.Project),          true)  => rows.OrderByDescending(r => r.Project).ToList(),
-                (nameof(DepartmentIncomeAnimal.OracleProjectCode),true)  => rows.OrderByDescending(r => r.OracleProjectCode).ToList(),
-                (nameof(DepartmentIncomeAnimal.AnimalType),       true)  => rows.OrderByDescending(r => r.AnimalType).ToList(),
-                (nameof(DepartmentIncomeAnimal.Month),            true)  => rows.OrderByDescending(r => r.Month).ToList(),
-                (nameof(DepartmentIncomeAnimal.TotalCost),        true)  => rows.OrderByDescending(r => r.TotalCost).ToList(),
-                (nameof(DepartmentIncomeAnimal.Project),          false) => rows.OrderBy(r => r.Project).ToList(),
-                (nameof(DepartmentIncomeAnimal.OracleProjectCode),false) => rows.OrderBy(r => r.OracleProjectCode).ToList(),
-                (nameof(DepartmentIncomeAnimal.AnimalType),       false) => rows.OrderBy(r => r.AnimalType).ToList(),
-                (nameof(DepartmentIncomeAnimal.Month),            false) => rows.OrderBy(r => r.Month).ToList(),
-                (nameof(DepartmentIncomeAnimal.TotalCost),        false) => rows.OrderBy(r => r.TotalCost).ToList(),
-                _                                                        => rows,
-            };
-        }
+                [nameof(DepartmentIncomeAnimal.Project)]           = r => r.Project,
+                [nameof(DepartmentIncomeAnimal.OracleProjectCode)] = r => r.OracleProjectCode,
+                [nameof(DepartmentIncomeAnimal.AnimalType)]        = r => r.AnimalType,
+                [nameof(DepartmentIncomeAnimal.Month)]             = r => r.Month,
+                [nameof(DepartmentIncomeAnimal.TotalCost)]         = r => r.TotalCost,
+            });
 
         private static List<DepartmentIncomeAdditional> ApplyAdditionalSort(List<DepartmentIncomeAdditional> rows, string? sortBy, bool descending)
-        {
-            if (string.IsNullOrWhiteSpace(sortBy)) return rows;
-            return (sortBy, descending) switch
+            => ApplySort(rows, sortBy, descending, new Dictionary<string, Func<DepartmentIncomeAdditional, object?>>
             {
-                (nameof(DepartmentIncomeAdditional.Project),          true)  => rows.OrderByDescending(r => r.Project).ToList(),
-                (nameof(DepartmentIncomeAdditional.OracleProjectCode),true)  => rows.OrderByDescending(r => r.OracleProjectCode).ToList(),
-                (nameof(DepartmentIncomeAdditional.Month),            true)  => rows.OrderByDescending(r => r.Month).ToList(),
-                (nameof(DepartmentIncomeAdditional.TotalCost),        true)  => rows.OrderByDescending(r => r.TotalCost).ToList(),
-                (nameof(DepartmentIncomeAdditional.Project),          false) => rows.OrderBy(r => r.Project).ToList(),
-                (nameof(DepartmentIncomeAdditional.OracleProjectCode),false) => rows.OrderBy(r => r.OracleProjectCode).ToList(),
-                (nameof(DepartmentIncomeAdditional.Month),            false) => rows.OrderBy(r => r.Month).ToList(),
-                (nameof(DepartmentIncomeAdditional.TotalCost),        false) => rows.OrderBy(r => r.TotalCost).ToList(),
-                _                                                            => rows,
-            };
-        }
+                [nameof(DepartmentIncomeAdditional.Project)]           = r => r.Project,
+                [nameof(DepartmentIncomeAdditional.OracleProjectCode)] = r => r.OracleProjectCode,
+                [nameof(DepartmentIncomeAdditional.Month)]             = r => r.Month,
+                [nameof(DepartmentIncomeAdditional.TotalCost)]         = r => r.TotalCost,
+            });
 
         private static Dictionary<string, string>? ParseFilterDict(string? filterJson)
         {
