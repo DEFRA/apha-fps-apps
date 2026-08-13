@@ -248,7 +248,7 @@ function renderSendResults(results) {
                 '<td class="govuk-table__cell sup_text_center">' + ($('<span>').text(r.workGroupName).html()) + '</td>' +
                 '<td class="govuk-table__cell sup_text_center">' + ($('<span>').text(r.emailRecipient || '').html()) + '</td>' +
                 '<td class="govuk-table__cell sup_text_center">' + ($('<span>').text(r.status || '').html()) + '</td>' +
-                '<td class="govuk-table__cell sup_text_center">' + ($('<span>').text(r.reason || '').html()) + '</td>' +
+                '<td class="govuk-table__cell">' + ($('<span>').text(r.reason || '').html()) + '</td>' +
                 '</tr>'
             );
         });

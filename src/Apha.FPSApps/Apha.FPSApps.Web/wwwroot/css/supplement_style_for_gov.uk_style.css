@@ -191,7 +191,9 @@ a {
 .sup_text_align_right {
     text-align: right;
 }
-
+.sup_text_align_left {
+    text-align: left;
+}
 .sup_top_border_1 {
     border-top: 1px solid var(--govuk-border-colour);
 }
