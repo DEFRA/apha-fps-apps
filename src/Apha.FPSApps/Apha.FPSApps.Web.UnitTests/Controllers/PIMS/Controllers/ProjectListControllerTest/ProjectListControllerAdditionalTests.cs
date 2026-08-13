@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.GenericExcelExport;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
@@ -6,6 +7,7 @@ using Apha.FPSApps.Web.Areas.PIMS.Controllers;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -17,13 +19,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
     {
         private readonly IProjectListService _projectListServiceMock;
         private readonly IMapper _mapperMock;
+        private readonly IGenericExcelExporter _excelExporterMock;
         private readonly ProjectListController _controller;
 
         public ProjectListControllerAdditionalTests()
         {
             _projectListServiceMock = Substitute.For<IProjectListService>();
             _mapperMock = Substitute.For<IMapper>();
-            _controller = new ProjectListController(_mapperMock, _projectListServiceMock);
+            _excelExporterMock = Substitute.For<IGenericExcelExporter>();
+            _controller = new ProjectListController(_mapperMock, _projectListServiceMock, _excelExporterMock);
         }
 
         /// <summary>
@@ -417,6 +421,81 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             var model = Assert.IsType<DataGridConfig<ProjectListItem>>(partialViewResult.Model);
             Assert.False(model.Pagination.SortDirection);
+        }
+
+        #endregion
+
+        #region LoadProjectListGrid - Excel Export
+
+        private void SetHttpContextWithQuery(string queryString)
+        {
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+            _controller.ControllerContext.HttpContext.Request.QueryString = new QueryString(queryString);
+        }
+
+        [Fact]
+        public async Task LoadProjectListGrid_AllowExcelExportIsTrue()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 };
+            SetupSuccessfulGridMocks();
+
+            // Act
+            var result = await _controller.LoadProjectListGrid(request);
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<DataGridConfig<ProjectListItem>>(partialViewResult.Model);
+            Assert.True(model.AllowExcelExport);
+        }
+
+        [Fact]
+        public async Task LoadProjectListGrid_ExportRequest_ReturnsExcelFile()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 };
+            SetupSuccessfulGridMocks();
+            _excelExporterMock.Export(Arg.Any<IEnumerable<ProjectListItem>>(), Arg.Any<string>())
+                .Returns(new byte[] { 1, 2, 3 });
+            SetHttpContextWithQuery("?export=true&format=excel");
+
+            // Act
+            var result = await _controller.LoadProjectListGrid(request);
+
+            // Assert
+            var fileResult = Assert.IsType<FileContentResult>(result);
+            Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileResult.ContentType);
+            Assert.EndsWith(".xlsx", fileResult.FileDownloadName);
+            Assert.Equal(new byte[] { 1, 2, 3 }, fileResult.FileContents);
+        }
+
+        [Fact]
+        public async Task LoadProjectListGrid_ExportRequest_RequestsFullResultSet()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 };
+            SetupSuccessfulGridMocks();
+            QueryParameters<string>? captured = null;
+            _projectListServiceMock.GetAllProjectsAsync(Arg.Do<QueryParameters<string>>(q => captured = q), Arg.Any<int>())
+                .Returns(new ApiResponseDto<List<ProjectListViewDto>>
+                {
+                    Success = true,
+                    Data = new List<ProjectListViewDto>()
+                });
+            _excelExporterMock.Export(Arg.Any<IEnumerable<ProjectListItem>>(), Arg.Any<string>())
+                .Returns(new byte[] { 1 });
+            SetHttpContextWithQuery("?export=true");
+
+            // Act
+            await _controller.LoadProjectListGrid(request);
+
+            // Assert
+            Assert.NotNull(captured);
+            Assert.Equal(1, captured!.Page);
+            Assert.Equal(int.MaxValue, captured.PageSize);
         }
 
         #endregion

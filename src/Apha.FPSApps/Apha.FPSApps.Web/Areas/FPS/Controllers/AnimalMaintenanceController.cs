@@ -20,7 +20,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IMapper _mapper;
         private readonly IAnimalService _animalMasterService;
 
-        public AnimalMaintenanceController(IMapper mapper, IAnimalService animalMasterService)
+        public AnimalMaintenanceController(
+            IMapper mapper,
+            IAnimalService animalMasterService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _animalMasterService = animalMasterService ?? throw new ArgumentNullException(nameof(animalMasterService));
@@ -32,6 +34,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return View(gridConfig);
         }
 
+        [HttpGet]
         [HttpPost]
         public async Task<IActionResult> LoadAnimalMasterGrid(PaginationFilter<string> request)
         {
@@ -188,6 +191,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AddFunction = "addAnimalMaster",
                 EditFunction = "editAnimalMaster",
                 DeleteFunction = "deleteAnimalMaster",
+                AllowExcelExport = true,
                 BindGridUrl = "/FPS/AnimalMaintenance/LoadAnimalMasterGrid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<AnimalMaintenanceViewModel>(null),

@@ -1,4 +1,5 @@
-﻿using Apha.FPSApps.Application.Dtos;
+﻿using Apha.Common.Utilities.GenericExcelExport;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Pagination;
@@ -17,13 +18,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
     {
         private readonly IProjectListService _projectListServiceMock;
         private readonly IMapper _mapperMock;
+        private readonly IGenericExcelExporter _excelExporterMock;
         private readonly ProjectListController _controller;
 
         public ProjectListControllerTests()
         {
             _projectListServiceMock = Substitute.For<IProjectListService>();
             _mapperMock = Substitute.For<IMapper>();
-            _controller = new ProjectListController(_mapperMock, _projectListServiceMock);
+            _excelExporterMock = Substitute.For<IGenericExcelExporter>();
+            _controller = new ProjectListController(_mapperMock, _projectListServiceMock, _excelExporterMock);
         }
 
         /// <summary>
@@ -899,7 +902,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
         public void Constructor_WithValidDependencies_InitializesController()
         {
             // Arrange & Act
-            var controller = new ProjectListController(_mapperMock, _projectListServiceMock);
+            var controller = new ProjectListController(_mapperMock, _projectListServiceMock, _excelExporterMock);
 
             // Assert
             Assert.NotNull(controller);

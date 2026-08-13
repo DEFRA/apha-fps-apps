@@ -4,6 +4,7 @@
 @{
     var hasHeaderContent = !string.IsNullOrWhiteSpace(Convert.ToString(Model.Title))
         || Model.AllowExport
+        || Model.AllowExcelExport
         || Model.AllowAdd
         || Model.AllowBulkCopy
         || Model.AllowBulkDelete;
@@ -22,6 +23,21 @@
                             {
                                 <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_p_8"
                                         id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl" allow-edit ="true">
+                                    <i class="fa fa-file-excel-o"></i> Excel Export
+                                </button>
+                            }
+                            @if (Model.AllowExcelExport)
+                            {
+                                var excelExportUrl = string.IsNullOrWhiteSpace(Convert.ToString(Model.ExcelExportUrl))
+                                    ? Convert.ToString(Model.BindGridUrl)
+                                    : Convert.ToString(Model.ExcelExportUrl);
+                                var excelExportFileName = !string.IsNullOrWhiteSpace(Convert.ToString(Model.ExcelExportFileName))
+                                    ? Convert.ToString(Model.ExcelExportFileName)
+                                    : (!string.IsNullOrWhiteSpace(Convert.ToString(Model.Title))
+                                        ? Convert.ToString(Model.Title)
+                                        : Convert.ToString(Model.GridId));
+                                <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_p_8"
+                                        id="@($"{Model.GridId}_excelExportBtn")" data-excel-export-url="@excelExportUrl" data-excel-file-name="@excelExportFileName">
                                     <i class="fa fa-file-excel-o"></i> Excel Export
                                 </button>
                             }
@@ -616,6 +632,37 @@
                     .join('&');
 
                 window.location.href = exportUrl + '?' + query;
+            });
+
+            // Excel Export button click (independent of the legacy export button above).
+            // Re-hits BindGridUrl with ALL current filters/search/sort/extra-filters, requesting
+            // the full result set as an .xlsx download via window.downloadFile.
+            $('#' + gridId + '_excelExportBtn').on('click', function () {
+                var excelExportUrl = $(this).data('excel-export-url');
+                if (!excelExportUrl) return;
+
+                var fileName = $(this).data('excel-file-name') || gridId;
+                if (!/\.xlsx$/i.test(fileName)) {
+                    fileName = fileName + '.xlsx';
+                }
+
+                // Reuse the exact params the grid sends to BindGridUrl, then signal Excel output.
+                // The server expands paging to the full result set when export=true.
+                var params = gridManager.getAjaxParams({ page: 1 });
+                params.export = true;
+                params.format = 'excel';
+
+                var query = Object.keys(params)
+                    .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
+                    .join('&');
+
+                var url = excelExportUrl + (excelExportUrl.indexOf('?') >= 0 ? '&' : '?') + query;
+
+                if (typeof window.downloadFile === 'function') {
+                    window.downloadFile(url, fileName);
+                } else {
+                    window.location.href = url;
+                }
             });
 
             // Edit button click
