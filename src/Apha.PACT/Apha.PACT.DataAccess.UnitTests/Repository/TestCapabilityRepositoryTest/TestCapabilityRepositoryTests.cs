@@ -2129,6 +2129,91 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
             Assert.Equal("PT002", result.Rows[1]["testcode"]);
         }
 
+        [Fact]
+        public async Task GetPagedTestPlanCrossTabAsync_SortBySparseProfitCentreColumn_DescendingSortsWithoutThrowing()
+        {
+            // Arrange — PT001 has a real profit-centre cost (pc_COMM), while PT002's
+            // only breakdown row has a null profit centre, so its pc_COMM cell is
+            // null. A column mixing a numeric cell with a null cell is exactly what
+            // previously made the sort comparer throw (boxed decimal vs string),
+            // breaking sorting for every column after "PC Total Cost".
+            var repo  = CreateRepositoryForCrossTab(
+                BuildSparseCapabilities(),
+                BuildSparseRequirements(),
+                BuildSparseProducts(),
+                BuildSparseProjects(),
+                BuildSparsePrograms(),
+                BuildSparseWorkGroups(),
+                BuildSparseReqBreakdown());
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 20, SortBy = "pc_COMM", Descending = true };
+
+            // Act
+            var result = await repo.GetPagedTestPlanCrossTabAsync(query);
+
+            // Assert — no exception; the populated row (PT001) surfaces first and the
+            // null-cell row (PT002) stays last even when sorting descending.
+            Assert.Equal(2, result.Rows.Count);
+            Assert.Equal("PT001", result.Rows[0]["testcode"]);
+            Assert.Equal("PT002", result.Rows[1]["testcode"]);
+        }
+
+        [Fact]
+        public async Task GetPagedTestPlanCrossTabAsync_SortBySparseProfitCentreColumn_AscendingOrdersNumericallyWithNullLast()
+        {
+            // Arrange — same sparse fixture as above. Ascending must place the
+            // populated numeric cell (PT001) before the null cell (PT002), proving
+            // null cells sort last regardless of direction.
+            var repo  = CreateRepositoryForCrossTab(
+                BuildSparseCapabilities(),
+                BuildSparseRequirements(),
+                BuildSparseProducts(),
+                BuildSparseProjects(),
+                BuildSparsePrograms(),
+                BuildSparseWorkGroups(),
+                BuildSparseReqBreakdown());
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 20, SortBy = "pc_COMM", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedTestPlanCrossTabAsync(query);
+
+            // Assert — populated row first, null-cell row last.
+            Assert.Equal(2, result.Rows.Count);
+            Assert.Equal("PT001", result.Rows[0]["testcode"]);
+            Assert.Equal("PT002", result.Rows[1]["testcode"]);
+        }
+
+        private static List<TestCapability> BuildSparseCapabilities() =>
+        [
+            new() { TestCode = "PT001", WorkGroup = "GEN01", FpsYear = DefaultFpsYear },
+            new() { TestCode = "PT002", WorkGroup = "GEN01", FpsYear = DefaultFpsYear }
+        ];
+
+        private static List<TestRequirement> BuildSparseRequirements() =>
+        [
+            new() { TestCode = "PT001", Buyer = "PROJ01", UnitPrice = 100m, NoRequired = 1, FpsYear = DefaultFpsYear },
+            new() { TestCode = "PT002", Buyer = "PROJ01", UnitPrice = 100m, NoRequired = 1, FpsYear = DefaultFpsYear }
+        ];
+
+        private static List<TestorProduct> BuildSparseProducts() =>
+            [new() { ItemCode = "PT001" }, new() { ItemCode = "PT002" }];
+
+        private static List<ProjectView> BuildSparseProjects() =>
+            [new() { ParentProject = "PROJ01", Program = "PROG01", FpsYear = DefaultFpsYear }];
+
+        private static List<Apha.PACT.Core.Entities.Program> BuildSparsePrograms() =>
+            [new() { ProgramNo = "PROG01", FpsYear = DefaultFpsYear }];
+
+        private static List<WorkGroupGeneralView> BuildSparseWorkGroups() =>
+            [new() { WorkGroup = "GEN01", FpsYear = DefaultFpsYear }];
+
+        private static List<TestReqBreakdownView> BuildSparseReqBreakdown() =>
+        [
+            // PT001 → pc_COMM populated (numeric); PT002 → null profit centre so its
+            // pc_COMM cell is null, producing the numeric-vs-null column mix.
+            new() { TestCode = "PT001", ShortDescription = "Test One", Pc = "COMM", TotalCost = 500m, FpsYear = DefaultFpsYear },
+            new() { TestCode = "PT002", ShortDescription = "Test Two", Pc = null,   TotalCost = 300m, FpsYear = DefaultFpsYear }
+        ];
+
         #endregion
 
         #region GetAllAsync
