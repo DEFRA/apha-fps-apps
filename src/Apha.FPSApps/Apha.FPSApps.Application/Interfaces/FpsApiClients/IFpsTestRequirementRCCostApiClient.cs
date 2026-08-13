@@ -13,7 +13,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
     /// </summary>
     public interface IFpsTestRequirementRCCostApiClient
     {
-        Task<ApiResponseDto<List<TestRequirementRCCostDto>>> GetPagedByTestCodeAsync(QueryParameters<string> query, string testCode);
+        Task<ApiResponseDto<List<TestRequirementRCCostDto>>> GetByTestCodePagedAsync(QueryParameters<string> query, string testCode);
 
         Task<ApiResponseDto<TestRequirementRCCostDto>> GetByKeyAsync(string testCode, string buyer, string profitCentre, int fpsYear);
 

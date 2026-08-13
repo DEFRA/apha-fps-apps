@@ -28,7 +28,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<ApiResponseDto<List<TestRequirementRCCostDto>>> GetPagedByTestCodeAsync(QueryParameters<string> query, string testCode)
+        public async Task<ApiResponseDto<List<TestRequirementRCCostDto>>> GetByTestCodePagedAsync(QueryParameters<string> query, string testCode)
         {
             var url = QueryStringHelper.AddQueryString($"{BaseUrl}/{Uri.EscapeDataString(testCode)}", query);
             var response = await _http.GetAsync<List<TestRequirementRCCostRes>>(url);

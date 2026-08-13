@@ -307,7 +307,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (!string.IsNullOrEmpty(testCode))
             {
-                var response = await _fpsApiClient.FpsTestRCCost.GetPagedByTestCodeAsync(query, testCode);
+                var response = await _fpsApiClient.FpsTestRCCost.GetByTestCodePagedAsync(query, testCode);
                 if (response.Success && response.Data != null)
                     items = _mapper.Map<List<TestRCCostItem>>(response.Data);
                 if (response.Pagination is not null)
@@ -382,7 +382,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (!string.IsNullOrEmpty(testCode))
             {
-                var response = await _fpsApiClient.FpsTestRequirementRCCost.GetPagedByTestCodeAsync(query, testCode);
+                var response = await _fpsApiClient.FpsTestRequirementRCCost.GetByTestCodePagedAsync(query, testCode);
                 if (response.Success && response.Data != null)
                     items = _mapper.Map<List<TestRequirementRCCostItem>>(response.Data);
                 if (response.Pagination is not null)
