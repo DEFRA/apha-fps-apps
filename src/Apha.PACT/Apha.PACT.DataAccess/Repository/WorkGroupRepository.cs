@@ -148,7 +148,7 @@ namespace Apha.PACT.DataAccess.Repository
             // (e.g. "ww" vs "WW") are treated as duplicates.
             return await _context.WorkGroups
                 .AsNoTracking()
-                .AnyAsync(w => w.WorkGroupName.ToLower() == workGroupName.ToLower());
+                .AnyAsync(p => EF.Functions.ILike(p.WorkGroupName.Trim(), workGroupName.Trim()));
         }
 
         public async Task<IEnumerable<string>> GetAllProfitCentresAsync()
