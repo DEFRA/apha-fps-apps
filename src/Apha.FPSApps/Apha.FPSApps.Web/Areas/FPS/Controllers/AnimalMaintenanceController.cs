@@ -20,9 +20,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IMapper _mapper;
         private readonly IAnimalService _animalMasterService;
 
-        public AnimalMaintenanceController(
-            IMapper mapper,
-            IAnimalService animalMasterService)
+        public AnimalMaintenanceController(IMapper mapper, IAnimalService animalMasterService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _animalMasterService = animalMasterService ?? throw new ArgumentNullException(nameof(animalMasterService));
