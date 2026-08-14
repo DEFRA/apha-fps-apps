@@ -222,6 +222,13 @@ namespace Apha.PACT.DataAccess.Repository
             if (filters.TryGetValue("ProfitCentre", out var pc) && !string.IsNullOrWhiteSpace(pc))
                 query = query.Where(w => EF.Functions.ILike(w.ProfitCentre, $"%{pc}%"));
 
+            if (filters.TryGetValue("CostCentre", out var cc) && !string.IsNullOrWhiteSpace(cc)
+                && double.TryParse(cc, out var costCentreValue))
+                query = query.Where(w => w.CostCentre.HasValue && Math.Abs(w.CostCentre.Value - costCentreValue) < 1e-9);
+
+            if (filters.TryGetValue("Owner", out var owner) && !string.IsNullOrWhiteSpace(owner))
+                query = query.Where(w => w.Owner != null && EF.Functions.ILike(w.Owner, $"%{owner}%"));
+
             if (filters.TryGetValue("Description", out var desc) && !string.IsNullOrWhiteSpace(desc))
                 query = query.Where(w => w.Description != null && EF.Functions.ILike(w.Description, $"%{desc}%"));
 
