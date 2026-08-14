@@ -64,11 +64,22 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
     }
 
     /// <summary>
-    /// Year End performs no DDL. Every table that needs a target-year partition — the 38 Table 23
-    /// business participants plus the year-scoped configuration dependencies
-    /// (fps.tblsettings/fps.tlkpmonthhours) — must already have it attached before any
-    /// business-data mutation begins. Partition provisioning is an external DB/DBA prerequisite;
-    /// this only validates.
+    /// Year End performs no DDL. <c>fpsyear</c> is the authoritative business-year discriminator —
+    /// the physical partition a row lands in is a storage implementation detail, not a business
+    /// concept Year End enforces. Every year-scoped table — the 38 Table 23 business participants,
+    /// the 3 year-scoped configuration dependencies, and the 21
+    /// <see cref="YearEndTableRole.YearScopedTargetMustBeEmpty"/> tables (62 total) — must already
+    /// have a routing destination for the target year before any business-data mutation begins: an
+    /// explicit <c>FOR VALUES IN (targetYear)</c> partition, or an attached <c>DEFAULT</c>
+    /// partition (rows routed via <c>DEFAULT</c> remain correctly discriminated by their
+    /// <c>fpsyear</c> column value regardless of physical location). Either is a legitimate,
+    /// DDL-free destination; this only validates routability, never creates partitions. Rows
+    /// routed through <c>DEFAULT</c> do lose partition pruning versus an explicit per-year
+    /// partition — worth keeping in mind for high-volume/continuously-written tables (e.g.
+    /// <c>timecodevalid</c>, <c>projectmonth2/3</c>) that other processes such as
+    /// <c>RecreateSummaries</c> keep writing to all year, not just during Year End's own copy step
+    /// — but that is a performance consideration for whoever provisions partitions, not a Year End
+    /// correctness gate.
     /// </summary>
     private static async Task ValidateTargetYearPartitionsAsync(
         DbConnection connection,
@@ -77,11 +88,13 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
         CancellationToken cancellationToken)
     {
         var notPartitioned = new List<string>();
-        var missingPartition = new List<string>();
+        var unroutable = new List<string>();
 
         foreach (var entry in YearEndTableRuleMatrix.Entries)
         {
-            if (entry.Role is not (YearEndTableRole.YearScopedBusinessParticipant or YearEndTableRole.YearScopedConfigurationDependency))
+            if (entry.Role is not (YearEndTableRole.YearScopedBusinessParticipant
+                or YearEndTableRole.YearScopedConfigurationDependency
+                or YearEndTableRole.YearScopedTargetMustBeEmpty))
             {
                 continue;
             }
@@ -96,13 +109,17 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
                 continue;
             }
 
-            if (!await YearEndSqlHelpers.IsPartitionAttachedForYearAsync(connection, transaction, entry.Schema, entry.TableName, targetYear, cancellationToken))
+            var hasExplicitPartition = await YearEndSqlHelpers.IsPartitionAttachedForYearAsync(connection, transaction, entry.Schema, entry.TableName, targetYear, cancellationToken);
+            var hasDefaultPartition = !hasExplicitPartition
+                && await YearEndSqlHelpers.IsDefaultPartitionAttachedAsync(connection, transaction, entry.Schema, entry.TableName, cancellationToken);
+
+            if (!hasExplicitPartition && !hasDefaultPartition)
             {
-                missingPartition.Add(qualifiedName);
+                unroutable.Add(qualifiedName);
             }
         }
 
-        if (notPartitioned.Count == 0 && missingPartition.Count == 0)
+        if (notPartitioned.Count == 0 && unroutable.Count == 0)
         {
             return;
         }
@@ -113,9 +130,9 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
             sections.Add($"Not partitioned as expected: {string.Join(", ", notPartitioned)}.");
         }
 
-        if (missingPartition.Count > 0)
+        if (unroutable.Count > 0)
         {
-            sections.Add($"Missing target-year ({targetYear}) partition: {string.Join(", ", missingPartition)}.");
+            sections.Add($"No routing destination (explicit or DEFAULT partition) for target year ({targetYear}): {string.Join(", ", unroutable)}.");
         }
 
         throw new InvalidOperationException(

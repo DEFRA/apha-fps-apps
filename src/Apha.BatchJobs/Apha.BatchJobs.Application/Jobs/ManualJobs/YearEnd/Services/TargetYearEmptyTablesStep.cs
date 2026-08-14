@@ -4,35 +4,13 @@ using Microsoft.Extensions.Logging;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
 /// <summary>
-/// Clears configured target-year rows from tables that must start empty after setup.
+/// Clears target-year rows from every <see cref="YearEndTableRuleMatrix"/> entry classified
+/// <see cref="YearEndTableRuleAction.ClearTargetYearRows"/> (the spec §19 "must start empty in the
+/// target year" legacy candidates). Matrix-driven — no local table list; the matrix is the single
+/// authoritative list, also consumed by <see cref="FinalValidationStep"/> to verify the result.
 /// </summary>
 public sealed class TargetYearEmptyTablesStep : IYearEndDataSetupStep
 {
-    private static readonly IReadOnlyList<string> CandidateTables =
-    [
-        "additionalcosts_log",
-        "animalreq_log",
-        "fpsyeartotals",
-        "mo_log",
-        "monthlyoutput",
-        "monthlytime",
-        "mt_log",
-        "proj_invoice",
-        "proj_subcontract",
-        "project_log",
-        "projectmonth",
-        "projectmonthfinal",
-        "recreatesummaries_log",
-        "staffjob_log",
-        "tblbid",
-        "tblpurchase",
-        "tblsurvff_fees",
-        "tblsurvff_submissions",
-        "tbltestreqbaseline",
-        "testreq_log",
-        "timecostcalcs"
-    ];
-
     private readonly ILogger<TargetYearEmptyTablesStep> _logger;
 
     public TargetYearEmptyTablesStep(ILogger<TargetYearEmptyTablesStep> logger)
@@ -55,32 +33,37 @@ public sealed class TargetYearEmptyTablesStep : IYearEndDataSetupStep
             throw new InvalidOperationException("Year End context must include targetFpsYear before target-year empty-table cleanup.");
         }
 
+        var clearEntries = YearEndTableRuleMatrix.Entries
+            .Where(e => e.Action == YearEndTableRuleAction.ClearTargetYearRows)
+            .ToList();
+
         var totalDeleted = 0;
 
-        foreach (var table in CandidateTables)
+        foreach (var entry in clearEntries)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (!await YearEndSqlHelpers.TableExistsAsync(connection, transaction, "fps", table, cancellationToken))
+            if (!await YearEndSqlHelpers.TableExistsAsync(connection, transaction, entry.Schema, entry.TableName, cancellationToken))
             {
                 continue;
             }
 
-            var yearColumn = await ResolveYearColumnAsync(connection, transaction, "fps", table, cancellationToken);
+            var yearColumn = await ResolveYearColumnAsync(connection, transaction, entry.Schema, entry.TableName, cancellationToken);
             if (yearColumn is null)
             {
                 _logger.LogWarning(
-                    "YearEnd empty-table cleanup skipped non-year-scoped table | CorrelationId={CorrelationId} | Table=fps.{Table}",
+                    "YearEnd empty-table cleanup skipped non-year-scoped table | CorrelationId={CorrelationId} | Table={Schema}.{Table}",
                     context.CorrelationId,
-                    table);
+                    entry.Schema,
+                    entry.TableName);
                 continue;
             }
 
             var deleted = await DeleteByYearAsync(
                 connection,
                 transaction,
-                schema: "fps",
-                table,
+                entry.Schema,
+                entry.TableName,
                 yearColumn,
                 context.TargetFpsYear.Value,
                 cancellationToken);
@@ -88,9 +71,10 @@ public sealed class TargetYearEmptyTablesStep : IYearEndDataSetupStep
             totalDeleted += deleted;
 
             _logger.LogInformation(
-                "YearEnd empty-table cleanup completed | CorrelationId={CorrelationId} | Table=fps.{Table} | YearColumn={YearColumn} | TargetYear={TargetYear} | DeletedRows={DeletedRows}",
+                "YearEnd empty-table cleanup completed | CorrelationId={CorrelationId} | Table={Schema}.{Table} | YearColumn={YearColumn} | TargetYear={TargetYear} | DeletedRows={DeletedRows}",
                 context.CorrelationId,
-                table,
+                entry.Schema,
+                entry.TableName,
                 yearColumn,
                 context.TargetFpsYear,
                 deleted);

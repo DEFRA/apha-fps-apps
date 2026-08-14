@@ -86,35 +86,42 @@ public sealed class ValidateYearScopedSchemaStepPartitionIntegrationTests : IAsy
         });
     }
 
+    /// <summary>
+    /// Supersedes the old "2099 must fail" assertion. <c>fpsyear</c> is the authoritative
+    /// business-year discriminator; a partitioned parent with a <c>DEFAULT</c> partition attached
+    /// (confirmed 2026-08-14 read-only scan: all 62 matrix entries have one in both
+    /// <c>batch_jobs_foundation_db</c> and the RDS <c>batchjobs</c> database) can legally accept
+    /// any year's rows without DDL, including a year nobody has ever heard of. No dedicated
+    /// partition for 2099 exists anywhere, so this specifically proves the <c>DEFAULT</c>-routing
+    /// path, not the explicit-partition path already covered by the positive test above.
+    /// </summary>
     [SkippableFact]
-    public async Task ExecuteAsync_WhenTargetYearHasNoPartitionsAttached_FailsListingAllMissingTables()
+    public async Task ExecuteAsync_WhenTargetYearHasNoDedicatedPartition_PassesViaDefaultRouting()
     {
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
 
         await RunUnderReadOnlyTransactionAsync(async (connection, transaction, cancellationToken) =>
         {
             var step = new ValidateYearScopedSchemaStep(NullLogger<ValidateYearScopedSchemaStep>.Instance);
-            const int farFutureYear = 2099; // no partition exists for this year anywhere
+            const int farFutureYear = 2099; // no dedicated partition exists for this year anywhere
             var context = new YearEndExecutionContext(
-                "partition-check-negative", null, CurrentFpsYear: _liveOpenYear, TargetFpsYear: farFutureYear);
+                "partition-check-default-routing", null, CurrentFpsYear: _liveOpenYear, TargetFpsYear: farFutureYear);
 
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => step.ExecuteAsync(context, connection, transaction, cancellationToken));
+            // Should not throw — every matrix table routes 2099 through its DEFAULT partition.
+            var resultContext = await step.ExecuteAsync(context, connection, transaction, cancellationToken);
 
-            Assert.Contains("Missing target-year (2099) partition", ex.Message, StringComparison.Ordinal);
-            Assert.DoesNotContain("Not partitioned as expected", ex.Message, StringComparison.Ordinal);
-
-            // All 40 partition-bearing matrix entries (38 business + 2 config dependency) should
-            // be listed — none of them has a 2099 partition.
-            foreach (var entry in YearEndTableRuleMatrix.Entries)
-            {
-                if (entry.Role is YearEndTableRole.YearScopedBusinessParticipant or YearEndTableRole.YearScopedConfigurationDependency)
-                {
-                    Assert.Contains($"{entry.Schema}.{entry.TableName}", ex.Message, StringComparison.Ordinal);
-                }
-            }
+            Assert.Equal(context.TargetFpsYear, resultContext.TargetFpsYear);
         });
     }
+
+    // No integration test covers "a partitioned matrix table with neither an explicit target-year
+    // partition nor a DEFAULT partition attached" (the remaining genuine failure case for
+    // ValidateTargetYearPartitionsAsync's routability check). Every real fps.* matrix table in both
+    // batch_jobs_foundation_db and batchjobs already has a DEFAULT partition by design (see the
+    // scan referenced above), so that state can't be reproduced against live matrix data without
+    // DDL — which would violate this test class's "no DDL, no seed data" invariant (see class
+    // remarks). Exercising that branch would need either test-only DDL or restructuring
+    // ValidateYearScopedSchemaStep to accept an injectable table list; out of scope here.
 
     private async Task RunUnderReadOnlyTransactionAsync(Func<System.Data.Common.DbConnection, System.Data.Common.DbTransaction, CancellationToken, Task> action)
     {

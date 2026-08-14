@@ -4,15 +4,34 @@ using Microsoft.Extensions.Logging;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
 /// <summary>
-/// Removes target-year staff-job rows that map to inactive employees when inactive markers are available.
+/// Removes target-year <c>fps.tblwgemployee</c> rows (and their dependent <c>fps.tblstaffjob</c>
+/// rows) for employees who were inactive in the source year and are not the General Staff
+/// exemption, per the legacy <c>Annual_WGEmployeeList.sql</c> Year End rule. Replaces the earlier
+/// generic active/isactive/employmentstatus/status column-discovery mechanism (which never matched
+/// any real column and was consequently a no-op) with this explicit, deterministic rule, confirmed
+/// 2026-08-14:
+///
+/// <list type="bullet">
+/// <item>Inactive candidate: <c>personstatus = 'I'</c> (case-insensitive) AND
+/// <c>enddate IS NULL</c>, evaluated against the <b>target</b> year's own row only.</item>
+/// <item>General Staff exemption (retained even if inactive):
+/// <c>spnumber LIKE 'G%'</c> (case-sensitive, matching the legacy rule) AND
+/// <c>UPPER(firstname) = 'GENERAL'</c>. Both conditions required — confirmed via a read-only
+/// cross-tab against live data that this AND reading is not equivalent to OR (15 discordant rows
+/// exist); the AND reading is the one confirmed by the legacy script.</item>
+/// <item>Any <c>personstatus</c> value other than <c>A</c>/<c>a</c>/<c>I</c>/<c>i</c> is a
+/// data-quality error, surfaced before any deletion — never silently treated as active or
+/// inactive.</item>
+/// </list>
+///
+/// FPS-only: no <c>mabarchive</c> table is referenced. <c>mabarchive.my_tblwgemployee</c> does not
+/// even exist in <c>batchjob_testing</c>, and MABArchive participation in Year End is gated
+/// exclusively through <see cref="ConditionalMabArchiveYearSetupStep"/> — this step must not reach
+/// into MABArchive outside that gate.
 /// </summary>
 public sealed class InactiveEmployeeCleanupStep : IYearEndDataSetupStep
 {
-    private static readonly IReadOnlyList<CleanupTarget> Targets =
-    [
-        new("fps", "tblstaffjob", "fpsyear", "staffid", "tblwgemployee", "pactid"),
-        new("mabarchive", "my_tblstaffjob", "year", "staffid", "my_tblwgemployee", "pactid")
-    ];
+    private const string Schema = "fps";
 
     private readonly ILogger<InactiveEmployeeCleanupStep> _logger;
 
@@ -36,136 +55,136 @@ public sealed class InactiveEmployeeCleanupStep : IYearEndDataSetupStep
             throw new InvalidOperationException("Year End context must include targetFpsYear before inactive employee cleanup.");
         }
 
-        var totalDeleted = 0;
+        var targetFpsYear = context.TargetFpsYear.Value;
 
-        foreach (var target in Targets)
+        await ValidatePersonStatusValuesAsync(connection, transaction, targetFpsYear, cancellationToken);
+
+        var eligiblePactIds = await GetInactiveNonGeneralStaffPactIdsAsync(connection, transaction, targetFpsYear, cancellationToken);
+        if (eligiblePactIds.Count == 0)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var deleted = await CleanupTargetAsync(connection, transaction, target, context, cancellationToken);
-            totalDeleted += deleted;
+            _logger.LogInformation(
+                "YearEnd inactive employee cleanup found no applicable rows | CorrelationId={CorrelationId} | TargetYear={TargetYear}",
+                context.CorrelationId,
+                targetFpsYear);
+            return context;
         }
 
+        // tblstaffjob has an FK to tblwgemployee — dependent rows must go first.
+        var staffJobDeleted = await DeleteByKeyValuesAsync(
+            connection, transaction, Schema, "tblstaffjob", "staffid", "fpsyear", targetFpsYear, eligiblePactIds, cancellationToken);
+
+        var wgEmployeeDeleted = await DeleteByKeyValuesAsync(
+            connection, transaction, Schema, "tblwgemployee", "pactid", "fpsyear", targetFpsYear, eligiblePactIds, cancellationToken);
+
         _logger.LogInformation(
-            "YearEnd inactive employee cleanup completed | CorrelationId={CorrelationId} | TargetYear={TargetYear} | DeletedRows={DeletedRows}",
+            "YearEnd inactive employee cleanup completed | CorrelationId={CorrelationId} | TargetYear={TargetYear} | " +
+            "InactiveNonGeneralStaffCount={EligibleCount} | TblStaffJobRowsDeleted={StaffJobDeleted} | TblWgEmployeeRowsDeleted={WgEmployeeDeleted}",
             context.CorrelationId,
-            context.TargetFpsYear,
-            totalDeleted);
+            targetFpsYear,
+            eligiblePactIds.Count,
+            staffJobDeleted,
+            wgEmployeeDeleted);
 
         return context;
     }
 
-    private async Task<int> CleanupTargetAsync(
+    /// <summary>
+    /// Data-quality gate, run before any deletion: every target-year <c>personstatus</c> value must
+    /// be <c>A</c>/<c>a</c>/<c>I</c>/<c>i</c>. Anything else (e.g. the known <c>AI</c> value found in
+    /// live data) is ambiguous and must block cleanup entirely rather than be silently classified
+    /// either way.
+    /// </summary>
+    private static async Task ValidatePersonStatusValuesAsync(
         DbConnection connection,
         DbTransaction transaction,
-        CleanupTarget target,
-        YearEndExecutionContext context,
+        int targetFpsYear,
         CancellationToken cancellationToken)
     {
-        var jobTableExists = await YearEndSqlHelpers.TableExistsAsync(connection, transaction, target.Schema, target.JobTable, cancellationToken);
-        if (!jobTableExists)
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, $@"
+            SELECT pactid, personstatus
+            FROM {Schema}.tblwgemployee
+            WHERE fpsyear = @target_fpsyear
+              AND UPPER(personstatus) NOT IN ('A', 'I')
+            ORDER BY pactid
+            LIMIT 20;");
+
+        YearEndSqlHelpers.AddParameter(command, "target_fpsyear", targetFpsYear);
+
+        var unexpected = new List<string>();
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
         {
-            _logger.LogWarning(
-                "YearEnd inactive cleanup skipped missing job table | CorrelationId={CorrelationId} | Table={Schema}.{Table}",
-                context.CorrelationId,
-                target.Schema,
-                target.JobTable);
-            return 0;
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var pactid = reader.IsDBNull(0) ? "<null>" : reader.GetString(0);
+                var personStatus = reader.IsDBNull(1) ? "<null>" : reader.GetString(1);
+                unexpected.Add($"{pactid}='{personStatus}'");
+            }
         }
 
-        var employeeTableExists = await YearEndSqlHelpers.TableExistsAsync(connection, transaction, target.Schema, target.EmployeeTable, cancellationToken);
-        if (!employeeTableExists)
-        {
-            _logger.LogWarning(
-                "YearEnd inactive cleanup skipped missing employee table | CorrelationId={CorrelationId} | Table={Schema}.{Table}",
-                context.CorrelationId,
-                target.Schema,
-                target.EmployeeTable);
-            return 0;
-        }
-
-        var hasYearColumn = await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, target.Schema, target.JobTable, target.YearColumn, cancellationToken);
-        var hasStaffColumn = await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, target.Schema, target.JobTable, target.JobStaffColumn, cancellationToken);
-        var hasEmployeeStaffColumn = await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, target.Schema, target.EmployeeTable, target.EmployeeStaffColumn, cancellationToken);
-
-        if (!hasYearColumn || !hasStaffColumn || !hasEmployeeStaffColumn)
+        if (unexpected.Count > 0)
         {
             throw new InvalidOperationException(
-                $"Inactive cleanup cannot run safely for {target.Schema}.{target.JobTable}; required columns are missing.");
+                $"Target year {targetFpsYear} has {Schema}.tblwgemployee rows with an unexpected personstatus value " +
+                $"(expected only A/a/I/i): {string.Join(", ", unexpected)}. Resolve the data quality issue before Year End cleanup can proceed.");
         }
-
-        var inactivePredicate = await BuildInactivePredicateAsync(connection, transaction, target.Schema, target.EmployeeTable, cancellationToken);
-        if (string.IsNullOrWhiteSpace(inactivePredicate))
-        {
-            _logger.LogWarning(
-                "YearEnd inactive cleanup skipped because no inactive markers were found | CorrelationId={CorrelationId} | EmployeeTable={Schema}.{Table}",
-                context.CorrelationId,
-                target.Schema,
-                target.EmployeeTable);
-            return 0;
-        }
-
-        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, $@"
-            DELETE FROM {target.Schema}.{target.JobTable} sj
-            WHERE sj.{target.YearColumn} = @target_year
-              AND EXISTS (
-                    SELECT 1
-                    FROM {target.Schema}.{target.EmployeeTable} e
-                    WHERE e.{target.EmployeeStaffColumn} = sj.{target.JobStaffColumn}
-                      AND ({inactivePredicate})
-              );");
-
-        YearEndSqlHelpers.AddParameter(command, "target_year", context.TargetFpsYear!.Value);
-        var deleted = await command.ExecuteNonQueryAsync(cancellationToken);
-
-        _logger.LogInformation(
-            "YearEnd inactive cleanup completed | CorrelationId={CorrelationId} | Table={Schema}.{Table} | TargetYear={TargetYear} | DeletedRows={DeletedRows}",
-            context.CorrelationId,
-            target.Schema,
-            target.JobTable,
-            context.TargetFpsYear,
-            deleted);
-
-        return deleted;
     }
 
-    private static async Task<string?> BuildInactivePredicateAsync(
+    /// <summary>
+    /// Target-year <c>pactid</c> values for employees who are inactive
+    /// (<c>personstatus='I'</c> case-insensitive, <c>enddate IS NULL</c>) and not the General Staff
+    /// exemption (<c>spnumber LIKE 'G%' AND UPPER(firstname)='GENERAL'</c>, both required). The join
+    /// to <c>tblemployee</c> is year-scoped and inner — an employee with no matching target-year
+    /// <c>tblemployee</c> row (so their name, and therefore General Staff status, can't be
+    /// determined) is never treated as eligible for removal.
+    /// </summary>
+    private static async Task<IReadOnlyList<string>> GetInactiveNonGeneralStaffPactIdsAsync(
+        DbConnection connection,
+        DbTransaction transaction,
+        int targetFpsYear,
+        CancellationToken cancellationToken)
+    {
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, $@"
+            SELECT wg.pactid
+            FROM {Schema}.tblwgemployee wg
+            JOIN {Schema}.tblemployee e
+              ON e.spnumber = wg.spnumber
+             AND e.fpsyear = wg.fpsyear
+            WHERE wg.fpsyear = @target_fpsyear
+              AND UPPER(wg.personstatus) = 'I'
+              AND wg.enddate IS NULL
+              AND NOT (wg.spnumber LIKE 'G%' AND UPPER(TRIM(e.firstname)) = 'GENERAL');");
+
+        YearEndSqlHelpers.AddParameter(command, "target_fpsyear", targetFpsYear);
+
+        var pactIds = new List<string>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            pactIds.Add(reader.GetString(0));
+        }
+
+        return pactIds;
+    }
+
+    private static async Task<int> DeleteByKeyValuesAsync(
         DbConnection connection,
         DbTransaction transaction,
         string schema,
         string table,
+        string keyColumn,
+        string yearColumn,
+        int targetFpsYear,
+        IReadOnlyList<string> keyValues,
         CancellationToken cancellationToken)
     {
-        var predicates = new List<string>();
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, $@"
+            DELETE FROM {schema}.{table}
+            WHERE {yearColumn} = @target_fpsyear
+              AND {keyColumn} = ANY(@key_values);");
 
-        if (await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, schema, table, "active", cancellationToken))
-        {
-            predicates.Add("lower(coalesce(cast(e.active as text), '')) in ('false', '0', 'n', 'no')");
-        }
+        YearEndSqlHelpers.AddParameter(command, "target_fpsyear", targetFpsYear);
+        YearEndSqlHelpers.AddParameter(command, "key_values", keyValues.ToArray());
 
-        if (await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, schema, table, "isactive", cancellationToken))
-        {
-            predicates.Add("lower(coalesce(cast(e.isactive as text), '')) in ('false', '0', 'n', 'no')");
-        }
-
-        if (await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, schema, table, "employmentstatus", cancellationToken))
-        {
-            predicates.Add("lower(coalesce(cast(e.employmentstatus as text), '')) in ('inactive', 'leaver', 'left', 'terminated')");
-        }
-
-        if (await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, schema, table, "status", cancellationToken))
-        {
-            predicates.Add("lower(coalesce(cast(e.status as text), '')) in ('inactive', 'leaver', 'left', 'terminated')");
-        }
-
-        return predicates.Count == 0 ? null : string.Join(" OR ", predicates);
+        return await command.ExecuteNonQueryAsync(cancellationToken);
     }
-
-    private sealed record CleanupTarget(
-        string Schema,
-        string JobTable,
-        string YearColumn,
-        string JobStaffColumn,
-        string EmployeeTable,
-        string EmployeeStaffColumn);
 }
