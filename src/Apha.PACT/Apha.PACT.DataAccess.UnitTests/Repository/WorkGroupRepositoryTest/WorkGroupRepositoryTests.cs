@@ -245,6 +245,68 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 
         #endregion
 
+        #region ExistsAsync
+
+        [Theory]
+        [InlineData("WW")]
+        [InlineData("ww")]
+        [InlineData("wW")]
+        [InlineData("Ww")]
+        public async Task ExistsAsync_NameDiffersOnlyByCase_ReturnsTrue(string candidate)
+        {
+            // Arrange
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "WW", ProfitCentre = "PC1" }
+            };
+            var repo = CreateRepository(workGroups);
+
+            // Act
+            var result = await repo.ExistsAsync(candidate);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_NameDoesNotExist_ReturnsFalse()
+        {
+            // Arrange
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "WW", ProfitCentre = "PC1" }
+            };
+            var repo = CreateRepository(workGroups);
+
+            // Act
+            var result = await repo.ExistsAsync("XX");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData(null)]
+        public async Task ExistsAsync_NullOrWhiteSpaceName_ReturnsFalse(string? candidate)
+        {
+            // Arrange
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "WW", ProfitCentre = "PC1" }
+            };
+            var repo = CreateRepository(workGroups);
+
+            // Act
+            var result = await repo.ExistsAsync(candidate!);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        #endregion
+
         #region GetStaffByWorkGroupAsync
 
         [Fact]

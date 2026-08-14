@@ -144,9 +144,11 @@ namespace Apha.PACT.DataAccess.Repository
             if (string.IsNullOrWhiteSpace(workGroupName))
                 return false;
 
+            // Case-insensitive comparison so names differing only by letter case
+            // (e.g. "ww" vs "WW") are treated as duplicates.
             return await _context.WorkGroups
                 .AsNoTracking()
-                .AnyAsync(w => w.WorkGroupName == workGroupName);
+                .AnyAsync(w => w.WorkGroupName.ToLower() == workGroupName.ToLower());
         }
 
         public async Task<IEnumerable<string>> GetAllProfitCentresAsync()
