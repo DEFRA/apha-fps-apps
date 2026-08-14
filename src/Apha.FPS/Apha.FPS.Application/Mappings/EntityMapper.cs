@@ -1,4 +1,6 @@
 ﻿using Apha.Common.Contracts.PACT;
+
+
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
@@ -149,6 +151,23 @@ CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap(
             CreateMap<YearEndFpsSetting, YearEndFpsSettingDto>().ReverseMap();
             CreateMap<MonthHour, MonthHourDto>().ReverseMap();
             CreateMap<YearEndMonthHour, YearEndMonthHourDto>().ReverseMap();
+
+            
+            // All six pairs are property-name aligned between entity and DTO; no ForMember overrides required.
+            // Covers all query types from frmDeptIncome: Time, Tests, Animals, Additional, Totals, plus PeriodLookup.
+            CreateMap<DepartmentIncomeTime,       DepartmentIncomeTimeDto>().ReverseMap();
+            CreateMap<DepartmentIncomeTest,       DepartmentIncomeTestDto>().ReverseMap();
+            CreateMap<DepartmentIncomeAnimal,     DepartmentIncomeAnimalDto>().ReverseMap();
+            CreateMap<DepartmentIncomeAdditional, DepartmentIncomeAdditionalDto>().ReverseMap();
+            CreateMap<DepartmentIncomeTotals,     DepartmentIncomeTotalsDto>().ReverseMap();
+            CreateMap<PeriodLookup, PeriodLookupDto>()
+                .ForMember(d => d.AccntsPeriod, o => o.MapFrom(s => (int)s.AccntsPeriod))
+                .ForMember(d => d.MonthNumber,  o => o.MapFrom(s => (int)s.MonthNumber))
+                .ReverseMap();
+            CreateMap<Period, PeriodSnapshotDto>()
+                .ForMember(d => d.FinalSummariesRun, o => o.MapFrom(s => s.FinalSummariesRun == -1))
+                .ForMember(d => d.PeriodLocked,      o => o.MapFrom(s => s.PeriodLocked == -1))
+                .ReverseMap();
         }
     }
 }

@@ -341,6 +341,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return NotFound();
 
             var model = _mapper.Map<ProgramProjectEditViewModel>(result.Data);
+            model.OriginalParentProject = result.Data.ParentProject;
             await PopulateDropdownsAsync(model);
             return PartialView("_AddEditProgramProject", model);
         }
@@ -367,7 +368,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var dto = _mapper.Map<ProjectDto>(model);
+            var lookupKey = !string.IsNullOrWhiteSpace(model.OriginalParentProject)
+                ? model.OriginalParentProject
+                : model.ParentProject;
+
+            var existing = await _projectService.GetProjectByIdAsync(lookupKey);
+            if (!existing.Success || existing.Data == null)
+                return NotFound();
+
+            var dto = _mapper.Map(model, existing.Data);
+            
             var result = await _projectService.UpdateProjectAsync(dto);
 
             if (result.Success)
