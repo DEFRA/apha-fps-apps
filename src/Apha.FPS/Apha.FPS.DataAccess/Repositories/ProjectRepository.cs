@@ -882,7 +882,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.Projects
                 .AsNoTracking()
-                .AnyAsync(p => EF.Functions.ILike(p.ParentProject.Trim(), newProject.Trim()));
+                .AnyAsync(p => p.ParentProject == newProject);
         }
 
         /// <summary>
