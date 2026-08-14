@@ -9,7 +9,7 @@
 <div class="govuk-grid-row sup_margin_left_right_0">
     <div class="govuk-grid-column-full">
         <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_bottom_10">
-            <div class="sup_flex_left_center">Test Supplier</div>
+            <div class="sup_flex_left_center">Test Supplier View (Who is Buying TestX?)</div>
         </h1>
     </div>
 </div>
@@ -141,123 +141,26 @@
         });
     }
 
+    // Totals always represent the entire dataset for the selected test and must NOT
+    // change with pagination, sorting, or filtering. They are computed server-side.
     function calculateTotals() {
-        var totalTests = 0;
-        var totalCost = 0;
-
-        $('#gridContainer_testSupplierGrid td[data-property="NoRequired"] span').each(function () {
-            var val = parseFloat($(this).text().trim());
-            if (!isNaN(val)) totalTests += val;
-        });
-
-        $('#gridContainer_testSupplierGrid td[data-property="TestCost"] span').each(function () {
-            var raw = $(this).text().trim().replace(/[£,]/g, '');
-            var val = parseFloat(raw);
-            if (!isNaN(val)) totalCost += val;
-        });
-
-        $('#totalTests').val(totalTests.toFixed(2));
-        $('#totalTestCost').val('£' + totalCost.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    }
-
-    // ── CRUD ──────────────────────────────────────────────────────────────────
-
-    function addTestSupplier() {
         if (!currentTestCode) {
-            showAlertMessage('Please select a Test Code first.', AlertType.INFO);
-            return;
-        }
-        $.get('/FPS/TestSupplier/CreateTestReqmt', { testCode: currentTestCode }, function (html) {
-            openModal(html);
-        }).fail(function () {
-            showAlertMessage('An error occurred while loading the form', AlertType.ERROR);
-        });
-    }
-
-    function editTestSupplier(btn) {
-        var buyer = $(btn).data('id');
-        $.get('/FPS/TestSupplier/EditTestReqmt', { testCode: currentTestCode, buyer: buyer }, function (html) {
-            openModal(html);
-        }).fail(function () {
-            showAlertMessage('An error occurred while loading the edit form', AlertType.ERROR);
-        });
-    }
-
-    function deleteTestSupplier(btn) {
-        var buyer = $(btn).data('id');
-        showGovukConfirm('Are you sure you want to delete this Test Supplier entry?').then(function (result) {
-            if (!result) return;
-            $.ajax({
-                url: '/FPS/TestSupplier/DeleteTestReqmt',
-                type: 'DELETE',
-                data: { testCode: currentTestCode, buyer: buyer },
-                success: function (response) {
-                    if (response.success) {
-                        showAlertMessage('Record deleted successfully.', AlertType.SUCCESS).then(function () {
-                            reloadGrid();
-                        });
-                    } else {
-                        showAlertMessage(response.message || 'Failed to delete entry.', AlertType.ERROR);
-                    }
-                },
-                error: function () {
-                    showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
-                }
-            });
-        });
-    }
-
-    function saveTestSupplier() {
-        clearValidationErrors('#modaPopupBody');
-        var form = $('#testSupplierForm');
-
-        if (!isFormValid(form)) {
-            displayClientValidationErrors(form, '#modaPopupBody');
+            $('#totalTests').val('0.00');
+            $('#totalTestCost').val('£0.00');
             return;
         }
 
-        var formData = {};
-        form.serializeArray().forEach(function (item) {
-            // Convert empty strings to null for nullable decimal fields
-            if (item.name === 'UnitPrice' && item.value === '') {
-                formData[item.name] = null;
-            } else {
-                formData[item.name] = item.value;
+        $.get('/FPS/TestSupplier/GetTestSupplierTotals', {
+            testCode: currentTestCode,
+            showRejected: currentShowRejected
+        }, function (result) {
+            if (result && result.success) {
+                var totalTests = parseFloat(result.totalTests) || 0;
+                var totalCost = parseFloat(result.totalCost) || 0;
+                $('#totalTests').val(totalTests.toFixed(2));
+                $('#totalTestCost').val('£' + totalCost.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
             }
         });
-
-        $.ajax({
-            url: '/FPS/TestSupplier/EditTestReqmt',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(formData),
-            success: function (result) {
-                if (result.success) {
-                    closeModal();
-                    showAlertMessage(result.message || 'Record saved successfully.', AlertType.SUCCESS);
-                    reloadGrid();
-                } else {
-                    displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
-                }
-            },
-            error: function (xhr) {
-                if (xhr.status === 400 && xhr.responseJSON) {
-                    displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
-                } else {
-                    showAlertMessage('An error occurred while saving.', AlertType.ERROR);
-                }
-            }
-        });
-    }
-
-    function openModal(html) {
-        $('#modaPopupBody').html(html);
-        $('#modalPopup').addClass('show');
-    }
-
-    function closeModal() {
-        $('#modaPopupBody').html('');
-        $('#modalPopup').removeClass('show');
     }
 </script>
 }

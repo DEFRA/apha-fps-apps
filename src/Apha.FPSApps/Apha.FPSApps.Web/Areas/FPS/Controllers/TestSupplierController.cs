@@ -214,6 +214,33 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             });
         }
 
+        // Totals must reflect the entire dataset for the selected test, independent of
+        // pagination, sorting, or filtering. They are computed server-side over all rows.
+        [HttpGet]
+        public async Task<IActionResult> GetTestSupplierTotals(string testCode, bool showRejected)
+        {
+            if (string.IsNullOrWhiteSpace(testCode))
+                return Json(new { success = true, totalTests = 0d, totalCost = 0m });
+
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = int.MaxValue,
+                Filter = "{}"
+            };
+
+            var response = await _testReqmtService.GetPagedBySupplierTestCodeAsync(query, testCode, showRejected);
+
+            var data = response.Success && response.Data != null
+                ? response.Data
+                : new List<TestSupplierViewDto>();
+
+            var totalTests = data.Sum(r => r.NoRequired ?? 0d);
+            var totalCost = data.Sum(r => r.TestCost ?? 0m);
+
+            return Json(new { success = true, totalTests, totalCost });
+        }
+
         // ── PRIVATE HELPERS ───────────────────────────────────────────────────
 
         private async Task<DataGridConfig<TestSupplierItem>> BuildTestSupplierGridAsync(
@@ -252,22 +279,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<TestSupplierItem>
             {
                 GridId = "testSupplierGrid",
-                Title = "Test Supplier View (Who is Buying TestX)",
+                Title = string.Empty,
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 AllowRowSelection = false,
                 KeyProperty = "Buyer",
                 BindGridUrl = "/FPS/TestSupplier/LoadTestSupplierGrid",
                 ExtraFilterMethod = "getTestSupplierExtraFilters",
-                AddFunction = "addTestSupplier",
-                EditFunction = "editTestSupplier",
-                DeleteFunction = "deleteTestSupplier",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<TestSupplierItem>(),
                 Pagination = paginationModel,
                 AllowAdd = false,
-                AllowEdit = true,
-                AllowDelete = true,
+                AllowEdit = false,
+                AllowDelete = false,
                 CurrentFilters = filterDict
             };
         }
