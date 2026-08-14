@@ -454,14 +454,60 @@ namespace Apha.PACT.DataAccess.Repository
         /// <summary>
         /// Returns a sort-comparable value for a pivot row column.
         /// Numeric columns sort as decimal; text columns sort as string.
+        /// A single composite key type is always returned so that sparse pivot
+        /// columns (e.g. dynamic "pc_*" profit-centre columns) — where some rows
+        /// hold a numeric value and others are blank/null — never mix a boxed
+        /// decimal with a string, which would make the default comparer throw
+        /// and silently break sorting for every dynamic column.
         /// </summary>
-        private static IComparable GetSortValue(Dictionary<string, string?> row, string key)
+        private static CrossTabSortKey GetSortValue(Dictionary<string, string?> row, string key)
         {
             var raw = row.TryGetValue(key, out var val) ? val : null;
             if (raw != null && decimal.TryParse(raw, System.Globalization.NumberStyles.Any,
                     System.Globalization.CultureInfo.InvariantCulture, out var number))
-                return number;
-            return raw ?? string.Empty;
+                return new CrossTabSortKey(number, null);
+            return new CrossTabSortKey(null, raw);
+        }
+
+        /// <summary>
+        /// Composite, null-safe sort key for cross-tab pivot cells. Numeric cells
+        /// are compared numerically; text cells are compared case-insensitively;
+        /// blank/null cells always sort last. Because a single type is used for
+        /// every cell, the default comparer never throws when a column mixes
+        /// numeric values with blanks (the sparse "pc_*" columns).
+        /// </summary>
+        private readonly struct CrossTabSortKey : IComparable<CrossTabSortKey>
+        {
+            private readonly decimal? _number;
+            private readonly string? _text;
+
+            public CrossTabSortKey(decimal? number, string? text)
+            {
+                _number = number;
+                _text = string.IsNullOrEmpty(text) ? null : text;
+            }
+
+            private bool HasValue => _number.HasValue || _text != null;
+
+            public int CompareTo(CrossTabSortKey other)
+            {
+                // Blank/null cells always sort last, regardless of direction target.
+                if (!HasValue && !other.HasValue) return 0;
+                if (!HasValue) return 1;
+                if (!other.HasValue) return -1;
+
+                // Both numeric → numeric comparison.
+                if (_number.HasValue && other._number.HasValue)
+                    return _number.Value.CompareTo(other._number.Value);
+
+                // Both text → case-insensitive string comparison.
+                if (_number is null && other._number is null)
+                    return string.Compare(_text, other._text, StringComparison.OrdinalIgnoreCase);
+
+                // Mixed numeric/text (not expected within a real column): order
+                // numeric before text deterministically to avoid throwing.
+                return _number.HasValue ? -1 : 1;
+            }
         }
 
         private static string ResolveDefaultWorkgroupName(string workGroup, int workgroupCount)
@@ -542,13 +588,27 @@ namespace Apha.PACT.DataAccess.Repository
         private static List<Dictionary<string, string?>> ApplyCrossTabSorting(
             List<Dictionary<string, string?>> pivotedRows, PaginationParameters<string> query)
         {
-            if (string.IsNullOrWhiteSpace(query.SortBy))
-                return pivotedRows;
+            // Caller only invokes this when SortBy has a value, so no null/blank guard is needed.
+            var sortKey = query.SortBy!.ToLowerInvariant();
 
-            var sortKey = query.SortBy.ToLowerInvariant();
-            return query.Descending
-                ? pivotedRows.OrderByDescending(r => GetSortValue(r, sortKey)).ToList()
-                : pivotedRows.OrderBy(r => GetSortValue(r, sortKey)).ToList();
+            // Keep rows with a blank/null cell for the sort column at the bottom
+            // regardless of sort direction. Sparse "pc_*" columns are mostly blank,
+            // so surfacing them first on a descending sort would hide the data the
+            // user is actually sorting by.
+            var populated = new List<Dictionary<string, string?>>();
+            var blanks = new List<Dictionary<string, string?>>();
+            foreach (var row in pivotedRows)
+            {
+                var hasValue = row.TryGetValue(sortKey, out var val) && !string.IsNullOrEmpty(val);
+                (hasValue ? populated : blanks).Add(row);
+            }
+
+            var sorted = query.Descending
+                ? populated.OrderByDescending(r => GetSortValue(r, sortKey)).ToList()
+                : populated.OrderBy(r => GetSortValue(r, sortKey)).ToList();
+
+            sorted.AddRange(blanks);
+            return sorted;
         }
 
         private sealed record WorkgroupLevelInfo(int HighestLevel, int WorkgroupCount);
