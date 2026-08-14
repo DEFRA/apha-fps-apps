@@ -7,6 +7,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 
@@ -119,7 +120,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// Displays the create resource centre modal.
         /// </summary>
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             var model = new ResourceCentreMaintenanceItem
             {
@@ -127,6 +128,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ProfitCentreName = string.Empty,
                 Division = string.Empty
             };
+            await PopulateManagerListAsync(model);
             return PartialView("_AddEditMaintResourceCentre", model);
         }
 
@@ -188,6 +190,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (result.Success && result.Data != null)
             {
                 var itemViewModel = _mapper.Map<ResourceCentreMaintenanceItem>(result.Data);
+                await PopulateManagerListAsync(itemViewModel);
                 return PartialView("_AddEditMaintResourceCentre", itemViewModel);
             }
 
@@ -307,6 +310,24 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             return Json(new { success = false, message = "Failed to load managers" });
+        }
+
+        /// <summary>
+        /// Populates the RC Head (manager) picker options for the modal.
+        /// </summary>
+        private async Task PopulateManagerListAsync(ResourceCentreMaintenanceItem model)
+        {
+            var managerResponse = await _employeeService.GetAllManagersAsync();
+            model.ManagerList = (managerResponse?.Data ?? new List<ManagerDto>())
+                .Where(m => !string.IsNullOrEmpty(m.Name))
+                .Select(m => new SelectListItem
+                {
+                    Value = m.Name,
+                    Text = $"{m.Name} | {m.WorkGroup ?? string.Empty} | {m.GradeCode ?? string.Empty}",
+                    Selected = string.Equals(model.ProfitCentreHead, m.Name, StringComparison.OrdinalIgnoreCase)
+                })
+                .Prepend(new SelectListItem { Value = string.Empty, Text = string.Empty, Selected = string.IsNullOrEmpty(model.ProfitCentreHead) })
+                .ToList();
         }
     }
 }

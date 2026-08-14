@@ -37,9 +37,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectGroupRepositoryTest
             // Arrange
             var projectGroups = new List<ProjectGroup>
             {
-                new() { ProjectGroupName = "Group A" },
-                new() { ProjectGroupName = "Group B" },
-                new() { ProjectGroupName = "Group C" }
+                new() { ProjectGroupName = "Group A", FpsYear = DefaultTestFpsYear },
+                new() { ProjectGroupName = "Group B", FpsYear = DefaultTestFpsYear },
+                new() { ProjectGroupName = "Group C", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(projectGroups);
 
@@ -71,7 +71,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectGroupRepositoryTest
             // Arrange
             var projectGroups = new List<ProjectGroup>
             {
-                new() { ProjectGroupName = "Group A" }
+                new() { ProjectGroupName = "Group A", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(projectGroups);
 

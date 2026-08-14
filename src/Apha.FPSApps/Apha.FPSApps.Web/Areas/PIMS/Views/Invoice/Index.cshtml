@@ -21,8 +21,8 @@
 
                 <!-- ── Filter toolbar ──────────────────────────────────────── -->
                
-                <div class="inv-toolbar">
-                    <div class="inv-toolbar__row">
+                <div class="inv-toolbar ">
+                    <div class="inv-toolbar__row govuk-!-margin-bottom-2">
                         <div class="inv-toolbar__item govuk-!-margin-left-1 govuk-!-margin-right-2 ">
                             <span class="govuk-label govuk-!-font-size-19 govuk-!-font-weight-bold">Filter</span>
                         </div>
@@ -33,7 +33,7 @@
                             <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                     id="invFilterProject"
                                     onchange="onInvProjectChange()"
-                                    aria-label="Filter by project">
+                                    aria-label="invFilterProject">
                                 <option value="">       </option>
                                 @foreach (var item in Model.ProjectList)
                                 {
@@ -56,7 +56,7 @@
                             <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                     id="invFilterSurvContract"
                                     onchange="onInvContractChange()"
-                                    aria-label="Filter by surveillance contract">
+                                    aria-label="invFilterSurvContract">
                                 <option value="">       </option>
                                 @foreach (var item in Model.ContractList)
                                 {
@@ -78,7 +78,7 @@
                             <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                     id="invFilterYear"
                                     onchange="applyInvoiceFilters()"
-                                    aria-label="Filter by year">
+                                    aria-label="invFilterYear">
                                 <option value="">       </option>
                                 @foreach (var item in Model.YearList)
                                 {
@@ -101,7 +101,7 @@
                             <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                     id="invFilterProgram"
                                     onchange="onInvProgramChange()"
-                                    aria-label="Filter by program">
+                                    aria-label="invFilterProgram">
                                 <option value="">       </option>
                                 @foreach (var item in Model.ProgramList)
                                 {
@@ -138,7 +138,7 @@
                 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10" style="margin-top: 8px;">
                     <div class="govuk-grid-column-full sup_p_0">
                         <div id="invTotalsContainer">
-                            <div id="invTotalsScrollWrapper" class="yfd-scroll-wrapper">
+                            <div id="invTotalsScrollWrapper" class="yfd-scroll-wrapper ">
                                 <table id="tblInvTotals" class="govuk-table custom-table yfd-totals-table" aria-label="Invoice totals">
                                     <colgroup>
                                         <col />

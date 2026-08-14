@@ -13,5 +13,15 @@ namespace Apha.Common.Contracts.Email
         public string DataSetupRejectionEmailRecipient { get; set; } = string.Empty;
         public string DataSetupRejectionEmailSubject { get; set; } = string.Empty;
         public string DataSetupRejectionEmailBody { get; set; } = string.Empty;
+
+        public string CutOverInitiatedEmailRecipient { get; set; } = string.Empty;
+        public string CutOverInitiatedEmailSubject { get; set; } = string.Empty;
+        public string CutOverInitiatedEmailBody { get; set; } = string.Empty;
+        public string CutOverApprovalEmailRecipient { get; set; } = string.Empty;
+        public string CutOverApprovalEmailSubject { get; set; } = string.Empty;
+        public string CutOverApprovalEmailBody { get; set; } = string.Empty;
+        public string CutOverRejectionEmailRecipient { get; set; } = string.Empty;
+        public string CutOverRejectionEmailSubject { get; set; } = string.Empty;
+        public string CutOverRejectionEmailBody { get; set; } = string.Empty;
     }
 }

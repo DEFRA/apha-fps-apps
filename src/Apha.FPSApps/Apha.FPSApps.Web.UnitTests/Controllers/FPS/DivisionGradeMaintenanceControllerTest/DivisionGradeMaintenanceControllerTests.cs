@@ -715,9 +715,83 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
         }
 
         #endregion
+
+        #region CheckDivisionGradeCodeExists Tests
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData(null)]
+        public async Task CheckDivisionGradeCodeExists_ReturnsFalse_WhenCodeIsEmpty(string? code)
+        {
+            // Act
+            var result = await _controller.CheckDivisionGradeCodeExists(code!);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<ExistsResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value.exists);
+            await _maintDGService.DidNotReceive().GetAllDivisionGradeCodesAsync();
+        }
+
+        [Fact]
+        public async Task CheckDivisionGradeCodeExists_ReturnsFalse_WhenCodeMatchesOriginalIgnoringCase()
+        {
+            // Act
+            var result = await _controller.CheckDivisionGradeCodeExists("A-VSD", "a-vsd");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<ExistsResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value.exists);
+            await _maintDGService.DidNotReceive().GetAllDivisionGradeCodesAsync();
+        }
+
+        [Theory]
+        [InlineData("A-VSD")]
+        [InlineData("a-vsd")]
+        [InlineData("A-vsd")]
+        public async Task CheckDivisionGradeCodeExists_ReturnsTrue_WhenDuplicateRegardlessOfCase(string code)
+        {
+            // Arrange
+            _maintDGService.GetAllDivisionGradeCodesAsync()
+                .Returns(ApiResponseDto<List<string>>.SuccessResponse(["A-VSD"]));
+
+            // Act
+            var result = await _controller.CheckDivisionGradeCodeExists(code);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<ExistsResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.True(value.exists);
+        }
+
+        [Fact]
+        public async Task CheckDivisionGradeCodeExists_ReturnsFalse_WhenCodeIsUnique()
+        {
+            // Arrange
+            _maintDGService.GetAllDivisionGradeCodesAsync()
+                .Returns(ApiResponseDto<List<string>>.SuccessResponse(["A-VSD"]));
+
+            // Act
+            var result = await _controller.CheckDivisionGradeCodeExists("B-VSD");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<ExistsResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value.exists);
+        }
+
+        #endregion
     }
 
     // Local helper record to deserialize JsonResult values
     internal record JsonResponse(bool success, string message, object? data = null, object? errors = null);
+
+    internal record ExistsResponse(bool exists);
 }
 

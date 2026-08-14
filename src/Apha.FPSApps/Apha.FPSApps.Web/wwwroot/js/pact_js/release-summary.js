@@ -34,8 +34,19 @@ function getLastCheckedIndexExcluding(excludeIndex) {
 /**
  * Disables checkboxes that appear before the last checked row.
  * The last checked row stays enabled so it can be unchecked.
+ * Also disables all checkboxes when the year is closed.
  */
 function updateCheckboxStates() {
+    // If year is closed, disable all grid checkboxes
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+        getGridRows().each(function () {
+            var $checkbox = getRowCheckbox($(this));
+            $checkbox.prop('disabled', true).attr('aria-disabled', 'true');
+        });
+        return;
+    }
+
+    // Otherwise, apply sequential logic
     var lastCheckedIndex = getLastCheckedIndex();
     getGridRows().each(function (index) {
         var $checkbox = getRowCheckbox($(this));
@@ -77,6 +88,11 @@ function saveFinalSummaryRun(periodName, finalSummariesRun, $row, $checkbox, isC
  * Sends the updated sendEmail setting to the server when cbSendEmail is toggled.
  */
 function onSendEmailChange() {
+    // Prevent changes when year is closed
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+        return false;
+    }
+
     var sendEmail = $(this).is(':checked') ? '1' : '0';
     $.ajax({
         url: setFinalSummaryRunUrl,
@@ -90,6 +106,11 @@ function onSendEmailChange() {
 }
 
 function onCheckboxChange() {
+    // Prevent changes when year is closed
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+        return false;
+    }
+
     var $checkbox = $(this);
     var $row = $checkbox.closest('tr');
     var periodName = $row.data('id');
@@ -109,6 +130,13 @@ function onCheckboxChange() {
 // ── Initialise ────────────────────────────────────────────────────────────────
 
 $(function () {
+    // Disable "Send Report Emails?" checkbox when year is closed
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+        $('#cbSendEmail')
+            .prop('disabled', true)
+            .attr('aria-disabled', 'true');
+    }
+
     updateCheckboxStates();
     $(GRID_SELECTOR).on('change', CHECKBOX_CLASS, onCheckboxChange);
     $('#cbSendEmail').on('change', onSendEmailChange);
