@@ -132,7 +132,10 @@ namespace Apha.FPSApps.Web.Filters
                 .MakeGenericMethod(rowType);
 
             var sheetName = string.IsNullOrWhiteSpace(config.SheetName) ? "Sheet1" : config.SheetName;
-            var fileContent = (byte[])exportMethod.Invoke(_excelExporter, new object[] { data, sheetName })!;
+            var includeProperties = config.VisibleColumnNames;
+            var fileContent = (byte[])exportMethod.Invoke(
+                _excelExporter,
+                new object?[] { data, sheetName, includeProperties })!;
 
             var baseName = config.FileName;
             if (baseName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
@@ -151,6 +154,7 @@ namespace Apha.FPSApps.Web.Filters
             IEnumerable? Data { get; }
             string FileName { get; }
             string SheetName { get; }
+            IReadOnlyList<string>? VisibleColumnNames { get; }
         }
 
         private sealed class DataGridExportConfig : IDataGridExportConfig
@@ -200,6 +204,44 @@ namespace Apha.FPSApps.Web.Filters
                 {
                     var title = _modelType.GetProperty("Title")?.GetValue(_model) as string;
                     return string.IsNullOrWhiteSpace(title) ? "Sheet1" : title.Trim();
+                }
+            }
+
+            // Restrict the export to the grid's VISIBLE columns, in their configured order. This
+            // automatically excludes [GridColumn(IsVisible = false)] members (e.g. DivisionId) and
+            // non-tabular helpers such as List<SelectListItem> ManagerList.
+            public IReadOnlyList<string>? VisibleColumnNames
+            {
+                get
+                {
+                    if (_modelType.GetProperty("Columns")?.GetValue(_model) is not IEnumerable columns)
+                    {
+                        return null;
+                    }
+
+                    var names = new List<string>();
+                    foreach (var column in columns)
+                    {
+                        if (column == null)
+                        {
+                            continue;
+                        }
+
+                        var columnType = column.GetType();
+                        var isVisible = (bool)(columnType.GetProperty("IsVisible")?.GetValue(column) ?? true);
+                        if (!isVisible)
+                        {
+                            continue;
+                        }
+
+                        if (columnType.GetProperty("PropertyName")?.GetValue(column) is string propertyName
+                            && !string.IsNullOrWhiteSpace(propertyName))
+                        {
+                            names.Add(propertyName);
+                        }
+                    }
+
+                    return names.Count > 0 ? names : null;
                 }
             }
         }

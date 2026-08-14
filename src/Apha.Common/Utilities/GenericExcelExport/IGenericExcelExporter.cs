@@ -16,7 +16,13 @@ namespace Apha.Common.Utilities.GenericExcelExport
         /// <typeparam name="T">Row type. Any class/record with public instance properties.</typeparam>
         /// <param name="data">The rows to export. A null value is treated as empty.</param>
         /// <param name="sheetName">The worksheet name.</param>
+        /// <param name="includeProperties">
+        /// Optional allow-list of property names to export, in the desired column order. When null or
+        /// empty, every eligible property is exported. Property names not found on <typeparamref name="T"/>
+        /// are ignored. Use this to restrict output to a known set of columns (e.g. only the grid's
+        /// visible columns).
+        /// </param>
         /// <returns>The generated .xlsx file as a byte array.</returns>
-        byte[] Export<T>(IEnumerable<T> data, string sheetName = "Sheet1");
+        byte[] Export<T>(IEnumerable<T> data, string sheetName = "Sheet1", IReadOnlyList<string>? includeProperties = null);
     }
 }

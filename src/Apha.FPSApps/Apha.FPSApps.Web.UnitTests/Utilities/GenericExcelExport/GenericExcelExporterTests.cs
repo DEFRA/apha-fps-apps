@@ -25,6 +25,15 @@ namespace Apha.FPSApps.Web.UnitTests.Utilities.GenericExcelExport
             public int InternalId { get; set; }
         }
 
+        private sealed class RowWithCollection
+        {
+            public string? Name { get; set; }
+
+            public int Age { get; set; }
+
+            public List<string> Tags { get; set; } = new();
+        }
+
         private static IXLWorksheet LoadFirstSheet(byte[] content)
         {
             using var stream = new MemoryStream(content);
@@ -131,6 +140,42 @@ namespace Apha.FPSApps.Web.UnitTests.Utilities.GenericExcelExport
             var workbook = new XLWorkbook(stream);
 
             Assert.Equal("BadName1", workbook.Worksheet(1).Name);
+        }
+
+        [Fact]
+        public void Export_SkipsCollectionProperties()
+        {
+            var data = new[] { new RowWithCollection { Name = "A", Age = 1, Tags = { "x", "y" } } };
+
+            var worksheet = LoadFirstSheet(_exporter.Export(data));
+
+            var headers = GetHeaders(worksheet);
+            Assert.Contains("Name", headers);
+            Assert.Contains("Age", headers);
+            Assert.DoesNotContain("Tags", headers);
+        }
+
+        [Fact]
+        public void Export_WithIncludeProperties_ExportsOnlyListedColumns_InOrder()
+        {
+            var data = new[] { new SampleRow { JobCode = "P1", Quantity = 5, Cost = 10m } };
+
+            var worksheet = LoadFirstSheet(
+                _exporter.Export(data, "Sheet1", new[] { "Quantity", "JobCode" }));
+
+            var headers = GetHeaders(worksheet);
+            Assert.Equal(new[] { "Quantity", "Project" }, headers);
+        }
+
+        [Fact]
+        public void Export_WithIncludeProperties_IgnoresUnknownNames()
+        {
+            var data = new[] { new SampleRow { Quantity = 5 } };
+
+            var worksheet = LoadFirstSheet(
+                _exporter.Export(data, "Sheet1", new[] { "Quantity", "DoesNotExist" }));
+
+            Assert.Equal(new[] { "Quantity" }, GetHeaders(worksheet));
         }
 
         private static IReadOnlyList<string> GetHeaders(IXLWorksheet worksheet)

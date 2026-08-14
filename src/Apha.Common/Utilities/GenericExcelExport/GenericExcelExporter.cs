@@ -8,10 +8,10 @@ namespace Apha.Common.Utilities.GenericExcelExport
     /// <inheritdoc cref="IGenericExcelExporter"/>
     public sealed class GenericExcelExporter : IGenericExcelExporter
     {
-        public byte[] Export<T>(IEnumerable<T> data, string sheetName = "Sheet1")
+        public byte[] Export<T>(IEnumerable<T> data, string sheetName = "Sheet1", IReadOnlyList<string>? includeProperties = null)
         {
             var rows = data ?? Enumerable.Empty<T>();
-            var columns = GetColumns(typeof(T));
+            var columns = GetColumns(typeof(T), includeProperties);
 
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add(SanitiseSheetName(sheetName));
@@ -79,16 +79,55 @@ namespace Apha.Common.Utilities.GenericExcelExport
             }
         }
 
-        private static IReadOnlyList<ExportColumn> GetColumns(Type type)
+        private static IReadOnlyList<ExportColumn> GetColumns(Type type, IReadOnlyList<string>? includeProperties)
         {
-            return type
+            var candidates = type
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
                 .Where(p => p.GetCustomAttribute<ExcelIgnoreAttribute>() is null)
+                .Where(IsExportableType);
+
+            if (includeProperties != null && includeProperties.Count > 0)
+            {
+                var lookup = candidates.ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
+
+                return includeProperties
+                    .Where(lookup.ContainsKey)
+                    .Select((name, index) => new ExportColumn(lookup[name], index))
+                    .ToList();
+            }
+
+            return candidates
                 .Select((p, index) => new ExportColumn(p, index))
                 .OrderBy(c => c.Order)
                 .ThenBy(c => c.DeclarationIndex)
                 .ToList();
+        }
+
+        // Excludes complex/collection members (e.g. List<SelectListItem>) that are not meaningful in a flat sheet.
+        private static bool IsExportableType(PropertyInfo property)
+        {
+            var type = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+
+            if (type == typeof(string))
+            {
+                return true;
+            }
+
+            if (typeof(System.Collections.IEnumerable).IsAssignableFrom(type))
+            {
+                return false;
+            }
+
+            return type.IsPrimitive
+                || type.IsEnum
+                || type == typeof(decimal)
+                || type == typeof(DateTime)
+                || type == typeof(DateOnly)
+                || type == typeof(TimeOnly)
+                || type == typeof(DateTimeOffset)
+                || type == typeof(TimeSpan)
+                || type == typeof(Guid);
         }
 
         private static string SanitiseSheetName(string sheetName)
