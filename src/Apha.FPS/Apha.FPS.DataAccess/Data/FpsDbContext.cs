@@ -1,5 +1,4 @@
-﻿
-using Apha.FPS.Core.Entities;
+﻿using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -79,6 +78,8 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ProjectMonthFinal> ProjectMonthFinals { get; set; }
         public virtual DbSet<ProjectInvoice> ProjectInvoices { get; set; }
         public virtual DbSet<ProjectSubContract> ProjectSubContracts { get; set; }
+        public virtual DbSet<PeriodProjSubContract> PeriodProjSubContracts { get; set; }
+        public virtual DbSet<PeriodMonthlyOutput> PeriodMonthlyOutputs { get; set; }
 
         public virtual DbSet<TimeCostCalcsView> TimeCostCalcsViews { get; set; }
         public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
@@ -124,8 +125,9 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<BatchJobQueueLog> BatchJobQueueLogs { get; set; }
         public virtual DbSet<BatchJobStatus> BatchJobStatuses { get; set; }
         public virtual DbSet<MonthHour> MonthHours { get; set; }
-
-
+                       
+        public virtual DbSet<PeriodLookup> PeriodLookups { get; set; }
+        public virtual DbSet<Period> Periods { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -248,6 +250,10 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new PactWorkGroupGradeViewMap());
             modelBuilder.Entity<PactWorkGroupGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new PeriodLookupMap());
+            modelBuilder.Entity<PeriodLookup>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.Entity<PactWorkGroupGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new YearMasterMap());
             modelBuilder.ApplyConfiguration(new StaffJobLogMap());
             modelBuilder.Entity<StaffJobLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -280,6 +286,8 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new ProjectSubContractMap());
             modelBuilder.Entity<ProjectSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new PeriodProjSubContractMap());
 
             modelBuilder.ApplyConfiguration(new AdditionalCostMap());
             modelBuilder.Entity<AdditionalCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -384,6 +392,11 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new MonthHourMap());
             modelBuilder.Entity<MonthHour>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new PeriodMap());
+            modelBuilder.Entity<Period>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new PeriodMonthlyOutputMap());
         }
     }
 }
