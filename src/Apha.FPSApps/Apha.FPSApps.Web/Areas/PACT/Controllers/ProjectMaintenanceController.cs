@@ -150,11 +150,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> Details([FromRoute(Name = "id")] string parentProject)
         {
             TempData["PactOrigin"] = "Project";
-            TempData["SelectedParentProject"] = parentProject;
             ViewBag.NavigationSource = TempData.Peek("NavigationSource")?.ToString();
-
-            // Clear the OriginalParentProject when returning to Details page
-            TempData.Remove("OriginalParentProject");
 
             var projectResponse = await _projectService.GetProjectByIdAsync(parentProject);
             if (!projectResponse.Success || projectResponse.Data == null)
