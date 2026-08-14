@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using Apha.FPSApps.Application.Dtos.FPS.BulkRates;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models

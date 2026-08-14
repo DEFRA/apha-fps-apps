@@ -1,4 +1,4 @@
-namespace Apha.FPSApps.Application.Dtos.FPS.BulkRates
+namespace Apha.FPSApps.Application.Dtos.FPS
 {
     /// <summary>
     /// Web-side DTO matching the JSON shape returned by the FPS API Bulk Rates endpoints

@@ -278,7 +278,7 @@
                                         @if (Model.CanRelease)
                                         {
                                             <button type="button" class="govuk-button" data-module="govuk-button" id="btnRelease"
-                                                    onclick="BulkRates.release('@entry.JobExecutionId')">
+                                                    onclick="BulkRates.showReleaseModal('@entry.JobExecutionId')">
                                                 Release for Approval
                                             </button>
                                         }
@@ -288,7 +288,7 @@
                                         {
                                             <button type="button" class="govuk-button" data-module="govuk-button" id="btnApprove"
                                                     data-return-url="/FPS/BulkRates/@QueueAction(entry.JobName)"
-                                                    onclick="BulkRates.approve('@entry.JobExecutionId')">
+                                                    onclick="BulkRates.showApproveModal('@entry.JobExecutionId')">
                                                 Approve
                                             </button>
                                         }
@@ -307,6 +307,7 @@
                                         @if (Model.CanCancel)
                                         {
                                             <button type="button" class="govuk-button govuk-button--warning" data-module="govuk-button" id="btnCancel"
+                                                    data-return-url="/FPS/BulkRates/@QueueAction(entry.JobName)"
                                                     onclick="BulkRates.showCancelModal('@entry.JobExecutionId')">
                                                 Cancel Request
                                             </button>
@@ -485,6 +486,12 @@
 
     </div>
 </main>
+
+@* Release modal (rendered at body end, toggled by JS) *@
+@await Html.PartialAsync("_ReleaseModal")
+
+@* Approval modal (rendered at body end, toggled by JS) *@
+@await Html.PartialAsync("_ApproveModal")
 
 @* Rejection modal (rendered at body end, toggled by JS) *@
 @await Html.PartialAsync("_RejectModal")

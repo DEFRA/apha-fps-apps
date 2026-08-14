@@ -1,5 +1,5 @@
 using Apha.Common.Contracts.FPS;
-using Apha.FPSApps.Application.Dtos.FPS.BulkRates;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Infrastructure.Mappings;
 using AutoMapper;
 using Xunit;

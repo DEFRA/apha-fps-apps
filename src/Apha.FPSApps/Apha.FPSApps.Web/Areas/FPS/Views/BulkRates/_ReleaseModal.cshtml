@@ -1,0 +1,27 @@
+@*
+    _ReleaseModal.cshtml — Release-for-approval confirmation modal.
+    Toggled by BulkRates.showReleaseModal() / BulkRates.closeReleaseModal().
+    BulkRates.confirmRelease() POSTs to /FPS/BulkRates/Release.
+    Mirrors _CancelModal.cshtml / _RejectModal.cshtml's structure for a standardized modal pattern.
+*@
+<div id="releaseModalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9999;"
+     role="dialog" aria-modal="true" aria-labelledby="releaseModalTitle">
+    <div style="background:#fff; max-width:480px; margin:10vh auto; padding:2rem; border:2px solid #0b0c0c;">
+        <div class="modal-header">
+            <h2 class="govuk-heading-m" id="releaseModalTitle">Release for approval</h2>
+            <button type="button" class="btn-close btn-red" aria-label="Close" onclick="BulkRates.closeReleaseModal()">X</button>
+        </div>
+        <p class="govuk-body-s">Release this request for approval? This action cannot be undone.</p>
+
+        <div class="govuk-button-group govuk-!-margin-bottom-0">
+            <button type="button" class="govuk-button govuk-!-margin-bottom-0"
+                    id="btnConfirmRelease" onclick="BulkRates.confirmRelease()">
+                Release for Approval
+            </button>
+            <button type="button" class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 govuk-!-margin-left-2"
+                    onclick="BulkRates.closeReleaseModal()">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>

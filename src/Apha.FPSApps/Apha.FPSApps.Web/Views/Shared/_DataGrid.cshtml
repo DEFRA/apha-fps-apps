@@ -437,9 +437,18 @@
                 return params;
             },
 
-            reloadGrid: function(params) {
+            // options.silent — background/polling reloads that shouldn't flash the full-page
+            // loader (jQuery's own "global" ajax option: false keeps this one request out of
+            // the ajaxStart/ajaxStop pair govuk-modal-dialog.js binds the loader to). Defaults
+            // to false so every existing caller keeps today's loader behaviour unchanged.
+            reloadGrid: function(params, options) {
                 var self = this;
-                $.post(bindGridUrl, self.getAjaxParams(params))
+                $.ajax({
+                    type: 'POST',
+                    url: bindGridUrl,
+                    data: self.getAjaxParams(params),
+                    global: !(options && options.silent)
+                })
                     .done(function (htmlData) {
                         $(gridContainerSelector).html(htmlData);
                         self.applyGridColumnWidths();

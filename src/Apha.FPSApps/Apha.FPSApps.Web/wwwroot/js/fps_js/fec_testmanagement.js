@@ -292,7 +292,11 @@ var BulkRates = (function () {
         var $statusCell = $('tr[data-id="' + _pollJobExecutionId + '"] td[data-property="Status"]');
         if ($statusCell.length === 0) { return; }
         var currentStatus = $.trim($statusCell.text());
-        if (currentStatus !== 'Approved' && currentStatus !== 'Running') {
+        // The grid's Status cell renders the friendly label (BulkRatesStatusDisplay.FriendlyLabel
+        // on the server), not the raw status — "Approved" is displayed as "Submitted". Comparing
+        // against the raw value here meant the cell text never matched, so polling always stopped
+        // after the first reload and the grid got stuck showing "Submitted".
+        if (currentStatus !== 'Submitted' && currentStatus !== 'Running') {
             stopActiveRequestPolling();
             $('#activeRequestBanner').remove();
             var $btnArea = $('#newRequestButtonArea');
@@ -324,51 +328,84 @@ var BulkRates = (function () {
                 return;
             }
             var gm = window['gridManager_bulkRatesGrid'];
-            if (gm) { gm.reloadGrid({ page: 1 }); }
+            // silent: true — background poll, not a user action; skip the full-page loader
+            // flash so only the Status badge visibly changes between ticks.
+            if (gm) { gm.reloadGrid({ page: 1 }, { silent: true }); }
         }, 3000);
     }
 
-    // ── Release for Approval ────────────────────────────────────────────────
+    // ── Release for Approval modal ──────────────────────────────────────────
+    // Uses the same custom-overlay pattern as the Cancel/Reject modals below,
+    // rather than the generic showGovukConfirm() dialog, so the four action
+    // modals on this page look and behave consistently with each other.
 
-    function release(requestId) {
-        showGovukConfirm('Release this request for approval? This action cannot be undone.').then(function (confirmed) {
-            if (!confirmed) { return; }
-            hideActionError();
-            var btn = document.getElementById('btnRelease');
-            if (btn) { btn.disabled = true; }
+    var _pendingReleaseId = null;
 
-            ajaxPost(
-                '/FPS/BulkRates/Release',
-                { id: requestId },
-                function () { window.location.reload(); },
-                function (msg) {
-                    showActionError(msg);
-                    if (btn) { btn.disabled = false; }
-                }
-            );
-        });
+    function showReleaseModal(requestId) {
+        _pendingReleaseId = requestId;
+        var overlay = document.getElementById('releaseModalOverlay');
+        if (!overlay) { return; }
+        overlay.style.display = '';
     }
 
-    // ── Approve ──────────────────────────────────────────────────────────────
+    function closeReleaseModal() {
+        var overlay = document.getElementById('releaseModalOverlay');
+        if (overlay) { overlay.style.display = 'none'; }
+        _pendingReleaseId = null;
+    }
 
-    function approve(requestId) {
-        showGovukConfirm('Approve this request? The changes will be processed and applied.').then(function (confirmed) {
-            if (!confirmed) { return; }
-            hideActionError();
-            var btn = document.getElementById('btnApprove');
-            if (btn) { btn.disabled = true; }
+    function confirmRelease() {
+        var requestId = _pendingReleaseId;
+        closeReleaseModal();
+        hideActionError();
+        var btn = document.getElementById('btnRelease');
+        if (btn) { btn.disabled = true; }
 
-            var returnUrl = btn ? (btn.getAttribute('data-return-url') || '/FPS/BulkRates') : '/FPS/BulkRates';
-            ajaxPost(
-                '/FPS/BulkRates/Approve',
-                { id: requestId },
-                function () { window.fpsNavigateTo(returnUrl); },
-                function (msg) {
-                    showActionError(msg);
-                    if (btn) { btn.disabled = false; }
-                }
-            );
-        });
+        ajaxPost(
+            '/FPS/BulkRates/Release',
+            { id: requestId },
+            function () { window.location.reload(); },
+            function (msg) {
+                showActionError(msg);
+                if (btn) { btn.disabled = false; }
+            }
+        );
+    }
+
+    // ── Approve modal ───────────────────────────────────────────────────────
+
+    var _pendingApproveId = null;
+
+    function showApproveModal(requestId) {
+        _pendingApproveId = requestId;
+        var overlay = document.getElementById('approveModalOverlay');
+        if (!overlay) { return; }
+        overlay.style.display = '';
+    }
+
+    function closeApproveModal() {
+        var overlay = document.getElementById('approveModalOverlay');
+        if (overlay) { overlay.style.display = 'none'; }
+        _pendingApproveId = null;
+    }
+
+    function confirmApprove() {
+        var requestId = _pendingApproveId;
+        closeApproveModal();
+        hideActionError();
+        var btn = document.getElementById('btnApprove');
+        if (btn) { btn.disabled = true; }
+
+        var returnUrl = btn ? (btn.getAttribute('data-return-url') || '/FPS/BulkRates') : '/FPS/BulkRates';
+        ajaxPost(
+            '/FPS/BulkRates/Approve',
+            { id: requestId },
+            function () { window.fpsNavigateTo(returnUrl); },
+            function (msg) {
+                showActionError(msg);
+                if (btn) { btn.disabled = false; }
+            }
+        );
     }
 
     // ── Reject modal ─────────────────────────────────────────────────────────
@@ -434,9 +471,12 @@ var BulkRates = (function () {
     // ── Cancel modal ─────────────────────────────────────────────────────────
 
     var _pendingCancelId = null;
+    var _pendingCancelReturnUrl = '/FPS/BulkRates';
 
     function showCancelModal(requestId) {
         _pendingCancelId = requestId;
+        var triggerBtn = document.getElementById('btnCancel');
+        _pendingCancelReturnUrl = triggerBtn ? (triggerBtn.getAttribute('data-return-url') || '/FPS/BulkRates') : '/FPS/BulkRates';
         var overlay = document.getElementById('cancelModalOverlay');
         var reason  = document.getElementById('cancelReason');
         if (!overlay) { return; }
@@ -461,7 +501,11 @@ var BulkRates = (function () {
         ajaxPost(
             '/FPS/BulkRates/Cancel',
             { id: _pendingCancelId, reason: reasonVal },
-            function () { window.fpsNavigateTo('/FPS/BulkRates/Index'); },
+            function () {
+                var returnUrl = _pendingCancelReturnUrl;
+                closeCancelModal();
+                window.fpsNavigateTo(returnUrl);
+            },
             function (msg) {
                 if (btn) { btn.disabled = false; }
                 alert(msg);
@@ -472,6 +516,8 @@ var BulkRates = (function () {
     // ── Keyboard: close modals on Escape ─────────────────────────────────────
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
+            closeReleaseModal();
+            closeApproveModal();
             closeRejectModal();
             closeCancelModal();
             closeUploadTrackerModal();
@@ -494,8 +540,12 @@ var BulkRates = (function () {
     return {
         submitCreate:           submitCreate,
         uploadFile:             uploadFile,
-        release:                release,
-        approve:                approve,
+        showReleaseModal:       showReleaseModal,
+        closeReleaseModal:      closeReleaseModal,
+        confirmRelease:         confirmRelease,
+        showApproveModal:       showApproveModal,
+        closeApproveModal:      closeApproveModal,
+        confirmApprove:         confirmApprove,
         showRejectModal:        showRejectModal,
         closeRejectModal:       closeRejectModal,
         confirmReject:          confirmReject,

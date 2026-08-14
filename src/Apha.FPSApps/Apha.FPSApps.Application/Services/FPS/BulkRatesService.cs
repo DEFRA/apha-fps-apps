@@ -1,5 +1,5 @@
 using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.FPS.BulkRates;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Pagination;
