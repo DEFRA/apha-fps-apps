@@ -1742,3 +1742,6 @@ table#tblMonthPeriod > tbody > tr > td {
 .sup_m-2 {
     margin-bottom: 2px;
 }
+sup_font-size-19{
+    font-size: 19px !important;
+}
