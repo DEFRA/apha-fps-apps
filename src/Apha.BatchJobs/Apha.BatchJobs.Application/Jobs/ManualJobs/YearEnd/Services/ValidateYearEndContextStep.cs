@@ -1,36 +1,40 @@
+using System.Data.Common;
+
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
 /// <summary>
-/// Validates mandatory Year End context values before data movement starts.
+/// Validates mandatory Year End context values before data movement starts, deriving the current
+/// FPS year live from <c>fps.tblyearmaster</c> rather than trusting a payload-supplied value.
 /// </summary>
 public sealed class ValidateYearEndContextStep : IYearEndDataSetupStep
 {
     public string Name => "ValidateYearEndContextStep";
 
-    public Task ExecuteAsync(YearEndExecutionContext context, CancellationToken cancellationToken = default)
+    public async Task<YearEndExecutionContext> ExecuteAsync(
+        YearEndExecutionContext context,
+        DbConnection connection,
+        DbTransaction transaction,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (!context.CurrentFpsYear.HasValue)
-        {
-            throw new InvalidOperationException("Year End Data Setup requires currentFpsYear in BATCH_JOB_PARAMETERS_JSON.");
-        }
-
         if (!context.TargetFpsYear.HasValue)
         {
-            throw new InvalidOperationException("Year End Data Setup requires targetFpsYear in BATCH_JOB_PARAMETERS_JSON.");
+            throw new InvalidOperationException("Year End Data Setup requires plannedYear in BATCH_JOB_PARAMETERS_JSON.");
         }
 
-        if (context.TargetFpsYear.Value == context.CurrentFpsYear.Value)
+        var currentFpsYear = await YearEndYearContextResolver.ResolveCurrentFpsYearAsync(connection, transaction, cancellationToken);
+
+        if (context.TargetFpsYear.Value == currentFpsYear)
         {
-            throw new InvalidOperationException("targetFpsYear must be different from currentFpsYear.");
+            throw new InvalidOperationException("plannedYear must be different from the current Open year.");
         }
 
-        if (context.TargetFpsYear.Value < context.CurrentFpsYear.Value)
+        if (context.TargetFpsYear.Value < currentFpsYear)
         {
-            throw new InvalidOperationException("targetFpsYear must be greater than currentFpsYear.");
+            throw new InvalidOperationException("plannedYear must be greater than the current Open year.");
         }
 
-        return Task.CompletedTask;
+        return context with { CurrentFpsYear = currentFpsYear };
     }
 }

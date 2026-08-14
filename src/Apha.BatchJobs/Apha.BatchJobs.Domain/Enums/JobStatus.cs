@@ -34,5 +34,11 @@ public enum JobStatus
     /// <summary>
     /// Request rejected by an approver and will not be executed.
     /// </summary>
-    Rejected = 5
+    Rejected = 5,
+
+    /// <summary>
+    /// Request cancelled by the requester before it was approved. Worker-side lifecycle
+    /// awareness only — cancellation itself is Initiated-only and API-managed.
+    /// </summary>
+    Cancelled = 6
 }

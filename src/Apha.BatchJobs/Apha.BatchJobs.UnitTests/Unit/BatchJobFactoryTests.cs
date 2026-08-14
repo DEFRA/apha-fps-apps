@@ -1,11 +1,15 @@
 using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Jobs.HealthCheck;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 using Apha.BatchJobs.Domain.Configuration;
+using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using NSubstitute;
 
 namespace Apha.BatchJobs.UnitTests;
 
@@ -80,11 +84,47 @@ public sealed class BatchJobFactoryTests
             "MABArchive",
             "MilestoneUpdateNotifications",
             "RecreateSummary",
-            "YearEndCutover",
-            "YearEndDataSetup"
+            "YearEnd-CutOver",
+            "YearEnd-DataSetup"
         };
 
         Assert.Equal(expected, factory.GetAvailableJobs());
+    }
+
+    [Fact]
+    public void Create_ShouldResolveCanonicalYearEndDataSetupName_ToDataSetupHandler()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(Substitute.For<IYearEndDataSetupService>());
+        services.AddSingleton(Substitute.For<ICorrelationService>());
+        services.AddSingleton<ILogger<YearEndDataSetupJobHandler>>(NullLogger<YearEndDataSetupJobHandler>.Instance);
+        services.AddSingleton<YearEndDataSetupJobHandler>();
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var factory = new BatchJobFactory(serviceProvider);
+
+        var job = factory.Create("YearEnd-DataSetup");
+
+        Assert.IsType<YearEndDataSetupJobHandler>(job);
+        Assert.Equal("YearEnd-DataSetup", job.Name);
+    }
+
+    [Fact]
+    public void Create_ShouldResolveCanonicalYearEndCutOverName_ToCutoverHandler()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(Substitute.For<IYearEndCutoverService>());
+        services.AddSingleton(Substitute.For<ICorrelationService>());
+        services.AddSingleton<ILogger<YearEndCutoverJobHandler>>(NullLogger<YearEndCutoverJobHandler>.Instance);
+        services.AddSingleton<YearEndCutoverJobHandler>();
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var factory = new BatchJobFactory(serviceProvider);
+
+        var job = factory.Create("YearEnd-CutOver");
+
+        Assert.IsType<YearEndCutoverJobHandler>(job);
+        Assert.Equal("YearEnd-CutOver", job.Name);
     }
 
     [Fact]

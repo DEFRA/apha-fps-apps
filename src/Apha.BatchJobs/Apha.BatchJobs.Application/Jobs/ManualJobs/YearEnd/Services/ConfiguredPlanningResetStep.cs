@@ -1,7 +1,5 @@
-using Apha.BatchJobs.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System.Data.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
@@ -54,20 +52,20 @@ public sealed class ConfiguredPlanningResetStep : IYearEndDataSetupStep
             }
         };
 
-    private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
     private readonly ILogger<ConfiguredPlanningResetStep> _logger;
 
-    public ConfiguredPlanningResetStep(
-        IDbContextFactory<BatchJobsDbContext> dbContextFactory,
-        ILogger<ConfiguredPlanningResetStep> logger)
+    public ConfiguredPlanningResetStep(ILogger<ConfiguredPlanningResetStep> logger)
     {
-        _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public string Name => "ConfiguredPlanningResetStep";
 
-    public async Task ExecuteAsync(YearEndExecutionContext context, CancellationToken cancellationToken = default)
+    public async Task<YearEndExecutionContext> ExecuteAsync(
+        YearEndExecutionContext context,
+        DbConnection connection,
+        DbTransaction transaction,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -76,14 +74,11 @@ public sealed class ConfiguredPlanningResetStep : IYearEndDataSetupStep
             throw new InvalidOperationException("Year End context must include targetFpsYear before configured planning reset.");
         }
 
-        await using var dbContext = _dbContextFactory.CreateDbContext();
-        await dbContext.Database.OpenConnectionAsync(cancellationToken);
-        var connection = dbContext.Database.GetDbConnection();
-
         var totalUpdated = 0;
 
         totalUpdated += await ApplyResetsForSchemaAsync(
             connection,
+            transaction,
             schema: "fps",
             yearColumn: "fpsyear",
             tableRules: FpsResetRulesByTable,
@@ -93,6 +88,7 @@ public sealed class ConfiguredPlanningResetStep : IYearEndDataSetupStep
 
         totalUpdated += await ApplyResetsForSchemaAsync(
             connection,
+            transaction,
             schema: "mabarchive",
             yearColumn: "year",
             tableRules: MabArchiveResetRulesByTable,
@@ -105,10 +101,13 @@ public sealed class ConfiguredPlanningResetStep : IYearEndDataSetupStep
             context.CorrelationId,
             context.TargetFpsYear,
             totalUpdated);
+
+        return context;
     }
 
     private async Task<int> ApplyResetsForSchemaAsync(
         DbConnection connection,
+        DbTransaction transaction,
         string schema,
         string yearColumn,
         IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> tableRules,
@@ -125,7 +124,7 @@ public sealed class ConfiguredPlanningResetStep : IYearEndDataSetupStep
             var tableName = tableEntry.Key;
             var resetRules = tableEntry.Value;
 
-            var exists = await TableExistsAsync(connection, schema, tableName, cancellationToken);
+            var exists = await YearEndSqlHelpers.TableExistsAsync(connection, transaction, schema, tableName, cancellationToken);
             if (!exists)
             {
                 _logger.LogWarning(
@@ -136,7 +135,7 @@ public sealed class ConfiguredPlanningResetStep : IYearEndDataSetupStep
                 continue;
             }
 
-            var hasYearColumn = await ColumnExistsAsync(connection, schema, tableName, yearColumn, cancellationToken);
+            var hasYearColumn = await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, schema, tableName, yearColumn, cancellationToken);
             if (!hasYearColumn)
             {
                 throw new InvalidOperationException(
@@ -146,7 +145,7 @@ public sealed class ConfiguredPlanningResetStep : IYearEndDataSetupStep
             var setClauses = new List<string>();
             foreach (var rule in resetRules)
             {
-                if (await ColumnExistsAsync(connection, schema, tableName, rule.Key, cancellationToken))
+                if (await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, schema, tableName, rule.Key, cancellationToken))
                 {
                     setClauses.Add($"{rule.Key} = {rule.Value}");
                 }
@@ -164,6 +163,7 @@ public sealed class ConfiguredPlanningResetStep : IYearEndDataSetupStep
 
             var updated = await ExecuteResetAsync(
                 connection,
+                transaction,
                 schema,
                 tableName,
                 yearColumn,
@@ -185,51 +185,9 @@ public sealed class ConfiguredPlanningResetStep : IYearEndDataSetupStep
         return updatedTotal;
     }
 
-    private static async Task<bool> TableExistsAsync(
-        DbConnection connection,
-        string schema,
-        string table,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.tables
-                WHERE table_schema = @schema_name
-                  AND table_name = @table_name
-            );";
-
-        AddParameter(command, "schema_name", schema);
-        AddParameter(command, "table_name", table);
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
-
-    private static async Task<bool> ColumnExistsAsync(
-        DbConnection connection,
-        string schema,
-        string table,
-        string column,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.columns
-                WHERE table_schema = @schema_name
-                  AND table_name = @table_name
-                  AND column_name = @column_name
-            );";
-
-        AddParameter(command, "schema_name", schema);
-        AddParameter(command, "table_name", table);
-        AddParameter(command, "column_name", column);
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
-
     private static async Task<int> ExecuteResetAsync(
         DbConnection connection,
+        DbTransaction transaction,
         string schema,
         string table,
         string yearColumn,
@@ -237,27 +195,12 @@ public sealed class ConfiguredPlanningResetStep : IYearEndDataSetupStep
         int targetYear,
         CancellationToken cancellationToken)
     {
-        await using var command = connection.CreateCommand();
-        command.CommandText = $@"
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, $@"
             UPDATE {schema}.{table}
             SET {string.Join(", ", setClauses)}
-            WHERE {yearColumn} = @target_year;";
+            WHERE {yearColumn} = @target_year;");
 
-        AddParameter(command, "target_year", targetYear);
+        YearEndSqlHelpers.AddParameter(command, "target_year", targetYear);
         return await command.ExecuteNonQueryAsync(cancellationToken);
-    }
-
-    private static async Task<bool> ExecuteBooleanAsync(DbCommand command, CancellationToken cancellationToken)
-    {
-        var result = await command.ExecuteScalarAsync(cancellationToken);
-        return result is bool value && value;
-    }
-
-    private static void AddParameter(DbCommand command, string name, object value)
-    {
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = name;
-        parameter.Value = value;
-        command.Parameters.Add(parameter);
     }
 }

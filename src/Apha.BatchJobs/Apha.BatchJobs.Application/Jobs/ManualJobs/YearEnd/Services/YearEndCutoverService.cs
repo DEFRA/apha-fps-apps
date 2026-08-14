@@ -37,29 +37,17 @@ public sealed class YearEndCutoverService : IYearEndCutoverService
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (!context.CurrentFpsYear.HasValue)
-        {
-            throw new InvalidOperationException("Year End Cutover requires currentFpsYear in BATCH_JOB_PARAMETERS_JSON.");
-        }
-
         if (!context.TargetFpsYear.HasValue)
         {
-            throw new InvalidOperationException("Year End Cutover requires targetFpsYear in BATCH_JOB_PARAMETERS_JSON.");
+            throw new InvalidOperationException("Year End Cutover requires plannedYear in BATCH_JOB_PARAMETERS_JSON.");
         }
 
-        var currentYear = context.CurrentFpsYear.Value;
         var targetYear = context.TargetFpsYear.Value;
 
-        if (targetYear <= currentYear)
-        {
-            throw new InvalidOperationException("targetFpsYear must be greater than currentFpsYear for Year End Cutover.");
-        }
-
         _logger.LogInformation(
-            "YearEndCutover service started | CorrelationId={CorrelationId} | TargetFpsYear={TargetFpsYear} | CurrentFpsYear={CurrentFpsYear}",
+            "YearEndCutover service started | CorrelationId={CorrelationId} | TargetFpsYear={TargetFpsYear}",
             context.CorrelationId,
-            targetYear,
-            currentYear);
+            targetYear);
 
         var latestDataSetupExecution = await _executionRepository.GetLastExecutionByFpsYearAsync(
             BatchJobNames.YearEndDataSetup,
@@ -78,6 +66,7 @@ public sealed class YearEndCutoverService : IYearEndCutoverService
         await dbContext.Database.OpenConnectionAsync(cancellationToken);
 
         var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        var closedYear = 0;
 
         await executionStrategy.ExecuteAsync(async () =>
         {
@@ -87,6 +76,14 @@ public sealed class YearEndCutoverService : IYearEndCutoverService
 
             try
             {
+                var currentYear = await YearEndYearContextResolver.ResolveCurrentFpsYearAsync(connection, dbTransaction, cancellationToken);
+                closedYear = currentYear;
+
+                if (targetYear <= currentYear)
+                {
+                    throw new InvalidOperationException("plannedYear must be greater than the current Open year for Year End Cutover.");
+                }
+
                 var targetState = await GetYearStateForUpdateAsync(connection, dbTransaction, targetYear, cancellationToken);
                 if (targetState is null)
                 {
@@ -137,7 +134,7 @@ public sealed class YearEndCutoverService : IYearEndCutoverService
         _logger.LogInformation(
             "YearEndCutover completed | CorrelationId={CorrelationId} | ClosedYear={ClosedYear} | ActivatedYear={ActivatedYear}",
             context.CorrelationId,
-            currentYear,
+            closedYear,
             targetYear);
     }
 

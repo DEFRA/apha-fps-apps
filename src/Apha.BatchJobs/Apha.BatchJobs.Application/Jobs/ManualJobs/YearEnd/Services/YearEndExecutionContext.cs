@@ -12,19 +12,24 @@ public sealed record YearEndExecutionContext(
     int? TargetFpsYear)
 {
     /// <summary>
+    /// Alias for <see cref="TargetFpsYear"/> under its production event field name.
+    /// </summary>
+    public int? PlannedYear => TargetFpsYear;
+
+    /// <summary>
     /// Builds execution context from worker environment variables.
     /// </summary>
     public static YearEndExecutionContext FromEnvironment(string? correlationId)
     {
         var parametersJson = Environment.GetEnvironmentVariable("BATCH_JOB_PARAMETERS_JSON");
         var currentFpsYear = TryReadInt(parametersJson, "currentFpsYear");
-        var targetFpsYear = TryReadInt(parametersJson, "targetFpsYear");
+        var plannedYear = YearEndPlannedYearParser.Parse(parametersJson);
 
         return new YearEndExecutionContext(
             string.IsNullOrWhiteSpace(correlationId) ? Guid.NewGuid().ToString("D") : correlationId,
             parametersJson,
             currentFpsYear,
-            targetFpsYear);
+            plannedYear);
     }
 
     private static int? TryReadInt(string? json, string propertyName)

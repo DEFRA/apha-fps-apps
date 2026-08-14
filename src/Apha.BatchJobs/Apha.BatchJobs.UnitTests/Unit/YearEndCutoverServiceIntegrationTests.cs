@@ -12,10 +12,18 @@ namespace Apha.BatchJobs.UnitTests;
 /// PostgreSQL-backed Year End Cutover integration tests with skip-safe semantics.
 /// The service commits its own transaction against fps.tblyearmaster, so seeded rows
 /// are inserted and committed up front and always removed again in a finally block.
-/// Both tests also seed a Completed YearEndDataSetup job_queue row for the target year,
+/// All tests also seed a Completed YearEndDataSetup job_queue row for the target year,
 /// since the service now requires that precondition (spec Section 20.1) before it will
 /// even look at fps.tblyearmaster.
 /// </summary>
+/// <remarks>
+/// Since Phase 1, the service derives the current FPS year live from the single Open row in
+/// <c>fps.tblyearmaster</c> (<see cref="YearEndYearContextResolver"/>) rather than trusting
+/// <c>context.CurrentFpsYear</c> — these tests read the database's real live Open year and only
+/// ever seed the (far-future, disposable) target/planned year row, never a competing "Open" row,
+/// since the resolver requires exactly one Open row across the whole table. Must only ever run
+/// against an isolated/local database — never <c>batchjob_testing</c>.
+/// </remarks>
 [Trait("Category", "Integration")]
 public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
 {
@@ -23,6 +31,8 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
     private readonly string _connectionString;
     private string? _skipReason;
     private bool _yearEndDataSetupCompletedCatalogAvailable;
+    private bool _exactlyOneOpenYear;
+    private int _liveOpenYear;
 
     public YearEndCutoverServiceIntegrationTests()
     {
@@ -51,6 +61,16 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
                     WHERE m.jobname = {BatchJobNames.YearEndDataSetup}
                       AND s.status = 'Completed'")
                 .SingleAsync() > 0;
+
+            var openYears = await context.Database
+                .SqlQuery<int>($@"SELECT fpsyear AS ""Value"" FROM fps.tblyearmaster WHERE yearstatus = 'Open'")
+                .ToListAsync();
+
+            _exactlyOneOpenYear = openYears.Count == 1;
+            if (_exactlyOneOpenYear)
+            {
+                _liveOpenYear = openYears[0];
+            }
         }
         catch (Exception ex)
         {
@@ -63,16 +83,11 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
     [SkippableFact]
     public async Task ExecuteAsync_WhenPreconditionsMet_ClosesCurrentYearAndActivatesTargetYear()
     {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-        Skip.IfNot(
-            _yearEndDataSetupCompletedCatalogAvailable,
-            $"job_master/job_status seed for '{BatchJobNames.YearEndDataSetup}' + 'Completed' is not yet provisioned on this database.");
+        SkipUnlessReady();
 
-        const int currentYear = 9801;
-        const int targetYear = 9802;
+        var targetYear = _liveOpenYear + 500; // far-future, safe to seed/clean without colliding with real data
         var dataSetupJobQueueId = Guid.NewGuid();
 
-        await SeedYearAsync(currentYear, "Open", active: true);
         await SeedYearAsync(targetYear, "Planned", active: true);
         await SeedCompletedDataSetupExecutionAsync(targetYear, dataSetupJobQueueId);
 
@@ -86,20 +101,24 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
             var context = new YearEndExecutionContext(
                 CorrelationId: "cutover-it-1",
                 ParametersJson: null,
-                CurrentFpsYear: currentYear,
+                CurrentFpsYear: null,
                 TargetFpsYear: targetYear);
 
             await service.ExecuteAsync(context);
 
-            var (currentStatus, _) = await GetYearStateAsync(currentYear);
+            var (originalOpenYearStatus, _) = await GetYearStateAsync(_liveOpenYear);
             var (targetStatus, _) = await GetYearStateAsync(targetYear);
 
-            Assert.Equal("Closed", currentStatus);
+            Assert.Equal("Closed", originalOpenYearStatus);
             Assert.Equal("Open", targetStatus);
         }
         finally
         {
-            await DeleteYearAsync(currentYear);
+            // Restore the real Open year so the database is left in its original state.
+            await using var restoreContext = CreateDbContext();
+            await restoreContext.Database.ExecuteSqlInterpolatedAsync($@"
+                UPDATE fps.tblyearmaster SET yearstatus = 'Open' WHERE fpsyear = {_liveOpenYear};");
+
             await DeleteYearAsync(targetYear);
             await DeleteJobQueueRowAsync(dataSetupJobQueueId);
         }
@@ -108,16 +127,11 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
     [SkippableFact]
     public async Task ExecuteAsync_WhenTargetYearNotPlanned_ThrowsAndLeavesRowsUnchanged()
     {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-        Skip.IfNot(
-            _yearEndDataSetupCompletedCatalogAvailable,
-            $"job_master/job_status seed for '{BatchJobNames.YearEndDataSetup}' + 'Completed' is not yet provisioned on this database.");
+        SkipUnlessReady();
 
-        const int currentYear = 9803;
-        const int targetYear = 9804;
+        var targetYear = _liveOpenYear + 501;
         var dataSetupJobQueueId = Guid.NewGuid();
 
-        await SeedYearAsync(currentYear, "Open", active: true);
         await SeedYearAsync(targetYear, "Open", active: true);
         await SeedCompletedDataSetupExecutionAsync(targetYear, dataSetupJobQueueId);
 
@@ -131,21 +145,22 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
             var context = new YearEndExecutionContext(
                 CorrelationId: "cutover-it-2",
                 ParametersJson: null,
-                CurrentFpsYear: currentYear,
+                CurrentFpsYear: null,
                 TargetFpsYear: targetYear);
 
+            // Two Open years now exist (the real live one plus this seeded target) — the live
+            // resolver must reject this as ambiguous before ever reaching the "not Planned" check.
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.ExecuteAsync(context));
-            Assert.Contains("Planned", ex.Message, StringComparison.Ordinal);
+            Assert.Contains("Open year", ex.Message, StringComparison.Ordinal);
 
-            var (currentStatus, _) = await GetYearStateAsync(currentYear);
+            var (originalOpenYearStatus, _) = await GetYearStateAsync(_liveOpenYear);
             var (targetStatus, _) = await GetYearStateAsync(targetYear);
 
-            Assert.Equal("Open", currentStatus);
+            Assert.Equal("Open", originalOpenYearStatus);
             Assert.Equal("Open", targetStatus);
         }
         finally
         {
-            await DeleteYearAsync(currentYear);
             await DeleteYearAsync(targetYear);
             await DeleteJobQueueRowAsync(dataSetupJobQueueId);
         }
@@ -154,15 +169,10 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
     [SkippableFact]
     public async Task ExecuteAsync_WhenLatestDataSetupNotCompletedForTargetYear_ThrowsBeforeTouchingYearMaster()
     {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-        Skip.IfNot(
-            _yearEndDataSetupCompletedCatalogAvailable,
-            $"job_master/job_status seed for '{BatchJobNames.YearEndDataSetup}' + 'Completed' is not yet provisioned on this database.");
+        SkipUnlessReady();
 
-        const int currentYear = 9805;
-        const int targetYear = 9806;
+        var targetYear = _liveOpenYear + 502;
 
-        await SeedYearAsync(currentYear, "Open", active: true);
         await SeedYearAsync(targetYear, "Planned", active: true);
 
         try
@@ -175,23 +185,34 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
             var context = new YearEndExecutionContext(
                 CorrelationId: "cutover-it-3",
                 ParametersJson: null,
-                CurrentFpsYear: currentYear,
+                CurrentFpsYear: null,
                 TargetFpsYear: targetYear);
 
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.ExecuteAsync(context));
             Assert.Contains(BatchJobNames.YearEndDataSetup, ex.Message, StringComparison.Ordinal);
 
-            var (currentStatus, _) = await GetYearStateAsync(currentYear);
+            var (originalOpenYearStatus, _) = await GetYearStateAsync(_liveOpenYear);
             var (targetStatus, _) = await GetYearStateAsync(targetYear);
 
-            Assert.Equal("Open", currentStatus);
+            Assert.Equal("Open", originalOpenYearStatus);
             Assert.Equal("Planned", targetStatus);
         }
         finally
         {
-            await DeleteYearAsync(currentYear);
             await DeleteYearAsync(targetYear);
         }
+    }
+
+    private void SkipUnlessReady()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Skip.IfNot(
+            _yearEndDataSetupCompletedCatalogAvailable,
+            $"job_master/job_status seed for '{BatchJobNames.YearEndDataSetup}' + 'Completed' is not yet provisioned on this database.");
+        Skip.IfNot(
+            _exactlyOneOpenYear,
+            "fps.tblyearmaster does not have exactly one Open year on this database. " +
+            "This test must target an isolated/local CR048-aligned database — never batchjob_testing.");
     }
 
     private async Task SeedYearAsync(int fpsYear, string yearStatus, bool active)

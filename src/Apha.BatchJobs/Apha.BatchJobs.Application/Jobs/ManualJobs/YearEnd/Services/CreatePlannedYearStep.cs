@@ -1,7 +1,5 @@
-using Apha.BatchJobs.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System.Data.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
@@ -13,20 +11,20 @@ public sealed class CreatePlannedYearStep : IYearEndDataSetupStep
     private const string PlannedStatus = "Planned";
     private const string BatchCreatedBy = "YearEndBatchWorker";
 
-    private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
     private readonly ILogger<CreatePlannedYearStep> _logger;
 
-    public CreatePlannedYearStep(
-        IDbContextFactory<BatchJobsDbContext> dbContextFactory,
-        ILogger<CreatePlannedYearStep> logger)
+    public CreatePlannedYearStep(ILogger<CreatePlannedYearStep> logger)
     {
-        _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public string Name => "CreatePlannedYearStep";
 
-    public async Task ExecuteAsync(YearEndExecutionContext context, CancellationToken cancellationToken = default)
+    public async Task<YearEndExecutionContext> ExecuteAsync(
+        YearEndExecutionContext context,
+        DbConnection connection,
+        DbTransaction transaction,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -35,11 +33,8 @@ public sealed class CreatePlannedYearStep : IYearEndDataSetupStep
             throw new InvalidOperationException("Year End Data Setup requires targetFpsYear before creating planned year.");
         }
 
-        await using var dbContext = _dbContextFactory.CreateDbContext();
-        await dbContext.Database.OpenConnectionAsync(cancellationToken);
-
         var targetYear = context.TargetFpsYear.Value;
-        var targetYearState = await GetYearStateAsync(dbContext.Database.GetDbConnection(), targetYear, cancellationToken);
+        var targetYearState = await GetYearStateAsync(connection, transaction, targetYear, cancellationToken);
 
         if (targetYearState is not null)
         {
@@ -59,12 +54,13 @@ public sealed class CreatePlannedYearStep : IYearEndDataSetupStep
                 "YearEnd target year already exists as Planned | CorrelationId={CorrelationId} | TargetFpsYear={TargetFpsYear}",
                 context.CorrelationId,
                 targetYear);
-            return;
+            return context;
         }
 
         var targetYearCode = BuildFpsYearCode(targetYear);
         var insertCount = await InsertPlannedYearAsync(
-            dbContext.Database.GetDbConnection(),
+            connection,
+            transaction,
             targetYear,
             targetYearCode,
             context.CorrelationId,
@@ -81,6 +77,8 @@ public sealed class CreatePlannedYearStep : IYearEndDataSetupStep
             context.CorrelationId,
             targetYear,
             targetYearCode);
+
+        return context;
     }
 
     private static string BuildFpsYearCode(int fpsYear)
@@ -91,16 +89,16 @@ public sealed class CreatePlannedYearStep : IYearEndDataSetupStep
 
     private static async Task<YearState?> GetYearStateAsync(
         DbConnection connection,
+        DbTransaction transaction,
         int fpsYear,
         CancellationToken cancellationToken)
     {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, @"
             SELECT ym.yearstatus, ym.active
             FROM fps.tblyearmaster ym
-            WHERE ym.fpsyear = @fpsyear;";
+            WHERE ym.fpsyear = @fpsyear;");
 
-        AddParameter(command, "fpsyear", fpsYear);
+        YearEndSqlHelpers.AddParameter(command, "fpsyear", fpsYear);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         if (!await reader.ReadAsync(cancellationToken))
@@ -116,32 +114,24 @@ public sealed class CreatePlannedYearStep : IYearEndDataSetupStep
 
     private static async Task<int> InsertPlannedYearAsync(
         DbConnection connection,
+        DbTransaction transaction,
         int fpsYear,
         string fpsYearCode,
         string correlationId,
         CancellationToken cancellationToken)
     {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, @"
             INSERT INTO fps.tblyearmaster (fpsyear, fpsyearcode, yearstatus, remarks, active, createdby)
-            VALUES (@fpsyear, @fpsyearcode, @yearstatus, @remarks, @active, @createdby);";
+            VALUES (@fpsyear, @fpsyearcode, @yearstatus, @remarks, @active, @createdby);");
 
-        AddParameter(command, "fpsyear", fpsYear);
-        AddParameter(command, "fpsyearcode", fpsYearCode);
-        AddParameter(command, "yearstatus", PlannedStatus);
-        AddParameter(command, "remarks", $"Created by YearEndDataSetup. CorrelationId={correlationId}");
-        AddParameter(command, "active", true);
-        AddParameter(command, "createdby", BatchCreatedBy);
+        YearEndSqlHelpers.AddParameter(command, "fpsyear", fpsYear);
+        YearEndSqlHelpers.AddParameter(command, "fpsyearcode", fpsYearCode);
+        YearEndSqlHelpers.AddParameter(command, "yearstatus", PlannedStatus);
+        YearEndSqlHelpers.AddParameter(command, "remarks", $"Created by YearEndDataSetup. CorrelationId={correlationId}");
+        YearEndSqlHelpers.AddParameter(command, "active", true);
+        YearEndSqlHelpers.AddParameter(command, "createdby", BatchCreatedBy);
 
         return await command.ExecuteNonQueryAsync(cancellationToken);
-    }
-
-    private static void AddParameter(DbCommand command, string name, object value)
-    {
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = name;
-        parameter.Value = value;
-        command.Parameters.Add(parameter);
     }
 
     private sealed record YearState(string YearStatus, bool Active);

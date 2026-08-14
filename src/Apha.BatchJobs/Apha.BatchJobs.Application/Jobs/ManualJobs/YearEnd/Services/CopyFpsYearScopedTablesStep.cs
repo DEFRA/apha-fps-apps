@@ -1,7 +1,5 @@
-using Apha.BatchJobs.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System.Data.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
@@ -55,20 +53,20 @@ public sealed class CopyFpsYearScopedTablesStep : IYearEndDataSetupStep
             }
         };
 
-    private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
     private readonly ILogger<CopyFpsYearScopedTablesStep> _logger;
 
-    public CopyFpsYearScopedTablesStep(
-        IDbContextFactory<BatchJobsDbContext> dbContextFactory,
-        ILogger<CopyFpsYearScopedTablesStep> logger)
+    public CopyFpsYearScopedTablesStep(ILogger<CopyFpsYearScopedTablesStep> logger)
     {
-        _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public string Name => "CopyFpsYearScopedTablesStep";
 
-    public async Task ExecuteAsync(YearEndExecutionContext context, CancellationToken cancellationToken = default)
+    public async Task<YearEndExecutionContext> ExecuteAsync(
+        YearEndExecutionContext context,
+        DbConnection connection,
+        DbTransaction transaction,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -77,15 +75,11 @@ public sealed class CopyFpsYearScopedTablesStep : IYearEndDataSetupStep
             throw new InvalidOperationException("Year End context must include currentFpsYear and targetFpsYear before FPS year-scoped copy.");
         }
 
-        await using var dbContext = _dbContextFactory.CreateDbContext();
-        await dbContext.Database.OpenConnectionAsync(cancellationToken);
-        var connection = dbContext.Database.GetDbConnection();
-
         foreach (var table in CopyTables)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var exists = await TableExistsAsync(connection, table, cancellationToken);
+            var exists = await YearEndSqlHelpers.TableExistsAsync(connection, transaction, "fps", table, cancellationToken);
             if (!exists)
             {
                 _logger.LogWarning(
@@ -95,26 +89,26 @@ public sealed class CopyFpsYearScopedTablesStep : IYearEndDataSetupStep
                 continue;
             }
 
-            var hasFpsYearColumn = await ColumnExistsAsync(connection, table, "fpsyear", cancellationToken);
+            var hasFpsYearColumn = await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, "fps", table, "fpsyear", cancellationToken);
             if (!hasFpsYearColumn)
             {
                 throw new InvalidOperationException($"Table fps.{table} does not contain fpsyear and cannot be copied safely.");
             }
 
-            var targetRows = await CountRowsByYearAsync(connection, table, context.TargetFpsYear.Value, cancellationToken);
+            var targetRows = await CountRowsByYearAsync(connection, transaction, table, context.TargetFpsYear.Value, cancellationToken);
             if (targetRows > 0)
             {
                 throw new InvalidOperationException(
                     $"Table fps.{table} already contains {targetRows} rows for target year {context.TargetFpsYear.Value}. Cleanup is required before Year End copy.");
             }
 
-            var insertColumns = await GetInsertColumnsAsync(connection, table, cancellationToken);
+            var insertColumns = await GetInsertColumnsAsync(connection, transaction, table, cancellationToken);
             if (string.IsNullOrWhiteSpace(insertColumns))
             {
                 throw new InvalidOperationException($"Could not resolve copyable columns for fps.{table}.");
             }
 
-            var selectProjection = await GetSelectProjectionAsync(connection, table, cancellationToken);
+            var selectProjection = await GetSelectProjectionAsync(connection, transaction, table, cancellationToken);
             if (string.IsNullOrWhiteSpace(selectProjection))
             {
                 throw new InvalidOperationException($"Could not resolve select projection for fps.{table}.");
@@ -122,6 +116,7 @@ public sealed class CopyFpsYearScopedTablesStep : IYearEndDataSetupStep
 
             var copied = await CopyRowsAsync(
                 connection,
+                transaction,
                 table,
                 insertColumns,
                 selectProjection,
@@ -131,6 +126,7 @@ public sealed class CopyFpsYearScopedTablesStep : IYearEndDataSetupStep
 
             var resetCount = await ApplyResetRulesAsync(
                 connection,
+                transaction,
                 table,
                 context.TargetFpsYear.Value,
                 cancellationToken);
@@ -144,70 +140,35 @@ public sealed class CopyFpsYearScopedTablesStep : IYearEndDataSetupStep
                 copied,
                 resetCount);
         }
+
+        return context;
     }
 
-    private static async Task<bool> TableExistsAsync(DbConnection connection, string tableName, CancellationToken cancellationToken)
+    private static async Task<long> CountRowsByYearAsync(DbConnection connection, DbTransaction transaction, string tableName, int fpsYear, CancellationToken cancellationToken)
     {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.tables
-                WHERE table_schema = 'fps'
-                  AND table_name = @table_name
-            );";
-
-        AddParameter(command, "table_name", tableName);
-        return await ExecuteBooleanAsync(command, cancellationToken);
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, $"SELECT COUNT(*) FROM fps.{tableName} WHERE fpsyear = @fpsyear;");
+        YearEndSqlHelpers.AddParameter(command, "fpsyear", fpsYear);
+        return await YearEndSqlHelpers.ExecuteCountAsync(command, cancellationToken);
     }
 
-    private static async Task<bool> ColumnExistsAsync(DbConnection connection, string tableName, string columnName, CancellationToken cancellationToken)
+    private static async Task<string?> GetInsertColumnsAsync(DbConnection connection, DbTransaction transaction, string tableName, CancellationToken cancellationToken)
     {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.columns
-                WHERE table_schema = 'fps'
-                  AND table_name = @table_name
-                  AND column_name = @column_name
-            );";
-
-        AddParameter(command, "table_name", tableName);
-        AddParameter(command, "column_name", columnName);
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
-
-    private static async Task<long> CountRowsByYearAsync(DbConnection connection, string tableName, int fpsYear, CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = $"SELECT COUNT(*) FROM fps.{tableName} WHERE fpsyear = @fpsyear;";
-        AddParameter(command, "fpsyear", fpsYear);
-
-        var scalar = await command.ExecuteScalarAsync(cancellationToken);
-        return scalar is long count ? count : Convert.ToInt64(scalar);
-    }
-
-    private static async Task<string?> GetInsertColumnsAsync(DbConnection connection, string tableName, CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, @"
             SELECT string_agg(format('%I', c.column_name), ', ' ORDER BY c.ordinal_position)
             FROM information_schema.columns c
             WHERE c.table_schema = 'fps'
               AND c.table_name = @table_name
               AND COALESCE(c.is_identity, 'NO') = 'NO'
-              AND COALESCE(c.is_generated, 'NEVER') = 'NEVER';";
+              AND COALESCE(c.is_generated, 'NEVER') = 'NEVER';");
 
-        AddParameter(command, "table_name", tableName);
+        YearEndSqlHelpers.AddParameter(command, "table_name", tableName);
         var scalar = await command.ExecuteScalarAsync(cancellationToken);
         return scalar?.ToString();
     }
 
-    private static async Task<string?> GetSelectProjectionAsync(DbConnection connection, string tableName, CancellationToken cancellationToken)
+    private static async Task<string?> GetSelectProjectionAsync(DbConnection connection, DbTransaction transaction, string tableName, CancellationToken cancellationToken)
     {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, @"
             SELECT string_agg(
                 CASE
                     WHEN c.column_name = 'fpsyear' THEN '@target_fpsyear AS fpsyear'
@@ -218,15 +179,16 @@ public sealed class CopyFpsYearScopedTablesStep : IYearEndDataSetupStep
             WHERE c.table_schema = 'fps'
               AND c.table_name = @table_name
               AND COALESCE(c.is_identity, 'NO') = 'NO'
-              AND COALESCE(c.is_generated, 'NEVER') = 'NEVER';";
+              AND COALESCE(c.is_generated, 'NEVER') = 'NEVER';");
 
-        AddParameter(command, "table_name", tableName);
+        YearEndSqlHelpers.AddParameter(command, "table_name", tableName);
         var scalar = await command.ExecuteScalarAsync(cancellationToken);
         return scalar?.ToString();
     }
 
     private static async Task<int> CopyRowsAsync(
         DbConnection connection,
+        DbTransaction transaction,
         string tableName,
         string insertColumns,
         string selectProjection,
@@ -234,21 +196,21 @@ public sealed class CopyFpsYearScopedTablesStep : IYearEndDataSetupStep
         int targetFpsYear,
         CancellationToken cancellationToken)
     {
-        await using var command = connection.CreateCommand();
-        command.CommandText = $@"
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, $@"
             INSERT INTO fps.{tableName} ({insertColumns})
             SELECT {selectProjection}
             FROM fps.{tableName}
-            WHERE fpsyear = @current_fpsyear;";
+            WHERE fpsyear = @current_fpsyear;");
 
-        AddParameter(command, "current_fpsyear", currentFpsYear);
-        AddParameter(command, "target_fpsyear", targetFpsYear);
+        YearEndSqlHelpers.AddParameter(command, "current_fpsyear", currentFpsYear);
+        YearEndSqlHelpers.AddParameter(command, "target_fpsyear", targetFpsYear);
 
         return await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static async Task<int> ApplyResetRulesAsync(
         DbConnection connection,
+        DbTransaction transaction,
         string tableName,
         int targetFpsYear,
         CancellationToken cancellationToken)
@@ -261,7 +223,7 @@ public sealed class CopyFpsYearScopedTablesStep : IYearEndDataSetupStep
         var setClauses = new List<string>();
         foreach (var entry in resetRules)
         {
-            var exists = await ColumnExistsAsync(connection, tableName, entry.Key, cancellationToken);
+            var exists = await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, "fps", tableName, entry.Key, cancellationToken);
             if (exists)
             {
                 setClauses.Add($"{entry.Key} = {entry.Value}");
@@ -273,27 +235,12 @@ public sealed class CopyFpsYearScopedTablesStep : IYearEndDataSetupStep
             return 0;
         }
 
-        await using var command = connection.CreateCommand();
-        command.CommandText = $@"
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, $@"
             UPDATE fps.{tableName}
             SET {string.Join(", ", setClauses)}
-            WHERE fpsyear = @target_fpsyear;";
+            WHERE fpsyear = @target_fpsyear;");
 
-        AddParameter(command, "target_fpsyear", targetFpsYear);
+        YearEndSqlHelpers.AddParameter(command, "target_fpsyear", targetFpsYear);
         return await command.ExecuteNonQueryAsync(cancellationToken);
-    }
-
-    private static async Task<bool> ExecuteBooleanAsync(DbCommand command, CancellationToken cancellationToken)
-    {
-        var result = await command.ExecuteScalarAsync(cancellationToken);
-        return result is bool value && value;
-    }
-
-    private static void AddParameter(DbCommand command, string name, object value)
-    {
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = name;
-        parameter.Value = value;
-        command.Parameters.Add(parameter);
     }
 }

@@ -1,7 +1,5 @@
-using Apha.BatchJobs.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System.Data.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
@@ -35,20 +33,20 @@ public sealed class TargetYearEmptyTablesStep : IYearEndDataSetupStep
         "timecostcalcs"
     ];
 
-    private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
     private readonly ILogger<TargetYearEmptyTablesStep> _logger;
 
-    public TargetYearEmptyTablesStep(
-        IDbContextFactory<BatchJobsDbContext> dbContextFactory,
-        ILogger<TargetYearEmptyTablesStep> logger)
+    public TargetYearEmptyTablesStep(ILogger<TargetYearEmptyTablesStep> logger)
     {
-        _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public string Name => "TargetYearEmptyTablesStep";
 
-    public async Task ExecuteAsync(YearEndExecutionContext context, CancellationToken cancellationToken = default)
+    public async Task<YearEndExecutionContext> ExecuteAsync(
+        YearEndExecutionContext context,
+        DbConnection connection,
+        DbTransaction transaction,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -57,22 +55,18 @@ public sealed class TargetYearEmptyTablesStep : IYearEndDataSetupStep
             throw new InvalidOperationException("Year End context must include targetFpsYear before target-year empty-table cleanup.");
         }
 
-        await using var dbContext = _dbContextFactory.CreateDbContext();
-        await dbContext.Database.OpenConnectionAsync(cancellationToken);
-        var connection = dbContext.Database.GetDbConnection();
-
         var totalDeleted = 0;
 
         foreach (var table in CandidateTables)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (!await TableExistsAsync(connection, "fps", table, cancellationToken))
+            if (!await YearEndSqlHelpers.TableExistsAsync(connection, transaction, "fps", table, cancellationToken))
             {
                 continue;
             }
 
-            var yearColumn = await ResolveYearColumnAsync(connection, "fps", table, cancellationToken);
+            var yearColumn = await ResolveYearColumnAsync(connection, transaction, "fps", table, cancellationToken);
             if (yearColumn is null)
             {
                 _logger.LogWarning(
@@ -84,6 +78,7 @@ public sealed class TargetYearEmptyTablesStep : IYearEndDataSetupStep
 
             var deleted = await DeleteByYearAsync(
                 connection,
+                transaction,
                 schema: "fps",
                 table,
                 yearColumn,
@@ -106,96 +101,42 @@ public sealed class TargetYearEmptyTablesStep : IYearEndDataSetupStep
             context.CorrelationId,
             context.TargetFpsYear,
             totalDeleted);
+
+        return context;
     }
 
     private static async Task<int> DeleteByYearAsync(
         DbConnection connection,
+        DbTransaction transaction,
         string schema,
         string table,
         string yearColumn,
         int targetYear,
         CancellationToken cancellationToken)
     {
-        await using var command = connection.CreateCommand();
-        command.CommandText = $"DELETE FROM {schema}.{table} WHERE {yearColumn} = @target_year;";
-        AddParameter(command, "target_year", targetYear);
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, $"DELETE FROM {schema}.{table} WHERE {yearColumn} = @target_year;");
+        YearEndSqlHelpers.AddParameter(command, "target_year", targetYear);
 
         return await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static async Task<string?> ResolveYearColumnAsync(
         DbConnection connection,
+        DbTransaction transaction,
         string schema,
         string table,
         CancellationToken cancellationToken)
     {
-        if (await ColumnExistsAsync(connection, schema, table, "fpsyear", cancellationToken))
+        if (await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, schema, table, "fpsyear", cancellationToken))
         {
             return "fpsyear";
         }
 
-        if (await ColumnExistsAsync(connection, schema, table, "year", cancellationToken))
+        if (await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, schema, table, "year", cancellationToken))
         {
             return "year";
         }
 
         return null;
-    }
-
-    private static async Task<bool> TableExistsAsync(
-        DbConnection connection,
-        string schema,
-        string table,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.tables
-                WHERE table_schema = @schema_name
-                  AND table_name = @table_name
-            );";
-
-        AddParameter(command, "schema_name", schema);
-        AddParameter(command, "table_name", table);
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
-
-    private static async Task<bool> ColumnExistsAsync(
-        DbConnection connection,
-        string schema,
-        string table,
-        string column,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.columns
-                WHERE table_schema = @schema_name
-                  AND table_name = @table_name
-                  AND column_name = @column_name
-            );";
-
-        AddParameter(command, "schema_name", schema);
-        AddParameter(command, "table_name", table);
-        AddParameter(command, "column_name", column);
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
-
-    private static async Task<bool> ExecuteBooleanAsync(DbCommand command, CancellationToken cancellationToken)
-    {
-        var result = await command.ExecuteScalarAsync(cancellationToken);
-        return result is bool value && value;
-    }
-
-    private static void AddParameter(DbCommand command, string name, object value)
-    {
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = name;
-        parameter.Value = value;
-        command.Parameters.Add(parameter);
     }
 }

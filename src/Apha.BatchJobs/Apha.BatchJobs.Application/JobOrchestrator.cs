@@ -1,5 +1,6 @@
 using Apha.BatchJobs.Application.FailureHandling;
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Entities;
@@ -110,7 +111,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _correlationService.SetCorrelationId(jobExecutionId.ToString("D"));
 
         // Resolve optional FPS year from job parameters (used by year-scoped jobs).
-        var fpsYear = TryExtractFpsYearFromParameters(parametersJson);
+        var fpsYear = TryExtractFpsYearFromParameters(jobName, parametersJson);
 
         var startedAt = DateTime.UtcNow;
 
@@ -789,8 +790,21 @@ public sealed class JobOrchestrator : IJobOrchestrator
         string.Equals(jobName, BatchJobNames.YearEndDataSetup, StringComparison.OrdinalIgnoreCase)
         || string.Equals(jobName, BatchJobNames.YearEndCutover, StringComparison.OrdinalIgnoreCase);
 
-    private static int? TryExtractFpsYearFromParameters(string? parametersJson)
+    /// <summary>
+    /// Resolves the FPS year from job parameters. Year End jobs use the strict, Year-End-specific
+    /// <see cref="YearEndPlannedYearParser"/> (which rejects a payload where <c>plannedYear</c> and
+    /// the legacy <c>targetFpsYear</c> are both present and disagree) so a malformed Year End
+    /// payload fails here, before any execution record is fetched or the job claims
+    /// Approved -&gt; Running. Other jobs keep today's lenient <c>targetFpsYear</c>-only extraction —
+    /// generic orchestration must not inherit Year End's stricter payload contract.
+    /// </summary>
+    private static int? TryExtractFpsYearFromParameters(string jobName, string? parametersJson)
     {
+        if (IsYearEndJob(jobName))
+        {
+            return YearEndPlannedYearParser.Parse(parametersJson);
+        }
+
         if (string.IsNullOrWhiteSpace(parametersJson))
             return null;
 

@@ -10,39 +10,25 @@ using NSubstitute;
 
 namespace Apha.BatchJobs.UnitTests;
 
+/// <summary>
+/// Pure unit coverage for <see cref="YearEndCutoverService"/> — only the guard clauses that fire
+/// before the shared transaction opens (target-year presence, latest Data Setup completeness).
+/// "Current year" is now derived live from <c>fps.tblyearmaster</c> inside the transaction via
+/// <see cref="YearEndYearContextResolver"/>, so target-vs-current ordering and the zero/multiple
+/// Open-year cases require a real Postgres connection and are covered by
+/// <c>YearEndCutoverServiceIntegrationTests</c> instead.
+/// </summary>
 public sealed class YearEndCutoverServiceTests
 {
-    [Fact]
-    public async Task ExecuteAsync_WhenCurrentYearMissing_ShouldThrow()
-    {
-        var service = CreateService();
-        var context = new YearEndExecutionContext("corr-1", null, CurrentFpsYear: null, TargetFpsYear: 2027);
-
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.ExecuteAsync(context));
-
-        Assert.Contains("currentFpsYear", ex.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
     [Fact]
     public async Task ExecuteAsync_WhenTargetYearMissing_ShouldThrow()
     {
         var service = CreateService();
-        var context = new YearEndExecutionContext("corr-2", null, CurrentFpsYear: 2026, TargetFpsYear: null);
+        var context = new YearEndExecutionContext("corr-2", null, CurrentFpsYear: null, TargetFpsYear: null);
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.ExecuteAsync(context));
 
-        Assert.Contains("targetFpsYear", ex.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task ExecuteAsync_WhenTargetYearNotGreaterThanCurrent_ShouldThrow()
-    {
-        var service = CreateService();
-        var context = new YearEndExecutionContext("corr-3", null, CurrentFpsYear: 2027, TargetFpsYear: 2027);
-
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.ExecuteAsync(context));
-
-        Assert.Contains("targetFpsYear", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("plannedYear", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -54,7 +40,7 @@ public sealed class YearEndCutoverServiceTests
             .Returns((JobExecutionRecord?)null);
 
         var service = CreateService(executionRepository);
-        var context = new YearEndExecutionContext("corr-4", null, CurrentFpsYear: 2026, TargetFpsYear: 2027);
+        var context = new YearEndExecutionContext("corr-4", null, CurrentFpsYear: null, TargetFpsYear: 2027);
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.ExecuteAsync(context));
 
@@ -83,7 +69,7 @@ public sealed class YearEndCutoverServiceTests
             });
 
         var service = CreateService(executionRepository);
-        var context = new YearEndExecutionContext("corr-5", null, CurrentFpsYear: 2026, TargetFpsYear: 2027);
+        var context = new YearEndExecutionContext("corr-5", null, CurrentFpsYear: null, TargetFpsYear: 2027);
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.ExecuteAsync(context));
 

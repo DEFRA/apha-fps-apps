@@ -1,7 +1,5 @@
-using Apha.BatchJobs.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System.Data.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
@@ -10,20 +8,20 @@ namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 /// </summary>
 public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
 {
-    private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
     private readonly ILogger<ValidateYearScopedSchemaStep> _logger;
 
-    public ValidateYearScopedSchemaStep(
-        IDbContextFactory<BatchJobsDbContext> dbContextFactory,
-        ILogger<ValidateYearScopedSchemaStep> logger)
+    public ValidateYearScopedSchemaStep(ILogger<ValidateYearScopedSchemaStep> logger)
     {
-        _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public string Name => "ValidateYearScopedSchemaStep";
 
-    public async Task ExecuteAsync(YearEndExecutionContext context, CancellationToken cancellationToken = default)
+    public async Task<YearEndExecutionContext> ExecuteAsync(
+        YearEndExecutionContext context,
+        DbConnection connection,
+        DbTransaction transaction,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -32,10 +30,7 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
             throw new InvalidOperationException("Year End context must include currentFpsYear and targetFpsYear before schema validation.");
         }
 
-        await using var dbContext = _dbContextFactory.CreateDbContext();
-        await dbContext.Database.OpenConnectionAsync(cancellationToken);
-
-        if (!await TableExistsAsync(dbContext.Database.GetDbConnection(), "fps", "tblyearmaster", cancellationToken))
+        if (!await YearEndSqlHelpers.TableExistsAsync(connection, transaction, "fps", "tblyearmaster", cancellationToken))
         {
             throw new InvalidOperationException("Required table fps.tblyearmaster was not found. Year End cannot continue.");
         }
@@ -43,16 +38,13 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
         var requiredColumns = new[] { "fpsyear", "fpsyearcode", "yearstatus", "active" };
         foreach (var columnName in requiredColumns)
         {
-            if (!await ColumnExistsAsync(dbContext.Database.GetDbConnection(), "fps", "tblyearmaster", columnName, cancellationToken))
+            if (!await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, "fps", "tblyearmaster", columnName, cancellationToken))
             {
                 throw new InvalidOperationException($"Required column fps.tblyearmaster.{columnName} was not found. Year End cannot continue.");
             }
         }
 
-        var currentYearExists = await RowExistsByYearAsync(
-            dbContext.Database.GetDbConnection(),
-            context.CurrentFpsYear.Value,
-            cancellationToken);
+        var currentYearExists = await RowExistsByYearAsync(connection, transaction, context.CurrentFpsYear.Value, cancellationToken);
 
         if (!currentYearExists)
         {
@@ -60,87 +52,92 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
                 $"Current year {context.CurrentFpsYear.Value} does not exist in fps.tblyearmaster. Year End cannot continue.");
         }
 
+        await ValidateTargetYearPartitionsAsync(connection, transaction, context.TargetFpsYear.Value, cancellationToken);
+
         _logger.LogInformation(
             "YearEnd schema validation succeeded | CorrelationId={CorrelationId} | CurrentFpsYear={CurrentFpsYear} | TargetFpsYear={TargetFpsYear}",
             context.CorrelationId,
             context.CurrentFpsYear,
             context.TargetFpsYear);
+
+        return context;
     }
 
-    private static async Task<bool> TableExistsAsync(
+    /// <summary>
+    /// Year End performs no DDL. Every table that needs a target-year partition — the 38 Table 23
+    /// business participants plus the year-scoped configuration dependencies
+    /// (fps.tblsettings/fps.tlkpmonthhours) — must already have it attached before any
+    /// business-data mutation begins. Partition provisioning is an external DB/DBA prerequisite;
+    /// this only validates.
+    /// </summary>
+    private static async Task ValidateTargetYearPartitionsAsync(
         DbConnection connection,
-        string schema,
-        string table,
+        DbTransaction transaction,
+        int targetYear,
         CancellationToken cancellationToken)
     {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.tables
-                WHERE table_schema = @schema
-                  AND table_name = @table
-            );";
+        var notPartitioned = new List<string>();
+        var missingPartition = new List<string>();
 
-        AddParameter(command, "schema", schema);
-        AddParameter(command, "table", table);
+        foreach (var entry in YearEndTableRuleMatrix.Entries)
+        {
+            if (entry.Role is not (YearEndTableRole.YearScopedBusinessParticipant or YearEndTableRole.YearScopedConfigurationDependency))
+            {
+                continue;
+            }
 
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
+            cancellationToken.ThrowIfCancellationRequested();
 
-    private static async Task<bool> ColumnExistsAsync(
-        DbConnection connection,
-        string schema,
-        string table,
-        string column,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.columns
-                WHERE table_schema = @schema
-                  AND table_name = @table
-                  AND column_name = @column
-            );";
+            var qualifiedName = $"{entry.Schema}.{entry.TableName}";
 
-        AddParameter(command, "schema", schema);
-        AddParameter(command, "table", table);
-        AddParameter(command, "column", column);
+            if (!await YearEndSqlHelpers.IsPartitionedTableAsync(connection, transaction, entry.Schema, entry.TableName, cancellationToken))
+            {
+                notPartitioned.Add(qualifiedName);
+                continue;
+            }
 
-        return await ExecuteBooleanAsync(command, cancellationToken);
+            if (!await YearEndSqlHelpers.IsPartitionAttachedForYearAsync(connection, transaction, entry.Schema, entry.TableName, targetYear, cancellationToken))
+            {
+                missingPartition.Add(qualifiedName);
+            }
+        }
+
+        if (notPartitioned.Count == 0 && missingPartition.Count == 0)
+        {
+            return;
+        }
+
+        var sections = new List<string>();
+        if (notPartitioned.Count > 0)
+        {
+            sections.Add($"Not partitioned as expected: {string.Join(", ", notPartitioned)}.");
+        }
+
+        if (missingPartition.Count > 0)
+        {
+            sections.Add($"Missing target-year ({targetYear}) partition: {string.Join(", ", missingPartition)}.");
+        }
+
+        throw new InvalidOperationException(
+            $"Year End target-year partition validation failed. {string.Join(" ", sections)} " +
+            "Partition creation is an external DB/DBA prerequisite; Year End performs no DDL.");
     }
 
     private static async Task<bool> RowExistsByYearAsync(
         DbConnection connection,
+        DbTransaction transaction,
         int fpsYear,
         CancellationToken cancellationToken)
     {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, @"
             SELECT EXISTS (
                 SELECT 1
                 FROM fps.tblyearmaster ym
                 WHERE ym.fpsyear = @fpsyear
-            );";
+            );");
 
-        AddParameter(command, "fpsyear", fpsYear);
+        YearEndSqlHelpers.AddParameter(command, "fpsyear", fpsYear);
 
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
-
-    private static async Task<bool> ExecuteBooleanAsync(DbCommand command, CancellationToken cancellationToken)
-    {
-        var result = await command.ExecuteScalarAsync(cancellationToken);
-        return result is bool value && value;
-    }
-
-    private static void AddParameter(DbCommand command, string name, object value)
-    {
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = name;
-        parameter.Value = value;
-        command.Parameters.Add(parameter);
+        return await YearEndSqlHelpers.ExecuteBooleanAsync(command, cancellationToken);
     }
 }

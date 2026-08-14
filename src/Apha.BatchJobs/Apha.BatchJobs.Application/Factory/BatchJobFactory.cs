@@ -107,6 +107,13 @@ public sealed class BatchJobFactory : IBatchJobFactory
         if (string.Equals(name, nameof(BatchJobNames.MabArchive), StringComparison.Ordinal))
             return BatchJobNames.MabArchive;
 
+        // Canonical Year End job names are hyphenated and cannot be derived from the type name
+        // by convention alone.
+        if (string.Equals(name, "YearEndDataSetup", StringComparison.Ordinal))
+            return BatchJobNames.YearEndDataSetup;
+        if (string.Equals(name, "YearEndCutover", StringComparison.Ordinal))
+            return BatchJobNames.YearEndCutover;
+
         return name;
     }
 }

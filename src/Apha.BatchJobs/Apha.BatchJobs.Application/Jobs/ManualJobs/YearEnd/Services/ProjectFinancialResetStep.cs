@@ -1,7 +1,5 @@
-using Apha.BatchJobs.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System.Data.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
@@ -32,20 +30,20 @@ public sealed class ProjectFinancialResetStep : IYearEndDataSetupStep
         new("mabarchive", "my_tlkpproject", "year")
     ];
 
-    private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
     private readonly ILogger<ProjectFinancialResetStep> _logger;
 
-    public ProjectFinancialResetStep(
-        IDbContextFactory<BatchJobsDbContext> dbContextFactory,
-        ILogger<ProjectFinancialResetStep> logger)
+    public ProjectFinancialResetStep(ILogger<ProjectFinancialResetStep> logger)
     {
-        _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public string Name => "ProjectFinancialResetStep";
 
-    public async Task ExecuteAsync(YearEndExecutionContext context, CancellationToken cancellationToken = default)
+    public async Task<YearEndExecutionContext> ExecuteAsync(
+        YearEndExecutionContext context,
+        DbConnection connection,
+        DbTransaction transaction,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -54,15 +52,11 @@ public sealed class ProjectFinancialResetStep : IYearEndDataSetupStep
             throw new InvalidOperationException("Year End context must include targetFpsYear before project financial reset.");
         }
 
-        await using var dbContext = _dbContextFactory.CreateDbContext();
-        await dbContext.Database.OpenConnectionAsync(cancellationToken);
-        var connection = dbContext.Database.GetDbConnection();
-
         foreach (var target in ResetTargets)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var exists = await TableExistsAsync(connection, target.Schema, target.Table, cancellationToken);
+            var exists = await YearEndSqlHelpers.TableExistsAsync(connection, transaction, target.Schema, target.Table, cancellationToken);
             if (!exists)
             {
                 _logger.LogWarning(
@@ -73,7 +67,7 @@ public sealed class ProjectFinancialResetStep : IYearEndDataSetupStep
                 continue;
             }
 
-            var hasYearColumn = await ColumnExistsAsync(connection, target.Schema, target.Table, target.YearColumn, cancellationToken);
+            var hasYearColumn = await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, target.Schema, target.Table, target.YearColumn, cancellationToken);
             if (!hasYearColumn)
             {
                 throw new InvalidOperationException(
@@ -83,7 +77,7 @@ public sealed class ProjectFinancialResetStep : IYearEndDataSetupStep
             var setClauses = new List<string>();
             foreach (var rule in ResetRules)
             {
-                if (await ColumnExistsAsync(connection, target.Schema, target.Table, rule.Key, cancellationToken))
+                if (await YearEndSqlHelpers.ColumnExistsAsync(connection, transaction, target.Schema, target.Table, rule.Key, cancellationToken))
                 {
                     setClauses.Add($"{rule.Key} = {rule.Value}");
                 }
@@ -101,6 +95,7 @@ public sealed class ProjectFinancialResetStep : IYearEndDataSetupStep
 
             var updated = await ExecuteResetAsync(
                 connection,
+                transaction,
                 target.Schema,
                 target.Table,
                 target.YearColumn,
@@ -116,55 +111,13 @@ public sealed class ProjectFinancialResetStep : IYearEndDataSetupStep
                 context.TargetFpsYear,
                 updated);
         }
-    }
 
-    private static async Task<bool> TableExistsAsync(
-        DbConnection connection,
-        string schema,
-        string table,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.tables
-                WHERE table_schema = @schema_name
-                  AND table_name = @table_name
-            );";
-
-        AddParameter(command, "schema_name", schema);
-        AddParameter(command, "table_name", table);
-
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
-
-    private static async Task<bool> ColumnExistsAsync(
-        DbConnection connection,
-        string schema,
-        string table,
-        string column,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.columns
-                WHERE table_schema = @schema_name
-                  AND table_name = @table_name
-                  AND column_name = @column_name
-            );";
-
-        AddParameter(command, "schema_name", schema);
-        AddParameter(command, "table_name", table);
-        AddParameter(command, "column_name", column);
-
-        return await ExecuteBooleanAsync(command, cancellationToken);
+        return context;
     }
 
     private static async Task<int> ExecuteResetAsync(
         DbConnection connection,
+        DbTransaction transaction,
         string schema,
         string table,
         string yearColumn,
@@ -172,28 +125,13 @@ public sealed class ProjectFinancialResetStep : IYearEndDataSetupStep
         int targetYear,
         CancellationToken cancellationToken)
     {
-        await using var command = connection.CreateCommand();
-        command.CommandText = $@"
+        await using var command = YearEndSqlHelpers.CreateCommand(connection, transaction, $@"
             UPDATE {schema}.{table}
             SET {string.Join(", ", setClauses)}
-            WHERE {yearColumn} = @target_year;";
+            WHERE {yearColumn} = @target_year;");
 
-        AddParameter(command, "target_year", targetYear);
+        YearEndSqlHelpers.AddParameter(command, "target_year", targetYear);
         return await command.ExecuteNonQueryAsync(cancellationToken);
-    }
-
-    private static async Task<bool> ExecuteBooleanAsync(DbCommand command, CancellationToken cancellationToken)
-    {
-        var result = await command.ExecuteScalarAsync(cancellationToken);
-        return result is bool value && value;
-    }
-
-    private static void AddParameter(DbCommand command, string name, object value)
-    {
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = name;
-        parameter.Value = value;
-        command.Parameters.Add(parameter);
     }
 
     private sealed record ResetTarget(string Schema, string Table, string YearColumn);

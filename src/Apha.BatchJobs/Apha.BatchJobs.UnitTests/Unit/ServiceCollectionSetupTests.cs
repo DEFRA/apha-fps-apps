@@ -122,8 +122,8 @@ public sealed class ServiceCollectionSetupTests
         var jobFactory = serviceProvider.GetRequiredService<IBatchJobFactory>();
         Assert.Contains("HealthCheck", jobFactory.GetAvailableJobs());
         Assert.Equal("HealthCheck", jobFactory.Create("HealthCheck").Name);
-        Assert.Contains("YearEndDataSetup", jobFactory.GetAvailableJobs());
-        Assert.Contains("YearEndCutover", jobFactory.GetAvailableJobs());
+        Assert.Contains("YearEnd-DataSetup", jobFactory.GetAvailableJobs());
+        Assert.Contains("YearEnd-CutOver", jobFactory.GetAvailableJobs());
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public sealed class ServiceCollectionSetupTests
 
         var jobs = serviceProvider.GetServices<IBatchJob>().ToList();
 
-        var manualJobNames = new[] { "HealthCheck", "RecreateSummary", "YearEndDataSetup", "YearEndCutover",
+        var manualJobNames = new[] { "HealthCheck", "RecreateSummary", "YearEnd-DataSetup", "YearEnd-CutOver",
             "BulkTestRatesUpdate", "BulkStaffRatesUpdate", "BulkAnimalRatesUpdate" };
         foreach (var jobName in manualJobNames)
         {
@@ -236,10 +236,11 @@ public sealed class ServiceCollectionSetupTests
             new[]
             {
                 "ValidateYearEndContextStep",
+                "ValidateYearEndConfigurationStep",
                 "ValidateYearScopedSchemaStep",
                 "CreatePlannedYearStep",
                 "CopyFpsYearScopedTablesStep",
-                "CopyMabArchiveYearScopedTablesStep",
+                "ConditionalMabArchiveYearSetupStep",
                 "PeriodSetupStep",
                 "ProjectFinancialResetStep",
                 "ConfiguredPlanningResetStep",
