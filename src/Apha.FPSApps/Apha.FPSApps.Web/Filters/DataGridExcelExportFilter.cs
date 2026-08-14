@@ -57,14 +57,30 @@ namespace Apha.FPSApps.Web.Filters
 
         private static bool IsExcelExportRequest(ActionExecutingContext context)
         {
-            var query = context.HttpContext?.Request?.Query;
-            if (query == null)
+            var request = context.HttpContext?.Request;
+            if (request == null)
             {
                 return false;
             }
 
-            return string.Equals(query["export"], "true", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(query["format"], "excel", StringComparison.OrdinalIgnoreCase);
+            if (MatchesExcelFlags(request.Query["export"], request.Query["format"]))
+            {
+                return true;
+            }
+
+            if (request.HasFormContentType
+                && MatchesExcelFlags(request.Form["export"], request.Form["format"]))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool MatchesExcelFlags(string? export, string? format)
+        {
+            return string.Equals(export, "true", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(format, "excel", StringComparison.OrdinalIgnoreCase);
         }
 
         private static void ExpandPagingToFullResultSet(ActionExecutingContext context)

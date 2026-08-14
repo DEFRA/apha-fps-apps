@@ -652,16 +652,13 @@
                 params.export = true;
                 params.format = 'excel';
 
-                var query = Object.keys(params)
-                    .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
-                    .join('&');
-
-                var url = excelExportUrl + (excelExportUrl.indexOf('?') >= 0 ? '&' : '?') + query;
-
                 if (typeof window.downloadFile === 'function') {
-                    window.downloadFile(url, fileName);
+                    window.downloadFile(excelExportUrl, fileName, { method: 'POST', data: params });
                 } else {
-                    window.location.href = url;
+                    var query = Object.keys(params)
+                        .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
+                        .join('&');
+                    window.location.href = excelExportUrl + (excelExportUrl.indexOf('?') >= 0 ? '&' : '?') + query;
                 }
             });
 

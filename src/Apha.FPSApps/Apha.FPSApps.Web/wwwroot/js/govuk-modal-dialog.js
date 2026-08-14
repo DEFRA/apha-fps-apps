@@ -397,9 +397,20 @@
 
     // Downloads a file from the given URL, showing the global loader until the
     // download completes. Reusable for any Excel/PDF/CSV export endpoint.
-    window.downloadFile = function (url, fileName) {
+    window.downloadFile = function (url, fileName, options) {
         showLoader();
-        return fetch(url)
+        options = options || {};
+        var fetchOptions = { method: options.method || 'GET' };
+
+        if (fetchOptions.method.toUpperCase() === 'POST') {
+            var body = new URLSearchParams();
+            var data = options.data || {};
+            Object.keys(data).forEach(function (k) { body.append(k, data[k]); });
+            fetchOptions.headers = { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' };
+            fetchOptions.body = body.toString();
+        }
+       
+        return fetch(url, fetchOptions)
             .then(function (r) { return r.blob(); })
             .then(function (blob) {
                 const link = document.createElement('a');

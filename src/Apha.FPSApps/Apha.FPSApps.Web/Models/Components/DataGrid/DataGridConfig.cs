@@ -77,7 +77,7 @@
             AllowBulkDelete = false;
             AllowView = false;
             AllowExport = false;
-            AllowExcelExport = false;
+            AllowExcelExport = true;
             AllowConfirm = false;
         }
     }

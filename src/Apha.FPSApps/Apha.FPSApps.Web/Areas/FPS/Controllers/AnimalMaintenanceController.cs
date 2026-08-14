@@ -34,7 +34,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return View(gridConfig);
         }
 
-        [HttpGet]
         [HttpPost]
         public async Task<IActionResult> LoadAnimalMasterGrid(PaginationFilter<string> request)
         {
@@ -191,7 +190,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AddFunction = "addAnimalMaster",
                 EditFunction = "editAnimalMaster",
                 DeleteFunction = "deleteAnimalMaster",
-                AllowExcelExport = true,
                 BindGridUrl = "/FPS/AnimalMaintenance/LoadAnimalMasterGrid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<AnimalMaintenanceViewModel>(null),
