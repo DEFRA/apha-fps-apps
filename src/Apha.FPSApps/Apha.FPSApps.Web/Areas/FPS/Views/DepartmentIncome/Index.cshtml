@@ -1,0 +1,226 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.DepartmentIncomeViewModel
+
+@{
+    ViewData["Title"] = "Department Income";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+    <link rel="stylesheet" href="~/css/common/_govuk_tabs.css" />
+}
+
+<main id="main-content">
+    <div class="content-wrapper">
+
+        <div class="govuk-grid-row sup_margin_left_right_0">
+            <div class="govuk-grid-column-full sup_margin_bottom_10">
+                <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_0 sup_padding_top_10 sup_padding_bottom_10">
+                    Department Income
+                </h1>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row sup_margin_left_right_0">
+
+            <div class="govuk-grid-column-one-third">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold" for="projectSelect">Project</label>
+                    <select id="projectSelect"
+                            asp-for="SelectedProject"
+                            asp-items="Model.ProjectList"
+                            class="govuk-select sup_select_option_width_100 govuk-!-font-size-16"
+                            aria-label="Select a project">
+                        <option value="">Select project</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="govuk-grid-column-two-thirds">
+                <div class="govuk-grid-column-one-half">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="monthFromSelect">Period from</label>
+                        <select id="monthFromSelect"
+                                asp-for="SelectedMonthFrom"
+                                class="govuk-select sup_select_option_width_100 govuk-!-font-size-16 govuk-visually-hidden"
+                                aria-hidden="true" tabindex="-1">
+                            <option value="">From</option>
+                            @foreach (var month in Model.MonthList)
+                            {
+                                if (Model.SelectedMonthFrom.HasValue && Model.SelectedMonthFrom == month.MonthNumber)
+                                {
+                                    <option value="@month.MonthNumber" selected>@month.MonthNumber @month.MonthName</option>
+                                }
+                                else
+                                {
+                                    <option value="@month.MonthNumber">@month.MonthNumber @month.MonthName</option>
+                                }
+                            }
+                        </select>
+                        <div id="periodFromDropdown"></div>
+                    </div>
+                </div>
+
+                <div class="govuk-grid-column-one-half">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="monthToSelect">Period to</label>
+                        <select id="monthToSelect"
+                                asp-for="SelectedMonthTo"
+                                class="govuk-select sup_select_option_width_100 govuk-!-font-size-16 govuk-visually-hidden"
+                                aria-hidden="true" tabindex="-1">
+                            <option value="">To</option>
+                            @foreach (var month in Model.MonthList)
+                            {
+                                if (Model.SelectedMonthTo.HasValue && Model.SelectedMonthTo == month.MonthNumber)
+                                {
+                                    <option value="@month.MonthNumber" selected>@month.MonthNumber @month.MonthName</option>
+                                }
+                                else
+                                {
+                                    <option value="@month.MonthNumber">@month.MonthNumber @month.MonthName</option>
+                                }
+                            }
+                        </select>
+                        <div id="periodToDropdown"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row sup_margin_left_right_0">
+            <div class="govuk-grid-column-full sup_p_0">
+                <div class="govuk-tabs" id="department-income-tabs" data-module="govuk-tabs">
+                    <ul class="govuk-tabs__list">
+                        <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
+                            <a class="govuk-tabs__tab" href="#department-income-snapshot">
+                                Snapshot data
+                            </a>
+                        </li>
+                        <li class="govuk-tabs__list-item">
+                            <a class="govuk-tabs__tab" href="#department-income-current">
+                                Current data (old style)
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="govuk-tabs__panel govuk-!-padding-2" id="department-income-snapshot">
+                        <div class="govuk-grid-row">
+
+                            <div class="govuk-grid-column-one-quarter">
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" for="snapshotQuerySelect">
+                                        Query
+                                    </label>
+                                    <select id="snapshotQuerySelect"
+                                            class="sup_select_option_width_100 govuk-!-font-size-16"
+                                            size="10" multiple
+                                            aria-label="Snapshot query list">
+                                        <option value="time">Time</option>
+                                        <option value="tests">Tests</option>
+                                        <option value="animals">Animals</option>
+                                        <option value="exceptional">Exceptional</option>
+                                        <option value="totals">Totals</option>
+                                    </select>
+                                    <div class="govuk-grid-column-one-sixth">
+                                        <div class="govuk-form-group sup_margin_bottom_10">
+                                            <label class="govuk-label govuk-visually-hidden" for="runQueryBtnSnapshot">Run query</label>
+                                            <button type="button" id="runQueryBtnSnapshot"
+                                                    class="govuk-button govuk-!-margin-top-7 sup_p_8"
+                                                    data-module="govuk-button">
+                                                Run query
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="govuk-grid-column-three-quarters">
+                                <section id="snapshotGridArea" aria-label="Snapshot data">
+                                    <section id="gridContainer_@(Model.SnapshotGrid.GridId)" aria-label="Snapshot query results">
+                                        @await Html.PartialAsync("_DataGrid", Model.SnapshotGrid)
+                                    </section>
+                                </section>
+                                <section id="snapshotQueryResultsArea" style="display:none; position:relative;" aria-label="Selected query results" aria-live="polite">
+                                    <button type="button" id="backToSnapshotBtn"
+                                            aria-label="Close query results and return to snapshot"
+                                            title="Close"
+                                            style="position:absolute; top:0; right:0; z-index:10; background:none; border:none; cursor:pointer; padding:0 6px; height:38px; display:flex; align-items:center; color:#000; font-size:1rem;">
+                                        &#x2715;
+                                    </button>
+                                    <div id="gridContainer_departmentIncomeSnapshotQueryGrid">
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2" id="department-income-current">
+                        <div class="govuk-grid-row">
+
+                            <div class="govuk-grid-column-one-quarter">
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" for="querySelect">Query</label>
+                                    <select id="querySelect"
+                                            class="sup_select_option_width_100 govuk-!-font-size-16"
+                                            size="10" aria-label="Department income query list">
+                                        <option value="qryDeptIncomeTime">qryDeptIncomeTime</option>
+                                        <option value="qryDeptIncomeTest">qryDeptIncomeTest</option>
+                                        <option value="qryDeptIncomeAnimal">qryDeptIncomeAnimal</option>
+                                        <option value="qryDeptIncomeExceptional">qryDeptIncomeExceptional</option>
+                                        <option value="qryDeptIncomeTotals">qryDeptIncomeTotals</option>
+                                    </select>
+                                    <label class="govuk-label govuk-visually-hidden" for="runQueryBtnCurrent">Run query</label>
+                                    <button type="button" id="runQueryBtnCurrent"
+                                            class="govuk-button govuk-!-margin-top-7 sup_p_8"
+                                            data-module="govuk-button">
+                                        Run query
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="govuk-grid-column-three-quarters">
+                                <section id="currentQueryResultsArea" style="display:none; position:relative;" aria-label="Current data query results" aria-live="polite">
+                                    <button type="button" id="closeCurrentGridBtn"
+                                            aria-label="Close query results"
+                                            title="Close"
+                                            style="position:absolute; top:0; right:0; z-index:10; background:none; border:none; cursor:pointer; padding:0 6px; height:38px; display:flex; align-items:center; color:#000; font-size:1rem;">
+                                        &#x2715;
+                                    </button>
+                                    <div id="gridContainer_departmentIncomeCurrentGrid"></div>
+                                </section>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<div class="modal" id="modalPopupDeptIncome" tabindex="-1" aria-labelledby="deptIncomeSnapshotModalTitle">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div id="modaPopupBodyDeptIncome"></div>
+        </div>
+    </div>
+</div>
+
+
+
+<div id="govuk-popup-overlay">
+    <div id="govuk-popup"></div>
+</div>
+
+@section Scripts {
+    <script>
+        var departmentIncomePageMonths  = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthList));
+        var departmentIncomePagePeriods = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PeriodList));
+        var deptIncomeLoadGridUrl       = '@Url.Action("LoadGrid", "DepartmentIncome", new { area = "FPS" })';
+    </script>
+    <script src="~/js/common/_govuk_tabs.js" asp-append-version="true"></script>
+    <script src="~/js/common/multicolumn-dropdown.component.js" asp-append-version="true"></script>
+    <script src="~/js/fps_js/DepartmentIncome.js" asp-append-version="true"></script>
+}
