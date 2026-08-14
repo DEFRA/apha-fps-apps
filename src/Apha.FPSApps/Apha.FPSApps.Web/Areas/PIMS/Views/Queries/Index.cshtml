@@ -1,0 +1,187 @@
+﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PIMS.Models.QueriesViewModel
+
+@{
+    ViewData["Title"] = "PIMS : Export Queries";
+}
+
+<div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-1 govuk-!-padding-0">
+    <h5 class="govuk-heading-s sup_margin_0 govuk-!-padding-top-2 govuk-!-padding-right-0 govuk-!-padding-bottom-1 govuk-!-padding-left-5">
+        Export Queries
+    </h5>
+</div>
+
+<div class="sup_flex">
+    <main class="main-content govuk-!-padding-top-0 sup_overflow_hidden">
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+
+                <!-- ── Filter Section ──────────────────────────────────── -->
+                <div class="govuk-!-padding-top-3 govuk-!-padding-bottom-5 govuk-!-padding-left-5 govuk-!-padding-right-5">
+
+                    <!-- Month/Year/Contract/Export Queries Filter Rows -->
+                    <div>
+
+                        <!-- Row 1: Month, Year -->
+                        <div class="qry-filter-row qry-filter-row--end govuk-!-margin-bottom-6">
+                            <div>
+                                <label class="govuk-label govuk-!-font-weight-bold" for="qryFilterMonth">
+                                    Month
+                                </label>
+                                <select class="govuk-select"
+                                        id="qryFilterMonth"
+                                        aria-label="Filter by month">
+                                    <option value="">Select Month</option>
+                                    <option value="1" selected="@(Model.SelectedMonth == 1 ? "selected" : null)">Jan</option>
+                                    <option value="2" selected="@(Model.SelectedMonth == 2 ? "selected" : null)">Feb</option>
+                                    <option value="3" selected="@(Model.SelectedMonth == 3 ? "selected" : null)">Mar</option>
+                                    <option value="4" selected="@(Model.SelectedMonth == 4 ? "selected" : null)">Apr</option>
+                                    <option value="5" selected="@(Model.SelectedMonth == 5 ? "selected" : null)">May</option>
+                                    <option value="6" selected="@(Model.SelectedMonth == 6 ? "selected" : null)">Jun</option>
+                                    <option value="7" selected="@(Model.SelectedMonth == 7 ? "selected" : null)">Jul</option>
+                                    <option value="8" selected="@(Model.SelectedMonth == 8 ? "selected" : null)">Aug</option>
+                                    <option value="9" selected="@(Model.SelectedMonth == 9 ? "selected" : null)">Sep</option>
+                                    <option value="10" selected="@(Model.SelectedMonth == 10 ? "selected" : null)">Oct</option>
+                                    <option value="11" selected="@(Model.SelectedMonth == 11 ? "selected" : null)">Nov</option>
+                                    <option value="12" selected="@(Model.SelectedMonth == 12 ? "selected" : null)">Dec</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="govuk-label govuk-!-font-weight-bold" for="qryFilterYear">
+                                    Year
+                                </label>
+                                <select class="govuk-select"
+                                        id="qryFilterYear"
+                                        aria-label="Filter by year">
+                                    <option value="">Year</option>
+                                    @foreach (var year in Model.YearOptions)
+                                    {
+                                        <option value="@year.Value" selected="@(year.Selected ? "selected" : null)">@year.Text</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Export Queries, Contract, Open Query Button -->
+                        <div class="qry-filter-row qry-filter-row--start">
+                            <div>
+                                <label class="govuk-label govuk-!-font-weight-bold sup_p_0" style="display:block">Export Queries</label>
+                                <div id="qryExportQueriesBox" class="govuk-!-margin-top-1">
+                                    <label for="qryAllContractQuery">
+                                        <input type="radio" id="qryAllContractQuery" name="exportQuery" value="allContract">
+                                        All Contracts Query
+                                    </label>
+                                    <label for="qryContractMonitoringQuery">
+                                        <input type="radio" id="qryContractMonitoringQuery" name="exportQuery" value="contractMonitoring">
+                                        Contracts Monitoring Query
+                                    </label>
+                                    <label for="qryProgramMonitoringQuery">
+                                        <input type="radio" id="qryProgramMonitoringQuery" name="exportQuery" value="programMonitoring">
+                                        Program and Customer Monitoring
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="qryContractGroup" class="govuk-!-margin-top-0">
+                                <label class="govuk-label govuk-!-font-weight-bold" for="qryFilterContract">
+                                    Contract
+                                </label>
+                                <select class="govuk-select"
+                                        id="qryFilterContract"
+                                        aria-label="Filter by contract">
+                                    @foreach (var contract in Model.ContractOptions)
+                                    {
+                                        <option value="@contract.Value">@contract.Text</option>
+                                    }
+                                </select>
+
+                                <div id="qryOpenQueryGroup" class="govuk-!-margin-top-9 govuk-!-margin-left-0">
+                                    <button id="openQueryBtn"
+                                            type="button"
+                                            class="govuk-button"
+                                            onclick="openQuery()">
+                                        Open Query
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ── Query Results Section ────────────────────────────── -->
+                <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                    <div class="govuk-grid-column-full">
+                        <div id="queryResultsContainer" class="govuk-!-margin-top-0">
+                            <h6 class="govuk-heading-s sup_margin_bottom_15">Query Results</h6>
+                            <div id="@($"gridContainer_{Model.QueryResultsGrid.GridId}")">
+                                @await Html.PartialAsync("_DataGrid", Model.QueryResultsGrid)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+</div>
+
+@section Scripts {
+    <script>
+        function isAllContractQuerySelected() {
+            const selectedQuery = document.querySelector('input[name="exportQuery"]:checked');
+            return selectedQuery && selectedQuery.value === 'allContract';
+        }
+
+        function updateContractFilterState() {
+            const contractSelect = document.getElementById('qryFilterContract');
+            contractSelect.disabled = false;
+        }
+
+        function openQuery() {
+            const selectedQuery = document.querySelector('input[name="exportQuery"]:checked');
+            const month = document.getElementById('qryFilterMonth').value;
+            const year = document.getElementById('qryFilterYear').value;
+            const contract = document.getElementById('qryFilterContract').value;
+
+            if (!selectedQuery) {
+                showAlertMessage('Please select an Export Query before opening the query.', AlertType.WARNING);
+                return;
+            }
+
+            if (!month || !year) {
+                showAlertMessage('Please select Month and Year before opening the query.', AlertType.WARNING);
+                return;
+            }
+
+            document.getElementById('queryResultsContainer').style.display = 'block';
+            var gm = window['gridManager_@Model.QueryResultsGrid.GridId'];
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+
+            const queryLabel = selectedQuery.closest('label').textContent.trim();
+            const contractText = contract ? `Contract ${contract}` : 'All Contracts';
+            showAlertMessage(`${queryLabel} - ${month}/${year} - ${contractText}`, AlertType.SUCCESS);
+        }
+
+        function getQueryExtraFilters() {
+            const selectedQuery = document.querySelector('input[name="exportQuery"]:checked');
+            return {
+                month: document.getElementById('qryFilterMonth').value,
+                year: document.getElementById('qryFilterYear').value,
+                contract: document.getElementById('qryFilterContract').value,
+                exportQuery: selectedQuery ? selectedQuery.value : ''
+            };
+        }
+
+        document.querySelectorAll('input[name="exportQuery"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                updateContractFilterState();
+            });
+        });
+
+        updateContractFilterState();
+    </script>
+}

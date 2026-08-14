@@ -85,6 +85,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectYearCostsService, ProjectYearCostsService>();
             services.AddScoped<IMilestoneService, MilestoneService>();
             services.AddScoped<IRadTrackInvoiceService, RadTrackInvoiceService>();
+            services.AddScoped<IQueriesService, QueriesService>();
             services.AddScoped<IMaintenanceService, MaintenanceService>();
 
             services.AddScoped<IYearlyFinancialDataService, YearlyFinancialDataService>();
