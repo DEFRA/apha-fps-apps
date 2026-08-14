@@ -7,8 +7,8 @@
 
 <!-- Page heading -->
 <div class="govuk-grid-row sup_margin_left_right_0">
-    <div class="govuk-grid-column-full">
-        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom p-tb-10 p-l-10">
+    <div class="govuk-grid-column-full sup_border-bottom ">
+        <h1 class="heading_with_txtbox govuk-heading-s govuk-!-margin-bottom-2  govuk-!-margin-top-2">
             <span class="sup_flex_left_center">Monthly Output Log</span>
         </h1>
     </div>
@@ -28,7 +28,7 @@
 </div>
 
 <!-- Search criteria panel -->
-<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10 govuk-!-margin-top-3">
     <div class="govuk-grid-column-full">
         <div class="sup_border sup_padding_16">
 
@@ -77,8 +77,8 @@
             </div>
 
             <!-- Row 2: Buying Project | OR | Buying Test | Date Imported -->
-            <div class="govuk-grid-row sup_flex_between_center">
-                <div class="govuk-grid-column-one-third sup_padding_right_7">
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-one-third" style="position:relative;">
                     <div class="govuk-form-group sup_margin_bottom_10">
                         <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddBuyingProject">
                             Buying Project
@@ -91,9 +91,9 @@
                             }
                         </select>
                     </div>
+                    <span class="or_text" style="position:absolute; top:34px; right:-10px;">OR</span>
                 </div>
-                <span class="or_text">OR</span>
-                <div class="govuk-grid-column-one-third sup_padding_left_0 sup_padding_right_20">
+                <div class="govuk-grid-column-one-third">
                     <div class="govuk-form-group sup_margin_bottom_10">
                         <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="txtBuyingTest">
                             Buying Test
@@ -103,7 +103,7 @@
                                placeholder="Buying Test" />
                     </div>
                 </div>
-                <div class="govuk-grid-column-one-third sup_padding_left_10">
+                <div class="govuk-grid-column-one-third">
                     <div class="govuk-form-group sup_margin_bottom_10">
                         <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="dtDateImported">
                             Date Imported (dd/mm/yy)
@@ -176,7 +176,7 @@
 
 <!-- Grid -->
 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10 sup_margin_bottom_10">
-    <div class="govuk-grid-column-full sup_padding_right_left_10">
+    <div class="govuk-grid-column-full">
         <div id="gridContainer_moLogGrid">
             @await Html.PartialAsync("_DataGrid", Model.LogGrid)
         </div>
