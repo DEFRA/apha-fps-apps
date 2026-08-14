@@ -88,6 +88,16 @@ table, th, td, button, label, input {
 }
 
 /* Shared pill base — border, colour, font */
+.year-end-message {
+    color: #00005c;
+    letter-spacing: 1px;
+    font-weight: 500;
+    font-size: 18px !important;
+    font-family: "GDS Transport", arial, sans-serif !important;
+    text-align: center;
+    margin-left: 10px;
+    line-height: 1.3;
+}
 .app-log, select.app-log {
     border: 1px solid #0374e9;
     border-radius: 10px;

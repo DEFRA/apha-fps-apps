@@ -1,17 +1,128 @@
 ﻿@model Apha.FPSApps.Web.Areas.CostBook.Models.YearlyDetailsViewModel
 
-<!-- ── Side Navigation ─────────────────────────────────────────── -->
+<!-- Side Navigation -->
 
 <nav class="sidenav flex-column flex-shrink-0" id="shortnav">
-    <button class="toggle-btn project-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle side navigation">
-        <img src="~/images/chevron-left-solid-full.svg" alt="side nav menu arrow" width="24">
+
+    <button class="toggle-btn project-toggle-btn"
+            onclick="toggleSidebar()"
+            aria-label="Toggle side navigation">
+        <img src="~/images/chevron-left-solid-full.svg"
+             alt="side nav menu arrow"
+             width="24">
     </button>
-    <ul>        
-        <li><a class="dropdown-item sidenav-title">Queries</a></li>
-            <li><a class="dropdown-item" asp-area="CostBook" asp-controller="ProjectCosts" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">Project Costs Query</a></li>
-        <li><a class="dropdown-item" asp-area="CostBook" asp-controller="StaffYears" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">CSG7 Staff Years</a></li>
-        <li><a class="dropdown-item" asp-area="CostBook" asp-controller="StaffEffort" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">SID3 Staff Effort</a></li>
-        <li><a class="dropdown-item" asp-area="CostBook" asp-controller="ProjectSummary" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">Project Summary</a></li>
-        <li><a class="dropdown-item" asp-area="CostBook" asp-controller="ProjectCosts" asp-action="ExportToExcel" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">Excel Report</a></li>
+
+    <ul>
+
+        <li>
+            <a class="dropdown-item sidenav-title">
+                Queries
+            </a>
+        </li>
+
+        <!-- Project Costs Query -->
+        <li>
+            <a class="dropdown-item sidenav-link"
+               data-nav="project-costs"
+               asp-area="CostBook"
+               asp-controller="ProjectCosts"
+               asp-action="Index"
+               asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">
+                Project Costs Query
+            </a>
+        </li>
+
+        <!-- CSG7 Staff Years -->
+        <li>
+            <a class="dropdown-item sidenav-link"
+               data-nav="staff-years"
+               asp-area="CostBook"
+               asp-controller="StaffYears"
+               asp-action="Index"
+               asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">
+                CSG7 Staff Years
+            </a>
+        </li>
+
+        <!-- SID3 Staff Effort -->
+        <li>
+            <a class="dropdown-item sidenav-link"
+               data-nav="staff-effort"
+               asp-area="CostBook"
+               asp-controller="StaffEffort"
+               asp-action="Index"
+               asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">
+                SID3 Staff Effort
+            </a>
+        </li>
+
+        <!-- Project Summary -->
+        <li>
+            <a class="dropdown-item sidenav-link"
+               data-nav="project-summary"
+               asp-area="CostBook"
+               asp-controller="ProjectSummary"
+               asp-action="Index"
+               asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">
+                Project Summary
+            </a>
+        </li>
+
+        <!-- Excel Report -->
+        <li>
+            <a class="dropdown-item sidenav-link"
+               data-nav="excel-report"
+               asp-area="CostBook"
+               asp-controller="ProjectCosts"
+               asp-action="ExportToExcel"
+               asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">
+                Excel Report
+            </a>
+        </li>
+
     </ul>
 </nav>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const navLinks = document.querySelectorAll(".sidenav-link");
+        const storageKey = "costbook-active-nav";
+
+        // Get previously selected navigation
+        const activeNav = sessionStorage.getItem(storageKey);
+
+        // Restore active navigation after page reload
+        if (activeNav) {
+            navLinks.forEach(function (link) {
+                if (link.dataset.nav === activeNav) {
+                    link.classList.add("active");
+                }
+            });
+        }
+
+        // Handle navigation click
+        navLinks.forEach(function (link) {
+
+            link.addEventListener("click", function () {
+
+                // Remove active from all nav items
+                navLinks.forEach(function (item) {
+                    item.classList.remove("active");
+                });
+
+                // Add active to clicked item
+                this.classList.add("active");
+
+                // Remember selected navigation
+                sessionStorage.setItem(
+                    storageKey,
+                    this.dataset.nav
+                );
+            });
+
+        });
+
+    });
+</script>

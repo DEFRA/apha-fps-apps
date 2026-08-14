@@ -21,7 +21,7 @@
     <div>
         <div class="govuk-grid-row sup_margin_left_right_0">
             <div class="govuk-grid-column-full sup_p_0">
-                <div class="main-content-cs">
+                <div class="main-content-csn isNoGlobalScroll">
                     <div class="govuk-tabs" data-module="govuk-tabs">
                         <ul class="govuk-tabs__list" role="tablist" aria-label="Costbook Maintainance tabs">
 
@@ -91,7 +91,7 @@
                                             <p class="govuk-!-font-size-16 govuk-!-font-weight-bold maint-panel-subheading">
                                                 % Inflation Figures
                                             </p>
-                                            <p class="govuk-body maint-hint-text">(to set inflation at 2.5% enter 2.5)</p>
+                                            <p class="govuk-body maint-hint-text">(To set the inflation rate to 2.5%, enter 2.5.)</p>
 
                                             <div class="govuk-form-group maint-inline-form-group" id="fg-inflAnimals">
                                                 <div class="maint-field-row">
@@ -161,7 +161,7 @@
                                                 Other Figures
                                             </p>
 
-                                            <div class="govuk-form-group maint-inline-form-group" id="fg-inflCurrentFinancialYear">
+                                            <div class="govuk-form-group maint-inline-form-group govuk-!-margin-bottom-2" id="fg-inflCurrentFinancialYear">
                                                 <div class="maint-field-row maint-field-row--top-spaced">
                                                     <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 maint-field-label"
                                                            for="inflCurrentFinancialYear">
@@ -175,12 +175,13 @@
                                                            aria-describedby="inflCurrentFinancialYear-error" />
                                                 </div>
                                                 <span id="inflCurrentFinancialYear-error" data-valmsg-for="inflCurrentFinancialYear" class="govuk-error-message field-validation-valid" style="display:none;"></span>
+
+                                                <p class="govuk-body maint-hint-text govuk-!-margin-bottom-2">
+                                                    Changing this value links the lookup tables to the relevant FPS version. Do not use this option with FPS versions earlier than 2001.
+                                                </p>
                                             </div>
 
-                                            <p class="govuk-body maint-hint-text">
-                                                Changing this figure, links the lookup tables to the relevant
-                                                version of FPS. Do not attempt to use on versions of FPS before 2001.
-                                            </p>
+                                            
 
                                             <div class="govuk-form-group maint-inline-form-group" id="fg-inflWorkingHoursInDay">
                                                 <div class="maint-field-row">
@@ -232,7 +233,7 @@
                       
 
                         @* ── TAB 2 — Account Categories ──────────────────────────────────────── *@
-                        <section id="tab-account-categories" class="govuk-tabs__panel" role="tabpanel"
+                        <section id="tab-account-categories" class="govuk-tabs__panel isScrollTabs" role="tabpanel"
                                  aria-labelledby="tab-link-account-categories">
 
                             <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
@@ -249,7 +250,7 @@
 
                         </section>
                         
-                        <section id="tab-csg7" class="govuk-tabs__panel" role="tabpanel"
+                        <section id="tab-csg7" class="govuk-tabs__panel isScrollTabs isCsgOpt" role="tabpanel"
                                  aria-labelledby="tab-link-csg7">
 
                             <div>
@@ -271,7 +272,7 @@
                        
 
                         @* ── TAB 4 — Profit Margins ──────────────────────────────────────────── *@
-                        <section id="tab-profit-margins" class="govuk-tabs__panel govuk-!-padding-top-3" role="tabpanel"
+                        <section id="tab-profit-margins" class="govuk-tabs__panel isScrollTabs govuk-!-padding-top-3" role="tabpanel"
                                  aria-labelledby="tab-link-profit-margins">
 
                             <form id="formProfitMargins" novalidate>
@@ -380,7 +381,7 @@
 
                         </section>
                      
-                        <section id="tab-caps-staff" class="govuk-tabs__panel" role="tabpanel"
+                        <section id="tab-caps-staff" class="govuk-tabs__panel isScrollTabs" role="tabpanel"
                                  aria-labelledby="tab-link-caps-staff">
 
                             <div>
