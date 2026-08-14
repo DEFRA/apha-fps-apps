@@ -10,6 +10,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using NSubstitute.ReturnsExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControllerTest
@@ -225,7 +226,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
         public async Task Create_Get_OwnerServiceReturnsNull_ReturnsPartialViewWithPlaceholderOnly()
         {
             // Arrange
-            _service.GetOwnersAsync().Returns((ApiResponseDto<List<OwnerDto>>?)null);
+            _service.GetOwnersAsync().ReturnsNull();
 
             // Act
             var result = await _controller.Create();
