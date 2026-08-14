@@ -93,39 +93,38 @@
         btn.disabled = true;
         btn.setAttribute('aria-disabled', 'true');
 
-        fetch(TRIGGER_URL, {
-            method  : 'POST',
-            headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body    : new URLSearchParams({
-                month                      : monthVal,
-                __RequestVerificationToken : getAntiForgeryToken()
-            })
-        })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-            if (data.success) {
-                // Show green success banner at the same position as the error summary
-                showSuccessBanner('Request submitted successfully. Summaries will be recreated shortly.');
-                refreshHistoryGrid();
-            } else {
-                // Map ALL server errors — each gets a summary entry (field is empty
-                // so the library routes every item to .govuk-error-summary)
-                var errors = Array.isArray(data.errors) && data.errors.length
-                    ? data.errors
-                    : [{ field: '', message: data.message || 'Failed to trigger the job.' }];
-                displayServerValidationErrors(errors, 'There is a problem', SCOPE);
+        $.ajax({
+            url: TRIGGER_URL,
+            type: 'POST',
+            data: {
+                month: monthVal,
+                __RequestVerificationToken: getAntiForgeryToken()
+            },
+            success: function (data) {
+                if (data.success) {
+                    // Show green success banner at the same position as the error summary
+                    showSuccessBanner('Request submitted successfully. Summaries will be recreated shortly.');
+                    refreshHistoryGrid();
+                } else {
+                    // Map ALL server errors — each gets a summary entry (field is empty
+                    // so the library routes every item to .govuk-error-summary)
+                    var errors = Array.isArray(data.errors) && data.errors.length
+                        ? data.errors
+                        : [{ field: '', message: data.message || 'Failed to trigger the job.' }];
+                    displayServerValidationErrors(errors, 'There is a problem', SCOPE);
+                    btn.disabled = false;
+                    btn.removeAttribute('aria-disabled');
+                }
+            },
+            error: function () {
+                displayServerValidationErrors(
+                    [{ field: '', message: 'An unexpected error occurred. Please try again.' }],
+                    'There is a problem',
+                    SCOPE
+                );
                 btn.disabled = false;
                 btn.removeAttribute('aria-disabled');
             }
-        })
-        .catch(function () {
-            displayServerValidationErrors(
-                [{ field: '', message: 'An unexpected error occurred. Please try again.' }],
-                'There is a problem',
-                SCOPE
-            );
-            btn.disabled = false;
-            btn.removeAttribute('aria-disabled');
         });
     };
 
@@ -135,18 +134,18 @@
         var container = document.getElementById('gridContainer_summaryHistoryGrid');
         if (!container) return;
 
-        fetch(GRID_URL, {
-            method  : 'POST',
-            headers : { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body    : new URLSearchParams({
-                Filter                     : '{}',
-                Page                       : 1,
-                PageSize                   : 10,
-                __RequestVerificationToken : getAntiForgeryToken()
-            })
-        })
-        .then(function (r) { return r.text(); })
-        .then(function (html) { container.innerHTML = html; });
+        $.ajax({
+            url: GRID_URL,
+            type: 'POST',
+            data: {
+                Filter: '{}',
+                Page: 1,
+                PageSize: 10,
+                __RequestVerificationToken: getAntiForgeryToken()
+            },
+            success: function (html) { container.innerHTML = html; },
+            error: function () { showAlertMessage('Failed to refresh history grid.', AlertType.ERROR); }
+        });
     }
 
     // ── Success banner helpers ────────────────────────────────────────────────

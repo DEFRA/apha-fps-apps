@@ -112,18 +112,30 @@ function saveProjectDetail() {
 
 // Job Code functions
 function addJobCode() {
-    $.get('/PACT/ProjectMaintenance/CreateJobCode', { parentProject: decodeURIComponent(parentProject) }, function(html) {
-        $('#modaPopupBody').html(html);
-        $('#modalPopup').addClass('show');
+    $.ajax({
+        url: '/PACT/ProjectMaintenance/CreateJobCode',
+        type: 'GET',
+        data: { parentProject: decodeURIComponent(parentProject) },
+        success: function(html) {
+            $('#modaPopupBody').html(html);
+            $('#modalPopup').addClass('show');
+        },
+        error: function() { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
 }
 
 function editJobCode(btn) {
     var jobCodeId = $(btn).data('id');
     selectedJobCodeId = jobCodeId;
-    $.get('/PACT/ProjectMaintenance/EditJobCode', { jobCodeId: jobCodeId }, function(html) {
-        $('#modaPopupBody').html(html);
-        $('#modalPopup').addClass('show');
+    $.ajax({
+        url: '/PACT/ProjectMaintenance/EditJobCode',
+        type: 'GET',
+        data: { jobCodeId: jobCodeId },
+        success: function(html) {
+            $('#modaPopupBody').html(html);
+            $('#modalPopup').addClass('show');
+        },
+        error: function() { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
 }
 
@@ -154,12 +166,16 @@ function deleteJobCode(btn) {
 function copyJobCode(btn) {
     var jobCodeId = $(btn).data('id');
     selectedJobCodeId = jobCodeId;
-    $.get('/PACT/ProjectMaintenance/CopyProjectJobCode',
-        { jobCodeId: selectedJobCodeId },
-        function(html) {
+    $.ajax({
+        url: '/PACT/ProjectMaintenance/CopyProjectJobCode',
+        type: 'GET',
+        data: { jobCodeId: selectedJobCodeId },
+        success: function(html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-        });
+        },
+        error: function() { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+    });
 }
 
 function saveJobCode() {
@@ -211,8 +227,14 @@ function selectJobCode(row) {
 function reloadTimeCodeGrid(jobCodeId) {
     selectedJobCodeId = jobCodeId;
     var params = { parentProject: decodeURIComponent(parentProject), jobCodeId: jobCodeId || '' };
-    $.post('/PACT/ProjectMaintenance/LoadTimeCodeGrid', params, function(html) {
-        $('#gridContainer_' + timeCodeGridId).html(html);
+    $.ajax({
+        url: '/PACT/ProjectMaintenance/LoadTimeCodeGrid',
+        type: 'POST',
+        data: params,
+        success: function(html) {
+            $('#gridContainer_' + timeCodeGridId).html(html);
+        },
+        error: function() { showAlertMessage('An error occurred while loading time codes.', AlertType.ERROR); }
     });
 }
 
@@ -226,23 +248,31 @@ function addTimeCode() {
         showAlertMessage('Please select a job code first.', AlertType.INFO); 
         return; 
     }
-    $.get('/PACT/ProjectMaintenance/CreateTimeCode',
-        { parentProject: decodeURIComponent(parentProject), jobCodeId: selectedJobCodeId },
-        function(html) {
+    $.ajax({
+        url: '/PACT/ProjectMaintenance/CreateTimeCode',
+        type: 'GET',
+        data: { parentProject: decodeURIComponent(parentProject), jobCodeId: selectedJobCodeId },
+        success: function(html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-        });
+        },
+        error: function() { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+    });
 }
 
 function editTimeCode(btn) {
     var timeCode = $(btn).data('id');
     var workGroup = $(btn).closest('tr').find('[data-property="WorkGroup"] span').text();
-    $.get('/PACT/ProjectMaintenance/EditTimeCode',
-        { workGroup: workGroup, timeCode: timeCode, jobCodeId: selectedJobCodeId, parentProject: decodeURIComponent(parentProject) },
-        function(html) {
+    $.ajax({
+        url: '/PACT/ProjectMaintenance/EditTimeCode',
+        type: 'GET',
+        data: { workGroup: workGroup, timeCode: timeCode, jobCodeId: selectedJobCodeId, parentProject: decodeURIComponent(parentProject) },
+        success: function(html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
-        });
+        },
+        error: function() { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+    });
 }
 
 function deleteTimeCode(btn) {
@@ -357,9 +387,11 @@ function copyBulkWorkGroup(selection) {
         return;
     }
 
-    $.get('/PACT/ProjectMaintenance/CopyWorkGroupPartial',
-        { parentProject: decodeURIComponent(parentProject), sourceJobCodeId: selectedJobCodeId },
-        function(html) {
+    $.ajax({
+        url: '/PACT/ProjectMaintenance/CopyWorkGroupPartial',
+        type: 'GET',
+        data: { parentProject: decodeURIComponent(parentProject), sourceJobCodeId: selectedJobCodeId },
+        success: function(html) {
             $('#modaPopupBody').html(html);
 
             if (selection.isAll) {
@@ -389,7 +421,9 @@ function copyBulkWorkGroup(selection) {
             }
 
             $('#modalPopup').addClass('show');
-        });
+        },
+        error: function() { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+    });
 }
 
 function executeCopyBulkWorkGroup() {

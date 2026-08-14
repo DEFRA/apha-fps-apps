@@ -37,7 +37,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanCrossTabControllerT
         private static TestPlanCostBreakdownDto BuildDto(
             List<string>? columns = null,
             List<Dictionary<string, string?>>? rows = null,
-            int totalCount = 0, int page = 1, int pageSize = 20)
+            int totalCount = 0, int page = 1, int pageSize = 10)
             => new TestPlanCostBreakdownDto()
             {
                 Columns    = columns ?? [],

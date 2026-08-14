@@ -158,6 +158,24 @@ namespace Apha.PACT.DataAccess.Repository
 
         private static IQueryable<TestorProduct> ApplySorting(IQueryable<TestorProduct> query, string? sortBy, bool descending)
         {
+            var key = sortBy?.ToLower() ?? string.Empty;
+
+            // Manager column holds a mix of NULL, empty and whitespace-only values. Ordering only by
+            // the raw value causes blanks to split around the populated names (empty strings sort to the
+            // top, NULLs to the bottom). Group all blanks together first so they stay contiguous.
+            if (key == "testmanager")
+            {
+                Expression<Func<TestorProduct, bool>> isBlank =
+                    e => e.TestManager == null || e.TestManager.Trim() == string.Empty;
+
+                if (descending)
+                {
+                    return query.OrderBy(isBlank).ThenByDescending(e => e.TestManager);
+                }
+
+                return query.OrderBy(isBlank).ThenBy(e => e.TestManager);
+            }
+
             var sortMap = new Dictionary<string, Expression<Func<TestorProduct, object?>>>
             {
                 ["itemcode"] = e => e.ItemCode,
@@ -170,7 +188,6 @@ namespace Apha.PACT.DataAccess.Repository
                 ["defraunitprice"] = e => e.DefraUnitPrice,
             };
 
-            var key = sortBy?.ToLower() ?? string.Empty;
             if (!sortMap.TryGetValue(key, out var keySelector))
                 keySelector = e => e.ItemCode;
 

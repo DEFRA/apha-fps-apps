@@ -753,7 +753,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return query;
         }
 
-        private static IQueryable<ProjectView> ApplyProfitabilityFilter(IQueryable<ProjectView> query, string? filter)
+        private static List<ProjectProfitabilityView> ApplyProfitabilityFilter(List<ProjectProfitabilityView> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
                 return query;
@@ -764,11 +764,17 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
-                query = query.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{jobCode}%"));
+            if (dict.TryGetValue("JobCode", out var jobCode) && !string.IsNullOrWhiteSpace(jobCode?.ToString()))
+            {
+                var jobCodeValue = jobCode.ToString()!;
+                query = query.Where(x => x.JobCode.Contains(jobCodeValue, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
 
-            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && projectStatus != null)
-                query = query.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
+            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && !string.IsNullOrWhiteSpace(projectStatus?.ToString()))
+            {
+                var projectStatusValue = projectStatus.ToString()!;
+                query = query.Where(x => x.ProjectStatus!.Contains(projectStatusValue, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
 
             return query;
         }
@@ -1633,8 +1639,6 @@ namespace Apha.FPS.DataAccess.Repositories
             else if (workTypeFilter == "not-approved")
                 projectQuery = projectQuery.Where(p => p.ProjectStatus == "Not Approved");
 
-            projectQuery = ApplyProfitabilityFilter(projectQuery, query.Filter);
-
             var projects = await projectQuery
                 .Select(p => new ProjectProfitabilityEntry(p.ParentProject, p.BudgetCvl, p.Profit, p.ProjectStatus, p.Program))
                 .ToListAsync();
@@ -1675,8 +1679,6 @@ namespace Apha.FPS.DataAccess.Repositories
                 projectQuery = projectQuery.Where(p => p.ProjectStatus == "Approved");
             else if (workTypeFilter == "not-approved")
                 projectQuery = projectQuery.Where(p => p.ProjectStatus == "Not Approved");
-
-            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
 
             var projects = await projectQuery
                 .Select(p => new ProjectProfitabilityEntry(p.ParentProject, p.BudgetCvl, p.Profit, p.ProjectStatus, p.Program))
@@ -1825,6 +1827,8 @@ namespace Apha.FPS.DataAccess.Repositories
             var results = projects
                 .Select(p => BuildProfitabilityRow(p, staffMap, additionalMap, testMap, animalCostByJob, programmeTargetMap))
                 .ToList();
+
+            results = ApplyProfitabilityFilter(results, query.Filter);
 
             // Apply sorting
             results = query.SortBy?.ToLower() switch
