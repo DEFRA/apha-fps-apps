@@ -216,23 +216,30 @@ namespace Apha.PACT.DataAccess.Repository
             if (filters is null)
                 return query;
 
-            if (filters.TryGetValue("WorkGroupName", out var wgName) && !string.IsNullOrWhiteSpace(wgName))
+            // ILike on a NULL column yields no match in PostgreSQL, so an explicit
+            // null guard is unnecessary for the nullable Owner/Description columns.
+            if (TryGetFilter(filters, "WorkGroupName", out var wgName))
                 query = query.Where(w => EF.Functions.ILike(w.WorkGroupName, $"%{wgName}%"));
 
-            if (filters.TryGetValue("ProfitCentre", out var pc) && !string.IsNullOrWhiteSpace(pc))
+            if (TryGetFilter(filters, "ProfitCentre", out var pc))
                 query = query.Where(w => EF.Functions.ILike(w.ProfitCentre, $"%{pc}%"));
 
-            if (filters.TryGetValue("CostCentre", out var cc) && !string.IsNullOrWhiteSpace(cc)
-                && double.TryParse(cc, out var costCentreValue))
+            if (TryGetFilter(filters, "Owner", out var owner))
+                query = query.Where(w => EF.Functions.ILike(w.Owner!, $"%{owner}%"));
+
+            if (TryGetFilter(filters, "Description", out var desc))
+                query = query.Where(w => EF.Functions.ILike(w.Description!, $"%{desc}%"));
+
+            if (TryGetFilter(filters, "CostCentre", out var cc) && double.TryParse(cc, out var costCentreValue))
                 query = query.Where(w => w.CostCentre.HasValue && Math.Abs(w.CostCentre.Value - costCentreValue) < 1e-9);
 
-            if (filters.TryGetValue("Owner", out var owner) && !string.IsNullOrWhiteSpace(owner))
-                query = query.Where(w => w.Owner != null && EF.Functions.ILike(w.Owner, $"%{owner}%"));
-
-            if (filters.TryGetValue("Description", out var desc) && !string.IsNullOrWhiteSpace(desc))
-                query = query.Where(w => w.Description != null && EF.Functions.ILike(w.Description, $"%{desc}%"));
-
             return query;
+        }
+
+        private static bool TryGetFilter(Dictionary<string, string> filters, string key, out string value)
+        {
+            value = filters.TryGetValue(key, out var raw) ? raw : string.Empty;
+            return !string.IsNullOrWhiteSpace(value);
         }
 
         public async Task<IEnumerable<SummarisedWgTimeView>> GetSummarisedWorkgroupTimeAsync(
