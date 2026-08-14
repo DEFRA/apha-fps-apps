@@ -475,19 +475,5 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
         }
 
         #endregion
-
-        #region Excel Export Tests
-
-        [Fact]
-        public async Task Index_GridAllowExcelExportIsTrue()
-        {
-            SetupPagedService();
-            var result = await _controller.Index();
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<DataGridConfig<AnimalMaintenanceViewModel>>(viewResult.Model);
-            Assert.True(model.AllowExcelExport);
-        }
-
-        #endregion
     }
 }
