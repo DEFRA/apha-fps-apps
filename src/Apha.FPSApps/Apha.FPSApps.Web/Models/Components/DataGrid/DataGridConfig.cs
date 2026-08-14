@@ -20,23 +20,8 @@
         public bool AllowView { get; set; }
         public bool AllowConfirm { get; set; }
         public bool AllowExport { get; set; }
-
-        /// <summary>
-        /// When true, renders a dedicated "Excel Export" button in the grid header that
-        /// re-hits <see cref="BindGridUrl"/> (with all current filters/search/sort) requesting
-        /// the full result set as an .xlsx download. This is independent of <see cref="AllowExport"/>.
-        /// </summary>
         public bool AllowExcelExport { get; set; }
-
-        /// <summary>
-        /// Optional endpoint used by the Excel export button. Defaults to <see cref="BindGridUrl"/> when empty.
-        /// </summary>
         public string ExcelExportUrl { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Optional file name (without extension) for the exported workbook.
-        /// Defaults to <see cref="Title"/> (or <see cref="GridId"/>) when empty.
-        /// </summary>
         public string ExcelExportFileName { get; set; } = string.Empty;
         public string BulkCopyButtonText { get; set; } = "Copy";
         public string BulkCopyFunction { get; set; } = string.Empty;
@@ -55,11 +40,6 @@
         public string? CurrentSearch { get; set; }
         public Dictionary<string, string>? CurrentFilters { get; set; } = null;
 
-        /// <summary>
-        /// Optional column-group header row rendered above the main header.
-        /// Each entry spans the given number of visible columns (left to right).
-        /// Use an empty Label for ungrouped filler columns.
-        /// </summary>
         public List<DataGridColumnGroup>? ColumnGroups { get; set; }
 
         public DataGridConfig()

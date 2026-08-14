@@ -7,17 +7,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Apha.FPSApps.Web.Filters
 {
-    /// <summary>
-    /// Centralises DataGrid "Excel Export" for every grid controller. When a request targets a
-    /// grid's <c>BindGridUrl</c> with <c>export=true</c> (or <c>format=excel</c>), this filter:
-    ///   1. Expands any bound paging argument so the action returns the full result set.
-    ///   2. Inspects the resulting <see cref="DataGridConfig{T}"/> model and, when
-    ///      <see cref="DataGridConfig{T}.AllowExcelExport"/> is true, converts its <c>Data</c>
-    ///      collection into an .xlsx download using the shared <see cref="IGenericExcelExporter"/>.
-    ///
-    /// Controllers therefore only need to set <c>AllowExcelExport = true</c> in their grid config —
-    /// no export-specific action code is required.
-    /// </summary>
     public sealed class DataGridExcelExportFilter : IAsyncActionFilter
     {
         private const string ExcelContentType =
