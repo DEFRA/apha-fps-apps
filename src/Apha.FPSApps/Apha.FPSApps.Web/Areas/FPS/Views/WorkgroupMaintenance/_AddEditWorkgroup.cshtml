@@ -84,16 +84,14 @@
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="CostCentre">
                                 CostCentre:
                             </label>
-                            <input class="govuk-input govuk-!-font-size-16"
-                                   id="CostCentre"
-                                   name="CostCentre"
-                                   type="text"
-                                   inputmode="numeric"
-                                   pattern="[0-9]*"
-                                   maxlength="10"
-                                   aria-label="Cost centre"
-                                   aria-describedby="err-modal-wg-cc"
-                                   value="@(Model?.CostCentre.HasValue == true ? ((long)Model.CostCentre.Value).ToString() : string.Empty)" />
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                                    id="CostCentre"
+                                    name="CostCentre"
+                                    aria-label="Cost centre"
+                                    aria-describedby="err-modal-wg-cc">
+                                <option value="">-- Select --</option>
+                                @* Options populated by AJAX loadCostCentreOptions() below, cascading from ProfitCentre *@
+                            </select>
                             <span data-valmsg-for="CostCentre" class="govuk-error-message field-validation-valid" id="err-modal-wg-cc" style="display:none;"></span>
                         </div>
                     </div>
@@ -186,24 +184,21 @@
         (function initWorkgroupModal() {
             var currentProfitCentre = @Json.Serialize(Model?.ProfitCentre ?? string.Empty);
             var currentOwner = @Json.Serialize(Model?.Owner ?? string.Empty);
+            var currentCostCentre = @Json.Serialize(Model?.CostCentre.HasValue == true ? ((long)Model.CostCentre.Value).ToString() : string.Empty);
 
-            // Load ProfitCentres (ResourceCentres) and Owners
-            loadProfitCentreOptions(currentProfitCentre);
+            // Load ProfitCentres (ResourceCentres), then cascade-load CostCentres for the
+            // currently selected ProfitCentre so the CostCentre dropdown is populated on open.
+            loadProfitCentreOptions(currentProfitCentre, function () {
+                loadCostCentreOptions(currentProfitCentre, currentCostCentre);
+            });
 
             loadOwnerOptions(currentOwner);
 
-            // CostCentre is a numeric-only text box (max 10 digits, no decimals)
-            var costCentreInput = document.getElementById('CostCentre');
-            if (costCentreInput) {
-                costCentreInput.addEventListener('input', function () {
-                    // Strip any non-digit characters and enforce max length of 10
-                    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
-                });
-                costCentreInput.addEventListener('keypress', function (e) {
-                    // Block non-numeric key presses (including '.' to disallow decimals)
-                    if (e.key.length === 1 && (e.key < '0' || e.key > '9')) {
-                        e.preventDefault();
-                    }
+            // CostCentre is a cascading dropdown driven by the selected ProfitCentre.
+            var profitCentreSelect = document.getElementById('ProfitCentre');
+            if (profitCentreSelect) {
+                profitCentreSelect.addEventListener('change', function () {
+                    loadCostCentreOptions(this.value, '');
                 });
             }
         })();
@@ -246,6 +241,30 @@
                 }
             }).fail(function () {
                 console.warn('Failed to load owners for WorkGroup modal');
+            });
+        }
+
+        function loadCostCentreOptions(profitCentre, selectedValue) {
+            var select = document.getElementById('CostCentre');
+            if (!select) { return; }
+
+            // Reset to the blank default option before (re)populating.
+            select.innerHTML = '<option value="">-- Select --</option>';
+
+            if (!profitCentre) { return; }
+
+            $.getJSON('/FPS/WorkgroupMaintenance/GetCostCentres', { profitCentre: profitCentre }, function (response) {
+                if (response.success && response.data) {
+                    response.data.forEach(function (item) {
+                        var opt = document.createElement('option');
+                        opt.value = item.value;
+                        opt.textContent = item.display;
+                        if (selectedValue !== '' && item.display === selectedValue) { opt.selected = true; }
+                        select.appendChild(opt);
+                    });
+                }
+            }).fail(function () {
+                console.warn('Failed to load cost centres for WorkGroup modal');
             });
         }
     </script>
