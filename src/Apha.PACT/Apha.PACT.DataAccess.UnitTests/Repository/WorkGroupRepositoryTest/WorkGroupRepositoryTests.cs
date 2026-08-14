@@ -12,6 +12,11 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 {
     public class WorkGroupRepositoryTests
     {
+        private static readonly string[] ExpectedOrderAscendingABC = { "WG_A", "WG_B", "WG_C" };
+        private static readonly string[] ExpectedOrderDescendingCBA = { "WG_C", "WG_B", "WG_A" };
+        private static readonly string[] ExpectedOrderAscendingAB = { "WG_A", "WG_B" };
+        private static readonly string[] ExpectedOrderNullFirst = { "WG_NULL", "WG_VALUE" };
+
         // ── Factories ────────────────────────────────────────────────────────
 
         /// <summary>
@@ -799,7 +804,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var result = await repo.GetPagedAsync(query);
 
             var order = result.Data.Select(w => w.WorkGroupName).ToList();
-            Assert.Equal(new[] { "WG_A", "WG_B", "WG_C" }, order);
+            Assert.Equal(ExpectedOrderAscendingABC, order);
             // Tolerance-based double comparison (no exact equality)
             Assert.Equal(100.0, result.Data.First().CostCentre!.Value, 3);
         }
@@ -825,7 +830,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var result = await repo.GetPagedAsync(query);
 
             var order = result.Data.Select(w => w.WorkGroupName).ToList();
-            Assert.Equal(new[] { "WG_C", "WG_B", "WG_A" }, order);
+            Assert.Equal(ExpectedOrderDescendingCBA, order);
             // Tolerance-based double comparison (no exact equality)
             Assert.Equal(300.0, result.Data.First().CostCentre!.Value, 3);
         }
@@ -849,7 +854,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 
             var result = await repo.GetPagedAsync(query);
 
-            Assert.Equal(new[] { "WG_A", "WG_B" }, result.Data.Select(w => w.WorkGroupName).ToList());
+            Assert.Equal(ExpectedOrderAscendingAB, result.Data.Select(w => w.WorkGroupName).ToList());
         }
 
         [Fact]
@@ -872,7 +877,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var result = await repo.GetPagedAsync(query);
 
             // Ascending: null sorts before a populated value
-            Assert.Equal(new[] { "WG_NULL", "WG_VALUE" }, result.Data.Select(w => w.WorkGroupName).ToList());
+            Assert.Equal(ExpectedOrderNullFirst, result.Data.Select(w => w.WorkGroupName).ToList());
         }
 
         // Covers every branch of ApplyFpsWorkGroupSorting (asc/desc for each sortable column + default).

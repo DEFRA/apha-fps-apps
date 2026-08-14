@@ -176,9 +176,9 @@ namespace Apha.PACT.DataAccess.Repository
                         wggg.GradeCode
                     })
                 .Where(x => x.Name != null
-                         && !x.Name.ToLower().Contains("general")
-                         && !x.Name.ToLower().Contains("vacancy"))
-                .Where(x => x.GradeCode != null && !x.GradeCode.StartsWith("G"))
+                         && !EF.Functions.ILike(x.Name, "%general%")
+                         && !EF.Functions.ILike(x.Name, "%vacancy%"))
+                .Where(x => x.GradeCode != null && !x.GradeCode.StartsWith('G'))
                 .Distinct()
                 .OrderBy(x => x.Name)
                 .Select(x => new Owner
@@ -367,7 +367,7 @@ namespace Apha.PACT.DataAccess.Repository
             return await _context.WorkGroupViews
                 .AsNoTracking()
                 .Where(w => w.ProfitCentre == profitCentre
-                         && w.UserEmail != null && w.UserEmail.ToLower() == _requestContext.UserEmailId)
+                         && w.UserEmail != null && EF.Functions.ILike(w.UserEmail, _requestContext.UserEmailId))
                 .Distinct()
                 .OrderBy(w => w.WorkGroupName)
                 .ToListAsync();
@@ -379,7 +379,7 @@ namespace Apha.PACT.DataAccess.Repository
             var q = _context.WorkGroupViews
                 .AsNoTracking()
                 .Where(w => w.ProfitCentre == profitCentre
-                         && w.UserEmail != null && w.UserEmail.ToLower() == _requestContext.UserEmailId)
+                         && w.UserEmail != null && EF.Functions.ILike(w.UserEmail, _requestContext.UserEmailId))
                 .Distinct()
                 .AsQueryable();
 
