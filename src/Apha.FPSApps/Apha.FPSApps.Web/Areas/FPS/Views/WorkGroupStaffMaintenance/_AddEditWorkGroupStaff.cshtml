@@ -171,7 +171,7 @@
                        type="number"
                        step="0.01"
                        required
-                       value="@(Model?.HrsPaid ?? 0)" />
+                       value="@(isEditMode ? Model?.HrsPaid.ToString() : string.Empty)" />
                 <span asp-validation-for="HrsPaid" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
@@ -187,7 +187,7 @@
                        type="number"
                        step="0.01"
                        required
-                       value="@(Model?.Leave ?? 0)" />
+                       value="@(isEditMode ? Model?.Leave.ToString() : string.Empty)" />
                 <span asp-validation-for="Leave" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
@@ -203,7 +203,7 @@
                        type="number"
                        step="0.01"
                        required
-                       value="@(Model?.SickSpecial ?? 0)" />
+                       value="@(isEditMode ? Model?.SickSpecial.ToString() : string.Empty)" />
                 <span asp-validation-for="SickSpecial" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
@@ -219,7 +219,7 @@
                        type="number"
                        step="0.01"
                        required
-                       value="@(Model?.HrsAvail ?? 0)" />
+                       value="@(isEditMode ? Model?.HrsAvail.ToString() : string.Empty)" />
             </div>
         </div>
 

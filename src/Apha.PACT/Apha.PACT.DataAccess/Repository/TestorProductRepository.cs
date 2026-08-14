@@ -42,7 +42,7 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return await _context.TestorProducts
                 .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.ItemCode.ToLower() == itemCode.ToLower());
+                .FirstOrDefaultAsync(t => EF.Functions.ILike(t.ItemCode, itemCode));
         }
 
         public async Task<TestorProduct> CreateTestOrProductAsync(TestorProduct entity)
@@ -158,6 +158,24 @@ namespace Apha.PACT.DataAccess.Repository
 
         private static IQueryable<TestorProduct> ApplySorting(IQueryable<TestorProduct> query, string? sortBy, bool descending)
         {
+            var key = sortBy?.ToLower() ?? string.Empty;
+
+            // Manager column holds a mix of NULL, empty and whitespace-only values. Ordering only by
+            // the raw value causes blanks to split around the populated names (empty strings sort to the
+            // top, NULLs to the bottom). Group all blanks together first so they stay contiguous.
+            if (key == "testmanager")
+            {
+                Expression<Func<TestorProduct, bool>> isBlank =
+                    e => e.TestManager == null || e.TestManager.Trim() == string.Empty;
+
+                if (descending)
+                {
+                    return query.OrderBy(isBlank).ThenByDescending(e => e.TestManager);
+                }
+
+                return query.OrderBy(isBlank).ThenBy(e => e.TestManager);
+            }
+
             var sortMap = new Dictionary<string, Expression<Func<TestorProduct, object?>>>
             {
                 ["itemcode"] = e => e.ItemCode,
@@ -170,7 +188,6 @@ namespace Apha.PACT.DataAccess.Repository
                 ["defraunitprice"] = e => e.DefraUnitPrice,
             };
 
-            var key = sortBy?.ToLower() ?? string.Empty;
             if (!sortMap.TryGetValue(key, out var keySelector))
                 keySelector = e => e.ItemCode;
 
@@ -201,7 +218,10 @@ namespace Apha.PACT.DataAccess.Repository
                 "non-standard" => baseQuery.Where(x =>
                     x.TestPrice != 0m &&
                     x.TestPrice != (x.IsDefraProject != 0 ? x.DefraUnitPrice : x.UnitPriceVla)),
-                _ => baseQuery
+                // "all" (Both) => zero-rated OR non-standard, excluding standard-priced rows.
+                _ => baseQuery.Where(x =>
+                    x.TestPrice == 0m ||
+                    x.TestPrice != (x.IsDefraProject != 0 ? x.DefraUnitPrice : x.UnitPriceVla))
             };
 
             // Step 5 — SQL-side sorting
@@ -401,27 +421,41 @@ namespace Apha.PACT.DataAccess.Repository
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("Version", out var ver) && ver != null)
-                query = query.Where(x => x.Version != null && EF.Functions.ILike(x.Version, $"%{ver}%"));
-            if (dict.TryGetValue("Directorate", out var dir) && dir != null)
-                query = query.Where(x => x.Directorate != null && EF.Functions.ILike(x.Directorate, $"%{dir}%"));
-            if (dict.TryGetValue("Customer", out var cust) && cust != null)
-                query = query.Where(x => x.Customer != null && EF.Functions.ILike(x.Customer, $"%{cust}%"));
-            if (dict.TryGetValue("Program", out var pg) && pg != null)
-                query = query.Where(x => x.Program != null && EF.Functions.ILike(x.Program, $"%{pg}%"));
-            if (dict.TryGetValue("Contract", out var con) && con != null)
-                query = query.Where(x => x.Contract != null && EF.Functions.ILike(x.Contract, $"%{con}%"));
-            if (dict.TryGetValue("Project", out var proj) && proj != null)
-                query = query.Where(x => x.Project != null && EF.Functions.ILike(x.Project, $"%{proj}%"));
-            if (dict.TryGetValue("Status", out var st) && st != null)
-                query = query.Where(x => x.Status != null && EF.Functions.ILike(x.Status, $"%{st}%"));
-            if (dict.TryGetValue("TestCode", out var tc) && tc != null)
-                query = query.Where(x => EF.Functions.ILike(x.TestCode, $"%{tc}%"));
-            if (dict.TryGetValue("Owner", out var ow) && ow != null)
-                query = query.Where(x => x.Owner != null && EF.Functions.ILike(x.Owner, $"%{ow}%"));
+            var textFilters = new (string Key, Func<IQueryable<TestFeePlanView>, string, IQueryable<TestFeePlanView>> Apply)[]
+            {
+                ("Version",     (q, v) => q.Where(x => x.Version != null && EF.Functions.ILike(x.Version, v))),
+                ("Directorate", (q, v) => q.Where(x => x.Directorate != null && EF.Functions.ILike(x.Directorate, v))),
+                ("Customer",    (q, v) => q.Where(x => x.Customer != null && EF.Functions.ILike(x.Customer, v))),
+                ("Program",     (q, v) => q.Where(x => x.Program != null && EF.Functions.ILike(x.Program, v))),
+                ("Contract",    (q, v) => q.Where(x => x.Contract != null && EF.Functions.ILike(x.Contract, v))),
+                ("Project",     (q, v) => q.Where(x => x.Project != null && EF.Functions.ILike(x.Project, v))),
+                ("Status",      (q, v) => q.Where(x => x.Status != null && EF.Functions.ILike(x.Status, v))),
+                ("TestCode",    (q, v) => q.Where(x => EF.Functions.ILike(x.TestCode, v))),
+                ("Owner",       (q, v) => q.Where(x => x.Owner != null && EF.Functions.ILike(x.Owner, v))),
+            };
+
+            foreach (var (key, apply) in textFilters)
+            {
+                if (dict.TryGetValue(key, out var value) && value != null)
+                    query = apply(query, $"%{value}%");
+            }
+
+            query = ApplyTestFeeValueFilter(dict, query);
+
+            return query;
+        }
+
+        private static IQueryable<TestFeePlanView> ApplyTestFeeValueFilter(
+            IDictionary<string, object> dict, IQueryable<TestFeePlanView> query)
+        {
             if (dict.TryGetValue("TestFee", out var fee) && fee != null
                 && double.TryParse(fee.ToString(), out var feeVal))
-                query = query.Where(x => x.TestFee == feeVal);
+            {
+                const double tolerance = 0.001;
+                query = query.Where(x => x.TestFee != null
+                    && x.TestFee >= feeVal - tolerance
+                    && x.TestFee <= feeVal + tolerance);
+            }
 
             return query;
         }

@@ -36,7 +36,7 @@ namespace Apha.Costbook.DataAccess.Repositories
             // Apply sorting (defaults to Csg7group)
             baseQuery = (IQueryable<AccountGroup>)ApplySorting(baseQuery, query.SortBy, query.Descending);
 
-            return await ApplyPaging(baseQuery.OrderBy(a => a.Csg7group), query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
        
         public async Task<AccountGroup?> GetByCsg7GroupAsync(string csg7Group)
@@ -120,7 +120,7 @@ namespace Apha.Costbook.DataAccess.Repositories
             return query;
         }
 
-        // Sorting helper: supports sorting by Csg7group only (defaults to Csg7group)
+        // Sorting helper: supports sorting by Csg7group and Useinflation (defaults to Csg7group)
         private static IQueryable ApplySorting(
             IQueryable<AccountGroup> query,
             string? sortBy,
@@ -135,6 +135,7 @@ namespace Apha.Costbook.DataAccess.Repositories
             return prop switch
             {
                 "csg7group" => ApplyOrder(query, q => q.Csg7group, descending),
+                "useinflation" => ApplyOrder(query, q => q.Useinflation, descending),
                 _ => descending ? query.OrderByDescending(x => x.Csg7group) : query.OrderBy(x => x.Csg7group),
             };
         }

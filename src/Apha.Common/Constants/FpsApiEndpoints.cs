@@ -286,8 +286,7 @@
         public const string SaveUserPermissions = "api/v1/user/{0}/permissions";
         public const string GetPermissionOptions = "api/v1/user/options";
 
-        // TRANSFORMENGINE: WorkgroupMaintenance (frmMaintWorkGroup2 — fps.workgroup) — added Phase 6
-        // CRUD endpoints
+       
         public const string GetPagedWorkgroups = "api/v1/workgroup/paged";
         public const string GetWorkgroupByName = "api/v1/workgroup/{0}";
         public const string CreateWorkgroup = "api/v1/workgroup";
@@ -298,12 +297,20 @@
         public const string GetWorkgroupOwners = "api/v1/workgroup/owners";
         public const string GetWorkgroupCostCentres = "api/v1/workgroup/costcentres?profitCentre={0}";
         // Year End Batch Job
-        public const string GetYearEndBatchJobHistory = "api/v1/yearend/batchjob/history";
-        public const string GetCanInitiateDataSetupRequest = "api/v1/yearend/dataSetup/caninitiate";
-        public const string GetCanApproveDataSetupRequest = "api/v1/yearend/dataSetup/canapproveorreject";
+        public const string GetYearEndDataSetupBatchJobHistory = "api/v1/yearend/dataSetup/batchjob/history";
+        public const string CanInitiateDataSetupRequest = "api/v1/yearend/dataSetup/caninitiate";
+        public const string CanApproveOrRejectDataSetupRequest = "api/v1/yearend/dataSetup/canapproveorreject";
         public const string EnqueueYearEndDataSetupInitiationJob = "api/v1/yearend/dataSetup/initiation";
         public const string EnqueueYearEndDataSetupApprovalJob    = "api/v1/yearend/dataSetup/approval";
         public const string EnqueueYearEndDataSetupRejectJob = "api/v1/yearend/dataSetup/reject";
+
+        
+        public const string GetYearEndCutOverBatchJobHistory = "api/v1/yearend/cutover/batchjob/history";
+        public const string CanInitiateCutOverRequest = "api/v1/yearend/cutover/caninitiate";
+        public const string CanApproveOrRejectCutOverRequest = "api/v1/yearend/cutover/canapproveorreject";
+        public const string EnqueueYearEndCutOverInitiationJob = "api/v1/yearend/cutover/initiation";
+        public const string EnqueueYearEndCutOverApprovalJob = "api/v1/yearend/cutover/approval";
+        public const string EnqueueYearEndCutOverRejectJob = "api/v1/yearend/cutover/reject";
 
         // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
         public const string GetAllCostCentres = "api/v1/costcentre";
@@ -322,5 +329,23 @@
         public const string GetResourceMgmtReplanStaffJobs = "api/v1/resourcemgmtreplan/staffjobs";
         public const string GetResourceMgmtReplanStaged = "api/v1/resourcemgmtreplan/staged";
         public const string CommitResourceMgmtReplan = "api/v1/resourcemgmtreplan/commit";
+
+        // Department Income (frmDeptIncome — read-only reporting)
+        public const string GetDepartmentIncomeTime       = "api/v1/department-income/time";
+        public const string GetDepartmentIncomeTests      = "api/v1/department-income/tests";
+        public const string GetDepartmentIncomeAnimals    = "api/v1/department-income/animals";
+        public const string GetDepartmentIncomeAdditional = "api/v1/department-income/additional";
+        public const string GetDepartmentIncomeTotals     = "api/v1/department-income/totals";
+        public const string GetDepartmentIncomePeriods    = "api/v1/department-income/periods";
+        public const string GetDepartmentIncomeSnapshotTests   = "api/v1/department-income/snapshot/tests";
+        public const string GetDepartmentIncomeSnapshotPeriods = "api/v1/department-income/snapshot-periods";
+        public const string UpdateDepartmentIncomeSnapshotPeriodLock = "api/v1/department-income/snapshot-periods/lock";
+
+        // Current (old style) — raw live-table queries, no period aggregation
+        public const string GetDepartmentIncomeCurrentTime       = "api/v1/department-income/current/time";
+        public const string GetDepartmentIncomeCurrentTests      = "api/v1/department-income/current/tests";
+        public const string GetDepartmentIncomeCurrentAnimals    = "api/v1/department-income/current/animals";
+        public const string GetDepartmentIncomeCurrentAdditional = "api/v1/department-income/current/additional";
+        public const string GetDepartmentIncomeCurrentTotals     = "api/v1/department-income/current/totals";
     }
 }

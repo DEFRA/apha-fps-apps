@@ -1884,3 +1884,11 @@ textarea {
         padding: 10px;
     }
 }
+.modal-dialog {
+    .govuk-label{
+        font-weight:bold;
+    }
+}
+.govuk-back-link{
+    font-weight: bold !important;
+}

@@ -75,6 +75,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectControllerTest
             Assert.False((bool)viewResult.ViewData["IsEditMode"]!);
         }
 
+        [Fact]
+        public async Task Add_Get_SetsIsDefraProjectToUnselectedSentinel()
+        {
+            SetupDropdownMocks();
+
+            var result = await _controller.Add();
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProgrammeNewProjectViewModel>(viewResult.Model);
+            // Sentinel value (matches no dropdown option) keeps the "Select" placeholder selected in Add mode
+            Assert.Equal((short)-99, model.IsDefraProject);
+            Assert.DoesNotContain(model.IsDefraProjectList, i => i.Selected);
+        }
+
         #endregion
 
         #region Add POST Tests

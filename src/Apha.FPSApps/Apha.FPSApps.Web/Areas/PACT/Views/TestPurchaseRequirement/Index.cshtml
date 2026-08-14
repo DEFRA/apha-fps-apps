@@ -111,27 +111,35 @@
         // ── CRUD ─────────────────────────────────────────────────────────
 
         function addTestPurchaseReq() {
-            $.get('/PACT/TestPurchaseRequirement/GetTestPurchaseReq',
-                { testCode: '', buyer: decodeURIComponent(parentProject), parentProject: decodeURIComponent(parentProject) },
-                function (html) {
+            $.ajax({
+                url: '/PACT/TestPurchaseRequirement/GetTestPurchaseReq',
+                type: 'GET',
+                data: { testCode: '', buyer: decodeURIComponent(parentProject), parentProject: decodeURIComponent(parentProject) },
+                success: function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
-                            // Initialize form validation (unobtrusive + numeric)
-                           initializeFormValidation('#testPurchaseReqForm');
-                });
+                    // Initialize form validation (unobtrusive + numeric)
+                    initializeFormValidation('#testPurchaseReqForm');
+                },
+                error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+            });
         }
 
         function editTestPurchaseReq(btn) {
             var testCode = $(btn).data('testcode') || $(btn).closest('tr').find('td:first').text().trim();
             var buyer = $(btn).data('id');
-            $.get('/PACT/TestPurchaseRequirement/GetTestPurchaseReq',
-                { testCode: testCode, buyer: buyer, parentProject: decodeURIComponent(parentProject) },
-                function (html) {
+            $.ajax({
+                url: '/PACT/TestPurchaseRequirement/GetTestPurchaseReq',
+                type: 'GET',
+                data: { testCode: testCode, buyer: buyer, parentProject: decodeURIComponent(parentProject) },
+                success: function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
                     initializeFormValidation('#invoiceForm');
-                });
+                },
+                error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+            });
         }
 
         function deleteTestPurchaseReq(btn) {
@@ -182,6 +190,8 @@
                         getGridManager()?.reloadGrid({ page: 1 });
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#testPurchaseReqForm');
+                        // Initialize form validation (unobtrusive + numeric)
+                        initializeFormValidation('#testPurchaseReqForm');
                     }
                 },
                 error: function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
