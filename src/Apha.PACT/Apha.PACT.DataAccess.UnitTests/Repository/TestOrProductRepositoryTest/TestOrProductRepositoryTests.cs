@@ -92,6 +92,74 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
             Assert.Equal(3, result.PaginationData.TotalPages);
         }
 
+        [Fact]
+        public async Task GetPagedTestOrProductsAsync_SortByManagerAscending_GroupsBlanksTogether()
+        {
+            // Arrange - mix of null, empty, whitespace-only and populated managers
+            var testorProducts = new[]
+            {
+                new TestorProduct { ItemCode = "T1", TestManager = "Charlie", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T2", TestManager = null, FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T3", TestManager = "Alice", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T4", TestManager = "   ", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T5", TestManager = "", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T6", TestManager = "Bob", FpsYear = 2024 }
+            };
+            var repo = CreateRepository(testorProducts);
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "TestManager",
+                Descending = false
+            };
+
+            // Act
+            var result = await repo.GetPagedTestOrProductsAsync(parameters);
+
+            // Assert - populated names sorted ascending, all blanks grouped contiguously at the end
+            var managers = result.Data.Select(x => x.TestManager).ToList();
+            var populated = managers.Where(m => !string.IsNullOrWhiteSpace(m)).ToList();
+            var firstBlankIndex = managers.FindIndex(m => string.IsNullOrWhiteSpace(m));
+            Assert.All(managers.Take(firstBlankIndex), m => Assert.False(string.IsNullOrWhiteSpace(m)));
+            Assert.All(managers.Skip(firstBlankIndex), m => Assert.True(string.IsNullOrWhiteSpace(m)));
+            Assert.Equal(new[] { "Alice", "Bob", "Charlie" }, populated);
+        }
+
+        [Fact]
+        public async Task GetPagedTestOrProductsAsync_SortByManagerDescending_GroupsBlanksTogether()
+        {
+            // Arrange
+            var testorProducts = new[]
+            {
+                new TestorProduct { ItemCode = "T1", TestManager = "Charlie", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T2", TestManager = null, FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T3", TestManager = "Alice", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T4", TestManager = "   ", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T5", TestManager = "", FpsYear = 2024 },
+                new TestorProduct { ItemCode = "T6", TestManager = "Bob", FpsYear = 2024 }
+            };
+            var repo = CreateRepository(testorProducts);
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "TestManager",
+                Descending = true
+            };
+
+            // Act
+            var result = await repo.GetPagedTestOrProductsAsync(parameters);
+
+            // Assert - populated names sorted descending, all blanks grouped contiguously at the end
+            var managers = result.Data.Select(x => x.TestManager).ToList();
+            var populated = managers.Where(m => !string.IsNullOrWhiteSpace(m)).ToList();
+            var firstBlankIndex = managers.FindIndex(m => string.IsNullOrWhiteSpace(m));
+            Assert.All(managers.Take(firstBlankIndex), m => Assert.False(string.IsNullOrWhiteSpace(m)));
+            Assert.All(managers.Skip(firstBlankIndex), m => Assert.True(string.IsNullOrWhiteSpace(m)));
+            Assert.Equal(new[] { "Charlie", "Bob", "Alice" }, populated);
+        }
+
         #endregion
 
         #region GetTestOrProductByIdAsync

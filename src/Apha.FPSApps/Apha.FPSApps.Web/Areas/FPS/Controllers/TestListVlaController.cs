@@ -301,14 +301,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                              ?? new Dictionary<string, string>();
             var fpsYear = _fpsYearContext.Year;
 
+            var query = _mapper.Map<QueryParameters<string>>(request);
             var items = new List<TestRCCostItem>();
             var paginationModel = new PaginationModel();
 
             if (!string.IsNullOrEmpty(testCode))
             {
-                var response = await _fpsApiClient.FpsTestRCCost.GetByTestCodeAsync(testCode, fpsYear);
+                var response = await _fpsApiClient.FpsTestRCCost.GetByTestCodePagedAsync(query, testCode);
                 if (response.Success && response.Data != null)
                     items = _mapper.Map<List<TestRCCostItem>>(response.Data);
+                if (response.Pagination is not null)
+                    paginationModel = _mapper.Map<PaginationModel>(response.Pagination);
             }
 
             paginationModel.SortColumn = request.SortBy;
@@ -361,21 +364,29 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                              ?? new Dictionary<string, string>();
             var fpsYear = _fpsYearContext.Year;
 
+            var query = _mapper.Map<QueryParameters<string>>(request);
+
+            // profitCentre is contextual (selected RC cost row); push it into the
+            // server-side filter so paging is applied against the filtered set.
+            if (!string.IsNullOrWhiteSpace(profitCentre))
+            {
+                var serverFilter = new Dictionary<string, string>(filterDict)
+                {
+                    ["ProfitCentre"] = profitCentre
+                };
+                query.Filter = JsonConvert.SerializeObject(serverFilter);
+            }
+
             var items = new List<TestRequirementRCCostItem>();
             var paginationModel = new PaginationModel();
 
             if (!string.IsNullOrEmpty(testCode))
             {
-                var response = await _fpsApiClient.FpsTestRequirementRCCost.GetByTestCodeAsync(testCode, fpsYear);
+                var response = await _fpsApiClient.FpsTestRequirementRCCost.GetByTestCodePagedAsync(query, testCode);
                 if (response.Success && response.Data != null)
                     items = _mapper.Map<List<TestRequirementRCCostItem>>(response.Data);
-            }
-
-            if (!string.IsNullOrWhiteSpace(profitCentre))
-            {
-                items = items
-                    .Where(x => string.Equals(x.ProfitCentre, profitCentre, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
+                if (response.Pagination is not null)
+                    paginationModel = _mapper.Map<PaginationModel>(response.Pagination);
             }
 
             paginationModel.SortColumn = request.SortBy;
@@ -402,9 +413,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             };
         }
 
-       
+        // COMPONENT CHARGES - SERVER-SIDE PAGING
+        // The Component Charges grids delegate filtering, sorting and paging to the
+        // backend repository (via the paged API clients), so no in-memory helpers are needed.
 
-        // ── SUPPLIERS / WORKGROUPS TAB GRID ───────────────────────────────────
+
+        // ── SUPPLIERS / WORKGROUPS TAB GRID ────────────────────────────────
 
         [HttpPost]
         public async Task<IActionResult> LoadSuppliersGrid(

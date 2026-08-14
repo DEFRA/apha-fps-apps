@@ -6,20 +6,21 @@
     var modalTitle  = isEditMode ? "Edit Staff Member" : "Add Staff Member";
 }
 
-<div class="modal-header">
-    <h5 class="modal-title">@modalTitle</h5>
-    <button type="button" class="btn-close"  onclick="closeModal()" aria-label="Close">&#x2715;</button>
-</div>
-<div class="modal-body">
-    
-    <form class="govuk-grid-column-full" id="formTblCapsStaff" novalidate>
+<div role="dialog" aria-modal="true" aria-labelledby="capsstaff-modal-title" tabindex="-1">
+    <div class="modal-header">
+        <h2 class="modal-title" id="capsstaff-modal-title">@modalTitle</h2>
+        <button type="button" class="btn-close"  onclick="closeModal()" aria-label="Close">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+
+        <form class="govuk-grid-column-full" id="formTblCapsStaff" novalidate>
         @Html.AntiForgeryToken()
         <input type="hidden" id="hdnCapsStaffIsEdit" value="@isEditMode.ToString().ToLower()" />
         <input type="hidden" id="hdnCapsStaffOriginal" value="@Model?.MNumber" />
 
         
         <div id="formTblCapsStaff-db-error" class="govuk-error-summary maint-db-error" role="alert"
-             aria-labelledby="formTblCapsStaff-db-error-title" hidden>
+             aria-labelledby="formTblCapsStaff-db-error-title" tabindex="-1" hidden>
             <h2 class="govuk-error-summary__title" id="formTblCapsStaff-db-error-title">There is a problem</h2>
             <div class="govuk-error-summary__body">
                 <p id="formTblCapsStaff-db-error-msg" class="govuk-body"></p>
