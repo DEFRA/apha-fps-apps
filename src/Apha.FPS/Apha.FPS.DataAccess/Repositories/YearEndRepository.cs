@@ -115,6 +115,32 @@ namespace Apha.FPS.DataAccess.Repositories
             return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, true);
         }
 
+        public async Task SetTriggeredMetadataAsync(string jobExecutionId, string triggeredBy)
+        {
+            if (string.IsNullOrWhiteSpace(jobExecutionId) || !Guid.TryParse(jobExecutionId, out var parsedJobExecutionId))
+            {
+                throw new ArgumentException("A valid jobExecutionId is required.", nameof(jobExecutionId));
+            }
+
+            // triggered_at_utc is "timestamp without time zone" (see BatchJobQueueMap) - write
+            // Kind=Unspecified UTC wall-clock digits, same reasoning as EnqueueApprovalOrRejectRequest.
+            // updated_at is genuinely timestamptz, so it keeps Kind=Utc.
+            var nowUtc = DateTime.UtcNow;
+            var nowUtcNaive = DateTime.SpecifyKind(nowUtc, DateTimeKind.Unspecified);
+
+            var updatedRows = await _context.BatchJobQueues
+                .Where(q => q.JobExecutionId == parsedJobExecutionId)
+                .ExecuteUpdateAsync(updates => updates
+                    .SetProperty(q => q.TriggeredBy, _ => triggeredBy)
+                    .SetProperty(q => q.TriggeredAtUtc, _ => nowUtcNaive)
+                    .SetProperty(q => q.UpdatedAt, _ => nowUtc));
+
+            if (updatedRows == 0)
+            {
+                throw new KeyNotFoundException($"Batch job queue row for JobExecutionId '{jobExecutionId}' was not found.");
+            }
+        }
+
         private async Task<bool> CanInitiateRequest(string jobName)
         {
             // Returns true when no records exist for the job, OR every record is in a terminal status (rejected / failed / cancelled).
@@ -204,12 +230,43 @@ namespace Apha.FPS.DataAccess.Repositories
                     .AsNoTracking().FirstOrDefaultAsync(j => j.JobqueueId == jobqueue.JobqueueId)
                     ?? throw new KeyNotFoundException($"Batch job queue for job '{jobName}' was not found.");
 
-                    //update the status of the job queue entry to "approved"
+                    //update the status of the job queue entry to "approved" or "rejected"
+                    var decidedAtUtc = DateTime.UtcNow;
                     queueRow.StatusId = jobStatus.StatusId;
                     queueRow.RequestedBy = requestedBy;
-                    queueRow.RequestedAtUtc = DateTime.UtcNow;
-                    queueRow.StartDateTime = DateTime.UtcNow;
+                    queueRow.RequestedAtUtc = decidedAtUtc;
+                    queueRow.StartDateTime = decidedAtUtc;
                     queueRow.ErrorMessage = note;
+
+                    // approved_at_utc/rejected_at_utc are "timestamp without time zone" columns
+                    // (see BatchJobQueueMap), unlike requested_at_utc/startdatetime above - Npgsql
+                    // requires Kind=Unspecified for a naive-typed parameter, and reinterpreting
+                    // (not reconverting) the same instant's wall-clock digits keeps this write
+                    // exactly aligned with requestedAtUtc/startDateTime above, just without the PG
+                    // offset marker.
+                    var decidedAtUtcNaive = DateTime.SpecifyKind(decidedAtUtc, DateTimeKind.Unspecified);
+
+                    // Approval/rejection metadata written in this same transaction as the status
+                    // flip - previously missing entirely (see
+                    // fps-year-end-phase6-implementation-trace-2026-08-15.md, "Urgent finding").
+                    // Apha.BatchJobs.JobOrchestrator.ValidateApprovalMetadataAsync requires
+                    // approved_by/approved_at_utc to be populated for a real Approved pickup to
+                    // succeed. triggered_by/triggered_at_utc are deliberately NOT set here - they
+                    // depend on the outcome of the EventBridge publish call, which happens after
+                    // this transaction commits (see EnqueueYearEndDataSetupApprovalJobAsync /
+                    // EnqueueYearEndCutOverApprovalJobAsync in YearEndService).
+                    if (isReject)
+                    {
+                        queueRow.RejectedBy = requestedBy;
+                        queueRow.RejectedAtUtc = decidedAtUtcNaive;
+                        queueRow.RejectionReason = note;
+                    }
+                    else
+                    {
+                        queueRow.ApprovedBy = requestedBy;
+                        queueRow.ApprovedAtUtc = decidedAtUtcNaive;
+                    }
+
                     _context.BatchJobQueues.Update(queueRow);
 
                     BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, jobStatus.StatusId);

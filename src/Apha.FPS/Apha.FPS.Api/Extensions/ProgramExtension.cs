@@ -5,6 +5,7 @@ using Apha.Common.Utilities.EventPublisher;
 using Apha.FPS.Api.Filters;
 using Apha.FPS.Api.Mappings;
 using Apha.FPS.Api.Middleware;
+using Apha.FPS.Api.TestTools;
 using Apha.FPS.Application.Mappings;
 using Apha.FPS.DataAccess.Data;
 using Asp.Versioning;
@@ -110,6 +111,13 @@ namespace Apha.FPS.Api.Extensions
             services.AddOptions<YearEndEmailSettings>()
                 .Bind(configuration.GetRequiredSection(YearEndEmailSettings.SectionName))
                 .ValidateOnStart();
+
+            // Temporary test-only tool - see Apha.FPS.Api/TestTools. Deliberately bound with
+            // Bind(), not BindConfiguration+GetRequiredSection, so a missing section just
+            // defaults Enabled to false instead of failing startup in environments that don't
+            // define it (i.e. everywhere except local/dev test config).
+            services.AddOptions<YearEndTestToolsOptions>()
+                .Bind(configuration.GetSection(YearEndTestToolsOptions.SectionName));
            
             builder.Services.AddSingleton<IAmazonEventBridge>(_ =>
            new AmazonEventBridgeClient(

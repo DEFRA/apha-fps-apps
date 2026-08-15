@@ -19,5 +19,9 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<BatchJobQueueDto>> EnqueueYearEndCutOverInitiationJobAsync(int plannedYear);
         Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndCutOverApprovalJobAsync(int plannedYear);
         Task<ApiResponseDto<bool>> EnqueueYearEndCutOverRejectJobAsync(int plannedYear);
+
+        // Temporary Year End test-reset tool - see Apha.FPS.Api/TestTools. Delete alongside it.
+        Task<ApiResponseDto<bool>> IsYearEndTestResetEnabledAsync();
+        Task<ApiResponseDto<bool>> TriggerYearEndTestReset2026Async();
     }
 }

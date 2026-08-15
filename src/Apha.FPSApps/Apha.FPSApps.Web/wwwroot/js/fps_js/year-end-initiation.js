@@ -283,6 +283,37 @@
         observeGridForButtonStates('gridContainer_yearEndConfigValuesGrid', applyConfigGridButtonStates);
         observeGridForButtonStates('gridContainer_yearEndMonthHoursGrid',   applyMonthGridButtonStates);
 
+        // ── Reset Year End 2026 Test Data button ──────────────────────────────
+        // Temporary test-only tool - see Apha.FPS.Api/TestTools. The backend applies the real
+        // gate (environment + config flag + live current_database() check); this button only
+        // renders when the server already reported the tool as enabled.
+        var btnReset = document.getElementById('btnResetYearEnd2026');
+        if (btnReset) {
+            btnReset.addEventListener('click', function () {
+                hidePageError();
+
+                showGovukConfirm('Are you sure you want to reset ALL 2026 Year End test data back to the pre-initiation baseline? This cannot be undone.')
+                    .then(function (confirmed) {
+                        if (!confirmed) return;
+
+                        btnReset.disabled = true;
+                        postJson(cfg.testResetUrl, {},
+                            function () {
+                                showAlertMessage('Year End 2026 test data reset to the pre-initiation baseline.', AlertType.SUCCESS);
+                                reloadConfigGrid();
+                                reloadMonthGrid();
+                                reloadHistoryGrid();
+                                btnReset.disabled = false;
+                            },
+                            function (msgs) {
+                                showPageError(msgs);
+                                btnReset.disabled = false;
+                            }
+                        );
+                    });
+            });
+        }
+
         var btnInitiate = document.getElementById('btnInitiateDataSetupRequest');
         if (btnInitiate) {
             btnInitiate.addEventListener('click', function () {

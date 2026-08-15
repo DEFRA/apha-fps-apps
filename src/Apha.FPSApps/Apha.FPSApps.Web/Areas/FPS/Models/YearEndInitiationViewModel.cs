@@ -8,6 +8,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public int PlannedYear { get; set; }
         public bool CanInitiate { get; set; }
         public bool CanApprove { get; set; }
+
+        // Temporary Year End test-reset tool - see Apha.FPS.Api/TestTools. Delete alongside it.
+        public bool ResetTestToolEnabled { get; set; }
         public required DataGridConfig<YearEndConfigValueItem> ConfigValuesGrid { get; set; }
         public required DataGridConfig<YearEndMonthWorkingItem> MonthHoursGrid { get; set; }
         public required DataGridConfig<YearEndHistoryItem> HistoryGrid { get; set; }

@@ -46,6 +46,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var plannedYear = await GetPlannedYearAsync();
             var canInitiate = await CanInitiateDataSetupRequestAsync();
             var canApprove = await CanApproveOrRejectDataSetupRequestAsync();
+            var resetTestToolEnabled = await IsResetTestToolEnabledAsync();
             var configValuesGrid = await BuildConfigValuesGridAsync();
             var monthHoursGrid = await BuildMonthHoursGridAsync();
             var historyGrid = await BuildHistoryGridAsync(new PaginationFilter<string> { Filter = "{}" });
@@ -55,6 +56,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 PlannedYear = plannedYear,
                 CanInitiate = canInitiate,
                 CanApprove = canApprove,
+                ResetTestToolEnabled = resetTestToolEnabled,
                 ConfigValuesGrid = configValuesGrid,
                 MonthHoursGrid = monthHoursGrid,
                 HistoryGrid = historyGrid
@@ -195,7 +197,25 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                          ?? [new { field = string.Empty, message = "Failed to Reject Year End datasetup job." }];
             return Json(new { success = false, errors });
         }
-        
+
+        // Temporary Year End test-reset tool - see Apha.FPS.Api/TestTools. Delete alongside it.
+        // The API applies the real gate (environment + config flag + live current_database()
+        // check); this action just forwards the request and reports whatever it decides.
+        [HttpPost]
+        public async Task<IActionResult> TestResetYearEnd2026()
+        {
+            var result = await _yearEndService.TriggerYearEndTestReset2026Async();
+            if (result.Success)
+            {
+                _logger.LogInformation("YearEnd 2026 test-reset triggered.");
+                return Json(new { success = true });
+            }
+
+            var errors = result?.Errors?.Select(e => new { field = string.Empty, message = e.Message }).ToArray()
+                         ?? [new { field = string.Empty, message = "Failed to reset Year End 2026 test data." }];
+            return Json(new { success = false, errors });
+        }
+
         private async Task<int> GetPlannedYearAsync()
         {
             var result = await _yearMasterService.GetFpsPlannedYearAsync();
@@ -211,6 +231,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private async Task<bool> CanApproveOrRejectDataSetupRequestAsync()
         {
             var result = await _yearEndService.CanApproveOrRejectDataSetupRequestAsync(YearEndInitiationJobName);
+            return result.Success && result.Data;
+        }
+
+        // Temporary Year End test-reset tool - see Apha.FPS.Api/TestTools. Delete alongside it.
+        private async Task<bool> IsResetTestToolEnabledAsync()
+        {
+            var result = await _yearEndService.IsYearEndTestResetEnabledAsync();
             return result.Success && result.Data;
         }
         

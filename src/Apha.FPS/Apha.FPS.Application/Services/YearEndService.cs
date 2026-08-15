@@ -115,6 +115,11 @@ namespace Apha.FPS.Application.Services
 
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
 
+            // Only reached if PublishAsync succeeded - if it throws, triggered_at_utc stays NULL
+            // and the row remains Approved. This is the durable condition a future recovery sweep
+            // depends on (see fps-year-end-phase6-implementation-trace-2026-08-15.md).
+            await _yearEndRepository.SetTriggeredMetadataAsync(queued.JobExecutionId.ToString(), requestedBy);
+
             var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
             result.EventId = eventId;
 
@@ -130,7 +135,7 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<BatchJobEventTriggerDto>(result);
         }
 
-        public async Task<bool> EnqueueYearEndDataSetupRejectJobAsync(int plannedYear, int contextYear, 
+        public async Task<bool> EnqueueYearEndDataSetupRejectJobAsync(int plannedYear, int contextYear,
             string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
@@ -221,6 +226,11 @@ namespace Apha.FPS.Application.Services
             var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, correlationId, plannedYear);
 
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
+
+            // Only reached if PublishAsync succeeded - see the DataSetup approval path above for
+            // the full rationale (same pattern, deliberately duplicated per-job rather than shared,
+            // matching this file's existing DataSetup/CutOver duplication convention).
+            await _yearEndRepository.SetTriggeredMetadataAsync(queued.JobExecutionId.ToString(), requestedBy);
 
             var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
             result.EventId = eventId;

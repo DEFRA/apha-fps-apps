@@ -19,5 +19,13 @@ namespace Apha.FPS.Core.Interfaces
         Task<BatchJobQueue> EnqueueCutOverInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
         Task<BatchJobQueue> EnqueueCutOverApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
         Task<BatchJobQueue> EnqueueCutOverRejectBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
+
+        /// <summary>
+        /// Records that the EventBridge publish for <paramref name="jobExecutionId"/> succeeded.
+        /// Called only after <c>IEventPublisherService.PublishAsync</c> returns successfully - if
+        /// publishing fails, the row is left Approved with triggered_at_utc still NULL, which is
+        /// the durable condition a future recovery sweep depends on.
+        /// </summary>
+        Task SetTriggeredMetadataAsync(string jobExecutionId, string triggeredBy);
     }
 }

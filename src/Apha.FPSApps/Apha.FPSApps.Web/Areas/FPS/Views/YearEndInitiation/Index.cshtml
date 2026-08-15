@@ -105,6 +105,15 @@
                             <div class="govuk-grid-column-full">
                                 <div class="approval-buttons-row">
                                     <div class="govuk-button-group sup_flex_end_center approval-buttons-group">
+                                        @if (Model.ResetTestToolEnabled)
+                                        {
+                                            @* Temporary Year End test-reset tool - see Apha.FPS.Api/TestTools. Remove this
+                                               block (and the JS wiring in year-end-initiation.js) once no longer needed. *@
+                                            <button type="button" class="govuk-button govuk-button--warning" data-module="govuk-button"
+                                                    id="btnResetYearEnd2026">
+                                                Reset Year End 2026 Test Data
+                                            </button>
+                                        }
                                         <button type="button" class="govuk-button" data-module="govuk-button"
                                                 id="btnInitiateDataSetupRequest"
                                                 disabled="@btnIntDisabled">
@@ -136,7 +145,8 @@
         saveMonthHourUrl:    '@Url.Action("SaveMonthHour",    "YearEndInitiation", new { area = "FPS" })',
         triggerInitiateUrl:  '@Url.Action("TriggerInitiate",  "YearEndInitiation", new { area = "FPS" })',
         triggerApproveUrl:   '@Url.Action("TriggerApprove",   "YearEndInitiation", new { area = "FPS" })',
-        triggerRejectUrl:    '@Url.Action("TriggerReject",    "YearEndInitiation", new { area = "FPS" })'
+        triggerRejectUrl:    '@Url.Action("TriggerReject",    "YearEndInitiation", new { area = "FPS" })',
+        testResetUrl:        '@Url.Action("TestResetYearEnd2026", "YearEndInitiation", new { area = "FPS" })'
     };
 </script>
 <script src="~/js/fps_js/year-end-initiation.js"></script>

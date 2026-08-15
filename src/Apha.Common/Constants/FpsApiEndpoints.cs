@@ -312,6 +312,10 @@
         public const string EnqueueYearEndCutOverApprovalJob = "api/v1/yearend/cutover/approval";
         public const string EnqueueYearEndCutOverRejectJob = "api/v1/yearend/cutover/reject";
 
+        // Temporary Year End test-reset tool - see Apha.FPS.Api/TestTools. Delete alongside it.
+        public const string IsYearEndTestResetEnabled = "api/v1/yearend/test/enabled";
+        public const string TriggerYearEndTestReset2026 = "api/v1/yearend/test/reset/2026";
+
         // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
         public const string GetAllCostCentres = "api/v1/costcentre";
         public const string GetPagedCostCentres = "api/v1/costcentre/paged";

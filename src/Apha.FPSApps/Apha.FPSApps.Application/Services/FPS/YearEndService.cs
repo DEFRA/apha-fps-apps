@@ -50,5 +50,12 @@ namespace Apha.FPSApps.Application.Services.FPS
 
         public async Task<ApiResponseDto<bool>> EnqueueYearEndCutOverRejectJobAsync(int plannedYear)
             => await _fpsClient.FpsYearEnd.EnqueueYearEndCutOverRejectJobAsync(plannedYear);
+
+        // Temporary Year End test-reset tool - see Apha.FPS.Api/TestTools. Delete alongside it.
+        public async Task<ApiResponseDto<bool>> IsYearEndTestResetEnabledAsync()
+            => await _fpsClient.FpsYearEnd.IsYearEndTestResetEnabledAsync();
+
+        public async Task<ApiResponseDto<bool>> TriggerYearEndTestReset2026Async()
+            => await _fpsClient.FpsYearEnd.TriggerYearEndTestReset2026Async();
     }
 }

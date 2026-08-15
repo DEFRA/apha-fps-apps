@@ -63,7 +63,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         private void SetupIndexDefaults(
             int plannedYear = 2025,
             bool canInitiate = true,
-            bool canApprove = false)
+            bool canApprove = false,
+            bool resetTestToolEnabled = false)
         {
             _yearMasterService.GetFpsPlannedYearAsync()
                 .Returns(ApiResponseDto<int>.SuccessResponse(plannedYear));
@@ -73,6 +74,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
 
             _yearEndService.CanApproveOrRejectDataSetupRequestAsync(JobName)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(canApprove));
+
+            _yearEndService.IsYearEndTestResetEnabledAsync()
+                .Returns(ApiResponseDto<bool>.SuccessResponse(resetTestToolEnabled));
 
             _settingService.GetYearEndSettingsAsync()
                 .Returns(ApiResponseDto<List<YearEndSettingDto>>.SuccessResponse(
@@ -184,6 +188,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
                 .Returns(ApiResponseDto<bool>.SuccessResponse(false));
             _yearEndService.CanApproveOrRejectDataSetupRequestAsync(JobName)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(false));
+            _yearEndService.IsYearEndTestResetEnabledAsync()
+                .Returns(ApiResponseDto<bool>.SuccessResponse(false));
             _settingService.GetYearEndSettingsAsync()
                 .Returns(ApiResponseDto<List<YearEndSettingDto>>.SuccessResponse([]));
             _monthHourService.GetYearEndMonthHoursAsync()
@@ -232,6 +238,38 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
             var model = Assert.IsType<YearEndInitiationViewModel>(viewResult.Model);
             Assert.Single(model.MonthHoursGrid.Data);
             Assert.Equal(1, model.MonthHoursGrid.Data[0].Month);
+        }
+
+        [Fact]
+        public async Task Index_ViewModelResetTestToolEnabledIsTrue_WhenServiceReturnsTrue()
+        {
+            // Arrange
+            SetupIndexDefaults(resetTestToolEnabled: true);
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<YearEndInitiationViewModel>(viewResult.Model);
+            Assert.True(model.ResetTestToolEnabled);
+        }
+
+        [Fact]
+        public async Task Index_ViewModelResetTestToolEnabledIsFalse_WhenServiceFails()
+        {
+            // Arrange
+            SetupIndexDefaults();
+            _yearEndService.IsYearEndTestResetEnabledAsync()
+                .Returns(new ApiResponseDto<bool> { Success = false });
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<YearEndInitiationViewModel>(viewResult.Model);
+            Assert.False(model.ResetTestToolEnabled);
         }
 
         #endregion
@@ -1013,6 +1051,68 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
 
             // Assert
             await _yearEndService.Received(1).EnqueueYearEndDataSetupRejectJobAsync(plannedYear);
+        }
+
+        #endregion
+
+        #region TestResetYearEnd2026
+
+        [Fact]
+        public async Task TestResetYearEnd2026_WhenServiceSucceeds_ReturnsJsonWithSuccessTrue()
+        {
+            // Arrange
+            _yearEndService.TriggerYearEndTestReset2026Async()
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.TestResetYearEnd2026();
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonElement(jsonResult);
+            Assert.True(value.GetProperty("success").GetBoolean());
+            await _yearEndService.Received(1).TriggerYearEndTestReset2026Async();
+        }
+
+        [Fact]
+        public async Task TestResetYearEnd2026_WhenServiceFails_ReturnsJsonWithSuccessFalseAndErrors()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Message = "Refused: not batchjobs.", Code = "FORBIDDEN" }
+            };
+            _yearEndService.TriggerYearEndTestReset2026Async()
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.TestResetYearEnd2026();
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            var errorsArray = value.GetProperty("errors");
+            Assert.Equal(1, errorsArray.GetArrayLength());
+            Assert.Equal("Refused: not batchjobs.", errorsArray[0].GetProperty("message").GetString());
+        }
+
+        [Fact]
+        public async Task TestResetYearEnd2026_WhenServiceReturnsNullErrors_ReturnsDefaultErrorMessage()
+        {
+            // Arrange
+            _yearEndService.TriggerYearEndTestReset2026Async()
+                .Returns(new ApiResponseDto<bool> { Success = false, Errors = null });
+
+            // Act
+            var result = await _controller.TestResetYearEnd2026();
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            var errorsArray = value.GetProperty("errors");
+            Assert.Equal("Failed to reset Year End 2026 test data.", errorsArray[0].GetProperty("message").GetString());
         }
 
         #endregion

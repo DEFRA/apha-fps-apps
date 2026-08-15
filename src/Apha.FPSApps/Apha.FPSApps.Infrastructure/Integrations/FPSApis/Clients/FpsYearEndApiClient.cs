@@ -190,5 +190,28 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var failDto = _mapper.Map<ApiResponseDto<bool>>(response);
             return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
         }
+
+        // Temporary Year End test-reset tool - see Apha.FPS.Api/TestTools. Delete alongside it.
+        public async Task<ApiResponseDto<bool>> IsYearEndTestResetEnabledAsync()
+        {
+            var response = await _http.GetAsync<bool>(FpsApiEndpoints.IsYearEndTestResetEnabled);
+
+            if (response.Success)
+                return ApiResponseDto<bool>.SuccessResponse(response.Data);
+
+            var failDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<bool>> TriggerYearEndTestReset2026Async()
+        {
+            var response = await _http.PostAsync<bool>(FpsApiEndpoints.TriggerYearEndTestReset2026);
+
+            if (response.Success)
+                return ApiResponseDto<bool>.SuccessResponse(response.Data);
+
+            var failDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
+        }
     }
 }
