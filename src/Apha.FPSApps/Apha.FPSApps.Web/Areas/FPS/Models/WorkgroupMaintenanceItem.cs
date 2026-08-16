@@ -1,5 +1,6 @@
 using Apha.FPSApps.Web.Validation;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -71,5 +72,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         // TRANSFORMENGINE: FpsYear — partition key; auto-resolved server-side; hidden from grid
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
         public int? FpsYear { get; set; }
+
+        // Owner picker options for the shared _ManagerPicker partial (Name | WorkGroup | Grade).
+        // Not persisted; populated server-side for the modal only.
+        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
+        public List<SelectListItem> OwnerList { get; set; } = new();
     }
 }

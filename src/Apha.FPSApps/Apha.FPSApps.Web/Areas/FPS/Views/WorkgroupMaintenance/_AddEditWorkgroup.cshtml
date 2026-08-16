@@ -101,14 +101,14 @@
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="Owner">
                                 Owner:
                             </label>
-                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
-                                    id="Owner"
-                                    name="Owner"
-                                    aria-describedby="err-modal-wg-owner">
-                                <option value="">-- Select --</option>
-                                @* Options populated by AJAX loadOwnerOptions() below *@
-                            </select>
-                            <span data-valmsg-for="Owner" class="govuk-error-message field-validation-valid" id="err-modal-wg-owner" style="display:none;"></span>
+                            @await Html.PartialAsync("_ManagerPicker", new Apha.FPSApps.Web.Areas.FPS.Models.ManagerPickerViewModel
+                            {
+                                ManagerList = Model?.OwnerList ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>(),
+                                FieldName = "Owner",
+                                ShowGrade = true,
+                                Required = false,
+                                SelectCssClass = "govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                            })
                         </div>
                     </div>
 
@@ -183,7 +183,6 @@
 <script>
         (function initWorkgroupModal() {
             var currentProfitCentre = @Json.Serialize(Model?.ProfitCentre ?? string.Empty);
-            var currentOwner = @Json.Serialize(Model?.Owner ?? string.Empty);
             var currentCostCentre = @Json.Serialize(Model?.CostCentre.HasValue == true ? ((long)Model.CostCentre.Value).ToString() : string.Empty);
 
             // Load ProfitCentres (ResourceCentres), then cascade-load CostCentres for the
@@ -192,7 +191,7 @@
                 loadCostCentreOptions(currentProfitCentre, currentCostCentre);
             });
 
-            loadOwnerOptions(currentOwner);
+            // Owner is a server-rendered searchable picker (_ManagerPicker) — no AJAX load required.
 
             // CostCentre is a cascading dropdown driven by the selected ProfitCentre.
             var profitCentreSelect = document.getElementById('ProfitCentre');
@@ -222,25 +221,6 @@
                 if (typeof callback === 'function') { callback(); }
             }).fail(function () {
                 console.warn('Failed to load profit centres for WorkGroup modal');
-            });
-        }
-
-        function loadOwnerOptions(selectedValue) {
-            $.getJSON('/FPS/WorkgroupMaintenance/GetOwners', function (response) {
-                var select = document.getElementById('Owner');
-                select.innerHTML = '<option value="">-- Select --</option>';
-
-                if (response.success && response.data) {
-                    response.data.forEach(function (item) {
-                        var opt = document.createElement('option');
-                        opt.value = item.name;
-                        opt.textContent = item.name;
-                        if (item.name === selectedValue) { opt.selected = true; }
-                        select.appendChild(opt);
-                    });
-                }
-            }).fail(function () {
-                console.warn('Failed to load owners for WorkGroup modal');
             });
         }
 

@@ -39,12 +39,12 @@
             @if (isEdit)
             {
                 <input type="hidden" asp-for="JobCodeId" />
-                <input class="govuk-input govuk-!-font-size-16" value="@Model.JobCodeId" disabled />
+                <input class="govuk-input govuk-!-font-size-16" aria-label="Portfolio job code" value="@Model.JobCodeId" disabled />
             }
             else
             {
                 <input class="govuk-input govuk-!-font-size-16" asp-for="JobCodeId" />
-                <span asp-validation-for="JobCodeId" class="govuk-error-message"></span>
+                <span asp-validation-for="JobCodeId" aria-label="Portfolio job code" class="govuk-error-message"></span>
             }
         </div>
 
