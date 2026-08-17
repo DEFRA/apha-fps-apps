@@ -176,5 +176,59 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupGradeServiceTest
         }
 
         #endregion
+
+        #region CreateAsync Tests
+
+        [Fact]
+        public async Task CreateAsync_WithUniqueWgGrade_CreatesSuccessfully()
+        {
+            // Arrange
+            var dto = new WorkgroupGradeDto { WgGrade = DefaultWgGrade };
+            var entity = new WorkgroupGrade { WgGrade = DefaultWgGrade };
+
+            _mockMapper.Map<WorkgroupGrade>(dto).Returns(entity);
+            _mockRepository.ExistsByWgGradeAsync(DefaultWgGrade).Returns(false);
+            _mockRepository.CreateAsync(entity).Returns(entity);
+            _mockMapper.Map<WorkgroupGradeDto>(entity).Returns(dto);
+
+            // Act
+            var result = await _sut.CreateAsync(dto);
+
+            // Assert
+            result.Should().BeSameAs(dto);
+            await _mockRepository.Received(1).ExistsByWgGradeAsync(DefaultWgGrade);
+            await _mockRepository.Received(1).CreateAsync(entity);
+        }
+
+        [Fact]
+        public async Task CreateAsync_WithNullDto_ThrowsBusinessValidationErrorException()
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
+                _sut.CreateAsync(null!));
+
+            await _mockRepository.DidNotReceive().CreateAsync(Arg.Any<WorkgroupGrade>());
+        }
+
+        [Fact]
+        public async Task CreateAsync_WithDuplicateWgGrade_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var dto = new WorkgroupGradeDto { WgGrade = DefaultWgGrade };
+            var entity = new WorkgroupGrade { WgGrade = DefaultWgGrade };
+
+            _mockMapper.Map<WorkgroupGrade>(dto).Returns(entity);
+            _mockRepository.ExistsByWgGradeAsync(DefaultWgGrade).Returns(true);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
+                _sut.CreateAsync(dto));
+
+            exception.Errors.Should().ContainSingle(e =>
+                e.Code == "WORKGROUPGRADE_DUPLICATE" && e.Message.Contains("already exists"));
+            await _mockRepository.DidNotReceive().CreateAsync(Arg.Any<WorkgroupGrade>());
+        }
+
+        #endregion
     }
 }

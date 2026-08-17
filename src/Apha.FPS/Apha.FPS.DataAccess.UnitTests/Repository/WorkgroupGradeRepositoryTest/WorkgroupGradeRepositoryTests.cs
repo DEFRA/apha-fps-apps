@@ -320,6 +320,68 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupGradeRepositoryTest
 
         #endregion
 
+        #region ExistsByWgGradeAsync Tests
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task ExistsByWgGradeAsync_ReturnsFalse_WhenNullOrWhitespace(string? wgGrade)
+        {
+            var repo = CreateRepository(grades: [BuildGrade("WG01")]);
+
+            var result = await repo.ExistsByWgGradeAsync(wgGrade!);
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsByWgGradeAsync_ReturnsFalse_WhenNotFound()
+        {
+            var repo = CreateRepository(grades: [BuildGrade("WG01")]);
+
+            var result = await repo.ExistsByWgGradeAsync("WG_MISSING");
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsByWgGradeAsync_ReturnsTrue_WhenExactMatch()
+        {
+            var repo = CreateRepository(grades: [BuildGrade("WG01")]);
+
+            var result = await repo.ExistsByWgGradeAsync("WG01");
+
+            Assert.True(result);
+        }
+
+        [Theory]
+        [InlineData("wg01")]
+        [InlineData("Wg01")]
+        [InlineData("wG01")]
+        public async Task ExistsByWgGradeAsync_ReturnsTrue_WhenCaseInsensitiveMatch(string candidate)
+        {
+            var repo = CreateRepository(grades: [BuildGrade("WG01")]);
+
+            var result = await repo.ExistsByWgGradeAsync(candidate);
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsByWgGradeAsync_ReturnsFalse_WhenMatchInDifferentFpsYear()
+        {
+            var otherYearGrade = BuildGrade("WG01");
+            otherYearGrade.FpsYear = DefaultFpsYear - 1;
+            var repo = CreateRepository(grades: [otherYearGrade]);
+
+            var result = await repo.ExistsByWgGradeAsync("WG01");
+
+            Assert.False(result);
+        }
+
+        #endregion
+
         #region CreateAsync Tests
 
         [Fact]
