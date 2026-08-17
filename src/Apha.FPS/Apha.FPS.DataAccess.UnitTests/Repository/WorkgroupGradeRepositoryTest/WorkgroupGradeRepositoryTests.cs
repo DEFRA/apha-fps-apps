@@ -213,6 +213,29 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupGradeRepositoryTest
             Assert.Equal(2, result.Data.Count());
         }
 
+        [Theory]
+        [InlineData("WgGrade", "alpha")]
+        [InlineData("ProfitCentreGrade", "pcg_a")]
+        [InlineData("GradeCode", "gca")]
+        [InlineData("Workgroup", "teama")]
+        public async Task GetAllWorkgroupGradesPagedAsync_FiltersAreCaseInsensitive(string field, string filterValue)
+        {
+            var grades = new List<WorkgroupGrade>
+            {
+                BuildGrade("ALPHA1", profitCentreGrade: "PCG_A", gradeCode: "GCA", workgroup: "TeamA"),
+                BuildGrade("BETA1",  profitCentreGrade: "PCG_B", gradeCode: "GCB", workgroup: "TeamB")
+            };
+            var repo   = CreateRepository(grades: grades);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { field, filterValue } });
+            var query  = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+
+            var result = await repo.GetAllWorkgroupGradesPagedAsync(query);
+
+            Assert.Single(result.Data);
+            Assert.Equal("ALPHA1", result.Data.First().WgGrade);
+        }
+
         [Fact]
         public async Task GetAllWorkgroupGradesPagedAsync_WithEmptyFilterObject_ReturnsAllRecords()
         {
