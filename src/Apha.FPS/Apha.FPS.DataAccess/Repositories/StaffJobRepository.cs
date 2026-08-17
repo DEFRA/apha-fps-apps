@@ -322,12 +322,13 @@ namespace Apha.FPS.DataAccess.Repositories
 
             IEnumerable<StaffJobView> sorted = sortBy.ToLower() switch
             {
-                "name"         => descending ? list.OrderByDescending(i => i.Name)         : list.OrderBy(i => i.Name),
-                "chargerate"   => descending ? list.OrderByDescending(i => i.ChargeRate)   : list.OrderBy(i => i.ChargeRate),
-                "plannedhours" => descending ? list.OrderByDescending(i => i.PlannedHours) : list.OrderBy(i => i.PlannedHours),
-                "days"         => descending ? list.OrderByDescending(i => i.Days)         : list.OrderBy(i => i.Days),
-                "staffcost"    => descending ? list.OrderByDescending(i => i.StaffCost)    : list.OrderBy(i => i.StaffCost),
-                _              => list
+                "workgroupgrade" => descending ? list.OrderByDescending(i => i.WorkGroupGrade) : list.OrderBy(i => i.WorkGroupGrade),
+                "name"           => descending ? list.OrderByDescending(i => i.Name)           : list.OrderBy(i => i.Name),
+                "chargerate"     => descending ? list.OrderByDescending(i => i.ChargeRate)     : list.OrderBy(i => i.ChargeRate),
+                "plannedhours"   => descending ? list.OrderByDescending(i => i.PlannedHours)   : list.OrderBy(i => i.PlannedHours),
+                "days"           => descending ? list.OrderByDescending(i => i.Days)           : list.OrderBy(i => i.Days),
+                "staffcost"      => descending ? list.OrderByDescending(i => i.StaffCost)      : list.OrderBy(i => i.StaffCost),
+                _                => list
             };
 
             return sorted.ToList();
