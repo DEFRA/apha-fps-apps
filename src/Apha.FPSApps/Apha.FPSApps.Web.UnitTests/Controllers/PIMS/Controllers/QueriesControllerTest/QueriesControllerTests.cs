@@ -232,6 +232,40 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.QueriesControl
         }
 
         [Fact]
+        public async Task LoadQueryResultsGrid_AllContract_WithContract_IgnoresContractAndUsesWildcard()
+        {
+            // Arrange
+            SetupMapperForGridBuild();
+
+            var request = new PaginationFilter<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{}"
+            };
+
+            _queriesService.GetMonitoringReportDataAsync(
+                    Arg.Any<QueryParameters<string>>(),
+                    Arg.Any<short>(),
+                    Arg.Any<short>(),
+                    Arg.Any<string>(),
+                    Arg.Any<IEnumerable<string>?>())
+                .Returns(SuccessResponse(new List<MonitoringReportDataDto>(), new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 0 }));
+
+            _mapper.Map<List<QueryResultItem>>(Arg.Any<List<MonitoringReportDataDto>>())
+                .Returns(new List<QueryResultItem>());
+
+            // Act
+            await _controller.LoadQueryResultsGrid(request, "1", "2023", "LabTGen", "allContract");
+
+            // Assert
+            await _queriesService.Received(1).GetMonitoringReportDataAsync(
+                Arg.Any<QueryParameters<string>>(), 2023, 1, "*", Arg.Any<IEnumerable<string>?>());
+            await _queriesService.DidNotReceive().GetMonitoringReportDataAsync(
+                Arg.Any<QueryParameters<string>>(), 2023, 1, "LabTGen", Arg.Any<IEnumerable<string>?>());
+        }
+
+        [Fact]
         public async Task LoadQueryResultsGrid_ProgramMonitoring_InvalidMonthYear_DoesNotCallService_ReturnsPartial()
         {
             // Arrange

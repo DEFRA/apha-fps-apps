@@ -58,6 +58,46 @@ namespace Apha.PIMS.DataAccess.Repository
         /// LEFT JOIN qryPMonitoringComments ON ...
         /// WHERE ... ORDER BY MY_tlkpProject.ParentProject
         /// </summary>
+        public async Task<PagedData<MonitoringReportData>> GetAllContractsMonitoringReportDataAsync(
+            PaginationParameters<string> parameters,
+            short reportYear,
+            double fiscalMonth,
+            string contractFilter = "*",
+            IEnumerable<string>? programFilter = null)
+        {
+            IQueryable<MonitoringReportData> query = BuildMonitoringReportQuery(
+                reportYear,
+                fiscalMonth,
+                contractFilter,
+                programFilter,
+                applySurveillanceProgramFilter: true);
+
+            query = ApplyFilter(query, parameters.Filter);
+            query = ApplySorting(query, parameters.SortBy, parameters.Descending);
+
+            return await ApplyPaging(query, parameters.Page, parameters.PageSize);
+        }
+
+        public async Task<PagedData<MonitoringReportData>> GetContractsMonitoringReportDataAsync(
+            PaginationParameters<string> parameters,
+            short reportYear,
+            double fiscalMonth,
+            string contractFilter = "*",
+            IEnumerable<string>? programFilter = null)
+        {
+            IQueryable<MonitoringReportData> query = BuildMonitoringReportQuery(
+                reportYear,
+                fiscalMonth,
+                contractFilter,
+                programFilter,
+                applySurveillanceProgramFilter: false);
+
+            query = ApplyFilter(query, parameters.Filter);
+            query = ApplySorting(query, parameters.SortBy, parameters.Descending);
+
+            return await ApplyPaging(query, parameters.Page, parameters.PageSize);
+        }
+
         public async Task<PagedData<MonitoringReportData>> GetMonitoringReportDataAsync(
             PaginationParameters<string> parameters,
             short reportYear,
@@ -66,19 +106,10 @@ namespace Apha.PIMS.DataAccess.Repository
             IEnumerable<string>? programFilter = null)
         {
             string? exportQueryType = GetExportQueryType(parameters.Filter);
-            bool applySurveillanceProgramFilter = string.Equals(exportQueryType, "allContract", StringComparison.OrdinalIgnoreCase);
 
-            IQueryable<MonitoringReportData> query = BuildMonitoringReportQuery(
-                reportYear,
-                fiscalMonth,
-                contractFilter,
-                programFilter,
-                applySurveillanceProgramFilter);
-
-            query = ApplyFilter(query, parameters.Filter);
-            query = ApplySorting(query, parameters.SortBy, parameters.Descending);
-
-            return await ApplyPaging(query, parameters.Page, parameters.PageSize);
+            return string.Equals(exportQueryType, "allContract", StringComparison.OrdinalIgnoreCase)
+                ? await GetAllContractsMonitoringReportDataAsync(parameters, reportYear, fiscalMonth, contractFilter, programFilter)
+                : await GetContractsMonitoringReportDataAsync(parameters, reportYear, fiscalMonth, contractFilter, programFilter);
         }
 
         public async Task<PagedData<ProgramCustomerMonitoringReportData>> GetProgramCustomerMonitoringReportDataAsync(
@@ -130,8 +161,8 @@ namespace Apha.PIMS.DataAccess.Repository
                         from comment in commentGroup.DefaultIfEmpty()
                         where myProject.Year == reportYear
                               && (!applySurveillanceProgramFilter
-                                  || _context.RadtrackProgs.AsNoTracking()
-                                      .Any(rp => rp.Program == myProject.Program && rp.Radtrackprog))
+                                  || (myProject.Program != null
+                                      && myProject.Program.ToUpper().EndsWith("SURV")))
                         select new MonitoringReportData
                         {
                             Year = myProject.Year,
@@ -157,7 +188,6 @@ namespace Apha.PIMS.DataAccess.Repository
             }
 
             return query
-                .Distinct()
                 .OrderBy(r => r.ParentProject);
         }
 
@@ -172,17 +202,17 @@ namespace Apha.PIMS.DataAccess.Repository
 
             var query = from myProject in _context.MyTlkpProjects.AsNoTracking()
                         join gProject in _context.Projects.AsNoTracking()
-                            on myProject.Parentproject equals gProject.Parentproject
+                            on myProject.Parentproject.Trim().ToUpper() equals gProject.Parentproject.Trim().ToUpper()
                         join yearTotalJoin in _context.FpsYearTotals.AsNoTracking()
                             on new { myProject.Year, myProject.Parentproject }
                             equals new { yearTotalJoin.Year, yearTotalJoin.Parentproject }
                             into yearTotalGroup
                         from yearTotal in yearTotalGroup.DefaultIfEmpty()
-                        join monthFinalJoin in _context.ProjectMonthFinals.AsNoTracking()
-                            on new { myProject.Year, Project = myProject.Parentproject, MonthNo = fiscalMonth }
-                            equals new { monthFinalJoin.Year, Project = monthFinalJoin.Project, MonthNo = monthFinalJoin.Monthno }
-                            into monthFinalGroup
-                        from monthFinal in monthFinalGroup.DefaultIfEmpty()
+                        from monthFinal in _context.ProjectMonthFinals.AsNoTracking()
+                            .Where(m => yearTotal != null
+                                        && m.Year == yearTotal.Year
+                                        && m.Project == yearTotal.Parentproject)
+                            .DefaultIfEmpty()
                         join yearlyDataJoin in _context.YearlyFinancialData.AsNoTracking()
                             on new { myProject.Year, Project = myProject.Parentproject }
                             equals new { yearlyDataJoin.Year, yearlyDataJoin.Project }
@@ -192,12 +222,13 @@ namespace Apha.PIMS.DataAccess.Repository
                             on myProject.Parentproject equals radTrackDataJoin.Parentproject
                             into radTrackDataGroup
                         from radTrackData in radTrackDataGroup.DefaultIfEmpty()
-                        join commentJoin in monitoringComments
-                            on new { Project = myProject.Parentproject, myProject.Year }
-                            equals new { Project = commentJoin.Project, commentJoin.Year }
-                            into commentGroup
-                        from comment in commentGroup.DefaultIfEmpty()
+                        from comment in monitoringComments
+                            .Where(c => yearTotal != null
+                                        && c.Year == yearTotal.Year
+                                        && c.Project == yearTotal.Parentproject)
+                            .DefaultIfEmpty()
                         where myProject.Year == reportYear
+                              && (monthFinal == null || monthFinal.Monthno == fiscalMonth)
                         select new ProgramCustomerMonitoringReportData
                         {
                             Year = myProject.Year,
@@ -236,7 +267,6 @@ namespace Apha.PIMS.DataAccess.Repository
             }
 
             return query
-                .Distinct()
                 .OrderBy(r => r.ParentProject);
         }
 
@@ -370,30 +400,26 @@ namespace Apha.PIMS.DataAccess.Repository
         }
 
         /// <summary>
-        /// Apply contract filter with wildcard support (similar to SQL LIKE with NZ function).
+        /// Apply contract filter with Access-style wildcard support (Nz(..., "*") semantics).
         /// </summary>
         private static IQueryable<MonitoringReportData> ApplyContractFilter(
             IQueryable<MonitoringReportData> query,
             string contractFilter)
         {
             if (string.IsNullOrWhiteSpace(contractFilter) || contractFilter == "*")
-                return query; // No filter - return all
+                return query;
 
-            // Handle wildcard patterns
-            if (contractFilter.Contains("*"))
-            {
-                // Convert * pattern to EF Core compatible pattern
-                string pattern = contractFilter.Replace("*", "%");
-                query = query.Where(r => EF.Functions.Like(r.Contract, pattern));
-            }
-            else
-            {
-                // Exact match if no wildcard
-                query = query.Where(r => r.Contract == contractFilter);
-            }
+            string pattern = contractFilter
+                .Replace("*", "%")
+                .Replace("?", "_");
 
+            query = query.Where(r => r.Contract != null && EF.Functions.ILike(r.Contract, pattern));
             return query;
         }
+
+        private static bool IsSurveillanceProgram(string? program)
+            => !string.IsNullOrWhiteSpace(program)
+               && program.EndsWith("SURV", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// Apply dynamic filtering based on the filter JSON parameter.
