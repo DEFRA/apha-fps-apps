@@ -25,7 +25,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var rows = await _dbContext.ProfitCentreViews
                 .AsNoTracking()
                 .Where(x => x.UserEmail != null
-                         && x.UserEmail.ToLower() == _requestContext.UserEmailId)
+                         && EF.Functions.ILike(x.UserEmail, _requestContext.UserEmailId))
                 .OrderBy(x => x.ProfitCentreId)
                 .ToListAsync();
 
@@ -70,7 +70,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var normalised = profitCentreId.ToLower();
             return await _dbContext.ProfitCentres
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.ProfitCentreId.ToLower() == normalised);
+                .FirstOrDefaultAsync(p => EF.Functions.ILike(p.ProfitCentreId, normalised));
         }
 
         public async Task<ProfitCentre> CreateProfitCentreAsync(ProfitCentre profitCentre)
@@ -88,7 +88,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
                     var currentUser = await _dbContext.Users
                         .AsNoTracking()
-                        .FirstOrDefaultAsync(u => u.UserEmail != null && u.UserEmail.ToLower() == _requestContext.UserEmailId);
+                        .FirstOrDefaultAsync(u => u.UserEmail != null && EF.Functions.ILike(u.UserEmail, _requestContext.UserEmailId));
 
                     var currentUserId = currentUser?.UserId ?? (int)SuperUser.SuperUserId;
 
@@ -144,7 +144,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
                     var currentUser = await _dbContext.Users
                         .AsNoTracking()
-                        .FirstOrDefaultAsync(u => u.UserEmail != null && u.UserEmail.ToLower() == _requestContext.UserEmailId);
+                        .FirstOrDefaultAsync(u => u.UserEmail != null && EF.Functions.ILike(u.UserEmail, _requestContext.UserEmailId));
 
                     var currentUserId = currentUser?.UserId ?? (int)SuperUser.SuperUserId;
 
@@ -237,7 +237,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var normalised = profitCentreId.ToLower();
             return await _dbContext.ProfitCentres
                 .AsNoTracking()
-                .AnyAsync(p => p.ProfitCentreId.ToLower() == normalised);
+                .AnyAsync(p => EF.Functions.ILike(p.ProfitCentreId, normalised));
         }
 
         public async Task<bool> UpdateProfitCentreSettingsAsync(string profitCentre, int timesheet, int outputsheet, short timesheetlayout)
@@ -387,28 +387,40 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
+            if (TryGetFilterValue(dict, "WorkGroup", out var workGroup))
                 query = query.Where(x => EF.Functions.ILike(x.WorkGroup!, $"%{workGroup}%"));
 
-            if (dict.TryGetValue("GradeCode", out var gradeCode) && gradeCode != null)
+            if (TryGetFilterValue(dict, "GradeCode", out var gradeCode))
                 query = query.Where(x => EF.Functions.ILike(x.GradeCode!, $"%{gradeCode}%"));
 
-            if (dict.TryGetValue("Name", out var name) && name != null)
+            if (TryGetFilterValue(dict, "Name", out var name))
                 query = query.Where(x => EF.Functions.ILike(x.Name!, $"%{name}%"));
 
-            if (dict.TryGetValue("Manager", out var manager) && manager != null)
+            if (TryGetFilterValue(dict, "Manager", out var manager))
                 query = query.Where(x => EF.Functions.ILike(x.Manager!, $"%{manager}%"));
 
-            if (dict.TryGetValue("Program", out var program) && program != null)
+            if (TryGetFilterValue(dict, "Program", out var program))
                 query = query.Where(x => EF.Functions.ILike(x.Program!, $"%{program}%"));
 
-            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+            if (TryGetFilterValue(dict, "JobCode", out var jobCode))
                 query = query.Where(x => EF.Functions.ILike(x.JobCode!, $"%{jobCode}%"));
 
-            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && projectStatus != null)
+            if (TryGetFilterValue(dict, "ProjectStatus", out var projectStatus))
                 query = query.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
 
             return query;
+        }
+
+        private static bool TryGetFilterValue(IDictionary<string, object> dict, string key, out string value)
+        {
+            if (dict.TryGetValue(key, out var raw) && raw != null)
+            {
+                value = raw.ToString()!;
+                return true;
+            }
+
+            value = string.Empty;
+            return false;
         }
 
         private static IQueryable<WgStaffPlanView> ApplyWgStaffPlanSorting(
@@ -419,17 +431,23 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return sortBy.ToLower() switch
             {
-                "workgroup"     => descending ? query.OrderByDescending(x => x.WorkGroup)     : query.OrderBy(x => x.WorkGroup),
-                "gradecode"     => descending ? query.OrderByDescending(x => x.GradeCode)     : query.OrderBy(x => x.GradeCode),
-                "name"          => descending ? query.OrderByDescending(x => x.Name)          : query.OrderBy(x => x.Name),
-                "manager"       => descending ? query.OrderByDescending(x => x.Manager)       : query.OrderBy(x => x.Manager),
-                "program"       => descending ? query.OrderByDescending(x => x.Program)       : query.OrderBy(x => x.Program),
-                "jobcode"       => descending ? query.OrderByDescending(x => x.JobCode)       : query.OrderBy(x => x.JobCode),
-                "projectstatus" => descending ? query.OrderByDescending(x => x.ProjectStatus) : query.OrderBy(x => x.ProjectStatus),
-                "plannedhours"  => descending ? query.OrderByDescending(x => x.PlannedHours)  : query.OrderBy(x => x.PlannedHours),
-                "fee"           => descending ? query.OrderByDescending(x => x.Fee)           : query.OrderBy(x => x.Fee),
+                "workgroup"     => OrderByField(query, x => x.WorkGroup, descending),
+                "gradecode"     => OrderByField(query, x => x.GradeCode, descending),
+                "name"          => OrderByField(query, x => x.Name, descending),
+                "manager"       => OrderByField(query, x => x.Manager, descending),
+                "program"       => OrderByField(query, x => x.Program, descending),
+                "jobcode"       => OrderByField(query, x => x.JobCode, descending),
+                "projectstatus" => OrderByField(query, x => x.ProjectStatus, descending),
+                "plannedhours"  => OrderByField(query, x => x.PlannedHours, descending),
+                "fee"           => OrderByField(query, x => x.Fee, descending),
                 _               => query.OrderBy(x => x.WorkGroup).ThenBy(x => x.Name)
             };
         }
+
+        private static IQueryable<WgStaffPlanView> OrderByField<TKey>(
+            IQueryable<WgStaffPlanView> query,
+            System.Linq.Expressions.Expression<Func<WgStaffPlanView, TKey>> selector,
+            bool descending) =>
+            descending ? query.OrderByDescending(selector) : query.OrderBy(selector);
     }
 }
