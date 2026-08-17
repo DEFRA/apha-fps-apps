@@ -64,6 +64,8 @@ namespace Apha.PIMS.Api.Extensions
             // Publication type lookup maintenance
             services.AddScoped<IPublicationTypeService, PublicationTypeService>();
 
+            services.AddScoped<IQueryReportService, QueryReportService>();
+
             return services;
         }
 
@@ -111,6 +113,7 @@ namespace Apha.PIMS.Api.Extensions
 
             
             services.AddScoped<IPublicationTypeRepository, PublicationTypeRepository>();
+            services.AddScoped<IQueriesRepository, QueriesRepository>();
 
             return services;
         }
