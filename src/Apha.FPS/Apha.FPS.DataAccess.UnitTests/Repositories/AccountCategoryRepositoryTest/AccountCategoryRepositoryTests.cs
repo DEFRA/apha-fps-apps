@@ -421,6 +421,41 @@ namespace Apha.FPS.DataAccess.UnitTests.Repositories.AccountCategoryRepositoryTe
 
         #endregion
 
+        #region ExistsByAccShortNameAsync
+
+        [Theory]
+        [InlineData("TEST001")]
+        [InlineData("test001")]
+        [InlineData("Test001")]
+        public async Task ExistsByAccShortNameAsync_DuplicateIgnoringCase_ReturnsTrue(string accShortName)
+        {
+            // Arrange
+            _repositoryMock.ExistsByAccShortNameAsync(accShortName).Returns(true);
+
+            // Act
+            var result = await _repositoryMock.ExistsByAccShortNameAsync(accShortName);
+
+            // Assert
+            Assert.True(result);
+            await _repositoryMock.Received(1).ExistsByAccShortNameAsync(accShortName);
+        }
+
+        [Fact]
+        public async Task ExistsByAccShortNameAsync_NonExisting_ReturnsFalse()
+        {
+            // Arrange
+            _repositoryMock.ExistsByAccShortNameAsync("NONEXISTENT").Returns(false);
+
+            // Act
+            var result = await _repositoryMock.ExistsByAccShortNameAsync("NONEXISTENT");
+
+            // Assert
+            Assert.False(result);
+            await _repositoryMock.Received(1).ExistsByAccShortNameAsync("NONEXISTENT");
+        }
+
+        #endregion
+
         #region AddAsync
 
         [Fact]
