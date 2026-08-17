@@ -8,34 +8,6 @@
 
 <main id="main-content">
     <div class="container-fluid">
-        @* <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <form asp-action="Index" asp-controller="ResourceSetUp" asp-area="FPS" method="get"
-                      class="govuk-!-padding-right-4 govuk-!-padding-top-2 govuk-!-padding-bottom-2"
-                      style="display: flex; align-items: center; justify-content: flex-end;">
-                    <input type="hidden" name="year" value="@FpsYearContext.Year" />
-                    <label class="fw-bold mt-2 me-2" for="profitCentreSelect">Resource Centre: </label>
-                    <select id="profitCentreSelect"
-                            name="profitCentre"
-                            asp-items="Model.ProfitCentreList"
-                            class="govuk-select govuk-!-font-size-16"
-                            style="width: auto; min-width: 260px;"
-                            onchange="showLoader(); this.form.submit()">
-                        <option value="">-- Select Resource Centre --</option>
-                    </select>
-                </form>
-            </div>
-        </div> *@
-
-        <!-- Page Title -->
-        @* <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
-                    Resource Set-Up <a href="#" id="fpsSrRcTitle" class="govuk-link">@Model.ProfitCentre</a>
-                </h1>
-            </div>
-        </div> *@
-
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-one-full isClearFix sup_border-bottom govuk-!-margin-bottom-3">
                 <div class="govuk-grid-column-one-half isFloatLeft">
