@@ -72,12 +72,3 @@
         Save
     </button>
 </div>
-
-<script>
-    (function () {
-        $('#txtmodal-testcode').on('change', function () {
-            var desc = $(this).find('option:selected').data('description') || '';
-            $('#txtmodal-description').val(desc);
-        });
-    })();
-</script>
