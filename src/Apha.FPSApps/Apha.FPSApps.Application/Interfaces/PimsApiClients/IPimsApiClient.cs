@@ -9,7 +9,8 @@ namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
         IPimsProjectYearCostsApiClient PimsProjectYearCosts { get; }
         IPimsMilestoneApiClient PimsMilestone { get; }
         IPimsRadTrackInvoiceApiClient PimsRadTrackInvoice { get; }
-        
+        IPimsQueryReportApiClient PimsQueryReport { get; }
+
         IPimsYearlyFinancialDataApiClient PimsYearlyFinancialData { get; }
         IPimsReportApiClient PimsReport { get; }
         IPimsReportGroupApiClient PimsReportGroup { get; }
