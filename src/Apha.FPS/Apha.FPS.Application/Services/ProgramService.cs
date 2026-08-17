@@ -59,6 +59,13 @@ namespace Apha.FPS.Application.Services
                 throw new ArgumentException("Program number is required.");
             }           
 
+            if (await _programRepository.ExistsByProgramNoAsync(programDto.ProgramNo))
+            {
+                throw new InvalidOperationException(
+                    $"Program '{programDto.ProgramNo}' already exists. " +
+                    "Please use a different program.");
+            }
+
             var program = _mapper.Map<Core.Entities.Program>(programDto);
 
             try
