@@ -289,6 +289,101 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
 
         #endregion
 
+        #region ExistsByProgramNoAsync
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task ExistsByProgramNoAsync_ReturnsFalse_WhenNullOrWhitespace(string? programNo)
+        {
+            // Arrange
+            var programs = new List<Core.Entities.Program>
+            {
+                new() { ProgramNo = "ADMIN", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(programs, [], []);
+
+            // Act
+            var result = await repo.ExistsByProgramNoAsync(programNo!);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsByProgramNoAsync_ReturnsFalse_WhenNotFound()
+        {
+            // Arrange
+            var programs = new List<Core.Entities.Program>
+            {
+                new() { ProgramNo = "ADMIN", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(programs, [], []);
+
+            // Act
+            var result = await repo.ExistsByProgramNoAsync("FINANCE");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsByProgramNoAsync_ReturnsTrue_WhenExactMatch()
+        {
+            // Arrange
+            var programs = new List<Core.Entities.Program>
+            {
+                new() { ProgramNo = "ADMIN", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(programs, [], []);
+
+            // Act
+            var result = await repo.ExistsByProgramNoAsync("ADMIN");
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Theory]
+        [InlineData("admin")]
+        [InlineData("Admin")]
+        [InlineData("aDmIn")]
+        public async Task ExistsByProgramNoAsync_ReturnsTrue_WhenCaseInsensitiveMatch(string candidate)
+        {
+            // Arrange - stored value is "ADMIN"; duplicate detection must be case-insensitive
+            var programs = new List<Core.Entities.Program>
+            {
+                new() { ProgramNo = "ADMIN", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(programs, [], []);
+
+            // Act
+            var result = await repo.ExistsByProgramNoAsync(candidate);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsByProgramNoAsync_ReturnsFalse_WhenMatchInDifferentFpsYear()
+        {
+            // Arrange - same name but a different FpsYear should not count as a duplicate
+            var programs = new List<Core.Entities.Program>
+            {
+                new() { ProgramNo = "ADMIN", FpsYear = DefaultTestFpsYear - 1 }
+            };
+            var repo = CreateRepository(programs, [], []);
+
+            // Act
+            var result = await repo.ExistsByProgramNoAsync("ADMIN");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        #endregion
+
         #region AddProgramAsync
 
         [Fact]
