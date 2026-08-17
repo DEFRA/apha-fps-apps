@@ -30,8 +30,7 @@
                                     Month
                                 </label>
                                 <select class="govuk-select"
-                                        id="qryFilterMonth"
-                                        aria-label="Filter by month">
+                                        id="qryFilterMonth">
                                     <option value="">Select Month</option>
                                     <option value="1" selected="@(Model.SelectedMonth == 1 ? "selected" : null)">Jan</option>
                                     <option value="2" selected="@(Model.SelectedMonth == 2 ? "selected" : null)">Feb</option>
@@ -89,8 +88,7 @@
                                     Contract
                                 </label>
                                 <select class="govuk-select"
-                                        id="qryFilterContract"
-                                        aria-label="Filter by contract">
+                                        id="qryFilterContract">
                                     @foreach (var contract in Model.ContractOptions)
                                     {
                                         <option value="@contract.Value">@contract.Text</option>
