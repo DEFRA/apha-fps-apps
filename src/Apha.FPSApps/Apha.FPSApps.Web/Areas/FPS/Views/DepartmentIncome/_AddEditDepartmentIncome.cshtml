@@ -1,0 +1,76 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.DepartmentIncomeSnapshotItem
+
+<div class="modal-header">
+    <h5 class="modal-title" id="deptIncomeSnapshotModalTitle">Edit Snapshot Period</h5>
+    <button type="button" class="btn-close btn-red" onclick="closeDeptIncomeSnapshotModal()">X</button>
+</div>
+
+<div class="modal-body">
+    <div class="govuk-error-summary" role="alert" aria-labelledby="deptincome-error-summary-title"
+         tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="deptincome-error-summary-title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list"></ul>
+        </div>
+    </div>
+
+    <form id="formEditSnapshotPeriod" class="row g-3">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" id="hdnSnapshotPeriodName" value="@Model?.PeriodName" />
+
+        <!-- Period Name (read-only) -->
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" for="displayPeriodName">Period Name:</label>
+                <input class="govuk-input" id="displayPeriodName"
+                       type="text"
+                       value="@Model?.PeriodName"
+                       readonly />
+            </div>
+        </div>
+
+        <!-- Final Summaries Run (read-only checkbox) -->
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0 d-flex align-items-center gap-2">
+                <label class="govuk-label sup_margin_0" for="chkFinalSummariesRunRO">Final Summaries Run:</label>
+                <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                    <div class="govuk-checkboxes__item">
+                        <input class="govuk-checkboxes__input"
+                               id="chkFinalSummariesRunRO"
+                               type="checkbox"
+                               @(Model != null && Model.FinalSummariesRun ? "checked" : "")
+                               disabled />
+                        <label class="govuk-label govuk-checkboxes__label" for="chkFinalSummariesRunRO">Yes</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Period Locked (editable checkbox) -->
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0 d-flex align-items-center gap-2">
+                <label class="govuk-label sup_margin_0" for="chkPeriodLocked">Period Locked:</label>
+                <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                    <div class="govuk-checkboxes__item">
+                        <input class="govuk-checkboxes__input"
+                               id="chkPeriodLocked"
+                               type="checkbox"
+                               @(Model != null && Model.PeriodLocked ? "checked" : "") />
+                        <label class="govuk-label govuk-checkboxes__label" for="chkPeriodLocked">Yes</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<div class="modal-footer sup_flex_space_center">
+    <button type="button"
+            class="govuk-button govuk-button--secondary sup_margin_0"
+            onclick="closeDeptIncomeSnapshotModal()">Cancel</button>
+    <button type="button"
+            class="govuk-button sup_margin_0"
+            onclick="saveDeptIncomeSnapshotPeriod()">Update</button>
+</div>

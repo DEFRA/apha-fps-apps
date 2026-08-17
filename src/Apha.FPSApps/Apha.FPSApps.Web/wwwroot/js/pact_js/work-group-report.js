@@ -59,6 +59,13 @@ function saveWorkGroupEmail() {
 // ── Document ready ────────────────────────────────────────────────────────────
 $(function () {
 
+    // Disable checkboxes when year is closed
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+        $('#chk-timesheets, #chk-outputsheets, #layout-flat, #layout-crosstab')
+            .prop('disabled', true)
+            .attr('aria-disabled', 'true');
+    }
+
     // When Profit Centre dropdown changes: reload the grid AND refresh checkboxes
     $('#SelectedProfitCentre').on('change', function () {
         var pc = $(this).val();
@@ -90,6 +97,10 @@ $(function () {
 
     // Time sheet layout behaves like a radio group — checking one unchecks the other
     $('#layout-flat, #layout-crosstab').on('change', function () {
+        // Prevent changes when year is closed
+        if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+            return false;
+        }
         if ($(this).is(':checked')) {
             var other = this.id === 'layout-flat' ? '#layout-crosstab' : '#layout-flat';
             $(other).prop('checked', false);
@@ -99,6 +110,10 @@ $(function () {
 
     // Time Sheets / Output Sheets checkboxes save independently
     $('#chk-timesheets, #chk-outputsheets').on('change', function () {
+        // Prevent changes when year is closed
+        if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+            return false;
+        }
         saveProfitCentreSettings();
     });
 
@@ -206,6 +221,13 @@ function applyProfitCentreSettings(data) {
     // timesheetLayout: 1 = Flat-file, 2 = Cross-tab (mirrors Access OptionValue)
     $('#layout-flat').prop('checked', data.timesheetLayout !== 2);
     $('#layout-crosstab').prop('checked', data.timesheetLayout === 2);
+
+    // Re-apply disabled state after settings are loaded
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+        $('#chk-timesheets, #chk-outputsheets, #layout-flat, #layout-crosstab')
+            .prop('disabled', true)
+            .attr('aria-disabled', 'true');
+    }
 }
 
 // ── PATCH the three profit-centre settings back to the database ───────────────
@@ -245,9 +267,9 @@ function renderSendResults(results) {
         $.each(results, function (_, r) {
             $body.append(
                 '<tr class="govuk-table__row">' +
-                '<td class="govuk-table__cell">' + ($('<span>').text(r.workGroupName).html()) + '</td>' +
-                '<td class="govuk-table__cell">' + ($('<span>').text(r.emailRecipient || '').html()) + '</td>' +
-                '<td class="govuk-table__cell">' + ($('<span>').text(r.status || '').html()) + '</td>' +
+                '<td class="govuk-table__cell sup_text_center">' + ($('<span>').text(r.workGroupName).html()) + '</td>' +
+                '<td class="govuk-table__cell sup_text_center">' + ($('<span>').text(r.emailRecipient || '').html()) + '</td>' +
+                '<td class="govuk-table__cell sup_text_center">' + ($('<span>').text(r.status || '').html()) + '</td>' +
                 '<td class="govuk-table__cell">' + ($('<span>').text(r.reason || '').html()) + '</td>' +
                 '</tr>'
             );

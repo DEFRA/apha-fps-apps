@@ -5,13 +5,6 @@
         ViewData["Title"] = "Select project";
 }
 
-<style>
-    .input-group-text {
-        border-radius: 0 5px 5px 0;
-        padding: 7px 6px 6px 6px;
-        border: 1px solid #919191;
-    }
-</style>
 
 @* <div class="govuk-grid-row sup_margin_left_right_0">
     <div class="govuk-grid-column-one-half">
@@ -27,15 +20,15 @@
 
 <div class="govuk-grid-row sup_margin_left_right_0 sup_border-bottom">
     <div class="govuk-grid-column-full sup_flex_left_center sup_p_0">
-        <div class="govuk-grid-column-one-half">
+        <div class="govuk-grid-column-one-half govuk-grid-column-one-half govuk-!-margin-bottom-3 govuk-!-margin-top-3">
 
-            <h1 class="heading_with_txtbox govuk-heading-s sup_margin_bottom_0 govuk-!-margin-top-2 govuk-!-margin-bottom-0">
+            <h1 class="heading_with_txtbox govuk-heading-s sup_margin_bottom_0 govuk-!-margin-bottom-0">
                 Choose Existing Project
             </h1>
         </div>
 
         <div class="govuk-grid-column-one-half sup_p_0 sup_align_right">
-            <a asp-area="CostBook" asp-controller="Projects" asp-action="Create" class="govuk-button govuk-!-margin-bottom-1 govuk-!-margin-top-1 floatRight">
+            <a asp-area="CostBook" asp-controller="Projects" asp-action="Create" class="govuk-button govuk-!-margin-bottom-2 govuk-!-margin-top-1 floatRight">
                 + Add New Project
             </a>
         </div>

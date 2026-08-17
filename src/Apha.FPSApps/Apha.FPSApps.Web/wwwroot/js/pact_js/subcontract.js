@@ -64,29 +64,33 @@ function getSubContractFilters() {
 
 // ── CRUD Functions ─────────────────────────────────────────────────
 function addSubContract() {
-    $.get('/PACT/SubContract/GetSubContract',
-        { id: 0, parentProject: currentParentProject || '' },
-        function (html) {
+    $.ajax({
+        url: '/PACT/SubContract/GetSubContract',
+        type: 'GET',
+        data: { id: 0, parentProject: currentParentProject || '' },
+        success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             // Initialize form validation (unobtrusive + numeric)
             initializeFormValidation('#subContractForm');
-        })
-        .fail(function(xhr, status, error) {
-            showAlertMessage('Error loading form: ' + error, AlertType.ERROR);
-        });
+        },
+        error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+    });
 }
 
 function editSubContract(btn) {
     var id = $(btn).data('id');
-    $.get('/PACT/SubContract/GetSubContract', { id: id }, function (html) {
-        $('#modaPopupBody').html(html);
-        $('#modalPopup').addClass('show');
-        // Initialize form validation (unobtrusive + numeric)
-        initializeFormValidation('#subContractForm');
-    })
-    .fail(function(xhr, status, error) {
-        showAlertMessage('Error loading form: ' + error, AlertType.ERROR);
+    $.ajax({
+        url: '/PACT/SubContract/GetSubContract',
+        type: 'GET',
+        data: { id: id },
+        success: function (html) {
+            $('#modaPopupBody').html(html);
+            $('#modalPopup').addClass('show');
+            // Initialize form validation (unobtrusive + numeric)
+            initializeFormValidation('#subContractForm');
+        },
+        error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
 }
 
@@ -115,10 +119,12 @@ function saveSubContract() {
     clearValidationErrors('#modaPopupBody');
     var form = $('#subContractForm');
 
+    // Check basic form validity (required fields)
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;
     }
+
     var data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
 
     // Convert empty strings to null for numeric fields, but parse valid numbers
@@ -135,9 +141,12 @@ function saveSubContract() {
 
     if (data['SupplierNumber'] === '' || data['SupplierNumber'] === undefined) {
         data['SupplierNumber'] = null;
+    } else if (typeof data['SupplierNumber'] === 'string') {
+        var parsedInt = parseInt(data['SupplierNumber'], 10);
+        data['SupplierNumber'] = isNaN(parsedInt) ? null : parsedInt;
     }
 
-    
+
 
     $.ajax({
         url: '/PACT/SubContract/SaveSubContract',
@@ -151,6 +160,8 @@ function saveSubContract() {
                 reloadSubContractsGrid();
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
+                // Initialize form validation (unobtrusive + numeric)
+                initializeFormValidation('#subContractForm');
             }
         },
         error: function () { 

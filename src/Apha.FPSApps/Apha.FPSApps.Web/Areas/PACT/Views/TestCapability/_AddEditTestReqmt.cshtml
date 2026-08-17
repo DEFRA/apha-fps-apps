@@ -35,11 +35,11 @@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
-                    <label class="govuk-label govuk-!-font-weight-bold" for="TestCode">Test Code <span class="sup_color_red">*</span></label>
+                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="TestCode">Test Code <span class="sup_color_red">*</span></label>
                     @if (isEdit)
                     {
                         <select class="govuk-select govuk-!-font-size-16" asp-for="TestCode" disabled
-                                asp-items="testorProductOptions" style="width:100%;">
+                                asp-items="testorProductOptions" style="width:100%;" aria-label="Test Code">
                             <option value="">-- Select Test Code --</option>
                         </select>
                     }
@@ -47,7 +47,7 @@
                     {
                         <select class="govuk-select govuk-!-font-size-16" asp-for="TestCode"
                                 asp-items="testorProductOptions" style="width:100%;" required
-                                onchange="fetchTestReqmtPricing()">
+                                onchange="fetchTestReqmtPricing()" aria-label="Test Code">
                             <option value="">-- Select Test Code --</option>
                         </select>
                         <span data-valmsg-for="TestCode"
@@ -108,12 +108,12 @@
             </div>
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
-                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="RecUnitPrice">Rec Unit Price</label>
+                    <label class="govuk-label govuk-!-font-weight-bold" for="RecUnitPrice">Rec Unit Price</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input class="govuk-input govuk-!-font-size-16 decfmt-input" id="recUnitPrice" name="RecUnitPrice"
+                        <input class="govuk-input govuk-!-font-size-16 decfmt-input" id="RecUnitPrice" name="RecUnitPrice"
                                type="text" value="@(Model.RecUnitPrice.HasValue ? Model.RecUnitPrice.Value.ToString("F2") : "")"
-                        @(isEdit ? "disabled" : "") />
+                        @(isEdit ? "disabled" : "disabled") />
                     </div>
                     <span data-valmsg-for="RecUnitPrice" class="govuk-error-message validation-message" style="display:none;"></span>
                 </div>
@@ -126,7 +126,7 @@
                 <div class="govuk-form-group sup_margin_bottom_10">
                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="Active">Active</label>
                     <select class="govuk-select govuk-!-font-size-16" asp-for="Active"
-                            style="width:100%;">
+                            style="width:100%;" aria-label="Active">
                         <option value="">-- Select Active --</option>
                         <option value="1">Yes</option>
                         <option value="0">No</option>
@@ -137,7 +137,7 @@
                 <div class="govuk-form-group sup_margin_bottom_10">
                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="IsDefraProject">Defra Project?</label>
                     <select class="govuk-select govuk-!-font-size-16" id="isDefraSelect"
-                            asp-for="IsDefraProject" style="width:100%;" disabled>
+                            asp-for="IsDefraProject" style="width:100%;" disabled aria-label="Defra Project?">
                         <option value="">-- N/A --</option>
                         <option value="-1">Yes</option>
                         <option value="0">No</option>
@@ -216,8 +216,11 @@
         var params = { testCode: testCode };
         if (projectCode) params.projectCode = projectCode;
 
-        $.get('/PACT/TestCapability/GetTestReqmtPricing', params,
-            function (data) {
+        $.ajax({
+            url: '/PACT/TestCapability/GetTestReqmtPricing',
+            type: 'GET',
+            data: params,
+            success: function (data) {
                 if (data.success) {
                     var price = data.recUnitPrice !== null && data.recUnitPrice !== undefined ? parseFloat(data.recUnitPrice).toFixed(2) : '';
                     $('#recUnitPrice').val(price);
@@ -231,7 +234,9 @@
                     $('#UnitPrice').val('');
                     if (projectCode) $('#isDefraSelect').val('');
                 }
-            });
+            },
+            error: function () { showAlertMessage('An error occurred while fetching pricing.', AlertType.ERROR); }
+        });
     }
 
     function onTestReqmtProjectChange(projectValueOrElement, isEdit) {

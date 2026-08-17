@@ -312,11 +312,16 @@
 
         // ── Grid 1 CRUD ────────────────────────────────────────────────────────
         function addTestCapability() {
-            $.get('/PACT/TestCapability/CreateTestCapability', function (html) {
-                $('#modaPopupBody').html(html);
-                $('#modalPopup').addClass('show');
-                // Attach numeric validation
-                attachNumericValidation();
+            $.ajax({
+                url: '/PACT/TestCapability/CreateTestCapability',
+                type: 'GET',
+                success: function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                    // Attach numeric validation
+                    attachNumericValidation();
+                },
+                error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
             });
         }
 
@@ -324,13 +329,17 @@
             var testCode  = encodeURIComponent($(rowData).data('id') || '');
             var workGroup = encodeURIComponent(
                 $(rowData).closest('tr').find('[data-property="WorkGroup"]').text().trim());
-            $.get('/PACT/TestCapability/EditTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
-                function (html) {
+            $.ajax({
+                url: '/PACT/TestCapability/EditTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
+                type: 'GET',
+                success: function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                     // Attach numeric validation
                     attachNumericValidation();
-                });
+                },
+                error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+            });
         }
 
         function saveTestCapability() {
@@ -398,53 +407,52 @@
                 return;
             }
 
-            $.get('/PACT/TestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
-                function (html) {
+            $.ajax({
+                url: '/PACT/TestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
+                type: 'GET',
+                success: function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
                     setTimeout(function() {
+                        // Initialize form validation (unobtrusive + numeric)
                         initializeFormValidation('#testReqmtForm');
                     }, 50);
-                });
+                },
+                error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+            });
         }
 
         function editTestReqmt(rowData) {
             var testCode = encodeURIComponent(currentSelectedTestCode || '');
             var buyer    = encodeURIComponent($(rowData).data('id') || '');
-            $.get('/PACT/TestCapability/EditTestReqmt?testCode=' + testCode + '&buyer=' + buyer,
-                function (html) {
+            $.ajax({
+                url: '/PACT/TestCapability/EditTestReqmt?testCode=' + testCode + '&buyer=' + buyer,
+                type: 'GET',
+                success: function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
                     setTimeout(function() {
+                        // Initialize form validation (unobtrusive + numeric)
                         initializeFormValidation('#testReqmtForm');
                     }, 50);
-                });
+                },
+                error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+            });
         }
 
         function saveTestReqmt() {
             var form = $('#testReqmtForm');
 
-            // Validate all numeric fields before checking isFormValid
-            form.find('.decfmt-input').each(function() {
-                validateRangeOnInput(this);
-            });
-
-            // Check for numeric validation errors
-            if (hasNumericValidationErrors(form)) {
-                displayClientValidationErrors(form, '#modaPopupBody');
-                return;
-            }
-
             if (!isFormValid(form)) {
                 // Display validation errors without clearing them first
-                displayClientValidationErrors(form, '#modaPopupBody');
+                displayClientValidationErrors(form, '#testReqmtForm');
                 return;
             }
 
             // Clear validation errors only after validation passes
-            clearValidationErrors('#modaPopupBody');
+            clearValidationErrors('#testReqmtForm');
 
             var isEdit        = form.find('[name="isEdit"]').val() === 'true';
             var rawUnitPrice  = form.find('[name="UnitPrice"]').val();
@@ -472,7 +480,9 @@
                         reloadTestReqmtGrid(currentSelectedTestCode);
                         showAlertMessage(isEdit ? 'Record updated successfully.' : 'Record saved successfully.', AlertType.SUCCESS);
                     } else {
-                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
+                        displayServerValidationErrors(result.errors, result.message, '#testReqmtForm');
+                        // Initialize form validation (unobtrusive + numeric)
+                        initializeFormValidation('#testReqmtForm');
                     }
                 },
                 error: function () { showAlertMessage('Request failed. Please try again.', AlertType.ERROR); }
