@@ -12,6 +12,11 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 {
     public class WorkGroupRepositoryTests
     {
+        private static readonly string[] ExpectedOrderAscendingABC = { "WG_A", "WG_B", "WG_C" };
+        private static readonly string[] ExpectedOrderDescendingCBA = { "WG_C", "WG_B", "WG_A" };
+        private static readonly string[] ExpectedOrderAscendingAB = { "WG_A", "WG_B" };
+        private static readonly string[] ExpectedOrderNullFirst = { "WG_NULL", "WG_VALUE" };
+
         // ── Factories ────────────────────────────────────────────────────────
 
         /// <summary>
@@ -117,6 +122,47 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 [GradeView(wgGrade, workGroup)],
                 [StaffView(pactId, name, wgGrade)],
                 [TimeRecord(pactId, parentProject, timeCode, month, hours)]);
+
+        // ── Owners repository factory (staff/grade view join) ─────────────────────
+
+        private static PactWorkGroupGradeView OwnerGradeView(
+            string wgGrade, string workGroup, string gradeCode) =>
+            new() { WgGrade = wgGrade, WorkGroup = workGroup, GradeCode = gradeCode };
+
+        private static WorkGroupStaffView OwnerStaffView(
+            string name, string workGroupGrade) =>
+            new() { Name = name, WorkGroupGrade = workGroupGrade };
+
+        private static WorkGroupRepository CreateOwnersRepository(
+            IEnumerable<PactWorkGroupGradeView> gradeViews,
+            IEnumerable<WorkGroupStaffView> staffViews)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
+            mockContext.Setup(x => x.PactWorkGroupGradeViews)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(gradeViews).Object);
+            mockContext.Setup(x => x.WorkGroupStaffViews)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(staffViews).Object);
+
+            return new WorkGroupRepository(mockContext.Object, fpsRequestContext);
+        }
+
+        // ── WorkGroupView (budget) repository factory ─────────────────────────────
+
+        private static WorkGroupRepository CreateWorkGroupViewRepository(
+            IEnumerable<WorkGroupView> workGroupViews,
+            string userEmailId)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.UserEmailId.Returns(userEmailId);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
+            mockContext.Setup(x => x.WorkGroupViews)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(workGroupViews).Object);
+
+            return new WorkGroupRepository(mockContext.Object, fpsRequestContext);
+        }
 
         #region GetAllWorkGroupsAsync
 
@@ -241,6 +287,68 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             Assert.All(result, name => Assert.IsType<string>(name));
             Assert.Contains("WG_A", result);
             Assert.Contains("WG_B", result);
+        }
+
+        #endregion
+
+        #region ExistsAsync
+
+        [Theory]
+        [InlineData("WW")]
+        [InlineData("ww")]
+        [InlineData("wW")]
+        [InlineData("Ww")]
+        public async Task ExistsAsync_NameDiffersOnlyByCase_ReturnsTrue(string candidate)
+        {
+            // Arrange
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "WW", ProfitCentre = "PC1" }
+            };
+            var repo = CreateRepository(workGroups);
+
+            // Act
+            var result = await repo.ExistsAsync(candidate);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_NameDoesNotExist_ReturnsFalse()
+        {
+            // Arrange
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "WW", ProfitCentre = "PC1" }
+            };
+            var repo = CreateRepository(workGroups);
+
+            // Act
+            var result = await repo.ExistsAsync("XX");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData(null)]
+        public async Task ExistsAsync_NullOrWhiteSpaceName_ReturnsFalse(string? candidate)
+        {
+            // Arrange
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "WW", ProfitCentre = "PC1" }
+            };
+            var repo = CreateRepository(workGroups);
+
+            // Act
+            var result = await repo.ExistsAsync(candidate!);
+
+            // Assert
+            Assert.False(result);
         }
 
         #endregion
@@ -737,7 +845,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var result = await repo.GetPagedAsync(query);
 
             var order = result.Data.Select(w => w.WorkGroupName).ToList();
-            Assert.Equal(new[] { "WG_A", "WG_B", "WG_C" }, order);
+            Assert.Equal(ExpectedOrderAscendingABC, order);
             // Tolerance-based double comparison (no exact equality)
             Assert.Equal(100.0, result.Data.First().CostCentre!.Value, 3);
         }
@@ -763,7 +871,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var result = await repo.GetPagedAsync(query);
 
             var order = result.Data.Select(w => w.WorkGroupName).ToList();
-            Assert.Equal(new[] { "WG_C", "WG_B", "WG_A" }, order);
+            Assert.Equal(ExpectedOrderDescendingCBA, order);
             // Tolerance-based double comparison (no exact equality)
             Assert.Equal(300.0, result.Data.First().CostCentre!.Value, 3);
         }
@@ -787,7 +895,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 
             var result = await repo.GetPagedAsync(query);
 
-            Assert.Equal(new[] { "WG_A", "WG_B" }, result.Data.Select(w => w.WorkGroupName).ToList());
+            Assert.Equal(ExpectedOrderAscendingAB, result.Data.Select(w => w.WorkGroupName).ToList());
         }
 
         [Fact]
@@ -810,7 +918,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var result = await repo.GetPagedAsync(query);
 
             // Ascending: null sorts before a populated value
-            Assert.Equal(new[] { "WG_NULL", "WG_VALUE" }, result.Data.Select(w => w.WorkGroupName).ToList());
+            Assert.Equal(ExpectedOrderNullFirst, result.Data.Select(w => w.WorkGroupName).ToList());
         }
 
         // Covers every branch of ApplyFpsWorkGroupSorting (asc/desc for each sortable column + default).
@@ -853,6 +961,232 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 
             Assert.Equal(expectedFirstWorkGroupName, result.Data.First().WorkGroupName);
         }
+        #endregion
+
+        #region GetOwnersAsync
+
+        [Fact]
+        public async Task GetOwnersAsync_JoinsStaffAndGrade_ReturnsOwnersOrderedByName()
+        {
+            // Arrange
+            var gradeViews = new List<PactWorkGroupGradeView>
+            {
+                OwnerGradeView("WGG1", "WG_A", "B1"),
+                OwnerGradeView("WGG2", "WG_B", "C2")
+            };
+            var staffViews = new List<WorkGroupStaffView>
+            {
+                OwnerStaffView("Zoe Adams", "WGG2"),
+                OwnerStaffView("Amy Brown", "WGG1")
+            };
+            var repo = CreateOwnersRepository(gradeViews, staffViews);
+
+            // Act
+            var result = (await repo.GetOwnersAsync()).ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            // Ordered alphabetically by name
+            Assert.Equal("Amy Brown", result[0].Name);
+            Assert.Equal("Zoe Adams", result[1].Name);
+            // Projection maps WorkGroup/GradeCode and Expr1 (first char of grade code)
+            Assert.Equal("WG_A", result[0].WorkGroup);
+            Assert.Equal("B1", result[0].GradeCode);
+            Assert.Equal("B", result[0].Expr1);
+        }
+
+        [Theory]
+        [InlineData("General Pool")]
+        [InlineData("GENERAL admin")]
+        [InlineData("Vacancy 1")]
+        [InlineData("Long-term VACANCY")]
+        public async Task GetOwnersAsync_ExcludesGeneralAndVacancyNames_CaseInsensitive(string excludedName)
+        {
+            // Arrange
+            var gradeViews = new List<PactWorkGroupGradeView>
+            {
+                OwnerGradeView("WGG1", "WG_A", "B1")
+            };
+            var staffViews = new List<WorkGroupStaffView>
+            {
+                OwnerStaffView(excludedName, "WGG1")
+            };
+            var repo = CreateOwnersRepository(gradeViews, staffViews);
+
+            // Act
+            var result = await repo.GetOwnersAsync();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetOwnersAsync_ExcludesGradeCodesStartingWithG()
+        {
+            // Arrange
+            var gradeViews = new List<PactWorkGroupGradeView>
+            {
+                OwnerGradeView("WGG1", "WG_A", "G5") // grade code starting with 'G' is excluded
+            };
+            var staffViews = new List<WorkGroupStaffView>
+            {
+                OwnerStaffView("Amy Brown", "WGG1")
+            };
+            var repo = CreateOwnersRepository(gradeViews, staffViews);
+
+            // Act
+            var result = await repo.GetOwnersAsync();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetOwnersAsync_NullGradeCode_ExcludesRow()
+        {
+            // Arrange
+            var gradeViews = new List<PactWorkGroupGradeView>
+            {
+                OwnerGradeView("WGG1", "WG_A", null!)
+            };
+            var staffViews = new List<WorkGroupStaffView>
+            {
+                OwnerStaffView("Amy Brown", "WGG1")
+            };
+            var repo = CreateOwnersRepository(gradeViews, staffViews);
+
+            // Act
+            var result = await repo.GetOwnersAsync();
+
+            // Assert - rows with a null grade code are filtered out
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetWorkGroupsForEmailAsync
+
+        [Fact]
+        public async Task GetWorkGroupsForEmailAsync_FiltersBySendEmailAndProfitCentre_OrdersByName()
+        {
+            // Arrange
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "WG_B", ProfitCentre = "PC1", SendEmail = 1 },
+                new() { WorkGroupName = "WG_A", ProfitCentre = "PC1", SendEmail = 1 },
+                new() { WorkGroupName = "WG_C", ProfitCentre = "PC1", SendEmail = 0 }, // excluded
+                new() { WorkGroupName = "WG_D", ProfitCentre = "PC2", SendEmail = 1 }  // excluded
+            };
+            var repo = CreateRepository(workGroups);
+
+            // Act
+            var result = (await repo.GetWorkGroupsForEmailAsync("PC1")).ToList();
+
+            // Assert
+            Assert.Equal(ExpectedOrderAscendingAB, result.Select(w => w.WorkGroupName).ToList());
+        }
+
+        #endregion
+
+        #region GetWorkGroupsByProfitCentreForBudgetAsync
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreForBudgetAsync_FiltersByProfitCentreAndUserEmail_OrdersByName()
+        {
+            // Arrange
+            const string userEmail = "user@example.com";
+            var views = new List<WorkGroupView>
+            {
+                new() { WorkGroupName = "WG_B", ProfitCentre = "PC1", UserEmail = userEmail },
+                new() { WorkGroupName = "WG_A", ProfitCentre = "PC1", UserEmail = "USER@EXAMPLE.COM" }, // case-insensitive match
+                new() { WorkGroupName = "WG_X", ProfitCentre = "PC1", UserEmail = "other@example.com" }, // wrong user
+                new() { WorkGroupName = "WG_Y", ProfitCentre = "PC2", UserEmail = userEmail }            // wrong profit centre
+            };
+            var repo = CreateWorkGroupViewRepository(views, userEmail);
+
+            // Act
+            var result = await repo.GetWorkGroupsByProfitCentreForBudgetAsync("PC1");
+
+            // Assert
+            Assert.Equal(ExpectedOrderAscendingAB, result.Select(w => w.WorkGroupName).ToList());
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreForBudgetAsync_NullUserEmail_ExcludesRow()
+        {
+            // Arrange
+            const string userEmail = "user@example.com";
+            var views = new List<WorkGroupView>
+            {
+                new() { WorkGroupName = "WG_A", ProfitCentre = "PC1", UserEmail = null }
+            };
+            var repo = CreateWorkGroupViewRepository(views, userEmail);
+
+            // Act
+            var result = await repo.GetWorkGroupsByProfitCentreForBudgetAsync("PC1");
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetWorkGroupsByProfitCentreForBudgetPagedAsync
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreForBudgetPagedAsync_FiltersByProfitCentreAndUserEmail_ReturnsPagedData()
+        {
+            // Arrange
+            const string userEmail = "user@example.com";
+            var views = new List<WorkGroupView>
+            {
+                new() { WorkGroupName = "WG_B", ProfitCentre = "PC1", UserEmail = userEmail },
+                new() { WorkGroupName = "WG_A", ProfitCentre = "PC1", UserEmail = userEmail },
+                new() { WorkGroupName = "WG_X", ProfitCentre = "PC1", UserEmail = "other@example.com" }
+            };
+            var repo = CreateWorkGroupViewRepository(views, userEmail);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "WorkGroupName",
+                Descending = false
+            };
+
+            // Act
+            var result = await repo.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.Equal(ExpectedOrderAscendingAB, result.Data.Select(w => w.WorkGroupName).ToList());
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreForBudgetPagedAsync_DefaultsPageAndPageSize_WhenNonPositive()
+        {
+            // Arrange
+            const string userEmail = "user@example.com";
+            var views = new List<WorkGroupView>
+            {
+                new() { WorkGroupName = "WG_A", ProfitCentre = "PC1", UserEmail = userEmail }
+            };
+            var repo = CreateWorkGroupViewRepository(views, userEmail);
+            var query = new PaginationParameters<string>
+            {
+                Page = 0,      // non-positive → defaults to 1
+                PageSize = 0,  // non-positive → defaults to 5
+                SortBy = "WorkGroupName",
+                Descending = false
+            };
+
+            // Act
+            var result = await repo.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("WG_A", result.Data.First().WorkGroupName);
+        }
+
         #endregion
     }
 }
