@@ -210,6 +210,15 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<BulkRatesRequestDto, BulkRatesRequestDetailRes>();
             CreateMap<BulkRatesUploadResultDto, BulkRatesUploadResultRes>();
             CreateMap<BulkRatesStagingDataDto, BulkRatesStagingDataRes>();
+
+            // All property names are identical across Dto and Res; .ReverseMap() covers both directions.
+            CreateMap<DepartmentIncomeTimeDto, DepartmentIncomeTimeRes>().ReverseMap();
+            CreateMap<DepartmentIncomeTestDto, DepartmentIncomeTestRes>().ReverseMap();
+            CreateMap<DepartmentIncomeAnimalDto, DepartmentIncomeAnimalRes>().ReverseMap();
+            CreateMap<DepartmentIncomeAdditionalDto, DepartmentIncomeAdditionalRes>().ReverseMap();
+            CreateMap<DepartmentIncomeTotalsDto, DepartmentIncomeTotalsRes>().ReverseMap();
+            CreateMap<PeriodLookupDto, PeriodLookupRes>().ReverseMap();
+            CreateMap<PeriodSnapshotDto, PeriodSnapshotRes>().ReverseMap();
         }
     }
 }

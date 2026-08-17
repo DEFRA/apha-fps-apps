@@ -77,7 +77,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IMonthHourService, MonthHourService>();
             services.AddSingleton<IEventPublisherService, EventBridgePublisherService>();
             services.AddSingleton<IGraphEmailService, GraphEmailService>();
-
+            services.AddScoped<IProjectDepartmentIncomeService, ProjectDepartmentIncomeService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -132,6 +132,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IResourceAllocationRepository, ResourceAllocationRepository>();
             services.AddScoped<IMonthHourRepository, MonthHourRepository>();
             services.AddScoped<IYearEndRepository, YearEndRepository>();
+            services.AddScoped<IProjectDepartmentIncomeRepository, ProjectDepartmentIncomeRepository>();
             return services;
 
         }

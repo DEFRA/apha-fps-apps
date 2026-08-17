@@ -35,7 +35,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsPurchasesApiClient FpsPurchases { get; }
         public IFpsUserApiClient FpsUserPermission { get; }
 
-        // TRANSFORMENGINE: FpsGrade added � Phase 9 (FpsGradeApiClient for frmMaintGrade ? api/v1/Grade)
+       
         public IFpsGradeApiClient FpsGrade { get; }
         public IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
         public IFpsCostCentreApiClient FpsCostCentre { get; }
@@ -53,6 +53,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsTestRequirementRCCostApiClient FpsTestRequirementRCCost { get; }
 
         public IFpsBulkRatesApiClient FpsBulkRates { get; }
+        public IFpsDepartmentIncomeApiClient FpsDepartmentIncome { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -103,6 +104,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsTestsRequiredByRc = new FpsTestsRequiredByRcApiClient(http, mapper);
             FpsMonthHour = new FpsMonthHourApiClient(http, mapper);
             FpsYearEnd = new FpsYearEndApiClient(http, mapper);
+           
+            FpsDepartmentIncome = new FpsDepartmentIncomeApiClient(http, mapper);
         }
     }
 }

@@ -982,8 +982,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
         {
             // Arrange
             var model = new ProgramProjectEditViewModel { ParentProject = "PP001", ProjectTitle = "Updated Title" };
+            var existingDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Old Title" };
             var dto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Updated Title" };
-            _mapper.Map<ProjectDto>(model).Returns(dto);
+            _projectService.GetProjectByIdAsync("PP001")
+                .Returns(ApiResponseDto<ProjectDto>.SuccessResponse(existingDto));
+            _mapper.Map(model, existingDto).Returns(dto);
             _projectService.UpdateProjectAsync(dto)
                 .Returns(ApiResponseDto<ProjectDto>.SuccessResponse(dto));
 
@@ -999,13 +1002,32 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
         }
 
         [Fact]
+        public async Task EditPost_WhenExistingProjectNotFound_ReturnsNotFound()
+        {
+            // Arrange
+            var model = new ProgramProjectEditViewModel { ParentProject = "PP001", ProjectTitle = "Updated Title" };
+            _projectService.GetProjectByIdAsync("PP001")
+                .Returns(ApiResponseDto<ProjectDto>.SuccessResponse(null!));
+
+            // Act
+            var result = await _controller.Edit(model);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+            await _projectService.DidNotReceive().UpdateProjectAsync(Arg.Any<ProjectDto>());
+        }
+
+        [Fact]
         public async Task EditPost_WhenUpdateFails_WithErrorMessage_ReturnsFailureJson()
         {
             // Arrange
             var model = new ProgramProjectEditViewModel { ParentProject = "PP001" };
+            var existingDto = new ProjectDto { ParentProject = "PP001" };
             var dto = new ProjectDto { ParentProject = "PP001" };
             var errors = new List<ApiErrorDto> { new() { Message = "Database error", Code = "DB_ERR" } };
-            _mapper.Map<ProjectDto>(model).Returns(dto);
+            _projectService.GetProjectByIdAsync("PP001")
+                .Returns(ApiResponseDto<ProjectDto>.SuccessResponse(existingDto));
+            _mapper.Map(model, existingDto).Returns(dto);
             _projectService.UpdateProjectAsync(dto)
                 .Returns(ApiResponseDto<ProjectDto>.FailureResponse(errors, new ApiMetaDto()));
 
@@ -1025,8 +1047,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
         {
             // Arrange
             var model = new ProgramProjectEditViewModel { ParentProject = "PP001" };
+            var existingDto = new ProjectDto { ParentProject = "PP001" };
             var dto = new ProjectDto { ParentProject = "PP001" };
-            _mapper.Map<ProjectDto>(model).Returns(dto);
+            _projectService.GetProjectByIdAsync("PP001")
+                .Returns(ApiResponseDto<ProjectDto>.SuccessResponse(existingDto));
+            _mapper.Map(model, existingDto).Returns(dto);
             _projectService.UpdateProjectAsync(dto)
                 .Returns(ApiResponseDto<ProjectDto>.FailureResponse(null, new ApiMetaDto()));
 

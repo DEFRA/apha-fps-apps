@@ -192,7 +192,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ResourceStaffAllocationDto, ResourceStaffAllocationItem>().ReverseMap();
             CreateMap<ResourceStaffJobDto, ResourceStaffJobItem>().ReverseMap();
 
-            // TRANSFORMENGINE: WorkgroupMaintenance mappings added — Phase 10 (Step 15b)
+           
             // DataGrid row: WorkgroupMaintenanceItem <-> WorkGroupDto (grid display and row selection)
             // All property names match exactly between Item and Dto (convention-based) — no ForMember needed.
             // Phase 11 adds [DataGridColumn] attributes to WorkgroupMaintenanceItem.

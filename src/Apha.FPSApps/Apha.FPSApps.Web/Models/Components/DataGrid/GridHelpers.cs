@@ -150,7 +150,7 @@
                             System.Globalization.CultureInfo.InvariantCulture, out var parsed))
                         return parsed.ToString("£#,##0.00;-£#,##0.00");
                     return raw ?? string.Empty;
-            }
+                }
 
             return value.ToString() ?? string.Empty;
         }

@@ -43,5 +43,7 @@
         IFpsTestsRequiredByRcApiClient FpsTestsRequiredByRc { get; }
         IFpsMonthHourApiClient FpsMonthHour { get; }
         IFpsYearEndApiClient FpsYearEnd { get; }
+        
+        IFpsDepartmentIncomeApiClient FpsDepartmentIncome { get; }
     }
 }
