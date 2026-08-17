@@ -344,14 +344,26 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
+            if (dict.TryGetValue("WorkGroupGrade", out var wgGrade) && wgGrade != null)
+            {
+                var wgGradeStr = wgGrade.ToString()!;
+                list = list.Where(x => x.WorkGroupGrade != null && x.WorkGroupGrade.Contains(wgGradeStr, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
             if (dict.TryGetValue("Name", out var name) && name != null)
             {
                 var nameStr = name.ToString()!;
                 list = list.Where(x => x.Name != null && x.Name.Contains(nameStr, StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
+            if (dict.TryGetValue("PlannedHours", out var plannedHours) && plannedHours != null &&
+                double.TryParse(plannedHours.ToString(), out var hoursVal))
+            {
+                list = list.Where(x => x.PlannedHours == hoursVal).ToList();
+            }
+
             return list;
-        }        
+        }
 
         public async Task<PagedData<StaffResourceUtilisationView>> GetStaffResourceUtilisationAsync(
             PaginationParameters<string> query, string workgroup)

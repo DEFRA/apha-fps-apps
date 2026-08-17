@@ -82,22 +82,22 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 SelectedProgram = program ?? string.Empty,
                 SelectedProjectGroup = projectGroup ?? string.Empty,
                 SelectedProjectCode = selectedProjectCode,
-                ProjectDetailsGrid = GetReadOnlyProjectDetailsGrid(),
+                ProjectDetailsGrid = GetReadOnlyProjectDetailsGrid().WithBind("/FPS/ProjectPlanViewer/LoadProjectDetailsGrid", "getisProjectDetailsGridExtraFilters"),
                 ProjectDetails = new ProjectDetailsPartialViewModel
                 {
                     SelectedProjectCode = selectedProjectCode,
-                    PlanSummaryStaffGrid = GetReadOnlyStaffGrid("planSummaryStaffGrid", "Staff Plans"),
-                    PlanSummaryTestGrid = GetReadOnlyTestPlanGrid("planSummaryTestGrid", "Test Plans"),
-                    PlanSummaryAnimalGrid = GetReadOnlyAnimalGrid("planSummaryAnimalGrid", "Animal Plans"),
-                    PlanSummaryAdditionalGrid = GetReadOnlyAdditionalGrid("planSummaryAdditionalGrid", "Additional Cost Plans"),
-                    StaffPlanGrid = GetReadOnlyStaffGrid("staffPlanGrid", "Staff Plans"),
-                    StaffActualGrid = GetReadOnlyCompareStaff2Grid(),
-                    TestPlanGrid = GetReadOnlyTestPlanGrid("testPlanGrid", "Test Plans"),
-                    TestActualGrid = GetReadOnlyTestActualGrid(),
-                    AnimalPlanGrid = GetReadOnlyAnimalGrid("animalPlanGrid", "Animal Plans"),
-                    AnimalActualGrid = GetReadOnlyActualCostGrid("actualAnimalCostGrid", "Actual Animal Costs (PACT)"),
-                    AdditionalPlanGrid = GetReadOnlyAdditionalGrid("additionalCostPlanGrid", "Additional Cost Plans"),
-                    AdditionalActualGrid = GetReadOnlyActualCostGrid("actualAdditionalCostGrid", "Actual Additional Costs (PACT)")
+                    PlanSummaryStaffGrid = GetReadOnlyStaffGrid("planSummaryStaffGrid", "Staff Plans").WithBind("/FPS/ProjectPlanViewer/LoadPlanSummaryStaffGrid", "getPlanSummaryStaffExtraFilters"),
+                    PlanSummaryTestGrid = GetReadOnlyTestPlanGrid("planSummaryTestGrid", "Test Plans").WithBind("/FPS/ProjectPlanViewer/LoadPlanSummaryTestGrid", "getPlanSummaryTestExtraFilters"),
+                    PlanSummaryAnimalGrid = GetReadOnlyAnimalGrid("planSummaryAnimalGrid", "Animal Plans").WithBind("/FPS/ProjectPlanViewer/LoadPlanSummaryAnimalGrid", "getPlanSummaryAnimalExtraFilters"),
+                    PlanSummaryAdditionalGrid = GetReadOnlyAdditionalGrid("planSummaryAdditionalGrid", "Additional Cost Plans").WithBind("/FPS/ProjectPlanViewer/LoadPlanSummaryAdditionalGrid", "getPlanSummaryAdditionalExtraFilters"),
+                    StaffPlanGrid = GetReadOnlyStaffGrid("staffPlanGrid", "Staff Plans").WithBind("/FPS/ProjectPlanViewer/LoadStaffPlanGrid", "getStaffPlanExtraFilters"),
+                    StaffActualGrid = GetReadOnlyCompareStaff2Grid().WithBind("/FPS/ProjectPlanViewer/LoadStaffActualGrid", "getStaffActualExtraFilters"),
+                    TestPlanGrid = GetReadOnlyTestPlanGrid("testPlanGrid", "Test Plans").WithBind("/FPS/ProjectPlanViewer/LoadTestPlanGrid", "getTestPlanExtraFilters"),
+                    TestActualGrid = GetReadOnlyTestActualGrid().WithBind("/FPS/ProjectPlanViewer/LoadTestActualGrid", "getTestActualExtraFilters"),
+                    AnimalPlanGrid = GetReadOnlyAnimalGrid("animalPlanGrid", "Animal Plans").WithBind("/FPS/ProjectPlanViewer/LoadAnimalPlanGrid", "getAnimalPlanExtraFilters"),
+                    AnimalActualGrid = GetReadOnlyActualCostGrid("actualAnimalCostGrid", "Actual Animal Costs (PACT)").WithBind("/FPS/ProjectPlanViewer/LoadAnimalActualGrid", "getAnimalActualExtraFilters"),
+                    AdditionalPlanGrid = GetReadOnlyAdditionalGrid("additionalCostPlanGrid", "Additional Cost Plans").WithBind("/FPS/ProjectPlanViewer/LoadAdditionalPlanGrid", "getAdditionalPlanExtraFilters"),
+                    AdditionalActualGrid = GetReadOnlyActualCostGrid("actualAdditionalCostGrid", "Actual Additional Costs (PACT)").WithBind("/FPS/ProjectPlanViewer/LoadAdditionalActualGrid", "getAdditionalActualExtraFilters")
                 }
             };
 
@@ -422,6 +422,326 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 : 0;
         }
 
+        // ─── Server-side Load actions for Project Plan Viewer grids ──────────────
+
+        [HttpPost]
+        public async Task<IActionResult> LoadProjectDetailsGrid(
+            PaginationFilter<string> request,
+            string? program = null,
+            string? projectGroup = null,
+            string? parentProject = null)
+        {
+            var filterDict = string.IsNullOrWhiteSpace(request.Filter)
+                ? new Dictionary<string, string>()
+                : JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter) ?? new();
+
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+
+            // Choose the right scoped service call based on dimension filters.
+            List<ProjectDetailsGridItem> items = new();
+            PaginationModel paginationModel = new();
+
+            if (!string.IsNullOrWhiteSpace(parentProject))
+            {
+                // Single project selected: return just that project.
+                var singleResult = await _projectService.GetProjectByIdAsync(parentProject);
+                if (singleResult.Success && singleResult.Data != null)
+                    items = _mapper.Map<List<ProjectDetailsGridItem>>(new[] { singleResult.Data });
+            }
+            else if (!string.IsNullOrWhiteSpace(projectGroup))
+            {
+                var result = await _projectService.GetProjectsByProjectGroupAsync(queryParameters, projectGroup);
+                if (result.Data != null) { items = _mapper.Map<List<ProjectDetailsGridItem>>(result.Data); paginationModel = _mapper.Map<PaginationModel>(result.Pagination) ?? new(); }
+            }
+            else if (!string.IsNullOrWhiteSpace(program))
+            {
+                var result = await _projectService.GetProjectsByProgramAsync(queryParameters, program);
+                if (result.Data != null) { items = _mapper.Map<List<ProjectDetailsGridItem>>(result.Data); paginationModel = _mapper.Map<PaginationModel>(result.Pagination) ?? new(); }
+            }
+            else
+            {
+                var result = await _projectService.GetPagedProjectsByUserAsync(queryParameters);
+                if (result.Data != null) { items = _mapper.Map<List<ProjectDetailsGridItem>>(result.Data); paginationModel = _mapper.Map<PaginationModel>(result.Pagination) ?? new(); }
+            }
+
+            paginationModel.SortColumn = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
+
+            var gridConfig = GetReadOnlyProjectDetailsGrid().WithBind(
+                "/FPS/ProjectPlanViewer/LoadProjectDetailsGrid",
+                "getisProjectDetailsGridExtraFilters");
+            gridConfig.Data = items;
+            gridConfig.Pagination = paginationModel;
+            gridConfig.CurrentFilters = filterDict;
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadPlanSummaryStaffGrid(PaginationFilter<string> request, string? projectCode = null)
+            => await LoadStaffGridInternal(request, projectCode, "planSummaryStaffGrid", "Staff Plans",
+                "/FPS/ProjectPlanViewer/LoadPlanSummaryStaffGrid", "getPlanSummaryStaffExtraFilters");
+
+        [HttpPost]
+        public async Task<IActionResult> LoadStaffPlanGrid(PaginationFilter<string> request, string? projectCode = null)
+            => await LoadStaffGridInternal(request, projectCode, "staffPlanGrid", "Staff Plans",
+                "/FPS/ProjectPlanViewer/LoadStaffPlanGrid", "getStaffPlanExtraFilters");
+
+        private async Task<IActionResult> LoadStaffGridInternal(
+            PaginationFilter<string> request, string? projectCode,
+            string gridId, string title, string bindUrl, string extraFilterMethod)
+        {
+            var filterDict = string.IsNullOrWhiteSpace(request.Filter)
+                ? new Dictionary<string, string>()
+                : JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter) ?? new();
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+
+            List<StaffJobItemViewModel> items = new();
+            PaginationModel paginationModel = new();
+            var result = await _staffJobService.GetAllStaffJobsAsync(queryParameters, projectCode ?? string.Empty);
+            if (result.Data != null)
+            {
+                items = _mapper.Map<List<StaffJobItemViewModel>>(result.Data);
+                paginationModel = _mapper.Map<PaginationModel>(result.Pagination) ?? new();
+            }
+            paginationModel.SortColumn = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
+
+            var gridConfig = GetReadOnlyStaffGrid(gridId, title).WithBind(bindUrl, extraFilterMethod);
+            gridConfig.Data = items;
+            gridConfig.Pagination = paginationModel;
+            gridConfig.CurrentFilters = filterDict;
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadStaffActualGrid(PaginationFilter<string> request, string? projectCode = null)
+        {
+            var filterDict = string.IsNullOrWhiteSpace(request.Filter)
+                ? new Dictionary<string, string>()
+                : JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter) ?? new();
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+
+            List<CompareStaff2Item> items = new();
+            PaginationModel paginationModel = new();
+            var result = await _timeCostCalcsService.GetTimeCostCalcsByProjectAsync(queryParameters, projectCode ?? string.Empty);
+            if (result.Data != null)
+            {
+                items = _mapper.Map<List<CompareStaff2Item>>(result.Data);
+                paginationModel = _mapper.Map<PaginationModel>(result.Pagination) ?? new();
+            }
+            paginationModel.SortColumn = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
+
+            var gridConfig = GetReadOnlyCompareStaff2Grid().WithBind(
+                "/FPS/ProjectPlanViewer/LoadStaffActualGrid", "getStaffActualExtraFilters");
+            gridConfig.Data = items;
+            gridConfig.Pagination = paginationModel;
+            gridConfig.CurrentFilters = filterDict;
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadPlanSummaryTestGrid(PaginationFilter<string> request, string? projectCode = null)
+            => await LoadTestPlanGridInternal(request, projectCode, "planSummaryTestGrid", "Test Plans",
+                "/FPS/ProjectPlanViewer/LoadPlanSummaryTestGrid", "getPlanSummaryTestExtraFilters");
+
+        [HttpPost]
+        public async Task<IActionResult> LoadTestPlanGrid(PaginationFilter<string> request, string? projectCode = null)
+            => await LoadTestPlanGridInternal(request, projectCode, "testPlanGrid", "Test Plans",
+                "/FPS/ProjectPlanViewer/LoadTestPlanGrid", "getTestPlanExtraFilters");
+
+        private async Task<IActionResult> LoadTestPlanGridInternal(
+            PaginationFilter<string> request, string? projectCode,
+            string gridId, string title, string bindUrl, string extraFilterMethod)
+        {
+            var filterDict = string.IsNullOrWhiteSpace(request.Filter)
+                ? new Dictionary<string, string>()
+                : JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter) ?? new();
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+
+            List<TestPlanActualItem> items = new();
+            PaginationModel paginationModel = new();
+            var result = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(queryParameters, projectCode ?? string.Empty);
+            if (result.Data != null)
+            {
+                items = _mapper.Map<List<TestPlanActualItem>>(result.Data);
+                paginationModel = _mapper.Map<PaginationModel>(result.Pagination) ?? new();
+            }
+            paginationModel.SortColumn = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
+
+            var gridConfig = GetReadOnlyTestPlanGrid(gridId, title).WithBind(bindUrl, extraFilterMethod);
+            gridConfig.Data = items;
+            gridConfig.Pagination = paginationModel;
+            gridConfig.CurrentFilters = filterDict;
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadTestActualGrid(PaginationFilter<string> request, string? projectCode = null)
+        {
+            var filterDict = string.IsNullOrWhiteSpace(request.Filter)
+                ? new Dictionary<string, string>()
+                : JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter) ?? new();
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+
+            List<ActualTestOutputItem> items = new();
+            PaginationModel paginationModel = new();
+            var result = await _monthlyOutputService.GetMonthlyOutputByProjectAsync(
+                queryParameters, projectCode ?? string.Empty, new());
+            if (result.Data != null)
+            {
+                items = _mapper.Map<List<ActualTestOutputItem>>(result.Data);
+                paginationModel = _mapper.Map<PaginationModel>(result.Pagination) ?? new();
+            }
+            paginationModel.SortColumn = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
+
+            var gridConfig = GetReadOnlyTestActualGrid().WithBind(
+                "/FPS/ProjectPlanViewer/LoadTestActualGrid", "getTestActualExtraFilters");
+            gridConfig.Data = items;
+            gridConfig.Pagination = paginationModel;
+            gridConfig.CurrentFilters = filterDict;
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadPlanSummaryAnimalGrid(PaginationFilter<string> request, string? projectCode = null)
+            => await LoadAnimalPlanGridInternal(request, projectCode, "planSummaryAnimalGrid", "Animal Plans",
+                "/FPS/ProjectPlanViewer/LoadPlanSummaryAnimalGrid", "getPlanSummaryAnimalExtraFilters");
+
+        [HttpPost]
+        public async Task<IActionResult> LoadAnimalPlanGrid(PaginationFilter<string> request, string? projectCode = null)
+            => await LoadAnimalPlanGridInternal(request, projectCode, "animalPlanGrid", "Animal Plans",
+                "/FPS/ProjectPlanViewer/LoadAnimalPlanGrid", "getAnimalPlanExtraFilters");
+
+        private async Task<IActionResult> LoadAnimalPlanGridInternal(
+            PaginationFilter<string> request, string? projectCode,
+            string gridId, string title, string bindUrl, string extraFilterMethod)
+        {
+            var filterDict = string.IsNullOrWhiteSpace(request.Filter)
+                ? new Dictionary<string, string>()
+                : JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter) ?? new();
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+
+            List<AnimalPlanItem> items = new();
+            PaginationModel paginationModel = new();
+            var result = await _animalPlanService.GetAllAnimalCostAsync(queryParameters, projectCode ?? string.Empty);
+            if (result.Data != null)
+            {
+                items = _mapper.Map<List<AnimalPlanItem>>(result.Data);
+                paginationModel = _mapper.Map<PaginationModel>(result.Pagination) ?? new();
+            }
+            paginationModel.SortColumn = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
+
+            var gridConfig = GetReadOnlyAnimalGrid(gridId, title).WithBind(bindUrl, extraFilterMethod);
+            gridConfig.Data = items;
+            gridConfig.Pagination = paginationModel;
+            gridConfig.CurrentFilters = filterDict;
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadAnimalActualGrid(PaginationFilter<string> request, string? projectCode = null)
+        {
+            var filterDict = string.IsNullOrWhiteSpace(request.Filter)
+                ? new Dictionary<string, string>()
+                : JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter) ?? new();
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+
+            List<ActualProjectCostItem> items = new();
+            PaginationModel paginationModel = new();
+            var result = await _projectSubContractService.GetFpsProjectSubContractsAsync(
+                queryParameters, projectCode, filterByAnimalAcctCodes: true);
+            if (result.Data != null)
+            {
+                items = _mapper.Map<List<ActualProjectCostItem>>(result.Data);
+                paginationModel = _mapper.Map<PaginationModel>(result.Pagination) ?? new();
+            }
+            paginationModel.SortColumn = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
+
+            var gridConfig = GetReadOnlyActualCostGrid("actualAnimalCostGrid", "Actual Animal Costs (PACT)").WithBind(
+                "/FPS/ProjectPlanViewer/LoadAnimalActualGrid", "getAnimalActualExtraFilters");
+            gridConfig.Data = items;
+            gridConfig.Pagination = paginationModel;
+            gridConfig.CurrentFilters = filterDict;
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadPlanSummaryAdditionalGrid(PaginationFilter<string> request, string? projectCode = null)
+            => await LoadAdditionalPlanGridInternal(request, projectCode, "planSummaryAdditionalGrid", "Additional Cost Plans",
+                "/FPS/ProjectPlanViewer/LoadPlanSummaryAdditionalGrid", "getPlanSummaryAdditionalExtraFilters");
+
+        [HttpPost]
+        public async Task<IActionResult> LoadAdditionalPlanGrid(PaginationFilter<string> request, string? projectCode = null)
+            => await LoadAdditionalPlanGridInternal(request, projectCode, "additionalCostPlanGrid", "Additional Cost Plans",
+                "/FPS/ProjectPlanViewer/LoadAdditionalPlanGrid", "getAdditionalPlanExtraFilters");
+
+        private async Task<IActionResult> LoadAdditionalPlanGridInternal(
+            PaginationFilter<string> request, string? projectCode,
+            string gridId, string title, string bindUrl, string extraFilterMethod)
+        {
+            var filterDict = string.IsNullOrWhiteSpace(request.Filter)
+                ? new Dictionary<string, string>()
+                : JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter) ?? new();
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+
+            List<AdditionalCostItemViewModel> items = new();
+            PaginationModel paginationModel = new();
+            var result = await _additionalCostService.GetAdditionalCostsAsync(queryParameters, projectCode ?? string.Empty);
+            if (result.Data != null)
+            {
+                items = _mapper.Map<List<AdditionalCostItemViewModel>>(result.Data);
+                paginationModel = _mapper.Map<PaginationModel>(result.Pagination) ?? new();
+            }
+            paginationModel.SortColumn = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
+
+            var gridConfig = GetReadOnlyAdditionalGrid(gridId, title).WithBind(bindUrl, extraFilterMethod);
+            gridConfig.Data = items;
+            gridConfig.Pagination = paginationModel;
+            gridConfig.CurrentFilters = filterDict;
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadAdditionalActualGrid(PaginationFilter<string> request, string? projectCode = null)
+        {
+            var filterDict = string.IsNullOrWhiteSpace(request.Filter)
+                ? new Dictionary<string, string>()
+                : JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter) ?? new();
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+
+            List<ActualProjectCostItem> items = new();
+            PaginationModel paginationModel = new();
+            var result = await _projectSubContractService.GetFpsProjectSubContractsAsync(
+                queryParameters, projectCode, filterByAnimalAcctCodes: false);
+            if (result.Data != null)
+            {
+                items = _mapper.Map<List<ActualProjectCostItem>>(result.Data);
+                paginationModel = _mapper.Map<PaginationModel>(result.Pagination) ?? new();
+            }
+            paginationModel.SortColumn = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
+
+            var gridConfig = GetReadOnlyActualCostGrid("actualAdditionalCostGrid", "Actual Additional Costs (PACT)").WithBind(
+                "/FPS/ProjectPlanViewer/LoadAdditionalActualGrid", "getAdditionalActualExtraFilters");
+            gridConfig.Data = items;
+            gridConfig.Pagination = paginationModel;
+            gridConfig.CurrentFilters = filterDict;
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        // ─── End Load actions ─────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Sets BindGridUrl and ExtraFilterMethod on a grid config, enabling server-side
+        /// filter reloading. Kept private to this controller to avoid side-effects on
+        /// the shared DataGrid infrastructure used by other features.
+        /// </summary>
         private async Task<List<SelectListItem>> GetProgramListAsync()
         {
             var result = await _programService.GetAllProgramsForAllUsersAsync();
@@ -615,8 +935,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowEdit = false,
                 AllowDelete = false,
                 KeyProperty = "RowKey",
-                ExtraFilterMethod = "getTestActualGridExtraFilters",
-                BindGridUrl = "/FPS/ProjectPlanViewer/LoadTestActualGrid",
                 Data = new List<ActualTestOutputItem>(),
                 Columns = GridDataProvider.GetColumnsDefination<ActualTestOutputItem>(null),
                 Pagination = new PaginationModel()
@@ -650,328 +968,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         #endregion
+    }
 
-        #region Grid Data Load Actions
-
-        [HttpPost]
-        public async Task<IActionResult> LoadProjectDetailsGrid(PaginationFilter<string> request, string? program = null,
-            string? projectGroup = null, string? parentProject = null)
+    internal static class DataGridConfigExtensions
+    {
+        internal static DataGridConfig<T> WithBind<T>(
+            this DataGridConfig<T> config,
+            string bindGridUrl,
+            string extraFilterMethod) where T : class
         {
-            if (!ModelState.IsValid)
-            {
-                return Json(new
-                {
-                    success = false,
-                    message = "Invalid request data",
-                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                });
-            }
-
-            var filterDict = !string.IsNullOrEmpty(request.Filter)
-                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
-                : null;
-
-            var query = _mapper.Map<QueryParameters<string>>(request);
-            ApiResponseDto<List<ProjectDto>>? result = null;
-
-            if (!string.IsNullOrWhiteSpace(parentProject))
-            {
-                // Single project selected - fetch that specific project
-                var singleResult = await _projectService.GetProjectByIdAsync(parentProject);
-                if (singleResult.Success && singleResult.Data != null)
-                {
-                    result = new ApiResponseDto<List<ProjectDto>>
-                    {
-                        Success = true,
-                        Data = new List<ProjectDto> { singleResult.Data },
-                        Pagination = new Application.Dtos.PaginationDto { TotalRecords = 1, PageNumber = 1, PageSize = query.PageSize }
-                    };
-                }
-                else
-                {
-                    result = new ApiResponseDto<List<ProjectDto>> { Success = true, Data = new List<ProjectDto>() };
-                }
-            }
-            else if (!string.IsNullOrWhiteSpace(program))
-            {
-                    result = await _projectService.GetProjectsByProgramAsync(query, program);
-            }
-            else if (!string.IsNullOrWhiteSpace(projectGroup))
-            {
-                result = await _projectService.GetProjectsByProjectGroupAsync(query, projectGroup);
-            }
-            else
-            {
-                result = await _projectService.GetPagedProjectsAsync(query);
-            }
-
-            var items = new List<ProjectDetailsGridItem>();
-            if (result != null && result.Success && result.Data != null)
-            {
-                items = result.Data.Select(p => new ProjectDetailsGridItem
-                {
-                    ParentProject = p.ParentProject,
-                    ProjectTitle = p.ProjectTitle,
-                    Program = p.Program,
-                    Manager = p.Manager,
-                    Customer = p.Customer,
-                    Contract = p.Contract,
-                    Status = p.ProjectStatus,
-                    TransferIncome = p.TransferIncome,
-                    CustIncome = p.CustIncome,
-                    Budget = p.BudgetCvl
-                }).ToList();
-            }
-
-            var paginationModel = result?.Pagination is null
-                ? new PaginationModel()
-                : _mapper.Map<PaginationModel>(result.Pagination);
-            paginationModel.SortColumn = request.SortBy;
-            paginationModel.SortDirection = request.Descending;
-
-            var gridConfig = GetReadOnlyProjectDetailsGrid();
-            gridConfig.Data = items;
-            gridConfig.Pagination = paginationModel;
-
-            gridConfig.CurrentFilters = filterDict;
-
-            return PartialView("_DataGrid", gridConfig);
+            config.BindGridUrl = bindGridUrl;
+            config.ExtraFilterMethod = extraFilterMethod;
+            return config;
         }
-
-        [HttpPost]
-        public async Task<IActionResult> LoadStaffPlanGrid(PaginationFilter<string> request, string? parentProject = null, string? gridId = null)
-        {
-            if (!ModelState.IsValid)
-                return Json(new { success = false, message = "Invalid request data" });
-
-            var items = new List<StaffJobItemViewModel>();
-            var paginationModel = new PaginationModel();
-
-            if (!string.IsNullOrWhiteSpace(parentProject))
-            {
-                var query = _mapper.Map<QueryParameters<string>>(request);
-                var pagedData = await _staffJobService.GetAllStaffJobsAsync(query, parentProject);
-
-                items = pagedData.Data != null
-                    ? _mapper.Map<List<StaffJobItemViewModel>>(pagedData.Data.ToList())
-                    : new List<StaffJobItemViewModel>();
-
-                paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
-            }
-
-            paginationModel.SortColumn = request.SortBy;
-            paginationModel.SortDirection = request.Descending;
-
-            var gridConfig = GetReadOnlyStaffGrid(gridId ?? "planSummaryStaffGrid", "Staff Plans");
-            gridConfig.Data = items;
-            gridConfig.Pagination = paginationModel;
-
-            return PartialView("_DataGrid", gridConfig);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> LoadTestPlanGrid(PaginationFilter<string> request, string? parentProject = null, string? gridId = null)
-        {
-            if (!ModelState.IsValid)
-                return Json(new { success = false, message = "Invalid request data" });
-
-            var items = new List<TestPlanActualItem>();
-            var paginationModel = new PaginationModel();
-
-            if (!string.IsNullOrWhiteSpace(parentProject))
-            {
-                var query = _mapper.Map<QueryParameters<string>>(request);
-                var response = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(query, parentProject);
-
-                items = response.Success && response.Data != null
-                    ? _mapper.Map<List<TestPlanActualItem>>(response.Data)
-                    : new List<TestPlanActualItem>();
-
-                paginationModel = response.Pagination is null
-                    ? new PaginationModel()
-                    : _mapper.Map<PaginationModel>(response.Pagination);
-            }
-
-            paginationModel.SortColumn = request.SortBy;
-            paginationModel.SortDirection = request.Descending;
-
-            var gridConfig = GetReadOnlyTestPlanGrid(gridId ?? "planSummaryTestGrid", "Test Plans");
-            gridConfig.Data = items;
-            gridConfig.Pagination = paginationModel;
-
-            return PartialView("_DataGrid", gridConfig);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> LoadAnimalPlanGrid(PaginationFilter<string> request, string? parentProject = null, string? gridId = null)
-        {
-            if (!ModelState.IsValid)
-                return Json(new { success = false, message = "Invalid request data" });
-
-            var items = new List<AnimalPlanItem>();
-            var paginationModel = new PaginationModel();
-
-            if (!string.IsNullOrWhiteSpace(parentProject))
-            {
-                var query = _mapper.Map<QueryParameters<string>>(request);
-                var pagedData = await _animalPlanService.GetAllAnimalCostAsync(query, parentProject);
-
-                items = pagedData.Data != null
-                    ? _mapper.Map<List<AnimalPlanItem>>(pagedData.Data.ToList())
-                    : new List<AnimalPlanItem>();
-
-                paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
-            }
-
-            paginationModel.SortColumn = request.SortBy;
-            paginationModel.SortDirection = request.Descending;
-
-            var gridConfig = GetReadOnlyAnimalGrid(gridId ?? "planSummaryAnimalGrid", "Animal Plans");
-            gridConfig.Data = items;
-            gridConfig.Pagination = paginationModel;
-
-            return PartialView("_DataGrid", gridConfig);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> LoadAdditionalCostGrid(PaginationFilter<string> request, string? parentProject = null, string? gridId = null)
-        {
-            if (!ModelState.IsValid)
-                return Json(new { success = false, message = "Invalid request data" });
-
-            var items = new List<AdditionalCostItemViewModel>();
-            var paginationModel = new PaginationModel();
-
-            if (!string.IsNullOrWhiteSpace(parentProject))
-            {
-                var query = _mapper.Map<QueryParameters<string>>(request);
-                var pagedData = await _additionalCostService.GetAdditionalCostsAsync(query, parentProject);
-
-                items = pagedData.Data != null
-                    ? _mapper.Map<List<AdditionalCostItemViewModel>>(pagedData.Data)
-                    : new List<AdditionalCostItemViewModel>();
-
-                paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
-            }
-
-            paginationModel.SortColumn = request.SortBy;
-            paginationModel.SortDirection = request.Descending;
-
-            var gridConfig = GetReadOnlyAdditionalGrid(gridId ?? "planSummaryAdditionalGrid", "Additional Cost Plans");
-            gridConfig.Data = items;
-            gridConfig.Pagination = paginationModel;
-
-            return PartialView("_DataGrid", gridConfig);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> LoadStaffActualGrid(PaginationFilter<string> request, string? parentProject = null)
-        {
-            if (!ModelState.IsValid)
-                return Json(new { success = false, message = "Invalid request data" });
-
-            var items = new List<CompareStaff2Item>();
-            var paginationModel = new PaginationModel();
-
-            if (!string.IsNullOrWhiteSpace(parentProject))
-            {
-                var query = _mapper.Map<QueryParameters<string>>(request);
-                var pagedData = await _timeCostCalcsService.GetTimeCostCalcsByProjectAsync(query, parentProject);
-
-                items = pagedData.Data != null
-                    ? _mapper.Map<List<CompareStaff2Item>>(pagedData.Data)
-                    : new List<CompareStaff2Item>();
-
-                paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
-            }
-
-            paginationModel.SortColumn = request.SortBy;
-            paginationModel.SortDirection = request.Descending;
-
-            var gridConfig = GetReadOnlyCompareStaff2Grid();
-            gridConfig.Data = items;
-            gridConfig.Pagination = paginationModel;
-
-            return PartialView("_DataGrid", gridConfig);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> LoadTestActualGrid(PaginationFilter<string> request, string? parentProject= null)
-        {
-            if (!ModelState.IsValid)
-                return Json(new { success = false, message = "Invalid request data" });
-
-            var items = new List<ActualTestOutputItem>();
-            var paginationModel = new PaginationModel();
-
-            if (!string.IsNullOrWhiteSpace(parentProject))
-            {
-                var query = _mapper.Map<QueryParameters<string>>(request);
-
-                // Build price lookup from test requirements
-                var testQuery = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
-                var testResult = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(testQuery, parentProject);
-                var priceLookup = new Dictionary<(string TestCode, string Buyer), decimal>();
-                if (testResult.Success && testResult.Data != null)
-                {
-                    foreach (var t in testResult.Data)
-                    {
-                        var key = (t.TestCode ?? string.Empty, t.Buyer ?? string.Empty);
-                        if (!priceLookup.ContainsKey(key))
-                            priceLookup[key] = t.UnitPrice ?? 0;
-                    }
-                }
-
-                var pagedData = await _monthlyOutputService.GetMonthlyOutputByProjectAsync(query, parentProject, priceLookup);
-
-                items = pagedData.Data != null
-                    ? _mapper.Map<List<ActualTestOutputItem>>(pagedData.Data)
-                    : new List<ActualTestOutputItem>();
-
-                paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
-            }
-
-            paginationModel.SortColumn = request.SortBy;
-            paginationModel.SortDirection = request.Descending;
-
-            var gridConfig = GetReadOnlyTestActualGrid();
-            gridConfig.Data = items;
-            gridConfig.Pagination = paginationModel;
-
-            return PartialView("_DataGrid", gridConfig);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> LoadActualCostGrid(PaginationFilter<string> request, string? parentProject = null, string? gridId = null, bool animalOnly = false)
-        {
-            if (!ModelState.IsValid)
-                return Json(new { success = false, message = "Invalid request data" });
-
-            var items = new List<ActualProjectCostItem>();
-            var paginationModel = new PaginationModel();
-
-            if (!string.IsNullOrWhiteSpace(parentProject))
-            {
-                var query = _mapper.Map<QueryParameters<string>>(request);
-                var pagedData = await _projectSubContractService.GetFpsProjectSubContractsAsync(query, parentProject, filterByAnimalAcctCodes: animalOnly);
-
-                items = pagedData.Data != null
-                    ? _mapper.Map<List<ActualProjectCostItem>>(pagedData.Data)
-                    : new List<ActualProjectCostItem>();
-
-                paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
-            }
-
-            paginationModel.SortColumn = request.SortBy;
-            paginationModel.SortDirection = request.Descending;
-
-            var gridConfig = GetReadOnlyActualCostGrid(gridId ?? "actualAnimalCostGrid", animalOnly ? "Actual Animal Costs (PACT)" : "Actual Additional Costs (PACT)");
-            gridConfig.Data = items;
-            gridConfig.Pagination = paginationModel;
-
-            return PartialView("_DataGrid", gridConfig);
-        }
-
-        #endregion
     }
 }

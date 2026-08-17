@@ -20,7 +20,30 @@
     </div>
 </div>
 
-<input type="hidden" id="hdnProjectCode" value="@Model.SelectedProjectCode" />
+    <!-- Hidden project code for extra-filter JS callbacks -->
+    <input type="hidden" id="hdnProjectCode" value="@Model.SelectedProjectCode" />
+
+<script>
+    // Extra-filter callbacks for Project Plan Viewer sub-grids.
+    // Each function returns the current projectCode so the Load action can scope
+    // the data to the selected project.
+    function getCurrentProjectCode() {
+        return document.getElementById('hdnProjectCode')?.value ?? '';
+    }
+
+    window.getPlanSummaryStaffExtraFilters = function () { return { projectCode: getCurrentProjectCode() }; };
+    window.getPlanSummaryTestExtraFilters  = function () { return { projectCode: getCurrentProjectCode() }; };
+    window.getPlanSummaryAnimalExtraFilters = function () { return { projectCode: getCurrentProjectCode() }; };
+    window.getPlanSummaryAdditionalExtraFilters = function () { return { projectCode: getCurrentProjectCode() }; };
+    window.getStaffPlanExtraFilters   = function () { return { projectCode: getCurrentProjectCode() }; };
+    window.getStaffActualExtraFilters = function () { return { projectCode: getCurrentProjectCode() }; };
+    window.getTestPlanExtraFilters    = function () { return { projectCode: getCurrentProjectCode() }; };
+    window.getTestActualExtraFilters  = function () { return { projectCode: getCurrentProjectCode() }; };
+    window.getAnimalPlanExtraFilters  = function () { return { projectCode: getCurrentProjectCode() }; };
+    window.getAnimalActualExtraFilters = function () { return { projectCode: getCurrentProjectCode() }; };
+    window.getAdditionalPlanExtraFilters   = function () { return { projectCode: getCurrentProjectCode() }; };
+    window.getAdditionalActualExtraFilters = function () { return { projectCode: getCurrentProjectCode() }; };
+</script>
 
 <!-- Tabs section -->
 <div class="govuk-grid-row">
