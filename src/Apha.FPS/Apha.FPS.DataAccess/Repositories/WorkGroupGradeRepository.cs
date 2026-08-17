@@ -49,6 +49,17 @@ namespace Apha.FPS.DataAccess.Repositories
                 .FirstOrDefaultAsync(e => e.WgGrade == wgGrade);
         }
 
+        public async Task<bool> ExistsByWgGradeAsync(string wgGrade)
+        {
+            if (string.IsNullOrWhiteSpace(wgGrade))
+                return false;
+
+            return await _dbContext.WorkgroupGrades
+                .AsNoTracking()
+                .AnyAsync(e => e.FpsYear == _requestContext.FpsYear
+                            && EF.Functions.ILike(e.WgGrade, wgGrade));
+        }
+
         public async Task<WorkgroupGrade> CreateAsync(WorkgroupGrade entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
