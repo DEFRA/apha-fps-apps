@@ -862,6 +862,7 @@ button a {
 
 /* Child links — indented relative to the parent */
 .sidenav-children > li > a.sidenav-child {
+    font-size: 0.95em !important;
     padding-left: 15px !important;
 }
 
@@ -5325,7 +5326,9 @@ body,
 .isHalfGrid {
     width: 51%;
 }
-
+.isResourceSetUp.isHalfGrid {
+    width: 29vw;
+}
 .isPlanAllStaff.isHalfGrid,
 .isCompareFPSPlan.isHalfGrid,
 .isAnimalBookedGrid.isHalfGrid {
@@ -5340,6 +5343,9 @@ body,
 .isPlanAllAnimalCosts.isHalfGrid,
 .isPlanAllTestPurchases.isHalfGrid {
     width: 26vw;
+}
+.isWorkgroupStaffPlan{
+    width: 42%;
 }
 
 .isPlanAllAdditionalCosts.isHalfGrid {
@@ -5401,3 +5407,47 @@ body,
 /*#programmeSelect {
     max-width: 25em;
 }*/
+
+#gridContainer_rcGradeGrid .grid-scroll-container {
+    height: 260px;
+    max-height: 260px;
+}
+
+#gridContainer_wgGradeGrid .grid-scroll-container {
+    height: 220px;
+    max-height: 220px;
+}
+
+#gridContainer_wgStaffGrid .grid-scroll-container {
+    height: 240px;
+    max-height: 240px;
+}
+
+#gridContainer_wgGradeGrid .editable-grid-container {
+    min-height: unset;
+}
+
+#gridContainer_wgGradeGrid table thead th,
+#gridContainer_wgGradeGrid table tbody td {
+    text-align: left !important;
+}
+
+/* Right-align numeric columns in wgStaffGrid (HrsPaid, Leave, SickSp, AtWork = columns 3-6) */
+#gridContainer_wgStaffGrid table thead th:nth-child(3),
+#gridContainer_wgStaffGrid table thead th:nth-child(4),
+#gridContainer_wgStaffGrid table thead th:nth-child(5),
+#gridContainer_wgStaffGrid table thead th:nth-child(6),
+#gridContainer_wgStaffGrid table tbody td:nth-child(3),
+#gridContainer_wgStaffGrid table tbody td:nth-child(4),
+#gridContainer_wgStaffGrid table tbody td:nth-child(5),
+#gridContainer_wgStaffGrid table tbody td:nth-child(6) {
+    text-align: right !important;
+}
+
+/* Border on the 4 numeric total cells */
+#fpsSrTotalHrsPaid,
+#fpsSrTotalLeave,
+#fpsSrTotalSick,
+#fpsSrTotalAtWork {
+    border: 1px solid #b1b4b6 !important;
+}

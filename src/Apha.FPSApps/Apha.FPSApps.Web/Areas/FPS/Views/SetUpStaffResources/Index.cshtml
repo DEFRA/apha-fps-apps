@@ -6,9 +6,9 @@
 <main class="govuk-main-wrapper govuk-!-padding-top-0" id="main-content" role="main">
     <div class="container-fluid">
         <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full sup_border-bottom govuk-!-margin-bottom-1">
-                <div class="ssr-heading-row govuk-!-margin-bottom-1">
-                    <h1 class="govuk-heading-s ssr-main-title">
+            <div class="govuk-grid-column-full">
+                @* <div class="ssr-heading-row">
+                    <h1 class="govuk-heading-s sup_border-bottom ssr-main-title">
                         Set Up Staff Resources
                     </h1>
                     <div class="ssr-heading-controls">
@@ -33,7 +33,49 @@
                             <option value="">-- Select a Work Group --</option>
                         </select>
                     </div>
-                </div>
+                </div> *@
+
+                <div class="govuk-grid-row sup_border-bottom">
+            <div class="govuk-grid-column-one-half">
+                <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 govuk-!-margin-left-0 isCustomPageHeadings">
+                    Set Up Staff Resources
+                </h1>
+            </div>
+            <div class="govuk-grid-column-one-half isFloatRight">
+                <table class="govuk-table govuk-!-margin-bottom-2">
+                    <tbody class="govuk-table__body">
+                        <tr class="govuk-table__row">
+                            <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
+                                <label class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-0 govuk-!-font-weight-bold isNoWrap" for="programmeDropdown">Select a Resource Center:</label>
+                            </th>
+                            <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
+                                <select class="govuk-select"  id="resourceCentreSelect"
+										aria-label="Select a Resource Center"
+										asp-for="SelectedResourceCentre"
+										asp-items="Model.ResourceCentres"
+										onchange="LoadGroupsByResourceCentre()">
+									<option value="">-- Select a Resource Center --</option>
+								</select>
+                            </td>
+
+                            <th scope="row" class="govuk-table__header  govuk-!-padding-right-1 govuk-!-padding-bottom-0 isNoBottomBorder">
+                                 <label for="ssrSelectedWorkgroup" class="govuk-label govuk-!-margin-bottom-0 govuk-!-font-weight-bold isNoWrap">Select WorkGroup: </label>
+                            </th>
+                            <td class="govuk-table__cell govuk-!-padding-bottom-0 isNoBottomBorder">                                        
+                                <select class="govuk-select"
+                                        id="workGroupSelect"
+                                        aria-label="Select a Work Group"
+                                        asp-for="SelectedWorkgroup"
+                                        asp-items="Model.WorkGroupList"
+                                        onchange="LoadGradeByGroup()">
+                                    <option value="">-- Select a Work Group --</option>
+                                 </select>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
             </div>
         </div>
 
