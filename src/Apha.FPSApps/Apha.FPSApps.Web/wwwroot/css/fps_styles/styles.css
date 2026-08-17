@@ -5370,20 +5370,11 @@ body,
         overflow-y: auto;
     }
 }
-
-#gridContainer_staffBookedGrid .grid-scroll-container {
-    height: 390px;
-    max-height: 390px;
+#gridContainer_compareStaff2Grid .grid-scroll-container,
+#gridContainer_projectGrid .editable-grid-container div .grid-scroll-container {
+    height: 410px;
+    max-height: 410px;
 }
-
-#gridContainer_animalBookedGrid .grid-scroll-container {
-    height: 255px;
-    max-height: 255px;
-}
-/*#gridContainer_testPlanGrid .grid-scroll-container {
-    height: 255px;
-    max-height: 255px;
-}*/
 #gridContainer_@Model.AdditionalCostGrid.GridId .grid-scroll-container {
     height: 255px;
     max-height: 255px;
