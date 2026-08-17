@@ -37,6 +37,14 @@ namespace Apha.FPS.DataAccess.Repositories
                 .FirstOrDefaultAsync(a => a.AccShortName == accShortName && a.FpsYear == _requestContext.FpsYear);
         }
 
+        public async Task<bool> ExistsByAccShortNameAsync(string accShortName)
+        {
+            return await _context.AccountCategories
+                .AsNoTracking()
+                .AnyAsync(a => a.FpsYear == _requestContext.FpsYear
+                            && EF.Functions.ILike(a.AccShortName, accShortName));
+        }
+
         public async Task<AccountCategory> AddAsync(AccountCategory accountCategory)
         {
             ArgumentNullException.ThrowIfNull(accountCategory);

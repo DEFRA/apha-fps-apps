@@ -10,6 +10,7 @@ namespace Apha.FPS.Core.Interfaces
         Task<PagedData<Program>> GetAllProgramsAsync(PaginationParameters<string> query);
         Task<PagedData<ProgramPlanCostView>> GetProgramTimeSnapshotAsync(PaginationParameters<string> query);
         Task<Program?> GetProgramByIdAsync(string id);       
+        Task<bool> ExistsByProgramNoAsync(string programNo);
         Task<Program> AddProgramAsync(Program entity);
         Task<Program> UpdateProgramAsync(Program entity, string originalProgramNo);
         Task<bool> DeleteProgramAsync(string id);

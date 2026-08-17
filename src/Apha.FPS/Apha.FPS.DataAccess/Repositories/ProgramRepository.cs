@@ -79,6 +79,17 @@ namespace Apha.FPS.DataAccess.Repositories
                 .FirstOrDefaultAsync(p => p.ProgramNo == id);
         }
 
+        public async Task<bool> ExistsByProgramNoAsync(string programNo)
+        {
+            if (string.IsNullOrWhiteSpace(programNo))
+                return false;
+
+            return await _dbContext.Programs
+                .AsNoTracking()
+                .AnyAsync(p => p.FpsYear == _requestContext.FpsYear
+                            && EF.Functions.ILike(p.ProgramNo, programNo));
+        }
+
         public async Task<Program> AddProgramAsync(Program entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
