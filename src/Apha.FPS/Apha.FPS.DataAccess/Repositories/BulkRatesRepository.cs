@@ -5,14 +5,19 @@ using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Npgsql;
-using System.Text;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
     /// <summary>
-    /// Raw-Npgsql implementation of <see cref="IBulkRatesRepository"/> for the FPS API.
-    /// Uses <see cref="FpsDbContext"/> to obtain the underlying Npgsql connection;
-    /// no EF entities are used — all SQL is written explicitly.
+    /// Hybrid EF/raw-Npgsql implementation of <see cref="IBulkRatesRepository"/> for the FPS API.
+    /// The core job_queue lifecycle (lookup, CRUD, status transitions, audit log) uses
+    /// EF/LINQ via the widened <see cref="BatchJobQueue"/> entity and the existing BatchJobs entities —
+    /// see <see cref="QueueRowsQuery"/>. Staging replace/read, validation errors, download
+    /// snapshots, and live-table exports remain raw Npgsql: those tables have no existing EF
+    /// mapping, and several (paired-array lookups, the concurrency-guarded download-activation
+    /// UPDATE) have PostgreSQL-specific or atomicity semantics that are the actual correctness
+    /// requirement, not just an implementation detail LINQ would express just as well. Each
+    /// method below carries a short comment where it stays raw explaining why.
     /// </summary>
     public class BulkRatesRepository : IBulkRatesRepository
     {
@@ -34,50 +39,93 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         // ── Job master / status lookup ───────────────────────────────────────────
+        // Ordinary single-value lookups on tables already EF-mapped (BatchJobMaster/
+        // BatchJobStatus, shared with the YearEnd/BatchJobs feature) — natural LINQ.
 
-        public async Task<int?> GetJobIdByNameAsync(string jobName, CancellationToken ct = default)
-        {
-            var conn = await OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT jobid FROM fps.job_master WHERE jobname = @jobname;";
-            cmd.Parameters.AddWithValue("jobname", jobName);
-            var result = await cmd.ExecuteScalarAsync(ct);
-            return result is null or DBNull ? null : (int?)Convert.ToInt32(result);
-        }
+        public Task<int?> GetJobIdByNameAsync(string jobName, CancellationToken ct = default) =>
+            _dbContext.BatchJobs
+                .Where(j => j.JobName == jobName)
+                .Select(j => (int?)j.JobId)
+                .FirstOrDefaultAsync(ct);
 
-        public async Task<int?> GetStatusIdByNameAsync(int jobId, string statusName, CancellationToken ct = default)
-        {
-            var conn = await OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT statusid FROM fps.job_status WHERE jobid = @jobid AND status = @status;";
-            cmd.Parameters.AddWithValue("jobid", jobId);
-            cmd.Parameters.AddWithValue("status", statusName);
-            var result = await cmd.ExecuteScalarAsync(ct);
-            return result is null or DBNull ? null : (int?)Convert.ToInt32(result);
-        }
+        public Task<int?> GetStatusIdByNameAsync(int jobId, string statusName, CancellationToken ct = default) =>
+            _dbContext.BatchJobStatuses
+                .Where(s => s.JobId == jobId && s.Status == statusName)
+                .Select(s => (int?)s.StatusId)
+                .FirstOrDefaultAsync(ct);
 
         // ── Queue entry CRUD ─────────────────────────────────────────────────────
+        // fps.job_queue + job_master + job_status, via the existing BatchJobQueue entity
+        // (widened with the Bulk-Rates workflow columns — see BatchJobQueue's doc comment)
+        // joined against the existing, shared BatchJobMaster/BatchJobStatus entities.
+        // BatchJobQueue carries a FpsYear query filter tied to the ambient
+        // IFpsRequestContext year (for YearEnd's own use) — every query against it here
+        // calls .IgnoreQueryFilters() since Bulk Rates filters by an explicit, caller-supplied
+        // year rather than "whatever year the UI currently has selected".
+
+        /// <summary>
+        /// The job_queue + job_master + job_status join, projected into <see cref="BulkRatesQueueRow"/>.
+        /// Composable: callers add their own Where/OrderBy/paging before executing.
+        /// </summary>
+        private IQueryable<BulkRatesQueueRow> QueueRowsQuery() =>
+            from q in _dbContext.BatchJobQueues.IgnoreQueryFilters()
+            join m in _dbContext.BatchJobs on q.JobId equals m.JobId
+            join s in _dbContext.BatchJobStatuses on new { q.StatusId, q.JobId } equals new { s.StatusId, s.JobId }
+            select new BulkRatesQueueRow
+            {
+                JobQueueId = q.JobqueueId,
+                JobId = q.JobId,
+                JobName = m.JobName,
+                StatusId = q.StatusId,
+                Status = s.Status,
+                JobExecutionId = q.JobExecutionId,
+                RequestedBy = q.RequestedBy,
+                RequestedAtUtc = q.RequestedAtUtc ?? default,
+                FpsYear = q.FpsYear,
+                UploadFilename = q.UploadFilename,
+                UploadChecksumSha256 = q.UploadChecksumSha256,
+                UploadVersion = q.UploadVersion,
+                UploadValidatedAtUtc = q.UploadValidatedAtUtc,
+                UploadRowCountsJson = q.UploadRowCountsJson,
+                ApprovedBy = q.ApprovedBy,
+                ApprovedAtUtc = q.ApprovedAtUtc,
+                RejectedBy = q.RejectedBy,
+                RejectedAtUtc = q.RejectedAtUtc,
+                RejectionReason = q.RejectionReason,
+                CancelledBy = q.CancelledBy,
+                CancelledAtUtc = q.CancelledAtUtc,
+                CancellationReason = q.CancellationReason,
+                TriggeredBy = q.TriggeredBy,
+                TriggeredAtUtc = q.TriggeredAtUtc,
+                StartDateTime = q.StartDateTime,
+                EndDateTime = q.EndDateTime,
+                // Physical column "errormessage" surfaces as FailureReason, not ErrorMessage —
+                // matches the pre-existing raw-SQL mapping exactly.
+                FailureReason = q.ErrorMessage,
+                ActiveDownloadVersion = q.ActiveDownloadVersion
+            };
 
         public async Task<BulkRatesQueueRow> CreateRequestAsync(
             Guid jobQueueId, Guid jobExecutionId, int jobId, int initiatedStatusId,
             string requestedBy, DateTime requestedAtUtc, int fpsYear,
             CancellationToken ct = default)
         {
-            var conn = await OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-                INSERT INTO fps.job_queue
-                    (jobqueueid, jobexecutionid, jobid, statusid, requestedby, requested_at_utc, fpsyear)
-                VALUES
-                    (@jobqueueid, @jobexecutionid, @jobid, @statusid, @requestedby, @requested_at_utc, @fpsyear);";
-            cmd.Parameters.AddWithValue("jobqueueid",        jobQueueId);
-            cmd.Parameters.AddWithValue("jobexecutionid",    jobExecutionId);
-            cmd.Parameters.AddWithValue("jobid",             jobId);
-            cmd.Parameters.AddWithValue("statusid",          initiatedStatusId);
-            cmd.Parameters.AddWithValue("requestedby",       requestedBy);
-            cmd.Parameters.AddWithValue("requested_at_utc",  requestedAtUtc);
-            cmd.Parameters.AddWithValue("fpsyear",           fpsYear);
-            await cmd.ExecuteNonQueryAsync(ct);
+            _dbContext.BatchJobQueues.Add(new BatchJobQueue
+            {
+                JobqueueId = jobQueueId,
+                JobExecutionId = jobExecutionId,
+                JobId = jobId,
+                StatusId = initiatedStatusId,
+                RequestedBy = requestedBy,
+                RequestedAtUtc = requestedAtUtc,
+                FpsYear = fpsYear,
+                // StartDateTime is non-nullable on this shared entity (YearEnd always sets it
+                // explicitly); the pre-existing raw SQL never set it for Bulk Rates at all, so
+                // there's no "original" value to preserve here — RequestedAtUtc is the closest
+                // sensible stand-in, rather than leaving the CLR default (0001-01-01).
+                StartDateTime = requestedAtUtc
+            });
+            await _dbContext.SaveChangesAsync(ct);
 
             _logger.LogInformation("Created job_queue row | JobQueueId={JobQueueId} | JobId={JobId} | FpsYear={FpsYear}",
                 jobQueueId, jobId, fpsYear);
@@ -86,108 +134,39 @@ namespace Apha.FPS.DataAccess.Repositories
                 ?? throw new InvalidOperationException($"Row just inserted (jobExecutionId={jobExecutionId}) could not be read back.");
         }
 
-        public async Task<BulkRatesQueueRow?> GetRequestAsync(Guid jobExecutionId, CancellationToken ct = default)
-        {
-            var conn = await OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-                SELECT q.jobqueueid, q.jobid, m.jobname, q.statusid, s.status,
-                       q.jobexecutionid, q.requestedby, q.requested_at_utc, q.fpsyear,
-                       q.upload_filename, q.upload_checksum_sha256, q.upload_version,
-                       q.upload_validated_at_utc, q.upload_row_counts_json,
-                       q.approved_by, q.approved_at_utc,
-                       q.rejected_by, q.rejected_at_utc, q.rejection_reason,
-                       q.cancelled_by, q.cancelled_at_utc, q.cancellation_reason,
-                       q.triggered_by, q.triggered_at_utc,
-                       q.startdatetime, q.enddatetime, q.errormessage,
-                       q.active_download_version
-                FROM fps.job_queue q
-                JOIN fps.job_master m ON m.jobid = q.jobid
-                JOIN fps.job_status s ON s.statusid = q.statusid AND s.jobid = q.jobid
-                WHERE q.jobexecutionid = @jobexecutionid;";
-            cmd.Parameters.AddWithValue("jobexecutionid", jobExecutionId);
-
-            await using var reader = await cmd.ExecuteReaderAsync(ct);
-            if (!await reader.ReadAsync(ct))
-                return null;
-
-            return ReadQueueEntry(reader);
-        }
-
-        // Whitelist mapping from client-facing sort keys to literal SQL column expressions —
-        // sortBy is user input (via the DataGrid's sortable-header clicks) and must never be
-        // interpolated directly into SQL text.
-        private static readonly Dictionary<string, string> SortColumns = new(StringComparer.OrdinalIgnoreCase)
-        {
-            ["jobname"] = "m.jobname",
-            ["fpsyear"] = "q.fpsyear",
-            ["status"] = "s.status",
-            ["requestedby"] = "q.requestedby",
-            ["requestedatutc"] = "q.requested_at_utc"
-        };
+        public Task<BulkRatesQueueRow?> GetRequestAsync(Guid jobExecutionId, CancellationToken ct = default) =>
+            QueueRowsQuery()
+                .Where(r => r.JobExecutionId == jobExecutionId)
+                .FirstOrDefaultAsync(ct);
 
         public async Task<PagedData<BulkRatesQueueRow>> GetRequestsAsync(
             string? jobName, int? fpsYear, string? status,
             int page, int pageSize, string? sortBy, bool descending,
             CancellationToken ct = default)
         {
-            var conn = await OpenAsync(ct);
+            var query = QueueRowsQuery();
+            if (jobName != null) query = query.Where(r => r.JobName == jobName);
+            if (fpsYear.HasValue) query = query.Where(r => r.FpsYear == fpsYear.Value);
+            if (status != null) query = query.Where(r => r.Status == status);
 
-            var where = new StringBuilder(" WHERE 1=1");
-            if (jobName != null) where.Append(" AND m.jobname = @jobname");
-            if (fpsYear.HasValue) where.Append(" AND q.fpsyear = @fpsyear");
-            if (status != null) where.Append(" AND s.status = @status");
+            var totalRecords = await query.CountAsync(ct);
 
-            void AddFilterParameters(NpgsqlCommand filterCmd)
+            // sortBy is user input (via the DataGrid's sortable-header clicks) — the switch
+            // below is the whitelist; anything unrecognised falls back to RequestedAtUtc rather
+            // than being interpolated into anything.
+            query = sortBy?.ToLowerInvariant() switch
             {
-                if (jobName != null) filterCmd.Parameters.AddWithValue("jobname", jobName);
-                if (fpsYear.HasValue) filterCmd.Parameters.AddWithValue("fpsyear", fpsYear.Value);
-                if (status != null) filterCmd.Parameters.AddWithValue("status", status);
-            }
+                "jobname" => descending ? query.OrderByDescending(r => r.JobName) : query.OrderBy(r => r.JobName),
+                "fpsyear" => descending ? query.OrderByDescending(r => r.FpsYear) : query.OrderBy(r => r.FpsYear),
+                "status" => descending ? query.OrderByDescending(r => r.Status) : query.OrderBy(r => r.Status),
+                "requestedby" => descending ? query.OrderByDescending(r => r.RequestedBy) : query.OrderBy(r => r.RequestedBy),
+                _ => descending ? query.OrderByDescending(r => r.RequestedAtUtc) : query.OrderBy(r => r.RequestedAtUtc)
+            };
 
-            int totalRecords;
-            await using (var countCmd = conn.CreateCommand())
-            {
-                countCmd.CommandText = @"
-                    SELECT COUNT(*)
-                    FROM fps.job_queue q
-                    JOIN fps.job_master m ON m.jobid = q.jobid
-                    JOIN fps.job_status s ON s.statusid = q.statusid AND s.jobid = q.jobid" + where;
-                AddFilterParameters(countCmd);
-                totalRecords = Convert.ToInt32(await countCmd.ExecuteScalarAsync(ct));
-            }
-
-            var sortColumn = sortBy != null && SortColumns.TryGetValue(sortBy, out var col)
-                ? col
-                : "q.requested_at_utc";
-            var sortDirection = descending ? "DESC" : "ASC";
-
-            var results = new List<BulkRatesQueueRow>();
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = @"
-                    SELECT q.jobqueueid, q.jobid, m.jobname, q.statusid, s.status,
-                           q.jobexecutionid, q.requestedby, q.requested_at_utc, q.fpsyear,
-                           q.upload_filename, q.upload_checksum_sha256, q.upload_version,
-                           q.upload_validated_at_utc, q.upload_row_counts_json,
-                           q.approved_by, q.approved_at_utc,
-                           q.rejected_by, q.rejected_at_utc, q.rejection_reason,
-                           q.cancelled_by, q.cancelled_at_utc, q.cancellation_reason,
-                           q.triggered_by, q.triggered_at_utc,
-                           q.startdatetime, q.enddatetime, q.errormessage,
-                           q.active_download_version
-                    FROM fps.job_queue q
-                    JOIN fps.job_master m ON m.jobid = q.jobid
-                    JOIN fps.job_status s ON s.statusid = q.statusid AND s.jobid = q.jobid"
-                    + where + $" ORDER BY {sortColumn} {sortDirection} LIMIT @pagesize OFFSET @offset;";
-                AddFilterParameters(cmd);
-                cmd.Parameters.AddWithValue("pagesize", pageSize);
-                cmd.Parameters.AddWithValue("offset", (page - 1) * pageSize);
-
-                await using var reader = await cmd.ExecuteReaderAsync(ct);
-                while (await reader.ReadAsync(ct))
-                    results.Add(ReadQueueEntry(reader));
-            }
+            var results = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(ct);
 
             return new PagedData<BulkRatesQueueRow>(results, new PaginationData
             {
@@ -198,171 +177,105 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        public async Task<BulkRatesQueueRow?> GetActiveRequestAsync(string jobName, CancellationToken ct = default)
+        public Task<BulkRatesQueueRow?> GetActiveRequestAsync(string jobName, CancellationToken ct = default)
         {
-            var conn = await OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-                SELECT q.jobqueueid, q.jobid, m.jobname, q.statusid, s.status,
-                       q.jobexecutionid, q.requestedby, q.requested_at_utc, q.fpsyear,
-                       q.upload_filename, q.upload_checksum_sha256, q.upload_version,
-                       q.upload_validated_at_utc, q.upload_row_counts_json,
-                       q.approved_by, q.approved_at_utc,
-                       q.rejected_by, q.rejected_at_utc, q.rejection_reason,
-                       q.cancelled_by, q.cancelled_at_utc, q.cancellation_reason,
-                       q.triggered_by, q.triggered_at_utc,
-                       q.startdatetime, q.enddatetime, q.errormessage,
-                       q.active_download_version
-                FROM fps.job_queue q
-                JOIN fps.job_master m ON m.jobid = q.jobid
-                JOIN fps.job_status s ON s.statusid = q.statusid AND s.jobid = q.jobid
-                WHERE m.jobname = @jobname
-                  AND s.status IN ('Initiated','ReleasedForApproval','Approved','Running')
-                ORDER BY q.requested_at_utc DESC
-                LIMIT 1;";
-            cmd.Parameters.AddWithValue("jobname", jobName);
-
-            await using var reader = await cmd.ExecuteReaderAsync(ct);
-            if (!await reader.ReadAsync(ct))
-                return null;
-
-            return ReadQueueEntry(reader);
+            // Matches the pre-existing SQL's IN-list exactly (Initiated/ReleasedForApproval/
+            // Approved/Running) — NOT "Failed", despite what the interface doc comment says;
+            // preserved as-is, not this conversion's place to change.
+            var blockingStatuses = new[] { "Initiated", "ReleasedForApproval", "Approved", "Running" };
+            return QueueRowsQuery()
+                .Where(r => r.JobName == jobName && blockingStatuses.Contains(r.Status))
+                .OrderByDescending(r => r.RequestedAtUtc)
+                .FirstOrDefaultAsync(ct);
         }
 
         // ── Status transitions ───────────────────────────────────────────────────
 
+        // EF atomic operation: a guarded UPDATE (only applies if the row is still in the
+        // expected status) must stay a single UPDATE...WHERE statement for its optimistic-
+        // concurrency check to mean anything — ExecuteUpdateAsync compiles to exactly that.
         public async Task<bool> TransitionStatusAsync(
             Guid jobQueueId, int expectedStatusId, int newStatusId,
             CancellationToken ct = default)
         {
-            var conn = await OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-                UPDATE fps.job_queue
-                SET statusid = @new_statusid, updated_at = NOW()
-                WHERE jobqueueid = @jobqueueid AND statusid = @expected_statusid;";
-            cmd.Parameters.AddWithValue("new_statusid",      newStatusId);
-            cmd.Parameters.AddWithValue("jobqueueid",        jobQueueId);
-            cmd.Parameters.AddWithValue("expected_statusid", expectedStatusId);
-            var affected = await cmd.ExecuteNonQueryAsync(ct);
+            var affected = await _dbContext.BatchJobQueues.IgnoreQueryFilters()
+                .Where(q => q.JobqueueId == jobQueueId && q.StatusId == expectedStatusId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(q => q.StatusId, newStatusId)
+                    .SetProperty(q => q.UpdatedAt, DateTime.UtcNow), ct);
             return affected > 0;
         }
 
-        public async Task SetApprovalAsync(
+        public Task SetApprovalAsync(
             Guid jobQueueId, Guid jobExecutionId,
             string approvedBy, DateTime approvedAtUtc,
             string triggeredBy, DateTime triggeredAtUtc,
             int approvedStatusId,
-            CancellationToken ct = default)
-        {
-            var conn = await OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-                UPDATE fps.job_queue
-                SET statusid         = @statusid,
-                    approved_by      = @approved_by,
-                    approved_at_utc  = @approved_at_utc,
-                    triggered_by     = @triggered_by,
-                    triggered_at_utc = @triggered_at_utc,
-                    updated_at       = NOW()
-                WHERE jobqueueid = @jobqueueid;";
-            cmd.Parameters.AddWithValue("statusid",         approvedStatusId);
-            cmd.Parameters.AddWithValue("approved_by",      approvedBy);
-            cmd.Parameters.AddWithValue("approved_at_utc",  approvedAtUtc);
-            cmd.Parameters.AddWithValue("triggered_by",     triggeredBy);
-            cmd.Parameters.AddWithValue("triggered_at_utc", triggeredAtUtc);
-            cmd.Parameters.AddWithValue("jobqueueid",       jobQueueId);
-            await cmd.ExecuteNonQueryAsync(ct);
-        }
+            CancellationToken ct = default) =>
+            _dbContext.BatchJobQueues.IgnoreQueryFilters()
+                .Where(q => q.JobqueueId == jobQueueId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(q => q.StatusId, approvedStatusId)
+                    .SetProperty(q => q.ApprovedBy, approvedBy)
+                    .SetProperty(q => q.ApprovedAtUtc, approvedAtUtc)
+                    .SetProperty(q => q.TriggeredBy, triggeredBy)
+                    .SetProperty(q => q.TriggeredAtUtc, triggeredAtUtc)
+                    .SetProperty(q => q.UpdatedAt, DateTime.UtcNow), ct);
 
-        public async Task SetRejectionAsync(
+        public Task SetRejectionAsync(
             Guid jobQueueId, string rejectedBy, DateTime rejectedAtUtc,
             string reason, int rejectedStatusId,
-            CancellationToken ct = default)
-        {
-            var conn = await OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-                UPDATE fps.job_queue
-                SET statusid        = @statusid,
-                    rejected_by     = @rejected_by,
-                    rejected_at_utc = @rejected_at_utc,
-                    rejection_reason = @rejection_reason,
-                    updated_at      = NOW()
-                WHERE jobqueueid = @jobqueueid;";
-            cmd.Parameters.AddWithValue("statusid",         rejectedStatusId);
-            cmd.Parameters.AddWithValue("rejected_by",      rejectedBy);
-            cmd.Parameters.AddWithValue("rejected_at_utc",  rejectedAtUtc);
-            cmd.Parameters.AddWithValue("rejection_reason", reason);
-            cmd.Parameters.AddWithValue("jobqueueid",       jobQueueId);
-            await cmd.ExecuteNonQueryAsync(ct);
-        }
+            CancellationToken ct = default) =>
+            _dbContext.BatchJobQueues.IgnoreQueryFilters()
+                .Where(q => q.JobqueueId == jobQueueId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(q => q.StatusId, rejectedStatusId)
+                    .SetProperty(q => q.RejectedBy, rejectedBy)
+                    .SetProperty(q => q.RejectedAtUtc, rejectedAtUtc)
+                    .SetProperty(q => q.RejectionReason, reason)
+                    .SetProperty(q => q.UpdatedAt, DateTime.UtcNow), ct);
 
-        public async Task SetCancellationAsync(
+        public Task SetCancellationAsync(
             Guid jobQueueId, string cancelledBy, DateTime cancelledAtUtc,
             string? reason, int cancelledStatusId,
-            CancellationToken ct = default)
-        {
-            var conn = await OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-                UPDATE fps.job_queue
-                SET statusid             = @statusid,
-                    cancelled_by         = @cancelled_by,
-                    cancelled_at_utc     = @cancelled_at_utc,
-                    cancellation_reason  = @cancellation_reason,
-                    updated_at           = NOW()
-                WHERE jobqueueid = @jobqueueid;";
-            cmd.Parameters.AddWithValue("statusid",            cancelledStatusId);
-            cmd.Parameters.AddWithValue("cancelled_by",        cancelledBy);
-            cmd.Parameters.AddWithValue("cancelled_at_utc",    cancelledAtUtc);
-            cmd.Parameters.AddWithValue("cancellation_reason", (object?)reason ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("jobqueueid",          jobQueueId);
-            await cmd.ExecuteNonQueryAsync(ct);
-        }
+            CancellationToken ct = default) =>
+            _dbContext.BatchJobQueues.IgnoreQueryFilters()
+                .Where(q => q.JobqueueId == jobQueueId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(q => q.StatusId, cancelledStatusId)
+                    .SetProperty(q => q.CancelledBy, cancelledBy)
+                    .SetProperty(q => q.CancelledAtUtc, cancelledAtUtc)
+                    .SetProperty(q => q.CancellationReason, reason)
+                    .SetProperty(q => q.UpdatedAt, DateTime.UtcNow), ct);
 
         // ── Upload metadata ──────────────────────────────────────────────────────
 
-        public async Task UpdateUploadMetadataAsync(
+        public Task UpdateUploadMetadataAsync(
             Guid jobQueueId, string filename, string checksumSha256, int uploadVersion,
-            DateTime validatedAtUtc, string rowCountsJson, CancellationToken ct = default)
-        {
-            var conn = await OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-                UPDATE fps.job_queue
-                SET upload_filename        = @upload_filename,
-                    upload_checksum_sha256 = @upload_checksum_sha256,
-                    upload_version          = @upload_version,
-                    upload_validated_at_utc = @upload_validated_at_utc,
-                    upload_row_counts_json  = @upload_row_counts_json::jsonb,
-                    updated_at              = NOW()
-                WHERE jobqueueid = @jobqueueid;";
-            cmd.Parameters.AddWithValue("upload_filename",        filename);
-            cmd.Parameters.AddWithValue("upload_checksum_sha256", checksumSha256);
-            cmd.Parameters.AddWithValue("upload_version",         uploadVersion);
-            cmd.Parameters.AddWithValue("upload_validated_at_utc", validatedAtUtc);
-            cmd.Parameters.AddWithValue("upload_row_counts_json", rowCountsJson);
-            cmd.Parameters.AddWithValue("jobqueueid",             jobQueueId);
-            await cmd.ExecuteNonQueryAsync(ct);
-        }
+            DateTime validatedAtUtc, string rowCountsJson, CancellationToken ct = default) =>
+            _dbContext.BatchJobQueues.IgnoreQueryFilters()
+                .Where(q => q.JobqueueId == jobQueueId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(q => q.UploadFilename, filename)
+                    .SetProperty(q => q.UploadChecksumSha256, checksumSha256)
+                    .SetProperty(q => q.UploadVersion, uploadVersion)
+                    .SetProperty(q => q.UploadValidatedAtUtc, validatedAtUtc)
+                    .SetProperty(q => q.UploadRowCountsJson, rowCountsJson)
+                    .SetProperty(q => q.UpdatedAt, DateTime.UtcNow), ct);
 
         // ── Audit log ────────────────────────────────────────────────────────────
+        // fps.job_queue_log via the existing BatchJobQueueLog entity (already reused as the
+        // return type here even before this conversion — see GetJobQueueLogsAsync's original
+        // comment, kept below).
 
         public async Task WriteJobQueueLogAsync(
             Guid jobQueueId, string note, string? actor, CancellationToken ct = default)
         {
-            var conn = await OpenAsync(ct);
-
             // Resolve current statusid (required by fps.job_queue_log FK constraint)
-            int? statusId = null;
-            await using (var statusCmd = conn.CreateCommand())
-            {
-                statusCmd.CommandText = "SELECT statusid FROM fps.job_queue WHERE jobqueueid = @jqid;";
-                statusCmd.Parameters.AddWithValue("jqid", jobQueueId);
-                var result = await statusCmd.ExecuteScalarAsync(ct);
-                statusId = result is null or DBNull ? null : (int?)Convert.ToInt32(result);
-            }
+            var statusId = await _dbContext.BatchJobQueues.IgnoreQueryFilters()
+                .Where(q => q.JobqueueId == jobQueueId)
+                .Select(q => (int?)q.StatusId)
+                .FirstOrDefaultAsync(ct);
 
             if (statusId is null)
             {
@@ -370,53 +283,32 @@ namespace Apha.FPS.DataAccess.Repositories
                 return;
             }
 
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-                INSERT INTO fps.job_queue_log (jobqueueid, statusid, performedby, logtime, note)
-                VALUES (@jobqueueid, @statusid, @performedby, NOW(), @note);";
-            cmd.Parameters.AddWithValue("jobqueueid",  jobQueueId);
-            cmd.Parameters.AddWithValue("statusid",    statusId.Value);
-            cmd.Parameters.AddWithValue("performedby", (object?)actor ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("note",        (object?)note ?? DBNull.Value);
-            await cmd.ExecuteNonQueryAsync(ct);
+            _dbContext.BatchJobQueueLogs.Add(new BatchJobQueueLog
+            {
+                JobqueueId = jobQueueId,
+                StatusId = statusId.Value,
+                // BatchJobQueueLog.PerformedBy is modeled non-nullable (shared with YearEnd) —
+                // every real caller always passes a real actor (see BulkRatesRequestService),
+                // so this only matters in the never-hit null case; empty string rather than a
+                // literal DB NULL to keep the existing entity's own nullability contract intact.
+                PerformedBy = actor ?? string.Empty,
+                Note = note
+            });
+            await _dbContext.SaveChangesAsync(ct);
         }
 
         public async Task<IReadOnlyList<BatchJobQueueLog>> GetJobQueueLogsAsync(
-            Guid jobQueueId, CancellationToken ct = default)
-        {
-            var conn = await OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-                SELECT jobqueuelogid, jobqueueid, statusid, performedby, logtime, note
-                FROM fps.job_queue_log
-                WHERE jobqueueid = @jobqueueid
-                ORDER BY logtime ASC;";
-            cmd.Parameters.AddWithValue("jobqueueid", jobQueueId);
-
-            // BatchJobQueueLog is the existing EF entity for fps.job_queue_log — reused here
-            // rather than maintaining a second near-identical raw-ADO type (see
-            // BulkRatesRequestService.ToDto(BatchJobQueueLog) for the persistence-name ->
-            // consumer-friendly-name mapping onto BulkRatesQueueLogDto). Reading all six
-            // columns, not a subset, since anything less would misrepresent this as the
-            // complete entity while silently leaving a persisted column unset.
-            var results = new List<BatchJobQueueLog>();
-            await using var reader = await cmd.ExecuteReaderAsync(ct);
-            while (await reader.ReadAsync(ct))
-            {
-                results.Add(new BatchJobQueueLog
-                {
-                    JobqueueLogId = reader.GetInt32(0),
-                    JobqueueId    = reader.GetGuid(1),
-                    StatusId      = reader.GetInt32(2),
-                    PerformedBy   = reader.GetString(3),
-                    LogTime       = reader.GetDateTime(4),
-                    Note          = reader.IsDBNull(5) ? null : reader.GetString(5)
-                });
-            }
-            return results;
-        }
+            Guid jobQueueId, CancellationToken ct = default) =>
+            await _dbContext.BatchJobQueueLogs
+                .Where(l => l.JobqueueId == jobQueueId)
+                .OrderBy(l => l.LogTime)
+                .ToListAsync(ct);
 
         // ── Staging — replace semantics ──────────────────────────────────────────
+        // fps.tblstaging* tables have no existing EF mapping. Kept raw rather than adding four
+        // more entities for this pass — delete-then-bulk-insert within an explicit transaction,
+        // with FK-ordering between the two FEC/AGRUP staging tables, is clearer as SQL than as
+        // AddRange+SaveChanges across a mapping that doesn't exist yet anywhere else.
 
         public async Task ReplaceStagingFecAsync(
             Guid jobQueueId,
@@ -754,6 +646,8 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         // ── Validation errors ────────────────────────────────────────────────────
+        // fps.staging_validation_error has no existing EF mapping — same delete-then-bulk-
+        // insert rationale as the staging block above.
 
         public async Task ReplaceValidationErrorsAsync(
             Guid jobQueueId,
@@ -847,6 +741,11 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         // ── Cancel + clear staging (atomic) ──────────────────────────────────────
+        // Kept fully raw for the same reason as MarkDownloadReadyAsync: this transaction spans
+        // job_queue (mapped) and four unmapped staging/validation tables in one atomic unit —
+        // splitting just the job_queue update into ExecuteUpdateAsync would mix styles within
+        // a single method for no real benefit, since it isn't a guarded/concurrency-sensitive
+        // update the way TransitionStatusAsync/MarkDownloadReadyAsync are.
 
         public async Task CancelAndClearStagingAsync(
             Guid jobQueueId, string jobName,
@@ -901,16 +800,21 @@ namespace Apha.FPS.DataAccess.Repositories
 
         // ── Reference checks ─────────────────────────────────────────────────────
 
-        public async Task<string?> GetFpsYearStatusAsync(int fpsYear, CancellationToken ct = default)
-        {
-            var conn = await OpenAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT yearstatus FROM fps.tblyearmaster WHERE fpsyear = @fpsyear AND active = true;";
-            cmd.Parameters.AddWithValue("fpsyear", fpsYear);
-            var result = await cmd.ExecuteScalarAsync(ct);
-            return result as string;
-        }
+        // fps.tblyearmaster is already EF-mapped (YearMaster/YearMasters, no query filter) —
+        // an ordinary single-value lookup, natural LINQ.
+        public Task<string?> GetFpsYearStatusAsync(int fpsYear, CancellationToken ct = default) =>
+            _dbContext.YearMasters
+                .Where(y => y.FpsYear == fpsYear && y.Active)
+                .Select(y => (string?)y.YearStatus)
+                .FirstOrDefaultAsync(ct);
 
+        // Raw SQL retained: fps.tlkpproject is already EF-mapped (Project/Projects), but with a
+        // FpsYear query filter tied to the ambient IFpsRequestContext year
+        // (HasQueryFilter(e => e.FpsYear == FilterFpsYear)) — this method takes fpsYear as an
+        // explicit parameter that is not guaranteed to equal whatever year the request context
+        // currently holds, so reusing that DbSet would risk silently mis-scoping results
+        // whenever the two diverge. Not worth an .IgnoreQueryFilters() escape hatch on a
+        // shared, actively-filtered entity for a bulk existence check this simple.
         public async Task<IReadOnlySet<string>> GetExistingProjectCodesAsync(
             IEnumerable<string> parentProjectCodes, int fpsYear, CancellationToken ct = default)
         {
@@ -937,6 +841,9 @@ namespace Apha.FPS.DataAccess.Repositories
             return result;
         }
 
+        // Raw SQL retained: a paired-array UNNEST join (testcode+workgroup as a matched pair,
+        // not two independent IN-lists) has no natural LINQ/EF translation — this is exactly
+        // the PostgreSQL-specific-semantics case, not a style choice.
         public async Task<IReadOnlySet<(string TestCode, string WorkGroup)>> GetExistingCapabilityPairsAsync(
             IEnumerable<(string TestCode, string WorkGroup)> pairs, int fpsYear, CancellationToken ct = default)
         {
@@ -973,6 +880,9 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         // ── Download snapshot ─────────────────────────────────────────────────────
+        // fps.bulk_rates_download / bulk_rates_downloaded_key / *_download_detail have no
+        // existing EF mapping; kept raw rather than introducing four more entities for this
+        // pass (see tracker for scope notes).
 
         public async Task<int> GetNextDownloadVersionAsync(Guid jobQueueId, CancellationToken ct = default)
         {
@@ -1063,6 +973,14 @@ namespace Apha.FPS.DataAccess.Repositories
                 jobQueueId, downloadVersion, fecRows.Count, agrupRows.Count);
         }
 
+        // Kept fully raw, deliberately not split into a mixed EF/SQL method: this transaction
+        // touches bulk_rates_download (unmapped) and job_queue (mapped via BatchJobQueue)
+        // in the same atomic unit. Converting only the second statement to ExecuteUpdateAsync
+        // while leaving the first as raw SQL would be exactly the "mixed styles within one
+        // method" outcome to avoid — and the acceptance bar here is strict (the guarded
+        // active_download_version UPDATE must stay a single atomic UPDATE...WHERE either way,
+        // which raw SQL already gives it untouched). See BulkRatesRepositoryDownloadConcurrencyTests
+        // for the test proving the guard.
         public async Task MarkDownloadReadyAsync(Guid jobQueueId, int downloadVersion, CancellationToken ct = default)
         {
             var conn = await OpenAsync(ct);
@@ -1337,6 +1255,11 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         // ── Export: live table reads ──────────────────────────────────────────────
+        // fps.testorproduct/tlkptestreqmt/profitcentregrade already have EF entities elsewhere
+        // (TestOrProduct, ProfitCentreGrade, ...), but each carries the same ambient FpsYear
+        // query-filter risk as GetExistingProjectCodesAsync above — these methods take fpsYear
+        // as an explicit parameter, not necessarily the ambient request-context year. Kept raw
+        // rather than routing around another feature's filtered entity.
 
         public async Task<IReadOnlyList<TestOrProductStagingRow>> GetFecRowsForExportAsync(
             int fpsYear, CancellationToken ct = default)
@@ -1478,6 +1401,9 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         // ── Freeze reviewed classification onto staging ───────────────────────────
+        // Same unmapped-staging-tables rationale as the Staging block above — per-row UPDATEs
+        // keyed by business key (TestCode / TestCode+Buyer / PcGrade / AnimalType) against
+        // tables with no existing EF entity.
 
         public async Task FreezeStagingCalculatedActionsAsync(
             Guid jobQueueId, int validationVersion,
@@ -1631,39 +1557,6 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         // ── Private helpers ──────────────────────────────────────────────────────
-
-        private static BulkRatesQueueRow ReadQueueEntry(NpgsqlDataReader reader) =>
-            new()
-            {
-                JobQueueId       = reader.GetGuid(0),
-                JobId            = reader.GetInt32(1),
-                JobName          = reader.GetString(2),
-                StatusId         = reader.GetInt32(3),
-                Status           = reader.GetString(4),
-                JobExecutionId   = reader.GetGuid(5),
-                RequestedBy      = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                RequestedAtUtc   = reader.IsDBNull(7) ? default : reader.GetDateTime(7),
-                FpsYear          = reader.IsDBNull(8) ? 0 : reader.GetInt32(8),
-                UploadFilename       = reader.IsDBNull(9) ? null : reader.GetString(9),
-                UploadChecksumSha256 = reader.IsDBNull(10) ? null : reader.GetString(10),
-                UploadVersion        = reader.IsDBNull(11) ? null : reader.GetInt32(11),
-                UploadValidatedAtUtc = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
-                UploadRowCountsJson  = reader.IsDBNull(13) ? null : reader.GetString(13),
-                ApprovedBy       = reader.IsDBNull(14) ? null : reader.GetString(14),
-                ApprovedAtUtc    = reader.IsDBNull(15) ? null : reader.GetDateTime(15),
-                RejectedBy       = reader.IsDBNull(16) ? null : reader.GetString(16),
-                RejectedAtUtc    = reader.IsDBNull(17) ? null : reader.GetDateTime(17),
-                RejectionReason  = reader.IsDBNull(18) ? null : reader.GetString(18),
-                CancelledBy      = reader.IsDBNull(19) ? null : reader.GetString(19),
-                CancelledAtUtc   = reader.IsDBNull(20) ? null : reader.GetDateTime(20),
-                CancellationReason = reader.IsDBNull(21) ? null : reader.GetString(21),
-                TriggeredBy      = reader.IsDBNull(22) ? null : reader.GetString(22),
-                TriggeredAtUtc   = reader.IsDBNull(23) ? null : reader.GetDateTime(23),
-                StartDateTime          = reader.IsDBNull(24) ? null : reader.GetDateTime(24),
-                EndDateTime            = reader.IsDBNull(25) ? null : reader.GetDateTime(25),
-                FailureReason          = reader.IsDBNull(26) ? null : reader.GetString(26),
-                ActiveDownloadVersion  = reader.IsDBNull(27) ? null : reader.GetInt32(27)
-            };
 
         private static async Task DeleteFromAsync(
             NpgsqlConnection conn, NpgsqlTransaction tx,

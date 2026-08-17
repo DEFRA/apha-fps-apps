@@ -43,6 +43,10 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<DivisionViewModel, DivisionDto>().ReverseMap();
             CreateMap<DivisionGradeItem, DivisionGradeDto>().ReverseMap();
             CreateMap<GradeItem, GradeDto>().ReverseMap();
+
+            // Maps CostCentreItem (DataGrid row: CostCentreNo double, ProfitCentre string) <-> CostCentreDto
+            CreateMap<CostCentreItem, CostCentreDto>().ReverseMap();
+
             CreateMap<ResourceCentreMaintenanceItem, ProfitCentreDto>().ReverseMap();
             CreateMap<TestPlanItem, TestRequirementDto>().ReverseMap();
             CreateMap<AdditionalCostItemViewModel, AdditionalCostDto>().ReverseMap();
@@ -59,6 +63,14 @@ namespace Apha.FPSApps.Web.Mappings
             //Work Group Staff Maintenance
             CreateMap<WorkGroupEmployeeStaffItem, WorkGroupEmployeeStaffDto>().ReverseMap();
             // Resource Set-Up
+            CreateMap<SetUpStaffResourcesItem, WorkGroupEmployeeStaffDto>()
+                .ForMember(d => d.PersonStatus, o => o.Ignore())
+                .ForMember(d => d.PersonClass, o => o.Ignore())
+                .ForMember(d => d.TimeRecorder, o => o.Ignore())
+                .ForMember(d => d.StartDate, o => o.Ignore())
+                .ForMember(d => d.EndDate, o => o.Ignore())
+                .ForMember(d => d.HoursPerWeek, o => o.Ignore())
+                .ReverseMap();
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
 
             // ProfitCentreGradeMaint
@@ -116,6 +128,14 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<PlanStaffZTCodeItemViewModel, StaffJobDto>()
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
                 .ReverseMap();
+
+            // Resource Allocation — Staff Jobs grid
+            CreateMap<ResourceStaffJobDetailDto, ResourceStaffJobItem>()
+                .ForMember(d => d.Project, o => o.MapFrom(s => s.JobCode))
+                .ForMember(d => d.Description, o => o.MapFrom(s => s.JobDescription))
+                .ForMember(d => d.Hour, o => o.MapFrom(s => s.PlannedHours))
+                .ForMember(d => d.Status, o => o.MapFrom(s => s.ProjectStatus))
+                .ForMember(d => d.StaffId, o => o.Ignore());
 
             // Contribution Summary — row grid item
             CreateMap<ContributionSummaryRowDto, ContributionSummaryRowItem>().ReverseMap();

@@ -299,13 +299,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsBulkRatesApiClien
             var mappedDto = ApiResponseDto<BulkRatesQueueEntryDto?>.SuccessResponse(
                 new BulkRatesQueueEntryDto { Status = "Initiated" });
 
-            _http.GetAsync<BulkRatesQueueEntryRes?>(Arg.Any<string>()).Returns(apiResponse);
+            _http.GetAsync<BulkRatesQueueEntryRes?>(Arg.Any<string>(), true).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<BulkRatesQueueEntryDto?>>(apiResponse).Returns(mappedDto);
 
             var result = await _client.GetActiveRequestAsync("BulkTestRatesUpdate");
 
             Assert.True(result.Success);
             Assert.Equal("Initiated", result.Data!.Status);
+            // GetActiveRequestAsync is the one caller allowed to treat 204 (no active request)
+            // as success — locks in that it actually opts in, not just that a mock happens to match.
+            await _http.Received(1).GetAsync<BulkRatesQueueEntryRes?>(Arg.Any<string>(), true);
         }
 
         [Fact]

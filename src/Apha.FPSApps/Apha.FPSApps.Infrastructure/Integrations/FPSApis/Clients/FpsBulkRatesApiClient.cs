@@ -159,7 +159,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<BulkRatesQueueEntryDto?>> GetActiveRequestAsync(string jobName)
         {
             var url = string.Format(FpsApiEndpoints.GetActiveBulkRatesRequest, Uri.EscapeDataString(jobName));
-            var response = await _http.GetAsync<BulkRatesQueueEntryRes?>(url);
+            var response = await _http.GetAsync<BulkRatesQueueEntryRes?>(url, allowNoContent: true);
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<BulkRatesQueueEntryDto?>>(response);

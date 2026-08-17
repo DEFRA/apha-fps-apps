@@ -4,6 +4,7 @@ using Apha.Common.Constants;
 using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Dtos.BulkRates;
+using Apha.FPS.Application.Enums;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Validation;

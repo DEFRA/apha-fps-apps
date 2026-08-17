@@ -586,20 +586,44 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(Guid id, IFormFile file)
         {
+            // Entry marker — if this line never appears in the logs for a failed upload, the
+            // request isn't reaching this container (proxy/WAF/body-size limit upstream), not an
+            // application-code failure. Kept at Information so it survives a Warning-only override.
+            _logger.LogInformation(
+                "BulkRates Upload received for {Id}: File={FileName}, Size={Size} bytes, ContentType={ContentType}",
+                id, file?.FileName, file?.Length, file?.ContentType);
+
             if (file is null || file.Length == 0)
                 return Json(new { success = false, message = "Please select a file before uploading." });
 
-            using var ms = new MemoryStream();
-            await file.CopyToAsync(ms);
-            var bytes = ms.ToArray();
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var bytes = ms.ToArray();
 
-            var response = await _bulkRatesService.UploadFileAsync(id, bytes, file.FileName);
-            if (response.Success)
-                return Json(new { success = true, data = response.Data });
+                var response = await _bulkRatesService.UploadFileAsync(id, bytes, file.FileName);
+                if (response.Success)
+                {
+                    _logger.LogInformation("BulkRates Upload succeeded for {Id}: File={FileName}", id, file.FileName);
+                    return Json(new { success = true, data = response.Data });
+                }
 
-            var msg = response.Errors?.FirstOrDefault()?.Message ?? "Upload failed.";
-            _logger.LogWarning("BulkRates Upload failed for {Id}: {Message}", id, msg);
-            return Json(new { success = false, message = msg });
+                var msg = response.Errors?.FirstOrDefault()?.Message ?? "Upload failed.";
+                _logger.LogWarning("BulkRates Upload failed for {Id}: {Message}", id, msg);
+                return Json(new { success = false, message = msg });
+            }
+            catch (Exception ex)
+            {
+                // Local catch (this action previously had none) so the AJAX caller gets a JSON
+                // error body instead of ExceptionMiddleware's redirect-to-/Error/Index — which an
+                // XHR request can't follow and jQuery just surfaces as a generic failure — and so
+                // this failure carries file/request context the generic handler doesn't have.
+                _logger.LogError(ex,
+                    "BulkRates Upload threw for {Id}: File={FileName}, Size={Size} bytes",
+                    id, file.FileName, file.Length);
+                return Json(new { success = false, message = "Upload failed due to an unexpected error. Please try again." });
+            }
         }
 
         // Release for approval — POST (AJAX)

@@ -1,4 +1,5 @@
-using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Application.Enums;
+using Apha.FPS.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace Apha.FPS.Application.Services

@@ -13,7 +13,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
         };
 
         public static async Task<ApiResponse<T>> ToApiResponse<T>(
-         this HttpResponseMessage response)
+         this HttpResponseMessage response, bool allowNoContent = false)
         {
             // Handle 404 Not Found - throw exception to let middleware handle it
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -23,7 +23,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
 
             // ASP.NET Core's Ok(null) is auto-converted to 204 No Content by MVC's default
             // output formatter — the body is empty, so there is nothing to deserialize.
-            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+            // Opt-in only: callers that never expect a 204 (i.e. every endpoint except
+            // GetActiveRequestAsync) should not have an unexpected No Content silently
+            // treated as success.
+            if (allowNoContent && response.StatusCode == System.Net.HttpStatusCode.NoContent)
             {
                 return new ApiResponse<T>
                 {

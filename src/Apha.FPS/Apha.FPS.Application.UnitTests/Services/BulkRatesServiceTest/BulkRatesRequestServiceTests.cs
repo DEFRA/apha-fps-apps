@@ -2,6 +2,7 @@ using Apha.Common.Constants;
 using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Dtos.BulkRates;
+using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Services;
 using NSubstitute.ExceptionExtensions;
 using Apha.FPS.Application.Dtos.BulkRates;

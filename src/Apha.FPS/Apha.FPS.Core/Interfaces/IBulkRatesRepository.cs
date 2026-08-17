@@ -5,7 +5,9 @@ namespace Apha.FPS.Core.Interfaces
 {
     /// <summary>
     /// Data access contract for all Bulk Rates API operations against fps schema tables.
-    /// Implemented by BulkRatesRepository in Apha.FPS.DataAccess using raw Npgsql.
+    /// Implemented by BulkRatesRepository in Apha.FPS.DataAccess — the core job_queue
+    /// lifecycle via EF/LINQ, staging/validation/download-snapshot tables via raw Npgsql
+    /// (see the implementation's class-level doc comment for the split).
     /// </summary>
     public interface IBulkRatesRepository
     {
