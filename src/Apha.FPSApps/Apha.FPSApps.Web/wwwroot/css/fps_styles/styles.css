@@ -5365,8 +5365,8 @@ body,
 }
 #gridContainer_programProjectGrid {
     .grid-scroll-container {
-        max-height: 400px;
-        height: 310px;
+        max-height: 460px;
+        height: 460px;
         overflow-y: auto;
     }
 }
