@@ -130,14 +130,16 @@
                                 </div>
 
                                 <div class="govuk-form-group sup_margin_0">
-                                    <label class="govuk-label required" asp-for="Program">Programme:</label>
+                                <label id="ProgramLabel" class="govuk-label required" asp-for="Program">Programme:</label>
                                     <div style="position: relative;">
                                         <input type="text" id="ProgramDisplay" placeholder="Select Programme" autocomplete="off"
-                                               class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly />
+                                               class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly
+                                               aria-labelledby="ProgramLabel" aria-haspopup="listbox" aria-expanded="false" aria-controls="ProgramDropdownBody" />
                                         <div id="ProgramDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
                                                 max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
                                                 box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
-                                            <input type="text" id="ProgramSearchBox" placeholder="Type to search programme"
+                                            <label for="ProgramSearchBox" class="govuk-label govuk-visually-hidden">Search programmes</label>
+                                            <input type="text" id="ProgramSearchBox" placeholder="Type to search programme" aria-label="Search programmes"
                                                    style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
                                             <table style="width:100%; border-collapse:collapse; font-size:14px;">
                                                 <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
@@ -146,7 +148,7 @@
                                                         <th style="padding:6px 8px; text-align:left;">Programme Name</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody id="ProgramDropdownBody">
+                                                <tbody id="ProgramDropdownBody" role="listbox" aria-label="Programme results">
                                                     @foreach (var item in Model.ProgramList.Where(i => !string.IsNullOrEmpty(i.Value)))
                                                     {
                                                         var parts = item.Text.Split('|');
@@ -245,14 +247,16 @@
                                 </div>
 
                                 <div class="govuk-form-group sup_margin_0">
-                                    <label class="govuk-label required" asp-for="CostCentre">Cost Centre:</label>
+                                <label id="CostCentreLabel" class="govuk-label required" asp-for="CostCentre">Cost Centre:</label>
                                     <div style="position: relative;">
                                         <input type="text" id="CostCentreDisplay" placeholder="Select Cost Centre" autocomplete="off"
-                                               class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly />
+                                               class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly
+                                               aria-labelledby="CostCentreLabel" aria-haspopup="listbox" aria-expanded="false" aria-controls="CostCentreDropdownBody" />
                                         <div id="CostCentreDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
                                                 max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
                                                 box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
-                                            <input type="text" id="CostCentreSearchBox" placeholder="Type to search cost centre"
+                                            <label for="CostCentreSearchBox" class="govuk-label govuk-visually-hidden">Search cost centres</label>
+                                            <input type="text" id="CostCentreSearchBox" placeholder="Type to search cost centre" aria-label="Search cost centres"
                                                    style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
                                             <table style="width:100%; border-collapse:collapse; font-size:14px;">
                                                 <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
@@ -262,7 +266,7 @@
                                                         <th style="padding:6px 8px; text-align:left;">WG</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody id="CostCentreDropdownBody">
+                                                <tbody id="CostCentreDropdownBody" role="listbox" aria-label="Cost centre results">
                                                     @foreach (var item in Model.CostCentreList.Where(i => !string.IsNullOrEmpty(i.Value)))
                                                     {
                                                         var ccParts  = item.Text.Split('|');
@@ -582,8 +586,10 @@
                 }
                 programDisplay.addEventListener('click', function (e) {
                     e.stopPropagation();
-                    programPanel.style.display = programPanel.style.display === 'none' ? 'block' : 'none';
-                    if (programPanel.style.display === 'block') { programSearch.value = ''; filterProgramRows(); programSearch.focus(); }
+                    var isOpen = programPanel.style.display === 'block';
+                    programPanel.style.display = isOpen ? 'none' : 'block';
+                    programDisplay.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+                    if (!isOpen) { programSearch.value = ''; filterProgramRows(); programSearch.focus(); }
                 });
                 programSearch.addEventListener('input', filterProgramRows);
                 function filterProgramRows() {
@@ -599,6 +605,7 @@
                         Array.from(programSelect.options).forEach(function (o) { o.selected = o.value === val; });
                         programSelect.dispatchEvent(new Event('change'));
                         programPanel.style.display = 'none';
+                        programDisplay.setAttribute('aria-expanded', 'false');
                     });
                     row.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
                     row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
@@ -606,6 +613,7 @@
                 document.addEventListener('click', function (e) {
                     if (!programDisplay.contains(e.target) && !programPanel.contains(e.target)) {
                         programPanel.style.display = 'none';
+                        programDisplay.setAttribute('aria-expanded', 'false');
                     }
                 });
             }
@@ -626,8 +634,10 @@
                 }
                 costCentreDisplay.addEventListener('click', function (e) {
                     e.stopPropagation();
-                    costCentrePanel.style.display = costCentrePanel.style.display === 'none' ? 'block' : 'none';
-                    if (costCentrePanel.style.display === 'block') { costCentreSearch.value = ''; filterCostCentreRows(); costCentreSearch.focus(); }
+                    var isOpen = costCentrePanel.style.display === 'block';
+                    costCentrePanel.style.display = isOpen ? 'none' : 'block';
+                    costCentreDisplay.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+                    if (!isOpen) { costCentreSearch.value = ''; filterCostCentreRows(); costCentreSearch.focus(); }
                 });
                 costCentreSearch.addEventListener('input', filterCostCentreRows);
                 function filterCostCentreRows() {
@@ -643,6 +653,7 @@
                         Array.from(costCentreSelect.options).forEach(function (o) { o.selected = o.value === val; });
                         costCentreSelect.dispatchEvent(new Event('change'));
                         costCentrePanel.style.display = 'none';
+                        costCentreDisplay.setAttribute('aria-expanded', 'false');
                     });
                     row.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
                     row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
@@ -650,6 +661,7 @@
                 document.addEventListener('click', function (e) {
                     if (!costCentreDisplay.contains(e.target) && !costCentrePanel.contains(e.target)) {
                         costCentrePanel.style.display = 'none';
+                        costCentreDisplay.setAttribute('aria-expanded', 'false');
                     }
                 });
             }

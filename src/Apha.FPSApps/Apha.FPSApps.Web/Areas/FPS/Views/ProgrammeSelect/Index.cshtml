@@ -13,11 +13,12 @@
                 </h1>
             </div>
             <div class="govuk-grid-column-one-third isFloatRight">
+                <form id="programmeFilterForm" role="search" aria-label="Programme and project filters">
                 <table class="govuk-table govuk-!-margin-bottom-2">
                     <tbody class="govuk-table__body">
                         <tr class="govuk-table__row">
                             <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
-                                <label class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-0 govuk-!-font-weight-bold isNoWrap" for="programmeDropdown">Select a Programme:</label>
+                                <label id="programmeDropdownLabel" class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-0 govuk-!-font-weight-bold isNoWrap" for="programmeDropdown">Select a Programme:</label>
                             </th>
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
                                 <select id="programmeDropdown"
@@ -37,11 +38,12 @@
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 isNoBottomBorder">
                                 <input type="text" id="projectNameInput" placeholder="Select Project" autocomplete="off"
                                        class="govuk-input down-arrow-img isNoWrap"
-                                       value="@Model.ProjectName" aria-label="Filter project" readonly />
+                                       value="@Model.ProjectName" aria-label="Filter project" aria-haspopup="listbox" aria-expanded="false" aria-controls="ProjectDropdownBody" readonly />
                                 <div id="ProjectDropdownPanel" style="display:none; position:absolute; top:100%; right: 26px; width:420px;
                                     max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
                                     box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000; top: 168px;">
-                                    <input type="text" id="ProjectSearchBox" placeholder="Type to search project"
+                                    <label for="ProjectSearchBox" class="govuk-label govuk-visually-hidden">Search projects</label>
+                                    <input type="text" id="ProjectSearchBox" placeholder="Type to search project" aria-label="Search projects"
                                            style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
                                     <table style="width:100%; border-collapse:collapse; font-size:14px;">
                                         <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
@@ -50,13 +52,14 @@
                                                 <th style="padding:6px 8px; text-align:left;">Program</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="ProjectDropdownBody"></tbody>
+                                        <tbody id="ProjectDropdownBody" role="listbox" aria-label="Project results"></tbody>
                                     </table>
                                 </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+                </form>
             </div>
         </div>
 
