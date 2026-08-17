@@ -7,31 +7,45 @@
     <div class="container-fluid">
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-                <div class="ssr-heading-row">
-                    <h1 class="govuk-heading-s sup_border-bottom ssr-main-title">
-                        Set Up Staff Resources
-                    </h1>
-                    <div class="ssr-heading-controls">
-                        <label for="resourceCentreSelect" class="govuk-label govuk-!-font-weight-bold">Select a Resource Center: </label>
-                        <select class="govuk-select ssr-resource-select"
-                                id="resourceCentreSelect"
-                                aria-label="Select a Resource Center"
-                                asp-for="SelectedResourceCentre"
-                                asp-items="Model.ResourceCentres"
-                                onchange="LoadGroupsByResourceCentre()">
-                            <option value="">-- Select a Resource Center --</option>
-                        </select>
+                <div class="govuk-grid-row sup_border-bottom">
+                    <div class="govuk-grid-column-one-half">
+                        <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 govuk-!-margin-left-0 isCustomPageHeadings">
+                            Set Up Staff Resources
+                        </h1>
                     </div>
-                    <div class="govuk-form-group ssr-wg-input-group">
-                        <label for="ssrSelectedWorkgroup" class="govuk-label govuk-!-font-weight-bold">Select WorkGroup: </label>
-                        <select class="govuk-select ssr-resource-select"
-                                id="workGroupSelect"
-                                aria-label="Select a Work Group"
-                                asp-for="SelectedWorkgroup"
-                                asp-items="Model.WorkGroupList"
-                                onchange="LoadGradeByGroup()">
-                            <option value="">-- Select a Work Group --</option>
-                        </select>
+                    <div class="govuk-grid-column-one-half isFloatRight">
+                        <table class="govuk-table govuk-!-margin-bottom-2">
+                            <tbody class="govuk-table__body">
+                                <tr class="govuk-table__row">
+                                    <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
+                                        <label class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-0 govuk-!-font-weight-bold isNoWrap" for="programmeDropdown">Select a Resource Center:</label>
+                                    </th>
+                                    <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
+                                        <select class="govuk-select" id="resourceCentreSelect"
+                                                aria-label="Select a Resource Center"
+                                                asp-for="SelectedResourceCentre"
+                                                asp-items="Model.ResourceCentres"
+                                                onchange="LoadGroupsByResourceCentre()">
+                                            <option value="">-- Select a Resource Center --</option>
+                                        </select>
+                                    </td>
+
+                                    <th scope="row" class="govuk-table__header  govuk-!-padding-right-1 govuk-!-padding-bottom-0 isNoBottomBorder">
+                                        <label for="ssrSelectedWorkgroup" class="govuk-label govuk-!-margin-bottom-0 govuk-!-font-weight-bold isNoWrap">Select WorkGroup: </label>
+                                    </th>
+                                    <td class="govuk-table__cell govuk-!-padding-bottom-0 isNoBottomBorder">
+                                        <select class="govuk-select"
+                                                id="workGroupSelect"
+                                                aria-label="Select a Work Group"
+                                                asp-for="SelectedWorkgroup"
+                                                asp-items="Model.WorkGroupList"
+                                                onchange="LoadGradeByGroup()">
+                                            <option value="">-- Select a Work Group --</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -144,17 +158,17 @@
     <script>
         // Initialise the SetUpStaffResources module with server-side values.
         window.ssrConfig = {
-            currentCentre:    '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedResourceCentre))',
+            currentCentre: '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedResourceCentre))',
             currentWorkGroup: '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedWorkgroup))',
-            currentGrade:     '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedGrade))',
-            ztCodeUrl:        '@Url.Action("Index", "PlanStaffZTCode", new { area = "FPS" })'
+            currentGrade: '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedGrade))',
+            ztCodeUrl: '@Url.Action("Index", "PlanStaffZTCode", new { area = "FPS" })'
         };
 
         // Initialise side nav state from server-selected values.
         window.sideNavState = {
             resourceCentre: '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedResourceCentre))',
-            workGroup:      '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedWorkgroup))',
-            fpsYear:        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(ViewBag.FpsYear?.ToString() ?? string.Empty))'
+            workGroup: '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedWorkgroup))',
+            fpsYear: '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(ViewBag.FpsYear?.ToString() ?? string.Empty))'
         };
 
         // Keep sideNavState in sync when the user changes the Resource Centre dropdown.
@@ -164,7 +178,7 @@
                 const wgSelect = document.getElementById('workGroupSelect');
 
                 if (rcSelect) {
-                    rcSelect.addEventListener('change', function () {
+                    rcSelect.addEventListener('change', function() {
                         window.sideNavState.resourceCentre = this.value;
                         window.sideNavState.workGroup = '';
                         sideNavUpdateLinks();
@@ -172,7 +186,7 @@
                 }
 
                 if (wgSelect) {
-                    wgSelect.addEventListener('change', function () {
+                    wgSelect.addEventListener('change', function() {
                         window.sideNavState.workGroup = this.value;
                         sideNavUpdateLinks();
                     });

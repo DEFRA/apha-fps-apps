@@ -89,21 +89,19 @@ function saveAccountCategory(isEdit = false) {
         return;
     }
 
-    // Validate AccountType - must be 'Pay' or 'NPRC' (case-insensitive).
-    // Normalise to the canonical casing so lowercase input (e.g. pay, nprc) is accepted.
-    const accountTypeInput = $('#AccountType').val().trim();
-    const accountTypeCanonicalMap = { 'pay': 'Pay', 'nprc': 'NPRC' };
-    const accountType = accountTypeCanonicalMap[accountTypeInput.toLowerCase()];
-    if (!accountType) {
+    // AccountType accepts any case/combination of "PAY" or "NPRC".
+    // Convert the entered value to upper case and validate it equals PAY or NPRC.
+    const accountType = $('#AccountType').val().trim().toUpperCase();
+    if (accountType !== 'PAY' && accountType !== 'NPRC') {
         const validationErrors = [{
             field: 'AccountType',
-            message: 'AccountType must be either "Pay" or "NPRC".'
+            message: 'AccountType must be either "PAY" or "NPRC".'
         }];
         displayServerValidationErrors(validationErrors, 'Please correct the following error:', '#accountCategoryModalContent');
         return;
     }
 
-    // Reflect the normalised value back to the input for user feedback.
+    // Reflect the normalised (upper case) value back to the input for user feedback.
     $('#AccountType').val(accountType);
 
     const formData = {
