@@ -26,14 +26,17 @@
 
 /* Left panel: workgroup selector */
 .ruv-left-panel {
-  width: 220px;
-  flex: 0 0 220px;
+    float: left;
+    width: 220px;
+    flex: 0 0 220px;
 }
 
 /* Right panel: staff utilisation grid */
 .ruv-right-panel {
-  flex: 1;
-  min-width: 0;
+    float: left;
+    flex: 1;
+    min-width: 0;
+    width: 87vw;
 }
 
 /* Staff totals summary strip below the grid */

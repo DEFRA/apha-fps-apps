@@ -5347,6 +5347,18 @@ body,
 .isWorkgroupStaffPlan{
     width: 42%;
 }
+.isSetUpStaffResources {
+    width: 63%;
+}
+.isBudgetBidsQuery{
+    width: 21%;
+}
+.isResourceReAllocationScreen {
+    width: 24%;
+}  
+.isStaffPlanDetails {
+    width: 20%;
+}
 
 .isPlanAllAdditionalCosts.isHalfGrid {
     width: 54%;
@@ -5441,4 +5453,13 @@ body,
 #fpsSrTotalSick,
 #fpsSrTotalAtWork {
     border: 1px solid #b1b4b6 !important;
+}
+.content-wrapper:has(.isResourceUtilizationViewPage) {
+    flex: 0 !important;
+    margin-bottom: 0 !important;
+}
+.govuk-footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
 }

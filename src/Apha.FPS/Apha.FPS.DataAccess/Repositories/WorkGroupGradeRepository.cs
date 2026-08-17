@@ -49,6 +49,17 @@ namespace Apha.FPS.DataAccess.Repositories
                 .FirstOrDefaultAsync(e => e.WgGrade == wgGrade);
         }
 
+        public async Task<bool> ExistsByWgGradeAsync(string wgGrade)
+        {
+            if (string.IsNullOrWhiteSpace(wgGrade))
+                return false;
+
+            return await _dbContext.WorkgroupGrades
+                .AsNoTracking()
+                .AnyAsync(e => e.FpsYear == _requestContext.FpsYear
+                            && EF.Functions.ILike(e.WgGrade, wgGrade));
+        }
+
         public async Task<WorkgroupGrade> CreateAsync(WorkgroupGrade entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
@@ -153,16 +164,16 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("WgGrade", out var wgGrade) && wgGrade != null)
-                query = query.Where(e => e.WgGrade.Contains(wgGrade.ToString()!));
+                query = query.Where(e => EF.Functions.ILike(e.WgGrade, $"%{wgGrade}%"));
 
             if (dict.TryGetValue("ProfitCentreGrade", out var pcGrade) && pcGrade != null)
-                query = query.Where(e => e.ProfitCentreGrade.Contains(pcGrade.ToString()!));
+                query = query.Where(e => EF.Functions.ILike(e.ProfitCentreGrade, $"%{pcGrade}%"));
 
             if (dict.TryGetValue("GradeCode", out var gradeCode) && gradeCode != null)
-                query = query.Where(e => e.GradeCode.Contains(gradeCode.ToString()!));
+                query = query.Where(e => EF.Functions.ILike(e.GradeCode, $"%{gradeCode}%"));
 
             if (dict.TryGetValue("Workgroup", out var workgroup) && workgroup != null)
-                query = query.Where(e => e.Workgroup.Contains(workgroup.ToString()!));
+                query = query.Where(e => EF.Functions.ILike(e.Workgroup, $"%{workgroup}%"));
 
             return query;
         }
