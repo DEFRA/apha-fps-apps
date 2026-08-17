@@ -621,6 +621,66 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
             Assert.Equal(2, result.Data.Count());
         }
 
+        [Theory]
+        [InlineData("alpha")]
+        [InlineData("ALPHA")]
+        [InlineData("AlPhA")]
+        public async Task GetAllProfitCentresPagedAsync_FiltersByProfitCentreName_IsCaseInsensitive(string filterValue)
+        {
+            var entities = new List<ProfitCentre>
+            {
+                BuildEntity("PC01", "Alpha Centre"),
+                BuildEntity("PC02", "Beta Centre"),
+                BuildEntity("PC03", "Alpha North")
+            };
+            var repo = CreateRepository(profitCentres: entities);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { "ProfitCentreName", filterValue } });
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllProfitCentresPagedAsync(query);
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Theory]
+        [InlineData("pc0")]
+        [InlineData("PC0")]
+        [InlineData("Pc0")]
+        public async Task GetAllProfitCentresPagedAsync_FiltersByProfitCentreId_IsCaseInsensitive(string filterValue)
+        {
+            var entities = new List<ProfitCentre>
+            {
+                BuildEntity("PC01", "Alpha Centre"),
+                BuildEntity("PC02", "Beta Centre"),
+                BuildEntity("XX03", "Alpha North")
+            };
+            var repo = CreateRepository(profitCentres: entities);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { "ProfitCentreId", filterValue } });
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllProfitCentresPagedAsync(query);
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Theory]
+        [InlineData("div1")]
+        [InlineData("DIV1")]
+        [InlineData("Div1")]
+        public async Task GetAllProfitCentresPagedAsync_FiltersByDivision_IsCaseInsensitive(string filterValue)
+        {
+            var entities = new List<ProfitCentre>
+            {
+                BuildEntity("PC01", "Alpha Centre", "DIV1"),
+                BuildEntity("PC02", "Beta Centre", "DIV2"),
+                BuildEntity("PC03", "Alpha North", "DIV1")
+            };
+            var repo = CreateRepository(profitCentres: entities);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { "Division", filterValue } });
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllProfitCentresPagedAsync(query);
+            Assert.Equal(2, result.Data.Count());
+        }
+
         [Fact]
         public async Task GetAllProfitCentresPagedAsync_ThrowsJsonException_WhenFilterIsInvalidJson()
         {

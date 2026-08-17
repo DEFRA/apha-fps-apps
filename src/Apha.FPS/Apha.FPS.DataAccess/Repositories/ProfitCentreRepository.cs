@@ -324,21 +324,21 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 var filterValue = profitCentreId.ToString();
                 if (!string.IsNullOrWhiteSpace(filterValue))
-                    query = query.Where(p => p.ProfitCentreId.Contains(filterValue));
+                    query = query.Where(p => EF.Functions.ILike(p.ProfitCentreId, $"%{filterValue}%"));
             }
 
             if (dict.TryGetValue("ProfitCentreName", out var profitCentreName) && profitCentreName != null)
             {
                 var filterValue = profitCentreName.ToString();
                 if (!string.IsNullOrWhiteSpace(filterValue))
-                    query = query.Where(p => p.ProfitCentreName.Contains(filterValue));
+                    query = query.Where(p => EF.Functions.ILike(p.ProfitCentreName, $"%{filterValue}%"));
             }
 
             if (dict.TryGetValue("Division", out var division) && division != null)
             {
                 var filterValue = division.ToString();
                 if (!string.IsNullOrWhiteSpace(filterValue))
-                    query = query.Where(p => p.Division.Contains(filterValue));
+                    query = query.Where(p => EF.Functions.ILike(p.Division, $"%{filterValue}%"));
             }
 
             return query;
