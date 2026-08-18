@@ -9,7 +9,7 @@ var currentMonthNumber = null;
 
 /**
  * Returns the grid manager instance for the profit center cost grid.
- * @returns {object|undefined} The grid manager, or undefined if not yet initialised.
+ * @returns {object|undefined} The grid manager, or undefined if not yet initialised .
  */
 function getProfitCenterCostGridManager() {
     return window['gridManager_' + profitCenterCostGridId];
