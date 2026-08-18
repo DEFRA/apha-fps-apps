@@ -93,12 +93,15 @@
         btn.disabled = true;
         btn.setAttribute('aria-disabled', 'true');
 
+        var antiForgeryToken = getAntiForgeryToken();
+
         $.ajax({
             url: TRIGGER_URL,
             type: 'POST',
+            headers: { 'RequestVerificationToken': antiForgeryToken },
             data: {
                 month: monthVal,
-                __RequestVerificationToken: getAntiForgeryToken()
+                __RequestVerificationToken: antiForgeryToken
             },
             success: function (data) {
                 if (data.success) {
@@ -134,14 +137,17 @@
         var container = document.getElementById('gridContainer_summaryHistoryGrid');
         if (!container) return;
 
+        var antiForgeryToken = getAntiForgeryToken();
+        debugger;
         $.ajax({
             url: GRID_URL,
             type: 'POST',
+            headers: { 'RequestVerificationToken': antiForgeryToken },
             data: {
                 Filter: '{}',
                 Page: 1,
                 PageSize: 10,
-                __RequestVerificationToken: getAntiForgeryToken()
+                //__RequestVerificationToken: antiForgeryToken
             },
             success: function (html) { container.innerHTML = html; },
             error: function () { showAlertMessage('Failed to refresh history grid.', AlertType.ERROR); }
