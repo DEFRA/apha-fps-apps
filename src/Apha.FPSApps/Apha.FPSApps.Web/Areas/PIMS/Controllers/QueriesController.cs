@@ -116,7 +116,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 serviceFilterDict["ExportQueryType"] = selectedQuery;
                 queryParameters.Filter = JsonConvert.SerializeObject(serviceFilterDict);
 
-                string contractFilter = string.IsNullOrWhiteSpace(contract) ? "*" : contract;
+                bool shouldApplyContractFilter = string.Equals(selectedQuery, "contractMonitoring", StringComparison.OrdinalIgnoreCase);
+                string contractFilter = shouldApplyContractFilter && !string.IsNullOrWhiteSpace(contract)
+                    ? contract
+                    : "*";
 
                 var response = await _queriesService.GetMonitoringReportDataAsync(
                     queryParameters,

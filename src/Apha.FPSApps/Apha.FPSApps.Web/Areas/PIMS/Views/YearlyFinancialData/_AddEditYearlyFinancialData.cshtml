@@ -74,12 +74,11 @@
                                    for="yfdModalPPAcc">
                                 PP/Acc:
                             </label>
-                            <input class="govuk-input govuk-!-font-size-16"
+                            <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                                    id="yfdModalPPAcc"
                                    name="yfdModalPPAcc"
-                                   type="number"
-                                   step="any"
-                                   inputmode="decimal"
+                                   type="text"
+                                   maxlength="20"
                                    value="@Model.BfBudget"
                                    aria-describedby="yfdModalPPAcc-error" />
                             <p class="govuk-error-message govuk-!-display-none" id="yfdModalPPAcc-error">
@@ -96,11 +95,11 @@
                             </label>
                             <div class="govuk-input__wrapper">
                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                <input class="govuk-input govuk-!-font-size-16 validate-number"
+                                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                                        id="yfdModalCustomerIncome"
                                        name="yfdModalCustomerIncome"
                                        type="text"
-                                       inputmode="decimal"
+                                       maxlength="20"
                                        value="@Model.PyBudget"
                                        aria-describedby="yfdModalCustomerIncome-error" />
                             </div>
@@ -118,11 +117,11 @@
                             </label>
                             <div class="govuk-input__wrapper">
                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                <input class="govuk-input govuk-!-font-size-16 validate-number"
+                                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                                        id="yfdModalVLABudget"
                                        name="yfdModalVLABudget"
                                        type="text"
-                                       inputmode="decimal"
+                                       maxlength="20"
                                        value="@Model.VlaBudget"
                                        aria-describedby="yfdModalVLABudget-error" />
                             </div>
@@ -140,11 +139,11 @@
                             </label>
                             <div class="govuk-input__wrapper">
                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                <input class="govuk-input govuk-!-font-size-16 validate-number"
+                                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                                        id="yfdModalSeedcorn"
                                        name="yfdModalSeedcorn"
                                        type="text"
-                                       inputmode="decimal"
+                                       maxlength="20"
                                        value="@Model.Seedcorn"
                                        oninput="recalcYFDTotalCosts()"
                                        aria-describedby="yfdModalSeedcorn-error" />
@@ -163,11 +162,11 @@
                             </label>
                             <div class="govuk-input__wrapper">
                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                <input class="govuk-input govuk-!-font-size-16 validate-number"
+                                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                                        id="yfdModalPayCosts"
                                        name="yfdModalPayCosts"
                                        type="text"
-                                       inputmode="decimal"
+                                       maxlength="20"
                                        value="@Model.PayCosts"
                                        oninput="recalcYFDTotalCosts()"
                                        aria-describedby="yfdModalPayCosts-error" />
@@ -186,11 +185,11 @@
                             </label>
                             <div class="govuk-input__wrapper">
                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                <input class="govuk-input govuk-!-font-size-16 validate-number"
+                                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                                        id="yfdModalNonPay"
                                        name="yfdModalNonPay"
                                        type="text"
-                                       inputmode="decimal"
+                                       maxlength="20"
                                        value="@Model.NonPayOhCosts"
                                        oninput="recalcYFDTotalCosts()"
                                        aria-describedby="yfdModalNonPay-error" />
@@ -209,11 +208,11 @@
                             </label>
                             <div class="govuk-input__wrapper">
                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                <input class="govuk-input govuk-!-font-size-16 validate-number"
+                                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                                        id="yfdModalTestCosts"
                                        name="yfdModalTestCosts"
                                        type="text"
-                                       inputmode="decimal"
+                                       maxlength="20"
                                        value="@Model.TestCosts"
                                        oninput="recalcYFDTotalCosts()"
                                        aria-describedby="yfdModalTestCosts-error" />
@@ -232,11 +231,11 @@
                             </label>
                             <div class="govuk-input__wrapper">
                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                <input class="govuk-input govuk-!-font-size-16 validate-number"
+                                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                                        id="yfdModalAnimalCosts"
                                        name="yfdModalAnimalCosts"
                                        type="text"
-                                       inputmode="decimal"
+                                       maxlength="20"
                                        value="@Model.AnimalCosts"
                                        oninput="recalcYFDTotalCosts()"
                                        aria-describedby="yfdModalAnimalCosts-error" />
@@ -255,11 +254,11 @@
                             </label>
                             <div class="govuk-input__wrapper">
                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                <input class="govuk-input govuk-!-font-size-16 validate-number"
+                                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                                        id="yfdModalProjectSpecific"
                                        name="yfdModalProjectSpecific"
                                        type="text"
-                                       inputmode="decimal"
+                                       maxlength="20"
                                        value="@Model.NonAnimalCosts"
                                        oninput="recalcYFDTotalCosts()"
                                        aria-describedby="yfdModalProjectSpecific-error" />
@@ -481,11 +480,11 @@
                             </label>
                             <div class="govuk-input__wrapper">
                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                <input class="govuk-input govuk-!-font-size-16 validate-number"
+                                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                                        id="yfdModalAdjustment"
                                        name="yfdModalAdjustment"
                                        type="text"
-                                       inputmode="decimal"
+                                       maxlength="20"
                                        value="@Model.Adjustment"
                                        aria-describedby="yfdModalAdjustment-error" />
                             </div>
