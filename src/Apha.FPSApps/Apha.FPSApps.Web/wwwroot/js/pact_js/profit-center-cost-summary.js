@@ -54,16 +54,13 @@ function reloadProfitCenterCostGrid(monthNumber) {
     $.ajax({
         url: '/PACT/ProfitCenterCostSummary/LoadProfitCenterCostGrid',
         type: 'POST',
-        headers: {
-            'RequestVerificationToken': token,
-            'X-Requested-With': 'XMLHttpRequest'
-        },
+        headers: { 'RequestVerificationToken': token },
         data: {
-            filter: '{}',
-            sortBy: '',
-            descending: false,
             page: 1,
             pageSize: 10,
+            sortBy: '',
+            descending: false,
+            filter: '{}',
             monthNumber: monthNumber,
             __RequestVerificationToken: token
         },
@@ -71,17 +68,24 @@ function reloadProfitCenterCostGrid(monthNumber) {
             $('#gridContainer_profitCenterCostGrid').html(html);
             profitCenterCostGridId = 'profitCenterCostGrid';
         },
-        error: function (xhr, status, error) {
-            if (xhr.status === 401) {
-                // Session expired — reload the page to trigger the OIDC login flow
-                window.location.reload();
-            } else {
-                console.error('Failed to load grid:', error);
-                $('#gridContainer_profitCenterCostGrid').html(
-                    '<div class="govuk-error-message">Failed to load data. Please try again.</div>'
-                );
-            }
+        error:
+            error: function()
+        {
+            $('#gridContainer_profitCenterCostGrid').html(
+                '<div class="govuk-error-message">Failed to load data. Please try again.</div>'
+            );
         }
+        //     function (xhr, status, error) {
+        //     if (xhr.status === 401) {
+        //         // Session expired — reload the page to trigger the OIDC login flow
+        //         window.location.reload();
+        //     } else {
+        //         console.error('Failed to load grid:', error);
+        //         $('#gridContainer_profitCenterCostGrid').html(
+        //             '<div class="govuk-error-message">Failed to load data. Please try again.</div>'
+        //         );
+        //     }
+        // }
     });
 }
 
@@ -102,11 +106,11 @@ function reloadAllProfitCenterCostGrid() {
     }
 
     gm.reloadGrid({
-        filter: '{}',
+        page: 1,
+        pageSize: 10,
         sortBy: '',
         descending: false,
-        page: 1,
-        pageSize: 10
+        filter: '{}'
     });
 }
 
