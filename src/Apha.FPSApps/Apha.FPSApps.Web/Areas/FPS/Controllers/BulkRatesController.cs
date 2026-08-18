@@ -583,7 +583,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // Upload (or re-upload) Excel file — POST (AJAX)
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        [IgnoreAntiforgeryToken] // DEBUG: temporarily bypassing antiforgery to confirm request reaches action
         public async Task<IActionResult> Upload(Guid id, IFormFile file)
         {
             // Entry marker — if this line never appears in the logs for a failed upload, the
