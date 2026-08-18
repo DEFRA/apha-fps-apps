@@ -1099,8 +1099,7 @@ namespace Apha.FPS.Application.Services
             {
                 SheetName = "Staff",
                 Data = exportRows.Cast<object>(),
-                DataType = typeof(BulkRatesStaffExportRowDto),
-                ProtectedColumnNames = [nameof(BulkRatesStaffExportRowDto.PcGrade)]
+                DataType = typeof(BulkRatesStaffExportRowDto)
             }];
         }
 
@@ -1128,8 +1127,7 @@ namespace Apha.FPS.Application.Services
             {
                 SheetName = "Animals",
                 Data = exportRows.Cast<object>(),
-                DataType = typeof(BulkRatesAnimalExportRowDto),
-                ProtectedColumnNames = [nameof(BulkRatesAnimalExportRowDto.AnimalType)]
+                DataType = typeof(BulkRatesAnimalExportRowDto)
             }];
         }
 
