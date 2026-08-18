@@ -92,15 +92,15 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ./.sonar/scanner
-          key: ${{ runner.os }}-sonar-scanner-9.0.2
-          restore-keys: ${{ runner.os }}-sonar-scanner-9.0.2
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
 
       - name: Install SonarQube Cloud scanner
         if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
         shell: bash
         run: |
           mkdir -p ./.sonar/scanner
-          dotnet tool update dotnet-sonarscanner --version 9.0.2 --tool-path ./.sonar/scanner
+          dotnet tool update dotnet-sonarscanner --tool-path ./.sonar/scanner
 
       - name: Extract short SHA
         id: shortsha
