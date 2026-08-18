@@ -104,6 +104,8 @@ namespace Apha.PIMS.Application.Services
 
         private List<BusinessValidationError> ValidateForSave(YearlyFinancialDataDto dto)
         {
+            const decimal maxNumeric19_4Value = 999999999999999.9999m;
+
             var errors = new List<BusinessValidationError>();
 
             if (dto.Year <= 0)
@@ -121,7 +123,33 @@ namespace Apha.PIMS.Application.Services
                     "Please enter reason for adjustment figure, (or remove the adjustment figure).",
                     "ADJUSTMENT_COMMENT_REQUIRED"));
 
+            ValidateDecimalRange(dto.BfBudget, nameof(dto.BfBudget), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.PyBudget, nameof(dto.PyBudget), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.VlaBudget, nameof(dto.VlaBudget), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.Seedcorn, nameof(dto.Seedcorn), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.PayCosts, nameof(dto.PayCosts), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.NonPayOhCosts, nameof(dto.NonPayOhCosts), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.TestCosts, nameof(dto.TestCosts), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.AnimalCosts, nameof(dto.AnimalCosts), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.NonAnimalCosts, nameof(dto.NonAnimalCosts), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.Adjustment, nameof(dto.Adjustment), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.ActualExpenditure, nameof(dto.ActualExpenditure), maxNumeric19_4Value, errors);
+
             return errors;
+        }
+
+        private static void ValidateDecimalRange(
+            decimal? value,
+            string fieldName,
+            decimal maxValue,
+            List<BusinessValidationError> errors)
+        {
+            if (value.HasValue && Math.Abs(value.Value) > maxValue)
+            {
+                errors.Add(new BusinessValidationError(
+                    $"{fieldName} exceeds the maximum allowed value of {maxValue:N4}.",
+                    "DECIMAL_OVERFLOW"));
+            }
         }
 
         private async Task ApplyLegacyCostingRulesAsync(YearlyFinancialDataDto dto)

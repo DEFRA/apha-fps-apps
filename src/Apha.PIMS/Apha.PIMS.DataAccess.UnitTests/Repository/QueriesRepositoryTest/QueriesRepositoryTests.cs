@@ -147,7 +147,61 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.QueriesRepositoryTest
         }
 
         [Fact]
-        public async Task GetMonitoringReportDataAsync_AllContractExportType_AppliesSurveillanceProgramFilter()
+        public async Task GetAllContractsMonitoringReportDataAsync_AppliesSurveillanceProgramFilter()
+        {
+            // Arrange
+            var myProjects = new List<Projects>
+            {
+                new() { Year = 2025, Parentproject = "PP001", Program = "END_SURV", Manager = "M1", Projectstatus = "Live" },
+                new() { Year = 2025, Parentproject = "PP002", Program = "ZZ", Manager = "M2", Projectstatus = "Live" }
+            };
+
+            var baseProjects = new List<Project>
+            {
+                new() { Parentproject = "PP001", Projecttitle = "Project 1", Contract = "LabTGen" },
+                new() { Parentproject = "PP002", Projecttitle = "Project 2", Contract = "LabTGen" }
+            };
+
+            var yearTotals = new List<FpsYearTotal>
+            {
+                new() { Year = 2025, Parentproject = "PP001", Program = "TB", Totalcosts = 100.0, Customer = "C1", Projectstatus = "Live" },
+                new() { Year = 2025, Parentproject = "PP002", Program = "ZZ", Totalcosts = 200.0, Customer = "C2", Projectstatus = "Live" }
+            };
+
+            var monthFinals = new List<ProjectMonthFinal>
+            {
+                new() { Year = 2025, Project = "PP001", Monthno = 6, Cumcost = 10m },
+                new() { Year = 2025, Project = "PP002", Monthno = 6, Cumcost = 20m }
+            };
+
+            var repo = CreateRepository(
+                myTlkpProjects: myProjects,
+                projects: baseProjects,
+                radTrackContracts: [new RadTrackContract { Contract = "LabTGen" }],
+                fpsYearTotals: yearTotals,
+                projectMonthFinals: monthFinals,
+                comments: new List<Comment>(),
+                radtrackProgs:
+                [
+                    new RadtrackProg { Program = "TB", Radtrackprog = true },
+                    new RadtrackProg { Program = "ZZ", Radtrackprog = false }
+                ]);
+
+            // Act
+            var result = await repo.GetAllContractsMonitoringReportDataAsync(
+                Params(),
+                reportYear: 2025,
+                fiscalMonth: 6,
+                contractFilter: "*",
+                programFilter: null);
+
+            // Assert
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal("END_SURV", Assert.Single(result.Data).Program);
+        }
+
+        [Fact]
+        public async Task GetContractsMonitoringReportDataAsync_DoesNotApplySurveillanceProgramFilter()
         {
             // Arrange
             var myProjects = new List<Projects>
@@ -187,19 +241,17 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.QueriesRepositoryTest
                     new RadtrackProg { Program = "ZZ", Radtrackprog = false }
                 ]);
 
-            var filter = "{\"ExportQueryType\":\"allContract\"}";
-
             // Act
-            var result = await repo.GetMonitoringReportDataAsync(
-                Params(filter: filter),
+            var result = await repo.GetContractsMonitoringReportDataAsync(
+                Params(),
                 reportYear: 2025,
                 fiscalMonth: 6,
                 contractFilter: "*",
                 programFilter: null);
 
             // Assert
-            Assert.Equal(1, result.PaginationData.TotalRecords);
-            Assert.Equal("TB", Assert.Single(result.Data).Program);
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.Data.Count);
         }
 
         [Fact]

@@ -565,7 +565,7 @@ function initializeTestCodeMultiColumnDropdown() {
         callbacks: {
             onSelect: function (selectedItem, dropdown) {
                 selectedTestCodeDropdownValue = selectedItem.Value;
-                $('#txtmodal-testcode').val(selectedItem.Value);
+                $('#txtmodal-testcode').val(selectedItem.Value).trigger('change');
                 $('#txtmodal-description').val(selectedItem.Text);
             },
             onClear: function (dropdown) {
