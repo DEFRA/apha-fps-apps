@@ -5411,15 +5411,15 @@ body,
     max-width: 25em;
 }*/
 
-#gridContainer_rcGradeGrid .grid-scroll-container {
+/*#gridContainer_rcGradeGrid .grid-scroll-container {
     height: 260px;
     max-height: 260px;
-}
+}*/
 
-#gridContainer_wgGradeGrid .grid-scroll-container {
+/*#gridContainer_wgGradeGrid .grid-scroll-container {
     height: 220px;
     max-height: 220px;
-}
+}*/
 
 #gridContainer_wgStaffGrid .grid-scroll-container {
     height: 240px;
@@ -5454,6 +5454,8 @@ body,
 #fpsSrTotalAtWork {
     border: 1px solid #b1b4b6 !important;
 }
+
+.content-wrapper:has(.isMiscReportPage),
 .content-wrapper:has(.isResourceUtilizationViewPage) {
     flex: 0 !important;
     margin-bottom: 0 !important;
