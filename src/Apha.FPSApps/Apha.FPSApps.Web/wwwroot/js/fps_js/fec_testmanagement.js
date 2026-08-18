@@ -115,7 +115,7 @@ var BulkRates = (function () {
 
     // ── Upload Excel file ───────────────────────────────────────────────────
     function uploadFile(requestId) {
-        alert('DEBUG: uploadFile called for ' + requestId + '. Button click is working.');
+        alert('DEBUG: uploadFile called for ' + requestId + '. Button click confirmed OK.');
         return;
 
         var fileInput = document.getElementById('ratesFile');
