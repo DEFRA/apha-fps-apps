@@ -25,6 +25,7 @@ namespace Apha.FPSApps.Application.Services.PACT
         private readonly IConfiguration _configuration;
         private readonly ILogger<PactMonthlyTimeService> _logger;
         private static readonly string[] CrossTabRequiredHeaders = ["Time Code", "Parent Project"];
+        private static readonly string[] CrossTabDisallowedHeaders = ["Hours", "Month", "Work Group", "Name", "StagingId", "Pact Staff Id", "Employee/Supplier Number", "Employee/Supplier", "Task Number", "Project Code", "Period", "Sum of Quantity"];
         private static readonly string[] StagingIdHeader = ["StagingId"];
 
         [GeneratedRegex("^(?<workGroup>[A-Za-z0-9]+?)(?<month>\\d{2})TS", RegexOptions.IgnoreCase)]
@@ -274,6 +275,16 @@ namespace Apha.FPSApps.Application.Services.PACT
             {
                 return ApiResponseDto<MonthlyTimeImportResultDto>.FailureResponse(
                     [new ApiErrorDto { Code = "INVALID_TEMPLATE", Message = "The uploaded Excel file format is not correct. Please use the correct cross-tab template." }],
+                    new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
+            }
+
+            var disallowedHeadersFound = CrossTabDisallowedHeaders
+                .Where(h => headerMap.ContainsKey(_excelImportService.NormalizeHeader(h)))
+                .ToList();
+            if (disallowedHeadersFound.Count > 0)
+            {
+                return ApiResponseDto<MonthlyTimeImportResultDto>.FailureResponse(
+                    [new ApiErrorDto { Code = "INVALID_TEMPLATE", Message = "The uploaded Excel file format is not correct. The file appears to be a different import type. Please use the correct cross-tab template." }],
                     new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
             }
 

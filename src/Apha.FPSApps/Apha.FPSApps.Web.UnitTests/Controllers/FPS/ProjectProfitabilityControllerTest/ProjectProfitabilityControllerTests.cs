@@ -371,7 +371,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
             Assert.NotNull(okResult.Value);
 
             var summary = GetSummaryJson(okResult);
-            Assert.Equal(10000m, summary.GetProperty("programmeTarget").GetDecimal());
+            Assert.Equal("10,000.00", summary.GetProperty("programmeTarget").GetString());
         }
 
         [Fact]
@@ -440,7 +440,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.NotNull(okResult.Value);
             var summary = GetSummaryJson(okResult);
-            Assert.Equal(0m, summary.GetProperty("programmeSurplusShortfall").GetDecimal());
+            Assert.Equal("0.00", summary.GetProperty("programmeSurplusShortfall").GetString());
         }
 
         [Fact]
@@ -464,8 +464,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var summary = GetSummaryJson(okResult);
-            Assert.Equal(0m, summary.GetProperty("totalOffTarget").GetDecimal());   // 500 + (-500) = 0
-            Assert.Equal(5000m, summary.GetProperty("totalProfit").GetDecimal());   // 3000 + 2000
+            Assert.Equal("0.00", summary.GetProperty("totalOffTarget").GetString());   // 500 + (-500) = 0
+            Assert.Equal("5,000.00", summary.GetProperty("totalProfit").GetString());   // 3000 + 2000
         }
 
         #endregion

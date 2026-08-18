@@ -124,6 +124,27 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.CostCentreRepositoryTest
             Assert.Equal(2, result.Data.Count());
         }
 
+        [Theory]
+        [InlineData("pc01")]
+        [InlineData("PC01")]
+        [InlineData("Pc01")]
+        public async Task GetAllPagedAsync_FiltersByProfitCentre_IsCaseInsensitive(string filterValue)
+        {
+            var entities = new List<CostCentre>
+            {
+                BuildEntity(100.0, "PC01"), BuildEntity(200.0, "PC02"), BuildEntity(300.0, "PC01")
+            };
+            var repo   = CreateRepository(entities);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { "ProfitCentre", filterValue } });
+            var query  = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+
+            var result = await repo.GetAllPagedAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, c => Assert.Equal("PC01", c.ProfitCentre));
+        }
+
         [Fact]
         public async Task GetAllPagedAsync_ReturnsAll_WhenFilterIsEmptyObject()
         {
