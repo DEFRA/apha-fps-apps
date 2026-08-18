@@ -5463,3 +5463,8 @@ body,
     bottom: 0;
     width: 100%;
 }
+.isSideNav {
+    .sidenav{
+        padding-left: 0 !important;
+    }
+}
