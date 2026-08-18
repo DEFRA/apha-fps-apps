@@ -67,16 +67,24 @@ function reloadProfitCenterCostGrid(monthNumber) {
  * @param {string} monthNumber - The month number to filter by.
  */
 function loadInitialGrid(monthNumber) {
+    var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
+    var token = antiForgeryToken ? antiForgeryToken.value : '';
+
     $.ajax({
         url: '/PACT/ProfitCenterCostSummary/LoadProfitCenterCostGrid',
         type: 'POST',
+        headers: {
+            'RequestVerificationToken': token,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
         data: {
             filter: '{}',
             sortBy: '',
             descending: false,
             page: 1,
             pageSize: 10,
-            monthNumber: monthNumber
+            monthNumber: monthNumber,
+            __RequestVerificationToken: token
         },
         success: function (html) {
             $('#gridContainer_profitCenterCostGrid').html(html);
@@ -84,10 +92,15 @@ function loadInitialGrid(monthNumber) {
             profitCenterCostGridId = 'profitCenterCostGrid';
         },
         error: function (xhr, status, error) {
-            console.error('Failed to load grid:', error);
-            $('#gridContainer_profitCenterCostGrid').html(
-                '<div class="govuk-error-message">Failed to load data. Please try again.</div>'
-            );
+            if (xhr.status === 401) {
+                // Session expired — reload the page to trigger the OIDC login flow
+                window.location.reload();
+            } else {
+                console.error('Failed to load grid:', error);
+                $('#gridContainer_profitCenterCostGrid').html(
+                    '<div class="govuk-error-message">Failed to load data. Please try again.</div>'
+                );
+            }
         }
     });
 }
