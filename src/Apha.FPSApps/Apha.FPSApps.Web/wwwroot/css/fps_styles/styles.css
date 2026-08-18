@@ -5359,7 +5359,9 @@ body,
 .isStaffPlanDetails {
     width: 20%;
 }
-
+.isTestPriceCheck {
+    width: 17%;
+}
 .isPlanAllAdditionalCosts.isHalfGrid {
     width: 54%;
 }
@@ -5460,11 +5462,15 @@ body,
     flex: 0 !important;
     margin-bottom: 0 !important;
 }
-.govuk-footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
+
+.sup_margin_bottom_10.content-wrapper:has(.isContributionSummaryPage) {
+    margin-bottom: 10vh !important;
 }
+    .govuk-footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+    }
 .isSideNav {
     .sidenav{
         padding-left: 0 !important;
