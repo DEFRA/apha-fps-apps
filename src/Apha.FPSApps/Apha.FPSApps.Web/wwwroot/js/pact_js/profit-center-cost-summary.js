@@ -94,6 +94,7 @@ function loadInitialGrid(monthNumber) {
         error: function (xhr, status, error) {
             if (xhr.status === 401) {
                 // Session expired — reload the page to trigger the OIDC login flow
+
                 window.location.reload();
             } else {
                 console.error('Failed to load grid:', error);
