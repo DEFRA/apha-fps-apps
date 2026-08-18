@@ -152,6 +152,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPortfolio(string parentProject)
         {
+            TempData["OriginalParentProject"] = parentProject;
             var result = await _projectService.GetProjectByIdAsync(parentProject);
             if (!result.Success || result.Data == null)
                 return Json(new { success = false, message = "Portfolio not found." });
