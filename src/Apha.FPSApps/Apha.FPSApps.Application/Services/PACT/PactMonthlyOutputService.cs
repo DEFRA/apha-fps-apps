@@ -24,7 +24,7 @@ namespace Apha.FPSApps.Application.Services.PACT
         private readonly ILogger<PactMonthlyOutputService> _logger;
         private static readonly string[] RequiredHeaders =
             ["Work Group", "Test Code", "Buyer", "Month", "Volume"];
-        private static readonly string[] ForbiddenHeadersForFreshImport =
+        private static readonly string[] DisallowedHeadersForFreshImport =
             ["Passed", "Failure Comments", "Filename", "StagingId"];
 
         public PactMonthlyOutputService(
@@ -181,11 +181,11 @@ namespace Apha.FPSApps.Application.Services.PACT
                 if (headerRow != null)
                 {
                     var headerMap = _excelImportService.BuildHeaderMap(headerRow);
-                    var foundForbidden = ForbiddenHeadersForFreshImport
+                    var disallowedHeadersFound = DisallowedHeadersForFreshImport
                         .Where(h => headerMap.ContainsKey(_excelImportService.NormalizeHeader(h)))
                         .ToList();
 
-                    if (foundForbidden.Count > 0)
+                    if (disallowedHeadersFound.Count > 0)
                     {
                         return ApiResponseDto<MonthlyOutputImportResultDto>.FailureResponse(
                             [new ApiErrorDto
