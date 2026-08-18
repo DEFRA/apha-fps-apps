@@ -157,46 +157,6 @@ var BulkRates = (function () {
         });
     }
 
-    // DEBUG: identical mechanics to uploadFile but posts to UploadTest stub — no FPS API, no year context
-    function uploadFileTest(requestId) {
-        var fileInput = document.getElementById('ratesFile');
-        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-            showActionError('Please select a file before uploading.');
-            return;
-        }
-
-        var file = fileInput.files[0];
-        var formData = new FormData();
-        formData.append('id', requestId);
-        formData.append('file', file);
-
-        var btn      = document.getElementById('btnUpload');
-        var progress = document.getElementById('uploadProgress');
-        if (btn)      { btn.disabled = true; }
-        if (progress) { progress.style.display = ''; }
-
-        $.ajax({
-            url: '/FPS/BulkRates/UploadTest',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            headers: { 'RequestVerificationToken': getAntiForgeryToken() },
-            success: function (result) {
-                if (btn)      { btn.disabled = false; }
-                if (progress) { progress.style.display = 'none'; }
-                showActionError((result && result.message) ? result.message : 'UploadTest: no message.');
-            },
-            error: function (xhr) {
-                if (btn)      { btn.disabled = false; }
-                if (progress) { progress.style.display = 'none'; }
-                var msg = 'UploadTest FAILED (HTTP error). Status=' + xhr.status;
-                if (xhr.responseJSON && xhr.responseJSON.message) { msg += ' ' + xhr.responseJSON.message; }
-                showActionError(msg);
-            }
-        });
-    }
-
     // ── Upload Updated Data (tracker button on Index) ──────────────────────
 
     var _trackerUploadRequestId = null;
@@ -585,7 +545,6 @@ var BulkRates = (function () {
     return {
         submitCreate:           submitCreate,
         uploadFile:             uploadFile,
-        uploadFileTest:         uploadFileTest,
         showReleaseModal:       showReleaseModal,
         closeReleaseModal:      closeReleaseModal,
         confirmRelease:         confirmRelease,
