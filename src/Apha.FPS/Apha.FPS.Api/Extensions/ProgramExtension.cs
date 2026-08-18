@@ -2,6 +2,7 @@
 using Amazon.EventBridge;
 using Apha.Common.Contracts.Email;
 using Apha.Common.Utilities.EventPublisher;
+using Apha.FPS.Api.Converters;
 using Apha.FPS.Api.Filters;
 using Apha.FPS.Api.Mappings;
 using Apha.FPS.Api.Middleware;
@@ -65,6 +66,10 @@ namespace Apha.FPS.Api.Extensions
             services.AddControllers(options =>
             {
                 options.Filters.Add<ApiResponseActionFilter>();
+            })
+                .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new TrimDecimalJsonConverter());
             });
 
             // API Versioning
