@@ -1616,7 +1616,7 @@ public class BulkRatesRequestServiceTests
         await repoV2.Received(1).CreateAnimalDownloadSnapshotAsync(entry.JobQueueId, 2, Arg.Any<IReadOnlyList<AnimalStagingRow>>(), Arg.Any<CancellationToken>());
     }
 
-    // ── Export template column protection ────────────────────────────────────
+    // ── Export template column protection ─────────────────────────────────────
 
     [Fact]
     public async Task ExportStaffTestData_HasNoProtectedColumns()
