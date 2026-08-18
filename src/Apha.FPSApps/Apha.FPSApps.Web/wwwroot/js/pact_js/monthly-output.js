@@ -452,10 +452,7 @@ function editStagingMonthlyOutput(btn) {
 }
 
 function initStagingModalDropdowns(existingWorkGroup, existingTestCode, existingBuyer) {
-    const wgData       = readDropdownJsonData('#staging-modal-workgroups-data');
-    const isEditMode   = !!(existingTestCode || existingBuyer || existingWorkGroup);
-    const allTestCodes = isEditMode ? readDropdownJsonData('#staging-modal-testcodes-data') : [];
-    const allBuyers    = isEditMode ? readDropdownJsonData('#staging-modal-buyers-data')    : [];
+    const wgData = readDropdownJsonData('#staging-modal-workgroups-data');
 
     window.stagingOutputWorkGroupDropdown = new MultiColumnDropdownComponent({
         dropdownId: 'stagingOutputWorkGroup',
@@ -476,27 +473,12 @@ function initStagingModalDropdowns(existingWorkGroup, existingTestCode, existing
             onSelect: function (selectedItem) {
                 const selectedWorkGroup = selectedItem?.value || '';
                 $('#StagingWorkGroup').val(selectedWorkGroup).trigger('change');
-
-                const isInitialRestore = existingWorkGroup && selectedWorkGroup === existingWorkGroup;
-                if (isInitialRestore) return;
-
-                // User changed WorkGroup — filter TestCodes via AJAX, preserving existing selections in edit mode
-                loadStagingModalTestCodesByWorkGroup(
-                    selectedWorkGroup,
-                    isEditMode ? existingTestCode : null,
-                    isEditMode ? existingBuyer    : null
-                );
+                loadStagingModalTestCodesByWorkGroup(selectedWorkGroup);
             },
             onClear: function () {
                 $('#StagingWorkGroup').val('');
-                if (isEditMode) {
-                    // Edit mode: restore full unfiltered lists from embedded data
-                    seedStagingModalTestCodesFromData(allTestCodes, null, allBuyers, null);
-                } else {
-                    // Add mode: clear both dropdowns
-                    resetStagingModalTestCodeOptions();
-                    resetStagingModalBuyerOptions();
-                }
+                resetStagingModalTestCodeOptions();
+                resetStagingModalBuyerOptions();
             }
         }
     });
@@ -510,7 +492,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingTestCode, existing
         columns: [
             { field: 'text', header: 'Test Code', width: '260px' }
         ],
-        data: isEditMode ? allTestCodes : [],
+        data: [],
         displayField: function (row) { return row.text || ''; },
         valueField: function (row) { return row.value || ''; },
         enableSearch: true,
@@ -519,29 +501,19 @@ function initStagingModalDropdowns(existingWorkGroup, existingTestCode, existing
         callbacks: {
             onSelect: function (selectedItem) {
                 if (window._stagingSkipTestCodeOnSelect) return;
-                const testCode  = selectedItem?.value || '';
+                const testCode = selectedItem?.value || '';
                 const workGroup = $('#StagingWorkGroup').val() || null;
                 $('#StagingTestCode').val(testCode).trigger('change');
-                // User changed TestCode — filter Buyers via AJAX, preserving existing buyer in edit mode
-                loadStagingModalBuyersByTestCode(
-                    workGroup,
-                    testCode,
-                    isEditMode ? existingBuyer : null
-                );
+
+                if (workGroup && testCode) {
+                    loadStagingModalBuyersByTestCode(workGroup, testCode);
+                } else {
+                    resetStagingModalBuyerOptions();
+                }
             },
             onClear: function () {
                 $('#StagingTestCode').val('');
-                const workGroup = $('#StagingWorkGroup').val() || null;
-                if (workGroup) {
-                    // Reload buyers filtered to workGroup via AJAX
-                    loadStagingModalBuyersByTestCode(workGroup, null);
-                } else if (isEditMode) {
-                    // Edit mode, no workGroup: restore full buyer list from embedded data
-                    seedStagingModalBuyersFromData(allBuyers, null);
-                } else {
-                    // Add mode: clear buyers
-                    resetStagingModalBuyerOptions();
-                }
+                resetStagingModalBuyerOptions();
             }
         }
     });
@@ -555,7 +527,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingTestCode, existing
         columns: [
             { field: 'text', header: 'Buyer', width: '260px' }
         ],
-        data: isEditMode ? allBuyers : [],
+        data: [],
         displayField: function (row) { return row.text || ''; },
         valueField: function (row) { return row.value || ''; },
         enableSearch: true,
@@ -573,20 +545,10 @@ function initStagingModalDropdowns(existingWorkGroup, existingTestCode, existing
 
     if (existingWorkGroup) {
         window.stagingOutputWorkGroupDropdown.setValue(existingWorkGroup);
-    }
-
-    if (isEditMode) {
-        // Edit mode: restore TestCode and Buyer synchronously from embedded data — no AJAX needed
-        if (existingTestCode) {
-            window._stagingSkipTestCodeOnSelect = true;
-            window.stagingOutputTestCodeDropdown.setValue(existingTestCode);
-            window._stagingSkipTestCodeOnSelect = false;
-            $('#StagingTestCode').val(existingTestCode);
-        }
-        if (existingBuyer) {
-            window.stagingOutputBuyerDropdown.setValue(existingBuyer);
-            $('#StagingBuyer').val(existingBuyer);
-        }
+        loadStagingModalTestCodesByWorkGroup(existingWorkGroup, existingTestCode, existingBuyer);
+    } else {
+        resetStagingModalTestCodeOptions();
+        resetStagingModalBuyerOptions();
     }
 }
 
@@ -607,37 +569,18 @@ function resetStagingModalBuyerOptions() {
     }
 }
 
-function seedStagingModalTestCodesFromData(testCodes, restoreTestCode, buyers, restoreBuyer) {
-    if (window.stagingOutputTestCodeDropdown) {
-        window.stagingOutputTestCodeDropdown.updateData(testCodes);
-        if (restoreTestCode && testCodes.some(function (item) { return item.value === restoreTestCode; })) {
-            window._stagingSkipTestCodeOnSelect = true;
-            window.stagingOutputTestCodeDropdown.setValue(restoreTestCode);
-            window._stagingSkipTestCodeOnSelect = false;
-            $('#StagingTestCode').val(restoreTestCode);
-        }
-    }
-    seedStagingModalBuyersFromData(buyers, restoreBuyer);
-}
-
-function seedStagingModalBuyersFromData(buyers, restoreBuyer) {
-    if (window.stagingOutputBuyerDropdown) {
-        window.stagingOutputBuyerDropdown.updateData(buyers);
-        if (restoreBuyer && buyers.some(function (item) { return item.value === restoreBuyer; })) {
-            window.stagingOutputBuyerDropdown.setValue(restoreBuyer);
-            $('#StagingBuyer').val(restoreBuyer);
-        }
-    }
-}
-
 function loadStagingModalTestCodesByWorkGroup(workGroup, restoreTestCode, restoreBuyer) {
     resetStagingModalTestCodeOptions();
     resetStagingModalBuyerOptions();
 
+    if (!workGroup) {
+        return;
+    }
+
     $.ajax({
         url: '/PACT/MonthlyOutput/GetTestCodesByWorkGroup',
         type: 'GET',
-        data: workGroup ? { workGroup: workGroup } : {},
+        data: { workGroup: workGroup },
         success: function (data) {
             const items = Array.isArray(data) ? data : [];
             if (window.stagingOutputTestCodeDropdown) {
@@ -649,8 +592,6 @@ function loadStagingModalTestCodesByWorkGroup(workGroup, restoreTestCode, restor
                     window._stagingSkipTestCodeOnSelect = false;
                     $('#StagingTestCode').val(restoreTestCode);
                     loadStagingModalBuyersByTestCode(workGroup, restoreTestCode, restoreBuyer);
-                } else {
-                    loadStagingModalBuyersByTestCode(workGroup, null);
                 }
             }
         },
@@ -663,14 +604,14 @@ function loadStagingModalTestCodesByWorkGroup(workGroup, restoreTestCode, restor
 function loadStagingModalBuyersByTestCode(workGroup, testCode, restoreBuyer) {
     resetStagingModalBuyerOptions();
 
-    const params = {};
-    if (workGroup) params.workGroup = workGroup;
-    if (testCode)  params.testCode  = testCode;
+    if (!workGroup || !testCode) {
+        return;
+    }
 
     $.ajax({
         url: '/PACT/MonthlyOutput/GetBuyersByTestCode',
         type: 'GET',
-        data: params,
+        data: { workGroup: workGroup, testCode: testCode },
         success: function (data) {
             const items = Array.isArray(data) ? data : [];
             if (window.stagingOutputBuyerDropdown) {
@@ -821,6 +762,7 @@ function validateMonthlyOutput() {
         type: 'POST',
         success: function (response) {
             if (response.success) {
+                window.monthlyOutputPassedFilter = null;
                 reloadStagingGrid();
                 const msg = response.message ||
                     ('Passed: ' + response.passedCount + ' | Failed: ' + response.failedCount);
@@ -849,6 +791,7 @@ function makeLiveMonthlyOutput() {
             type: 'POST',
             success: function (response) {
                 if (response.success) {
+                    window.monthlyOutputPassedFilter = null;
                     reloadLiveGrid();
                     reloadStagingGrid();
                     document.getElementById('failedmsg').style.display = 'none';
@@ -881,6 +824,7 @@ function deleteAllStagingRecords() {
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
+                    window.monthlyOutputPassedFilter = null;
                     reloadStagingGrid();
                     document.getElementById('failedmsg').style.display = 'none';
                     showAlertMessage('All staging records deleted.', AlertType.SUCCESS);
@@ -906,6 +850,7 @@ function deleteFailedStagingRecords() {
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
+                    window.monthlyOutputPassedFilter = null;
                     reloadStagingGrid();
                     document.getElementById('failedmsg').style.display = 'none';
                     showAlertMessage('Failed staging records deleted.', AlertType.SUCCESS);
