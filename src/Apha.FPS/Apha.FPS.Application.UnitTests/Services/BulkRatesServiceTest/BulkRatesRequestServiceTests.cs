@@ -1616,16 +1616,10 @@ public class BulkRatesRequestServiceTests
         await repoV2.Received(1).CreateAnimalDownloadSnapshotAsync(entry.JobQueueId, 2, Arg.Any<IReadOnlyList<AnimalStagingRow>>(), Arg.Any<CancellationToken>());
     }
 
-    // ── Export template column protection (parity with FEC/AGRUP) ───────────
-    //
-    // PcGrade/AnimalType are the sole identity/business keys for these tables (fps.
-    // profitcentregrade/fps.tblanimals are keyed by that column + FpsYear, and FpsYear is fixed
-    // by the request, not the sheet) — protecting only that column stops a retyped key silently
-    // producing an unmatched "Not Found" row on re-upload, while leaving every other column
-    // (including Species/SecurityLevel, which BulkAnimalRatesService does apply) editable.
+    // ── Export template column protection ────────────────────────────────────
 
     [Fact]
-    public async Task ExportStaffTestData_ProtectsOnlyPcGradeColumn()
+    public async Task ExportStaffTestData_HasNoProtectedColumns()
     {
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetStaffRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
@@ -1639,11 +1633,11 @@ public class BulkRatesRequestServiceTests
         await svc.ExportStaffTestDataAsync(FpsYear);
 
         capturedSheets.Should().ContainSingle();
-        capturedSheets![0].ProtectedColumnNames.Should().BeEquivalentTo(new[] { nameof(BulkRatesStaffExportRowDto.PcGrade) });
+        capturedSheets![0].ProtectedColumnNames.Should().BeNullOrEmpty();
     }
 
     [Fact]
-    public async Task ExportAnimalTestData_ProtectsOnlyAnimalTypeColumn()
+    public async Task ExportAnimalTestData_HasNoProtectedColumns()
     {
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetAnimalRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
@@ -1657,7 +1651,7 @@ public class BulkRatesRequestServiceTests
         await svc.ExportAnimalTestDataAsync(FpsYear);
 
         capturedSheets.Should().ContainSingle();
-        capturedSheets![0].ProtectedColumnNames.Should().BeEquivalentTo(new[] { nameof(BulkRatesAnimalExportRowDto.AnimalType) });
+        capturedSheets![0].ProtectedColumnNames.Should().BeNullOrEmpty();
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
