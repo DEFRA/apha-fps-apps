@@ -258,7 +258,7 @@ namespace Apha.PACT.Application.Services
                 ProcessedCount = result.ProcessedCount,
                 ImportedCount = result.ImportedCount,
                 FailedCount = result.FailedCount,
-                Message = $"Make Live completed: {result.ImportedCount} of {result.ProcessedCount} records were successfully moved to MonthlyOutput. {result.FailedCount} records remain in the Imported Records and require revalidation."
+                Message = $"{result.ImportedCount} of {result.ProcessedCount} records have been successfully made live.{Environment.NewLine}The remaining {result.FailedCount} records require revalidation."
             };
         }
 
