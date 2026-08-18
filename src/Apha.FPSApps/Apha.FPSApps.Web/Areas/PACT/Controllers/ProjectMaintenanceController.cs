@@ -151,6 +151,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             TempData["PactOrigin"] = "Project";
             ViewBag.NavigationSource = TempData.Peek("NavigationSource")?.ToString();
+            TempData["OriginalParentProject"] = parentProject;
 
             var projectResponse = await _projectService.GetProjectByIdAsync(parentProject);
             if (!projectResponse.Success || projectResponse.Data == null)

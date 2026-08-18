@@ -219,8 +219,8 @@ function loadPortfolioData(parentProject) {
                 }
 
                 $('#dpManager').val(d.manager || '');
-                $('#txtBudgetCvl').val(formatToTwoDecimals(d.budgetCvl || '0'));
-                $('#txtTransferIncome').val(formatToTwoDecimals(d.transferIncome || '0'));
+                $('#txtBudgetCvl').val(d.budgetCvl ?? '');
+                $('#txtTransferIncome').val(d.transferIncome ?? '');
                 $('#txtComments').val(d.comments || '');
 
                 // Update sidebar nav links — preserves existing query params (e.g. year)
