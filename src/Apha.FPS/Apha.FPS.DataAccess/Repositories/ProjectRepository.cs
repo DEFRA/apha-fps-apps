@@ -800,9 +800,12 @@ namespace Apha.FPS.DataAccess.Repositories
                 "customer"         => ApplyOrder(query, p => p.Customer, descending),
                 "contract"         => ApplyOrder(query, p => p.Contract, descending),
                 "disease"          => ApplyOrder(query, p => p.Disease, descending),
+                "status"           => ApplyOrder(query, p => p.ProjectStatus, descending),
                 "projectstatus"    => ApplyOrder(query, p => p.ProjectStatus, descending),
-                "budgetcvl"        => ApplyOrder(query, p => p.BudgetCvl, descending),
+                "custincome"       => ApplyOrder(query, p => p.CustIncome, descending),
                 "budgetext"        => ApplyOrder(query, p => p.CustIncome, descending),
+                "budget"           => ApplyOrder(query, p => p.BudgetCvl, descending),
+                "budgetcvl"        => ApplyOrder(query, p => p.BudgetCvl, descending),
                 "transferincome"   => ApplyOrder(query, p => p.TransferIncome, descending),
                 "plancaseworkdebit"=> ApplyOrder(query, p => p.PlanCaseWorkDebit, descending),
                 "costcentre"       => ApplyOrder(query, p => p.CostCentre, descending),
@@ -882,7 +885,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.Projects
                 .AsNoTracking()
-                .AnyAsync(p => p.ParentProject == newProject);
+                .AnyAsync(p => EF.Functions.ILike(p.ParentProject.Trim(), newProject.Trim()));
         }
 
         /// <summary>

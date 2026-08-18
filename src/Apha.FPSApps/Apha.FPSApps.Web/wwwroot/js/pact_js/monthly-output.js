@@ -326,7 +326,7 @@ function initLiveModalWorkGroupDropdown() {
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem) {
-                $('#LiveWorkGroup').val(selectedItem?.value || '');
+                $('#LiveWorkGroup').val(selectedItem?.value || '').trigger('change');
             },
             onClear: function () {
                 $('#LiveWorkGroup').val('');
@@ -475,7 +475,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingTestCode, existing
         callbacks: {
             onSelect: function (selectedItem) {
                 const selectedWorkGroup = selectedItem?.value || '';
-                $('#StagingWorkGroup').val(selectedWorkGroup);
+                $('#StagingWorkGroup').val(selectedWorkGroup).trigger('change');
 
                 const isInitialRestore = existingWorkGroup && selectedWorkGroup === existingWorkGroup;
                 if (isInitialRestore) return;
@@ -521,7 +521,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingTestCode, existing
                 if (window._stagingSkipTestCodeOnSelect) return;
                 const testCode  = selectedItem?.value || '';
                 const workGroup = $('#StagingWorkGroup').val() || null;
-                $('#StagingTestCode').val(testCode);
+                $('#StagingTestCode').val(testCode).trigger('change');
                 // User changed TestCode — filter Buyers via AJAX, preserving existing buyer in edit mode
                 loadStagingModalBuyersByTestCode(
                     workGroup,
@@ -563,7 +563,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingTestCode, existing
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem) {
-                $('#StagingBuyer').val(selectedItem?.value || '');
+                $('#StagingBuyer').val(selectedItem?.value || '').trigger('change');
             },
             onClear: function () {
                 $('#StagingBuyer').val('');

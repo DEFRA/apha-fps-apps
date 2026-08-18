@@ -278,7 +278,7 @@
 
         function planPortfolio() {
             var parentProject = document.getElementById('portfolioNewForm').dataset.parentProject;
-            window.location.href = '@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })?parentProject=' + encodeURIComponent(parentProject);
+            window.location.href = '@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })?projectCode=' + encodeURIComponent(parentProject);
         }
 
         function setupComponents() {

@@ -2,6 +2,7 @@ using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
+using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Pagination;
 using AutoMapper;
 
@@ -122,6 +123,9 @@ namespace Apha.PIMS.Api.Mappings
                 .ForMember(dest => dest.Year, opt => opt.MapFrom(src => (double)src.Year));
 
             CreateMap<ProjectYearManagerDto, ProjectYearManagerRes>().ReverseMap();
+            CreateMap<QueryReportDto, QueryReportRes>().ReverseMap();
+            CreateMap<MonitoringReportData, MonitoringReportDataRes>().ReverseMap();
+            CreateMap<ProgramCustomerMonitoringReportData, ProgramCustomerMonitoringReportDataRes>().ReverseMap();
         }
     }
 }
