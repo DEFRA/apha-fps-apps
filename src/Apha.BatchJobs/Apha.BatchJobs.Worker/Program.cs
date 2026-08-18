@@ -6,9 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
-// Propagate CLI arg to env var so BatchExecutionContext.FromEnvironment() picks it up.
-if (args.Length > 0 && !string.IsNullOrWhiteSpace(args[0]))
-    Environment.SetEnvironmentVariable("BATCH_JOB_NAME", args[0]);
+CliArgumentAdapter.Apply(args);
 
 var requestedJobName = Environment.GetEnvironmentVariable("BATCH_JOB_NAME");
 

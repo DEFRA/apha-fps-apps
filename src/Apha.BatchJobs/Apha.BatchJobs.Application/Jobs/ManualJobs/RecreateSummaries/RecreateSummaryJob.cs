@@ -34,6 +34,9 @@ public sealed class RecreateSummaryJob : IBatchJob
     /// <summary>Canonical job name.</summary>
     public string Name => "RecreateSummary";
 
+    // 2 minutes: steps exceeding this are logged as slow for operational investigation.
+    private const int SlowStepThresholdMs = 120_000;
+
     /// <summary>
     /// Idempotency strategy: full delete-and-rebuild per month with a single wrapping transaction.
     /// </summary>
@@ -230,8 +233,8 @@ public sealed class RecreateSummaryJob : IBatchJob
             jobExecutionId, result.StepName, result.Status, result.RowsAffected,
             stepDurationMs);
 
-        // Warn if step exceeded 2 minutes (slow-step detection)
-        if (stepDurationMs > 120_000)
+        // Warn if step exceeded the slow-step threshold
+        if (stepDurationMs > SlowStepThresholdMs)
         {
             _logger.LogInformation(
                 "[{JobExecutionId}] SLOW STEP DETECTED | StepName={StepName} | Duration={Ms}ms | RowsAffected={Rows}",

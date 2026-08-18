@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Application.DependencyInjection; // BatchJobsRetryStrategy
+using Apha.BatchJobs.Infrastructure.Resilience;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories;

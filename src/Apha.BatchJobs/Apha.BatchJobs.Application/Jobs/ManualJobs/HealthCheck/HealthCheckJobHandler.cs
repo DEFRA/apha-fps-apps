@@ -7,46 +7,26 @@ using Microsoft.Extensions.Options;
 namespace Apha.BatchJobs.Application.Jobs.HealthCheck;
 
 /// <summary>
-/// Health check job handler for testing the batch jobs framework.
-/// This job validates process liveness only and must not require database access.
+/// Container liveness check. Exercises the full ECS batch dispatch path (host build → DI
+/// resolution → job execution → exit 0) without touching the database.
+/// Trigger: deployment pipeline or operator passes "HealthCheck" as the CLI argument.
+/// Checks: environment name readable, BatchJobSettings resolves from DI, synthetic
+/// 50-iteration loop completes without exception.
+/// Consumer: deployment automation verifying that the ECS task launch works end-to-end.
 /// </summary>
 public sealed class HealthCheckJobHandler : IBatchJob
 {
     private readonly ILogger<HealthCheckJobHandler> _logger;
     private readonly BatchJobSettings _settings;
 
-    /// <summary>
-    /// Name of this job.
-    /// </summary>
     public string Name => "HealthCheck";
-
-    /// <summary>
-    /// Explicit idempotency strategy declaration for this job.
-    /// HealthCheck is read/validate-only and produces no mutable side effects.
-    /// </summary>
+    // Read/validate-only; no mutable side effects.
     public string IdempotencyStrategy => "NoWriteValidation";
-
-    /// <summary>
-    /// No schedule expression: HealthCheck is ad-hoc or manually triggered.
-    /// Can be invoked from deployment automation or monitoring dashboards.
-    /// </summary>
+    // Ad-hoc only — invoked explicitly, never on a cron schedule.
     public string? ScheduleExpression => null;
-
-    /// <summary>
-    /// Human-readable description for ad-hoc validation job.
-    /// </summary>
     public string? ScheduleDescription => "On-demand health check (no schedule)";
-
-    /// <summary>
-    /// Maximum execution timeout for this light-weight validation job: 5 minutes.
-    /// </summary>
     public int? MaxExecutionSeconds => 300;
 
-    /// <summary>
-    /// Initializes a new instance of the HealthCheckJobHandler.
-    /// </summary>
-    /// <param name="logger">Logger instance.</param>
-    /// <param name="settings">Batch job runtime settings.</param>
     public HealthCheckJobHandler(
         ILogger<HealthCheckJobHandler> logger,
         IOptions<BatchJobSettings> settings)
@@ -55,10 +35,6 @@ public sealed class HealthCheckJobHandler : IBatchJob
         _settings = settings?.Value ?? new BatchJobSettings();
     }
 
-    /// <summary>
-    /// Executes the health check job.
-    /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task ExecuteAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("=== HealthCheck Job Started ===");
@@ -68,7 +44,6 @@ public sealed class HealthCheckJobHandler : IBatchJob
 
         try
         {
-            // Phase 1: Validate configuration
             _logger.LogInformation("Phase 1: Validating configuration...");
             var envName = EnvironmentResolver.GetEnvironmentName("Not Set");
             var executionMode = "LivenessOnly (NoDbDependency)";
@@ -77,7 +52,6 @@ public sealed class HealthCheckJobHandler : IBatchJob
             _logger.LogInformation("  .NET Version: {DotNetVersion}", System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);
             _logger.LogInformation("  OS: {OS}", System.Runtime.InteropServices.RuntimeInformation.OSDescription);
 
-            // Phase 2: Simulate work
             _logger.LogInformation("Phase 2: Processing records...");
             var recordCount = 50;
             var successCount = 0;
@@ -97,15 +71,12 @@ public sealed class HealthCheckJobHandler : IBatchJob
                     _logger.LogInformation("  Processed {RecordsProcessed}/{TotalRecords} records", i, recordCount);
                 }
 
-                // Simulate work delay
                 await Task.Delay(50, cancellationToken);
             }
 
-            // Phase 3: Validate liveness-only execution path
             _logger.LogInformation("Phase 3: Validating liveness-only execution path...");
             _logger.LogInformation("  No database calls are required for this check");
 
-            // Phase 4: Report results
             _logger.LogInformation("Phase 4: Job completion report");
             _logger.LogInformation("  Records Processed: {RecordsProcessed}", successCount);
             _logger.LogInformation("  Success Rate: {SuccessRate:P}", (double)successCount / recordCount);

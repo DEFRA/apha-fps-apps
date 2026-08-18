@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 
-namespace Apha.BatchJobs.Application.DependencyInjection;
+namespace Apha.BatchJobs.Infrastructure.Resilience;
 
 /// <summary>
 /// Custom EF Core execution strategy that retries on transient Npgsql errors

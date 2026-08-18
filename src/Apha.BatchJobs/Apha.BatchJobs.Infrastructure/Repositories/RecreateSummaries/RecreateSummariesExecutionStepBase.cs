@@ -19,6 +19,10 @@ internal abstract class RecreateSummariesExecutionStepBase : IRecreateSummariesE
             var rowsAffected = await ExecuteCoreAsync(context, cancellationToken);
             return new StepResult(StepName, rowsAffected, start, DateTime.UtcNow, StepStatus.Success);
         }
+        catch (OperationCanceledException)
+        {
+            throw; // Must propagate — caller owns cancellation handling and transaction rollback
+        }
         catch (Exception ex)
         {
             var root = ex.GetBaseException();

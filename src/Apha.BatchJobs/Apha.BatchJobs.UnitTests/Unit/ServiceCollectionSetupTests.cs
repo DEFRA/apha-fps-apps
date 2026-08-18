@@ -127,6 +127,25 @@ public sealed class ServiceCollectionSetupTests
     }
 
     [Fact]
+    public void AddBatchJobs_ShouldRegisterExactlySixSupportedJobs()
+    {
+        // Regression guard: adding, removing, or deferring a job must force a deliberate update here.
+        using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{\"month\":\"2026-07\"}");
+        var services = CreateServices(GetBatchJobsRoot());
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var registeredNames = serviceProvider.GetServices<IBatchJob>()
+            .Select(j => j.Name)
+            .OrderBy(n => n, StringComparer.Ordinal)
+            .ToList();
+
+        Assert.Equal(
+            new[] { "BulkAnimalRatesUpdate", "BulkStaffRatesUpdate", "BulkTestRatesUpdate",
+                    "HealthCheck", "MABArchive", "RecreateSummary" },
+            registeredNames);
+    }
+
+    [Fact]
     public void AddBatchJobs_AllRegisteredJobs_ShouldDeclareExplicitIdempotencyStrategy()
     {
         using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{\"month\":\"2026-07\"}");
@@ -153,7 +172,7 @@ public sealed class ServiceCollectionSetupTests
 
         var jobs = serviceProvider.GetServices<IBatchJob>().ToList();
 
-        var manualJobNames = new[] { "HealthCheck", "RecreateSummary", "YearEndDataSetup", "YearEndCutover",
+        var manualJobNames = new[] { "HealthCheck", "RecreateSummary",
             "BulkTestRatesUpdate", "BulkStaffRatesUpdate", "BulkAnimalRatesUpdate" };
         foreach (var jobName in manualJobNames)
         {

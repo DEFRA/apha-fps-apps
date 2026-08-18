@@ -1,35 +1,33 @@
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Jobs.HealthCheck;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Apha.BatchJobs.Application.DependencyInjection;
 
 public static class BatchJobRegistrationExtensions
 {
-    /// <summary>
-    /// Reflects over the Application assembly to discover all concrete, non-abstract
-    /// <see cref="IBatchJob"/> implementations, sorts them deterministically by full type name,
-    /// and registers each as both its concrete type and as <see cref="IBatchJob"/>.
-    /// </summary>
+    // Registers only the current-branch supported job set.
+    // Year End and MilestoneNotification are excluded until those branches merge.
     public static IServiceCollection RegisterBatchJobImplementations(
         this IServiceCollection services)
     {
-        var batchJobType = typeof(IBatchJob);
-        var applicationAssembly = batchJobType.Assembly;
+        services.AddJob<BulkAnimalRatesUpdateJob>();
+        services.AddJob<BulkStaffRatesUpdateJob>();
+        services.AddJob<BulkTestRatesUpdateJob>();
+        services.AddJob<HealthCheckJobHandler>();
+        services.AddJob<MabArchiveJob>();
+        services.AddJob<RecreateSummaryJob>();
+        return services;
+    }
 
-        var jobTypes = applicationAssembly
-            .GetTypes()
-            .Where(t =>
-                t is { IsClass: true, IsAbstract: false } &&
-                batchJobType.IsAssignableFrom(t))
-            .OrderBy(t => t.FullName, StringComparer.Ordinal)
-            .ToList();
-
-        foreach (var jobType in jobTypes)
-        {
-            services.AddScoped(jobType);
-            services.AddScoped(typeof(IBatchJob), sp => (IBatchJob)sp.GetRequiredService(jobType));
-        }
-
+    private static IServiceCollection AddJob<TJob>(this IServiceCollection services)
+        where TJob : class, IBatchJob
+    {
+        services.AddScoped<TJob>();
+        services.AddScoped<IBatchJob>(sp => sp.GetRequiredService<TJob>());
         return services;
     }
 }
