@@ -43,30 +43,11 @@ function onPeriodChange(monthNumber) {
 /**
  * Reloads the profit center cost grid filtered by the specified month number,
  * resetting pagination, sort, and filter state.
+ * Uses a direct AJAX call with the anti-forgery token to avoid 403 errors
+ * that occur when relying on the grid manager's internal $.post (which omits the token).
  * @param {string} monthNumber - The month number to filter by.
  */
 function reloadProfitCenterCostGrid(monthNumber) {
-    var gm = getProfitCenterCostGridManager();
-    if (!gm) {
-        // Grid not yet initialized - load it via AJAX
-        loadInitialGrid(monthNumber);
-        return;
-    }
-
-    gm.reloadGrid({
-        filter: '{}',
-        sortBy: '',
-        descending: false,
-        page: 1,
-        pageSize: 10
-    }, { monthNumber: monthNumber });
-}
-
-/**
- * Loads the grid for the first time when a period is selected.
- * @param {string} monthNumber - The month number to filter by.
- */
-function loadInitialGrid(monthNumber) {
     var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
     var token = antiForgeryToken ? antiForgeryToken.value : '';
 
@@ -88,13 +69,11 @@ function loadInitialGrid(monthNumber) {
         },
         success: function (html) {
             $('#gridContainer_profitCenterCostGrid').html(html);
-            // Update the global grid ID variable after loading
             profitCenterCostGridId = 'profitCenterCostGrid';
         },
         error: function (xhr, status, error) {
             if (xhr.status === 401) {
                 // Session expired — reload the page to trigger the OIDC login flow
-
                 window.location.reload();
             } else {
                 console.error('Failed to load grid:', error);
