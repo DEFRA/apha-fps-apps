@@ -49,9 +49,33 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             await Task.WhenAll(invoicesGridTask, subContractsGridTask, invoiceTotalTask, subContractTotalTask);
 
+            // Store the original parentProject on first visit, preserve it on subsequent visits
+            string originalParentProject;
+            if (TempData.Peek("OriginalParentProject") == null)
+            {
+                originalParentProject = parentProject ?? string.Empty;
+                TempData["OriginalParentProject"] = originalParentProject;
+            }
+            else
+            {
+                originalParentProject = TempData.Peek("OriginalParentProject")?.ToString() ?? string.Empty;
+                TempData.Keep("OriginalParentProject");
+            }
+
+            // Preserve TempData for return navigation and project code changes
+            if (TempData.Peek("NavigationSource") != null)
+            {
+                TempData.Keep("NavigationSource");
+            }
+            if (TempData.Peek("PactOrigin") != null)
+            {
+                TempData.Keep("PactOrigin");
+            }
+
             return View(new ProjectInvoiceSubContractViewModel
             {
                 ParentProject = parentProject ?? string.Empty,
+                OriginalParentProject = originalParentProject,
                 FromPortfolio = TempData.Peek("PactOrigin") as string == "PortfolioMaintenance",
                 InvoicesGrid = invoicesGridTask.Result,
                 SubContractsGrid = subContractsGridTask.Result,

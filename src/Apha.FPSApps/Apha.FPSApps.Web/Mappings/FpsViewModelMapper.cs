@@ -90,6 +90,12 @@ namespace Apha.FPSApps.Web.Mappings
                 .ReverseMap()
                 .ForMember(d => d.WorkGroup, o => o.MapFrom(s => s.WorkGroupName));
 
+            // ProjectPlanViewer details grid
+            // Budget maps to budget_cvl (the sole budget column in tlkpproject; there is no budget_ext DB column).
+            CreateMap<ProjectDto, ProjectDetailsGridItem>()
+                .ForMember(d => d.Status, o => o.MapFrom(s => s.ProjectStatus))
+                .ForMember(d => d.Budget, o => o.MapFrom(s => s.BudgetCvl));
+
             // ProjectProfitability
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityItem>().ReverseMap();
 
