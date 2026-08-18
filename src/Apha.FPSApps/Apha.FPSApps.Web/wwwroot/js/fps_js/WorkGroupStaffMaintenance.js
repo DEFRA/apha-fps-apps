@@ -31,15 +31,15 @@ function deleteMaintWGStaff(btn) {
             data: { pactId: pactId },
             success: function (response) {
                 if (response.success) {
-                    showGovukAlert('WG Staff record deleted successfully').then(function () {
+                    showAlertMessage('WG Staff record deleted successfully', AlertType.SUCCESS).then(function () {
                         getGridManager().reloadGrid({ page: 1 });
                     });
                 } else {
-                    showGovukAlert('Error: ' + (response.message || 'Delete failed.'));
+                    showAlertMessage('Error: ' + (response.message || 'Delete failed.'), AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting.');
+                showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
     });
@@ -90,7 +90,7 @@ function saveMaintWGStaff() {
         success: function (response) {
             if (response.success) {
                 closeModal();
-                showGovukAlert(response.message);
+                showAlertMessage(response.message, AlertType.SUCCESS);
                 getGridManager().reloadGrid({ page: 1 });
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
@@ -100,7 +100,7 @@ function saveMaintWGStaff() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });

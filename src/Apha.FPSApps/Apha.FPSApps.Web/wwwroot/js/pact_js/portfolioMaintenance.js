@@ -566,11 +566,12 @@ function initializeTestCodeMultiColumnDropdown() {
             onSelect: function (selectedItem, dropdown) {
                 selectedTestCodeDropdownValue = selectedItem.Value;
                 $('#txtmodal-testcode').val(selectedItem.Value).trigger('change');
-                
+                $('#txtmodal-description').val(selectedItem.Text);
             },
             onClear: function (dropdown) {
                 testCodeSelectDropdown = null;
                 $('#txtmodal-testcode').val('');
+                $('#txtmodal-description').val('');
             }
         }
     });
