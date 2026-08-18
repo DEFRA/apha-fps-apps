@@ -441,11 +441,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var summary = GetSummaryJson(okResult);
-            Assert.Equal(3000m, summary.GetProperty("totalStaffCosts").GetDecimal());    // 1000 + 2000
-            Assert.Equal(300m,  summary.GetProperty("totalTestCosts").GetDecimal());     // 100 + 200
-            Assert.Equal(110m,  summary.GetProperty("totalAnimalCosts").GetDecimal());   // 50 + 60
-            Assert.Equal(65m,   summary.GetProperty("totalAdditionalCosts").GetDecimal()); // 25 + 40
-            Assert.Equal(7525m, summary.GetProperty("totalProfit").GetDecimal());        // 3825 + 3700
+            Assert.Equal("3,000.00", summary.GetProperty("totalStaffCosts").GetString());    // 1000 + 2000
+            Assert.Equal("300.00",   summary.GetProperty("totalTestCosts").GetString());     // 100 + 200
+            Assert.Equal("110.00",   summary.GetProperty("totalAnimalCosts").GetString());   // 50 + 60
+            Assert.Equal("65.00",    summary.GetProperty("totalAdditionalCosts").GetString()); // 25 + 40
+            Assert.Equal("7,525.00", summary.GetProperty("totalProfit").GetString());        // 3825 + 3700
         }
 
         [Fact]
