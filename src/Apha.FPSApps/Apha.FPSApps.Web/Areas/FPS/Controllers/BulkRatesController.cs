@@ -217,6 +217,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> Detail(Guid id)
         {
+            // DEBUG: log ECS task identity so we can compare with Upload POST logs
+            _logger.LogInformation("[DEBUG] Detail GET Id={Id} Task={Task}", id, Environment.MachineName);
             BulkRatesRequestDetailDto? requestData;
             try
             {
@@ -581,17 +583,27 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
         }
 
+        // DEBUG: stub action — same antiforgery + binding as real Upload, no year context or FPS API call
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult UploadTest(Guid id, IFormFile file)
+        {
+            _logger.LogInformation("[DEBUG] UploadTest POST Id={Id} File={File} Task={Task}",
+                id, file?.FileName, Environment.MachineName);
+            return Json(new { success = false, message = $"DEBUG UploadTest reached. File={file?.FileName ?? "null"} Task={Environment.MachineName}" });
+        }
+
         // Upload (or re-upload) Excel file — POST (AJAX)
         [HttpPost]
-        [IgnoreAntiforgeryToken] // DEBUG: temporarily bypassing antiforgery to confirm request reaches action
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(Guid id, IFormFile file)
         {
             // Entry marker — if this line never appears in the logs for a failed upload, the
             // request isn't reaching this container (proxy/WAF/body-size limit upstream), not an
             // application-code failure. Kept at Information so it survives a Warning-only override.
             _logger.LogInformation(
-                "BulkRates Upload received for {Id}: File={FileName}, Size={Size} bytes, ContentType={ContentType}",
-                id, file?.FileName, file?.Length, file?.ContentType);
+                "BulkRates Upload received for {Id}: File={FileName}, Size={Size} bytes, ContentType={ContentType} Task={Task}",
+                id, file?.FileName, file?.Length, file?.ContentType, Environment.MachineName);
 
             if (file is null || file.Length == 0)
                 return Json(new { success = false, message = "Please select a file before uploading." });
