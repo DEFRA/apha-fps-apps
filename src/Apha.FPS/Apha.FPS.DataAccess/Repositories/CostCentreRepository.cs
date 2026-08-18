@@ -167,7 +167,7 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 var filterValue = profitCentre.ToString();
                 if (!string.IsNullOrWhiteSpace(filterValue))
-                    query = query.Where(c => c.ProfitCentre.Contains(filterValue));
+                    query = query.Where(c => EF.Functions.ILike(c.ProfitCentre, $"%{filterValue}%"));
             }
 
             return query;

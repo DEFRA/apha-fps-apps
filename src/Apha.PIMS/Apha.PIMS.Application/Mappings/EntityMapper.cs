@@ -68,6 +68,8 @@ namespace Apha.PIMS.Application.Mappings
             CreateMap<PactProjectYearCosts, PactProjectYearCostsDto>().ReverseMap();
 
             CreateMap<ProjectYearManager, ProjectYearManagerDto>().ReverseMap();
+
+            CreateMap<QueryReportItem, QueryReportDto>().ReverseMap();
         }
     }
 }
