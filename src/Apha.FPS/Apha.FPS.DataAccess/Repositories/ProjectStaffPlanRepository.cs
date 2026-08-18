@@ -41,11 +41,23 @@ namespace Apha.FPS.DataAccess.Repositories
             if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
                 query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
 
+            if (dict.TryGetValue("Contract", out var contract) && contract != null)
+                query = query.Where(x => EF.Functions.ILike(x.Contract!, $"%{contract}%"));
+
             if (dict.TryGetValue("Name", out var name) && name != null)
                 query = query.Where(x => EF.Functions.ILike(x.Name!, $"%{name}%"));
 
             if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
                 query = query.Where(x => EF.Functions.ILike(x.WorkGroup!, $"%{workGroup}%"));
+
+            if (dict.TryGetValue("ProfitCentre", out var profitCentre) && profitCentre != null)
+                query = query.Where(x => EF.Functions.ILike(x.ProfitCentre!, $"%{profitCentre}%"));
+
+            if (dict.TryGetValue("WgGrade", out var wgGrade) && wgGrade != null)
+                query = query.Where(x => EF.Functions.ILike(x.WgGrade!, $"%{wgGrade}%"));
+
+            if (dict.TryGetValue("PcGrade", out var pcGrade) && pcGrade != null)
+                query = query.Where(x => EF.Functions.ILike(x.PcGrade!, $"%{pcGrade}%"));
 
             if (dict.TryGetValue("GradeCode", out var gradeCode) && gradeCode != null)
                 query = query.Where(x => EF.Functions.ILike(x.GradeCode!, $"%{gradeCode}%"));
@@ -69,9 +81,13 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 "programno"     => ApplyOrder(query, x => x.ProgramNo,     descending),
                 "parentproject" => ApplyOrder(query, x => x.ParentProject, descending),
+                "contract"      => ApplyOrder(query, x => x.Contract,      descending),
                 "name"          => ApplyOrder(query, x => x.Name,          descending),
                 "staffid"       => ApplyOrder(query, x => x.StaffId,       descending),
                 "workgroup"     => ApplyOrder(query, x => x.WorkGroup,     descending),
+                "profitcentre"  => ApplyOrder(query, x => x.ProfitCentre,  descending),
+                "wggrade"       => ApplyOrder(query, x => x.WgGrade,       descending),
+                "pcgrade"       => ApplyOrder(query, x => x.PcGrade,       descending),
                 "gradecode"     => ApplyOrder(query, x => x.GradeCode,     descending),
                 "plannedhours"  => ApplyOrder(query, x => x.PlannedHours,  descending),
                 "cost"          => ApplyOrder(query, x => x.Cost,          descending),
