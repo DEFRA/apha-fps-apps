@@ -744,7 +744,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             // Arrange
             const string project = "PP001";
             const string number = "M1";
-            const short underReview = 1;
+            const short underReview = -1;
             const short onTarget = 0;
             // No dateCompleted, so mutual exclusion will not apply based on dateCompleted
             const string projectLeaderComment = "Updated via PMD";
@@ -758,17 +758,17 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
                 Description = "Original",
                 DateDue = new DateTime(2024, 9, 1),
                 UnderSdReview = 0,
-                OnTarget = 1
+                OnTarget = -1
             };
 
-            // After mutual exclusions: UnderSdReview=1, so OnTarget=0, DateCompleted=null
+            // After mutual exclusions: UnderSdReview=-1, so OnTarget=0, DateCompleted=null
             var updatedMilestone = new Milestone
             {
                 Project = project,
                 Number = number,
                 Description = "Original",
                 DateDue = new DateTime(2024, 9, 1),
-                UnderSdReview = 1,
+                UnderSdReview = -1,
                 OnTarget = 0,
                 DateCompleted = null,
                 ProjectLeaderComment = projectLeaderComment
@@ -780,7 +780,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
                 Number = number,
                 Description = "Original",
                 DateDue = new DateTime(2024, 9, 1),
-                UnderSdReview = 1,
+                UnderSdReview = -1,
                 OnTarget = 0,
                 DateCompleted = null,
                 ProjectLeaderComment = projectLeaderComment
@@ -788,8 +788,8 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             // The service calls GetMilestoneAsync to validate existence
             _mockRepository.GetMilestoneAsync(project, number).Returns(existingMilestone);
-            // After applying mutual exclusions: underReview=1, so onTarget=0, dateCompleted=null
-            _mockRepository.UpdateMilestoneAsync_PMD(project, number, (short)1, (short)0, null, projectLeaderComment, changedBy)
+            // After applying mutual exclusions: underReview=-1, so onTarget=0, dateCompleted=null
+            _mockRepository.UpdateMilestoneAsync_PMD(project, number, (short)-1, (short)0, null, projectLeaderComment, changedBy)
                 .Returns(updatedMilestone);
             _mockMapper.Map<MilestoneDto>(updatedMilestone).Returns(expectedDto);
 
@@ -803,7 +803,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             result?.Description.Should().Be("Original"); // Unchanged
 
             await _mockRepository.Received(1).GetMilestoneAsync(project, number);
-            await _mockRepository.Received(1).UpdateMilestoneAsync_PMD(project, number, (short)1, (short)0, null, projectLeaderComment, changedBy);
+            await _mockRepository.Received(1).UpdateMilestoneAsync_PMD(project, number, (short)-1, (short)0, null, projectLeaderComment, changedBy);
             _mockMapper.Received(1).Map<MilestoneDto>(updatedMilestone);
         }
 
@@ -814,7 +814,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             const string project = "PP001";
             const string number = "M1";
             const short underReview = 0;
-            const short onTarget = 1;
+            const short onTarget = -1;
             // No dateCompleted
             const string projectLeaderComment = "Updated";
 
@@ -822,19 +822,19 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             {
                 Project = project,
                 Number = number,
-                DateDue = new DateTime(2024, 9, 1),
-                UnderSdReview = 1,
+                DateDue = DateTime.Today.AddDays(30),
+                UnderSdReview = -1,
                 OnTarget = 0
             };
 
-            // After mutual exclusions: onTarget=1, so underReview=0, dateCompleted=null
+            // After mutual exclusions: onTarget=-1, so underReview=0, dateCompleted=null
             var updatedMilestone = new Milestone
             {
                 Project = project,
                 Number = number,
-                DateDue = new DateTime(2024, 9, 1),
+                DateDue = DateTime.Today.AddDays(30),
                 UnderSdReview = 0,
-                OnTarget = 1,
+                OnTarget = -1,
                 DateCompleted = null,
                 ProjectLeaderComment = projectLeaderComment
             };
@@ -843,15 +843,15 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             {
                 Project = project,
                 Number = number,
-                DateDue = new DateTime(2024, 9, 1),
+                DateDue = DateTime.Today.AddDays(30),
                 UnderSdReview = 0,
-                OnTarget = 1,
+                OnTarget = -1,
                 DateCompleted = null,
                 ProjectLeaderComment = projectLeaderComment
             };
 
             _mockRepository.GetMilestoneAsync(project, number).Returns(existingMilestone);
-            _mockRepository.UpdateMilestoneAsync_PMD(project, number, (short)0, (short)1, null, projectLeaderComment, null)
+            _mockRepository.UpdateMilestoneAsync_PMD(project, number, (short)0, (short)-1, null, projectLeaderComment, null)
                 .Returns(updatedMilestone);
             _mockMapper.Map<MilestoneDto>(updatedMilestone).Returns(expectedDto);
 
@@ -862,16 +862,16 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             result.Should().NotBeNull();
 
             await _mockRepository.Received(1).GetMilestoneAsync(project, number);
-            await _mockRepository.Received(1).UpdateMilestoneAsync_PMD(project, number, (short)0, (short)1, null, projectLeaderComment, null);
+            await _mockRepository.Received(1).UpdateMilestoneAsync_PMD(project, number, (short)0, (short)-1, null, projectLeaderComment, null);
         }
 
         [Fact]
-        public async Task UpdateMilestoneAsync_PMD_WhenMilestoneNotFound_ThrowsInvalidOperationException()
+        public async Task UpdateMilestoneAsync_PMD_WhenMilestoneNotFound_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             const string project = "PP001";
             const string number = "UNKNOWN";
-            const short underReview = 1;
+            const short underReview = -1;
             const short onTarget = 0;
             var dateCompleted = new DateTime(2024, 8, 15);
             const string projectLeaderComment = "Updated";
@@ -880,10 +880,140 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             _mockRepository.GetMilestoneAsync(project, number).Returns((Milestone?)null);
 
             // Act & Assert
-            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => 
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
                 _sut.UpdateMilestoneAsync_PMD(project, number, underReview, onTarget, dateCompleted, projectLeaderComment));
 
+            ex.Errors.Should().ContainSingle(e => e.Code == "NOT_FOUND");
             await _mockRepository.Received(1).GetMilestoneAsync(project, number);
+        }
+
+        [Fact]
+        public async Task UpdateMilestoneAsync_PMD_ThrowsWhenOnTargetAndDueDateHasPassed()
+        {
+            // Arrange
+            const string project = "PP001";
+            const string number = "M1";
+            const short underReview = 0;
+            const short onTarget = -1;
+            var existingMilestone = new Milestone
+            {
+                Project = project,
+                Number = number,
+                DateDue = DateTime.Now.AddDays(-1)
+            };
+
+            _mockRepository.GetMilestoneAsync(project, number).Returns(existingMilestone);
+
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
+                _sut.UpdateMilestoneAsync_PMD(project, number, underReview, onTarget, null, null));
+
+            // Assert
+            ex.Errors.Should().ContainSingle(e => e.Code == "ON_TARGET_PAST_DUE");
+            await _mockRepository.DidNotReceive().UpdateMilestoneAsync_PMD(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<short>(), Arg.Any<short>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<string?>());
+        }
+
+        [Fact]
+        public async Task UpdateMilestoneAsync_PMD_ThrowsWhenOnTargetAndUnderReviewAreBothSet()
+        {
+            // Arrange
+            const string project = "PP001";
+            const string number = "M1";
+            const short underReview = -1;
+            const short onTarget = -1;
+            var existingMilestone = new Milestone
+            {
+                Project = project,
+                Number = number,
+                DateDue = DateTime.Now.AddDays(10)
+            };
+
+            _mockRepository.GetMilestoneAsync(project, number).Returns(existingMilestone);
+
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
+                _sut.UpdateMilestoneAsync_PMD(project, number, underReview, onTarget, null, null));
+
+            // Assert
+            ex.Errors.Should().ContainSingle(e => e.Code == "ON_TARGET_AND_UNDER_REVIEW");
+        }
+
+        [Fact]
+        public async Task UpdateMilestoneAsync_PMD_ThrowsWhenCompletedAndUnderReviewAreBothSet()
+        {
+            // Arrange
+            const string project = "PP001";
+            const string number = "M1";
+            const short underReview = -1;
+            const short onTarget = 0;
+            var existingMilestone = new Milestone
+            {
+                Project = project,
+                Number = number,
+                DateDue = DateTime.Now.AddDays(10)
+            };
+
+            _mockRepository.GetMilestoneAsync(project, number).Returns(existingMilestone);
+
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
+                _sut.UpdateMilestoneAsync_PMD(project, number, underReview, onTarget, DateTime.Today.AddDays(-1), null));
+
+            // Assert
+            ex.Errors.Should().Contain(e => e.Code == "COMPLETED_AND_UNDER_REVIEW");
+        }
+
+        [Fact]
+        public async Task UpdateMilestoneAsync_PMD_ThrowsWhenCompletionDateIsInFuture()
+        {
+            // Arrange
+            const string project = "PP001";
+            const string number = "M1";
+            const short underReview = 0;
+            const short onTarget = 0;
+            var existingMilestone = new Milestone
+            {
+                Project = project,
+                Number = number,
+                DateDue = DateTime.Now.AddDays(10)
+            };
+
+            _mockRepository.GetMilestoneAsync(project, number).Returns(existingMilestone);
+
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
+                _sut.UpdateMilestoneAsync_PMD(project, number, underReview, onTarget, DateTime.Today.AddDays(1), null));
+
+            // Assert
+            ex.Errors.Should().ContainSingle(e => e.Code == "DATE_COMPLETED_FUTURE");
+        }
+
+        [Fact]
+        public async Task UpdateMilestoneAsync_PMD_CollectsAllValidationErrors_WhenInputsInvalid()
+        {
+            // Arrange
+            const string project = "PP001";
+            const string number = "M1";
+            const short underReview = -1;
+            const short onTarget = -1;
+            var existingMilestone = new Milestone
+            {
+                Project = project,
+                Number = number,
+                DateDue = DateTime.Now.AddDays(-1)
+            };
+
+            _mockRepository.GetMilestoneAsync(project, number).Returns(existingMilestone);
+
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
+                _sut.UpdateMilestoneAsync_PMD(project, number, underReview, onTarget, DateTime.Today.AddDays(1), null));
+
+            // Assert
+            ex.Errors.Should().Contain(e => e.Code == "DATE_COMPLETED_FUTURE");
+            ex.Errors.Should().Contain(e => e.Code == "ON_TARGET_PAST_DUE");
+            ex.Errors.Should().Contain(e => e.Code == "ON_TARGET_AND_UNDER_REVIEW");
+            ex.Errors.Should().Contain(e => e.Code == "COMPLETED_AND_UNDER_REVIEW");
         }
 
         #endregion
