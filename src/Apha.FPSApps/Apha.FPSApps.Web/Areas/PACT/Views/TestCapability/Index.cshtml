@@ -401,8 +401,15 @@
 
         // ── Grid 2 CRUD ────────────────────────────────────────────────────────
         function addTestReqmt() {
-            $.get('/PACT/TestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
-                function (html) {
+            if (!currentSelectedTestCode) {
+                showAlertMessage('Please select a Test Capability record before adding the test requirement', AlertType.INFO);
+                return;
+            }
+
+            $.ajax({
+                url: '/PACT/TestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
+                type: 'GET',
+                success: function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)

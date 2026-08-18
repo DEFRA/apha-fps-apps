@@ -24,6 +24,8 @@ namespace Apha.FPSApps.Application.Services.PACT
         private readonly ILogger<PactMonthlyOutputService> _logger;
         private static readonly string[] RequiredHeaders =
             ["Work Group", "Test Code", "Buyer", "Month", "Volume"];
+        private static readonly string[] DisallowedHeadersForFreshImport =
+            ["Passed", "Failure Comments", "Filename", "StagingId"];
 
         public PactMonthlyOutputService(
             IPactApiClient pactApiClient,
@@ -171,6 +173,28 @@ namespace Apha.FPSApps.Application.Services.PACT
                     return ApiResponseDto<MonthlyOutputImportResultDto>.FailureResponse(
                         errors,
                         new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
+                }
+
+                // Reject files that contain headers belonging to exported/correction files
+                var worksheet = workbook.Worksheet(1);
+                var headerRow = worksheet.RangeUsed()?.RowsUsed().FirstOrDefault();
+                if (headerRow != null)
+                {
+                    var headerMap = _excelImportService.BuildHeaderMap(headerRow);
+                    var disallowedHeadersFound = DisallowedHeadersForFreshImport
+                        .Where(h => headerMap.ContainsKey(_excelImportService.NormalizeHeader(h)))
+                        .ToList();
+
+                    if (disallowedHeadersFound.Count > 0)
+                    {
+                        return ApiResponseDto<MonthlyOutputImportResultDto>.FailureResponse(
+                            [new ApiErrorDto
+                            {
+                                Code = "INVALID_TEMPLATE",
+                                Message = "This file appears to be an exported or correction file. Please use the correct file template for fresh import."
+                            }],
+                            new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
+                    }
                 }
 
                 var request = new MonthlyOutputImportReqDto
