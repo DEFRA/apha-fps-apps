@@ -24,6 +24,20 @@ namespace Apha.FPS.DataAccess.Repositories
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
+        private static readonly (string Key, Expression<Func<ProjectStaffPlanView, string?>> Selector)[] FilterableColumns =
+        {
+            ("ProgramNo",     x => x.ProgramNo),
+            ("ParentProject", x => x.ParentProject),
+            ("Contract",      x => x.Contract),
+            ("Name",          x => x.Name),
+            ("WorkGroup",     x => x.WorkGroup),
+            ("ProfitCentre",  x => x.ProfitCentre),
+            ("WgGrade",       x => x.WgGrade),
+            ("PcGrade",       x => x.PcGrade),
+            ("GradeCode",     x => x.GradeCode),
+            ("StaffId",       x => x.StaffId),
+        };
+
         private static IQueryable<ProjectStaffPlanView> ApplyFilter(IQueryable<ProjectStaffPlanView> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
@@ -35,37 +49,32 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("ProgramNo", out var programNo) && programNo != null)
-                query = query.Where(x => EF.Functions.ILike(x.ProgramNo!, $"%{programNo}%"));
-
-            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
-                query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
-
-            if (dict.TryGetValue("Contract", out var contract) && contract != null)
-                query = query.Where(x => EF.Functions.ILike(x.Contract!, $"%{contract}%"));
-
-            if (dict.TryGetValue("Name", out var name) && name != null)
-                query = query.Where(x => EF.Functions.ILike(x.Name!, $"%{name}%"));
-
-            if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
-                query = query.Where(x => EF.Functions.ILike(x.WorkGroup!, $"%{workGroup}%"));
-
-            if (dict.TryGetValue("ProfitCentre", out var profitCentre) && profitCentre != null)
-                query = query.Where(x => EF.Functions.ILike(x.ProfitCentre!, $"%{profitCentre}%"));
-
-            if (dict.TryGetValue("WgGrade", out var wgGrade) && wgGrade != null)
-                query = query.Where(x => EF.Functions.ILike(x.WgGrade!, $"%{wgGrade}%"));
-
-            if (dict.TryGetValue("PcGrade", out var pcGrade) && pcGrade != null)
-                query = query.Where(x => EF.Functions.ILike(x.PcGrade!, $"%{pcGrade}%"));
-
-            if (dict.TryGetValue("GradeCode", out var gradeCode) && gradeCode != null)
-                query = query.Where(x => EF.Functions.ILike(x.GradeCode!, $"%{gradeCode}%"));
-
-            if (dict.TryGetValue("StaffId", out var staffId) && staffId != null)
-                query = query.Where(x => EF.Functions.ILike(x.StaffId!, $"%{staffId}%"));
+            foreach (var (key, selector) in FilterableColumns)
+            {
+                if (dict.TryGetValue(key, out var value) && value != null)
+                    query = ApplyLike(query, selector, value.ToString()!);
+            }
 
             return query;
+        }
+
+        private static IQueryable<ProjectStaffPlanView> ApplyLike(
+            IQueryable<ProjectStaffPlanView> query,
+            Expression<Func<ProjectStaffPlanView, string?>> selector,
+            string value)
+        {
+            var iLike = typeof(NpgsqlDbFunctionsExtensions).GetMethod(
+                nameof(NpgsqlDbFunctionsExtensions.ILike),
+                new[] { typeof(DbFunctions), typeof(string), typeof(string) })!;
+
+            var body = Expression.Call(
+                iLike,
+                Expression.Constant(EF.Functions),
+                selector.Body,
+                Expression.Constant($"%{value}%"));
+
+            var predicate = Expression.Lambda<Func<ProjectStaffPlanView, bool>>(body, selector.Parameters);
+            return query.Where(predicate);
         }
 
         private static IQueryable ApplySorting(IQueryable<ProjectStaffPlanView> query, string? sortBy, bool descending)

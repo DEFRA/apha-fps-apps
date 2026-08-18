@@ -55,6 +55,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<StaffWorkgroupLookup>> GetStaffWorkgroupLookup()
         {
+            // CA1862 suppressed: this is an EF Core query translated to SQL. The
+            // string.Equals(StringComparison) overload cannot be translated by Npgsql,
+            // whereas ToLower() maps to SQL LOWER(). UserEmailId is already lower-cased.
+#pragma warning disable CA1862
             var query = (from s in _dbContext.StaffViews
                          join sp in _dbContext.StaffPickViews on s.StaffId equals sp.StaffId
                          where s.UserEmail != null && s.UserEmail.ToLower() == _requestContext.UserEmailId
@@ -68,6 +72,7 @@ namespace Apha.FPS.DataAccess.Repositories
                              Leave = s.Leave ?? 0,
                              SickSpecial = s.SickSpecial ?? 0
                          }).Distinct().OrderBy(e => e.Name);
+#pragma warning restore CA1862
 
             return await query.ToListAsync();
         }
@@ -250,7 +255,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             view.StaffCost = (decimal)view.PlannedHours *
                              (view.ChargeRate ?? 0m) *
-                             ((view.SectorName ?? "").Trim().ToLower() == "charge" ? 1m : 0m);
+                             ((view.SectorName ?? "").Trim().Equals("charge", StringComparison.OrdinalIgnoreCase) ? 1m : 0m);
             return view;
         }
 
@@ -276,6 +281,10 @@ namespace Apha.FPS.DataAccess.Repositories
                 .FirstOrDefaultAsync();
 
 
+            // CA1862 suppressed: this is an EF Core query translated to SQL. The
+            // string.Equals(StringComparison) overload cannot be translated by Npgsql,
+            // whereas ToLower() maps to SQL LOWER(). UserEmailId is already lower-cased.
+#pragma warning disable CA1862
             var projProgram = (from p in _dbContext.ProjectViews
                                join prg in _dbContext.ProgramViews on
                                    new { p.Program, p.UserId } equals new { Program = prg.ProgramNo, prg.UserId }
@@ -290,6 +299,7 @@ namespace Apha.FPS.DataAccess.Repositories
                                    prg.UserId,
                                    prg.UserEmail
                                }).Distinct();
+#pragma warning restore CA1862
 
             return (from sj in _dbContext.StaffJobTblViews
                     join s in _dbContext.StaffGeneralViews on sj.StaffId equals s.StaffId
@@ -362,7 +372,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 from wg in _context.WorkgroupGrades
 
                 join s in _context.StaffViews
-                    on new { WorkgroupGrade = wg.WgGrade, FpsYear = (int?)wg.FpsYear }
+                    on new { WorkgroupGrade = wg.WgGrade, FpsYear = wg.FpsYear }
                     equals new { s.WorkgroupGrade, s.FpsYear }
 
                 join pc in _context.ProfitCentreGrades
@@ -514,12 +524,17 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<double> GetZtTotalHoursByStaffIdAsync(string staffId)
         {
+            // CA1862 suppressed: this is an EF Core query translated to SQL. The
+            // string.Equals(StringComparison) overload cannot be translated by Npgsql,
+            // whereas ToUpper() maps to SQL UPPER().
+#pragma warning disable CA1862
             return await (from sj in _dbContext.StaffJobTblViews
                           join jc in _dbContext.JobCodes on sj.JobCode equals jc.JobCodeId
                           where sj.StaffId == staffId
                                 && jc.Type != null && jc.Type.ToUpper() == "ZT"
-                          select (double?)sj.PlannedHours)
+                          select sj.PlannedHours)
                 .SumAsync(h => h ?? 0);
+#pragma warning restore CA1862
         }
 
         public async Task<PagedData<StaffJobZtView>> GetZtStaffJobsByStaffIdPagedAsync(PaginationParameters<string> query, string staffId)
@@ -532,7 +547,7 @@ namespace Apha.FPS.DataAccess.Repositories
                              {
                                  StaffID = sj.StaffId,
                                  JobCode = sj.JobCode,
-                                 PlannedHours = (double?)sj.PlannedHours ?? 0,
+                                 PlannedHours = sj.PlannedHours ?? 0,
                                  Name = jc.ProjectTitle
                              }).Distinct().AsQueryable();
 
@@ -554,7 +569,7 @@ namespace Apha.FPS.DataAccess.Repositories
                              {
                                  StaffID = vsjt.StaffId,
                                  JobCode = vsjt.JobCode,
-                                 PlannedHours = (double?)vsjt.PlannedHours ?? 0,
+                                 PlannedHours = vsjt.PlannedHours ?? 0,
                                  Name = vjc.ProjectTitle
                              }).Distinct().AsQueryable();
 
