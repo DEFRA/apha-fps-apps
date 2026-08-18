@@ -6,6 +6,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     public class TestPurchaseRequirementViewModel
     {
         public string ParentProject { get; set; } = string.Empty;
+        public string OriginalParentProject { get; set; } = string.Empty;
         public string NavigationOrigin { get; set; } = "Project";
         public DataGridConfig<TestPurchaseRequirementItem> TestPurchaseReqGrid { get; set; } = new();
     }
