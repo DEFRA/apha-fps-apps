@@ -304,7 +304,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         StaffID = sj.StaffId,
                         JobCode = sj.JobCode,
                         PlannedHours = sj.PlannedHours ?? 0,
-                        Name = "",
+                        Name = s.Name ?? "",
                         WorkGroupGrade = s.WorkGroupGrade,
                         ChargeRate = dailyRate,
                         StaffCost = 0m,
