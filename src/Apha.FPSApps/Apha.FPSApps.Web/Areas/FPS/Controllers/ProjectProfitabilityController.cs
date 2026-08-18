@@ -157,7 +157,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var isProjectGroupMode = !string.IsNullOrWhiteSpace(projectGroup);
 
             if (!isProjectGroupMode && string.IsNullOrWhiteSpace(programNo))
-                return Ok(new { programmeTarget = (decimal?)null, programmeSurplusShortfall = 0m });
+                return Ok(new { programmeTarget = (string?)null, programmeSurplusShortfall = FormatAmount(0m) });
 
             var query = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
 
@@ -173,19 +173,28 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var sumProfit = items.Sum(i => i.JcProfit);
             return Ok(new
             {
-                programmeTarget,
-                programmeSurplusShortfall = sumProfit - (programmeTarget ?? 0m),
-                totalStaffCosts      = items.Sum(i => i.JcTotalStaffCosts),
-                totalTestCosts       = items.Sum(i => i.JcTotalTestCosts),
-                totalAnimalCosts     = items.Sum(i => i.JcTotalAnimalCosts),
-                totalAdditionalCosts = items.Sum(i => i.JcTotalAdditionalCosts),
-                totalCosts           = items.Sum(i => i.TotalCosts),
-                totalBudget          = items.Sum(i => i.BudgetCvl ?? 0m),
-                totalProfit          = sumProfit,
-                totalTargetProfit    = items.Sum(i => i.TargetProfit),
-                totalOffTarget       = items.Sum(i => i.OffTarget)
+                programmeTarget      = FormatAmount(programmeTarget),
+                programmeSurplusShortfall = FormatAmount(sumProfit - (programmeTarget ?? 0m)),
+                totalStaffCosts      = FormatAmount(items.Sum(i => i.JcTotalStaffCosts)),
+                totalTestCosts       = FormatAmount(items.Sum(i => i.JcTotalTestCosts)),
+                totalAnimalCosts     = FormatAmount(items.Sum(i => i.JcTotalAnimalCosts)),
+                totalAdditionalCosts = FormatAmount(items.Sum(i => i.JcTotalAdditionalCosts)),
+                totalCosts           = FormatAmount(items.Sum(i => i.TotalCosts)),
+                totalBudget          = FormatAmount(items.Sum(i => i.BudgetCvl ?? 0m)),
+                totalProfit          = FormatAmount(sumProfit),
+                totalTargetProfit    = FormatAmount(items.Sum(i => i.TargetProfit)),
+                totalOffTarget       = FormatAmount(items.Sum(i => i.OffTarget))
             });
         }
+
+        /// <summary>
+        /// Formats a decimal to a grouped string with 2 decimal places using en-GB conventions,
+        /// preserving the full precision of the value. The currency symbol is intentionally
+        /// omitted because the view already renders a static "£" prefix for each field.
+        /// Returns null when the value is null.
+        /// </summary>
+        private static string? FormatAmount(decimal? value) =>
+            value?.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("en-GB"));
 
         private DataGridConfig<ProjectProfitabilityItem> GetProfitabilityGridConfig(bool isProjectGroupMode = false)
         {            return new DataGridConfig<ProjectProfitabilityItem>

@@ -401,16 +401,8 @@
 
         // ── Grid 2 CRUD ────────────────────────────────────────────────────────
         function addTestReqmt() {
-            var hasRows = $('#tbl_' + testReqmtGridId + ' tbody tr[data-id]').length > 0;
-            if (!hasRows || !currentSelectedTestCode) {
-                showAlertMessage('Please select a Test Capability record before adding the test requirement', AlertType.INFO);
-                return;
-            }
-
-            $.ajax({
-                url: '/PACT/TestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
-                type: 'GET',
-                success: function (html) {
+            $.get('/PACT/TestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
+                function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
