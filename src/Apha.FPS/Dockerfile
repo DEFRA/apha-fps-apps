@@ -29,7 +29,7 @@ ARG PARENT_VERSION=dotnet10.0
 LABEL uk.gov.defra.parent-image=defra-dotnetcore:${PARENT_VERSION}
 
 USER 0
-RUN apk update && apk add --no-cache icu-libs
+RUN apk update && apk add --no-cache icu-libs krb5-libs
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
 ARG PORT=8080
