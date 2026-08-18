@@ -74,17 +74,6 @@ function reloadProfitCenterCostGrid(monthNumber) {
                 '<div class="govuk-error-message">Failed to load data. Please try again.</div>'
             );
         }
-        //     function (xhr, status, error) {
-        //     if (xhr.status === 401) {
-        //         // Session expired — reload the page to trigger the OIDC login flow
-        //         window.location.reload();
-        //     } else {
-        //         console.error('Failed to load grid:', error);
-        //         $('#gridContainer_profitCenterCostGrid').html(
-        //             '<div class="govuk-error-message">Failed to load data. Please try again.</div>'
-        //         );
-        //     }
-        // }
     });
 }
 
