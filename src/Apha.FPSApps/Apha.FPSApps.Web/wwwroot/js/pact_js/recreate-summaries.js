@@ -134,14 +134,19 @@
         var container = document.getElementById('gridContainer_summaryHistoryGrid');
         if (!container) return;
 
+        var antiForgeryToken = getAntiForgeryToken();
+
         $.ajax({
             url: GRID_URL,
             type: 'POST',
+            headers: { 'RequestVerificationToken': antiForgeryToken },
             data: {
-                Filter: '{}',
-                Page: 1,
-                PageSize: 10,
-                __RequestVerificationToken: getAntiForgeryToken()
+                page: 1,
+                pageSize: 10,
+                sortBy: '',
+                descending: false,
+                filter: '{}',
+                __RequestVerificationToken: antiForgeryToken
             },
             success: function (html) { container.innerHTML = html; },
             error: function () { showAlertMessage('Failed to refresh history grid.', AlertType.ERROR); }
