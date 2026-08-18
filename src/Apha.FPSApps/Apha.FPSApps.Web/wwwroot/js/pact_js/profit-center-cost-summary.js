@@ -68,8 +68,7 @@ function reloadProfitCenterCostGrid(monthNumber) {
             $('#gridContainer_profitCenterCostGrid').html(html);
             profitCenterCostGridId = 'profitCenterCostGrid';
         },
-        error:
-            error: function()
+        error: function()
         {
             $('#gridContainer_profitCenterCostGrid').html(
                 '<div class="govuk-error-message">Failed to load data. Please try again.</div>'
