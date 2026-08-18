@@ -622,11 +622,6 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
                 workGroupInput.removeClass('govuk-input--error');
                 errorMsg.hide().text('');
 
-                const isInitialRestore = existingWorkGroup && selectedWorkGroup === existingWorkGroup;
-                if (isInitialRestore) {
-                    return;
-                }
-
                 loadStagingModalStaffByWorkGroup(selectedWorkGroup);
                 loadStagingModalTimeCodesByWorkGroup(selectedWorkGroup);
             },
@@ -634,8 +629,8 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
                 $('#StagingWorkGroup').val('');
                 $('#StagingPactId').val('');
                 loadStagingModalStaffByWorkGroup('');
-                loadAllStagingModalTimeCodes();
-                loadAllStagingModalProjects();
+                resetStagingModalTimeCodeOptions();
+                resetStagingModalParentProjectOptions();
             }
         }
     });
@@ -719,14 +714,8 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
                 }
             },
             onClear: function () {
-                const workGroup = $('#StagingWorkGroup').val();
                 $('#StagingTimeCode').val('');
-
-                if (workGroup) {
-                    resetStagingModalParentProjectOptions();
-                } else {
-                    loadAllStagingModalProjects();
-                }
+                resetStagingModalParentProjectOptions();
             }
         }
     });
@@ -768,11 +757,11 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
     if (existingWorkGroup) {
         window.stagingWorkGroupDropdown.setValue(existingWorkGroup);
         loadStagingModalStaffByWorkGroup(existingWorkGroup, existingName, existingPactId);
-        loadAllStagingModalTimeCodes(existingTimeCode, existingParentProject);
+        loadStagingModalTimeCodesByWorkGroup(existingWorkGroup, existingTimeCode, existingParentProject);
     } else {
-        loadStagingModalStaffByWorkGroup($('#StagingWorkGroup').val());
-        loadAllStagingModalTimeCodes();
-        loadAllStagingModalProjects();
+        const currentWorkGroup = $('#StagingWorkGroup').val();
+        loadStagingModalStaffByWorkGroup(currentWorkGroup);
+        loadStagingModalTimeCodesByWorkGroup(currentWorkGroup);
     }
 }
 
@@ -810,9 +799,10 @@ function loadStagingModalStaffByWorkGroup(workGroup, restoreName, restorePactId)
                     $('#StagingPactStaffId').val(match.spNumber);
                     $('#StagingPactId').val(match.pactId);
                 } else {
-                    // Employee not in list (e.g. inactive) — show stored text directly
+                    // No matching selectable staff item in dropdown:
+                    // keep name text, but do not show Staff Pact ID unless a dropdown item is selected.
                     $('#StagingName').val(restoreName || '');
-                    $('#StagingPactStaffId').val(restorePactId || '');
+                    $('#StagingPactStaffId').val('');
                     $('#StagingPactId').val(restorePactId || '');
                 }
             }
@@ -824,7 +814,7 @@ function loadStagingModalStaffByWorkGroup(workGroup, restoreName, restorePactId)
     });
 }
 
-function loadStagingModalTimeCodesByWorkGroup(workGroup, restoreTimeCode, loadProjectsOnRestore = true) {
+function loadStagingModalTimeCodesByWorkGroup(workGroup, restoreTimeCode, restoreParentProject) {
     resetStagingModalTimeCodeOptions();
     resetStagingModalParentProjectOptions();
 
@@ -842,11 +832,11 @@ function loadStagingModalTimeCodesByWorkGroup(workGroup, restoreTimeCode, loadPr
                 window.stagingTimeCodeDropdown.updateData(items);
 
                 if (restoreTimeCode && items.some(function (item) { return item.value === restoreTimeCode; })) {
+                    window._stagingSkipTimeCodeOnSelect = true;
                     window.stagingTimeCodeDropdown.setValue(restoreTimeCode);
+                    window._stagingSkipTimeCodeOnSelect = false;
                     $('#StagingTimeCode').val(restoreTimeCode);
-                    if (loadProjectsOnRestore) {
-                        loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, restoreTimeCode);
-                    }
+                    loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, restoreTimeCode, restoreParentProject);
                 }
             }
         },
@@ -938,8 +928,6 @@ function loadAllStagingModalTimeCodes(restoreTimeCode, restoreParentProject) {
                     const workGroup = $('#StagingWorkGroup').val();
                     if (workGroup) {
                         loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, restoreTimeCode, restoreParentProject);
-                    } else if (restoreParentProject !== undefined) {
-                        loadAllStagingModalProjects(restoreParentProject);
                     }
                 }
             }
