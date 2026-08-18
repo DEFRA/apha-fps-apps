@@ -30,7 +30,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     JobName = jm.JobName,
                     JobExecutionId = jq.JobExecutionId,
                     RequestedBy = jq.RequestedBy,
-                    StartDateTime = jq.StartDateTime,
+                    StartDateTime = jq.StartDateTime.GetValueOrDefault(),
                     EndDateTime = jq.EndDateTime,
                     ErrorMessage = jq.ErrorMessage,
                     Status = js.Status
@@ -253,7 +253,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, _requestContext.FpsYear);
                     _context.BatchJobQueues.Add(jobQueueEntry);
 
-                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId);
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime.GetValueOrDefault(), initiatedStatus.StatusId);
                     _context.BatchJobQueueLogs.Add(logEntry);
 
                     await _context.SaveChangesAsync();

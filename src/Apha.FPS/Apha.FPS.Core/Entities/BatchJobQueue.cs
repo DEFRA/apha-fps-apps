@@ -8,7 +8,7 @@
         public int StatusId { get; set; } = 0;
         public string RequestedBy { get; set; } = null!;
         public DateTime? RequestedAtUtc { get; set; }
-        public DateTime StartDateTime { get; set; }
+        public DateTime? StartDateTime { get; set; }
         public DateTime? EndDateTime { get; set; }
         public string? ErrorMessage { get; set; }
         public DateTime CreatedAt { get; set; }

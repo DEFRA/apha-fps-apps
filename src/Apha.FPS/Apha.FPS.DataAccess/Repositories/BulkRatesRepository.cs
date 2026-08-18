@@ -118,12 +118,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 StatusId = initiatedStatusId,
                 RequestedBy = requestedBy,
                 RequestedAtUtc = requestedAtUtc,
-                FpsYear = fpsYear,
-                // StartDateTime is non-nullable on this shared entity (YearEnd always sets it
-                // explicitly); the pre-existing raw SQL never set it for Bulk Rates at all, so
-                // there's no "original" value to preserve here — RequestedAtUtc is the closest
-                // sensible stand-in, rather than leaving the CLR default (0001-01-01).
-                StartDateTime = requestedAtUtc
+                FpsYear = fpsYear
+                // StartDateTime is left null — the request hasn't been triggered into
+                // execution yet, matching every other pre-trigger Bulk Rates row.
             });
             await _dbContext.SaveChangesAsync(ct);
 

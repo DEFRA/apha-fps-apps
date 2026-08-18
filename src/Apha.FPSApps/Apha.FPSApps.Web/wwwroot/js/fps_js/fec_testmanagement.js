@@ -252,9 +252,15 @@ var BulkRates = (function () {
     function getBulkRatesExtraFilters() {
         var jobNameEl = document.getElementById('jobNameFilter');
         var statusEl  = document.getElementById('statusFilter');
+        var yearEl    = document.getElementById('yearSelector');
         return {
             jobName: jobNameEl ? jobNameEl.value : '',
-            status:  statusEl  ? statusEl.value  : ''
+            status:  statusEl  ? statusEl.value  : '',
+            // Every grid reload (sort/filter/page/background poll) is a plain AJAX POST with
+            // no query string, so FpsYearMiddleware.ResolveYear has nothing to go on but this
+            // form field — without it, it silently falls back to whichever year is "Open",
+            // which can differ from the year actually selected/displayed on the page.
+            FPSYear: yearEl ? yearEl.value : ''
         };
     }
     window.getBulkRatesExtraFilters = getBulkRatesExtraFilters;
