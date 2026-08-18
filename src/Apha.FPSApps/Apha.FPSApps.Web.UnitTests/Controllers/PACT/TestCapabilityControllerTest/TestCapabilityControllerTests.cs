@@ -80,7 +80,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestCapabilityControllerTe
                 .Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse([]));
             _testorProductService.GetAllTestorProductsAsync()
                 .Returns(ApiResponseDto<List<TestorProductDto>>.SuccessResponse([]));
-            _projectService.GetAllProjectsAsync()
+            _projectService.GetAllProjectsForAllUsersAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([]));
         }
 
@@ -627,7 +627,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestCapabilityControllerTe
                 .Returns(ApiResponseDto<TestRequirementDto>.SuccessResponse(dto));
             _mapper.Map<TestRequirementItem>(dto).Returns(item);
             _testorProductService.GetAllTestorProductsAsync().Returns(ApiResponseDto<List<TestorProductDto>>.SuccessResponse([]));
-            _projectService.GetAllProjectsAsync().Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([]));
+            _projectService.GetAllProjectsForAllUsersAsync().Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([]));
 
             // Act
             var result = await _controller.EditTestReqmt("BLOOD", "PRJ1");

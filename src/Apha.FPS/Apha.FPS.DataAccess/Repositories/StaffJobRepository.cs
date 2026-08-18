@@ -322,12 +322,13 @@ namespace Apha.FPS.DataAccess.Repositories
 
             IEnumerable<StaffJobView> sorted = sortBy.ToLower() switch
             {
-                "name"         => descending ? list.OrderByDescending(i => i.Name)         : list.OrderBy(i => i.Name),
-                "chargerate"   => descending ? list.OrderByDescending(i => i.ChargeRate)   : list.OrderBy(i => i.ChargeRate),
-                "plannedhours" => descending ? list.OrderByDescending(i => i.PlannedHours) : list.OrderBy(i => i.PlannedHours),
-                "days"         => descending ? list.OrderByDescending(i => i.Days)         : list.OrderBy(i => i.Days),
-                "staffcost"    => descending ? list.OrderByDescending(i => i.StaffCost)    : list.OrderBy(i => i.StaffCost),
-                _              => list
+                "workgroupgrade" => descending ? list.OrderByDescending(i => i.WorkGroupGrade) : list.OrderBy(i => i.WorkGroupGrade),
+                "name"           => descending ? list.OrderByDescending(i => i.Name)           : list.OrderBy(i => i.Name),
+                "chargerate"     => descending ? list.OrderByDescending(i => i.ChargeRate)     : list.OrderBy(i => i.ChargeRate),
+                "plannedhours"   => descending ? list.OrderByDescending(i => i.PlannedHours)   : list.OrderBy(i => i.PlannedHours),
+                "days"           => descending ? list.OrderByDescending(i => i.Days)           : list.OrderBy(i => i.Days),
+                "staffcost"      => descending ? list.OrderByDescending(i => i.StaffCost)      : list.OrderBy(i => i.StaffCost),
+                _                => list
             };
 
             return sorted.ToList();
@@ -344,14 +345,26 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
+            if (dict.TryGetValue("WorkGroupGrade", out var wgGrade) && wgGrade != null)
+            {
+                var wgGradeStr = wgGrade.ToString()!;
+                list = list.Where(x => x.WorkGroupGrade != null && x.WorkGroupGrade.Contains(wgGradeStr, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
             if (dict.TryGetValue("Name", out var name) && name != null)
             {
                 var nameStr = name.ToString()!;
                 list = list.Where(x => x.Name != null && x.Name.Contains(nameStr, StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
+            if (dict.TryGetValue("PlannedHours", out var plannedHours) && plannedHours != null &&
+                double.TryParse(plannedHours.ToString(), out var hoursVal))
+            {
+                list = list.Where(x => x.PlannedHours == hoursVal).ToList();
+            }
+
             return list;
-        }        
+        }
 
         public async Task<PagedData<StaffResourceUtilisationView>> GetStaffResourceUtilisationAsync(
             PaginationParameters<string> query, string workgroup)
