@@ -2387,6 +2387,30 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         #region ApplyProjectFilter Additional Branch Tests
 
         [Fact]
+        public async Task GetPagedProjectsAsync_FilterByProgram_ReturnsMatchingProjects()
+        {
+            // Arrange
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "PP001", Program = "PRG100", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+                new() { ParentProject = "PP002", Program = "PRG101", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+                new() { ParentProject = "PP003", Program = "OTH999", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+            };
+            var repo  = CreateRepository(projectViews: projectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                Filter = "{\"Program\":\"PRG\"}"
+            };
+
+            // Act
+            var result = await repo.GetPagedProjectsAsync(query);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Contains("PRG", p.Program));
+        }
+
+        [Fact]
         public async Task GetPagedProjectsAsync_FilterByOracleProjectCode_ReturnsMatchingProjects()
         {
             // Arrange
