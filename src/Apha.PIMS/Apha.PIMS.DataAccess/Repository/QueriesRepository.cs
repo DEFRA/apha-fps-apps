@@ -208,11 +208,11 @@ namespace Apha.PIMS.DataAccess.Repository
                             equals new { yearTotalJoin.Year, yearTotalJoin.Parentproject }
                             into yearTotalGroup
                         from yearTotal in yearTotalGroup.DefaultIfEmpty()
-                        from monthFinal in _context.ProjectMonthFinals.AsNoTracking()
-                            .Where(m => yearTotal != null
-                                        && m.Year == yearTotal.Year
-                                        && m.Project == yearTotal.Parentproject)
-                            .DefaultIfEmpty()
+                        join monthFinalJoin in _context.ProjectMonthFinals.AsNoTracking()
+                            on new { Year = yearTotal.Year, Project = yearTotal.Parentproject }
+                            equals new { Year = monthFinalJoin.Year, Project = monthFinalJoin.Project }
+                            into monthFinalGroup
+                        from monthFinal in monthFinalGroup.DefaultIfEmpty()
                         join yearlyDataJoin in _context.YearlyFinancialData.AsNoTracking()
                             on new { myProject.Year, Project = myProject.Parentproject }
                             equals new { yearlyDataJoin.Year, yearlyDataJoin.Project }
@@ -222,11 +222,11 @@ namespace Apha.PIMS.DataAccess.Repository
                             on myProject.Parentproject equals radTrackDataJoin.Parentproject
                             into radTrackDataGroup
                         from radTrackData in radTrackDataGroup.DefaultIfEmpty()
-                        from comment in monitoringComments
-                            .Where(c => yearTotal != null
-                                        && c.Year == yearTotal.Year
-                                        && c.Project == yearTotal.Parentproject)
-                            .DefaultIfEmpty()
+                        join commentJoin in monitoringComments
+                            on new { Year = yearTotal.Year, Project = yearTotal.Parentproject }
+                            equals new { Year = commentJoin.Year, Project = commentJoin.Project }
+                            into commentGroup
+                        from comment in commentGroup.DefaultIfEmpty()
                         where myProject.Year == reportYear
                               && (monthFinal == null || monthFinal.Monthno == fiscalMonth)
                         select new ProgramCustomerMonitoringReportData

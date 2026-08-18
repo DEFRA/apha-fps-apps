@@ -6,75 +6,43 @@
     ViewData["Title"] = "Resource Set-Up";
 }
 
-<style type="text/css">
-    #gridContainer_rcGradeGrid .grid-scroll-container {
-        height: 260px;
-        max-height: 260px;
-    }
-    #gridContainer_wgGradeGrid .grid-scroll-container {
-        height: 220px;
-        max-height: 220px;
-    }
-    #gridContainer_wgStaffGrid .grid-scroll-container {
-        height: 240px;
-        max-height: 240px;
-    }
-    #gridContainer_wgGradeGrid .editable-grid-container {
-        min-height: unset;
-    }
-    #gridContainer_wgGradeGrid table thead th,
-    #gridContainer_wgGradeGrid table tbody td { text-align: left !important; }
-
-    /* Right-align numeric columns in wgStaffGrid (HrsPaid, Leave, SickSp, AtWork = columns 3-6) */
-    #gridContainer_wgStaffGrid table thead th:nth-child(3),
-    #gridContainer_wgStaffGrid table thead th:nth-child(4),
-    #gridContainer_wgStaffGrid table thead th:nth-child(5),
-    #gridContainer_wgStaffGrid table thead th:nth-child(6),
-    #gridContainer_wgStaffGrid table tbody td:nth-child(3),
-    #gridContainer_wgStaffGrid table tbody td:nth-child(4),
-    #gridContainer_wgStaffGrid table tbody td:nth-child(5),
-    #gridContainer_wgStaffGrid table tbody td:nth-child(6) {
-        text-align: right !important;
-    }
-
-    /* Border on the 4 numeric total cells */
-    #fpsSrTotalHrsPaid,
-    #fpsSrTotalLeave,
-    #fpsSrTotalSick,
-    #fpsSrTotalAtWork {
-        border: 1px solid #b1b4b6 !important;
-    }
-</style>
-
 <main id="main-content">
     <div class="container-fluid">
         <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <form asp-action="Index" asp-controller="ResourceSetUp" asp-area="FPS" method="get"
-                      class="govuk-!-padding-right-4 govuk-!-padding-top-2 govuk-!-padding-bottom-2"
-                      style="display: flex; align-items: center; justify-content: flex-end;">
-                    <input type="hidden" name="year" value="@FpsYearContext.Year" />
-                    <label class="fw-bold mt-2 me-2" for="profitCentreSelect">Resource Centre: </label>
-                    <select id="profitCentreSelect"
-                            name="profitCentre"
-                            asp-items="Model.ProfitCentreList"
-                            class="govuk-select govuk-!-font-size-16"
-                            style="width: auto; min-width: 260px;"
-                            onchange="showLoader(); this.form.submit()">
-                        <option value="">-- Select Resource Centre --</option>
-                    </select>
-                </form>
-            </div>
-        </div>
+            <div class="govuk-grid-column-one-full isClearFix sup_border-bottom govuk-!-margin-bottom-3">
+                <div class="govuk-grid-column-one-half isFloatLeft">
+                    <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-left-0 govuk-!-margin-top-3 isCustomPageHeadings">
+                        Resource Set-Up <a href="#" id="fpsSrRcTitle" class="govuk-link">@Model.ProfitCentre</a>
+                    </h1>
+                </div>
 
-        <!-- Page Title -->
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
-                    Resource Set-Up <a href="#" id="fpsSrRcTitle" class="govuk-link">@Model.ProfitCentre</a>
-                </h1>
+                <div class="govuk-grid-column-one-half isFloatRight">
+                    <table class="govuk-table govuk-!-margin-bottom-0 isFloatRight isHalfGrid isResourceSetUp">
+                        <tbody class="govuk-table__body">
+                            <tr class="govuk-table__row">
+                                <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-0 isNoBottomBorder govuk-!-text-align-right">
+                                    <label class="fw-bold me-2" for="profitCentreSelect">Resource Centre: </label>
+                                </th>
+                                <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
+                                    <form asp-action="Index" asp-controller="ResourceSetUp" asp-area="FPS" method="get"
+                                          class="govuk-!-padding-right-0 govuk-!-padding-top-2 govuk-!-padding-bottom-2">
+                                        <input type="hidden" name="year" value="@FpsYearContext.Year" />
+                                        @* <label class="fw-bold mt-2 me-2" for="profitCentreSelect">Resource Centre: </label> *@
+                                        <select id="profitCentreSelect"
+                                                name="profitCentre"
+                                                asp-items="Model.ProfitCentreList"
+                                                class="govuk-select govuk-!-font-size-16 govuk-input--width-20"
+                                                onchange="showLoader(); this.form.submit()">
+                                            <option value="">-- Select Resource Centre --</option>
+                                        </select>
+                                        </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
+    </div>
 
         <!-- Three-grid layout -->
         <div class="govuk-grid-row">
@@ -170,6 +138,7 @@
 <div class="modal" id="modalPopup" tabindex="-1" aria-labelledby="wgStaffModalLabel">
     <div class="modal-dialog">
         <div class="modal-content">
+            <h2 id="wgStaffModalLabel" class="govuk-visually-hidden">Edit WG staff</h2>
             <div id="modaPopupBody"></div>
         </div>
     </div>

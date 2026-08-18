@@ -14,6 +14,9 @@ namespace Apha.FPS.Core.Interfaces
         /// <summary>Returns a single WorkgroupGrade by WgGrade code.</summary>
         Task<WorkgroupGrade?> GetByWgGradeAsync(string wgGrade);
 
+        /// <summary>Returns true if a WorkgroupGrade with the given WgGrade code already exists (case-insensitive).</summary>
+        Task<bool> ExistsByWgGradeAsync(string wgGrade);
+
         /// <summary>Creates a new WorkgroupGrade record.</summary>
         Task<WorkgroupGrade> CreateAsync(WorkgroupGrade entity);
 
