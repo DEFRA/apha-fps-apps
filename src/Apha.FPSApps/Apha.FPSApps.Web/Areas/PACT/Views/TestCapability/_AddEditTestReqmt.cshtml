@@ -183,7 +183,7 @@
             callbacks: {
                 onSelect: function (selectedItem) {
                     const selectedProject = selectedItem && selectedItem.ParentProject ? selectedItem.ParentProject : '';
-                    $('#ProjectBuyerCode').val(selectedProject);
+                    $('#ProjectBuyerCode').val(selectedProject).trigger('change');
                     onTestReqmtProjectChange(selectedProject, isEditMode);
                 },
                 onClear: function () {

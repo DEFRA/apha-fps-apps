@@ -84,6 +84,10 @@ namespace Apha.Common.Constants
         public const string GetRadTrackInvoiceContracts = "api/v1/radtrackinvoice/lookups/contracts";
         public const string GetRadTrackInvoicePrograms = "api/v1/radtrackinvoice/lookups/programs";
 
+        // Query reports
+        public const string GetMonitoringQueryReportData = "api/v1/queries/monitoring";
+        public const string GetProgramCustomerMonitoringQueryReportData = "api/v1/queries/program-customer-monitoring";
+
         // Yearly Financial Details
         public const string GetAllYearlyFinancialData = "api/v1/yearlyfinancialdata/{0}";
         public const string GetYearlyFinancialDataByKey = "api/v1/yearlyfinancialdata/{0}/{1}";

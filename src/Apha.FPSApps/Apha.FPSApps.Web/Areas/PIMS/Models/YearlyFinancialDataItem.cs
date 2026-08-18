@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System;
 using System.ComponentModel.DataAnnotations;
 
@@ -18,26 +19,31 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 
        
         [Display(Name = "PP/Acc")]
-        [GridColumn(Order = 2, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false, CssClass = "sup_text_right_align")]
+        [CurrencyRange]
+        [GridColumn(Order = 2, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? BfBudget { get; set; }
 
       
         [Display(Name = "Customer Income")]
-        [GridColumn(Order = 3, Width = 115, Type = GridColumnType.GbpValue, IsFilterable = false, CssClass = "sup_text_right_align")]
+        [CurrencyRange]
+        [GridColumn(Order = 3, Width = 115, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? PyBudget { get; set; }
 
         
         [Display(Name = "VLA Budget")]
-        [GridColumn(Order = 4, Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false, CssClass = "sup_text_right_align")]
+        [CurrencyRange]
+        [GridColumn(Order = 4, Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? VlaBudget { get; set; }
 
         
         [Display(Name = "Actual Exp")]
-        [GridColumn(Order = 5, Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false, CssClass = "sup_text_right_align")]
+        [CurrencyRange]
+        [GridColumn(Order = 5, Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? ActualExpenditure { get; set; }
 
         
         [Display(Name = "Seedcorn")]
+        [CurrencyRange]
         [GridColumn(Order = 6, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? Seedcorn { get; set; }
 
@@ -48,32 +54,38 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 
         
         [Display(Name = "Pay Costs")]
-        [GridColumn(Order = 8, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false, CssClass = "sup_text_right_align")]
+        [CurrencyRange]
+        [GridColumn(Order = 8, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? PayCosts { get; set; }
 
         
         [Display(Name = "Non-Pay & OH")]
-        [GridColumn(Order = 9, Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false, CssClass = "sup_text_right_align")]
+        [CurrencyRange]
+        [GridColumn(Order = 9, Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? NonPayOhCosts { get; set; }
 
         
         [Display(Name = "Test Costs")]
-        [GridColumn(Order = 10, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false, CssClass = "sup_text_right_align")]
+        [CurrencyRange]
+        [GridColumn(Order = 10, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? TestCosts { get; set; }
 
         
         [Display(Name = "Project Specific")]
-        [GridColumn(Order = 11, Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false, CssClass = "sup_text_right_align")]
+        [CurrencyRange]
+        [GridColumn(Order = 11, Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? NonAnimalCosts { get; set; }
 
         
         [Display(Name = "Animal Costs")]
-        [GridColumn(Order = 12, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false, CssClass = "sup_text_right_align")]
+        [CurrencyRange]
+        [GridColumn(Order = 12, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? AnimalCosts { get; set; }
 
         
         [Display(Name = "Exc/Adj")]
-        [GridColumn(Order = 13, Width = 80, Type = GridColumnType.GbpValue, IsFilterable = false, CssClass = "sup_text_right_align")]
+        [CurrencyRange]
+        [GridColumn(Order = 13, Width = 80, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? Adjustment { get; set; }
 
        
@@ -83,7 +95,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 
         
         [Display(Name = "Total Costs")]
-        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false, CssClass = "sup_text_right_align")]
+        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
         public decimal? TotalCosts { get; set; }
 
         
@@ -128,7 +140,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
         public short AnimalCostsChanged { get; set; }
 
-        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false, CssClass = "sup_text_right_align")]
+        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
         public short NonAnimalCostsChanged { get; set; }
     }
 }

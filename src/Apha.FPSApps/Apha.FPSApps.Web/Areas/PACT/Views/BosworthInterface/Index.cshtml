@@ -7,8 +7,8 @@
 
 <div class="content-wrapper">
     <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10 time-recordings-layout" style="margin-bottom: 11vh;">
-        <div class="govuk-grid-column-full sup_flex_center_start sup_border-bottom sup_margin_bottom_10">
-            <h1 class="govuk-heading-m sup_margin_bottom_10">Bosworth Interface</h1>
+        <div class="govuk-grid-column-full sup_flex_center_start sup_border-bottom ">
+            <h1 class="govuk-heading-s sup_margin_bottom_10 sup_font-size-19">Bosworth Interface</h1>
         </div>
 
         <table class="govuk-table">
@@ -16,10 +16,10 @@
                 <tr class="govuk-table__row">
                     <td class="govuk-table__cell">
                         <div class="time-recordings-layout isResourceManagementSection">
-                            <div class="govuk-!-padding-2 govuk-!-padding-bottom-0 govuk-!-padding-left-0 isOverflowHidden tr-section-box">
-                                <h2 class="govuk-heading-s isSubHeading">Resource Management</h2>
-                                <div class="govuk-grid-column-one-full govuk-!-padding-2 btnSec isClearfix">
-                                    <a class="govuk-button isFloatRight" data-module="govuk-button" asp-area="PACT" asp-controller="WorkGroupPeople" asp-action="Index">Show Workgroups &amp; Staffs</a>
+                            <div class="govuk-!-padding-2 govuk-!-padding-top-0 govuk-!-padding-left-0 isOverflowHidden tr-section-box">
+                                <h2 class="govuk-heading-s isSubHeading bosworth-sub-heading sup_font-size-19">Resource Management</h2>
+                                <div class="govuk-grid-column-one-full govuk-!-padding-right-1 isClearfix">
+                                    <a class="govuk-button isFloatRight govuk-!-margin-bottom-4" data-module="govuk-button" asp-area="PACT" asp-controller="WorkGroupPeople" asp-action="Index">Show WorkGroups &amp; Staffs</a>
                                 </div>
 
                                 <div class="govuk-grid-column-one-half govuk-!-padding-2 govuk-!-padding-bottom-0 tr-section-panel isTimeSaleSection">
@@ -59,7 +59,7 @@
                                                         </div>
                                                     </td>
                                                     <td class="govuk-table__cell sup_border_0 govuk-!-text-align-centre">
-                                                        <a class="govuk-link" href="#" aria-label="Export selected workgroup" id="export-workgroup-link">
+                                                        <a class="govuk-link" href="#" aria-label="Export selected WorkGroup" id="export-workgroup-link">
                                                             <img class="excel-icon" src="../images/excel-export-icon.png" alt=""
                                                                  aria-hidden="true">
                                                         </a>
@@ -80,7 +80,7 @@
                                                         <td class="govuk-table__cell sup_border_0" style="width: 37vw;padding-right: 0;">
                                                             <div class="period-dropdown resource-dropdown" id="test-sale-selling-dropdown">
                                                                 <label for="selectSellingWorkGroupDropdown_input" class="govuk-label govuk-!-margin-bottom-1">
-                                                                    Select a Selling Workgroup
+                                                                    Select a Selling WorkGroup
                                                                 </label>
                                                                 <div id="selectSellingWorkGroupMultiDropdown"></div>
                                                                 <p class="govuk-!-font-weight-regular govuk-label govuk-label--l">
@@ -89,7 +89,7 @@
                                                             </div>
                                                         </td>
                                                         <td class="govuk-table__cell sup_border_0 govuk-!-text-align-centre">
-                                                            <a class="govuk-link" href="#" aria-label="Export selected test sale workgroup" id="export-selling-workgroup-link">
+                                                            <a class="govuk-link" href="#" aria-label="Export selected test sale WorkGroup" id="export-selling-workgroup-link">
                                                                 <img class="excel-icon" src="../images/excel-export-icon.png" alt=""
                                                                      aria-hidden="true">
                                                             </a>
@@ -118,7 +118,7 @@
                                                         <td class="govuk-table__cell sup_border_0">
                                                             <button type="button" id="test-sale-capabilities-button"
                                                                     class="govuk-button isFloatRight" data-module="govuk-button"
-                                                                    aria-label="List test capabilities for selected workgroup" allow-edit="true">
+                                                                    aria-label="List test capabilities for selected WorkGroup" allow-edit="true">
                                                                 List Test Capabilities for Selected WorkGroup
                                                             </button>
                                                         </td>
@@ -138,9 +138,9 @@
                     <td class="govuk-table__cell">
                         <div class="govuk-grid-column-one-full time-recordings-layout isServiceManagementSection">
                             <div class="govuk-!-padding-2 govuk-!-padding-top-0">
-                                <h2 class="govuk-heading-s isSubHeading">Service Management</h2>
+                                <h2 class="govuk-heading-s isSubHeading bosworth-sub-heading sup_font-size-19">Service Management</h2>
                                 <div class="govuk-grid-column-one-full govuk-!-padding-2 tr-section-panel">
-                                    <h2 class="govuk-heading-s">TimePurchase PivotWizards</h2>
+                                    <h2 class="govuk-!-margin-bottom-0 isCustomHeading">TimePurchase PivotWizards</h2>
 
                                     <div class="govuk-grid-column-one-full govuk-!-padding-2">
                                         <table class="govuk-table govuk-!-margin-bottom-0 isCustomPivotGrid">
@@ -149,7 +149,7 @@
                                                     <td class="govuk-table__cell sup_border_0" style="width: 37vw;padding-right: 0;">
                                                         <div class="period-dropdown" id="select-project-dropdown">
                                                             <label for="selectProjectDropdown_input" class="govuk-label govuk-!-margin-bottom-1">
-                                                                Select Project:
+                                                                Select a Project:
                                                             </label>
                                                             <div id="selectProjectMultiDropdown"></div>
                                                             <p class="govuk-!-font-weight-regular govuk-label govuk-label--l">

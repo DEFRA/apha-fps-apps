@@ -74,10 +74,10 @@ namespace Apha.FPS.Api.Controllers
         {
             if (string.IsNullOrWhiteSpace(request.OldCode) || string.IsNullOrWhiteSpace(request.NewCode))
                 throw new ArgumentException("Both old and new project codes are required.");
-            var existing = await _projectService.GetProjectByIdAsync(request.OldCode);
+            var existing = await _projectService.GetProjectByIdAsync(request.OldCode.Trim());
             if (existing == null)
                 throw new ArgumentException($"Project record with code: {request.OldCode} not found");
-            await _projectService.ChangeProjectCodeAsync(request.OldCode, request.NewCode);
+            await _projectService.ChangeProjectCodeAsync(request.OldCode, request.NewCode.Trim());
             return Ok(true);
         }
 

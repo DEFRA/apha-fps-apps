@@ -213,6 +213,29 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupGradeRepositoryTest
             Assert.Equal(2, result.Data.Count());
         }
 
+        [Theory]
+        [InlineData("WgGrade", "alpha")]
+        [InlineData("ProfitCentreGrade", "pcg_a")]
+        [InlineData("GradeCode", "gca")]
+        [InlineData("Workgroup", "teama")]
+        public async Task GetAllWorkgroupGradesPagedAsync_FiltersAreCaseInsensitive(string field, string filterValue)
+        {
+            var grades = new List<WorkgroupGrade>
+            {
+                BuildGrade("ALPHA1", profitCentreGrade: "PCG_A", gradeCode: "GCA", workgroup: "TeamA"),
+                BuildGrade("BETA1",  profitCentreGrade: "PCG_B", gradeCode: "GCB", workgroup: "TeamB")
+            };
+            var repo   = CreateRepository(grades: grades);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { field, filterValue } });
+            var query  = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+
+            var result = await repo.GetAllWorkgroupGradesPagedAsync(query);
+
+            Assert.Single(result.Data);
+            Assert.Equal("ALPHA1", result.Data.First().WgGrade);
+        }
+
         [Fact]
         public async Task GetAllWorkgroupGradesPagedAsync_WithEmptyFilterObject_ReturnsAllRecords()
         {
@@ -316,6 +339,68 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupGradeRepositoryTest
 
             Assert.NotNull(result);
             Assert.Equal("WG01", result.WgGrade);
+        }
+
+        #endregion
+
+        #region ExistsByWgGradeAsync Tests
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task ExistsByWgGradeAsync_ReturnsFalse_WhenNullOrWhitespace(string? wgGrade)
+        {
+            var repo = CreateRepository(grades: [BuildGrade("WG01")]);
+
+            var result = await repo.ExistsByWgGradeAsync(wgGrade!);
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsByWgGradeAsync_ReturnsFalse_WhenNotFound()
+        {
+            var repo = CreateRepository(grades: [BuildGrade("WG01")]);
+
+            var result = await repo.ExistsByWgGradeAsync("WG_MISSING");
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsByWgGradeAsync_ReturnsTrue_WhenExactMatch()
+        {
+            var repo = CreateRepository(grades: [BuildGrade("WG01")]);
+
+            var result = await repo.ExistsByWgGradeAsync("WG01");
+
+            Assert.True(result);
+        }
+
+        [Theory]
+        [InlineData("wg01")]
+        [InlineData("Wg01")]
+        [InlineData("wG01")]
+        public async Task ExistsByWgGradeAsync_ReturnsTrue_WhenCaseInsensitiveMatch(string candidate)
+        {
+            var repo = CreateRepository(grades: [BuildGrade("WG01")]);
+
+            var result = await repo.ExistsByWgGradeAsync(candidate);
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsByWgGradeAsync_ReturnsFalse_WhenMatchInDifferentFpsYear()
+        {
+            var otherYearGrade = BuildGrade("WG01");
+            otherYearGrade.FpsYear = DefaultFpsYear - 1;
+            var repo = CreateRepository(grades: [otherYearGrade]);
+
+            var result = await repo.ExistsByWgGradeAsync("WG01");
+
+            Assert.False(result);
         }
 
         #endregion

@@ -326,7 +326,7 @@ function initLiveModalWorkGroupDropdown() {
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem) {
-                $('#LiveWorkGroup').val(selectedItem?.value || '');
+                $('#LiveWorkGroup').val(selectedItem?.value || '').trigger('change');
             },
             onClear: function () {
                 $('#LiveWorkGroup').val('');
@@ -472,7 +472,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingTestCode, existing
         callbacks: {
             onSelect: function (selectedItem) {
                 const selectedWorkGroup = selectedItem?.value || '';
-                $('#StagingWorkGroup').val(selectedWorkGroup);
+                $('#StagingWorkGroup').val(selectedWorkGroup).trigger('change');
                 loadStagingModalTestCodesByWorkGroup(selectedWorkGroup);
             },
             onClear: function () {
@@ -503,7 +503,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingTestCode, existing
                 if (window._stagingSkipTestCodeOnSelect) return;
                 const testCode = selectedItem?.value || '';
                 const workGroup = $('#StagingWorkGroup').val() || null;
-                $('#StagingTestCode').val(testCode);
+                $('#StagingTestCode').val(testCode).trigger('change');
 
                 if (workGroup && testCode) {
                     loadStagingModalBuyersByTestCode(workGroup, testCode);
@@ -535,7 +535,7 @@ function initStagingModalDropdowns(existingWorkGroup, existingTestCode, existing
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem) {
-                $('#StagingBuyer').val(selectedItem?.value || '');
+                $('#StagingBuyer').val(selectedItem?.value || '').trigger('change');
             },
             onClear: function () {
                 $('#StagingBuyer').val('');

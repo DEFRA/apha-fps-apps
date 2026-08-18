@@ -144,9 +144,11 @@ namespace Apha.PACT.DataAccess.Repository
             if (string.IsNullOrWhiteSpace(workGroupName))
                 return false;
 
+            // Case-insensitive comparison so names differing only by letter case
+            // (e.g. "ww" vs "WW") are treated as duplicates.
             return await _context.WorkGroups
                 .AsNoTracking()
-                .AnyAsync(w => w.WorkGroupName == workGroupName);
+                .AnyAsync(p => EF.Functions.ILike(p.WorkGroupName.Trim(), workGroupName.Trim()));
         }
 
         public async Task<IEnumerable<string>> GetAllProfitCentresAsync()
@@ -174,8 +176,8 @@ namespace Apha.PACT.DataAccess.Repository
                         wggg.GradeCode
                     })
                 .Where(x => x.Name != null
-                         && !x.Name.ToLower().Contains("general")
-                         && !x.Name.ToLower().Contains("vacancy"))
+                         && !EF.Functions.ILike(x.Name, "%general%")
+                         && !EF.Functions.ILike(x.Name, "%vacancy%"))
                 .Where(x => x.GradeCode != null && !x.GradeCode.StartsWith("G"))
                 .Distinct()
                 .OrderBy(x => x.Name)
@@ -216,16 +218,30 @@ namespace Apha.PACT.DataAccess.Repository
             if (filters is null)
                 return query;
 
-            if (filters.TryGetValue("WorkGroupName", out var wgName) && !string.IsNullOrWhiteSpace(wgName))
+            // ILike on a NULL column yields no match in PostgreSQL, so an explicit
+            // null guard is unnecessary for the nullable Owner/Description columns.
+            if (TryGetFilter(filters, "WorkGroupName", out var wgName))
                 query = query.Where(w => EF.Functions.ILike(w.WorkGroupName, $"%{wgName}%"));
 
-            if (filters.TryGetValue("ProfitCentre", out var pc) && !string.IsNullOrWhiteSpace(pc))
+            if (TryGetFilter(filters, "ProfitCentre", out var pc))
                 query = query.Where(w => EF.Functions.ILike(w.ProfitCentre, $"%{pc}%"));
 
-            if (filters.TryGetValue("Description", out var desc) && !string.IsNullOrWhiteSpace(desc))
-                query = query.Where(w => w.Description != null && EF.Functions.ILike(w.Description, $"%{desc}%"));
+            if (TryGetFilter(filters, "Owner", out var owner))
+                query = query.Where(w => EF.Functions.ILike(w.Owner!, $"%{owner}%"));
+
+            if (TryGetFilter(filters, "Description", out var desc))
+                query = query.Where(w => EF.Functions.ILike(w.Description!, $"%{desc}%"));
+
+            if (TryGetFilter(filters, "CostCentre", out var cc) && double.TryParse(cc, out var costCentreValue))
+                query = query.Where(w => w.CostCentre.HasValue && Math.Abs(w.CostCentre.Value - costCentreValue) < 1e-9);
 
             return query;
+        }
+
+        private static bool TryGetFilter(Dictionary<string, string> filters, string key, out string value)
+        {
+            value = filters.TryGetValue(key, out var raw) ? raw : string.Empty;
+            return !string.IsNullOrWhiteSpace(value);
         }
 
         public async Task<IEnumerable<SummarisedWgTimeView>> GetSummarisedWorkgroupTimeAsync(
@@ -365,7 +381,7 @@ namespace Apha.PACT.DataAccess.Repository
             return await _context.WorkGroupViews
                 .AsNoTracking()
                 .Where(w => w.ProfitCentre == profitCentre
-                         && w.UserEmail != null && w.UserEmail.ToLower() == _requestContext.UserEmailId)
+                         && w.UserEmail != null && EF.Functions.ILike(w.UserEmail, _requestContext.UserEmailId))
                 .Distinct()
                 .OrderBy(w => w.WorkGroupName)
                 .ToListAsync();
@@ -377,7 +393,7 @@ namespace Apha.PACT.DataAccess.Repository
             var q = _context.WorkGroupViews
                 .AsNoTracking()
                 .Where(w => w.ProfitCentre == profitCentre
-                         && w.UserEmail != null && w.UserEmail.ToLower() == _requestContext.UserEmailId)
+                         && w.UserEmail != null && EF.Functions.ILike(w.UserEmail, _requestContext.UserEmailId))
                 .Distinct()
                 .AsQueryable();
 

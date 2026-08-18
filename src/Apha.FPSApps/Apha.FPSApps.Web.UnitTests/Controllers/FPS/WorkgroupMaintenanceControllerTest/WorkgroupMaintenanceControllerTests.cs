@@ -10,6 +10,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using NSubstitute.ReturnsExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControllerTest
@@ -195,15 +196,47 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
         #region Create Tests
 
         [Fact]
-        public void Create_Get_ReturnsPartialViewWithEmptyItem()
+        public async Task Create_Get_ReturnsPartialViewWithEmptyItem()
         {
+            // Arrange
+            var ownerResponse = new ApiResponseDto<List<OwnerDto>>
+            {
+                Success = true,
+                Data = new List<OwnerDto>
+                {
+                    new() { Name = "Alice Smith", WorkGroup = "WG001", GradeCode = "B1" }
+                }
+            };
+            _service.GetOwnersAsync().Returns(ownerResponse);
+
             // Act
-            var result = _controller.Create();
+            var result = await _controller.Create();
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditWorkgroup", partialViewResult.ViewName);
-            Assert.IsType<WorkgroupMaintenanceItem>(partialViewResult.Model);
+            var model = Assert.IsType<WorkgroupMaintenanceItem>(partialViewResult.Model);
+            // Owner picker options populated (blank placeholder + one owner)
+            Assert.Equal(2, model.OwnerList.Count);
+            Assert.Contains(model.OwnerList, o => o.Value == "Alice Smith"
+                && o.Text == "Alice Smith | WG001 | B1");
+        }
+
+        [Fact]
+        public async Task Create_Get_OwnerServiceReturnsNull_ReturnsPartialViewWithPlaceholderOnly()
+        {
+            // Arrange
+            _service.GetOwnersAsync().ReturnsNull();
+
+            // Act
+            var result = await _controller.Create();
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<WorkgroupMaintenanceItem>(partialViewResult.Model);
+            // Only the blank placeholder option is present
+            Assert.Single(model.OwnerList);
+            Assert.Equal(string.Empty, model.OwnerList[0].Value);
         }
 
         [Fact]
@@ -291,6 +324,39 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
             Assert.Equal("_AddEditWorkgroup", partialViewResult.ViewName);
             var model = Assert.IsType<WorkgroupMaintenanceItem>(partialViewResult.Model);
             Assert.Equal(TestWorkGroupName, model.WorkGroupName);
+        }
+
+        [Fact]
+        public async Task Edit_Get_PopulatesOwnerListWithSelectedOwner()
+        {
+            // Arrange
+            var dto  = BuildDto();
+            var item = BuildItem();
+            item.Owner = "Bob Jones";
+            var response = new ApiResponseDto<WorkGroupDto> { Success = true, Data = dto };
+
+            _service.GetByWorkGroupNameAsync(TestWorkGroupName).Returns(response);
+            _mapper.Map<WorkgroupMaintenanceItem>(dto).Returns(item);
+            _service.GetOwnersAsync().Returns(new ApiResponseDto<List<OwnerDto>>
+            {
+                Success = true,
+                Data = new List<OwnerDto>
+                {
+                    new() { Name = "Alice Smith", WorkGroup = "WG001", GradeCode = "B1" },
+                    new() { Name = "Bob Jones",   WorkGroup = "WG002", GradeCode = "B2" }
+                }
+            });
+
+            // Act
+            var result = await _controller.Edit(TestWorkGroupName);
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<WorkgroupMaintenanceItem>(partialViewResult.Model);
+            // Blank placeholder + two owners
+            Assert.Equal(3, model.OwnerList.Count);
+            var selected = Assert.Single(model.OwnerList, o => o.Selected);
+            Assert.Equal("Bob Jones", selected.Value);
         }
 
         [Fact]
