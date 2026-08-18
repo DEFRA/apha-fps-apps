@@ -608,9 +608,11 @@ function initializeProgramDropdown() {
             }
         }
     });
-    // Set initial value if exists
+    // Set initial value if exists (defer to next tick to ensure dropdown is fully rendered)
     if (selectedProgramValue && selectedProgramValue !== '') {
-        programDropdown.setValue(selectedProgramValue);
+        setTimeout(function() {
+            programDropdown.setValue(selectedProgramValue);
+        }, 0);
     }
 }
 
@@ -641,10 +643,12 @@ function initializeContractDropdown() {
             }
         }
     });
-   
-    // Set initial value if exists
+
+    // Set initial value if exists (defer to next tick to ensure dropdown is fully rendered)
     if (selectedContractValue && selectedContractValue !== '') {
-        contractDropdown.setValue(selectedContractValue);
+        setTimeout(function() {
+            contractDropdown.setValue(selectedContractValue);
+        }, 0);
     }
 }
 
