@@ -172,18 +172,6 @@ $(document).ready(function () {
 // ── Wrap a plain message string into the errors-array format ─────────────
 function errMsg(msg) { return [{ field: '', message: msg }]; }
 
-function formatToTwoDecimals(value) {
-    if (value === null || value === undefined) return '';
-
-    var text = String(value).trim();
-    if (!text) return '';
-
-    var numberValue = Number(text);
-    if (Number.isNaN(numberValue)) return text;
-
-    return numberValue.toFixed(2);
-}
-
 // ── Update a nav link href, preserving existing query params ─────────────
 function updateNavHref(id, parentProject) {
     var current = $(id).attr('href') || '';
@@ -219,8 +207,8 @@ function loadPortfolioData(parentProject) {
                 }
 
                 $('#dpManager').val(d.manager || '');
-                $('#txtBudgetCvl').val(d.budgetCvl ?? '');
-                $('#txtTransferIncome').val(d.transferIncome ?? '');
+                $('#txtBudgetCvl').val(formatDecimalTo4Places(d.budgetCvl));
+                $('#txtTransferIncome').val(formatDecimalTo4Places(d.transferIncome));
                 $('#txtComments').val(d.comments || '');
 
                 // Update sidebar nav links — preserves existing query params (e.g. year)
