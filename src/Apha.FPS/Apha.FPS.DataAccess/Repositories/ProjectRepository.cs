@@ -734,6 +734,9 @@ namespace Apha.FPS.DataAccess.Repositories
             if (dict.TryGetValue(FilterKeyParentProject, out var parentProject) && parentProject != null)
                 query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
 
+            if (dict.TryGetValue("Program", out var program) && program != null)
+                query = query.Where(x => EF.Functions.ILike(x.Program!, $"%{program}%"));
+
             if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
                 query = query.Where(x => EF.Functions.ILike(x.ProjectTitle, $"%{projectTitle}%"));
 
