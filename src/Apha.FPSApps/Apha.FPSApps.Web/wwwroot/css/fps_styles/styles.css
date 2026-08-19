@@ -5464,3 +5464,10 @@ body,
         left: -154px !important;
     }
 }
+#gridContainer_testListVlaGrid {
+    .editable-grid-container {
+        .sup_border_bottom_0 {
+            display: none;
+        }
+    }
+}
