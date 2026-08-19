@@ -625,24 +625,34 @@ namespace Apha.PIMS.DataAccess.Repository
         /// Gets project year manager details by filtering projects by year and joining with manager information
         /// </summary>
         /// <param name="year">The year to filter projects</param>
+        /// <param name="loginEmail">Optional login email used to restrict results for project managers</param>
         /// <returns>List of project year manager details</returns>
-        public async Task<List<ProjectYearManager>> GetProjectYearManagersAsync(int year)
+        public async Task<List<ProjectYearManager>> GetProjectYearManagersAsync(int year, string? loginEmail = null, bool viewSpecificProject = false)
         {
             year = 2025;
+            loginEmail = string.IsNullOrWhiteSpace(loginEmail) ? null : loginEmail.Trim();
+
             var query = from project in _dbContext.MyTlkpProjects.AsNoTracking()
                         join manager in _dbContext.ProjectManagers.AsNoTracking()
                             on project.Manager equals manager.Projectmanager into managerGroup
                         from manager in managerGroup.DefaultIfEmpty()
                         where project.Year == year
-                        select new ProjectYearManager
-                        {
-                            ProjectYear = project.Year,
-                            ParentProject = project.Parentproject,
-                            Manager = project.Manager,
-                            ManagerNumber = manager != null ? manager.Mnumber : null
-                        };
+                        select new { project, manager };
 
-            return await query.ToListAsync();
+            if (viewSpecificProject && loginEmail != null)
+            {
+                query = query.Where(x => x.manager != null
+                    && x.manager.LoginEmail != null
+                    && EF.Functions.ILike(x.manager.LoginEmail, loginEmail));
+            }
+
+            return await query.Select(x => new ProjectYearManager
+            {
+                ProjectYear = x.project.Year,
+                ParentProject = x.project.Parentproject,
+                Manager = x.project.Manager,
+                ManagerNumber = x.manager != null ? x.manager.Mnumber : null
+            }).ToListAsync();
         }
         public async Task<PagedData<Milestone>> GetPMDMilestonesAsync(PaginationParameters<string> parameters, string project)
         {
