@@ -9,7 +9,7 @@ var currentMonthNumber = null;
 
 /**
  * Returns the grid manager instance for the profit center cost grid.
- * @returns {object|undefined} The grid manager, or undefined if not yet initialised.
+ * @returns {object|undefined} The grid manager, or undefined if not yet initialised .
  */
 function getProfitCenterCostGridManager() {
     return window['gridManager_' + profitCenterCostGridId];
@@ -43,48 +43,33 @@ function onPeriodChange(monthNumber) {
 /**
  * Reloads the profit center cost grid filtered by the specified month number,
  * resetting pagination, sort, and filter state.
+ * Uses a direct AJAX call with the anti-forgery token to avoid 403 errors
+ * that occur when relying on the grid manager's internal $.post (which omits the token).
  * @param {string} monthNumber - The month number to filter by.
  */
 function reloadProfitCenterCostGrid(monthNumber) {
-    var gm = getProfitCenterCostGridManager();
-    if (!gm) {
-        // Grid not yet initialized - load it via AJAX
-        loadInitialGrid(monthNumber);
-        return;
-    }
+    var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
+    var token = antiForgeryToken ? antiForgeryToken.value : '';
 
-    gm.reloadGrid({
-        filter: '{}',
-        sortBy: '',
-        descending: false,
-        page: 1,
-        pageSize: 10
-    }, { monthNumber: monthNumber });
-}
-
-/**
- * Loads the grid for the first time when a period is selected.
- * @param {string} monthNumber - The month number to filter by.
- */
-function loadInitialGrid(monthNumber) {
     $.ajax({
         url: '/PACT/ProfitCenterCostSummary/LoadProfitCenterCostGrid',
         type: 'POST',
+        headers: { 'RequestVerificationToken': token },
         data: {
-            filter: '{}',
-            sortBy: '',
-            descending: false,
             page: 1,
             pageSize: 10,
-            monthNumber: monthNumber
+            sortBy: '',
+            descending: false,
+            filter: '{}',
+            monthNumber: monthNumber,
+            __RequestVerificationToken: token
         },
         success: function (html) {
             $('#gridContainer_profitCenterCostGrid').html(html);
-            // Update the global grid ID variable after loading
             profitCenterCostGridId = 'profitCenterCostGrid';
         },
-        error: function (xhr, status, error) {
-            console.error('Failed to load grid:', error);
+        error: function()
+        {
             $('#gridContainer_profitCenterCostGrid').html(
                 '<div class="govuk-error-message">Failed to load data. Please try again.</div>'
             );
@@ -109,11 +94,11 @@ function reloadAllProfitCenterCostGrid() {
     }
 
     gm.reloadGrid({
-        filter: '{}',
+        page: 1,
+        pageSize: 10,
         sortBy: '',
         descending: false,
-        page: 1,
-        pageSize: 10
+        filter: '{}'
     });
 }
 

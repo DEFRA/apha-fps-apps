@@ -44,9 +44,11 @@ namespace Apha.PACT.Core.Interfaces
         Task<int> ImportStagingAsync(IEnumerable<StagingMonthlyOutput> stagingRows);
         Task<int> RemoveZeroAndNullVolumeRecordsAsync(string importedBy);
         Task<List<StagingMonthlyOutput>> GetStagingRecordsForValidationAsync(string importedBy);
+        Task<HashSet<string>> GetPassedStagingKeysAsync(string importedBy);
         Task UpdateStagingRecordsAsync(IEnumerable<StagingMonthlyOutput> records);
         Task<bool> HasFailedStagingAsync(string importedBy);
         Task<(int ProcessedCount, int ImportedCount, int FailedCount)> MakeLiveAsync(string importedBy);
         Task<bool> LiveRecordExistsAsync(string testCode, string buyer, double month, string workGroup);
+        Task<HashSet<string>> GetExistingLiveKeysAsync();
     }
 }
