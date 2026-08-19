@@ -23,15 +23,14 @@ button {
 .admin-btn {
     background-color: #f0f0f0;
     border: 1px solid #ccc;
-    padding: 5px 15px;
     border-radius: 3px;
     cursor: pointer;
 }
 
 .project-code-section {
     background-color: #f8f8f8;
-    padding: 15px;
-    margin-bottom: 20px;
+    padding: 0 15px;
+    margin-bottom: 0;
     border-radius: 5px;
     display: flex;
     align-items: center;
@@ -5353,9 +5352,13 @@ body,
 .isBudgetBidsQuery{
     width: 33%;
 }
+.isProjectGroupManagement {
+    width: 35%;
+}
 .isResourceReAllocationScreen {
     width: 24%;
-}  
+}
+.isMiscReport,
 .isStaffPlanDetails {
     width: 20%;
 }
@@ -5470,4 +5473,52 @@ body,
             display: none;
         }
     }
+}
+#ProjectDropdownPanel {
+    position: absolute;
+    top: 100%;
+    left: -200px;
+    width: 420px;
+    max-height: 260px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #b1b4b6;
+    box-shadow: 0 4px 8px rgba(0,0,0,.2);
+    z-index: 2000;
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+
+        thead {
+            background: #f3f2f1;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+
+            th {
+                padding: 6px 8px;
+                text-align: left;
+            }
+        }
+    }
+}
+#ProjectSearchBox {
+    width: 100%;
+    padding: 6px 8px;
+    border: 0;
+    border-bottom: 1px solid #b1b4b6;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.isCustomLabels {
+    text-align: right;
+    display: block;
+    margin-top: 7px;
+    width: 47%;
+}
+.isWidthAuto{
+    width: auto;
 }
