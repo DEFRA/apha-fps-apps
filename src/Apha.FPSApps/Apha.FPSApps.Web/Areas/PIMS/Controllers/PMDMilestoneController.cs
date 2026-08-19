@@ -1,4 +1,6 @@
-﻿using Apha.FPSApps.Application.Interfaces.PIMS;
+﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.PIMS;
+using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -45,11 +47,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             viewModel.Parentproject = parentproject ?? viewModel.ProjectOptions.FirstOrDefault()?.Value ?? string.Empty;
 
-            (viewModel.ShowConfirmationSection, viewModel.ConfirmationLabelText) =
-                await BuildConfirmationStateAsync(viewModel.Parentproject);
-
             PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
             viewModel.MilestonesGrid = await BuildMilestonesGridAsync(viewModel.Parentproject, defaultRequest);
+
+            bool hasMilestoneRecords = viewModel.MilestonesGrid.Data?.Any() == true;
+            (viewModel.ShowConfirmationSection, viewModel.ShowSubmitButton, viewModel.ConfirmationLabelText) =
+                await BuildConfirmationStateAsync(viewModel.Parentproject, hasMilestoneRecords);
 
             return View(viewModel);
         }
@@ -148,26 +151,213 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         [HttpGet]
         public async Task<IActionResult> GetConfirmationState(string? parentproject)
         {
-            (bool showConfirmationSection, string confirmationLabelText) =
-                await BuildConfirmationStateAsync(parentproject);
+            bool hasMilestoneRecords = await HasMilestoneRecordsAsync(parentproject);
+            (bool showConfirmationSection, bool showSubmitButton, string confirmationLabelText) =
+                await BuildConfirmationStateAsync(parentproject, hasMilestoneRecords);
 
-            return Json(new { showConfirmationSection, confirmationLabelText });
+            return Json(new { showConfirmationSection, showSubmitButton, confirmationLabelText });
         }
 
-        private static async Task<(bool ShowConfirmationSection, string ConfirmationLabelText)> BuildConfirmationStateAsync(string? parentproject)
+        [HttpGet]
+        public async Task<IActionResult> GetMilestoneAsync_pmd(string parentproject, string number)
         {
-            await Task.CompletedTask;
+            if (string.IsNullOrWhiteSpace(parentproject) || string.IsNullOrWhiteSpace(number))
+                return RedirectToAction(nameof(Index));
 
+            string decodedNumber = HttpUtility.UrlDecode(number);
+            MilestoneItem model = new() { Project = parentproject, Number = decodedNumber };
+
+            var result = await _milestoneService.GetMilestoneAsync_PMD(parentproject, decodedNumber);
+            if (result is { Success: true, Data: not null })
+                model = _mapper.Map<MilestoneItem>(result.Data);
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetMilestoneFormDatesAsync_pmd(string parentproject, short? year = null)
+        {
             if (string.IsNullOrWhiteSpace(parentproject))
-                return (false, string.Empty);
+                return RedirectToAction(nameof(Index));
+
+            MilestoneFormDatesItem model = new() { ParentProject = parentproject };
+            if (year.HasValue)
+            {
+                ApiResponseDto<MilestoneFormDatesDto> result =
+                    await _milestoneService.GetMilestoneFormDatesAsync_PMD(parentproject, year.Value);
+                if (result is { Success: true, Data: not null })
+                    model = _mapper.Map<MilestoneFormDatesItem>(result.Data);
+            }
+
+            ViewBag.IsAddingNew = !year.HasValue;
+            return PartialView("_AddEditMilestoneFormDates", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveMilestoneFormDatesAsync_pmd(MilestoneFormDatesItem item)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                        .Where(kvp => kvp.Value!.Errors.Any())
+                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
+                        {
+                            field = kvp.Key,
+                            message = e.ErrorMessage
+                        }))
+                });
+            }
+
+            MilestoneFormDatesDto dto = _mapper.Map<MilestoneFormDatesDto>(item);
+            ApiResponseDto<MilestoneFormDatesDto> result =
+                await _milestoneService.SaveMilestoneFormDatesAsync_PMD(item.ParentProject, dto);
+            return result.Success
+                ? Json(new { success = true, data = result.Data, message = "Financial year record saved successfully." })
+                : Json(new { success = false, errors = result.Errors });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SubmitConfirmation(string parentproject)
+        {
+            if (string.IsNullOrWhiteSpace(parentproject))
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Project is required.",
+                    errors = new[] { "Project is required." }
+                });
+            }
 
             string monthToUpdate = GetMonthToUpdate();
             if (string.IsNullOrWhiteSpace(monthToUpdate))
-                return (false, string.Empty);
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Unable to determine the month to confirm.",
+                    errors = new[] { "Unable to determine the month to confirm." }
+                });
+            }
 
-            string label = $"Please click here to confirm {monthToUpdate} information is correct.";
-            return (true, label);
+            short year = (short)GetFY();
+            ApiResponseDto<MilestoneFormDatesDto> existingResponse =
+                await _milestoneService.GetMilestoneFormDatesAsync_PMD(parentproject, year);
+
+            MilestoneFormDatesDto milestoneFormDates = existingResponse is { Success: true, Data: not null }
+                ? existingResponse.Data
+                : new MilestoneFormDatesDto { ParentProject = parentproject, Year = year };
+
+            SetConfirmationDate(milestoneFormDates, monthToUpdate, DateTime.Today);
+
+            ApiResponseDto<MilestoneFormDatesDto> saveResponse =
+                await _milestoneService.SaveMilestoneFormDatesAsync_PMD(parentproject, milestoneFormDates);
+
+            if (!saveResponse.Success)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Failed to confirm information.",
+                    errors = saveResponse.Errors?.Select(e => e.Message).ToList() ?? new List<string> { "An error occurred." }
+                });
+            }
+
+            bool hasMilestoneRecords = await HasMilestoneRecordsAsync(parentproject);
+            (bool showConfirmationSection, bool showSubmitButton, string confirmationLabelText) =
+                await BuildConfirmationStateAsync(parentproject, hasMilestoneRecords);
+
+            return Json(new
+            {
+                success = true,
+                message = $"{monthToUpdate} information confirmed.",
+                showConfirmationSection,
+                showSubmitButton,
+                confirmationLabelText
+            });
         }
+
+        private async Task<(bool ShowConfirmationSection, bool ShowSubmitButton, string ConfirmationLabelText)> BuildConfirmationStateAsync(string? parentproject, bool hasMilestoneRecords)
+        {
+            if (string.IsNullOrWhiteSpace(parentproject) || !hasMilestoneRecords)
+                return (false, false, string.Empty);
+
+            string monthToUpdate = GetMonthToUpdate();
+            if (string.IsNullOrWhiteSpace(monthToUpdate))
+                return (false, false, string.Empty);
+
+            short year = (short)GetFY();
+            ApiResponseDto<MilestoneFormDatesDto> milestoneFormDatesResponse =
+                await _milestoneService.GetMilestoneFormDatesAsync_PMD(parentproject, year);
+            MilestoneFormDatesDto? milestoneFormDates =
+                milestoneFormDatesResponse is { Success: true, Data: not null }
+                    ? milestoneFormDatesResponse.Data
+                    : null;
+
+            bool confirm = milestoneFormDates is null || IsConfirmationRequired(milestoneFormDates, monthToUpdate);
+
+            if (confirm)
+                return (true, true, $"Please click here to confirm {monthToUpdate} information is correct.");
+
+            return (true, false, $"{monthToUpdate} information confirmed.");
+        }
+
+        private static void SetConfirmationDate(MilestoneFormDatesDto milestoneFormDates, string monthToUpdate, DateTime confirmationDate)
+        {
+            switch (monthToUpdate)
+            {
+                case "Jan":
+                    milestoneFormDates.Jan = confirmationDate;
+                    break;
+                case "Feb":
+                    milestoneFormDates.Feb = confirmationDate;
+                    break;
+                case "Mar":
+                    milestoneFormDates.Mar = confirmationDate;
+                    break;
+                case "Apr":
+                    milestoneFormDates.Apr = confirmationDate;
+                    break;
+                case "Jun":
+                    milestoneFormDates.Jun = confirmationDate;
+                    break;
+                case "Sep":
+                    milestoneFormDates.Sep = confirmationDate;
+                    break;
+                case "Dec":
+                    milestoneFormDates.Dec = confirmationDate;
+                    break;
+            }
+        }
+
+        private async Task<bool> HasMilestoneRecordsAsync(string? parentproject)
+        {
+            if (string.IsNullOrWhiteSpace(parentproject))
+                return false;
+
+            PaginationFilter<string> request = new() { Filter = "{}" };
+            DataGridConfig<PMDMilestoneItem> gridConfig = await BuildMilestonesGridAsync(parentproject, request);
+            return gridConfig.Data?.Any() == true;
+        }
+
+        private static bool IsConfirmationRequired(MilestoneFormDatesDto milestoneFormDates, string monthToUpdate)
+            => monthToUpdate switch
+            {
+                "Jan" => !milestoneFormDates.Jan.HasValue,
+                "Feb" => !milestoneFormDates.Feb.HasValue,
+                "Mar" => !milestoneFormDates.Mar.HasValue,
+                "Apr" => !milestoneFormDates.Apr.HasValue,
+                "Jun" => !milestoneFormDates.Jun.HasValue,
+                "Sep" => !milestoneFormDates.Sep.HasValue,
+                "Dec" => !milestoneFormDates.Dec.HasValue,
+                _ => true
+            };
 
         [HttpGet]
         public async Task<IActionResult> Edit(string parentproject, string number)
@@ -178,7 +368,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             string decodedNumber = HttpUtility.UrlDecode(number);
             MilestoneItem model = new() { Project = parentproject, Number = decodedNumber };
 
-            var result = await _milestoneService.GetMilestoneAsync(parentproject, decodedNumber);
+            var result = await _milestoneService.GetMilestoneAsync_PMD(parentproject, decodedNumber);
             if (result is { Success: true, Data: not null })
                 model = _mapper.Map<MilestoneItem>(result.Data);
 
@@ -199,9 +389,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 if (string.IsNullOrWhiteSpace(project) || string.IsNullOrWhiteSpace(number))
                     return Json(new { success = false, message = "Project and Milestone number are required.", errors = new[] { "Project and Milestone number are required." } });
 
-                if (string.IsNullOrWhiteSpace(projectleadercomment))
-                    return Json(new { success = false, message = "Project Leaders Comment is required.", errors = new[] { "Project Leaders Comment is required." } });
-
+                
                 // Parse date if provided
                 DateTime? dateCompletedValue = null;
                 if (!string.IsNullOrWhiteSpace(datecompleted))

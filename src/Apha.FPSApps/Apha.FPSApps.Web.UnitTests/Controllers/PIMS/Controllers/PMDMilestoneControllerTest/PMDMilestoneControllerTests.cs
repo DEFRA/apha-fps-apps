@@ -136,7 +136,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
                 new() { ParentProject = "PP001", Manager = "Manager1" }
             };
             var managersResponse = ApiResponseDto<List<ProjectYearManagerDto>>.SuccessResponse(managers);
-            var milestonesResponse = ApiResponseDto<List<MilestoneDto>>.SuccessResponse(new List<MilestoneDto>());
+            var milestonesResponse = ApiResponseDto<List<MilestoneDto>>.SuccessResponse(
+                new List<MilestoneDto> { new() { Project = "PP001", Number = "M1" } });
 
             _mockMilestoneService.GetProjectYearManagersAsync(Arg.Any<int>()).Returns(managersResponse);
             _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
@@ -144,7 +145,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
             _mockMilestoneService.GetPMDMilestonesAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
                 .Returns(milestonesResponse);
             _mockMapper.Map<List<PMDMilestoneItem>>(Arg.Any<List<MilestoneDto>>())
-                .Returns(new List<PMDMilestoneItem>());
+                .Returns(new List<PMDMilestoneItem> { new() { Project = "PP001", Number = "M1" } });
             _mockMapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel());
 
@@ -154,7 +155,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
             // Assert
             var viewResult = result as ViewResult;
             var model = viewResult!.Model as PMDMilestoneViewModel;
-            Assert.NotNull(model!.ConfirmationLabelText);
+            Assert.True(model!.ShowConfirmationSection);
+            Assert.True(model.ShowSubmitButton);
+            Assert.False(string.IsNullOrWhiteSpace(model.ConfirmationLabelText));
         }
 
         #endregion
@@ -332,6 +335,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
         {
             // Arrange
             const string parentproject = "PP001";
+            var milestonesResponse = ApiResponseDto<List<MilestoneDto>>.SuccessResponse(
+                new List<MilestoneDto> { new() { Project = parentproject, Number = "M1" } });
+
+            _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _mockMilestoneService.GetPMDMilestonesAsync(Arg.Any<QueryParameters<string>>(), parentproject)
+                .Returns(milestonesResponse);
+            _mockMapper.Map<List<PMDMilestoneItem>>(Arg.Any<List<MilestoneDto>>())
+                .Returns(new List<PMDMilestoneItem> { new() { Project = parentproject, Number = "M1" } });
+            _mockMilestoneService.GetMilestoneFormDatesAsync_PMD(parentproject, Arg.Any<short>())
+                .Returns(ApiResponseDto<MilestoneFormDatesDto>.SuccessResponse(new MilestoneFormDatesDto { ParentProject = parentproject }));
 
             // Act
             var result = await _sut.GetConfirmationState(parentproject);
@@ -340,6 +354,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
             Assert.IsType<JsonResult>(result);
             var jsonResult = result as JsonResult;
             Assert.NotNull(jsonResult!.Value);
+            Assert.True(GetJsonProperty<bool>(jsonResult.Value!, "showConfirmationSection"));
+            Assert.True(GetJsonProperty<bool>(jsonResult.Value!, "showSubmitButton"));
+            Assert.False(string.IsNullOrWhiteSpace(GetJsonProperty<string>(jsonResult.Value!, "confirmationLabelText")));
         }
 
         [Fact]
@@ -352,6 +369,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
             Assert.IsType<JsonResult>(result);
             var jsonResult = result as JsonResult;
             Assert.NotNull(jsonResult!.Value);
+            Assert.False(GetJsonProperty<bool>(jsonResult.Value!, "showConfirmationSection"));
+            Assert.False(GetJsonProperty<bool>(jsonResult.Value!, "showSubmitButton"));
+            Assert.Equal(string.Empty, GetJsonProperty<string>(jsonResult.Value!, "confirmationLabelText"));
         }
 
         [Fact]
@@ -364,8 +384,196 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
             Assert.IsType<JsonResult>(result);
             var jsonResult = result as JsonResult;
             Assert.NotNull(jsonResult!.Value);
+            Assert.False(GetJsonProperty<bool>(jsonResult.Value!, "showConfirmationSection"));
+            Assert.False(GetJsonProperty<bool>(jsonResult.Value!, "showSubmitButton"));
+            Assert.Equal(string.Empty, GetJsonProperty<string>(jsonResult.Value!, "confirmationLabelText"));
         }
 
         #endregion
+
+        #region SubmitConfirmation
+
+        [Fact]
+        public async Task SubmitConfirmation_WhenNoExistingFormDates_CreatesCurrentYearRecordForCurrentMonth()
+        {
+            // Arrange
+            const string parentproject = "PP001";
+            short year = GetExpectedFinancialYear();
+            string monthToUpdate = GetExpectedMonthToUpdate();
+            var confirmedDto = new MilestoneFormDatesDto { ParentProject = parentproject, Year = year };
+            SetMonthValue(confirmedDto, monthToUpdate, DateTime.Today);
+
+            var milestonesResponse = ApiResponseDto<List<MilestoneDto>>.SuccessResponse(
+                new List<MilestoneDto> { new() { Project = parentproject, Number = "M1" } });
+
+            _mockMilestoneService.GetMilestoneFormDatesAsync_PMD(parentproject, year)
+                .Returns(
+                    new ApiResponseDto<MilestoneFormDatesDto> { Success = false },
+                    ApiResponseDto<MilestoneFormDatesDto>.SuccessResponse(confirmedDto));
+            _mockMilestoneService.SaveMilestoneFormDatesAsync_PMD(parentproject, Arg.Any<MilestoneFormDatesDto>())
+                .Returns(ApiResponseDto<MilestoneFormDatesDto>.SuccessResponse(confirmedDto));
+            _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _mockMilestoneService.GetPMDMilestonesAsync(Arg.Any<QueryParameters<string>>(), parentproject)
+                .Returns(milestonesResponse);
+            _mockMapper.Map<List<PMDMilestoneItem>>(Arg.Any<List<MilestoneDto>>())
+                .Returns(new List<PMDMilestoneItem> { new() { Project = parentproject, Number = "M1" } });
+
+            // Act
+            var result = await _sut.SubmitConfirmation(parentproject);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            Assert.True(GetJsonProperty<bool>(jsonResult.Value!, "success"));
+            Assert.True(GetJsonProperty<bool>(jsonResult.Value!, "showConfirmationSection"));
+            Assert.False(GetJsonProperty<bool>(jsonResult.Value!, "showSubmitButton"));
+            Assert.Equal($"{monthToUpdate} information confirmed.", GetJsonProperty<string>(jsonResult.Value!, "message"));
+            Assert.Equal($"{monthToUpdate} information confirmed.", GetJsonProperty<string>(jsonResult.Value!, "confirmationLabelText"));
+
+            await _mockMilestoneService.Received(1).SaveMilestoneFormDatesAsync_PMD(
+                parentproject,
+                Arg.Is<MilestoneFormDatesDto>(dto =>
+                    dto.ParentProject == parentproject
+                    && dto.Year == year
+                    && HasMonthValueOnDate(dto, monthToUpdate, DateTime.Today)));
+        }
+
+        [Fact]
+        public async Task SubmitConfirmation_WhenExistingFormDatesFound_UpdatesCurrentMonth()
+        {
+            // Arrange
+            const string parentproject = "PP001";
+            short year = GetExpectedFinancialYear();
+            string monthToUpdate = GetExpectedMonthToUpdate();
+            var existingDto = new MilestoneFormDatesDto
+            {
+                ParentProject = parentproject,
+                Year = year,
+                Jan = new DateTime(year, 1, 1)
+            };
+            var existingResponse = ApiResponseDto<MilestoneFormDatesDto>.SuccessResponse(existingDto);
+            var milestonesResponse = ApiResponseDto<List<MilestoneDto>>.SuccessResponse(
+                new List<MilestoneDto> { new() { Project = parentproject, Number = "M1" } });
+
+            _mockMilestoneService.GetMilestoneFormDatesAsync_PMD(parentproject, year).Returns(existingResponse);
+            _mockMilestoneService.SaveMilestoneFormDatesAsync_PMD(parentproject, Arg.Any<MilestoneFormDatesDto>())
+                .Returns(ApiResponseDto<MilestoneFormDatesDto>.SuccessResponse(existingDto));
+            _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _mockMilestoneService.GetPMDMilestonesAsync(Arg.Any<QueryParameters<string>>(), parentproject)
+                .Returns(milestonesResponse);
+            _mockMapper.Map<List<PMDMilestoneItem>>(Arg.Any<List<MilestoneDto>>())
+                .Returns(new List<PMDMilestoneItem> { new() { Project = parentproject, Number = "M1" } });
+
+            // Act
+            var result = await _sut.SubmitConfirmation(parentproject);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            Assert.True(GetJsonProperty<bool>(jsonResult.Value!, "success"));
+            Assert.True(GetJsonProperty<bool>(jsonResult.Value!, "showConfirmationSection"));
+            Assert.False(GetJsonProperty<bool>(jsonResult.Value!, "showSubmitButton"));
+            Assert.Equal($"{monthToUpdate} information confirmed.", GetJsonProperty<string>(jsonResult.Value!, "message"));
+            Assert.Equal($"{monthToUpdate} information confirmed.", GetJsonProperty<string>(jsonResult.Value!, "confirmationLabelText"));
+
+            await _mockMilestoneService.Received(1).SaveMilestoneFormDatesAsync_PMD(
+                parentproject,
+                Arg.Is<MilestoneFormDatesDto>(dto =>
+                    ReferenceEquals(dto, existingDto)
+                    && HasMonthValueOnDate(dto, monthToUpdate, DateTime.Today)));
+        }
+
+        [Fact]
+        public async Task SubmitConfirmation_WhenProjectMissing_ReturnsValidationError()
+        {
+            // Act
+            var result = await _sut.SubmitConfirmation(string.Empty);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            Assert.False(GetJsonProperty<bool>(jsonResult.Value!, "success"));
+            await _mockMilestoneService.DidNotReceive().SaveMilestoneFormDatesAsync_PMD(Arg.Any<string>(), Arg.Any<MilestoneFormDatesDto>());
+        }
+
+        #endregion
+
+        private static short GetExpectedFinancialYear()
+        {
+            int currentYear = DateTime.Today.Year;
+            int currentMonth = DateTime.Today.Month;
+            return (short)(currentMonth < 6 ? currentYear - 1 : currentYear);
+        }
+
+        private static string GetExpectedMonthToUpdate()
+        {
+            int currentMonth = DateTime.Today.Month;
+
+            if (currentMonth > 4 && currentMonth <= 6)
+                return "Apr";
+            if (currentMonth >= 7 && currentMonth <= 9)
+                return "Jun";
+            if (currentMonth >= 10 && currentMonth <= 12)
+                return "Sep";
+            if (currentMonth == 1)
+                return "Dec";
+            if (currentMonth == 2)
+                return "Jan";
+            if (currentMonth == 3)
+                return "Feb";
+            if (currentMonth == 4)
+                return "Mar";
+
+            return string.Empty;
+        }
+
+        private static DateTime? GetMonthValue(MilestoneFormDatesDto dto, string monthToUpdate)
+            => monthToUpdate switch
+            {
+                "Jan" => dto.Jan,
+                "Feb" => dto.Feb,
+                "Mar" => dto.Mar,
+                "Apr" => dto.Apr,
+                "Jun" => dto.Jun,
+                "Sep" => dto.Sep,
+                "Dec" => dto.Dec,
+                _ => null
+            };
+
+        private static void SetMonthValue(MilestoneFormDatesDto dto, string monthToUpdate, DateTime value)
+        {
+            switch (monthToUpdate)
+            {
+                case "Jan":
+                    dto.Jan = value;
+                    break;
+                case "Feb":
+                    dto.Feb = value;
+                    break;
+                case "Mar":
+                    dto.Mar = value;
+                    break;
+                case "Apr":
+                    dto.Apr = value;
+                    break;
+                case "Jun":
+                    dto.Jun = value;
+                    break;
+                case "Sep":
+                    dto.Sep = value;
+                    break;
+                case "Dec":
+                    dto.Dec = value;
+                    break;
+            }
+        }
+
+        private static bool HasMonthValueOnDate(MilestoneFormDatesDto dto, string monthToUpdate, DateTime value)
+        {
+            DateTime? monthValue = GetMonthValue(dto, monthToUpdate);
+            return monthValue.HasValue && monthValue.Value.Date == value.Date;
+        }
+
+        private static T GetJsonProperty<T>(object value, string propertyName)
+            => (T)value.GetType().GetProperty(propertyName)!.GetValue(value)!;
     }
 }

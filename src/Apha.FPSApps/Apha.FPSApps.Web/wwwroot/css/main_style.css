@@ -1770,7 +1770,7 @@ textarea {
     background: #ffffff;
     margin-bottom: 18px;
     padding: 14px;
-    box-shadow: 0 2px 0 rgba(11, 12, 12, 0.08);
+/*    box-shadow: 0 2px 0 rgba(11, 12, 12, 0.08);*/
 }
 
 .tr-section-box--compact {

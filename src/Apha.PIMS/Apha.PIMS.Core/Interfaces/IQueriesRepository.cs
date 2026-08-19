@@ -12,15 +12,28 @@ namespace Apha.PIMS.Core.Interfaces
         Task<List<QueryReportItem>> GetQueryReportsAsync();
 
         /// <summary>
-        /// Get monitoring report data for a given year and fiscal month, filtered by contract and program.
-        /// Combines data from RadTrack contracts, project details, year totals, month-final costs, and monitoring comments.
+        /// Get all contracts monitoring report data using the legacy Access all-contracts query semantics.
         /// </summary>
-        /// <param name="parameters">Pagination parameters containing filter, sort, and page information</param>
-        /// <param name="reportYear">The reporting year (from fnReportYear logic)</param>
-        /// <param name="fiscalMonth">The fiscal month number (from fnMonthToFMonth logic)</param>
-        /// <param name="contractFilter">Contract filter pattern (e.g., "*" for all, "NZ*" for pattern match)</param>
-        /// <param name="programFilter">Optional list of valid program codes for fnSurvProgram filter. If null/empty, no program filter applied.</param>
-        /// <returns>Paged list of MonitoringReportData ordered by ParentProject</returns>
+        Task<PagedData<MonitoringReportData>> GetAllContractsMonitoringReportDataAsync(
+            PaginationParameters<string> parameters,
+            short reportYear,
+            double fiscalMonth,
+            string contractFilter = "*",
+            IEnumerable<string>? programFilter = null);
+
+        /// <summary>
+        /// Get contract monitoring report data using the legacy Access export query semantics.
+        /// </summary>
+        Task<PagedData<MonitoringReportData>> GetContractsMonitoringReportDataAsync(
+            PaginationParameters<string> parameters,
+            short reportYear,
+            double fiscalMonth,
+            string contractFilter = "*",
+            IEnumerable<string>? programFilter = null);
+
+        /// <summary>
+        /// Backwards-compatible dispatcher that routes to the correct legacy query based on export type.
+        /// </summary>
         Task<PagedData<MonitoringReportData>> GetMonitoringReportDataAsync(
             PaginationParameters<string> parameters,
             short reportYear,
