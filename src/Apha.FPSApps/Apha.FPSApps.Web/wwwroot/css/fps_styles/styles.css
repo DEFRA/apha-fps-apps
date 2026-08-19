@@ -5351,7 +5351,7 @@ body,
     width: 63%;
 }
 .isBudgetBidsQuery{
-    width: 21%;
+    width: 33%;
 }
 .isResourceReAllocationScreen {
     width: 24%;
@@ -5360,7 +5360,7 @@ body,
     width: 20%;
 }
 .isTestPriceCheck {
-    width: 17%;
+    width: 16%;
 }
 .isPlanAllAdditionalCosts.isHalfGrid {
     width: 54%;
@@ -5409,24 +5409,6 @@ body,
         float: right;
     }
 }
-/*#programmeSelect {
-    max-width: 25em;
-}*/
-
-/*#gridContainer_rcGradeGrid .grid-scroll-container {
-    height: 260px;
-    max-height: 260px;
-}*/
-
-/*#gridContainer_wgGradeGrid .grid-scroll-container {
-    height: 220px;
-    max-height: 220px;
-}*/
-
-#gridContainer_wgStaffGrid .grid-scroll-container {
-    height: 240px;
-    max-height: 240px;
-}
 
 #gridContainer_wgGradeGrid .editable-grid-container {
     min-height: unset;
@@ -5457,6 +5439,7 @@ body,
     border: 1px solid #b1b4b6 !important;
 }
 
+.content-wrapper:has(.isTestSupplierPage),
 .content-wrapper:has(.isMiscReportPage),
 .content-wrapper:has(.isResourceUtilizationViewPage) {
     flex: 0 !important;
@@ -5474,5 +5457,10 @@ body,
 .isSideNav {
     .sidenav{
         padding-left: 0 !important;
+    }
+}
+.isTestSupplierPage {
+    .multicolumn-dropdown-panel {
+        left: -154px !important;
     }
 }
