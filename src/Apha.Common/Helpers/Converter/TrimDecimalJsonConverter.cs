@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Apha.PACT.Api.Converters
+namespace Apha.Common.Helpers.Converter
 {
     /// <summary>
     /// Serialises <see cref="decimal"/> values with a minimum of 2 decimal places
