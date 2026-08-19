@@ -629,7 +629,7 @@ namespace Apha.PIMS.DataAccess.Repository
         /// <returns>List of project year manager details</returns>
         public async Task<List<ProjectYearManager>> GetProjectYearManagersAsync(int year, string? loginEmail = null, bool viewSpecificProject = false)
         {
-            year = 2025;
+            year = 2025; //temporary hardcode for testing, remove this line in production
             loginEmail = string.IsNullOrWhiteSpace(loginEmail) ? null : loginEmail.Trim();
 
             var query = from project in _dbContext.MyTlkpProjects.AsNoTracking()
