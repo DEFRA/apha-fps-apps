@@ -108,16 +108,33 @@ namespace Apha.PIMS.Application.Services
 
         public async Task<MilestoneDto> UpdateMilestoneAsync_PMD(string project, string number, short underReview, short onTarget, DateTime? dateCompleted, string? projectLeaderComment, string? changedBy = null)
         {
-            // Validate milestone exists
+            var errors = new List<BusinessValidationError>();
+
+            if (string.IsNullOrWhiteSpace(project))
+                errors.Add(new BusinessValidationError("Project is required.", "PROJECT_REQUIRED"));
+            if (string.IsNullOrWhiteSpace(number))
+                errors.Add(new BusinessValidationError("Number is required.", "NUMBER_REQUIRED"));
+            if (dateCompleted.HasValue && dateCompleted.Value.Date > DateTime.Today)
+                errors.Add(new BusinessValidationError("Completion Date cannot be in the future.", "DATE_COMPLETED_FUTURE"));
+
             Milestone? existing = await _repository.GetMilestoneAsync(project, number);
             if (existing is null)
-                throw new BusinessValidationErrorException(
-                    [new BusinessValidationError("Milestone not found.", "NOT_FOUND")]);
+                errors.Add(new BusinessValidationError("Milestone not found.", "NOT_FOUND"));
+            else
+            {
+                DateTime dueDate = existing.DateDue;
+                if (dueDate != default && dueDate < DateTime.Now && onTarget != 0)
+                    errors.Add(new BusinessValidationError("Milestone cannot be On Target as the due date has passed.", "ON_TARGET_PAST_DUE"));
 
-            // Validate dateCompleted is not in future
-            if (dateCompleted.HasValue && dateCompleted.Value.Date > DateTime.Today)
-                throw new BusinessValidationErrorException(
-                    [new BusinessValidationError("Date completed cannot be after today.", "DATE_COMPLETED_FUTURE")]);
+                if (onTarget != 0 && underReview != 0)
+                    errors.Add(new BusinessValidationError("Milestone cannot be On Target and Under Review.", "ON_TARGET_AND_UNDER_REVIEW"));
+
+                if (dateCompleted.HasValue && underReview != 0)
+                    errors.Add(new BusinessValidationError("Milestone cannot be completed and Under Review.", "COMPLETED_AND_UNDER_REVIEW"));
+            }
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
 
             // Create a DTO for mutual exclusion logic
             var dto = new MilestoneDto
@@ -127,7 +144,8 @@ namespace Apha.PIMS.Application.Services
                 DateCompleted = dateCompleted,
                 ProjectLeaderComment = projectLeaderComment
             };
-            ApplyMutualExclusions(dto);
+
+           
 
             // Update only PMD-specific fields
             Milestone updated = await _repository.UpdateMilestoneAsync_PMD(

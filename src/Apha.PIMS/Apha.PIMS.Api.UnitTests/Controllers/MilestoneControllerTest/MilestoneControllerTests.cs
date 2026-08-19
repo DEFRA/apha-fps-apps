@@ -616,7 +616,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         }
 
         [Fact]
-        public async Task GetMilestoneFormDates_ReturnsNotFound_WhenNotFound()
+        public async Task GetMilestoneFormDates_ReturnsOkNullResult_WhenNotFound()
         {
             // Arrange
             const string parent = "PP001";
@@ -628,7 +628,8 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var result = await _controller.GetMilestoneFormDates(parent, year);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Null(okResult.Value);
 
             _mapper.DidNotReceive().Map<MilestoneFormDatesRes>(Arg.Any<MilestoneFormDatesDto>());
         }
@@ -1165,21 +1166,21 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         #region ImportStaging
 
         [Fact]
-        public async Task ImportStaging_ReturnsOkResult_AndPassesTruncatedChangedByAndCreatedBy()
+        public async Task ImportStaging_ReturnsOkResult_AndPassesFullChangedByAndCreatedBy()
         {
             // Arrange
             const string project = "PP001";
             var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "ABCDEFGHIJKL") }, "TestAuth");
             _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(identity);
 
-            _service.ImportStagingAsync(project, "ABCDEFGHIJ", "ABCDEFGHIJKL").Returns(5);
+            _service.ImportStagingAsync(project, "ABCDEFGHIJKL", "ABCDEFGHIJKL").Returns(5);
 
             // Act
             var result = await _controller.ImportStaging(project);
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
-            await _service.Received(1).ImportStagingAsync(project, "ABCDEFGHIJ", "ABCDEFGHIJKL");
+            await _service.Received(1).ImportStagingAsync(project, "ABCDEFGHIJKL", "ABCDEFGHIJKL");
         }
 
         [Fact]
@@ -1214,21 +1215,21 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         #region ImportWithOverwrite
 
         [Fact]
-        public async Task ImportWithOverwrite_ReturnsOkResult_AndPassesTruncatedChangedByAndCreatedBy()
+        public async Task ImportWithOverwrite_ReturnsOkResult_AndPassesFullChangedByAndCreatedBy()
         {
             // Arrange
             const string project = "PP001";
             var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "USERLONGNAME") }, "TestAuth");
             _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(identity);
 
-            _service.ImportWithOverwriteAsync(project, "USERLONGNA", "USERLONGNAME").Returns(7);
+            _service.ImportWithOverwriteAsync(project, "USERLONGNAME", "USERLONGNAME").Returns(7);
 
             // Act
             var result = await _controller.ImportWithOverwrite(project);
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
-            await _service.Received(1).ImportWithOverwriteAsync(project, "USERLONGNA", "USERLONGNAME");
+            await _service.Received(1).ImportWithOverwriteAsync(project, "USERLONGNAME", "USERLONGNAME");
         }
 
         [Fact]
