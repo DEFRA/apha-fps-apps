@@ -581,6 +581,26 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
                 Arg.Is<string>(u => u == expectedUrl), Arg.Any<MilestoneReq>());
         }
 
+        [Fact]
+        public async Task GetMilestoneFormDatesAsync_PMD_WhenApiReturnsNullData_ReturnsSuccessWithNullData()
+        {
+            // Arrange
+            const string parent = "PP001";
+            const short year = 2024;
+            var url = $"{PimsApiEndpoints.GetMilestoneFormDatesAsync_PMD}?parentProject={Uri.EscapeDataString(parent)}&year={year}";
+            var apiResponse = new ApiResponse<MilestoneFormDatesRes> { Success = true, Data = null };
+
+            _http.GetAsync<MilestoneFormDatesRes>(url).Returns(apiResponse);
+
+            // Act
+            var result = await _client.GetMilestoneFormDatesAsync_PMD(parent, year);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Null(result.Data);
+            await _http.Received(1).GetAsync<MilestoneFormDatesRes>(Arg.Is<string>(u => u == url));
+        }
+
         #endregion
 
         #region DeleteMilestoneAsync

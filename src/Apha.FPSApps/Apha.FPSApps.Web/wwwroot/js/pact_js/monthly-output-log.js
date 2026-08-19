@@ -77,9 +77,6 @@ $(function () {
         $('#txtUserId').val('');
         $('#ddAction').val('');
 
-        // Clear validation errors using shared function
-        clearValidationErrors(document);
-
         // Reload the grid with empty criteria to show empty grid (no records)
         var gm = getGridManager();
         if (gm) {

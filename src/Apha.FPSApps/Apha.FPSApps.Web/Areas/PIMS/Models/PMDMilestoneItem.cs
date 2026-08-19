@@ -30,24 +30,29 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         [GridColumn(Order = 3, Width = 200, Type = GridColumnType.Text)]
         public string? Description { get; set; }
 
-        [Display(Name = "Due")]
+        [Display(Name = "Date Due")]
         [GridColumn(Order = 4, Width = 100, Type = GridColumnType.Date)]
         public DateTime? DateDue { get; set; }
 
-        [Display(Name = "On Target")]
-        [GridColumn(Order = 5, Width = 90, Type = GridColumnType.Checkbox)]
+        [GridColumn(Order = 5, Width = 90, Type = GridColumnType.ReadOnly, IsVisible = false)]
         public short OnTarget { get; set; }
 
+        [Display(Name = "On Target")]
+        [GridColumn(Order = 5, Width = 90, Type = GridColumnType.ReadOnly)]
+        public string OnTargetDisplay => GetYesNoNaValue(OnTarget);
 
-        [Display(Name = "Under Review?")]
-        [GridColumn(Order = 6, Width = 100, Type = GridColumnType.Checkbox)]
+        [GridColumn(Order = 6, Width = 100, Type = GridColumnType.ReadOnly, IsVisible = false)]
         public short UnderSdReview { get; set; }
 
-        [Display(Name = "Completed/Delivered")]
+        [Display(Name = "Under Review")]
+        [GridColumn(Order = 6, Width = 100, Type = GridColumnType.ReadOnly)]
+        public string UnderSdReviewDisplay => GetYesNoNaValue(UnderSdReview);
+
+        [Display(Name = "Date Completed\t")]
         [GridColumn(Order = 7, Width = 130, Type = GridColumnType.Date)]
         public DateTime? DateCompleted { get; set; }
 
-        [Display(Name = "P Leader's Comment")]
+        [Display(Name = "Project Leaders Comment")]
         [GridColumn(Order = 8, Width = 180, Type = GridColumnType.Text)]
         public string? ProjectLeaderComment { get; set; }  
        
@@ -64,5 +69,15 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 
         [GridColumn(Order = 11, Width = 0, Type = GridColumnType.ReadOnly, IsVisible = false)]
         public DateTime? DateFormReceived { get; set; }
+
+        private static string GetYesNoNaValue(short value)
+        {
+            return value switch
+            {
+                0 => "No",
+                -1 => "Yes",
+                _ => "NA"
+            };
+        }
     }
 }
