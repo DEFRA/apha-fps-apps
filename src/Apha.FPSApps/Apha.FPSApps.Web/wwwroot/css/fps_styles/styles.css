@@ -5350,7 +5350,7 @@ body,
     width: 63%;
 }
 .isBudgetBidsQuery{
-    width: 33%;
+    width: 21%;
 }
 .isProjectGroupManagement {
     width: 35%;
@@ -5521,4 +5521,9 @@ body,
 }
 .isWidthAuto{
     width: auto;
+}
+#gridContainer_ruvWorkgroupGrid {
+    h2.sup_align_heading{
+        display: none;
+    }
 }
