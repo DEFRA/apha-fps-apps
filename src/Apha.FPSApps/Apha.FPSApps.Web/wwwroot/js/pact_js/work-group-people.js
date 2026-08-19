@@ -139,11 +139,11 @@ function reloadPeopleGridByPerson(personName, personWorkGroup) {
         type: 'POST',
         headers: { 'RequestVerificationToken': antiForgeryToken },
         data: {
-            filter: '{}',
-            sortBy: '',
-            descending: false,
             page: 1,
             pageSize: 10,
+            sortBy: '',
+            descending: false,
+            filter: '{}',
             workGroup: personWorkGroup || null,
             __RequestVerificationToken: antiForgeryToken
         },
@@ -191,7 +191,8 @@ function selectFirstPersonRow() {
 }
 
 function getAntiForgeryToken() {
-    return $('input[name="__RequestVerificationToken"]').first().val() || '';
+    var el = document.querySelector('input[name="__RequestVerificationToken"]');
+    return el ? el.value : '';
 }
 
 /**
