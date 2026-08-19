@@ -132,17 +132,20 @@ function reloadAllPeopleGrid() {
  * @param {string|null} personWorkGroup - The work group associated with the selected person.
  */
 function reloadPeopleGridByPerson(personName, personWorkGroup) {
+    var antiForgeryToken = getAntiForgeryToken();
+
     $.ajax({
         url: '/PACT/WorkGroupPeople/LoadPeopleGrid',
         type: 'POST',
-        headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+        headers: { 'RequestVerificationToken': antiForgeryToken },
         data: {
-            Filter: '{}',
-            SortBy: '',
-            Descending: false,
-            Page: 1,
-            PageSize: 10,
-            workGroup: personWorkGroup || null
+            filter: '{}',
+            sortBy: '',
+            descending: false,
+            page: 1,
+            pageSize: 10,
+            workGroup: personWorkGroup || null,
+            __RequestVerificationToken: antiForgeryToken
         },
         success: function (html) {
             $('#gridContainer_peopleGrid').html(html);
@@ -185,6 +188,10 @@ function selectFirstPersonRow() {
             currentPersonName = name || null;
         }
     }
+}
+
+function getAntiForgeryToken() {
+    return $('input[name="__RequestVerificationToken"]').first().val() || '';
 }
 
 /**

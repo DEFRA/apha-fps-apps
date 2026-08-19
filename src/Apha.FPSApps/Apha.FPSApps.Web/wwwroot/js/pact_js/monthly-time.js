@@ -1084,14 +1084,21 @@ function confirmImportType() {
     triggerMonthlyTimeImportSelection(selected);
 }
 
+function getAntiForgeryToken() {
+    return $('input[name="__RequestVerificationToken"]').first().val() || '';
+}
+
 function importMonthlyTime(file) {
     const formData = new FormData();
+    const antiForgeryToken = getAntiForgeryToken();
     formData.append('file', file);
     formData.append('importType', window.monthlyTimeImportType || '2');
+    formData.append('__RequestVerificationToken', antiForgeryToken);
 
     $.ajax({
         url: '/PACT/MonthlyTime/Import',
         type: 'POST',
+        headers: { 'RequestVerificationToken': antiForgeryToken },
         data: formData,
         processData: false,
         contentType: false,

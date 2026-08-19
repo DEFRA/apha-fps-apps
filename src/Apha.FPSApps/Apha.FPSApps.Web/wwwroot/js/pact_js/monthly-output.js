@@ -719,18 +719,25 @@ function openImportFilePicker() {
     $('#csvInput').trigger('click');
 }
 
+function getAntiForgeryToken() {
+    return $('input[name="__RequestVerificationToken"]').first().val() || '';
+}
+
 function importMonthlyOutput(file) {
     if (!file) {
         return;
     }
 
     const formData = new FormData();
+    const antiForgeryToken = getAntiForgeryToken();
     formData.append('file', file);
     formData.append('importType', window.monthlyOutputImportType || '1');
+    formData.append('__RequestVerificationToken', antiForgeryToken);
 
     $.ajax({
         url: '/PACT/MonthlyOutput/Import',
         type: 'POST',
+        headers: { 'RequestVerificationToken': antiForgeryToken },
         data: formData,
         processData: false,
         contentType: false,
