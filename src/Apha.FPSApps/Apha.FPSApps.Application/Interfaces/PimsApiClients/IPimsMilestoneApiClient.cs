@@ -8,6 +8,7 @@ namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
     {
         Task<ApiResponseDto<List<MilestoneDto>>> GetAllMilestonesAsync(QueryParameters<string> query, string project);        
         Task<ApiResponseDto<MilestoneDto>> GetMilestoneAsync(string project, string number);
+        Task<ApiResponseDto<MilestoneDto>> GetMilestoneAsync_PMD(string project, string number);
         Task<ApiResponseDto<MilestoneDto>> SaveMilestoneAsync(string project, MilestoneDto dto);
         Task<ApiResponseDto<MilestoneDto>> UpdateMilestoneAsync(string project, string number, MilestoneDto dto);
         Task<ApiResponseDto<MilestoneDto>> UpdateMilestoneAsync_PMD(string project, string number, MilestoneDto dto);
@@ -18,7 +19,9 @@ namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
 
         Task<ApiResponseDto<List<MilestoneFormDatesDto>>> GetAllMilestoneFormDatesAsync(string parentProject, QueryParameters<string> parameters);
         Task<ApiResponseDto<MilestoneFormDatesDto>> GetMilestoneFormDatesAsync(string parentProject, short year);
+        Task<ApiResponseDto<MilestoneFormDatesDto>> GetMilestoneFormDatesAsync_PMD(string parentProject, short year);
         Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync(string parentProject, MilestoneFormDatesDto dto);
+        Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync_PMD(string parentProject, MilestoneFormDatesDto dto);
         Task<ApiResponseDto<object>> DeleteMilestoneFormDatesAsync(string parentProject, short year);
 
         Task<ApiResponseDto<List<LogMilestoneDto>>> GetLogMilestonesAsync(QueryParameters<string> parameters, string? project, string? numberPart1, string? numberPart2);
