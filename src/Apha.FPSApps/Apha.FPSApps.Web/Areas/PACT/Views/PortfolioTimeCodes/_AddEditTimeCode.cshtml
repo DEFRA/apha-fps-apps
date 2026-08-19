@@ -45,7 +45,7 @@
             @if (isEdit)
             {
                 <input type="hidden" asp-for="WorkGroup" />
-                <input class="govuk-input govuk-!-font-size-16" value="@Model.WorkGroup" disabled />
+                <input class="govuk-input govuk-!-font-size-16" aria-label="Portfolio test workgroup" value="@Model.WorkGroup" disabled />
             }
             else
             {
@@ -84,11 +84,11 @@
             <label class="govuk-label govuk-!-font-weight-bold" asp-for="TimeCode">Time Code<span class="sup_color_red">* </span></label>
             @if (isEdit)
             {
-                <input class="govuk-input govuk-!-font-size-16" value="@Model.TimeCode" disabled />
+                <input class="govuk-input govuk-!-font-size-16" aria-label="Portfolio test timecode" value="@Model.TimeCode" disabled />
             }
             else
             {
-                <input class="govuk-input govuk-!-font-size-16" asp-for="TimeCode" required />
+                <input class="govuk-input govuk-!-font-size-16" asp-for="TimeCode" aria-label="Portfolio test timecode workgroup"  required />
                 <span asp-validation-for="TimeCode" class="govuk-error-message"></span>
             }
         </div>
@@ -99,11 +99,11 @@
             @if (isEdit)
             {
                 <input type="hidden" asp-for="Project" />
-                <input class="govuk-input govuk-!-font-size-16" value="@Model.Project" disabled />
+                <input class="govuk-input govuk-!-font-size-16" value="@Model.Project" aria-label="Portfolio test project" disabled />
             }
             else
             {
-                <select class="govuk-select govuk-!-font-size-16" asp-for="Project"
+                <select class="govuk-select govuk-!-font-size-16" asp-for="Project" aria-label="Portfolio test project select"
                         asp-items="@(ViewBag.Projects as List<SelectListItem>)" required>
                     <option value="">--select--</option>
                 </select>

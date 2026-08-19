@@ -32,6 +32,7 @@
                 Work Group <span class="sup_color_red">*</span>
             </label>
             <select class="govuk-select govuk-!-font-size-16" asp-for="WorkGroup"
+                    aria-label="txtmodal-workgrp"
                     id="txtmodal-workgrp" style="width:100%;" required
                     asp-items="@(ViewBag.WorkGroups as List<SelectListItem>)"
                     disabled="@(isEdit ? "disabled" : null)">
@@ -48,12 +49,12 @@
             @if (isEdit)
             {
                 <input class="govuk-input govuk-!-font-size-16" asp-for="TimeCode"
-                       id="txtmodal-wg-timecode" placeholder="Time Code" disabled />
+                       id="txtmodal-wg-timecode" aria-label="txtmodal-wg-timecode" placeholder="Time Code" disabled />
             }
             else
             {
                 <input class="govuk-input govuk-!-font-size-16" asp-for="TimeCode"
-                       id="txtmodal-wg-timecode" placeholder="Time Code" />
+                       id="txtmodal-wg-timecode" aria-label="txtmodal-wg-timecode"  placeholder="Time Code" />
             }
             <span asp-validation-for="TimeCode" class="govuk-error-message"></span>
         </div>
@@ -78,7 +79,7 @@
                 Test Code <span class="sup_color_red">*</span>
             </label>
             <input class="govuk-input govuk-!-font-size-16" asp-for="TestCode"
-                   id="txtmodal-wg-testcode" placeholder="Test Code" disabled />
+                   id="txtmodal-wg-testcode" aria-label="txtmodal-wg-testcode" placeholder="Test Code" disabled />
             <span asp-validation-for="TestCode" class="govuk-error-message"></span>
         </div>
 
@@ -88,7 +89,7 @@
                 Portfolio <span class="sup_color_red">*</span>
             </label>
             <input class="govuk-input govuk-!-font-size-16" asp-for="Portfolio"
-                   id="txtmodal-wg-portfolio" placeholder="Portfolio" disabled />
+                   id="txtmodal-wg-portfolio" aria-label="txtmodal-wg-portfolio" placeholder="Portfolio" disabled />
             <span asp-validation-for="Portfolio" class="govuk-error-message"></span>
         </div>
 
@@ -103,7 +104,7 @@
             </label>
             <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes">
                 <div class="govuk-checkboxes__item">
-                    <input class="govuk-checkboxes__input"
+                    <input class="govuk-checkboxes__input" aria-label="txtmodal-wg-active"
                            id="txtmodal-wg-active" asp-for="Active" />
                     <label class="govuk-label govuk-checkboxes__label sup_label_auto_width" asp-for="Active">
                         Yes

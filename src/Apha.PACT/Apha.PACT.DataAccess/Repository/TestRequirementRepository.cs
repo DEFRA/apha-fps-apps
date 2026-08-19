@@ -161,7 +161,8 @@ namespace Apha.PACT.DataAccess.Repository
                                  Active = t.Active,
                                  FpsYear = t.FpsYear,
                                  IsDefraProject = p.IsDefraProject,
-                                 RecUnitPrice = p.IsDefraProject == 0 ? tp.UnitPriceVla : (decimal?)tp.DefraUnitPrice
+                                 RecUnitPrice = p.IsDefraProject == 0 ? tp.UnitPriceVla : (decimal?)tp.DefraUnitPrice,
+                                 TestCost = (t.UnitPrice ?? 0) * (decimal)(t.NoRequired ?? 0)
                              }).AsQueryable();
 
             baseQuery = ApplyTestReqmtDetailFilter(baseQuery, query.Filter);
@@ -177,6 +178,7 @@ namespace Apha.PACT.DataAccess.Repository
                     nameof(TestRequirementDetail.ProjectBuyerCode) => baseQuery.OrderByDescending(t => t.ProjectBuyerCode),
                     nameof(TestRequirementDetail.IsDefraProject) => baseQuery.OrderByDescending(t => t.IsDefraProject),
                     nameof(TestRequirementDetail.RecUnitPrice) => baseQuery.OrderByDescending(t => t.RecUnitPrice),
+                    nameof(TestRequirementDetail.TestCost) => baseQuery.OrderByDescending(t => t.TestCost),
                     _ => baseQuery.OrderByDescending(t => t.TestCode)
                 },
                 (true, false) => query.SortBy switch
@@ -188,6 +190,7 @@ namespace Apha.PACT.DataAccess.Repository
                     nameof(TestRequirementDetail.ProjectBuyerCode) => baseQuery.OrderBy(t => t.ProjectBuyerCode),
                     nameof(TestRequirementDetail.IsDefraProject) => baseQuery.OrderBy(t => t.IsDefraProject),
                     nameof(TestRequirementDetail.RecUnitPrice) => baseQuery.OrderBy(t => t.RecUnitPrice),
+                    nameof(TestRequirementDetail.TestCost) => baseQuery.OrderBy(t => t.TestCost),
                     _ => baseQuery.OrderBy(t => t.TestCode)
                 },
                 _ => baseQuery.OrderBy(t => t.TestCode)

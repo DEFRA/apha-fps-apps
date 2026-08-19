@@ -67,6 +67,7 @@ namespace Apha.PACT.Api.Middleware
 
                 case BusinessValidationErrorException validationEx:
                     context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                    errorType = _configuration["ExceptionTypes:BusinessValidation"];
                     foreach (var err in validationEx.Errors)
                     {
                         apiResponse.Errors.Add(new ApiError

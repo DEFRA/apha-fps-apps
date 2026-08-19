@@ -30,7 +30,7 @@
                        asp-area="PACT"
                        asp-controller="ProjectMaintenance"
                        asp-action="Details"
-                       asp-route-id="@Model.ParentProject">Back</a>
+                       asp-route-id="@Model.OriginalParentProject">Back</a>
                 }
             </span>
         </h1>
@@ -110,23 +110,33 @@
         // ── Invoice CRUD ─────────────────────────────────────────────────
 
         function addInvoice() {
-            $.get('/PACT/ProjectInvoiceSubContract/GetInvoice',
-                { id: 0, parentProject: decodeURIComponent(parentProject) },
-                function (html) {
+            $.ajax({
+                url: '/PACT/ProjectInvoiceSubContract/GetInvoice',
+                type: 'GET',
+                data: { id: 0, parentProject: decodeURIComponent(parentProject) },
+                success: function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
                     initializeFormValidation('#invoiceForm');
-                });
+                },
+                error: function () { showAlertMessage('An error occurred while loading the invoice.', AlertType.ERROR); }
+            });
         }
 
         function editInvoice(btn) {
             var id = $(btn).data('id');
-            $.get('/PACT/ProjectInvoiceSubContract/GetInvoice', { id: id }, function (html) {
-                $('#modaPopupBody').html(html);
-                $('#modalPopup').addClass('show');
-                // Initialize form validation (unobtrusive + numeric)
-                initializeFormValidation('#invoiceForm');
+            $.ajax({
+                url: '/PACT/ProjectInvoiceSubContract/GetInvoice',
+                type: 'GET',
+                data: { id: id },
+                success: function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                    // Initialize form validation (unobtrusive + numeric)
+                    initializeFormValidation('#invoiceForm');
+                },
+                error: function () { showAlertMessage('An error occurred while loading the invoice.', AlertType.ERROR); }
             });
         }
 
@@ -194,23 +204,33 @@
         // ── Sub-Contract CRUD ─────────────────────────────────────────────
 
         function addSubContract() {
-            $.get('/PACT/ProjectInvoiceSubContract/GetSubContract',
-                { id: 0, parentProject: decodeURIComponent(parentProject) },
-                function (html) {
+            $.ajax({
+                url: '/PACT/ProjectInvoiceSubContract/GetSubContract',
+                type: 'GET',
+                data: { id: 0, parentProject: decodeURIComponent(parentProject) },
+                success: function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
-                   initializeFormValidation('#subContractForm');
-                });
+                    initializeFormValidation('#subContractForm');
+                },
+                error: function () { showAlertMessage('An error occurred while loading the sub-contract.', AlertType.ERROR); }
+            });
         }
 
         function editSubContract(btn) {
             var id = $(btn).data('id');
-            $.get('/PACT/ProjectInvoiceSubContract/GetSubContract', { id: id }, function (html) {
-                $('#modaPopupBody').html(html);
-                $('#modalPopup').addClass('show');
-                 // Initialize form validation (unobtrusive + numeric)
-                 initializeFormValidation('#subContractForm');
+            $.ajax({
+                url: '/PACT/ProjectInvoiceSubContract/GetSubContract',
+                type: 'GET',
+                data: { id: id },
+                success: function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                    // Initialize form validation (unobtrusive + numeric)
+                    initializeFormValidation('#subContractForm');
+                },
+                error: function () { showAlertMessage('An error occurred while loading the sub-contract.', AlertType.ERROR); }
             });
         }
 
@@ -290,19 +310,27 @@
         }
 
         function refreshInvoiceTotalAmount() {
-            $.get('/PACT/ProjectInvoiceSubContract/GetInvoiceTotalAmount',
-                { parentProject: decodeURIComponent(parentProject) },
-                function (response) {
+            $.ajax({
+                url: '/PACT/ProjectInvoiceSubContract/GetInvoiceTotalAmount',
+                type: 'GET',
+                data: { parentProject: decodeURIComponent(parentProject) },
+                success: function (response) {
                     $('#txtTotalAmount').val(formatGbp(response.total));
-                });
+                },
+                error: function () { showAlertMessage('An error occurred while refreshing the invoice total.', AlertType.ERROR); }
+            });
         }
 
         function refreshSubContractTotalAmount() {
-            $.get('/PACT/ProjectInvoiceSubContract/GetSubContractTotalAmount',
-                { parentProject: decodeURIComponent(parentProject) },
-                function (response) {
+            $.ajax({
+                url: '/PACT/ProjectInvoiceSubContract/GetSubContractTotalAmount',
+                type: 'GET',
+                data: { parentProject: decodeURIComponent(parentProject) },
+                success: function (response) {
                     $('#txtTestDataTotalAmount').val(formatGbp(response.total));
-                });
+                },
+                error: function () { showAlertMessage('An error occurred while refreshing the sub-contract total.', AlertType.ERROR); }
+            });
         }
 
         function alignYtdBox(tableId, gridContainerId, amountBoxId, boxId, lblId) {

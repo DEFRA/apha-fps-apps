@@ -1,7 +1,9 @@
 using Apha.Common.Contracts.FPS;
+using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
@@ -25,9 +27,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<ApiResponseDto<List<TestRCCostDto>>> GetByTestCodeAsync(string testCode, int fpsYear)
+        public async Task<ApiResponseDto<List<TestRCCostDto>>> GetByTestCodePagedAsync(QueryParameters<string> query, string testCode)
         {
-            var url = $"{BaseUrl}/{testCode}";
+            var url = QueryStringHelper.AddQueryString($"{BaseUrl}/{Uri.EscapeDataString(testCode)}", query);
             var response = await _http.GetAsync<List<TestRCCostRes>>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<TestRCCostDto>>>(response);

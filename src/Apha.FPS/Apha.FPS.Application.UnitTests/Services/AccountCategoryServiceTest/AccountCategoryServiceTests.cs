@@ -154,7 +154,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AccountCategoryServiceTest
             var dto = CreateTestDto(TestAccShortName, TestAccountDescription);
             var entity = CreateTestEntity(TestAccShortName, TestAccountDescription);
 
-            _repository.GetByIdAsync(TestAccShortName).Returns((AccountCategory?)null);
+            _repository.ExistsByAccShortNameAsync(TestAccShortName).Returns(false);
             _mapper.Map<AccountCategory>(dto).Returns(entity);
             _repository.AddAsync(entity).Returns(entity);
             _mapper.Map<AccountCategoryDto>(entity).Returns(dto);
@@ -215,9 +215,8 @@ namespace Apha.FPS.Application.UnitTests.Services.AccountCategoryServiceTest
         {
             // Arrange
             var dto = CreateTestDto(TestAccShortName, TestAccountDescription);
-            var existingEntity = CreateTestEntity(TestAccShortName, "Existing");
 
-            _repository.GetByIdAsync(TestAccShortName).Returns(existingEntity);
+            _repository.ExistsByAccShortNameAsync(TestAccShortName).Returns(true);
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -225,6 +224,22 @@ namespace Apha.FPS.Application.UnitTests.Services.AccountCategoryServiceTest
 
             Assert.Contains(TestAccShortName, exception.Message);
             Assert.Contains("already exists", exception.Message);
+        }
+
+        [Fact]
+        public async Task AddAsync_DuplicateAccShortNameDiffersOnlyByCase_ThrowsInvalidOperationException()
+        {
+            // Arrange - duplicate detection must be case-insensitive
+            var dto = CreateTestDto(TestAccShortName, TestAccountDescription);
+
+            _repository.ExistsByAccShortNameAsync(TestAccShortName).Returns(true);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _service.AddAsync(dto));
+
+            Assert.Contains("already exists", exception.Message);
+            await _repository.DidNotReceive().AddAsync(Arg.Any<AccountCategory>());
         }
 
         #endregion

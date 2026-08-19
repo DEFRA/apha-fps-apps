@@ -23,7 +23,7 @@
                        asp-area="PACT"
                        asp-controller="PortfolioTimeCodes"
                        asp-action="Index"
-                       asp-route-parentProject="@Model.ParentProject">Back</a>
+                       asp-route-parentProject="@Model.OriginalParentProject">Back</a>
                 }
                 else if (Model.NavigationOrigin == "PortfolioMaintenance")
                 {
@@ -31,7 +31,7 @@
                        asp-area="PACT"
                        asp-controller="PortfolioMaintenance"
                        asp-action="Index"
-                    asp-route-portfolio="@Model.ParentProject">Back</a>
+                    asp-route-portfolio="@Model.OriginalParentProject">Back</a>
                 }
                 else
                 {
@@ -39,7 +39,7 @@
                        asp-area="PACT"
                        asp-controller="ProjectMaintenance"
                        asp-action="Details"
-                       asp-route-id="@Model.ParentProject">Back</a>
+                       asp-route-id="@Model.OriginalParentProject">Back</a>
                 }
             </span>
         </h1>
@@ -111,27 +111,35 @@
         // ── CRUD ─────────────────────────────────────────────────────────
 
         function addTestPurchaseReq() {
-            $.get('/PACT/TestPurchaseRequirement/GetTestPurchaseReq',
-                { testCode: '', buyer: decodeURIComponent(parentProject), parentProject: decodeURIComponent(parentProject) },
-                function (html) {
+            $.ajax({
+                url: '/PACT/TestPurchaseRequirement/GetTestPurchaseReq',
+                type: 'GET',
+                data: { testCode: '', buyer: decodeURIComponent(parentProject), parentProject: decodeURIComponent(parentProject) },
+                success: function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
-                            // Initialize form validation (unobtrusive + numeric)
-                           initializeFormValidation('#testPurchaseReqForm');
-                });
+                    // Initialize form validation (unobtrusive + numeric)
+                    initializeFormValidation('#testPurchaseReqForm');
+                },
+                error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+            });
         }
 
         function editTestPurchaseReq(btn) {
             var testCode = $(btn).data('testcode') || $(btn).closest('tr').find('td:first').text().trim();
             var buyer = $(btn).data('id');
-            $.get('/PACT/TestPurchaseRequirement/GetTestPurchaseReq',
-                { testCode: testCode, buyer: buyer, parentProject: decodeURIComponent(parentProject) },
-                function (html) {
+            $.ajax({
+                url: '/PACT/TestPurchaseRequirement/GetTestPurchaseReq',
+                type: 'GET',
+                data: { testCode: testCode, buyer: buyer, parentProject: decodeURIComponent(parentProject) },
+                success: function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
                     initializeFormValidation('#invoiceForm');
-                });
+                },
+                error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+            });
         }
 
         function deleteTestPurchaseReq(btn) {

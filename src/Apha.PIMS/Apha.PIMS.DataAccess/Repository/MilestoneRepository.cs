@@ -680,21 +680,14 @@ namespace Apha.PIMS.DataAccess.Repository
 
             return await ApplyPaging(query, parameters.Page, parameters.PageSize);
         }
-
+       
         private static DateTime GetFYStart()
         {
-            // TODO: Remove testYear after testing
-            int testYear = 2025;
-            int fyYear = testYear < 6 ? testYear - 1 : testYear;  // FY 2024-25 starts 2024-04-01
+            int currentYear = DateTime.Today.Year;
+            int currentMonth = DateTime.Today.Month;
+
+            int fyYear = currentMonth < 6 ? currentYear - 1 : currentYear;
             return new DateTime(fyYear, 4, 1);
         }
-        //private static DateTime GetFYStart()
-        //{
-        //    int currentYear = DateTime.Today.Year;
-        //    int currentMonth = DateTime.Today.Month;
-
-        //    int fyYear = currentMonth < 6 ? currentYear - 1 : currentYear;
-        //    return new DateTime(fyYear, 4, 1);
-        //}
     }
 }

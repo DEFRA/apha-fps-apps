@@ -141,7 +141,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.Projects
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.ParentProject.ToLower() == parentProject.ToLower());
+                .FirstOrDefaultAsync(p => EF.Functions.ILike(p.ParentProject, parentProject));
         }
 
         public async Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query)
@@ -243,47 +243,51 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("Program", out var program) && program != null)
-                query = query.Where(x => EF.Functions.ILike(x.Program!, $"%{program}%"));
+            var textFilters = new (string Key, Expression<Func<ProjectSpecificQueryItem, string?>> Selector)[]
+            {
+                ("Program", x => x.Program),
+                ("ParentProject", x => x.ParentProject),
+                ("ProjectTitle", x => x.ProjectTitle),
+                ("ShortTitle", x => x.ShortTitle),
+                ("ProjectStatus", x => x.ProjectStatus),
+                ("Account", x => x.Account),
+                ("Description", x => x.Description),
+                ("AccountDescription", x => x.AccountDescription),
+                ("ConstituentAccountCodes", x => x.ConstituentAccountCodes),
+                ("Freq", x => x.Freq),
+                ("Supplier", x => x.Supplier),
+                ("Manager", x => x.Manager)
+            };
 
-            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
-                query = query.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{parentProject}%"));
-
-            if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
-                query = query.Where(x => EF.Functions.ILike(x.ProjectTitle!, $"%{projectTitle}%"));
-
-            if (dict.TryGetValue("ShortTitle", out var shortTitle) && shortTitle != null)
-                query = query.Where(x => EF.Functions.ILike(x.ShortTitle!, $"%{shortTitle}%"));
-
-            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && projectStatus != null)
-                query = query.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
-
-            if (dict.TryGetValue("Account", out var account) && account != null)
-                query = query.Where(x => EF.Functions.ILike(x.Account!, $"%{account}%"));
-
-            if (dict.TryGetValue("Description", out var description) && description != null)
-                query = query.Where(x => EF.Functions.ILike(x.Description!, $"%{description}%"));
-
-            if (dict.TryGetValue("AccountDescription", out var accountDescription) && accountDescription != null)
-                query = query.Where(x => EF.Functions.ILike(x.AccountDescription!, $"%{accountDescription}%"));
-
-            if (dict.TryGetValue("ConstituentAccountCodes", out var constituentAccountCodes) && constituentAccountCodes != null)
-                query = query.Where(x => EF.Functions.ILike(x.ConstituentAccountCodes!, $"%{constituentAccountCodes}%"));
-
-            if (dict.TryGetValue("Freq", out var freq) && freq != null)
-                query = query.Where(x => EF.Functions.ILike(x.Freq!, $"%{freq}%"));
-
-            if (dict.TryGetValue("Supplier", out var supplier) && supplier != null)
-                query = query.Where(x => EF.Functions.ILike(x.Supplier!, $"%{supplier}%"));
-
-            if (dict.TryGetValue("Manager", out var manager) && manager != null)
-                query = query.Where(x => EF.Functions.ILike(x.Manager!, $"%{manager}%"));
+            foreach (var (key, selector) in textFilters)
+                query = ApplyLike(query, dict, key, selector);
 
             if (dict.TryGetValue("ItemCost", out var itemCost) && itemCost != null
                 && decimal.TryParse(itemCost.ToString(), out var itemCostValue))
                 query = query.Where(x => x.ItemCost == itemCostValue);
 
             return query;
+        }
+
+        private static IQueryable<ProjectSpecificQueryItem> ApplyLike(
+            IQueryable<ProjectSpecificQueryItem> query,
+            IDictionary<string, object> dict,
+            string key,
+            Expression<Func<ProjectSpecificQueryItem, string?>> selector)
+        {
+            if (!dict.TryGetValue(key, out var value) || value == null)
+                return query;
+
+            var pattern = $"%{value}%";
+            var body = Expression.Call(
+                typeof(NpgsqlDbFunctionsExtensions),
+                nameof(NpgsqlDbFunctionsExtensions.ILike),
+                Type.EmptyTypes,
+                Expression.Constant(EF.Functions),
+                selector.Body,
+                Expression.Constant(pattern));
+            var predicate = Expression.Lambda<Func<ProjectSpecificQueryItem, bool>>(body, selector.Parameters);
+            return query.Where(predicate);
         }
 
         private static IQueryable<ProjectSpecificQueryItem> ApplyProjectSpecificQuerySorting(IQueryable<ProjectSpecificQueryItem> query, string? sortBy, bool descending)
@@ -293,22 +297,27 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return sortBy.ToLower() switch
             {
-                "program" => descending ? query.OrderByDescending(x => x.Program) : query.OrderBy(x => x.Program),
-                "parentproject" => descending ? query.OrderByDescending(x => x.ParentProject) : query.OrderBy(x => x.ParentProject),
-                "projecttitle" => descending ? query.OrderByDescending(x => x.ProjectTitle) : query.OrderBy(x => x.ProjectTitle),
-                "shorttitle" => descending ? query.OrderByDescending(x => x.ShortTitle) : query.OrderBy(x => x.ShortTitle),
-                "projectstatus" => descending ? query.OrderByDescending(x => x.ProjectStatus) : query.OrderBy(x => x.ProjectStatus),
-                "account" => descending ? query.OrderByDescending(x => x.Account) : query.OrderBy(x => x.Account),
-                "description" => descending ? query.OrderByDescending(x => x.Description) : query.OrderBy(x => x.Description),
-                "accountdescription" => descending ? query.OrderByDescending(x => x.AccountDescription) : query.OrderBy(x => x.AccountDescription),
-                "constituentaccountcodes" => descending ? query.OrderByDescending(x => x.ConstituentAccountCodes) : query.OrderBy(x => x.ConstituentAccountCodes),
-                "freq" => descending ? query.OrderByDescending(x => x.Freq) : query.OrderBy(x => x.Freq),
-                "supplier" => descending ? query.OrderByDescending(x => x.Supplier) : query.OrderBy(x => x.Supplier),
-                "itemcost" => descending ? query.OrderByDescending(x => x.ItemCost) : query.OrderBy(x => x.ItemCost),
-                "manager" => descending ? query.OrderByDescending(x => x.Manager) : query.OrderBy(x => x.Manager),
+                "program" => ApplyOrder(query, x => x.Program, descending),
+                "parentproject" => ApplyOrder(query, x => x.ParentProject, descending),
+                "projecttitle" => ApplyOrder(query, x => x.ProjectTitle, descending),
+                "shorttitle" => ApplyOrder(query, x => x.ShortTitle, descending),
+                "projectstatus" => ApplyOrder(query, x => x.ProjectStatus, descending),
+                "account" => ApplyOrder(query, x => x.Account, descending),
+                "description" => ApplyOrder(query, x => x.Description, descending),
+                "accountdescription" => ApplyOrder(query, x => x.AccountDescription, descending),
+                "constituentaccountcodes" => ApplyOrder(query, x => x.ConstituentAccountCodes, descending),
+                "freq" => ApplyOrder(query, x => x.Freq, descending),
+                "supplier" => ApplyOrder(query, x => x.Supplier, descending),
+                "itemcost" => ApplyOrder(query, x => x.ItemCost, descending),
+                "manager" => ApplyOrder(query, x => x.Manager, descending),
                 _ => query.OrderBy(x => x.ParentProject).ThenBy(x => x.Account)
             };
         }
+
+        private static IQueryable<ProjectSpecificQueryItem> ApplyOrder<T>(
+            IQueryable<ProjectSpecificQueryItem> query,
+            Expression<Func<ProjectSpecificQueryItem, T>> keySelector, bool descending)
+            => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
 
 
         public async Task<PagedData<ProjectExceptionalCostView>> GetProjectExceptionalCostsPagedAsync(PaginationParameters<string> query)
@@ -356,31 +365,37 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("Directorate", out var directorate) && directorate != null)
-                rows = rows.Where(r => r.Directorate != null &&
-                    r.Directorate.Contains(directorate.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+            var textFilters = new (string Key, Func<ProjectExceptionalCostView, string?> Selector)[]
+            {
+                ("Directorate", r => r.Directorate),
+                ("Programme", r => r.Programme),
+                ("ContractNumber", r => r.ContractNumber),
+                ("Project", r => r.Project),
+                ("AccountCat", r => r.AccountCat),
+                ("Description", r => r.Description)
+            };
 
-            if (dict.TryGetValue("Programme", out var programme) && programme != null)
-                rows = rows.Where(r => r.Programme != null &&
-                    r.Programme.Contains(programme.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            if (dict.TryGetValue("ContractNumber", out var contract) && contract != null)
-                rows = rows.Where(r => r.ContractNumber != null &&
-                    r.ContractNumber.Contains(contract.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            if (dict.TryGetValue("Project", out var project) && project != null)
-                rows = rows.Where(r => r.Project != null &&
-                    r.Project.Contains(project.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            if (dict.TryGetValue("AccountCat", out var account) && account != null)
-                rows = rows.Where(r => r.AccountCat != null &&
-                    r.AccountCat.Contains(account.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            if (dict.TryGetValue("Description", out var description) && description != null)
-                rows = rows.Where(r => r.Description != null &&
-                    r.Description.Contains(description.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+            foreach (var (key, selector) in textFilters)
+                rows = ApplyContains(rows, dict, key, selector);
 
             return rows;
+        }
+
+        private static List<ProjectExceptionalCostView> ApplyContains(
+            List<ProjectExceptionalCostView> rows,
+            IDictionary<string, object> dict,
+            string key,
+            Func<ProjectExceptionalCostView, string?> selector)
+        {
+            if (!dict.TryGetValue(key, out var value) || value == null)
+                return rows;
+
+            var text = value.ToString()!;
+            return rows.Where(r =>
+            {
+                var field = selector(r);
+                return field != null && field.Contains(text, StringComparison.OrdinalIgnoreCase);
+            }).ToList();
         }
 
         private static List<ProjectExceptionalCostView> ApplyProjectExceptionalCostSort(
@@ -731,20 +746,18 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue(FilterKeyParentProject, out var parentProject) && parentProject != null)
-                query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
+            var textFilters = new (string Key, Expression<Func<Project, string?>> Selector)[]
+            {
+                (FilterKeyParentProject, x => x.ParentProject),
+                ("Program", x => x.Program),
+                ("ProjectTitle", x => x.ProjectTitle),
+                ("Manager", x => x.Manager),
+                ("OracleProjectCode", x => x.OracleProjectCode),
+                ("SubAccountCode", x => x.SubAccountCode)
+            };
 
-            if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
-                query = query.Where(x => EF.Functions.ILike(x.ProjectTitle, $"%{projectTitle}%"));
-
-            if (dict.TryGetValue("Manager", out var manager) && manager != null)
-                query = query.Where(x => EF.Functions.ILike(x.Manager!, $"%{manager}%"));
-
-            if (dict.TryGetValue("OracleProjectCode", out var oracleProjectCode) && oracleProjectCode != null)
-                query = query.Where(x => EF.Functions.ILike(x.OracleProjectCode!, $"%{oracleProjectCode}%"));
-
-            if (dict.TryGetValue("SubAccountCode", out var subAccountCode) && subAccountCode != null)
-                query = query.Where(x => EF.Functions.ILike(x.SubAccountCode!, $"%{subAccountCode}%"));
+            foreach (var (key, selector) in textFilters)
+                query = ApplyLike(query, dict, key, selector);
 
             if (dict.TryGetValue("CostCentre", out var costCentre) && costCentre != null
                 && double.TryParse(costCentre.ToString(), out var costCentreValue))
@@ -753,7 +766,28 @@ namespace Apha.FPS.DataAccess.Repositories
             return query;
         }
 
-        private static IQueryable<ProjectView> ApplyProfitabilityFilter(IQueryable<ProjectView> query, string? filter)
+        private static IQueryable<Project> ApplyLike(
+            IQueryable<Project> query,
+            IDictionary<string, object> dict,
+            string key,
+            Expression<Func<Project, string?>> selector)
+        {
+            if (!dict.TryGetValue(key, out var value) || value == null)
+                return query;
+
+            var pattern = $"%{value}%";
+            var body = Expression.Call(
+                typeof(NpgsqlDbFunctionsExtensions),
+                nameof(NpgsqlDbFunctionsExtensions.ILike),
+                Type.EmptyTypes,
+                Expression.Constant(EF.Functions),
+                selector.Body,
+                Expression.Constant(pattern));
+            var predicate = Expression.Lambda<Func<Project, bool>>(body, selector.Parameters);
+            return query.Where(predicate);
+        }
+
+        private static List<ProjectProfitabilityView> ApplyProfitabilityFilter(List<ProjectProfitabilityView> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
                 return query;
@@ -764,11 +798,17 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
-                query = query.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{jobCode}%"));
+            if (dict.TryGetValue("JobCode", out var jobCode) && !string.IsNullOrWhiteSpace(jobCode?.ToString()))
+            {
+                var jobCodeValue = jobCode.ToString()!;
+                query = query.Where(x => x.JobCode.Contains(jobCodeValue, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
 
-            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && projectStatus != null)
-                query = query.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
+            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && !string.IsNullOrWhiteSpace(projectStatus?.ToString()))
+            {
+                var projectStatusValue = projectStatus.ToString()!;
+                query = query.Where(x => x.ProjectStatus!.Contains(projectStatusValue, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
 
             return query;
         }
@@ -794,9 +834,12 @@ namespace Apha.FPS.DataAccess.Repositories
                 "customer"         => ApplyOrder(query, p => p.Customer, descending),
                 "contract"         => ApplyOrder(query, p => p.Contract, descending),
                 "disease"          => ApplyOrder(query, p => p.Disease, descending),
+                "status"           => ApplyOrder(query, p => p.ProjectStatus, descending),
                 "projectstatus"    => ApplyOrder(query, p => p.ProjectStatus, descending),
-                "budgetcvl"        => ApplyOrder(query, p => p.BudgetCvl, descending),
+                "custincome"       => ApplyOrder(query, p => p.CustIncome, descending),
                 "budgetext"        => ApplyOrder(query, p => p.CustIncome, descending),
+                "budget"           => ApplyOrder(query, p => p.BudgetCvl, descending),
+                "budgetcvl"        => ApplyOrder(query, p => p.BudgetCvl, descending),
                 "transferincome"   => ApplyOrder(query, p => p.TransferIncome, descending),
                 "plancaseworkdebit"=> ApplyOrder(query, p => p.PlanCaseWorkDebit, descending),
                 "costcentre"       => ApplyOrder(query, p => p.CostCentre, descending),
@@ -876,7 +919,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.Projects
                 .AsNoTracking()
-                .AnyAsync(p => p.ParentProject == newProject);
+                .AnyAsync(p => EF.Functions.ILike(p.ParentProject.Trim(), newProject.Trim()));
         }
 
         /// <summary>
@@ -1633,8 +1676,6 @@ namespace Apha.FPS.DataAccess.Repositories
             else if (workTypeFilter == "not-approved")
                 projectQuery = projectQuery.Where(p => p.ProjectStatus == "Not Approved");
 
-            projectQuery = ApplyProfitabilityFilter(projectQuery, query.Filter);
-
             var projects = await projectQuery
                 .Select(p => new ProjectProfitabilityEntry(p.ParentProject, p.BudgetCvl, p.Profit, p.ProjectStatus, p.Program))
                 .ToListAsync();
@@ -1649,7 +1690,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .FirstOrDefaultAsync();
 
             var programmeTargetMap = programme != null
-                ? new Dictionary<string, decimal?> { { programme.ProgramNo!, programme.Target } }
+                ? new Dictionary<string, decimal?> { { programme.ProgramNo, programme.Target } }
                 : new Dictionary<string, decimal?>();
 
             return await ComputeProfitabilityAsync(query, projects, programmeTargetMap);
@@ -1676,8 +1717,6 @@ namespace Apha.FPS.DataAccess.Repositories
             else if (workTypeFilter == "not-approved")
                 projectQuery = projectQuery.Where(p => p.ProjectStatus == "Not Approved");
 
-            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
-
             var projects = await projectQuery
                 .Select(p => new ProjectProfitabilityEntry(p.ParentProject, p.BudgetCvl, p.Profit, p.ProjectStatus, p.Program))
                 .ToListAsync();
@@ -1694,7 +1733,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var programmeTargetMap = await _dbContext.Programs
                 .AsNoTracking()
                 .Where(pg => distinctProgramNos.Contains(pg.ProgramNo))
-                .ToDictionaryAsync(pg => pg.ProgramNo!, pg => pg.Target);
+                .ToDictionaryAsync(pg => pg.ProgramNo, pg => pg.Target);
 
             return await ComputeProfitabilityAsync(query, projects, programmeTargetMap);
         }
@@ -1826,6 +1865,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Select(p => BuildProfitabilityRow(p, staffMap, additionalMap, testMap, animalCostByJob, programmeTargetMap))
                 .ToList();
 
+            results = ApplyProfitabilityFilter(results, query.Filter);
+
             // Apply sorting
             results = query.SortBy?.ToLower() switch
             {
@@ -1869,25 +1910,25 @@ namespace Apha.FPS.DataAccess.Repositories
                             select new { p, pg }).AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(projectStatus))
-                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ProjectStatus!, $"%{projectStatus}%"));
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ProjectStatus, $"%{projectStatus}%"));
 
             if (!string.IsNullOrWhiteSpace(programNo))
-                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Program!, $"%{programNo}%"));
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Program, $"%{programNo}%"));
 
             if (!string.IsNullOrWhiteSpace(manager))
                 rawQuery = rawQuery.Where(x => x.pg != null && EF.Functions.ILike(x.pg.Manager!, $"%{manager}%"));
 
             if (!string.IsNullOrWhiteSpace(customer))
-                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Customer!, $"%{customer}%"));
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Customer, $"%{customer}%"));
 
             if (!string.IsNullOrWhiteSpace(query.Search))
-                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{query.Search}%"));
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject, $"%{query.Search}%"));
 
             var filterDict = ParseFilterDict(query.Filter);
             if (filterDict.TryGetValue("JobCode", out var jobCode))
-                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{jobCode}%"));
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject, $"%{jobCode}%"));
             if (filterDict.TryGetValue(FilterKeyParentProject, out var parentProject))
-                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{parentProject}%"));
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject, $"%{parentProject}%"));
 
             var projects = await rawQuery
                 .Select(x => new VlaProjectEntry(

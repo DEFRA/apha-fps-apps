@@ -1,4 +1,4 @@
-﻿using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.ExcelImport;
 using Apha.Common.Utilities.GenericExcelExport;
 using Apha.Common.Utilities.StateManagement;
@@ -58,6 +58,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
             services.AddScoped<IMonthService, MonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
+            services.AddScoped<IDepartmentIncomeService, DepartmentIncomeService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
             //   TestListVlaService delegates to IPactApiClient.PactTestList (PACT API).
@@ -85,6 +86,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectYearCostsService, ProjectYearCostsService>();
             services.AddScoped<IMilestoneService, MilestoneService>();
             services.AddScoped<IRadTrackInvoiceService, RadTrackInvoiceService>();
+            services.AddScoped<IQueriesService, QueriesService>();
             services.AddScoped<IMaintenanceService, MaintenanceService>();
 
             services.AddScoped<IYearlyFinancialDataService, YearlyFinancialDataService>();
@@ -134,6 +136,7 @@ namespace Apha.FPSApps.Web.Extensions
         {
             //   used by IFpsProfitCentreApiClient and other IFps*ApiClient registrations (see ApiClientExtension.cs).
             services.AddScoped<IFpsProjectAuditTrailApiClient, FpsProjectAuditTrailApiClient>();
+            services.AddScoped<IFpsDepartmentIncomeApiClient, FpsDepartmentIncomeApiClient>();
             return services;
         }
     }

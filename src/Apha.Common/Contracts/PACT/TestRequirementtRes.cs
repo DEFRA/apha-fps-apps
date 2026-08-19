@@ -14,5 +14,6 @@ namespace Apha.Common.Contracts.PACT
         public int FpsYear { get; set; }
         public short IsDefraProject { get; set; }
         public decimal? RecUnitPrice { get; set; }
+        public decimal? TestCost { get; set; }
     }
 }

@@ -267,9 +267,9 @@ function renderSendResults(results) {
         $.each(results, function (_, r) {
             $body.append(
                 '<tr class="govuk-table__row">' +
-                '<td class="govuk-table__cell">' + ($('<span>').text(r.workGroupName).html()) + '</td>' +
-                '<td class="govuk-table__cell">' + ($('<span>').text(r.emailRecipient || '').html()) + '</td>' +
-                '<td class="govuk-table__cell">' + ($('<span>').text(r.status || '').html()) + '</td>' +
+                '<td class="govuk-table__cell sup_text_center">' + ($('<span>').text(r.workGroupName).html()) + '</td>' +
+                '<td class="govuk-table__cell sup_text_center">' + ($('<span>').text(r.emailRecipient || '').html()) + '</td>' +
+                '<td class="govuk-table__cell sup_text_center">' + ($('<span>').text(r.status || '').html()) + '</td>' +
                 '<td class="govuk-table__cell">' + ($('<span>').text(r.reason || '').html()) + '</td>' +
                 '</tr>'
             );

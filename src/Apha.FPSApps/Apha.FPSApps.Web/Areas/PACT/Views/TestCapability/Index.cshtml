@@ -312,11 +312,16 @@
 
         // ── Grid 1 CRUD ────────────────────────────────────────────────────────
         function addTestCapability() {
-            $.get('/PACT/TestCapability/CreateTestCapability', function (html) {
-                $('#modaPopupBody').html(html);
-                $('#modalPopup').addClass('show');
-                // Attach numeric validation
-                attachNumericValidation();
+            $.ajax({
+                url: '/PACT/TestCapability/CreateTestCapability',
+                type: 'GET',
+                success: function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                    // Attach numeric validation
+                    attachNumericValidation();
+                },
+                error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
             });
         }
 
@@ -324,13 +329,17 @@
             var testCode  = encodeURIComponent($(rowData).data('id') || '');
             var workGroup = encodeURIComponent(
                 $(rowData).closest('tr').find('[data-property="WorkGroup"]').text().trim());
-            $.get('/PACT/TestCapability/EditTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
-                function (html) {
+            $.ajax({
+                url: '/PACT/TestCapability/EditTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
+                type: 'GET',
+                success: function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                     // Attach numeric validation
                     attachNumericValidation();
-                });
+                },
+                error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+            });
         }
 
         function saveTestCapability() {
@@ -392,14 +401,15 @@
 
         // ── Grid 2 CRUD ────────────────────────────────────────────────────────
         function addTestReqmt() {
-            var hasRows = $('#tbl_' + testReqmtGridId + ' tbody tr[data-id]').length > 0;
-            if (!hasRows || !currentSelectedTestCode) {
+            if (!currentSelectedTestCode) {
                 showAlertMessage('Please select a Test Capability record before adding the test requirement', AlertType.INFO);
                 return;
             }
 
-            $.get('/PACT/TestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
-                function (html) {
+            $.ajax({
+                url: '/PACT/TestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
+                type: 'GET',
+                success: function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
@@ -407,14 +417,18 @@
                         // Initialize form validation (unobtrusive + numeric)
                         initializeFormValidation('#testReqmtForm');
                     }, 50);
-                });
+                },
+                error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+            });
         }
 
         function editTestReqmt(rowData) {
             var testCode = encodeURIComponent(currentSelectedTestCode || '');
             var buyer    = encodeURIComponent($(rowData).data('id') || '');
-            $.get('/PACT/TestCapability/EditTestReqmt?testCode=' + testCode + '&buyer=' + buyer,
-                function (html) {
+            $.ajax({
+                url: '/PACT/TestCapability/EditTestReqmt?testCode=' + testCode + '&buyer=' + buyer,
+                type: 'GET',
+                success: function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
@@ -422,7 +436,9 @@
                         // Initialize form validation (unobtrusive + numeric)
                         initializeFormValidation('#testReqmtForm');
                     }, 50);
-                });
+                },
+                error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+            });
         }
 
         function saveTestReqmt() {
