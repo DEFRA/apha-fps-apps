@@ -161,7 +161,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var jobCodeGrid = await BuildJobCodeGridAsync(defaultRequest, parentProject);
 
             var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
-            var programs = await _programService.GetAllProgramsAsync();
+            var programs = await _programService.GetAllProgramsForAllUsersAsync();
             var statuses = await _projectService.GetAllStatusesAsync();
             var diseases = await _projectService.GetAllDiseasesAsync();
             var customers = await _projectService.GetAllCustomersAsync();
