@@ -17,6 +17,11 @@
 
                 <div class="govuk-grid-column-one-third isFloatRight govuk-!-padding-right-0 isPlanProjectIndividually">
                     <table class="govuk-table govuk-!-margin-bottom-0">
+                        <thead class="govuk-table__head govuk-visually-hidden">
+                            <tr class="govuk-table__row">
+                                <th scope="col" class="govuk-table__header">@(Model.IsProjectGroupMode ? "Project Group selection" : "Programme selection")</th>
+                            </tr>
+                        </thead>
                         <tbody class="govuk-table__body">
                             <tr class="govuk-table__row">
                                 <td class="govuk-table__cell govuk-!-padding-bottom-2 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
@@ -331,6 +336,7 @@
 
             var data = {
                 ParentProject:     form.find('[name="ParentProject"]').val(),
+                OriginalParentProject: form.find('[name="OriginalParentProject"]').val(),
                 ProjectTitle:      form.find('[name="ProjectTitle"]').val(),
                 Manager:           form.find('[name="Manager"]').val(),
                 Program:           form.find('[name="Program"]').val(),
@@ -409,7 +415,7 @@
         }
 
         function formatGbp(value) {
-            return '£' + Math.round(value || 0).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            return '£' + (value || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function loadProjectTotals() {

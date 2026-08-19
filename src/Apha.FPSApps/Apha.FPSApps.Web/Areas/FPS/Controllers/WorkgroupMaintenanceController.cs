@@ -69,6 +69,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 
@@ -182,9 +183,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// Displays the Add WorkGroup modal partial.
         /// </summary>
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return PartialView("_AddEditWorkgroup", new WorkgroupMaintenanceItem());
+            var model = new WorkgroupMaintenanceItem();
+            await PopulateOwnerListAsync(model);
+            return PartialView("_AddEditWorkgroup", model);
         }
 
         /// <summary>
@@ -240,6 +243,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = $"WorkGroup '{workGroupName}' not found." });
 
             var item = _mapper.Map<WorkgroupMaintenanceItem>(result.Data);
+            await PopulateOwnerListAsync(item);
             return PartialView("_AddEditWorkgroup", item);
         }
 
@@ -339,14 +343,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> GetOwners()
         {
             // TRANSFORMENGINE: GetOwnersAsync maps to GET api/v1/workgroup/owners → List<OwnerDto>
-            // Returns OwnerDto.Name for display and value binding in the Owner select
+            // Returns the complete OwnerDto record (Name, WorkGroup, GradeCode, Expr1) so the
+            // Owner select can display full owner data, not just the name.
             var result = await _service.GetOwnersAsync();
 
             if (result.Success && result.Data != null)
             {
                 var owners = result.Data
                     .Where(m => !string.IsNullOrWhiteSpace(m.Name))
-                    .Select(m => new { name = m.Name })
+                    .Select(m => new
+                    {
+                        name = m.Name,
+                        workGroup = m.WorkGroup,
+                        gradeCode = m.GradeCode,
+                        expr1 = m.Expr1
+                    })
                     .OrderBy(m => m.name)
                     .ToList();
 
@@ -354,6 +365,27 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             return Json(new { success = false, message = "Failed to load owners" });
+        }
+
+        /// <summary>
+        /// Populates the Owner picker options for the shared _ManagerPicker partial.
+        /// Text is pipe-delimited as "Name | WorkGroup | Grade" so the picker can render
+        /// the Name, Work Group and Grade columns; the bound value is the owner Name.
+        /// </summary>
+        private async Task PopulateOwnerListAsync(WorkgroupMaintenanceItem model)
+        {
+            var ownerResponse = await _service.GetOwnersAsync();
+            model.OwnerList = (ownerResponse?.Data ?? new List<OwnerDto>())
+                .Where(m => !string.IsNullOrWhiteSpace(m.Name))
+                .OrderBy(m => m.Name)
+                .Select(m => new SelectListItem
+                {
+                    Value = m.Name,
+                    Text = $"{m.Name} | {m.WorkGroup ?? string.Empty} | {m.GradeCode ?? string.Empty}",
+                    Selected = string.Equals(model.Owner, m.Name, StringComparison.OrdinalIgnoreCase)
+                })
+                .Prepend(new SelectListItem { Value = string.Empty, Text = string.Empty, Selected = string.IsNullOrEmpty(model.Owner) })
+                .ToList();
         }
 
         /// <summary>

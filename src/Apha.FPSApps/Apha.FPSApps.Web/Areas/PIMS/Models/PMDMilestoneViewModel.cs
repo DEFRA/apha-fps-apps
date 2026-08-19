@@ -10,6 +10,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         public DataGridConfig<PMDMilestoneItem> MilestonesGrid { get; set; } = new();
 
         public bool ShowConfirmationSection { get; set; }
+        public bool ShowSubmitButton { get; set; }
         public string ConfirmationLabelText { get; set; } = string.Empty;
     }
 }

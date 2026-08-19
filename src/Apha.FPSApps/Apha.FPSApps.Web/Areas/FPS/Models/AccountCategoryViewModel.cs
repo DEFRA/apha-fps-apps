@@ -24,7 +24,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "AccountType")]
         [Required(ErrorMessage = "Account Type is required")]
         [StringLength(10, ErrorMessage = "Account Type cannot exceed 10 characters")]
-        [RegularExpression("^(Pay|NPRC)$", ErrorMessage = "Account Type must be either 'Pay' or 'NPRC'")]
+        [RegularExpression("^(PAY|NPRC)$", ErrorMessage = "Account Type must be either 'PAY' or 'NPRC'")]
         [GridColumn(Width = 150, Type = GridColumnType.Text, IsFilterable = true)]
         public string AccountType { get; set; } = null!;
 

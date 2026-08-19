@@ -235,6 +235,58 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         }
 
         [Fact]
+        public async Task GetJobStaffCostAsync_CalculatesStaffCost_ForChargeableSector_IsCaseInsensitive()
+        {
+            // Arrange - SectorName uses mixed case ("Charge") to verify the
+            // case-insensitive comparison in ComputeStaffCost.
+            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var staffJobTblViews = new List<StaffJobTblView>
+            {
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40, UserId = DefaultUserId }
+            };
+            var staffGeneralViews = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "John", WorkGroupGrade = "WG01" }
+            };
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PC01", ChargeRate = 100, DefraChargeRate = 120 }
+            };
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "JOB001", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
+            };
+            var programViews = new List<ProgramView>
+            {
+                new() { ProgramNo = "PROG01", UserId = DefaultUserId, SectorName = "Charge" }
+            };
+
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
+                settings: settings);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
+
+            // Assert
+            var staffJobView = result.Data.First();
+            Assert.Equal(4000m, staffJobView.StaffCost); // 40 hours * 100 rate * 1 (Charge, case-insensitive)
+        }
+
+        [Fact]
         public async Task GetJobStaffCostAsync_ReturnsEmptyList_WhenNoDataFound()
         {
             // Arrange
@@ -257,6 +309,58 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
 
             // Assert
             Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetJobStaffCostAsync_PopulatesName_FromStaffGeneralView_WhenLookupEmpty()
+        {
+            // Arrange - staffViews/staffPickViews are empty, so the name can only come
+            // from StaffGeneralView (regression test for the blank-name fix).
+            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var staffJobTblViews = new List<StaffJobTblView>
+            {
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40, UserId = DefaultUserId }
+            };
+            var staffGeneralViews = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "John Doe", WorkGroupGrade = "WG01" }
+            };
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PC01", ChargeRate = 100, DefraChargeRate = 120 }
+            };
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "JOB001", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
+            };
+            var programViews = new List<ProgramView>
+            {
+                new() { ProgramNo = "PROG01", UserId = DefaultUserId, SectorName = "charge" }
+            };
+
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
+                settings: settings);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
+
+            // Assert
+            var staffJobView = result.Data.First();
+            Assert.Equal("John Doe", staffJobView.Name);
         }
 
         #endregion

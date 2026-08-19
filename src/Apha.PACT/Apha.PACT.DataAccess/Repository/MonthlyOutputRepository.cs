@@ -73,41 +73,105 @@ namespace Apha.PACT.DataAccess.Repository
 
             IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("SequenceNo", out object? sequenceNo)
-                && sequenceNo != null
-                && int.TryParse(sequenceNo.ToString(), out int sequenceNoValue))
-            {
-                query = query.Where(x => x.SequenceNo == sequenceNoValue);
-            }
-
-            if (dict.TryGetValue("TestCode", out object? testCode) && testCode != null)
-                query = query.Where(x => x.TestCode != null && EF.Functions.ILike(x.TestCode, $"%{testCode}%"));
-
-            if (dict.TryGetValue("Buyer", out object? buyer) && buyer != null)
-                query = query.Where(x => x.Buyer != null && EF.Functions.ILike(x.Buyer, $"%{buyer}%"));
-
-            if (dict.TryGetValue("WorkGroup", out object? workGroup) && workGroup != null)
-                query = query.Where(x => x.WorkGroup != null && EF.Functions.ILike(x.WorkGroup, $"%{workGroup}%"));
-
-            if (dict.TryGetValue("Month", out object? month) && month != null && double.TryParse(month.ToString(), out double monthValue))
-                query = query.Where(x => x.Month.HasValue && (int)x.Month.Value == (int)monthValue);
-
-            if (dict.TryGetValue("Volume", out object? volume) && volume != null && double.TryParse(volume.ToString(), out double volumeValue))
-                query = query.Where(x => x.Volume.HasValue && x.Volume.Value == volumeValue);
-
-            if (dict.TryGetValue("DateTime", out object? dateImported) && dateImported != null && DateTime.TryParse(dateImported.ToString(), out DateTime importedDate))
-            {
-                var dateOnly = importedDate.Date;
-                query = query.Where(x => x.DateTime.HasValue && x.DateTime.Value.Date == dateOnly);
-            }
-
-            if (dict.TryGetValue("UserId", out object? userId) && userId != null)
-                query = query.Where(x => x.UserId != null && EF.Functions.ILike(x.UserId, $"%{userId}%"));
-
-            if (dict.TryGetValue("InsertDelete", out object? insertDelete) && insertDelete != null)
-                query = query.Where(x => x.InsertDelete != null && EF.Functions.ILike(x.InsertDelete, $"%{insertDelete}%"));
+            query = ApplySequenceNoFilter(query, dict);
+            query = ApplyContainsFilter(query, dict, "TestCode", x => x.TestCode);
+            query = ApplyContainsFilter(query, dict, "Buyer", x => x.Buyer);
+            query = ApplyContainsFilter(query, dict, "WorkGroup", x => x.WorkGroup);
+            query = ApplyMonthFilter(query, dict);
+            query = ApplyVolumeFilter(query, dict);
+            query = ApplyDateImportedFilter(query, dict);
+            query = ApplyContainsFilter(query, dict, "UserId", x => x.UserId);
+            query = ApplyContainsFilter(query, dict, "InsertDelete", x => x.InsertDelete);
 
             return query;
+        }
+
+        private static IQueryable<MonthlyOutputLog> ApplySequenceNoFilter(IQueryable<MonthlyOutputLog> query, IDictionary<string, object> dict)
+        {
+            if (TryGetInt(dict, "SequenceNo", out var sequenceNoValue))
+                return query.Where(x => x.SequenceNo == sequenceNoValue);
+
+            return query;
+        }
+
+        private static IQueryable<MonthlyOutputLog> ApplyMonthFilter(IQueryable<MonthlyOutputLog> query, IDictionary<string, object> dict)
+        {
+            if (TryGetDouble(dict, "Month", out var monthValue))
+                return query.Where(x => x.Month.HasValue && (int)x.Month.Value == (int)monthValue);
+
+            return query;
+        }
+
+        private static IQueryable<MonthlyOutputLog> ApplyVolumeFilter(IQueryable<MonthlyOutputLog> query, IDictionary<string, object> dict)
+        {
+            if (TryGetDouble(dict, "Volume", out var volumeValue))
+                return query.Where(x => x.Volume.HasValue && x.Volume.Value == volumeValue);
+
+            return query;
+        }
+
+        private static IQueryable<MonthlyOutputLog> ApplyDateImportedFilter(IQueryable<MonthlyOutputLog> query, IDictionary<string, object> dict)
+        {
+            if (TryGetDateTime(dict, "DateTime", out var importedDate))
+            {
+                var dateOnly = importedDate.Date;
+                return query.Where(x => x.DateTime.HasValue && x.DateTime.Value.Date == dateOnly);
+            }
+
+            return query;
+        }
+
+        private static IQueryable<MonthlyOutputLog> ApplyContainsFilter(
+            IQueryable<MonthlyOutputLog> query,
+            IDictionary<string, object> dict,
+            string key,
+            Expression<Func<MonthlyOutputLog, string?>> selector)
+        {
+            if (!TryGetString(dict, key, out var value))
+                return query;
+
+            return query.Where(x => EF.Functions.ILike(EF.Property<string?>(x, GetMemberName(selector))!, $"%{value}%"));
+        }
+
+        private static string GetMemberName(Expression<Func<MonthlyOutputLog, string?>> selector)
+        {
+            return selector.Body is MemberExpression memberExpression
+                ? memberExpression.Member.Name
+                : throw new ArgumentException("Selector must be a member expression.", nameof(selector));
+        }
+
+        private static bool TryGetString(IDictionary<string, object> dict, string key, out string value)
+        {
+            value = string.Empty;
+            if (!dict.TryGetValue(key, out object? raw) || raw == null)
+                return false;
+
+            value = raw.ToString() ?? string.Empty;
+            return !string.IsNullOrWhiteSpace(value);
+        }
+
+        private static bool TryGetInt(IDictionary<string, object> dict, string key, out int value)
+        {
+            value = default;
+            return dict.TryGetValue(key, out object? raw)
+                && raw != null
+                && int.TryParse(raw.ToString(), out value);
+        }
+
+        private static bool TryGetDouble(IDictionary<string, object> dict, string key, out double value)
+        {
+            value = default;
+            return dict.TryGetValue(key, out object? raw)
+                && raw != null
+                && double.TryParse(raw.ToString(), out value);
+        }
+
+        private static bool TryGetDateTime(IDictionary<string, object> dict, string key, out DateTime value)
+        {
+            value = default;
+            return dict.TryGetValue(key, out object? raw)
+                && raw != null
+                && DateTime.TryParse(raw.ToString(), out value);
         }
 
         private static IQueryable ApplySorting(IQueryable<MonthlyOutputLog> query, string? sortBy, bool descending)
@@ -148,6 +212,16 @@ namespace Apha.PACT.DataAccess.Repository
                 .AsNoTracking()
                 .AnyAsync(m => m.TestCode == testCode && m.Buyer == buyer
                             && (int)m.Month == (int)month && m.WorkGroup == workGroup);
+        }
+
+        public async Task<HashSet<string>> GetExistingLiveKeysAsync()
+        {
+            var keys = await _context.MonthlyOutputs
+                .AsNoTracking()
+                .Select(x => x.TestCode + "|" + x.Buyer + "|" + (int)x.Month + "|" + x.WorkGroup)
+                .ToListAsync();
+
+            return new HashSet<string>(keys, StringComparer.OrdinalIgnoreCase);
         }
 
 
@@ -266,6 +340,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<StagingMonthlyOutput> CreateStagingAsync(StagingMonthlyOutput stagingMonthlyOutput)
         {
+            stagingMonthlyOutput.Passed = false;
             await _context.StagingMonthlyOutputs.AddAsync(stagingMonthlyOutput);
             await _context.SaveChangesAsync();
             return stagingMonthlyOutput;
@@ -350,6 +425,17 @@ namespace Apha.PACT.DataAccess.Repository
                 .ToListAsync();
         }
 
+        public async Task<HashSet<string>> GetPassedStagingKeysAsync(string importedBy)
+        {
+            var keys = await _context.StagingMonthlyOutputs
+                .AsNoTracking()
+                .Where(x => x.ImportedBy == importedBy && x.Passed == true)
+                .Select(x => (x.TestCode ?? string.Empty) + "|" + (x.Buyer ?? string.Empty) + "|" + (int)x.Month + "|" + (x.WorkGroup ?? string.Empty))
+                .ToListAsync();
+
+            return new HashSet<string>(keys, StringComparer.OrdinalIgnoreCase);
+        }
+
         public async Task UpdateStagingRecordsAsync(IEnumerable<StagingMonthlyOutput> records)
         {
             foreach (var record in records)
@@ -390,7 +476,7 @@ namespace Apha.PACT.DataAccess.Repository
             {
                 if (!IsValidForMakeLive(row))
                 {
-                    await MarkRowAsInvalidAsync(row, noLongerValidMessage);
+                    await MarkRowAsInvalidAsync(row.Id, noLongerValidMessage);
                     failedCount++;
                     continue;
                 }
@@ -413,8 +499,12 @@ namespace Apha.PACT.DataAccess.Repository
                 && !string.IsNullOrWhiteSpace(row.WorkGroup);
         }
 
-        private async Task MarkRowAsInvalidAsync(StagingMonthlyOutput row, string failureMessage)
+        private async Task MarkRowAsInvalidAsync(int rowId, string failureMessage)
         {
+            var row = await _context.StagingMonthlyOutputs.FirstOrDefaultAsync(x => x.Id == rowId);
+            if (row == null)
+                return;
+
             row.Passed = false;
             row.FailureComments = failureMessage;
             await _context.SaveChangesAsync();
@@ -442,15 +532,8 @@ namespace Apha.PACT.DataAccess.Repository
                 DetachIfTracked(liveRow);
                 DetachIfTracked(logEntry);
 
-                var rowEntry = _context.Entry(row);
-                if (rowEntry.State == EntityState.Deleted)
-                    rowEntry.State = EntityState.Unchanged;
-
-                row.Passed = false;
-                row.FailureComments = failureMessage;
-                rowEntry.State = EntityState.Modified;
-
-                await _context.SaveChangesAsync();
+                _context.ChangeTracker.Clear();
+                await MarkRowAsInvalidAsync(row.Id, failureMessage);
                 return false;
             }
         }

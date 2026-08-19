@@ -4038,9 +4038,14 @@ table#tblMonthPeriod > tbody > tr:hover {
     background: #ffffff;
     margin-bottom: 18px;
     padding: 14px;
-    box-shadow: 0 2px 0 rgba(11, 12, 12, 0.08);
+/*    box-shadow: 0 2px 0 rgba(11, 12, 12, 0.08);*/
 }
-
+.bosworth-sub-heading {
+    margin-left: -14px;
+    margin-right: -14px;
+    padding-left: 14px;
+    padding-right: 14px;
+}
 .tr-section-box--compact {
     overflow: visible;
     display: flow-root;
@@ -4103,4 +4108,31 @@ table#tblMonthPeriod > tbody > tr:hover {
     border-radius: 4px;
     padding: 12px;
     background: #ffffff;
+}
+/* Ensure the WorkGroup / TestCode / Buyer multicolumn dropdown panels are not
+       clipped by the scrollable modal body */
+.modal-body-custom {
+    overflow: visible !important;
+}
+
+#fg-staging-workgroup,
+#fg-staging-testcode,
+#fg-staging-buyer,
+#staging-modal-workgroup-dropdown-container,
+#staging-modal-testcode-dropdown,
+#staging-modal-buyer-dropdown,
+.modal-dropdown-container {
+    position: relative;
+    overflow: visible !important;
+}
+/* Right-align only the data cells for ID and Period (headers remain left-aligned) */
+#gridContainer_releaseLogsGrid td[data-property="Id"],
+#gridContainer_releaseLogsGrid td[data-property="Period"] {
+    text-align: right;
+}
+/* Reduce the rendered width of the Period column to match its narrow content */
+#gridContainer_releaseLogsGrid th[data-column="Period"],
+#gridContainer_releaseLogsGrid td[data-property="Period"] {
+    width: 100px;
+    max-width: 100px;
 }

@@ -574,7 +574,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             var response = await _monthService.GetAllMonthsAsync();
             return response.Success && response.Data != null
-                ? response.Data.OrderBy(x => x.Monthnumber).Select(x => new SelectListItem(x.Monthname, x.Monthnumber.ToString())).ToList()
+                ? response.Data.OrderBy(x => x.Monthnumber).Select(x => new SelectListItem(x.Monthnumber.ToString(), x.Monthnumber.ToString())).ToList()
                 : [];
         }
 
