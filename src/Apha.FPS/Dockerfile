@@ -29,9 +29,7 @@ ARG PARENT_VERSION=dotnet10.0
 LABEL uk.gov.defra.parent-image=defra-dotnetcore:${PARENT_VERSION}
 
 USER 0
-# krb5-libs provides libgssapi_krb5.so.2, missing without it — surfaced as a runtime
-# "Cannot load library" warning around Bulk Rates upload/validate requests.
-RUN apk update && apk add --no-cache icu-libs krb5-libs
+RUN apk update && apk add --no-cache icu-libs
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
 ARG PORT=8080
