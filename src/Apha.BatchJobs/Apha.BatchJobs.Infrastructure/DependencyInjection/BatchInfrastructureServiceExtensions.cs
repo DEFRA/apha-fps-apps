@@ -32,6 +32,7 @@ public static class BatchInfrastructureServiceExtensions
         services.AddScoped<IBulkRatesRepository, BulkRatesRepository>();
         services.AddScoped<IRecreateSummariesStepCatalog>(sp =>
             new RecreateSummariesStepCatalog(sp.GetRequiredService<ILoggerFactory>()));
+        services.AddMilestoneNotificationInfrastructure(configuration);
 
         return services;
     }
