@@ -963,6 +963,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 var query = _mapper.Map<QueryParameters<string>>(request);
 
+                // Rate (TestPrice) and Charge are computed in-memory after the API fetch,
+                // so the DB cannot sort by them. When sorting on these columns, fetch all
+                // rows, enrich, then sort and page client-side.
+                bool sortByComputed =
+                    string.Equals(request.SortBy, nameof(ActualTestOutputItem.TestPrice), StringComparison.Ordinal) ||
+                    string.Equals(request.SortBy, nameof(ActualTestOutputItem.Charge), StringComparison.Ordinal);
+
                 // Build price lookup from test requirements
                 var testQuery = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
                 var testResult = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(testQuery, parentProject);
@@ -977,13 +984,55 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     }
                 }
 
-                var pagedData = await _monthlyOutputService.GetMonthlyOutputByProjectAsync(query, parentProject, priceLookup);
+                if (sortByComputed)
+                {
+                    var allQuery = new QueryParameters<string>
+                    {
+                        Page = 1,
+                        PageSize = int.MaxValue,
+                        Filter = query.Filter
+                    };
 
-                items = pagedData.Data != null
-                    ? _mapper.Map<List<ActualTestOutputItem>>(pagedData.Data)
-                    : new List<ActualTestOutputItem>();
+                    var allData = await _monthlyOutputService.GetMonthlyOutputByProjectAsync(allQuery, parentProject, priceLookup);
+                    var allItems = allData.Data != null
+                        ? _mapper.Map<List<ActualTestOutputItem>>(allData.Data)
+                        : new List<ActualTestOutputItem>();
 
-                paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+                    IEnumerable<ActualTestOutputItem> sorted =
+                        string.Equals(request.SortBy, nameof(ActualTestOutputItem.Charge), StringComparison.Ordinal)
+                            ? (request.Descending
+                                ? allItems.OrderByDescending(i => i.Charge)
+                                : allItems.OrderBy(i => i.Charge))
+                            : (request.Descending
+                                ? allItems.OrderByDescending(i => i.TestPrice)
+                                : allItems.OrderBy(i => i.TestPrice));
+
+                    var sortedList = sorted.ToList();
+                    int pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
+                    int page = query.Page <= 0 ? 1 : query.Page;
+
+                    items = sortedList
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToList();
+
+                    paginationModel = new PaginationModel
+                    {
+                        TotalRecords = sortedList.Count,
+                        PageNumber = page,
+                        PageSize = pageSize
+                    };
+                }
+                else
+                {
+                    var pagedData = await _monthlyOutputService.GetMonthlyOutputByProjectAsync(query, parentProject, priceLookup);
+
+                    items = pagedData.Data != null
+                        ? _mapper.Map<List<ActualTestOutputItem>>(pagedData.Data)
+                        : new List<ActualTestOutputItem>();
+
+                    paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+                }
             }
 
             paginationModel.SortColumn = request.SortBy;
