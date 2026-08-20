@@ -731,7 +731,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var paginationModel = result?.Pagination is null
                 ? new PaginationModel()
-                : _mapper.Map<PaginationModel>(result.Pagination);
+                : _mapper.Map<PaginationModel>(result.Pagination) ?? new PaginationModel();
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
