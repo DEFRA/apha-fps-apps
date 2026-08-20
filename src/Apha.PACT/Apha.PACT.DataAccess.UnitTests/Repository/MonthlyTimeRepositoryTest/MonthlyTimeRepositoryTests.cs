@@ -4,6 +4,7 @@ using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;
 using Apha.PACT.DataAccess.Repository;
+using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 
 namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
@@ -30,6 +31,21 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             mockContext.Setup(x => x.MonthlyTimeLogs).Returns(logMockSet.Object);
 
             return new MonthlyTimeRepository(mockContext.Object, fpsRequestContext);
+        }
+
+        private static (FpsDbContext Context, MonthlyTimeRepository Repo) CreateInMemoryContext(int fpsYear = DefaultFpsYear)
+        {
+            var options = new DbContextOptionsBuilder<FpsDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options;
+
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+            fpsRequestContext.UserEmailId.Returns("test.user@apha.gov.uk");
+
+            var context = new FpsDbContext(options, fpsRequestContext);
+            var repo = new MonthlyTimeRepository(context, fpsRequestContext);
+            return (context, repo);
         }
 
         // Shared log data used across SearchAsync tests
@@ -409,7 +425,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter());
 
             Assert.Equal(10, result.PaginationData.TotalRecords);
-            Assert.Equal(3, result.Data.Count());
+            Assert.Equal(3, result.Data.Count);
         }
 
         #endregion
@@ -446,6 +462,129 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var result = await repo.GetLiveByKeyAsync("S9", "TC1", 6, "PP1");
 
             Assert.Null(result);
+        }
+
+        #endregion
+
+        #region MakeLiveAsync
+
+        [Fact]
+        public async Task MakeLiveAsync_WhenOneRowFails_ContinuesAndMarksOnlyFailedRow()
+        {
+            const string importedBy = "tester";
+            const string failureMessage = "This record is no longer valid. Needs re-validating";
+
+            var (context, repo) = CreateInMemoryContext();
+
+            context.MonthlyTimes.Add(new MonthlyTime
+            {
+                PactStaffId = "S1",
+                TimeCode = "TC1",
+                Month = 1,
+                ParentProject = "PP1",
+                WorkGroup = "WG1",
+                Hours = 2,
+                FpsYear = DefaultFpsYear
+            });
+
+            context.StagingMonthlyTimes.AddRange(
+                new StagingMonthlyTime
+                {
+                    Id = 1,
+                    ImportedBy = importedBy,
+                    Passed = true,
+                    PactId = "S1",
+                    TimeCode = "TC1",
+                    Month = 1,
+                    ParentProject = "PP1",
+                    WorkGroup = "WG1",
+                    Hours = 2
+                },
+                new StagingMonthlyTime
+                {
+                    Id = 2,
+                    ImportedBy = importedBy,
+                    Passed = true,
+                    PactId = "S2",
+                    TimeCode = "TC2",
+                    Month = 2,
+                    ParentProject = "PP2",
+                    WorkGroup = "WG2",
+                    Hours = 3
+                });
+
+            await context.SaveChangesAsync();
+
+            var result = await repo.MakeLiveAsync(importedBy);
+
+            Assert.Equal(2, result.ProcessedCount);
+            Assert.Equal(1, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount);
+
+            var failedRow = await context.StagingMonthlyTimes.SingleAsync(x => x.Id == 1);
+            Assert.False(failedRow.Passed);
+            Assert.Equal(failureMessage, failedRow.FailureComments);
+
+            Assert.False(await context.StagingMonthlyTimes.AnyAsync(x => x.Id == 2));
+            Assert.True(await context.MonthlyTimes.AnyAsync(x => x.PactStaffId == "S2"
+                && x.TimeCode == "TC2"
+                && x.Month == 2
+                && x.ParentProject == "PP2"
+                && x.FpsYear == DefaultFpsYear));
+        }
+
+        [Fact]
+        public async Task MakeLiveAsync_WhenRowIsNoLongerValid_MarksFailedAndImportsRemainingRows()
+        {
+            const string importedBy = "tester";
+            const string failureMessage = "This record is no longer valid. Needs re-validating";
+
+            var (context, repo) = CreateInMemoryContext();
+
+            context.StagingMonthlyTimes.AddRange(
+                new StagingMonthlyTime
+                {
+                    Id = 10,
+                    ImportedBy = importedBy,
+                    Passed = true,
+                    PactId = null,
+                    TimeCode = "TC1",
+                    Month = 1,
+                    ParentProject = "PP1",
+                    WorkGroup = "WG1",
+                    Hours = 2
+                },
+                new StagingMonthlyTime
+                {
+                    Id = 11,
+                    ImportedBy = importedBy,
+                    Passed = true,
+                    PactId = "S2",
+                    TimeCode = "TC2",
+                    Month = 2,
+                    ParentProject = "PP2",
+                    WorkGroup = "WG2",
+                    Hours = 3
+                });
+
+            await context.SaveChangesAsync();
+
+            var result = await repo.MakeLiveAsync(importedBy);
+
+            Assert.Equal(2, result.ProcessedCount);
+            Assert.Equal(1, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount);
+
+            var failedRow = await context.StagingMonthlyTimes.SingleAsync(x => x.Id == 10);
+            Assert.False(failedRow.Passed);
+            Assert.Equal(failureMessage, failedRow.FailureComments);
+
+            Assert.False(await context.StagingMonthlyTimes.AnyAsync(x => x.Id == 11));
+            Assert.True(await context.MonthlyTimes.AnyAsync(x => x.PactStaffId == "S2"
+                && x.TimeCode == "TC2"
+                && x.Month == 2
+                && x.ParentProject == "PP2"
+                && x.FpsYear == DefaultFpsYear));
         }
 
         #endregion

@@ -209,7 +209,8 @@ namespace Apha.PACT.DataAccess.Repository
         }
 
         public async Task<StagingMonthlyTime> CreateStagingAsync(StagingMonthlyTime stagingMonthlyTime)
-        {            
+        {
+            stagingMonthlyTime.Passed = false;
             await _context.StagingMonthlyTimes.AddAsync(stagingMonthlyTime);
             await _context.SaveChangesAsync();
             return stagingMonthlyTime;
@@ -313,6 +314,17 @@ namespace Apha.PACT.DataAccess.Repository
                 .ToListAsync();
         }
 
+        public async Task<HashSet<string>> GetPassedStagingKeysAsync(string importedBy)
+        {
+            var keys = await _context.StagingMonthlyTimes
+                .AsNoTracking()
+                .Where(x => x.ImportedBy == importedBy && x.Passed == true)
+                .Select(x => (x.PactId ?? string.Empty) + "|" + (x.TimeCode ?? string.Empty) + "|" + (x.ParentProject ?? string.Empty) + "|" + (x.WorkGroup ?? string.Empty) + "|" + (x.Month.HasValue ? x.Month.Value.ToString() : string.Empty))
+                .ToListAsync();
+
+            return new HashSet<string>(keys, StringComparer.OrdinalIgnoreCase);
+        }
+
         public async Task UpdateStagingRecordsAsync(IEnumerable<StagingMonthlyTime> records)
         {
             foreach (var record in records)
@@ -328,7 +340,7 @@ namespace Apha.PACT.DataAccess.Repository
                 .AsNoTracking()
                 .Select(x => x.PactStaffId + "|" + x.TimeCode + "|" + x.ParentProject + "|" + x.WorkGroup + "|" + x.Month)
                 .ToListAsync();
-            return new HashSet<string>(keys);
+            return new HashSet<string>(keys, StringComparer.OrdinalIgnoreCase);
         }
 
         public async Task<bool> HasFailedStagingAsync(string importedBy)
@@ -359,7 +371,7 @@ namespace Apha.PACT.DataAccess.Repository
             {
                 if (!IsValidForMakeLive(row))
                 {
-                    MarkRowAsInvalid(row, noLongerValidMessage);
+                    await MarkRowAsInvalidAsync(row.Id, noLongerValidMessage);
                     failedCount++;
                     continue;
                 }
@@ -370,8 +382,6 @@ namespace Apha.PACT.DataAccess.Repository
                 else
                     failedCount++;
             }
-
-            await _context.SaveChangesAsync();
 
             if (failedCount == 0)
                 await DeleteAllStagingByUserAsync(importedBy);
@@ -387,10 +397,15 @@ namespace Apha.PACT.DataAccess.Repository
                 && !string.IsNullOrWhiteSpace(row.ParentProject);
         }
 
-        private static void MarkRowAsInvalid(StagingMonthlyTime row, string failureMessage)
+        private async Task MarkRowAsInvalidAsync(int rowId, string failureMessage)
         {
+            var row = await _context.StagingMonthlyTimes.FirstOrDefaultAsync(x => x.Id == rowId);
+            if (row == null)
+                return;
+
             row.Passed = false;
             row.FailureComments = failureMessage;
+            await _context.SaveChangesAsync();
         }
 
         private async Task<bool> TryImportRowToLiveAsync(StagingMonthlyTime row, string failureMessage)
@@ -415,15 +430,8 @@ namespace Apha.PACT.DataAccess.Repository
                 DetachIfTracked(liveRow);
                 DetachIfTracked(logEntry);
 
-                var rowEntry = _context.Entry(row);
-                if (rowEntry.State == EntityState.Deleted)
-                    rowEntry.State = EntityState.Unchanged;
-
-                row.Passed = false;
-                row.FailureComments = failureMessage;
-                rowEntry.State = EntityState.Modified;
-
-                await _context.SaveChangesAsync();
+                _context.ChangeTracker.Clear();
+                await MarkRowAsInvalidAsync(row.Id, failureMessage);
                 return false;
             }
         }
