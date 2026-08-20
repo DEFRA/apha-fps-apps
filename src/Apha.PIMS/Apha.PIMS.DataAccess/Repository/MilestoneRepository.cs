@@ -445,7 +445,7 @@ namespace Apha.PIMS.DataAccess.Repository
             await ValidateNumberAsync(row, project);
         }
 
-        private void ValidateDateDue(StagingMilestone row)
+        private static void ValidateDateDue(StagingMilestone row)
         {
             if (row.DateDue == default)
                 row.Note = (row.Note ?? string.Empty) + "(*Please check this date*)";
@@ -472,7 +472,7 @@ namespace Apha.PIMS.DataAccess.Repository
                 row.Number = trimmed;
         }
 
-        private bool IsValidNumberFormat(string number)
+        private static bool IsValidNumberFormat(string number)
         {
             return Regex.IsMatch(number.Trim(), @"^\d{2}/\d{2}$", RegexOptions.None, TimeSpan.FromSeconds(1));
         }
