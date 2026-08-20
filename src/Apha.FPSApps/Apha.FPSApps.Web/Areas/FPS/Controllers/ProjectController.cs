@@ -164,6 +164,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (string.IsNullOrWhiteSpace(oldCode) || string.IsNullOrWhiteSpace(newCode))
                 return Json(new { success = false, message = "Both old and new project codes are required." });
 
+            if (!System.Text.RegularExpressions.Regex.IsMatch(newCode, "^[A-Za-z0-9]+$"))
+                return Json(new { success = false, message = "Project Code must contain only letters (A-Z, a-z) and numbers (0-9)." });
+
             var response = await _projectService.ChangeProjectCodeAsync(oldCode, newCode);
             if (response.Success)
                 return Json(new
