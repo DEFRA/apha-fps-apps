@@ -121,6 +121,11 @@ function readDropdownJsonData(selector) {
     }
 }
 
+function getAntiForgeryToken() {
+    const el = document.querySelector('input[name="__RequestVerificationToken"]');
+    return el ? el.value : '';
+}
+
 function resetTimeCodeOptions() {
     $('#ddTimeCode').val('');
     if (window.monthlyTimeTimeCodeDropdown) {
@@ -1085,13 +1090,16 @@ function confirmImportType() {
 }
 
 function importMonthlyTime(file) {
+    const antiForgeryToken = getAntiForgeryToken();
     const formData = new FormData();
     formData.append('file', file);
     formData.append('importType', window.monthlyTimeImportType || '2');
+    formData.append('__RequestVerificationToken', antiForgeryToken);
 
     $.ajax({
         url: '/PACT/MonthlyTime/Import',
         type: 'POST',
+        headers: { 'RequestVerificationToken': antiForgeryToken },
         data: formData,
         processData: false,
         contentType: false,
