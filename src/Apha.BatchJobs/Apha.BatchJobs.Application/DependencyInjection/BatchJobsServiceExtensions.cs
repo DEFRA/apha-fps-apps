@@ -3,7 +3,6 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
-using Apha.BatchJobs.Infrastructure.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,7 +19,6 @@ public static class BatchJobsServiceExtensions
         IConfiguration configuration)
     {
         services.AddBatchApplicationServices(configuration);
-        services.AddBatchInfrastructure(configuration);
 
         services.AddYearEndJob();
         services.AddBulkRatesJobs();

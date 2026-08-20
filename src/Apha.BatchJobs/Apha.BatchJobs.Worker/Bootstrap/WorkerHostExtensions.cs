@@ -1,5 +1,6 @@
 using Apha.BatchJobs.Application.DependencyInjection;
 using Apha.BatchJobs.Application.FailureHandling;
+using Apha.BatchJobs.Infrastructure.DependencyInjection;
 using Apha.BatchJobs.Worker.Configuration;
 using Apha.BatchJobs.Worker.Execution;
 using Apha.BatchJobs.Worker.Reporting;
@@ -36,6 +37,7 @@ public static class WorkerHostExtensions
     /// </summary>
     public static void ConfigureWorkerServices(this HostApplicationBuilder builder)
     {
+        builder.Services.AddBatchInfrastructure(builder.Configuration);
         builder.Services.AddBatchJobs(builder.Configuration);
 
         builder.Services
