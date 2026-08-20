@@ -1,6 +1,7 @@
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Context;
 using Apha.BatchJobs.Infrastructure.Repositories.BulkRates;
+using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Apha.BatchJobs.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,8 @@ public static class BatchInfrastructureServiceExtensions
         services.AddScoped<IRecreateSummariesContext, RecreateSummariesContext>();
         services.AddSingleton<ICorrelationService, CorrelationService>();
         services.AddScoped<IBulkRatesRepository, BulkRatesRepository>();
+        services.AddScoped<IRecreateSummariesStepCatalog>(sp =>
+            new RecreateSummariesStepCatalog(sp.GetRequiredService<ILoggerFactory>()));
 
         return services;
     }
