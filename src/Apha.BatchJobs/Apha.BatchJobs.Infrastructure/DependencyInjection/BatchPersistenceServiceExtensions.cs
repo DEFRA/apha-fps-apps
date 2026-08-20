@@ -30,6 +30,7 @@ public static class BatchPersistenceServiceExtensions
 
         services.AddScoped<IBatchLockRepository, BatchLockRepository>();
         services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
+        services.AddScoped<IYearEndCutoverRepository, YearEndCutoverRepository>();
 
         return services;
     }

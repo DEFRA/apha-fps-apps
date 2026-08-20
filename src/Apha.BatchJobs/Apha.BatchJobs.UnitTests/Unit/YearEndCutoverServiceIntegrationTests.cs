@@ -79,7 +79,7 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
         try
         {
             var service = new YearEndCutoverService(
-                CreateDbContextFactory(),
+                new YearEndCutoverRepository(CreateDbContextFactory()),
                 CreateExecutionRepository(),
                 NullLogger<YearEndCutoverService>.Instance);
 
@@ -124,7 +124,7 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
         try
         {
             var service = new YearEndCutoverService(
-                CreateDbContextFactory(),
+                new YearEndCutoverRepository(CreateDbContextFactory()),
                 CreateExecutionRepository(),
                 NullLogger<YearEndCutoverService>.Instance);
 
@@ -168,7 +168,7 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
         try
         {
             var service = new YearEndCutoverService(
-                CreateDbContextFactory(),
+                new YearEndCutoverRepository(CreateDbContextFactory()),
                 CreateExecutionRepository(),
                 NullLogger<YearEndCutoverService>.Instance);
 

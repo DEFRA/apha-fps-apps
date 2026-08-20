@@ -3,8 +3,6 @@ using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
-using Apha.BatchJobs.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
@@ -92,9 +90,8 @@ public sealed class YearEndCutoverServiceTests
 
     private static YearEndCutoverService CreateService(IJobExecutionRepository? executionRepository = null)
     {
-        var dbContextFactory = Substitute.For<IDbContextFactory<BatchJobsDbContext>>();
         return new YearEndCutoverService(
-            dbContextFactory,
+            Substitute.For<IYearEndCutoverRepository>(),
             executionRepository ?? Substitute.For<IJobExecutionRepository>(),
             NullLogger<YearEndCutoverService>.Instance);
     }
