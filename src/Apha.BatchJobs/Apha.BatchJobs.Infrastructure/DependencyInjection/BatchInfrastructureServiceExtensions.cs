@@ -3,6 +3,7 @@ using Apha.BatchJobs.Infrastructure.Context;
 using Apha.BatchJobs.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Infrastructure.DependencyInjection;
 
@@ -24,6 +25,7 @@ public static class BatchInfrastructureServiceExtensions
         // Shared execution-context services whose implementations are in Infrastructure.
         services.AddScoped<IExecutionYearContext, ExecutionYearContext>();
         services.AddScoped<ICurrentJobExecutionContext, CurrentJobExecutionContext>();
+        services.AddScoped<IRecreateSummariesContext, RecreateSummariesContext>();
         services.AddSingleton<ICorrelationService, CorrelationService>();
 
         return services;
