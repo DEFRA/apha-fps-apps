@@ -66,6 +66,18 @@ namespace Apha.FPS.Application.Services
             }
 
             var entity = _mapper.Map<WorkgroupGrade>(dto);
+
+            if (!string.IsNullOrWhiteSpace(entity.WgGrade)
+                && await _repository.ExistsByWgGradeAsync(entity.WgGrade))
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"WG Grade '{entity.WgGrade}' already exists. Please enter a unique WG Grade.",
+                        "WORKGROUPGRADE_DUPLICATE")
+                ]);
+            }
+
             var created = await _repository.CreateAsync(entity);
             return _mapper.Map<WorkgroupGradeDto>(created);
         }

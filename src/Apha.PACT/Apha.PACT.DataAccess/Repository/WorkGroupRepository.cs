@@ -178,7 +178,7 @@ namespace Apha.PACT.DataAccess.Repository
                 .Where(x => x.Name != null
                          && !EF.Functions.ILike(x.Name, "%general%")
                          && !EF.Functions.ILike(x.Name, "%vacancy%"))
-                .Where(x => x.GradeCode != null && !x.GradeCode.StartsWith('G'))
+                .Where(x => x.GradeCode != null && !x.GradeCode.StartsWith("G"))
                 .Distinct()
                 .OrderBy(x => x.Name)
                 .Select(x => new Owner

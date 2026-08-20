@@ -44,9 +44,34 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var grid = await BuildTestPurchaseRequiremntGridAsync(defaultRequest, parentProject ?? string.Empty);
 
             var origin = TempData.Peek("PactOrigin") as string;
+
+            // Store the original parentProject on first visit, preserve it on subsequent visits
+            string originalParentProject;
+            if (TempData.Peek("OriginalParentProject") == null)
+            {
+                originalParentProject = parentProject ?? string.Empty;
+                TempData["OriginalParentProject"] = originalParentProject;
+            }
+            else
+            {
+                originalParentProject = TempData.Peek("OriginalParentProject")?.ToString() ?? string.Empty;
+                TempData.Keep("OriginalParentProject");
+            }
+
+            // Preserve TempData for return navigation and project code changes
+            if (TempData.Peek("NavigationSource") != null)
+            {
+                TempData.Keep("NavigationSource");
+            }
+            if (TempData.Peek("PactOrigin") != null)
+            {
+                TempData.Keep("PactOrigin");
+            }
+
             var viewModel = new TestPurchaseRequirementViewModel
             {
                 ParentProject = parentProject ?? string.Empty,
+                OriginalParentProject = originalParentProject,
                 NavigationOrigin = origin ?? "Project",
                 TestPurchaseReqGrid = grid,
             };
