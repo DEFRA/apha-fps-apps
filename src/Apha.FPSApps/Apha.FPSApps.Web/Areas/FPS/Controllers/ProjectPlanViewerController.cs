@@ -694,7 +694,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
             else if (!string.IsNullOrWhiteSpace(program))
             {
-                    result = await _projectService.GetProjectsByProgramAsync(query, program);
+                result = await _projectService.GetProjectsByProgramAsync(query, program);
             }
             else if (!string.IsNullOrWhiteSpace(projectGroup))
             {
@@ -765,6 +765,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyStaffGrid(gridId ?? "planSummaryStaffGrid", "Staff Plans");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }
@@ -798,6 +802,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyTestPlanGrid(gridId ?? "planSummaryTestGrid", "Test Plans");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }
@@ -829,6 +837,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyAnimalGrid(gridId ?? "planSummaryAnimalGrid", "Animal Plans");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }
@@ -860,6 +872,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyAdditionalGrid(gridId ?? "planSummaryAdditionalGrid", "Additional Cost Plans");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }
@@ -891,12 +907,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyCompareStaff2Grid();
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadTestActualGrid(PaginationFilter<string> request, string? parentProject= null)
+        public async Task<IActionResult> LoadTestActualGrid(PaginationFilter<string> request, string? parentProject = null)
         {
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
@@ -937,6 +957,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyTestActualGrid();
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }
@@ -968,6 +992,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyActualCostGrid(gridId ?? "actualAnimalCostGrid", animalOnly ? "Actual Animal Costs (PACT)" : "Actual Additional Costs (PACT)");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }

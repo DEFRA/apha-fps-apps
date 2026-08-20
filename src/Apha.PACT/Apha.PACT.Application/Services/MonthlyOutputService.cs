@@ -107,7 +107,6 @@ namespace Apha.PACT.Application.Services
             var entity = _mapper.Map<StagingMonthlyOutput>(stagingMonthlyOutput);
             entity.ImportedBy = importedBy;
             entity.ImportedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
-            await ValidateSingleRecordAsync(entity);
             var created = await _repository.CreateStagingAsync(entity);
             return _mapper.Map<StagingMonthlyOutputDto>(created);
         }
@@ -116,7 +115,6 @@ namespace Apha.PACT.Application.Services
         {
             var entity = _mapper.Map<StagingMonthlyOutput>(stagingMonthlyOutput);
             entity.ImportedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
-            await ValidateSingleRecordAsync(entity);
             var updated = await _repository.UpdateStagingAsync(entity, importedBy);
             return _mapper.Map<StagingMonthlyOutputDto>(updated);
         }
@@ -236,7 +234,7 @@ namespace Apha.PACT.Application.Services
                 };
             }
 
-            var context = await LoadValidationContextAsync();
+            var context = await LoadValidationContextAsync(importedBy);
             var result = ValidateRecords(records, context);
 
             await _repository.UpdateStagingRecordsAsync(records);
@@ -260,31 +258,12 @@ namespace Apha.PACT.Application.Services
                 ProcessedCount = result.ProcessedCount,
                 ImportedCount = result.ImportedCount,
                 FailedCount = result.FailedCount,
-                Message = $"Make live completed. {result.ImportedCount} records moved into MonthlyOutput."
+                Message = $"{result.ImportedCount} of {result.ProcessedCount} records have been successfully made live.{Environment.NewLine}The remaining {result.FailedCount} records require revalidation."
             };
         }
 
 
-        private async Task ValidateSingleRecordAsync(StagingMonthlyOutput entity)
-        {
-            var context = await LoadValidationContextAsync();
-            var stagingKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var failures = ValidateRecordSync(entity, context, stagingKeys);
-
-            if (failures.Count == 0
-                && !string.IsNullOrWhiteSpace(entity.TestCode)
-                && !string.IsNullOrWhiteSpace(entity.Buyer)
-                && !string.IsNullOrWhiteSpace(entity.WorkGroup))
-            {
-                if (await _repository.LiveRecordExistsAsync(entity.TestCode, entity.Buyer, entity.Month, entity.WorkGroup))
-                    failures.Add($"A similar record already imported. WG = {entity.WorkGroup}, Buyer = {entity.Buyer}, TestCode = {entity.TestCode} and Month = {entity.Month}.");
-            }
-
-            entity.Passed = failures.Count == 0;
-            entity.FailureComments = failures.Count == 0 ? string.Empty : string.Join(Environment.NewLine, failures);
-        }
-
-        private async Task<OutputValidationContext> LoadValidationContextAsync()
+        private async Task<OutputValidationContext> LoadValidationContextAsync(string importedBy)
         {
             var calenderMonths = await _calenderMonthRepository.GetCalenderMonthsAsync();
             var allTestCapabilities = await _testCapabilityRepository.GetAllAsync();
@@ -301,15 +280,17 @@ namespace Apha.PACT.Application.Services
                     StringComparer.OrdinalIgnoreCase),
                 ActiveBuyerKeys = new HashSet<string>(
                     allActiveTestRequirements.Select(tr => $"{tr.TestCode}|{tr.Buyer}"),
-                    StringComparer.OrdinalIgnoreCase)
+                    StringComparer.OrdinalIgnoreCase),
+                ExistingLiveKeys = await _repository.GetExistingLiveKeysAsync(),
+                PassedStagingKeys = await _repository.GetPassedStagingKeysAsync(importedBy)
             };
         }
 
-        private MonthlyOutputValidateResultDto ValidateRecords(
+        private static MonthlyOutputValidateResultDto ValidateRecords(
             List<StagingMonthlyOutput> records,
             OutputValidationContext context)
         {
-            var stagingKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var stagingKeys = new HashSet<string>(context.PassedStagingKeys, StringComparer.OrdinalIgnoreCase);
             var passedCount = 0;
             var failedCount = 0;
 
@@ -317,8 +298,6 @@ namespace Apha.PACT.Application.Services
             {
                 var failures = ValidateRecordSync(record, context, stagingKeys);
 
-                // Duplicate check against live is done during import for single records;
-                // for bulk validation we rely on the staging-key de-dup above
                 record.Passed = failures.Count == 0;
                 record.FailureComments = failures.Count == 0 ? string.Empty : string.Join(Environment.NewLine, failures);
 
@@ -346,8 +325,8 @@ namespace Apha.PACT.Application.Services
             var month = record.Month;
             var volume = record.Volume;
 
-            // Volume must be numeric and > 0
-            if (volume == null || volume <= 0)
+            // Volume must be numeric and non-zero
+            if (volume == null || volume == 0)
             {
                 failures.Add($"The volume is not a number. \"{volume}\"");
                 return failures;
@@ -400,14 +379,35 @@ namespace Apha.PACT.Application.Services
                 return failures;
             }
 
-            // Duplicate check within this staging batch
-            var key = $"{testCode}|{buyer}|{(int)month}|{workGroup}";
-            if (!stagingKeys.Add(key))
-            {
-                failures.Add($"Similar record in sheet being imported, WG = {workGroup}, Buyer = {buyer}, TestCode = {testCode} and Month = {month}.");
-            }
+            ValidateDuplicates(record, failures, context, stagingKeys);
 
             return failures;
+        }
+
+        private static void ValidateDuplicates(
+            StagingMonthlyOutput record,
+            List<string> failures,
+            OutputValidationContext context,
+            HashSet<string> stagingKeys)
+        {
+            if (failures.Count > 0)
+                return;
+
+            var key = BuildLiveDuplicateKey(record.TestCode, record.Buyer, record.Month, record.WorkGroup);
+
+            if (!stagingKeys.Add(key))
+            {
+                failures.Add($"Similar record in sheet being imported, WG = {record.WorkGroup}, Buyer = {record.Buyer}, TestCode = {record.TestCode} and Month = {record.Month}.");
+            }
+            else if (context.ExistingLiveKeys.Contains(key))
+            {
+                failures.Add($"A similar record already imported. WG = {record.WorkGroup}, Buyer = {record.Buyer}, TestCode = {record.TestCode} and Month = {record.Month}.");
+            }
+        }
+
+        private static string BuildLiveDuplicateKey(string? testCode, string? buyer, double month, string? workGroup)
+        {
+            return $"{(testCode ?? string.Empty).Trim()}|{(buyer ?? string.Empty).Trim()}|{(int)month}|{(workGroup ?? string.Empty).Trim()}";
         }
     }
 
@@ -417,5 +417,7 @@ namespace Apha.PACT.Application.Services
         public required HashSet<double> ValidMonths { get; init; }
         public required HashSet<string> TestCapabilityKeys { get; init; }
         public required HashSet<string> ActiveBuyerKeys { get; init; }
+        public required HashSet<string> ExistingLiveKeys { get; init; }
+        public required HashSet<string> PassedStagingKeys { get; init; }
     }
 }

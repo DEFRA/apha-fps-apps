@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+﻿    using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
@@ -50,7 +50,7 @@ namespace Apha.PIMS.Api.Controllers
         {
             MilestoneDto dto = _mapper.Map<MilestoneDto>(request);
             dto.Project = project;
-            string? changedBy = User.Identity?.Name is { } name ? name[..Math.Min(10, name.Length)] : null;
+            string? changedBy = User.Identity?.Name;
             MilestoneDto result = await _service.SaveMilestoneAsync(dto, changedBy);
             return Ok(_mapper.Map<MilestoneRes>(result));
         }
@@ -63,7 +63,7 @@ namespace Apha.PIMS.Api.Controllers
             MilestoneDto dto = _mapper.Map<MilestoneDto>(request);
             dto.Project = project;
             dto.Number = decodedId;
-            string? changedBy = User.Identity?.Name is { } name ? name[..Math.Min(10, name.Length)] : null;
+            string? changedBy = User.Identity?.Name;
             MilestoneDto result = await _service.UpdateMilestoneAsync(dto, changedBy);
             return Ok(_mapper.Map<MilestoneRes>(result));
         }
@@ -107,7 +107,7 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetMilestoneFormDates(string parentProject, short year)
         {
             MilestoneFormDatesDto? result = await _service.GetMilestoneFormDatesAsync(year, parentProject);
-            return result is null ? NotFound() : Ok(_mapper.Map<MilestoneFormDatesRes>(result));
+            return Ok(result is null ? null : _mapper.Map<MilestoneFormDatesRes>(result));
         }
 
         /// <summary>Create or update a financial form dates record.</summary>
@@ -212,7 +212,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpPost("{project}/staging/import")]
         public async Task<IActionResult> ImportStaging(string project)
         {
-            string? changedBy = User.Identity?.Name is { } name ? name[..Math.Min(10, name.Length)] : null;
+            string? changedBy = User.Identity?.Name;
             string? createdBy = User.Identity?.Name;
             int imported = await _service.ImportStagingAsync(project, changedBy, createdBy);
             return Ok(new { imported });
@@ -222,7 +222,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpPost("{project}/staging/import-overwrite")]
         public async Task<IActionResult> ImportWithOverwrite(string project)
         {
-            string? changedBy = User.Identity?.Name is { } name ? name[..Math.Min(10, name.Length)] : null;
+            string? changedBy = User.Identity?.Name;
             string? createdBy = User.Identity?.Name;
             int updated = await _service.ImportWithOverwriteAsync(project, changedBy, createdBy);
             return Ok(new { updated });

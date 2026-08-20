@@ -212,7 +212,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return new DataGridConfig<SubContractItem>
             {
                 GridId = "subContractsGrid",
-                Title = "Sub Contracts",
+                Title = "SubContracts",
                 KeyProperty = "SubContCounter",
                 AddFunction = "addSubContract",
                 EditFunction = "editSubContract",

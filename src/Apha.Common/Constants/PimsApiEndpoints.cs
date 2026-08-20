@@ -54,6 +54,9 @@ namespace Apha.Common.Constants
         public const string GetMilestone = "api/v1/milestone/{0}/milestones/{1}";
         public const string SaveMilestone = "api/v1/milestone/{0}/milestones";
         public const string UpdateMilestone = "api/v1/milestone/{0}/milestones/{1}";
+        public const string GetMilestoneAsync_PMD = "api/v1/pmd/milestone";
+        public const string GetMilestoneFormDatesAsync_PMD = "api/v1/pmd/formdates";
+        public const string SaveMilestoneFormDatesAsync_PMD = "api/v1/pmd/formdates";
         public const string UpdateMilestoneAsync_PMD = "api/v1/pmd/update";
         public const string DeleteMilestone = "api/v1/milestone/{0}/milestones/{1}";
         public const string UpdateFormRequired = "api/v1/milestone/{0}/formrequired";
@@ -83,6 +86,10 @@ namespace Apha.Common.Constants
         public const string GetRadTrackInvoiceYears = "api/v1/radtrackinvoice/lookups/years";
         public const string GetRadTrackInvoiceContracts = "api/v1/radtrackinvoice/lookups/contracts";
         public const string GetRadTrackInvoicePrograms = "api/v1/radtrackinvoice/lookups/programs";
+
+        // Query reports
+        public const string GetMonitoringQueryReportData = "api/v1/queries/monitoring";
+        public const string GetProgramCustomerMonitoringQueryReportData = "api/v1/queries/program-customer-monitoring";
 
         // Yearly Financial Details
         public const string GetAllYearlyFinancialData = "api/v1/yearlyfinancialdata/{0}";

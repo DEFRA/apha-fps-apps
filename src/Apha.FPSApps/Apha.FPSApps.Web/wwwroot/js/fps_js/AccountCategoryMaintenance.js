@@ -89,16 +89,20 @@ function saveAccountCategory(isEdit = false) {
         return;
     }
 
-    // Validate AccountType - must be 'Pay' or 'NPRC'
-    const accountType = $('#AccountType').val().trim();
-    if (accountType !== 'Pay' && accountType !== 'NPRC') {
+    // AccountType accepts any case/combination of "PAY" or "NPRC".
+    // Convert the entered value to upper case and validate it equals PAY or NPRC.
+    const accountType = $('#AccountType').val().trim().toUpperCase();
+    if (accountType !== 'PAY' && accountType !== 'NPRC') {
         const validationErrors = [{
             field: 'AccountType',
-            message: 'AccountType must be either "Pay" or "NPRC".'
+            message: 'AccountType must be either "PAY" or "NPRC".'
         }];
         displayServerValidationErrors(validationErrors, 'Please correct the following error:', '#accountCategoryModalContent');
         return;
     }
+
+    // Reflect the normalised (upper case) value back to the input for user feedback.
+    $('#AccountType').val(accountType);
 
     const formData = {
         AccShortName: isEdit ? $('#originalAccShortName').val() : $('#AccShortName').val(),

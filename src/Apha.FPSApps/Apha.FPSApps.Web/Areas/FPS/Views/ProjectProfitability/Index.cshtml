@@ -48,7 +48,7 @@
                 <div class="govuk-grid-column-two-thirds">
                     <fieldset class="govuk-fieldset sup_margin_0">
                         <legend class="govuk-fieldset__legend govuk-fieldset__legend--s govuk-!-margin-bottom-1">
-                            Choose Work Type
+                            Choose Work Type: 
                         </legend>
                         <div class="govuk-radios govuk-radios--small govuk-radios--inline ppf-worktype-radios-row"
                              data-module="govuk-radios">
@@ -140,7 +140,7 @@
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input text-AlignRight pva-input-185"
-                                               id="ppf-total-staff-costs" type="text" value="0" readonly>
+                                               id="ppf-total-staff-costs" type="text" readonly>
                                     </div>
                                 </div>
                                 <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
@@ -149,7 +149,7 @@
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input text-AlignRight pva-input-185"
-                                               id="ppf-total-test-cost" type="text" value="0" readonly>
+                                               id="ppf-total-test-cost" type="text" readonly>
                                     </div>
                                 </div>
                                 <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
@@ -158,7 +158,7 @@
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input text-AlignRight pva-input-185"
-                                               id="ppf-total-animal" type="text" value="0" readonly>
+                                               id="ppf-total-animal" type="text" readonly>
                                     </div>
                                 </div>
                                 <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
@@ -167,7 +167,7 @@
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input text-AlignRight pva-input-185"
-                                               id="ppf-total-add-costs" type="text" value="0" readonly>
+                                               id="ppf-total-add-costs" type="text" readonly>
                                     </div>
                                 </div>
                                 <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
@@ -176,7 +176,7 @@
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input text-AlignRight pva-input-185"
-                                               id="ppf-total-total-costs" type="text" value="0" readonly>
+                                               id="ppf-total-total-costs" type="text" readonly>
                                     </div>
                                 </div>
                                 <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
@@ -185,7 +185,7 @@
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input text-AlignRight pva-input-185"
-                                               id="ppf-total-budget" type="text" value="0" readonly>
+                                               id="ppf-total-budget" type="text" readonly>
                                     </div>
                                 </div>
                                 <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
@@ -194,7 +194,7 @@
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input text-AlignRight pva-input-185"
-                                               id="ppf-total-profit" type="text" value="0" readonly>
+                                               id="ppf-total-profit" type="text" readonly>
                                     </div>
                                 </div>
                                 <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
@@ -203,7 +203,7 @@
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input text-AlignRight pva-input-185"
-                                               id="ppf-total-target-profit" type="text" value="0" readonly>
+                                               id="ppf-total-target-profit" type="text" readonly>
                                     </div>
                                 </div>
                                 <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
@@ -212,7 +212,7 @@
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input text-AlignRight pva-input-185"
-                                               id="ppf-total-off-target" type="text" value="0" readonly>
+                                               id="ppf-total-off-target" type="text" readonly>
                                     </div>
                                 </div>
                             </div>
@@ -292,8 +292,8 @@
                 }
 
                 function updateSummary(target, shortfall) {
-                    document.getElementById('ppf-programme-target').value = target != null ? formatGbp(target) : '£0';
-                    document.getElementById('ppf-programme-shortfall').value = shortfall != null ? formatGbp(shortfall) : '£0';
+                    document.getElementById('ppf-programme-target').value = target != null ? formatGbp(target) : '0.00';
+                    document.getElementById('ppf-programme-shortfall').value = shortfall != null ? formatGbp(shortfall) : '0.00';
                 }
 
                 function updateTotals(data) {
@@ -305,14 +305,14 @@
                     document.getElementById('ppf-total-budget').value = formatGbp(data.totalBudget ?? 0);
                     document.getElementById('ppf-total-profit').value = formatGbp(data.totalProfit ?? 0);
                     document.getElementById('ppf-total-target-profit').value = formatGbp(data.totalTargetProfit ?? 0);
-                    var offTargetValue = data.totalOffTarget ?? 0;
+                    var offTargetValue = data.totalOffTarget ?? '0.00';
                     var offTargetEl = document.getElementById('ppf-total-off-target');
                     offTargetEl.value = formatGbp(offTargetValue);
-                    offTargetEl.style.color = offTargetValue < 0 ? 'red' : 'blue';
+                    offTargetEl.style.color = String(offTargetValue).trim().charAt(0) === '-' ? 'red' : 'blue';
                 }
 
                 function formatGbp(value) {
-                    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(value));
+                    return value != null ? value : '0.00';
                 }
 
                 // ── Row selection ─────────────────────────────────────────────────────────
