@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
+﻿using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +33,6 @@ public sealed class MyFpsYearlyDataServiceTests
     [Fact]
     public void Constructor_WhenLoadersIsNull_ShouldThrowArgumentNullException()
     {
-        using var context = CreateContext();
 
         var ex = Assert.Throws<ArgumentNullException>(
             () => new MyFpsYearlyDataService(context, NullLogger<MyFpsYearlyDataService>.Instance, null!));
@@ -44,7 +43,6 @@ public sealed class MyFpsYearlyDataServiceTests
     [Fact]
     public void Constructor_WhenLoaderCountMismatch_ShouldThrowInvalidOperationException()
     {
-        using var context = CreateContext();
         var loaders = CreateSequentialLoaders(1, 23);
 
         var ex = Assert.Throws<InvalidOperationException>(
@@ -56,7 +54,6 @@ public sealed class MyFpsYearlyDataServiceTests
     [Fact]
     public void Constructor_WhenDuplicateSequenceExists_ShouldThrowInvalidOperationException()
     {
-        using var context = CreateContext();
         var loaders = CreateSequentialLoaders(1, 23)
             .Concat(new[] { CreateLoader(5, "Loader-5-Duplicate", (_, _, _) => Task.FromResult(0)) })
             .ToList();
@@ -70,7 +67,6 @@ public sealed class MyFpsYearlyDataServiceTests
     [Fact]
     public void Constructor_WhenSequenceIsNotContiguous_ShouldThrowInvalidOperationException()
     {
-        using var context = CreateContext();
         var loaders = CreateSequentialLoaders(1, 23)
             .Concat(new[] { CreateLoader(25, "Loader-25", (_, _, _) => Task.FromResult(0)) })
             .ToList();
@@ -84,7 +80,6 @@ public sealed class MyFpsYearlyDataServiceTests
     [Fact]
     public async Task LoadYearDataAsync_WhenLoadersProvidedUnordered_ShouldExecuteInSequenceOrderAndAggregateRows()
     {
-        using var context = CreateContext();
         var executionOrder = new List<int>();
 
         var unorderedLoaders = Enumerable.Range(1, 24)
@@ -107,7 +102,6 @@ public sealed class MyFpsYearlyDataServiceTests
     [Fact]
     public async Task LoadYearDataAsync_WhenLoaderFails_ShouldStopAndRethrow()
     {
-        using var context = CreateContext();
         var executionOrder = new List<int>();
 
         var loaders = Enumerable.Range(1, 24)
@@ -197,7 +191,7 @@ public sealed class MyFpsYearlyDataServiceTests
 
         // Legacy sp_LoadFromFPS parity: only loader 24 (my_tlkpproject_all) runs for the
         // Planned-year path. g_tlkpproject (loader 2) and my_tlkpproject (loader 3) are
-        // never touched here — they only refresh as part of the Open year's full load.
+        // never touched here â€” they only refresh as part of the Open year's full load.
         Assert.Equal(new Dictionary<int, int> { [24] = 1900 }, invokedSequenceYears);
     }
 

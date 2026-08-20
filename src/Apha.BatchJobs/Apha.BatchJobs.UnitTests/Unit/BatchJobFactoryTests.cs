@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Application.Factory;
+﻿using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Jobs.HealthCheck;
 using Apha.BatchJobs.Domain.Configuration;
@@ -50,9 +50,8 @@ public sealed class BatchJobFactoryTests
     public void Create_ShouldThrowImmediately_WhenRegisteredTypeCannotBeResolvedFromContainer()
     {
         // ConventionalJobMap finds HealthCheckJobHandler by reflection, but nothing here
-        // registers it (or its dependencies) in the container — this must fail loudly at
+        // registers it (or its dependencies) in the container â€” this must fail loudly at
         // this Create() call rather than silently falling back to constructing every other job.
-        using var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var factory = new BatchJobFactory(serviceProvider);
 
         var action = () => factory.Create("HealthCheck");
@@ -65,7 +64,6 @@ public sealed class BatchJobFactoryTests
     [Fact]
     public void GetAvailableJobs_ShouldReturnKnownConventionalNames()
     {
-        using var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var factory = new BatchJobFactory(serviceProvider);
 
         // Regression guard: this is the full set of real IBatchJob types discovered by

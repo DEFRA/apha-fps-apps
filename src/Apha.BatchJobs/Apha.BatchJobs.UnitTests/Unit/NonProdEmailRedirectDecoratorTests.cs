@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Services;
+﻿using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Services;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Entities.MilestoneUpdateNotifications;
 using Apha.BatchJobs.Infrastructure.Repositories.MilestoneUpdateNotifications;
@@ -46,7 +46,6 @@ public sealed class NonProdEmailRedirectDecoratorTests
     [Fact]
     public async Task SendAsync_WhenNonProduction_AndRedirectEnabled_ShouldRedirectToConfiguredRecipients()
     {
-        using var envScope = new EnvironmentVariableScope("Development");
         var decorator = CreateDecorator(out var inner, NonProdSettings());
         var message = new EmailMessage(["real.manager@example.com"], "Milestone and Deliverable Update Request", "<p>body</p>");
 
@@ -75,7 +74,6 @@ public sealed class NonProdEmailRedirectDecoratorTests
     [Fact]
     public async Task SendAsync_WhenNonProduction_AndRedirectDisabled_ShouldPassThroughUnchanged()
     {
-        using var envScope = new EnvironmentVariableScope("Development");
         var settings = NonProdSettings();
         settings.NonProdRedirectEnabled = false;
         var decorator = CreateDecorator(out var inner, settings);
@@ -89,7 +87,6 @@ public sealed class NonProdEmailRedirectDecoratorTests
     [Fact]
     public async Task SendAsync_WhenNonProduction_AndRedirectEnabled_ButNoRecipientsConfigured_ShouldThrow()
     {
-        using var envScope = new EnvironmentVariableScope("Development");
         var settings = new MilestoneNotificationsSettings { NonProdRedirectEnabled = true, NonProdRedirectRecipients = [] };
         var decorator = CreateDecorator(out var inner, settings);
         var message = new EmailMessage(["real.manager@example.com"], "Subject", "<p>body</p>");

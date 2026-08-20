@@ -1,7 +1,6 @@
 using Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates.Services;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Repositories.BulkRates;
-using Apha.BatchJobs.Infrastructure.Services.BulkRates;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates;

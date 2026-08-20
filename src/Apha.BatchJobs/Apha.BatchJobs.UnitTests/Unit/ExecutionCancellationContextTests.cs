@@ -1,11 +1,11 @@
-using Apha.BatchJobs.Worker.Lifecycle;
+﻿using Apha.BatchJobs.Worker.Lifecycle;
 using Microsoft.Extensions.Hosting;
 using NSubstitute;
 
 namespace Apha.BatchJobs.UnitTests;
 
 /// <summary>
-/// Tests for <see cref="ExecutionCancellationContext"/> — the overall-timeout CTS linked with
+/// Tests for <see cref="ExecutionCancellationContext"/> â€” the overall-timeout CTS linked with
 /// host shutdown, with host shutdown always taking precedence when both fire.
 /// </summary>
 public sealed class ExecutionCancellationContextTests
@@ -52,7 +52,6 @@ public sealed class ExecutionCancellationContextTests
     public async Task ClassifyCancellation_WhenBothTimeoutAndShutdownFire_PrefersHostShutdown()
     {
         var hostLifetime = CreateLifetime(out var lifetimeCts);
-        using var context = new ExecutionCancellationContext(hostLifetime, overallTimeoutSeconds: 1);
 
         await Task.Delay(TimeSpan.FromSeconds(1.5));
         lifetimeCts.Cancel();
@@ -66,7 +65,6 @@ public sealed class ExecutionCancellationContextTests
     public void ClassifyCancellation_WhenNeitherFires_IsUnclassified()
     {
         var hostLifetime = CreateLifetime(out _);
-        using var context = new ExecutionCancellationContext(hostLifetime, overallTimeoutSeconds: 3600);
 
         Assert.False(context.Token.IsCancellationRequested);
         Assert.Equal(ExecutionCancellationReason.Unclassified, context.ClassifyCancellation());

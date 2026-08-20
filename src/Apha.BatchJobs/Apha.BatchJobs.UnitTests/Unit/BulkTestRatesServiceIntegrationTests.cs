@@ -1,9 +1,8 @@
-using Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates;
+﻿using Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.BulkRates;
-using Apha.BatchJobs.Infrastructure.Services.BulkRates;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
@@ -77,7 +76,6 @@ public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
     }
 
     private BulkTestRatesService CreateService() => new(
-        new TestDbContextFactory(_connectionString),
         new BulkRatesRepository(new TestDbContextFactory(_connectionString), NullLogger<BulkRatesRepository>.Instance),
         Substitute.For<IJobExecutionRepository>(),
         NullLogger<BulkTestRatesService>.Instance);
@@ -155,7 +153,7 @@ public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
         await Exec("DELETE FROM fps.tlkpprogram WHERE fpsyear = @fpsyear;", c => c.Parameters.AddWithValue("fpsyear", fpsYear));
     }
 
-    // â”€â”€ FEC existing row, null rate â†’ zero + retain â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Ã¢â€â‚¬Ã¢â€â‚¬ FEC existing row, null rate Ã¢â€ â€™ zero + retain Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     [SkippableFact]
     public async Task ExecuteAsync_FecExistingRowBlankRate_ZeroesAndRetains()
@@ -230,7 +228,7 @@ public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // â”€â”€ AGRUP existing row, null rate â†’ zero + retain â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Ã¢â€â‚¬Ã¢â€â‚¬ AGRUP existing row, null rate Ã¢â€ â€™ zero + retain Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     [SkippableFact]
     public async Task ExecuteAsync_AgrupExistingRowBlankRate_ZeroesAndRetains()
@@ -315,7 +313,7 @@ public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // â”€â”€ New AGRUP insert uses staged routing fields, not hardcoded Buyer â”€â”€
+    // Ã¢â€â‚¬Ã¢â€â‚¬ New AGRUP insert uses staged routing fields, not hardcoded Buyer Ã¢â€â‚¬Ã¢â€â‚¬
 
     [SkippableFact]
     public async Task ExecuteAsync_NewAgrupRow_UsesStagedRoutingFields_NotHardcodedBuyer()
@@ -396,7 +394,7 @@ public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
                 await using var r = await cmd.ExecuteReaderAsync();
                 Assert.True(await r.ReadAsync());
                 Assert.Equal(15.00m, r.GetDecimal(0));
-                // Staged ProjectBuyerCode/TestBuyerCode are written verbatim â€” no
+                // Staged ProjectBuyerCode/TestBuyerCode are written verbatim Ã¢â‚¬â€ no
                 // longer the old hardcoded ProjectBuyerCode = Buyer / omitted TestBuyerCode.
                 Assert.Equal(projectBuyerCode, r.GetString(1));
                 Assert.NotEqual(buyer, r.GetString(1));
@@ -429,7 +427,7 @@ public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── FEC insert must precede a dependent new-AGRUP-in-the-same-upload insert ─────
+    // â”€â”€ FEC insert must precede a dependent new-AGRUP-in-the-same-upload insert â”€â”€â”€â”€â”€
 
     [SkippableFact]
     public async Task ExecuteAsync_NewFecAndDependentNewAgrup_SameUpload_BothApply()
@@ -446,9 +444,9 @@ public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
         await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync();
 
-        // No live fps.testorproduct row — the FEC TestCode is brand new in this same upload,
+        // No live fps.testorproduct row â€” the FEC TestCode is brand new in this same upload,
         // and the dependent AGRUP row must be able to route against it via the staged FEC sheet
-        // (not a live lookup), proving FEC applies first within the transaction (spec §2.4/§15.2).
+        // (not a live lookup), proving FEC applies first within the transaction (spec Â§2.4/Â§15.2).
         await using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = "INSERT INTO fps.tlkpprogram (programno, sector_name, fpsyear) VALUES ('PRG-WK08', 'Wave-WK08', @year);";
@@ -537,7 +535,7 @@ public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── A duplicate invocation must not reapply an already-committed change ────────
+    // â”€â”€ A duplicate invocation must not reapply an already-committed change â”€â”€â”€â”€â”€â”€â”€â”€
 
     [SkippableFact]
     public async Task ExecuteAsync_CalledTwiceForSameRequest_SecondCallThrows_DoesNotReapply()
@@ -579,7 +577,7 @@ public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
 
         try
         {
-            // First call commits normally and clears staging (spec §10.6).
+            // First call commits normally and clears staging (spec Â§10.6).
             await CreateService().ExecuteAsync(new BulkRatesExecutionContext(jobExecutionId, BatchJobNames.BulkTestRatesUpdate, fpsYear));
 
             int historyCountAfterFirstRun;
@@ -591,7 +589,7 @@ public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
             }
             Assert.Equal(2, historyCountAfterFirstRun); // unitpricevla + defraunitprice
 
-            // Second call for the same JobExecutionId/JobQueueId — staging is empty, so the
+            // Second call for the same JobExecutionId/JobQueueId â€” staging is empty, so the
             // worker must reject it rather than silently doing nothing or reapplying.
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(
                 () => CreateService().ExecuteAsync(new BulkRatesExecutionContext(jobExecutionId, BatchJobNames.BulkTestRatesUpdate, fpsYear)));
@@ -622,7 +620,7 @@ public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── testreq_log audit ────────────────────────────────────────────────────
+    // â”€â”€ testreq_log audit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private static async Task<int> CountTestreqLogAsync(
         NpgsqlConnection conn, string testCode, string buyer, int fpsYear)
@@ -938,3 +936,4 @@ public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
     }
 
 }
+

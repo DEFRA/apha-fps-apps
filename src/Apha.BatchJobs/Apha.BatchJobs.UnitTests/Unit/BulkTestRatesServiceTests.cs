@@ -1,10 +1,7 @@
-using Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates;
+﻿using Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Entities.BulkRates;
 using Apha.BatchJobs.Domain.Interfaces;
-using Apha.BatchJobs.Infrastructure.Data;
-using Apha.BatchJobs.Infrastructure.Services.BulkRates;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
@@ -12,7 +9,7 @@ namespace Apha.BatchJobs.UnitTests;
 
 public sealed class BulkTestRatesServiceTests
 {
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private static BulkRatesExecutionContext ValidContext(Guid? jobExecutionId = null, int? triggerYear = null)
         => new(jobExecutionId ?? Guid.NewGuid(), BatchJobNames.BulkTestRatesUpdate, triggerYear);
@@ -40,12 +37,11 @@ public sealed class BulkTestRatesServiceTests
     private static BulkTestRatesService CreateService(
         IBulkRatesRepository? repo = null)
         => new(
-            Substitute.For<IDbContextFactory<BatchJobsDbContext>>(),
             repo ?? Substitute.For<IBulkRatesRepository>(),
             Substitute.For<IJobExecutionRepository>(),
             NullLogger<BulkTestRatesService>.Instance);
 
-    // ── GetRunningRequestAsync returns null ──────────────────────────────────
+    // â”€â”€ GetRunningRequestAsync returns null â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public async Task ExecuteAsync_WhenJobQueueEntryNotFound_ShouldThrow()
@@ -62,7 +58,7 @@ public sealed class BulkTestRatesServiceTests
         Assert.Contains(ctx.JobExecutionId.ToString("D"), ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    // ── Precondition: Status ─────────────────────────────────────────────────
+    // â”€â”€ Precondition: Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public async Task ExecuteAsync_WhenStatusNotRunning_ShouldThrow()
@@ -78,7 +74,7 @@ public sealed class BulkTestRatesServiceTests
         Assert.Contains("Running", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    // ── Precondition: JobName ─────────────────────────────────────────────────
+    // â”€â”€ Precondition: JobName â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public async Task ExecuteAsync_WhenJobNameMismatch_ShouldThrow()
@@ -93,7 +89,7 @@ public sealed class BulkTestRatesServiceTests
         Assert.Contains(BatchJobNames.BulkStaffRatesUpdate, ex.Message, StringComparison.Ordinal);
     }
 
-    // ── Precondition: FpsYear ─────────────────────────────────────────────────
+    // â”€â”€ Precondition: FpsYear â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public async Task ExecuteAsync_WhenFpsYearZero_ShouldThrow()
@@ -108,7 +104,7 @@ public sealed class BulkTestRatesServiceTests
         Assert.Contains("fpsyear", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    // ── Precondition: TriggerYear mismatch ───────────────────────────────────
+    // â”€â”€ Precondition: TriggerYear mismatch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public async Task ExecuteAsync_WhenTriggerYearMismatchesPersistedYear_ShouldThrow()
@@ -127,7 +123,7 @@ public sealed class BulkTestRatesServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenTriggerYearMatchesPersistedYear_ShouldProceedPastYearCheck()
     {
-        // Arrange: matching trigger year — should pass the year check and reach staging guard
+        // Arrange: matching trigger year â€” should pass the year check and reach staging guard
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetRunningRequestAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(ApprovedEntry(fpsYear: 2027));
@@ -145,7 +141,7 @@ public sealed class BulkTestRatesServiceTests
         Assert.Contains("staging", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    // ── Precondition: ApprovalMetadata ───────────────────────────────────────
+    // â”€â”€ Precondition: ApprovalMetadata â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public async Task ExecuteAsync_WhenApprovedByMissing_ShouldThrow()
@@ -173,7 +169,7 @@ public sealed class BulkTestRatesServiceTests
         Assert.Contains("approval metadata", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    // ── Staging guard ─────────────────────────────────────────────────────────
+    // â”€â”€ Staging guard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public async Task ExecuteAsync_WhenBothFecAndAgrupStagingEmpty_ShouldThrow()
@@ -192,3 +188,4 @@ public sealed class BulkTestRatesServiceTests
         Assert.Contains("staging", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 }
+

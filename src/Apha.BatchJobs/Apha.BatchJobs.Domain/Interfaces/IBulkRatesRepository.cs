@@ -88,4 +88,38 @@ public interface IBulkRatesRepository
         string note,
         string? actor,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Locks the live tblanimals rows, applies all staging mutations (Insert/Update/NoChange),
+    /// writes rate_change_history — all inside a single transaction — then commits.
+    /// Returns the count of inserted, updated, and unchanged rows.
+    /// </summary>
+    Task<(int Inserted, int Updated, int Unchanged)> ApplyAnimalRatesAsync(
+        IReadOnlyList<AnimalStagingRow> stagingRows,
+        BulkRatesJobQueueEntry entry,
+        DateTime appliedAt,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Locks the live profitcentregrade rows, applies all staging mutations (Update/NoChange),
+    /// writes rate_change_history — all inside a single transaction — then commits.
+    /// Returns the count of updated and unchanged rows.
+    /// </summary>
+    Task<(int Updated, int Unchanged)> ApplyStaffRatesAsync(
+        IReadOnlyList<StaffStagingRow> stagingRows,
+        BulkRatesJobQueueEntry entry,
+        DateTime appliedAt,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Locks the live testorproduct and tlkptestreqmt rows, applies FEC then AGRUP mutations,
+    /// writes testreq_log and rate_change_history — all inside a single transaction — then commits.
+    /// Returns per-table inserted/updated/unchanged counts.
+    /// </summary>
+    Task<(int FecInserted, int FecUpdated, int FecUnchanged, int AgrupInserted, int AgrupUpdated, int AgrupUnchanged)> ApplyFecRatesAsync(
+        IReadOnlyList<FecStagingRow> fecRows,
+        IReadOnlyList<AgrupStagingRow> agrupRows,
+        BulkRatesJobQueueEntry entry,
+        DateTime appliedAt,
+        CancellationToken cancellationToken = default);
 }

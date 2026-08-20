@@ -1,9 +1,8 @@
-using Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates;
+﻿using Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Entities.BulkRates;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.BulkRates;
-using Apha.BatchJobs.Infrastructure.Services.BulkRates;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
@@ -80,7 +79,6 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
     }
 
     private BulkAnimalRatesService CreateService() => new(
-        new TestDbContextFactory(_connectionString),
         new BulkRatesRepository(new TestDbContextFactory(_connectionString), NullLogger<BulkRatesRepository>.Instance),
         NullLogger<BulkAnimalRatesService>.Instance);
 
@@ -226,8 +224,8 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
         await cmd.ExecuteNonQueryAsync();
     }
 
-    // ── Update action applies the frozen effective_* state (all 5 fields) and
-    // writes history only for the fields that actually changed ─────────────────────────
+    // â”€â”€ Update action applies the frozen effective_* state (all 5 fields) and
+    // writes history only for the fields that actually changed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [SkippableFact]
     public async Task ExecuteAsync_UpdateAction_AppliesEffectiveStateAndWritesHistory()
@@ -296,7 +294,7 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── NoChange action applies nothing and writes no history ──────────────────────
+    // â”€â”€ NoChange action applies nothing and writes no history â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [SkippableFact]
     public async Task ExecuteAsync_NoChangeAction_SkipsApplyAndHistory()
@@ -338,7 +336,7 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── Insert action creates live row and writes five history rows ───────────────
+    // â”€â”€ Insert action creates live row and writes five history rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [SkippableFact]
     public async Task ExecuteAsync_InsertAction_CreatesLiveRowAndFiveHistoryRows()
@@ -396,7 +394,7 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── Insert history is written for false, zero, and null effective values ─────────
+    // â”€â”€ Insert history is written for false, zero, and null effective values â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [SkippableFact]
     public async Task ExecuteAsync_InsertAction_WritesFalseZeroAndNullFieldsAsHistoryRows()
@@ -433,7 +431,7 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── Insert conflict: target row already exists — throws, no new row, no history ─
+    // â”€â”€ Insert conflict: target row already exists â€” throws, no new row, no history â”€
 
     [SkippableFact]
     public async Task ExecuteAsync_InsertAction_WhenTargetAlreadyExists_ThrowsAndRollsBack()
@@ -482,7 +480,7 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── Mixed request: Insert + Update + NoChange — correct history, no staging after commit ─
+    // â”€â”€ Mixed request: Insert + Update + NoChange â€” correct history, no staging after commit â”€
 
     [SkippableFact]
     public async Task ExecuteAsync_MixedInsertUpdateNoChange_CorrectHistoryAndNoStagingAfterCommit()
@@ -490,7 +488,7 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
 
         const int fpsYear = 2096;
-        const string typeInsert   = "SA5-A13"; // alphabetically first → processed first
+        const string typeInsert   = "SA5-A13"; // alphabetically first â†’ processed first
         const string typeUpdate   = "SA5-A14";
         const string typeNoChange = "SA5-A15";
         var jobQueueId = Guid.NewGuid();
@@ -556,7 +554,7 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── Mixed atomic rollback: Insert A + Update B + Insert C conflicts ───────────
+    // â”€â”€ Mixed atomic rollback: Insert A + Update B + Insert C conflicts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // All changes including A's Insert and B's Update must roll back; C stays unchanged.
 
     [SkippableFact]
@@ -636,7 +634,7 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── Unexpected actions: ZeroRateWithdrawal, NotFound, Invalid ────────────────────
+    // â”€â”€ Unexpected actions: ZeroRateWithdrawal, NotFound, Invalid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [SkippableFact]
     public async Task ExecuteAsync_UnexpectedAction_ZeroRateWithdrawal_Throws()
@@ -688,7 +686,7 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── Helper for Insert-action staging rows (source fields represent absent state) ─
+    // â”€â”€ Helper for Insert-action staging rows (source fields represent absent state) â”€
 
     private async Task InsertInsertStagingRowAsync(
         NpgsqlConnection conn, Guid jobQueueId, string animalType,
@@ -721,9 +719,9 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
         await cmd.ExecuteNonQueryAsync();
     }
 
-    // ── Direct 23505 mapping: row inserted by liveLookup pre-check miss
+    // â”€â”€ Direct 23505 mapping: row inserted by liveLookup pre-check miss
     // (concurrent-race stand-in: pre-existing row hidden from test, INSERT raised 23505)
-    // Proves the catch clause in InsertAnimalRowAsync maps 23505 → InvalidOperationException.
+    // Proves the catch clause in InsertAnimalRowAsync maps 23505 â†’ InvalidOperationException.
 
     [SkippableFact]
     public async Task InsertAnimalRowAsync_WhenInsertRaises23505_ThrowsControlledConflictError()
@@ -764,7 +762,7 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
                 ValidationVersion:   1);
 
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => BulkAnimalRatesService.InsertAnimalRowAsync(conn, tx, stagingRow, fpsYear, CancellationToken.None));
+                () => BulkRatesRepository.InsertAnimalRowAsync(conn, tx, stagingRow, fpsYear, CancellationToken.None));
             Assert.Contains("already exists", ex.Message, StringComparison.OrdinalIgnoreCase);
             Assert.IsType<Npgsql.PostgresException>(ex.InnerException);
             Assert.Equal("23505", ((Npgsql.PostgresException)ex.InnerException!).SqlState);

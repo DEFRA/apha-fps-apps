@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Application.Interfaces;
+﻿using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Apha.BatchJobs.Domain.Configuration;
@@ -60,7 +60,6 @@ public sealed class MabArchiveJobTests
     [Fact]
     public void Constructor_WhenTotalsServiceIsNull_ShouldThrowArgumentNullException()
     {
-        using var dbContext = CreateDbContext();
 
         var ex = Assert.Throws<ArgumentNullException>(() => new MabArchiveJob(
             dbContext,
@@ -78,7 +77,6 @@ public sealed class MabArchiveJobTests
     [Fact]
     public void Constructor_WhenDataServiceIsNull_ShouldThrowArgumentNullException()
     {
-        using var dbContext = CreateDbContext();
 
         var ex = Assert.Throws<ArgumentNullException>(() => new MabArchiveJob(
             dbContext,
@@ -96,7 +94,6 @@ public sealed class MabArchiveJobTests
     [Fact]
     public void Constructor_WhenExecutionYearContextIsNull_ShouldThrowArgumentNullException()
     {
-        using var dbContext = CreateDbContext();
 
         var ex = Assert.Throws<ArgumentNullException>(() => new MabArchiveJob(
             dbContext,
@@ -114,7 +111,6 @@ public sealed class MabArchiveJobTests
     [Fact]
     public void Constructor_WhenCorrelationServiceIsNull_ShouldThrowArgumentNullException()
     {
-        using var dbContext = CreateDbContext();
 
         var ex = Assert.Throws<ArgumentNullException>(() => new MabArchiveJob(
             dbContext,
@@ -132,7 +128,6 @@ public sealed class MabArchiveJobTests
     [Fact]
     public void Constructor_WhenLoggerIsNull_ShouldThrowArgumentNullException()
     {
-        using var dbContext = CreateDbContext();
 
         var ex = Assert.Throws<ArgumentNullException>(() => new MabArchiveJob(
             dbContext,
@@ -150,7 +145,6 @@ public sealed class MabArchiveJobTests
     [Fact]
     public void Constructor_WhenSettingsIsNull_ShouldUseDefaults()
     {
-        using var dbContext = CreateDbContext();
 
         var subject = new MabArchiveJob(
             dbContext,
@@ -168,7 +162,6 @@ public sealed class MabArchiveJobTests
     [Fact]
     public void Metadata_ShouldMatchExpectedContract()
     {
-        using var dbContext = CreateDbContext();
 
         var subject = new MabArchiveJob(
             dbContext,

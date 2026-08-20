@@ -4,6 +4,8 @@ using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Npgsql;
+using NpgsqlTypes;
+using System.Text.Json;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.BulkRates;
 
@@ -343,6 +345,671 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
             "Animal staging deleted | JobQueueId={JobQueueId} | RowsDeleted={RowsDeleted}",
             jobQueueId, deleted);
     }
+
+    // ── Apply Animal rates in one transaction ────────────────────────────────
+
+    /// <inheritdoc />
+    public async Task<(int Inserted, int Updated, int Unchanged)> ApplyAnimalRatesAsync(
+        IReadOnlyList<AnimalStagingRow> stagingRows,
+        BulkRatesJobQueueEntry entry,
+        DateTime appliedAt,
+        CancellationToken cancellationToken = default)
+    {
+        int inserted = 0, updated = 0, unchanged = 0;
+
+        await using var dbContext = _dbContextFactory.CreateDbContext();
+        await dbContext.Database.OpenConnectionAsync(cancellationToken);
+        var conn = (NpgsqlConnection)dbContext.Database.GetDbConnection();
+
+        await using var tx = await conn.BeginTransactionAsync(cancellationToken);
+
+        var animalTypes = stagingRows
+            .Select(r => r.AnimalType)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var liveLookup = await GetAnimalRowsForUpdateAsync(conn, tx, animalTypes, entry.FpsYear, cancellationToken);
+
+        foreach (var row in stagingRows)
+        {
+            switch (row.CalculatedAction)
+            {
+                case "NoChange":
+                    unchanged++;
+                    break;
+
+                case "Update":
+                    liveLookup.TryGetValue(row.AnimalType.ToUpperInvariant(), out var liveBefore);
+                    var rowsAffected = await UpdateAnimalRowAsync(conn, tx, row, entry.FpsYear, cancellationToken);
+                    if (rowsAffected == 0)
+                        throw new InvalidOperationException(
+                            $"BulkAnimalRatesUpdate: UPDATE matched 0 rows for AnimalType='{row.AnimalType}' in JobQueueId={entry.JobQueueId:D}.");
+                    foreach (var historyRow in BuildAnimalUpdateHistory(row, liveBefore, entry, appliedAt))
+                        await InsertHistoryRowAsync(conn, tx, historyRow, cancellationToken);
+                    updated++;
+                    break;
+
+                case "Insert":
+                    if (liveLookup.ContainsKey(row.AnimalType.ToUpperInvariant()))
+                        throw new InvalidOperationException(
+                            $"BulkAnimalRatesUpdate: Animal Insert concurrency conflict for AnimalType='{row.AnimalType}', FPS year {entry.FpsYear}: " +
+                            "the approved Insert target already exists.");
+                    await InsertAnimalRowAsync(conn, tx, row, entry.FpsYear, cancellationToken);
+                    foreach (var historyRow in BuildAnimalInsertHistory(row, entry, appliedAt))
+                        await InsertHistoryRowAsync(conn, tx, historyRow, cancellationToken);
+                    inserted++;
+                    break;
+
+                default:
+                    throw new InvalidOperationException(
+                        $"BulkAnimalRatesUpdate: unexpected CalculatedAction '{row.CalculatedAction}' " +
+                        $"for AnimalType='{row.AnimalType}' in JobQueueId={entry.JobQueueId:D}. " +
+                        "Only NoChange, Update, and Insert are supported.");
+            }
+        }
+
+        await tx.CommitAsync(cancellationToken);
+        return (inserted, updated, unchanged);
+    }
+
+    private static async Task<Dictionary<string, (decimal? DailyRate, decimal? DefraDailyRate, bool PlanByWeek, string? Species, string? SecurityLevel)>> GetAnimalRowsForUpdateAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx,
+        IReadOnlyCollection<string> animalTypes, int fpsYear, CancellationToken ct)
+    {
+        var result = new Dictionary<string, (decimal? DailyRate, decimal? DefraDailyRate, bool PlanByWeek, string? Species, string? SecurityLevel)>(StringComparer.OrdinalIgnoreCase);
+        if (animalTypes.Count == 0) return result;
+
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            SELECT animaltype, species, security_level, dailyrate::numeric, defradailyrate::numeric, planbyweek
+            FROM fps.tblanimals
+            WHERE fpsyear = @fpsyear AND animaltype = ANY(@types)
+            ORDER BY animaltype
+            FOR UPDATE;";
+        cmd.Parameters.AddWithValue("fpsyear", fpsYear);
+        cmd.Parameters.Add(new NpgsqlParameter("types", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = animalTypes.ToArray() });
+
+        await using var r = await cmd.ExecuteReaderAsync(ct);
+        while (await r.ReadAsync(ct))
+        {
+            var animalType = r.GetString(0);
+            result[animalType.ToUpperInvariant()] = (
+                r.IsDBNull(3) ? null : r.GetDecimal(3),
+                r.IsDBNull(4) ? null : r.GetDecimal(4),
+                !r.IsDBNull(5) && r.GetBoolean(5),
+                r.IsDBNull(1) ? null : r.GetString(1),
+                r.IsDBNull(2) ? null : r.GetString(2));
+        }
+        return result;
+    }
+
+    internal static async Task InsertAnimalRowAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx,
+        AnimalStagingRow row, int fpsYear, CancellationToken ct)
+    {
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            INSERT INTO fps.tblanimals
+                (animaltype, species, security_level, dailyrate, defradailyrate, planbyweek, fpsyear)
+            VALUES
+                (@animaltype, @species, @security_level, @dailyrate, @defradailyrate, @planbyweek, @fpsyear);";
+        cmd.Parameters.AddWithValue("animaltype",     row.AnimalType);
+        cmd.Parameters.AddWithValue("species",        (object?)row.EffectiveSpecies        ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("security_level", (object?)row.EffectiveSecurityLevel  ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("dailyrate",      (object?)row.EffectiveDailyRate      ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("defradailyrate", (object?)row.EffectiveDefraDailyRate ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("planbyweek",     row.EffectivePlanByWeek ?? false);
+        cmd.Parameters.AddWithValue("fpsyear",        fpsYear);
+        try
+        {
+            await cmd.ExecuteNonQueryAsync(ct);
+        }
+        catch (NpgsqlException ex) when (ex.SqlState == "23505")
+        {
+            throw new InvalidOperationException(
+                $"BulkAnimalRatesUpdate: Animal Insert concurrency conflict for AnimalType='{row.AnimalType}', FPS year {fpsYear}: " +
+                "the approved Insert target already exists.", ex);
+        }
+    }
+
+    private static async Task<int> UpdateAnimalRowAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx,
+        AnimalStagingRow row, int fpsYear, CancellationToken ct)
+    {
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            UPDATE fps.tblanimals
+            SET dailyrate      = @dailyrate::money,
+                defradailyrate = @defradailyrate::money,
+                planbyweek     = @planbyweek,
+                species        = @species,
+                security_level = @security_level
+            WHERE animaltype = @animaltype AND fpsyear = @fpsyear;";
+        cmd.Parameters.AddWithValue("dailyrate",      row.EffectiveDailyRate ?? 0m);
+        cmd.Parameters.AddWithValue("defradailyrate", row.EffectiveDefraDailyRate ?? 0m);
+        cmd.Parameters.AddWithValue("planbyweek",     row.EffectivePlanByWeek ?? false);
+        var species  = string.IsNullOrWhiteSpace(row.EffectiveSpecies)       ? null : row.EffectiveSpecies.Trim();
+        var secLevel = string.IsNullOrWhiteSpace(row.EffectiveSecurityLevel) ? null : row.EffectiveSecurityLevel.Trim();
+        cmd.Parameters.AddWithValue("species",        (object?)species  ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("security_level", (object?)secLevel ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("animaltype",     row.AnimalType);
+        cmd.Parameters.AddWithValue("fpsyear",        fpsYear);
+        return await cmd.ExecuteNonQueryAsync(ct);
+    }
+
+    private static RateChangeHistoryRow[] BuildAnimalInsertHistory(
+        AnimalStagingRow row, BulkRatesJobQueueEntry entry, DateTime appliedAt)
+    {
+        var key = JsonSerializer.Serialize(new { animalType = row.AnimalType, fpsYear = entry.FpsYear });
+        var c = (entry.JobQueueId, entry.JobExecutionId, entry.JobId, entry.FpsYear,
+                 "Animal", key, entry.RequestedBy, entry.ApprovedBy, appliedAt);
+        var species       = string.IsNullOrWhiteSpace(row.EffectiveSpecies)       ? null : row.EffectiveSpecies.Trim();
+        var secLevel      = string.IsNullOrWhiteSpace(row.EffectiveSecurityLevel) ? null : row.EffectiveSecurityLevel.Trim();
+        var dailyRate     = row.EffectiveDailyRate?.ToString();
+        var defraDailyRate = row.EffectiveDefraDailyRate?.ToString();
+        var planByWeek    = (row.EffectivePlanByWeek ?? false).ToString();
+        return
+        [
+            MakeHistoryRow(c, "species",        null, species,        "Insert"),
+            MakeHistoryRow(c, "security_level", null, secLevel,       "Insert"),
+            MakeHistoryRow(c, "dailyrate",      null, dailyRate,      "Insert"),
+            MakeHistoryRow(c, "defradailyrate", null, defraDailyRate, "Insert"),
+            MakeHistoryRow(c, "planbyweek",     null, planByWeek,     "Insert"),
+        ];
+    }
+
+    private static RateChangeHistoryRow[] BuildAnimalUpdateHistory(
+        AnimalStagingRow row,
+        (decimal? DailyRate, decimal? DefraDailyRate, bool PlanByWeek, string? Species, string? SecurityLevel)? before,
+        BulkRatesJobQueueEntry entry, DateTime appliedAt)
+    {
+        var key = JsonSerializer.Serialize(new { animalType = row.AnimalType });
+        var c = (entry.JobQueueId, entry.JobExecutionId, entry.JobId, entry.FpsYear,
+                 "Animal", key, entry.RequestedBy, entry.ApprovedBy, appliedAt);
+
+        var beforeDailyRate      = before?.DailyRate ?? 0m;
+        var beforeDefraDailyRate = before?.DefraDailyRate ?? 0m;
+        var beforePlanByWeek     = before?.PlanByWeek ?? false;
+        var beforeSpecies        = string.IsNullOrWhiteSpace(before?.Species)       ? null : before.Value.Species!.Trim();
+        var beforeSecurityLevel  = string.IsNullOrWhiteSpace(before?.SecurityLevel) ? null : before.Value.SecurityLevel!.Trim();
+        var afterDailyRate      = row.EffectiveDailyRate ?? 0m;
+        var afterDefraDailyRate = row.EffectiveDefraDailyRate ?? 0m;
+        var afterPlanByWeek     = row.EffectivePlanByWeek ?? false;
+        var afterSpecies        = string.IsNullOrWhiteSpace(row.EffectiveSpecies)       ? null : row.EffectiveSpecies.Trim();
+        var afterSecurityLevel  = string.IsNullOrWhiteSpace(row.EffectiveSecurityLevel) ? null : row.EffectiveSecurityLevel.Trim();
+
+        var rows = new List<RateChangeHistoryRow>();
+        if (beforeDailyRate != afterDailyRate)
+            rows.Add(MakeHistoryRow(c, "dailyrate", beforeDailyRate.ToString(), afterDailyRate.ToString(), "Update"));
+        if (beforeDefraDailyRate != afterDefraDailyRate)
+            rows.Add(MakeHistoryRow(c, "defradailyrate", beforeDefraDailyRate.ToString(), afterDefraDailyRate.ToString(), "Update"));
+        if (beforePlanByWeek != afterPlanByWeek)
+            rows.Add(MakeHistoryRow(c, "planbyweek", beforePlanByWeek.ToString(), afterPlanByWeek.ToString(), "Update"));
+        if (!string.Equals(beforeSpecies, afterSpecies, StringComparison.OrdinalIgnoreCase))
+            rows.Add(MakeHistoryRow(c, "species", beforeSpecies, afterSpecies, "Update"));
+        if (!string.Equals(beforeSecurityLevel, afterSecurityLevel, StringComparison.OrdinalIgnoreCase))
+            rows.Add(MakeHistoryRow(c, "security_level", beforeSecurityLevel, afterSecurityLevel, "Update"));
+        return [.. rows];
+    }
+
+    // ── Apply Staff rates in one transaction ─────────────────────────────────
+
+    /// <inheritdoc />
+    public async Task<(int Updated, int Unchanged)> ApplyStaffRatesAsync(
+        IReadOnlyList<StaffStagingRow> stagingRows,
+        BulkRatesJobQueueEntry entry,
+        DateTime appliedAt,
+        CancellationToken cancellationToken = default)
+    {
+        int updated = 0, unchanged = 0;
+
+        await using var dbContext = _dbContextFactory.CreateDbContext();
+        await dbContext.Database.OpenConnectionAsync(cancellationToken);
+        var conn = (NpgsqlConnection)dbContext.Database.GetDbConnection();
+
+        await using var tx = await conn.BeginTransactionAsync(cancellationToken);
+
+        var pcGrades = stagingRows
+            .Select(r => r.PcGrade)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var liveLookup = await GetStaffRowsForUpdateAsync(conn, tx, pcGrades, entry.FpsYear, cancellationToken);
+
+        foreach (var row in stagingRows)
+        {
+            switch (row.CalculatedAction)
+            {
+                case "NoChange":
+                    unchanged++;
+                    break;
+
+                case "Update":
+                    liveLookup.TryGetValue(row.PcGrade.ToUpperInvariant(), out var liveBefore);
+                    var rowsAffected = await UpdateStaffRowAsync(conn, tx, row, entry.FpsYear, cancellationToken);
+                    if (rowsAffected == 0)
+                        throw new InvalidOperationException(
+                            $"BulkStaffRatesUpdate: UPDATE matched 0 rows for PcGrade='{row.PcGrade}' in JobQueueId={entry.JobQueueId:D}.");
+                    foreach (var historyRow in BuildStaffHistory(row, liveBefore, entry, appliedAt))
+                        await InsertHistoryRowAsync(conn, tx, historyRow, cancellationToken);
+                    updated++;
+                    break;
+
+                case "Insert":
+                    throw new InvalidOperationException(
+                        $"BulkStaffRatesUpdate: Staff Insert is not supported. " +
+                        $"PcGrade='{row.PcGrade}' in JobQueueId={entry.JobQueueId:D} " +
+                        "has CalculatedAction=Insert, which indicates an upstream defect.");
+
+                default:
+                    throw new InvalidOperationException(
+                        $"BulkStaffRatesUpdate: unexpected CalculatedAction '{row.CalculatedAction}' " +
+                        $"for PcGrade='{row.PcGrade}' in JobQueueId={entry.JobQueueId:D}.");
+            }
+        }
+
+        await tx.CommitAsync(cancellationToken);
+        return (updated, unchanged);
+    }
+
+    private static async Task<Dictionary<string, (decimal? PayRate, decimal? Npr, decimal? Ohr)>> GetStaffRowsForUpdateAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx,
+        IReadOnlyCollection<string> pcGrades, int fpsYear, CancellationToken ct)
+    {
+        var result = new Dictionary<string, (decimal? PayRate, decimal? Npr, decimal? Ohr)>(StringComparer.OrdinalIgnoreCase);
+        if (pcGrades.Count == 0) return result;
+
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            SELECT pcgrade, payrate::numeric, npr::numeric, ohr::numeric
+            FROM fps.profitcentregrade
+            WHERE fpsyear = @fpsyear AND pcgrade = ANY(@grades)
+            ORDER BY pcgrade
+            FOR UPDATE;";
+        cmd.Parameters.AddWithValue("fpsyear", fpsYear);
+        cmd.Parameters.Add(new NpgsqlParameter("grades", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = pcGrades.ToArray() });
+
+        await using var r = await cmd.ExecuteReaderAsync(ct);
+        while (await r.ReadAsync(ct))
+        {
+            var pcGrade = r.GetString(0);
+            result[pcGrade.ToUpperInvariant()] = (
+                r.IsDBNull(1) ? null : r.GetDecimal(1),
+                r.IsDBNull(2) ? null : r.GetDecimal(2),
+                r.IsDBNull(3) ? null : r.GetDecimal(3));
+        }
+        return result;
+    }
+
+    private static async Task<int> UpdateStaffRowAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx,
+        StaffStagingRow row, int fpsYear, CancellationToken ct)
+    {
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            UPDATE fps.profitcentregrade
+            SET payrate = @payrate::money,
+                npr     = @npr::money,
+                ohr     = @ohr::money
+            WHERE pcgrade = @pcgrade AND fpsyear = @fpsyear;";
+        cmd.Parameters.AddWithValue("payrate", row.EffectivePayRate ?? 0m);
+        cmd.Parameters.AddWithValue("npr",     row.EffectiveNpr ?? 0m);
+        cmd.Parameters.AddWithValue("ohr",     row.EffectiveOhr ?? 0m);
+        cmd.Parameters.AddWithValue("pcgrade", row.PcGrade);
+        cmd.Parameters.AddWithValue("fpsyear", fpsYear);
+        return await cmd.ExecuteNonQueryAsync(ct);
+    }
+
+    private static RateChangeHistoryRow[] BuildStaffHistory(
+        StaffStagingRow row, (decimal? PayRate, decimal? Npr, decimal? Ohr)? before,
+        BulkRatesJobQueueEntry entry, DateTime appliedAt)
+    {
+        var key = JsonSerializer.Serialize(new { pcGrade = row.PcGrade });
+        var c = (entry.JobQueueId, entry.JobExecutionId, entry.JobId, entry.FpsYear,
+                 "Staff", key, entry.RequestedBy, entry.ApprovedBy, appliedAt);
+
+        var beforePayRate = before?.PayRate ?? 0m;
+        var beforeNpr     = before?.Npr ?? 0m;
+        var beforeOhr     = before?.Ohr ?? 0m;
+        var afterPayRate  = row.EffectivePayRate ?? 0m;
+        var afterNpr      = row.EffectiveNpr ?? 0m;
+        var afterOhr      = row.EffectiveOhr ?? 0m;
+
+        var rows = new List<RateChangeHistoryRow>();
+        if (beforePayRate != afterPayRate)
+            rows.Add(MakeHistoryRow(c, "payrate", beforePayRate.ToString(), afterPayRate.ToString(), "Update"));
+        if (beforeNpr != afterNpr)
+            rows.Add(MakeHistoryRow(c, "npr", beforeNpr.ToString(), afterNpr.ToString(), "Update"));
+        if (beforeOhr != afterOhr)
+            rows.Add(MakeHistoryRow(c, "ohr", beforeOhr.ToString(), afterOhr.ToString(), "Update"));
+        return [.. rows];
+    }
+
+    // ── Apply FEC (Test/AGRUP) rates in one transaction ──────────────────────
+
+    /// <inheritdoc />
+    public async Task<(int FecInserted, int FecUpdated, int FecUnchanged, int AgrupInserted, int AgrupUpdated, int AgrupUnchanged)> ApplyFecRatesAsync(
+        IReadOnlyList<FecStagingRow> fecRows,
+        IReadOnlyList<AgrupStagingRow> agrupRows,
+        BulkRatesJobQueueEntry entry,
+        DateTime appliedAt,
+        CancellationToken cancellationToken = default)
+    {
+        int fecInserted = 0, fecUpdated = 0, fecUnchanged = 0;
+        int agrupInserted = 0, agrupUpdated = 0, agrupUnchanged = 0;
+        var historyRows = new List<RateChangeHistoryRow>();
+
+        await using var dbContext = _dbContextFactory.CreateDbContext();
+        await dbContext.Database.OpenConnectionAsync(cancellationToken);
+        var conn = (NpgsqlConnection)dbContext.Database.GetDbConnection();
+
+        await using var tx = await conn.BeginTransactionAsync(cancellationToken);
+
+        var testCodes = fecRows.Select(r => r.TestCode)
+            .Concat(agrupRows.Select(r => r.TestCode))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var liveFecLookup   = await GetFecRowsForUpdateAsync(conn, tx, testCodes, entry.FpsYear, cancellationToken);
+        var liveAgrupLookup = await GetAgrupRowsForUpdateAsync(conn, tx, testCodes, entry.FpsYear, cancellationToken);
+
+        foreach (var row in fecRows)
+        {
+            var effectiveRate = row.EffectiveNewRate ?? 0m;
+            liveFecLookup.TryGetValue(row.TestCode.ToUpperInvariant(), out var live);
+
+            switch (row.CalculatedAction)
+            {
+                case "Insert":
+                    await InsertFecRowAsync(conn, tx, row, entry.FpsYear, effectiveRate, cancellationToken);
+                    historyRows.AddRange(BuildFecInsertHistory(row, entry, appliedAt, effectiveRate));
+                    fecInserted++;
+                    break;
+
+                case "Update":
+                case "ZeroRateWithdrawal":
+                    await UpdateFecRowAsync(conn, tx, row.TestCode, entry.FpsYear, effectiveRate, cancellationToken);
+                    historyRows.AddRange(BuildFecUpdateHistory(
+                        row, (live.UnitPriceVla ?? 0m, live.DefraUnitPrice ?? 0m),
+                        entry, appliedAt, effectiveRate, row.CalculatedAction!));
+                    fecUpdated++;
+                    break;
+
+                default:
+                    fecUnchanged++;
+                    break;
+            }
+        }
+
+        foreach (var row in agrupRows)
+        {
+            var agrupKey = (row.TestCode.ToUpperInvariant(), row.Buyer.ToUpperInvariant());
+            var effectiveRate = row.EffectiveNewRate ?? 0m;
+            liveAgrupLookup.TryGetValue(agrupKey, out var live);
+
+            switch (row.CalculatedAction)
+            {
+                case "Insert":
+                    await InsertAgrupRowAsync(conn, tx, row, entry.FpsYear, effectiveRate, appliedAt, cancellationToken);
+                    await WriteTestreqLogAsync(conn, tx,
+                        row.TestCode, row.Buyer, entry.FpsYear, effectiveRate,
+                        row.NoRequired, row.ProjectBuyerCode, row.TestBuyerCode, active: 1,
+                        appliedAt, entry.ApprovedBy, "I", cancellationToken);
+                    historyRows.AddRange(BuildAgrupInsertHistory(row, entry, appliedAt, effectiveRate));
+                    agrupInserted++;
+                    break;
+
+                case "Update":
+                case "ZeroRateWithdrawal":
+                    await UpdateAgrupRowAsync(conn, tx, row.TestCode, row.Buyer, entry.FpsYear, effectiveRate, cancellationToken);
+                    await WriteTestreqLogAsync(conn, tx,
+                        row.TestCode, row.Buyer, entry.FpsYear, effectiveRate,
+                        live.NoRequired, live.ProjectBuyerCode, live.TestBuyerCode, live.Active,
+                        appliedAt, entry.ApprovedBy, "I", cancellationToken);
+                    historyRows.AddRange(BuildAgrupUpdateHistory(
+                        row, live.UnitPrice, entry, appliedAt, effectiveRate, row.CalculatedAction!));
+                    agrupUpdated++;
+                    break;
+
+                default:
+                    agrupUnchanged++;
+                    break;
+            }
+        }
+
+        foreach (var historyRow in historyRows)
+            await InsertHistoryRowAsync(conn, tx, historyRow, cancellationToken);
+
+        await tx.CommitAsync(cancellationToken);
+        return (fecInserted, fecUpdated, fecUnchanged, agrupInserted, agrupUpdated, agrupUnchanged);
+    }
+
+    private static async Task<Dictionary<string, (decimal? UnitPriceVla, decimal? DefraUnitPrice)>> GetFecRowsForUpdateAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx,
+        IReadOnlyCollection<string> testCodes, int fpsYear, CancellationToken ct)
+    {
+        var result = new Dictionary<string, (decimal? UnitPriceVla, decimal? DefraUnitPrice)>(StringComparer.OrdinalIgnoreCase);
+        if (testCodes.Count == 0) return result;
+
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            SELECT itemcode, unitpricevla::numeric, defraunitprice::numeric
+            FROM fps.testorproduct
+            WHERE fpsyear = @fpsyear AND itemcode = ANY(@codes)
+            FOR UPDATE;";
+        cmd.Parameters.AddWithValue("fpsyear", fpsYear);
+        cmd.Parameters.Add(new NpgsqlParameter("codes", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = testCodes.ToArray() });
+
+        await using var r = await cmd.ExecuteReaderAsync(ct);
+        while (await r.ReadAsync(ct))
+        {
+            var testCode = r.GetString(0);
+            result[testCode.ToUpperInvariant()] = (
+                r.IsDBNull(1) ? null : r.GetDecimal(1),
+                r.IsDBNull(2) ? null : r.GetDecimal(2));
+        }
+        return result;
+    }
+
+    private static async Task InsertFecRowAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx,
+        FecStagingRow row, int fpsYear, decimal rate, CancellationToken ct)
+    {
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            INSERT INTO fps.testorproduct
+                (itemcode, itemdescription, unitpricevla, owner, shortdescription, defraunitprice, fpsyear)
+            VALUES
+                (@itemcode, @itemdescription, @unitpricevla, @owner, @shortdescription, @defraunitprice, @fpsyear);";
+        cmd.Parameters.AddWithValue("itemcode",         row.TestCode);
+        cmd.Parameters.AddWithValue("itemdescription",  (object?)row.ItemDescription ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("unitpricevla",     rate);
+        cmd.Parameters.AddWithValue("owner",            (object?)row.Owner ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("shortdescription", (object?)row.ShortDescription ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("defraunitprice",   rate);
+        cmd.Parameters.AddWithValue("fpsyear",          fpsYear);
+        await cmd.ExecuteNonQueryAsync(ct);
+    }
+
+    private static async Task UpdateFecRowAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx,
+        string testCode, int fpsYear, decimal newRate, CancellationToken ct)
+    {
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            UPDATE fps.testorproduct
+            SET unitpricevla = @rate, defraunitprice = @rate
+            WHERE itemcode = @itemcode AND fpsyear = @fpsyear;";
+        cmd.Parameters.AddWithValue("rate",     newRate);
+        cmd.Parameters.AddWithValue("itemcode", testCode);
+        cmd.Parameters.AddWithValue("fpsyear",  fpsYear);
+        await cmd.ExecuteNonQueryAsync(ct);
+    }
+
+    private static async Task<Dictionary<(string TestCode, string Buyer), (decimal? UnitPrice, double? NoRequired, string? ProjectBuyerCode, string? TestBuyerCode, short? Active)>> GetAgrupRowsForUpdateAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx,
+        IReadOnlyCollection<string> testCodes, int fpsYear, CancellationToken ct)
+    {
+        var result = new Dictionary<(string, string), (decimal? UnitPrice, double? NoRequired, string? ProjectBuyerCode, string? TestBuyerCode, short? Active)>();
+        if (testCodes.Count == 0) return result;
+
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            SELECT testcode, buyer, unitprice::numeric, projectbuyercode, testbuyercode,
+                   norequired, active
+            FROM fps.tlkptestreqmt
+            WHERE fpsyear = @fpsyear AND testcode = ANY(@codes)
+            FOR UPDATE;";
+        cmd.Parameters.AddWithValue("fpsyear", fpsYear);
+        cmd.Parameters.Add(new NpgsqlParameter("codes", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = testCodes.ToArray() });
+
+        await using var r = await cmd.ExecuteReaderAsync(ct);
+        while (await r.ReadAsync(ct))
+        {
+            var testCode = r.GetString(0);
+            var buyer    = r.GetString(1);
+            result[(testCode.ToUpperInvariant(), buyer.ToUpperInvariant())] = (
+                r.IsDBNull(2) ? null : r.GetDecimal(2),
+                r.IsDBNull(5) ? null : r.GetDouble(5),
+                r.IsDBNull(3) ? null : r.GetString(3),
+                r.IsDBNull(4) ? null : r.GetString(4),
+                r.IsDBNull(6) ? null : r.GetInt16(6));
+        }
+        return result;
+    }
+
+    private static async Task InsertAgrupRowAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx,
+        AgrupStagingRow row, int fpsYear, decimal rate, DateTime executionTimestamp, CancellationToken ct)
+    {
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            INSERT INTO fps.tlkptestreqmt
+                (testcode, buyer, unitprice, norequired, projectbuyercode, testbuyercode, datecreated, active, fpsyear)
+            VALUES
+                (@testcode, @buyer, @unitprice, @norequired, @projectbuyercode, @testbuyercode, @datecreated, 1, @fpsyear);";
+        cmd.Parameters.AddWithValue("testcode",         row.TestCode);
+        cmd.Parameters.AddWithValue("buyer",            row.Buyer);
+        cmd.Parameters.AddWithValue("unitprice",        rate);
+        cmd.Parameters.AddWithValue("norequired",       (object?)row.NoRequired ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("projectbuyercode", (object?)row.ProjectBuyerCode ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("testbuyercode",    (object?)row.TestBuyerCode ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("datecreated",      executionTimestamp);
+        cmd.Parameters.AddWithValue("fpsyear",          fpsYear);
+        await cmd.ExecuteNonQueryAsync(ct);
+    }
+
+    private static async Task UpdateAgrupRowAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx,
+        string testCode, string buyer, int fpsYear, decimal newRate, CancellationToken ct)
+    {
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        // Spec §2.3: Update UnitPrice only; do not touch NoRequired, DateCreated, Active,
+        // ProjectBuyerCode/TestBuyerCode (existing-row routing immutability).
+        cmd.CommandText = @"
+            UPDATE fps.tlkptestreqmt
+            SET unitprice = @unitprice
+            WHERE testcode = @testcode AND buyer = @buyer AND fpsyear = @fpsyear;";
+        cmd.Parameters.AddWithValue("unitprice", newRate);
+        cmd.Parameters.AddWithValue("testcode",  testCode);
+        cmd.Parameters.AddWithValue("buyer",     buyer);
+        cmd.Parameters.AddWithValue("fpsyear",   fpsYear);
+        await cmd.ExecuteNonQueryAsync(ct);
+    }
+
+    private static async Task WriteTestreqLogAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx,
+        string testCode, string buyer, int fpsYear, decimal unitPrice,
+        double? noRequired, string? projectBuyerCode, string? testBuyerCode, short? active,
+        DateTime executionTimestamp, string? userId, string insertDelete, CancellationToken ct)
+    {
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            INSERT INTO fps.testreq_log
+                (testcode, buyer, unitprice, norequired, projectbuyercode, testbuyercode,
+                 active, date_time, user_id, insert_delete, jobcode, fpsyear)
+            VALUES
+                (@testcode, @buyer, @unitprice, @norequired, @projectbuyercode, @testbuyercode,
+                 @active, @date_time, @user_id, @insert_delete, @jobcode, @fpsyear);";
+        cmd.Parameters.AddWithValue("testcode",         testCode.Length <= 20 ? testCode : testCode[..20]);
+        cmd.Parameters.AddWithValue("buyer",            buyer.Length <= 20 ? buyer : buyer[..20]);
+        cmd.Parameters.AddWithValue("unitprice",        (double)unitPrice);
+        cmd.Parameters.AddWithValue("norequired",       noRequired.HasValue ? (object)(int)noRequired.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("projectbuyercode", (object?)projectBuyerCode ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("testbuyercode",    (object?)testBuyerCode ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("active",           active.HasValue ? (object)active.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("date_time",        executionTimestamp);
+        cmd.Parameters.AddWithValue("user_id",
+            userId is null ? DBNull.Value
+            : userId.Length <= 20 ? (object)userId : userId[..20]);
+        cmd.Parameters.AddWithValue("insert_delete",    insertDelete);
+        cmd.Parameters.AddWithValue("jobcode",          (object?)projectBuyerCode ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("fpsyear",          fpsYear);
+        await cmd.ExecuteNonQueryAsync(ct);
+    }
+
+    private static IEnumerable<RateChangeHistoryRow> BuildFecInsertHistory(
+        FecStagingRow row, BulkRatesJobQueueEntry entry, DateTime appliedAt, decimal newRate)
+    {
+        var key = JsonSerializer.Serialize(new { testCode = row.TestCode });
+        var c = (entry.JobQueueId, entry.JobExecutionId, entry.JobId, entry.FpsYear,
+                 "FEC", key, entry.RequestedBy, entry.ApprovedBy, appliedAt);
+        yield return MakeHistoryRow(c, "unitpricevla",   null, newRate.ToString(), "Insert");
+        yield return MakeHistoryRow(c, "defraunitprice", null, newRate.ToString(), "Insert");
+    }
+
+    private static IEnumerable<RateChangeHistoryRow> BuildFecUpdateHistory(
+        FecStagingRow row,
+        (decimal UnitPriceVla, decimal DefraUnitPrice) before,
+        BulkRatesJobQueueEntry entry, DateTime appliedAt, decimal newRate, string changeType)
+    {
+        var key = JsonSerializer.Serialize(new { testCode = row.TestCode });
+        var c = (entry.JobQueueId, entry.JobExecutionId, entry.JobId, entry.FpsYear,
+                 "FEC", key, entry.RequestedBy, entry.ApprovedBy, appliedAt);
+        yield return MakeHistoryRow(c, "unitpricevla",   before.UnitPriceVla.ToString(), newRate.ToString(), changeType);
+        yield return MakeHistoryRow(c, "defraunitprice", before.DefraUnitPrice.ToString(), newRate.ToString(), changeType);
+    }
+
+    private static IEnumerable<RateChangeHistoryRow> BuildAgrupInsertHistory(
+        AgrupStagingRow row, BulkRatesJobQueueEntry entry, DateTime appliedAt, decimal newRate)
+    {
+        var key = JsonSerializer.Serialize(new { testCode = row.TestCode, buyer = row.Buyer });
+        var c = (entry.JobQueueId, entry.JobExecutionId, entry.JobId, entry.FpsYear,
+                 "AGRUP", key, entry.RequestedBy, entry.ApprovedBy, appliedAt);
+        yield return MakeHistoryRow(c, "unitprice", null, newRate.ToString(), "Insert");
+    }
+
+    private static IEnumerable<RateChangeHistoryRow> BuildAgrupUpdateHistory(
+        AgrupStagingRow row, decimal? currentUnitPrice, BulkRatesJobQueueEntry entry, DateTime appliedAt,
+        decimal newRate, string changeType)
+    {
+        var key = JsonSerializer.Serialize(new { testCode = row.TestCode, buyer = row.Buyer });
+        var c = (entry.JobQueueId, entry.JobExecutionId, entry.JobId, entry.FpsYear,
+                 "AGRUP", key, entry.RequestedBy, entry.ApprovedBy, appliedAt);
+        yield return MakeHistoryRow(c, "unitprice", currentUnitPrice?.ToString(), newRate.ToString(), changeType);
+    }
+
+    private static RateChangeHistoryRow MakeHistoryRow(
+        (Guid JobQueueId, Guid JobExecutionId, int JobId, int FpsYear,
+         string RateCategory, string BusinessKeyJson,
+         string? RequestedBy, string? ApprovedBy, DateTime AppliedAt) c,
+        string fieldName, string? oldValue, string? newValue, string changeType)
+        => new(c.JobQueueId, c.JobExecutionId, c.JobId, c.FpsYear,
+               c.RateCategory, c.BusinessKeyJson, fieldName,
+               oldValue, newValue, changeType,
+               c.RequestedBy, c.ApprovedBy, c.AppliedAt);
 
     // ── Shared history insert ────────────────────────────────────────────────
 

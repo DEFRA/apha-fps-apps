@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Infrastructure.Data;
+﻿using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -7,7 +7,7 @@ namespace Apha.BatchJobs.UnitTests;
 /// <summary>
 /// Validates that the EF Core model configuration mirrors the SQL schema:
 /// column names, required constraints, max-lengths, FK navigation, delete behavior.
-/// No DB connection required — these assertions run entirely against the in-memory model metadata.
+/// No DB connection required â€” these assertions run entirely against the in-memory model metadata.
 /// Internal entity types are accessed by table-name lookup to avoid visibility constraints.
 /// </summary>
 public sealed class EfCoreMappingTests
@@ -25,9 +25,9 @@ public sealed class EfCoreMappingTests
         ctx.Model.GetEntityTypes()
                  .Single(e => e.GetViewName() == view);
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // job_lock
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void BatchLock_JobName_MaxLength_Is_255()
@@ -41,7 +41,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void BatchLock_JobQueueId_Is_Mapped()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var prop = ctx.Model.FindEntityType(typeof(Domain.Entities.BatchLock))!
                        .FindProperty(nameof(Domain.Entities.BatchLock.JobQueueId));
         Assert.NotNull(prop);
@@ -50,20 +49,18 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void BatchLock_TableName_Is_job_lock_In_Fps_Schema()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var entityType = ctx.Model.FindEntityType(typeof(Domain.Entities.BatchLock))!;
         Assert.Equal("job_lock", entityType.GetTableName());
         Assert.Equal("fps", entityType.GetSchema());
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // job_master
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void TblJobMaster_JobName_MaxLength_Is_100()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var entityType = GetEntityByTable(ctx, "job_master");
         var prop = entityType.FindProperty("JobName")!;
         Assert.Equal(100, prop.GetMaxLength());
@@ -72,19 +69,17 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void TblJobMaster_CreatedAt_HasDefaultValueSql()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var prop = GetEntityByTable(ctx, "job_master").FindProperty("CreatedAt")!;
         Assert.Equal("NOW()", prop.GetDefaultValueSql());
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // job_status FK
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void TblJobStatus_HasForeignKey_To_TblJobMaster_Cascade()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var master = GetEntityByTable(ctx, "job_master");
         var status = GetEntityByTable(ctx, "job_status");
         var fk = status.GetForeignKeys()
@@ -93,14 +88,13 @@ public sealed class EfCoreMappingTests
         Assert.Equal(DeleteBehavior.Cascade, fk!.DeleteBehavior);
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // job_queue FK + error message length
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void TblJobQueue_ErrorMessage_MaxLength_Is_1000()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var prop = GetEntityByTable(ctx, "job_queue").FindProperty("ErrorMessage")!;
         Assert.Equal(1000, prop.GetMaxLength());
     }
@@ -108,7 +102,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void TblJobQueue_RequestedAtUtc_ColumnName_Is_requested_at_utc()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var prop = GetEntityByTable(ctx, "job_queue").FindProperty("RequestedAtUtc")!;
         Assert.Equal("requested_at_utc", prop.GetColumnName(StoreObjectIdentifier.Table("job_queue", "fps")));
     }
@@ -116,7 +109,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void TblJobQueue_FpsYear_ColumnName_Is_fpsyear()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var prop = GetEntityByTable(ctx, "job_queue").FindProperty("FpsYear")!;
         Assert.Equal("fpsyear", prop.GetColumnName(StoreObjectIdentifier.Table("job_queue", "fps")));
     }
@@ -124,7 +116,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void TblJobQueue_HasForeignKey_To_TblJobMaster_Restrict()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var master = GetEntityByTable(ctx, "job_master");
         var queue = GetEntityByTable(ctx, "job_queue");
         var fk = queue.GetForeignKeys()
@@ -136,7 +127,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void TblJobQueue_HasForeignKey_To_TblJobStatus_Restrict()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var status = GetEntityByTable(ctx, "job_status");
         var queue = GetEntityByTable(ctx, "job_queue");
         var fk = queue.GetForeignKeys()
@@ -145,14 +135,13 @@ public sealed class EfCoreMappingTests
         Assert.Equal(DeleteBehavior.Restrict, fk!.DeleteBehavior);
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // job_queue_log FK + performed by length
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void TblJobQueueLog_PerformedBy_MaxLength_Is_100()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var prop = GetEntityByTable(ctx, "job_queue_log").FindProperty("PerformedBy")!;
         Assert.Equal(100, prop.GetMaxLength());
     }
@@ -160,7 +149,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void TblJobQueueLog_Note_MaxLength_Is_500()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var prop = GetEntityByTable(ctx, "job_queue_log").FindProperty("Note")!;
         Assert.Equal(500, prop.GetMaxLength());
     }
@@ -168,7 +156,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void TblJobQueueLog_HasForeignKey_To_TblJobQueue_Cascade()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var queue = GetEntityByTable(ctx, "job_queue");
         var log = GetEntityByTable(ctx, "job_queue_log");
         var fk = log.GetForeignKeys()
@@ -180,7 +167,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void TblJobQueueLog_HasForeignKey_To_TblJobStatus_Restrict()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var status = GetEntityByTable(ctx, "job_status");
         var log = GetEntityByTable(ctx, "job_queue_log");
         var fk = log.GetForeignKeys()
@@ -189,14 +175,13 @@ public sealed class EfCoreMappingTests
         Assert.Equal(DeleteBehavior.Restrict, fk!.DeleteBehavior);
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // scheduled_load_run
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void ScheduledLoadRun_Table_Exists_In_Fps_Schema()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var entity = GetEntityByTable(ctx, "scheduled_load_run");
         Assert.Equal("fps", entity.GetSchema());
     }
@@ -204,7 +189,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void ScheduledLoadRun_JobName_MaxLength_Is_100()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var prop = GetEntityByTable(ctx, "scheduled_load_run").FindProperty("JobName")!;
         Assert.Equal(100, prop.GetMaxLength());
     }
@@ -212,7 +196,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void ScheduledLoadRun_HasForeignKey_To_TblJobMaster_Restrict_Using_JobName()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var run = GetEntityByTable(ctx, "scheduled_load_run");
         var master = GetEntityByTable(ctx, "job_master");
 
@@ -223,14 +206,13 @@ public sealed class EfCoreMappingTests
         Assert.Equal("JobName", fk.PrincipalKey.Properties.Single().Name);
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // scheduled_load_step_run + scheduled_load_validation_result
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void ScheduledLoadStepRun_HasForeignKey_To_ScheduledLoadRun_Cascade()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var run = GetEntityByTable(ctx, "scheduled_load_run");
         var step = GetEntityByTable(ctx, "scheduled_load_step_run");
         var fk = step.GetForeignKeys().FirstOrDefault(f => f.PrincipalEntityType == run);
@@ -241,7 +223,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void ScheduledLoadValidationResult_Has_Unique_Index_On_RunId_And_AssertionCode()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var validation = GetEntityByTable(ctx, "scheduled_load_validation_result");
 
         var uniqueIndex = validation
@@ -253,14 +234,13 @@ public sealed class EfCoreMappingTests
         Assert.Equal("uq_scheduled_load_validation_run_assertion", uniqueIndex!.GetDatabaseName());
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // fps_source_project_year
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void FpsSourceProjectYear_Has_CompositePrimaryKey_Year_ParentProject()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var source = GetEntityByTable(ctx, "fps_source_project_year");
         Assert.Equal("fps", source.GetSchema());
         var keyProps = source.FindPrimaryKey()!.Properties.Select(p => p.Name).ToArray();
@@ -270,7 +250,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void FpsSourceProjectYear_Program_MaxLength_Is_10_And_TotalAdditionalCosts_Is_Money()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var source = GetEntityByTable(ctx, "fps_source_project_year");
 
         var program = source.FindProperty("Program")!;
@@ -280,14 +259,13 @@ public sealed class EfCoreMappingTests
         Assert.Equal("money", totalAdditional.GetColumnType());
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // fps_year_totals + fps_year_archive
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void FpsYearTotals_ProjectStatus_Is_Required_And_CustIncome_Is_Money()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var totals = GetEntityByTable(ctx, "fps_year_totals");
         Assert.Equal("fps", totals.GetSchema());
 
@@ -301,7 +279,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void FpsYearArchive_ArchiveReason_MaxLength_Is_100_And_Has_Default()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var archive = GetEntityByTable(ctx, "fps_year_archive");
         Assert.Equal("fps", archive.GetSchema());
         var reason = archive.FindProperty("ArchiveReason")!;
@@ -310,14 +287,13 @@ public sealed class EfCoreMappingTests
         Assert.Equal("Before deletion", reason.GetDefaultValue());
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // fps_project_all_current_year
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void FpsProjectAllCurrentYear_Has_CompositePrimaryKey_Year_ParentProject()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var projectAll = GetEntityByTable(ctx, "fps_project_all_current_year");
         Assert.Equal("fps", projectAll.GetSchema());
         var keyProps = projectAll.FindPrimaryKey()!.Properties.Select(p => p.Name).ToArray();
@@ -327,20 +303,18 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void FpsProjectAllCurrentYear_DateCreated_Uses_Date_Column_Type()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var projectAll = GetEntityByTable(ctx, "fps_project_all_current_year");
         var dateCreated = projectAll.FindProperty("DateCreated")!;
         Assert.Equal("date", dateCreated.GetColumnType());
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // MilestoneUpdateNotifications read-only sources (mabarchive)
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void VLatestMonthYear_Is_Keyless_View_In_Mabarchive_Schema()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var entity = GetEntityByView(ctx, "vlatestmonthyear");
         Assert.Equal("mabarchive", entity.GetViewSchema());
         Assert.Null(entity.FindPrimaryKey());
@@ -349,7 +323,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void VProjectReportsPmMilestoneEmail_Is_Keyless_View_With_Expected_Columns()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var entity = GetEntityByView(ctx, "vprojectreports_pmmilestoneemail");
         Assert.Equal("mabarchive", entity.GetViewSchema());
         Assert.Null(entity.FindPrimaryKey());
@@ -364,7 +337,6 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void TblSettings_Table_Has_Id_PrimaryKey_In_Mabarchive_Schema()
     {
-        using var ctx = new BatchJobsDbContext(_options);
         var entity = GetEntityByTable(ctx, "tbl_settings");
         Assert.Equal("mabarchive", entity.GetSchema());
         var keyProps = entity.FindPrimaryKey()!.Properties.Select(p => p.Name).ToArray();
@@ -375,7 +347,6 @@ public sealed class EfCoreMappingTests
     public void TblCurrentMonth_IsKeyless_Table_In_Fps_Schema()
     {
         // fps.tblcurrentmonth is the authoritative source for latestmonthreleased in TlkpYearLoader.
-        using var ctx = new BatchJobsDbContext(_options);
         var entity = GetEntityByTable(ctx, "tblcurrentmonth");
         Assert.Equal("fps", entity.GetSchema());
         Assert.Null(entity.FindPrimaryKey());
@@ -383,14 +354,13 @@ public sealed class EfCoreMappingTests
         Assert.Equal("currentmonth", entity.FindProperty("CurrentMonth")!.GetColumnName(storeObject));
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // single-db / schema guardrails
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void All_Mapped_Store_Objects_Should_Use_Only_Fps_Or_Mabarchive_Schema()
     {
-        using var ctx = new BatchJobsDbContext(_options);
 
         var invalid = ctx.Model.GetEntityTypes()
             .Where(e => e.GetTableName() is not null || e.GetViewName() is not null)
@@ -410,12 +380,11 @@ public sealed class EfCoreMappingTests
     [Fact]
     public void Mabarchive_Tables_Should_Be_Year_Scoped_Except_Approved_Global_Master_Tables()
     {
-        using var ctx = new BatchJobsDbContext(_options);
 
         var approvedGlobalMasterTables = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "g_tlkpproject",
-            "tbl_settings" // global config lookup (id-keyed), not year-scoped — see MilestoneNotificationsTables.cs
+            "tbl_settings" // global config lookup (id-keyed), not year-scoped â€” see MilestoneNotificationsTables.cs
         };
 
         var invalid = ctx.Model.GetEntityTypes()

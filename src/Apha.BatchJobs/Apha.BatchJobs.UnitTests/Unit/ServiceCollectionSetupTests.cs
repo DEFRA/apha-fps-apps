@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Application.DependencyInjection;
+﻿using Apha.BatchJobs.Application.DependencyInjection;
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
@@ -130,9 +130,7 @@ public sealed class ServiceCollectionSetupTests
     public void AddBatchJobs_ShouldRegisterExactlySixSupportedJobs()
     {
         // Regression guard: adding, removing, or deferring a job must force a deliberate update here.
-        using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{\"month\":\"2026-07\"}");
         var services = CreateServices(GetBatchJobsRoot());
-        using var serviceProvider = services.BuildServiceProvider();
 
         var registeredNames = serviceProvider.GetServices<IBatchJob>()
             .Select(j => j.Name)
@@ -148,9 +146,7 @@ public sealed class ServiceCollectionSetupTests
     [Fact]
     public void AddBatchJobs_AllRegisteredJobs_ShouldDeclareExplicitIdempotencyStrategy()
     {
-        using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{\"month\":\"2026-07\"}");
         var services = CreateServices(GetBatchJobsRoot());
-        using var serviceProvider = services.BuildServiceProvider();
 
         var jobs = serviceProvider.GetServices<IBatchJob>().ToList();
         Assert.NotEmpty(jobs);
@@ -166,9 +162,7 @@ public sealed class ServiceCollectionSetupTests
     [Fact]
     public void AddBatchJobs_ManualAdhocJobs_ShouldHaveNoScheduleExpression()
     {
-        using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{\"month\":\"2026-07\"}");
         var services = CreateServices(GetBatchJobsRoot());
-        using var serviceProvider = services.BuildServiceProvider();
 
         var jobs = serviceProvider.GetServices<IBatchJob>().ToList();
 
@@ -193,7 +187,6 @@ public sealed class ServiceCollectionSetupTests
     [Fact]
     public void AddBatchJobs_DefaultMabArchiveMode_ShouldRegisterMabArchiveLoadersOnly()
     {
-        using var serviceProvider = BuildServiceProvider();
         var loaders = serviceProvider.GetServices<IMabArchiveLoader>().ToList();
 
         Assert.Equal(24, loaders.Count);
@@ -248,7 +241,6 @@ public sealed class ServiceCollectionSetupTests
     [Fact]
     public void AddBatchJobs_ShouldRegisterYearEndDataSetupStepsInExpectedOrder()
     {
-        using var serviceProvider = BuildServiceProvider();
         var steps = serviceProvider.GetServices<IYearEndDataSetupStep>().ToList();
 
         Assert.Equal(
@@ -272,17 +264,15 @@ public sealed class ServiceCollectionSetupTests
     [Fact]
     public void AddBatchJobs_ShouldRegisterEmailTemplateRenderer()
     {
-        using var serviceProvider = BuildServiceProvider();
         Assert.NotNull(serviceProvider.GetRequiredService<IEmailTemplateRenderer>());
     }
 
     [Fact]
     public void AddBatchJobs_WhenGraphEmailSettingsMissing_RegistrationSucceeds_ButResolvingEmailServiceThrows()
     {
-        // No GraphEmailSettings section � expected in every environment until a live Graph send
+        // No GraphEmailSettings section ï¿½ expected in every environment until a live Graph send
         // is authorised. Registration and BuildServiceProvider must not throw; only resolving
         // IEmailService itself should fail, and only at that point.
-        using var serviceProvider = BuildServiceProvider();
 
         var ex = Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<IEmailService>());
         Assert.Contains("GraphEmailSettings", ex.Message);

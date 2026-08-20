@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
+﻿using Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
@@ -35,7 +35,6 @@ public sealed class RecreateSummariesExecutionStepBaseTests
     [Fact]
     public async Task ExecuteAsync_WhenCancelled_DoesNotReturnFailedStepResult()
     {
-        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         var step = new CancellingStep();
@@ -75,7 +74,7 @@ public sealed class RecreateSummariesExecutionStepBaseTests
         Assert.Equal(3, result.RowsAffected);
     }
 
-    // Fake step subclasses — defined here to keep tests self-contained
+    // Fake step subclasses â€” defined here to keep tests self-contained
 
     private sealed class CancellingStep : RecreateSummariesExecutionStepBase
     {

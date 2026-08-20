@@ -1,8 +1,7 @@
-using Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates;
+﻿using Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.BulkRates;
-using Apha.BatchJobs.Infrastructure.Services.BulkRates;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
@@ -78,7 +77,6 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
     }
 
     private BulkStaffRatesService CreateService() => new(
-        new TestDbContextFactory(_connectionString),
         new BulkRatesRepository(new TestDbContextFactory(_connectionString), NullLogger<BulkRatesRepository>.Instance),
         NullLogger<BulkStaffRatesService>.Instance);
 
@@ -219,7 +217,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
     {
         await EnsureYearInMasterAsync(conn, fpsYear);
 
-        // fps.grade is partitioned — use SELECT-then-INSERT
+        // fps.grade is partitioned â€” use SELECT-then-INSERT
         await using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = "SELECT COUNT(*)::int FROM fps.grade WHERE gradecode = 'IT-TGRADE' AND fpsyear = @year;";
@@ -233,7 +231,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
             }
         }
 
-        // fps.divisiongrade is partitioned — use SELECT-then-INSERT
+        // fps.divisiongrade is partitioned â€” use SELECT-then-INSERT
         await using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = "SELECT COUNT(*)::int FROM fps.divisiongrade WHERE divisiongrade = 'IT-TDVG' AND fpsyear = @year;";
@@ -248,7 +246,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── Update action applies the frozen effective_* state and writes history ───────
+    // â”€â”€ Update action applies the frozen effective_* state and writes history â”€â”€â”€â”€â”€â”€â”€
 
     [SkippableFact]
     public async Task ExecuteAsync_UpdateAction_AppliesEffectiveStateAndWritesHistory()
@@ -299,7 +297,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
                 Assert.Equal("payrate", r.GetString(0));
                 Assert.Equal(10.00m, decimal.Parse(r.GetString(1), System.Globalization.CultureInfo.InvariantCulture));
                 Assert.Equal(12.00m, decimal.Parse(r.GetString(2), System.Globalization.CultureInfo.InvariantCulture));
-                Assert.False(await r.ReadAsync(), "Only payrate changed — npr/ohr must not get a history row.");
+                Assert.False(await r.ReadAsync(), "Only payrate changed â€” npr/ohr must not get a history row.");
             }
 
             await using (var cmd = conn.CreateCommand())
@@ -315,7 +313,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── NoChange action applies nothing and writes no history ──────────────────────
+    // â”€â”€ NoChange action applies nothing and writes no history â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [SkippableFact]
     public async Task ExecuteAsync_NoChangeAction_SkipsApplyAndHistory()
@@ -356,7 +354,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    // ── Unexpected actions: Insert, ZeroRateWithdrawal, NotFound, Invalid ───────────
+    // â”€â”€ Unexpected actions: Insert, ZeroRateWithdrawal, NotFound, Invalid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [SkippableFact]
     public async Task ExecuteAsync_InsertAction_ThrowsWithDiagnosticMessage()
@@ -415,3 +413,4 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
         }
     }
 }
+

@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Application.FailureHandling;
+﻿using Apha.BatchJobs.Application.FailureHandling;
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Enums;
@@ -18,7 +18,7 @@ namespace Apha.BatchJobs.UnitTests;
 /// <summary>
 /// Tests for <see cref="BatchWorkerRunner"/>: request resolution, orchestrator invocation,
 /// outcome mapping, and that the summary writer is always invoked exactly once. HealthCheck is
-/// intentionally not covered — <c>Program.cs</c> never lets it reach this runner.
+/// intentionally not covered â€” <c>Program.cs</c> never lets it reach this runner.
 /// </summary>
 public sealed class BatchWorkerRunnerTests
 {
@@ -54,7 +54,7 @@ public sealed class BatchWorkerRunnerTests
     private static async Task<JobExecutionResult> WaitForCancellationAsync(CancellationToken token)
     {
         await Task.Delay(Timeout.Infinite, token);
-        throw new InvalidOperationException("unreachable — Task.Delay should have thrown first");
+        throw new InvalidOperationException("unreachable â€” Task.Delay should have thrown first");
     }
 
     [Fact]
@@ -94,7 +94,6 @@ public sealed class BatchWorkerRunnerTests
     [Fact]
     public async Task RunAsync_WhenOrchestratorThrowsJobLockException_MapsToLockFailure()
     {
-        using var scope = new EnvScopeSet("RecreateSummary", "Manual", Guid.NewGuid().ToString("D"), "arihant");
         var orchestrator = Substitute.For<IJobOrchestrator>();
         orchestrator.RunAsync(Arg.Any<string>(), Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromException<JobExecutionResult>(new JobLockException("already running")));
@@ -111,7 +110,6 @@ public sealed class BatchWorkerRunnerTests
     [Fact]
     public async Task RunAsync_WhenHostShutdownRequested_MapsToCancelledWithHostShutdownReason()
     {
-        using var scope = new EnvScopeSet("RecreateSummary", "Manual", Guid.NewGuid().ToString("D"), "arihant");
         var hostLifetime = CreateLifetime(out var lifetimeCts);
         lifetimeCts.Cancel();
 
@@ -131,7 +129,6 @@ public sealed class BatchWorkerRunnerTests
     [Fact]
     public async Task RunAsync_WhenOverallTimeoutFires_MapsToCancelledWithTimeoutReason()
     {
-        using var scope = new EnvScopeSet("RecreateSummary", "Manual", Guid.NewGuid().ToString("D"), "arihant");
         var orchestrator = Substitute.For<IJobOrchestrator>();
         orchestrator.RunAsync(Arg.Any<string>(), Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(callInfo => WaitForCancellationAsync((CancellationToken)callInfo[6]));
@@ -147,7 +144,6 @@ public sealed class BatchWorkerRunnerTests
     [Fact]
     public async Task RunAsync_WhenCancelledWithoutShutdownOrTimeout_MapsToUnclassified()
     {
-        using var scope = new EnvScopeSet("RecreateSummary", "Manual", Guid.NewGuid().ToString("D"), "arihant");
         var orchestrator = Substitute.For<IJobOrchestrator>();
         orchestrator.RunAsync(Arg.Any<string>(), Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromException<JobExecutionResult>(new OperationCanceledException()));

@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Domain.Configuration;
+﻿using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 using Microsoft.EntityFrameworkCore;
@@ -39,7 +39,6 @@ public sealed class ReloadFpsTotalsServiceTests
     [Fact]
     public void Constructor_WhenLoggerIsNull_ShouldThrowArgumentNullException()
     {
-        using var context = CreateDbContext(GetConnectionString());
 
         var ex = Assert.Throws<ArgumentNullException>(() =>
             new ReloadFpsTotalsService(
