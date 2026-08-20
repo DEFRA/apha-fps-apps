@@ -1,12 +1,6 @@
-using Apha.BatchJobs.Application.Interfaces;
-using Apha.BatchJobs.Domain.Enums;
-using Apha.BatchJobs.Domain.Exceptions;
+﻿using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Interfaces;
-using Apha.BatchJobs.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
-using Npgsql;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 
@@ -19,12 +13,12 @@ namespace Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 ///
 /// Lock lifecycle, retry, and final status are owned exclusively by <see cref="JobOrchestrator"/>.
 /// This job must not acquire or release the distributed lock, and performs no heartbeat or lock
-/// renewal of its own — that is a generic capability to be designed separately.
+/// renewal of its own â€” that is a generic capability to be designed separately.
 /// </summary>
 
 public sealed class RecreateSummaryJob : IBatchJob
 {
-    private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
+    private readonly IRecreateSummariesExecutionRunner _executionRunner;
     private readonly IRecreateSummariesStepCatalog _stepCatalog;
     private readonly IRecreateSummariesContext _jobContext;
     private readonly ICorrelationService _correlationService;
@@ -33,16 +27,13 @@ public sealed class RecreateSummaryJob : IBatchJob
     /// <summary>Canonical job name.</summary>
     public string Name => "RecreateSummary";
 
-    // 2 minutes: steps exceeding this are logged as slow for operational investigation.
-    private const int SlowStepThresholdMs = 120_000;
-
     /// <summary>
     /// Idempotency strategy: full delete-and-rebuild per month with a single wrapping transaction.
     /// </summary>
     public string IdempotencyStrategy => "DeleteAndRebuildWithSingleTransaction";
 
     /// <summary>
-    /// RecreateSummaries is a manually triggered job — no schedule expression.
+    /// RecreateSummaries is a manually triggered job â€” no schedule expression.
     /// </summary>
     public string? ScheduleExpression => null;
 
@@ -56,13 +47,13 @@ public sealed class RecreateSummaryJob : IBatchJob
     /// Initializes a new instance of <see cref="RecreateSummaryJob"/>.
     /// </summary>
     public RecreateSummaryJob(
-        IDbContextFactory<BatchJobsDbContext> dbContextFactory,
+        IRecreateSummariesExecutionRunner executionRunner,
         IRecreateSummariesStepCatalog stepCatalog,
         IRecreateSummariesContext jobContext,
         ICorrelationService correlationService,
         ILogger<RecreateSummaryJob> logger)
     {
-        _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
+        _executionRunner = executionRunner ?? throw new ArgumentNullException(nameof(executionRunner));
         _stepCatalog = stepCatalog ?? throw new ArgumentNullException(nameof(stepCatalog));
         _jobContext = jobContext ?? throw new ArgumentNullException(nameof(jobContext));
         _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
@@ -93,11 +84,12 @@ public sealed class RecreateSummaryJob : IBatchJob
 
         try
         {
-            var results = await ExecuteStepsAsync(
+            var results = await _executionRunner.ExecuteAsync(
                 jobExecutionId,
                 _jobContext.Month,
                 _jobContext.Year,
                 _jobContext.TriggeredBy,
+                _stepCatalog,
                 cancellationToken);
 
             var duration = DateTime.UtcNow - startedAt;
@@ -117,166 +109,6 @@ public sealed class RecreateSummaryJob : IBatchJob
         {
             _logger.LogError(ex, "RecreateSummaries job failed | JobExecutionId={JobExecutionId} | Month={Month} | Year={Year}", jobExecutionId, _jobContext.Month, _jobContext.Year);
             throw;
-        }
-    }
-
-    /// <summary>
-    /// Executes steps 1–14 in order, reads the period-lock flag, and
-    /// conditionally executes steps 15–17, all within one transaction.
-    /// Any failure rolls back the whole transaction exactly once.
-    /// </summary>
-    private async Task<IReadOnlyList<StepResult>> ExecuteStepsAsync(
-        string jobExecutionId,
-        int month,
-        int year,
-        string triggeredBy,
-        CancellationToken cancellationToken)
-    {
-        await using var context = _dbContextFactory.CreateDbContext();
-        IReadOnlyList<StepResult>? completedResults = null;
-        var executionStrategy = context.Database.CreateExecutionStrategy();
-
-        await executionStrategy.ExecuteAsync(async () =>
-        {
-            var results = new List<StepResult>();
-
-            // Ensure retries start from a clean tracking graph.
-            context.ChangeTracker.Clear();
-
-            var npgsqlConnection = (NpgsqlConnection)context.Database.GetDbConnection();
-            if (npgsqlConnection.State != System.Data.ConnectionState.Open)
-                await context.Database.OpenConnectionAsync(cancellationToken);
-
-            var executionContext = new RecreateSummariesExecutionContext(context, npgsqlConnection, year);
-
-            await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-
-            try
-            {
-                _logger.LogInformation("[{JobExecutionId}] RecreateSummaries implementation: DotNetLinq", jobExecutionId);
-
-                // --- Steps 1–14 (mandatory, ordered) ---
-                var mandatorySteps = _stepCatalog.BuildMandatorySteps(month, year, triggeredBy);
-
-                foreach (var step in mandatorySteps)
-                {
-                    results.Add(await ExecuteStepAsync(step, executionContext, jobExecutionId, cancellationToken));
-                }
-
-                // --- Period-lock check (Phase 6) ---
-                var periodLocked = await GetPeriodLockedAsync(context, month, year, cancellationToken);
-
-                _logger.LogInformation(
-                    "[{JobExecutionId}] Period lock check | Month={Month} | Year={Year} | PeriodLocked={PeriodLocked}",
-                    jobExecutionId, month, year, periodLocked);
-
-                if (periodLocked == 0)
-                {
-                    // Steps 15–17: conditional refresh when period is not locked
-                    var refreshSteps = _stepCatalog.BuildRefreshSteps(month);
-
-                    foreach (var step in refreshSteps)
-                    {
-                        results.Add(await ExecuteStepAsync(step, executionContext, jobExecutionId, cancellationToken));
-                    }
-                }
-                else
-                {
-                    // Period is locked — skip refresh steps, record as Skipped
-                    foreach (var stepName in _stepCatalog.BuildRefreshSteps(month).Select(step => step.StepName))
-                    {
-                        var skipped = new StepResult(stepName, 0, DateTime.UtcNow, DateTime.UtcNow,
-                            StepStatus.Skipped, "Period is locked");
-                        results.Add(skipped);
-                        _logger.LogInformation("[{JobExecutionId}] Step {StepName} skipped - period is locked.", jobExecutionId, stepName);
-                    }
-                }
-
-                await transaction.CommitAsync(cancellationToken);
-                context.ChangeTracker.Clear();
-
-                _logger.LogInformation("[{JobExecutionId}] Transaction committed. All steps completed.", jobExecutionId);
-                completedResults = results;
-            }
-            catch (Exception)
-            {
-                // Single rollback point for the whole job transaction: a failed step
-                // (RecreateSummariesStepException) or any other unexpected exception.
-                await SafeRollbackAsync(transaction, jobExecutionId);
-                context.ChangeTracker.Clear();
-                throw;
-            }
-        });
-
-        return completedResults ?? Array.Empty<StepResult>();
-    }
-
-    /// <summary>
-    /// Executes one step and logs its outcome. Throws <see cref="RecreateSummariesStepException"/>
-    /// on failure — the caller's transaction-level catch performs the rollback.
-    /// </summary>
-    private async Task<StepResult> ExecuteStepAsync(
-        IRecreateSummariesExecutionStep step,
-        RecreateSummariesExecutionContext executionContext,
-        string jobExecutionId,
-        CancellationToken cancellationToken)
-    {
-        using var stepScope = _logger.BeginScope(new Dictionary<string, object?> { ["StepName"] = step.StepName });
-        _logger.LogInformation("[{JobExecutionId}] Executing step: {StepName}", jobExecutionId, step.StepName);
-
-        var result = await step.ExecuteAsync(executionContext, cancellationToken);
-
-        var stepDurationMs = (int)(result.EndTime - result.StartTime).TotalMilliseconds;
-        _logger.LogInformation(
-            "[{JobExecutionId}] Step {StepName} -> {Status} | RowsAffected={Rows} | Duration={Ms}ms",
-            jobExecutionId, result.StepName, result.Status, result.RowsAffected,
-            stepDurationMs);
-
-        // Warn if step exceeded the slow-step threshold
-        if (stepDurationMs > SlowStepThresholdMs)
-        {
-            _logger.LogInformation(
-                "[{JobExecutionId}] SLOW STEP DETECTED | StepName={StepName} | Duration={Ms}ms | RowsAffected={Rows}",
-                jobExecutionId, result.StepName, stepDurationMs, result.RowsAffected);
-        }
-
-        if (result.Status == StepStatus.Failed)
-        {
-            _logger.LogError(
-                "[{JobExecutionId}] Step {StepName} failed: {Error}",
-                jobExecutionId, result.StepName, result.ErrorMessage);
-
-            throw new RecreateSummariesStepException(result.StepName, result.ErrorMessage);
-        }
-
-        return result;
-    }
-
-    private async Task<int> GetPeriodLockedAsync(
-        BatchJobsDbContext context,
-        int month,
-        int year,
-        CancellationToken cancellationToken)
-    {
-        var periodLocked = await context.RsTblPeriod
-            .AsNoTracking()
-            .Where(p => p.EndPeriod == month && p.FpsYear == year)
-            .Select(p => p.PeriodLocked)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        return periodLocked ?? 1;
-    }
-
-    private async Task SafeRollbackAsync(IDbContextTransaction transaction, string jobExecutionId)
-    {
-        try
-        {
-            await transaction.RollbackAsync(CancellationToken.None);
-        }
-        catch (Exception rollbackEx)
-        {
-            _logger.LogError(rollbackEx, "[{JobExecutionId}] Rollback failed.", jobExecutionId);
-            throw new InvalidOperationException($"Rollback failed for RecreateSummaries job ({jobExecutionId}).", rollbackEx);
         }
     }
 }
