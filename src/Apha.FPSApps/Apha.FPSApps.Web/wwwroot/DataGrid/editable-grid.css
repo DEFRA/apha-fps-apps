@@ -49,11 +49,7 @@
 }
 
 .grid-scroll-container {
-    /*  flex: 1;
-    overflow: auto;
-    background-color: #fff;*/
     max-height: 435px;
-    /*    height: 400px;*/
     height: auto;
     overflow-y: auto;
 }
