@@ -49,6 +49,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             return ApiResponseDto<MilestoneDto>.FailureResponse(dto.Errors, dto.Meta);
         }
 
+        public async Task<ApiResponseDto<MilestoneDto>> GetMilestoneAsync_PMD(string project, string number)
+        {
+            var response = await _http.GetAsync<MilestoneRes>(
+                $"{PimsApiEndpoints.GetMilestoneAsync_PMD}?project={Uri.EscapeDataString(project)}&number={HttpUtility.UrlEncode(number)}");
+            if (response.Success && response.Data != null)
+                return _mapper.Map<ApiResponseDto<MilestoneDto>>(response);
+            if (response.Success && response.Data == null)
+                return ApiResponseDto<MilestoneDto>.SuccessResponse(null!);
+            var dto = _mapper.Map<ApiResponseDto<MilestoneDto>>(response);
+            return ApiResponseDto<MilestoneDto>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<MilestoneDto>> SaveMilestoneAsync(string project, MilestoneDto dto)
         {
             MilestoneReq request = _mapper.Map<MilestoneReq>(dto);
@@ -130,19 +142,31 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
 
         public async Task<ApiResponseDto<MilestoneFormDatesDto>> GetMilestoneFormDatesAsync(string parentProject, short year)
         {
-           
+
                 var response = await _http.GetAsync<MilestoneFormDatesRes>(
                     string.Format(PimsApiEndpoints.GetMilestoneFormDates, Uri.EscapeDataString(parentProject), year));
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<MilestoneFormDatesDto>>(response);
                 var dto = _mapper.Map<ApiResponseDto<MilestoneFormDatesDto>>(response);
                 return ApiResponseDto<MilestoneFormDatesDto>.FailureResponse(dto.Errors, dto.Meta);
-            
+
+        }
+
+        public async Task<ApiResponseDto<MilestoneFormDatesDto>> GetMilestoneFormDatesAsync_PMD(string parentProject, short year)
+        {
+            var response = await _http.GetAsync<MilestoneFormDatesRes>(
+                $"{PimsApiEndpoints.GetMilestoneFormDatesAsync_PMD}?parentProject={Uri.EscapeDataString(parentProject)}&year={year}");
+            if (response.Success && response.Data != null)
+                return _mapper.Map<ApiResponseDto<MilestoneFormDatesDto>>(response);
+            if (response.Success && response.Data == null)
+                return ApiResponseDto<MilestoneFormDatesDto>.SuccessResponse(null!);
+            var dto = _mapper.Map<ApiResponseDto<MilestoneFormDatesDto>>(response);
+            return ApiResponseDto<MilestoneFormDatesDto>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync(string parentProject, MilestoneFormDatesDto dto)
         {
-            
+
                 MilestoneFormDatesReq request = _mapper.Map<MilestoneFormDatesReq>(dto);
                 var response = await _http.PostAsync<MilestoneFormDatesReq, MilestoneFormDatesRes>(
                     string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parentProject)), request);
@@ -150,7 +174,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     return _mapper.Map<ApiResponseDto<MilestoneFormDatesDto>>(response);
                 var responseDto = _mapper.Map<ApiResponseDto<MilestoneFormDatesDto>>(response);
                 return ApiResponseDto<MilestoneFormDatesDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            
+
+        }
+
+        public async Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync_PMD(string parentProject, MilestoneFormDatesDto dto)
+        {
+            MilestoneFormDatesReq request = _mapper.Map<MilestoneFormDatesReq>(dto);
+            var response = await _http.PostAsync<MilestoneFormDatesReq, MilestoneFormDatesRes>(
+                $"{PimsApiEndpoints.SaveMilestoneFormDatesAsync_PMD}?parentProject={Uri.EscapeDataString(parentProject)}", request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<MilestoneFormDatesDto>>(response);
+            var responseDto = _mapper.Map<ApiResponseDto<MilestoneFormDatesDto>>(response);
+            return ApiResponseDto<MilestoneFormDatesDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         public async Task<ApiResponseDto<object>> DeleteMilestoneFormDatesAsync(string parentProject, short year)

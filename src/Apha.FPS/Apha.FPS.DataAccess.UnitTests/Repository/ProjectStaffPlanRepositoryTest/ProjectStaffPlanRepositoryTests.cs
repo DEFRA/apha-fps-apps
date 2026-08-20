@@ -38,10 +38,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectStaffPlanRepositoryTes
 
         private static List<ProjectStaffPlanView> SampleData() =>
         [
-            new() { ParentProject = "P001", ProgramNo = "PROG1", Name = "Alice Smith",  StaffId = "S001", WorkGroup = "WG_CSU",  GradeCode = "GR1", PlannedHours = 100, Cost = 500m, PayCost = 400m },
-            new() { ParentProject = "P001", ProgramNo = "PROG1", Name = "Bob Jones",    StaffId = "S002", WorkGroup = "WG_BSU",  GradeCode = "GR2", PlannedHours = 80,  Cost = 400m, PayCost = 320m },
-            new() { ParentProject = "P002", ProgramNo = "PROG2", Name = "Carol White",  StaffId = "S003", WorkGroup = "WG_CSU",  GradeCode = "GR1", PlannedHours = 60,  Cost = 300m, PayCost = 240m },
-            new() { ParentProject = "P003", ProgramNo = "PROG3", Name = "Dave Brown",   StaffId = "S004", WorkGroup = "WG_OTHER",GradeCode = "GR3", PlannedHours = 40,  Cost = 200m, PayCost = 160m }
+            new() { ParentProject = "P001", ProgramNo = "PROG1", Name = "Alice Smith",  StaffId = "S001", WorkGroup = "WG_CSU",  GradeCode = "GR1", Contract = "CON_A", ProfitCentre = "PC_A", WgGrade = "WGA", PcGrade = "PCA", PlannedHours = 100, Cost = 500m, PayCost = 400m },
+            new() { ParentProject = "P001", ProgramNo = "PROG1", Name = "Bob Jones",    StaffId = "S002", WorkGroup = "WG_BSU",  GradeCode = "GR2", Contract = "CON_B", ProfitCentre = "PC_B", WgGrade = "WGB", PcGrade = "PCB", PlannedHours = 80,  Cost = 400m, PayCost = 320m },
+            new() { ParentProject = "P002", ProgramNo = "PROG2", Name = "Carol White",  StaffId = "S003", WorkGroup = "WG_CSU",  GradeCode = "GR1", Contract = "CON_A", ProfitCentre = "PC_A", WgGrade = "WGA", PcGrade = "PCA", PlannedHours = 60,  Cost = 300m, PayCost = 240m },
+            new() { ParentProject = "P003", ProgramNo = "PROG3", Name = "Dave Brown",   StaffId = "S004", WorkGroup = "WG_OTHER",GradeCode = "GR3", Contract = "CON_C", ProfitCentre = "PC_C", WgGrade = "WGC", PcGrade = "PCC", PlannedHours = 40,  Cost = 200m, PayCost = 160m }
         ];
 
         #region GetPagedAsync — Happy path
@@ -202,6 +202,107 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectStaffPlanRepositoryTes
 
             Assert.Single(result.Data);
             Assert.Equal("S001", result.Data.First().StaffId);
+        }
+
+        #endregion
+
+        #region GetPagedAsync — Filtering by Contract / ProfitCentre / WgGrade / PcGrade
+
+        [Fact]
+        public async Task GetPagedAsync_FilterByContract_ReturnsMatchingRows()
+        {
+            var repo   = CreateRepository(SampleData());
+            var result = await repo.GetPagedAsync(DefaultQuery(filter: "{\"Contract\":\"CON_A\"}"));
+
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, r => Assert.Contains("CON_A", r.Contract!, StringComparison.OrdinalIgnoreCase));
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_FilterByProfitCentre_ReturnsMatchingRows()
+        {
+            var repo   = CreateRepository(SampleData());
+            var result = await repo.GetPagedAsync(DefaultQuery(filter: "{\"ProfitCentre\":\"PC_B\"}"));
+
+            Assert.Single(result.Data);
+            Assert.All(result.Data, r => Assert.Contains("PC_B", r.ProfitCentre!, StringComparison.OrdinalIgnoreCase));
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_FilterByWgGrade_ReturnsMatchingRows()
+        {
+            var repo   = CreateRepository(SampleData());
+            var result = await repo.GetPagedAsync(DefaultQuery(filter: "{\"WgGrade\":\"WGA\"}"));
+
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, r => Assert.Contains("WGA", r.WgGrade!, StringComparison.OrdinalIgnoreCase));
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_FilterByPcGrade_ReturnsMatchingRows()
+        {
+            var repo   = CreateRepository(SampleData());
+            var result = await repo.GetPagedAsync(DefaultQuery(filter: "{\"PcGrade\":\"PCC\"}"));
+
+            Assert.Single(result.Data);
+            Assert.All(result.Data, r => Assert.Contains("PCC", r.PcGrade!, StringComparison.OrdinalIgnoreCase));
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_FilterByContract_NoMatch_ReturnsEmpty()
+        {
+            var repo   = CreateRepository(SampleData());
+            var result = await repo.GetPagedAsync(DefaultQuery(filter: "{\"Contract\":\"ZZZZ\"}"));
+
+            Assert.Empty(result.Data);
+        }
+
+        #endregion
+
+        #region GetPagedAsync — Sorting by new columns
+
+        [Fact]
+        public async Task GetPagedAsync_SortByContractAscending_ReturnsOrderedResults()
+        {
+            var repo   = CreateRepository(SampleData());
+            var result = await repo.GetPagedAsync(DefaultQuery(sortBy: "contract", descending: false));
+
+            var list = result.Data.ToList();
+            for (int i = 1; i < list.Count; i++)
+                Assert.True(string.Compare(list[i - 1].Contract, list[i].Contract, StringComparison.OrdinalIgnoreCase) <= 0);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_SortByProfitCentreDescending_ReturnsOrderedResults()
+        {
+            var repo   = CreateRepository(SampleData());
+            var result = await repo.GetPagedAsync(DefaultQuery(sortBy: "profitcentre", descending: true));
+
+            var list = result.Data.ToList();
+            for (int i = 1; i < list.Count; i++)
+                Assert.True(string.Compare(list[i - 1].ProfitCentre, list[i].ProfitCentre, StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_SortByWgGradeAscending_ReturnsOrderedResults()
+        {
+            var repo   = CreateRepository(SampleData());
+            var result = await repo.GetPagedAsync(DefaultQuery(sortBy: "wggrade", descending: false));
+
+            var list = result.Data.ToList();
+            for (int i = 1; i < list.Count; i++)
+                Assert.True(string.Compare(list[i - 1].WgGrade, list[i].WgGrade, StringComparison.OrdinalIgnoreCase) <= 0);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_SortByPcGradeAscending_ReturnsOrderedResults()
+        {
+            var repo   = CreateRepository(SampleData());
+            var result = await repo.GetPagedAsync(DefaultQuery(sortBy: "pcgrade", descending: false));
+
+            var list = result.Data.ToList();
+            for (int i = 1; i < list.Count; i++)
+                Assert.True(string.Compare(list[i - 1].PcGrade, list[i].PcGrade, StringComparison.OrdinalIgnoreCase) <= 0);
         }
 
         #endregion
