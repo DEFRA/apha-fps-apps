@@ -2911,3 +2911,9 @@ th.sorted-desc {
 .other-col-id {
     width: 90px;
 }
+/*-- Add button- right align*/
+#gridContainer_comments .editable-grid-container div div,
+#gridContainer_milestonesGrid .editable-grid-container div div,
+#gridContainer_milestoneFormDatesGrid .editable-grid-container div div {
+    justify-content: end
+}
