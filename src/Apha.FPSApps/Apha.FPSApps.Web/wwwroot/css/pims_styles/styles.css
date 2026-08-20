@@ -105,12 +105,9 @@
     }
 }
 
-/* Reports grid: word-wrap long text and widen Description/Report Help columns */
+/* Reports grid: word-wrap long text; set min/max widths for Name, Description and Report Help columns */
 #gridContainer_reportsGrid {
-/*    td[data-property="ReportDescription"],
-    td[data-property="ReportDescription"] span{
-        min-width: 280px !important;
-    }*/
+    td[data-property="ReportName"],
     td[data-property="ReportDescription"],
     td[data-property="ReportHelp"] {
         white-space: normal;
@@ -119,6 +116,7 @@
         padding: 2px;
     }
 
+        td[data-property="ReportName"] span,
         td[data-property="ReportDescription"] span,
         td[data-property="ReportHelp"] span {
             white-space: normal;
@@ -127,15 +125,26 @@
             display: inline-block;
             padding: 2px;
         }
-
+    /* Name column */
+    th[data-property="ReportName"],
+    td[data-property="ReportName"] {
+        min-width: 290px;
+        width: 290px;
+        max-width: 320px;
+    }
+    /* Description column */
     th[data-property="ReportDescription"],
     td[data-property="ReportDescription"] {
-        min-width: 220px;
+        min-width: 300px;
+        width: 300px;
+        max-width: 350px;
     }
-
+    /* Report Help column */
     th[data-property="ReportHelp"],
     td[data-property="ReportHelp"] {
-        min-width: 400px;
+        min-width: 531px;
+        width: 531px;
+        max-width: 560px;
     }
 }
 
@@ -230,9 +239,9 @@
     gap: 8px; /* small gap between input and button */
 }
 
-.sup-inline-control .govuk-input {
-    min-width: 190px;
-}
+    .sup-inline-control .govuk-input, .govuk-select {
+        min-width: 190px;
+    }
 
 .sup-inline-control .govuk-button {
     margin: 0;
