@@ -147,6 +147,8 @@ namespace Apha.Common.Utilities.GenericExcelExport
             return value switch
             {
                 null => null,
+                short a => a == 0 ? "No" : "Yes",
+                bool b => b ? "Yes" : "No",
                 DateOnly d => d.ToDateTime(TimeOnly.MinValue),
                 TimeOnly t => t.ToTimeSpan(),
                 _ => value
