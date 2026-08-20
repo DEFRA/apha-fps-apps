@@ -52,7 +52,8 @@
     align-items: center;
     border: 1px solid #b1b4b6;
     background-color: #f3f2f1;
-    margin-top: 2px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .sup_total_footer__label {
@@ -76,6 +77,73 @@
 .sup_btn_input_height {
     padding: 5px 10px;
     line-height: 1.2;
+}
+
+/* No custom layout rules here - use GOV.UK classes and the supplement stylesheet for layout */
+
+/* Supplement classes for Comments filters table (minimal, aligned to GOV.UK look) */
+.sup-filters-table {
+    width: 50%;
+    border-collapse: collapse;
+}
+
+.sup-nested-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.sup-col-1 { width: 25%; vertical-align: middle; }
+.sup-col-2 { width: 10%; text-align: center; vertical-align: middle; }
+.sup-col-3 { width: 8%; }
+.sup-col-4 { width: 57%; }
+
+.sup-cell-label {
+    vertical-align: middle;
+}
+
+.sup-cell-control {
+    padding: 0;
+}
+
+/* small spacing between nested rows */
+.sup-nested-table tr td {
+    padding: 4px 6px;
+}
+
+/* Inline control wrapper: keep label-to-control gap small and align Save button */
+.sup-inline-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px; /* small gap between input and button */
+}
+
+.sup-inline-control .govuk-input {
+    min-width: 190px;
+}
+
+.sup-inline-control .govuk-button {
+    margin: 0;
+}
+
+/* Filter box border and reduced gaps */
+.sup-filter-box {
+    border: 1px solid #9e9e9e;
+    padding: 6px 8px;
+    display: inline-block;
+    vertical-align: top;
+    margin-left:30px;
+}
+
+/* Reduce gap between label and control */
+.sup-cell-label {
+    padding-right: 6px;
+    white-space: nowrap;
+}
+
+.sup-cell-control select,
+.sup-cell-control input {
+    margin-left: 0;
 }
 
 /*menu*/
@@ -119,11 +187,11 @@ body {
     /* transform: translateX(5px);*/
 }
 
-.sidebar-link.active {
-    color: #ffffff;
-    background: none;
-    /* width: var(--sidebar-width-collapsed);*/
-}
+    .sidebar-link.active {
+        color: #ffffff;
+        background-color: #00005c;
+        /* width: var(--sidebar-width-collapsed);*/
+    }
 
 .sidenav {
     width: 20px;
@@ -135,6 +203,7 @@ body {
     border-radius: 0 8px 8px 0;
     margin-bottom: 10px;
     margin-right: 5px;
+    margin-left: 5px;
 }
 
 .sidenav.collapsed {
@@ -182,17 +251,15 @@ body {
     overflow: hidden;
 }
 
-.sidebar-link-two:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.1);
-    /* transform: translateX(5px);*/
-}
+    .sidebar-link-two:hover {
+        background-color: #155790;
+        color: #fff;
+    }
 
-.sidebar-link-two.active {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.1);
-    /* width: var(--sidebar-width-collapsed);*/
-}
+    .sidebar-link-two.active {
+        background-color: #155790;
+        color: #fff;
+    }
 
 
 .collapsed .sidebar-link-two {

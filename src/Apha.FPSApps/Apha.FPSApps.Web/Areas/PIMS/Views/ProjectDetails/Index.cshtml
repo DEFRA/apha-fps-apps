@@ -70,37 +70,37 @@
                                 {
                                     <div class="govuk-grid-row" style="align-items: flex-start">
                                         <div class="govuk-grid-column-one-quarter">
-                                            <label class="tab-font-bold-size sup_font_weight_700"
+                                            <label class="govuk-!-font-size-16 sup_font_weight_700"
                                                    asp-for="FpsProjectDetails.Parentproject">
                                                 Project
                                             </label>
                                         </div>
                                         <div class="govuk-grid-column-three-quarters sup_font_weight_700">
-                                            <p id="selected_project" class="tab-font-size">
+                                            <p id="selected_project" class="govuk-!-font-size-16 sup_font_weight_700">
                                                 @Model.FpsProjectDetails.Parentproject
                                             </p>
                                         </div>
                                     </div>
                                     <div class="govuk-grid-row">
                                         <div class="govuk-grid-column-one-quarter">
-                                            <label class="tab-font-bold-size sup_font_weight_700"
+                                            <label class="govuk-!-font-size-16 sup_font_weight_700"
                                                    asp-for="FpsProjectDetails.Projecttitle">
                                                 Title
                                             </label>
                                         </div>
                                         <div class="govuk-grid-column-three-quarters sup_font_weight_700">
-                                            <p class="tab-font-size">@Model.FpsProjectDetails.Projecttitle</p>
+                                            <p class="govuk-!-font-size-16 sup_font_weight_700">@Model.FpsProjectDetails.Projecttitle</p>
                                         </div>
                                     </div>
                                     <div class="govuk-grid-row">
                                         <div class="govuk-grid-column-one-quarter">
-                                            <label class="tab-font-bold-size sup_font_weight_700"
+                                            <label class="govuk-!-font-size-16 sup_font_weight_700"
                                                    asp-for="FpsProjectDetails.Disease">
                                                 Disease
                                             </label>
                                         </div>
                                         <div class="govuk-grid-column-three-quarters sup_font_weight_700">
-                                            <p class="tab-font-size">
+                                            <p class="govuk-!-font-size-16 sup_font_weight_700">
                                                 @(string.IsNullOrWhiteSpace(Model.FpsProjectDetails.Disease)
                                                     ? "Not Specified"
                                                     : Model.FpsProjectDetails.Disease)
@@ -109,24 +109,24 @@
                                     </div>
                                     <div class="govuk-grid-row">
                                         <div class="govuk-grid-column-one-quarter">
-                                            <label class="tab-font-bold-size sup_font_weight_700"
+                                            <label class="govuk-!-font-size-16 sup_font_weight_700"
                                                    asp-for="FpsProjectDetails.Contract">
                                                 Contract
                                             </label>
                                         </div>
                                         <div class="govuk-grid-column-three-quarters sup_font_weight_700">
-                                            <p class="tab-font-size">@Model.FpsProjectDetails.Contract</p>
+                                            <p class="govuk-!-font-size-16 sup_font_weight_700">@Model.FpsProjectDetails.Contract</p>
                                         </div>
                                     </div>
                                     <div class="govuk-grid-row">
                                         <div class="govuk-grid-column-one-quarter">
-                                            <label class="tab-font-bold-size sup_font_weight_700"
+                                            <label class="govuk-!-font-size-16 sup_font_weight_700"
                                                    asp-for="FpsProjectDetails.Projectstatus">
                                                 Status
                                             </label>
                                         </div>
                                         <div class="govuk-grid-column-three-quarters sup_font_weight_700">
-                                            <p>@Model.FpsProjectDetails.Projectstatus</p>
+                                            <p class="govuk-!-font-size-16 sup_font_weight_700">@Model.FpsProjectDetails.Projectstatus</p>
                                         </div>
                                     </div>
                                 }
@@ -258,7 +258,7 @@
                                                            id="manager-transfer"
                                                            aria-label="manager-transfer"
                                                            asp-for="ProposedProjectDetails.Manager"
-                                                           asp-for="ProposedProjectDetails.Manager"
+                                                         
                                                            type="text" />
                                                 </div>
                                             </fieldset>
@@ -322,18 +322,18 @@
                           asp-area="PIMS"
                           asp-route-parentproject="@parentproject"
                           method="post"
-                          class="govuk-form-group selectedProjectForm"
+                          class="govuk-form-group selectedProjectForm sup_min_height_620"
                           id="formPimsDetailRight">
                         @Html.AntiForgeryToken()
                         <div class="flex-column">
                             <fieldset class="govuk-fieldset">
                                 <div class="headline">
-                                    <h6 class="selectedProjectForm govuk-form-group">PIMS Details</h6>
+                                    <h6 class="selectedProjectForm sup_font_weight_700 govuk-form-group">PIMS Details</h6>
                                 </div>
                                 <div class="govuk-grid-row">
                                     <!-- Left sub-column -->
                                     <div class="govuk-grid-column-one-half">
-                                        <div class="govuk-form-group">
+                                        <div class="govuk-form-group">      
                                             <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pims-version">
                                                 Version
                                             </label>
