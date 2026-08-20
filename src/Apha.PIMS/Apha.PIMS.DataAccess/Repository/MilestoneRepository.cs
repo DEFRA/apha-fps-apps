@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Dynamic;
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 
 
 namespace Apha.PIMS.DataAccess.Repository
@@ -413,7 +414,6 @@ namespace Apha.PIMS.DataAccess.Repository
         public async Task ValidateStagingAsync(string project, string? typeId, bool isDeliverableMode, string? createdBy = null)
         {
             IQueryable<StagingMilestone> query = _dbContext.StagingMilestones;
-               
 
             if (!string.IsNullOrWhiteSpace(createdBy))
                 query = query.Where(s => s.CreatedBy == createdBy);
@@ -424,8 +424,7 @@ namespace Apha.PIMS.DataAccess.Repository
             {
                 // Skip fully empty rows
                 if (string.IsNullOrWhiteSpace(row.Description) &&
-                    string.IsNullOrWhiteSpace(row.Number)
-                    )
+                    string.IsNullOrWhiteSpace(row.Number))
                 {
                     _dbContext.StagingMilestones.Remove(row);
                     continue;
@@ -434,32 +433,52 @@ namespace Apha.PIMS.DataAccess.Repository
                 row.TypeId = typeId;
                 row.Note = null;
 
-                // Validate date
-                if (row.DateDue == default)
-                    row.Note = (row.Note ?? string.Empty) + "(*Please check this date*)";
-
-                // Validate number format: must match YY/NN
-                if (!string.IsNullOrWhiteSpace(row.Number) &&
-                    !System.Text.RegularExpressions.Regex.IsMatch(row.Number.Trim(), @"^\d{2}/\d{2}$"))
-                {
-                    row.Note = (row.Note ?? string.Empty) + " Please check this number format.";
-                }
-                else if (!string.IsNullOrWhiteSpace(row.Number))
-                {
-                    string trimmed = row.Number.Trim();
-                    bool exists = await _dbContext.Milestones
-                        .AnyAsync(m => m.Project == project && m.Number == trimmed);
-                    if (exists)
-                        row.Note = (row.Note ?? string.Empty) + $" {ExistingMilestoneNote}.";
-                    else
-                        row.Number = trimmed;
-                }
+                await ValidateRowAsync(row, project);
             }
 
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<int> ImportStagingAsync(string project, string? changedBy, string? createdBy = null)
+        private async Task ValidateRowAsync(StagingMilestone row, string project)
+        {
+            ValidateDateDue(row);
+            await ValidateNumberAsync(row, project);
+        }
+
+        private void ValidateDateDue(StagingMilestone row)
+        {
+            if (row.DateDue == default)
+                row.Note = (row.Note ?? string.Empty) + "(*Please check this date*)";
+        }
+
+        private async Task ValidateNumberAsync(StagingMilestone row, string project)
+        {
+            if (string.IsNullOrWhiteSpace(row.Number))
+                return;
+
+            if (!IsValidNumberFormat(row.Number))
+            {
+                row.Note = (row.Note ?? string.Empty) + " Please check this number format.";
+                return;
+            }
+
+            string trimmed = row.Number.Trim();
+            bool exists = await _dbContext.Milestones
+                .AnyAsync(m => m.Project == project && m.Number == trimmed);
+
+            if (exists)
+                row.Note = (row.Note ?? string.Empty) + $" {ExistingMilestoneNote}.";
+            else
+                row.Number = trimmed;
+        }
+
+        private bool IsValidNumberFormat(string number)
+        {
+            return Regex.IsMatch(number.Trim(), @"^\d{2}/\d{2}$", RegexOptions.None, TimeSpan.FromSeconds(1));
+        }
+
+
+        public async Task<int> ImportStagingAsync(string project, string? changedBy = null, string? createdBy = null)
         {
             IQueryable<StagingMilestone> validQuery = _dbContext.StagingMilestones
                 .AsNoTracking()
@@ -532,7 +551,7 @@ namespace Apha.PIMS.DataAccess.Repository
             return newMilestones.Count;
         }
 
-        public async Task<int> ImportWithOverwriteAsync(string project, string? changedBy, string? createdBy = null)
+        public async Task<int> ImportWithOverwriteAsync(string project, string? changedBy = null, string? createdBy = null)
         {
             IQueryable<StagingMilestone> updateQuery = _dbContext.StagingMilestones;
 
@@ -656,10 +675,6 @@ namespace Apha.PIMS.DataAccess.Repository
         }
         public async Task<PagedData<Milestone>> GetPMDMilestonesAsync(PaginationParameters<string> parameters, string project)
         {
-            //DateTime fyStart = GetFYStart();
-            //DateTime fyEnd = fyStart.AddYears(1).AddDays(-1);
-
-
             DateTime fyStart = GetFYStart();
             DateTime fyEnd = fyStart.AddYears(1).AddDays(-1);
 
@@ -697,7 +712,7 @@ namespace Apha.PIMS.DataAccess.Repository
             int currentMonth = DateTime.Today.Month;
 
             int fyYear = currentMonth < 6 ? currentYear - 1 : currentYear;
-            return new DateTime(fyYear, 4, 1);
+            return new DateTime(fyYear, 4, 1, 0, 0, 0, DateTimeKind.Unspecified);
         }
     }
 }
