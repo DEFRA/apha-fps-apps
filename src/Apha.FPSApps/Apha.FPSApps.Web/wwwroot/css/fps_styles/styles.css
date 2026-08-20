@@ -5411,7 +5411,7 @@ body,
     max-width: 25em;
 }*/
 
-/*#gridContainer_rcGradeGrid .grid-scroll-container {
+#gridContainer_rcGradeGrid .grid-scroll-container {
     height: 260px;
     max-height: 260px;
 }
@@ -5425,7 +5425,7 @@ body,
     height: 240px;
     max-height: 240px;
 }
-*/
+
 #gridContainer_wgGradeGrid .editable-grid-container {
     min-height: unset;
 }
