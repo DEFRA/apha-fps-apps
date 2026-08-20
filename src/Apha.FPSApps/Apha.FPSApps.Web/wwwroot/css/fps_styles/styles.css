@@ -5527,3 +5527,8 @@ body,
         display: none;
     }
 }
+.project-dropdown-panel{
+    td{
+        text-align: left;
+    }
+}

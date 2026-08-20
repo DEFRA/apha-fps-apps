@@ -38,9 +38,6 @@
 }
 
 .grid-wrapper {
-    /* display: flex;
-    flex: 1;
-    overflow: hidden;*/
     max-height: 423px;
     height: 403px;
     border: 0 !important;

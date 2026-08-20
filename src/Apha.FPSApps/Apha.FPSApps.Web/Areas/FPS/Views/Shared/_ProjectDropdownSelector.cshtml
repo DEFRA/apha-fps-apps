@@ -8,17 +8,15 @@
     var label        = ViewData["ProjectDropdownLabel"]?.ToString() ?? "Project:";
 }
 <div style="display: flex; justify-content: flex-end; align-items: center;" class="col-md-6">
-    @{ var uid = "pd_" + DateTime.Now.Ticks.ToString(); }
-    <label id="projectDropdownLabel_@uid" class="fw-bold me-2" style="white-space:nowrap;">@label</label>
+    <label class="fw-bold me-2" style="white-space:nowrap;">@label</label>
     <div style="position:relative;">
-        <input type="text" id="projectNameInput_@uid" placeholder="Select Project" autocomplete="off"
-               class="govuk-input down-arrow-img project-dropdown-input" style="width:220px; cursor:pointer;"
-               value="@selectedCode" aria-label="Filter project" aria-labelledby="projectDropdownLabel_@uid" aria-owns="ProjectDropdownBody_@uid" aria-haspopup="listbox" aria-expanded="false" aria-controls="ProjectDropdownBody_@uid" readonly />
-        <div id="ProjectDropdownPanel_@uid" class="project-dropdown-panel" style="display:none; position:fixed; width:420px;
+        <input type="text" id="projectNameInput" placeholder="Select Project" autocomplete="off"
+               class="govuk-input down-arrow-img" style="width:220px; cursor:pointer;"
+               value="@selectedCode" aria-label="Filter project" readonly />
+        <div id="ProjectDropdownPanel" style="display:none; position:fixed; width:420px;
                 max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
                 box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:9999;">
-            <label for="ProjectSearchBox_@uid" class="govuk-label govuk-visually-hidden">Search projects</label>
-            <input type="text" id="ProjectSearchBox_@uid" class="project-dropdown-search" placeholder="Type to search project" aria-label="Search projects"
+            <input type="text" id="ProjectSearchBox" placeholder="Type to search project"
                    style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
             <table style="width:100%; border-collapse:collapse; font-size:14px;">
                 <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
@@ -27,7 +25,7 @@
                         <th style="padding:6px 8px; text-align:left;">Project Title</th>
                     </tr>
                 </thead>
-                <tbody id="ProjectDropdownBody_@uid" class="project-dropdown-body" role="listbox" aria-label="Project results"></tbody>
+                <tbody id="ProjectDropdownBody"></tbody>
             </table>
         </div>
     </div>
