@@ -1,6 +1,8 @@
-﻿using Apha.FPSApps.Application.Interfaces.FPS;
+﻿using Apha.Common.Utilities.StateManagement;
+using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -19,27 +21,52 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IMapper _mapper;
         private readonly IContributionSummaryService _service;
         private readonly IProfitCentreService _profitCentreService;
+        private readonly IAppStateService _appStateService;
 
         public ContributionSummaryController(
             IMapper mapper,
             IContributionSummaryService service,
-            IProfitCentreService profitCentreService)
+            IProfitCentreService profitCentreService,
+            IAppStateService appStateService)
         {
             _mapper              = mapper;
             _service             = service;
             _profitCentreService = profitCentreService;
+            _appStateService     = appStateService;
         }
 
         // ?? Page load ????????????????????????????????????????????????????????
 
-        /// <summary>Renders the page with the Selling PC dropdown only; grid loads via AJAX.</summary>
-        public async Task<IActionResult> Index()
+        /// <summary>Renders the page with the Selling PC dropdown, restoring the session selection.</summary>
+        public async Task<IActionResult> Index(string? profitCentre = null)
         {
+            var list = await GetProfitCentreSelectListAsync();
+
+            if (profitCentre == null)
+                profitCentre = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProfitCentre);
+
+            var selected = !string.IsNullOrWhiteSpace(profitCentre)
+                && list.Any(p => p.Value == profitCentre) ? profitCentre : null;
+
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, selected ?? string.Empty);
+
             var vm = new ContributionSummaryViewModel
             {
-                SellingProfitCentres = await GetProfitCentreSelectListAsync()
+                SellingProfitCentres = list,
+                SelectedSellingPc    = selected
             };
             return View(vm);
+        }
+
+        /// <summary>
+        /// Saves the selected profit centre to session (called client-side via AJAX when the
+        /// dropdown changes, including when the user resets to the empty option).
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> SaveProfitCentreSession([FromBody] string profitCentre)
+        {
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, profitCentre ?? string.Empty);
+            return Ok();
         }
 
         // ?? Grid load (AJAX, called by DataGrid on every page/sort/filter change) ??
@@ -51,6 +78,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpPost]
         public async Task<IActionResult> LoadData(PaginationFilter<string> request, string sellingPc)
         {
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, sellingPc ?? string.Empty);
+
             if (IsSellingPcMissing(sellingPc, out var badRequest))
                 return badRequest!;
 

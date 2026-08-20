@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -27,6 +28,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffResourceControllerTest
         private readonly IProfitCentreService   _profitCentreService;
         private readonly IWorkGroupService       _workGroupService;
         private readonly IStaffJobService        _staffJobService;
+        private readonly IAppStateService        _appStateService;
         private readonly StaffResourceController _controller;
 
         public StaffResourceControllerTests()
@@ -35,12 +37,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffResourceControllerTest
             _profitCentreService = Substitute.For<IProfitCentreService>();
             _workGroupService    = Substitute.For<IWorkGroupService>();
             _staffJobService     = Substitute.For<IStaffJobService>();
+            _appStateService     = Substitute.For<IAppStateService>();
 
             _controller = new StaffResourceController(
                 _mapper,
                 _profitCentreService,
                 _workGroupService,
-                _staffJobService);
+                _staffJobService,
+                _appStateService);
 
             var urlHelper = Substitute.For<IUrlHelper>();
             urlHelper.Action(Arg.Is<UrlActionContext>(ctx => ctx.Action == nameof(StaffResourceController.LoadWorkgroupGrid)))
@@ -101,12 +105,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffResourceControllerTest
         #region Index
 
         [Fact]
-        public async Task Index_WithNoProfitCentre_ReturnsViewWithAutoSelectedFirst()
+        public async Task Index_WithNoProfitCentre_AndNoSessionValue_ReturnsViewWithEmptySelection()
         {
             // Arrange
             SetupProfitCentreSuccess();
             SetupWorkgroupSuccess("PC01");
             _mapper.Map<PaginationModel>(Arg.Any<object>()).Returns(new PaginationModel());
+            // Session returns null/empty (no previously saved selection)
+            _appStateService.GetSessionAsync<string>(Arg.Any<string>()).Returns((string?)null);
 
             // Act
             var result = await _controller.Index(null);
@@ -115,7 +121,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffResourceControllerTest
             var viewResult = Assert.IsType<ViewResult>(result);
             var model      = Assert.IsType<StaffResourceViewModel>(viewResult.Model);
 
-            Assert.Equal("PC01", model.SelectedProfitCentre);
+            Assert.Equal(string.Empty, model.SelectedProfitCentre);
             Assert.Equal(2, model.ProfitCentreList.Count);
             Assert.NotNull(model.WorkgroupGrid);
             Assert.NotNull(model.StaffGrid);

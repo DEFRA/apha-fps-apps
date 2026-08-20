@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -23,6 +24,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         private readonly IProfitCentreGradeService _rcGradeService;
         private readonly IWorkGroupGradeService _wgGradeService;
         private readonly IWorkGroupEmployeeService _wgEmployeeService;
+        private readonly IAppStateService _appStateService;
         private readonly ResourceSetUpController _controller;
 
         public ResourceSetUpControllerTests()
@@ -32,13 +34,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             _rcGradeService      = Substitute.For<IProfitCentreGradeService>();
             _wgGradeService      = Substitute.For<IWorkGroupGradeService>();
             _wgEmployeeService   = Substitute.For<IWorkGroupEmployeeService>();
+            _appStateService     = Substitute.For<IAppStateService>();
 
             _controller = new ResourceSetUpController(
                 _mapper,
                 _profitCentreService,
                 _rcGradeService,
                 _wgGradeService,
-                _wgEmployeeService);
+                _wgEmployeeService,
+                _appStateService);
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
