@@ -90,20 +90,34 @@ public sealed class BulkStaffRatesService : IBulkStaffRatesService
 
             foreach (var row in stagingRows)
             {
-                if (row.CalculatedAction == "NoChange")
+                switch (row.CalculatedAction)
                 {
-                    unchanged++;
-                    continue;
-                }
+                    case "NoChange":
+                        unchanged++;
+                        break;
 
-                liveLookup.TryGetValue(row.PcGrade.ToUpperInvariant(), out var liveBefore);
-                var rowsAffected = await UpdateStaffRowAsync(conn, tx, row, fpsYear, cancellationToken);
-                if (rowsAffected == 0)
-                    throw new InvalidOperationException(
-                        $"BulkStaffRatesUpdate: UPDATE matched 0 rows for PcGrade='{row.PcGrade}' in JobQueueId={jobQueueId:D}.");
-                foreach (var historyRow in BuildHistory(row, liveBefore, entry, appliedAt))
-                    await BulkRatesRepository.InsertHistoryRowAsync(conn, tx, historyRow, cancellationToken);
-                updated++;
+                    case "Update":
+                        liveLookup.TryGetValue(row.PcGrade.ToUpperInvariant(), out var liveBefore);
+                        var rowsAffected = await UpdateStaffRowAsync(conn, tx, row, fpsYear, cancellationToken);
+                        if (rowsAffected == 0)
+                            throw new InvalidOperationException(
+                                $"BulkStaffRatesUpdate: UPDATE matched 0 rows for PcGrade='{row.PcGrade}' in JobQueueId={jobQueueId:D}.");
+                        foreach (var historyRow in BuildHistory(row, liveBefore, entry, appliedAt))
+                            await BulkRatesRepository.InsertHistoryRowAsync(conn, tx, historyRow, cancellationToken);
+                        updated++;
+                        break;
+
+                    case "Insert":
+                        throw new InvalidOperationException(
+                            $"BulkStaffRatesUpdate: Staff Insert is not supported. " +
+                            $"PcGrade='{row.PcGrade}' in JobQueueId={jobQueueId:D} " +
+                            "has CalculatedAction=Insert, which indicates an upstream defect.");
+
+                    default:
+                        throw new InvalidOperationException(
+                            $"BulkStaffRatesUpdate: unexpected CalculatedAction '{row.CalculatedAction}' " +
+                            $"for PcGrade='{row.PcGrade}' in JobQueueId={jobQueueId:D}.");
+                }
             }
 
             await tx.CommitAsync(cancellationToken);

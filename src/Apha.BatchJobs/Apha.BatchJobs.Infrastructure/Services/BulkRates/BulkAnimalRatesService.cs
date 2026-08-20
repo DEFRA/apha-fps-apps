@@ -72,7 +72,7 @@ public sealed class BulkAnimalRatesService : IBulkAnimalRatesService
             jobQueueId, stagingRows.Count);
 
         // ── 3. Execute all mutations in one transaction ───────────────────
-        int updated = 0, unchanged = 0;
+        int inserted = 0, updated = 0, unchanged = 0;
 
         await using var dbContext = _dbContextFactory.CreateDbContext();
         await dbContext.Database.OpenConnectionAsync(cancellationToken);
@@ -90,32 +90,52 @@ public sealed class BulkAnimalRatesService : IBulkAnimalRatesService
 
             foreach (var row in stagingRows)
             {
-                if (row.CalculatedAction == "NoChange")
+                switch (row.CalculatedAction)
                 {
-                    unchanged++;
-                    continue;
-                }
+                    case "NoChange":
+                        unchanged++;
+                        break;
 
-                liveLookup.TryGetValue(row.AnimalType.ToUpperInvariant(), out var liveBefore);
-                var rowsAffected = await UpdateAnimalRowAsync(conn, tx, row, fpsYear, cancellationToken);
-                if (rowsAffected == 0)
-                    throw new InvalidOperationException(
-                        $"BulkAnimalRatesUpdate: UPDATE matched 0 rows for AnimalType='{row.AnimalType}' in JobQueueId={jobQueueId:D}.");
-                foreach (var historyRow in BuildHistory(row, liveBefore, entry, appliedAt))
-                    await BulkRatesRepository.InsertHistoryRowAsync(conn, tx, historyRow, cancellationToken);
-                updated++;
+                    case "Update":
+                        liveLookup.TryGetValue(row.AnimalType.ToUpperInvariant(), out var liveBefore);
+                        var rowsAffected = await UpdateAnimalRowAsync(conn, tx, row, fpsYear, cancellationToken);
+                        if (rowsAffected == 0)
+                            throw new InvalidOperationException(
+                                $"BulkAnimalRatesUpdate: UPDATE matched 0 rows for AnimalType='{row.AnimalType}' in JobQueueId={jobQueueId:D}.");
+                        foreach (var historyRow in BuildUpdateHistory(row, liveBefore, entry, appliedAt))
+                            await BulkRatesRepository.InsertHistoryRowAsync(conn, tx, historyRow, cancellationToken);
+                        updated++;
+                        break;
+
+                    case "Insert":
+                        if (liveLookup.ContainsKey(row.AnimalType.ToUpperInvariant()))
+                            throw new InvalidOperationException(
+                                $"BulkAnimalRatesUpdate: Animal Insert concurrency conflict for AnimalType='{row.AnimalType}', FPS year {fpsYear}: " +
+                                "the approved Insert target already exists.");
+                        await InsertAnimalRowAsync(conn, tx, row, fpsYear, cancellationToken);
+                        foreach (var historyRow in BuildInsertHistory(row, entry, appliedAt))
+                            await BulkRatesRepository.InsertHistoryRowAsync(conn, tx, historyRow, cancellationToken);
+                        inserted++;
+                        break;
+
+                    default:
+                        throw new InvalidOperationException(
+                            $"BulkAnimalRatesUpdate: unexpected CalculatedAction '{row.CalculatedAction}' " +
+                            $"for AnimalType='{row.AnimalType}' in JobQueueId={jobQueueId:D}. " +
+                            "Only NoChange, Update, and Insert are supported.");
+                }
             }
 
             await tx.CommitAsync(cancellationToken);
 
             _logger.LogInformation(
-                "BulkAnimalRatesUpdate committed | JobQueueId={JobQueueId} | Updated={Updated} | Unchanged={Unchanged}",
-                jobQueueId, updated, unchanged);
+                "BulkAnimalRatesUpdate committed | JobQueueId={JobQueueId} | Inserted={Inserted} | Updated={Updated} | Unchanged={Unchanged}",
+                jobQueueId, inserted, updated, unchanged);
 
             // ── US-XC-02: Log commit summary ──────────────────────────────
             await _repository.WriteJobQueueLogAsync(
                 jobQueueId,
-                $"Rate changes committed: Animal updated={updated}, unchanged={unchanged}.",
+                $"Rate changes committed: Animal inserted={inserted}, updated={updated}, unchanged={unchanged}.",
                 entry.ApprovedBy, cancellationToken);
         }
 
@@ -204,6 +224,38 @@ public sealed class BulkAnimalRatesService : IBulkAnimalRatesService
         return result;
     }
 
+    internal static async Task InsertAnimalRowAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx,
+        AnimalStagingRow row, int fpsYear,
+        CancellationToken ct)
+    {
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            INSERT INTO fps.tblanimals
+                (animaltype, species, security_level, dailyrate, defradailyrate, planbyweek, fpsyear)
+            VALUES
+                (@animaltype, @species, @security_level, @dailyrate, @defradailyrate, @planbyweek, @fpsyear);";
+        cmd.Parameters.AddWithValue("animaltype",     row.AnimalType);
+        cmd.Parameters.AddWithValue("species",        (object?)row.EffectiveSpecies        ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("security_level", (object?)row.EffectiveSecurityLevel  ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("dailyrate",      (object?)row.EffectiveDailyRate      ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("defradailyrate", (object?)row.EffectiveDefraDailyRate ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("planbyweek",     row.EffectivePlanByWeek ?? false);
+        cmd.Parameters.AddWithValue("fpsyear",        fpsYear);
+        try
+        {
+            await cmd.ExecuteNonQueryAsync(ct);
+        }
+        catch (NpgsqlException ex) when (ex.SqlState == "23505")
+        {
+            // Another transaction won the concurrent Insert race; unique constraint is the authoritative guard.
+            throw new InvalidOperationException(
+                $"BulkAnimalRatesUpdate: Animal Insert concurrency conflict for AnimalType='{row.AnimalType}', FPS year {fpsYear}: " +
+                "the approved Insert target already exists.", ex);
+        }
+    }
+
     private static async Task<int> UpdateAnimalRowAsync(
         NpgsqlConnection conn, NpgsqlTransaction tx,
         AnimalStagingRow row, int fpsYear,
@@ -231,7 +283,33 @@ public sealed class BulkAnimalRatesService : IBulkAnimalRatesService
         return await cmd.ExecuteNonQueryAsync(ct);
     }
 
-    private static RateChangeHistoryRow[] BuildHistory(
+    private static RateChangeHistoryRow[] BuildInsertHistory(
+        AnimalStagingRow row,
+        BulkRatesJobQueueEntry entry, DateTime appliedAt)
+    {
+        // business_key includes fpsYear because the PK is composite (animaltype, fpsyear)
+        var key = JsonSerializer.Serialize(new { animalType = row.AnimalType, fpsYear = entry.FpsYear });
+        var c = (entry.JobQueueId, entry.JobExecutionId, entry.JobId, entry.FpsYear,
+                 "Animal", key, entry.RequestedBy, entry.ApprovedBy, appliedAt);
+
+        var species       = string.IsNullOrWhiteSpace(row.EffectiveSpecies)       ? null : row.EffectiveSpecies.Trim();
+        var secLevel      = string.IsNullOrWhiteSpace(row.EffectiveSecurityLevel) ? null : row.EffectiveSecurityLevel.Trim();
+        var dailyRate     = row.EffectiveDailyRate?.ToString();
+        var defraDailyRate = row.EffectiveDefraDailyRate?.ToString();
+        var planByWeek    = (row.EffectivePlanByWeek ?? false).ToString();
+
+        // All governed fields written regardless of value (0, false, and null are auditable facts)
+        return
+        [
+            MakeRow(c, "species",        null, species,        "Insert"),
+            MakeRow(c, "security_level", null, secLevel,       "Insert"),
+            MakeRow(c, "dailyrate",      null, dailyRate,      "Insert"),
+            MakeRow(c, "defradailyrate", null, defraDailyRate, "Insert"),
+            MakeRow(c, "planbyweek",     null, planByWeek,     "Insert"),
+        ];
+    }
+
+    private static RateChangeHistoryRow[] BuildUpdateHistory(
         AnimalStagingRow row,
         (decimal? DailyRate, decimal? DefraDailyRate, bool PlanByWeek, string? Species, string? SecurityLevel)? before,
         BulkRatesJobQueueEntry entry, DateTime appliedAt)
@@ -243,13 +321,13 @@ public sealed class BulkAnimalRatesService : IBulkAnimalRatesService
         var beforeDailyRate      = before?.DailyRate ?? 0m;
         var beforeDefraDailyRate = before?.DefraDailyRate ?? 0m;
         var beforePlanByWeek     = before?.PlanByWeek ?? false;
-        var beforeSpecies        = string.IsNullOrWhiteSpace(before?.Species) ? null : before.Value.Species!.Trim();
+        var beforeSpecies        = string.IsNullOrWhiteSpace(before?.Species)       ? null : before.Value.Species!.Trim();
         var beforeSecurityLevel  = string.IsNullOrWhiteSpace(before?.SecurityLevel) ? null : before.Value.SecurityLevel!.Trim();
 
         var afterDailyRate      = row.EffectiveDailyRate ?? 0m;
         var afterDefraDailyRate = row.EffectiveDefraDailyRate ?? 0m;
         var afterPlanByWeek     = row.EffectivePlanByWeek ?? false;
-        var afterSpecies        = string.IsNullOrWhiteSpace(row.EffectiveSpecies) ? null : row.EffectiveSpecies.Trim();
+        var afterSpecies        = string.IsNullOrWhiteSpace(row.EffectiveSpecies)       ? null : row.EffectiveSpecies.Trim();
         var afterSecurityLevel  = string.IsNullOrWhiteSpace(row.EffectiveSecurityLevel) ? null : row.EffectiveSecurityLevel.Trim();
 
         var rows = new List<RateChangeHistoryRow>();

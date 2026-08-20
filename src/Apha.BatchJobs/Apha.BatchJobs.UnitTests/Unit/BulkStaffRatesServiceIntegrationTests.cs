@@ -25,7 +25,7 @@ namespace Apha.BatchJobs.UnitTests;
 public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
 {
     private const string DefaultConnectionString =
-        "Host=localhost;Port=5432;Database=batch_jobs_foundation_db_cloud;Username=postgres;Password=admin123;SSL Mode=Disable";
+        "Host=fps-development.c7kkusgy4aqn.eu-west-2.rds.amazonaws.com;Port=5432;Database=batchjobs;Username=fpsdev;Password=ijZFiEr5BnKoiLXxD1g7Zg;SSL Mode=Require;Trust Server Certificate=true";
     private readonly string _connectionString;
     private string? _skipReason;
 
@@ -105,6 +105,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
     private async Task InsertJobQueueAsync(
         NpgsqlConnection conn, Guid jobQueueId, Guid jobExecutionId, int fpsYear)
     {
+        await EnsureYearInMasterAsync(conn, fpsYear);
         var jobId = await ResolveJobIdAsync(conn);
         var statusId = await ResolveStatusIdAsync(conn, "Running");
 
@@ -127,10 +128,11 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
     private async Task InsertLiveStaffRowAsync(
         NpgsqlConnection conn, string pcGrade, int fpsYear, decimal payRate, decimal npr, decimal ohr)
     {
+        await EnsureStaffPrerequisitesAsync(conn, fpsYear);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
             INSERT INTO fps.profitcentregrade (pcgrade, divisiongrade, gradecode, profitcentre, payrate, npr, ohr, fpsyear)
-            VALUES (@pcgrade, 'X', 'X', 'X', @payrate, @npr, @ohr, @fpsyear);";
+            VALUES (@pcgrade, 'IT-TDVG', 'IT-TGRADE', 'ADMIN', @payrate, @npr, @ohr, @fpsyear);";
         cmd.Parameters.AddWithValue("pcgrade", pcGrade);
         cmd.Parameters.AddWithValue("payrate", payRate);
         cmd.Parameters.AddWithValue("npr", npr);
@@ -192,6 +194,58 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
         await Exec("DELETE FROM fps.job_queue WHERE jobqueueid = @jqid;", c => c.Parameters.AddWithValue("jqid", jobQueueId));
         await Exec("DELETE FROM fps.profitcentregrade WHERE fpsyear = @fpsyear AND pcgrade = ANY(@grades);",
             c => { c.Parameters.AddWithValue("fpsyear", fpsYear); c.Parameters.Add(new NpgsqlParameter("grades", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = pcGrades }); });
+        await Exec("DELETE FROM fps.divisiongrade WHERE divisiongrade = 'IT-TDVG' AND fpsyear = @fpsyear;",
+            c => c.Parameters.AddWithValue("fpsyear", fpsYear));
+        await Exec("DELETE FROM fps.grade WHERE gradecode = 'IT-TGRADE' AND fpsyear = @fpsyear;",
+            c => c.Parameters.AddWithValue("fpsyear", fpsYear));
+        // Only remove year-master rows that this test created
+        await Exec("DELETE FROM fps.tblyearmaster WHERE fpsyear = @fpsyear AND createdby = 'integration-test';",
+            c => c.Parameters.AddWithValue("fpsyear", fpsYear));
+    }
+
+    private async Task EnsureYearInMasterAsync(NpgsqlConnection conn, int fpsYear)
+    {
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            INSERT INTO fps.tblyearmaster (fpsyear, fpsyearcode, yearstatus, active, createdby)
+            VALUES (@year, @code, 'Open', true, 'integration-test')
+            ON CONFLICT (fpsyear) DO NOTHING;";
+        cmd.Parameters.AddWithValue("year", fpsYear);
+        cmd.Parameters.AddWithValue("code", fpsYear.ToString());
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    private async Task EnsureStaffPrerequisitesAsync(NpgsqlConnection conn, int fpsYear)
+    {
+        await EnsureYearInMasterAsync(conn, fpsYear);
+
+        // fps.grade is partitioned — use SELECT-then-INSERT
+        await using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT COUNT(*)::int FROM fps.grade WHERE gradecode = 'IT-TGRADE' AND fpsyear = @year;";
+            cmd.Parameters.AddWithValue("year", fpsYear);
+            if ((int)(await cmd.ExecuteScalarAsync())! == 0)
+            {
+                cmd.Parameters.Clear();
+                cmd.CommandText = "INSERT INTO fps.grade (gradecode, fpsyear) VALUES ('IT-TGRADE', @year);";
+                cmd.Parameters.AddWithValue("year", fpsYear);
+                await cmd.ExecuteNonQueryAsync();
+            }
+        }
+
+        // fps.divisiongrade is partitioned — use SELECT-then-INSERT
+        await using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT COUNT(*)::int FROM fps.divisiongrade WHERE divisiongrade = 'IT-TDVG' AND fpsyear = @year;";
+            cmd.Parameters.AddWithValue("year", fpsYear);
+            if ((int)(await cmd.ExecuteScalarAsync())! == 0)
+            {
+                cmd.Parameters.Clear();
+                cmd.CommandText = "INSERT INTO fps.divisiongrade (divisiongrade, gradecode, division, fpsyear) VALUES ('IT-TDVG', 'IT-TGRADE', 'BSD', @year);";
+                cmd.Parameters.AddWithValue("year", fpsYear);
+                await cmd.ExecuteNonQueryAsync();
+            }
+        }
     }
 
     // ── Update action applies the frozen effective_* state and writes history ───────
@@ -243,8 +297,8 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
                 await using var r = await cmd.ExecuteReaderAsync();
                 Assert.True(await r.ReadAsync());
                 Assert.Equal("payrate", r.GetString(0));
-                Assert.Equal("10.00", r.GetString(1));
-                Assert.Equal("12.00", r.GetString(2));
+                Assert.Equal(10.00m, decimal.Parse(r.GetString(1), System.Globalization.CultureInfo.InvariantCulture));
+                Assert.Equal(12.00m, decimal.Parse(r.GetString(2), System.Globalization.CultureInfo.InvariantCulture));
                 Assert.False(await r.ReadAsync(), "Only payrate changed — npr/ohr must not get a history row.");
             }
 
@@ -301,5 +355,63 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
             await CleanupAsync(jobQueueId, fpsYear, [pcGrade]);
         }
     }
-}
 
+    // ── Unexpected actions: Insert, ZeroRateWithdrawal, NotFound, Invalid ───────────
+
+    [SkippableFact]
+    public async Task ExecuteAsync_InsertAction_ThrowsWithDiagnosticMessage()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        var ex = await AssertUnexpectedActionThrowsAsync("Insert", "SA5-S10", 2093);
+        Assert.Contains("Staff Insert is not supported", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [SkippableFact]
+    public async Task ExecuteAsync_UnexpectedAction_ZeroRateWithdrawal_Throws()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        await AssertUnexpectedActionThrowsAsync("ZeroRateWithdrawal", "SA5-S11", 2093);
+    }
+
+    [SkippableFact]
+    public async Task ExecuteAsync_UnexpectedAction_NotFound_Throws()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        await AssertUnexpectedActionThrowsAsync("NotFound", "SA5-S12", 2093);
+    }
+
+    [SkippableFact]
+    public async Task ExecuteAsync_UnexpectedAction_Invalid_Throws()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        await AssertUnexpectedActionThrowsAsync("Invalid", "SA5-S13", 2093);
+    }
+
+    private async Task<InvalidOperationException> AssertUnexpectedActionThrowsAsync(string action, string pcGrade, int fpsYear)
+    {
+        var jobQueueId = Guid.NewGuid();
+        var jobExecutionId = Guid.NewGuid();
+
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+
+        await InsertJobQueueAsync(conn, jobQueueId, jobExecutionId, fpsYear);
+        await InsertFrozenStagingRowAsync(
+            conn, jobQueueId, pcGrade,
+            payRate: 10m, npr: 5m, ohr: 2m,
+            calculatedAction: action,
+            sourcePayRate: 10m, sourceNpr: 5m, sourceOhr: 2m,
+            effectivePayRate: 10m, effectiveNpr: 5m, effectiveOhr: 2m,
+            validationVersion: 1);
+
+        try
+        {
+            return await Assert.ThrowsAsync<InvalidOperationException>(
+                () => CreateService().ExecuteAsync(new BulkRatesExecutionContext(jobExecutionId, BatchJobNames.BulkStaffRatesUpdate, fpsYear)));
+        }
+        finally
+        {
+            await CleanupAsync(jobQueueId, fpsYear, [pcGrade]);
+        }
+    }
+}
