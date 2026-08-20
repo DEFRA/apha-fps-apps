@@ -1,7 +1,5 @@
-using Apha.BatchJobs.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
+using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
-using System.Data.Common;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
@@ -10,14 +8,14 @@ namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 /// </summary>
 public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
 {
-    private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
+    private readonly IYearEndDataSetupRepository _repository;
     private readonly ILogger<ValidateYearScopedSchemaStep> _logger;
 
     public ValidateYearScopedSchemaStep(
-        IDbContextFactory<BatchJobsDbContext> dbContextFactory,
+        IYearEndDataSetupRepository repository,
         ILogger<ValidateYearScopedSchemaStep> logger)
     {
-        _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -32,10 +30,7 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
             throw new InvalidOperationException("Year End context must include currentFpsYear and targetFpsYear before schema validation.");
         }
 
-        await using var dbContext = _dbContextFactory.CreateDbContext();
-        await dbContext.Database.OpenConnectionAsync(cancellationToken);
-
-        if (!await TableExistsAsync(dbContext.Database.GetDbConnection(), "fps", "tblyearmaster", cancellationToken))
+        if (!await _repository.TableExistsAsync("fps", "tblyearmaster", cancellationToken))
         {
             throw new InvalidOperationException("Required table fps.tblyearmaster was not found. Year End cannot continue.");
         }
@@ -43,14 +38,13 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
         var requiredColumns = new[] { "fpsyear", "fpsyearcode", "yearstatus", "active" };
         foreach (var columnName in requiredColumns)
         {
-            if (!await ColumnExistsAsync(dbContext.Database.GetDbConnection(), "fps", "tblyearmaster", columnName, cancellationToken))
+            if (!await _repository.ColumnExistsAsync("fps", "tblyearmaster", columnName, cancellationToken))
             {
                 throw new InvalidOperationException($"Required column fps.tblyearmaster.{columnName} was not found. Year End cannot continue.");
             }
         }
 
-        var currentYearExists = await RowExistsByYearAsync(
-            dbContext.Database.GetDbConnection(),
+        var currentYearExists = await _repository.YearRowExistsAsync(
             context.CurrentFpsYear.Value,
             cancellationToken);
 
@@ -67,80 +61,4 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
             context.TargetFpsYear);
     }
 
-    private static async Task<bool> TableExistsAsync(
-        DbConnection connection,
-        string schema,
-        string table,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.tables
-                WHERE table_schema = @schema
-                  AND table_name = @table
-            );";
-
-        AddParameter(command, "schema", schema);
-        AddParameter(command, "table", table);
-
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
-
-    private static async Task<bool> ColumnExistsAsync(
-        DbConnection connection,
-        string schema,
-        string table,
-        string column,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.columns
-                WHERE table_schema = @schema
-                  AND table_name = @table
-                  AND column_name = @column
-            );";
-
-        AddParameter(command, "schema", schema);
-        AddParameter(command, "table", table);
-        AddParameter(command, "column", column);
-
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
-
-    private static async Task<bool> RowExistsByYearAsync(
-        DbConnection connection,
-        int fpsYear,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM fps.tblyearmaster ym
-                WHERE ym.fpsyear = @fpsyear
-            );";
-
-        AddParameter(command, "fpsyear", fpsYear);
-
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
-
-    private static async Task<bool> ExecuteBooleanAsync(DbCommand command, CancellationToken cancellationToken)
-    {
-        var result = await command.ExecuteScalarAsync(cancellationToken);
-        return result is bool value && value;
-    }
-
-    private static void AddParameter(DbCommand command, string name, object value)
-    {
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = name;
-        parameter.Value = value;
-        command.Parameters.Add(parameter);
-    }
 }

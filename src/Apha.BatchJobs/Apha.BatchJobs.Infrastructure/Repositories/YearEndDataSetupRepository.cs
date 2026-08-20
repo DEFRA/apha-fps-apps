@@ -67,6 +67,75 @@ public sealed class YearEndDataSetupRepository : IYearEndDataSetupRepository
         return await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    public async Task<bool> TableExistsAsync(string schema, string table, CancellationToken cancellationToken = default)
+    {
+        await using var dbContext = _dbContextFactory.CreateDbContext();
+        await dbContext.Database.OpenConnectionAsync(cancellationToken);
+        var connection = dbContext.Database.GetDbConnection();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = @schema
+                  AND table_name = @table
+            );";
+
+        AddParameter(command, "schema", schema);
+        AddParameter(command, "table", table);
+
+        return await ExecuteBooleanAsync(command, cancellationToken);
+    }
+
+    public async Task<bool> ColumnExistsAsync(string schema, string table, string column, CancellationToken cancellationToken = default)
+    {
+        await using var dbContext = _dbContextFactory.CreateDbContext();
+        await dbContext.Database.OpenConnectionAsync(cancellationToken);
+        var connection = dbContext.Database.GetDbConnection();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = @schema
+                  AND table_name = @table
+                  AND column_name = @column
+            );";
+
+        AddParameter(command, "schema", schema);
+        AddParameter(command, "table", table);
+        AddParameter(command, "column", column);
+
+        return await ExecuteBooleanAsync(command, cancellationToken);
+    }
+
+    public async Task<bool> YearRowExistsAsync(int fpsYear, CancellationToken cancellationToken = default)
+    {
+        await using var dbContext = _dbContextFactory.CreateDbContext();
+        await dbContext.Database.OpenConnectionAsync(cancellationToken);
+        var connection = dbContext.Database.GetDbConnection();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT EXISTS (
+                SELECT 1
+                FROM fps.tblyearmaster ym
+                WHERE ym.fpsyear = @fpsyear
+            );";
+
+        AddParameter(command, "fpsyear", fpsYear);
+
+        return await ExecuteBooleanAsync(command, cancellationToken);
+    }
+
+    private static async Task<bool> ExecuteBooleanAsync(DbCommand command, CancellationToken cancellationToken)
+    {
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result is bool value && value;
+    }
+
     private static void AddParameter(DbCommand command, string name, object value)
     {
         var parameter = command.CreateParameter();

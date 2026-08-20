@@ -15,4 +15,13 @@ public interface IYearEndDataSetupRepository
     /// Inserts a new row in fps.tblyearmaster with Planned status and returns the number of rows affected.
     /// </summary>
     Task<int> InsertPlannedYearAsync(int fpsYear, string fpsYearCode, string correlationId, CancellationToken cancellationToken = default);
+
+    /// <summary>Returns true if the specified table exists in information_schema.</summary>
+    Task<bool> TableExistsAsync(string schema, string table, CancellationToken cancellationToken = default);
+
+    /// <summary>Returns true if the specified column exists in information_schema.</summary>
+    Task<bool> ColumnExistsAsync(string schema, string table, string column, CancellationToken cancellationToken = default);
+
+    /// <summary>Returns true if a row for the given fpsYear exists in fps.tblyearmaster.</summary>
+    Task<bool> YearRowExistsAsync(int fpsYear, CancellationToken cancellationToken = default);
 }
