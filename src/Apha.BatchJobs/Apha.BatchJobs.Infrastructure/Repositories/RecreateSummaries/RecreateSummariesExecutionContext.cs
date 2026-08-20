@@ -1,7 +1,7 @@
 using Apha.BatchJobs.Infrastructure.Data;
 using Npgsql;
 
-namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
+namespace Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 
 /// <summary>
 /// Shared execution context for RecreateSummaries steps.

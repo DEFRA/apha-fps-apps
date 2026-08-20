@@ -180,7 +180,7 @@ public sealed class ServiceCollectionSetupTests
     public void AddBatchJobs_WhenRecreateSummariesModeIsDotNetLinq_ShouldResolveLinqCatalog()
     {
         using var serviceProvider = BuildServiceProvider();
-        var catalog = serviceProvider.GetRequiredService<Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.IRecreateSummariesStepCatalog>();
+        var catalog = serviceProvider.GetRequiredService<Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries.IRecreateSummariesStepCatalog>();
         Assert.Equal("RecreateSummariesStepCatalog", catalog.GetType().Name);
     }
 

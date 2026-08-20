@@ -1,4 +1,4 @@
-namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
+namespace Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 
 /// <summary>
 /// Builds the ordered step list for RecreateSummaries execution.

@@ -1,3 +1,4 @@
+using Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Context;
 using Apha.BatchJobs.Infrastructure.Repositories.BulkRates;

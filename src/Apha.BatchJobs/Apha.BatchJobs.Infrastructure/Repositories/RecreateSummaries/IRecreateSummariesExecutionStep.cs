@@ -1,6 +1,5 @@
-using Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 
-namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
+namespace Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 
 /// <summary>
 /// Contract for a single executable RecreateSummaries step.

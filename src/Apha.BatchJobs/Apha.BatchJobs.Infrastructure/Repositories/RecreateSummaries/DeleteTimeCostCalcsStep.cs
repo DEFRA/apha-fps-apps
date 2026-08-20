@@ -1,3 +1,4 @@
+using Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
