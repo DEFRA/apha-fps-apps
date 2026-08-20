@@ -1894,7 +1894,7 @@ textarea {
 }
 
 .govuk-input:disabled,
-.govuk-input[readonly],
+/*.govuk-input[readonly],*/
 .govuk-input--disabled {
     background: #E8E8E8;
     border: 1px solid #b1b4b6;
