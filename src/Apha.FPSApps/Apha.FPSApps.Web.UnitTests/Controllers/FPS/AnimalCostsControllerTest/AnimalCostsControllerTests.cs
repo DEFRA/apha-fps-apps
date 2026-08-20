@@ -122,6 +122,26 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalCostsControllerTest
         }
 
         [Fact]
+        public async Task Index_PopulatesAnimalTypeDropdown_SortedAlphabetically()
+        {
+            SetupAnimalsService(new List<AnimalDto>
+            {
+                BuildAnimalDto("Zebra"),
+                BuildAnimalDto("TEST"),
+                BuildAnimalDto("B&B Fixed Price, Avian"),
+                BuildAnimalDto("Sheep, High Security")
+            });
+
+            var result = await _controller.Index();
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<AnimalCostsViewModel>(viewResult.Model);
+            Assert.Equal(
+                new[] { "B&B Fixed Price, Avian", "Sheep, High Security", "TEST", "Zebra" },
+                model.AnimalTypeList.Select(x => x.Value));
+        }
+
+        [Fact]
         public async Task Index_Grid_HasExpectedGridIdAndBindUrl()
         {
             SetupAnimalsService();
