@@ -287,9 +287,8 @@
                 <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
                      id="nav-project-details" role="tabpanel" aria-labelledby="tab_nav-project-details"
                      style="overflow-y: auto; max-height: 500px;">
-                    <form class="govuk-form" style="width: 100%; display: flex;">
-                        <fieldset class="govuk-fieldset"
-                                  style="width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; grid-auto-flow: dense;">
+                    <form class="govuk-form" id="nav-project-details-form">
+                        <fieldset class="govuk-fieldset pyc-fieldset-grid govuk-!-margin-left-1">
                             <div class="govuk-form-group">
                                 <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pd-year">Year</label>
                                 <input class="govuk-input govuk-!-font-size-16" id="pd-year" name="year" type="text" readonly>
@@ -370,7 +369,11 @@
                                 <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pd-project-group">Project Group</label>
                                 <input class="govuk-input govuk-!-font-size-16" id="pd-project-group" name="projectgroup" type="text" readonly>
                             </div>
-                            <div class="govuk-form-group">
+                            <div class="govuk-form-group pyc-comments-group" style="grid-column: span 2;">
+                                <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pd-comments">Comments</label>
+                                <textarea class="govuk-textarea govuk-!-font-size-16" id="pd-comments" name="comments" rows="3" readonly></textarea>
+                            </div>
+                            <div class="govuk-form-group pyc-checkbox-group">
                                 <div class="govuk-checkboxes govuk-checkboxes--small govuk-!-margin-top-4">
                                     <div class="govuk-checkboxes__item">
                                         <input class="govuk-checkboxes__input" id="pd-defraproject" name="defraproject" type="checkbox" disabled>
@@ -378,10 +381,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="govuk-form-group" style="grid-column: span 3;">
-                                <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pd-comments">Comments</label>
-                                <textarea class="govuk-textarea govuk-!-font-size-16" id="pd-comments" name="comments" rows="2" readonly></textarea>
-                            </div>
+
 
                         </fieldset>
                     </form>
