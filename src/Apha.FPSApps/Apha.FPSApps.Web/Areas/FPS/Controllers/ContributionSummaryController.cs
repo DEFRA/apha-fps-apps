@@ -83,7 +83,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (IsSellingPcMissing(sellingPc, out var badRequest))
                 return badRequest!;
 
-            var gridConfig = await BuildRowGridAsync(request, sellingPc);
+            var gridConfig = await BuildRowGridAsync(request, sellingPc!);
             return PartialView("_DataGrid", gridConfig);
         }
 
