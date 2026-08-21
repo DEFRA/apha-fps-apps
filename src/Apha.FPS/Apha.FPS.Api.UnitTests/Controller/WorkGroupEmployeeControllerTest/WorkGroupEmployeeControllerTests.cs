@@ -338,14 +338,18 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
         }
 
         [Fact]
-        public async Task DeleteWorkGroupEmployeeAsync_WhenNotFound_ThrowsKeyNotFoundException()
+        public async Task DeleteWorkGroupEmployeeAsync_WhenNotDeleted_ReturnsOkWithFalse()
         {
             // Arrange
             _serviceMock.DeleteWorkGroupEmployeeAsync(DefaultPactId).Returns(false);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-                _controller.DeleteWorkGroupEmployeeAsync(DefaultPactId));
+            // Act
+            var result = await _controller.DeleteWorkGroupEmployeeAsync(DefaultPactId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(false, okResult.Value);
+            await _serviceMock.Received(1).DeleteWorkGroupEmployeeAsync(DefaultPactId);
         }
 
         #endregion
