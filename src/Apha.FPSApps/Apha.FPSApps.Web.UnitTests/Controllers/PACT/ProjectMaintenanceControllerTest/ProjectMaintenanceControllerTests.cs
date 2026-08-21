@@ -375,7 +375,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         public async Task LoadTimeCodeGrid_NullParentProject_ReturnsBadRequest()
         {
             // Act
-            var result = await _controller.LoadTimeCodeGrid(new PaginationFilter<string> { Filter = "{}" }, null, "JC1");
+            var result = await _controller.LoadTimeCodeGrid(new PaginationFilter<string> { Filter = "{}" }, null!, "JC1");
 
             // Assert
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
@@ -397,7 +397,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         public async Task LoadTimeCodeGrid_NullJobCodeId_ReturnsBadRequest()
         {
             // Act
-            var result = await _controller.LoadTimeCodeGrid(new PaginationFilter<string> { Filter = "{}" }, "PRJ001", null);
+            var result = await _controller.LoadTimeCodeGrid(new PaginationFilter<string> { Filter = "{}" }, "PRJ001", null!);
 
             // Assert
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
@@ -408,7 +408,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         public async Task LoadTimeCodeGrid_BothParametersNull_ReturnsBadRequest()
         {
             // Act
-            var result = await _controller.LoadTimeCodeGrid(new PaginationFilter<string> { Filter = "{}" }, null, null);
+            var result = await _controller.LoadTimeCodeGrid(new PaginationFilter<string> { Filter = "{}" }, null!, null!);
 
             // Assert
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
@@ -422,7 +422,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             var request = new PaginationFilter<string> { Filter = "{}" };
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>()).Returns(new QueryParameters<string>());
             _timeCodeService.GetPagedTimeCodesAsync(Arg.Any<QueryParameters<string>>(), "JC1", "PRJ001")
-                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(null, new PaginationDto()));
+                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(null!, new PaginationDto()));
             _mapper.Map<List<TimeCodeViewModel>>(Arg.Any<List<TimeCodeValidDto>>()).Returns([]);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
 
@@ -492,7 +492,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         public void LoadTimeCodeEmptyGrid_NullParentProject_ReturnsBadRequest()
         {
             // Act
-            var result = _controller.LoadTimeCodeEmptyGrid(null);
+            var result = _controller.LoadTimeCodeEmptyGrid(null!);
 
             // Assert
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
