@@ -470,8 +470,6 @@ function executeCopyBulkWorkGroup() {
                 success: function(response) {
                     if (response.success) {
                         $('#modalPopup').removeClass('show');
-                        $('#timeCodeGridSubtitle').text('— Job Code: ');
-                        reloadTimeCodeEmptyGrid();
                         showAlertMessage('All work groups copied successfully.', AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#copyWorkGroupForm');
