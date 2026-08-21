@@ -93,7 +93,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 KeyProperty = "WgGrade",
                 AllowAdd = false,
                 AllowEdit = false,
-                AllowDelete = false,
+                AllowDelete = true,
+                DeleteFunction = "deleteWgGrade",
                 ExtraFilterMethod = "getWgGradeExtraFilters",
                 BindGridUrl = "/FPS/ResourceSetUp/LoadWgGradeGrid",
                 Data = new List<WorkGroupGradeItem>(),
@@ -111,7 +112,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowAdd = false,
                 AllowEdit = true,
                 EditFunction = "editWgStaff",
-                AllowDelete = false,
+                AllowDelete = true,
+                DeleteFunction = "deleteWgStaff",
                 ExtraFilterMethod = "getWgStaffExtraFilters",
                 BindGridUrl = "/FPS/ResourceSetUp/LoadWgStaffGrid",
                 Data = new List<WorkGroupEmployeeItem>(),
@@ -224,7 +226,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 KeyProperty = "WgGrade",
                 AllowAdd = false,
                 AllowEdit = false,
-                AllowDelete = false,
+                AllowDelete = true,
+                DeleteFunction = "deleteWgGrade",
                 ExtraFilterMethod = "getWgGradeExtraFilters",
                 BindGridUrl = "/FPS/ResourceSetUp/LoadWgGradeGrid",
                 Data = pagedItems,
@@ -292,7 +295,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowAdd = false,
                 AllowEdit = true,
                 EditFunction = "editWgStaff",
-                AllowDelete = false,
+                AllowDelete = true,
+                DeleteFunction = "deleteWgStaff",
                 ExtraFilterMethod = "getWgStaffExtraFilters",
                 BindGridUrl = "/FPS/ResourceSetUp/LoadWgStaffGrid",
                 Data = staffItems,
@@ -379,6 +383,50 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
 
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteWgGrade(string wgGrade)
+        {
+            if (string.IsNullOrWhiteSpace(wgGrade))
+            {
+                return Json(new { success = false, message = "WG Grade is required." });
+            }
+
+            var response = await _wgGradeService.DeleteAsync(wgGrade);
+            if (response.Success)
+            {
+                return Json(new { success = true, message = "WG Grade deleted successfully." });
+            }
+
+            return Json(new
+            {
+                success = false,
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to delete WG Grade.",
+                errors = (response.Errors ?? new List<ApiErrorDto>()).Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
+            });
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteWgStaff(string pactId)
+        {
+            if (string.IsNullOrWhiteSpace(pactId))
+            {
+                return Json(new { success = false, message = "PACTid is required." });
+            }
+
+            var response = await _WorkGroupEmployeeService.DeleteWorkGroupEmployeeAsync(pactId);
+            if (response.Success)
+            {
+                return Json(new { success = true, message = "WG Staff record deleted successfully." });
+            }
+
+            return Json(new
+            {
+                success = false,
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to delete WG Staff record.",
+                errors = (response.Errors ?? new List<ApiErrorDto>()).Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
+            });
+        }
 
         private static Dictionary<string, string> ParseFilterJson(string? filter)
         {

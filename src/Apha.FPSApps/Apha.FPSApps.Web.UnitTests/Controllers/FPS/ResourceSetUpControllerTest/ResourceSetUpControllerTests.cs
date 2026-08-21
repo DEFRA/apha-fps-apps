@@ -205,7 +205,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
 
             Assert.True(model.WgStaffGrid.AllowEdit);
             Assert.False(model.WgStaffGrid.AllowAdd);
-            Assert.False(model.WgStaffGrid.AllowDelete);
+            Assert.True(model.WgStaffGrid.AllowDelete);
         }
 
         #endregion
@@ -528,6 +528,120 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             var value      = GetJsonResultElement(jsonResult);
 
             Assert.False(value.GetProperty("success").GetBoolean());
+        }
+
+        #endregion
+
+        #region DeleteWgGrade Tests
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task DeleteWgGrade_WithMissingWgGrade_ReturnsFailureJson(string wgGrade)
+        {
+            // Act
+            var result = await _controller.DeleteWgGrade(wgGrade);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value      = GetJsonResultElement(jsonResult);
+
+            Assert.False(value.GetProperty("success").GetBoolean());
+            await _wgGradeService.DidNotReceive().DeleteAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteWgGrade_WithValidWgGrade_ReturnsSuccessJson()
+        {
+            // Arrange
+            _wgGradeService.DeleteAsync(DefaultWgGrade)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.DeleteWgGrade(DefaultWgGrade);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value      = GetJsonResultElement(jsonResult);
+
+            Assert.True(value.GetProperty("success").GetBoolean());
+            await _wgGradeService.Received(1).DeleteAsync(DefaultWgGrade);
+        }
+
+        [Fact]
+        public async Task DeleteWgGrade_WhenServiceFails_ReturnsFailureJson()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Associated with staff", Code = "WORKGROUPGRADE_HAS_ASSOCIATIONS" } };
+            _wgGradeService.DeleteAsync(DefaultWgGrade)
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.DeleteWgGrade(DefaultWgGrade);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value      = GetJsonResultElement(jsonResult);
+
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("Associated with staff", value.GetProperty("message").GetString());
+        }
+
+        #endregion
+
+        #region DeleteWgStaff Tests
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task DeleteWgStaff_WithMissingPactId_ReturnsFailureJson(string pactId)
+        {
+            // Act
+            var result = await _controller.DeleteWgStaff(pactId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value      = GetJsonResultElement(jsonResult);
+
+            Assert.False(value.GetProperty("success").GetBoolean());
+            await _wgEmployeeService.DidNotReceive().DeleteWorkGroupEmployeeAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteWgStaff_WithValidPactId_ReturnsSuccessJson()
+        {
+            // Arrange
+            _wgEmployeeService.DeleteWorkGroupEmployeeAsync(DefaultPactId)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.DeleteWgStaff(DefaultPactId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value      = GetJsonResultElement(jsonResult);
+
+            Assert.True(value.GetProperty("success").GetBoolean());
+            await _wgEmployeeService.Received(1).DeleteWorkGroupEmployeeAsync(DefaultPactId);
+        }
+
+        [Fact]
+        public async Task DeleteWgStaff_WhenServiceFails_ReturnsFailureJson()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Selected record cannot be deleted", Code = "WORKGROUPEMPLOYEE_HAS_ASSOCIATIONS" } };
+            _wgEmployeeService.DeleteWorkGroupEmployeeAsync(DefaultPactId)
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.DeleteWgStaff(DefaultPactId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value      = GetJsonResultElement(jsonResult);
+
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("Selected record cannot be deleted", value.GetProperty("message").GetString());
         }
 
         #endregion

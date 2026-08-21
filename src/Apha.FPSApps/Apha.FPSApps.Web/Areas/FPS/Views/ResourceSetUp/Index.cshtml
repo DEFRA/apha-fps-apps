@@ -326,6 +326,57 @@
             });
         }
 
+        // Delete WG Grade
+        function deleteWgGrade(btn) {
+            var wgGrade = $(btn).data('id');
+            showGovukConfirm('Are you sure you want to delete this WG Grade record?').then(function (result) {
+                if (!result) return;
+                $.ajax({
+                    url: '/FPS/ResourceSetUp/DeleteWgGrade',
+                    type: 'DELETE',
+                    data: { wgGrade: wgGrade },
+                    success: function (response) {
+                        if (response.success) {
+                            showAlertMessage('WG Grade deleted successfully', AlertType.SUCCESS).then(function () {
+                                getWgGradeGridManager().reloadGrid({ page: 1 });
+                            });
+                        } else {
+                            showAlertMessage('Error: ' + (response.message || 'Delete failed.'), AlertType.ERROR);
+                        }
+                    },
+                    error: function () {
+                        showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
+                    }
+                });
+            });
+        }
+
+        // Delete WG Staff
+        function deleteWgStaff(btn) {
+            var pactId = $(btn).data('id');
+            showGovukConfirm('Are you sure you want to delete this WG Staff record?').then(function (result) {
+                if (!result) return;
+                $.ajax({
+                    url: '/FPS/ResourceSetUp/DeleteWgStaff',
+                    type: 'DELETE',
+                    data: { pactId: pactId },
+                    success: function (response) {
+                        if (response.success) {
+                            showAlertMessage('WG Staff record deleted successfully', AlertType.SUCCESS).then(function () {
+                                getWgStaffGridManager().reloadGrid({ page: 1 });
+                                updateStaffTotals();
+                            });
+                        } else {
+                            showAlertMessage('Error: ' + (response.message || 'Delete failed.'), AlertType.ERROR);
+                        }
+                    },
+                    error: function () {
+                        showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
+                    }
+                });
+            });
+        }
+
        
 
         // Plan Person onto ZT Codes — navigates to PlanStaffZTCode for the selected person (Button46_Click)
