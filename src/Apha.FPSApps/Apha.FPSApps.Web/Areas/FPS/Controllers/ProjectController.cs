@@ -13,10 +13,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin,FPSUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
-    public partial class ProjectController : Controller
+    public class ProjectController : Controller
     {
-        [GeneratedRegex("^[A-Za-z0-9]+$")]
-        private static partial Regex ProjectCodeRegex();
+        private static readonly Regex ProjectCodeRegex =
+            new("^[A-Za-z0-9]+$", RegexOptions.Compiled);
 
         private readonly IMapper _mapper;
         private readonly IProjectService _projectService;
@@ -168,7 +168,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (string.IsNullOrWhiteSpace(oldCode) || string.IsNullOrWhiteSpace(newCode))
                 return Json(new { success = false, message = "Both old and new project codes are required." });
 
-            if (!ProjectCodeRegex().IsMatch(newCode))
+            if (!ProjectCodeRegex.IsMatch(newCode))
                 return Json(new { success = false, message = "Project Code must contain only letters (A-Z, a-z) and numbers (0-9)." });
 
             var response = await _projectService.ChangeProjectCodeAsync(oldCode, newCode);
