@@ -107,7 +107,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             var profitCentres = BuildProfitCentreList();
-            SetHttpContext();
+            SetHttpContext($"?profitCentre={DefaultProfitCentre}");
             var rcGrades      = BuildRcGradeList();
 
             _profitCentreService.GetProfitCentresAsync()
