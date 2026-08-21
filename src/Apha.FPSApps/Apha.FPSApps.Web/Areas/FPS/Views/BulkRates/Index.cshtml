@@ -173,14 +173,6 @@
                                             @DownloadButtonLabel(Model.JobNameFilter)
                                         </button>
                                     }
-                                    @if (Model.UploadTargetId != null)
-                                    {
-                                        <button type="button" class="govuk-button sup_margin_0"
-                                                data-module="govuk-button" id="btnUploadUpdatedData"
-                                                data-request-id="@Model.UploadTargetId">
-                                            Upload Updated Data
-                                        </button>
-                                    }
                                 </div>
                                 @if (!string.IsNullOrEmpty(Model.JobNameFilter))
                                 {
@@ -267,8 +259,6 @@
 
     </div>
 </main>
-
-@await Html.PartialAsync("_UploadTrackerModal")
 
 @section Scripts {
     <script src="~/js/fps_js/fec_testmanagement.js" asp-append-version="true"></script>

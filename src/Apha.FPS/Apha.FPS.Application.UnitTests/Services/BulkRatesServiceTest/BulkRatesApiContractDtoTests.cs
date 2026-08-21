@@ -78,6 +78,16 @@ namespace Apha.FPS.Application.UnitTests.Services.BulkRatesServiceTest
                 [nameof(BulkRatesRowCountsDto.Insert)] = typeof(int),
                 [nameof(BulkRatesRowCountsDto.Update)] = typeof(int),
                 [nameof(BulkRatesRowCountsDto.Unchanged)] = typeof(int),
+                [nameof(BulkRatesRowCountsDto.FecTotal)] = typeof(int),
+                [nameof(BulkRatesRowCountsDto.FecInsert)] = typeof(int),
+                [nameof(BulkRatesRowCountsDto.FecUpdate)] = typeof(int),
+                [nameof(BulkRatesRowCountsDto.FecUnchanged)] = typeof(int),
+                [nameof(BulkRatesRowCountsDto.FecInvalid)] = typeof(int),
+                [nameof(BulkRatesRowCountsDto.AgrupTotal)] = typeof(int),
+                [nameof(BulkRatesRowCountsDto.AgrupInsert)] = typeof(int),
+                [nameof(BulkRatesRowCountsDto.AgrupUpdate)] = typeof(int),
+                [nameof(BulkRatesRowCountsDto.AgrupUnchanged)] = typeof(int),
+                [nameof(BulkRatesRowCountsDto.AgrupInvalid)] = typeof(int),
             });
         }
 

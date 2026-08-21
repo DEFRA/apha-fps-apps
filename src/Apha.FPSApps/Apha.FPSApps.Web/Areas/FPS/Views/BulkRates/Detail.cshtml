@@ -222,6 +222,15 @@
                                             Total rows: @rc.Total, Valid: @rc.Valid, Invalid: @rc.Invalid,
                                             Insert: @rc.Insert, Update: @rc.Update, Unchanged: @rc.Unchanged
                                         </p>
+                                        @if (entry.JobName == "BulkTestRatesUpdate")
+                                        {
+                                            <p class="govuk-body-s govuk-!-margin-bottom-2">
+                                                FEC: @rc.FecTotal rows &mdash; Insert: @rc.FecInsert, Update: @rc.FecUpdate, Unchanged: @rc.FecUnchanged, Invalid: @rc.FecInvalid
+                                            </p>
+                                            <p class="govuk-body-s govuk-!-margin-bottom-2">
+                                                AGRUP: @rc.AgrupTotal rows &mdash; Insert: @rc.AgrupInsert, Update: @rc.AgrupUpdate, Unchanged: @rc.AgrupUnchanged, Invalid: @rc.AgrupInvalid
+                                            </p>
+                                        }
 
                                         @if (unmatchedErrors.Count < uploadResult.ValidationErrors.Count)
                                         {

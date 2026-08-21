@@ -15,5 +15,17 @@ namespace Apha.FPS.Core.Entities
         public int Insert { get; set; }
         public int Update { get; set; }
         public int Unchanged { get; set; }
+
+        // Per-sheet breakdown — populated for FEC/AGRUP requests; zero for Staff/Animal.
+        public int FecTotal { get; set; }
+        public int FecInsert { get; set; }
+        public int FecUpdate { get; set; }
+        public int FecUnchanged { get; set; }
+        public int FecInvalid { get; set; }
+        public int AgrupTotal { get; set; }
+        public int AgrupInsert { get; set; }
+        public int AgrupUpdate { get; set; }
+        public int AgrupUnchanged { get; set; }
+        public int AgrupInvalid { get; set; }
     }
 }

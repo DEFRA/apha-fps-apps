@@ -852,7 +852,11 @@ namespace Apha.FPS.Application.Services
                 });
             }
 
-            return new BulkRatesStagingDataDto { FecRows = fecRows, AgrupRows = agrupRows };
+            return new BulkRatesStagingDataDto
+            {
+                FecRows = fecRows.OrderBy(r => FecAgrupSortKey(r.Status)).ToList(),
+                AgrupRows = agrupRows.OrderBy(r => FecAgrupSortKey(r.Status)).ToList()
+            };
         }
 
         private static (string TestCode, string Buyer) AgrupKey(string testCode, string buyer) =>
@@ -866,6 +870,27 @@ namespace Apha.FPS.Application.Services
             ValidationCalculatedAction.Update => "Update",
             ValidationCalculatedAction.ZeroRateWithdrawal => "Zero-Rate Withdrawal",
             _ => "Unknown"
+        };
+
+        // Sort order for FEC/AGRUP: Unknown/error-status first, then actionable rows, NoChange last.
+        private static int FecAgrupSortKey(string status) => status switch
+        {
+            "Unknown"              => 0,
+            "Insert"               => 1,
+            "Update"               => 2,
+            "Zero-Rate Withdrawal" => 3,
+            "Deleted"              => 4,
+            "No Change"            => 5,
+            _                      => 0
+        };
+
+        // Sort order for Staff/Animal: Not Found first, Updated next, No Change last.
+        private static int StaffAnimalSortKey(string status) => status switch
+        {
+            "Not Found" => 0,
+            "Updated"   => 1,
+            "No Change" => 2,
+            _           => 0
         };
 
         // Staff/Animal are update-only (see BulkStaffRatesService/BulkAnimalRatesService in the
@@ -918,7 +943,7 @@ namespace Apha.FPS.Application.Services
                 });
             }
 
-            return new BulkRatesStagingDataDto { StaffRows = rows };
+            return new BulkRatesStagingDataDto { StaffRows = rows.OrderBy(r => StaffAnimalSortKey(r.Status)).ToList() };
         }
 
         private async Task<BulkRatesStagingDataDto> GetAnimalStagingDataAsync(BulkRatesQueueRow entry, CancellationToken ct)
@@ -968,7 +993,7 @@ namespace Apha.FPS.Application.Services
                 });
             }
 
-            return new BulkRatesStagingDataDto { AnimalRows = rows };
+            return new BulkRatesStagingDataDto { AnimalRows = rows.OrderBy(r => StaffAnimalSortKey(r.Status)).ToList() };
         }
 
         public async Task<byte[]> ExportStagingDataAsync(Guid jobExecutionId, CancellationToken ct = default)
@@ -1290,6 +1315,16 @@ namespace Apha.FPS.Application.Services
             Insert = counts.Insert,
             Update = counts.Update,
             Unchanged = counts.Unchanged,
+            FecTotal = counts.FecTotal,
+            FecInsert = counts.FecInsert,
+            FecUpdate = counts.FecUpdate,
+            FecUnchanged = counts.FecUnchanged,
+            FecInvalid = counts.FecInvalid,
+            AgrupTotal = counts.AgrupTotal,
+            AgrupInsert = counts.AgrupInsert,
+            AgrupUpdate = counts.AgrupUpdate,
+            AgrupUnchanged = counts.AgrupUnchanged,
+            AgrupInvalid = counts.AgrupInvalid,
         };
 
         // BatchJobQueueLog is the shared EF entity for fps.job_queue_log — BulkRates reuses it

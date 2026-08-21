@@ -1259,6 +1259,75 @@ public class BulkRatesRequestServiceTests
         await repoV2.Received(1).CreateDownloadSnapshotAsync(entry.JobQueueId, 2, Arg.Any<IReadOnlyList<TestOrProductStagingRow>>(), Arg.Any<IReadOnlyList<TestRequirementStagingRow>>(), Arg.Any<CancellationToken>());
     }
 
+    // Phase 2: workbook output — FEC New and AGRUP New pre-populated from snapshot source_rate
+
+    [Fact]
+    public async Task Download_WorkbookFecSheet_PrepopulatesFecNewWithDefraUnitPrice()
+    {
+        // Simulates GetFecSnapshotRowsAsync returning rows with FecNewRate = DefraUnitPrice
+        // (the fix in Phase 2 — source_rate projected as fecnewrate in the snapshot query).
+        var snapshotFec = new[]
+        {
+            new TestOrProductStagingRow
+            {
+                TestCode = "TC001", DefraUnitPrice = 45.00m, FecNewRate = 45.00m, UnitPriceVla = 40.00m
+            }
+        } as IReadOnlyList<TestOrProductStagingRow>;
+        var entry = Entry(status: "Initiated");
+        var repo  = RepoForDownload(entry, snapshotFec: snapshotFec,
+            snapshotAgrup: Array.Empty<TestRequirementStagingRow>());
+
+        IReadOnlyList<ExcelSheetDefinition>? capturedSheets = null;
+        var excel = Substitute.For<IExcelExportService>();
+        excel.ExportToExcelMultiSheet(
+                Arg.Do<IEnumerable<ExcelSheetDefinition>>(s => capturedSheets = s.ToList()),
+                Arg.Any<IReadOnlyDictionary<string, string>>())
+             .Returns([1]);
+        var svc = CreateServiceWithExcel(repo, excel);
+
+        await svc.DownloadFecTestDataAsync(entry.JobExecutionId);
+
+        var fecRow = capturedSheets!.Should().Contain(s => s.SheetName == "FEC").Which
+            .Data.Cast<BulkRatesFecExportRowDto>().Should().ContainSingle().Which;
+        fecRow.FecNew.Should().Be(45.00m);       // pre-populated from DefraUnitPrice
+        fecRow.DefraUnitPrice.Should().Be(45.00m);
+        // Change formula will evaluate to 0 in Excel (FecNew - DefraUnitPrice = 45 - 45)
+    }
+
+    [Fact]
+    public async Task Download_WorkbookAgrupSheet_PrepopulatesAgrupNewWithCurrentAgrup()
+    {
+        // Simulates GetAgrupSnapshotRowsAsync returning rows with AgrupNew = Agrup
+        // (the fix in Phase 2 — source_rate projected as agrupnew in the snapshot query).
+        var snapshotAgrup = new[]
+        {
+            new TestRequirementStagingRow
+            {
+                TestCode = "TC001", Buyer = "VET", Agrup = 30.00m, AgrupNew = 30.00m
+            }
+        } as IReadOnlyList<TestRequirementStagingRow>;
+        var entry = Entry(status: "Initiated");
+        var repo  = RepoForDownload(entry,
+            snapshotFec: Array.Empty<TestOrProductStagingRow>(),
+            snapshotAgrup: snapshotAgrup);
+
+        IReadOnlyList<ExcelSheetDefinition>? capturedSheets = null;
+        var excel = Substitute.For<IExcelExportService>();
+        excel.ExportToExcelMultiSheet(
+                Arg.Do<IEnumerable<ExcelSheetDefinition>>(s => capturedSheets = s.ToList()),
+                Arg.Any<IReadOnlyDictionary<string, string>>())
+             .Returns([1]);
+        var svc = CreateServiceWithExcel(repo, excel);
+
+        await svc.DownloadFecTestDataAsync(entry.JobExecutionId);
+
+        var agrupRow = capturedSheets!.Should().Contain(s => s.SheetName == "AGRUP").Which
+            .Data.Cast<BulkRatesAgrupExportRowDto>().Should().ContainSingle().Which;
+        agrupRow.AgrupNew.Should().Be(30.00m);   // pre-populated from current Agrup
+        agrupRow.Agrup.Should().Be(30.00m);
+        // Change formula will evaluate to 0 in Excel (AgrupNew - Agrup = 30 - 30)
+    }
+
     // ── DownloadStaffTestDataAsync / DownloadAnimalTestDataAsync ──────────────
     //
     // Parity checklist with DownloadFecTestDataAsync above, plus a job-type guard that FEC

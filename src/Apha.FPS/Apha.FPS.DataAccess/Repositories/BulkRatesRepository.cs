@@ -1037,7 +1037,8 @@ namespace Apha.FPS.DataAccess.Repositories
             var conn = await OpenAsync(ct);
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-                SELECT testcode, unitpricevla, source_rate, itemdescription, shortdescription, owner
+                SELECT testcode, unitpricevla, source_rate, itemdescription, shortdescription, owner,
+                       source_rate AS fecnewrate
                 FROM fps.bulk_rates_downloaded_key
                 WHERE jobqueueid = @jobqueueid AND download_version = @downloadversion AND sheetname = 'FEC'
                 ORDER BY id;";
@@ -1057,6 +1058,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     ItemDescription = reader.IsDBNull(3) ? null : reader.GetString(3),
                     ShortDescription = reader.IsDBNull(4) ? null : reader.GetString(4),
                     Owner = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    FecNewRate = reader.IsDBNull(6) ? null : reader.GetDecimal(6),
                 });
             }
             return result;
@@ -1069,7 +1071,7 @@ namespace Apha.FPS.DataAccess.Repositories
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
                 SELECT testcode, buyer, source_rate, norequired, datecreated, active,
-                       projectbuyercode, testbuyercode
+                       projectbuyercode, testbuyercode, source_rate AS agrupnew
                 FROM fps.bulk_rates_downloaded_key
                 WHERE jobqueueid = @jobqueueid AND download_version = @downloadversion AND sheetname = 'AGRUP'
                 ORDER BY id;";
@@ -1090,7 +1092,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     DateCreated = reader.IsDBNull(4) ? null : reader.GetDateTime(4),
                     Active = reader.IsDBNull(5) ? null : (short?)(reader.GetBoolean(5) ? 1 : 0),
                     ProjectBuyerCode = reader.IsDBNull(6) ? null : reader.GetString(6),
-                    TestBuyerCode = reader.IsDBNull(7) ? null : reader.GetString(7)
+                    TestBuyerCode = reader.IsDBNull(7) ? null : reader.GetString(7),
+                    AgrupNew = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                 });
             }
             return result;

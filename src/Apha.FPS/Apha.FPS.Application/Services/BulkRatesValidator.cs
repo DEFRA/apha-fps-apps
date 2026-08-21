@@ -361,20 +361,36 @@ namespace Apha.FPS.Application.Services
             int totalFec, int totalAgrup, IReadOnlyList<ValidationFinding> findings, IReadOnlyList<StagingValidationError> errors)
         {
             int insert = 0, update = 0, unchanged = 0;
+            int fecInsert = 0, fecUpdate = 0, fecUnchanged = 0;
+            int agrupInsert = 0, agrupUpdate = 0, agrupUnchanged = 0;
             foreach (var f in findings)
             {
                 if (f.ValidationCode != "ROW_CLASSIFIED") continue;
+                bool isFec = string.Equals(f.Sheet, "FEC", StringComparison.OrdinalIgnoreCase);
                 switch (f.CalculatedAction)
                 {
-                    case ValidationCalculatedAction.Insert: insert++; break;
+                    case ValidationCalculatedAction.Insert:
+                        insert++;
+                        if (isFec) fecInsert++; else agrupInsert++;
+                        break;
                     case ValidationCalculatedAction.Update:
-                    case ValidationCalculatedAction.ZeroRateWithdrawal: update++; break;
-                    case ValidationCalculatedAction.NoChange: unchanged++; break;
+                    case ValidationCalculatedAction.ZeroRateWithdrawal:
+                        update++;
+                        if (isFec) fecUpdate++; else agrupUpdate++;
+                        break;
+                    case ValidationCalculatedAction.NoChange:
+                        unchanged++;
+                        if (isFec) fecUnchanged++; else agrupUnchanged++;
+                        break;
                 }
             }
 
             var total = totalFec + totalAgrup;
             var invalid = errors.Count(e => e.Severity == ValidationSeverity.Error);
+            var fecInvalid = errors.Count(e => e.Severity == ValidationSeverity.Error
+                && string.Equals(e.SheetName, "FEC", StringComparison.OrdinalIgnoreCase));
+            var agrupInvalid = errors.Count(e => e.Severity == ValidationSeverity.Error
+                && string.Equals(e.SheetName, "AGRUP", StringComparison.OrdinalIgnoreCase));
             return new BulkRatesRowCounts
             {
                 Total = total,
@@ -382,7 +398,17 @@ namespace Apha.FPS.Application.Services
                 Update = update,
                 Unchanged = unchanged,
                 Invalid = invalid,
-                Valid = total - invalid
+                Valid = total - invalid,
+                FecTotal = totalFec,
+                FecInsert = fecInsert,
+                FecUpdate = fecUpdate,
+                FecUnchanged = fecUnchanged,
+                FecInvalid = fecInvalid,
+                AgrupTotal = totalAgrup,
+                AgrupInsert = agrupInsert,
+                AgrupUpdate = agrupUpdate,
+                AgrupUnchanged = agrupUnchanged,
+                AgrupInvalid = agrupInvalid,
             };
         }
 

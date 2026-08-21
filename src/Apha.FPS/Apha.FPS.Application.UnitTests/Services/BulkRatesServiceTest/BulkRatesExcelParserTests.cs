@@ -352,4 +352,145 @@ public class BulkRatesExcelParserTests
 
         result.FecRows.Should().ContainSingle(r => r.TestCode == "TC001");
     }
+
+    // ── Phase 2: FEC Change = 0 when FEC New equals prepopulated Defra rate ─
+
+    [Fact]
+    public void Parse_FecSheet_WhenFecNewEqualsDefraUnitPrice_ChangeIsZero()
+    {
+        // Fresh download: FEC New is prepopulated with DefraUnitPrice, so Change = 0.
+        var bytes = BuildWorkbook(wb =>
+        {
+            var fec = AddFecSheet(wb);
+            fec.Cell(2, 1).Value = "TC001";
+            fec.Cell(2, 3).Value = 50.00;  // Defra Unit Price
+            fec.Cell(2, 4).Value = 50.00;  // FEC New = Defra Unit Price (no edit)
+            AddAgrupSheet(wb);
+        });
+
+        var result = _parser.Parse(bytes, "rates.xlsx", "BulkTestRatesUpdate", QueueId);
+
+        var row = result.FecRows.Should().ContainSingle().Which;
+        row.FecNewRate.Should().Be(50.00m);
+        row.Change.Should().Be(0m);
+    }
+
+    [Fact]
+    public void Parse_FecSheet_UserEditProducesCorrectChange()
+    {
+        var bytes = BuildWorkbook(wb =>
+        {
+            var fec = AddFecSheet(wb);
+            fec.Cell(2, 1).Value = "TC001";
+            fec.Cell(2, 3).Value = 50.00;  // Defra Unit Price
+            fec.Cell(2, 4).Value = 55.75;  // FEC New edited by user
+            AddAgrupSheet(wb);
+        });
+
+        var result = _parser.Parse(bytes, "rates.xlsx", "BulkTestRatesUpdate", QueueId);
+
+        var row = result.FecRows.Should().ContainSingle().Which;
+        row.Change.Should().Be(5.75m);
+    }
+
+    [Fact]
+    public void Parse_FecSheet_ZeroRateDoesNotAlterChangeCalculation()
+    {
+        // Zero FEC New is a valid Zero-Rate Withdrawal; Change = 0 - DefraUnitPrice (negative).
+        var bytes = BuildWorkbook(wb =>
+        {
+            var fec = AddFecSheet(wb);
+            fec.Cell(2, 1).Value = "TC001";
+            fec.Cell(2, 3).Value = 50.00;
+            fec.Cell(2, 4).Value = 0.00;   // explicit zero
+            AddAgrupSheet(wb);
+        });
+
+        var result = _parser.Parse(bytes, "rates.xlsx", "BulkTestRatesUpdate", QueueId);
+
+        var row = result.FecRows.Should().ContainSingle().Which;
+        row.FecNewRate.Should().Be(0m);
+        row.Change.Should().Be(-50.00m);
+    }
+
+    [Fact]
+    public void Parse_FecSheet_WhenFecNewIsBlank_ChangeIsNull()
+    {
+        var bytes = BuildWorkbook(wb =>
+        {
+            var fec = AddFecSheet(wb);
+            fec.Cell(2, 1).Value = "TC001";
+            fec.Cell(2, 3).Value = 50.00;
+            // FEC New left blank
+            AddAgrupSheet(wb);
+        });
+
+        var result = _parser.Parse(bytes, "rates.xlsx", "BulkTestRatesUpdate", QueueId);
+
+        var row = result.FecRows.Should().ContainSingle().Which;
+        row.FecNewRate.Should().BeNull();
+        row.Change.Should().BeNull();
+    }
+
+    // ── Phase 2: AGRUP Change = 0 when Agrup New equals prepopulated Agrup ──
+
+    [Fact]
+    public void Parse_AgrupSheet_WhenAgrupNewEqualsAgrup_ChangeIsZero()
+    {
+        // Fresh download: Agrup New is prepopulated with current Agrup rate, so Change = 0.
+        var bytes = BuildWorkbook(wb =>
+        {
+            AddFecSheet(wb);
+            var agrup = AddAgrupSheet(wb);
+            agrup.Cell(2, 1).Value = "TC001";
+            agrup.Cell(2, 2).Value = "VET";
+            agrup.Cell(2, 3).Value = 30.00;  // Agrup (current rate)
+            agrup.Cell(2, 4).Value = 30.00;  // Agrup New = Agrup (no edit)
+        });
+
+        var result = _parser.Parse(bytes, "rates.xlsx", "BulkTestRatesUpdate", QueueId);
+
+        var row = result.AgrupRows.Should().ContainSingle().Which;
+        row.AgrupNew.Should().Be(30.00m);
+        row.Change.Should().Be(0m);
+    }
+
+    [Fact]
+    public void Parse_AgrupSheet_UserEditProducesCorrectChange()
+    {
+        var bytes = BuildWorkbook(wb =>
+        {
+            AddFecSheet(wb);
+            var agrup = AddAgrupSheet(wb);
+            agrup.Cell(2, 1).Value = "TC001";
+            agrup.Cell(2, 2).Value = "VET";
+            agrup.Cell(2, 3).Value = 30.00;
+            agrup.Cell(2, 4).Value = 35.50;  // edited
+        });
+
+        var result = _parser.Parse(bytes, "rates.xlsx", "BulkTestRatesUpdate", QueueId);
+
+        var row = result.AgrupRows.Should().ContainSingle().Which;
+        row.Change.Should().Be(5.50m);
+    }
+
+    [Fact]
+    public void Parse_AgrupSheet_WhenAgrupNewIsBlank_ChangeIsNull()
+    {
+        var bytes = BuildWorkbook(wb =>
+        {
+            AddFecSheet(wb);
+            var agrup = AddAgrupSheet(wb);
+            agrup.Cell(2, 1).Value = "TC001";
+            agrup.Cell(2, 2).Value = "VET";
+            agrup.Cell(2, 3).Value = 30.00;
+            // Agrup New left blank
+        });
+
+        var result = _parser.Parse(bytes, "rates.xlsx", "BulkTestRatesUpdate", QueueId);
+
+        var row = result.AgrupRows.Should().ContainSingle().Which;
+        row.AgrupNew.Should().BeNull();
+        row.Change.Should().BeNull();
+    }
 }
