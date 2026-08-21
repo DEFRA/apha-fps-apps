@@ -104,7 +104,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── Private helpers ──────────────────────────────────────────────────────
 
-        private bool IsSellingPcMissing(string sellingPc, out IActionResult? result)
+        private bool IsSellingPcMissing(string? sellingPc, out IActionResult? result)
         {
             if (string.IsNullOrWhiteSpace(sellingPc))
             {
