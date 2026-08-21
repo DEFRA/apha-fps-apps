@@ -29,6 +29,14 @@
     <!-- ── Main Navigation ───────────────────────────────────────────── -->
     @await Component.InvokeAsync("AppNav", new { appArea = "FPS" })
 
+    <!-- ── Page loader overlay ──────────────────────────────────────────── -->
+    <div id="pageLoader" aria-live="polite" aria-label="Loading" role="status"
+         style="display:none; position:fixed; inset:0; z-index:9999;
+                background:rgba(255,255,255,0.75);
+                align-items:center; justify-content:center;">
+        <div class="fps-spinner" aria-hidden="true"></div>
+    </div>
+
     <!-- ── Page Body ─────────────────────────────────────────────────── -->
     <div class="sup_margin_bottom_10 content-wrapper">
         @RenderBody()
@@ -92,11 +100,42 @@
                 });
                 return obj;
             };
+
+        // ── Page loader: show on year-dropdown navigation, hide when fully loaded ──
+        (function () {
+            var loader = document.getElementById('pageLoader');
+            if (!loader) return;
+
+            // Show when the year selector triggers a full-page navigation
+            document.addEventListener('change', function (e) {
+                if (e.target && e.target.id === 'yearSelector') {
+                    loader.style.display = 'flex';
+                }
+            });
+
+            // Hide once the page (including images/scripts) has fully loaded
+            window.addEventListener('load', function () {
+                loader.style.display = 'none';
+            });
+        })();
     </script>
 
     <script src="~/js/common/headernav/navmenu.js"></script>
     <script src="~/js/common/numeric-decimal-input.js"></script>
     <script src="~/js/common/js-alphanumeric-field.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <style>
+        .fps-spinner {
+            width: 48px; height: 48px;
+            border: 5px solid #dee0e2;
+            border-top-color: #1d70b8;
+            border-radius: 50%;
+            animation: fps-spin 0.8s linear infinite;
+        }
+        @@keyframes fps-spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </body>
 </html>
