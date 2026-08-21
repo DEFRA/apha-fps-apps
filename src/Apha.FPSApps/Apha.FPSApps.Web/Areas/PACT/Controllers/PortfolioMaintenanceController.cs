@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             ViewBag.SourceWorkGroup = workgroup;
 
             var allPortfolios = await _projectService.GetAllPactProjectsAsync();
-            var programs = await _programService.GetAllProgramsAsync();
+            var programs = await _programService.GetAllProgramsForAllUsersAsync();
             var managers = await _employeeService.GetAllPactManagersAsync();
             var workGroups = await _testCapabilityService.GetAllWorkGroupsAsync();
             var testorProducts = await _testorProductService.GetAllTestorProductsAsync();
