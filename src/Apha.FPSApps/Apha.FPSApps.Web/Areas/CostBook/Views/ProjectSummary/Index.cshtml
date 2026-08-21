@@ -115,78 +115,18 @@
                             <!-- Year costs shell -->
                             <div class="project-year-costs-shell" style="margin:1px; overflow:auto;">
 
-                                <!-- Project Summary table -->
+                                <!-- Project Summary grid -->
                                 <div class="form-header project-year-costs-header">
                                     <h3 class="govuk-heading-s">Project Summary</h3>
                                 </div>
 
                                 <div class="project-summary-table-wrap">
-                                    <table class="custom-table" id="summaryTable">
-                                        <thead class="govuk-table__head">
-                                            <tr>
-                                                <th class="govuk-table__header govuk-!-font-size-16"
-                                                    data-column="0" data-type="string" aria-sort="none">
-                                                    Financial Year <span class="sort-indicator"></span>
-                                                </th>
-                                                <th class="govuk-table__header govuk-table__header--numeric govuk-!-font-size-16"
-                                                    data-column="1" data-type="currency" aria-sort="none">
-                                                    Additional Costs (£) <span class="sort-indicator"></span>
-                                                </th>
-                                                <th class="govuk-table__header govuk-table__header--numeric govuk-!-font-size-16"
-                                                    data-column="2" data-type="currency" aria-sort="none">
-                                                    Staff Costs (£) <span class="sort-indicator"></span>
-                                                </th>
-                                                <th class="govuk-table__header govuk-table__header--numeric govuk-!-font-size-16"
-                                                    data-column="3" data-type="currency" aria-sort="none">
-                                                    Test Costs (£) <span class="sort-indicator"></span>
-                                                </th>
-                                                <th class="govuk-table__header govuk-table__header--numeric govuk-!-font-size-16"
-                                                    data-column="4" data-type="currency" aria-sort="none">
-                                                    Animal Costs (£) <span class="sort-indicator"></span>
-                                                </th>
-                                                <th class="govuk-table__header govuk-table__header--numeric govuk-!-font-size-16"
-                                                    data-column="5" data-type="currency" aria-sort="none">
-                                                    Total Year Costs (£) <span class="sort-indicator"></span>
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="govuk-table__body" id="summaryTableBody">
-                                            @foreach (var row in Model.Rows)
-                                            {
-                                                <tr class="govuk-table__row">
-                                                    <td class="govuk-table__cell govuk-!-font-size-16">@row.FinancialYearDisplay</td>
-                                                    <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-size-16">@row.AdditionalCost.ToString("£#,##0.00")</td>
-                                                    <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-size-16">@row.StaffCost.ToString("£#,##0.00")</td>
-                                                    <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-size-16">@row.TestCost.ToString("£#,##0.00")</td>
-                                                    <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-size-16">@row.AnimalCost.ToString("£#,##0.00")</td>
-                                                    <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-size-16">@row.GrandTotal.ToString("£#,##0.00")</td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                <!-- Pagination -->
-                                <div class="sup_pagination_footer sup_border">
-                                    <div class="sup_pagination_wrapper">
-                                        <div class="sup_margin_top_bottom_5_10">
-                                            <label class="pagination-label" for="recordsPerPage">Records per page</label>
-                                            <select id="recordsPerPage" class="govuk-select sup_select_pagination_width">
-                                                <option value="5" selected>5</option>
-                                                <option value="10">10</option>
-                                                <option value="15">15</option>
-                                                <option value="20">20</option>
-                                                <option value="25">25</option>
-                                                <option value="30">30</option>
-                                            </select>
-                                        </div>
-                                        <nav class="govuk-!-margin-bottom-0 govuk-pagination" aria-label="Pagination">
-                                            <ul class="govuk-pagination__list" id="pagination"></ul>
-                                        </nav>
+                                    <div id="@($"gridContainer_{Model.SummaryGrid.GridId}")">
+                                        @await Html.PartialAsync("_DataGrid", Model.SummaryGrid)
                                     </div>
                                 </div>
 
-                                <!-- Totals footer (below pagination) -->
+                                <!-- Totals footer (below grid) -->
                                 <div class="project-summary-table-wrap govuk-form-group">
                                     <table class="govuk-table fps-sr-themed-table isResultGrid" style="margin-bottom:0;">
                                         <tfoot class="ps-tfoot" id="summaryTableFootBtm">
@@ -262,7 +202,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             if (typeof tuInitResize === "function") {
-                tuInitResize("summaryTable");
+                tuInitResize("tbl_@Model.SummaryGrid.GridId");
             }
         });
     </script>
