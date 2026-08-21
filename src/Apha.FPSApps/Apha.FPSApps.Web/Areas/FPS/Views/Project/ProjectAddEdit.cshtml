@@ -84,7 +84,7 @@
                             <div class="govuk-form-group sup_margin_0 mt-2 mb-3"
                                  style="border: 1px solid #1d70b8; padding: 8px; border-radius: 4px; display: flex; align-items: center; gap: 10px;">
                                 <label class="govuk-label" style="display:inline-block; margin:0;" for="NewProjectCode">Change Project Code:</label>
-                                <input type="text" style="width:350px;" class="govuk-input js-alphanumeric" id="NewProjectCode" name="NewProjectCode"
+                                <input type="text" style="width:350px;" class="govuk-input js-alphanumeric" id="NewProjectCode" name="NewProjectCode" maxlength="20"
                                        placeholder="Enter new project code" />
                                 <button class="govuk-button sup_margin_0" type="button"
                                         onclick="changeProjectCode(document.querySelector('input[name=OriginalParentProject]').value, document.getElementById('NewProjectCode').value)">
@@ -104,7 +104,7 @@
                                     }
                                     else
                                     {
-                                        <input type="text" asp-for="ParentProject" class="govuk-input js-alphanumeric" required />
+                                        <input type="text" asp-for="ParentProject" class="govuk-input js-alphanumeric" maxlength="20" required />
                                     }
                                     <span asp-validation-for="ParentProject" class="govuk-error-message" style="display:none;"></span>
                                 </div>
