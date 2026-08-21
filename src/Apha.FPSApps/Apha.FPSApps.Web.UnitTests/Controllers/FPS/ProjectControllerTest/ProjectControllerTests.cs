@@ -418,7 +418,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectControllerTest
 
         #region Helpers
 
-        private ProgrammeNewProjectViewModel CreateValidProjectViewModel()
+        private static ProgrammeNewProjectViewModel CreateValidProjectViewModel()
         {
             return new ProgrammeNewProjectViewModel
             {
