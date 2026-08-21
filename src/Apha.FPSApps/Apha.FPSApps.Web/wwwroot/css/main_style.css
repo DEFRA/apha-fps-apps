@@ -1893,7 +1893,7 @@ textarea {
     font-weight: bold !important;
 }
 
-.govuk-input:disabled,
+/*.govuk-input:disabled,
 .modal-body .govuk-input[readonly],
 .govuk-input--disabled {
     background: #E8E8E8;
@@ -1910,4 +1910,4 @@ textarea {
         color: #505A5F;
         cursor: not-allowed;
     }
-}
+}*/
