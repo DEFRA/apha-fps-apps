@@ -639,6 +639,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
             // Assert — CurrentFilters on the returned grid config must reflect the column filter
             var partialView = Assert.IsType<PartialViewResult>(result);
             var config = Assert.IsType<DataGridConfig<TestRCCostItem>>(partialView.Model);
+            Assert.NotNull(config.CurrentFilters);                                      // ← guards the null warning
             Assert.True(config.CurrentFilters.ContainsKey("ProfitCentre"));
             Assert.Equal(DefaultProfitCentre, config.CurrentFilters["ProfitCentre"]);
         }
