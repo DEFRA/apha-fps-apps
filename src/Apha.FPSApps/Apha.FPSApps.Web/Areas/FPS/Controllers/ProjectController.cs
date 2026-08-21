@@ -1,23 +1,20 @@
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Common.Validation;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
-using System.Text.RegularExpressions;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin,FPSUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
-    public partial class ProjectController : Controller
+    public class ProjectController : Controller
     {
-        [GeneratedRegex("^[A-Za-z0-9]+$")]
-        private static partial Regex ProjectCodeRegex();
-
         private readonly IMapper _mapper;
         private readonly IProjectService _projectService;
         private readonly IProgramService _programService;
@@ -168,7 +165,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (string.IsNullOrWhiteSpace(oldCode) || string.IsNullOrWhiteSpace(newCode))
                 return Json(new { success = false, message = "Both old and new project codes are required." });
 
-            if (!ProjectCodeRegex().IsMatch(newCode))
+            if (!ValidationRegexPatterns.AlphaNumeric().IsMatch(newCode))
                 return Json(new { success = false, message = "Project Code must contain only letters (A-Z, a-z) and numbers (0-9)." });
 
             var response = await _projectService.ChangeProjectCodeAsync(oldCode, newCode);
