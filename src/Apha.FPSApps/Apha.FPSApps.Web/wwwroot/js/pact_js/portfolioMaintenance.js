@@ -547,7 +547,7 @@ function initializeTestCodeMultiColumnDropdown() {
             { field: 'Text', header: 'Test Description', width: '180px' }
         ],
         data: testCodeOptionsListData,
-        displayField: 'Text',
+        displayField: 'Value',
         valueField: 'Value',
         clearButtonClearsSelection: true,
         callbacks: {

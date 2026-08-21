@@ -211,6 +211,16 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_DataGrid", gridConfig);
         }
 
+        [HttpPost]
+        public IActionResult LoadTimeCodeEmptyGrid(string parentProject)
+        {
+            if (String.IsNullOrEmpty(parentProject))
+                return BadRequest("Parent project is required");
+
+            var gridConfig = BuildEmptyTimeCodeGrid(parentProject);
+            return PartialView("_DataGrid", gridConfig);
+        }
+
         private async Task<DataGridConfig<JobCodeViewModel>> BuildJobCodeGridAsync(PaginationFilter<string> request, string parentProject)
         {
             var query = _mapper.Map<QueryParameters<string>>(request);

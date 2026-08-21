@@ -86,7 +86,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
 
             _jobCodeService.GetAllWorkGroupsAsync()
                 .Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse([]));
-            _programService.GetAllProgramsAsync()
+            _programService.GetAllProgramsForAllUsersAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse([]));
             _projectService.GetAllStatusesAsync()
                 .Returns(ApiResponseDto<List<StatusDto>>.SuccessResponse([]));
@@ -310,7 +310,40 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
-            Assert.IsType<DataGridConfig<TimeCodeViewModel>>(partial.Model);
+            var gridConfig = Assert.IsType<DataGridConfig<TimeCodeViewModel>>(partial.Model);
+            Assert.NotNull(gridConfig);
+        }
+
+        [Fact]
+        public async Task LoadTimeCodeGrid_ValidRequestWithData_ReturnsGridWithCorrectConfiguration()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Filter = "{}", SortBy = "TimeCode", Descending = false };
+            var timeCodeData = new List<TimeCodeValidDto>
+            {
+                new() { TimeCode = "TC1", ParentProject = "PRJ001", JobCode = "JC1", WorkGroup = "WG1", Active = true },
+                new() { TimeCode = "TC2", ParentProject = "PRJ001", JobCode = "JC1", WorkGroup = "WG2", Active = true }
+            };
+            var viewModelData = new List<TimeCodeViewModel>
+            {
+                new() { TimeCode = "TC1" },
+                new() { TimeCode = "TC2" }
+            };
+
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>()).Returns(new QueryParameters<string>());
+            _timeCodeService.GetPagedTimeCodesAsync(Arg.Any<QueryParameters<string>>(), "JC1", "PRJ001")
+                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(timeCodeData, new PaginationDto()));
+            _mapper.Map<List<TimeCodeViewModel>>(Arg.Is<List<TimeCodeValidDto>>(x => x.Count == 2)).Returns(viewModelData);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
+
+            // Act
+            var result = await _controller.LoadTimeCodeGrid(request, "PRJ001", "JC1");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<TimeCodeViewModel>>(partial.Model);
+            Assert.Equal(2, gridConfig.Data.Count);
+            await _timeCodeService.Received(1).GetPagedTimeCodesAsync(Arg.Any<QueryParameters<string>>(), "JC1", "PRJ001");
         }
 
         [Fact]
@@ -323,7 +356,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             var result = await _controller.LoadTimeCodeGrid(new PaginationFilter<string> { Filter = "{}" }, "PRJ001", "JC1");
 
             // Assert
-            Assert.IsType<BadRequestObjectResult>(result);
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.NotNull(badRequest.Value);
         }
 
         [Fact]
@@ -333,7 +367,19 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             var result = await _controller.LoadTimeCodeGrid(new PaginationFilter<string> { Filter = "{}" }, string.Empty, "JC1");
 
             // Assert
-            Assert.IsType<BadRequestObjectResult>(result);
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Parent project and job code are required", badRequest.Value);
+        }
+
+        [Fact]
+        public async Task LoadTimeCodeGrid_NullParentProject_ReturnsBadRequest()
+        {
+            // Act
+            var result = await _controller.LoadTimeCodeGrid(new PaginationFilter<string> { Filter = "{}" }, null, "JC1");
+
+            // Assert
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Parent project and job code are required", badRequest.Value);
         }
 
         [Fact]
@@ -343,7 +389,136 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             var result = await _controller.LoadTimeCodeGrid(new PaginationFilter<string> { Filter = "{}" }, "PRJ001", string.Empty);
 
             // Assert
-            Assert.IsType<BadRequestObjectResult>(result);
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Parent project and job code are required", badRequest.Value);
+        }
+
+        [Fact]
+        public async Task LoadTimeCodeGrid_NullJobCodeId_ReturnsBadRequest()
+        {
+            // Act
+            var result = await _controller.LoadTimeCodeGrid(new PaginationFilter<string> { Filter = "{}" }, "PRJ001", null);
+
+            // Assert
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Parent project and job code are required", badRequest.Value);
+        }
+
+        [Fact]
+        public async Task LoadTimeCodeGrid_BothParametersNull_ReturnsBadRequest()
+        {
+            // Act
+            var result = await _controller.LoadTimeCodeGrid(new PaginationFilter<string> { Filter = "{}" }, null, null);
+
+            // Assert
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Parent project and job code are required", badRequest.Value);
+        }
+
+        [Fact]
+        public async Task LoadTimeCodeGrid_ServiceReturnsNoData_ReturnsEmptyGrid()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Filter = "{}" };
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>()).Returns(new QueryParameters<string>());
+            _timeCodeService.GetPagedTimeCodesAsync(Arg.Any<QueryParameters<string>>(), "JC1", "PRJ001")
+                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(null, new PaginationDto()));
+            _mapper.Map<List<TimeCodeViewModel>>(Arg.Any<List<TimeCodeValidDto>>()).Returns([]);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
+
+            // Act
+            var result = await _controller.LoadTimeCodeGrid(request, "PRJ001", "JC1");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<TimeCodeViewModel>>(partial.Model);
+            Assert.Empty(gridConfig.Data);
+        }
+
+        [Fact]
+        public async Task LoadTimeCodeGrid_CorrectParametersPassedToService()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Filter = "{}", Page = 2, PageSize = 25 };
+            var queryParams = new QueryParameters<string> { Page = 2, PageSize = 25 };
+
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>()).Returns(queryParams);
+            _timeCodeService.GetPagedTimeCodesAsync(Arg.Any<QueryParameters<string>>(), "JC1", "PRJ001")
+                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse([], new PaginationDto()));
+            _mapper.Map<List<TimeCodeViewModel>>(Arg.Any<List<TimeCodeValidDto>>()).Returns([]);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
+
+            // Act
+            await _controller.LoadTimeCodeGrid(request, "PRJ001", "JC1");
+
+            // Assert
+            await _timeCodeService.Received(1).GetPagedTimeCodesAsync(
+                Arg.Is<QueryParameters<string>>(q => q.Page == 2 && q.PageSize == 25),
+                "JC1",
+                "PRJ001");
+        }
+
+        #endregion
+
+        #region LoadTimeCodeEmptyGrid
+
+        [Fact]
+        public void LoadTimeCodeEmptyGrid_ValidParentProject_ReturnsPartialViewWithEmptyGrid()
+        {
+            // Act
+            var result = _controller.LoadTimeCodeEmptyGrid("PRJ001");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
+            var gridConfig = Assert.IsType<DataGridConfig<TimeCodeViewModel>>(partial.Model);
+            Assert.Equal("timeCodeGrid", gridConfig.GridId);
+            Assert.Equal("Time Code Validity", gridConfig.Title);
+            Assert.Empty(gridConfig.Data);
+        }
+
+        [Fact]
+        public void LoadTimeCodeEmptyGrid_EmptyParentProject_ReturnsBadRequest()
+        {
+            // Act
+            var result = _controller.LoadTimeCodeEmptyGrid(string.Empty);
+
+            // Assert
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Parent project is required", badRequest.Value);
+        }
+
+        [Fact]
+        public void LoadTimeCodeEmptyGrid_NullParentProject_ReturnsBadRequest()
+        {
+            // Act
+            var result = _controller.LoadTimeCodeEmptyGrid(null);
+
+            // Assert
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Parent project is required", badRequest.Value);
+        }
+
+        [Fact]
+        public void LoadTimeCodeEmptyGrid_ValidParentProject_GridHasCorrectProperties()
+        {
+            // Act
+            var result = _controller.LoadTimeCodeEmptyGrid("PRJ001");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<TimeCodeViewModel>>(partial.Model);
+
+            Assert.Equal("timeCodeGrid", gridConfig.GridId);
+            Assert.Equal("Time Code Validity", gridConfig.Title);
+            Assert.Equal("TimeCode", gridConfig.KeyProperty);
+            Assert.Equal("addTimeCode", gridConfig.AddFunction);
+            Assert.Equal("editTimeCode", gridConfig.EditFunction);
+            Assert.Equal("deleteTimeCode", gridConfig.DeleteFunction);
+            Assert.Equal("getTimeCodeExtraFilters", gridConfig.ExtraFilterMethod);
+            Assert.Contains("PRJ001", gridConfig.BindGridUrl);
+            Assert.True(gridConfig.ShowPagination);
+            Assert.NotNull(gridConfig.Columns);
         }
 
         #endregion
