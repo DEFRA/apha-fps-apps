@@ -412,7 +412,9 @@ function initLiveModalDropdowns(existingWorkGroup, existingName, existingPactId)
             },
             onClear: function () {
                 $('#LiveWorkGroup').val('');
-                if (window.liveNameDropdown) window.liveNameDropdown.updateData([]);
+                if (window.liveNameDropdown) {
+                    window.liveNameDropdown.updateData([]);
+                }
                 $('#LivePactStaffId').val('');
                 $('#LiveName').val('');
             }
