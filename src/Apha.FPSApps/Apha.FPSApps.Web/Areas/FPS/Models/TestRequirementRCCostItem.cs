@@ -5,10 +5,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
     public class TestRequirementRCCostItem
     {
-        // Part of composite PK — visible, editable
+        // Part of composite PK — contextually locked to the selected
+        // ComponentChargesGeneralGrid row; not user-filterable.
         [Required(ErrorMessage = "Profit Centre is required.")]
         [Display(Name = "ProfitCentre")]
-        [GridColumn(Order = 1, Width = 140, Type = GridColumnType.Text, IsFilterable = true)]
+        [GridColumn(Order = 1, Width = 140, Type = GridColumnType.Text, IsFilterable = false)]
         public string ProfitCentre { get; set; } = null!;
 
         // Maps to DTO Buyer — "project" in the JS is the buyer/project code
