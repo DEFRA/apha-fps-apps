@@ -420,6 +420,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectControllerTest
 
         private static ProgrammeNewProjectViewModel CreateValidProjectViewModel()
         {
+
             return new ProgrammeNewProjectViewModel
             {
                 ParentProject = "PP001",
