@@ -9,6 +9,8 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using System.Text.Json;
+using Apha.FPSApps.Web.Constants;
+using Microsoft.AspNetCore.Http;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
 {
@@ -26,7 +28,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         private readonly IWorkGroupEmployeeService _wgEmployeeService;
         private readonly IAppStateService _appStateService;
         private readonly ResourceSetUpController _controller;
-
+        private const string SelectedProfitCentreSessionKey = "SelectedProfitCentre";
         public ResourceSetUpControllerTests()
         {
             _mapper              = Substitute.For<IMapper>();
@@ -63,6 +65,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             new() { PcGrade = "G002", ProfitCentre = DefaultProfitCentre, ChargeRate = 200m }
         ];
 
+        private void SetHttpContext(string queryString = "")
+        {
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.QueryString = new QueryString(queryString);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = httpContext
+            };
+        }
+
         #region Index Tests
 
         [Fact]
@@ -70,6 +83,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             var profitCentres = BuildProfitCentreList();
+            SetHttpContext();
             _profitCentreService.GetProfitCentresAsync()
                 .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
 
@@ -93,6 +107,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             var profitCentres = BuildProfitCentreList();
+            SetHttpContext();
             var rcGrades      = BuildRcGradeList();
 
             _profitCentreService.GetProfitCentresAsync()
@@ -121,7 +136,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
             _profitCentreService.GetProfitCentresAsync()
                 .Returns(ApiResponseDto<List<ProfitCentreDto>>.FailureResponse(errors, new ApiMetaDto()));
-
+            SetHttpContext();
             // Act
             var result = await _controller.Index(null);
 
@@ -137,6 +152,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             var profitCentres = BuildProfitCentreList();
+            SetHttpContext();
             var errors        = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
 
             _profitCentreService.GetProfitCentresAsync()
@@ -159,6 +175,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             var profitCentres = BuildProfitCentreList();
+            SetHttpContext();
             _profitCentreService.GetProfitCentresAsync()
                 .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
 
@@ -180,6 +197,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             // Arrange
             _profitCentreService.GetProfitCentresAsync()
                 .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(BuildProfitCentreList()));
+            SetHttpContext();
 
             // Act
             var result = await _controller.Index(null);
@@ -199,6 +217,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             // Arrange
             _profitCentreService.GetProfitCentresAsync()
                 .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(BuildProfitCentreList()));
+            SetHttpContext();
 
             // Act
             var result = await _controller.Index(null);
@@ -210,6 +229,59 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             Assert.True(model.WgStaffGrid.AllowEdit);
             Assert.False(model.WgStaffGrid.AllowAdd);
             Assert.False(model.WgStaffGrid.AllowDelete);
+        }
+
+        [Fact]
+        public async Task Index_WhenProfitCentreQueryIsMissing_UsesSessionValue()
+        {
+            // Arrange
+            var profitCentres = BuildProfitCentreList();
+            SetHttpContext();
+
+            SetHttpContext();
+            _profitCentreService.GetProfitCentresAsync()
+                .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
+            _appStateService.GetSessionAsync<string>(SelectedProfitCentreSessionKey)
+                .Returns(DefaultProfitCentre);
+            _rcGradeService.GetProfitCentreGradesAsync(DefaultProfitCentre)
+                .Returns(ApiResponseDto<List<ProfitCentreGradeDto>>.SuccessResponse(BuildRcGradeList()));
+
+            // Act
+            var result = await _controller.Index(null);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResourceSetUpViewModel>(viewResult.Model);
+
+            Assert.Equal(DefaultProfitCentre, model.ProfitCentre);
+            await _appStateService.Received(1).GetSessionAsync<string>(SelectedProfitCentreSessionKey);
+            await _appStateService.Received(1).SetSessionAsync(SelectedProfitCentreSessionKey, DefaultProfitCentre);
+        }
+
+        [Fact]
+        public async Task Index_WhenProfitCentreQueryIsPresentButEmpty_ClearsSelectionInsteadOfUsingSession()
+        {
+            // Arrange
+            var profitCentres = BuildProfitCentreList();
+            SetHttpContext();
+
+            SetHttpContext("?profitCentre=");
+            _profitCentreService.GetProfitCentresAsync()
+                .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
+            _appStateService.GetSessionAsync<string>(SelectedProfitCentreSessionKey)
+                .Returns(DefaultProfitCentre);
+
+            // Act
+            var result = await _controller.Index(string.Empty);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResourceSetUpViewModel>(viewResult.Model);
+
+            Assert.Equal(string.Empty, model.ProfitCentre);
+            await _appStateService.DidNotReceive().GetSessionAsync<string>(SelectedProfitCentreSessionKey);
+            await _appStateService.Received(1).SetSessionAsync(SelectedProfitCentreSessionKey, string.Empty);
+            await _rcGradeService.DidNotReceive().GetProfitCentreGradesAsync(Arg.Any<string>());
         }
 
         #endregion
