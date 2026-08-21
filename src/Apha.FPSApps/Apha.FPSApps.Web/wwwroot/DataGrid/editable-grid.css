@@ -46,8 +46,9 @@
 }
 
 .grid-scroll-container {
-    max-height: 435px;
-    height: auto;
+    background-color: #fff; /* add background color to prevent table background become transparent*/
+    max-height: 400px;
+    height: 400px;
     overflow-y: auto;
 }
 
