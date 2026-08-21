@@ -149,6 +149,7 @@ function deleteJobCode(btn) {
             success: function(response) {
                 if (response.success) {
                     getJobCodeGridManager()?.reloadGrid({ page: 1 });
+                    $('#timeCodeGridSubtitle').text('— Job Code: ');
                     reloadTimeCodeEmptyGrid();
                     showAlertMessage('JobCode deleted successfully.', AlertType.SUCCESS);
                 } else {
@@ -469,7 +470,7 @@ function executeCopyBulkWorkGroup() {
                 success: function(response) {
                     if (response.success) {
                         $('#modalPopup').removeClass('show');
-                        debugger;
+                        $('#timeCodeGridSubtitle').text('— Job Code: ');
                         reloadTimeCodeEmptyGrid();
                         showAlertMessage('All work groups copied successfully.', AlertType.SUCCESS);
                     } else {
