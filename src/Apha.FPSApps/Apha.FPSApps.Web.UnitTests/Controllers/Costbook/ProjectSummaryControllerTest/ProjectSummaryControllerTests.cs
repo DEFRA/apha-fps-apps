@@ -3,6 +3,7 @@ using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Web.Areas.CostBook.Controllers;
 using Apha.FPSApps.Web.Areas.CostBook.Models;
+using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 
@@ -389,6 +390,58 @@ public class ProjectSummaryControllerTests
         var model = Assert.IsType<ProjectSummaryViewModel>(viewResult.Model);
         Assert.Equal(projectId,   model.ProjectHeaderDto.ProjectId);
         Assert.Equal("My Project", model.ProjectHeaderDto.ProjectTitle);
+    }
+
+    [Fact]
+    public async Task Index_WithYears_ReturnsViewModelWithSummaryGridConfigured()
+    {
+        // Arrange
+        const string projectId = "P001";
+        _yearlyDetailsService.GetProjectHeaderAsync(projectId).Returns(HeaderSuccess(projectId));
+        _yearlyDetailsService.GetProjectYearsAsync(projectId).Returns(YearsSuccess(2024, 2025));
+        SetupYearServices(projectId, 2024, staffCost: 10, testCost: 20, animalCost: 30, additionalCost: 40);
+        SetupYearServices(projectId, 2025, staffCost: 50, testCost: 60, animalCost: 70, additionalCost: 80);
+
+        // Act
+        var result = await _controller.Index(projectId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<ProjectSummaryViewModel>(viewResult.Model);
+        Assert.Equal(2, model.SummaryGrid.Data.Count);
+        Assert.Equal("projectSummaryGrid", model.SummaryGrid.GridId);
+        Assert.False(model.SummaryGrid.ShowPagination);
+        Assert.Equal($"/CostBook/ProjectSummary/LoadProjectSummaryGrid?projectId={System.Web.HttpUtility.UrlEncode(projectId)}", model.SummaryGrid.BindGridUrl);
+    }
+
+    [Fact]
+    public async Task LoadProjectSummaryGrid_ReturnsPartialViewWithGridData()
+    {
+        // Arrange
+        const string projectId = "P001";
+        var request = new PaginationFilter<string>
+        {
+            Page = 1,
+            PageSize = 10,
+            SortBy = nameof(ProjectSummaryRow.Year),
+            Descending = true,
+            Filter = "{}"
+        };
+
+        _yearlyDetailsService.GetProjectYearsAsync(projectId).Returns(YearsSuccess(2024, 2025));
+        SetupYearServices(projectId, 2024, staffCost: 10, testCost: 20, animalCost: 30, additionalCost: 40);
+        SetupYearServices(projectId, 2025, staffCost: 50, testCost: 60, animalCost: 70, additionalCost: 80);
+
+        // Act
+        var result = await _controller.LoadProjectSummaryGrid(request, projectId);
+
+        // Assert
+        var partial = Assert.IsType<PartialViewResult>(result);
+        Assert.Equal("_DataGrid", partial.ViewName);
+        var model = Assert.IsType<DataGridConfig<ProjectSummaryRow>>(partial.Model);
+        Assert.Equal(2, model.Data.Count);
+        Assert.Equal(2025, model.Data[0].Year);
+        Assert.Equal(2024, model.Data[1].Year);
     }
 
     #endregion

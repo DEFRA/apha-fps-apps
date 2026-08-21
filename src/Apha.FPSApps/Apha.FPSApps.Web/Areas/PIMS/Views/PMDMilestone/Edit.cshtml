@@ -118,7 +118,7 @@
 
             <div class="govuk-form-group" id="fg-comment">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="ProjectLeaderComment">
-                    Project Leaders Comment <span class="app-required" aria-hidden="true">*</span>
+                    Project Leaders Comment 
                 </label>
                 <textarea class="govuk-textarea govuk-!-font-size-16" asp-for="ProjectLeaderComment" rows="4"></textarea>
                 <span asp-validation-for="ProjectLeaderComment" class="govuk-error-message govuk-!-display-none"></span>
@@ -293,10 +293,7 @@ else
             const errors = [];
             const projectLeaderComment = document.querySelector('[name="ProjectLeaderComment"]')?.value || '';
             const dateCompletedError = document.getElementById('DateCompletedError');
-
-            if (!projectLeaderComment.trim()) {
-                errors.push('Project Leaders Comment is required.');
-            }
+           
 
             // Check if there are any date validation errors
             if (dateCompletedError && dateCompletedError.style.display === 'block') {
