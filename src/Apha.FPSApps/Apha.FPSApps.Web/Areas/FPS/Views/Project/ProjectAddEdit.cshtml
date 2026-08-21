@@ -477,10 +477,8 @@
                         showAlertMessage(result.message || 'Project code changed successfully.', AlertType.SUCCESS).then(function () {
                             window.location.href = result.redirectUrl;
                         });
-                    } else if (result.errors && result.errors.length) {
-                        displayServerValidationErrors(result.errors, result.message, '#main-content');
                     } else {
-                        showAlertMessage(result.message || 'Failed to change project code.', AlertType.ERROR);
+                        displayServerValidationErrors(result.errors, result.message, '#main-content');
                     }
                 })
                 .catch(function (err) {
