@@ -108,6 +108,7 @@
 
         function planProject(btn) {
             var projectCode = $(btn).data('id');
+            sessionStorage.setItem('fps_clearFiltersOnReturn', '1');
             fpsNavigateTo('@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })' + '?projectCode=' + encodeURIComponent(projectCode));
         }
 
@@ -120,10 +121,18 @@
                 + '?projectGroup=' + encodeURIComponent(projectGroup)
                 + '&projectSearch=' + encodeURIComponent(projectSearch);
 
+            sessionStorage.setItem('fps_clearFiltersOnReturn', '1');
             fpsNavigateTo('@Url.Action("Edit", "Project", new { area = "FPS" })'
                 + '?parentProject=' + encodeURIComponent(parentProject)
                 + '&returnUrl=' + encodeURIComponent(returnUrl));
         }
+
+        window.addEventListener('pageshow', function () {
+            if (sessionStorage.getItem('fps_clearFiltersOnReturn') === '1') {
+                sessionStorage.removeItem('fps_clearFiltersOnReturn');
+                fpsNavigateTo('@Url.Action("Index", "ProjectGroupSelection", new { area = "FPS" })');
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', function () {
             function applyButtonTitles() {
