@@ -355,9 +355,51 @@
 
             var isValid = year >= range.minYear && year <= range.maxYear;
             if (!isValid && showMessage) {
-                showAlertMessage('Please enter year between ' + range.minYear + ' and ' + range.maxYear + ' for this project.', AlertType.ERROR);
+                showYfdYearValidation('Please enter a year between ' + range.minYear + ' and ' + range.maxYear + ' for this project.');
             }
             return isValid;
+        }
+
+        function clearYfdFormError() {
+            $('#yfdFormErrorMsg').text('');
+            $('#yfdFormError').addClass('govuk-!-display-none');
+        }
+
+        function showYfdFormError(message) {
+            $('#yfdFormErrorMsg').text(message);
+            $('#yfdFormError').removeClass('govuk-!-display-none').focus();
+        }
+
+        function clearYfdYearValidation() {
+            $('#yfdModalYearGroup').removeClass('govuk-form-group--error');
+            $('#yfdModalYear').removeAttr('aria-invalid');
+            $('#yfdModalYear-error-msg').text('');
+            $('#yfdModalYear-error').addClass('govuk-!-display-none');
+            clearYfdFormError();
+        }
+
+        function showYfdYearValidation(message) {
+            $('#yfdModalYearGroup').addClass('govuk-form-group--error');
+            $('#yfdModalYear').attr('aria-invalid', 'true');
+            $('#yfdModalYear-error-msg').text(message);
+            $('#yfdModalYear-error').removeClass('govuk-!-display-none');
+            showYfdFormError(message);
+        }
+
+        function clearYfdAdjustmentCommentValidation() {
+            $('#yfdModalAdjCommentGroup').removeClass('govuk-form-group--error');
+            $('#yfdModalAdjComment').removeAttr('aria-invalid');
+            $('#yfdModalAdjComment-error-msg').text('');
+            $('#yfdModalAdjComment-error').addClass('govuk-!-display-none');
+            clearYfdFormError();
+        }
+
+        function showYfdAdjustmentCommentValidation(message) {
+            $('#yfdModalAdjCommentGroup').addClass('govuk-form-group--error');
+            $('#yfdModalAdjComment').attr('aria-invalid', 'true');
+            $('#yfdModalAdjComment-error-msg').text(message);
+            $('#yfdModalAdjComment-error').removeClass('govuk-!-display-none');
+            showYfdFormError(message);
         }
 
         function getPactProjectSpecific(pact) {
@@ -412,9 +454,13 @@
         function wireYfdReportedValueSync() {
             $('#yfdModalAdjustment').off('.yfdReported').on('input.yfdReported change.yfdReported', function () {
                 recalcYfdReportedValuesFromPact();
+                clearYfdAdjustmentCommentValidation();
             });
 
-           
+            $('#yfdModalAdjComment').off('.yfdAdjComment').on('input.yfdAdjComment change.yfdAdjComment', function () {
+                clearYfdAdjustmentCommentValidation();
+            });
+
             $('#yfdModalFixed').off('.yfdReported').on('change.yfdReported', function () {
                 var locked = $(this).is(':checked');
                 lockYfdCostFields(locked);
@@ -537,6 +583,10 @@
                 var project = getCurrentYfdProject();
                 var yearText = ($('#yfdModalYear').val() || '').trim();
 
+                if (yearText.length > 0) {
+                    clearYfdYearValidation();
+                }
+
                 if (!project || !/^\d{4}$/.test(yearText)) {
                     yfdPactCosts = null;
                     clearYfdPactDetailsPanel();
@@ -604,11 +654,26 @@
         
         async function saveYFD() {
             var isEdit = $('#hdnYfdIsEdit').val() === 'true';
-            var year = getCurrentYfdYear();
             var project = getCurrentYfdProject();
 
-            if (!year || !project) {
-                showAlertMessage('Please enter a valid year and select a project.', AlertType.ERROR);
+            if (!isEdit) {
+                var yearText = ($('#yfdModalYear').val() || '').trim();
+                if (!yearText) {
+                    showYfdYearValidation('Year is required');
+                    return;
+                }
+                clearYfdYearValidation();
+            }
+
+            var year = getCurrentYfdYear();
+
+            if (!isEdit && !year) {
+                showYfdYearValidation('Please enter a valid year.');
+                return;
+            }
+
+            if (!project) {
+                showYfdFormError('Please select a project.');
                 return;
             }
 
@@ -619,9 +684,10 @@
             var adjustment = parseDecimalOrNull($('#yfdModalAdjustment').val());
             var adjustmentComment = ($('#yfdModalAdjComment').val() || '').trim();
             if ((adjustment ?? 0) !== 0 && adjustmentComment.length === 0) {
-                showAlertMessage('Please enter reason for adjustment figure, (or remove the adjustment figure).', AlertType.ERROR);
+                showYfdAdjustmentCommentValidation('Please enter a reason for the adjustment figure, or remove the adjustment figure.');
                 return;
             }
+            clearYfdAdjustmentCommentValidation();
 
             var pact = null;
             try {
@@ -698,7 +764,7 @@
             var year = getCurrentYfdYear();
             var project = getCurrentYfdProject();
             if (!year || !project) {
-                showAlertMessage('Please select a project and year first.', AlertType.ERROR);
+                showYfdFormError('Please select a project and year first.');
                 return;
             }
 
@@ -722,12 +788,13 @@
             var adjustmentComment = ($('#yfdModalAdjComment').val() || '').trim();
 
             if ((adjustment !== 0) && adjustmentComment.length === 0) {
-                showAlertMessage('Please enter reason for adjustment figure, (or remove the adjustment figure).', AlertType.ERROR);
+                showYfdAdjustmentCommentValidation('Please enter a reason for the adjustment figure, or remove the adjustment figure.');
                 return;
             }
+            clearYfdAdjustmentCommentValidation();
 
             if (!year || !project) {
-                showAlertMessage('Please select a project and year first.', AlertType.ERROR);
+                showYfdFormError('Please select a project and year first.');
                 return;
             }
 

@@ -295,10 +295,10 @@
                     <div class="yfd-modal-col-centre">
 
                         @* Year (required; editable in add mode, read-only in edit mode) *@
-                        <div class="govuk-form-group sup_margin_bottom_10">
+                        <div class="govuk-form-group sup_margin_bottom_10" id="yfdModalYearGroup">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 sup_font_weight_700"
                                    for="yfdModalYear">
-                                Year
+                                Year: <span class="ra-required-star" aria-hidden="true">*</span>
                             </label>
                             @if (isEditMode)
                             {
@@ -320,8 +320,10 @@
                                        value="@(Model.Year != 0 ? Model.Year.ToString() : string.Empty)"
                                        required
                                        aria-required="true"
+                                       data-val-required="Year is required"
                                        placeholder="e.g. 2026"
                                        maxlength="4"
+                                       oninput="clearYfdYearValidation()"
                                        aria-describedby="yfdModalYear-error" />
                             }
                             <p class="govuk-error-message govuk-!-display-none" id="yfdModalYear-error">
@@ -495,7 +497,7 @@
                         </div>
 
                         @* Adjustment Comment — AdjustmentComment *@
-                        <div class="govuk-form-group sup_margin_bottom_10">
+                        <div class="govuk-form-group sup_margin_bottom_10" id="yfdModalAdjCommentGroup">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 sup_font_weight_700"
                                    for="yfdModalAdjComment">
                                 Adjustment Comment:
@@ -503,7 +505,12 @@
                             <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
                                       id="yfdModalAdjComment"
                                       name="yfdModalAdjComment"
-                                      rows="6">@Model.AdjustmentComment</textarea>
+                                      rows="6"
+                                      aria-describedby="yfdModalAdjComment-error">@Model.AdjustmentComment</textarea>
+                            <p class="govuk-error-message govuk-!-display-none" id="yfdModalAdjComment-error">
+                                <span class="govuk-visually-hidden">Error:</span>
+                                <span id="yfdModalAdjComment-error-msg"></span>
+                            </p>
                         </div>
 
                         <div class="yfd-update-costing-wrapper">

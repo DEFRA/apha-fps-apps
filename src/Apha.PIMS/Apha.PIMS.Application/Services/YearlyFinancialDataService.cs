@@ -20,6 +20,27 @@ namespace Apha.PIMS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
+        public async Task<PaginatedResult<YearlyFinancialDataDto>> GetAllAsync(string project, QueryParameters<string> parameters)
+        {
+            if (string.IsNullOrWhiteSpace(project))
+                throw new ArgumentException("Project must not be null or empty.", nameof(project));
+
+            if (parameters is null)
+                throw new ArgumentException("Query parameters must not be null.", nameof(parameters));
+
+            PaginationParameters<string> paginationParams =
+                _mapper.Map<PaginationParameters<string>>(parameters);
+
+            PagedData<YearlyFinancialData> pagedData =
+                await _repository.GetAllAsync(project, paginationParams);
+
+            return new PaginatedResult<YearlyFinancialDataDto>
+            {
+                Data = _mapper.Map<List<YearlyFinancialDataDto>>(pagedData.Data),
+                PaginationData = _mapper.Map<PaginationDto>(pagedData.PaginationData)
+            };
+        }
+
         public async Task<PaginatedResult<YearlyFinancialDataDto>> GetAllAsync(QueryParameters<string> parameters)
         {
             if (parameters is null)

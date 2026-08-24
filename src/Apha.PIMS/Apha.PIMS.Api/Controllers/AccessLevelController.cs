@@ -13,7 +13,6 @@ namespace Apha.PIMS.Api.Controllers
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/accesslevel")]
 
-    //Controller of AccessLevel
     public class AccessLevelController : ControllerBase
     {
         private readonly IAccessLevelService _service;

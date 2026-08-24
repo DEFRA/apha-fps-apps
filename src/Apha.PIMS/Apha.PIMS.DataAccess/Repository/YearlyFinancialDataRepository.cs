@@ -4,16 +4,14 @@ using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using System.Text.Json;
 
 namespace Apha.PIMS.DataAccess.Repository
 {
-    public class YearlyFinancialDataRepository : IYearlyFinancialDataRepository
+    public class YearlyFinancialDataRepository : BaseRepository, IYearlyFinancialDataRepository
     {
-        private readonly PimsDbContext _context;
-
-        public YearlyFinancialDataRepository(PimsDbContext context)
+        public YearlyFinancialDataRepository(PimsDbContext context) : base(context)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public async Task<PagedData<YearlyFinancialData>> GetAllAsync(
@@ -24,29 +22,11 @@ namespace Apha.PIMS.DataAccess.Repository
                 .AsNoTracking()
                 .Where(e => e.Project == project);
 
+            query = ApplyFilter(query, paging.Filter);
             query = ApplySearch(query, paging.Search);
             query = ApplySorting(query, paging.SortBy, paging.Descending);
 
-            int totalRecords = await query.CountAsync();
-
-            List<YearlyFinancialData> data = paging.Page == -1
-                ? await query.ToListAsync()
-                : await query
-                      .Skip((paging.Page - 1) * paging.PageSize)
-                      .Take(paging.PageSize)
-                      .ToListAsync();
-
-            var pagination = new PaginationData
-            {
-                PageNumber   = paging.Page,
-                PageSize     = paging.PageSize,
-                TotalRecords = totalRecords,
-                TotalPages   = paging.Page == -1
-                    ? 1
-                    : (int)Math.Ceiling((double)totalRecords / paging.PageSize)
-            };
-
-            return new PagedData<YearlyFinancialData>(data, pagination);
+            return await ApplyPaging(query, paging.Page, paging.PageSize);
         }
 
         public async Task<YearlyFinancialData?> GetByKeyAsync(short year, string project)
@@ -200,50 +180,110 @@ namespace Apha.PIMS.DataAccess.Repository
         // ─── Private helpers ────────────────────────────────────────────────────────
 
       
+        private static IQueryable<YearlyFinancialData> ApplyFilter(
+            IQueryable<YearlyFinancialData> query,
+            string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter) || filter == "{}")
+            {
+                return query;
+            }
+
+            try
+            {
+                using JsonDocument doc = JsonDocument.Parse(filter);
+                if (!doc.RootElement.TryGetProperty("Year", out JsonElement yearElement)
+                    && !doc.RootElement.TryGetProperty("year", out yearElement))
+                {
+                    return query;
+                }
+
+                string? yearText = yearElement.ValueKind == JsonValueKind.String
+                    ? yearElement.GetString()
+                    : yearElement.ToString();
+
+                if (short.TryParse(yearText, out short year))
+                {
+                    query = query.Where(e => e.Year == year);
+                }
+            }
+            catch (JsonException)
+            {
+                return query;
+            }
+
+            return query;
+        }
+
         private static IQueryable<YearlyFinancialData> ApplySearch(
             IQueryable<YearlyFinancialData> query,
             string? search)
         {
-            if (string.IsNullOrWhiteSpace(search)) return query;
+            if (string.IsNullOrWhiteSpace(search))
+            {
+                return query;
+            }
 
-            string s = search.ToLower();
-
-            // Search year as string equivalent, project code, costedby username
-            return query.Where(e =>
-                e.Project.ToLower().Contains(s) ||
-                (e.CostedBy != null && e.CostedBy.ToLower().Contains(s)) ||
-                (e.AdjustmentComment != null && e.AdjustmentComment.ToLower().Contains(s)));
+            string s = search.Trim();
+            return query.Where(e => e.Year.ToString().Contains(s));
         }
 
-      
         private static IQueryable<YearlyFinancialData> ApplySorting(
             IQueryable<YearlyFinancialData> query,
             string? sortBy,
             bool descending)
         {
-            return (sortBy?.ToLower()) switch
+            string key = (sortBy ?? string.Empty).Trim().ToLowerInvariant();
+
+            return key switch
             {
-                "year"                => ApplyOrder(query, e => e.Year,               descending),
-                "project"             => ApplyOrder(query, e => e.Project,            descending),
-                "bfbudget"            => ApplyOrder(query, e => e.BfBudget,           descending),
-                "pybudget"            => ApplyOrder(query, e => e.PyBudget,           descending),
-                "seedcorn"            => ApplyOrder(query, e => e.Seedcorn,           descending),
-                "manhours"            => ApplyOrder(query, e => e.ManHours,           descending),
-                "mandays"             => ApplyOrder(query, e => e.ManDays,            descending),
-                "manyears"            => ApplyOrder(query, e => e.ManYears,           descending),
-                "paycosts"            => ApplyOrder(query, e => e.PayCosts,           descending),
-                "nonpayohcosts"       => ApplyOrder(query, e => e.NonPayOhCosts,      descending),
-                "testcosts"           => ApplyOrder(query, e => e.TestCosts,          descending),
-                "animalcosts"         => ApplyOrder(query, e => e.AnimalCosts,        descending),
-                "nonanimalcosts"      => ApplyOrder(query, e => e.NonAnimalCosts,     descending),
-                "adjustment"          => ApplyOrder(query, e => e.Adjustment,         descending),
-                "actualexpenditure"   => ApplyOrder(query, e => e.ActualExpenditure,  descending),
-                "actualmanyears"      => ApplyOrder(query, e => e.ActualManYears,     descending),
-                "vlabudget"           => ApplyOrder(query, e => e.VlaBudget,          descending),
-                "locked"              => ApplyOrder(query, e => e.Locked,             descending),
-                "datecosted"          => ApplyOrder(query, e => e.DateCosted,         descending),
-                "costedby"            => ApplyOrder(query, e => e.CostedBy,           descending),
-                _                     => query.OrderBy(e => e.Year).ThenBy(e => e.Project)
+                "year" => ApplyOrder(query, e => e.Year, descending),
+                "project" => ApplyOrder(query, e => e.Project, descending),
+
+                "bfbudget" => ApplyOrder(query, e => e.BfBudget, descending),
+                "pp/acc" => ApplyOrder(query, e => e.BfBudget, descending),
+
+                "pybudget" => ApplyOrder(query, e => e.PyBudget, descending),
+                "customer income" => ApplyOrder(query, e => e.PyBudget, descending),
+
+                "vlabudget" => ApplyOrder(query, e => e.VlaBudget, descending),
+                "vla budget" => ApplyOrder(query, e => e.VlaBudget, descending),
+
+                "actualexpenditure" => ApplyOrder(query, e => e.ActualExpenditure, descending),
+                "actual exp" => ApplyOrder(query, e => e.ActualExpenditure, descending),
+
+                "seedcorn" => ApplyOrder(query, e => e.Seedcorn, descending),
+                "manhours" => ApplyOrder(query, e => e.ManHours, descending),
+                "man hours" => ApplyOrder(query, e => e.ManHours, descending),
+
+                "paycosts" => ApplyOrder(query, e => e.PayCosts, descending),
+                "pay costs" => ApplyOrder(query, e => e.PayCosts, descending),
+
+                "nonpayohcosts" => ApplyOrder(query, e => e.NonPayOhCosts, descending),
+                "non-pay & oh" => ApplyOrder(query, e => e.NonPayOhCosts, descending),
+
+                "testcosts" => ApplyOrder(query, e => e.TestCosts, descending),
+                "test costs" => ApplyOrder(query, e => e.TestCosts, descending),
+
+                "nonanimalcosts" => ApplyOrder(query, e => e.NonAnimalCosts, descending),
+                "project specific" => ApplyOrder(query, e => e.NonAnimalCosts, descending),
+
+                "animalcosts" => ApplyOrder(query, e => e.AnimalCosts, descending),
+                "animal costs" => ApplyOrder(query, e => e.AnimalCosts, descending),
+
+                "adjustment" => ApplyOrder(query, e => e.Adjustment, descending),
+                "exc/adj" => ApplyOrder(query, e => e.Adjustment, descending),
+
+                "adjustmentcomment" => ApplyOrder(query, e => e.AdjustmentComment, descending),
+                "adj comment" => ApplyOrder(query, e => e.AdjustmentComment, descending),
+
+                "mandays" => ApplyOrder(query, e => e.ManDays, descending),
+                "manyears" => ApplyOrder(query, e => e.ManYears, descending),
+                "actualmanyears" => ApplyOrder(query, e => e.ActualManYears, descending),
+                "locked" => ApplyOrder(query, e => e.Locked, descending),
+                "datecosted" => ApplyOrder(query, e => e.DateCosted, descending),
+                "costedby" => ApplyOrder(query, e => e.CostedBy, descending),
+                _ => query.OrderBy(e => e.Year).ThenBy(e => e.Project)
             };
         }
 
