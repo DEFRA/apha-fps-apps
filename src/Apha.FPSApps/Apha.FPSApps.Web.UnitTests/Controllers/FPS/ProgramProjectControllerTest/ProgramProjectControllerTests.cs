@@ -251,6 +251,176 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
                 Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
 
+        [Fact]
+        public async Task LoadProjectGrid_WhenSortingByIsDefraProject_FetchesAllRecordsAndSortsAscendingAcrossPages()
+        {
+            // Arrange
+            var request = new PaginationFilter<string>
+            {
+                Page = 1,
+                PageSize = 2,
+                SortBy = nameof(ProjectViewModel.IsDefraProject),
+                Descending = false
+            };
+            var programNo = "P001";
+            var allDtos = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", IsDefraProject = 1 },
+                new() { ParentProject = "PP002", IsDefraProject = 0 },
+                new() { ParentProject = "PP003", IsDefraProject = 1 },
+                new() { ParentProject = "PP004", IsDefraProject = 0 }
+            };
+            var allViewModels = new List<ProjectViewModel>
+            {
+                new() { ParentProject = "PP001", IsDefraProject = 1 },
+                new() { ParentProject = "PP002", IsDefraProject = 0 },
+                new() { ParentProject = "PP003", IsDefraProject = 1 },
+                new() { ParentProject = "PP004", IsDefraProject = 0 }
+            };
+            var pagination = new PaginationDto { PageNumber = 1, PageSize = 4, TotalRecords = 4, TotalPages = 1 };
+            var response = ApiResponseDto<List<ProjectDto>>.SuccessResponse(allDtos, pagination);
+
+            _mapper.Map<QueryParameters<string>>(request)
+                .Returns(_ => new QueryParameters<string> { Page = 1, PageSize = 2 });
+            _projectService.GetProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), programNo)
+                .Returns(response);
+            _mapper.Map<List<ProjectViewModel>>(allDtos).Returns(allViewModels);
+
+            // Act
+            var result = await _controller.LoadProjectGrid(request, programNo);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<ProjectViewModel>>(partialView.Model);
+            Assert.Equal(2, gridConfig.Data.Count);
+            Assert.All(gridConfig.Data, item => Assert.Equal(0, item.IsDefraProject));
+            Assert.Equal(4, gridConfig.Pagination.TotalRecords);
+            await _projectService.Received(2).GetProjectsByProgramAsync(
+                Arg.Any<QueryParameters<string>>(), programNo);
+        }
+
+        [Fact]
+        public async Task LoadProjectGrid_WhenSortingByIsDefraProjectDescending_ReturnsDefraRowsFirst()
+        {
+            // Arrange
+            var request = new PaginationFilter<string>
+            {
+                Page = 1,
+                PageSize = 2,
+                SortBy = nameof(ProjectViewModel.IsDefraProject),
+                Descending = true
+            };
+            var programNo = "P001";
+            var allDtos = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", IsDefraProject = 0 },
+                new() { ParentProject = "PP002", IsDefraProject = 1 },
+                new() { ParentProject = "PP003", IsDefraProject = 0 },
+                new() { ParentProject = "PP004", IsDefraProject = 1 }
+            };
+            var allViewModels = new List<ProjectViewModel>
+            {
+                new() { ParentProject = "PP001", IsDefraProject = 0 },
+                new() { ParentProject = "PP002", IsDefraProject = 1 },
+                new() { ParentProject = "PP003", IsDefraProject = 0 },
+                new() { ParentProject = "PP004", IsDefraProject = 1 }
+            };
+            var pagination = new PaginationDto { PageNumber = 1, PageSize = 4, TotalRecords = 4, TotalPages = 1 };
+            var response = ApiResponseDto<List<ProjectDto>>.SuccessResponse(allDtos, pagination);
+
+            _mapper.Map<QueryParameters<string>>(request)
+                .Returns(_ => new QueryParameters<string> { Page = 1, PageSize = 2 });
+            _projectService.GetProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), programNo)
+                .Returns(response);
+            _mapper.Map<List<ProjectViewModel>>(allDtos).Returns(allViewModels);
+
+            // Act
+            var result = await _controller.LoadProjectGrid(request, programNo);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<ProjectViewModel>>(partialView.Model);
+            Assert.Equal(2, gridConfig.Data.Count);
+            Assert.All(gridConfig.Data, item => Assert.Equal(1, item.IsDefraProject));
+        }
+
+        [Fact]
+        public async Task LoadProjectGrid_WhenSortingByIsDefraProject_ReturnsSecondPageSlice()
+        {
+            // Arrange
+            var request = new PaginationFilter<string>
+            {
+                Page = 2,
+                PageSize = 2,
+                SortBy = nameof(ProjectViewModel.IsDefraProject),
+                Descending = false
+            };
+            var programNo = "P001";
+            var allDtos = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", IsDefraProject = 1 },
+                new() { ParentProject = "PP002", IsDefraProject = 0 },
+                new() { ParentProject = "PP003", IsDefraProject = 1 },
+                new() { ParentProject = "PP004", IsDefraProject = 0 }
+            };
+            var allViewModels = new List<ProjectViewModel>
+            {
+                new() { ParentProject = "PP001", IsDefraProject = 1 },
+                new() { ParentProject = "PP002", IsDefraProject = 0 },
+                new() { ParentProject = "PP003", IsDefraProject = 1 },
+                new() { ParentProject = "PP004", IsDefraProject = 0 }
+            };
+            var pagination = new PaginationDto { PageNumber = 1, PageSize = 4, TotalRecords = 4, TotalPages = 1 };
+            var response = ApiResponseDto<List<ProjectDto>>.SuccessResponse(allDtos, pagination);
+
+            _mapper.Map<QueryParameters<string>>(request)
+                .Returns(_ => new QueryParameters<string> { Page = 2, PageSize = 2 });
+            _projectService.GetProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), programNo)
+                .Returns(response);
+            _mapper.Map<List<ProjectViewModel>>(allDtos).Returns(allViewModels);
+
+            // Act
+            var result = await _controller.LoadProjectGrid(request, programNo);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<ProjectViewModel>>(partialView.Model);
+            Assert.Equal(2, gridConfig.Data.Count);
+            Assert.All(gridConfig.Data, item => Assert.Equal(1, item.IsDefraProject));
+            Assert.Equal(2, gridConfig.Pagination.PageNumber);
+        }
+
+        [Fact]
+        public async Task LoadProjectGrid_WhenSortingByIsDefraProjectAndNoRecords_SkipsSecondServiceCall()
+        {
+            // Arrange
+            var request = new PaginationFilter<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = nameof(ProjectViewModel.IsDefraProject)
+            };
+            var programNo = "P001";
+            var pagination = new PaginationDto { PageNumber = 1, PageSize = 1, TotalRecords = 0, TotalPages = 0 };
+            var response = ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>(), pagination);
+
+            _mapper.Map<QueryParameters<string>>(request)
+                .Returns(_ => new QueryParameters<string> { Page = 1, PageSize = 10 });
+            _projectService.GetProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), programNo)
+                .Returns(response);
+
+            // Act
+            var result = await _controller.LoadProjectGrid(request, programNo);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<ProjectViewModel>>(partialView.Model);
+            Assert.Empty(gridConfig.Data);
+            Assert.Equal(0, gridConfig.Pagination.TotalRecords);
+            await _projectService.Received(1).GetProjectsByProgramAsync(
+                Arg.Any<QueryParameters<string>>(), programNo);
+        }
+
         #endregion
 
         #region Index Tests
