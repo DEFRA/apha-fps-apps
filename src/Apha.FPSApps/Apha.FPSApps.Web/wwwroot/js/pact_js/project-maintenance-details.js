@@ -126,7 +126,6 @@ function addJobCode() {
 
 function editJobCode(btn) {
     var jobCodeId = $(btn).data('id');
-    selectedJobCodeId = jobCodeId;
     $.ajax({
         url: '/PACT/ProjectMaintenance/EditJobCode',
         type: 'GET',
@@ -135,7 +134,7 @@ function editJobCode(btn) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
         },
-        error: function() { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+        error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
 }
 
@@ -150,7 +149,8 @@ function deleteJobCode(btn) {
             success: function(response) {
                 if (response.success) {
                     getJobCodeGridManager()?.reloadGrid({ page: 1 });
-                    reloadTimeCodeGrid(null);
+                    $('#timeCodeGridSubtitle').text('— Job Code: ');
+                    reloadTimeCodeEmptyGrid();
                     showAlertMessage('JobCode deleted successfully.', AlertType.SUCCESS);
                 } else {
                     showAlertMessage('Error: ' + response.message, AlertType.ERROR);
@@ -165,16 +165,15 @@ function deleteJobCode(btn) {
 
 function copyJobCode(btn) {
     var jobCodeId = $(btn).data('id');
-    selectedJobCodeId = jobCodeId;
     $.ajax({
         url: '/PACT/ProjectMaintenance/CopyProjectJobCode',
         type: 'GET',
-        data: { jobCodeId: selectedJobCodeId },
+        data: { jobCodeId: jobCodeId },
         success: function(html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
         },
-        error: function() { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+        error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
 }
 
@@ -200,6 +199,9 @@ function saveJobCode() {
             if (response.success) {
                 $('#modalPopup').removeClass('show');
                 getJobCodeGridManager()?.reloadGrid({ page: 1 });
+                selectedJobCodeId = '';
+                $('#timeCodeGridSubtitle').text('— Job Code: ');
+                reloadTimeCodeEmptyGrid();
                 showAlertMessage(successMsg, AlertType.SUCCESS);
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#jobCodeForm');
@@ -219,9 +221,9 @@ function loadTimeCodesForJobCode(btn) {
 
 function selectJobCode(row) {
     var jobCodeId = $(row).data('id');
-    selectedJobCodeId = jobCodeId;
-    $('#timeCodeGridSubtitle').text('— Job Code: ' + jobCodeId);
-    reloadTimeCodeGrid(jobCodeId);
+        selectedJobCodeId = jobCodeId;
+        $('#timeCodeGridSubtitle').text('— Job Code: ' + jobCodeId);
+        reloadTimeCodeGrid(jobCodeId);
 }
 
 function reloadTimeCodeGrid(jobCodeId) {
@@ -235,6 +237,20 @@ function reloadTimeCodeGrid(jobCodeId) {
             $('#gridContainer_' + timeCodeGridId).html(html);
         },
         error: function() { showAlertMessage('An error occurred while loading time codes.', AlertType.ERROR); }
+    });
+}
+
+function reloadTimeCodeEmptyGrid() {
+    selectedJobCodeId = null;
+    var params = { parentProject: decodeURIComponent(parentProject) };
+    $.ajax({
+        url: '/PACT/ProjectMaintenance/LoadTimeCodeEmptyGrid',
+        type: 'POST',
+        data: params,
+        success: function(html) {
+            $('#gridContainer_' + timeCodeGridId).html(html);
+        },
+        error: function() { showAlertMessage('An error occurred while loading empty time code grid.', AlertType.ERROR); }
     });
 }
 
@@ -271,7 +287,7 @@ function editTimeCode(btn) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
         },
-        error: function() { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+        error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
 }
 
@@ -361,9 +377,9 @@ function executeCopyJobCode() {
                 if (response.success) {
                     $('#modalPopup').removeClass('show');
                     getJobCodeGridManager()?.reloadGrid({ page: 1 });
-                    if (data.CopyWorkGroup) {
-                        reloadTimeCodeGrid(jobCodeId);
-                    }
+                    selectedJobCodeId = '';
+                    $('#timeCodeGridSubtitle').text('— Job Code: ');
+                    reloadTimeCodeEmptyGrid();
                     showAlertMessage('JobCode copied successfully.', AlertType.SUCCESS);
                 } else {
                     displayServerValidationErrors(response.errors, response.message, '#formAddJobcode');
@@ -422,7 +438,7 @@ function copyBulkWorkGroup(selection) {
 
             $('#modalPopup').addClass('show');
         },
-        error: function() { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
+        error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
 }
 
@@ -454,7 +470,6 @@ function executeCopyBulkWorkGroup() {
                 success: function(response) {
                     if (response.success) {
                         $('#modalPopup').removeClass('show');
-                        reloadTimeCodeGrid(selectedJobCodeId);
                         showAlertMessage('All work groups copied successfully.', AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#copyWorkGroupForm');
@@ -608,9 +623,11 @@ function initializeProgramDropdown() {
             }
         }
     });
-    // Set initial value if exists
+    // Set initial value if exists (defer to next tick to ensure dropdown is fully rendered)
     if (selectedProgramValue && selectedProgramValue !== '') {
-        programDropdown.setValue(selectedProgramValue);
+        setTimeout(function() {
+            programDropdown.setValue(selectedProgramValue);
+        }, 0);
     }
 }
 
@@ -641,10 +658,12 @@ function initializeContractDropdown() {
             }
         }
     });
-   
-    // Set initial value if exists
+
+    // Set initial value if exists (defer to next tick to ensure dropdown is fully rendered)
     if (selectedContractValue && selectedContractValue !== '') {
-        contractDropdown.setValue(selectedContractValue);
+        setTimeout(function() {
+            contractDropdown.setValue(selectedContractValue);
+        }, 0);
     }
 }
 

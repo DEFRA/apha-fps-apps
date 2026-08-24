@@ -5,6 +5,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
     public class PortfolioTimeCodesViewModel
     {
+        public string OriginalParentProject { get; set; } = string.Empty;
         public string? SelectedPortfolio { get; set; }
         public List<SelectListItem> PortfolioOptions { get; set; } = [];
         public List<SelectListItem> WorkGroups { get; set; } = [];
