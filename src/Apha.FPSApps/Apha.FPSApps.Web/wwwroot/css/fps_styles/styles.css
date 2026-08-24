@@ -5533,3 +5533,9 @@ body,
         text-align: left;
     }
 }
+.govuk-tabs__list {
+    padding-top: 7px;
+}
+.isDateSection {
+    width: 23%;
+}
