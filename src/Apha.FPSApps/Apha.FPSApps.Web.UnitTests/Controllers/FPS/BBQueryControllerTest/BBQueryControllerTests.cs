@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -18,6 +19,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
         private readonly IWorkGroupService _workGroupService;
         private readonly IBudgetBidsService _budgetBidsService;
         private readonly IProfitCentreService _profitCentreService;
+        private readonly IAppStateService _appStateService;
         private readonly BBQueryController _controller;
 
         public BBQueryControllerTests()
@@ -25,7 +27,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             _workGroupService = Substitute.For<IWorkGroupService>();
             _budgetBidsService = Substitute.For<IBudgetBidsService>();
             _profitCentreService = Substitute.For<IProfitCentreService>();
-            _controller = new BBQueryController(_workGroupService, _budgetBidsService, _profitCentreService)
+            _appStateService = Substitute.For<IAppStateService>();
+            _controller = new BBQueryController(_workGroupService, _budgetBidsService, _profitCentreService, _appStateService)
             {
                 ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
             };
