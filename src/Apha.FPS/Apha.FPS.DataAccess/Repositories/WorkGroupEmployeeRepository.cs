@@ -271,7 +271,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("PactId", out var pactId) && pactId != null)
-                query = query.Where(x => EF.Functions.ILike(x.PactId, $"%{pactId}%"));
+                query = query.Where(x => x.PactId != null && EF.Functions.ILike(x.PactId, $"%{pactId}%"));
 
             if (dict.TryGetValue("SpNumber", out var spNumber) && spNumber != null)
                 query = query.Where(x => x.SpNumber != null && EF.Functions.ILike(x.SpNumber, $"%{spNumber}%"));
