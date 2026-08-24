@@ -22,10 +22,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPriceCheckControllerTes
 
         public TestPriceCheckControllerTests()
         {
-            _mapper        = Substitute.For<IMapper>();
-            _service       = Substitute.For<ITestorProductService>();
+            _mapper         = Substitute.For<IMapper>();
+            _service        = Substitute.For<ITestorProductService>();
             _fpsYearContext = Substitute.For<IFpsYearContext>();
-            _controller    = new TestPriceCheckController(_mapper, _service, _fpsYearContext);
+            _controller     = new TestPriceCheckController(_mapper, _service, _fpsYearContext);
         }
 
         private static T? FromJson<T>(JsonResult result)
@@ -41,7 +41,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPriceCheckControllerTes
                 .Returns(c =>
                 {
                     var f = c.Arg<PaginationFilter<string>>();
-                    return new QueryParameters<string> { Page = f.Page, PageSize = f.PageSize, Filter = f.Filter };
+                    return new QueryParameters<string>
+                    {
+                        Page       = f.Page,
+                        PageSize   = f.PageSize,
+                        SortBy     = f.SortBy,
+                        Descending = f.Descending,
+                        Filter     = f.Filter
+                    };
                 });
         }
 
@@ -130,6 +137,259 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPriceCheckControllerTes
 
             await _service.Received(1)
                 .GetTestPriceCheckPagedAsync(Arg.Any<QueryParameters<string>>(), "zero", "AB");
+        }
+
+        #endregion
+
+        #region LoadTestPriceCheckGrid – DefraProject Sort
+
+        [Fact]
+        public async Task LoadTestPriceCheckGrid_SortByIsDefraProject_MakesTwoServiceCalls()
+        {
+            // Arrange – request with SortBy = IsDefraProject
+            var request = new PaginationFilter<string>
+            {
+                Page = 1, PageSize = 5,
+                SortBy = nameof(TestPriceCheckItem.IsDefraProject),
+                Filter = "{}"
+            };
+
+            var probeResponse = ApiResponseDto<List<TestPriceCheckDto>>.SuccessResponse(
+                [new() { TestCode = "T001", JobCode = "J1" }],
+                new PaginationDto { TotalRecords = 3 });
+
+            var allDtos = new List<TestPriceCheckDto>
+            {
+                new() { TestCode = "T001", JobCode = "J1", IsDefraProject = 0  },
+                new() { TestCode = "T002", JobCode = "J2", IsDefraProject = -1 },
+                new() { TestCode = "T003", JobCode = "J3", IsDefraProject = -1 }
+            };
+            var allResponse = ApiResponseDto<List<TestPriceCheckDto>>.SuccessResponse(
+                allDtos, new PaginationDto { TotalRecords = 3 });
+
+            _service.GetTestPriceCheckPagedAsync(
+                    Arg.Is<QueryParameters<string>>(q => q.PageSize == 1), "all", null)
+                .Returns(probeResponse);
+            _service.GetTestPriceCheckPagedAsync(
+                    Arg.Is<QueryParameters<string>>(q => q.PageSize == 3), "all", null)
+                .Returns(allResponse);
+
+            SetupQueryParamMapper();
+            _mapper.Map<List<TestPriceCheckItem>>(allDtos).Returns(
+                allDtos.Select(d => new TestPriceCheckItem
+                    { TestCode = d.TestCode, JobCode = d.JobCode, IsDefraProject = d.IsDefraProject }).ToList());
+
+            // Act
+            await _controller.LoadTestPriceCheckGrid(request, "all", null);
+
+            // Assert – probe call (pageSize=1) and full-data call (pageSize=3) each made exactly once
+            await _service.Received(1)
+                .GetTestPriceCheckPagedAsync(
+                    Arg.Is<QueryParameters<string>>(q => q.PageSize == 1), "all", null);
+            await _service.Received(1)
+                .GetTestPriceCheckPagedAsync(
+                    Arg.Is<QueryParameters<string>>(q => q.PageSize == 3), "all", null);
+        }
+
+        [Fact]
+        public async Task LoadTestPriceCheckGrid_SortByIsDefraProject_Ascending_GroupsDefraProjectsFirst()
+        {
+            var request = new PaginationFilter<string>
+            {
+                Page = 1, PageSize = 5,
+                SortBy = nameof(TestPriceCheckItem.IsDefraProject),
+                Descending = false,
+                Filter = "{}"
+            };
+
+            var allDtos = new List<TestPriceCheckDto>
+            {
+                new() { TestCode = "T001", JobCode = "J1", IsDefraProject = 0  },
+                new() { TestCode = "T002", JobCode = "J2", IsDefraProject = -1 },
+                new() { TestCode = "T003", JobCode = "J3", IsDefraProject = 0  },
+                new() { TestCode = "T004", JobCode = "J4", IsDefraProject = -1 }
+            };
+            var allItems = allDtos
+                .Select(d => new TestPriceCheckItem
+                    { TestCode = d.TestCode, JobCode = d.JobCode, IsDefraProject = d.IsDefraProject })
+                .ToList();
+
+            SetupDefraSortService(probeTotal: 4, allDtos: allDtos, pageSize: 5, priceFilter: "all", owner: null);
+            SetupQueryParamMapper();
+            _mapper.Map<List<TestPriceCheckItem>>(allDtos).Returns(allItems);
+
+            var result = await _controller.LoadTestPriceCheckGrid(request, "all", null);
+
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid    = Assert.IsType<DataGridConfig<TestPriceCheckItem>>(partial.Model);
+            // Ascending: -1 (Defra) < 0 (non-Defra), so Defra items are first
+            Assert.All(grid.Data.Take(2), item => Assert.Equal(-1, item.IsDefraProject));
+            Assert.All(grid.Data.Skip(2), item => Assert.Equal(0,  item.IsDefraProject));
+        }
+
+        [Fact]
+        public async Task LoadTestPriceCheckGrid_SortByIsDefraProject_Descending_GroupsNonDefraProjectsFirst()
+        {
+            var request = new PaginationFilter<string>
+            {
+                Page = 1, PageSize = 5,
+                SortBy = nameof(TestPriceCheckItem.IsDefraProject),
+                Descending = true,
+                Filter = "{}"
+            };
+
+            var allDtos = new List<TestPriceCheckDto>
+            {
+                new() { TestCode = "T001", JobCode = "J1", IsDefraProject = -1 },
+                new() { TestCode = "T002", JobCode = "J2", IsDefraProject = 0  },
+                new() { TestCode = "T003", JobCode = "J3", IsDefraProject = -1 },
+                new() { TestCode = "T004", JobCode = "J4", IsDefraProject = 0  }
+            };
+            var allItems = allDtos
+                .Select(d => new TestPriceCheckItem
+                    { TestCode = d.TestCode, JobCode = d.JobCode, IsDefraProject = d.IsDefraProject })
+                .ToList();
+
+            SetupDefraSortService(probeTotal: 4, allDtos: allDtos, pageSize: 5, priceFilter: "all", owner: null);
+            SetupQueryParamMapper();
+            _mapper.Map<List<TestPriceCheckItem>>(allDtos).Returns(allItems);
+
+            var result = await _controller.LoadTestPriceCheckGrid(request, "all", null);
+
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid    = Assert.IsType<DataGridConfig<TestPriceCheckItem>>(partial.Model);
+            // Descending: 0 (non-Defra) > -1 (Defra), so non-Defra items are first
+            Assert.All(grid.Data.Take(2), item => Assert.Equal(0,  item.IsDefraProject));
+            Assert.All(grid.Data.Skip(2), item => Assert.Equal(-1, item.IsDefraProject));
+        }
+
+        [Fact]
+        public async Task LoadTestPriceCheckGrid_SortByIsDefraProject_CorrectPageSliceReturnedForPage2()
+        {
+            // 4 records total, pageSize=2, page=2 → slice [2..3] of the sorted set
+            var request = new PaginationFilter<string>
+            {
+                Page = 2, PageSize = 2,
+                SortBy = nameof(TestPriceCheckItem.IsDefraProject),
+                Descending = false,
+                Filter = "{}"
+            };
+
+            // Sorted ascending: T002(-1), T004(-1), T001(0), T003(0)
+            // Page 2 (skip 2, take 2) → T001, T003
+            var allDtos = new List<TestPriceCheckDto>
+            {
+                new() { TestCode = "T001", JobCode = "J1", IsDefraProject = 0  },
+                new() { TestCode = "T002", JobCode = "J2", IsDefraProject = -1 },
+                new() { TestCode = "T003", JobCode = "J3", IsDefraProject = 0  },
+                new() { TestCode = "T004", JobCode = "J4", IsDefraProject = -1 }
+            };
+            var allItems = allDtos
+                .Select(d => new TestPriceCheckItem
+                    { TestCode = d.TestCode, JobCode = d.JobCode, IsDefraProject = d.IsDefraProject })
+                .ToList();
+
+            SetupDefraSortService(probeTotal: 4, allDtos: allDtos, pageSize: 4, priceFilter: "all", owner: null);
+            SetupQueryParamMapper();
+            _mapper.Map<List<TestPriceCheckItem>>(allDtos).Returns(allItems);
+
+            var result = await _controller.LoadTestPriceCheckGrid(request, "all", null);
+
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid    = Assert.IsType<DataGridConfig<TestPriceCheckItem>>(partial.Model);
+            Assert.Equal(2, grid.Data.Count);
+            // Page 2 of ascending sort should be the two non-Defra (0) items
+            Assert.All(grid.Data, item => Assert.Equal(0, item.IsDefraProject));
+        }
+
+        [Fact]
+        public async Task LoadTestPriceCheckGrid_SortByIsDefraProject_TotalRecordsSetFromProbeResponse()
+        {
+            var request = new PaginationFilter<string>
+            {
+                Page = 1, PageSize = 5,
+                SortBy = nameof(TestPriceCheckItem.IsDefraProject),
+                Filter = "{}"
+            };
+
+            var allDtos = new List<TestPriceCheckDto>
+            {
+                new() { TestCode = "T001", JobCode = "J1", IsDefraProject = -1 },
+                new() { TestCode = "T002", JobCode = "J2", IsDefraProject = 0  }
+            };
+            var allItems = allDtos
+                .Select(d => new TestPriceCheckItem
+                    { TestCode = d.TestCode, JobCode = d.JobCode, IsDefraProject = d.IsDefraProject })
+                .ToList();
+
+            SetupDefraSortService(probeTotal: 42, allDtos: allDtos, pageSize: 5, priceFilter: "all", owner: null);
+            SetupQueryParamMapper();
+            _mapper.Map<List<TestPriceCheckItem>>(allDtos).Returns(allItems);
+
+            var result = await _controller.LoadTestPriceCheckGrid(request, "all", null);
+
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid    = Assert.IsType<DataGridConfig<TestPriceCheckItem>>(partial.Model);
+            Assert.Equal(42, grid.Pagination.TotalRecords);
+        }
+
+        [Fact]
+        public async Task LoadTestPriceCheckGrid_SortByIsDefraProject_ZeroTotalRecords_ReturnsEmptyGridWithoutSecondCall()
+        {
+            var request = new PaginationFilter<string>
+            {
+                Page = 1, PageSize = 5,
+                SortBy = nameof(TestPriceCheckItem.IsDefraProject),
+                Filter = "{}"
+            };
+
+            var probeResponse = ApiResponseDto<List<TestPriceCheckDto>>.SuccessResponse(
+                [], new PaginationDto { TotalRecords = 0 });
+
+            _service.GetTestPriceCheckPagedAsync(
+                    Arg.Is<QueryParameters<string>>(q => q.PageSize == 1), "all", null)
+                .Returns(probeResponse);
+
+            SetupQueryParamMapper();
+
+            var result = await _controller.LoadTestPriceCheckGrid(request, "all", null);
+
+            // Full-data call (pageSize != 1) must never be made when TotalRecords = 0
+            await _service.DidNotReceive()
+                .GetTestPriceCheckPagedAsync(
+                    Arg.Is<QueryParameters<string>>(q => q.PageSize != 1), "all", null);
+
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid    = Assert.IsType<DataGridConfig<TestPriceCheckItem>>(partial.Model);
+            Assert.Empty(grid.Data);
+        }
+
+        /// <summary>
+        /// Helper: wires up the probe (pageSize=1) and full-data (pageSize=probeTotal) service calls
+        /// for the IsDefraProject two-call sort path.
+        /// </summary>
+        private void SetupDefraSortService(
+            int probeTotal,
+            List<TestPriceCheckDto> allDtos,
+            int pageSize,
+            string priceFilter,
+            string? owner)
+        {
+            var probeResponse = ApiResponseDto<List<TestPriceCheckDto>>.SuccessResponse(
+                allDtos.Take(1).ToList(),
+                new PaginationDto { TotalRecords = probeTotal });
+
+            var allResponse = ApiResponseDto<List<TestPriceCheckDto>>.SuccessResponse(
+                allDtos,
+                new PaginationDto { TotalRecords = probeTotal });
+
+            _service.GetTestPriceCheckPagedAsync(
+                    Arg.Is<QueryParameters<string>>(q => q.PageSize == 1), priceFilter, owner)
+                .Returns(probeResponse);
+
+            _service.GetTestPriceCheckPagedAsync(
+                    Arg.Is<QueryParameters<string>>(q => q.PageSize == probeTotal), priceFilter, owner)
+                .Returns(allResponse);
         }
 
         #endregion
