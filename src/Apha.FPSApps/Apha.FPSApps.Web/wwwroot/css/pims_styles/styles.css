@@ -3109,3 +3109,7 @@ th.sorted-desc {
     max-width: 240px;
     flex-shrink: 0;
 }
+.yfd-modal-min-width-height {
+    min-width: 900px;
+    min-height: 500px;
+}
