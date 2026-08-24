@@ -1095,20 +1095,7 @@ a {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.multicolumn-dropdown-panel {
-    position: absolute;
-    top: 100%;
-    left: 0px;
-    right: 0;
-    border: 1px solid #aaa;
-    background: #fff;
-    z-index: 9999;
-    max-height: 300px;
-    overflow-y: auto;
-    display: none;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    width: 100%;
-}
+/* Panel positioning/sizing is owned by css/common/multicolumn-dropdown.css */
 
     .multicolumn-dropdown-panel .search-box-wrapper {
         position: sticky;
@@ -1459,20 +1446,7 @@ table#tblMonthPeriod > tbody > tr > td {
         line-height: 10px !important;
     }
 
-.multicolumn-dropdown-panel {
-    position: absolute;
-    top: 100%;
-    left: 0px;
-    right: 0;
-    border: 1px solid #aaa;
-    background: #fff;
-    z-index: 9999;
-    max-height: 300px;
-    overflow-y: auto;
-    display: none;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    width: 100%;
-}
+/* Panel positioning/sizing is owned by css/common/multicolumn-dropdown.css */
 
     .multicolumn-dropdown-panel .search-box-wrapper {
         position: sticky;

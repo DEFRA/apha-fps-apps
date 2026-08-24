@@ -16,6 +16,7 @@
  *     displayField: 'name',
  *     valueField: 'id',
  *     enableSearch: true,
+ *     showClearButton: true, // false: hide the clear (x) icon in the search box
  *     clearButtonClearsSelection: false, // false: clear search only (default), true: clear both search and selection
  *     callbacks: {
  *         onSelect: function(selectedItem) { ... },
@@ -62,6 +63,7 @@
             labelText: '',
             required: false,
             disabled: false,
+            showClearButton: true, // false: hide the clear (x) icon in the search box
             clearButtonClearsSelection: false, // false: clear search only, true: clear both search and selection
             callbacks: {
                 onSelect: null,
@@ -157,14 +159,16 @@
                                 placeholder="${config.searchPlaceholder}" 
                                 aria-label="Search by code or name"
                             />
-                            <button 
-                                type="button" 
-                                class="govuk-button govuk-button--secondary clear-search-btn" 
-                                id="${dropdownId}_clearSearch"
-                                aria-label="Clear search"
-                            >
-                                <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
-                            </button>
+                            ${config.showClearButton ? `
+                                <button 
+                                    type="button" 
+                                    class="govuk-button govuk-button--secondary clear-search-btn" 
+                                    id="${dropdownId}_clearSearch"
+                                    aria-label="Clear search"
+                                >
+                                    <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
+                                </button>
+                            ` : ''}
                         </div>
                     ` : ''}
                     
@@ -457,6 +461,11 @@
         panel.addEventListener('click', function (e) {
             e.stopPropagation();
         });
+
+        // Keep the panel aligned with the control when the layout changes
+        window.addEventListener('resize', function () {
+            self.alignPanel();
+        });
     };
 
     /**
@@ -493,6 +502,8 @@
             this.isOpen = true;
             input.classList.add('dropdown-open');
 
+            this.alignPanel();
+
             // Focus search box if enabled
             if (this.config.enableSearch) {
                 var searchBox = document.getElementById(this.config.dropdownId + '_search');
@@ -502,6 +513,30 @@
                     }, 100);
                 }
             }
+        }
+    };
+
+    /**
+     * Align the panel with the dropdown control.
+     * The panel is anchored to the control wrapper via CSS; this only flips the
+     * panel to right alignment when it would overflow the viewport, so every
+     * implementation opens in the same, consistent position.
+     */
+    MultiColumnDropdownComponent.prototype.alignPanel = function () {
+        var panel = document.getElementById(this.config.dropdownId + '_panel');
+        var input = document.getElementById(this.config.dropdownId + '_input');
+
+        if (!panel || !input || !this.isOpen) {
+            return;
+        }
+
+        panel.classList.remove('align-right');
+
+        var inputRect = input.getBoundingClientRect();
+        var panelWidth = panel.offsetWidth;
+
+        if (inputRect.left + panelWidth > document.documentElement.clientWidth) {
+            panel.classList.add('align-right');
         }
     };
 
@@ -516,6 +551,7 @@
 
         if (panel && input) {
             panel.style.display = 'none';
+            panel.classList.remove('align-right');
             this.isOpen = false;
             input.classList.remove('dropdown-open');
             this.focusedRowIndex = -1; // Reset focus
