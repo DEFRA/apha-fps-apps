@@ -307,6 +307,7 @@ namespace Apha.PACT.DataAccess.Repository
                 "normalprice"    => ApplyOrder(source, x => x.IsDefraProject != 0 ? x.DefraUnitPrice : x.UnitPriceVla, descending),
                 "unitpricevla"   => ApplyOrder(source, x => x.UnitPriceVla,  descending),
                 "defraunitprice" => ApplyOrder(source, x => x.DefraUnitPrice, descending),
+                "isdefraproject" => ApplyOrder(source, x => x.IsDefraProject, descending),
                 "owner"          => ApplyOrder(source, x => x.Owner,         descending),
                 _                => ApplyOrder(source, x => x.TestCode,      descending),
             };
