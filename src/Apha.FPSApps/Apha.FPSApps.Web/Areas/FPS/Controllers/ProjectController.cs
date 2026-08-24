@@ -1,6 +1,7 @@
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Common.Validation;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -163,6 +164,23 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             if (string.IsNullOrWhiteSpace(oldCode) || string.IsNullOrWhiteSpace(newCode))
                 return Json(new { success = false, message = "Both old and new project codes are required." });
+
+            if (!ValidationRegexPatterns.AlphaNumeric().IsMatch(newCode))
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Project Code must contain only letters (A-Z, a-z) and numbers (0-9)",
+                    errors = new[]
+                    {
+                        new
+                        {
+                            field = "ALPHANUMERIC_CODE_VALUE_FAILD",
+                            message = "Project Code must contain only letters (A-Z, a-z) and numbers (0-9)."
+                        }
+                    }
+                });
+            }
 
             var response = await _projectService.ChangeProjectCodeAsync(oldCode, newCode);
             if (response.Success)

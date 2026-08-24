@@ -224,6 +224,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         [Fact]
         public async Task LoadComponentChargesGeneralGrid_NullTestCode_ReturnsPartialViewWithEmptyData()
         {
+            // Arrange
+            SetupGridMapper(); // ← added: mapper must return non-null QueryParameters so query.Filter assignment doesn't throw
+
             // Act — no testCode provided
             var result = await _controller.LoadComponentChargesGeneralGrid(new PaginationFilter<string>(), null);
 
@@ -236,6 +239,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         public async Task LoadComponentChargesGeneralGrid_WithTestCode_CallsRCCostApiClient()
         {
             // Arrange
+            SetupGridMapper();  // ← added: ensures mapper returns non-null QueryParameters so query.Filter assignment doesn't throw
             var response = ApiResponseDto<List<TestRCCostDto>>.SuccessResponse(new List<TestRCCostDto>());
             _fpsTestRCCostApiClient.GetByTestCodePagedAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode).Returns(response);
             _mapper.Map<List<TestRCCostItem>>(Arg.Any<List<TestRCCostDto>>())
@@ -583,6 +587,81 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         }
 
        
+
+        #endregion
+
+        #region LoadComponentChargesGeneralGrid — filter propagation (fix for profitCentre filtering)
+
+        [Fact]
+        public async Task LoadComponentChargesGeneralGrid_WithTestCodeAndProfitCentreFilter_PassesFilterJsonToApiQuery()
+        {
+            // Arrange — a ProfitCentre column filter typed by the user in the grid
+            SetupGridMapper();
+            var filterJson = Newtonsoft.Json.JsonConvert.SerializeObject(
+                new Dictionary<string, string> { ["ProfitCentre"] = DefaultProfitCentre });
+            var request = new PaginationFilter<string> { Filter = filterJson };
+
+            QueryParameters<string>? capturedQuery = null;
+            var response = ApiResponseDto<List<TestRCCostDto>>.SuccessResponse(new List<TestRCCostDto>());
+            _fpsTestRCCostApiClient
+                .GetByTestCodePagedAsync(Arg.Do<QueryParameters<string>>(q => capturedQuery = q), DefaultTestCode)
+                .Returns(response);
+            _mapper.Map<List<TestRCCostItem>>(Arg.Any<List<TestRCCostDto>>())
+                .Returns(new List<TestRCCostItem>());
+
+            // Act
+            await _controller.LoadComponentChargesGeneralGrid(request, DefaultTestCode);
+
+            // Assert — the query sent to the API must carry the serialised filter
+            Assert.NotNull(capturedQuery);
+            Assert.Equal(filterJson, capturedQuery!.Filter);
+        }
+
+        [Fact]
+        public async Task LoadComponentChargesGeneralGrid_WithTestCodeAndProfitCentreFilter_ReturnsCurrentFiltersInGridConfig()
+        {
+            // Arrange
+            SetupGridMapper();
+            var filterJson = Newtonsoft.Json.JsonConvert.SerializeObject(
+                new Dictionary<string, string> { ["ProfitCentre"] = DefaultProfitCentre });
+            var request = new PaginationFilter<string> { Filter = filterJson };
+
+            var response = ApiResponseDto<List<TestRCCostDto>>.SuccessResponse(new List<TestRCCostDto>());
+            _fpsTestRCCostApiClient
+                .GetByTestCodePagedAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode)
+                .Returns(response);
+            _mapper.Map<List<TestRCCostItem>>(Arg.Any<List<TestRCCostDto>>())
+                .Returns(new List<TestRCCostItem>());
+
+            // Act
+            var result = await _controller.LoadComponentChargesGeneralGrid(request, DefaultTestCode);
+
+            // Assert — CurrentFilters on the returned grid config must reflect the column filter
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var config = Assert.IsType<DataGridConfig<TestRCCostItem>>(partialView.Model);
+            Assert.NotNull(config.CurrentFilters);                                      // ← guards the null warning
+            Assert.True(config.CurrentFilters.ContainsKey("ProfitCentre"));
+            Assert.Equal(DefaultProfitCentre, config.CurrentFilters["ProfitCentre"]);
+        }
+
+        #endregion
+
+        #region TestRequirementRCCostItem model — ProfitCentre column attribute
+
+        [Fact]
+        public void TestRequirementRCCostItem_ProfitCentreColumn_IsNotFilterable()
+        {
+            // The ProfitCentre column on the project grid is always driven by the
+            // selected general row (selectedGeneralProfitCentre JS state), so the
+            // column-level filter input must not be rendered.
+            var columns = GridDataProvider.GetColumnsDefination<TestRequirementRCCostItem>();
+            var profitCentreCol = columns.FirstOrDefault(c => c.PropertyName == "ProfitCentre");
+
+            Assert.NotNull(profitCentreCol);
+            Assert.False(profitCentreCol!.IsFilterable,
+                "ProfitCentre on ComponentChargesProjectGrid must not be user-filterable; " +
+                "it is controlled by row selection on the General grid.");
+        }
 
         #endregion
     }
