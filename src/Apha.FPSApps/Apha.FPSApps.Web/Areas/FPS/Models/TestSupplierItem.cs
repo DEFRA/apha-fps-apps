@@ -27,7 +27,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "No Tests")]  // ✅ Renamed from "No. Required" to "No Tests"
         [GridColumn(Order = 3, Width = 90, Type = GridColumnType.DecimalNumber)]
-        public int? NoRequired { get; set; }
+        public decimal? NoRequired { get; set; }
 
         [Display(Name = "Test Price")]  // ✅ Renamed from "Unit Price" to "Test Price"
         [GridColumn(Order = 4, Width = 110, Type = GridColumnType.GbpValue)]
