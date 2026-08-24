@@ -46,7 +46,11 @@
 
 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
     <div class="govuk-grid-column-full">
-        <div id="gridContainer_bbQueryGrid">
+        @* The grid partial is always rendered so its gridManager is registered for reloads,
+           but the container stays hidden until a Resource Centre is selected. The number of
+           columns depends on the selected Resource Centre, so the table structure must not be
+           shown by default. *@
+        <div id="gridContainer_bbQueryGrid" style="@(string.IsNullOrWhiteSpace(Model.SelectedProfitCentre) ? "display:none" : "")">
             @await Html.PartialAsync("_DataGrid", Model.Grid)
         </div>
     </div>
@@ -64,8 +68,23 @@
             if (!pc) return;
 
             pc.addEventListener('change', function () {
+                var container = document.getElementById('gridContainer_bbQueryGrid');
+
+                // No Resource Centre selected: clear any existing table structure/data
+                // and keep the grid hidden. Columns are generated per Resource Centre.
+                if (!pc.value) {
+                    if (container) {
+                        container.innerHTML = '';
+                        container.style.display = 'none';
+                    }
+                    return;
+                }
+
                 var gm = window['gridManager_bbQueryGrid'];
                 if (gm) {
+                    if (container) {
+                        container.style.display = '';
+                    }
                     showLoader();
                     gm.reloadGrid({ filter: '{}', sortBy: '', descending: false, page: 1 });
                 }
