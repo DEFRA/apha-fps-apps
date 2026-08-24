@@ -1,6 +1,7 @@
 ﻿using Amazon;
 using Amazon.EventBridge;
 using Apha.Common.Contracts.Email;
+using Apha.Common.Helpers.Converter;
 using Apha.Common.Utilities.EventPublisher;
 using Apha.PACT.Api.Filters;
 using Apha.PACT.Api.Mappings;
@@ -67,7 +68,12 @@ namespace Apha.PACT.Api.Extensions
             services.AddControllers(options =>
             {
                 options.Filters.Add<ApiResponseActionFilter>();
+            })
+                .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new TrimDecimalJsonConverter());
             });
+
 
             // API Versioning
             services.AddApiVersioning(options =>

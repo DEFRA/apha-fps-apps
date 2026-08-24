@@ -141,6 +141,38 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProfitCentreGradeMaintContr
             Assert.Equal("Resource Centre Grade Maintenance", model.RcGradeMaintenanceGrid.Title);
         }
 
+        [Fact]
+        public async Task Index_GridHasNoDefaultSortColumn()
+        {
+            // Arrange
+            SetupPagedGridCall([BuildDto()]);
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model      = Assert.IsType<ProfitCentreGradeMaintViewModel>(viewResult.Model);
+            Assert.True(string.IsNullOrEmpty(model.RcGradeMaintenanceGrid.Pagination.SortColumn),
+                "No sort column should be applied on initial page load.");
+        }
+
+        [Fact]
+        public async Task Index_GridHasNoDefaultSortDirection()
+        {
+            // Arrange
+            SetupPagedGridCall([BuildDto()]);
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model      = Assert.IsType<ProfitCentreGradeMaintViewModel>(viewResult.Model);
+            Assert.False(model.RcGradeMaintenanceGrid.Pagination.SortDirection,
+                "Sort direction should default to ascending (false) on initial page load.");
+        }
+
         #endregion
 
         #region LoadProfitCentreGradeMaintGrid Tests
