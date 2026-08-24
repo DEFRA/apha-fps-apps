@@ -132,19 +132,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
                 : null;
 
-            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
-
             var projectItems = new List<ProjectViewModel>();
             var paginationModel = new PaginationModel
             {
                 SortColumn = request.SortBy,
-                SortDirection = request.Descending
+                SortDirection = request.Descending,
+                PageNumber = request.Page,
+                PageSize = request.PageSize
             };
 
             if (!string.IsNullOrWhiteSpace(programNo))
             {
-                var projectsData = await _projectService.GetProjectsByProgramAsync(
-                    queryParameters, programNo);
+                var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+
+                var projectsData = await _projectService.GetProjectsByProgramAsync(queryParameters, programNo);
 
                 if (projectsData.Success && projectsData.Data != null)
                     projectItems = _mapper.Map<List<ProjectViewModel>>(projectsData.Data);
