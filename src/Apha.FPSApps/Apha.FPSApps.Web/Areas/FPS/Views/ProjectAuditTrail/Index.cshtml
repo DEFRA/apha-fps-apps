@@ -30,7 +30,7 @@
                     <div class="trl-filter-row spc-filter-row-near">
 
                         <!-- Project filter -->
-                        <div class="govuk-form-group trl-filter-group sup_margin_bottom_10">
+                        <div class="govuk-grid-column-one-third govuk-form-group govuk-!-margin-bottom-4">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
                                    for="filter-project"
                                    id="filter-project-label">Project</label>
@@ -51,37 +51,40 @@
                             </p>
                         </div>
 
-                        <!-- Date of change fieldset -->
-                        <fieldset class="govuk-fieldset trl-filter-group sup_margin_bottom_10 border-legend">
-                            <legend class="govuk-fieldset__legend govuk-!-font-weight-bold govuk-!-font-size-16">
-                                Date of change
-                            </legend>
-                            <div class="sup_flex_gap_10">
-                                <div class="govuk-form-group govuk-!-margin-bottom-0">
-                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
-                                           for="filter-from">From</label>
-                                    <input class="govuk-input width-200 govuk-!-font-size-16"
-                                           id="filter-from"
-                                           name="filterFrom"
-                                           asp-for="FromDate"
-                                           type="date"
-                                           aria-label="Date of change from" />
+                        <div class="govuk-grid-column-one-third govuk-form-group sup_margin_bottom_10 isDateSection">
+                            <!-- Date of change fieldset -->
+                            <fieldset class="govuk-fieldset trl-filter-group sup_margin_bottom_10 border-legend">
+                                <legend class="govuk-fieldset__legend govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-padding-bottom-0">
+                                    Date of change
+                                </legend>
+                                <div class="sup_flex_gap_10">
+                                    <div class="govuk-form-group govuk-!-margin-bottom-0">
+                                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                                               for="filter-from">From</label>
+                                        <input class="govuk-input width-200 govuk-!-font-size-16"
+                                               id="filter-from"
+                                               name="filterFrom"
+                                               asp-for="FromDate"
+                                               type="date"
+                                               aria-label="Date of change from" />
+                                    </div>
+                                    <div class="govuk-form-group govuk-!-margin-bottom-0">
+                                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                                               for="filter-to">To</label>
+                                        <input class="govuk-input width-200 govuk-!-font-size-16"
+                                               id="filter-to"
+                                               name="filterTo"
+                                               asp-for="ToDate"
+                                               type="date"
+                                               aria-label="Date of change to" />
+                                    </div>
                                 </div>
-                                <div class="govuk-form-group govuk-!-margin-bottom-0">
-                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
-                                           for="filter-to">To</label>
-                                    <input class="govuk-input width-200 govuk-!-font-size-16"
-                                           id="filter-to"
-                                           name="filterTo"
-                                           asp-for="ToDate"
-                                           type="date"
-                                           aria-label="Date of change to" />
-                                </div>
-                            </div>
-                        </fieldset>
+                            </fieldset>
+                        </div>
+                        
 
                         <!-- Filter actions -->
-                        <div class="trl-filter-actions spc-filter-actions-near sup_margin_bottom_10">
+                        <div class="trl-filter-actions spc-filter-actions-near govuk-!-margin-bottom-4">
                             <span class="trl-filter-actions-label" aria-hidden="true">Actions</span>
                             <div class="govuk-button-group sup_margin_0 trl-filter-actions-buttons">
                                 <button type="button"

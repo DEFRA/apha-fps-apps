@@ -1,8 +1,10 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -27,35 +29,62 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IWorkGroupService _workGroupService;
         private readonly IProjectService _projectService;
         private readonly IPlanStaffZTCodeService _planStaffZTCodeService;
+        private readonly IAppStateService _appStateService;
 
         public ResourceMgmtReplanController(
             IMapper mapper,
             IProfitCentreService profitCentreService,
             IWorkGroupService workGroupService,
             IProjectService projectService,
-            IPlanStaffZTCodeService planStaffZTCodeService)
+            IPlanStaffZTCodeService planStaffZTCodeService,
+            IAppStateService appStateService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _profitCentreService = profitCentreService ?? throw new ArgumentNullException(nameof(profitCentreService));
             _workGroupService = workGroupService ?? throw new ArgumentNullException(nameof(workGroupService));
             _projectService = projectService ?? throw new ArgumentNullException(nameof(projectService));
             _planStaffZTCodeService = planStaffZTCodeService ?? throw new ArgumentNullException(nameof(planStaffZTCodeService));
+            _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
         }
 
-        /// <summary>
-        /// Displays the Resource Management Re-plan main page.
-        /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? resourceCentre = null)
         {
+            var resourceCentres = await PopulateResourceCentresAsync();
+
+            if (resourceCentre == null)
+                resourceCentre = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProfitCentre);
+
+            var selected = !string.IsNullOrWhiteSpace(resourceCentre)
+                && resourceCentres.Any(r => r.Value == resourceCentre) ? resourceCentre : string.Empty;
+
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, selected);
+
+            if (selected != string.Empty)
+            {
+                var selectedItem = resourceCentres.FirstOrDefault(r => r.Value == selected);
+                if (selectedItem != null) selectedItem.Selected = true;
+            }
+
             var viewModel = new ResourceMgmtReplanViewModel
             {
-                ResourceCentres = await PopulateResourceCentresAsync(),
+                ResourceCentres = resourceCentres,
+                SelectedResourceCentre = selected,
                 RePlanGrid = BuildRePlanGridConfig([]),
                 AllTimeGrid = BuildAllTimeGridConfig([])
             };
 
             return View(viewModel);
+        }
+
+        /// <summary>
+        /// Saves the selected resource centre to session (called from JS when the dropdown changes).
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> SaveProfitCentreSession([FromBody] string resourceCentre)
+        {
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, resourceCentre ?? string.Empty);
+            return Ok();
         }
 
         // ─────────────── DROPDOWN DATA ───────────────

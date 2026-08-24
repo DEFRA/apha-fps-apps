@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -25,6 +26,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
         private readonly IProfitCentreService _profitCentreService;
         private readonly IWorkGroupGradeService _workGroupGradeService;
         private readonly IWorkGroupService _workGroupService;
+        private readonly IAppStateService _appStateService;
         private readonly SetUpStaffResourcesController _controller;
 
         public SetUpStaffResourcesControllerTests()
@@ -34,13 +36,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
             _profitCentreService      = Substitute.For<IProfitCentreService>();
             _workGroupGradeService    = Substitute.For<IWorkGroupGradeService>();
             _workGroupService         = Substitute.For<IWorkGroupService>();
+            _appStateService          = Substitute.For<IAppStateService>();
 
             _controller = new SetUpStaffResourcesController(
                 _mapper,
                 _workGroupEmployeeService,
                 _profitCentreService,
                 _workGroupGradeService,
-                _workGroupService);
+                _workGroupService,
+                _appStateService);
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
@@ -84,28 +88,28 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
         public void Constructor_WithNullMapper_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new SetUpStaffResourcesController(
-                null!, _workGroupEmployeeService, _profitCentreService, _workGroupGradeService, _workGroupService));
+                null!, _workGroupEmployeeService, _profitCentreService, _workGroupGradeService, _workGroupService, _appStateService));
         }
 
         [Fact]
         public void Constructor_WithNullWorkGroupEmployeeService_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new SetUpStaffResourcesController(
-                _mapper, null!, _profitCentreService, _workGroupGradeService, _workGroupService));
+                _mapper, null!, _profitCentreService, _workGroupGradeService, _workGroupService, _appStateService));
         }
 
         [Fact]
         public void Constructor_WithNullProfitCentreService_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new SetUpStaffResourcesController(
-                _mapper, _workGroupEmployeeService, null!, _workGroupGradeService, _workGroupService));
+                _mapper, _workGroupEmployeeService, null!, _workGroupGradeService, _workGroupService, _appStateService));
         }
 
         [Fact]
         public void Constructor_WithNullWorkGroupGradeService_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new SetUpStaffResourcesController(
-                _mapper, _workGroupEmployeeService, _profitCentreService, null!, _workGroupService));
+                _mapper, _workGroupEmployeeService, _profitCentreService, null!, _workGroupService, _appStateService));
         }
 
         #endregion
