@@ -78,7 +78,6 @@ public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
 
     private BulkTestRatesService CreateService() => new(
         new BulkRatesRepository(new TestDbContextFactory(_connectionString), NullLogger<BulkRatesRepository>.Instance),
-        Substitute.For<IJobExecutionRepository>(),
         NullLogger<BulkTestRatesService>.Instance);
 
     private async Task<int> ResolveStatusIdAsync(NpgsqlConnection conn, string status)

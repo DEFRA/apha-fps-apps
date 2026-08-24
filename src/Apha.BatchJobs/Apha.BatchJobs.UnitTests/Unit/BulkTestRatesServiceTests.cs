@@ -39,7 +39,6 @@ public sealed class BulkTestRatesServiceTests
         IBulkRatesRepository? repo = null)
         => new(
             repo ?? Substitute.For<IBulkRatesRepository>(),
-            Substitute.For<IJobExecutionRepository>(),
             NullLogger<BulkTestRatesService>.Instance);
 
     // â”€â”€ GetRunningRequestAsync returns null â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

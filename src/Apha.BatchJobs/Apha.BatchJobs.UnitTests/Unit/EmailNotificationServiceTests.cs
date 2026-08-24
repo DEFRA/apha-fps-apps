@@ -39,7 +39,9 @@ public sealed class EmailNotificationServiceTests
         var service = new EmailNotificationService(
             NullLogger<EmailNotificationService>.Instance, settings: null!, awsLoggingSettings: null!, ThrowingEmailServiceFactory);
 
+        // ThrowingEmailServiceFactory would throw if email was resolved — completing without exception proves early return.
         await service.SendFailureNotificationAsync("cid-null-settings", "MABArchive", "boom", DateTime.UtcNow, CancellationToken.None);
+        Assert.True(true);
     }
 
     [Fact]
@@ -51,10 +53,14 @@ public sealed class EmailNotificationServiceTests
             AdminNotificationEmail = "alerts@example.com"
         });
 
+        var emailServiceResolved = false;
         var service = new EmailNotificationService(
-            NullLogger<EmailNotificationService>.Instance, settings, DefaultAwsLoggingSettings, ThrowingEmailServiceFactory);
+            NullLogger<EmailNotificationService>.Instance, settings, DefaultAwsLoggingSettings,
+            () => { emailServiceResolved = true; return Substitute.For<IEmailService>(); });
 
         await service.SendFailureNotificationAsync("cid-1", "MABArchive", "boom", DateTime.UtcNow, CancellationToken.None);
+
+        Assert.False(emailServiceResolved);
     }
 
     [Fact]
@@ -66,10 +72,14 @@ public sealed class EmailNotificationServiceTests
             AdminNotificationEmail = "   "
         });
 
+        var emailServiceResolved = false;
         var service = new EmailNotificationService(
-            NullLogger<EmailNotificationService>.Instance, settings, DefaultAwsLoggingSettings, ThrowingEmailServiceFactory);
+            NullLogger<EmailNotificationService>.Instance, settings, DefaultAwsLoggingSettings,
+            () => { emailServiceResolved = true; return Substitute.For<IEmailService>(); });
 
         await service.SendFailureNotificationAsync("cid-2", "MABArchive", "boom", DateTime.UtcNow, CancellationToken.None);
+
+        Assert.False(emailServiceResolved);
     }
 
     [Fact]
@@ -109,6 +119,9 @@ public sealed class EmailNotificationServiceTests
             NullLogger<EmailNotificationService>.Instance, settings, DefaultAwsLoggingSettings, () => emailService);
 
         await service.SendFailureNotificationAsync("cid-4", "MABArchive", "boom", DateTime.UtcNow, CancellationToken.None);
+
+        // Send was attempted but the failure result did not propagate as an exception.
+        await emailService.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

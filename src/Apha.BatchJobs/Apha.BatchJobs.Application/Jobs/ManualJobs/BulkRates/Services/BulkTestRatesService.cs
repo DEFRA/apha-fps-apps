@@ -15,16 +15,13 @@ namespace Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates.Services;
 public sealed class BulkTestRatesService : IBulkTestRatesService
 {
     private readonly IBulkRatesRepository _repository;
-    private readonly IJobExecutionRepository _executionRepository;
     private readonly ILogger<BulkTestRatesService> _logger;
 
     public BulkTestRatesService(
         IBulkRatesRepository repository,
-        IJobExecutionRepository executionRepository,
         ILogger<BulkTestRatesService> logger)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _executionRepository = executionRepository ?? throw new ArgumentNullException(nameof(executionRepository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 

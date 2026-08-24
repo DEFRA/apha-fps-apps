@@ -117,10 +117,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         // Fetch the Initiated record created by API layer
         var existingExecution = await _executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
 
-        var shouldAutoCreateInitiated =
-            runMode == RunMode.Scheduled
-        && (string.Equals(jobName, BatchJobNames.MabArchive, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(jobName, BatchJobNames.MilestoneUpdateNotifications, StringComparison.OrdinalIgnoreCase));
+        var shouldAutoCreateInitiated = IsWorkerManagedScheduledRun(jobName, runMode);
         // Worker-managed MABArchive Scheduled runs may self-create their initiated record below.
         if (!shouldAutoCreateInitiated)
         {
@@ -128,59 +125,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
 
         if (existingExecution == null && shouldAutoCreateInitiated)
-        {
-            var initiatedRequestedAtUtc = requestedAtUtc ?? startedAt;
-
-            try
-            {
-                var createdJobQueueId = await _executionRepository.CreateInitiatedRecordAsync(
-                    jobName,
-                    jobExecutionId,
-                    userId,
-                    initiatedRequestedAtUtc,
-                    runMode,
-                    cancellationToken,
-                    fpsYear);
-
-                existingExecution = new JobExecutionRecord
-                {
-                    ExecutionId = 0,
-                    JobName = jobName,
-                    JobExecutionId = jobExecutionId,
-                    JobQueueId = createdJobQueueId,
-                    UserId = userId,
-                    JobType = JobType.Unknown,
-                    RunMode = runMode,
-                    Status = JobStatus.Initiated,
-                    RequestedAtUtc = initiatedRequestedAtUtc,
-                    FpsYear = fpsYear,
-                    StartedAt = initiatedRequestedAtUtc
-                };
-
-                _logger.LogWarning(
-                    "Initiated record was missing for scheduled worker-managed run. Created worker-managed Initiated row in worker | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode}",
-                    jobName,
-                    jobExecutionId,
-                    createdJobQueueId,
-                    runMode);
-            }
-            catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == PostgresErrorCodes.UniqueViolation)
-            {
-                existingExecution = await _executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
-
-                if (existingExecution == null)
-                {
-                    throw;
-                }
-
-                _logger.LogInformation(
-                    "Initiated record appeared concurrently while creating worker-managed row. Proceeding with existing row | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode}",
-                    jobName,
-                    jobExecutionId,
-                    existingExecution.JobQueueId,
-                    runMode);
-            }
-        }
+            existingExecution = await AutoCreateInitiatedRecordAsync(jobName, jobExecutionId, userId, requestedAtUtc, startedAt, runMode, fpsYear, cancellationToken);
 
         if (existingExecution == null)
         {
@@ -271,13 +216,11 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
 
         // Step 3 — Execute the job
-        IBatchJob? job = null;
         Exception? jobException = null;
-        var retryStartedAt = DateTime.UtcNow;
 
         try
         {
-            job = _factory.Create(jobName);
+            var job = _factory.Create(jobName);
 
             // Populate the scoped execution context so the job can read its resolved identity
             // and parameters instead of re-parsing environment variables or querying its own
@@ -292,148 +235,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 jobName,
                 runtimeTimeoutSeconds?.ToString() ?? "none");
 
-            var totalAttempts = _retryAttempts + 1;
-            for (var attempt = 1; attempt <= totalAttempts; attempt++)
-            {
-                using var attemptCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                if (runtimeTimeoutSeconds.HasValue)
-                {
-                    attemptCts.CancelAfter(TimeSpan.FromSeconds(runtimeTimeoutSeconds.Value));
-                }
-
-                var attemptToken = attemptCts.Token;
-
-                // Heartbeat is now handled at job/step entry points (step-based strategy)
-                // instead of background loop, providing better observability and step correlation.
-                _logger.LogInformation(
-                    "Heartbeat strategy: step-based checks (not background loop) | JobName={JobName} | JobQueueId={JobQueueId}",
-                    jobName, jobQueueId);
-
-                try
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    _logger.LogInformation(
-                        "Executing job '{JobName}' | Attempt={Attempt}/{TotalAttempts}",
-                        jobName,
-                        attempt,
-                        totalAttempts);
-
-                    await job.ExecuteAsync(attemptToken);
-                    _logger.LogInformation(
-                        "Job '{JobName}' completed successfully | Attempt={Attempt}/{TotalAttempts}",
-                        jobName,
-                        attempt,
-                        totalAttempts);
-
-                    jobException = null;
-                    break;
-                }
-                catch (OperationCanceledException ex)
-                {
-                    if (attemptCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
-                    {
-                        var timeoutException = new TimeoutException(
-                            $"Job '{jobName}' exceeded runtime timeout of {runtimeTimeoutSeconds} seconds.",
-                            ex);
-                        jobException = timeoutException;
-                        _logger.LogError(timeoutException,
-                            "Job '{JobName}' exceeded runtime timeout and was stopped | Attempt={Attempt}/{TotalAttempts} | RuntimeTimeoutSeconds={RuntimeTimeoutSeconds}",
-                            jobName,
-                            attempt,
-                            totalAttempts,
-                            runtimeTimeoutSeconds);
-                        break;
-                    }
-
-                    jobException = ex;
-                    _logger.LogWarning(ex,
-                        "Job '{JobName}' execution was interrupted by cancellation token | Attempt={Attempt}/{TotalAttempts}",
-                        jobName,
-                        attempt,
-                        totalAttempts);
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    jobException = ex;
-
-                    // Classify whether this exception is retryable (with logging)
-                    var isRetryable = IsRetryable(ex);
-                    var exceptionClassification = isRetryable ? "TransientRetryable" : "NonRetryable";
-                    _logger.LogInformation(
-                        "Job exception classification | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | Classification={ExceptionClassification}",
-                        attempt,
-                        totalAttempts,
-                        ex.GetType().Name,
-                        exceptionClassification);
-
-                    // Non-retryable: config, validation, and business-rule errors must not be retried.
-                    if (!isRetryable)
-                    {
-                        _logger.LogError(ex,
-                            "Job '{JobName}' failed with non-retryable exception | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | ErrorMessage={ErrorMessage} | JobQueueId={JobQueueId}",
-                            jobName, attempt, totalAttempts, ex.GetType().Name, ex.Message, jobQueueId);
-                        break;
-                    }
-
-                    var canRetry = attempt < totalAttempts;
-
-                    if (!canRetry)
-                    {
-                        _logger.LogError(ex,
-                            "Job '{JobName}' failed after retries exhausted | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | ErrorMessage={ErrorMessage} | JobQueueId={JobQueueId}",
-                            jobName, attempt, totalAttempts, ex.GetType().Name, ex.Message, jobQueueId);
-                        break;
-                    }
-
-                    // Check if total retry duration would be exceeded
-                    var elapsedRetrySeconds = (DateTime.UtcNow - retryStartedAt).TotalSeconds;
-                    if (_maxRetryDurationSeconds > 0 && elapsedRetrySeconds >= _maxRetryDurationSeconds)
-                    {
-                        _logger.LogError(ex,
-                            "Job '{JobName}' retry duration capped | Attempt={Attempt}/{TotalAttempts} | ElapsedRetrySeconds={ElapsedSeconds} | MaxRetrySeconds={MaxSeconds} | JobQueueId={JobQueueId}",
-                            jobName, attempt, totalAttempts, (int)elapsedRetrySeconds, _maxRetryDurationSeconds, jobQueueId);
-                        break;
-                    }
-
-                    // Calculate retry delay with jitter
-                    var basedelaySeconds = _retryDelaySeconds;
-                    var jitterSeconds = new Random().Next(0, Math.Max(1, basedelaySeconds / 2)); // Up to 50% jitter
-                    var finalDelaySeconds = basedelaySeconds + jitterSeconds;
-
-                    _logger.LogWarning(ex,
-                        "Job '{JobName}' failed | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | Classification={ExceptionClassification} | Retrying after {RetryDelaySeconds}s (+{JitterSeconds}s jitter) | JobQueueId={JobQueueId}",
-                        jobName,
-                        attempt,
-                        totalAttempts,
-                        ex.GetType().Name,
-                        exceptionClassification,
-                        basedelaySeconds,
-                        jitterSeconds,
-                        jobQueueId);
-
-                    try
-                    {
-                        await Task.Delay(TimeSpan.FromSeconds(finalDelaySeconds), cancellationToken);
-                    }
-                    catch (OperationCanceledException cancelDelayEx)
-                    {
-                        jobException = cancelDelayEx;
-                        _logger.LogWarning(cancelDelayEx,
-                            "Retry delay cancelled for '{JobName}' | Attempt={Attempt}/{TotalAttempts}",
-                            jobName,
-                            attempt,
-                            totalAttempts);
-                        break;
-                    }
-                }
-                finally
-                {
-                    // No background heartbeat task to cancel (step-based strategy in place)
-                    attemptCts.Cancel();
-                }
-            }
+            jobException = await RunJobWithRetryAsync(job, jobName, jobQueueId, runtimeTimeoutSeconds, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -518,6 +320,179 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
 
         return new JobExecutionResult(jobQueueId, jobName, status, finalDuration, executionId);
+    }
+
+    private static bool IsWorkerManagedScheduledRun(string jobName, RunMode runMode) =>
+        runMode == RunMode.Scheduled &&
+        (string.Equals(jobName, BatchJobNames.MabArchive, StringComparison.OrdinalIgnoreCase) ||
+         string.Equals(jobName, BatchJobNames.MilestoneUpdateNotifications, StringComparison.OrdinalIgnoreCase));
+
+    private async Task<JobExecutionRecord> AutoCreateInitiatedRecordAsync(
+        string jobName, Guid jobExecutionId, string userId,
+        DateTime? requestedAtUtc, DateTime startedAt, RunMode runMode, int? fpsYear,
+        CancellationToken cancellationToken)
+    {
+        var initiatedRequestedAtUtc = requestedAtUtc ?? startedAt;
+        try
+        {
+            var createdJobQueueId = await _executionRepository.CreateInitiatedRecordAsync(
+                jobName, jobExecutionId, userId, initiatedRequestedAtUtc, runMode, cancellationToken, fpsYear);
+
+            _logger.LogWarning(
+                "Initiated record was missing for scheduled worker-managed run. Created worker-managed Initiated row in worker | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode}",
+                jobName, jobExecutionId, createdJobQueueId, runMode);
+
+            return new JobExecutionRecord
+            {
+                ExecutionId = 0,
+                JobName = jobName,
+                JobExecutionId = jobExecutionId,
+                JobQueueId = createdJobQueueId,
+                UserId = userId,
+                JobType = JobType.Unknown,
+                RunMode = runMode,
+                Status = JobStatus.Initiated,
+                RequestedAtUtc = initiatedRequestedAtUtc,
+                FpsYear = fpsYear,
+                StartedAt = initiatedRequestedAtUtc
+            };
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            var existing = await _executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
+            if (existing == null) throw;
+
+            _logger.LogInformation(
+                "Initiated record appeared concurrently while creating worker-managed row. Proceeding with existing row | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode}",
+                jobName, jobExecutionId, existing.JobQueueId, runMode);
+            return existing;
+        }
+    }
+
+    private async Task<Exception?> RunJobWithRetryAsync(
+        IBatchJob job, string jobName, Guid jobQueueId,
+        int? runtimeTimeoutSeconds, CancellationToken cancellationToken)
+    {
+        var retryStartedAt = DateTime.UtcNow;
+        var totalAttempts = _retryAttempts + 1;
+
+        for (var attempt = 1; attempt <= totalAttempts; attempt++)
+        {
+            using var attemptCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            if (runtimeTimeoutSeconds.HasValue)
+                attemptCts.CancelAfter(TimeSpan.FromSeconds(runtimeTimeoutSeconds.Value));
+
+            var attemptToken = attemptCts.Token;
+
+            // Heartbeat is now handled at job/step entry points (step-based strategy)
+            // instead of background loop, providing better observability and step correlation.
+            _logger.LogInformation(
+                "Heartbeat strategy: step-based checks (not background loop) | JobName={JobName} | JobQueueId={JobQueueId}",
+                jobName, jobQueueId);
+
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                _logger.LogInformation(
+                    "Executing job '{JobName}' | Attempt={Attempt}/{TotalAttempts}",
+                    jobName, attempt, totalAttempts);
+                await job.ExecuteAsync(attemptToken);
+                _logger.LogInformation(
+                    "Job '{JobName}' completed successfully | Attempt={Attempt}/{TotalAttempts}",
+                    jobName, attempt, totalAttempts);
+                return null;
+            }
+            catch (OperationCanceledException ex)
+            {
+                if (attemptCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+                {
+                    var timeoutEx = new TimeoutException(
+                        $"Job '{jobName}' exceeded runtime timeout of {runtimeTimeoutSeconds} seconds.", ex);
+                    _logger.LogError(timeoutEx,
+                        "Job '{JobName}' exceeded runtime timeout and was stopped | Attempt={Attempt}/{TotalAttempts} | RuntimeTimeoutSeconds={RuntimeTimeoutSeconds}",
+                        jobName, attempt, totalAttempts, runtimeTimeoutSeconds);
+                    return timeoutEx;
+                }
+                _logger.LogWarning(ex,
+                    "Job '{JobName}' execution was interrupted by cancellation token | Attempt={Attempt}/{TotalAttempts}",
+                    jobName, attempt, totalAttempts);
+                return ex;
+            }
+            catch (Exception ex)
+            {
+                var maybeRetry = await HandleRetryableExceptionAsync(
+                    ex, jobName, jobQueueId, attempt, totalAttempts, retryStartedAt, cancellationToken);
+                if (maybeRetry != null)
+                    return maybeRetry;
+            }
+            finally
+            {
+                // No background heartbeat task to cancel (step-based strategy in place)
+                attemptCts.Cancel();
+            }
+        }
+
+        return null;
+    }
+
+    // Returns the exception to surface (stop retrying), or null to continue with the next attempt.
+    private async Task<Exception?> HandleRetryableExceptionAsync(
+        Exception ex, string jobName, Guid jobQueueId,
+        int attempt, int totalAttempts, DateTime retryStartedAt, CancellationToken cancellationToken)
+    {
+        var isRetryable = IsRetryable(ex);
+        var exceptionClassification = isRetryable ? "TransientRetryable" : "NonRetryable";
+        _logger.LogInformation(
+            "Job exception classification | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | Classification={ExceptionClassification}",
+            attempt, totalAttempts, ex.GetType().Name, exceptionClassification);
+
+        if (!isRetryable)
+        {
+            _logger.LogError(ex,
+                "Job '{JobName}' failed with non-retryable exception | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | ErrorMessage={ErrorMessage} | JobQueueId={JobQueueId}",
+                jobName, attempt, totalAttempts, ex.GetType().Name, ex.Message, jobQueueId);
+            return ex;
+        }
+
+        if (attempt >= totalAttempts)
+        {
+            _logger.LogError(ex,
+                "Job '{JobName}' failed after retries exhausted | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | ErrorMessage={ErrorMessage} | JobQueueId={JobQueueId}",
+                jobName, attempt, totalAttempts, ex.GetType().Name, ex.Message, jobQueueId);
+            return ex;
+        }
+
+        var elapsedRetrySeconds = (DateTime.UtcNow - retryStartedAt).TotalSeconds;
+        if (_maxRetryDurationSeconds > 0 && elapsedRetrySeconds >= _maxRetryDurationSeconds)
+        {
+            _logger.LogError(ex,
+                "Job '{JobName}' retry duration capped | Attempt={Attempt}/{TotalAttempts} | ElapsedRetrySeconds={ElapsedSeconds} | MaxRetrySeconds={MaxSeconds} | JobQueueId={JobQueueId}",
+                jobName, attempt, totalAttempts, (int)elapsedRetrySeconds, _maxRetryDurationSeconds, jobQueueId);
+            return ex;
+        }
+
+        var basedelaySeconds = _retryDelaySeconds;
+        var jitterSeconds = new Random().Next(0, Math.Max(1, basedelaySeconds / 2));
+        var finalDelaySeconds = basedelaySeconds + jitterSeconds;
+
+        _logger.LogWarning(ex,
+            "Job '{JobName}' failed | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | Classification={ExceptionClassification} | Retrying after {RetryDelaySeconds}s (+{JitterSeconds}s jitter) | JobQueueId={JobQueueId}",
+            jobName, attempt, totalAttempts, ex.GetType().Name, exceptionClassification,
+            basedelaySeconds, jitterSeconds, jobQueueId);
+
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(finalDelaySeconds), cancellationToken);
+        }
+        catch (OperationCanceledException cancelDelayEx)
+        {
+            _logger.LogWarning(cancelDelayEx,
+                "Retry delay cancelled for '{JobName}' | Attempt={Attempt}/{TotalAttempts}",
+                jobName, attempt, totalAttempts);
+            return cancelDelayEx;
+        }
+
+        return null; // proceed with next attempt
     }
 
     /// <summary>

@@ -166,5 +166,8 @@ public sealed class BulkRatesCompletionNotifierTests
         // Must complete without throwing.
         await CreateNotifier(email)
             .NotifyAsync(MakeContext(BatchJobNames.BulkTestRatesUpdate), CancellationToken.None);
+
+        // Email send was attempted; the exception was swallowed by the notifier.
+        await email.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
     }
 }

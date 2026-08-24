@@ -488,10 +488,10 @@ internal sealed class MaDstMyTlkpTestReqmt
 {
     public int Year { get; set; }
     public required string TestCode { get; set; }
-    public string? Buyer { get; set; }
+    public required string Buyer { get; set; }
     public decimal? UnitPrice { get; set; }
     public double? NoRequired { get; set; }
-    public required string ProjectBuyerCode { get; set; }
+    public string? ProjectBuyerCode { get; set; }
     public string? TestBuyerCode { get; set; }
 }
 

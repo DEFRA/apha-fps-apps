@@ -98,7 +98,6 @@ public sealed class BulkTestRatesServicePerformanceTests : IAsyncLifetime
 
     private BulkTestRatesService CreateService() => new(
         new BulkRatesRepository(new TestDbContextFactory(_connectionString), NullLogger<BulkRatesRepository>.Instance),
-        Substitute.For<IJobExecutionRepository>(),
         NullLogger<BulkTestRatesService>.Instance);
 
     // â”€â”€ Real Postgres: full worker pipeline at volume â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

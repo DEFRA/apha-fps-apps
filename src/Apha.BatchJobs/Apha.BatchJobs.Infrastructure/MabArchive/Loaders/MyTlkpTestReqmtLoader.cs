@@ -13,20 +13,18 @@ internal sealed class MyTlkpTestReqmtLoader : MabArchiveExecutionLoaderBase
 
     protected override async Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
-        // 2026-05-21: Baseline SQL does not enforce NOT NULL here, and production source data
-        // can contain null/blank ProjectBuyerCode/TestCode. EF materialization throws when
-        // required key fields are null, so we skip invalid rows instead of failing the whole load.
+        // PK is (year, testcode, buyer); skip rows where either key column is null/blank.
         var rows = await context.MaSrcTlkpTestReqmt
             .AsNoTracking()
-            .Where(t => t.FpsYear == year && !string.IsNullOrWhiteSpace(t.ProjectBuyerCode) && !string.IsNullOrWhiteSpace(t.TestCode))
+            .Where(t => t.FpsYear == year && !string.IsNullOrWhiteSpace(t.TestCode) && !string.IsNullOrWhiteSpace(t.Buyer))
             .Select(t => new MaDstMyTlkpTestReqmt
             {
                 Year = year,
                 TestCode = t.TestCode!,
-                Buyer = t.Buyer,
+                Buyer = t.Buyer!,
                 UnitPrice = t.UnitPrice,
                 NoRequired = t.NoRequired,
-                ProjectBuyerCode = t.ProjectBuyerCode!,
+                ProjectBuyerCode = t.ProjectBuyerCode,
                 TestBuyerCode = t.TestBuyerCode
             })
             .ToListAsync(cancellationToken);

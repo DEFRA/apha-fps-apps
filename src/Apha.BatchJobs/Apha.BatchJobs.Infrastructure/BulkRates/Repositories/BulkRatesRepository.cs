@@ -7,6 +7,9 @@ using Npgsql;
 using NpgsqlTypes;
 using System.Text.Json;
 
+// NpgsqlDbType is [Flags] in Npgsql v6+; suppress the false-positive S2166 rule.
+#pragma warning disable S2166
+
 namespace Apha.BatchJobs.Infrastructure.BulkRates.Repositories;
 
 /// <summary>
@@ -94,26 +97,26 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
         var rows = new List<FecStagingRow>();
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
-        {
-            rows.Add(new FecStagingRow(
-                JobQueueId:       reader.GetGuid(0),
-                TestCode:         reader.GetString(1),
-                UnitPriceVla:     reader.IsDBNull(2) ? null : reader.GetDecimal(2),
-                DefraUnitPrice:   reader.IsDBNull(3) ? null : reader.GetDecimal(3),
-                FecNewRate:       reader.IsDBNull(4) ? null : reader.GetDecimal(4),
-                Change:           reader.IsDBNull(5) ? null : reader.GetDecimal(5),
-                ItemDescription:  reader.IsDBNull(6) ? null : reader.GetString(6),
-                ShortDescription: reader.IsDBNull(7) ? null : reader.GetString(7),
-                Owner:            reader.IsDBNull(8) ? null : reader.GetString(8),
-                Comments:         reader.IsDBNull(9) ? null : reader.GetString(9),
-                CalculatedAction:  reader.IsDBNull(10) ? null : reader.GetString(10),
-                EffectiveNewRate:  reader.IsDBNull(11) ? null : reader.GetDecimal(11),
-                SourceCurrentRate: reader.IsDBNull(12) ? null : reader.GetDecimal(12),
-                ValidationVersion: reader.IsDBNull(13) ? null : reader.GetInt32(13)));
-        }
+            rows.Add(ReadFecRow(reader));
 
         return rows;
     }
+
+    private static FecStagingRow ReadFecRow(NpgsqlDataReader r) => new(
+        JobQueueId:       r.GetGuid(0),
+        TestCode:         r.GetString(1),
+        UnitPriceVla:     Decimal(r, 2),
+        DefraUnitPrice:   Decimal(r, 3),
+        FecNewRate:       Decimal(r, 4),
+        Change:           Decimal(r, 5),
+        ItemDescription:  Str(r, 6),
+        ShortDescription: Str(r, 7),
+        Owner:            Str(r, 8),
+        Comments:         Str(r, 9),
+        CalculatedAction:  Str(r, 10),
+        EffectiveNewRate:  Decimal(r, 11),
+        SourceCurrentRate: Decimal(r, 12),
+        ValidationVersion: Int(r, 13));
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<AgrupStagingRow>> GetAgrupStagingRowsAsync(
@@ -139,29 +142,29 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
         var rows = new List<AgrupStagingRow>();
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
-        {
-            rows.Add(new AgrupStagingRow(
-                JobQueueId:  reader.GetGuid(0),
-                TestCode:    reader.GetString(1),
-                Buyer:       reader.GetString(2),
-                Agrup:       reader.IsDBNull(3) ? null : reader.GetDecimal(3),
-                AgrupNew:    reader.IsDBNull(4) ? null : reader.GetDecimal(4),
-                Change:      reader.IsDBNull(5) ? null : reader.GetDecimal(5),
-                NoRequired:  reader.IsDBNull(6) ? null : reader.GetDouble(6),
-                DateCreated: reader.IsDBNull(7) ? null : reader.GetDateTime(7),
-                Active:      reader.IsDBNull(8) ? null : reader.GetInt16(8),
-                Comments:    reader.IsDBNull(9) ? null : reader.GetString(9),
-                ProjectBuyerCode:   reader.IsDBNull(10) ? null : reader.GetString(10),
-                TestBuyerCode:      reader.IsDBNull(11) ? null : reader.GetString(11),
-                TestBuyerWorkGroup: reader.IsDBNull(12) ? null : reader.GetString(12),
-                CalculatedAction:   reader.IsDBNull(13) ? null : reader.GetString(13),
-                EffectiveNewRate:   reader.IsDBNull(14) ? null : reader.GetDecimal(14),
-                SourceCurrentRate:  reader.IsDBNull(15) ? null : reader.GetDecimal(15),
-                ValidationVersion:  reader.IsDBNull(16) ? null : reader.GetInt32(16)));
-        }
+            rows.Add(ReadAgrupRow(reader));
 
         return rows;
     }
+
+    private static AgrupStagingRow ReadAgrupRow(NpgsqlDataReader r) => new(
+        JobQueueId:  r.GetGuid(0),
+        TestCode:    r.GetString(1),
+        Buyer:       r.GetString(2),
+        Agrup:       Decimal(r, 3),
+        AgrupNew:    Decimal(r, 4),
+        Change:      Decimal(r, 5),
+        NoRequired:  Dbl(r, 6),
+        DateCreated: Dt(r, 7),
+        Active:      I16(r, 8),
+        Comments:    Str(r, 9),
+        ProjectBuyerCode:   Str(r, 10),
+        TestBuyerCode:      Str(r, 11),
+        TestBuyerWorkGroup: Str(r, 12),
+        CalculatedAction:   Str(r, 13),
+        EffectiveNewRate:   Decimal(r, 14),
+        SourceCurrentRate:  Decimal(r, 15),
+        ValidationVersion:  Int(r, 16));
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<StaffStagingRow>> GetStaffStagingRowsAsync(
@@ -188,26 +191,26 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
         var rows = new List<StaffStagingRow>();
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
-        {
-            rows.Add(new StaffStagingRow(
-                JobQueueId: reader.GetGuid(0),
-                PcGrade:    reader.GetString(1),
-                PayRate:    reader.IsDBNull(2) ? null : reader.GetDecimal(2),
-                Npr:        reader.IsDBNull(3) ? null : reader.GetDecimal(3),
-                Ohr:        reader.IsDBNull(4) ? null : reader.GetDecimal(4),
-                CalculatedAction: reader.IsDBNull(5) ? null : reader.GetString(5),
-                SourcePayRate:    reader.IsDBNull(6) ? null : reader.GetDecimal(6),
-                SourceNpr:        reader.IsDBNull(7) ? null : reader.GetDecimal(7),
-                SourceOhr:        reader.IsDBNull(8) ? null : reader.GetDecimal(8),
-                EffectivePayRate: reader.IsDBNull(9) ? null : reader.GetDecimal(9),
-                EffectiveNpr:     reader.IsDBNull(10) ? null : reader.GetDecimal(10),
-                EffectiveOhr:     reader.IsDBNull(11) ? null : reader.GetDecimal(11),
-                EffectiveChargeRate: reader.IsDBNull(12) ? null : reader.GetDecimal(12),
-                ValidationVersion: reader.IsDBNull(13) ? null : reader.GetInt32(13)));
-        }
+            rows.Add(ReadStaffRow(reader));
 
         return rows;
     }
+
+    private static StaffStagingRow ReadStaffRow(NpgsqlDataReader r) => new(
+        JobQueueId: r.GetGuid(0),
+        PcGrade:    r.GetString(1),
+        PayRate:    Decimal(r, 2),
+        Npr:        Decimal(r, 3),
+        Ohr:        Decimal(r, 4),
+        CalculatedAction: Str(r, 5),
+        SourcePayRate:    Decimal(r, 6),
+        SourceNpr:        Decimal(r, 7),
+        SourceOhr:        Decimal(r, 8),
+        EffectivePayRate: Decimal(r, 9),
+        EffectiveNpr:     Decimal(r, 10),
+        EffectiveOhr:     Decimal(r, 11),
+        EffectiveChargeRate: Decimal(r, 12),
+        ValidationVersion: Int(r, 13));
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<AnimalStagingRow>> GetAnimalStagingRowsAsync(
@@ -235,31 +238,31 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
         var rows = new List<AnimalStagingRow>();
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
-        {
-            rows.Add(new AnimalStagingRow(
-                JobQueueId:    reader.GetGuid(0),
-                AnimalType:    reader.GetString(1),
-                Species:       reader.IsDBNull(2) ? null : reader.GetString(2),
-                SecurityLevel: reader.IsDBNull(3) ? null : reader.GetString(3),
-                DailyRate:     reader.IsDBNull(4) ? null : reader.GetDecimal(4),
-                DefraDailyRate: reader.IsDBNull(5) ? null : reader.GetDecimal(5),
-                PlanByWeek:    reader.IsDBNull(6) ? null : reader.GetBoolean(6),
-                CalculatedAction: reader.IsDBNull(7) ? null : reader.GetString(7),
-                SourceDailyRate:      reader.IsDBNull(8) ? null : reader.GetDecimal(8),
-                SourceDefraDailyRate: reader.IsDBNull(9) ? null : reader.GetDecimal(9),
-                SourcePlanByWeek:     reader.IsDBNull(10) ? null : reader.GetBoolean(10),
-                SourceSpecies:        reader.IsDBNull(11) ? null : reader.GetString(11),
-                SourceSecurityLevel:  reader.IsDBNull(12) ? null : reader.GetString(12),
-                EffectiveDailyRate:      reader.IsDBNull(13) ? null : reader.GetDecimal(13),
-                EffectiveDefraDailyRate: reader.IsDBNull(14) ? null : reader.GetDecimal(14),
-                EffectivePlanByWeek:     reader.IsDBNull(15) ? null : reader.GetBoolean(15),
-                EffectiveSpecies:        reader.IsDBNull(16) ? null : reader.GetString(16),
-                EffectiveSecurityLevel:  reader.IsDBNull(17) ? null : reader.GetString(17),
-                ValidationVersion: reader.IsDBNull(18) ? null : reader.GetInt32(18)));
-        }
+            rows.Add(ReadAnimalRow(reader));
 
         return rows;
     }
+
+    private static AnimalStagingRow ReadAnimalRow(NpgsqlDataReader r) => new(
+        JobQueueId:    r.GetGuid(0),
+        AnimalType:    r.GetString(1),
+        Species:       Str(r, 2),
+        SecurityLevel: Str(r, 3),
+        DailyRate:     Decimal(r, 4),
+        DefraDailyRate: Decimal(r, 5),
+        PlanByWeek:    Bool(r, 6),
+        CalculatedAction: Str(r, 7),
+        SourceDailyRate:      Decimal(r, 8),
+        SourceDefraDailyRate: Decimal(r, 9),
+        SourcePlanByWeek:     Bool(r, 10),
+        SourceSpecies:        Str(r, 11),
+        SourceSecurityLevel:  Str(r, 12),
+        EffectiveDailyRate:      Decimal(r, 13),
+        EffectiveDefraDailyRate: Decimal(r, 14),
+        EffectivePlanByWeek:     Bool(r, 15),
+        EffectiveSpecies:        Str(r, 16),
+        EffectiveSecurityLevel:  Str(r, 17),
+        ValidationVersion: Int(r, 18));
 
     /// <inheritdoc />
     public async Task WriteHistoryBatchAsync(
@@ -1041,4 +1044,12 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
         cmd.Parameters.AddWithValue("note",        (object?)note ?? DBNull.Value);
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
+
+    private static string?  Str(NpgsqlDataReader r, int i)     => r.IsDBNull(i) ? null : r.GetString(i);
+    private static decimal? Decimal(NpgsqlDataReader r, int i) => r.IsDBNull(i) ? null : r.GetDecimal(i);
+    private static int?     Int(NpgsqlDataReader r, int i)     => r.IsDBNull(i) ? null : r.GetInt32(i);
+    private static bool?    Bool(NpgsqlDataReader r, int i)    => r.IsDBNull(i) ? null : r.GetBoolean(i);
+    private static double?  Dbl(NpgsqlDataReader r, int i)     => r.IsDBNull(i) ? null : r.GetDouble(i);
+    private static short?   I16(NpgsqlDataReader r, int i)     => r.IsDBNull(i) ? null : r.GetInt16(i);
+    private static DateTime? Dt(NpgsqlDataReader r, int i)     => r.IsDBNull(i) ? null : r.GetDateTime(i);
 }

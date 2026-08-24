@@ -219,153 +219,9 @@ public sealed class MilestoneUpdateNotificationsJob : IBatchJob
             var deliveryKey = new NotificationDeliveryKey(
                 NotificationType, reportingYear, effectiveMonth, group.RecipientId);
 
-            // Disabled recipient — skip and audit.
-            if (group.IsDisabled)
-            {
-                _logger.LogInformation(
-                    "Skipping disabled recipient | RecipientId={RecipientId} | Manager={Manager} | Projects={ProjectCount}",
-                    group.RecipientId, group.ProjectManager, group.Projects.Count);
-
-                await _deliveryRepository.InsertSkippedDeliveryAsync(
-                    jobQueueId, deliveryKey, group.DurablePersonId, group.ProjectManager, group.Email,
-                    "RecipientDisabled", TemplateVersion,
-                    group.Projects.Select(p => (p.ParentProject, p.Year)).ToList(),
-                    cancellationToken);
-
-                counters.DisabledRecipientCount++;
-                counters.DisabledProjectCount += group.Projects.Count;
-                counters.ManagerEmailSkippedCount++;
-                continue;
-            }
-
-            // Missing email — skip and audit.
-            if (string.IsNullOrWhiteSpace(group.Email))
-            {
-                _logger.LogInformation(
-                    "Skipping recipient with no email address | RecipientId={RecipientId} | Manager={Manager} | Projects={ProjectCount}",
-                    group.RecipientId, group.ProjectManager, group.Projects.Count);
-
-                await _deliveryRepository.InsertSkippedDeliveryAsync(
-                    jobQueueId, deliveryKey, group.DurablePersonId, group.ProjectManager, group.Email,
-                    "EmailMissing", TemplateVersion,
-                    group.Projects.Select(p => (p.ParentProject, p.Year)).ToList(),
-                    cancellationToken);
-
-                counters.MissingEmailRecipientCount++;
-                counters.MissingEmailProjectCount += group.Projects.Count;
-                counters.ManagerEmailSkippedCount++;
-                continue;
-            }
-
-            // Three-outcome duplicate check.
-            var existing = await _deliveryRepository.GetExistingAttemptAsync(deliveryKey, cancellationToken);
-            if (existing != null)
-            {
-                if (existing.DeliveryStatus == "Sent" && !isForceResend)
-                {
-                    _logger.LogInformation(
-                        "DuplicateSuccessfulDelivery — prior Sent row found, skipping | " +
-                        "RecipientId={RecipientId} | Manager={Manager} | PriorDeliveryId={PriorDeliveryId}",
-                        group.RecipientId, group.ProjectManager, existing.NotificationDeliveryId);
-                    counters.DuplicateSkippedCount++;
-                    continue;
-                }
-
-                if (existing.DeliveryStatus == "Sending")
-                {
-                    _logger.LogWarning(
-                        "Prior Sending row found — transitioning to OutcomeUnknown; operational review required | " +
-                        "RecipientId={RecipientId} | Manager={Manager} | PriorDeliveryId={PriorDeliveryId}",
-                        group.RecipientId, group.ProjectManager, existing.NotificationDeliveryId);
-                    await _deliveryRepository.TransitionToOutcomeUnknownAsync(
-                        existing.NotificationDeliveryId, cancellationToken);
-                    counters.OutcomeUnknownRecipientCount++;
-                    continue;
-                }
-
-                // Outcome 3: Sent + forceResend=true — proceed with a fresh attempt.
-                _logger.LogInformation(
-                    "forceResend — prior Sent row found but forceResend=true; proceeding with new attempt | " +
-                    "RecipientId={RecipientId} | Manager={Manager} | PriorDeliveryId={PriorDeliveryId}",
-                    group.RecipientId, group.ProjectManager, existing.NotificationDeliveryId);
-            }
-
-            // Render template — excluded projects have invalid EditLink.
-            var renderResult = _templateRenderer.RenderManagerEmailBody(
-                group.ProjectManager,
-                group.Projects,
-                includeConfirmationInstruction);
-
-            if (renderResult.ExcludedProjects.Count > 0)
-            {
-                _logger.LogWarning(
-                    "Excluded {ExcludedCount} project(s) with invalid EditLink | RecipientId={RecipientId} | Manager={Manager} | ExcludedProjects={Projects}",
-                    renderResult.ExcludedProjects.Count,
-                    group.RecipientId,
-                    group.ProjectManager,
-                    string.Join(", ", renderResult.ExcludedProjects.Select(p => p.ParentProject)));
-            }
-
-            // No valid project links remain — skip the send.
-            if (renderResult.IncludedProjects.Count == 0)
-            {
-                _logger.LogWarning(
-                    "Skipping recipient — zero valid project links after EditLink validation | RecipientId={RecipientId} | Manager={Manager}",
-                    group.RecipientId, group.ProjectManager);
-
-                await _deliveryRepository.InsertSkippedDeliveryAsync(
-                    jobQueueId, deliveryKey, group.DurablePersonId, group.ProjectManager, group.Email,
-                    "NoValidProjectLinks", TemplateVersion,
-                    group.Projects.Select(p => (p.ParentProject, p.Year)).ToList(),
-                    cancellationToken);
-
-                counters.ManagerEmailSkippedCount++;
-                continue;
-            }
-
-            // Audit: Pending -> Sending -> (send) -> Sent/Failed (write order).
-            var children = renderResult.IncludedProjects
-                .Select(p => (p.ParentProject, p.Year, "Pending", (string?)null))
-                .Concat(renderResult.ExcludedProjects
-                    .Select(p => (p.ParentProject, p.Year, "Skipped", (string?)"NoValidProjectLinks")))
-                .ToList();
-
-            var deliveryId = await _deliveryRepository.InsertPendingDeliveryAsync(
-                jobQueueId, deliveryKey, group.DurablePersonId, group.ProjectManager, group.Email,
-                isForceResend, TemplateVersion, children, cancellationToken);
-
-            await _deliveryRepository.UpdateDeliveryToSendingAsync(deliveryId, cancellationToken);
-
-            // Send email (a failure here does not stop subsequent sends).
-            var message = new EmailMessage(
-                To: [group.Email],
-                Subject: _templateRenderer.Subject,
-                HtmlBody: renderResult.HtmlBody);
-
-            var sendResult = await _emailService.SendAsync(message, cancellationToken);
-            counters.ManagerEmailAttemptCount++;
-
-            if (sendResult.Succeeded)
-            {
-                var sentAt = DateTime.UtcNow;
-                await _deliveryRepository.UpdateDeliveryOutcomeAsync(
-                    deliveryId, "Sent", null, sentAt, cancellationToken);
-                _logger.LogInformation(
-                    "EmailSent | RecipientId={RecipientId} | Manager={Manager} | Email={Email} | Projects={ProjectCount} | DeliveryId={DeliveryId}",
-                    group.RecipientId, group.ProjectManager, group.Email,
-                    renderResult.IncludedProjects.Count, deliveryId);
-                counters.ManagerEmailSentCount++;
-            }
-            else
-            {
-                await _deliveryRepository.UpdateDeliveryOutcomeAsync(
-                    deliveryId, "Failed", sendResult.FailureMessage, null, cancellationToken);
-                _logger.LogError(
-                    "EmailSendFailed | RecipientId={RecipientId} | Manager={Manager} | Email={Email} | Reason={Reason} | DeliveryId={DeliveryId}",
-                    group.RecipientId, group.ProjectManager, group.Email,
-                    sendResult.FailureMessage, deliveryId);
-                counters.ManagerEmailFailedCount++;
-            }
+            await ProcessRecipientGroupAsync(
+                group, deliveryKey, jobQueueId, isForceResend,
+                includeConfirmationInstruction, counters, cancellationToken);
         }
 
         // Post-loop: finalize counters, persist, send CAPS summary.
@@ -391,6 +247,173 @@ public sealed class MilestoneUpdateNotificationsJob : IBatchJob
             "MilestoneUpdateNotifications Job - Completed | Sent={Sent} | Failed={Failed} | Duration={DurationSeconds}s",
             counters.ManagerEmailSentCount, counters.ManagerEmailFailedCount, (int)duration.TotalSeconds);
         _logger.LogInformation("===========================================");
+    }
+
+    private async Task ProcessRecipientGroupAsync(
+        NotificationGroup group,
+        NotificationDeliveryKey deliveryKey,
+        Guid jobQueueId,
+        bool isForceResend,
+        bool includeConfirmationInstruction,
+        NotificationRunSummaryCounters counters,
+        CancellationToken cancellationToken)
+    {
+        // Disabled recipient — skip and audit.
+        if (group.IsDisabled)
+        {
+            _logger.LogInformation(
+                "Skipping disabled recipient | RecipientId={RecipientId} | Manager={Manager} | Projects={ProjectCount}",
+                group.RecipientId, group.ProjectManager, group.Projects.Count);
+            await _deliveryRepository.InsertSkippedDeliveryAsync(
+                jobQueueId, deliveryKey, group.DurablePersonId, group.ProjectManager, group.Email,
+                "RecipientDisabled", TemplateVersion,
+                group.Projects.Select(p => (p.ParentProject, p.Year)).ToList(),
+                cancellationToken);
+            counters.DisabledRecipientCount++;
+            counters.DisabledProjectCount += group.Projects.Count;
+            counters.ManagerEmailSkippedCount++;
+            return;
+        }
+
+        // Missing email — skip and audit.
+        if (string.IsNullOrWhiteSpace(group.Email))
+        {
+            _logger.LogInformation(
+                "Skipping recipient with no email address | RecipientId={RecipientId} | Manager={Manager} | Projects={ProjectCount}",
+                group.RecipientId, group.ProjectManager, group.Projects.Count);
+            await _deliveryRepository.InsertSkippedDeliveryAsync(
+                jobQueueId, deliveryKey, group.DurablePersonId, group.ProjectManager, group.Email,
+                "EmailMissing", TemplateVersion,
+                group.Projects.Select(p => (p.ParentProject, p.Year)).ToList(),
+                cancellationToken);
+            counters.MissingEmailRecipientCount++;
+            counters.MissingEmailProjectCount += group.Projects.Count;
+            counters.ManagerEmailSkippedCount++;
+            return;
+        }
+
+        if (await CheckDuplicateAsync(group, deliveryKey, isForceResend, counters, cancellationToken))
+            return;
+
+        await SendNotificationAsync(
+            group, deliveryKey, jobQueueId, isForceResend,
+            includeConfirmationInstruction, counters, cancellationToken);
+    }
+
+    // Returns true if the group was handled (skipped or deferred); false to proceed with send.
+    private async Task<bool> CheckDuplicateAsync(
+        NotificationGroup group,
+        NotificationDeliveryKey deliveryKey,
+        bool isForceResend,
+        NotificationRunSummaryCounters counters,
+        CancellationToken cancellationToken)
+    {
+        var existing = await _deliveryRepository.GetExistingAttemptAsync(deliveryKey, cancellationToken);
+        if (existing == null)
+            return false;
+
+        if (existing.DeliveryStatus == "Sent" && !isForceResend)
+        {
+            _logger.LogInformation(
+                "DuplicateSuccessfulDelivery — prior Sent row found, skipping | " +
+                "RecipientId={RecipientId} | Manager={Manager} | PriorDeliveryId={PriorDeliveryId}",
+                group.RecipientId, group.ProjectManager, existing.NotificationDeliveryId);
+            counters.DuplicateSkippedCount++;
+            return true;
+        }
+
+        if (existing.DeliveryStatus == "Sending")
+        {
+            _logger.LogWarning(
+                "Prior Sending row found — transitioning to OutcomeUnknown; operational review required | " +
+                "RecipientId={RecipientId} | Manager={Manager} | PriorDeliveryId={PriorDeliveryId}",
+                group.RecipientId, group.ProjectManager, existing.NotificationDeliveryId);
+            await _deliveryRepository.TransitionToOutcomeUnknownAsync(
+                existing.NotificationDeliveryId, cancellationToken);
+            counters.OutcomeUnknownRecipientCount++;
+            return true;
+        }
+
+        // Sent + forceResend=true — proceed with a fresh attempt.
+        _logger.LogInformation(
+            "forceResend — prior Sent row found but forceResend=true; proceeding with new attempt | " +
+            "RecipientId={RecipientId} | Manager={Manager} | PriorDeliveryId={PriorDeliveryId}",
+            group.RecipientId, group.ProjectManager, existing.NotificationDeliveryId);
+        return false;
+    }
+
+    private async Task SendNotificationAsync(
+        NotificationGroup group,
+        NotificationDeliveryKey deliveryKey,
+        Guid jobQueueId,
+        bool isForceResend,
+        bool includeConfirmationInstruction,
+        NotificationRunSummaryCounters counters,
+        CancellationToken cancellationToken)
+    {
+        var renderResult = _templateRenderer.RenderManagerEmailBody(
+            group.ProjectManager, group.Projects, includeConfirmationInstruction);
+
+        if (renderResult.ExcludedProjects.Count > 0)
+            _logger.LogWarning(
+                "Excluded {ExcludedCount} project(s) with invalid EditLink | RecipientId={RecipientId} | Manager={Manager} | ExcludedProjects={Projects}",
+                renderResult.ExcludedProjects.Count, group.RecipientId, group.ProjectManager,
+                string.Join(", ", renderResult.ExcludedProjects.Select(p => p.ParentProject)));
+
+        if (renderResult.IncludedProjects.Count == 0)
+        {
+            _logger.LogWarning(
+                "Skipping recipient — zero valid project links after EditLink validation | RecipientId={RecipientId} | Manager={Manager}",
+                group.RecipientId, group.ProjectManager);
+            await _deliveryRepository.InsertSkippedDeliveryAsync(
+                jobQueueId, deliveryKey, group.DurablePersonId, group.ProjectManager, group.Email,
+                "NoValidProjectLinks", TemplateVersion,
+                group.Projects.Select(p => (p.ParentProject, p.Year)).ToList(),
+                cancellationToken);
+            counters.ManagerEmailSkippedCount++;
+            return;
+        }
+
+        var children = renderResult.IncludedProjects
+            .Select(p => (p.ParentProject, p.Year, "Pending", (string?)null))
+            .Concat(renderResult.ExcludedProjects
+                .Select(p => (p.ParentProject, p.Year, "Skipped", (string?)"NoValidProjectLinks")))
+            .ToList();
+
+        var deliveryId = await _deliveryRepository.InsertPendingDeliveryAsync(
+            jobQueueId, deliveryKey, group.DurablePersonId, group.ProjectManager, group.Email,
+            isForceResend, TemplateVersion, children, cancellationToken);
+
+        await _deliveryRepository.UpdateDeliveryToSendingAsync(deliveryId, cancellationToken);
+
+        var message = new EmailMessage(
+            To: [group.Email!],
+            Subject: _templateRenderer.Subject,
+            HtmlBody: renderResult.HtmlBody);
+
+        var sendResult = await _emailService.SendAsync(message, cancellationToken);
+        counters.ManagerEmailAttemptCount++;
+
+        if (sendResult.Succeeded)
+        {
+            await _deliveryRepository.UpdateDeliveryOutcomeAsync(
+                deliveryId, "Sent", null, DateTime.UtcNow, cancellationToken);
+            _logger.LogInformation(
+                "EmailSent | RecipientId={RecipientId} | Manager={Manager} | Email={Email} | Projects={ProjectCount} | DeliveryId={DeliveryId}",
+                group.RecipientId, group.ProjectManager, group.Email,
+                renderResult.IncludedProjects.Count, deliveryId);
+            counters.ManagerEmailSentCount++;
+        }
+        else
+        {
+            await _deliveryRepository.UpdateDeliveryOutcomeAsync(
+                deliveryId, "Failed", sendResult.FailureMessage, null, cancellationToken);
+            _logger.LogError(
+                "EmailSendFailed | RecipientId={RecipientId} | Manager={Manager} | Email={Email} | Reason={Reason} | DeliveryId={DeliveryId}",
+                group.RecipientId, group.ProjectManager, group.Email,
+                sendResult.FailureMessage, deliveryId);
+            counters.ManagerEmailFailedCount++;
+        }
     }
 
     /// <summary>

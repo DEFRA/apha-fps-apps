@@ -17,7 +17,6 @@ namespace Apha.BatchJobs.Application.Jobs.HealthCheck;
 public sealed class HealthCheckJobHandler : IBatchJob
 {
     private readonly ILogger<HealthCheckJobHandler> _logger;
-    private readonly BatchJobSettings _settings;
 
     public string Name => "HealthCheck";
     // Read/validate-only; no mutable side effects.
@@ -32,7 +31,7 @@ public sealed class HealthCheckJobHandler : IBatchJob
         IOptions<BatchJobSettings> settings)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _settings = settings?.Value ?? new BatchJobSettings();
+        _ = settings?.Value ?? new BatchJobSettings();
     }
 
     public async Task ExecuteAsync(CancellationToken cancellationToken = default)

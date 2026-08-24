@@ -1048,7 +1048,7 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<MaDstMyTlkpTestReqmt>(entity =>
         {
             entity.ToTable("my_tlkptestreqmt", schema: "mabarchive");
-            entity.HasKey(e => new { e.Year, e.ProjectBuyerCode, e.TestCode });
+            entity.HasKey(e => new { e.Year, e.TestCode, e.Buyer }).HasName("pk_my_tlkptestreqmt");
             entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.TestCode).HasColumnName("testcode");
             entity.Property(e => e.Buyer).HasColumnName("buyer");
