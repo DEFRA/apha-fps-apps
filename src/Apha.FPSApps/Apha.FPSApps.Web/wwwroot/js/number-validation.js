@@ -76,6 +76,23 @@ function formatNumberWithoutRounding(num) {
 }
 
 /**
+ * Format a decimal value to exactly 4 decimal places.
+ * Used for displaying decimal values retrieved from AJAX/API calls.
+ * @param {number|string|null|undefined} value - The value to format
+ * @returns {string} - Formatted decimal string with 4 places or empty string
+ */
+function formatDecimalTo4Places(value) {
+    if (value === null || value === undefined || value === '') {
+        return '';
+    }
+    var num = Number(value);
+    if (isNaN(num)) {
+        return value;
+    }
+    return num.toFixed(4);
+}
+
+/**
  * Get the field label name from the associated label element.
  * Falls back to 'Value' if no label is found.
  * @param {jQuery} $input - The input element
