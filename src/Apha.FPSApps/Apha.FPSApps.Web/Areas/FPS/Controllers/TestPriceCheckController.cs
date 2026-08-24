@@ -120,8 +120,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             });
         }
 
-        private const string DefraProjectSortColumn = nameof(TestPriceCheckItem.IsDefraProject);
-
         private async Task<DataGridConfig<TestPriceCheckItem>> GetTestPriceCheckGridConfigAsync(
             PaginationFilter<string> request,
             string priceFilter,
@@ -130,97 +128,41 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                 ?? new Dictionary<string, string>();
 
-            var isSortingByDefraProject = string.Equals(
-                request.SortBy,
-                DefraProjectSortColumn,
-                StringComparison.OrdinalIgnoreCase);
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            queryParameters.Filter = request.Filter;
 
-            List<TestPriceCheckItem> items;
-            int totalRecords;
+            var response = await _testListService.GetTestPriceCheckPagedAsync(queryParameters, priceFilter, owner);
 
-            if (isSortingByDefraProject)
-            {
-                // Step 1: fetch a first page (page 1, size 1) just to get TotalRecords.
-                var probeQuery = _mapper.Map<QueryParameters<string>>(request);
-                probeQuery.Filter  = request.Filter;
-                probeQuery.Page     = 1;
-                probeQuery.PageSize = 1;
-                probeQuery.SortBy   = null; // don't ask the API to sort by this column
-
-                var probeResponse = await _testListService.GetTestPriceCheckPagedAsync(probeQuery, priceFilter, owner);
-                totalRecords = probeResponse.Pagination?.TotalRecords ?? 0;
-
-                if (totalRecords == 0 || !probeResponse.Success)
-                {
-                    items = new List<TestPriceCheckItem>();
-                }
-                else
-                {
-                    // Step 2: fetch all records in one call, unsorted by the API.
-                    var allQuery = _mapper.Map<QueryParameters<string>>(request);
-                    allQuery.Filter   = request.Filter;
-                    allQuery.Page     = 1;
-                    allQuery.PageSize = totalRecords;
-                    allQuery.SortBy   = null;
-
-                    var allResponse = await _testListService.GetTestPriceCheckPagedAsync(allQuery, priceFilter, owner);
-
-                    var allItems = allResponse.Success && allResponse.Data != null
-                        ? _mapper.Map<List<TestPriceCheckItem>>(allResponse.Data)
-                        : new List<TestPriceCheckItem>();
-
-                    // Step 3: sort the full dataset in memory so Defra projects group together.
-                    var sorted = request.Descending
-                        ? allItems.OrderByDescending(x => x.IsDefraProject)
-                        : allItems.OrderBy(x => x.IsDefraProject);
-
-                    // Step 4: slice the requested page.
-                    items = sorted
-                        .Skip((request.Page - 1) * request.PageSize)
-                        .Take(request.PageSize)
-                        .ToList();
-                }
-            }
-            else
-            {
-                // Normal path — let the API handle sorting and paging.
-                var queryParameters = _mapper.Map<QueryParameters<string>>(request);
-                queryParameters.Filter = request.Filter;
-
-                var response = await _testListService.GetTestPriceCheckPagedAsync(queryParameters, priceFilter, owner);
-
-                totalRecords = response.Pagination?.TotalRecords ?? 0;
-                items = response.Success && response.Data != null
-                    ? _mapper.Map<List<TestPriceCheckItem>>(response.Data)
-                    : new List<TestPriceCheckItem>();
-            }
+            var items = new List<TestPriceCheckItem>();
+            if (response.Success && response.Data != null)
+                items = _mapper.Map<List<TestPriceCheckItem>>(response.Data);
 
             var paginationModel = new PaginationModel
             {
-                TotalRecords = totalRecords,
-                PageSize     = request.PageSize,
-                PageNumber   = request.Page,
-                SortColumn   = request.SortBy,
+                TotalRecords = response.Pagination?.TotalRecords ?? 0,
+                PageSize = request.PageSize,
+                PageNumber = request.Page,
+                SortColumn = request.SortBy,
                 SortDirection = request.Descending
             };
 
             return new DataGridConfig<TestPriceCheckItem>
             {
-                GridId           = "testPriceCheckGrid",
-                Title            = "Test Price Check",
+                GridId = "testPriceCheckGrid",
+                Title = "Test Price Check",
                 ShowCheckboxColumn = false,
-                ShowPagination   = true,
-                KeyProperty      = "TestCode",
-                AllowAdd         = false,
-                AllowEdit        = true,
-                AllowDelete      = false,
-                EditFunction     = "editTestPriceCheck",
+                ShowPagination = true,
+                KeyProperty = "TestCode",
+                AllowAdd = false,
+                AllowEdit = true,
+                AllowDelete = false,
+                EditFunction = "editTestPriceCheck",
                 ExtraFilterMethod = "getTestPriceCheckExtraFilters",
-                BindGridUrl      = "/FPS/TestPriceCheck/LoadTestPriceCheckGrid",
-                Data             = items,
-                Columns          = GridDataProvider.GetColumnsDefination<TestPriceCheckItem>(null),
-                Pagination       = paginationModel,
-                CurrentFilters   = filterDict
+                BindGridUrl = "/FPS/TestPriceCheck/LoadTestPriceCheckGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<TestPriceCheckItem>(null),
+                Pagination = paginationModel,
+                CurrentFilters = filterDict
             };
         }
 
