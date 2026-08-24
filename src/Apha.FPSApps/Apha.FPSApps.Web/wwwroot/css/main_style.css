@@ -1892,3 +1892,34 @@ textarea {
 .govuk-back-link{
     font-weight: bold !important;
 }
+
+/* Excel export icon button for datagrid header */
+.grid-excel-export-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    margin: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    vertical-align: middle;
+    line-height: 0;
+}
+
+.grid-excel-export-btn:hover,
+.grid-excel-export-btn:focus {
+    background: rgba(29, 112, 184, 0.1);
+    border-radius: 4px;
+    outline: none;
+}
+
+.grid-excel-export-btn:focus {
+    box-shadow: 0 0 0 3px #ffdd00;
+}
+
+.grid-excel-export-btn .excel-icon {
+    width: 28px;
+    height: 28px;
+    display: block;
+}

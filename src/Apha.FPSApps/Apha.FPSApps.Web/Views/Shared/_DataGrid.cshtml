@@ -21,9 +21,10 @@
                         <div>
                             @if (Model.AllowExport)
                             {
-                                <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_p_8"
-                                        id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl" allow-edit ="true">
-                                    <i class="fa fa-file-excel-o"></i> Excel Export
+                                <button type="button" class="grid-excel-export-btn sup_margin_0"
+                                        id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl" allow-edit ="true"
+                                        title="Excel Export" aria-label="Excel Export">
+                                    <img class="excel-icon" src="~/images/excel-export-icon.png" alt="" aria-hidden="true" />
                                 </button>
                             }
                             @if (Model.AllowExcelExport)
@@ -36,9 +37,10 @@
                                     : (!string.IsNullOrWhiteSpace(Convert.ToString(Model.Title))
                                         ? Convert.ToString(Model.Title)
                                         : Convert.ToString(Model.GridId));
-                                <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_p_8"
-                                        id="@($"{Model.GridId}_excelExportBtn")" data-excel-export-url="@excelExportUrl" data-excel-file-name="@excelExportFileName">
-                                    <i class="fa fa-file-excel-o"></i> Excel Export
+                                <button type="button" class="grid-excel-export-btn sup_margin_0"
+                                        id="@($"{Model.GridId}_excelExportBtn")" data-excel-export-url="@excelExportUrl" data-excel-file-name="@excelExportFileName"
+                                        title="Excel Export" aria-label="Excel Export">
+                                    <img class="excel-icon" src="~/images/excel-export-icon.png" alt="" aria-hidden="true" />
                                 </button>
                             }
                             @if (Model.AllowAdd)

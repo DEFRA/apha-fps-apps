@@ -400,24 +400,46 @@
     window.downloadFile = function (url, fileName, options) {
         showLoader();
         options = options || {};
-        var fetchOptions = { method: options.method || 'GET' };
+        var data = options.data;
+        // Default to POST whenever a payload is supplied so callers that pass
+        // filters/params never accidentally fall back to a GET request (which a
+        // [HttpPost]-only endpoint rejects with 405 Method Not Allowed).
+        var method = (options.method || (data ? 'POST' : 'GET')).toUpperCase();
+        var fetchOptions = { method: method };
 
-        if (fetchOptions.method.toUpperCase() === 'POST') {
+        if (method === 'POST') {
             var body = new URLSearchParams();
-            var data = options.data || {};
+            data = data || {};
             Object.keys(data).forEach(function (k) { body.append(k, data[k]); });
             fetchOptions.headers = { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' };
             fetchOptions.body = body.toString();
         }
-       
+
         return fetch(url, fetchOptions)
-            .then(function (r) { return r.blob(); })
+            .then(function (r) {
+                // Guard against saving an error page/redirect (HTML or JSON) as a
+                // corrupt file. Only treat a successful, non-HTML response as a file.
+                if (!r.ok) {
+                    throw new Error('Download failed with HTTP ' + r.status);
+                }
+                var contentType = r.headers.get('Content-Type') || '';
+                if (contentType.indexOf('text/html') !== -1) {
+                    throw new Error('Download failed: server returned an HTML response.');
+                }
+                return r.blob();
+            })
             .then(function (blob) {
                 const link = document.createElement('a');
                 link.href = window.URL.createObjectURL(blob);
                 link.download = fileName || 'download';
                 link.click();
                 window.URL.revokeObjectURL(link.href);
+            })
+            .catch(function (error) {
+                console.error('downloadFile error:', error);
+                if (typeof showAlertMessage === 'function' && typeof AlertType !== 'undefined') {
+                    showAlertMessage('The file could not be downloaded. Please try again.', AlertType.ERROR);
+                }
             })
             .finally(hideLoader);
     }
