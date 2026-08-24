@@ -21,6 +21,7 @@ namespace Apha.BatchJobs.UnitTests;
 /// behavior lives in <c>JobOrchestratorTests</c> now that <see cref="MabArchiveJob"/> no longer
 /// sends its own notifications.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class MabArchiveJobTests
 {
     private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD;Timeout=30";

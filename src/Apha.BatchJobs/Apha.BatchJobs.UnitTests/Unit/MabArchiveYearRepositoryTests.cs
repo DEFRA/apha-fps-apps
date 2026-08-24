@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Apha.BatchJobs.UnitTests;
 
+[Trait("Category", "Integration")]
 public sealed class MabArchiveYearRepositoryTests
 {
     private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD;Timeout=30";

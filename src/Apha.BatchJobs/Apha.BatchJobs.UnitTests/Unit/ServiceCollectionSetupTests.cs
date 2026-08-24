@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Apha.BatchJobs.UnitTests;
 
+[Trait("Category", "Integration")]
 public sealed class ServiceCollectionSetupTests
 {
     // ---------------------------------------------------------------------------
