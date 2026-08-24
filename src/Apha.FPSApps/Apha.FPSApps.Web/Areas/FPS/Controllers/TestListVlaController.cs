@@ -302,6 +302,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var fpsYear = _fpsYearContext.Year;
 
             var query = _mapper.Map<QueryParameters<string>>(request);
+            // Propagate column filters (e.g. ProfitCentre) into the API query so
+            // server-side filtering works correctly.
+            query.Filter = request.Filter;//JsonConvert.SerializeObject(filterDict);
+
             var items = new List<TestRCCostItem>();
             var paginationModel = new PaginationModel();
 

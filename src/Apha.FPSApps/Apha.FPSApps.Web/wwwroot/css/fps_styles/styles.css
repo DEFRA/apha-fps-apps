@@ -5252,6 +5252,7 @@ body,
 }
 
 .asu-dropdown-wrapper {
+    margin-bottom: 5px !important;
     position: relative;
 }
 
@@ -5347,13 +5348,13 @@ body,
     width: 42%;
 }
 .isSetUpStaffResources {
-    width: 63%;
+    width: 65%;
 }
 .isBudgetBidsQuery{
     width: 21%;
 }
 .isProjectGroupManagement {
-    width: 35%;
+    width: 37%;
 }
 .isResourceReAllocationScreen {
     width: 24%;
@@ -5525,5 +5526,10 @@ body,
 #gridContainer_ruvWorkgroupGrid {
     h2.sup_align_heading{
         display: none;
+    }
+}
+.project-dropdown-panel{
+    td{
+        text-align: left;
     }
 }
