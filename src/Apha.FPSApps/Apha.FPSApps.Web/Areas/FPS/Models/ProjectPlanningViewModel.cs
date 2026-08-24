@@ -120,7 +120,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Transfer Income")]
         [DataType(DataType.Currency)]
-        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal TransferIncome { get; set; }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "External Income")]
         [DataType(DataType.Currency)]
-        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal ExternalIncome { get; set; }
 
         /// <summary>
@@ -138,7 +138,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Budget CVL")]
         [DataType(DataType.Currency)]
-        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal BudgetCVL { get; set; }
 
         /// <summary>
@@ -148,7 +148,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Total Costs")]
         [DataType(DataType.Currency)]
-        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal TotalCosts { get; set; }
 
         /// <summary>
@@ -159,7 +159,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Profit/(Loss)")]
         [DataType(DataType.Currency)]
-        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal ProfitLoss { get; set; }
 
         /// <summary>
@@ -168,7 +168,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Target Profit")]
         [DataType(DataType.Currency)]
-        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal TargetProfit { get; set; }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Off - Target")]
         [DataType(DataType.Currency)]
-        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal OffTarget { get; set; }
     }
 }

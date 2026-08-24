@@ -73,31 +73,31 @@
         <div class="summary-row">
             <div class="summary-item">
                 <label class="govuk-label--s govuk-!-font-size-16" for="TransferIncome">Transfer Income:</label>
-                <input type="text" value="@Model.TransferIncome.ToString("C0")" aria-label="Transfer Income" id="TransferIncome" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TransferIncome" asp-for="TransferIncome">
+                <input type="text" value="@Model.TransferIncome.ToString("C2")" aria-label="Transfer Income" id="TransferIncome" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TransferIncome" asp-for="TransferIncome">
             </div>
             <div class="summary-item">
                 <label class="govuk-label--s govuk-!-font-size-16" for="ExternalIncome">External Income:</label>
-                <input type="text" value="@Model.ExternalIncome.ToString("C0")" aria-label="External Income" id="ExternalIncome" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="ExternalIncome" asp-for="ExternalIncome">
+                <input type="text" value="@Model.ExternalIncome.ToString("C2")" aria-label="External Income" id="ExternalIncome" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="ExternalIncome" asp-for="ExternalIncome">
             </div>
             <div class="summary-item">
                 <label class="govuk-label--s govuk-!-font-size-16" for="BudgetCVL">Budget CVL:</label>
-                <input type="text" value="@Model.BudgetCVL.ToString("C0")" aria-label="Budget CVL" id="BudgetCVL" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="BudgetCVL" asp-for="BudgetCVL">
+                <input type="text" value="@Model.BudgetCVL.ToString("C2")" aria-label="Budget CVL" id="BudgetCVL" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="BudgetCVL" asp-for="BudgetCVL">
             </div>
             <div class="summary-item">
                 <label class="govuk-label--s govuk-!-font-size-16" for="TotalCosts">Total Costs:</label>
-                <input type="text" value="@Model.TotalCosts.ToString("C0")" aria-label="Total Costs" id="TotalCosts" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TotalCosts" asp-for="TotalCosts">
+                <input type="text" value="@Model.TotalCosts.ToString("C2")" aria-label="Total Costs" id="TotalCosts" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TotalCosts" asp-for="TotalCosts">
             </div>
             <div class="summary-item">
                 <label class="govuk-label--s govuk-!-font-size-16" for="ProfitLoss">Profit/(Loss):</label>
-                <input type="text" value="@(Model.ProfitLoss < 0 ? $"(£{Math.Abs(Model.ProfitLoss):N0})" : Model.ProfitLoss.ToString("C0"))" aria-label="Profit/(Loss)" id="ProfitLoss" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight @(Model.ProfitLoss < 0 ? "text-danger" : "text-primary")" name="ProfitLoss" asp-for="ProfitLoss">
+                <input type="text" value="@(Model.ProfitLoss < 0 ? $"(£{Math.Abs(Model.ProfitLoss):N2})" : Model.ProfitLoss.ToString("C2"))" aria-label="Profit/(Loss)" id="ProfitLoss" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight @(Model.ProfitLoss < 0 ? "text-danger" : "text-primary")" name="ProfitLoss" asp-for="ProfitLoss">
             </div>
             <div class="summary-item">
                 <label class="govuk-label--s govuk-!-font-size-16" for="TargetProfit">Target Profit:</label>
-                <input type="text" value="@Model.TargetProfit.ToString("C0")" aria-label="Target Profit" id="TargetProfit" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TargetProfit" asp-for="TargetProfit">
+                <input type="text" value="@Model.TargetProfit.ToString("C2")" aria-label="Target Profit" id="TargetProfit" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TargetProfit" asp-for="TargetProfit">
             </div>
             <div class="summary-item">
                 <label class="govuk-label--s govuk-!-font-size-16" for="OffTarget">Off - Target:</label>
-                <input type="text" value="@(Model.OffTarget < 0 ? $"(£{Math.Abs(Model.OffTarget):N0})" : Model.OffTarget.ToString("C0"))" aria-label="Off - Target" id="OffTarget" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="OffTarget" asp-for="OffTarget" style="color:#1d70b8;font-weight:400;">
+                <input type="text" value="@(Model.OffTarget < 0 ? $"(£{Math.Abs(Model.OffTarget):N2})" : Model.OffTarget.ToString("C2"))" aria-label="Off - Target" id="OffTarget" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="OffTarget" asp-for="OffTarget" style="color:#1d70b8;font-weight:400;">
             </div>
         </div>
     </footer>
@@ -114,7 +114,7 @@
         // ---- Currency helpers ----
 
         function formatGBP(value) {
-            var formatted = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.abs(value));
+            var formatted = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP',  maximumFractionDigits: 2 }).format(Math.abs(value));
             return value < 0 ? '-(' + formatted + ')' : formatted;
         }
 
