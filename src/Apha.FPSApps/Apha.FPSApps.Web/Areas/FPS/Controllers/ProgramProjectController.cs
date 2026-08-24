@@ -132,26 +132,78 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
                 : null;
 
-            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
-
             var projectItems = new List<ProjectViewModel>();
             var paginationModel = new PaginationModel
             {
                 SortColumn = request.SortBy,
-                SortDirection = request.Descending
+                SortDirection = request.Descending,
+                PageNumber = request.Page,
+                PageSize = request.PageSize
             };
 
             if (!string.IsNullOrWhiteSpace(programNo))
             {
-                var projectsData = await _projectService.GetProjectsByProgramAsync(
-                    queryParameters, programNo);
+                var isDefraSort = string.Equals(
+                    request.SortBy,
+                    nameof(ProjectViewModel.IsDefraProject),
+                    StringComparison.OrdinalIgnoreCase);
 
-                if (projectsData.Success && projectsData.Data != null)
-                    projectItems = _mapper.Map<List<ProjectViewModel>>(projectsData.Data);
+                if (isDefraSort)
+                {
+                    // 1) Probe total records
+                    var probeQuery = _mapper.Map<QueryParameters<string>>(request);
+                    probeQuery.Page = 1;
+                    probeQuery.PageSize = 1;
+                    probeQuery.SortBy = null;
+                    probeQuery.Descending = false;
 
-                paginationModel = _mapper.Map<PaginationModel>(projectsData.Pagination) ?? paginationModel;
-                paginationModel.SortColumn = request.SortBy;
-                paginationModel.SortDirection = request.Descending;
+                    var probe = await _projectService.GetProjectsByProgramAsync(probeQuery, programNo);
+                    var totalRecords = probe.Pagination?.TotalRecords ?? 0;
+
+                    paginationModel.TotalRecords = totalRecords;
+                    // Do not assign TotalPages (read-only); it is computed from TotalRecords and PageSize.
+
+                    if (probe.Success && totalRecords > 0)
+                    {
+                        // 2) Fetch all rows
+                        var allQuery = _mapper.Map<QueryParameters<string>>(request);
+                        allQuery.Page = 1;
+                        allQuery.PageSize = totalRecords;
+                        allQuery.SortBy = null;
+                        allQuery.Descending = false;
+
+                        var allData = await _projectService.GetProjectsByProgramAsync(allQuery, programNo);
+
+                        if (allData.Success && allData.Data != null)
+                        {
+                            var allItems = _mapper.Map<List<ProjectViewModel>>(allData.Data);
+
+                            // 3) Sort full set
+                            var ordered = request.Descending
+                                ? allItems.OrderByDescending(x => x.IsDefraProject)
+                                : allItems.OrderBy(x => x.IsDefraProject);
+
+                            // 4) Apply page slice after sort
+                            projectItems = ordered
+                                .Skip((request.Page - 1) * request.PageSize)
+                                .Take(request.PageSize)
+                                .ToList();
+                        }
+                    }
+                }
+                else
+                {
+                    var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+
+                    var projectsData = await _projectService.GetProjectsByProgramAsync(queryParameters, programNo);
+
+                    if (projectsData.Success && projectsData.Data != null)
+                        projectItems = _mapper.Map<List<ProjectViewModel>>(projectsData.Data);
+
+                    paginationModel = _mapper.Map<PaginationModel>(projectsData.Pagination) ?? paginationModel;
+                    paginationModel.SortColumn = request.SortBy;
+                    paginationModel.SortDirection = request.Descending;
+                }
             }
 
             var gridConfig = new DataGridConfig<ProjectViewModel>
