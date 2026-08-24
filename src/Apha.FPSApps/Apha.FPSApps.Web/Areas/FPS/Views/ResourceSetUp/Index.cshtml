@@ -207,7 +207,7 @@
                         onWgGradeRowClick(wgGrade);
                     });
                 } else {
-                    // No WG grade rows — reset dependent state and show empty highlighted row in staff grid
+                    // No WG grade rows — reset dependent state and show "No records found" in staff grid
                     currentWgGrade = '';
                     document.getElementById('fpsSrSelectedWg').value = '';
                     document.getElementById('fpsSrPersonName').value = '';
@@ -216,8 +216,13 @@
                     var $staffTbody = $('#gridContainer_' + wgStaffGridId + ' table tbody');
                     if ($staffTbody.length) {
                         var colCount = $('#gridContainer_' + wgStaffGridId + ' table thead tr:first th').length;
-                        $staffTbody.html('<tr class="selected-row"><td colspan="' + colCount + '" style="padding:6px;"></td></tr>');
+                        $staffTbody.html('<tr><td colspan="' + colCount + '" class="govuk-table__cell" ' +
+                            'style="text-align:center; color:#505a5f; font-style:italic; padding:16px;">' +
+                            'No records found.</td></tr>');
                     }
+                    resetStaffPaginationFooter();
+                    syncTotalsRow();
+                    updateStaffTotals();
                 }
             }
 
@@ -435,6 +440,20 @@
         function closeModal() {
             $('#modalPopup').removeClass('show');
             $('#modaPopupBody').html('');
+        }
+
+        // Resets the wgStaffGrid pagination footer to reflect an empty grid (0 records)
+        function resetStaffPaginationFooter() {
+            var $footer = $('#gridContainer_' + wgStaffGridId + ' .sup_pagination_footer');
+            if (!$footer.length) return;
+            // "of X" total records label
+            $footer.find('#' + wgStaffGridId + '_pageSize').nextAll('span').first().text('of 0');
+            // Rebuild pagination nav to a single disabled page
+            var $nav = $footer.find('nav.pagination ul.govuk-pagination__list');
+            if ($nav.length) {
+                $nav.find('.govuk-pagination__link').addClass('pagination--disabled').attr('aria-disabled', 'true');
+                $nav.find('.govuk-pagination__item--current .record-info').text('1').attr('data-pageno', '1');
+            }
         }
 
         // Syncs totals footer cell widths to match the actual rendered wgStaffGrid header columns
