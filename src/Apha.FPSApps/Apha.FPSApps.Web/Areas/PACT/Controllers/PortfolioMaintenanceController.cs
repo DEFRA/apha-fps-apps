@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             ViewBag.SourceWorkGroup = workgroup;
 
             var allPortfolios = await _projectService.GetAllPactProjectsAsync();
-            var programs = await _programService.GetAllProgramsAsync();
+            var programs = await _programService.GetAllProgramsForAllUsersAsync();
             var managers = await _employeeService.GetAllPactManagersAsync();
             var workGroups = await _testCapabilityService.GetAllWorkGroupsAsync();
             var testorProducts = await _testorProductService.GetAllTestorProductsAsync();
@@ -152,6 +152,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPortfolio(string parentProject)
         {
+            TempData["OriginalParentProject"] = parentProject;
             var result = await _projectService.GetProjectByIdAsync(parentProject);
             if (!result.Success || result.Data == null)
                 return Json(new { success = false, message = "Portfolio not found." });
