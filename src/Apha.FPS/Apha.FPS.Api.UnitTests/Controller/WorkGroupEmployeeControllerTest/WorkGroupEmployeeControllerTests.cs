@@ -333,7 +333,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(true, okResult.Value);
+            Assert.True((bool)okResult.Value!);
             await _serviceMock.Received(1).DeleteWorkGroupEmployeeAsync(DefaultPactId);
         }
 
@@ -348,7 +348,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(false, okResult.Value);
+            Assert.False((bool)okResult.Value!);
             await _serviceMock.Received(1).DeleteWorkGroupEmployeeAsync(DefaultPactId);
         }
 

@@ -138,7 +138,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsNoTracking()
                 .Where(x => x.WorkGroupGrade == wgGrade
                          && x.PersonStatus != "I"
-                         && x.UserEmail != null && x.UserEmail.ToLower() == _requestContext.UserEmailId)
+                         && x.UserEmail != null && EF.Functions.ILike(x.UserEmail, _requestContext.UserEmailId))
                 .Join(
                     _dbContext.Employees.AsNoTracking(),
                     wg => wg.SpNumber,
@@ -359,18 +359,24 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return sortBy?.ToLower() switch
             {
-                "pactid" => descending ? query.OrderByDescending(x => x.PactId) : query.OrderBy(x => x.PactId),
-                "sickspecial" => descending ? query.OrderByDescending(x => x.SickSpecial) : query.OrderBy(x => x.SickSpecial),
-                "hrspaid" => descending ? query.OrderByDescending(x => x.HrsPaid) : query.OrderBy(x => x.HrsPaid),
-                "leave" => descending ? query.OrderByDescending(x => x.Leave) : query.OrderBy(x => x.Leave),
-                "makeavailable" => descending ? query.OrderByDescending(x => x.MakeAvailable) : query.OrderBy(x => x.MakeAvailable),
-                "hrsavai" => descending ? query.OrderByDescending(x => x.HrsAvail) : query.OrderBy(x => x.HrsAvail),
-                "spnumber" => descending ? query.OrderByDescending(x => x.SpNumber) : query.OrderBy(x => x.SpNumber),
-                "name" or "staffname" => descending ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name),
-                "workgroupgrade" or "wggrade" => descending ? query.OrderByDescending(x => x.WorkGroupGrade) : query.OrderBy(x => x.WorkGroupGrade),
-                "personstatus" => descending ? query.OrderByDescending(x => x.PersonStatus) : query.OrderBy(x => x.PersonStatus),
+                "pactid" => ApplyOrder(query, x => x.PactId, descending),
+                "sickspecial" => ApplyOrder(query, x => x.SickSpecial, descending),
+                "hrspaid" => ApplyOrder(query, x => x.HrsPaid, descending),
+                "leave" => ApplyOrder(query, x => x.Leave, descending),
+                "makeavailable" => ApplyOrder(query, x => x.MakeAvailable, descending),
+                "hrsavai" => ApplyOrder(query, x => x.HrsAvail, descending),
+                "spnumber" => ApplyOrder(query, x => x.SpNumber, descending),
+                "name" or "staffname" => ApplyOrder(query, x => x.Name, descending),
+                "workgroupgrade" or "wggrade" => ApplyOrder(query, x => x.WorkGroupGrade, descending),
+                "personstatus" => ApplyOrder(query, x => x.PersonStatus, descending),
                 _ => query.OrderBy(x => x.Name)
             };
         }
+
+        private static IQueryable<WorkGroupEmployeeView> ApplyOrder<T>(
+            IQueryable<WorkGroupEmployeeView> query,
+            Expression<Func<WorkGroupEmployeeView, T>> keySelector,
+            bool descending)
+            => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
     }
 }
