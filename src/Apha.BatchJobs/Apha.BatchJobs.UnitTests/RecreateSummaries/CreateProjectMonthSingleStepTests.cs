@@ -12,6 +12,7 @@ using Npgsql;
 
 namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
 
+[Trait("Category", "Integration")]
 public sealed class CreateProjectMonthSingleStepTests
 {
     [SkippableFact]

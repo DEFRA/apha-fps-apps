@@ -11,6 +11,7 @@ using Npgsql;
 
 namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
 
+[Trait("Category", "Integration")]
 public sealed class LogRecreateSummariesStepTests
 {
     [Fact(Skip = "Requires a live Postgres instance; not run in CI.")]
