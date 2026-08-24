@@ -74,6 +74,7 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.TriggeredBy).HasColumnName("triggered_by");
             entity.Property(e => e.TriggeredAtUtc).HasColumnName("triggered_at_utc");
             entity.Property(e => e.ActiveDownloadVersion).HasColumnName("active_download_version");
+            entity.Property(e => e.S3ObjectKey).HasColumnName("s3_object_key");
         }
     }
 }

@@ -51,6 +51,7 @@ namespace Apha.FPS.Application.UnitTests.Services.BulkRatesServiceTest
                 [nameof(BulkRatesQueueEntryDto.ErrorMessage)] = typeof(string),
                 [nameof(BulkRatesQueueEntryDto.FailureReason)] = typeof(string),
                 [nameof(BulkRatesQueueEntryDto.ActiveDownloadVersion)] = typeof(int?),
+                [nameof(BulkRatesQueueEntryDto.S3ObjectKey)] = typeof(string),
             });
         }
 

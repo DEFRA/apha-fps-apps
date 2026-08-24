@@ -1,8 +1,10 @@
 ﻿// FPS API startup extensions — service registration and middleware pipeline configuration.
 using Amazon;
 using Amazon.EventBridge;
+using Amazon.S3;
 using Apha.Common.Contracts.Email;
 using Apha.Common.Utilities.EventPublisher;
+using Apha.Common.Utilities.Storage;
 using Apha.FPS.Api.Filters;
 using Apha.FPS.Api.Mappings;
 using Apha.FPS.Api.Middleware;
@@ -111,12 +113,24 @@ namespace Apha.FPS.Api.Extensions
             services.AddOptions<YearEndEmailSettings>()
                 .Bind(configuration.GetRequiredSection(YearEndEmailSettings.SectionName))
                 .ValidateOnStart();
+
+            services.AddOptions<BulkRatesEmailSettings>()
+                .Bind(configuration.GetRequiredSection(BulkRatesEmailSettings.SectionName))
+                .ValidateOnStart();
            
             builder.Services.AddSingleton<IAmazonEventBridge>(_ =>
            new AmazonEventBridgeClient(
                RegionEndpoint.GetBySystemName(configuration.GetValue<string>("EventBridge:Region"))));
 
             builder.Services.AddScoped<IEventPublisherService, EventBridgePublisherService>();
+
+            // AWS S3 client (used by Bulk Rates artefact retention)
+            builder.Services.AddSingleton<IAmazonS3>(_ =>
+                new AmazonS3Client(
+                    RegionEndpoint.GetBySystemName(
+                        configuration["S3Storage:Region"]
+                        ?? throw new InvalidOperationException("S3Storage:Region is not configured."))));
+            builder.Services.AddScoped<IS3StorageService, S3StorageService>();
             // Authentication
             services.AddAuthenticationServices(configuration);
 

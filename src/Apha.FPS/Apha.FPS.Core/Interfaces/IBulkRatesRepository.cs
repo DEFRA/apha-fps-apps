@@ -71,6 +71,9 @@ namespace Apha.FPS.Core.Interfaces
             Guid jobQueueId, string filename, string checksumSha256, int uploadVersion,
             DateTime validatedAtUtc, string rowCountsJson, CancellationToken ct = default);
 
+        Task UpdateS3ObjectKeyAsync(
+            Guid jobQueueId, string s3ObjectKey, CancellationToken ct = default);
+
         // ── Audit log ────────────────────────────────────────────────────────────
         Task WriteJobQueueLogAsync(
             Guid jobQueueId, string note, string? actor, CancellationToken ct = default);

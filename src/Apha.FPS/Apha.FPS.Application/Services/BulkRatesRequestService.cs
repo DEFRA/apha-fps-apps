@@ -1,8 +1,10 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Apha.Common.Constants;
 using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.Storage;
 using Apha.FPS.Application.Dtos.BulkRates;
 using Apha.FPS.Application.Enums;
 using Apha.FPS.Application.Interfaces;
@@ -10,6 +12,7 @@ using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Apha.FPS.Application.Services
@@ -30,6 +33,8 @@ namespace Apha.FPS.Application.Services
         private readonly IEventPublisherService _eventPublisherService;
         private readonly IBulkRatesNotificationService _notificationService;
         private readonly IExcelExportService _excelExportService;
+        private readonly IS3StorageService _s3StorageService;
+        private readonly IConfiguration _configuration;
         private readonly ILogger<BulkRatesRequestService> _logger;
 
         public BulkRatesRequestService(
@@ -39,6 +44,8 @@ namespace Apha.FPS.Application.Services
             IEventPublisherService eventPublisherService,
             IBulkRatesNotificationService notificationService,
             IExcelExportService excelExportService,
+            IS3StorageService s3StorageService,
+            IConfiguration configuration,
             ILogger<BulkRatesRequestService> logger)
         {
             _repository = repository;
@@ -47,6 +54,8 @@ namespace Apha.FPS.Application.Services
             _eventPublisherService = eventPublisherService;
             _notificationService = notificationService;
             _excelExportService = excelExportService;
+            _s3StorageService = s3StorageService;
+            _configuration = configuration;
             _logger = logger;
         }
 
@@ -133,15 +142,10 @@ namespace Apha.FPS.Application.Services
                 throw new BusinessValidationErrorException([
                     new($"File upload is only permitted when the request is in '{StatusInitiated}' status. Current status: {entry.Status}.", "INVALID_STATUS_FOR_UPLOAD")]);
 
-            // Parse the Excel file
+            // Step 1: Parse workbook in-memory (no side effects)
             var parseResult = _parser.Parse(fileBytes, filename, entry.JobName, entry.JobQueueId);
 
-            // the upload must carry the same download version as this request's
-            // currently active download — rejects a superseded or hand-edited
-            // workbook before it ever reaches staging. Which job names this applies to is a
-            // capability check, not a hardcoded chain — Staff/Animal
-            // joined FEC here at rollout, once the request-scoped route
-            // that actually embeds this metadata for them shipped.
+            // Step 2: Envelope check — validate download version before any external write
             if (BulkRatesJobCapabilities.RequiresDownloadVersion(entry.JobName))
             {
                 int? carriedVersion = parseResult.WorkbookMetadata.TryGetValue(
@@ -156,24 +160,55 @@ namespace Apha.FPS.Application.Services
                             "Download the current workbook and upload it without editing the hidden metadata.", "STALE_DOWNLOAD_VERSION")]);
             }
 
-            // Compute SHA-256 checksum
+            // Compute SHA-256 and upload version — needed for S3 key before any DB writes
             var checksum = ComputeSha256(fileBytes);
-
-            // Determine upload version — computed before validation so
-            // ValidationContext.UploadVersion reflects the version this upload is about to become.
             var newVersion = (entry.UploadVersion ?? 0) + 1;
 
-            // Run validation (structural + reference) and classify rows
+            // Step 3: Persist original workbook bytes to S3
+            var bucket = _configuration["S3Storage:BucketName"]
+                ?? throw new InvalidOperationException("S3Storage:BucketName is not configured.");
+
+            var safeFilename = SanitizeS3Filename(filename);
+            var folderPath = $"FPS{entry.FpsYear}/BulkRates/{entry.JobName}/{jobQueueId}/v{newVersion}";
+
+            S3UploadResult s3Result;
+            using (var stream = new MemoryStream(fileBytes))
+            {
+                s3Result = await _s3StorageService.UploadFileAsync(
+                    stream, bucket, folderPath, safeFilename,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ct);
+            }
+
+            if (!s3Result.Success)
+            {
+                _logger.LogError(
+                    "[BulkRates.S3UploadFailed] JobQueueId={JobQueueId} | JobName={JobName} | FpsYear={FpsYear} | Actor={Actor} | UploadVersion={UploadVersion} | ErrorCode={ErrorCode} | Message={Message}",
+                    jobQueueId, entry.JobName, entry.FpsYear, requestedBy, newVersion, s3Result.ErrorCode, s3Result.Message);
+                throw new InvalidOperationException(
+                    $"Failed to retain uploaded workbook in S3 ({s3Result.ErrorCode}: {s3Result.Message}). Upload aborted.");
+            }
+
+            // Step 4: Persist S3 object key — if this fails the S3 object is intentionally retained
+            var s3ObjectKey = s3Result.ObjectKey!;
+            try
+            {
+                await _repository.UpdateS3ObjectKeyAsync(jobQueueId, s3ObjectKey, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "[BulkRates.S3KeyPersistFailed] JobQueueId={JobQueueId} | JobName={JobName} | FpsYear={FpsYear} | Actor={Actor} | UploadVersion={UploadVersion} | Bucket={Bucket} | S3ObjectKey={S3ObjectKey}",
+                    jobQueueId, entry.JobName, entry.FpsYear, requestedBy, newVersion, bucket, s3ObjectKey);
+                throw;
+            }
+
+            // Step 5: Business validation and staging (workbook is now retained in S3)
             var validationResult = await _validator.ValidateAsync(
                 parseResult, entry.FpsYear, entry.JobName, newVersion, entry.ActiveDownloadVersion, ct);
 
-            // Staging always holds every parsed row — valid and invalid alike — so the user can
-            // review and correct invalid rows in place; only Release is gated on zero blocking
-            // errors (see ReleaseForApprovalAsync). Validation errors are stored per staged row.
             await ReplaceStagingAsync(entry.JobName, jobQueueId, parseResult, ct);
             await _repository.ReplaceValidationErrorsAsync(jobQueueId, validationResult.Errors, ct);
 
-            // Persist upload metadata as typed columns (configuration_json retired)
             var counts = validationResult.RowCounts;
             await _repository.UpdateUploadMetadataAsync(
                 jobQueueId, filename, checksum, newVersion, DateTime.UtcNow,
@@ -181,12 +216,12 @@ namespace Apha.FPS.Application.Services
 
             await _repository.WriteJobQueueLogAsync(
                 jobQueueId,
-                $"File uploaded (v{newVersion}): {filename}. Rows: {counts.Total} total, {counts.Invalid} invalid, {counts.Insert} insert, {counts.Update} update, {counts.Unchanged} unchanged.",
+                $"File uploaded (v{newVersion}): {filename}. S3: {s3ObjectKey}. Rows: {counts.Total} total, {counts.Invalid} invalid, {counts.Insert} insert, {counts.Update} update, {counts.Unchanged} unchanged.",
                 requestedBy, ct);
 
             _logger.LogInformation(
-                "[BulkRates.FileUploaded] JobQueueId={JobQueueId} | JobName={JobName} | FpsYear={FpsYear} | Actor={Actor} | UploadVersion={UploadVersion} | TotalRows={TotalRows} | InvalidRows={InvalidRows}",
-                jobQueueId, entry.JobName, entry.FpsYear, requestedBy, newVersion, counts.Total, counts.Invalid);
+                "[BulkRates.FileUploaded] JobQueueId={JobQueueId} | JobName={JobName} | FpsYear={FpsYear} | Actor={Actor} | UploadVersion={UploadVersion} | S3ObjectKey={S3ObjectKey} | TotalRows={TotalRows} | InvalidRows={InvalidRows}",
+                jobQueueId, entry.JobName, entry.FpsYear, requestedBy, newVersion, s3ObjectKey, counts.Total, counts.Invalid);
 
             return new BulkRatesUploadResultDto
             {
@@ -197,6 +232,17 @@ namespace Apha.FPS.Application.Services
                 RowCounts = ToDto(counts),
                 ValidationErrors = ToDto(validationResult.Errors)
             };
+        }
+
+        /// <summary>
+        /// Strips characters that are illegal or problematic in S3 object key path segments.
+        /// Preserves the file extension; replaces path separators and control characters with underscores.
+        /// </summary>
+        private static string SanitizeS3Filename(string filename)
+        {
+            // Replace path separators and characters outside safe ASCII range with underscores
+            var sanitized = Regex.Replace(Path.GetFileName(filename), @"[/\\?#%\x00-\x1f]", "_");
+            return string.IsNullOrWhiteSpace(sanitized) ? "upload" : sanitized;
         }
 
         // ── Get validation results ──────────────────────────────────────────────
@@ -312,16 +358,23 @@ namespace Apha.FPS.Application.Services
             await _repository.TransitionStatusAsync(jobQueueId, initiatedStatusId, releasedStatusId, ct);
             await _repository.WriteJobQueueLogAsync(jobQueueId, "Request released for approval.", requestedBy, ct);
 
-            await _notificationService.NotifyAsync(
-                BulkRatesNotificationEvent.ReleasedForApproval,
-                new BulkRatesNotificationContext
-                {
-                    JobQueueId = jobQueueId,
-                    JobName = entry.JobName,
-                    FpsYear = entry.FpsYear,
-                    RequestedBy = entry.RequestedBy,
-                    RowCounts = metadata.RowCounts
-                }, ct);
+            try
+            {
+                await _notificationService.NotifyAsync(
+                    BulkRatesNotificationEvent.ReleasedForApproval,
+                    new BulkRatesNotificationContext
+                    {
+                        JobQueueId = jobQueueId,
+                        JobName = entry.JobName,
+                        FpsYear = entry.FpsYear,
+                        RequestedBy = entry.RequestedBy,
+                        RowCounts = metadata.RowCounts
+                    }, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[BulkRates.ReleasedForApproval] Notification failed. State transition is preserved. JobQueueId={JobQueueId}", jobQueueId);
+            }
 
             _logger.LogInformation(
                 "[BulkRates.ReleasedForApproval] JobQueueId={JobQueueId} | JobName={JobName} | FpsYear={FpsYear} | Actor={Actor} | FromStatus={FromStatus} | ToStatus={ToStatus}",
@@ -377,6 +430,24 @@ namespace Apha.FPS.Application.Services
                 "[BulkRates.Approved] JobQueueId={JobQueueId} | JobName={JobName} | FpsYear={FpsYear} | Actor={Actor} | JobExecutionId={JobExecutionId} | FromStatus={FromStatus} | ToStatus={ToStatus}",
                 jobQueueId, entry.JobName, entry.FpsYear, approvedBy, entry.JobExecutionId, StatusReleasedForApproval, StatusApproved);
 
+            try
+            {
+                await _notificationService.NotifyAsync(
+                    BulkRatesNotificationEvent.Approved,
+                    new BulkRatesNotificationContext
+                    {
+                        JobQueueId  = jobQueueId,
+                        JobName     = entry.JobName,
+                        FpsYear     = entry.FpsYear,
+                        RequestedBy = entry.RequestedBy,
+                        ApprovedBy  = approvedBy
+                    }, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[BulkRates.Approved] Notification failed; approval state is preserved. JobQueueId={JobQueueId}", jobQueueId);
+            }
+
             entry.ApprovedBy = approvedBy;
             entry.ApprovedAtUtc = now;
             entry.StatusId = approvedStatusId;
@@ -413,16 +484,23 @@ namespace Apha.FPS.Application.Services
             await _repository.WriteJobQueueLogAsync(
                 jobQueueId, $"Request rejected. Reason: {reason}", rejectedBy, ct);
 
-            await _notificationService.NotifyAsync(
-                BulkRatesNotificationEvent.Rejected,
-                new BulkRatesNotificationContext
-                {
-                    JobQueueId = jobQueueId,
-                    JobName = entry.JobName,
-                    FpsYear = entry.FpsYear,
-                    RequestedBy = entry.RequestedBy,
-                    Reason = reason
-                }, ct);
+            try
+            {
+                await _notificationService.NotifyAsync(
+                    BulkRatesNotificationEvent.Rejected,
+                    new BulkRatesNotificationContext
+                    {
+                        JobQueueId = jobQueueId,
+                        JobName = entry.JobName,
+                        FpsYear = entry.FpsYear,
+                        RequestedBy = entry.RequestedBy,
+                        Reason = reason
+                    }, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[BulkRates.Rejected] Notification failed. State transition is preserved. JobQueueId={JobQueueId}", jobQueueId);
+            }
 
             _logger.LogInformation(
                 "[BulkRates.Rejected] JobQueueId={JobQueueId} | JobName={JobName} | FpsYear={FpsYear} | Actor={Actor} | FromStatus={FromStatus} | ToStatus={ToStatus}",
@@ -470,16 +548,23 @@ namespace Apha.FPS.Application.Services
                     : $"Request cancelled by initiator. Reason: {reason}",
                 cancelledBy, ct);
 
-            await _notificationService.NotifyAsync(
-                BulkRatesNotificationEvent.Cancelled,
-                new BulkRatesNotificationContext
-                {
-                    JobQueueId = jobQueueId,
-                    JobName = entry.JobName,
-                    FpsYear = entry.FpsYear,
-                    RequestedBy = entry.RequestedBy,
-                    Reason = reason
-                }, ct);
+            try
+            {
+                await _notificationService.NotifyAsync(
+                    BulkRatesNotificationEvent.Cancelled,
+                    new BulkRatesNotificationContext
+                    {
+                        JobQueueId = jobQueueId,
+                        JobName = entry.JobName,
+                        FpsYear = entry.FpsYear,
+                        RequestedBy = entry.RequestedBy,
+                        Reason = reason
+                    }, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[BulkRates.Cancelled] Notification failed. State transition is preserved. JobQueueId={JobQueueId}", jobQueueId);
+            }
 
             _logger.LogInformation(
                 "[BulkRates.Cancelled] JobQueueId={JobQueueId} | JobName={JobName} | FpsYear={FpsYear} | Actor={Actor} | FromStatus={FromStatus} | ToStatus={ToStatus}",
@@ -1308,6 +1393,7 @@ namespace Apha.FPS.Application.Services
             ErrorMessage = entry.ErrorMessage,
             FailureReason = entry.FailureReason,
             ActiveDownloadVersion = entry.ActiveDownloadVersion,
+            S3ObjectKey = entry.S3ObjectKey,
         };
 
         private static BulkRatesUploadMetadataDto? ToDto(BulkRatesUploadMetadata? metadata) => metadata is null ? null : new BulkRatesUploadMetadataDto

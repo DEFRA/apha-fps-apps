@@ -65,7 +65,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IBulkRatesValidationService, BulkRatesValidationService>();
             services.AddScoped<IStaffAnimalValidationService, StaffAnimalValidationService>();
             services.AddScoped<BulkRatesValidator>();
-            services.AddScoped<IBulkRatesNotificationService, LogOnlyBulkRatesNotificationService>();
+            services.AddScoped<IBulkRatesNotificationService, GraphEmailBulkRatesNotificationService>();
             services.AddScoped<ICostCentreService, CostCentreService>();
             services.AddScoped<ITestRCCostService, TestRCCostService>();
             services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();

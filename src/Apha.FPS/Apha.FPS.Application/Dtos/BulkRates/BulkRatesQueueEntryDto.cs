@@ -37,5 +37,6 @@ namespace Apha.FPS.Application.Dtos.BulkRates
         public string? ErrorMessage { get; set; }
         public string? FailureReason { get; set; }
         public int? ActiveDownloadVersion { get; set; }
+        public string? S3ObjectKey { get; set; }
     }
 }

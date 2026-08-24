@@ -102,7 +102,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 // Physical column "errormessage" surfaces as FailureReason, not ErrorMessage —
                 // matches the pre-existing raw-SQL mapping exactly.
                 FailureReason = q.ErrorMessage,
-                ActiveDownloadVersion = q.ActiveDownloadVersion
+                ActiveDownloadVersion = q.ActiveDownloadVersion,
+                S3ObjectKey = q.S3ObjectKey
             };
 
         public async Task<BulkRatesQueueRow> CreateRequestAsync(
@@ -258,6 +259,14 @@ namespace Apha.FPS.DataAccess.Repositories
                     .SetProperty(q => q.UploadVersion, uploadVersion)
                     .SetProperty(q => q.UploadValidatedAtUtc, validatedAtUtc)
                     .SetProperty(q => q.UploadRowCountsJson, rowCountsJson)
+                    .SetProperty(q => q.UpdatedAt, DateTime.UtcNow), ct);
+
+        public Task UpdateS3ObjectKeyAsync(
+            Guid jobQueueId, string s3ObjectKey, CancellationToken ct = default) =>
+            _dbContext.BatchJobQueues.IgnoreQueryFilters()
+                .Where(q => q.JobqueueId == jobQueueId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(q => q.S3ObjectKey, s3ObjectKey)
                     .SetProperty(q => q.UpdatedAt, DateTime.UtcNow), ct);
 
         // ── Audit log ────────────────────────────────────────────────────────────

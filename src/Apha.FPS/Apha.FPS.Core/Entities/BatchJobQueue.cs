@@ -36,5 +36,6 @@
         public string? TriggeredBy { get; set; }
         public DateTime? TriggeredAtUtc { get; set; }
         public int? ActiveDownloadVersion { get; set; }
+        public string? S3ObjectKey { get; set; }
     }
 }

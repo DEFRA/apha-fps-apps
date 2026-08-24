@@ -44,5 +44,11 @@ namespace Apha.FPS.Core.Entities
         /// metadata sheet. Null means no workbook has been generated yet for this request.
         /// </summary>
         public int? ActiveDownloadVersion { get; set; }
+        /// <summary>
+        /// S3 object key of the latest uploaded Bulk Rates workbook artefact for this request.
+        /// Prior versioned artefacts remain retained in S3 under their versioned keys but are
+        /// not individually enumerated here.
+        /// </summary>
+        public string? S3ObjectKey { get; set; }
     }
 }

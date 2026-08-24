@@ -1,8 +1,11 @@
 using Apha.Common.Constants;
 using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.Storage;
 using Apha.FPS.Application.Dtos.BulkRates;
+using Apha.FPS.Application.Enums;
 using Apha.FPS.Application.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Apha.FPS.Application.Services;
 using NSubstitute.ExceptionExtensions;
 using Apha.FPS.Application.Dtos.BulkRates;
@@ -69,10 +72,30 @@ public class BulkRatesRequestServiceTests
 
     // SUT factory
 
+    private static IS3StorageService DefaultS3(string objectKey = "test/key.xlsx")
+    {
+        var s3 = Substitute.For<IS3StorageService>();
+        s3.UploadFileAsync(
+                Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(),
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(S3UploadResult.SuccessResponse(objectKey));
+        return s3;
+    }
+
+    private static IConfiguration DefaultConfiguration(string bucket = "test-bucket", string region = "eu-west-2")
+    {
+        var cfg = Substitute.For<IConfiguration>();
+        cfg["S3Storage:BucketName"].Returns(bucket);
+        cfg["S3Storage:Region"].Returns(region);
+        return cfg;
+    }
+
     private static BulkRatesRequestService CreateService(
         IBulkRatesRepository? repo = null,
         IEventPublisherService? eb = null,
-        IBulkRatesNotificationService? notif = null)
+        IBulkRatesNotificationService? notif = null,
+        IS3StorageService? s3 = null,
+        IConfiguration? config = null)
     {
         var r  = repo  ?? Substitute.For<IBulkRatesRepository>();
         var e  = eb    ?? Substitute.For<IEventPublisherService>();
@@ -83,6 +106,8 @@ public class BulkRatesRequestServiceTests
             new BulkRatesValidator(r, new BulkRatesValidationService(), new StaffAnimalValidationService()),
             e, n,
             Substitute.For<IExcelExportService>(),
+            s3 ?? DefaultS3(),
+            config ?? DefaultConfiguration(),
             NullLogger<BulkRatesRequestService>.Instance);
     }
 
@@ -560,6 +585,75 @@ public class BulkRatesRequestServiceTests
             Arg.Any<CancellationToken>());
     }
 
+    // ── Notification failure policy ───────────────────────────────────────────
+    // A failed notification must never roll back a completed state transition.
+
+    [Fact]
+    public async Task Approve_WhenNotificationThrows_StateTransitionIsPreserved()
+    {
+        var repo = RepoReturning(Entry(status: "ReleasedForApproval", uploadChecksum: "sha256abc"));
+        var notif = Substitute.For<IBulkRatesNotificationService>();
+        notif.NotifyAsync(Arg.Any<BulkRatesNotificationEvent>(), Arg.Any<BulkRatesNotificationContext>(), Arg.Any<CancellationToken>())
+             .ThrowsAsync(new InvalidOperationException("email down"));
+        var svc = CreateService(repo, notif: notif);
+
+        var result = await svc.ApproveAsync(QueueId, Approver);
+
+        result.Should().NotBeNull();
+        await repo.Received(1).SetApprovalAsync(QueueId, ExecId, Approver, Arg.Any<DateTime>(), Approver, Arg.Any<DateTime>(), 42, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ReleaseForApproval_WhenNotificationThrows_StateTransitionIsPreserved()
+    {
+        var repo = RepoReturning(Entry(status: "Initiated", uploadChecksum: "sha256abc"));
+        // Minimal clean FEC staging so validation passes and the flow reaches notification.
+        repo.GetTestOrProductStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "TC001", FecNewRate = 10m } } as IReadOnlyList<TestOrProductStagingRow>);
+        repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 10m, DefraUnitPrice = 10m } } as IReadOnlyList<TestOrProductStagingRow>);
+        var notif = Substitute.For<IBulkRatesNotificationService>();
+        notif.NotifyAsync(Arg.Any<BulkRatesNotificationEvent>(), Arg.Any<BulkRatesNotificationContext>(), Arg.Any<CancellationToken>())
+             .ThrowsAsync(new InvalidOperationException("email down"));
+        var svc = CreateService(repo, notif: notif);
+
+        // Must succeed despite notification failure
+        var result = await svc.ReleaseForApprovalAsync(QueueId, Initiator);
+
+        result.Should().NotBeNull();
+        await repo.Received(1).TransitionStatusAsync(QueueId, Arg.Any<int>(), 42, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Reject_WhenNotificationThrows_StateTransitionIsPreserved()
+    {
+        var repo  = RepoReturning(Entry(status: "ReleasedForApproval"));
+        var notif = Substitute.For<IBulkRatesNotificationService>();
+        notif.NotifyAsync(Arg.Any<BulkRatesNotificationEvent>(), Arg.Any<BulkRatesNotificationContext>(), Arg.Any<CancellationToken>())
+             .ThrowsAsync(new InvalidOperationException("email down"));
+        var svc = CreateService(repo, notif: notif);
+
+        var result = await svc.RejectAsync(QueueId, Approver, "Wrong rates");
+
+        result.Should().NotBeNull();
+        await repo.Received(1).SetRejectionAsync(QueueId, Approver, Arg.Any<DateTime>(), "Wrong rates", 42, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Cancel_WhenNotificationThrows_StateTransitionIsPreserved()
+    {
+        var repo  = RepoReturning(Entry(status: "Initiated"));
+        var notif = Substitute.For<IBulkRatesNotificationService>();
+        notif.NotifyAsync(Arg.Any<BulkRatesNotificationEvent>(), Arg.Any<BulkRatesNotificationContext>(), Arg.Any<CancellationToken>())
+             .ThrowsAsync(new InvalidOperationException("email down"));
+        var svc = CreateService(repo, notif: notif);
+
+        var result = await svc.CancelAsync(QueueId, Initiator, null);
+
+        result.Should().NotBeNull();
+        await repo.Received(1).CancelAndClearStagingAsync(QueueId, JobName, Initiator, Arg.Any<DateTime>(), null, 42, Arg.Any<CancellationToken>());
+    }
+
     // ── GetRequestAsync ──────────────────────────────────────────────────────
 
     [Fact]
@@ -610,6 +704,7 @@ public class BulkRatesRequestServiceTests
             ErrorMessage = "error message",
             FailureReason = "failure reason",
             ActiveDownloadVersion = 7,
+            S3ObjectKey = "FPS2027/BulkRates/BulkTestRatesUpdate/some-id/v3/rates.xlsx",
         };
         var logs = new List<BatchJobQueueLog>
         {
@@ -1117,7 +1212,9 @@ public class BulkRatesRequestServiceTests
 
     private static BulkRatesRequestService CreateServiceWithExcel(
         IBulkRatesRepository repo,
-        IExcelExportService? excel = null)
+        IExcelExportService? excel = null,
+        IS3StorageService? s3 = null,
+        IConfiguration? config = null)
     {
         var r  = repo;
         var e  = Substitute.For<IEventPublisherService>();
@@ -1128,6 +1225,8 @@ public class BulkRatesRequestServiceTests
             new BulkRatesExcelParser(),
             new BulkRatesValidator(r, new BulkRatesValidationService(), new StaffAnimalValidationService()),
             e, n, ex,
+            s3 ?? DefaultS3(),
+            config ?? DefaultConfiguration(),
             NullLogger<BulkRatesRequestService>.Instance);
     }
 
@@ -1920,5 +2019,169 @@ public class BulkRatesRequestServiceTests
         await repo.Received(1).GetTestRequirementStagingRowsAsync(QueueId, Arg.Any<CancellationToken>());
         await repo.DidNotReceive().GetProfitCentreGradeStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
         await repo.DidNotReceive().GetAnimalStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    // ── Phase 5: S3 retention ────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Upload_WhenS3Succeeds_PersistsS3ObjectKeyBeforeStaging()
+    {
+        const string expectedKey = "FPS2027/BulkRates/BulkTestRatesUpdate/{queueId}/v1/rates.xlsx";
+        var repo = RepoReturning(Entry(status: "Initiated", activeDownloadVersion: 1));
+        var s3 = DefaultS3(objectKey: "FPS2027/BulkRates/BulkTestRatesUpdate/v1/rates.xlsx");
+
+        var callOrder = new List<string>();
+        repo.UpdateS3ObjectKeyAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(_ => { callOrder.Add("s3key"); return Task.CompletedTask; });
+        repo.ReplaceStagingFecAsync(Arg.Any<Guid>(), Arg.Any<IReadOnlyList<TestOrProductStagingRow>>(),
+                Arg.Any<IReadOnlyList<TestRequirementStagingRow>>(), Arg.Any<CancellationToken>())
+            .Returns(_ => { callOrder.Add("staging"); return Task.CompletedTask; });
+
+        var svc = CreateService(repo, s3: s3);
+        await svc.UploadFileAsync(QueueId, BuildMinimalXlsx(downloadVersion: 1), "rates.xlsx", Initiator);
+
+        callOrder.IndexOf("s3key").Should().BeLessThan(callOrder.IndexOf("staging"),
+            "S3 key must be persisted before staging is populated");
+    }
+
+    [Fact]
+    public async Task Upload_WhenS3Fails_ThrowsAndDoesNotPopulateStaging()
+    {
+        var s3 = Substitute.For<IS3StorageService>();
+        s3.UploadFileAsync(
+                Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(),
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(S3UploadResult.FailureResponse("S3_BUCKET_NOT_FOUND", "Bucket missing"));
+
+        var repo = RepoReturning(Entry(status: "Initiated", activeDownloadVersion: 1));
+        var svc = CreateService(repo, s3: s3);
+
+        await svc.Invoking(s => s.UploadFileAsync(QueueId, BuildMinimalXlsx(downloadVersion: 1), "rates.xlsx", Initiator))
+            .Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*S3_BUCKET_NOT_FOUND*");
+
+        await repo.DidNotReceive().UpdateS3ObjectKeyAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await repo.DidNotReceive().ReplaceStagingFecAsync(Arg.Any<Guid>(), Arg.Any<IReadOnlyList<TestOrProductStagingRow>>(),
+            Arg.Any<IReadOnlyList<TestRequirementStagingRow>>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Upload_WhenS3KeyPersistFails_ThrowsAndDoesNotPopulateStaging()
+    {
+        var repo = RepoReturning(Entry(status: "Initiated", activeDownloadVersion: 1));
+        repo.UpdateS3ObjectKeyAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .ThrowsAsync(new InvalidOperationException("DB failure"));
+
+        var svc = CreateService(repo, s3: DefaultS3());
+
+        await svc.Invoking(s => s.UploadFileAsync(QueueId, BuildMinimalXlsx(downloadVersion: 1), "rates.xlsx", Initiator))
+            .Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*DB failure*");
+
+        await repo.DidNotReceive().ReplaceStagingFecAsync(Arg.Any<Guid>(), Arg.Any<IReadOnlyList<TestOrProductStagingRow>>(),
+            Arg.Any<IReadOnlyList<TestRequirementStagingRow>>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Upload_ObjectKeyContainsNewVersionNotPreviousVersion()
+    {
+        // Entry already has upload_version = 1 (one prior upload); new upload should use v2
+        var entry = Entry(status: "Initiated", activeDownloadVersion: 2, uploadChecksum: "prev-hash");
+        entry.UploadVersion = 1;
+
+        string? capturedKey = null;
+        var s3 = Substitute.For<IS3StorageService>();
+        s3.UploadFileAsync(
+                Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(),
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var folder = (string)callInfo[2];
+                var file   = (string)callInfo[3];
+                capturedKey = $"{folder}/{file}";
+                return S3UploadResult.SuccessResponse(capturedKey);
+            });
+
+        var repo = RepoReturning(entry);
+        var svc = CreateService(repo, s3: s3);
+
+        await svc.UploadFileAsync(QueueId, BuildMinimalXlsx(downloadVersion: 2), "rates.xlsx", Initiator);
+
+        capturedKey.Should().Contain("/v2/", "object key must use the new upload version, not the previous one");
+        capturedKey.Should().NotContain("/v1/");
+    }
+
+    [Fact]
+    public async Task Upload_ObjectKeyContainsFpsYearJobNameAndJobQueueId()
+    {
+        string? capturedFolder = null;
+        var s3 = Substitute.For<IS3StorageService>();
+        s3.UploadFileAsync(
+                Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(),
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                capturedFolder = (string)callInfo[2];
+                return S3UploadResult.SuccessResponse($"{capturedFolder}/rates.xlsx");
+            });
+
+        var repo = RepoReturning(Entry(status: "Initiated", activeDownloadVersion: 1));
+        var svc = CreateService(repo, s3: s3);
+
+        await svc.UploadFileAsync(QueueId, BuildMinimalXlsx(downloadVersion: 1), "rates.xlsx", Initiator);
+
+        capturedFolder.Should().Contain("FPS2027");
+        capturedFolder.Should().Contain("BulkTestRatesUpdate");
+        capturedFolder.Should().Contain(QueueId.ToString());
+    }
+
+    [Fact]
+    public async Task Upload_BucketNameReadFromConfiguration()
+    {
+        const string customBucket = "my-custom-bucket";
+        string? capturedBucket = null;
+        var s3 = Substitute.For<IS3StorageService>();
+        s3.UploadFileAsync(
+                Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(),
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                capturedBucket = (string)callInfo[1];
+                return S3UploadResult.SuccessResponse("key");
+            });
+
+        var config = DefaultConfiguration(bucket: customBucket);
+        var repo = RepoReturning(Entry(status: "Initiated", activeDownloadVersion: 1));
+        var svc = CreateService(repo, s3: s3, config: config);
+
+        await svc.UploadFileAsync(QueueId, BuildMinimalXlsx(downloadVersion: 1), "rates.xlsx", Initiator);
+
+        capturedBucket.Should().Be(customBucket);
+    }
+
+    [Theory]
+    [InlineData("file/with/slashes.xlsx",  "slashes.xlsx")]
+    [InlineData("file\\back\\slashes.xlsx", "slashes.xlsx")]
+    [InlineData("normal-file.xlsx",         "normal-file.xlsx")]
+    public async Task Upload_SanitizesFilenameInS3Key(string inputFilename, string expectedFilename)
+    {
+        string? capturedFile = null;
+        var s3 = Substitute.For<IS3StorageService>();
+        s3.UploadFileAsync(
+                Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(),
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                capturedFile = (string)callInfo[3];
+                return S3UploadResult.SuccessResponse($"folder/{capturedFile}");
+            });
+
+        var repo = RepoReturning(Entry(status: "Initiated", activeDownloadVersion: 1));
+        var svc = CreateService(repo, s3: s3);
+
+        // The xlsx bytes must be a valid workbook — use BuildMinimalXlsx regardless of filename
+        await svc.UploadFileAsync(QueueId, BuildMinimalXlsx(downloadVersion: 1), inputFilename, Initiator);
+
+        capturedFile.Should().Be(expectedFilename);
     }
 }
