@@ -85,17 +85,12 @@
             data: testCodeOptionsListData,
             displayField: 'Text',
             valueField: 'Value',
-            clearButtonClearsSelection: true,
-            showClearButton: true,
+            showClearButton: false,
 
             callbacks: {
                 onSelect: function (selectedItem) {
                     $('#testCodePick').val(selectedItem.Value);
                     onTestCodeChange(selectedItem.Value);
-                },
-                onClear: function () {
-                    $('#testCodePick').val('');
-                    onTestCodeChange('');
                 }
             }
         });

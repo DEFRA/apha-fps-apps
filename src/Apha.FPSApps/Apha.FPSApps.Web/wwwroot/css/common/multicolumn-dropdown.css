@@ -9,11 +9,17 @@
 /* Dropdown panel container */
 
 
+/* The control wrapper is the positioning context for every dropdown panel */
+.tableselectdropdown {
+    position: relative;
+}
+
 .multicolumn-dropdown-panel {
     position: absolute;
-    top: 100%;
-    left: 0px;
+    top: calc(100% + 2px);
+    left: 0;
     right: auto;
+    margin: 0;
     border: 1px solid #aaa;
     background: #fff;
     z-index: 9999;
@@ -23,7 +29,15 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     width: max-content;
     min-width: 100%;
+    max-width: 90vw;
+    box-sizing: border-box;
 }
+
+    /* Applied by the component when the panel would overflow the viewport */
+    .multicolumn-dropdown-panel.align-right {
+        left: auto;
+        right: 0;
+    }
 
     /* Search box wrapper */
     .multicolumn-dropdown-panel .search-box-wrapper {
