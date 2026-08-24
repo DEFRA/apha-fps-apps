@@ -307,6 +307,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
         [InlineData("defraunitprice",true,  "T002", "T001")]
         [InlineData("normalprice",   false, "T001", "T002")]  // T001 VLA=50m, T002 Defra=120m
         [InlineData("normalprice",   true,  "T002", "T001")]
+        [InlineData("isdefraproject",false, "T002", "T001")]  // T002 IsDefraProject=-1, T001=0
+        [InlineData("isdefraproject",true,  "T001", "T002")]
         [InlineData("unknown",       false, "T001", "T002")]  // default: sort by TestCode asc
         [InlineData("unknown",       true,  "T002", "T001")]  // default: sort by TestCode desc
         public async Task GetTestPriceCheckPagedAsync_Sorting_ReturnsExpectedOrder(
@@ -346,6 +348,27 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
             
             Assert.Equal(expectedFirst, firstValue);
             Assert.Equal(expectedSecond, secondValue);
+        }
+
+        [Theory]
+        [InlineData(false, (short)-1, (short)0)]
+        [InlineData(true,  (short)0,  (short)-1)]
+        public async Task GetTestPriceCheckPagedAsync_SortByIsDefraProject_GroupsDefraRowsTogether(
+            bool descending, short expectedFirst, short expectedSecond)
+        {
+            var repo = CreateRepositoryWithMocks(
+                SeedRequirementsNonStandard(), SeedProjectViews(), SeedTestorProducts());
+
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, SortBy = "isdefraproject", Descending = descending
+            };
+
+            var result = await repo.GetTestPriceCheckPagedAsync(parameters, "all", null);
+
+            Assert.Equal(2, result.Data.Count);
+            Assert.Equal(expectedFirst, result.Data.ElementAt(0).IsDefraProject);
+            Assert.Equal(expectedSecond, result.Data.ElementAt(1).IsDefraProject);
         }
 
         #endregion
