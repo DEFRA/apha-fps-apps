@@ -171,6 +171,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (result.Success && result.Data != null)
             {
                 viewModel.AnimalTypeList = result.Data
+                    .OrderBy(a => a.AnimalType, StringComparer.OrdinalIgnoreCase)
                     .Select(a => new SelectListItem
                     {
                         Value = a.AnimalType,

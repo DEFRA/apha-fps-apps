@@ -270,6 +270,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             ApiResponseDto<List<AnimalDto>> animalResponse = await _animalPlanService.GetAnimalLookupAsync();
             model.AnimalTypeList = animalResponse.Data == null ? new List<SelectListItem>() :
                 animalResponse.Data
+                    .OrderBy(a => a.AnimalType, StringComparer.OrdinalIgnoreCase)
                     .Select(a => new SelectListItem
                     {
                         Value = a.AnimalType,

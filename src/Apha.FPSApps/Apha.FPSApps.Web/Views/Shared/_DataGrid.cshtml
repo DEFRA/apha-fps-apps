@@ -126,7 +126,7 @@
                                 var isSorted = (Model.Pagination.SortColumn == column.PropertyName);
                                 var sortIcon = "";
                                 if (isSorted)
-                                    sortIcon = Model.Pagination.SortDirection ? "▲" : "▼";
+                                    sortIcon = Model.Pagination.SortDirection ? "▼" : "▲";
                                 <th scope="col" style="width: @column.Width px; cursor:pointer;"
                                             class="sortable-header @GridHelpers.GetHeaderAlignmentCssClass(column) @column.CssClass"
                                             data-column="@column.PropertyName"
@@ -192,7 +192,7 @@
                                         }
                                         else
                                         {
-                                            <input type="text" id="@($"{Model.GridId}_{column.PropertyName}_filter")" class="grid-filter govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName" value="@filterValue" placeholder="Filter..." aria-label="@($"Filter {column.DisplayName}")" />
+                                                <input type="text" id="@($"{Model.GridId}_{column.PropertyName}_filter")" class="grid-filter govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName" value="@filterValue" placeholder="Filter..." aria-label="@($"Filter {column.DisplayName}")" autocomplete="off" />
                                         }
                                     }
                                     else

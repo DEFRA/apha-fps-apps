@@ -18,8 +18,8 @@
                     <tbody class="govuk-table__body">
                         <tr class="govuk-table__row">
                             <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
-                                <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0" for="testCodePick">
-                                    Select a Project:
+                                <label id="projectGroupDropdownLabel" class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0" for="projectGroupDropdown">
+                                    Select a Project Group:
                                 </label>
                             </th>
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
@@ -35,7 +35,7 @@
                             </td>
 
                             <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
-                                <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0" for="testCodePick">
+                                <label id="projectSearchInputLabel" class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0" for="projectSearchInput">
                                     Project:
                                 </label>
                             </th>
@@ -45,7 +45,8 @@
                                            class="govuk-input down-arrow-img" style="width:220px; cursor:pointer;"
                                            value="@Model.ProjectSearch" aria-label="Filter project" readonly />
                                     <div id="ProjectDropdownPanel" style="display:none;">
-                                        <input type="text" id="ProjectSearchBox" placeholder="Type to search project" />
+                                        <label for="ProjectSearchBox" class="govuk-label govuk-visually-hidden">Search projects</label>
+                                        <input type="text" id="ProjectSearchBox" placeholder="Type to search project" aria-label="Search projects" />
                                         <table>
                                             <thead>
                                                 <tr>
@@ -53,7 +54,7 @@
                                                     <th>Project Group</th>
                                                 </tr>
                                             </thead>
-                                            <tbody id="ProjectDropdownBody"></tbody>
+                                            <tbody id="ProjectDropdownBody" role="listbox" aria-label="Project results"></tbody>
                                         </table>
                                     </div>
                                 </div>
@@ -117,6 +118,7 @@
 
         function planProject(btn) {
             var projectCode = $(btn).data('id');
+            sessionStorage.setItem('fps_clearFiltersOnReturn', '1');
             fpsNavigateTo('@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })' + '?projectCode=' + encodeURIComponent(projectCode));
         }
 
@@ -129,10 +131,18 @@
                 + '?projectGroup=' + encodeURIComponent(projectGroup)
                 + '&projectSearch=' + encodeURIComponent(projectSearch);
 
+            sessionStorage.setItem('fps_clearFiltersOnReturn', '1');
             fpsNavigateTo('@Url.Action("Edit", "Project", new { area = "FPS" })'
                 + '?parentProject=' + encodeURIComponent(parentProject)
                 + '&returnUrl=' + encodeURIComponent(returnUrl));
         }
+
+        window.addEventListener('pageshow', function () {
+            if (sessionStorage.getItem('fps_clearFiltersOnReturn') === '1') {
+                sessionStorage.removeItem('fps_clearFiltersOnReturn');
+                fpsNavigateTo('@Url.Action("Index", "ProjectGroupSelection", new { area = "FPS" })');
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', function () {
             function applyButtonTitles() {

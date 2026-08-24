@@ -159,6 +159,31 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalJobControllerTest
         }
 
         [Fact]
+        public async Task Create_Get_PopulatesAnimalDropdown_SortedAlphabetically()
+        {
+            // Arrange
+            var animals = new List<AnimalDto>
+            {
+                new() { AnimalType = "Zebra", DailyRate = 10m },
+                new() { AnimalType = "TEST", DailyRate = 10m },
+                new() { AnimalType = "B&B Fixed Price, Avian", DailyRate = 10m },
+                new() { AnimalType = "Sheep, High Security", DailyRate = 15m }
+            };
+            _animalPlanService.GetAnimalLookupAsync()
+                .Returns(ApiResponseDto<List<AnimalDto>>.SuccessResponse(animals));
+
+            // Act
+            var result = await _controller.Create();
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<AnimalPlanItem>(partialView.Model);
+            Assert.Equal(
+                new[] { "B&B Fixed Price, Avian", "Sheep, High Security", "TEST", "Zebra" },
+                model.AnimalTypeList.Select(x => x.Value));
+        }
+
+        [Fact]
         public async Task Create_Get_WhenAnimalLookupFails_ReturnsEmptyDropdown()
         {
             // Arrange
