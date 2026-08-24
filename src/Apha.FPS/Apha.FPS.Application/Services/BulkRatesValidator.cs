@@ -148,7 +148,8 @@ namespace Apha.FPS.Application.Services
             var freezes = result.StaffResults.Select(r => new StaffFreezeEntry(
                 r.PcGrade, r.Action,
                 r.Source?.PayRate, r.Source?.Npr, r.Source?.Ohr,
-                r.Effective?.PayRate, r.Effective?.Npr, r.Effective?.Ohr)).ToList();
+                r.Effective?.PayRate, r.Effective?.Npr, r.Effective?.Ohr,
+                r.Effective?.ChargeRate)).ToList();
 
             return new BulkRatesStaffFreezeResult { BlockingErrors = blockingErrors, Freezes = freezes };
         }

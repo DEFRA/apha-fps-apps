@@ -11,5 +11,6 @@ namespace Apha.FPS.Core.Entities
         string PcGrade,
         string CalculatedAction,
         decimal? SourcePayRate, decimal? SourceNpr, decimal? SourceOhr,
-        decimal? EffectivePayRate, decimal? EffectiveNpr, decimal? EffectiveOhr);
+        decimal? EffectivePayRate, decimal? EffectiveNpr, decimal? EffectiveOhr,
+        decimal? EffectiveChargeRate);
 }

@@ -187,8 +187,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Order = 8, Width = 100, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public decimal? OhrNew { get; set; }
 
+        [Display(Name = "Charge Rate")]
+        [GridColumn(Order = 9, Width = 120, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        public decimal? ChargeRate { get; set; }
+
+        [Display(Name = "Charge Rate New")]
+        [GridColumn(Order = 10, Width = 130, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        public decimal? ChargeRateNew { get; set; }
+
         [Display(Name = "Validation")]
-        [GridColumn(Order = 9, Width = 260, Type = GridColumnType.Text, IsFilterable = true)]
+        [GridColumn(Order = 11, Width = 260, Type = GridColumnType.Text, IsFilterable = true)]
         public string? ValidationSummary { get; set; }
     }
 

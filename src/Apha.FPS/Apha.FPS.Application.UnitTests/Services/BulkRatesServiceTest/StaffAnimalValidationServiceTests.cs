@@ -159,6 +159,85 @@ namespace Apha.FPS.Application.UnitTests.Services.BulkRatesServiceTest
             row.Effective!.PayRate.Should().Be(0);
         }
 
+        // ── Staff ChargeRate ──────────────────────────────────────────────────────
+
+        [Fact]
+        public void Staff_EffectiveChargeRate_IsSumOfEffectiveComponents()
+        {
+            var ctx = Context(
+                staff: [Staff("G1", payRate: 100m, npr: 20m, ohr: 5m)],
+                liveStaff: new Dictionary<string, LiveStaffRow> { ["G1"] = new() { PcGrade = "G1", PayRate = 90m, Npr = 10m, Ohr = 5m } });
+
+            var result = _sut.Validate(ctx);
+
+            result.StaffResults.Single().Effective!.ChargeRate.Should().Be(125m);
+        }
+
+        [Fact]
+        public void Staff_SourceChargeRate_IsSumOfSourceComponents()
+        {
+            var ctx = Context(
+                staff: [Staff("G1", payRate: 100m, npr: 20m, ohr: 5m)],
+                liveStaff: new Dictionary<string, LiveStaffRow> { ["G1"] = new() { PcGrade = "G1", PayRate = 90m, Npr = 10m, Ohr = 5m } });
+
+            var result = _sut.Validate(ctx);
+
+            result.StaffResults.Single().Source!.ChargeRate.Should().Be(105m);
+        }
+
+        [Fact]
+        public void Staff_ChargeRate_ZeroComponents_ProducesZero()
+        {
+            var ctx = Context(
+                staff: [Staff("G1", payRate: 0m, npr: 0m, ohr: 0m)],
+                liveStaff: new Dictionary<string, LiveStaffRow> { ["G1"] = new() { PcGrade = "G1", PayRate = 0m, Npr = 0m, Ohr = 0m } });
+
+            var result = _sut.Validate(ctx);
+
+            var row = result.StaffResults.Single();
+            row.Effective!.ChargeRate.Should().Be(0m);
+            row.Source!.ChargeRate.Should().Be(0m);
+        }
+
+        [Fact]
+        public void Staff_ChargeRate_DecimalPrecision_IsPreserved()
+        {
+            var ctx = Context(
+                staff: [Staff("G1", payRate: 100.1234m, npr: 10.0001m, ohr: 5.0005m)],
+                liveStaff: new Dictionary<string, LiveStaffRow> { ["G1"] = new() { PcGrade = "G1", PayRate = 100.1234m, Npr = 10.0001m, Ohr = 5.0005m } });
+
+            var result = _sut.Validate(ctx);
+
+            result.StaffResults.Single().Effective!.ChargeRate.Should().Be(115.124m);
+        }
+
+        [Fact]
+        public void Staff_ChargeRate_NullUploadComponents_TreatedAsZeroInSum()
+        {
+            var ctx = Context(
+                staff: [Staff("G1", payRate: null, npr: null, ohr: null)],
+                liveStaff: new Dictionary<string, LiveStaffRow> { ["G1"] = new() { PcGrade = "G1", PayRate = 50m, Npr = 5m, Ohr = 5m } });
+
+            var result = _sut.Validate(ctx);
+
+            result.StaffResults.Single().Effective!.ChargeRate.Should().Be(0m);
+        }
+
+        [Fact]
+        public void Staff_ChargeRate_OnlyOneComponentChanged_ReflectsFullSum()
+        {
+            var ctx = Context(
+                staff: [Staff("G1", payRate: 200m, npr: 10m, ohr: 5m)],
+                liveStaff: new Dictionary<string, LiveStaffRow> { ["G1"] = new() { PcGrade = "G1", PayRate = 100m, Npr = 10m, Ohr = 5m } });
+
+            var result = _sut.Validate(ctx);
+
+            var row = result.StaffResults.Single();
+            row.Action.Should().Be(StaffAnimalCalculatedAction.Update);
+            row.Effective!.ChargeRate.Should().Be(215m);
+            row.Source!.ChargeRate.Should().Be(115m);
+        }
+
         // ── Animal ───────────────────────────────────────────────────────────────
 
         [Fact]

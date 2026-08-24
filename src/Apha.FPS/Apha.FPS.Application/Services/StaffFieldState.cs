@@ -11,5 +11,6 @@ namespace Apha.FPS.Application.Services
         public required decimal PayRate { get; init; }
         public required decimal Npr { get; init; }
         public required decimal Ohr { get; init; }
+        public required decimal ChargeRate { get; init; }
     }
 }

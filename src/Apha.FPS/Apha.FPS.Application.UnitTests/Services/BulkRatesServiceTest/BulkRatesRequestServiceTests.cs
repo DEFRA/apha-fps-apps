@@ -357,6 +357,32 @@ public class BulkRatesRequestServiceTests
     }
 
     [Fact]
+    public async Task Release_WhenStaffJob_FreezeEntryContainsEffectiveChargeRate()
+    {
+        // EffectiveChargeRate must equal EffectivePayRate + EffectiveNpr + EffectiveOhr.
+        var entry = Entry(status: "Initiated", uploadChecksum: "abc");
+        entry.JobName = Apha.Common.Constants.BulkRatesJobNames.Staff;
+        var repo = RepoReturning(entry);
+        repo.GetProfitCentreGradeStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 100m, Npr = 20m, Ohr = 5m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
+        repo.GetStaffRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 90m, Npr = 10m, Ohr = 5m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
+        var svc = CreateService(repo);
+
+        await svc.ReleaseForApprovalAsync(QueueId, Initiator);
+
+        await repo.Received(1).FreezeStaffStagingAsync(
+            QueueId, StaffAnimalValidationVersion.Current,
+            Arg.Is<IReadOnlyList<StaffFreezeEntry>>(list =>
+                list.Count == 1
+                && list[0].EffectiveChargeRate == 125m      // 100 + 20 + 5
+                && list[0].EffectivePayRate == 100m
+                && list[0].EffectiveNpr == 20m
+                && list[0].EffectiveOhr == 5m),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Release_WhenStaffGradeDeletedSinceUpload_ThrowsAndDoesNotTransitionOrFreeze()
     {
         var entry = Entry(status: "Initiated", uploadChecksum: "abc");
@@ -943,6 +969,44 @@ public class BulkRatesRequestServiceTests
         var result = await svc.GetStagingDataAsync(QueueId);
 
         result.StaffRows.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetStaffStagingData_ChargeRateAndChargeRateNew_PopulatedFromComponents()
+    {
+        var entry = Entry(status: "Initiated", uploadChecksum: "abc");
+        entry.JobName = Apha.Common.Constants.BulkRatesJobNames.Staff;
+        var repo = RepoReturning(entry);
+        repo.GetProfitCentreGradeStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 100m, Npr = 20m, Ohr = 5m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
+        repo.GetStaffRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "G1", PayRate = 90m, Npr = 10m, Ohr = 5m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
+        var svc = CreateService(repo);
+
+        var result = await svc.GetStagingDataAsync(QueueId);
+
+        var row = result.StaffRows.Should().ContainSingle().Which;
+        row.ChargeRate.Should().Be(105m);      // source: 90 + 10 + 5
+        row.ChargeRateNew.Should().Be(125m);   // effective: 100 + 20 + 5
+    }
+
+    [Fact]
+    public async Task GetStaffStagingData_NotFound_ChargeRateIsNull_ChargeRateNewFromStagedComponents()
+    {
+        var entry = Entry(status: "Initiated", uploadChecksum: "abc");
+        entry.JobName = Apha.Common.Constants.BulkRatesJobNames.Staff;
+        var repo = RepoReturning(entry);
+        repo.GetProfitCentreGradeStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new ProfitCentreGradeStagingRow { PcGrade = "GHOST", PayRate = 50m, Npr = 10m, Ohr = 5m } } as IReadOnlyList<ProfitCentreGradeStagingRow>);
+        repo.GetStaffRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<ProfitCentreGradeStagingRow>() as IReadOnlyList<ProfitCentreGradeStagingRow>);
+        var svc = CreateService(repo);
+
+        var result = await svc.GetStagingDataAsync(QueueId);
+
+        var row = result.StaffRows.Should().ContainSingle().Which;
+        row.ChargeRate.Should().BeNull();
+        row.ChargeRateNew.Should().Be(65m);    // 50 + 10 + 5
     }
 
     [Fact]

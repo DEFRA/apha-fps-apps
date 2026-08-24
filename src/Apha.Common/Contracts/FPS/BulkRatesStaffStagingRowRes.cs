@@ -13,5 +13,7 @@ namespace Apha.Common.Contracts.FPS
         public decimal? NprNew { get; set; }
         public decimal? Ohr { get; set; }
         public decimal? OhrNew { get; set; }
+        public decimal? ChargeRate { get; set; }
+        public decimal? ChargeRateNew { get; set; }
     }
 }

@@ -60,11 +60,15 @@ namespace Apha.FPS.Application.Services
                         "Negative rates are not permitted.", "ohr"));
 
                 var hasLive = ctx.LiveStaffLookup.TryGetValue(key, out var live);
+                var effectivePayRate = StaffAnimalFieldComparer.NormalizeAmount(row.PayRate);
+                var effectiveNpr     = StaffAnimalFieldComparer.NormalizeAmount(row.Npr);
+                var effectiveOhr     = StaffAnimalFieldComparer.NormalizeAmount(row.Ohr);
                 var effective = new StaffFieldState
                 {
-                    PayRate = StaffAnimalFieldComparer.NormalizeAmount(row.PayRate),
-                    Npr = StaffAnimalFieldComparer.NormalizeAmount(row.Npr),
-                    Ohr = StaffAnimalFieldComparer.NormalizeAmount(row.Ohr),
+                    PayRate    = effectivePayRate,
+                    Npr        = effectiveNpr,
+                    Ohr        = effectiveOhr,
+                    ChargeRate = effectivePayRate + effectiveNpr + effectiveOhr,
                 };
 
                 if (errors.Count > 0)
@@ -113,12 +117,13 @@ namespace Apha.FPS.Application.Services
             return results;
         }
 
-        private static StaffFieldState ToState(LiveStaffRow live) => new()
+        private static StaffFieldState ToState(LiveStaffRow live)
         {
-            PayRate = StaffAnimalFieldComparer.NormalizeAmount(live.PayRate),
-            Npr = StaffAnimalFieldComparer.NormalizeAmount(live.Npr),
-            Ohr = StaffAnimalFieldComparer.NormalizeAmount(live.Ohr),
-        };
+            var payRate = StaffAnimalFieldComparer.NormalizeAmount(live.PayRate);
+            var npr     = StaffAnimalFieldComparer.NormalizeAmount(live.Npr);
+            var ohr     = StaffAnimalFieldComparer.NormalizeAmount(live.Ohr);
+            return new StaffFieldState { PayRate = payRate, Npr = npr, Ohr = ohr, ChargeRate = payRate + npr + ohr };
+        }
 
         // ── Animal ───────────────────────────────────────────────────────────────
 

@@ -1476,14 +1476,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 upd.Transaction = tx;
                 upd.CommandText = @"
                     UPDATE fps.tblstagingprofitcentregrade
-                    SET source_payrate     = @source_payrate,
-                        source_npr         = @source_npr,
-                        source_ohr         = @source_ohr,
-                        effective_payrate  = @effective_payrate,
-                        effective_npr      = @effective_npr,
-                        effective_ohr      = @effective_ohr,
-                        calculated_action  = @calculated_action,
-                        validation_version = @validation_version
+                    SET source_payrate        = @source_payrate,
+                        source_npr            = @source_npr,
+                        source_ohr            = @source_ohr,
+                        effective_payrate     = @effective_payrate,
+                        effective_npr         = @effective_npr,
+                        effective_ohr         = @effective_ohr,
+                        effective_chargerate  = @effective_chargerate,
+                        calculated_action     = @calculated_action,
+                        validation_version    = @validation_version
                     WHERE jobqueueid = @jobqueueid AND pcgrade = @pcgrade;";
                 upd.Parameters.AddWithValue("jobqueueid", jobQueueId);
                 upd.Parameters.AddWithValue("pcgrade", entry.PcGrade);
@@ -1493,6 +1494,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 upd.Parameters.AddWithValue("effective_payrate", (object?)entry.EffectivePayRate ?? DBNull.Value);
                 upd.Parameters.AddWithValue("effective_npr", (object?)entry.EffectiveNpr ?? DBNull.Value);
                 upd.Parameters.AddWithValue("effective_ohr", (object?)entry.EffectiveOhr ?? DBNull.Value);
+                upd.Parameters.AddWithValue("effective_chargerate", (object?)entry.EffectiveChargeRate ?? DBNull.Value);
                 upd.Parameters.AddWithValue("calculated_action", entry.CalculatedAction);
                 upd.Parameters.AddWithValue("validation_version", validationVersion);
                 await upd.ExecuteNonQueryAsync(ct);

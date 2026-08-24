@@ -913,13 +913,17 @@ namespace Apha.FPS.Application.Services
             {
                 if (!liveByGrade.TryGetValue(row.PcGrade, out var live))
                 {
+                    var newPay = row.PayRate ?? 0m;
+                    var newNpr = row.Npr ?? 0m;
+                    var newOhr = row.Ohr ?? 0m;
                     rows.Add(new BulkRatesStaffStagingRowDto
                     {
-                        Status = "Not Found",
-                        PcGrade = row.PcGrade,
-                        PayRateNew = row.PayRate,
-                        NprNew = row.Npr,
-                        OhrNew = row.Ohr
+                        Status       = "Not Found",
+                        PcGrade      = row.PcGrade,
+                        PayRateNew   = row.PayRate,
+                        NprNew       = row.Npr,
+                        OhrNew       = row.Ohr,
+                        ChargeRateNew = newPay + newNpr + newOhr,
                     });
                     continue;
                 }
@@ -928,18 +932,26 @@ namespace Apha.FPS.Application.Services
                 var nprChanged = row.Npr.HasValue && row.Npr.Value != live.Npr;
                 var ohrChanged = row.Ohr.HasValue && row.Ohr.Value != live.Ohr;
 
+                var effPay = row.PayRate ?? live.PayRate ?? 0m;
+                var effNpr = row.Npr ?? live.Npr ?? 0m;
+                var effOhr = row.Ohr ?? live.Ohr ?? 0m;
+                var srcPay = live.PayRate ?? 0m;
+                var srcNpr = live.Npr ?? 0m;
+                var srcOhr = live.Ohr ?? 0m;
                 rows.Add(new BulkRatesStaffStagingRowDto
                 {
                     // The worker independently recomputes this same per-field diff at apply
                     // time and skips no-change rows there — this Status only drives display.
-                    Status = (payRateChanged || nprChanged || ohrChanged) ? "Updated" : "No Change",
-                    PcGrade = row.PcGrade,
-                    PayRate = live.PayRate,
-                    PayRateNew = row.PayRate,
-                    Npr = live.Npr,
-                    NprNew = row.Npr,
-                    Ohr = live.Ohr,
-                    OhrNew = row.Ohr
+                    Status        = (payRateChanged || nprChanged || ohrChanged) ? "Updated" : "No Change",
+                    PcGrade       = row.PcGrade,
+                    PayRate       = live.PayRate,
+                    PayRateNew    = row.PayRate,
+                    Npr           = live.Npr,
+                    NprNew        = row.Npr,
+                    Ohr           = live.Ohr,
+                    OhrNew        = row.Ohr,
+                    ChargeRate    = srcPay + srcNpr + srcOhr,
+                    ChargeRateNew = effPay + effNpr + effOhr,
                 });
             }
 
