@@ -1984,7 +1984,7 @@ th.sorted-desc {
     align-items: center;
 }
 
-/.yfd-costing-panel__checkbox .govuk-checkboxes__item {
+.yfd-costing-panel__checkbox .govuk-checkboxes__item {
     margin: 0;
 }
 
@@ -3014,7 +3014,279 @@ th.sorted-desc {
 #gridContainer_milestoneFormDatesGrid .editable-grid-container div div {
     justify-content: end
 }
+=====================================================
+Manager Tab Panel Styles
+(#tab-manager)
+===================================================== */
+/* ── Main manager grid ─────────────────────────────── */
+.mgr-grid-wrapper {
+    margin-bottom: 10px;
+    overflow: hidden;
+}
 
+/* ── Selected row in main manager table ─────────────── */
+#mgrTable .govuk-table__body .mgr-row-selected td,
+#mgrTable .govuk-table__body .mgr-row-selected:nth-child(even) td,
+#mgrTable .govuk-table__body .mgr-row-selected:hover td {
+    background-color: #cecece !important;
+}
+
+#mgrTable .govuk-table__body .govuk-table__row {
+    cursor: pointer;
+}
+
+/* ── Disable checkbox (read-only display) ────────────── */
+.mgr-checkbox-display {
+    width: 16px;
+    height: 16px;
+    cursor: default;
+    accent-color: #1d70b8;
+}
+
+/* ── Manager search input ────────────────────────────── */
+.mgr-search-input {
+    font-size: 13px;
+    padding: 3px 8px;
+    border: 1px solid #b1b4b6;
+    font-family: "GDS Transport", Arial, sans-serif;
+    height: 28px;
+    width: 130px;
+}
+
+    .mgr-search-input:focus {
+        outline: 3px solid #ffdd00;
+        outline-offset: 0;
+        box-shadow: inset 0 0 0 2px #0b0c0c;
+    }
+
+/* ── Sub-grids container ───────────────────────────── */
+.mgr-subgrids-wrapper {
+    margin-top: 16px;
+}
+
+/* ── Sub-grid box ──────────────────────────────────── */
+.mgr-sub-grid-box {
+    border-radius: 2px;
+    /*    overflow: hidden;*/
+    margin-bottom: 8px;
+}
+
+.mgr-sub-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    border-bottom: 1px solid #b1b4b6;
+    background-color: #f8f8f8;
+}
+
+/* ── Sub-grid table ────────────────────────────────── */
+.mgr-sub-table-wrapper {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 200px;
+}
+
+.mgr-sub-table .govuk-table__body .govuk-table__row:nth-child(even) {
+    background-color: #fafafa;
+}
+
+/* ── Column widths ─────────────────────────────────── */
+.mgr-th-name {
+    min-width: 160px;
+}
+
+.mgr-th-mnumber {
+    min-width: 100px;
+}
+
+.mgr-th-email {
+    min-width: 220px;
+}
+
+.mgr-th-disable {
+    min-width: 70px;
+    text-align: center !important;
+}
+
+.mgr-th-actions {
+    min-width: 100px;
+    text-align: center !important;
+}
+
+.mgr-sub-th-value {
+    min-width: 180px;
+}
+
+.mgr-sub-th-actions {
+    min-width: 100px;
+    text-align: center !important;
+}
+
+/* ── Action cell centring ──────────────────────────── */
+.mgr-action-cell {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    align-items: center;
+}
+
+.mgr-disable-cell {
+    text-align: center;
+}
+
+.govuk-edit-modal__footer {
+    margin-bottom: 15px !important;
+}
+
+.govuk-edit-modal__close-btn {
+    color: white !important;
+}
+
+
+/* =====================================================
+   Time Tab – Working Hours & Working Days
+   PIMS Report Admin Maintenance
+   ===================================================== */
+
+/* ── Form container ────────────────────────────────── */
+.time-form-container {
+    max-width: 900px;
+    padding: 16px 0 8px 0;
+}
+
+/* ── Each field row (label | input | hint inline) ──── */
+.time-form-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 25px;
+    margin-bottom: 0;
+    border-left: none;
+}
+
+    .time-form-row.govuk-form-group--error {
+        border-left: 4px solid #d4351c;
+        padding-left: 12px;
+    }
+
+/* ── Label column ──────────────────────────────────── */
+.time-form-label-col {
+    flex: 0 0 200px;
+    min-width: 0;
+    padding-top: 5px;
+    padding-left: 10px
+}
+
+    .time-form-label-col .govuk-label {
+        margin-bottom: 0;
+    }
+
+/* ── Input column ──────────────────────────────────── */
+.time-form-input-col {
+    flex: 0 0 250px;
+    min-width: 0px;
+}
+
+    .time-form-input-col .govuk-input {
+        width: 100%;
+    }
+
+    .time-form-input-col .govuk-error-message {
+        margin-top: 4px;
+        margin-bottom: 0;
+        font-size: 14px;
+    }
+
+/* ── Hint column ───────────────────────────────────── */
+.time-form-hint-col {
+    flex: 1;
+    min-width: 0;
+    padding-top: 5px;
+}
+
+    .time-form-hint-col .govuk-hint {
+        margin-bottom: 0;
+        font-size: 14px;
+        color: #505a5f;
+    }
+
+/* ── Footer (Cancel / Save buttons) ───────────────── */
+.time-form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    padding-left: 7px;
+    margin-top: 12px;
+    max-width: 470px;
+}
+
+/* ── pimsNewProject.html — form column at 60% max-width ──── */
+#pimsformNewProject,
+.pnp-app-note {
+    width: 100%;
+    max-width: 60%;
+}
+
+/* =====================================================
+   Import Milestones/Deliverables — page-specific styles
+   (pimsmilestonesimport.html)
+   Classes here have no equivalent in govuk-* or sup_*
+   ===================================================== */
+
+/* Left workflow panel — unique background, border and width constraints */
+.import-workflow-panel {
+    background-color: #f3f2f1;
+    border: 1px solid var(--govuk-border-colour, #b1b4b6);
+    padding: 12px;
+    min-width: 220px;
+    max-width: 240px;
+    flex-shrink: 0;
+}
+/* =====================================================
+
+   Milestone/Deliverable Form Required checkbox
+
+   Keep checkbox and label on the same line
+
+   ===================================================== */
+.milestone-checkbox-inline {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    white-space: nowrap;
+}
+/* Override button positioning to move Add button to rightmost */
+
+#gridContainer_milestonesGrid .editable-grid-container > div > h2 > .sup_flex_space_between,
+#gridContainer_milestoneFormDatesGrid .editable-grid-container > div > h2 > .sup_flex_space_between,
+#gridContainer_comments .editable-grid-container > div > h2 > .sup_flex_space_between {
+    display: flex !important;
+    justify-content: end !important;
+}
+
+#gridContainer_milestonesGrid > .editable-grid-container > div > .grid-scroll-container {
+    height: 300px !important;
+    max-height: 300px !important;
+}
+
+#gridContainer_pmdMilestonesGrid > .editable-grid-container > div > .grid-scroll-container,
+#gridContainer_invoicesGrid > .editable-grid-container > div > .grid-scroll-container,
+#gridContainer_milestoneFormDatesGrid > .editable-grid-container > div > .grid-scroll-container {
+    height: 270px !important;
+    max-height: 270px !important;
+}
+
+.isProjectList {
+    .editable-grid-table td {
+        width: calc(100%/4) !important;
+    }
+}
+
+.yfd-modal-min-width-height {
+    min-width: 900px;
+    min-height: 500px;
+}
 /* ── Export Queries (PIMS Queries/Index) ───────────────────────────── */
 /* Only rules with no equivalent GOV.UK/supplement utility class remain here. */
 .qry-filter-row {
@@ -3093,19 +3365,4 @@ th.sorted-desc {
 #qryResultsTableWrapper {
     overflow-x: auto;
     border: 1px solid var(--govuk-border-colour, #b1b4b6);
-}
-/* =====================================================
-   Import Milestones/Deliverables — page-specific styles
-   (pimsmilestonesimport.html)
-   Classes here have no equivalent in govuk-* or sup_*
-   ===================================================== */
-
-/* Left workflow panel — unique background, border and width constraints */
-.import-workflow-panel {
-    background-color: #f3f2f1;
-    border: 1px solid var(--govuk-border-colour, #b1b4b6);
-    padding: 12px;
-    min-width: 220px;
-    max-width: 240px;
-    flex-shrink: 0;
 }

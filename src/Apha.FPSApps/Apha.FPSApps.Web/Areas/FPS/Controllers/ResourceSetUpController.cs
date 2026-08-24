@@ -1,8 +1,10 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -23,25 +25,53 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IProfitCentreGradeService _rcGradeService;
         private readonly IWorkGroupGradeService _wgGradeService;
         private readonly IWorkGroupEmployeeService _WorkGroupEmployeeService;
+        private readonly IAppStateService _appStateService;
 
         public ResourceSetUpController(
             IMapper mapper,
             IProfitCentreService profitCentreService,
             IProfitCentreGradeService rcGradeService,
             IWorkGroupGradeService wgGradeService,
-            IWorkGroupEmployeeService WorkGroupEmployeeService)
+            IWorkGroupEmployeeService WorkGroupEmployeeService,
+            IAppStateService appStateService)
         {
             _mapper = mapper;
             _profitCentreService = profitCentreService;
             _rcGradeService = rcGradeService;
             _wgGradeService = wgGradeService;
             _WorkGroupEmployeeService = WorkGroupEmployeeService;
+            _appStateService = appStateService;
         }
 
         public async Task<IActionResult> Index(string? profitCentre = null)
         {
+            // Fall back to the session value only when no profit centre was supplied on the
+            // request (e.g. navigating in from another screen). An explicitly supplied empty
+            // value means the user reset the selection, so it must clear the session.
+            var hasProfitCentreQuery = Request.Query.ContainsKey("profitCentre");
+            if (!hasProfitCentreQuery)
+                profitCentre = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProfitCentre);
+
             var profitCentreList = await GetProfitCentreListAsync();
-            var selectedProfitCentre = profitCentre ?? string.Empty;
+
+            // Fall back to the session value only when no profit centre was supplied on the
+            // request (e.g. navigating in from another screen). An explicitly supplied empty
+            // value means the user reset the selection, so it must clear the session.
+            if (profitCentre == null)
+                profitCentre = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProfitCentre);
+
+            var selectedProfitCentre = !string.IsNullOrWhiteSpace(profitCentre)
+                && profitCentreList.Any(p => p.Value == profitCentre)
+                ? profitCentre
+                : string.Empty;
+
+            // Persist the selection so it is retained across screens that show the Resource Centre dropdown.
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, selectedProfitCentre);
+
+            // Mark the persisted item as selected so the dropdown reflects it on load.
+            var selectedItem = profitCentreList.FirstOrDefault(p => p.Value == selectedProfitCentre);
+            if (selectedItem != null)
+                selectedItem.Selected = true;
 
             var viewModel = new ResourceSetUpViewModel
             {
@@ -120,6 +150,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             };
 
             return View(viewModel);
+        }
+
+        /// <summary>
+        /// Saves the selected profit centre to session (called client-side via AJAX).
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> SaveProfitCentreSession([FromBody] string profitCentre)
+        {
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, profitCentre ?? string.Empty);
+            return Ok();
         }
 
         [HttpPost]

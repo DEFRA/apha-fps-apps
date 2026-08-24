@@ -1,7 +1,9 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -21,39 +23,46 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IProfitCentreService _profitCentreService;
         private readonly IWorkGroupService _workGroupService;
         private readonly IStaffJobService _staffJobService;
+        private readonly IAppStateService _appStateService;
 
         public StaffResourceController(
             IMapper mapper,
             IProfitCentreService profitCentreService,
             IWorkGroupService workGroupService,
-            IStaffJobService staffJobService)
+            IStaffJobService staffJobService,
+            IAppStateService appStateService)
         {
             _mapper = mapper;
             _profitCentreService = profitCentreService;
             _workGroupService = workGroupService;
             _staffJobService = staffJobService;
+            _appStateService = appStateService;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string? profitCentre = null)
         {
-            var viewModel = new StaffResourceViewModel
-            {
-                SelectedProfitCentre = profitCentre ?? string.Empty
-            };
+            var viewModel = new StaffResourceViewModel();
 
             await PopulateProfitCentresAsync(viewModel);
 
-            // Auto-select the first profit centre when none is specified
-            if (string.IsNullOrWhiteSpace(viewModel.SelectedProfitCentre) && viewModel.ProfitCentreList.Count > 0)
-            {
-                var first = viewModel.ProfitCentreList.First().Value ?? string.Empty;
-                viewModel.SelectedProfitCentre = first;
-                foreach (var item in viewModel.ProfitCentreList)
-                    item.Selected = string.Equals(item.Value, first, StringComparison.OrdinalIgnoreCase);
-            }
+            // Fall back to session only when no param was supplied (arriving from another screen).
+            // An explicitly supplied empty value clears the session.
+            if (profitCentre == null)
+                profitCentre = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProfitCentre);
 
-            viewModel.WorkgroupGrid = await GetWorkgroupGridConfigAsync(new QueryParameters<string>(), null, viewModel.SelectedProfitCentre);
+            var selected = !string.IsNullOrWhiteSpace(profitCentre)
+                && viewModel.ProfitCentreList.Any(p => p.Value == profitCentre)
+                ? profitCentre
+                : string.Empty;
+
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, selected);
+
+            viewModel.SelectedProfitCentre = selected;
+            foreach (var item in viewModel.ProfitCentreList)
+                item.Selected = string.Equals(item.Value, selected, StringComparison.OrdinalIgnoreCase);
+
+            viewModel.WorkgroupGrid = await GetWorkgroupGridConfigAsync(new QueryParameters<string>(), null, selected);
             viewModel.StaffGrid = GetStaffGridConfig();
 
             return View(viewModel);
