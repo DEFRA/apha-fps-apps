@@ -5541,3 +5541,6 @@ body,
 .isDateSection {
     width: 23%;
 }
+.govuk-tabs__list {
+    padding-top: 10px !important;
+}
