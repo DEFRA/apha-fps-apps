@@ -134,7 +134,7 @@ namespace Apha.FPS.DataAccess.Repositories
             PaginationParameters<string> query,
             string wgGrade)
         {
-            var all = await _dbContext.WorkGroupEmployeeViews
+            var all = _dbContext.WorkGroupEmployeeViews
                 .AsNoTracking()
                 .Where(x => x.WorkGroupGrade == wgGrade
                          && x.PersonStatus != "I"
@@ -145,32 +145,31 @@ namespace Apha.FPS.DataAccess.Repositories
                     e => e.SPNumber,
                     (wg, e) => new WorkGroupEmployeeView
                     {
-                        PactId         = wg.PactId,
-                        SpNumber       = wg.SpNumber,
+                        PactId = wg.PactId,
+                        SpNumber = wg.SpNumber,
                         WorkGroupGrade = wg.WorkGroupGrade,
-                        Name           = (e.LastName ?? "") + " " + (e.FirstName ?? ""),
-                        PersonStatus   = wg.PersonStatus,
-                        PersonClass    = wg.PersonClass,
-                        HrsPaid        = wg.HrsPaid,
-                        Leave          = wg.Leave,
-                        SickSpecial    = wg.SickSpecial,
-                        HrsAvail       = wg.HrsAvail,
-                        MakeAvailable  = wg.MakeAvailable,
-                        TimeRecorder   = wg.TimeRecorder,
-                        StartDate      = wg.StartDate,
-                        EndDate        = wg.EndDate,
-                        HoursPerWeek   = wg.HoursPerWeek,
-                        FpsYear        = wg.FpsYear,
-                        UserId         = wg.UserId,
-                        Dt2Username    = wg.Dt2Username,
-                        UserEmail      = wg.UserEmail,
-                    })
-                .ToListAsync();
+                        Name = (e.LastName ?? "") + " " + (e.FirstName ?? ""),
+                        PersonStatus = wg.PersonStatus,
+                        PersonClass = wg.PersonClass,
+                        HrsPaid = wg.HrsPaid,
+                        Leave = wg.Leave,
+                        SickSpecial = wg.SickSpecial,
+                        HrsAvail = wg.HrsAvail,
+                        MakeAvailable = wg.MakeAvailable,
+                        TimeRecorder = wg.TimeRecorder,
+                        StartDate = wg.StartDate,
+                        EndDate = wg.EndDate,
+                        HoursPerWeek = wg.HoursPerWeek,
+                        FpsYear = wg.FpsYear,
+                        UserId = wg.UserId,
+                        Dt2Username = wg.Dt2Username,
+                        UserEmail = wg.UserEmail,
+                    });
 
-            var filtered = ApplyFilter(all.AsQueryable(), query.Filter);
+            var filtered = ApplyFilter(all, query.Filter);
             var sorted   = ApplySorting(filtered, query.SortBy, query.Descending);
 
-            return ApplyPaging(sorted, query.Page, query.PageSize);
+            return await ApplyPagingAsync(sorted, query.Page, query.PageSize);
         }
 
         public async Task<PagedData<WorkGroupEmployeeView>> GetAllActiveWorkGroupEmployeesAsync(
@@ -361,6 +360,11 @@ namespace Apha.FPS.DataAccess.Repositories
             return sortBy?.ToLower() switch
             {
                 "pactid" => descending ? query.OrderByDescending(x => x.PactId) : query.OrderBy(x => x.PactId),
+                "sickspecial" => descending ? query.OrderByDescending(x => x.SickSpecial) : query.OrderBy(x => x.SickSpecial),
+                "hrspaid" => descending ? query.OrderByDescending(x => x.HrsPaid) : query.OrderBy(x => x.HrsPaid),
+                "leave" => descending ? query.OrderByDescending(x => x.Leave) : query.OrderBy(x => x.Leave),
+                "makeavailable" => descending ? query.OrderByDescending(x => x.MakeAvailable) : query.OrderBy(x => x.MakeAvailable),
+                "hrsavai" => descending ? query.OrderByDescending(x => x.HrsAvail) : query.OrderBy(x => x.HrsAvail),
                 "spnumber" => descending ? query.OrderByDescending(x => x.SpNumber) : query.OrderBy(x => x.SpNumber),
                 "name" or "staffname" => descending ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name),
                 "workgroupgrade" or "wggrade" => descending ? query.OrderByDescending(x => x.WorkGroupGrade) : query.OrderBy(x => x.WorkGroupGrade),
