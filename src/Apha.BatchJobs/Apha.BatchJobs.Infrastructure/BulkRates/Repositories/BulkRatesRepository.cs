@@ -178,6 +178,7 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
                    calculated_action,
                    source_payrate::numeric, source_npr::numeric, source_ohr::numeric,
                    effective_payrate::numeric, effective_npr::numeric, effective_ohr::numeric,
+                   effective_chargerate::numeric,
                    validation_version
             FROM fps.tblstagingprofitcentregrade
             WHERE jobqueueid = @jobqueueid
@@ -201,7 +202,8 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
                 EffectivePayRate: reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                 EffectiveNpr:     reader.IsDBNull(10) ? null : reader.GetDecimal(10),
                 EffectiveOhr:     reader.IsDBNull(11) ? null : reader.GetDecimal(11),
-                ValidationVersion: reader.IsDBNull(12) ? null : reader.GetInt32(12)));
+                EffectiveChargeRate: reader.IsDBNull(12) ? null : reader.GetDecimal(12),
+                ValidationVersion: reader.IsDBNull(13) ? null : reader.GetInt32(13)));
         }
 
         return rows;
@@ -349,13 +351,13 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
     // ── Apply Animal rates in one transaction ────────────────────────────────
 
     /// <inheritdoc />
-    public async Task<(int Inserted, int Updated, int Unchanged)> ApplyAnimalRatesAsync(
+    public async Task<(int Updated, int Unchanged)> ApplyAnimalRatesAsync(
         IReadOnlyList<AnimalStagingRow> stagingRows,
         BulkRatesJobQueueEntry entry,
         DateTime appliedAt,
         CancellationToken cancellationToken = default)
     {
-        int inserted = 0, updated = 0, unchanged = 0;
+        int updated = 0, unchanged = 0;
 
         await using var dbContext = _dbContextFactory.CreateDbContext();
         await dbContext.Database.OpenConnectionAsync(cancellationToken);
@@ -390,26 +392,20 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
                     break;
 
                 case "Insert":
-                    if (liveLookup.ContainsKey(row.AnimalType.ToUpperInvariant()))
-                        throw new InvalidOperationException(
-                            $"BulkAnimalRatesUpdate: Animal Insert concurrency conflict for AnimalType='{row.AnimalType}', FPS year {entry.FpsYear}: " +
-                            "the approved Insert target already exists.");
-                    await InsertAnimalRowAsync(conn, tx, row, entry.FpsYear, cancellationToken);
-                    foreach (var historyRow in BuildAnimalInsertHistory(row, entry, appliedAt))
-                        await InsertHistoryRowAsync(conn, tx, historyRow, cancellationToken);
-                    inserted++;
-                    break;
+                    throw new InvalidOperationException(
+                        $"BulkAnimalRatesUpdate: Animal Insert is not supported. " +
+                        $"AnimalType='{row.AnimalType}' in JobQueueId={entry.JobQueueId:D} " +
+                        "has CalculatedAction=Insert, which indicates an upstream defect.");
 
                 default:
                     throw new InvalidOperationException(
                         $"BulkAnimalRatesUpdate: unexpected CalculatedAction '{row.CalculatedAction}' " +
-                        $"for AnimalType='{row.AnimalType}' in JobQueueId={entry.JobQueueId:D}. " +
-                        "Only NoChange, Update, and Insert are supported.");
+                        $"for AnimalType='{row.AnimalType}' in JobQueueId={entry.JobQueueId:D}.");
             }
         }
 
         await tx.CommitAsync(cancellationToken);
-        return (inserted, updated, unchanged);
+        return (updated, unchanged);
     }
 
     private static async Task<Dictionary<string, (decimal? DailyRate, decimal? DefraDailyRate, bool PlanByWeek, string? Species, string? SecurityLevel)>> GetAnimalRowsForUpdateAsync(
@@ -444,36 +440,6 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
         return result;
     }
 
-    internal static async Task InsertAnimalRowAsync(
-        NpgsqlConnection conn, NpgsqlTransaction tx,
-        AnimalStagingRow row, int fpsYear, CancellationToken ct)
-    {
-        await using var cmd = conn.CreateCommand();
-        cmd.Transaction = tx;
-        cmd.CommandText = @"
-            INSERT INTO fps.tblanimals
-                (animaltype, species, security_level, dailyrate, defradailyrate, planbyweek, fpsyear)
-            VALUES
-                (@animaltype, @species, @security_level, @dailyrate, @defradailyrate, @planbyweek, @fpsyear);";
-        cmd.Parameters.AddWithValue("animaltype",     row.AnimalType);
-        cmd.Parameters.AddWithValue("species",        (object?)row.EffectiveSpecies        ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("security_level", (object?)row.EffectiveSecurityLevel  ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("dailyrate",      (object?)row.EffectiveDailyRate      ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("defradailyrate", (object?)row.EffectiveDefraDailyRate ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("planbyweek",     row.EffectivePlanByWeek ?? false);
-        cmd.Parameters.AddWithValue("fpsyear",        fpsYear);
-        try
-        {
-            await cmd.ExecuteNonQueryAsync(ct);
-        }
-        catch (NpgsqlException ex) when (ex.SqlState == "23505")
-        {
-            throw new InvalidOperationException(
-                $"BulkAnimalRatesUpdate: Animal Insert concurrency conflict for AnimalType='{row.AnimalType}', FPS year {fpsYear}: " +
-                "the approved Insert target already exists.", ex);
-        }
-    }
-
     private static async Task<int> UpdateAnimalRowAsync(
         NpgsqlConnection conn, NpgsqlTransaction tx,
         AnimalStagingRow row, int fpsYear, CancellationToken ct)
@@ -498,27 +464,6 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
         cmd.Parameters.AddWithValue("animaltype",     row.AnimalType);
         cmd.Parameters.AddWithValue("fpsyear",        fpsYear);
         return await cmd.ExecuteNonQueryAsync(ct);
-    }
-
-    private static RateChangeHistoryRow[] BuildAnimalInsertHistory(
-        AnimalStagingRow row, BulkRatesJobQueueEntry entry, DateTime appliedAt)
-    {
-        var key = JsonSerializer.Serialize(new { animalType = row.AnimalType, fpsYear = entry.FpsYear });
-        var c = (entry.JobQueueId, entry.JobExecutionId, entry.JobId, entry.FpsYear,
-                 "Animal", key, entry.RequestedBy, entry.ApprovedBy, appliedAt);
-        var species       = string.IsNullOrWhiteSpace(row.EffectiveSpecies)       ? null : row.EffectiveSpecies.Trim();
-        var secLevel      = string.IsNullOrWhiteSpace(row.EffectiveSecurityLevel) ? null : row.EffectiveSecurityLevel.Trim();
-        var dailyRate     = row.EffectiveDailyRate?.ToString();
-        var defraDailyRate = row.EffectiveDefraDailyRate?.ToString();
-        var planByWeek    = (row.EffectivePlanByWeek ?? false).ToString();
-        return
-        [
-            MakeHistoryRow(c, "species",        null, species,        "Insert"),
-            MakeHistoryRow(c, "security_level", null, secLevel,       "Insert"),
-            MakeHistoryRow(c, "dailyrate",      null, dailyRate,      "Insert"),
-            MakeHistoryRow(c, "defradailyrate", null, defraDailyRate, "Insert"),
-            MakeHistoryRow(c, "planbyweek",     null, planByWeek,     "Insert"),
-        ];
     }
 
     private static RateChangeHistoryRow[] BuildAnimalUpdateHistory(
@@ -615,17 +560,17 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
         return (updated, unchanged);
     }
 
-    private static async Task<Dictionary<string, (decimal? PayRate, decimal? Npr, decimal? Ohr)>> GetStaffRowsForUpdateAsync(
+    private static async Task<Dictionary<string, (decimal? PayRate, decimal? Npr, decimal? Ohr, decimal? ChargeRate)>> GetStaffRowsForUpdateAsync(
         NpgsqlConnection conn, NpgsqlTransaction tx,
         IReadOnlyCollection<string> pcGrades, int fpsYear, CancellationToken ct)
     {
-        var result = new Dictionary<string, (decimal? PayRate, decimal? Npr, decimal? Ohr)>(StringComparer.OrdinalIgnoreCase);
+        var result = new Dictionary<string, (decimal? PayRate, decimal? Npr, decimal? Ohr, decimal? ChargeRate)>(StringComparer.OrdinalIgnoreCase);
         if (pcGrades.Count == 0) return result;
 
         await using var cmd = conn.CreateCommand();
         cmd.Transaction = tx;
         cmd.CommandText = @"
-            SELECT pcgrade, payrate::numeric, npr::numeric, ohr::numeric
+            SELECT pcgrade, payrate, npr, ohr, chargerate
             FROM fps.profitcentregrade
             WHERE fpsyear = @fpsyear AND pcgrade = ANY(@grades)
             ORDER BY pcgrade
@@ -640,7 +585,8 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
             result[pcGrade.ToUpperInvariant()] = (
                 r.IsDBNull(1) ? null : r.GetDecimal(1),
                 r.IsDBNull(2) ? null : r.GetDecimal(2),
-                r.IsDBNull(3) ? null : r.GetDecimal(3));
+                r.IsDBNull(3) ? null : r.GetDecimal(3),
+                r.IsDBNull(4) ? null : r.GetDecimal(4));
         }
         return result;
     }
@@ -653,40 +599,51 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
         cmd.Transaction = tx;
         cmd.CommandText = @"
             UPDATE fps.profitcentregrade
-            SET payrate = @payrate::money,
-                npr     = @npr::money,
-                ohr     = @ohr::money
+            SET payrate    = @payrate,
+                npr        = @npr,
+                ohr        = @ohr,
+                chargerate = @chargerate
             WHERE pcgrade = @pcgrade AND fpsyear = @fpsyear;";
-        cmd.Parameters.AddWithValue("payrate", row.EffectivePayRate ?? 0m);
-        cmd.Parameters.AddWithValue("npr",     row.EffectiveNpr ?? 0m);
-        cmd.Parameters.AddWithValue("ohr",     row.EffectiveOhr ?? 0m);
-        cmd.Parameters.AddWithValue("pcgrade", row.PcGrade);
-        cmd.Parameters.AddWithValue("fpsyear", fpsYear);
+        if (row.EffectiveChargeRate == null)
+            throw new InvalidOperationException(
+                $"BulkStaffRatesUpdate: approved Staff Update is missing EffectiveChargeRate " +
+                $"for PcGrade='{row.PcGrade}' in JobQueueId={row.JobQueueId:D}. " +
+                "This indicates an upstream frozen-state contract defect.");
+        cmd.Parameters.AddWithValue("payrate",    row.EffectivePayRate ?? 0m);
+        cmd.Parameters.AddWithValue("npr",         row.EffectiveNpr ?? 0m);
+        cmd.Parameters.AddWithValue("ohr",         row.EffectiveOhr ?? 0m);
+        cmd.Parameters.AddWithValue("chargerate",  row.EffectiveChargeRate.Value);
+        cmd.Parameters.AddWithValue("pcgrade",     row.PcGrade);
+        cmd.Parameters.AddWithValue("fpsyear",     fpsYear);
         return await cmd.ExecuteNonQueryAsync(ct);
     }
 
     private static RateChangeHistoryRow[] BuildStaffHistory(
-        StaffStagingRow row, (decimal? PayRate, decimal? Npr, decimal? Ohr)? before,
+        StaffStagingRow row, (decimal? PayRate, decimal? Npr, decimal? Ohr, decimal? ChargeRate)? before,
         BulkRatesJobQueueEntry entry, DateTime appliedAt)
     {
         var key = JsonSerializer.Serialize(new { pcGrade = row.PcGrade });
         var c = (entry.JobQueueId, entry.JobExecutionId, entry.JobId, entry.FpsYear,
                  "Staff", key, entry.RequestedBy, entry.ApprovedBy, appliedAt);
 
-        var beforePayRate = before?.PayRate ?? 0m;
-        var beforeNpr     = before?.Npr ?? 0m;
-        var beforeOhr     = before?.Ohr ?? 0m;
-        var afterPayRate  = row.EffectivePayRate ?? 0m;
-        var afterNpr      = row.EffectiveNpr ?? 0m;
-        var afterOhr      = row.EffectiveOhr ?? 0m;
+        var beforePayRate   = before?.PayRate ?? 0m;
+        var beforeNpr       = before?.Npr ?? 0m;
+        var beforeOhr       = before?.Ohr ?? 0m;
+        var beforeChargeRate = before?.ChargeRate ?? 0m;
+        var afterPayRate    = row.EffectivePayRate ?? 0m;
+        var afterNpr        = row.EffectiveNpr ?? 0m;
+        var afterOhr        = row.EffectiveOhr ?? 0m;
+        var afterChargeRate = row.EffectiveChargeRate ?? 0m;
 
         var rows = new List<RateChangeHistoryRow>();
         if (beforePayRate != afterPayRate)
-            rows.Add(MakeHistoryRow(c, "payrate", beforePayRate.ToString(), afterPayRate.ToString(), "Update"));
+            rows.Add(MakeHistoryRow(c, "PayRate", beforePayRate.ToString(), afterPayRate.ToString(), "Update"));
         if (beforeNpr != afterNpr)
-            rows.Add(MakeHistoryRow(c, "npr", beforeNpr.ToString(), afterNpr.ToString(), "Update"));
+            rows.Add(MakeHistoryRow(c, "NPR", beforeNpr.ToString(), afterNpr.ToString(), "Update"));
         if (beforeOhr != afterOhr)
-            rows.Add(MakeHistoryRow(c, "ohr", beforeOhr.ToString(), afterOhr.ToString(), "Update"));
+            rows.Add(MakeHistoryRow(c, "OHR", beforeOhr.ToString(), afterOhr.ToString(), "Update"));
+        if (beforeChargeRate != afterChargeRate)
+            rows.Add(MakeHistoryRow(c, "ChargeRate", beforeChargeRate.ToString(), afterChargeRate.ToString(), "Update"));
         return [.. rows];
     }
 

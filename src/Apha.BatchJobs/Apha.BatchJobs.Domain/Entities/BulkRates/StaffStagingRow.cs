@@ -19,4 +19,5 @@ public sealed record StaffStagingRow(
     decimal? EffectivePayRate = null,
     decimal? EffectiveNpr = null,
     decimal? EffectiveOhr = null,
+    decimal? EffectiveChargeRate = null,
     int? ValidationVersion = null);

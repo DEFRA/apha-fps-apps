@@ -90,11 +90,11 @@ public interface IBulkRatesRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Locks the live tblanimals rows, applies all staging mutations (Insert/Update/NoChange),
+    /// Locks the live tblanimals rows, applies all staging mutations (Update/NoChange),
     /// writes rate_change_history — all inside a single transaction — then commits.
-    /// Returns the count of inserted, updated, and unchanged rows.
+    /// Returns the count of updated and unchanged rows. Insert is not supported.
     /// </summary>
-    Task<(int Inserted, int Updated, int Unchanged)> ApplyAnimalRatesAsync(
+    Task<(int Updated, int Unchanged)> ApplyAnimalRatesAsync(
         IReadOnlyList<AnimalStagingRow> stagingRows,
         BulkRatesJobQueueEntry entry,
         DateTime appliedAt,

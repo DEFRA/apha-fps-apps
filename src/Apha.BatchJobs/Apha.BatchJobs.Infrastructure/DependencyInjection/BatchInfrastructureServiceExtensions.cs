@@ -1,6 +1,8 @@
 using Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries.Execution;
+using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Context;
+using Apha.BatchJobs.Infrastructure.Email;
 using Apha.BatchJobs.Infrastructure.RecreateSummaries;
 using Apha.BatchJobs.Infrastructure.BulkRates.Repositories;
 using Microsoft.Extensions.Configuration;
@@ -36,6 +38,9 @@ public static class BatchInfrastructureServiceExtensions
         services.AddScoped<IRecreateSummariesExecutionRunner, RecreateSummariesExecutionRunner>();
         services.AddMilestoneNotificationInfrastructure(configuration);
         services.AddMabArchiveInfrastructure(configuration);
+
+        services.Configure<BulkRatesEmailSettings>(configuration.GetSection(BulkRatesEmailSettings.SectionName));
+        services.AddScoped<IPostCompletionNotifier, BulkRatesCompletionNotifier>();
 
         return services;
     }

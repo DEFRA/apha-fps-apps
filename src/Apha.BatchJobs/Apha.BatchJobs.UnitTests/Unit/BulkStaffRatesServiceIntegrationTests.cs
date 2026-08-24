@@ -25,7 +25,7 @@ namespace Apha.BatchJobs.UnitTests;
 public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
 {
     private const string DefaultConnectionString =
-        "Host=fps-development.c7kkusgy4aqn.eu-west-2.rds.amazonaws.com;Port=5432;Database=batchjobs;Username=fpsdev;Password=ijZFiEr5BnKoiLXxD1g7Zg;SSL Mode=Require;Trust Server Certificate=true";
+        "Host=fps-development.c7kkusgy4aqn.eu-west-2.rds.amazonaws.com;Port=5432;Database=batchjob_testing;Username=fpsdev;Password=ijZFiEr5BnKoiLXxD1g7Zg;SSL Mode=Require;Trust Server Certificate=true";
     private readonly string _connectionString;
     private string? _skipReason;
 
@@ -125,17 +125,19 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
     }
 
     private async Task InsertLiveStaffRowAsync(
-        NpgsqlConnection conn, string pcGrade, int fpsYear, decimal payRate, decimal npr, decimal ohr)
+        NpgsqlConnection conn, string pcGrade, int fpsYear,
+        decimal payRate, decimal npr, decimal ohr, decimal chargeRate = 0m)
     {
         await EnsureStaffPrerequisitesAsync(conn, fpsYear);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-            INSERT INTO fps.profitcentregrade (pcgrade, divisiongrade, gradecode, profitcentre, payrate, npr, ohr, fpsyear)
-            VALUES (@pcgrade, 'IT-TDVG', 'IT-TGRADE', 'ADMIN', @payrate, @npr, @ohr, @fpsyear);";
+            INSERT INTO fps.profitcentregrade (pcgrade, divisiongrade, gradecode, profitcentre, payrate, npr, ohr, chargerate, fpsyear)
+            VALUES (@pcgrade, 'IT-TDVG', 'IT-TGRADE', 'ADMIN', @payrate, @npr, @ohr, @chargerate, @fpsyear);";
         cmd.Parameters.AddWithValue("pcgrade", pcGrade);
         cmd.Parameters.AddWithValue("payrate", payRate);
         cmd.Parameters.AddWithValue("npr", npr);
         cmd.Parameters.AddWithValue("ohr", ohr);
+        cmd.Parameters.AddWithValue("chargerate", chargeRate);
         cmd.Parameters.AddWithValue("fpsyear", fpsYear);
         await cmd.ExecuteNonQueryAsync();
     }
@@ -146,6 +148,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
         string calculatedAction,
         decimal sourcePayRate, decimal sourceNpr, decimal sourceOhr,
         decimal effectivePayRate, decimal effectiveNpr, decimal effectiveOhr,
+        decimal? effectiveChargeRate,
         int validationVersion)
     {
         await using var cmd = conn.CreateCommand();
@@ -153,11 +156,11 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
             INSERT INTO fps.tblstagingprofitcentregrade
                 (jobqueueid, pcgrade, payrate, npr, ohr,
                  calculated_action, source_payrate, source_npr, source_ohr,
-                 effective_payrate, effective_npr, effective_ohr, validation_version)
+                 effective_payrate, effective_npr, effective_ohr, effective_chargerate, validation_version)
             VALUES
                 (@jqid, @pcgrade, @payrate, @npr, @ohr,
                  @action, @sourcepayrate, @sourcenpr, @sourceohr,
-                 @effectivepayrate, @effectivenpr, @effectiveohr, @version);";
+                 @effectivepayrate, @effectivenpr, @effectiveohr, @effectivechargerate, @version);";
         cmd.Parameters.AddWithValue("jqid", jobQueueId);
         cmd.Parameters.AddWithValue("pcgrade", pcGrade);
         cmd.Parameters.AddWithValue("payrate", (object?)payRate ?? DBNull.Value);
@@ -170,6 +173,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
         cmd.Parameters.AddWithValue("effectivepayrate", effectivePayRate);
         cmd.Parameters.AddWithValue("effectivenpr", effectiveNpr);
         cmd.Parameters.AddWithValue("effectiveohr", effectiveOhr);
+        cmd.Parameters.AddWithValue("effectivechargerate", (object?)effectiveChargeRate ?? DBNull.Value);
         cmd.Parameters.AddWithValue("version", validationVersion);
         await cmd.ExecuteNonQueryAsync();
     }
@@ -254,7 +258,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
     {
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
 
-        const int fpsYear = 2091;
+        const int fpsYear = 2101;
         const string pcGrade = "SA5-S01";
         var jobQueueId = Guid.NewGuid();
         var jobExecutionId = Guid.NewGuid();
@@ -262,15 +266,16 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
         await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync();
 
-        await InsertLiveStaffRowAsync(conn, pcGrade, fpsYear, payRate: 10.00m, npr: 5.00m, ohr: 2.00m);
+        await InsertLiveStaffRowAsync(conn, pcGrade, fpsYear, payRate: 10.00m, npr: 5.00m, ohr: 2.00m, chargeRate: 17.00m);
         await InsertJobQueueAsync(conn, jobQueueId, jobExecutionId, fpsYear);
-        // Live still matches the frozen source (10/5/2); the approved effective target
-        // raises PayRate only (12.00), leaving NPR/OHR unchanged.
+        // Live still matches the frozen source (10/5/2/17); the approved effective target
+        // raises PayRate only (12.00), leaving NPR/OHR/ChargeRate unchanged.
         await InsertFrozenStagingRowAsync(
             conn, jobQueueId, pcGrade, payRate: 12.00m, npr: 5.00m, ohr: 2.00m,
             calculatedAction: "Update",
             sourcePayRate: 10.00m, sourceNpr: 5.00m, sourceOhr: 2.00m,
             effectivePayRate: 12.00m, effectiveNpr: 5.00m, effectiveOhr: 2.00m,
+            effectiveChargeRate: 17.00m,
             validationVersion: 1);
 
         try
@@ -279,7 +284,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
 
             await using (var cmd = conn.CreateCommand())
             {
-                cmd.CommandText = "SELECT payrate::numeric, npr::numeric, ohr::numeric FROM fps.profitcentregrade WHERE pcgrade = @pcgrade AND fpsyear = @year;";
+                cmd.CommandText = "SELECT payrate, npr, ohr, chargerate FROM fps.profitcentregrade WHERE pcgrade = @pcgrade AND fpsyear = @year;";
                 cmd.Parameters.AddWithValue("pcgrade", pcGrade);
                 cmd.Parameters.AddWithValue("year", fpsYear);
                 await using var r = await cmd.ExecuteReaderAsync();
@@ -287,6 +292,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
                 Assert.Equal(12.00m, r.GetDecimal(0));
                 Assert.Equal(5.00m, r.GetDecimal(1));
                 Assert.Equal(2.00m, r.GetDecimal(2));
+                Assert.Equal(17.00m, r.GetDecimal(3));
             }
 
             await using (var cmd = conn.CreateCommand())
@@ -295,10 +301,10 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
                 cmd.Parameters.AddWithValue("jqid", jobQueueId);
                 await using var r = await cmd.ExecuteReaderAsync();
                 Assert.True(await r.ReadAsync());
-                Assert.Equal("payrate", r.GetString(0));
+                Assert.Equal("PayRate", r.GetString(0));
                 Assert.Equal(10.00m, decimal.Parse(r.GetString(1), System.Globalization.CultureInfo.InvariantCulture));
                 Assert.Equal(12.00m, decimal.Parse(r.GetString(2), System.Globalization.CultureInfo.InvariantCulture));
-                Assert.False(await r.ReadAsync(), "Only payrate changed â€” npr/ohr must not get a history row.");
+                Assert.False(await r.ReadAsync(), "Only PayRate changed — NPR/OHR/ChargeRate must not get a history row.");
             }
 
             await using (var cmd = conn.CreateCommand())
@@ -321,7 +327,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
     {
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
 
-        const int fpsYear = 2092;
+        const int fpsYear = 2102;
         const string pcGrade = "SA5-S02";
         var jobQueueId = Guid.NewGuid();
         var jobExecutionId = Guid.NewGuid();
@@ -336,6 +342,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
             calculatedAction: "NoChange",
             sourcePayRate: 10.00m, sourceNpr: 5.00m, sourceOhr: 2.00m,
             effectivePayRate: 10.00m, effectiveNpr: 5.00m, effectiveOhr: 2.00m,
+            effectiveChargeRate: 17.00m,
             validationVersion: 1);
 
         try
@@ -354,14 +361,137 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
             await CleanupAsync(jobQueueId, fpsYear, [pcGrade]);
         }
     }
+    // ── ChargeRate audit: persisted when changed, suppressed when unchanged ──────────
 
+    [SkippableFact]
+    public async Task ExecuteAsync_UpdateAction_WhenChargeRateChanges_WritesChargeRateHistoryRow()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+
+        const int fpsYear = 2094;
+        const string pcGrade = "SA5-S14";
+        var jobQueueId = Guid.NewGuid();
+        var jobExecutionId = Guid.NewGuid();
+
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+
+        // Live ChargeRate = 17.00; effective ChargeRate = 22.00 → change expected.
+        await InsertLiveStaffRowAsync(conn, pcGrade, fpsYear,
+            payRate: 10.00m, npr: 5.00m, ohr: 2.00m, chargeRate: 17.00m);
+        await InsertJobQueueAsync(conn, jobQueueId, jobExecutionId, fpsYear);
+        await InsertFrozenStagingRowAsync(
+            conn, jobQueueId, pcGrade,
+            payRate: 10.00m, npr: 5.00m, ohr: 2.00m,
+            calculatedAction: "Update",
+            sourcePayRate: 10.00m, sourceNpr: 5.00m, sourceOhr: 2.00m,
+            effectivePayRate: 10.00m, effectiveNpr: 5.00m, effectiveOhr: 2.00m,
+            effectiveChargeRate: 22.00m,
+            validationVersion: 1);
+
+        try
+        {
+            await CreateService().ExecuteAsync(new BulkRatesExecutionContext(jobExecutionId, BatchJobNames.BulkStaffRatesUpdate, fpsYear));
+
+            // Live row must reflect the new ChargeRate.
+            await using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT chargerate FROM fps.profitcentregrade WHERE pcgrade = @pcgrade AND fpsyear = @year;";
+                cmd.Parameters.AddWithValue("pcgrade", pcGrade);
+                cmd.Parameters.AddWithValue("year", fpsYear);
+                await using var r = await cmd.ExecuteReaderAsync();
+                Assert.True(await r.ReadAsync());
+                Assert.Equal(22.00m, r.GetDecimal(0));
+            }
+
+            // History must include a ChargeRate row.
+            await using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = @"
+                    SELECT fieldname, oldvalue, newvalue
+                    FROM fps.rate_change_history
+                    WHERE jobqueueid = @jqid
+                    ORDER BY fieldname;";
+                cmd.Parameters.AddWithValue("jqid", jobQueueId);
+                await using var r = await cmd.ExecuteReaderAsync();
+
+                var rows = new List<(string Field, string Old, string New)>();
+                while (await r.ReadAsync())
+                    rows.Add((r.GetString(0), r.GetString(1), r.GetString(2)));
+
+                Assert.Contains(rows, row => row.Field == "ChargeRate");
+                var cr = rows.Single(row => row.Field == "ChargeRate");
+                Assert.Equal(17m, decimal.Parse(cr.Old, System.Globalization.CultureInfo.InvariantCulture));
+                Assert.Equal(22m, decimal.Parse(cr.New, System.Globalization.CultureInfo.InvariantCulture));
+            }
+        }
+        finally
+        {
+            await CleanupAsync(jobQueueId, fpsYear, [pcGrade]);
+        }
+    }
+
+    [SkippableFact]
+    public async Task ExecuteAsync_UpdateAction_WhenChargeRateUnchanged_NoChargeRateHistoryRow()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+
+        const int fpsYear = 2095;
+        const string pcGrade = "SA5-S15";
+        var jobQueueId = Guid.NewGuid();
+        var jobExecutionId = Guid.NewGuid();
+
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+
+        // Live ChargeRate = 17.00; effective ChargeRate = 17.00 → no change.
+        // PayRate does change (10→12) so we still get a PayRate history row.
+        await InsertLiveStaffRowAsync(conn, pcGrade, fpsYear,
+            payRate: 10.00m, npr: 5.00m, ohr: 2.00m, chargeRate: 17.00m);
+        await InsertJobQueueAsync(conn, jobQueueId, jobExecutionId, fpsYear);
+        await InsertFrozenStagingRowAsync(
+            conn, jobQueueId, pcGrade,
+            payRate: 12.00m, npr: 5.00m, ohr: 2.00m,
+            calculatedAction: "Update",
+            sourcePayRate: 10.00m, sourceNpr: 5.00m, sourceOhr: 2.00m,
+            effectivePayRate: 12.00m, effectiveNpr: 5.00m, effectiveOhr: 2.00m,
+            effectiveChargeRate: 17.00m,
+            validationVersion: 1);
+
+        try
+        {
+            await CreateService().ExecuteAsync(new BulkRatesExecutionContext(jobExecutionId, BatchJobNames.BulkStaffRatesUpdate, fpsYear));
+
+            await using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = @"
+                    SELECT fieldname
+                    FROM fps.rate_change_history
+                    WHERE jobqueueid = @jqid
+                    ORDER BY fieldname;";
+                cmd.Parameters.AddWithValue("jqid", jobQueueId);
+                await using var r = await cmd.ExecuteReaderAsync();
+
+                var fields = new List<string>();
+                while (await r.ReadAsync())
+                    fields.Add(r.GetString(0));
+
+                Assert.DoesNotContain("ChargeRate", fields);
+                Assert.Contains("PayRate", fields); // sanity: PayRate change was recorded
+            }
+        }
+        finally
+        {
+            await CleanupAsync(jobQueueId, fpsYear, [pcGrade]);
+        }
+    }
     // â”€â”€ Unexpected actions: Insert, ZeroRateWithdrawal, NotFound, Invalid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [SkippableFact]
     public async Task ExecuteAsync_InsertAction_ThrowsWithDiagnosticMessage()
     {
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-        var ex = await AssertUnexpectedActionThrowsAsync("Insert", "SA5-S10", 2093);
+        var ex = await AssertUnexpectedActionThrowsAsync("Insert", "SA5-S10", 2103);
         Assert.Contains("Staff Insert is not supported", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -369,21 +499,21 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
     public async Task ExecuteAsync_UnexpectedAction_ZeroRateWithdrawal_Throws()
     {
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-        await AssertUnexpectedActionThrowsAsync("ZeroRateWithdrawal", "SA5-S11", 2093);
+        await AssertUnexpectedActionThrowsAsync("ZeroRateWithdrawal", "SA5-S11", 2103);
     }
 
     [SkippableFact]
     public async Task ExecuteAsync_UnexpectedAction_NotFound_Throws()
     {
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-        await AssertUnexpectedActionThrowsAsync("NotFound", "SA5-S12", 2093);
+        await AssertUnexpectedActionThrowsAsync("NotFound", "SA5-S12", 2103);
     }
 
     [SkippableFact]
     public async Task ExecuteAsync_UnexpectedAction_Invalid_Throws()
     {
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-        await AssertUnexpectedActionThrowsAsync("Invalid", "SA5-S13", 2093);
+        await AssertUnexpectedActionThrowsAsync("Invalid", "SA5-S13", 2103);
     }
 
     private async Task<InvalidOperationException> AssertUnexpectedActionThrowsAsync(string action, string pcGrade, int fpsYear)
@@ -401,6 +531,7 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
             calculatedAction: action,
             sourcePayRate: 10m, sourceNpr: 5m, sourceOhr: 2m,
             effectivePayRate: 10m, effectiveNpr: 5m, effectiveOhr: 2m,
+            effectiveChargeRate: 17m,
             validationVersion: 1);
 
         try

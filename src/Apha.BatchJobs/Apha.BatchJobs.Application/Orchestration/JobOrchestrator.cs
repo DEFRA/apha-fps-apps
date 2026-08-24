@@ -27,6 +27,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private readonly ICorrelationContextAccessor _correlationService;
     private readonly ICurrentJobExecutionContext _currentExecutionContext;
     private readonly IEmailNotificationService _notificationService;
+    private readonly IEnumerable<IPostCompletionNotifier> _postCompletionNotifiers;
     private readonly BatchAlertingSettings _alertingSettings;
     private readonly ILogger<JobOrchestrator> _logger;
     private readonly int _lockTimeoutSeconds;
@@ -54,6 +55,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         ICorrelationContextAccessor correlationService,
         ICurrentJobExecutionContext currentExecutionContext,
         IEmailNotificationService notificationService,
+        IEnumerable<IPostCompletionNotifier> postCompletionNotifiers,
         IOptions<BatchAlertingSettings> alertingSettings,
         IOptions<BatchJobSettings> settings,
         BatchFailureClassifier failureClassifier,
@@ -65,6 +67,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
         _currentExecutionContext = currentExecutionContext ?? throw new ArgumentNullException(nameof(currentExecutionContext));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+        _postCompletionNotifiers = postCompletionNotifiers ?? [];
         _alertingSettings = alertingSettings?.Value ?? new BatchAlertingSettings();
         _lockTimeoutSeconds = settings?.Value.LockTimeoutSeconds >= 0
             ? settings.Value.LockTimeoutSeconds
@@ -497,6 +500,12 @@ public sealed class JobOrchestrator : IJobOrchestrator
             "--- Orchestrator: '{JobName}' finished | Status={Status} | Duration={Duration:mm\\:ss\\.fff} | JobQueueId={JobQueueId}",
             jobName, status, finalDuration, jobQueueId);
 
+        if (jobException is null)
+        {
+            var completionContext = new BatchJobCompletionContext(jobQueueId, jobExecutionId, jobName, fpsYear, userId);
+            await TryNotifyCompletionAsync(completionContext, cancellationToken);
+        }
+
         if (jobException is OperationCanceledException cancelEx)
             throw cancelEx;
 
@@ -571,6 +580,32 @@ public sealed class JobOrchestrator : IJobOrchestrator
     /// across all jobs, so eligibility must be opted into per job rather than applying to every
     /// job's failure by default.
     /// </summary>
+    /// <summary>
+    /// Invokes all registered post-completion notifiers in sequence after a job is durably
+    /// Completed and its lock released. Failures in any notifier are logged at Error level and
+    /// swallowed — a notification problem must not alter the durable Completed state.
+    /// </summary>
+    private async Task TryNotifyCompletionAsync(BatchJobCompletionContext context, CancellationToken cancellationToken)
+    {
+        foreach (var notifier in _postCompletionNotifiers)
+        {
+            try
+            {
+                await notifier.NotifyAsync(context, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Post-completion notifier {NotifierType} failed | JobName={JobName} | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId}",
+                    notifier.GetType().Name,
+                    context.JobName,
+                    context.JobQueueId,
+                    context.JobExecutionId);
+            }
+        }
+    }
+
     private async Task TryNotifyFailureAsync(string jobName, Guid jobExecutionId, Exception exception)
     {
         if (!_alertingSettings.EnableEmailNotifications ||

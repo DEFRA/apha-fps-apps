@@ -61,12 +61,12 @@ public sealed class BulkAnimalRatesService : IBulkAnimalRatesService
             jobQueueId, stagingRows.Count);
 
         // ── 3. Apply all mutations in one transaction (repository-managed) ─
-        var (inserted, updated, unchanged) = await _repository.ApplyAnimalRatesAsync(
+        var (updated, unchanged) = await _repository.ApplyAnimalRatesAsync(
             stagingRows, entry, appliedAt, cancellationToken);
 
         _logger.LogInformation(
-            "BulkAnimalRatesUpdate committed | JobQueueId={JobQueueId} | Inserted={Inserted} | Updated={Updated} | Unchanged={Unchanged}",
-            jobQueueId, inserted, updated, unchanged);
+            "BulkAnimalRatesUpdate committed | JobQueueId={JobQueueId} | Updated={Updated} | Unchanged={Unchanged}",
+            jobQueueId, updated, unchanged);
 
         // ── US-XC-02: Log commit summary ──────────────────────────────
         // Best-effort: rates are committed; a logging failure must not fail the job.
@@ -74,7 +74,7 @@ public sealed class BulkAnimalRatesService : IBulkAnimalRatesService
         {
             await _repository.WriteJobQueueLogAsync(
                 jobQueueId,
-                $"Rate changes committed: Animal inserted={inserted}, updated={updated}, unchanged={unchanged}.",
+                $"Rate changes committed: Animal updated={updated}, unchanged={unchanged}.",
                 entry.ApprovedBy, cancellationToken);
         }
         catch (Exception ex)

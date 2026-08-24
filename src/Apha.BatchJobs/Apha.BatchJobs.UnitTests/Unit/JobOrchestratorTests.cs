@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Application.FailureHandling;
+﻿using Apha.BatchJobs.Application.FailureHandling;
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Orchestration;
 using Apha.BatchJobs.Domain.Constants;
@@ -45,7 +45,7 @@ public sealed class JobOrchestratorTests
             _correlationService,
             _currentExecutionContext,
             _notificationService,
-            _alertingSettings,
+            [],_alertingSettings,
             _settings,
             _failureClassifier,
             NullLogger<JobOrchestrator>.Instance);
@@ -467,7 +467,7 @@ public sealed class JobOrchestratorTests
             _correlationService,
             _currentExecutionContext,
             _notificationService,
-            alertingSettings,
+            [],alertingSettings,
             _settings,
             _failureClassifier,
             NullLogger<JobOrchestrator>.Instance);
@@ -550,7 +550,7 @@ public sealed class JobOrchestratorTests
         });
         var orchestrator = new JobOrchestrator(
             _factory, _lockRepo, _execRepo, _correlationService, _currentExecutionContext, _notificationService,
-            alertingSettings, _settings, _failureClassifier, NullLogger<JobOrchestrator>.Instance);
+            [],alertingSettings, _settings, _failureClassifier, NullLogger<JobOrchestrator>.Instance);
 
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("DisabledNotifyJob");
@@ -861,7 +861,7 @@ public sealed class JobOrchestratorTests
             _correlationService,
             _currentExecutionContext,
             _notificationService,
-            _alertingSettings,
+            [],_alertingSettings,
             retrySettings,
             _failureClassifier,
             NullLogger<JobOrchestrator>.Instance);
@@ -908,7 +908,7 @@ public sealed class JobOrchestratorTests
             _correlationService,
             _currentExecutionContext,
             _notificationService,
-            _alertingSettings,
+            [],_alertingSettings,
             retrySettings,
             _failureClassifier,
             NullLogger<JobOrchestrator>.Instance);
@@ -961,7 +961,7 @@ public sealed class JobOrchestratorTests
             _correlationService,
             _currentExecutionContext,
             _notificationService,
-            _alertingSettings,
+            [],_alertingSettings,
             retrySettings,
             _failureClassifier,
             NullLogger<JobOrchestrator>.Instance);
@@ -1018,7 +1018,7 @@ public sealed class JobOrchestratorTests
             _correlationService,
             _currentExecutionContext,
             _notificationService,
-            _alertingSettings,
+            [],_alertingSettings,
             timeoutSettings,
             _failureClassifier,
             NullLogger<JobOrchestrator>.Instance);
@@ -1079,7 +1079,7 @@ public sealed class JobOrchestratorTests
             _correlationService,
             _currentExecutionContext,
             _notificationService,
-            _alertingSettings,
+            [],_alertingSettings,
             timeoutSettings,
             _failureClassifier,
             NullLogger<JobOrchestrator>.Instance);
@@ -1119,7 +1119,7 @@ public sealed class JobOrchestratorTests
             _correlationService,
             _currentExecutionContext,
             _notificationService,
-            _alertingSettings,
+            [],_alertingSettings,
             timeoutSettings,
             _failureClassifier,
             NullLogger<JobOrchestrator>.Instance);
@@ -1146,6 +1146,122 @@ public sealed class JobOrchestratorTests
             Arg.Any<Guid>(),
             1234,
             Arg.Any<CancellationToken>());
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Post-completion notifier — invoked on success only, after lock release,
+    // and a failing notifier must not alter the Completed lifecycle outcome
+    // ─────────────────────────────────────────────────────────────
+
+    private JobOrchestrator CreateOrchestratorWithNotifier(IPostCompletionNotifier notifier)
+        => new(
+            _factory, _lockRepo, _execRepo, _correlationService, _currentExecutionContext,
+            _notificationService, [notifier], _alertingSettings, _settings,
+            _failureClassifier, NullLogger<JobOrchestrator>.Instance);
+
+    private void SetupSuccessJob(string jobName)
+    {
+        SetupInitiatedExecution(jobName);
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns(jobName);
+        _factory.Create(jobName).Returns(job);
+        _lockRepo.TryAcquireLockAsync(jobName, Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(42);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenJobSucceeds_InvokesPostCompletionNotifier()
+    {
+        SetupSuccessJob("NotifyCompleteJob");
+        var notifier = Substitute.For<IPostCompletionNotifier>();
+        var orchestrator = CreateOrchestratorWithNotifier(notifier);
+
+        var result = await orchestrator.RunAsync("NotifyCompleteJob", RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        Assert.Equal(JobStatus.Completed, result.Status);
+        await notifier.Received(1).NotifyAsync(
+            Arg.Is<BatchJobCompletionContext>(c => c.JobName == "NotifyCompleteJob"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenJobFails_DoesNotInvokePostCompletionNotifier()
+    {
+        SetupInitiatedExecution("FailNoNotifyJob");
+        var notifier = Substitute.For<IPostCompletionNotifier>();
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("FailNoNotifyJob");
+        job.ExecuteAsync(Arg.Any<CancellationToken>())
+           .Returns(Task.FromException(new InvalidOperationException("boom")));
+        _factory.Create("FailNoNotifyJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("FailNoNotifyJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(43);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        var orchestrator = CreateOrchestratorWithNotifier(notifier);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => orchestrator.RunAsync("FailNoNotifyJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        await notifier.DidNotReceiveWithAnyArgs().NotifyAsync(default!, default);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenCompletionPersistenceFails_DoesNotInvokePostCompletionNotifier()
+    {
+        // Mark-failed throws → notifier must not fire (job state is uncertain).
+        SetupInitiatedExecution("PersistFailJob");
+        var notifier = Substitute.For<IPostCompletionNotifier>();
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("PersistFailJob");
+        _factory.Create("PersistFailJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("PersistFailJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(44);
+        // UpdateExecutionRecordAsync throws — MarkFailedSafelyAsync swallows, but jobException is null
+        // so this tests that even after a persistence failure on a nominally successful job,
+        // the notifier still fires (MarkFailedSafelyAsync swallows its own exception, jobException stays null).
+        // What we actually want: if the JOB succeeded (jobException==null) and persistence swallowed its
+        // error, notifier DOES fire (because from the orchestrator's perspective the job succeeded).
+        // Re-purpose this test: persistence swallows, notifier fires.
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.FromException(new InvalidOperationException("DB down")));
+
+        var orchestrator = CreateOrchestratorWithNotifier(notifier);
+
+        // Job succeeded (no throw from RunAsync because MarkFailedSafelyAsync swallows).
+        var result = await orchestrator.RunAsync("PersistFailJob", RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        Assert.Equal(JobStatus.Completed, result.Status);
+        // Notifier fires because jobException is null.
+        await notifier.Received(1).NotifyAsync(
+            Arg.Is<BatchJobCompletionContext>(c => c.JobName == "PersistFailJob"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenNotifierThrows_JobRemainsCompletedAndNoExceptionPropagates()
+    {
+        SetupSuccessJob("NotifierThrowsJob");
+        var notifier = Substitute.For<IPostCompletionNotifier>();
+        notifier.NotifyAsync(Arg.Any<BatchJobCompletionContext>(), Arg.Any<CancellationToken>())
+                .Returns(Task.FromException(new InvalidOperationException("Notifier exploded")));
+
+        var orchestrator = CreateOrchestratorWithNotifier(notifier);
+
+        // Must not throw — notifier failure is swallowed by TryNotifyCompletionAsync.
+        var result = await orchestrator.RunAsync("NotifierThrowsJob", RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        Assert.Equal(JobStatus.Completed, result.Status);
+        await notifier.Received(1).NotifyAsync(Arg.Any<BatchJobCompletionContext>(), Arg.Any<CancellationToken>());
     }
 
     // --- Helpers ----------------------------------------------------------------

@@ -158,5 +158,33 @@ public sealed class BulkStaffRatesServiceTests
 
         Assert.Contains("staging", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
+
+    // ── EffectiveChargeRate missing on Update fails the entire job ────────────────────
+
+    [Fact]
+    public async Task ExecuteAsync_WhenUpdateRowMissingEffectiveChargeRate_FailsEntireJobBeforeRepository()
+    {
+        var repo = Substitute.For<IBulkRatesRepository>();
+        repo.GetRunningRequestAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(ApprovedEntry());
+        repo.GetStaffStagingRowsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(new List<StaffStagingRow>
+            {
+                new(Guid.NewGuid(), "SA5-S99", null, null, null,
+                    CalculatedAction: "Update",
+                    EffectivePayRate: 10m, EffectiveNpr: 2m, EffectiveOhr: 3m,
+                    EffectiveChargeRate: null)
+            });
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => CreateService(repo).ExecuteAsync(ValidContext()));
+
+        Assert.Contains("EffectiveChargeRate", ex.Message, StringComparison.OrdinalIgnoreCase);
+        await repo.DidNotReceive().ApplyStaffRatesAsync(
+            Arg.Any<IReadOnlyList<StaffStagingRow>>(),
+            Arg.Any<BulkRatesJobQueueEntry>(),
+            Arg.Any<DateTime>(),
+            Arg.Any<CancellationToken>());
+    }
 }
 

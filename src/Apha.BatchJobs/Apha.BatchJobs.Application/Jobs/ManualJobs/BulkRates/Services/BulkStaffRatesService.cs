@@ -56,6 +56,15 @@ public sealed class BulkStaffRatesService : IBulkStaffRatesService
                 $"BulkStaffRatesUpdate: no staging rows found for JobQueueId={jobQueueId:D}.");
         }
 
+        var nullChargeRateRow = stagingRows.FirstOrDefault(
+            r => string.Equals(r.CalculatedAction, "Update", StringComparison.OrdinalIgnoreCase)
+              && r.EffectiveChargeRate == null);
+        if (nullChargeRateRow != null)
+            throw new InvalidOperationException(
+                $"BulkStaffRatesUpdate: approved Staff Update is missing EffectiveChargeRate " +
+                $"for PcGrade='{nullChargeRateRow.PcGrade}' in JobQueueId={jobQueueId:D}. " +
+                "This indicates an upstream frozen-state contract defect.");
+
         _logger.LogInformation(
             "BulkStaffRatesUpdate staging loaded | JobQueueId={JobQueueId} | Rows={Rows}",
             jobQueueId, stagingRows.Count);
