@@ -91,7 +91,7 @@
                             <table id="tbl_wgStaffTotals" class="govuk-table govuk-!-margin-top-0 govuk-!-margin-bottom-0" style="table-layout: fixed; width: 100%; border-top: 2px solid #b1b4b6;">
                                 <tbody>
                                     <tr class="govuk-table__row" style="background-color: #f3f2f1;">
-                                        <td class="govuk-table__cell" id="fpsSrTotalsLabelCol1" style="font-weight:bold;">Totals</td>
+                                        <th scope="row" class="govuk-table__cell" id="fpsSrTotalsLabelCol1" style="font-weight:bold;">Totals</th>
                                         <td class="govuk-table__cell" id="fpsSrTotalsLabelCol2"></td>
                                         <td class="govuk-table__cell" id="fpsSrTotalHrsPaid" style="text-align:right; font-weight:bold;">@Model.WgHrsPaid</td>
                                         <td class="govuk-table__cell" id="fpsSrTotalLeave"   style="text-align:right; font-weight:bold;">@Model.WgLeave</td>
@@ -460,7 +460,7 @@
         // Syncs totals footer cell widths to match the actual rendered wgStaffGrid header columns
         function syncTotalsRow() {
             var $headerCols = $('#tbl_' + wgStaffGridId + ' thead tr:first th');
-            var $totalCols  = $('#tbl_wgStaffTotals tbody tr:first td');
+            var $totalCols  = $('#tbl_wgStaffTotals tbody tr:first').children('th, td');
             if ($headerCols.length === $totalCols.length) {
                 $headerCols.each(function (i) {
                     $totalCols.eq(i).css('width', $(this).outerWidth() + 'px');
