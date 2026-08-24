@@ -86,6 +86,21 @@
 }
 
 /* Milestone grid: word-wrap long text in Description/P Leader's Comment/CAP's Comment columns */
+#gridContainer_pmdMilestonesGrid td[data-property="Description"],
+#gridContainer_pmdMilestonesGrid td[data-property="ProjectLeaderComment"],
+#gridContainer_importGrid td[data-property="Description"],
+#gridContainer_logMilestonesGrid td[data-property="ProjectLeaderComment"],
+#gridContainer_logMilestonesGrid td[data-property="CapsComment"] {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+#gridContainer_logMilestonesGrid td[data-property="Description"] {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 300px !important
+}
 #gridContainer_milestonesGrid {
     td[data-property="Description"],
     td[data-property="ProjectLeaderComment"],
@@ -95,14 +110,14 @@
         overflow-wrap: break-word;
     }
 
-    td[data-property="Description"] span,
-    td[data-property="ProjectLeaderComment"] span,
-    td[data-property="CapsComment"] span {
-        white-space: normal;
-        word-break: break-word;
-        overflow-wrap: break-word;
-        display: inline-block;
-    }
+        td[data-property="Description"] span,
+        td[data-property="ProjectLeaderComment"] span,
+        td[data-property="CapsComment"] span {
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            display: inline-block;
+        }
 }
 
 /* Reports grid: word-wrap long text; set min/max widths for Name, Description and Report Help columns */
@@ -2520,6 +2535,84 @@ th.sorted-desc {
 .govuk-error-message {
     font-size: 14px !important;
 }
+/* =====================================================
+   Time Tab – Working Hours & Working Days
+   PIMS Report Admin Maintenance
+   ===================================================== */
+
+/* ── Form container ────────────────────────────────── */
+.time-form-container {
+    max-width: 900px;
+    padding: 16px 0 8px 0;
+}
+
+/* ── Each field row (label | input | hint inline) ──── */
+.time-form-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 25px;
+    margin-bottom: 0;
+    border-left: none;
+}
+
+    .time-form-row.govuk-form-group--error {
+        border-left: 4px solid #d4351c;
+        padding-left: 12px;
+    }
+
+/* ── Label column ──────────────────────────────────── */
+.time-form-label-col {
+    flex: 0 0 200px;
+    min-width: 0;
+    padding-top: 5px;
+    padding-left: 10px
+}
+
+    .time-form-label-col .govuk-label {
+        margin-bottom: 0;
+    }
+
+/* ── Input column ──────────────────────────────────── */
+.time-form-input-col {
+    flex: 0 0 250px;
+    min-width: 0px;
+}
+
+    .time-form-input-col .govuk-input {
+        width: 100%;
+    }
+
+    .time-form-input-col .govuk-error-message {
+        margin-top: 4px;
+        margin-bottom: 0;
+        font-size: 14px;
+    }
+
+/* ── Hint column ───────────────────────────────────── */
+.time-form-hint-col {
+    display: flex;
+    align-items: start;
+}
+
+    .time-form-hint-col .govuk-hint {
+        padding: 0;
+        margin: 0;
+        font-size: 16px;
+        color: #0b0c0c;
+        font-weight: 700;
+    }
+
+/* ── Footer (Cancel / Save buttons) ───────────────── */
+.time-form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    padding-left: 7px;
+    margin-top: 12px;
+    max-width: 470px;
+}
+
 
 /* =====================================================
    Admin Maintenance Tab Panel Styles
@@ -2758,8 +2851,11 @@ th.sorted-desc {
 
 .other-panel-header {
     border-bottom: 1px solid #b1b4b6;
-    padding: 7px 10px;
-    font-size: 14px;
+    padding-top: 13px;
+    padding-left: 10px;
+    padding-bottom: 15px;
+    font-size: 1.1rem;
+/*    font-size: 16px;*/
     font-weight: 700;
     color: #0b0c0c;
     margin-bottom: 1px;
@@ -2774,17 +2870,18 @@ th.sorted-desc {
     cursor: pointer;
 }
 
-.other-list-table tbody tr td {
-    padding: 6px 10px;
-    font-size: 14px;
-    color: #0b0c0c;
-    border-bottom: 1px solid #f0f0f0;
-    white-space: nowrap;
-}
+    .other-list-table tbody tr td {
+        padding: 6px 10px;
+        font-size: 1.1rem !important;
+        color: #0b0c0c;
+        border-bottom: 1px solid #f0f0f0;
+        white-space: nowrap;
+    }
 
-.other-list-table tbody tr:hover td {
-    background-color: #f5f5f5;
-}
+    .other-list-table tbody tr:hover td {
+        background-color: #f0f8ff;
+
+    }
 
 .other-list-table tbody tr.other-row-selected td {
     background-color: #f5f5f5;
@@ -2793,7 +2890,7 @@ th.sorted-desc {
 }
 
     .other-list-table tbody tr td.other-list-item.selected {
-        background-color: #f4f8fb;
+        background-color: #b3d1ff;
         color: #0b0c0c;
         font-weight: 700;
     }
@@ -2916,4 +3013,99 @@ th.sorted-desc {
 #gridContainer_milestonesGrid .editable-grid-container div div,
 #gridContainer_milestoneFormDatesGrid .editable-grid-container div div {
     justify-content: end
+}
+
+/* ── Export Queries (PIMS Queries/Index) ───────────────────────────── */
+/* Only rules with no equivalent GOV.UK/supplement utility class remain here. */
+.qry-filter-row {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.qry-filter-row--end {
+    align-items: flex-end;
+}
+
+.qry-filter-row--start {
+    align-items: flex-start;
+}
+
+#qryFilterMonth,
+#qryFilterYear,
+#qryFilterContract {
+    width: 400px;
+}
+
+#qryExportQueriesBox {
+    border: 1px solid black;
+    width: 400px;
+    background: #ffffff;
+    max-height: 125px;
+    overflow-y: auto;
+}
+
+    #qryExportQueriesBox label {
+        display: block;
+        padding: 8px 12px;
+        margin: 0;
+        cursor: pointer;
+        border-bottom: 1px solid var(--govuk-border-colour, #b1b4b6);
+    }
+
+        #qryExportQueriesBox label:last-child {
+            border-bottom: none;
+        }
+
+    #qryExportQueriesBox input[type="radio"] {
+        display: none;
+    }
+
+    #qryExportQueriesBox label:hover {
+        background-color: #f0f8ff;
+    }
+
+    #qryExportQueriesBox label:has(input:checked) {
+        background-color: #b3d1ff;
+        color: #0b0c0c;
+        font-weight: 700;
+    }
+
+#qryOpenQueryGroup {
+    margin-top: 51px
+}
+
+#qryContractGroup {
+    margin-top: 35px;
+}
+
+#queryResultsContainer {
+    display: none;
+    margin-top: 30px;
+}
+
+#row1,
+#row2,
+#row3 {
+    display: none;
+}
+
+#qryResultsTableWrapper {
+    overflow-x: auto;
+    border: 1px solid var(--govuk-border-colour, #b1b4b6);
+}
+/* =====================================================
+   Import Milestones/Deliverables — page-specific styles
+   (pimsmilestonesimport.html)
+   Classes here have no equivalent in govuk-* or sup_*
+   ===================================================== */
+
+/* Left workflow panel — unique background, border and width constraints */
+.import-workflow-panel {
+    background-color: #f3f2f1;
+    border: 1px solid var(--govuk-border-colour, #b1b4b6);
+    padding: 12px;
+    min-width: 220px;
+    max-width: 240px;
+    flex-shrink: 0;
 }
