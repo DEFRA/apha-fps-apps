@@ -142,7 +142,7 @@
                                 var isSorted = (Model.Pagination.SortColumn == column.PropertyName);
                                 var sortIcon = "";
                                 if (isSorted)
-                                    sortIcon = Model.Pagination.SortDirection ? "▲" : "▼";
+                                    sortIcon = Model.Pagination.SortDirection ? "▼" : "▲";
                                 <th scope="col" style="width: @column.Width px; cursor:pointer;"
                                             class="sortable-header @GridHelpers.GetHeaderAlignmentCssClass(column) @column.CssClass"
                                             data-column="@column.PropertyName"
