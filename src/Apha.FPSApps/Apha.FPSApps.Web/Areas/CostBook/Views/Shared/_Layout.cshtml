@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿﻿
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -35,7 +36,7 @@
     <!-- ── Shared modal popup (for add/edit forms) ───────────────────── -->
     <div id="modalPopup" tabindex="-1" aria-label="Dialog"
          style="display:none; position:fixed; inset:0; z-index:1050;
-                background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+        background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
         <div class="modal-dialog modal-lg" style="margin:auto; width:100%; max-width:700px;">
             <div id="modaPopupBody" class="modal-content" style="border-radius:4px;">
             </div>
@@ -47,46 +48,46 @@
     <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
     <script src="~/js/govuk-modal-dialog.js"></script>
-    <fps-year-script></fps-year-script>
 
+    
     <script>
-        // ── Modal open / close helpers ────────────────────────────────────
-        (function () {
-            var modal = document.getElementById('modalPopup');
-            if (!modal) return;
+            // ── Modal open / close helpers ────────────────────────────────────
+            (function() {
+                var modal = document.getElementById('modalPopup');
+                if (!modal) return;
 
-            var observer = new MutationObserver(function () {
-                if (modal.classList.contains('show')) {
-                    modal.style.display = 'flex';
-                    document.body.style.overflow = 'hidden';
-                } else {
-                    modal.style.display = 'none';
-                    document.body.style.overflow = '';
-                }
-            });
-            observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+                var observer = new MutationObserver(function() {
+                    if (modal.classList.contains('show')) {
+                        modal.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                    } else {
+                        modal.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }
+                });
+                observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
 
-            modal.addEventListener('click', function (e) {
-                if (e.target === modal) {
-                    return false;
-                }
-            });
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        return false;
+                    }
+                });
 
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape' && modal.classList.contains('show')) {
-                    modal.classList.remove('show');
-                }
-            });
-        })();
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && modal.classList.contains('show')) {
+                        modal.classList.remove('show');
+                    }
+                });
+            })();
 
-        // ── jQuery.fn.serializeObject helper ─────────────────────────────
-        $.fn.serializeObject = function () {
-            var obj = {};
-            this.serializeArray().forEach(function (item) {
-                obj[item.name] = item.value;
-            });
-            return obj;
-        };
+            // ── jQuery.fn.serializeObject helper ─────────────────────────────
+            $.fn.serializeObject = function() {
+                var obj = {};
+                this.serializeArray().forEach(function(item) {
+                    obj[item.name] = item.value;
+                });
+                return obj;
+            };
     </script>
 
     <script src="~/js/common/headernav/navmenu.js"></script>
