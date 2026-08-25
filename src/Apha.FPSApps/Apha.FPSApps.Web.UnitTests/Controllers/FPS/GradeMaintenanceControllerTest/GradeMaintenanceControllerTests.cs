@@ -31,6 +31,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.GradeMaintenanceControllerT
             return JsonSerializer.Deserialize<T>(json);
         }
 
+        private void SetupGradeServiceDefault()
+        {
+            _gradeService.GetAllPagedAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(ApiResponseDto<List<GradeDto>>.SuccessResponse(new List<GradeDto>()));
+        }
+
         #region Constructor Tests
 
         [Fact]
@@ -45,6 +51,83 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.GradeMaintenanceControllerT
         {
             Assert.Throws<ArgumentNullException>(() =>
                 new GradeMaintenanceController(_mapper, null!));
+        }
+
+        #endregion
+
+        #region Index Tests
+
+        [Fact]
+        public async Task Index_ReturnsViewResult()
+        {
+            // Arrange
+            SetupGradeServiceDefault();
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            Assert.IsType<ViewResult>(result);
+        }
+
+        [Fact]
+        public async Task Index_GridHasNoDefaultSortColumn()
+        {
+            // Arrange
+            SetupGradeServiceDefault();
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model      = Assert.IsType<GradeMaintenanceViewModel>(viewResult.Model);
+            Assert.True(string.IsNullOrEmpty(model.GradeGrid.Pagination.SortColumn),
+                "No sort column should be applied on initial page load.");
+        }
+
+        [Fact]
+        public async Task Index_GridHasNoDefaultSortDirection()
+        {
+            // Arrange
+            SetupGradeServiceDefault();
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model      = Assert.IsType<GradeMaintenanceViewModel>(viewResult.Model);
+            Assert.False(model.GradeGrid.Pagination.SortDirection,
+                "Sort direction should default to ascending (false) on initial page load.");
+        }
+
+        [Fact]
+        public async Task Index_GridHasCorrectGridId()
+        {
+            // Arrange
+            SetupGradeServiceDefault();
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model      = Assert.IsType<GradeMaintenanceViewModel>(viewResult.Model);
+            Assert.Equal("gradeGrid", model.GradeGrid.GridId);
+        }
+
+        [Fact]
+        public async Task Index_CallsGetAllPagedAsync_Once()
+        {
+            // Arrange
+            SetupGradeServiceDefault();
+
+            // Act
+            await _controller.Index();
+
+            // Assert
+            await _gradeService.Received(1).GetAllPagedAsync(Arg.Any<QueryParameters<string>>());
         }
 
         #endregion

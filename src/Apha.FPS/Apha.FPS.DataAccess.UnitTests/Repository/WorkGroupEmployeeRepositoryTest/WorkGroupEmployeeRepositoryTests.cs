@@ -34,6 +34,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
                 SpNumber       = e.SpNumber,
                 WorkGroupGrade = e.WorkGroupGrade,
                 PersonStatus   = e.PersonStatus,
+                HrsPaid        = e.HrsPaid,
+                Leave          = e.Leave,
+                SickSpecial    = e.SickSpecial,
+                HrsAvail       = e.HrsAvail,
+                MakeAvailable  = e.MakeAvailable,
                 UserEmail      = testEmail,
                 FpsYear        = requestContext.FpsYear
             });
@@ -465,6 +470,229 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
             var list = result.Data.ToList();
             Assert.Equal("P010", list[0].PactId);
             Assert.Equal("P011", list[1].PactId);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortByHrsPaidAscending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsPaid = 30 },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsPaid = 10 },
+                new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsPaid = 20 }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "hrspaid", Descending = false };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Equal(10, list[0].HrsPaid);
+            Assert.Equal(20, list[1].HrsPaid);
+            Assert.Equal(30, list[2].HrsPaid);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortByHrsPaidDescending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsPaid = 30 },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsPaid = 10 },
+                new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsPaid = 20 }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "hrspaid", Descending = true };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Equal(30, list[0].HrsPaid);
+            Assert.Equal(20, list[1].HrsPaid);
+            Assert.Equal(10, list[2].HrsPaid);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortByLeaveAscending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", Leave = 5 },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", Leave = 1 },
+                new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", Leave = 3 }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "leave", Descending = false };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Equal(1, list[0].Leave);
+            Assert.Equal(3, list[1].Leave);
+            Assert.Equal(5, list[2].Leave);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortByLeaveDescending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", Leave = 5 },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", Leave = 1 },
+                new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", Leave = 3 }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "leave", Descending = true };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Equal(5, list[0].Leave);
+            Assert.Equal(3, list[1].Leave);
+            Assert.Equal(1, list[2].Leave);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortBySickSpecialAscending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", SickSpecial = 7 },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", SickSpecial = 2 },
+                new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", SickSpecial = 4 }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "sickspecial", Descending = false };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Equal(2, list[0].SickSpecial);
+            Assert.Equal(4, list[1].SickSpecial);
+            Assert.Equal(7, list[2].SickSpecial);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortBySickSpecialDescending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", SickSpecial = 7 },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", SickSpecial = 2 },
+                new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", SickSpecial = 4 }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "sickspecial", Descending = true };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Equal(7, list[0].SickSpecial);
+            Assert.Equal(4, list[1].SickSpecial);
+            Assert.Equal(2, list[2].SickSpecial);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortByHrsAvailAscending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsAvail = 25 },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsAvail = 5 },
+                new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsAvail = 15 }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "hrsavai", Descending = false };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Equal(5, list[0].HrsAvail);
+            Assert.Equal(15, list[1].HrsAvail);
+            Assert.Equal(25, list[2].HrsAvail);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortByHrsAvailDescending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsAvail = 25 },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsAvail = 5 },
+                new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsAvail = 15 }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "hrsavai", Descending = true };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Equal(25, list[0].HrsAvail);
+            Assert.Equal(15, list[1].HrsAvail);
+            Assert.Equal(5, list[2].HrsAvail);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortByMakeAvailableAscending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", MakeAvailable = 1 },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", MakeAvailable = -1 },
+                new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", MakeAvailable = 0 }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "makeavailable", Descending = false };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Equal(-1, list[0].MakeAvailable);
+            Assert.Equal(0, list[1].MakeAvailable);
+            Assert.Equal(1, list[2].MakeAvailable);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortByMakeAvailableDescending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", MakeAvailable = 1 },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", MakeAvailable = -1 },
+                new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", MakeAvailable = 0 }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "makeavailable", Descending = true };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Equal(1, list[0].MakeAvailable);
+            Assert.Equal(0, list[1].MakeAvailable);
+            Assert.Equal(-1, list[2].MakeAvailable);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortByNullSortBy_DefaultsToNameOrder()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
+            };
+            var staff = new List<Employee>
+            {
+                new() { SPNumber = "SP001", FirstName = "First", LastName = "Zeta" },
+                new() { SPNumber = "SP002", FirstName = "First", LastName = "Alpha" }
+            };
+            var repo  = CreateRepository(employees, staff);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = null, Descending = false };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Contains("Alpha", list[0].Name);
+            Assert.Contains("Zeta", list[1].Name);
         }
 
         #endregion

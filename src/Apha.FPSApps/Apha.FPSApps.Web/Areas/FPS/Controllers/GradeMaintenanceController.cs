@@ -36,11 +36,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             // an empty grid with default Add button regardless of JS-derived operations profile.
             // AllowAdd:true from JS showAddButton:true; AllowEdit+AllowDelete:true from JS
             // actions column containing both edit and delete buttons (fps_grade_maintenance.js).
+            // Build the initial grid with no default sort applied.
+            // Sorting is only applied after the user explicitly clicks a column header.
             var defaultRequest = new PaginationFilter<string>
             {
-                Filter = "{}",
-                SortBy = "GradeCode",
-                Descending = false
+                Filter = "{}"
             };
             viewModel.GradeGrid = await GetGradeGridConfigAsync(defaultRequest);
 
