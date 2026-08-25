@@ -1,9 +1,11 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -24,26 +26,42 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IProfitCentreService _profitCentreService;
         private readonly IWorkGroupService _workGroupService;
         private readonly IWorkGroupGradeService _workGroupGradeService;
+        private readonly IAppStateService _appStateService;
 
         public SetUpStaffResourcesController(
             IMapper mapper,
             IWorkGroupEmployeeService workGroupEmployeeService,
             IProfitCentreService profitCentreService,
             IWorkGroupGradeService workGroupGradeService,
-            IWorkGroupService workGroupService)
+            IWorkGroupService workGroupService,
+            IAppStateService appStateService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _workGroupEmployeeService = workGroupEmployeeService ?? throw new ArgumentNullException(nameof(workGroupEmployeeService));
             _profitCentreService = profitCentreService ?? throw new ArgumentNullException(nameof(profitCentreService));
             _workGroupGradeService = workGroupGradeService ?? throw new ArgumentNullException(nameof(workGroupGradeService));
             _workGroupService = workGroupService ?? throw new ArgumentNullException(nameof(workGroupService));
+            _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string? resourceCentre = null, string? workGroup = null)
         {
             var resourceCentres = await PopulateResourceCentresAsync();
-            var selectedRc = resourceCentre ?? string.Empty;
+
+            // Fall back to the session value only when no resource centre was supplied on the
+            // request (e.g. navigating in from another screen). An explicitly supplied empty
+            // value means the user reset the selection, so it must clear the session.
+            if (resourceCentre == null)
+                resourceCentre = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProfitCentre);
+
+            var selectedRc = !string.IsNullOrWhiteSpace(resourceCentre)
+                && resourceCentres.Any(r => r.Value == resourceCentre)
+                ? resourceCentre
+                : string.Empty;
+
+            // Persist the selection so it is retained across screens that show the Resource Centre dropdown.
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, selectedRc);
 
             var viewModel = new SetUpStaffResourcesViewModel
             {
@@ -93,6 +111,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             viewModel.StaffGrid = BuildStaffGridConfig(new List<SetUpStaffResourcesItem>(), new PaginationModel());
 
             return View(viewModel);
+        }
+
+        /// <summary>
+        /// Saves the selected resource centre to session (called client-side via AJAX when the dropdown changes).
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> SaveProfitCentreSession([FromBody] string resourceCentre)
+        {
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, resourceCentre ?? string.Empty);
+            return Ok();
         }
 
         [HttpPost]

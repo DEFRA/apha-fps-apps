@@ -189,7 +189,8 @@
             currentCentre: '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedResourceCentre))',
             currentWorkGroup: '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedWorkgroup))',
             currentGrade: '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedGrade))',
-            ztCodeUrl: '@Url.Action("Index", "PlanStaffZTCode", new { area = "FPS" })'
+            ztCodeUrl: '@Url.Action("Index", "PlanStaffZTCode", new { area = "FPS" })',
+            savePcSessionUrl: '@Url.Action("SaveProfitCentreSession", "SetUpStaffResources", new { area = "FPS" })'
         };
 
         // Initialise side nav state from server-selected values.

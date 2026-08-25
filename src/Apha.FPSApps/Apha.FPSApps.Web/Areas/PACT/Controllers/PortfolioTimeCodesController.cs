@@ -42,7 +42,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             var portfolios = await _projectService.GetAllPactProjectsAsync();
             var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
-
+            string originalParentProject;
+            if (TempData.Peek("OriginalParentProject") == null)
+            {
+                originalParentProject = parentProject ?? string.Empty;
+                TempData["OriginalParentProject"] = originalParentProject;
+            }
+            else
+            {
+                originalParentProject = TempData.Peek("OriginalParentProject")?.ToString() ?? string.Empty;
+                TempData.Keep("OriginalParentProject");
+            }
             var defaultRequest = new PaginationFilter<string>
             {
                 Filter = "{}",
@@ -62,6 +72,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             var viewModel = new PortfolioTimeCodesViewModel
             {
+                OriginalParentProject= originalParentProject,
                 SelectedPortfolio = parentProject,
                 PortfolioOptions = portfolios.Data?
                     .Select(p => new SelectListItem($"{p.ParentProject} - {p.ProjectTitle}", p.ParentProject))
