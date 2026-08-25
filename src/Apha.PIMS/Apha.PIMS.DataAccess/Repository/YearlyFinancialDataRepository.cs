@@ -92,7 +92,7 @@ namespace Apha.PIMS.DataAccess.Repository
                 if (rtd is { Useprojectyear: -1 } && rtd.Startdate.HasValue)
                 {
                     int shift = (int)pmf.Monthno + 3 - rtd.Startdate.Value.Month;
-                    return (short)new DateTime(pmf.Year, 1, 1).AddMonths(shift).Year;
+                    return (short)new DateTime(pmf.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(shift).Year;
                 }
                 return pmf.Year;
             }

@@ -626,7 +626,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.YearlyFinancialDataRepositor
             };
             var rtd  = new[]
             {
-                MakeRtd("PP001", useprojectyear: -1, startdate: new DateTime(2015, 1, 5))
+                MakeRtd("PP001", useprojectyear: -1, startdate: new DateTime(2015, 1, 5, 0, 0, 0, DateTimeKind.Utc))
             };
             var repo = CreateRepository(projectMonthFinals: pmfData, projectRadTrackData: rtd);
 
@@ -643,7 +643,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.YearlyFinancialDataRepositor
             // MonthNo 12: shift = 12+3-4 = 11 → Jan2024 + 11 months = Dec 2024 → year 2024.
             // Request for year 2023 should return nothing.
             var pmfData = new[] { MakePmf("PP001", 2024, 1.0), MakePmf("PP001", 2024, 12.0) };
-            var rtd     = new[] { MakeRtd("PP001", useprojectyear: -1, startdate: new DateTime(2024, 4, 1)) };
+            var rtd     = new[] { MakeRtd("PP001", useprojectyear: -1, startdate: new DateTime(2024, 4, 1, 0, 0, 0, DateTimeKind.Utc)) };
             var repo    = CreateRepository(projectMonthFinals: pmfData, projectRadTrackData: rtd);
 
             var result = await repo.GetPactCostsAsync("PP001", 2023);
