@@ -93,11 +93,21 @@
 
                             <!-- Year costs shell -->
                             <div class="project-year-costs-shell">
+                                
                                 <div class="form-header project-year-costs-header">
-                                    <h3 class="govuk-heading-s">@selectedYear Year Costs</h3>
+                                    <div class="sup_flex_between_center">
+                                        <h3 class="govuk-heading-s govuk-!-margin-bottom-0">@selectedYear Year Costs</h3>
+                                        <div class="govuk-!-margin-right-1 govuk-!-margin-bottom-1">
+                                            <button type="button" id="openCopyDataModal" class="govuk-button govuk-button--primary govuk-!-margin-bottom-0">Copy Data</button>
+                                        </div>
+                                    </div>
                                 </div>
-
+                                
+                                
                                 <div class="content-area">
+                                    <div id="copyYearModalContentHidden" style="display:none;">
+                                        @await Html.PartialAsync("_CopyYearData")
+                                    </div>
                                     <div class="user-grid-section project-year-grid tab-grid-scroll">
 
                                         <!-- Year list (fsubProjectYear navigation) -->
@@ -304,7 +314,7 @@
     </div>
 
     <!-- Modal container for Add/Edit partials -->
-                <div id="project1ModalContainer" class="modal project-modal-hidden sup_overflow_hidden" tabindex="-1">
+            <div id="project1ModalContainer" class="modal project-modal-hidden sup_overflow_hidden" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content" id="project1ModalContent">
             </div>

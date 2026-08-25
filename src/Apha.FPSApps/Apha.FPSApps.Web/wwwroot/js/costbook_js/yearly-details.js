@@ -51,6 +51,9 @@ function attachButtonEventListeners() {
     var addYearBtn = document.getElementById('add_year');
     if (addYearBtn) addYearBtn.addEventListener('click', function () { addProjectYear(projectId); });
 
+    var openCopyDataBtn = document.getElementById('openCopyDataModal');
+    if (openCopyDataBtn) openCopyDataBtn.addEventListener('click', function () { openCopyYearDataModal(); });
+
     var addStaffBtn = document.getElementById('addstaffbookedBtn');
     if (addStaffBtn) addStaffBtn.addEventListener('click', function () { openAddStaffModal(projectId, selectedYear); });
 
@@ -62,6 +65,9 @@ function attachButtonEventListeners() {
 
     var addAdditionalBtn = document.getElementById('addadditionalBtn');
     if (addAdditionalBtn) addAdditionalBtn.addEventListener('click', function () { openAddAdditionalCostModal(projectId, selectedYear); });
+
+    var addStaffBtn = document.getElementById('addstaffbookedBtn');
+    if (addStaffBtn) addStaffBtn.addEventListener('click', function () { openAddStaffModal(projectId, selectedYear); });
 }
 
 // ── Modal helpers ──────────────────────────────────────────────────
@@ -191,6 +197,41 @@ function addProjectYear(pid) {
             openModal();
             bindAddYearForm(pid, nextYear);
         });
+}
+
+function openCopyYearDataModal() {
+    var html = document.getElementById('copyYearModalContentHidden').innerHTML;
+    document.getElementById('project1ModalContent').innerHTML = html;
+    openModal();
+    bindCopyYearDataForm();
+}
+
+function bindCopyYearDataForm() {
+    var yearSelect = document.getElementById('copyFromYearSelect');
+    if (yearSelect) {
+        var years = Array.from(document.querySelectorAll('.project-year-row'))
+            .map(function (r) { return parseInt(r.getAttribute('data-year'), 10); })
+            .filter(function (y) { return y !== selectedYear; });
+        years.forEach(function (y) {
+            var option = document.createElement('option');
+            option.value = y;
+            option.textContent = y;
+            yearSelect.appendChild(option);
+        });
+    }
+
+    var doCopyBtn = document.getElementById('btnDoCopy');
+    if (!doCopyBtn) return;
+
+    doCopyBtn.addEventListener('click', function () {
+        var $form = $('#copyDataForm');
+        var $modal = $('#project1ModalContent');
+        clearValidationErrors($modal);
+        if (!isFormValid($form)) { displayClientValidationErrors($form, $modal); return; }
+
+        // TODO: wire up to a CopyYearData controller action once implemented.
+        console.warn('Copy year data endpoint not yet implemented.');
+    });
 }
 
 function bindAddYearForm(pid, year) {

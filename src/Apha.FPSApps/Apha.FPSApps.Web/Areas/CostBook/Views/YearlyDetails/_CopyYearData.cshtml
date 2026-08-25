@@ -1,0 +1,31 @@
+﻿@model dynamic
+<div class="modal-header">
+    <h5 class="modal-title govuk-!-margin-bottom-0 govuk-heading-s">Copy Data</h5>
+    <button type="button" class="btn-close" aria-label="Close" onclick="closeModal()">X</button>
+</div>
+<div class="modal-body">
+    <form id="copyDataForm" novalidate>
+        <div class="govuk-error-summary" role="alert" aria-labelledby="copyDataErrorTitle" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="copyDataErrorTitle">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
+        </div>
+
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" for="copyFromYearSelect">Copy data from year</label>
+            <select id="copyFromYearSelect" name="copyFromYear" class="govuk-select" aria-required="true">
+                <option value="">Select year</option>
+                <option value="">2024</option>
+                <option value="">2025</option>
+                <option value="">2026</option>
+            </select>
+            <span class="govuk-error-message" id="copyFromYearError" style="display:none;">Please select a year to copy from.</span>
+        </div>
+
+        <div class="sup_flex_between_center">
+            <button type="button" class="govuk-button govuk-button--secondary" id="btnCopyCancel" onclick="closeModal()">Cancel</button>
+            <button type="button" class="govuk-button govuk-button--start" id="btnDoCopy">Copy</button>
+        </div>
+    </form>
+</div>
