@@ -261,15 +261,6 @@
                                             </div>
                                         </td>
                                     }
-                                    else if (column.ColumnType == GridColumnType.Badge)
-                                    {
-                                        var badgeModifier = !string.IsNullOrEmpty(column.CssClassSourceProperty)
-                                            ? GridHelpers.GetPropertyValue(row, column.CssClassSourceProperty)?.ToString()
-                                            : null;
-                                        <td data-property="@column.PropertyName" data-type="@column.ColumnType" class="govuk-table__cell @column.CssClass">
-                                            <strong class="govuk-tag govuk-!-font-size-16 govuk-!-font-weight-regular @badgeModifier">@GridHelpers.FormatValue(value, column)</strong>
-                                        </td>
-                                    }
                                     else
                                     {
                                         <td data-property="@column.PropertyName" data-type="@column.ColumnType" class="govuk-table__cell @column.CssClass @GridHelpers.GetAlignmentCssClass(column)">
@@ -437,18 +428,9 @@
                 return params;
             },
 
-            // options.silent — background/polling reloads that shouldn't flash the full-page
-            // loader (jQuery's own "global" ajax option: false keeps this one request out of
-            // the ajaxStart/ajaxStop pair govuk-modal-dialog.js binds the loader to). Defaults
-            // to false so every existing caller keeps today's loader behaviour unchanged.
-            reloadGrid: function(params, options) {
+            reloadGrid: function(params) {
                 var self = this;
-                $.ajax({
-                    type: 'POST',
-                    url: bindGridUrl,
-                    data: self.getAjaxParams(params),
-                    global: !(options && options.silent)
-                })
+                $.post(bindGridUrl, self.getAjaxParams(params))
                     .done(function (htmlData) {
                         $(gridContainerSelector).html(htmlData);
                         self.applyGridColumnWidths();

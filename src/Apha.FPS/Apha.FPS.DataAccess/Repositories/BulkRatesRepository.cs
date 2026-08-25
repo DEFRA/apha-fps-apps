@@ -152,14 +152,7 @@ namespace Apha.FPS.DataAccess.Repositories
             // sortBy is user input (via the DataGrid's sortable-header clicks) — the switch
             // below is the whitelist; anything unrecognised falls back to RequestedAtUtc rather
             // than being interpolated into anything.
-            query = sortBy?.ToLowerInvariant() switch
-            {
-                "jobname" => descending ? query.OrderByDescending(r => r.JobName) : query.OrderBy(r => r.JobName),
-                "fpsyear" => descending ? query.OrderByDescending(r => r.FpsYear) : query.OrderBy(r => r.FpsYear),
-                "status" => descending ? query.OrderByDescending(r => r.Status) : query.OrderBy(r => r.Status),
-                "requestedby" => descending ? query.OrderByDescending(r => r.RequestedBy) : query.OrderBy(r => r.RequestedBy),
-                _ => descending ? query.OrderByDescending(r => r.RequestedAtUtc) : query.OrderBy(r => r.RequestedAtUtc)
-            };
+            query = ApplySortOrder(query, sortBy, descending);
 
             var results = await query
                 .Skip((page - 1) * pageSize)
@@ -526,25 +519,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var rows = new List<TestOrProductStagingRow>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
-            {
-                rows.Add(new TestOrProductStagingRow
-                {
-                    JobQueueId       = reader.GetGuid(0),
-                    TestCode         = reader.GetString(1),
-                    UnitPriceVla     = reader.IsDBNull(2) ? null : reader.GetDecimal(2),
-                    DefraUnitPrice   = reader.IsDBNull(3) ? null : reader.GetDecimal(3),
-                    FecNewRate       = reader.IsDBNull(4) ? null : reader.GetDecimal(4),
-                    Change           = reader.IsDBNull(5) ? null : reader.GetDecimal(5),
-                    ItemDescription  = reader.IsDBNull(6) ? null : reader.GetString(6),
-                    ShortDescription = reader.IsDBNull(7) ? null : reader.GetString(7),
-                    Owner            = reader.IsDBNull(8) ? null : reader.GetString(8),
-                    Comments         = reader.IsDBNull(9) ? null : reader.GetString(9),
-                    CalculatedAction  = reader.IsDBNull(10) ? null : reader.GetString(10),
-                    EffectiveNewRate  = reader.IsDBNull(11) ? null : reader.GetDecimal(11),
-                    SourceCurrentRate = reader.IsDBNull(12) ? null : reader.GetDecimal(12),
-                    ValidationVersion = reader.IsDBNull(13) ? null : reader.GetInt32(13)
-                });
-            }
+                rows.Add(MapFecStagingRow(reader));
             return rows;
         }
 
@@ -568,28 +543,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var rows = new List<TestRequirementStagingRow>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
-            {
-                rows.Add(new TestRequirementStagingRow
-                {
-                    JobQueueId  = reader.GetGuid(0),
-                    TestCode    = reader.GetString(1),
-                    Buyer       = reader.GetString(2),
-                    Agrup       = reader.IsDBNull(3) ? null : reader.GetDecimal(3),
-                    AgrupNew    = reader.IsDBNull(4) ? null : reader.GetDecimal(4),
-                    Change      = reader.IsDBNull(5) ? null : reader.GetDecimal(5),
-                    NoRequired  = reader.IsDBNull(6) ? null : reader.GetDouble(6),
-                    DateCreated = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
-                    Active      = reader.IsDBNull(8) ? null : reader.GetInt16(8),
-                    Comments    = reader.IsDBNull(9) ? null : reader.GetString(9),
-                    ProjectBuyerCode   = reader.IsDBNull(10) ? null : reader.GetString(10),
-                    TestBuyerCode      = reader.IsDBNull(11) ? null : reader.GetString(11),
-                    TestBuyerWorkGroup = reader.IsDBNull(12) ? null : reader.GetString(12),
-                    CalculatedAction   = reader.IsDBNull(13) ? null : reader.GetString(13),
-                    EffectiveNewRate   = reader.IsDBNull(14) ? null : reader.GetDecimal(14),
-                    SourceCurrentRate  = reader.IsDBNull(15) ? null : reader.GetDecimal(15),
-                    ValidationVersion  = reader.IsDBNull(16) ? null : reader.GetInt32(16)
-                });
-            }
+                rows.Add(MapAgrupStagingRow(reader));
             return rows;
         }
 
@@ -834,10 +788,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 SELECT parentproject FROM fps.tlkpproject
                 WHERE fpsyear = @fpsyear AND parentproject = ANY(@codes);";
             cmd.Parameters.AddWithValue("fpsyear", fpsYear);
-            cmd.Parameters.Add(new NpgsqlParameter("codes", NpgsqlTypes.NpgsqlDbType.Array | NpgsqlTypes.NpgsqlDbType.Text)
-            {
-                Value = codeList.ToArray()
-            });
+            cmd.Parameters.AddWithValue("codes", codeList.ToArray());
 
             var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             await using var reader = await cmd.ExecuteReaderAsync(ct);
@@ -868,14 +819,8 @@ namespace Apha.FPS.DataAccess.Repositories
                   ON c.testcode = v.tc AND c.workgroup = v.wg
                 WHERE c.fpsyear = @fpsyear;";
             cmd.Parameters.AddWithValue("fpsyear", fpsYear);
-            cmd.Parameters.Add(new NpgsqlParameter("testcodes", NpgsqlTypes.NpgsqlDbType.Array | NpgsqlTypes.NpgsqlDbType.Text)
-            {
-                Value = pairList.Select(p => p.TestCode).ToArray()
-            });
-            cmd.Parameters.Add(new NpgsqlParameter("workgroups", NpgsqlTypes.NpgsqlDbType.Array | NpgsqlTypes.NpgsqlDbType.Text)
-            {
-                Value = pairList.Select(p => p.WorkGroup).ToArray()
-            });
+            cmd.Parameters.AddWithValue("testcodes", pairList.Select(p => p.TestCode).ToArray());
+            cmd.Parameters.AddWithValue("workgroups", pairList.Select(p => p.WorkGroup).ToArray());
 
             var result = new HashSet<(string, string)>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
@@ -1434,12 +1379,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         source_current_rate  = @source_current_rate,
                         validation_version   = @validation_version
                     WHERE jobqueueid = @jobqueueid AND testcode = @testcode;";
-                upd.Parameters.AddWithValue("jobqueueid",          jobQueueId);
-                upd.Parameters.AddWithValue("testcode",            entry.TestCode);
-                upd.Parameters.AddWithValue("calculated_action",   entry.CalculatedAction);
-                upd.Parameters.AddWithValue("effective_new_rate",  (object?)entry.EffectiveNewRate ?? DBNull.Value);
-                upd.Parameters.AddWithValue("source_current_rate", (object?)entry.SourceCurrentRate ?? DBNull.Value);
-                upd.Parameters.AddWithValue("validation_version",  validationVersion);
+                ApplyFecFreezeParams(upd, jobQueueId, entry, validationVersion);
                 await upd.ExecuteNonQueryAsync(ct);
             }
 
@@ -1454,13 +1394,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         source_current_rate  = @source_current_rate,
                         validation_version   = @validation_version
                     WHERE jobqueueid = @jobqueueid AND testcode = @testcode AND buyer = @buyer;";
-                upd.Parameters.AddWithValue("jobqueueid",          jobQueueId);
-                upd.Parameters.AddWithValue("testcode",            entry.TestCode);
-                upd.Parameters.AddWithValue("buyer",               (object?)entry.Buyer ?? DBNull.Value);
-                upd.Parameters.AddWithValue("calculated_action",   entry.CalculatedAction);
-                upd.Parameters.AddWithValue("effective_new_rate",  (object?)entry.EffectiveNewRate ?? DBNull.Value);
-                upd.Parameters.AddWithValue("source_current_rate", (object?)entry.SourceCurrentRate ?? DBNull.Value);
-                upd.Parameters.AddWithValue("validation_version",  validationVersion);
+                ApplyAgrupFreezeParams(upd, jobQueueId, entry, validationVersion);
                 await upd.ExecuteNonQueryAsync(ct);
             }
 
@@ -1495,17 +1429,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         calculated_action     = @calculated_action,
                         validation_version    = @validation_version
                     WHERE jobqueueid = @jobqueueid AND pcgrade = @pcgrade;";
-                upd.Parameters.AddWithValue("jobqueueid", jobQueueId);
-                upd.Parameters.AddWithValue("pcgrade", entry.PcGrade);
-                upd.Parameters.AddWithValue("source_payrate", (object?)entry.SourcePayRate ?? DBNull.Value);
-                upd.Parameters.AddWithValue("source_npr", (object?)entry.SourceNpr ?? DBNull.Value);
-                upd.Parameters.AddWithValue("source_ohr", (object?)entry.SourceOhr ?? DBNull.Value);
-                upd.Parameters.AddWithValue("effective_payrate", (object?)entry.EffectivePayRate ?? DBNull.Value);
-                upd.Parameters.AddWithValue("effective_npr", (object?)entry.EffectiveNpr ?? DBNull.Value);
-                upd.Parameters.AddWithValue("effective_ohr", (object?)entry.EffectiveOhr ?? DBNull.Value);
-                upd.Parameters.AddWithValue("effective_chargerate", (object?)entry.EffectiveChargeRate ?? DBNull.Value);
-                upd.Parameters.AddWithValue("calculated_action", entry.CalculatedAction);
-                upd.Parameters.AddWithValue("validation_version", validationVersion);
+                ApplyStaffFreezeParams(upd, jobQueueId, entry, validationVersion);
                 await upd.ExecuteNonQueryAsync(ct);
             }
 
@@ -1579,6 +1503,97 @@ namespace Apha.FPS.DataAccess.Repositories
             cmd.CommandText = $"DELETE FROM {qualifiedTable} WHERE jobqueueid = @jqid;";
             cmd.Parameters.AddWithValue("jqid", jobQueueId);
             await cmd.ExecuteNonQueryAsync(ct);
+        }
+
+        private static IQueryable<BulkRatesQueueRow> ApplySortOrder(
+            IQueryable<BulkRatesQueueRow> q, string? sortBy, bool descending) =>
+            sortBy?.ToLowerInvariant() switch
+            {
+                "jobname"     => descending ? q.OrderByDescending(r => r.JobName)        : q.OrderBy(r => r.JobName),
+                "fpsyear"     => descending ? q.OrderByDescending(r => r.FpsYear)        : q.OrderBy(r => r.FpsYear),
+                "status"      => descending ? q.OrderByDescending(r => r.Status)         : q.OrderBy(r => r.Status),
+                "requestedby" => descending ? q.OrderByDescending(r => r.RequestedBy)    : q.OrderBy(r => r.RequestedBy),
+                _             => descending ? q.OrderByDescending(r => r.RequestedAtUtc) : q.OrderBy(r => r.RequestedAtUtc)
+            };
+
+        private static TestOrProductStagingRow MapFecStagingRow(NpgsqlDataReader r) =>
+            new()
+            {
+                JobQueueId        = r.GetGuid(0),
+                TestCode          = r.GetString(1),
+                UnitPriceVla      = r.IsDBNull(2)  ? null : r.GetDecimal(2),
+                DefraUnitPrice    = r.IsDBNull(3)  ? null : r.GetDecimal(3),
+                FecNewRate        = r.IsDBNull(4)  ? null : r.GetDecimal(4),
+                Change            = r.IsDBNull(5)  ? null : r.GetDecimal(5),
+                ItemDescription   = r.IsDBNull(6)  ? null : r.GetString(6),
+                ShortDescription  = r.IsDBNull(7)  ? null : r.GetString(7),
+                Owner             = r.IsDBNull(8)  ? null : r.GetString(8),
+                Comments          = r.IsDBNull(9)  ? null : r.GetString(9),
+                CalculatedAction  = r.IsDBNull(10) ? null : r.GetString(10),
+                EffectiveNewRate  = r.IsDBNull(11) ? null : r.GetDecimal(11),
+                SourceCurrentRate = r.IsDBNull(12) ? null : r.GetDecimal(12),
+                ValidationVersion = r.IsDBNull(13) ? null : r.GetInt32(13)
+            };
+
+        private static TestRequirementStagingRow MapAgrupStagingRow(NpgsqlDataReader r) =>
+            new()
+            {
+                JobQueueId         = r.GetGuid(0),
+                TestCode           = r.GetString(1),
+                Buyer              = r.GetString(2),
+                Agrup              = r.IsDBNull(3)  ? null : r.GetDecimal(3),
+                AgrupNew           = r.IsDBNull(4)  ? null : r.GetDecimal(4),
+                Change             = r.IsDBNull(5)  ? null : r.GetDecimal(5),
+                NoRequired         = r.IsDBNull(6)  ? null : r.GetDouble(6),
+                DateCreated        = r.IsDBNull(7)  ? null : r.GetDateTime(7),
+                Active             = r.IsDBNull(8)  ? null : r.GetInt16(8),
+                Comments           = r.IsDBNull(9)  ? null : r.GetString(9),
+                ProjectBuyerCode   = r.IsDBNull(10) ? null : r.GetString(10),
+                TestBuyerCode      = r.IsDBNull(11) ? null : r.GetString(11),
+                TestBuyerWorkGroup = r.IsDBNull(12) ? null : r.GetString(12),
+                CalculatedAction   = r.IsDBNull(13) ? null : r.GetString(13),
+                EffectiveNewRate   = r.IsDBNull(14) ? null : r.GetDecimal(14),
+                SourceCurrentRate  = r.IsDBNull(15) ? null : r.GetDecimal(15),
+                ValidationVersion  = r.IsDBNull(16) ? null : r.GetInt32(16)
+            };
+
+        private static void ApplyFecFreezeParams(
+            NpgsqlCommand cmd, Guid jobQueueId, TestFreezeEntry entry, int validationVersion)
+        {
+            cmd.Parameters.AddWithValue("jobqueueid",          jobQueueId);
+            cmd.Parameters.AddWithValue("testcode",            entry.TestCode);
+            cmd.Parameters.AddWithValue("calculated_action",   entry.CalculatedAction);
+            cmd.Parameters.AddWithValue("effective_new_rate",  (object?)entry.EffectiveNewRate  ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("source_current_rate", (object?)entry.SourceCurrentRate ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("validation_version",  validationVersion);
+        }
+
+        private static void ApplyAgrupFreezeParams(
+            NpgsqlCommand cmd, Guid jobQueueId, TestFreezeEntry entry, int validationVersion)
+        {
+            cmd.Parameters.AddWithValue("jobqueueid",          jobQueueId);
+            cmd.Parameters.AddWithValue("testcode",            entry.TestCode);
+            cmd.Parameters.AddWithValue("buyer",               (object?)entry.Buyer           ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("calculated_action",   entry.CalculatedAction);
+            cmd.Parameters.AddWithValue("effective_new_rate",  (object?)entry.EffectiveNewRate  ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("source_current_rate", (object?)entry.SourceCurrentRate ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("validation_version",  validationVersion);
+        }
+
+        private static void ApplyStaffFreezeParams(
+            NpgsqlCommand cmd, Guid jobQueueId, StaffFreezeEntry entry, int validationVersion)
+        {
+            cmd.Parameters.AddWithValue("jobqueueid",           jobQueueId);
+            cmd.Parameters.AddWithValue("pcgrade",              entry.PcGrade);
+            cmd.Parameters.AddWithValue("source_payrate",       (object?)entry.SourcePayRate    ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("source_npr",           (object?)entry.SourceNpr        ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("source_ohr",           (object?)entry.SourceOhr        ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("effective_payrate",    (object?)entry.EffectivePayRate  ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("effective_npr",        (object?)entry.EffectiveNpr      ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("effective_ohr",        (object?)entry.EffectiveOhr      ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("effective_chargerate", (object?)entry.EffectiveChargeRate ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("calculated_action",    entry.CalculatedAction);
+            cmd.Parameters.AddWithValue("validation_version",   validationVersion);
         }
     }
 }
