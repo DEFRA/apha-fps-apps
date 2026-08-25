@@ -15,7 +15,7 @@ let selectedTestCodeDropdownValue = null;
 function toggleSavePortfolioButton() {
     var parentProject = $('#hdnParentProject').val();
     var btn = $('#btnSavePortfolio');
-    if (typeof isYearReadOnly !== 'undefined' && isYearReadOnly) {
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
         btn.prop('disabled', true);
     } else if (parentProject && selectedPortfolio) {
         btn.prop('disabled', false);

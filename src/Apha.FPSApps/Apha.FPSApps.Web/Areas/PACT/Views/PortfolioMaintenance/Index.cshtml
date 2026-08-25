@@ -1,6 +1,5 @@
 @model Apha.FPSApps.Web.Areas.PACT.Models.PortfolioMaintenanceViewModel
 @using Microsoft.AspNetCore.Mvc.Rendering
-@inject Apha.FPSApps.Web.Handler.IFpsYearContext FpsYearContext
 
 @{
     ViewData["Title"] = "Portfolio Maintenance";
@@ -311,7 +310,6 @@
 }
 @section Scripts {
      <script>
-        const isYearReadOnly = @Html.Raw(FpsYearContext.IsReadOnly.ToString().ToLowerInvariant());
         const portfolioOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.PortfolioOptions));
         const preselectedPortfolio = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.SelectedPortfolio as string ?? string.Empty));
         const programOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Programs));
