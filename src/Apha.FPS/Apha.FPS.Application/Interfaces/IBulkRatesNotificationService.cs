@@ -1,5 +1,5 @@
 using Apha.FPS.Application.Enums;
-using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Services.BulkRates;
 
 namespace Apha.FPS.Application.Interfaces
 {

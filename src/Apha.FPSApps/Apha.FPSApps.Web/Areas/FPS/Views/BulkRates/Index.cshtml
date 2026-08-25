@@ -276,6 +276,34 @@
 
 @section Scripts {
     <script src="~/js/fps_js/fec_testmanagement.js" asp-append-version="true"></script>
+    <script>
+        // Apply govuk-tag colour to Status cells after each grid render (initial + sort/page/filter).
+        const bulkRatesStatusColours = {
+            'Initiated': 'govuk-tag--blue',
+            'Released For Approval': 'govuk-tag--yellow',
+            'Submitted': 'govuk-tag--turquoise',
+            'Running': 'govuk-tag--purple',
+            'Completed': '',
+            'Failed': 'govuk-tag--red',
+            'Rejected': 'govuk-tag--orange',
+            'Cancelled': 'govuk-tag--grey'
+        };
+        function applyBulkRatesStatusTags() {
+            document.querySelectorAll('#gridContainer_bulkRatesGrid [data-property="Status"] span').forEach(function (span) {
+                const label = span.textContent.trim();
+                const modifier = Object.prototype.hasOwnProperty.call(bulkRatesStatusColours, label)
+                    ? bulkRatesStatusColours[label] : 'govuk-tag--grey';
+                span.className = 'govuk-tag' + (modifier ? ' ' + modifier : '');
+            });
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            applyBulkRatesStatusTags();
+            const container = document.getElementById('gridContainer_bulkRatesGrid');
+            if (container) {
+                new MutationObserver(applyBulkRatesStatusTags).observe(container, { childList: true, subtree: true });
+            }
+        });
+    </script>
     @if (Model.ActiveRequest != null)
     {
         <script>

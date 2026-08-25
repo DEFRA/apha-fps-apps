@@ -61,18 +61,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string JobName { get; set; } = string.Empty;
 
         [Display(Name = "Status")]
-        [GridColumn(Order = 3, Width = 160, Type = GridColumnType.Badge, IsFilterable = false, CssClassSourceProperty = nameof(StatusBadgeModifier))]
+        [GridColumn(Order = 3, Width = 160, Type = GridColumnType.Text, IsFilterable = false)]
         public string Status { get; set; } = string.Empty;
-
-        /// <summary>
-        /// GOV.UK tag colour modifier for Status (e.g. "govuk-tag--yellow") — a data carrier for
-        /// the Badge column type only, never rendered as its own column. See BulkRatesStatusDisplay.
-        /// GetColumnsDefination includes every property by default (no [GridColumn] = still a
-        /// visible column using the raw property name) — IsVisible = false is required here, not
-        /// optional, or this becomes its own "StatusBadgeModifier" column in the grid.
-        /// </summary>
-        [GridColumn(IsVisible = false)]
-        public string StatusBadgeModifier { get; set; } = string.Empty;
 
         [Display(Name = "Requested By")]
         [GridColumn(Order = 4, Width = 220, Type = GridColumnType.Text, IsFilterable = false)]

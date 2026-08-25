@@ -180,12 +180,10 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.UserEmail, o => o.Ignore());
 
             // Bulk Rates — queue grid row. JobName mapped to its friendly display name; Status
-            // to its friendly label plus the GOV.UK tag colour modifier the Badge column type
-            // renders it with (see BulkRatesStatusDisplay — shared with the Detail page badge).
+            // to its friendly label (colour applied client-side in Index.cshtml via JS).
             CreateMap<BulkRatesQueueEntryDto, BulkRatesQueueGridItem>()
                 .ForMember(d => d.JobName, o => o.MapFrom(s => FriendlyBulkRatesJobName(s.JobName)))
-                .ForMember(d => d.Status, o => o.MapFrom(s => BulkRatesStatusDisplay.FriendlyLabel(s.Status)))
-                .ForMember(d => d.StatusBadgeModifier, o => o.MapFrom(s => BulkRatesStatusDisplay.GovUkTagModifierClass(s.Status)));
+                .ForMember(d => d.Status, o => o.MapFrom(s => BulkRatesStatusDisplay.FriendlyLabel(s.Status)));
 
             // Bulk Rates — staging grids (Detail page). ValidationSummary has no source member —
             // it's populated after mapping, from BulkRatesUploadResultDto, by
