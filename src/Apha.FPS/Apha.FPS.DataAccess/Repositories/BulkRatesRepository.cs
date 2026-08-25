@@ -120,8 +120,10 @@ namespace Apha.FPS.DataAccess.Repositories
                 RequestedBy = requestedBy,
                 RequestedAtUtc = requestedAtUtc,
                 FpsYear = fpsYear
-                // StartDateTime is left null — the request hasn't been triggered into
-                // execution yet, matching every other pre-trigger Bulk Rates row.
+                // StartDateTime is left null — it's the Batch Worker's own "execution actually
+                // began" marker (set by JobExecutionRepository's Running transition), not a
+                // request/trigger timestamp. TriggeredAtUtc (set in SetApprovalAsync) is what
+                // Bulk Rates uses to tell "released" from "dispatch to the worker succeeded".
             });
             await _dbContext.SaveChangesAsync(ct);
 

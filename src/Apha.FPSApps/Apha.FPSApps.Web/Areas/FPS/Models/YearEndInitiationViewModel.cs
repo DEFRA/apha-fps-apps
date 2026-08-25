@@ -102,7 +102,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "Start Date/Time")]
         [GridColumn(Order = 3, Width = 180, Type = GridColumnType.Text)]
-        public DateTime StartDateTime { get; set; }
+        public DateTime? StartDateTime { get; set; }
 
         [Display(Name = "End Date/Time")]
         [GridColumn(Order = 4, Width = 180, Type = GridColumnType.Text)]

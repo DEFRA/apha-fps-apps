@@ -8,6 +8,9 @@
         public int StatusId { get; set; } = 0;
         public string RequestedBy { get; set; } = null!;
         public DateTime? RequestedAtUtc { get; set; }
+        // Null until the Batch Worker actually begins executing this row (JobExecutionRepository's
+        // Running transition sets it — see Apha.BatchJobs.Infrastructure.Operational.Repositories).
+        // Not the request/trigger timestamp — use RequestedAtUtc / TriggeredAtUtc for those.
         public DateTime? StartDateTime { get; set; }
         public DateTime? EndDateTime { get; set; }
         public string? ErrorMessage { get; set; }

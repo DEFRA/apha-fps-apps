@@ -7,7 +7,8 @@
         public Guid JobExecutionId { get; set; }
         public string Status { get; set; } = null!;
         public string RequestedBy { get; set; } = null!;
-        public DateTime StartDateTime { get; set; }
+        // Null until the Batch Worker actually starts running this execution.
+        public DateTime? StartDateTime { get; set; }
         public DateTime? EndDateTime { get; set; }
         public string? ErrorMessage { get; set; }
    
