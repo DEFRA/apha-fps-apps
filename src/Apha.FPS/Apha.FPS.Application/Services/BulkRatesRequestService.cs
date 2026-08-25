@@ -240,8 +240,9 @@ namespace Apha.FPS.Application.Services
         /// </summary>
         private static string SanitizeS3Filename(string filename)
         {
-            // Replace path separators and characters outside safe ASCII range with underscores
-            var sanitized = Regex.Replace(Path.GetFileName(filename), @"[/\\?#%\x00-\x1f]", "_");
+            // Split on both separators so backslash paths are handled correctly on Linux too
+            var basename = filename.Split('/', '\\').LastOrDefault(s => !string.IsNullOrWhiteSpace(s)) ?? filename;
+            var sanitized = Regex.Replace(basename, @"[/\\?#%\x00-\x1f]", "_");
             return string.IsNullOrWhiteSpace(sanitized) ? "upload" : sanitized;
         }
 

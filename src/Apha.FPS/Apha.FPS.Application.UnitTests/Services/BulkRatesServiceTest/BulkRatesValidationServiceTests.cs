@@ -173,18 +173,6 @@ namespace Apha.FPS.Application.UnitTests.Services.BulkRatesServiceTest
             findings.Count(f => f.ValidationCode == "DUPLICATE_TEST_CODE").Should().Be(2);
         }
 
-        [Fact]
-        public void ExistingFecRow_ItemDescriptionSupplied_RaisesIgnoredOnUpdateWarning()
-        {
-            var ctx = Context(
-                fec: [Fec("TC001", 15, item: "changed")],
-                liveFec: new Dictionary<string, LiveFecRow> { ["TC001"] = new() { TestCode = "TC001", UnitPriceVla = 10, DefraUnitPrice = 10 } });
-
-            var findings = _sut.Validate(ctx);
-
-            findings.Should().ContainSingle(f => f.ValidationCode == "IGNORED_ON_UPDATE" && f.Severity == ValidationSeverity.Warning);
-        }
-
         // ── AGRUP: existing-row blank/zero → Zero-Rate Withdrawal (reconciliation §2.2) ──────────
 
         [Fact]

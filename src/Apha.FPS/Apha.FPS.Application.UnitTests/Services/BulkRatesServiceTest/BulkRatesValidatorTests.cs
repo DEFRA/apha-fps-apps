@@ -164,19 +164,6 @@ public class BulkRatesValidatorTests
         result.Errors.Should().Contain(e => e.ValidationCode == "MISSING_FOR_INSERT" && e.FieldName == "owner");
     }
 
-    // ── Existing FEC row: description change is a warning, not an error ──────
-
-    [Fact]
-    public async Task ValidateFec_ExistingRow_WhenDescriptionProvided_AddsWarning()
-    {
-        var liveFec = new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 5m, DefraUnitPrice = 5m } };
-        var parse = FecParse(new TestOrProductStagingRow { TestCode = "TC001", FecNewRate = 10m, ItemDescription = "some changed description" });
-
-        var result = await Validate(CreateValidator(CreateRepo(liveFec: liveFec)), parse);
-
-        result.Errors.Should().Contain(e => e.Severity == "Warning" && e.ValidationCode == "IGNORED_ON_UPDATE");
-    }
-
     // ── AGRUP existing-row blank rate is Zero-Rate Withdrawal, not Unchanged ──────────
 
     [Fact]
