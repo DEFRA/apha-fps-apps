@@ -54,6 +54,27 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnName("updated_at");
 
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+
+            // ── Bulk Rates workflow columns — see BatchJobQueue for why they're here ──
+            entity.Property(e => e.UploadFilename).HasColumnName("upload_filename");
+            entity.Property(e => e.UploadChecksumSha256).HasColumnName("upload_checksum_sha256");
+            entity.Property(e => e.UploadVersion).HasColumnName("upload_version");
+            entity.Property(e => e.UploadValidatedAtUtc).HasColumnName("upload_validated_at_utc");
+            entity.Property(e => e.UploadRowCountsJson)
+                .HasColumnType("jsonb")
+                .HasColumnName("upload_row_counts_json");
+            entity.Property(e => e.ApprovedBy).HasColumnName("approved_by");
+            entity.Property(e => e.ApprovedAtUtc).HasColumnName("approved_at_utc");
+            entity.Property(e => e.RejectedBy).HasColumnName("rejected_by");
+            entity.Property(e => e.RejectedAtUtc).HasColumnName("rejected_at_utc");
+            entity.Property(e => e.RejectionReason).HasColumnName("rejection_reason");
+            entity.Property(e => e.CancelledBy).HasColumnName("cancelled_by");
+            entity.Property(e => e.CancelledAtUtc).HasColumnName("cancelled_at_utc");
+            entity.Property(e => e.CancellationReason).HasColumnName("cancellation_reason");
+            entity.Property(e => e.TriggeredBy).HasColumnName("triggered_by");
+            entity.Property(e => e.TriggeredAtUtc).HasColumnName("triggered_at_utc");
+            entity.Property(e => e.ActiveDownloadVersion).HasColumnName("active_download_version");
+            entity.Property(e => e.S3ObjectKey).HasColumnName("s3_object_key");
         }
     }
 }

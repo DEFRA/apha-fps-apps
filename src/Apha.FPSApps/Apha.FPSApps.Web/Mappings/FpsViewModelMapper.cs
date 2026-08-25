@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Pagination;
@@ -17,13 +17,6 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<TestPriceCheckDto, TestPriceCheckItem>()
                 .ForMember(d => d.IsDefraProjectList, o => o.Ignore());
             CreateMap<TestPriceCheckItem, TestPriceCheckDto>();
-            CreateMap<TestReqBreakdownItem, TestReqBreakdownDto>()
-                .ForMember(d => d.Pc, o => o.MapFrom(s => s.PC))
-                .ForMember(d => d.WgPrice, o => o.MapFrom(s => s.WGPrice))
-                .ReverseMap()
-                .ForMember(d => d.PC, o => o.MapFrom(s => s.Pc))
-                .ForMember(d => d.WGPrice, o => o.MapFrom(s => s.WgPrice));
-            CreateMap<TestActualBreakdownItem, TestActualBreakdownDto>().ReverseMap();
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
             CreateMap<AnimalMaintenanceViewModel, AnimalDto>().ReverseMap();
             CreateMap<UserPermissionViewModel, UserDto>().ReverseMap();
@@ -66,7 +59,7 @@ namespace Apha.FPSApps.Web.Mappings
             // PortfolioNew
             CreateMap<ProjectDto, PortfolioNewViewModel>().ReverseMap();
 
-            // Work Group Staff Maintenance
+            //Work Group Staff Maintenance
             CreateMap<WorkGroupEmployeeStaffItem, WorkGroupEmployeeStaffDto>().ReverseMap();
             // Resource Set-Up
             CreateMap<SetUpStaffResourcesItem, WorkGroupEmployeeStaffDto>()
@@ -186,6 +179,25 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<AdditionalCostLogDto, AdditionalCostLogItem>()
                 .ForMember(d => d.UserEmail, o => o.Ignore());
 
+            // Bulk Rates — queue grid row. JobName mapped to its friendly display name; Status
+            // to its friendly label (colour applied client-side in Index.cshtml via JS).
+            CreateMap<BulkRatesQueueEntryDto, BulkRatesQueueGridItem>()
+                .ForMember(d => d.JobName, o => o.MapFrom(s => FriendlyBulkRatesJobName(s.JobName)))
+                .ForMember(d => d.Status, o => o.MapFrom(s => BulkRatesStatusDisplay.FriendlyLabel(s.Status)));
+
+            // Bulk Rates — staging grids (Detail page). ValidationSummary has no source member —
+            // it's populated after mapping, from BulkRatesUploadResultDto, by
+            // BulkRatesController.BuildStagingGridConfig.
+            CreateMap<BulkRatesFecStagingRowDto, FecStagingGridItem>()
+                .ForMember(d => d.ValidationSummary, o => o.Ignore());
+            CreateMap<BulkRatesAgrupStagingRowDto, AgrupStagingGridItem>()
+                .ForMember(d => d.Active, o => o.MapFrom(s => s.Active == 1))
+                .ForMember(d => d.ValidationSummary, o => o.Ignore());
+            CreateMap<BulkRatesStaffStagingRowDto, StaffStagingGridItem>()
+                .ForMember(d => d.ValidationSummary, o => o.Ignore());
+            CreateMap<BulkRatesAnimalStagingRowDto, AnimalStagingGridItem>()
+                .ForMember(d => d.ValidationSummary, o => o.Ignore());
+
             // TestListVla grid row ↔ DTO (frmTestList / fsubTest_MainList):
             CreateMap<TestorProductDto, TestListVlaItem>().ReverseMap();
 
@@ -224,5 +236,15 @@ namespace Apha.FPSApps.Web.Mappings
 
             CreateMap<Apha.FPSApps.Application.Dtos.FPS.BatchJobHistoryDto, YearEndHistoryItem>();
         }
+
+        // AutoMapper's MapFrom builds an expression tree, which cannot contain a switch
+        // expression — a plain method call is used instead.
+        private static string FriendlyBulkRatesJobName(string jobName) => jobName switch
+        {
+            "BulkTestRatesUpdate" => "FEC Test Rates",
+            "BulkStaffRatesUpdate" => "Staff Rates",
+            "BulkAnimalRatesUpdate" => "Animal Rates",
+            _ => jobName
+        };
     }
 }

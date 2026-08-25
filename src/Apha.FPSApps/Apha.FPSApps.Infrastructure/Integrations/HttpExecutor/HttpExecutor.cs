@@ -13,11 +13,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
             _http = http;
         }
 
-        public async Task<ApiResponse<T>> GetAsync<T>(string url)
+        public async Task<ApiResponse<T>> GetAsync<T>(string url, bool allowNoContent = false)
         {
             var response = await _http.GetAsync(url);
-            return await response.ToApiResponse<T>();
-        }        
+            return await response.ToApiResponse<T>(allowNoContent);
+        }
 
         public async Task<byte[]> GetFileAsync(string url)
         {
@@ -92,6 +92,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
                     "application/json")
             };
             var response = await _http.SendAsync(request);
+            return await response.ToApiResponse<T>();
+        }
+
+        public async Task<ApiResponse<T>> PostMultipartAsync<T>(string url, MultipartFormDataContent content)
+        {
+            var response = await _http.PostAsync(url, content);
             return await response.ToApiResponse<T>();
         }
     }

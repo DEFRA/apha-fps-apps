@@ -37,6 +37,7 @@
         IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
         IFpsCostCentreApiClient FpsCostCentre { get; }
         IFpsResourceAllocationApiClient FpsResourceAllocation { get; }
+        IFpsBulkRatesApiClient FpsBulkRates { get; }
         IFpsResourceMgmtReplanApiClient FpsResourceMgmtReplan { get; }
         IFpsTestsRequiredByWgApiClient FpsTestsRequiredByWg { get; }
         IFpsTestsRequiredByRcApiClient FpsTestsRequiredByRc { get; }
