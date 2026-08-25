@@ -5,10 +5,13 @@ using FluentAssertions;
 namespace Apha.Common.UnitTests.Utilities.ExcelExport;
 
 /// <summary>
-/// Unit tests for <see cref="ExcelExportService"/>'s column-protection support
-/// (<see cref="ExcelSheetDefinition.ProtectedColumnNames"/>) — existing-row routing cells must
-/// render locked/protected while every other cell (and any row a user adds afterward) stays
-/// editable, and sheets that never set this property must be completely unaffected.
+/// Unit tests for <see cref="ExcelExportService"/>: the single-sheet
+/// <see cref="ExcelExportService.ExportToExcel{T}"/> path's header/border/autofit styling
+/// (shared with PACT's exports), plus the multi-sheet path's Bulk Rates-specific
+/// column-protection (<see cref="ExcelSheetDefinition.ProtectedColumnNames"/>) and formula-column
+/// support — existing-row routing cells must render locked/protected while every other cell (and
+/// any row a user adds afterward) stays editable, and sheets that never set these properties must
+/// be completely unaffected.
 /// </summary>
 public class ExcelExportServiceTests
 {
@@ -21,6 +24,42 @@ public class ExcelExportServiceTests
     }
 
     private readonly ExcelExportService _service = new();
+
+    // ── ExportToExcel<T>: single-sheet header/border/autofit styling ──────────────
+    // Regression coverage for an accidental deletion caught in PR review: this styling was
+    // briefly dropped from ExportToExcel<T> while building the multi-sheet path below, even
+    // though every existing PACT export (MonthlyTime, MonthlyOutput, TestCapability,
+    // SubContractRms, BosworthInterface) depends on it and Bulk Rates never calls this method.
+
+    [Fact]
+    public void ExportToExcel_AppliesHeaderBoldAndCellBorders()
+    {
+        var rows = new[] { new SampleRow { TestCode = "TC001", AgrupNew = 10m } };
+
+        var bytes = _service.ExportToExcel(rows, "Sheet1");
+
+        using var wb = new XLWorkbook(new MemoryStream(bytes));
+        var ws = wb.Worksheet("Sheet1");
+
+        ws.Cell(1, 1).Style.Font.Bold.Should().BeTrue("header row must be bold");
+        ws.Cell(1, 1).Style.Border.TopBorder.Should().Be(XLBorderStyleValues.Thin);
+        ws.Cell(2, 1).Style.Border.LeftBorder.Should().Be(XLBorderStyleValues.Thin);
+    }
+
+    [Fact]
+    public void ExportToExcel_AutoFitsColumnsToContent()
+    {
+        using var blankWorkbook = new XLWorkbook();
+        var defaultWidth = blankWorkbook.Worksheets.Add("Blank").Column(1).Width;
+
+        var rows = new[] { new SampleRow { TestCode = "A-Much-Longer-Test-Code-Than-The-Default-Column-Width" } };
+        var bytes = _service.ExportToExcel(rows, "Sheet1");
+
+        using var wb = new XLWorkbook(new MemoryStream(bytes));
+        var ws = wb.Worksheet("Sheet1");
+
+        ws.Column(1).Width.Should().BeGreaterThan(defaultWidth, "AdjustToContents should widen the column for long values");
+    }
 
     [Fact]
     public void ExportToExcelMultiSheet_WhenProtectedColumnNamesSet_LocksOnlyThoseColumns_AndProtectsSheet()
