@@ -1,5 +1,25 @@
 @using Apha.FPSApps.Web.Areas.FPS.Models
 @model BulkRatesDetailViewModel
+
+<style>
+    /* Staging grids are paginated — no inner fixed-height scroll needed. */
+    #gridContainer_fecStagingGrid .grid-scroll-container,
+    #gridContainer_agrupStagingGrid .grid-scroll-container,
+    #gridContainer_staffStagingGrid .grid-scroll-container,
+    #gridContainer_animalStagingGrid .grid-scroll-container {
+        max-height: none !important;
+        height: auto !important;
+        overflow-y: visible !important;
+    }
+    /* Wide tables scroll within the container (body has overflow-x:hidden). */
+    #gridContainer_fecStagingGrid > .editable-grid-container > div,
+    #gridContainer_agrupStagingGrid > .editable-grid-container > div,
+    #gridContainer_staffStagingGrid > .editable-grid-container > div,
+    #gridContainer_animalStagingGrid > .editable-grid-container > div {
+        overflow-x: auto;
+    }
+</style>
+
 @{
     var entry = Model.Request.Entry;
     var uploadResult = Model.UploadResult;

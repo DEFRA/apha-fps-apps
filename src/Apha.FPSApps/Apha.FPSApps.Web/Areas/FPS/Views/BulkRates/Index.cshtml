@@ -1,5 +1,19 @@
 @using Apha.FPSApps.Web.Areas.FPS.Models
 @model BulkRatesQueueViewModel
+
+<style>
+    /* Queue grid is paginated — no inner fixed-height scroll needed. */
+    #gridContainer_bulkRatesGrid .grid-scroll-container {
+        max-height: none !important;
+        height: auto !important;
+        overflow-y: visible !important;
+    }
+    /* Wide table scrolls within the container (body has overflow-x:hidden). */
+    #gridContainer_bulkRatesGrid > .editable-grid-container > div {
+        overflow-x: auto;
+    }
+</style>
+
 @{
     ViewData["Title"] = "Bulk Rate Updates — Queue";
 
