@@ -2148,7 +2148,9 @@ table.custom-table th {
     margin-bottom: 0;
     white-space: nowrap;
 }
-
+.govuk-label{
+    font-weight:bold;
+}
 .asu-main-content {
     padding-bottom: 74px;
 }
@@ -5558,4 +5560,13 @@ body,
     td{
         text-align: left;
     }
+}
+.govuk-tabs__list {
+    padding-top: 7px;
+}
+.isDateSection {
+    width: 23%;
+}
+.govuk-tabs__list {
+    padding-top: 10px !important;
 }
