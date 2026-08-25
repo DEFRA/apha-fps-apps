@@ -69,7 +69,7 @@
 
         #testCodePickMultiDropdown {
             width: 100%;
-            max-width: 420px;
+            max-width: 520px;
             margin-left: auto;
         }
 
@@ -102,15 +102,14 @@
         }
 
         #testCodePickMultiDropdown .multicolumn-dropdown-panel {
-            left: auto;
+            left: 0;
             right: 0;
             top: 100%;
             margin: 0;
-            /* Give the panel enough room for both columns, but never let it
-               spill outside the page. */
-            width: max-content;
+            /* Match the control width exactly, like the PACT WorkGroup dropdown. */
+            width: 100%;
             min-width: 100%;
-            max-width: calc(100vw - 40px);
+            max-width: 100%;
             box-sizing: border-box;
         }
 
@@ -128,16 +127,24 @@
                 vertical-align: top;
             }
 
-            /* The item code is fixed-length, so keep it on one line. */
-            #testCodePickMultiDropdown .multicolumn-dropdown-panel th:first-child,
-            #testCodePickMultiDropdown .multicolumn-dropdown-panel td:first-child {
+            /* The shared component reserves the first column for a serial number
+               (60px fixed). This dropdown has no serial number column, so that
+               rule squashes ItemCode. Let it size to its content instead. */
+            #testCodePickMultiDropdown .dropdown-table-wrapper thead th:first-child,
+            #testCodePickMultiDropdown .dropdown-table-wrapper tbody td:first-child {
                 width: 1%;
+                min-width: 0;
+                max-width: none;
                 white-space: nowrap;
+                overflow: visible;
+                text-overflow: clip;
+                text-align: left;
             }
 
-            /* Show the full description rather than clipping it. */
+            /* Description takes the remaining width and wraps if needed. */
             #testCodePickMultiDropdown .multicolumn-dropdown-panel th:last-child,
             #testCodePickMultiDropdown .multicolumn-dropdown-panel td:last-child {
+                width: auto;
                 white-space: normal;
                 overflow-wrap: anywhere;
             }
@@ -168,8 +175,8 @@
             searchPlaceholder: 'Search by Test',
             labelText: '',
             columns: [
-                { field: 'Value', header: 'ItemCode', width: '90px' },
-                { field: 'Text', header: 'ItemDescription', width: '320px' }
+                { field: 'Value', header: 'ItemCode' },
+                { field: 'Text', header: 'ItemDescription' }
             ],
             data: testCodeOptionsListData,
             displayField: 'Text',
