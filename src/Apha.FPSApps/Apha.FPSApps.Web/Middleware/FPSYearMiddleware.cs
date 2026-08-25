@@ -74,7 +74,6 @@ namespace Apha.FPSApps.Web.Middleware
             context.Items["SelectedFPSYear"] = year;
 
             fyContext.IsReadOnly = ResolveIsReadOnly(area, yearStatus);
-            fyContext.YearStatus = yearStatus.ToString();
 
             await _next(context);
         }

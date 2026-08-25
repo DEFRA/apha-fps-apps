@@ -9,6 +9,5 @@
         public bool IsVisible { get; set; } = true;
         public bool IsFilterable { get; set; } = false;
         public string CssClass { get; set; } = string.Empty;
-        public string CssClassSourceProperty { get; set; } = string.Empty;
     }
 }
