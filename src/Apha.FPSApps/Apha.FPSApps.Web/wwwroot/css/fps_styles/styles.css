@@ -5585,3 +5585,13 @@ body,
         overflow: visible;
     }
 }
+
+.isNoGlobalScrollBar {
+    .grid-scroll-container {
+        max-height: none !important;
+        height: 50.55vh !important;
+    }
+}
+.isClearfix{
+    overflow: hidden;
+}
