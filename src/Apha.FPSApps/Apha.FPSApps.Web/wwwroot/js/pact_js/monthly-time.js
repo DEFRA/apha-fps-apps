@@ -1175,7 +1175,7 @@ function deleteAllMonthlyTime() {
                     reloadStagingGrid();
                     showAlertMessage('Imported records deleted successfully.', AlertType.SUCCESS);
                 } else {
-                    showAlertMessage('Delete all failed.', AlertType.ERROR);
+                    showAlertMessage(response.message || 'Delete all failed.', AlertType.ERROR);
                 }
             },
             error: function () {

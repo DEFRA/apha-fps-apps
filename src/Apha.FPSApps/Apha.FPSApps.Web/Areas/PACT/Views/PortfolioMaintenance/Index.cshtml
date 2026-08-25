@@ -1,5 +1,6 @@
 @model Apha.FPSApps.Web.Areas.PACT.Models.PortfolioMaintenanceViewModel
 @using Microsoft.AspNetCore.Mvc.Rendering
+@inject Apha.FPSApps.Web.Handler.IFpsYearContext FpsYearContext
 
 @{
     ViewData["Title"] = "Portfolio Maintenance";
@@ -254,7 +255,7 @@
 
                         <div class="govuk-grid-row" style="text-align:right; margin:5px 0 5px 0;">
                             <button type="button" class="govuk-button sup_margin_0" id="btnSavePortfolio"
-                                    data-module="govuk-button" allow-edit="false">
+                                    data-module="govuk-button" allow-edit="false" disabled>
                                 Save
                             </button>
                         </div>
@@ -310,6 +311,7 @@
 }
 @section Scripts {
      <script>
+        const isYearReadOnly = @Html.Raw(FpsYearContext.IsReadOnly.ToString().ToLowerInvariant());
         const portfolioOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.PortfolioOptions));
         const preselectedPortfolio = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.SelectedPortfolio as string ?? string.Empty));
         const programOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Programs));
