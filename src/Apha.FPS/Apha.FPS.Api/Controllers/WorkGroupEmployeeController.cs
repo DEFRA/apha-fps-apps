@@ -96,15 +96,7 @@ namespace Apha.FPS.Api.Controllers
         [HttpDelete("{pactId}")]
         public async Task<IActionResult> DeleteWorkGroupEmployeeAsync(string pactId)
         {
-            if (string.IsNullOrWhiteSpace(pactId))
-                throw new ArgumentException("PACT Id cannot be null or empty.", nameof(pactId));
-
             var isDeleted = await _workGroupEmployeeService.DeleteWorkGroupEmployeeAsync(pactId);
-            if (!isDeleted)
-            {
-                throw new KeyNotFoundException($"WorkGroupEmployee with PACT Id '{pactId}' not found.");
-            }
-
             return Ok(isDeleted);
         }
     }
