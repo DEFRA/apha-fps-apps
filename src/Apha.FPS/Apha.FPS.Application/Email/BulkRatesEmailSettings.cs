@@ -1,4 +1,4 @@
-namespace Apha.Common.Contracts.FPS.Email
+namespace Apha.FPS.Application.Email
 {
     public class BulkRatesEmailSettings
     {
