@@ -5554,4 +5554,6 @@ body,
         white-space: nowrap;
         width: calc(100%/2);
     }
+.govuk-tabs__list {
+    padding-top: 10px !important;
 }
