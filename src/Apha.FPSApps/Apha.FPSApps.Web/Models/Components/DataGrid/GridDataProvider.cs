@@ -33,8 +33,7 @@ namespace Apha.FPSApps.Web.Models.Components.DataGrid
                     IsFilterable = isFilterable,
                     FilterType = columnAttr?.Type,
                     FilterOptions = filterOptions,
-                    CssClass = columnAttr?.CssClass ?? string.Empty,
-                    CssClassSourceProperty = columnAttr?.CssClassSourceProperty
+                    CssClass = columnAttr?.CssClass ?? string.Empty
                 });
             }
             return columns;
