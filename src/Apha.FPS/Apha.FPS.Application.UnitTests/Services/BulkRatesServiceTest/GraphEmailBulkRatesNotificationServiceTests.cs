@@ -1,5 +1,6 @@
 using Apha.Common.Contracts.Email;
 using Apha.Common.Utilities.Email;
+using Apha.FPS.Application.Common.BulkRates;
 using Apha.FPS.Application.Enums;
 using Apha.FPS.Application.Services;
 using Microsoft.Extensions.Logging.Abstractions;

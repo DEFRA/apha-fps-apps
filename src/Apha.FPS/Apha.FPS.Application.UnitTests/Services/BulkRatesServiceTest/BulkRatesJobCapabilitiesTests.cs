@@ -1,4 +1,5 @@
 using Apha.Common.Constants;
+using Apha.FPS.Application.Common.BulkRates;
 using Apha.FPS.Application.Services;
 using FluentAssertions;
 

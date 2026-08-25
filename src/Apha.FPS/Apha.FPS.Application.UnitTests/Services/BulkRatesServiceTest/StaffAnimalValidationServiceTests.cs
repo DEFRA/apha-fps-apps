@@ -1,4 +1,5 @@
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation.BulkRates;
 using FluentAssertions;
 
 namespace Apha.FPS.Application.UnitTests.Services.BulkRatesServiceTest
