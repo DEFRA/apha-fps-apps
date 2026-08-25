@@ -84,7 +84,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Total Staff Cost")]
         [DataType(DataType.Currency)]
-        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal TotalStaffCost { get; set; }
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Total Animal Cost")]
         [DataType(DataType.Currency)]
-        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal TotalAnimalCost { get; set; }
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Total Test Cost")]
         [DataType(DataType.Currency)]
-        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal TotalTestCost { get; set; }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Total Additional Cost")]
         [DataType(DataType.Currency)]
-        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
+        [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal TotalAdditionalCost { get; set; }
 
         /// <summary>
