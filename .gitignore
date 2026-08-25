@@ -1,8 +1,5 @@
 ## Ignore Visual Studio temporary files, build results, and user-specific files
 
-# Local scratch/temp programs — never committed
-temp/
-
 # User-specific files
 *.rsuser
 *.suo
