@@ -305,7 +305,7 @@
                                 '<td class="govuk-table__cell">' + (p.monthNumber ?? '') + '</td>';
                             tr.addEventListener('click', function () {
                                 input.value         = p.period + ' - ' + p.monthName;
-                                hidden.value        = p.monthNumber;
+                                hidden.value = p.period;
                                 panel.style.display = 'none';
                             });
                             tbody.appendChild(tr);

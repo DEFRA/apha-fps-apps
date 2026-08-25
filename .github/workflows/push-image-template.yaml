@@ -25,6 +25,11 @@ on:
         description: "Relative path to the Dockerfile from repo root"
         required: true
         type: string
+      run_local_healthcheck:
+        description: "Run local container health check before push (set false for worker/non-HTTP images)"
+        required: false
+        type: boolean
+        default: true
   
     secrets:
       AWS_ENV_REGION:
@@ -120,6 +125,7 @@ jobs:
             org.opencontainers.image.licenses=OGL-UK-3.0
 
       - name: Run container locally
+        if: ${{ inputs.run_local_healthcheck }}
         env:
           IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
         run: |
@@ -127,6 +133,7 @@ jobs:
           echo "Running local image: $IMAGE_TAG"
           docker run -d --name test-container -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=local $REPOSITORY:$IMAGE_TAG
       - name: Wait for service to start
+        if: ${{ inputs.run_local_healthcheck }}
         run: >
           echo "Waiting for the service to start..."
 
@@ -143,10 +150,11 @@ jobs:
             sleep 3
           done
       - name: Test application response
+        if: ${{ inputs.run_local_healthcheck }}
         run: |
           curl -i http://localhost:8080/health
       - name: Cleanup container
-        if: always()
+        if: ${{ inputs.run_local_healthcheck }}
         run: |
           docker rm -f test-container
 

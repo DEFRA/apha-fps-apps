@@ -253,12 +253,18 @@ namespace Apha.PACT.Application.Services
             }
 
             var result = await _repository.MakeLiveAsync(importedBy);
+            var message = $"{result.ImportedCount} of {result.ProcessedCount} records have been successfully made live.";
+            if (result.FailedCount > 0)
+            {
+                message += $"{Environment.NewLine}The remaining {result.FailedCount} records require revalidation.";
+            }
+
             return new MonthlyOutputMakeLiveResultDto
             {
                 ProcessedCount = result.ProcessedCount,
                 ImportedCount = result.ImportedCount,
                 FailedCount = result.FailedCount,
-                Message = $"{result.ImportedCount} of {result.ProcessedCount} records have been successfully made live.{Environment.NewLine}The remaining {result.FailedCount} records require revalidation."
+                Message = message
             };
         }
 

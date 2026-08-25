@@ -116,6 +116,52 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceCentreMaintenanceCo
             Assert.Equal("resourceCentreGrid", model.ResourceCentreGrid.GridId);
         }
 
+        [Fact]
+        public async Task Index_GridHasNoDefaultSortColumn()
+        {
+            // Arrange
+            var pagedResponse = BuildPagedResponse(new List<ProfitCentreDto> { BuildDto() });
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _profitCentreService.GetAllProfitCentresPagedAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(pagedResponse);
+            _mapper.Map<List<ResourceCentreMaintenanceItem>>(Arg.Any<List<ProfitCentreDto>>())
+                .Returns(new List<ResourceCentreMaintenanceItem>());
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model      = Assert.IsType<ResourceCentreMaintenanceViewModel>(viewResult.Model);
+            Assert.True(string.IsNullOrEmpty(model.ResourceCentreGrid.Pagination.SortColumn),
+                "No sort column should be applied on initial page load.");
+        }
+
+        [Fact]
+        public async Task Index_GridHasNoDefaultSortDirection()
+        {
+            // Arrange
+            var pagedResponse = BuildPagedResponse(new List<ProfitCentreDto> { BuildDto() });
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _profitCentreService.GetAllProfitCentresPagedAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(pagedResponse);
+            _mapper.Map<List<ResourceCentreMaintenanceItem>>(Arg.Any<List<ProfitCentreDto>>())
+                .Returns(new List<ResourceCentreMaintenanceItem>());
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model      = Assert.IsType<ResourceCentreMaintenanceViewModel>(viewResult.Model);
+            Assert.False(model.ResourceCentreGrid.Pagination.SortDirection,
+                "Sort direction should default to ascending (false) on initial page load.");
+        }
+
         #endregion
 
         #region LoadResourceCentreGrid Tests

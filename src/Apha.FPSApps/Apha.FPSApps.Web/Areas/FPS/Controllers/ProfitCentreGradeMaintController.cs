@@ -35,7 +35,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> Index()
         {
             var viewModel = new ProfitCentreGradeMaintViewModel();
-            var defaultRequest = new PaginationFilter<string> { Filter = "{}", SortBy = "PcGrade", Descending = false };
+            // Build the initial grid with no default sort applied.
+            // Sorting is only applied after the user explicitly clicks a column header.
+            var defaultRequest = new PaginationFilter<string>
+            {
+                Filter = "{}"
+            };
             viewModel.RcGradeMaintenanceGrid = await GetProfitCentreGradeMaintGridConfigAsync(defaultRequest);
             return View(viewModel);
         }

@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -16,6 +17,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
         private readonly IMapper                     _mapper;
         private readonly IContributionSummaryService _service;
         private readonly IProfitCentreService        _profitCentreService;
+        private readonly IAppStateService            _appStateService;
         private readonly ContributionSummaryController _controller;
 
         public ContributionSummaryControllerTests()
@@ -23,7 +25,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
             _mapper              = Substitute.For<IMapper>();
             _service             = Substitute.For<IContributionSummaryService>();
             _profitCentreService = Substitute.For<IProfitCentreService>();
-            _controller          = new ContributionSummaryController(_mapper, _service, _profitCentreService);
+            _appStateService     = Substitute.For<IAppStateService>();
+            _controller          = new ContributionSummaryController(_mapper, _service, _profitCentreService, _appStateService);
         }
 
         private static List<ProfitCentreDto> MakeProfitCentres()
