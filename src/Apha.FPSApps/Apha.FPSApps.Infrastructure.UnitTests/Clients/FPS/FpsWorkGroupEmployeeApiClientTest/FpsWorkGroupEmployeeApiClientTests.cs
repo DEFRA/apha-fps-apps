@@ -204,10 +204,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupEmployee
         [Fact]
         public async Task DeleteWorkGroupEmployeeAsync_WithSuccessResponse_ReturnsSuccess()
         {
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             var result = await _client.DeleteWorkGroupEmployeeAsync(DefaultPactId);
@@ -219,10 +219,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupEmployee
         [Fact]
         public async Task DeleteWorkGroupEmployeeAsync_WithFailureResponse_ReturnsFailureDto()
         {
-            var apiResponse = new ApiResponse<bool> { Success = false };
+            var apiResponse = new ApiResponse<bool?> { Success = false };
             var expectedDto = ApiResponseDto<bool>.FailureResponse([], new ApiMetaDto());
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             var result = await _client.DeleteWorkGroupEmployeeAsync(DefaultPactId);

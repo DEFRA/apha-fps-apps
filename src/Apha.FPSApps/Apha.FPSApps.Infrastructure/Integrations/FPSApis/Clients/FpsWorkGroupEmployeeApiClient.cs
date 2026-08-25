@@ -188,22 +188,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<bool>> DeleteWorkGroupEmployeeAsync(string pactId)
         {
-            try
-            {
-                var response = await _http.DeleteAsync<bool>(
-                    string.Format(FpsApiEndpoints.DeleteWgEmployee, Uri.EscapeDataString(pactId)));
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<bool>>(response);
+            var response = await _http.DeleteAsync<bool?>(
+                string.Format(FpsApiEndpoints.DeleteWgEmployee, Uri.EscapeDataString(pactId)));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
-                return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<bool>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to delete WorkGroupEmployee", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
     }
 }

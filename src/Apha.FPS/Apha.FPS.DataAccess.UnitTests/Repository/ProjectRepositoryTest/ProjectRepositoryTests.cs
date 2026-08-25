@@ -3140,7 +3140,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             decimal? budgetCvl   = null,
             decimal? custIncome  = null,
             decimal? transferIncome    = null,
-            decimal? planCaseWorkDebit = null) => new()
+            decimal? planCaseWorkDebit = null,
+            short? isDefraProject      = 0) => new()
         {
             ParentProject     = parentProject,
             Program           = "P001",
@@ -3153,7 +3154,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             CustIncome        = custIncome,
             TransferIncome    = transferIncome,
             PlanCaseWorkDebit = planCaseWorkDebit,
-            IsDefraProject    = 0,
+            IsDefraProject    = isDefraProject,
             UserEmail         = "test@example.com"
         };
 
@@ -3239,6 +3240,68 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal("CustomerC", items[0].Customer);
             Assert.Equal("CustomerB", items[1].Customer);
             Assert.Equal("CustomerA", items[2].Customer);
+        }
+
+        // -- isdefraproject ------------------------------------------------------
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByIsDefraProject_Ascending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", isDefraProject: 0),
+                MakeSortView("PP002", isDefraProject: -1),
+                MakeSortView("PP003", isDefraProject: 0),
+                MakeSortView("PP004", isDefraProject: -1),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "isdefraproject", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(4, items.Count);
+            Assert.Equal(new short[] { -1, -1, 0, 0 }, items.Select(i => i.IsDefraProject));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByIsDefraProject_Descending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", isDefraProject: -1),
+                MakeSortView("PP002", isDefraProject: 0),
+                MakeSortView("PP003", isDefraProject: -1),
+                MakeSortView("PP004", isDefraProject: 0),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "isdefraproject", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(4, items.Count);
+            Assert.Equal(new short[] { 0, 0, -1, -1 }, items.Select(i => i.IsDefraProject));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByIsDefraProject_GroupingHoldsOnSecondPage()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", isDefraProject: 0),
+                MakeSortView("PP002", isDefraProject: -1),
+                MakeSortView("PP003", isDefraProject: 0),
+                MakeSortView("PP004", isDefraProject: -1),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "isdefraproject", descending: false, page: 2, pageSize: 2);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(2, items.Count);
+            Assert.All(items, i => Assert.Equal((short)0, i.IsDefraProject));
         }
 
         // ?? contract ???????????????????????????????????????????????????????????

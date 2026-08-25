@@ -5541,3 +5541,27 @@ body,
 .isDateSection {
     width: 23%;
 }
+.isSelectDropdown {
+    width: 27vw;
+}
+.isAnimalTypePanel {
+    position: absolute;
+    top: 20.5vh;
+    width: 20vw;
+    left: 79.2vw;
+
+    th {
+        white-space: nowrap;
+        width: calc(100%/2);
+    }
+
+    .govuk-tabs__list {
+        padding-top: 10px !important;
+    }
+}
+
+.modal-body {
+    .govuk-form-group {
+        margin-top: 1em !important;
+    }
+}
