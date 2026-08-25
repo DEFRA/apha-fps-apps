@@ -4,9 +4,6 @@
     {
         int Year { get; set; }
         bool IsReadOnly { get; set; }
-
-        /// <summary>fps.tblyearmaster yearstatus for <see cref="Year"/> (e.g. "Open", "Planned", "Closed").</summary>
-        string? YearStatus { get; set; }
     }
 
 
@@ -14,6 +11,5 @@
     {
         public int Year { get; set; }
         public bool IsReadOnly { get; set; }
-        public string? YearStatus { get; set; }
     }
 }

@@ -99,6 +99,3 @@ web.*.config
 
 # exclude files which shouldnt be git ignored
 !*.slnLaunch.user
-
-# Throwaway local dev tools/scratch space
-temp/
