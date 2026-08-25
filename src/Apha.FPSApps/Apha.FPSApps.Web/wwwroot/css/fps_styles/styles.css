@@ -5565,3 +5565,23 @@ body,
         margin-top: 1em !important;
     }
 }
+
+#ManagerDropdownPanel {
+    left: -24px !important;
+    width: auto !important;
+
+    table {
+        th {
+            white-space: nowrap;
+            width: calc(100%/3) !important;
+        }
+    }
+}
+#editWorkgroupForm {
+    position: relative;
+}
+#modaPopupBody {
+    .modal-body {
+        overflow: visible;
+    }
+}
