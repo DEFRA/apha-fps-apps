@@ -18,38 +18,54 @@ namespace Apha.PIMS.DataAccess.Repository
         public async Task<PagedData<AccessUserLevel>> GetPagedAccessUserLevelAllAsync(PaginationParameters<string> query)
         {
             var baseQuery = _dbContext.AccessUserLevels.AsNoTracking();
+            baseQuery = ApplyAccessUserLevelFilters(baseQuery, query.Filter);
+            baseQuery = ApplyAccessUserLevelSorting(baseQuery, query.SortBy, query.Descending);
 
-            if (!string.IsNullOrWhiteSpace(query.Filter))
+            var page = query.Page > 0 ? query.Page : 1;
+            var pageSize = query.PageSize > 0 ? query.PageSize : 10;
+            return await ApplyPaging(baseQuery, page, pageSize);
+        }
+
+        private IQueryable<AccessUserLevel> ApplyAccessUserLevelFilters(IQueryable<AccessUserLevel> baseQuery, string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
             {
-                var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(query.Filter)
-                    ?? new Dictionary<string, string>();
-
-                if (filters.TryGetValue("UserName", out var userNameFilter)
-                    && !string.IsNullOrWhiteSpace(userNameFilter))
-                {
-                    var value = userNameFilter.Trim();
-                    // Resolve matching NtLogins via subquery against AccessUsers
-                    var matchingLogins = _dbContext.AccessUsers
-                        .Where(u => u.UserName != null && EF.Functions.ILike(u.UserName, $"%{value}%"))
-                        .Select(u => u.NtLogin);
-                    baseQuery = baseQuery.Where(ul => matchingLogins.Contains(ul.NtLogin));
-                }
-
-                if (filters.TryGetValue("NtLogin", out var ntloginFilter)
-                    && !string.IsNullOrWhiteSpace(ntloginFilter))
-                {
-                    var value = ntloginFilter.Trim();
-                    baseQuery = baseQuery.Where(ul => EF.Functions.ILike(ul.NtLogin, $"%{value}%"));
-                }
-
-                if (filters.TryGetValue("SystemId", out var systemIdFilter)
-                    && int.TryParse(systemIdFilter, out var systemIdVal))
-                {
-                    baseQuery = baseQuery.Where(ul => ul.SystemId == systemIdVal);
-                }
+                return baseQuery;
             }
 
-            baseQuery = (query.SortBy, query.Descending) switch
+            var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filter)
+                ?? new Dictionary<string, string>();
+
+            if (filters.TryGetValue("UserName", out var userNameFilter)
+                && !string.IsNullOrWhiteSpace(userNameFilter))
+            {
+                var value = userNameFilter.Trim();
+                // Resolve matching NtLogins via subquery against AccessUsers
+                var matchingLogins = _dbContext.AccessUsers
+                    .Where(u => u.UserName != null && EF.Functions.ILike(u.UserName, $"%{value}%"))
+                    .Select(u => u.NtLogin);
+                baseQuery = baseQuery.Where(ul => matchingLogins.Contains(ul.NtLogin));
+            }
+
+            if (filters.TryGetValue("NtLogin", out var ntloginFilter)
+                && !string.IsNullOrWhiteSpace(ntloginFilter))
+            {
+                var value = ntloginFilter.Trim();
+                baseQuery = baseQuery.Where(ul => EF.Functions.ILike(ul.NtLogin, $"%{value}%"));
+            }
+
+            if (filters.TryGetValue("SystemId", out var systemIdFilter)
+                && int.TryParse(systemIdFilter, out var systemIdVal))
+            {
+                baseQuery = baseQuery.Where(ul => ul.SystemId == systemIdVal);
+            }
+
+            return baseQuery;
+        }
+
+        private IQueryable<AccessUserLevel> ApplyAccessUserLevelSorting(IQueryable<AccessUserLevel> baseQuery, string? sortBy, bool descending)
+        {
+            return (sortBy, descending) switch
             {
                 ("NtLogin", true)        => baseQuery.OrderByDescending(ul => ul.NtLogin),
                 ("NtLogin", false)       => baseQuery.OrderBy(ul => ul.NtLogin),
@@ -72,10 +88,6 @@ namespace Apha.PIMS.DataAccess.Repository
                 (_, true)                 => baseQuery.OrderByDescending(ul => ul.SystemId).ThenByDescending(ul => ul.NtLogin),
                 _                         => baseQuery.OrderBy(ul => ul.SystemId).ThenBy(ul => ul.NtLogin)
             };
-
-            var page = query.Page > 0 ? query.Page : 1;
-            var pageSize = query.PageSize > 0 ? query.PageSize : 10;
-            return await ApplyPaging(baseQuery, page, pageSize);
         }
         public async Task<List<AccessUserLevel>> GetBySystemIdAsync(int systemId)
         {
