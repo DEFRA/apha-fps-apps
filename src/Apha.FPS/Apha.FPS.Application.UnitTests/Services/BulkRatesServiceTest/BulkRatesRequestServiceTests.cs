@@ -965,6 +965,49 @@ public class BulkRatesRequestServiceTests
     }
 
     [Fact]
+    public async Task GetStagingData_WhenRowHasValidationError_DisplaysErrorNotUnknown()
+    {
+        // Negative-rate rows produce a validation error but no CalculatedAction.
+        // The display status must be "Error", not "Unknown" (display-status bug fix).
+        var repo = RepoReturning(Entry(status: "Initiated", uploadChecksum: "abc"));
+        repo.GetTestOrProductStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "PT0000", FecNewRate = -119.15m } } as IReadOnlyList<TestOrProductStagingRow>);
+        repo.GetTestRequirementStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
+        repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "PT0000", DefraUnitPrice = -119.15m } } as IReadOnlyList<TestOrProductStagingRow>);
+        repo.GetValidationErrorsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new StagingValidationError { TestCode = "PT0000", Severity = "Error", SheetName = "FEC", ValidationCode = "NEGATIVE_RATE", ValidationMessage = "Negative rates are not permitted." } } as IReadOnlyList<StagingValidationError>);
+        var svc = CreateService(repo);
+
+        var result = await svc.GetStagingDataAsync(QueueId);
+
+        var row = result.FecRows.Should().ContainSingle(r => r.TestCode == "PT0000").Subject;
+        row.Status.Should().Be("Error");
+    }
+
+    [Fact]
+    public async Task GetStagingData_WhenNoValidationErrorsAndNullCalculatedAction_DisplaysUnknown()
+    {
+        // A frozen row carrying an unrecognised CalculatedAction (no live re-classification,
+        // no stored errors) must display "Unknown" — distinguishing it from a validation failure.
+        var repo = RepoReturning(Entry(status: "Initiated", uploadChecksum: "abc"));
+        repo.GetTestOrProductStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "T_UNK", FecNewRate = 5.0m, CalculatedAction = "FutureAction" } } as IReadOnlyList<TestOrProductStagingRow>);
+        repo.GetTestRequirementStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
+        repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "T_UNK", DefraUnitPrice = 10.0m } } as IReadOnlyList<TestOrProductStagingRow>);
+        // GetValidationErrorsAsync returns empty (default in RepoReturning) — no errors for this row.
+        var svc = CreateService(repo);
+
+        var result = await svc.GetStagingDataAsync(QueueId);
+
+        var row = result.FecRows.Should().ContainSingle(r => r.TestCode == "T_UNK").Subject;
+        row.Status.Should().Be("Unknown");
+    }
+
+    [Fact]
     public async Task GetStagingData_WhenRequestIsCompleted_DoesNotFloodGridWithLiveRowsAsDeleted()
     {
         // Staging rows are purged after a successful commit (BulkTestRatesService step 5,

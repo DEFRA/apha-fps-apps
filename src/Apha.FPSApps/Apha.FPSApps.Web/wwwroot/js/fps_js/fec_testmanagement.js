@@ -344,73 +344,45 @@ var BulkRates = (function () {
     // rather than the generic showGovukConfirm() dialog, so the four action
     // modals on this page look and behave consistently with each other.
 
-    var _pendingReleaseId = null;
-
     function showReleaseModal(requestId) {
-        _pendingReleaseId = requestId;
-        var overlay = document.getElementById('releaseModalOverlay');
-        if (!overlay) { return; }
-        overlay.style.display = '';
-    }
-
-    function closeReleaseModal() {
-        var overlay = document.getElementById('releaseModalOverlay');
-        if (overlay) { overlay.style.display = 'none'; }
-        _pendingReleaseId = null;
-    }
-
-    function confirmRelease() {
-        var requestId = _pendingReleaseId;
-        closeReleaseModal();
-        hideActionError();
-        var btn = document.getElementById('btnRelease');
-        if (btn) { btn.disabled = true; }
-
-        ajaxPost(
-            '/FPS/BulkRates/Release',
-            { id: requestId },
-            function () { window.location.reload(); },
-            function (msg) {
-                showActionError(msg);
-                if (btn) { btn.disabled = false; }
-            }
-        );
+        showGovukConfirm('Release this request for approval? This action cannot be undone.')
+            .then(function (confirmed) {
+                if (!confirmed) { return; }
+                hideActionError();
+                var btn = document.getElementById('btnRelease');
+                if (btn) { btn.disabled = true; }
+                ajaxPost(
+                    '/FPS/BulkRates/Release',
+                    { id: requestId },
+                    function () { window.location.reload(); },
+                    function (msg) {
+                        showActionError(msg);
+                        if (btn) { btn.disabled = false; }
+                    }
+                );
+            });
     }
 
     // ── Approve modal ───────────────────────────────────────────────────────
 
-    var _pendingApproveId = null;
-
     function showApproveModal(requestId) {
-        _pendingApproveId = requestId;
-        var overlay = document.getElementById('approveModalOverlay');
-        if (!overlay) { return; }
-        overlay.style.display = '';
-    }
-
-    function closeApproveModal() {
-        var overlay = document.getElementById('approveModalOverlay');
-        if (overlay) { overlay.style.display = 'none'; }
-        _pendingApproveId = null;
-    }
-
-    function confirmApprove() {
-        var requestId = _pendingApproveId;
-        closeApproveModal();
-        hideActionError();
-        var btn = document.getElementById('btnApprove');
-        if (btn) { btn.disabled = true; }
-
-        var returnUrl = btn ? (btn.getAttribute('data-return-url') || '/FPS/BulkRates') : '/FPS/BulkRates';
-        ajaxPost(
-            '/FPS/BulkRates/Approve',
-            { id: requestId },
-            function () { window.fpsNavigateTo(returnUrl); },
-            function (msg) {
-                showActionError(msg);
-                if (btn) { btn.disabled = false; }
-            }
-        );
+        showGovukConfirm('Approve this request? The changes will be processed and applied.')
+            .then(function (confirmed) {
+                if (!confirmed) { return; }
+                hideActionError();
+                var btn = document.getElementById('btnApprove');
+                if (btn) { btn.disabled = true; }
+                var returnUrl = btn ? (btn.getAttribute('data-return-url') || '/FPS/BulkRates') : '/FPS/BulkRates';
+                ajaxPost(
+                    '/FPS/BulkRates/Approve',
+                    { id: requestId },
+                    function () { window.fpsNavigateTo(returnUrl); },
+                    function (msg) {
+                        showActionError(msg);
+                        if (btn) { btn.disabled = false; }
+                    }
+                );
+            });
     }
 
     // ── Reject modal ─────────────────────────────────────────────────────────
@@ -521,8 +493,6 @@ var BulkRates = (function () {
     // ── Keyboard: close modals on Escape ─────────────────────────────────────
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
-            closeReleaseModal();
-            closeApproveModal();
             closeRejectModal();
             closeCancelModal();
             closeUploadTrackerModal();
@@ -546,11 +516,7 @@ var BulkRates = (function () {
         submitCreate:           submitCreate,
         uploadFile:             uploadFile,
         showReleaseModal:       showReleaseModal,
-        closeReleaseModal:      closeReleaseModal,
-        confirmRelease:         confirmRelease,
         showApproveModal:       showApproveModal,
-        closeApproveModal:      closeApproveModal,
-        confirmApprove:         confirmApprove,
         showRejectModal:        showRejectModal,
         closeRejectModal:       closeRejectModal,
         confirmReject:          confirmReject,

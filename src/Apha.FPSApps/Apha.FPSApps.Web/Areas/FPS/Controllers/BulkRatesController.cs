@@ -238,7 +238,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var validationResponse = await _bulkRatesService.GetValidationResultsAsync(id);
             var uploadResult = validationResponse.Success ? validationResponse.Data : null;
             var staging = await GetStagingDataOrEmptyAsync(id);
-            var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
+            var defaultRequest = new PaginationFilter<string> { Filter = "{}", SortBy = "status" };
 
             var vm = new BulkRatesDetailViewModel
             {
@@ -248,19 +248,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 FecStagingGrid = BuildStagingGridConfig<BulkRatesFecStagingRowDto, FecStagingGridItem>(
                     staging.FecRows, defaultRequest, "fecStagingGrid", "TestCode",
                     FecStagingGridUrl(id), FecSortSelector,
-                    BuildFecValidationLookup(uploadResult), r => r.TestCode),
+                    BuildFecValidationLookup(uploadResult), r => r.TestCode, r => r.Status == "No Change"),
                 AgrupStagingGrid = BuildStagingGridConfig<BulkRatesAgrupStagingRowDto, AgrupStagingGridItem>(
                     staging.AgrupRows, defaultRequest, "agrupStagingGrid", "TestCode",
                     AgrupStagingGridUrl(id), AgrupSortSelector,
-                    BuildAgrupValidationLookup(uploadResult), AgrupValidationKey),
+                    BuildAgrupValidationLookup(uploadResult), AgrupValidationKey, r => r.Status == "No Change"),
                 StaffStagingGrid = BuildStagingGridConfig<BulkRatesStaffStagingRowDto, StaffStagingGridItem>(
                     staging.StaffRows, defaultRequest, "staffStagingGrid", "PcGrade",
                     StaffStagingGridUrl(id), StaffSortSelector,
-                    BuildStaffValidationLookup(uploadResult), r => r.PcGrade),
+                    BuildStaffValidationLookup(uploadResult), r => r.PcGrade, r => r.Status == "No Change"),
                 AnimalStagingGrid = BuildStagingGridConfig<BulkRatesAnimalStagingRowDto, AnimalStagingGridItem>(
                     staging.AnimalRows, defaultRequest, "animalStagingGrid", "AnimalType",
                     AnimalStagingGridUrl(id), AnimalSortSelector,
-                    BuildAnimalValidationLookup(uploadResult), r => r.AnimalType)
+                    BuildAnimalValidationLookup(uploadResult), r => r.AnimalType, r => r.Status == "No Change")
             };
             return View(vm);
         }
@@ -282,7 +282,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = BuildStagingGridConfig<BulkRatesFecStagingRowDto, FecStagingGridItem>(
                 staging.FecRows, request, "fecStagingGrid", "TestCode",
                 FecStagingGridUrl(jobExecutionId), FecSortSelector,
-                BuildFecValidationLookup(validationResponse.Success ? validationResponse.Data : null), r => r.TestCode);
+                BuildFecValidationLookup(validationResponse.Success ? validationResponse.Data : null), r => r.TestCode, r => r.Status == "No Change");
             return PartialView("_DataGrid", gridConfig);
         }
 
@@ -297,7 +297,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = BuildStagingGridConfig<BulkRatesAgrupStagingRowDto, AgrupStagingGridItem>(
                 staging.AgrupRows, request, "agrupStagingGrid", "TestCode",
                 AgrupStagingGridUrl(jobExecutionId), AgrupSortSelector,
-                BuildAgrupValidationLookup(validationResponse.Success ? validationResponse.Data : null), AgrupValidationKey);
+                BuildAgrupValidationLookup(validationResponse.Success ? validationResponse.Data : null), AgrupValidationKey, r => r.Status == "No Change");
             return PartialView("_DataGrid", gridConfig);
         }
 
@@ -312,7 +312,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = BuildStagingGridConfig<BulkRatesStaffStagingRowDto, StaffStagingGridItem>(
                 staging.StaffRows, request, "staffStagingGrid", "PcGrade",
                 StaffStagingGridUrl(jobExecutionId), StaffSortSelector,
-                BuildStaffValidationLookup(validationResponse.Success ? validationResponse.Data : null), r => r.PcGrade);
+                BuildStaffValidationLookup(validationResponse.Success ? validationResponse.Data : null), r => r.PcGrade, r => r.Status == "No Change");
             return PartialView("_DataGrid", gridConfig);
         }
 
@@ -327,7 +327,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = BuildStagingGridConfig<BulkRatesAnimalStagingRowDto, AnimalStagingGridItem>(
                 staging.AnimalRows, request, "animalStagingGrid", "AnimalType",
                 AnimalStagingGridUrl(jobExecutionId), AnimalSortSelector,
-                BuildAnimalValidationLookup(validationResponse.Success ? validationResponse.Data : null), r => r.AnimalType);
+                BuildAnimalValidationLookup(validationResponse.Success ? validationResponse.Data : null), r => r.AnimalType, r => r.Status == "No Change");
             return PartialView("_DataGrid", gridConfig);
         }
 
@@ -455,7 +455,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             string gridId, string keyProperty, string bindGridUrl,
             Func<string?, Func<TRow, object?>> sortKeySelector,
             IReadOnlyDictionary<string, string>? validationLookup = null,
-            Func<TRow, string?>? validationKeySelector = null)
+            Func<TRow, string?>? validationKeySelector = null,
+            Func<TRow, bool>? pinLastSelector = null)
             where TItem : class
         {
             var page = request.Page < 1 ? 1 : request.Page;
@@ -471,9 +472,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             // (see BuildStagingGridConfig's original paging/sorting comment).
             var filteredRows = ApplyFilters(rows, filterDict);
 
-            var ordered = request.Descending
-                ? filteredRows.OrderByDescending(keySelector, NullSafeComparer.Instance)
-                : filteredRows.OrderBy(keySelector, NullSafeComparer.Instance);
+            // Pin-last rows (e.g. "No Change") always sort to the bottom regardless of direction.
+            var ordered = pinLastSelector != null
+                ? (request.Descending
+                    ? filteredRows.OrderBy(pinLastSelector).ThenByDescending(keySelector, NullSafeComparer.Instance)
+                    : filteredRows.OrderBy(pinLastSelector).ThenBy(keySelector, NullSafeComparer.Instance))
+                : (request.Descending
+                    ? filteredRows.OrderByDescending(keySelector, NullSafeComparer.Instance)
+                    : filteredRows.OrderBy(keySelector, NullSafeComparer.Instance));
 
             var pageRows = ordered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
             var items = _mapper.Map<List<TItem>>(pageRows);

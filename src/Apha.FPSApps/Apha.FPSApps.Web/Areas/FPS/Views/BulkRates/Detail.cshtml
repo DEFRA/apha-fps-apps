@@ -89,10 +89,10 @@
                                 @* ── Request header ── *@
                                 <div class="govuk-grid-row govuk-!-margin-top-4 govuk-!-margin-bottom-4">
                                     <div class="govuk-grid-column-full">
-                                        <h2 class="govuk-heading-m govuk-!-margin-bottom-2">
-                                            @FriendlyJobName(entry.JobName) — FPS Year @entry.FpsYear
-                                            <strong class="@StatusBadgeClass(entry.Status) govuk-!-margin-left-2" style="white-space: nowrap;">@FriendlyStatus(entry.Status)</strong>
-                                        </h2>
+                                        <div class="govuk-!-display-flex govuk-!-margin-bottom-2" style="justify-content:space-between; align-items:center; gap:1rem;">
+                                            <h2 class="govuk-heading-m govuk-!-margin-bottom-0">@FriendlyJobName(entry.JobName) — FPS Year @entry.FpsYear</h2>
+                                            <strong class="@StatusBadgeClass(entry.Status)" style="white-space:nowrap; flex-shrink:0;">@FriendlyStatus(entry.Status)</strong>
+                                        </div>
                                         <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-font-size-16 govuk-!-margin-bottom-0">
                                             <div class="govuk-summary-list__row">
                                                 <dt class="govuk-summary-list__key">Request ID</dt>
@@ -495,12 +495,6 @@
 
     </div>
 </main>
-
-@* Release modal (rendered at body end, toggled by JS) *@
-@await Html.PartialAsync("_ReleaseModal")
-
-@* Approval modal (rendered at body end, toggled by JS) *@
-@await Html.PartialAsync("_ApproveModal")
 
 @* Rejection modal (rendered at body end, toggled by JS) *@
 @await Html.PartialAsync("_RejectModal")

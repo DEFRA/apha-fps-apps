@@ -66,10 +66,7 @@ namespace Apha.FPS.Application.Services
                 }
                 else
                 {
-                    // Existing Test Code: description/owner changes are ignored (spec, unchanged).
-                    if (!string.IsNullOrWhiteSpace(row.ItemDescription))
-                        findings.Add(Warning("IGNORED_ON_UPDATE", "FEC", row.TestCode, row.SourceRow,
-                            "Item Description changes are ignored for existing Test Codes (update-only modifies price columns).", "itemdescription"));
+                // Existing Test Code: description/owner changes are ignored (spec, unchanged).
 
                     // Existing + blank/zero rate = Zero-Rate Withdrawal, not an error (reconciliation §2.1) —
                     // supersedes the old "blank is always a mandatory-field error" rule. Still counts

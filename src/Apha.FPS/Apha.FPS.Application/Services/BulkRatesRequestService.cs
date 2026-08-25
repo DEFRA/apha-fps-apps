@@ -853,6 +853,21 @@ namespace Apha.FPS.Application.Services
                     return AgrupKey(parts[0], parts.Length > 1 ? parts[1] : string.Empty);
                 });
 
+            // Build error-keyed lookups so rows with validation errors show "Error", not "Unknown".
+            var storedErrors = await _repository.GetValidationErrorsAsync(entry.JobQueueId, ct);
+            var fecTestCodesWithErrors = storedErrors
+                .Where(e => string.Equals(e.Severity, "Error", StringComparison.OrdinalIgnoreCase)
+                         && !string.IsNullOrEmpty(e.TestCode)
+                         && (e.SheetName is null || string.Equals(e.SheetName, "FEC", StringComparison.OrdinalIgnoreCase)))
+                .Select(e => e.TestCode!)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var agrupKeysWithErrors = storedErrors
+                .Where(e => string.Equals(e.Severity, "Error", StringComparison.OrdinalIgnoreCase)
+                         && !string.IsNullOrEmpty(e.TestCode)
+                         && string.Equals(e.SheetName, "AGRUP", StringComparison.OrdinalIgnoreCase))
+                .Select(e => AgrupKey(e.TestCode!, e.Buyer ?? string.Empty))
+                .ToHashSet();
+
             var fecRows = new List<BulkRatesFecStagingRowDto>();
             foreach (var row in stagedFec)
             {
@@ -862,7 +877,9 @@ namespace Apha.FPS.Application.Services
 
                 fecRows.Add(new BulkRatesFecStagingRowDto
                 {
-                    Status = FormatCalculatedAction(calculatedAction),
+                    Status = fecTestCodesWithErrors.Contains(row.TestCode)
+                        ? "Error"
+                        : FormatCalculatedAction(calculatedAction),
                     TestCode = row.TestCode,
                     UnitPriceVla = row.UnitPriceVla,
                     DefraUnitPrice = row.DefraUnitPrice,
@@ -907,7 +924,9 @@ namespace Apha.FPS.Application.Services
 
                 agrupRows.Add(new BulkRatesAgrupStagingRowDto
                 {
-                    Status = FormatCalculatedAction(calculatedAction),
+                    Status = agrupKeysWithErrors.Contains(AgrupKey(row.TestCode, row.Buyer))
+                        ? "Error"
+                        : FormatCalculatedAction(calculatedAction),
                     TestCode = row.TestCode,
                     Buyer = row.Buyer,
                     Agrup = row.Agrup,
@@ -957,9 +976,10 @@ namespace Apha.FPS.Application.Services
             _ => "Unknown"
         };
 
-        // Sort order for FEC/AGRUP: Unknown/error-status first, then actionable rows, NoChange last.
+        // Sort order for FEC/AGRUP: Error/Unknown first, then actionable rows, NoChange last.
         private static int FecAgrupSortKey(string status) => status switch
         {
+            "Error"                => 0,
             "Unknown"              => 0,
             "Insert"               => 1,
             "Update"               => 2,

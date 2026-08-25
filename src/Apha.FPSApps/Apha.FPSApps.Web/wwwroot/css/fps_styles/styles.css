@@ -4530,6 +4530,16 @@ body,
     overflow-y: visible !important;
 }
 
+/* Horizontal scroll on the wrapper div (one level above grid-scroll-container) so wide tables
+   scroll within the grid container rather than overflowing the body (body has overflow-x:hidden). */
+#gridContainer_bulkRatesGrid > .editable-grid-container > div,
+#gridContainer_fecStagingGrid > .editable-grid-container > div,
+#gridContainer_agrupStagingGrid > .editable-grid-container > div,
+#gridContainer_staffStagingGrid > .editable-grid-container > div,
+#gridContainer_animalStagingGrid > .editable-grid-container > div {
+    overflow-x: auto;
+}
+
 #stage2StaffAllocationGridContainer .editable-grid-table th,
 #stage2StaffAllocationGridContainer .editable-grid-table td,
 #stage2StaffJobsGridContainer .editable-grid-table th,
