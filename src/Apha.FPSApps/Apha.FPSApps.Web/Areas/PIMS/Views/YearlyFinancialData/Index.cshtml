@@ -35,7 +35,6 @@
                             asp-items="Model.ProjectList"
                             onchange="onProjectChanged()"
                             aria-label="Select project">
-                        <option value=""></option>
                     </select>
                 </div>
 
@@ -129,6 +128,19 @@
 
 @Html.AntiForgeryToken()
 
+<style>
+    /* Style to make select appear empty when no value is selected (matches MS Access behavior) */
+    #yfdProject:empty,
+    #yfdProject[value=""],
+    #yfdProject:invalid {
+        color: #999;
+    }
+
+    #yfdProject option {
+        color: black;
+    }
+</style>
+
 @section Scripts {
     <script>
         // ── Sidebar ──────────────────────────────────────────────────────
@@ -136,7 +148,17 @@
             document.querySelector('.sidenav').classList.toggle('collapsed');
         }
 
-        // ── Grid extra filter — supplies current project to LoadYearlyFinancialDataGrid ──
+        // ── Initialize project dropdown to empty on page load ──────────────────────────────────
+        // Ensure the Project dropdown starts empty (matches MS Access behavior)
+        document.addEventListener('DOMContentLoaded', function() {
+            var projectSelect = document.getElementById('yfdProject');
+            if (projectSelect) {
+                // Reset to empty value on page load
+                projectSelect.value = '';
+            }
+        });
+
+
         
         function getYearlyFinancialDataExtraFilters() {
             return {

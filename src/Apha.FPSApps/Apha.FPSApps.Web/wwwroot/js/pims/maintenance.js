@@ -583,7 +583,6 @@ function getPimsAntiForgeryToken() {
 function saveRadTrackProg() {
     const $form = $('#formRadTrackProg');
     const $banner = $('#progProgDbError');
-    const $bannerText = $('#progProgDbErrorText');
 
     displayClientValidationErrors($form, $form);
 
@@ -605,13 +604,6 @@ function saveRadTrackProg() {
             if (data.errors) {
                 displayServerValidationErrors(data.errors, data.message, $form);
             }
-
-            const serverMessage = data.message
-                || (Array.isArray(data.errors) && data.errors.length > 0 && data.errors[0].message)
-                || 'Save failed.';
-
-            $bannerText.text(serverMessage);
-            $banner.removeClass('ra-hidden');
         })
         .fail(function (xhr) {
             const response = xhr && xhr.responseJSON ? xhr.responseJSON : null;
@@ -620,15 +612,13 @@ function saveRadTrackProg() {
                 || xhr.responseText
                 || 'An error occurred while saving.';
 
-            $bannerText.text(serverMessage);
-            $banner.removeClass('ra-hidden');
+            displayServerValidationErrors([{ field: 'Program', message: serverMessage }], null, $form);
         });
 }
 
 $(document).off('change.radtrackprog', '#progProgName').on('change.radtrackprog', '#progProgName', function () {
     clearValidationErrors('#formRadTrackProg');
     $('#progProgDbError').addClass('ra-hidden');
-    $('#progProgDbErrorText').text('');
 });
 
 function addRadTrackProg() {

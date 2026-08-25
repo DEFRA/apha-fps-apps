@@ -36,6 +36,9 @@ namespace Apha.PIMS.Application.Services
         {
             if (string.IsNullOrWhiteSpace(program)) throw new ArgumentException("program must not be empty.", nameof(program));
 
+            // Trim the program name to normalize it (remove leading/trailing spaces)
+            program = program.Trim();
+
             RadtrackProg? entity = await _repository.GetRadTrackProgByProgramAsync(program);
             return entity is null ? null : _mapper.Map<RadTrackProgDto>(entity);
         }
@@ -45,6 +48,9 @@ namespace Apha.PIMS.Application.Services
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.Program)) throw new ArgumentException("Program must not be empty.", nameof(dto));
+
+            // Trim the program name to normalize it (remove leading/trailing spaces)
+            dto.Program = dto.Program.Trim();
 
             // Check if program already exists to prevent duplicate key constraint violation
             bool exists = await _repository.RadTrackProgExistsAsync(dto.Program);
@@ -62,6 +68,9 @@ namespace Apha.PIMS.Application.Services
             if (dto is null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.Program)) throw new ArgumentException("Program must not be empty.", nameof(dto));
 
+            // Trim the program name to normalize it (remove leading/trailing spaces)
+            dto.Program = dto.Program.Trim();
+
             bool exists = await _repository.RadTrackProgExistsAsync(dto.Program);
             if (!exists)
                 throw new KeyNotFoundException($"RadTrackProg with program '{dto.Program}' was not found.");
@@ -75,6 +84,9 @@ namespace Apha.PIMS.Application.Services
         public async Task<bool> DeleteRadTrackProgAsync(string program)
         {
             if (string.IsNullOrWhiteSpace(program)) throw new ArgumentException("program must not be empty.", nameof(program));
+
+            // Trim the program name to normalize it (remove leading/trailing spaces)
+            program = program.Trim();
 
             bool exists = await _repository.RadTrackProgExistsAsync(program);
             if (!exists)

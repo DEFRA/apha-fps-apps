@@ -47,13 +47,13 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         {
             YearlyFinancialDataViewModel viewModel = new();
 
-            
+
             await PopulateDropdownsAsync(viewModel);
 
-            viewModel.SelectedProject = project ?? string.Empty;
+            viewModel.SelectedProject = project ?? null;
 
-            
-            viewModel.Parentproject = parentproject ?? viewModel.SelectedProject;
+
+            viewModel.Parentproject = parentproject ?? viewModel.SelectedProject ?? string.Empty;
 
             viewModel.HoursInDay = await GetRequiredDoubleSettingAsync("HoursInDay");
             viewModel.DaysInYear = await GetRequiredDoubleSettingAsync("DaysInYear");
