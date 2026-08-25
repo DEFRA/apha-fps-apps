@@ -144,6 +144,60 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserLevelRepositoryTes
             Assert.Equal(10, result.Data.Count);
         }
 
+        [Fact]
+        public async Task GetPagedAccessUserLevelAllAsync_SortByUserNameAscending_OrdersByUserName()
+        {
+            // Arrange
+            var levels = new List<AccessUserLevel>
+            {
+                MakeUserLevel(1, "dom\\u1", 1),
+                MakeUserLevel(1, "dom\\u2", 1),
+                MakeUserLevel(1, "dom\\u3", 1)
+            };
+            var users = new List<AccessUser>
+            {
+                MakeUser(1, "dom\\u1", "Charlie"),
+                MakeUser(1, "dom\\u2", "Alice"),
+                MakeUser(1, "dom\\u3", "Bob")
+            };
+
+            var repo = CreateRepository(levels, users);
+            var query = new PaginationParameters<string>(sortBy: "UserName", descending: false, page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetPagedAccessUserLevelAllAsync(query);
+
+            // Assert
+            Assert.Equal(new[] { "dom\\u2", "dom\\u3", "dom\\u1" }, result.Data.Select(x => x.NtLogin).ToArray());
+        }
+
+        [Fact]
+        public async Task GetPagedAccessUserLevelAllAsync_SortByUserNameDescending_OrdersByUserName()
+        {
+            // Arrange
+            var levels = new List<AccessUserLevel>
+            {
+                MakeUserLevel(1, "dom\\u1", 1),
+                MakeUserLevel(1, "dom\\u2", 1),
+                MakeUserLevel(1, "dom\\u3", 1)
+            };
+            var users = new List<AccessUser>
+            {
+                MakeUser(1, "dom\\u1", "Charlie"),
+                MakeUser(1, "dom\\u2", "Alice"),
+                MakeUser(1, "dom\\u3", "Bob")
+            };
+
+            var repo = CreateRepository(levels, users);
+            var query = new PaginationParameters<string>(sortBy: "UserName", descending: true, page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetPagedAccessUserLevelAllAsync(query);
+
+            // Assert
+            Assert.Equal(new[] { "dom\\u1", "dom\\u3", "dom\\u2" }, result.Data.Select(x => x.NtLogin).ToArray());
+        }
+
         #endregion
 
         #region GetBySystemIdAsync

@@ -53,14 +53,24 @@ namespace Apha.PIMS.DataAccess.Repository
             {
                 ("NtLogin", true)        => baseQuery.OrderByDescending(ul => ul.NtLogin),
                 ("NtLogin", false)       => baseQuery.OrderBy(ul => ul.NtLogin),
-                ("UserName", true)       => baseQuery.OrderByDescending(ul => ul.NtLogin),
-                ("UserName", false)      => baseQuery.OrderBy(ul => ul.NtLogin),
+                ("UserName", true)       => baseQuery
+                    .OrderByDescending(ul => _dbContext.AccessUsers
+                        .Where(u => u.SystemId == ul.SystemId && u.NtLogin == ul.NtLogin)
+                        .Select(u => u.UserName)
+                        .FirstOrDefault())
+                    .ThenByDescending(ul => ul.NtLogin),
+                ("UserName", false)      => baseQuery
+                    .OrderBy(ul => _dbContext.AccessUsers
+                        .Where(u => u.SystemId == ul.SystemId && u.NtLogin == ul.NtLogin)
+                        .Select(u => u.UserName)
+                        .FirstOrDefault())
+                    .ThenBy(ul => ul.NtLogin),
                 ("AccessLevelId", true)  => baseQuery.OrderByDescending(ul => ul.AccessLevelId),
                 ("AccessLevelId", false) => baseQuery.OrderBy(ul => ul.AccessLevelId),
                 ("SystemId", true)       => baseQuery.OrderByDescending(ul => ul.SystemId),
                 ("SystemId", false)      => baseQuery.OrderBy(ul => ul.SystemId),
-                (_, true)               => baseQuery.OrderByDescending(ul => ul.SystemId).ThenByDescending(ul => ul.NtLogin),
-                _                       => baseQuery.OrderBy(ul => ul.SystemId).ThenBy(ul => ul.NtLogin)
+                (_, true)                 => baseQuery.OrderByDescending(ul => ul.SystemId).ThenByDescending(ul => ul.NtLogin),
+                _                         => baseQuery.OrderBy(ul => ul.SystemId).ThenBy(ul => ul.NtLogin)
             };
 
             var page = query.Page > 0 ? query.Page : 1;

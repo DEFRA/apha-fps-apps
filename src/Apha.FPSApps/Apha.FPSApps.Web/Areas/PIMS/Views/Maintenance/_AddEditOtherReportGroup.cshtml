@@ -28,7 +28,7 @@
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10" id="otherReportGroupIdGroup">
                     <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="GroupId">
-                        Group Id: <span class="ra-required-star" aria-hidden="true">*</span>
+                        Group Id
                     </label>
                     @if (isEditMode)
                     {
@@ -39,31 +39,19 @@
                                min="1"
                                step="1"
                                readonly
-                               aria-required="true"
-                               aria-describedby="otherGroupIdError"
-                               data-val-required="Group Id is required" 
                                aria-label="Group Id" />
                     }
                     else
                     {
                         <input class="govuk-input govuk-!-font-size-16"
-                               asp-for="GroupId"
                                id="otherGroupId"
                                type="number"
-                               min="1"
-                               step="1"
                                value=""
-                               required
-                               aria-required="true"
-                               aria-describedby="otherGroupIdError"
-                               data-val-required="Group Id is required" 
+                               disabled
+                               placeholder="Auto-generated"
                                aria-label="Group Id" />
+                        <input type="hidden" asp-for="GroupId" value="0" />
                     }
-                    <span asp-validation-for="GroupId"
-                          data-valmsg-for="GroupId"
-                          class="govuk-error-message"
-                          id="otherGroupIdError"
-                          style="display:none;"></span>
                 </div>
             </div>
             <div class="govuk-grid-column-one-half">
