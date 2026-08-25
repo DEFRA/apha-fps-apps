@@ -77,30 +77,30 @@ namespace Apha.PIMS.DataAccess.Repository
             var pageSize = query.PageSize > 0 ? query.PageSize : 10;
             return await ApplyPaging(baseQuery, page, pageSize);
         }
-        public async Task<List<AccessUserLevel>> GetBySystemIdAsync(int systemid)
+        public async Task<List<AccessUserLevel>> GetBySystemIdAsync(int systemId)
         {
             return await _dbContext.AccessUserLevels
                 .AsNoTracking()
-                .Where(ul => ul.SystemId == systemid)
+                .Where(ul => ul.SystemId == systemId)
                 .OrderBy(ul => ul.NtLogin)
                 .ThenBy(ul => ul.AccessLevelId)
                 .ToListAsync();
         }
-        public async Task<List<AccessUserLevel>> GetByUserAsync(int systemid, string ntlogin)
+        public async Task<List<AccessUserLevel>> GetByUserAsync(int systemId, string ntLogin)
         {
             return await _dbContext.AccessUserLevels
                 .AsNoTracking()
-                .Where(ul => ul.SystemId == systemid && ul.NtLogin == ntlogin)
+                .Where(ul => ul.SystemId == systemId && ul.NtLogin == ntLogin)
                 .OrderBy(ul => ul.AccessLevelId)
                 .ToListAsync();
         }
-        public async Task<AccessUserLevel?> GetByIdAsync(int systemid, string ntlogin, int accesslevelid)
+        public async Task<AccessUserLevel?> GetByIdAsync(int systemId, string ntLogin, int accessLevelId)
         {
             return await _dbContext.AccessUserLevels
                 .AsNoTracking()
-                .FirstOrDefaultAsync(ul => ul.SystemId == systemid
-                                        && ul.NtLogin == ntlogin
-                                        && ul.AccessLevelId == accesslevelid);
+                .FirstOrDefaultAsync(ul => ul.SystemId == systemId
+                                        && ul.NtLogin == ntLogin
+                                        && ul.AccessLevelId == accessLevelId);
         }
         public async Task<AccessUserLevel> AddAsync(AccessUserLevel entity)
         {

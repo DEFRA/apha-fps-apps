@@ -49,11 +49,11 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserLevelRepositoryTes
             return (repo, accessUserLevelsMockSet, mockContext);
         }
 
-        private static AccessUserLevel MakeUserLevel(int systemid = 1, string ntlogin = "DOM\\user1", int accesslevelid = 10) =>
-            new() { SystemId = systemid, NtLogin = ntlogin, AccessLevelId = accesslevelid };
+        private static AccessUserLevel MakeUserLevel(int systemId = 1, string ntLogin = "DOM\\user1", int accessLevelId = 10) =>
+            new() { SystemId = systemId, NtLogin = ntLogin, AccessLevelId = accessLevelId };
 
-        private static AccessUser MakeUser(int systemid = 1, string ntlogin = "DOM\\user1", string username = "User One") =>
-            new() { SystemId = systemid, NtLogin = ntlogin, UserName = username, UserEmail = "user@example.com" };
+        private static AccessUser MakeUser(int systemId = 1, string ntLogin = "DOM\\user1", string userName = "User One") =>
+            new() { SystemId = systemId, NtLogin = ntLogin, UserName = userName, UserEmail = "user@example.com" };
 
         #region GetPagedAccessUserLevelAllAsync
 
@@ -247,25 +247,25 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserLevelRepositoryTes
         public async Task GetByUserAsync_ReturnsMatchingAssignments_WhenCompositePrefixMatches()
         {
             // Arrange
-            const string ntlogin = "dom\\user1";
+            const string ntLogin = "dom\\user1";
             var data = new List<AccessUserLevel>
             {
-                MakeUserLevel(1, ntlogin, 3),
-                MakeUserLevel(1, ntlogin, 1),
+                MakeUserLevel(1, ntLogin, 3),
+                MakeUserLevel(1, ntLogin, 1),
                 MakeUserLevel(1, "dom\\other", 1),
-                MakeUserLevel(2, ntlogin, 2)
+                MakeUserLevel(2, ntLogin, 2)
             };
             var repo = CreateRepository(data);
 
             // Act
-            var result = await repo.GetByUserAsync(1, ntlogin);
+            var result = await repo.GetByUserAsync(1, ntLogin);
 
             // Assert
             Assert.Equal(2, result.Count);
             Assert.All(result, r =>
             {
                 Assert.Equal(1, r.SystemId);
-                Assert.Equal(ntlogin, r.NtLogin);
+                Assert.Equal(ntLogin, r.NtLogin);
             });
             Assert.Equal(new[] { 1, 3 }, result.Select(x => x.AccessLevelId).ToArray());
         }
@@ -291,22 +291,22 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserLevelRepositoryTes
         public async Task GetByIdAsync_ReturnsAssignment_WhenTripleCompositeKeyMatches()
         {
             // Arrange
-            const string ntlogin = "dom\\user1";
+            const string ntLogin = "dom\\user1";
             var data = new List<AccessUserLevel>
             {
-                MakeUserLevel(1, ntlogin, 2),
-                MakeUserLevel(1, ntlogin, 3),
-                MakeUserLevel(2, ntlogin, 2)
+                MakeUserLevel(1, ntLogin, 2),
+                MakeUserLevel(1, ntLogin, 3),
+                MakeUserLevel(2, ntLogin, 2)
             };
             var repo = CreateRepository(data);
 
             // Act
-            var result = await repo.GetByIdAsync(1, ntlogin, 3);
+            var result = await repo.GetByIdAsync(1, ntLogin, 3);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(1, result!.SystemId);
-            Assert.Equal(ntlogin, result.NtLogin);
+            Assert.Equal(ntLogin, result.NtLogin);
             Assert.Equal(3, result.AccessLevelId);
         }
 
