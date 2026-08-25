@@ -18,6 +18,14 @@
     #gridContainer_animalStagingGrid > .editable-grid-container > div {
         overflow-x: auto;
     }
+    /* govuk-tag's own max-width:160px is calibrated for the GDS Transport font, which this
+       app doesn't load (no font files bundled) — the arial/sans-serif fallback is wider,
+       so labels like "Initiated" hit overflow-wrap:break-word and split mid-word. Same
+       override used by the queue grid's status tags. */
+    .bulk-rates-status-tag {
+        max-width: none;
+        white-space: nowrap;
+    }
 </style>
 
 @{
@@ -30,7 +38,10 @@
     // the exact same label and colour for a given status. The raw PascalCase value is left
     // untouched everywhere else (entry.Status == "Completed" checks, Status history table, JS)
     // — only the visible label/colour goes through this.
-    string StatusBadgeClass(string s) => $"govuk-tag {BulkRatesStatusDisplay.GovUkTagModifierClass(s)}";
+    // bulk-rates-status-tag overrides govuk-tag's built-in max-width:160px (calibrated for the
+    // GDS Transport font, which this app doesn't load), which otherwise wraps longer labels
+    // like "Initiated" mid-word — same class the queue grid's JS applies for the same reason.
+    string StatusBadgeClass(string s) => $"govuk-tag bulk-rates-status-tag {BulkRatesStatusDisplay.GovUkTagModifierClass(s)}";
     string FriendlyStatus(string s) => BulkRatesStatusDisplay.FriendlyLabel(s);
 
     string FriendlyJobName(string j) => j switch
