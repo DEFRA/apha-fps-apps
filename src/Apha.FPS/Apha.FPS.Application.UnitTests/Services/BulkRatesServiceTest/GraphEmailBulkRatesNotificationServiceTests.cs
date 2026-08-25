@@ -1,4 +1,5 @@
 using Apha.Common.Contracts.Email;
+using Apha.Common.Contracts.FPS.Email;
 using Apha.Common.Utilities.Email;
 using Apha.FPS.Application.Common.BulkRates;
 using Apha.FPS.Application.Enums;

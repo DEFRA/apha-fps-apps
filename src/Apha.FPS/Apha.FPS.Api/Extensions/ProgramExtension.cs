@@ -3,6 +3,7 @@ using Amazon;
 using Amazon.EventBridge;
 using Amazon.S3;
 using Apha.Common.Contracts.Email;
+using Apha.Common.Contracts.FPS.Email;
 using Apha.Common.Helpers.Converter;
 using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.Storage;
