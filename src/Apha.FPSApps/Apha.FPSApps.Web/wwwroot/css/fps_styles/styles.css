@@ -5544,16 +5544,25 @@ body,
 .isSelectDropdown {
     width: 27vw;
 }
-.isAnimalTypePanel{
+.isAnimalTypePanel {
     position: absolute;
     top: 20.5vh;
     width: 20vw;
     left: 79.2vw;
 
-    th{
+    th {
         white-space: nowrap;
         width: calc(100%/2);
     }
-.govuk-tabs__list {
-    padding-top: 10px !important;
+
+    .govuk-tabs__list {
+        padding-top: 10px !important;
+    }
+}
+
+#editProgramProjectForm .col-6 .govuk-form-group,
+.modal-body {
+    .govuk-form-group {
+        margin-top: 1em !important;
+    }
 }
