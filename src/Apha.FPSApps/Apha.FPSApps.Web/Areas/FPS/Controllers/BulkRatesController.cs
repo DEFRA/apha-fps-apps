@@ -66,9 +66,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Descending = true
             };
 
+            var (grid, gridLoadError) = await GetBulkRatesGridConfigAsync(defaultRequest, jobName, status);
             var vm = new BulkRatesQueueViewModel
             {
-                Grid = await GetBulkRatesGridConfigAsync(defaultRequest, jobName, status),
+                Grid = grid,
+                GridLoadError = gridLoadError,
                 JobNameFilter = jobName,
                 StatusFilter = status,
                 CurrentUserEmail = GetCurrentUserEmail(),
@@ -109,15 +111,24 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var gridConfig = await GetBulkRatesGridConfigAsync(request, jobName, status);
+            var (gridConfig, _) = await GetBulkRatesGridConfigAsync(request, jobName, status);
             return PartialView("_DataGrid", gridConfig);
         }
 
-        private async Task<DataGridConfig<BulkRatesQueueGridItem>> GetBulkRatesGridConfigAsync(
+        private async Task<(DataGridConfig<BulkRatesQueueGridItem> Grid, string? ErrorMessage)> GetBulkRatesGridConfigAsync(
             PaginationFilter<string> request, string? jobName, string? status)
         {
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
             var response = await _bulkRatesService.GetRequestsAsync(queryParameters, jobName, _fpsYearContext.Year, status);
+
+            string? errorMessage = null;
+            if (!response.Success)
+            {
+                errorMessage = response.Errors?.FirstOrDefault()?.Message ?? "Unable to load requests.";
+                _logger.LogError(
+                    "BulkRates LoadRequests failed | JobName={JobName} | FpsYear={FpsYear} | Status={Status} | CorrelationId={CorrelationId} | Errors={@Errors}",
+                    jobName, _fpsYearContext.Year, status, response.Meta?.CorrelationId, response.Errors);
+            }
 
             var items = response.Data != null
                 ? _mapper.Map<List<BulkRatesQueueGridItem>>(response.Data)
@@ -129,7 +140,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            return new DataGridConfig<BulkRatesQueueGridItem>
+            var grid = new DataGridConfig<BulkRatesQueueGridItem>
             {
                 GridId = "bulkRatesGrid",
                 Title = "Requests",
@@ -146,6 +157,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Columns = GridDataProvider.GetColumnsDefination<BulkRatesQueueGridItem>(null),
                 Pagination = paginationModel
             };
+            return (grid, errorMessage);
         }
 
         // Create request — GET form

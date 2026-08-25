@@ -33,6 +33,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? CurrentYearStatus { get; set; }
 
         /// <summary>
+        /// Set when the API call behind the grid failed (Success == false) — the grid then
+        /// renders empty with no other indication, so this is shown as a banner instead of
+        /// silently looking like "genuinely no requests".
+        /// </summary>
+        public string? GridLoadError { get; set; }
+
+        /// <summary>
         /// The current user's own open (Initiated/Rejected) request for JobNameFilter, if it is
         /// also the active blocking request — i.e. available for (re-)upload via the "Upload
         /// Updated Data" tracker button. Derived from ActiveRequest rather than the (now paged)
