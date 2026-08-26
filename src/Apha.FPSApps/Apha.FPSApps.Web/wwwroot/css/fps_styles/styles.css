@@ -5590,3 +5590,8 @@ body,
 .isClearfix{
     overflow: hidden;
 }
+
+.btn-close
+.btn-close:hover {
+    background: #ca3535 !important;
+}

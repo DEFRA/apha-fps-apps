@@ -7,11 +7,11 @@
 
 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
     <div class="govuk-grid-column-full sup_flex_center_start sup_border-bottom sup_margin_bottom_10">
-        <h1 class="govuk-heading-m sup_margin_bottom_10">Recreate Summaries</h1>
+        <h1 class="govuk-heading-s sup_margin_bottom_10 sup_font-size-19 ">Recreate Summaries</h1>
     </div>
 </div>
 
-<div id="recreate-form-scope" class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+<div id="recreate-form-scope" class="govuk-grid-row sup_margin_left_right_0 ">
     @Html.AntiForgeryToken()
     <div class="govuk-grid-column-three-quarters govuk-!-padding-2">
 
@@ -42,8 +42,8 @@
                 <tr class="govuk-table__row">
                     <td class="govuk-table__cell sup_border_0">
                         @* Bug 2 + 3 fix: govuk-form-group wrapper, named hidden input, valmsg span *@
-                        <div class="govuk-form-group" id="month-form-group">
-                            <label class="govuk-label govuk-!-margin-bottom-1 isFontBold" for="month">
+                        <div class="" id="month-form-group">
+                            <label class="govuk-label govuk-!-margin-bottom-1 sup_font_weight_700" for="month">
                                 Select Summary Period:
                             </label>
                             @* Hidden input with name="month" so validation library can locate the field *@
@@ -56,7 +56,7 @@
                         </div>
                     </td>
                     <td class="govuk-table__cell sup_border_0 govuk-!-padding-left-3 recreate-summaries__action-cell">
-                        <div class="govuk-button-group govuk-!-margin-bottom-0">
+                        <div class="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-top-5">
                             <button type="button"
                                     id="btnCreateSummary"
                                     class="govuk-button govuk-!-margin-bottom-0"
@@ -74,7 +74,7 @@
     </div>
 </div>
 
-<div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-4" id="summary-history-section">
+<div class="govuk-grid-row sup_margin_left_right_0" id="summary-history-section">
     <div class="govuk-grid-column-full govuk-!-padding-2">
         <div id="gridContainer_summaryHistoryGrid">
             @await Html.PartialAsync("_DataGrid", Model.HistoryGrid)

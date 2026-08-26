@@ -11,6 +11,18 @@ let programSelectDropdown = null;
 let selectedProgram = null;
 let testCodeSelectDropdown = null;
 let selectedTestCodeDropdownValue = null;
+
+function toggleSavePortfolioButton() {
+    var parentProject = $('#hdnParentProject').val();
+    var btn = $('#btnSavePortfolio');
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+        btn.prop('disabled', true);
+    } else if (parentProject && selectedPortfolio) {
+        btn.prop('disabled', false);
+    } else {
+        btn.prop('disabled', true);
+    }
+}
 function toggleSidebar() {
     document.querySelector('#shortnav').classList.toggle('collapsed');
 }
@@ -217,8 +229,10 @@ function loadPortfolioData(parentProject) {
                 updateNavHref('#sideNavInvoices', parentProject);
 
                 loadConstituentTestGrid(parentProject);
+                toggleSavePortfolioButton();
             } else {
                 showAlertMessage(res.message || 'Portfolio not found.', AlertType.ERROR);
+                toggleSavePortfolioButton();
             }
         },
         error: function () { showAlertMessage('An error occurred while loading portfolio data.', AlertType.ERROR); }
@@ -259,7 +273,10 @@ function loadConstituentTestGrid(parentProject, page, pageSize, sortBy, desc) {
 }
 
 function addConstituentTest() {
-    if (!currentParentProject) return;
+    if (!currentParentProject) {
+        showAlertMessage('Please select a portfolio first.', AlertType.INFO);
+        return;
+    }
     $.ajax({
         url: '/PACT/PortfolioMaintenance/CreateConstituentTest',
         type: 'GET',
@@ -367,7 +384,14 @@ function loadTimeCodeGrid(parentProject, testCode, page, pageSize) {
 }
 
 function addPortfolioTimeCode() {
-    if (!currentParentProject) return;
+    if (!currentParentProject) {
+        showAlertMessage('Please select a portfolio first.', AlertType.INFO);
+        return;
+    }
+    if (!$('#txtSelectedPortfolioTest').val()) {
+        showAlertMessage('Please select a Constituent Test.', AlertType.INFO);
+        return;
+    }
     $.ajax({
         url: '/PACT/PortfolioMaintenance/CreatePortfolioTimeCode',
         type: 'GET',

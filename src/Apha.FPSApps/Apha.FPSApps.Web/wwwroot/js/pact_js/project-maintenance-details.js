@@ -615,7 +615,7 @@ function initializeProgramDropdown() {
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem, dropdown) {
-                $('#Project_Program').val(selectedItem.Value);
+                $('#Project_Program').val(selectedItem.Value).trigger('change');
             },
             onClear: function (dropdown) {
                 $('#Project_Program').val('');
@@ -650,7 +650,7 @@ function initializeContractDropdown() {
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem, dropdown) {
-                $('#Project_Contract').val(selectedItem.Value);
+                $('#Project_Contract').val(selectedItem.Value).trigger('change');
             },
             onClear: function (dropdown) {
                 $('#Project_Contract').val('');
