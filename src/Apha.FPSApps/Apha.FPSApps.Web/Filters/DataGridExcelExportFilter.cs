@@ -133,9 +133,10 @@ namespace Apha.FPSApps.Web.Filters
 
             var sheetName = string.IsNullOrWhiteSpace(config.SheetName) ? "Sheet1" : config.SheetName;
             var includeProperties = config.VisibleColumnNames;
+            var columnHeaders = config.ColumnHeaders;
             var fileContent = (byte[])exportMethod.Invoke(
                 _excelExporter,
-                new object?[] { data, sheetName, includeProperties })!;
+                new object?[] { data, sheetName, includeProperties, columnHeaders })!;
 
             var baseName = config.FileName;
             if (baseName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
@@ -155,6 +156,7 @@ namespace Apha.FPSApps.Web.Filters
             string FileName { get; }
             string SheetName { get; }
             IReadOnlyList<string>? VisibleColumnNames { get; }
+            IReadOnlyDictionary<string, string>? ColumnHeaders { get; }
         }
 
         private sealed class DataGridExportConfig : IDataGridExportConfig
@@ -242,6 +244,39 @@ namespace Apha.FPSApps.Web.Filters
                     }
 
                     return names.Count > 0 ? names : null;
+                }
+            }
+
+            // Maps each visible column's PropertyName to its DisplayName so dictionary-backed grids
+            // (cross-tabs) can show friendly headers instead of the raw dictionary keys.
+            public IReadOnlyDictionary<string, string>? ColumnHeaders
+            {
+                get
+                {
+                    if (_modelType.GetProperty("Columns")?.GetValue(_model) is not IEnumerable columns)
+                    {
+                        return null;
+                    }
+
+                    var headers = new Dictionary<string, string>(StringComparer.Ordinal);
+                    foreach (var column in columns)
+                    {
+                        if (column == null)
+                        {
+                            continue;
+                        }
+
+                        var columnType = column.GetType();
+                        if (columnType.GetProperty("PropertyName")?.GetValue(column) is string propertyName
+                            && !string.IsNullOrWhiteSpace(propertyName)
+                            && columnType.GetProperty("DisplayName")?.GetValue(column) is string displayName
+                            && !string.IsNullOrWhiteSpace(displayName))
+                        {
+                            headers[propertyName] = displayName;
+                        }
+                    }
+
+                    return headers.Count > 0 ? headers : null;
                 }
             }
         }

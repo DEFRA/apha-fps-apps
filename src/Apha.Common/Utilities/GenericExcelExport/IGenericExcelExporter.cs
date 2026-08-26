@@ -22,7 +22,12 @@ namespace Apha.Common.Utilities.GenericExcelExport
         /// are ignored. Use this to restrict output to a known set of columns (e.g. only the grid's
         /// visible columns).
         /// </param>
+        /// <param name="columnHeaders">
+        /// Optional map of column key/property name to the header text to display. Primarily used for
+        /// dictionary-backed row types (e.g. cross-tab grids) so friendly display names can be shown
+        /// instead of the raw dictionary keys. Keys not present fall back to the property name/key.
+        /// </param>
         /// <returns>The generated .xlsx file as a byte array.</returns>
-        byte[] Export<T>(IEnumerable<T> data, string sheetName = "Sheet1", IReadOnlyList<string>? includeProperties = null);
+        byte[] Export<T>(IEnumerable<T> data, string sheetName = "Sheet1", IReadOnlyList<string>? includeProperties = null, IReadOnlyDictionary<string, string>? columnHeaders = null);
     }
 }

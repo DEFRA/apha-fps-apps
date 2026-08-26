@@ -8,10 +8,12 @@ namespace Apha.Common.Utilities.GenericExcelExport
     /// <inheritdoc cref="IGenericExcelExporter"/>
     public sealed class GenericExcelExporter : IGenericExcelExporter
     {
-        public byte[] Export<T>(IEnumerable<T> data, string sheetName = "Sheet1", IReadOnlyList<string>? includeProperties = null)
+        public byte[] Export<T>(IEnumerable<T> data, string sheetName = "Sheet1", IReadOnlyList<string>? includeProperties = null, IReadOnlyDictionary<string, string>? columnHeaders = null)
         {
             var rows = data ?? Enumerable.Empty<T>();
-            var columns = GetColumns(typeof(T), includeProperties);
+            var columns = IsDictionaryRowType(typeof(T))
+                ? GetDictionaryColumns(includeProperties, columnHeaders)
+                : GetColumns(typeof(T), includeProperties);
 
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add(SanitiseSheetName(sheetName));
@@ -40,7 +42,7 @@ namespace Apha.Common.Utilities.GenericExcelExport
             {
                 for (int col = 0; col < columns.Count; col++)
                 {
-                    var rawValue = ConvertExcelValue(columns[col].Property.GetValue(item));
+                    var rawValue = ConvertExcelValue(columns[col].GetValue(item));
                     worksheet.Cell(row, col + 1).Value = XLCellValue.FromObject(rawValue);
                 }
                 row++;
@@ -104,6 +106,40 @@ namespace Apha.Common.Utilities.GenericExcelExport
                 .ToList();
         }
 
+        // True for row types that are string-keyed dictionaries (e.g. cross-tab grids whose
+        // columns are dynamic and therefore modelled as Dictionary<string, string?> rows).
+        private static bool IsDictionaryRowType(Type type)
+        {
+            return type
+                .GetInterfaces()
+                .Append(type)
+                .Any(i => i.IsGenericType
+                    && i.GetGenericTypeDefinition() == typeof(IDictionary<,>)
+                    && i.GetGenericArguments()[0] == typeof(string));
+        }
+
+        // Builds columns for dictionary-backed rows. The keys are supplied via includeProperties
+        // (the grid's visible column names, in order); values are read by key at write time.
+        // Header text is taken from columnHeaders when available, otherwise falls back to the key.
+        private static IReadOnlyList<ExportColumn> GetDictionaryColumns(IReadOnlyList<string>? includeProperties, IReadOnlyDictionary<string, string>? columnHeaders)
+        {
+            if (includeProperties == null || includeProperties.Count == 0)
+            {
+                return Array.Empty<ExportColumn>();
+            }
+
+            return includeProperties
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select((name, index) =>
+                {
+                    var header = columnHeaders != null && columnHeaders.TryGetValue(name, out var display) && !string.IsNullOrWhiteSpace(display)
+                        ? display
+                        : name;
+                    return new ExportColumn(name, header, index);
+                })
+                .ToList();
+        }
+
         // Excludes complex/collection members (e.g. List<SelectListItem>) that are not meaningful in a flat sheet.
         private static bool IsExportableType(PropertyInfo property)
         {
@@ -157,9 +193,12 @@ namespace Apha.Common.Utilities.GenericExcelExport
 
         private sealed class ExportColumn
         {
+            private readonly PropertyInfo? _property;
+            private readonly string? _dictionaryKey;
+
             public ExportColumn(PropertyInfo property, int declarationIndex)
             {
-                Property = property;
+                _property = property;
                 DeclarationIndex = declarationIndex;
 
                 var excelColumn = property.GetCustomAttribute<ExcelColumnAttribute>();
@@ -174,12 +213,42 @@ namespace Apha.Common.Utilities.GenericExcelExport
                     : ExtractNumberFormat(displayFormat?.DataFormatString);
             }
 
-            public PropertyInfo Property { get; }
+            // Column backed by a dictionary key rather than a CLR property.
+            public ExportColumn(string dictionaryKey, string header, int declarationIndex)
+            {
+                _dictionaryKey = dictionaryKey;
+                DeclarationIndex = declarationIndex;
+                Header = header;
+                Order = int.MaxValue;
+                Width = 0;
+                Format = null;
+            }
+
             public int DeclarationIndex { get; }
             public string Header { get; }
             public int Order { get; }
             public double Width { get; }
             public string? Format { get; }
+
+            public object? GetValue(object? item)
+            {
+                if (item == null)
+                {
+                    return null;
+                }
+
+                if (_property != null)
+                {
+                    return _property.GetValue(item);
+                }
+
+                if (_dictionaryKey != null && item is IDictionary<string, string?> stringDictionary)
+                {
+                    return stringDictionary.TryGetValue(_dictionaryKey, out var value) ? value : null;
+                }
+
+                return null;
+            }
 
             private static string FirstNonEmpty(params string?[] candidates)
             {
