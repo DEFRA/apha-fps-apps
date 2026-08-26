@@ -441,10 +441,7 @@
             return result;
         });
     };
-})();
 
-
-$(function () {
 
     var isDragging = true;
     var startX = 0;
@@ -512,4 +509,4 @@ $(function () {
         $("body").css("user-select", "");
     });
 
-});
+})();
