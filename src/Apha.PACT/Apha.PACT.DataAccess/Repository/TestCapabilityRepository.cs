@@ -69,19 +69,94 @@ namespace Apha.PACT.DataAccess.Repository
             return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
-        public async Task<PagedData<TestCapability>> GetPagedTestCapabilityByPortfolioAsync(
+        private static readonly HashSet<string> AllowedPortfolioSortColumns = new(StringComparer.OrdinalIgnoreCase)
+        {
+            nameof(TestCapabilityWithDescription.TestCode),
+            nameof(TestCapabilityWithDescription.WorkGroup),
+            nameof(TestCapabilityWithDescription.PlanPortfolio),
+            nameof(TestCapabilityWithDescription.ItemDescription),
+            nameof(TestCapabilityWithDescription.UnitCost),
+            nameof(TestCapabilityWithDescription.PredOutturn),
+            nameof(TestCapabilityWithDescription.Sop),
+            nameof(TestCapabilityWithDescription.SmsCode),
+            nameof(TestCapabilityWithDescription.FpsYear)
+        };
+
+        public async Task<PagedData<TestCapabilityWithDescription>> GetPagedTestCapabilityByPortfolioAsync(
             PaginationParameters<string> query, string? portfolio)
         {
-            var baseQuery = _context.TestCapabilities.AsNoTracking().AsQueryable();
+            // Description and Unit Cost are owned by the TestorProduct master (testorproduct), not by
+            // tlkptestcapability. Join to the master so the database can filter, sort and page on those
+            // columns in a single query. A LEFT join (GroupJoin + DefaultIfEmpty) is used so capability
+            // rows without a matching TestorProduct are still returned (with a null description/unit cost),
+            // preserving the previous behaviour.
+            var baseQuery =
+                from testCapability in _context.TestCapabilities.AsNoTracking()
+                join testProduct in _context.TestorProducts.AsNoTracking()
+                    on testCapability.TestCode equals testProduct.ItemCode into products
+                from testProduct in products.DefaultIfEmpty()
+                select new TestCapabilityWithDescription
+                {
+                    TestCode = testCapability.TestCode,
+                    WorkGroup = testCapability.WorkGroup,
+                    PlanPortfolio = testCapability.PlanPortfolio,
+                    ItemDescription = testProduct != null ? testProduct.ItemDescription : null,
+                    // Unit Cost always reflects the TestorProduct master price.
+                    UnitCost = testProduct != null ? testProduct.UnitPriceVla : testCapability.UnitCost,
+                    PredOutturn = testCapability.PredOutturn,
+                    Sop = testCapability.Sop,
+                    SmsCode = testCapability.SmsCode,
+                    FpsYear = testCapability.FpsYear
+                };
 
             if (!string.IsNullOrWhiteSpace(portfolio))
                 baseQuery = baseQuery.Where(t => t.PlanPortfolio == portfolio);
 
-            baseQuery = ApplyTestCapabilityFilter(baseQuery, query.Filter);
+            baseQuery = ApplyPortfolioFilter(baseQuery, query.Filter);
 
-            baseQuery = ApplyTestCapabilitySort(baseQuery, query);
+            baseQuery = ApplyPortfolioSort(baseQuery, query);
 
             return await ApplyPaging(baseQuery, query.Page, query.PageSize);
+        }
+
+        private static IQueryable<TestCapabilityWithDescription> ApplyPortfolioFilter(
+            IQueryable<TestCapabilityWithDescription> query, string? filterJson)
+        {
+            if (string.IsNullOrWhiteSpace(filterJson)) return query;
+
+            var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filterJson);
+            if (filters is null) return query;
+
+            if (filters.TryGetValue("TestCode", out string? testCode) && !string.IsNullOrWhiteSpace(testCode))
+                query = query.Where(t => EF.Functions.ILike(t.TestCode, $"%{testCode}%"));
+
+            if (filters.TryGetValue("WorkGroup", out string? workGroup) && !string.IsNullOrWhiteSpace(workGroup))
+                query = query.Where(t => EF.Functions.ILike(t.WorkGroup, $"%{workGroup}%"));
+
+            if (filters.TryGetValue("PlanPortfolio", out string? portfolio) && !string.IsNullOrWhiteSpace(portfolio))
+                query = query.Where(t => EF.Functions.ILike(t.PlanPortfolio, $"%{portfolio}%"));
+
+            if (filters.TryGetValue("ItemDescription", out string? itemDescription) && !string.IsNullOrWhiteSpace(itemDescription))
+                query = query.Where(t => t.ItemDescription != null && EF.Functions.ILike(t.ItemDescription, $"%{itemDescription}%"));
+
+            if (filters.TryGetValue("Sop", out string? sop) && !string.IsNullOrWhiteSpace(sop))
+                query = query.Where(t => t.Sop != null && EF.Functions.ILike(t.Sop, $"%{sop}%"));
+
+            if (filters.TryGetValue("SmsCode", out string? smsCode) && !string.IsNullOrWhiteSpace(smsCode))
+                query = query.Where(t => t.SmsCode != null && EF.Functions.ILike(t.SmsCode, $"%{smsCode}%"));
+
+            return query;
+        }
+
+        private static IQueryable<TestCapabilityWithDescription> ApplyPortfolioSort(
+            IQueryable<TestCapabilityWithDescription> baseQuery, PaginationParameters<string> query)
+        {
+            if (!string.IsNullOrWhiteSpace(query.SortBy) && AllowedPortfolioSortColumns.Contains(query.SortBy))
+                return query.Descending
+                    ? baseQuery.OrderByDescending(e => EF.Property<object>(e, query.SortBy))
+                    : baseQuery.OrderBy(e => EF.Property<object>(e, query.SortBy));
+
+            return baseQuery.OrderBy(t => t.TestCode);
         }
 
         public async Task<TestCapability?> GetByIdAsync(string testCode, string workGroup)
