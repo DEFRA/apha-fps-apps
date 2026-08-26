@@ -69,8 +69,11 @@
                                     <div class="financial-summary govuk-!-margin-bottom-1 govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-margin-top-1">
                                         <div class="pva-inline-summary govuk-!-padding-bottom-1 govuk-!-padding-top-1">
                                             <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total :</span>
-                                            <input type="text" id="planSummaryStaffTotal" value="@Model.TotalStaffPlanCost.ToString("C2")"
+                                            <div class="govuk-input__wrapper">
+                                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                            <input type="text" id="planSummaryStaffTotal" value="@Model.TotalStaffPlanCost.ToString("N2")"
                                                    aria-label="Total Staff Plans" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                                   </div>
                                         </div>
                                     </div>
                                 </div>
@@ -82,8 +85,11 @@
                                     <div class="financial-summary govuk-!-margin-bottom-1 govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-margin-top-1">
                                         <div class="pva-inline-summary govuk-!-padding-bottom-1 govuk-!-padding-top-1 sup_top_border_1">
                                             <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total :</span>
-                                            <input type="text" id="planSummaryTestTotal" value="@Model.TotalTestPlanCost.ToString("C2")"
+                                            <div class="govuk-input__wrapper">
+                                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                            <input type="text" id="planSummaryTestTotal" value="@Model.TotalTestPlanCost.ToString("N2")"
                                                    aria-label="Total Test Plans" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                                   </div>
                                         </div>
                                     </div>
                                 </div>
@@ -97,8 +103,11 @@
                                     <div class="financial-summary govuk-!-margin-bottom-1 govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-margin-top-1">
                                         <div class="pva-inline-summary govuk-!-padding-bottom-1 govuk-!-padding-top-1 sup_top_border_1">
                                             <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total :</span>
-                                            <input type="text" id="planSummaryAnimalTotal" value="@Model.TotalAnimalPlanCost.ToString("C2")"
+                                            <div class="govuk-input__wrapper">
+                                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                            <input type="text" id="planSummaryAnimalTotal" value="@Model.TotalAnimalPlanCost.ToString("N2")"
                                                    aria-label="Total Animal Plans" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                                   </div>
                                         </div>
                                     </div>
                                 </div>
@@ -110,8 +119,11 @@
                                     <div class="financial-summary govuk-!-margin-bottom-1 govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-margin-top-1">
                                         <div class="pva-inline-summary govuk-!-padding-bottom-1 govuk-!-padding-top-1 sup_top_border_1">
                                             <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total :</span>
-                                            <input type="text" id="planSummaryAdditionalTotal" value="@Model.TotalAdditionalPlanCost.ToString("C2")"
+                                            <div class="govuk-input__wrapper">
+                                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                            <input type="text" id="planSummaryAdditionalTotal" value="@Model.TotalAdditionalPlanCost.ToString("N2")"
                                                    aria-label="Total Additional Cost Plans" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                                   </div>
                                         </div>
                                     </div>
                                 </div>
@@ -156,15 +168,24 @@
                                     </div>
                                     <div class="govuk-form-group sup_margin_0">
                                         <label class="govuk-label" for="fpd-custIncome">Customer Income:</label>
-                                        <input type="text" class="govuk-input text-AlignRight" value="@Model.ProjectDetails.CustIncome.ToString("C2")" id="fpd-custIncome" readonly>
+                                        <div class="govuk-input__wrapper">
+                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@Model.ProjectDetails.CustIncome.ToString("N2")" id="fpd-custIncome" readonly>
+                                        </div>
                                     </div>
                                     <div class="govuk-form-group sup_margin_0">
                                         <label class="govuk-label" for="fpd-transferIncome">Transfer Income:</label>
-                                        <input type="text" class="govuk-input text-AlignRight" value="@Model.ProjectDetails.TransferIncome.ToString("C2")" id="fpd-transferIncome" readonly>
+                                        <div class="govuk-input__wrapper">
+                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@Model.ProjectDetails.TransferIncome.ToString("N2")" id="fpd-transferIncome" readonly>
+                                        </div>
                                     </div>
                                     <div class="govuk-form-group sup_margin_0">
                                         <label class="govuk-label" for="fpd-targetProfit">Target Profit:</label>
-                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.TargetProfit ?? 0).ToString("C2"))" id="fpd-targetProfit" readonly>
+                                        <div class="govuk-input__wrapper">
+                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.TargetProfit ?? 0).ToString("N2"))" id="fpd-targetProfit" readonly>
+                                        </div>
                                     </div>
                                     <div class="govuk-form-group sup_margin_0">
                                         <label class="govuk-label" for="fpd-status">Status:</label>
@@ -203,23 +224,37 @@
                                 <div class="form-center">
                                     <div class="govuk-form-group sup_margin_0">
                                         <label class="govuk-label" for="fpd-budget">Budget:</label>
-                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.BudgetCvl ?? 0).ToString("C2"))" id="fpd-budget" readonly>
+                                        <div class="govuk-input__wrapper">
+                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.BudgetCvl ?? 0).ToString("N2"))" id="fpd-budget" readonly>
+                                        </div>
                                     </div>
                                     <div class="govuk-form-group sup_margin_0" style="align-items: flex-start;">
                                         <label class="govuk-label" for="fpd-pvsIncome">PVS Income:(Surv Only)</label>
-                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.PvsIncome ?? 0).ToString("C2"))" id="fpd-pvsIncome" readonly>
+                                        <div class="govuk-input__wrapper">
+                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.PvsIncome ?? 0).ToString("N2"))" id="fpd-pvsIncome" readonly></div>
                                     </div>
                                     <div class="govuk-form-group sup_margin_0" style="align-items: flex-start;">
                                         <label class="govuk-label" for="fpd-planCWDebit">Plan CW Debit:(Surv Only)</label>
-                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.PlanCaseWorkDebit ?? 0).ToString("C2"))" id="fpd-planCWDebit" readonly>
+                                        <div class="govuk-input__wrapper">
+                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.PlanCaseWorkDebit ?? 0).ToString("N2"))" id="fpd-planCWDebit" readonly>
+                                        </div>
                                     </div>
                                     <div class="govuk-form-group sup_margin_0">
                                         <label class="govuk-label" for="fpd-carryOver">CarryOver:</label>
-                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.CarryOver ?? 0).ToString("C2"))" id="fpd-carryOver" readonly>
+                                        <div class="govuk-input__wrapper">
+                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.CarryOver ?? 0).ToString("N2"))" id="fpd-carryOver" readonly>
+                                        </div>
                                     </div>
                                     <div class="govuk-form-group sup_margin_0">
                                         <label class="govuk-label" for="fpd-carryOverSeed">CarryOverSeed:</label>
-                                        <input type="text" class="govuk-input" value="@((Model.ProjectDetails.CarryOverSeed ?? 0).ToString("C2"))" id="fpd-carryOverSeed" readonly>
+                                        <div class="govuk-input__wrapper">
+                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input type="text" style="text-align:right" class="govuk-input" value="@((Model.ProjectDetails.CarryOverSeed ?? 0).ToString("N2"))" id="fpd-carryOverSeed" readonly>
+                                        </div>
                                     </div>
                                     <div class="govuk-form-group sup_margin_0" style="align-items: flex-start;">
                                         <label class="govuk-label" for="fpd-comments">Comments:</label>
@@ -248,8 +283,11 @@
                                                 <div class="financial-summary">
                                                     <div class="pva-inline-summary">
                                                         <label class="govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Total Planned Cost :</label>
-                                                        <input type="text" value="@Model.StaffTotalPlannedCost.ToString("C2")" aria-label="Total Planned Cost"
+                                                        <div class="govuk-input__wrapper">
+                                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                                        <input type="text" value="@Model.StaffTotalPlannedCost.ToString("N2")" aria-label="Total Planned Cost"
                                                                id="staff-planned-total-cost" class="govuk-input text-AlignRight pva-input-140" readonly>
+                                                               </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -269,10 +307,16 @@
                                                 <div class="financial-summary mt-2">
                                                     <div class="summary-row govuk-!-margin-0 pva-inline-summary">
                                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Totals:</label>
+                                                        <div class="govuk-input__wrapper">
+                                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                                         <input type="text" value="@Model.StaffTotalActualHrs.ToString("F2")" aria-label="Total Hrs"
                                                                id="staff-total-hrs" class="govuk-input text-AlignRight pva-input-120" readonly>
-                                                        <input type="text" value="@Model.StaffTotalActualCost.ToString("C2")" aria-label="Total Actual Cost"
+                                                               </div>
+                                                        <div class="govuk-input__wrapper">
+                                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                                        <input type="text" value="@Model.StaffTotalActualCost.ToString("N2")" aria-label="Total Actual Cost"
                                                                id="staff-total-cost" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                                               </div>
                                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-3 pva-nowrap-label">Percent of Plan:</label>
                                                         <input type="text" value="@Model.StaffPercentOfPlan.ToString("F2")%" aria-label="Percent of Plan"
                                                                id="staff-percent-plan" class="govuk-input text-AlignRight pva-input-95" readonly>
@@ -304,8 +348,11 @@
                                                 <div class="financial-summary">
                                                     <div class="pva-inline-summary">
                                                         <label class="govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Total Planned Cost :</label>
-                                                        <input type="text" value="@Model.TestTotalPlannedCost.ToString("C2")" aria-label="Total Planned Cost"
+                                                        <div class="govuk-input__wrapper">
+                                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                                        <input type="text" value="@Model.TestTotalPlannedCost.ToString("N2")" aria-label="Total Planned Cost"
                                                                id="test-planned-total-cost" class="govuk-input text-AlignRight pva-input-140" readonly>
+                                                               </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -325,8 +372,11 @@
                                                 <div class="financial-summary mt-2">
                                                     <div class="summary-row govuk-!-margin-0 pva-inline-summary">
                                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Totals:</label>
-                                                        <input type="text" value="@Model.TestTotalActualCost.ToString("C2")" aria-label="Total Actual Cost"
+                                                        <div class="govuk-input__wrapper">
+                                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                                        <input type="text" value="@Model.TestTotalActualCost.ToString("N2")" aria-label="Total Actual Cost"
                                                                id="test-total-cost" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                                               </div>
                                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-3 pva-nowrap-label">Percent of Plan:</label>
                                                         <input type="text" value="@Model.TestPercentOfPlan.ToString("F2")%" aria-label="Percent of Plan"
                                                                id="test-percent-plan" class="govuk-input text-AlignRight pva-input-95" readonly>
@@ -358,8 +408,11 @@
                                                 <div class="financial-summary">
                                                     <div class="pva-inline-summary">
                                                         <label class="govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Total Planned Cost :</label>
-                                                        <input type="text" value="@Model.AnimalTotalPlannedCost.ToString("C2")" aria-label="Total Planned Cost"
+                                                        <div class="govuk-input__wrapper">
+                                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                                        <input type="text" value="@Model.AnimalTotalPlannedCost.ToString("N2")" aria-label="Total Planned Cost"
                                                                id="animal-planned-total-cost" class="govuk-input text-AlignRight pva-input-140" readonly>
+                                                               </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -379,8 +432,11 @@
                                                 <div class="financial-summary mt-2">
                                                     <div class="summary-row govuk-!-margin-0 pva-inline-summary">
                                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Totals:</label>
-                                                        <input type="text" value="@Model.AnimalTotalActualCost.ToString("C2")" aria-label="Total Actual Cost"
+                                                        <div class="govuk-input__wrapper">
+                                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                                        <input type="text" value="@Model.AnimalTotalActualCost.ToString("N2")" aria-label="Total Actual Cost"
                                                                id="animal-total-cost" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                                               </div>
                                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-3 pva-nowrap-label">Percent of Plan:</label>
                                                         <input type="text" value="@Model.AnimalPercentOfPlan.ToString("F2")%" aria-label="Percent of Plan"
                                                                id="animal-percent-plan" class="govuk-input text-AlignRight pva-input-95" readonly>
@@ -412,8 +468,11 @@
                                                 <div class="financial-summary">
                                                     <div class="pva-inline-summary">
                                                         <label class="govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Total Planned Cost :</label>
-                                                        <input type="text" value="@Model.AdditionalTotalPlannedCost.ToString("C2")" aria-label="Total Planned Cost"
+                                                        <div class="govuk-input__wrapper">
+                                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                                        <input type="text" value="@Model.AdditionalTotalPlannedCost.ToString("N2")" aria-label="Total Planned Cost"
                                                                id="additional-planned-total-cost" class="govuk-input text-AlignRight pva-input-140" readonly>
+                                                               </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -433,8 +492,11 @@
                                                 <div class="financial-summary mt-2">
                                                     <div class="summary-row govuk-!-margin-0 pva-inline-summary">
                                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Totals:</label>
-                                                        <input type="text" value="@Model.AdditionalTotalActualCost.ToString("C2")" aria-label="Total Actual Cost"
+                                                        <div class="govuk-input__wrapper">
+                                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                                        <input type="text" value="@Model.AdditionalTotalActualCost.ToString("N2")" aria-label="Total Actual Cost"
                                                                id="additional-total-cost" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                                               </div>
                                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-3 pva-nowrap-label">Percent of Plan:</label>
                                                         <input type="text" value="@Model.AdditionalPercentOfPlan.ToString("F2")%" aria-label="Percent of Plan"
                                                                id="additional-percent-plan" class="govuk-input text-AlignRight pva-input-95" readonly>
