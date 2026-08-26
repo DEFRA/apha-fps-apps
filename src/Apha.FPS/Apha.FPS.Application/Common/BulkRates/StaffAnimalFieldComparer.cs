@@ -1,12 +1,12 @@
-namespace Apha.FPS.Application.Validation.BulkRates
+namespace Apha.FPS.Application.Common.BulkRates
 {
     /// <summary>
     /// The centralized comparison normalization for Staff/Animal, covering at minimum
     /// PayRate/NPR/OHR/DailyRate/DefraDailyRate (amounts), Species/SecurityLevel (text), and
     /// PlanByWeek (flag). This is the *only* place null/blank/zero equivalence, string
-    /// trimming/case-sensitivity, and decimal comparison are decided — StaffAnimalValidationService
-    /// calls these, and so must any future worker-side drift check, so the two can
-    /// never silently disagree.
+    /// trimming/case-sensitivity, and decimal comparison are decided — BulkStaffRatesService/
+    /// BulkAnimalRatesService (and the old StaffAnimalValidationService) call these, and so must
+    /// any future worker-side drift check, so they can never silently disagree.
     ///
     /// Rules:
     /// - Amounts: null and 0 are equivalent — a blank uploaded cell targets zero, the same as

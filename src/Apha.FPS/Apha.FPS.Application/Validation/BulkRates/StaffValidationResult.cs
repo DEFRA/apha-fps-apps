@@ -1,3 +1,5 @@
+using Apha.FPS.Application.Common.BulkRates;
+
 namespace Apha.FPS.Application.Validation.BulkRates
 {
     /// <summary>

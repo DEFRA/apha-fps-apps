@@ -1,4 +1,4 @@
-namespace Apha.FPS.Application.Validation.BulkRates
+namespace Apha.FPS.Application.Common.BulkRates
 {
     /// <summary>
     /// Common result model, one per finding. The API validator,
@@ -33,7 +33,7 @@ namespace Apha.FPS.Application.Validation.BulkRates
 
         public required string Message { get; init; }
 
-        /// <summary>One of <see cref="ValidationCalculatedAction"/>. Null for findings that are not row classifications (e.g. duplicate-key errors).</summary>
+        /// <summary>One of <c>ValidationCalculatedAction</c> (FEC/AGRUP) or <see cref="StaffAnimalCalculatedAction"/>. Null for findings that are not row classifications (e.g. duplicate-key errors).</summary>
         public string? CalculatedAction { get; init; }
 
         /// <summary>

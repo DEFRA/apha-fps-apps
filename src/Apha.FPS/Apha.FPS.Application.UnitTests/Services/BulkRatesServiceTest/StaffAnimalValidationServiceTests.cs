@@ -1,3 +1,4 @@
+using Apha.FPS.Application.Common.BulkRates;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Application.Validation.BulkRates;
 using FluentAssertions;

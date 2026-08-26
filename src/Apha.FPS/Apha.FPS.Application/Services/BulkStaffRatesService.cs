@@ -3,7 +3,6 @@ using Apha.FPS.Application.Common.BulkRates;
 using Apha.FPS.Application.Dtos.BulkRates;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Validation;
-using Apha.FPS.Application.Validation.BulkRates;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -15,18 +14,20 @@ namespace Apha.FPS.Application.Services
     /// release-time revalidation and freeze, and staging/export/download presentation. Staff is
     /// update-only: no insert path, no ZeroRateWithdrawal. Extracted from
     /// <c>StaffAnimalValidationService</c>/<c>BulkRatesValidator</c>/<c>BulkRatesRequestService</c>
-    /// per the low-risk phase-wise execution plan, Phase 3. Not yet wired into
+    /// per the low-risk phase-wise execution plan, Phases 3-4. Not yet wired into
     /// <c>BulkRatesRequestService</c> or DI.
     ///
     /// <c>LiveStaffRow</c>/<c>ValidationStaffRow</c>/<c>StaffFieldState</c>/
     /// <c>StaffValidationResult</c> below are private nested types — genuinely Staff-only (never
     /// shared with Animal), so safe to duplicate out of the still-standalone
-    /// <c>Validation/BulkRates/</c> files now. <c>StaffAnimalCalculatedAction</c>/
-    /// <c>StaffAnimalFieldComparer</c>/<c>StaffAnimalValidationVersion</c>/
-    /// <c>StaffAnimalValidationKeys</c> are deliberately left in their current shared location
-    /// and referenced directly — they're genuinely shared with Animal, which hasn't moved yet;
-    /// Phase 4 is where both real consumers are visible and the shared/private split gets decided
-    /// for real.
+    /// <c>Validation/BulkRates/</c> files. <see cref="Common.BulkRates.StaffAnimalFieldComparer"/>/
+    /// <see cref="Common.BulkRates.StaffAnimalCalculatedAction"/>/
+    /// <see cref="Common.BulkRates.StaffAnimalValidationVersion"/> are genuinely shared with
+    /// <c>BulkAnimalRatesService</c> and now live in <c>Common/BulkRates/</c> (Phase 4). The old
+    /// combined <c>StaffAnimalValidationKeys.PcGrade</c> is inlined below as a private
+    /// Staff-only helper instead — <c>BulkAnimalRatesService</c> gets its own private
+    /// <c>AnimalType</c> helper rather than both continuing to share one file whose two halves
+    /// serve different services.
     /// </summary>
     public class BulkStaffRatesService : IBulkStaffRatesService
     {
@@ -75,10 +76,10 @@ namespace Apha.FPS.Application.Services
 
             var errors = results
                 .SelectMany(r => r.Errors)
-                .Select(f => MapFinding(f, parseResult.JobQueueId, uploadVersion))
+                .Select(f => BulkRatesValidationFindingMapper.MapFinding(f, parseResult.JobQueueId, uploadVersion))
                 .ToList();
 
-            var counts = ComputeRowCounts(parseResult.StaffRows.Count, results.Select(r => r.Action), errors);
+            var counts = StaffAnimalRowCountHelper.ComputeRowCounts(parseResult.StaffRows.Count, results.Select(r => r.Action), errors);
 
             await _repository.ReplaceStagingStaffAsync(parseResult.JobQueueId, parseResult.StaffRows, ct);
 
@@ -245,7 +246,7 @@ namespace Apha.FPS.Application.Services
         {
             var liveStaffRows = await _repository.GetStaffRowsForExportAsync(fpsYear, ct);
             var liveStaffLookup = liveStaffRows.ToDictionary(
-                r => StaffAnimalValidationKeys.PcGrade(r.PcGrade),
+                r => PcGrade(r.PcGrade),
                 r => new LiveStaffRow { PcGrade = r.PcGrade, PayRate = r.PayRate, Npr = r.Npr, Ohr = r.Ohr });
 
             var stagedStaff = stagedRows.Select((r, i) => new ValidationStaffRow
@@ -279,7 +280,7 @@ namespace Apha.FPS.Application.Services
 
             var duplicates = ctx.StagedStaffRows
                 .Where(r => !string.IsNullOrWhiteSpace(r.PcGrade))
-                .GroupBy(r => StaffAnimalValidationKeys.PcGrade(r.PcGrade))
+                .GroupBy(r => PcGrade(r.PcGrade))
                 .Where(g => g.Count() > 1)
                 .Select(g => g.Key)
                 .ToHashSet();
@@ -298,7 +299,7 @@ namespace Apha.FPS.Application.Services
                     continue;
                 }
 
-                var key = StaffAnimalValidationKeys.PcGrade(row.PcGrade);
+                var key = PcGrade(row.PcGrade);
                 var errors = new List<ValidationFinding>();
 
                 if (duplicates.Contains(key))
@@ -387,62 +388,14 @@ namespace Apha.FPS.Application.Services
                 Message = message,
             };
 
-        // ── Finding -> StagingValidationError mapping ─────────────────────────────────
-
-        private static StagingValidationError MapFinding(ValidationFinding finding, Guid jobQueueId, int uploadVersion)
-        {
-            var (testCode, buyer) = SplitBusinessKey(finding.Sheet, finding.BusinessKey);
-            return new StagingValidationError
-            {
-                JobQueueId = jobQueueId,
-                UploadVersion = uploadVersion,
-                SourceRowNumber = finding.SourceRow ?? 0,
-                FieldName = finding.Field,
-                ValidationCode = finding.ValidationCode,
-                Severity = finding.Severity,
-                ValidationMessage = finding.Message,
-                SheetName = finding.Sheet,
-                TestCode = testCode,
-                Buyer = buyer,
-                IsRequestLevel = finding.IsRequestLevel
-            };
-        }
-
-        private static (string? TestCode, string? Buyer) SplitBusinessKey(string sheet, string? businessKey)
-        {
-            if (businessKey is null) return (null, null);
-            if (!string.Equals(sheet, "AGRUP", StringComparison.OrdinalIgnoreCase)) return (businessKey, null);
-            var parts = businessKey.Split('/', 2);
-            return parts.Length == 2 ? (parts[0], parts[1]) : (businessKey, null);
-        }
-
-        // ── Row counts ───────────────────────────────────────────────────────────────
+        // ── Business-key normalization ───────────────────────────────────────────────
 
         /// <summary>
-        /// No Insert bucket (update-only): NotFound/Invalid rows both carry an Error-severity
-        /// finding, so they're counted the same way FEC/AGRUP's Invalid bucket already is, from
-        /// the mapped errors rather than from StaffAnimalCalculatedAction directly.
+        /// Staff-only half of the old combined <c>StaffAnimalValidationKeys</c> — inlined here
+        /// per Phase 4 rather than continuing to share one file whose other half
+        /// (<c>AnimalType</c>) only <c>BulkAnimalRatesService</c> uses.
         /// </summary>
-        private static BulkRatesRowCounts ComputeRowCounts(
-            int total, IEnumerable<string> actions, IReadOnlyList<StagingValidationError> errors)
-        {
-            int update = 0, unchanged = 0;
-            foreach (var action in actions)
-            {
-                if (action == StaffAnimalCalculatedAction.Update) update++;
-                else if (action == StaffAnimalCalculatedAction.NoChange) unchanged++;
-            }
-
-            var invalid = errors.Count(e => e.Severity == ValidationSeverity.Error);
-            return new BulkRatesRowCounts
-            {
-                Total = total,
-                Update = update,
-                Unchanged = unchanged,
-                Invalid = invalid,
-                Valid = total - invalid
-            };
-        }
+        private static string PcGrade(string pcGrade) => pcGrade.ToUpperInvariant();
 
         // ── Staging-grid presentation helpers ─────────────────────────────────────────
 

@@ -3,7 +3,6 @@ using Apha.FPS.Application.Common.BulkRates;
 using Apha.FPS.Application.Dtos.BulkRates;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Validation;
-using Apha.FPS.Application.Validation.BulkRates;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -82,7 +81,7 @@ namespace Apha.FPS.Application.Services
             // fps.staging_validation_error.
             var errors = findings
                 .Where(f => f.ValidationCode != "ROW_CLASSIFIED")
-                .Select(f => MapFinding(f, parseResult.JobQueueId, uploadVersion))
+                .Select(f => BulkRatesValidationFindingMapper.MapFinding(f, parseResult.JobQueueId, uploadVersion))
                 .ToList();
 
             var counts = ComputeRowCounts(parseResult.FecRows.Count, parseResult.AgrupRows.Count, findings, errors);
@@ -133,7 +132,7 @@ namespace Apha.FPS.Application.Services
                 .Where(f => f.ValidationCode == "ROW_CLASSIFIED" && string.Equals(f.Sheet, "AGRUP", StringComparison.OrdinalIgnoreCase))
                 .Select(f =>
                 {
-                    var (testCode, buyer) = SplitBusinessKey(f.Sheet, f.BusinessKey);
+                    var (testCode, buyer) = BulkRatesValidationFindingMapper.SplitBusinessKey(f.Sheet, f.BusinessKey);
                     context.LiveAgrupLookup.TryGetValue(BulkRatesValidationKeys.AgrupKey(testCode!, buyer!), out var live);
                     return new TestFreezeEntry(testCode!, buyer, f.CalculatedAction!, f.EffectiveNewRate, live?.UnitPrice);
                 })
@@ -822,35 +821,6 @@ namespace Apha.FPS.Application.Services
                 EffectiveNewRate = effectiveNewRate,
             };
 
-        // ── Finding -> StagingValidationError mapping ─────────────────────────────────
-
-        private static StagingValidationError MapFinding(ValidationFinding finding, Guid jobQueueId, int uploadVersion)
-        {
-            var (testCode, buyer) = SplitBusinessKey(finding.Sheet, finding.BusinessKey);
-            return new StagingValidationError
-            {
-                JobQueueId = jobQueueId,
-                UploadVersion = uploadVersion,
-                SourceRowNumber = finding.SourceRow ?? 0,
-                FieldName = finding.Field,
-                ValidationCode = finding.ValidationCode,
-                Severity = finding.Severity,
-                ValidationMessage = finding.Message,
-                SheetName = finding.Sheet,
-                TestCode = testCode,
-                Buyer = buyer,
-                IsRequestLevel = finding.IsRequestLevel
-            };
-        }
-
-        /// <summary>AGRUP findings carry "TestCode/Buyer" as a single BusinessKey string; everything else is a plain TestCode.</summary>
-        private static (string? TestCode, string? Buyer) SplitBusinessKey(string sheet, string? businessKey)
-        {
-            if (businessKey is null) return (null, null);
-            if (!string.Equals(sheet, "AGRUP", StringComparison.OrdinalIgnoreCase)) return (businessKey, null);
-            var parts = businessKey.Split('/', 2);
-            return parts.Length == 2 ? (parts[0], parts[1]) : (businessKey, null);
-        }
 
         // ── Row counts ───────────────────────────────────────────────────────────────
 

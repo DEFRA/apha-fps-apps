@@ -1,11 +1,11 @@
-namespace Apha.FPS.Application.Validation.BulkRates
+namespace Apha.FPS.Application.Common.BulkRates
 {
     /// <summary>
-    /// The classification IStaffAnimalValidationService assigns to a staged Staff/Animal row:
+    /// The classification assigned to a staged Staff/Animal row:
     /// update-only, no `Insert`, no `ZeroRateWithdrawal` —
-    /// a deliberately smaller vocabulary than <see cref="ValidationCalculatedAction"/>
-    /// (FEC/AGRUP), kept as its own type rather than sharing constants so the two domains'
-    /// action sets can evolve independently.
+    /// a deliberately smaller vocabulary than FEC/AGRUP's calculated-action vocabulary
+    /// (kept as its own type rather than sharing constants so the two domains'
+    /// action sets can evolve independently).
     /// </summary>
     public static class StaffAnimalCalculatedAction
     {

@@ -1,4 +1,4 @@
-namespace Apha.FPS.Application.Validation.BulkRates
+namespace Apha.FPS.Application.Common.BulkRates
 {
     /// <summary>
     /// Matches fps.staging_validation_error's chk_staging_validation_error_severity

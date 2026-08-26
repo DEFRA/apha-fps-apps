@@ -1,3 +1,4 @@
+using Apha.FPS.Application.Common.BulkRates;
 using Apha.FPS.Application.Validation.BulkRates;
 
 namespace Apha.FPS.Application.Interfaces
