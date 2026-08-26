@@ -42,6 +42,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private async Task<TestPlanCrossTabViewModel> BuildViewModelAsync(PaginationFilter<string> request)
         {
+            // The shared _DataGrid renders the persisted sort column into a JS string literal,
+            // which Razor HTML-encodes. On pagination the grid echoes that encoded value back
+            // (e.g. a "B&M" programme column arrives as "B&amp;M"), so it no longer matches the
+            // real pivot column key and server-side sorting is silently dropped. Decoding here
+            // restores the true column key so sorting is retained across page navigation.
+            if (!string.IsNullOrWhiteSpace(request.SortBy))
+                request.SortBy = System.Net.WebUtility.HtmlDecode(request.SortBy);
+
             var query = _mapper.Map<QueryParameters<string>>(request);
             var response = await _testPlanCrossTabService.GetPagedTestPlanCrossTabAsync(query);
 
