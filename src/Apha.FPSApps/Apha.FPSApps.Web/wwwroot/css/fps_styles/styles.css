@@ -5465,11 +5465,6 @@ body,
         padding-left: 0 !important;
     }
 }
-.isTestSupplierPage {
-    .multicolumn-dropdown-panel {
-        left: -154px !important;
-    }
-}
 #gridContainer_testListVlaGrid {
     .editable-grid-container {
         .sup_border_bottom_0 {
@@ -5584,4 +5579,19 @@ body,
     .modal-body {
         overflow: visible;
     }
+}
+
+.isNoGlobalScrollBar {
+    .grid-scroll-container {
+        max-height: none !important;
+        height: 50.55vh !important;
+    }
+}
+.isClearfix{
+    overflow: hidden;
+}
+
+.btn-close
+.btn-close:hover {
+    background: #ca3535 !important;
 }

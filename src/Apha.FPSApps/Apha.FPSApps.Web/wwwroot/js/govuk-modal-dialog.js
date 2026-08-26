@@ -395,6 +395,62 @@
         window.jQuery.__loaderBound = true;
     }
 
+    // Centralised loader handling for full-page navigation.
+    // Shows the global loader whenever the user navigates to another page via a
+    // standard link click or a form submission, giving visual feedback while the
+    // next page loads. Elements can opt out with the data-no-loader attribute
+    // (e.g. downloads, new-tab links, or in-page anchors). The loader is hidden
+    // again if the user returns via the browser back/forward cache (pageshow).
+    if (!window.__navigationLoaderBound) {
+        window.__navigationLoaderBound = true;
+
+        var shouldSkipNavigationLoader = function (el) {
+            return !el || el.hasAttribute("data-no-loader") || el.closest("[data-no-loader]") !== null;
+        };
+
+        document.addEventListener("click", function (event) {
+            if (event.defaultPrevented || event.button !== 0 ||
+                event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                return;
+            }
+
+            var link = event.target.closest ? event.target.closest("a[href]") : null;
+            if (!link || shouldSkipNavigationLoader(link)) {
+                return;
+            }
+
+            var href = link.getAttribute("href");
+            if (!href || href.charAt(0) === "#" ||
+                href.indexOf("javascript:") === 0 ||
+                link.getAttribute("target") === "_blank" ||
+                link.hasAttribute("download")) {
+                return;
+            }
+
+            showLoader();
+        }, true);
+
+        document.addEventListener("submit", function (event) {
+            var form = event.target;
+            if (event.defaultPrevented || !form || shouldSkipNavigationLoader(form)) {
+                return;
+            }
+
+            if (form.getAttribute("target") === "_blank") {
+                return;
+            }
+
+            showLoader();
+        }, true);
+
+        // Hide the loader when the page is restored from the back/forward cache.
+        window.addEventListener("pageshow", function (event) {
+            if (event.persisted) {
+                hideLoader();
+            }
+        });
+    }
+
     // Downloads a file from the given URL, showing the global loader until the
     // download completes. Reusable for any Excel/PDF/CSV export endpoint.
     window.downloadFile = function (url, fileName) {
