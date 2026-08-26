@@ -1,4 +1,4 @@
-﻿using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
@@ -95,18 +95,22 @@ namespace Apha.PIMS.DataAccess.Repository
 
         public async Task<ProposedProject> UpdateProposedProjectAsync(ProposedProject entity, string transferTo)
         {
-            if (entity.Parentproject != transferTo)
-            {
-                bool codeChanged = await ChangeProjectCodeAsync(entity.Parentproject!, transferTo);
-                if (!codeChanged)
-                    throw new InvalidOperationException("Failed to change project code for proposed project update.");
-                entity.Parentproject = transferTo;
-            }
-            else {
-                _dbContext.ProposedProjects.Update(entity);
-                await _dbContext.SaveChangesAsync();
-            }
             
+                _dbContext.ProposedProjects.Update(entity);
+                _dbContext.Entry(entity).Property(x => x.Parentproject).IsModified = false;
+                await _dbContext.SaveChangesAsync();
+
+                if (entity.Parentproject != transferTo)
+                {                   
+
+                    bool codeChanged = await ChangeProjectCodeAsync(entity.Parentproject!, transferTo);
+                    if (!codeChanged)
+                        throw new InvalidOperationException("Failed to change project code for proposed project update.");
+
+                    entity.Parentproject = transferTo;
+                }
+            
+           
             return entity;
         }
 
@@ -130,46 +134,82 @@ namespace Apha.PIMS.DataAccess.Repository
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.Parentproject == parentproject);
         }
+
         private async Task<bool> ChangeProjectCodeAsync(string oldCode, string newCode)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
             return await strategy.ExecuteAsync(async () =>
             {
-                using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-                var comments = await _dbContext.Comments
-                    .Where(x => x.Project == oldCode)
-                    .ToListAsync();
+              
+                    var comments = await _dbContext.Comments
+                        .Where(x => x.Project == oldCode)
+                        .ToListAsync();
 
-                if (comments.Count != 0)
-                {
-                    comments.ForEach(x => x.Project = newCode);
-                }
+                    if (comments.Count != 0)
+                    {
+                        comments.ForEach(x => x.Project = newCode);
+                    }
 
-                var proposed = await _dbContext.ProposedProjects
-                    .Where(x => x.Parentproject == oldCode)
-                    .ToListAsync();
+                    bool proposedNewCodeExists = await _dbContext.ProposedProjects
+                        .AnyAsync(x => x.Parentproject == newCode);
 
-                if (proposed.Count != 0)
-                {
-                    proposed.ForEach(x => x.Parentproject = newCode);
-                }
+                    if (!proposedNewCodeExists)
+                    {
+                        var proposed = await _dbContext.ProposedProjects
+                            .Where(x => x.Parentproject == oldCode)
+                            .ToListAsync();
 
-                var radTrackOld = await _dbContext.ProjectRadTrackData
-                    .Where(x => x.Parentproject == oldCode)
-                    .ToListAsync();
-               
+                        if (proposed.Count != 0)
+                        {
+                            proposed.ForEach(x => x.Parentproject = newCode);
+                        }
+                    }
 
-                if (radTrackOld.Count != 0)
-                {
-                    radTrackOld.ForEach(x => x.Parentproject = newCode);
-                }
+                    bool radTrackNewCodeExists = await _dbContext.ProjectRadTrackData
+                        .AnyAsync(x => x.Parentproject == newCode);
 
-                await _dbContext.SaveChangesAsync();
-                await transaction.CommitAsync();
+                    if (!radTrackNewCodeExists)
+                    {
+                        var radTrackOld = await _dbContext.ProjectRadTrackData
+                            .FirstOrDefaultAsync(x => x.Parentproject == oldCode);
 
-                return true;
+                        if (radTrackOld is not null)
+                        {
+                            var radTrackNew = new ProjectRadTrackData
+                            {
+                                Parentproject = newCode,
+                                Version = radTrackOld.Version,
+                                Fileref = radTrackOld.Fileref,
+                                Customerref = radTrackOld.Customerref,
+                                Startdate = radTrackOld.Startdate,
+                                Enddate = radTrackOld.Enddate,
+                                Finalreportreceived = radTrackOld.Finalreportreceived,
+                                Finalreportsent = radTrackOld.Finalreportsent,
+                                Inflation = radTrackOld.Inflation,
+                                Closeddate = radTrackOld.Closeddate,
+                                Useprojectyear = radTrackOld.Useprojectyear,
+                                Status = radTrackOld.Status,
+                                Pcforecastspend = radTrackOld.Pcforecastspend,
+                                Riskid = radTrackOld.Riskid,
+                                Costbooknumber = radTrackOld.Costbooknumber,
+                                Revisedenddate = radTrackOld.Revisedenddate,
+                                Formrequired = radTrackOld.Formrequired,
+                                Overallcustincome = radTrackOld.Overallcustincome,
+                            };
+
+                            _dbContext.ProjectRadTrackData.Add(radTrackNew);
+                            _dbContext.ProjectRadTrackData.Remove(radTrackOld);
+                        }
+                    }
+
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return true;
+              
             });
         }
     }
