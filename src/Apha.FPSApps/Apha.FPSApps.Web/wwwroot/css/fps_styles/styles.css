@@ -5640,3 +5640,8 @@ body,
 .btn-close:hover {
     background: #ca3535 !important;
 }
+
+.isCustomTableHeight {
+    .sup_align_heading {
+        line-height: 35px;
+    }
