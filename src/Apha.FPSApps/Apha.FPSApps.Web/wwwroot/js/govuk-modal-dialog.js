@@ -442,3 +442,74 @@
         });
     };
 })();
+
+
+$(function () {
+
+    var isDragging = true;
+    var startX = 0;
+    var startY = 0;
+    var startLeft = 0;
+    var startTop = 0;
+
+    $(document).on("mousedown", ".modal-dialog .modal-header", function (e) {
+
+        // Don't start dragging when clicking buttons/links inside header
+        if ($(e.target).closest("button, a, input, select, textarea").length) {
+            return;
+        }
+
+        var $dialog = $(this).closest(".modal-dialog");
+
+        isDragging = true;
+
+        var offset = $dialog.offset();
+
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = offset.left;
+        startTop = offset.top;
+
+        // Important: remove margin:auto so left/top can control position
+        $dialog.css({
+            position: "fixed",
+            margin: 0,
+            left: startLeft,
+            top: startTop,
+            width: $dialog.outerWidth()
+        });
+
+        $("body").css("user-select", "none");
+
+        e.preventDefault();
+    });
+
+    $(document).on("mousemove", function (e) {
+
+        if (!isDragging) {
+            return;
+        }
+
+        var $dialog = $(".modal-dialog:has(.modal-header)");
+
+        var newLeft = startLeft + (e.clientX - startX);
+        var newTop = startTop + (e.clientY - startY);
+
+        $dialog.css({
+            left: newLeft,
+            top: newTop
+        });
+    });
+
+    $(document).on("mouseup", function () {
+
+        if (!isDragging) {
+            return;
+        }
+
+        isDragging = false;
+
+        $("body").css("user-select", "");
+    });
+
+});
