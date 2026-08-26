@@ -618,16 +618,7 @@ namespace Apha.FPS.Application.Services
         // ── Export ───────────────────────────────────────────────────────────────
 
         public async Task<byte[]> ExportFecTestDataAsync(int fpsYear, CancellationToken ct = default)
-        {
-            var fecRows = await _repository.GetFecRowsForExportAsync(fpsYear, ct);
-            var agrupRows = await _repository.GetAgrupRowsForExportAsync(fpsYear, ct);
-
-            _logger.LogInformation(
-                "[BulkRates.ExportFecTestData] FpsYear={FpsYear} | FecRows={FecRows} | AgrupRows={AgrupRows}",
-                fpsYear, fecRows.Count, agrupRows.Count);
-
-            return _excelExportService.ExportToExcelMultiSheet(BuildFecAgrupSheets(fecRows, agrupRows));
-        }
+            => await _testService.ExportTestDataAsync(fpsYear, ct);
 
         // ── Request-scoped download, atomic with snapshot capture ──────────────────
 
@@ -636,73 +627,14 @@ namespace Apha.FPS.Application.Services
             var entry = await RequireRequestAsync(jobExecutionId, ct);
             RequireDownloadableStatus(entry);
 
-            var downloadVersion = await _repository.GetNextDownloadVersionAsync(entry.JobQueueId, ct);
-
-            // Steps 1-2: snapshot live data as the new Generating header, in one transaction —
-            // this becomes the immutable record the worker's revalidation validates against, regardless
-            // of whether workbook generation below succeeds.
-            var liveFec = await _repository.GetFecRowsForExportAsync(entry.FpsYear, ct);
-            var liveAgrup = await _repository.GetAgrupRowsForExportAsync(entry.FpsYear, ct);
-            await _repository.CreateDownloadSnapshotAsync(entry.JobQueueId, downloadVersion, liveFec, liveAgrup, ct);
-
-            try
-            {
-                // Step 3: generate from the just-persisted snapshot, not a second live query —
-                // the snapshot and the workbook can never disagree because they share one source.
-                var snapshotFec = await _repository.GetFecSnapshotRowsAsync(entry.JobQueueId, downloadVersion, ct);
-                var snapshotAgrup = await _repository.GetAgrupSnapshotRowsAsync(entry.JobQueueId, downloadVersion, ct);
-
-                var metadata = new Dictionary<string, string>
-                {
-                    [BulkRatesDownloadMetadataKeys.JobQueueId] = entry.JobQueueId.ToString(),
-                    [BulkRatesDownloadMetadataKeys.DownloadVersion] = downloadVersion.ToString(),
-                };
-                var bytes = _excelExportService.ExportToExcelMultiSheet(
-                    BuildFecAgrupSheets(snapshotFec, snapshotAgrup), metadata);
-
-                // Step 4: only on success, Ready + active_download_version — if anything above
-                // throws, the header is left Generating/marked Failed below and
-                // active_download_version stays untouched, so the previous still-valid version
-                // (if any) remains what an upload is checked against.
-                await _repository.MarkDownloadReadyAsync(entry.JobQueueId, downloadVersion, ct);
-
-                _logger.LogInformation(
-                    "[BulkRates.DownloadFecTestData] JobQueueId={JobQueueId} | DownloadVersion={DownloadVersion} | FecRows={FecRows} | AgrupRows={AgrupRows}",
-                    entry.JobQueueId, downloadVersion, snapshotFec.Count, snapshotAgrup.Count);
-
-                return bytes;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex,
-                    "[BulkRates.DownloadFecTestData] Workbook generation failed after snapshot commit | JobQueueId={JobQueueId} | DownloadVersion={DownloadVersion}",
-                    entry.JobQueueId, downloadVersion);
-                await _repository.MarkDownloadFailedAsync(entry.JobQueueId, downloadVersion, ct);
-                throw;
-            }
+            return await _testService.DownloadTestDataAsync(entry, ct);
         }
 
         public async Task<byte[]> ExportStaffTestDataAsync(int fpsYear, CancellationToken ct = default)
-        {
-            var staffRows = await _repository.GetStaffRowsForExportAsync(fpsYear, ct);
-
-            _logger.LogInformation(
-                "[BulkRates.ExportStaffTestData] FpsYear={FpsYear} | StaffRows={StaffRows}",
-                fpsYear, staffRows.Count);
-
-            return _excelExportService.ExportToExcelMultiSheet(BuildStaffSheet(staffRows));
-        }
+            => await _staffService.ExportTestDataAsync(fpsYear, ct);
 
         public async Task<byte[]> ExportAnimalTestDataAsync(int fpsYear, CancellationToken ct = default)
-        {
-            var animalRows = await _repository.GetAnimalRowsForExportAsync(fpsYear, ct);
-
-            _logger.LogInformation(
-                "[BulkRates.ExportAnimalTestData] FpsYear={FpsYear} | AnimalRows={AnimalRows}",
-                fpsYear, animalRows.Count);
-
-            return _excelExportService.ExportToExcelMultiSheet(BuildAnimalSheet(animalRows));
-        }
+            => await _animalService.ExportTestDataAsync(fpsYear, ct);
 
         // ── Request-scoped Staff/Animal downloads, parity with
         //    DownloadFecTestDataAsync ─────────────────────────────────────────────────
@@ -713,44 +645,7 @@ namespace Apha.FPS.Application.Services
             RequireJobName(entry, BulkRatesJobNames.Staff, "download Staff test rates");
             RequireDownloadableStatus(entry);
 
-            var downloadVersion = await _repository.GetNextDownloadVersionAsync(entry.JobQueueId, ct);
-
-            // Steps 1-2, matching DownloadFecTestDataAsync exactly: snapshot live data as the new
-            // Generating header, in one transaction — this predicate
-            // (every live row for the request's FPS year, no other filter) matches
-            // GetStaffRowsForExportAsync unchanged.
-            var liveRows = await _repository.GetStaffRowsForExportAsync(entry.FpsYear, ct);
-            await _repository.CreateStaffDownloadSnapshotAsync(entry.JobQueueId, downloadVersion, liveRows, ct);
-
-            try
-            {
-                // Step 3: generate from the just-persisted snapshot, not a second live query.
-                var snapshotRows = await _repository.GetStaffSnapshotRowsAsync(entry.JobQueueId, downloadVersion, ct);
-
-                var metadata = new Dictionary<string, string>
-                {
-                    [BulkRatesDownloadMetadataKeys.JobQueueId] = entry.JobQueueId.ToString(),
-                    [BulkRatesDownloadMetadataKeys.DownloadVersion] = downloadVersion.ToString(),
-                };
-                var bytes = _excelExportService.ExportToExcelMultiSheet(BuildStaffSheet(snapshotRows), metadata);
-
-                // Step 4: only on success, Ready + active_download_version.
-                await _repository.MarkDownloadReadyAsync(entry.JobQueueId, downloadVersion, ct);
-
-                _logger.LogInformation(
-                    "[BulkRates.DownloadStaffTestData] JobQueueId={JobQueueId} | DownloadVersion={DownloadVersion} | StaffRows={StaffRows}",
-                    entry.JobQueueId, downloadVersion, snapshotRows.Count);
-
-                return bytes;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex,
-                    "[BulkRates.DownloadStaffTestData] Workbook generation failed after snapshot commit | JobQueueId={JobQueueId} | DownloadVersion={DownloadVersion}",
-                    entry.JobQueueId, downloadVersion);
-                await _repository.MarkDownloadFailedAsync(entry.JobQueueId, downloadVersion, ct);
-                throw;
-            }
+            return await _staffService.DownloadTestDataAsync(entry, ct);
         }
 
         public async Task<byte[]> DownloadAnimalTestDataAsync(Guid jobExecutionId, CancellationToken ct = default)
@@ -759,38 +654,7 @@ namespace Apha.FPS.Application.Services
             RequireJobName(entry, BulkRatesJobNames.Animal, "download Animal test rates");
             RequireDownloadableStatus(entry);
 
-            var downloadVersion = await _repository.GetNextDownloadVersionAsync(entry.JobQueueId, ct);
-
-            var liveRows = await _repository.GetAnimalRowsForExportAsync(entry.FpsYear, ct);
-            await _repository.CreateAnimalDownloadSnapshotAsync(entry.JobQueueId, downloadVersion, liveRows, ct);
-
-            try
-            {
-                var snapshotRows = await _repository.GetAnimalSnapshotRowsAsync(entry.JobQueueId, downloadVersion, ct);
-
-                var metadata = new Dictionary<string, string>
-                {
-                    [BulkRatesDownloadMetadataKeys.JobQueueId] = entry.JobQueueId.ToString(),
-                    [BulkRatesDownloadMetadataKeys.DownloadVersion] = downloadVersion.ToString(),
-                };
-                var bytes = _excelExportService.ExportToExcelMultiSheet(BuildAnimalSheet(snapshotRows), metadata);
-
-                await _repository.MarkDownloadReadyAsync(entry.JobQueueId, downloadVersion, ct);
-
-                _logger.LogInformation(
-                    "[BulkRates.DownloadAnimalTestData] JobQueueId={JobQueueId} | DownloadVersion={DownloadVersion} | AnimalRows={AnimalRows}",
-                    entry.JobQueueId, downloadVersion, snapshotRows.Count);
-
-                return bytes;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex,
-                    "[BulkRates.DownloadAnimalTestData] Workbook generation failed after snapshot commit | JobQueueId={JobQueueId} | DownloadVersion={DownloadVersion}",
-                    entry.JobQueueId, downloadVersion);
-                await _repository.MarkDownloadFailedAsync(entry.JobQueueId, downloadVersion, ct);
-                throw;
-            }
+            return await _animalService.DownloadTestDataAsync(entry, ct);
         }
 
         // ── Staging grid (Detail page — "FEC Data (Staging)" / "Agrup Details") ────
@@ -804,472 +668,33 @@ namespace Apha.FPS.Application.Services
             if (entry.UploadChecksumSha256 == null)
                 return new BulkRatesStagingDataDto();
 
+            if (string.Equals(entry.JobName, BulkRatesJobNames.Fec, StringComparison.OrdinalIgnoreCase))
+                return await _testService.GetStagingDataAsync(entry, ct);
+
             if (string.Equals(entry.JobName, BulkRatesJobNames.Staff, StringComparison.OrdinalIgnoreCase))
-                return await GetStaffStagingDataAsync(entry, ct);
+                return await _staffService.GetStagingDataAsync(entry, ct);
 
             if (string.Equals(entry.JobName, BulkRatesJobNames.Animal, StringComparison.OrdinalIgnoreCase))
-                return await GetAnimalStagingDataAsync(entry, ct);
+                return await _animalService.GetStagingDataAsync(entry, ct);
 
-            if (!string.Equals(entry.JobName, BulkRatesJobNames.Fec, StringComparison.OrdinalIgnoreCase))
-                return new BulkRatesStagingDataDto();
-
-            var stagedFec = await _repository.GetTestOrProductStagingRowsAsync(entry.JobQueueId, ct);
-            var stagedAgrup = await _repository.GetTestRequirementStagingRowsAsync(entry.JobQueueId, ct);
-
-            // Once a request has Completed, its staging rows are purged as post-commit cleanup
-            // (spec §10.6, BulkTestRatesService step 5) — there is nothing left to diff against
-            // live data. Skipping the live fetch here isn't just an optimisation: treating "no
-            // staged rows" as "every live row was deleted" would be actively wrong, since the
-            // apply step only ever touches rows that were actually staged — an unstaged live row
-            // is never modified or removed, so labelling the whole live catalog "Deleted" after
-            // completion is both misleading and unrelated to what actually happened.
-            var liveFec = entry.Status == "Completed"
-                ? []
-                : await _repository.GetFecRowsForExportAsync(entry.FpsYear, ct);
-
-            var stagedTestCodes = stagedFec.Select(r => r.TestCode).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            // the per-row action label comes from the validator — frozen at release time
-            // once available, or computed live via the same shared validator
-            // (BulkRatesValidator.GetCalculatedActionsAsync) before release — never a bespoke
-            // UI-layer diff. "Deleted" below is a separate concept the validator has no row to
-            // classify: a live TestCode/Buyer this upload never staged at all.
-            var needsLiveClassification =
-                stagedFec.Any(r => r.CalculatedAction is null) || stagedAgrup.Any(r => r.CalculatedAction is null);
-            var liveClassifications = needsLiveClassification
-                ? await _validator.GetCalculatedActionsAsync(
-                    entry.JobQueueId, entry.FpsYear, entry.UploadVersion ?? 0, entry.ActiveDownloadVersion, ct)
-                : [];
-
-            var fecActionByTestCode = liveClassifications
-                .Where(f => string.Equals(f.Sheet, "FEC", StringComparison.OrdinalIgnoreCase))
-                .ToDictionary(f => f.BusinessKey!, StringComparer.OrdinalIgnoreCase);
-            var agrupActionByKey = liveClassifications
-                .Where(f => string.Equals(f.Sheet, "AGRUP", StringComparison.OrdinalIgnoreCase))
-                .ToDictionary(f =>
-                {
-                    var parts = f.BusinessKey!.Split('/', 2);
-                    return AgrupKey(parts[0], parts.Length > 1 ? parts[1] : string.Empty);
-                });
-
-            // Build error-keyed lookups so rows with validation errors show "Error", not "Unknown".
-            var storedErrors = await _repository.GetValidationErrorsAsync(entry.JobQueueId, ct);
-            var fecTestCodesWithErrors = storedErrors
-                .Where(e => string.Equals(e.Severity, "Error", StringComparison.OrdinalIgnoreCase)
-                         && !string.IsNullOrEmpty(e.TestCode)
-                         && (e.SheetName is null || string.Equals(e.SheetName, "FEC", StringComparison.OrdinalIgnoreCase)))
-                .Select(e => e.TestCode!)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var agrupKeysWithErrors = storedErrors
-                .Where(e => string.Equals(e.Severity, "Error", StringComparison.OrdinalIgnoreCase)
-                         && !string.IsNullOrEmpty(e.TestCode)
-                         && string.Equals(e.SheetName, "AGRUP", StringComparison.OrdinalIgnoreCase))
-                .Select(e => AgrupKey(e.TestCode!, e.Buyer ?? string.Empty))
-                .ToHashSet();
-
-            var fecRows = new List<BulkRatesFecStagingRowDto>();
-            foreach (var row in stagedFec)
-            {
-                var calculatedAction = row.CalculatedAction;
-                if (calculatedAction is null && fecActionByTestCode.TryGetValue(row.TestCode, out var liveFinding))
-                    calculatedAction = liveFinding.CalculatedAction;
-
-                fecRows.Add(new BulkRatesFecStagingRowDto
-                {
-                    Status = fecTestCodesWithErrors.Contains(row.TestCode)
-                        ? "Error"
-                        : FormatCalculatedAction(calculatedAction),
-                    TestCode = row.TestCode,
-                    UnitPriceVla = row.UnitPriceVla,
-                    DefraUnitPrice = row.DefraUnitPrice,
-                    FecNewRate = row.FecNewRate,
-                    ItemDescription = row.ItemDescription,
-                    ShortDescription = row.ShortDescription,
-                    Owner = row.Owner,
-                    Comments = row.Comments
-                });
-            }
-
-            foreach (var live in liveFec)
-            {
-                if (stagedTestCodes.Contains(live.TestCode))
-                    continue;
-
-                fecRows.Add(new BulkRatesFecStagingRowDto
-                {
-                    Status = "Deleted",
-                    TestCode = live.TestCode,
-                    UnitPriceVla = live.UnitPriceVla,
-                    DefraUnitPrice = live.DefraUnitPrice,
-                    ItemDescription = live.ItemDescription,
-                    ShortDescription = live.ShortDescription,
-                    Owner = live.Owner,
-                    Comments = live.Comments
-                });
-            }
-
-            // Same rationale as liveFec above — AGRUP staging is purged alongside FEC on commit.
-            var liveAgrup = entry.Status == "Completed"
-                ? []
-                : await _repository.GetAgrupRowsForExportAsync(entry.FpsYear, ct);
-            var stagedAgrupKeys = stagedAgrup.Select(r => AgrupKey(r.TestCode, r.Buyer)).ToHashSet();
-
-            var agrupRows = new List<BulkRatesAgrupStagingRowDto>();
-            foreach (var row in stagedAgrup)
-            {
-                var calculatedAction = row.CalculatedAction;
-                if (calculatedAction is null && agrupActionByKey.TryGetValue(AgrupKey(row.TestCode, row.Buyer), out var liveFinding))
-                    calculatedAction = liveFinding.CalculatedAction;
-
-                agrupRows.Add(new BulkRatesAgrupStagingRowDto
-                {
-                    Status = agrupKeysWithErrors.Contains(AgrupKey(row.TestCode, row.Buyer))
-                        ? "Error"
-                        : FormatCalculatedAction(calculatedAction),
-                    TestCode = row.TestCode,
-                    Buyer = row.Buyer,
-                    Agrup = row.Agrup,
-                    AgrupNew = row.AgrupNew,
-                    NoRequired = row.NoRequired,
-                    DateCreated = row.DateCreated,
-                    Active = row.Active,
-                    Comments = row.Comments
-                });
-            }
-
-            foreach (var live in liveAgrup)
-            {
-                if (stagedAgrupKeys.Contains(AgrupKey(live.TestCode, live.Buyer)))
-                    continue;
-
-                agrupRows.Add(new BulkRatesAgrupStagingRowDto
-                {
-                    Status = "Deleted",
-                    TestCode = live.TestCode,
-                    Buyer = live.Buyer,
-                    Agrup = live.Agrup,
-                    NoRequired = live.NoRequired,
-                    DateCreated = live.DateCreated,
-                    Active = live.Active,
-                    Comments = live.Comments
-                });
-            }
-
-            return new BulkRatesStagingDataDto
-            {
-                FecRows = fecRows.OrderBy(r => FecAgrupSortKey(r.Status)).ToList(),
-                AgrupRows = agrupRows.OrderBy(r => FecAgrupSortKey(r.Status)).ToList()
-            };
-        }
-
-        private static (string TestCode, string Buyer) AgrupKey(string testCode, string buyer) =>
-            (testCode.ToUpperInvariant(), buyer.ToUpperInvariant());
-
-        /// <summary>Maps a <see cref="ValidationCalculatedAction"/> code to its Detail-page label.</summary>
-        private static string FormatCalculatedAction(string? calculatedAction) => calculatedAction switch
-        {
-            ValidationCalculatedAction.NoChange => "No Change",
-            ValidationCalculatedAction.Insert => "Insert",
-            ValidationCalculatedAction.Update => "Update",
-            ValidationCalculatedAction.ZeroRateWithdrawal => "Zero-Rate Withdrawal",
-            _ => "Unknown"
-        };
-
-        // Sort order for FEC/AGRUP: Error/Unknown first, then actionable rows, NoChange last.
-        private static int FecAgrupSortKey(string status) => status switch
-        {
-            "Error"                => 0,
-            "Unknown"              => 0,
-            "Insert"               => 1,
-            "Update"               => 2,
-            "Zero-Rate Withdrawal" => 3,
-            "Deleted"              => 4,
-            "No Change"            => 5,
-            _                      => 0
-        };
-
-        // Sort order for Staff/Animal: Not Found first, Updated next, No Change last.
-        private static int StaffAnimalSortKey(string status) => status switch
-        {
-            "Not Found" => 0,
-            "Updated"   => 1,
-            "No Change" => 2,
-            _           => 0
-        };
-
-        // Staff/Animal are update-only (see BulkStaffRatesService/BulkAnimalRatesService in the
-        // worker): a staged row whose key doesn't exist live is skipped, never inserted, and a
-        // live row absent from the upload is left untouched, never deleted. So unlike FEC/AGRUP,
-        // there is no "Inserted"/"Deleted" status here — only "No Change" (staged values match
-        // live), "Updated" (will be applied), and "Not Found" (won't be — surfaced so the
-        // initiator can catch a typo'd grade/animal type before release, matching exactly what
-        // the worker will do). Every staged row is shown (parity with FEC/AGRUP's
-        // decision to display all rows, not just the ones that will change).
-
-        private async Task<BulkRatesStagingDataDto> GetStaffStagingDataAsync(BulkRatesQueueRow entry, CancellationToken ct)
-        {
-            var stagedStaff = await _repository.GetProfitCentreGradeStagingRowsAsync(entry.JobQueueId, ct);
-            var liveStaff = await _repository.GetStaffRowsForExportAsync(entry.FpsYear, ct);
-            var liveByGrade = liveStaff.ToDictionary(r => r.PcGrade, StringComparer.OrdinalIgnoreCase);
-
-            var rows = new List<BulkRatesStaffStagingRowDto>();
-            foreach (var row in stagedStaff)
-            {
-                if (!liveByGrade.TryGetValue(row.PcGrade, out var live))
-                {
-                    var newPay = row.PayRate ?? 0m;
-                    var newNpr = row.Npr ?? 0m;
-                    var newOhr = row.Ohr ?? 0m;
-                    rows.Add(new BulkRatesStaffStagingRowDto
-                    {
-                        Status       = "Not Found",
-                        PcGrade      = row.PcGrade,
-                        PayRateNew   = row.PayRate,
-                        NprNew       = row.Npr,
-                        OhrNew       = row.Ohr,
-                        ChargeRateNew = newPay + newNpr + newOhr,
-                    });
-                    continue;
-                }
-
-                var payRateChanged = row.PayRate.HasValue && row.PayRate.Value != live.PayRate;
-                var nprChanged = row.Npr.HasValue && row.Npr.Value != live.Npr;
-                var ohrChanged = row.Ohr.HasValue && row.Ohr.Value != live.Ohr;
-
-                var effPay = row.PayRate ?? live.PayRate ?? 0m;
-                var effNpr = row.Npr ?? live.Npr ?? 0m;
-                var effOhr = row.Ohr ?? live.Ohr ?? 0m;
-                var srcPay = live.PayRate ?? 0m;
-                var srcNpr = live.Npr ?? 0m;
-                var srcOhr = live.Ohr ?? 0m;
-                rows.Add(new BulkRatesStaffStagingRowDto
-                {
-                    // The worker independently recomputes this same per-field diff at apply
-                    // time and skips no-change rows there — this Status only drives display.
-                    Status        = (payRateChanged || nprChanged || ohrChanged) ? "Updated" : "No Change",
-                    PcGrade       = row.PcGrade,
-                    PayRate       = live.PayRate,
-                    PayRateNew    = row.PayRate,
-                    Npr           = live.Npr,
-                    NprNew        = row.Npr,
-                    Ohr           = live.Ohr,
-                    OhrNew        = row.Ohr,
-                    ChargeRate    = srcPay + srcNpr + srcOhr,
-                    ChargeRateNew = effPay + effNpr + effOhr,
-                });
-            }
-
-            return new BulkRatesStagingDataDto { StaffRows = rows.OrderBy(r => StaffAnimalSortKey(r.Status)).ToList() };
-        }
-
-        private async Task<BulkRatesStagingDataDto> GetAnimalStagingDataAsync(BulkRatesQueueRow entry, CancellationToken ct)
-        {
-            var stagedAnimal = await _repository.GetAnimalStagingRowsAsync(entry.JobQueueId, ct);
-            var liveAnimal = await _repository.GetAnimalRowsForExportAsync(entry.FpsYear, ct);
-            var liveByType = liveAnimal.ToDictionary(r => r.AnimalType, StringComparer.OrdinalIgnoreCase);
-
-            var rows = new List<BulkRatesAnimalStagingRowDto>();
-            foreach (var row in stagedAnimal)
-            {
-                if (!liveByType.TryGetValue(row.AnimalType, out var live))
-                {
-                    rows.Add(new BulkRatesAnimalStagingRowDto
-                    {
-                        Status = "Not Found",
-                        AnimalType = row.AnimalType,
-                        Species = row.Species,
-                        SecurityLevel = row.SecurityLevel,
-                        DailyRateNew = row.DailyRate,
-                        DefraDailyRateNew = row.DefraDailyRate,
-                        PlanByWeek = row.PlanByWeek
-                    });
-                    continue;
-                }
-
-                var dailyRateChanged = row.DailyRate.HasValue && row.DailyRate.Value != live.DailyRate;
-                var defraDailyRateChanged = row.DefraDailyRate.HasValue && row.DefraDailyRate.Value != live.DefraDailyRate;
-                var planByWeekChanged = row.PlanByWeek.HasValue && row.PlanByWeek.Value != live.PlanByWeek;
-                var speciesChanged = row.Species is not null && row.Species != live.Species;
-                var securityLevelChanged = row.SecurityLevel is not null && row.SecurityLevel != live.SecurityLevel;
-                var anyChanged = dailyRateChanged || defraDailyRateChanged || planByWeekChanged || speciesChanged || securityLevelChanged;
-
-                rows.Add(new BulkRatesAnimalStagingRowDto
-                {
-                    // The worker independently recomputes this same per-field diff at apply
-                    // time and skips no-change rows there — this Status only drives display.
-                    Status = anyChanged ? "Updated" : "No Change",
-                    AnimalType = row.AnimalType,
-                    Species = row.Species ?? live.Species,
-                    SecurityLevel = row.SecurityLevel ?? live.SecurityLevel,
-                    DailyRate = live.DailyRate,
-                    DailyRateNew = row.DailyRate,
-                    DefraDailyRate = live.DefraDailyRate,
-                    DefraDailyRateNew = row.DefraDailyRate,
-                    PlanByWeek = row.PlanByWeek ?? live.PlanByWeek
-                });
-            }
-
-            return new BulkRatesStagingDataDto { AnimalRows = rows.OrderBy(r => StaffAnimalSortKey(r.Status)).ToList() };
+            return new BulkRatesStagingDataDto();
         }
 
         public async Task<byte[]> ExportStagingDataAsync(Guid jobExecutionId, CancellationToken ct = default)
         {
             var entry = await RequireRequestAsync(jobExecutionId, ct);
 
-            // Mirrors GetStagingDataAsync's job-type dispatch — this method predates Staff/Animal
-            // staging support and was never updated to branch by job type,
-            // so it always queried FEC/AGRUP staging regardless of entry.JobName, producing an
-            // empty workbook for every Staff/Animal request.
+            // Mirrors GetStagingDataAsync's job-type dispatch, with one legacy quirk preserved
+            // exactly: this method predates Staff/Animal staging support and was never given an
+            // explicit "unrecognized job name" branch — FEC/AGRUP is the fallback for anything
+            // that isn't Staff or Animal, not gated on entry.JobName actually being Fec.
             if (string.Equals(entry.JobName, BulkRatesJobNames.Staff, StringComparison.OrdinalIgnoreCase))
-            {
-                var stagedStaff = await _repository.GetProfitCentreGradeStagingRowsAsync(entry.JobQueueId, ct);
-
-                _logger.LogInformation(
-                    "[BulkRates.ExportStagingData] JobExecutionId={JobExecutionId} | StaffRows={StaffRows}",
-                    jobExecutionId, stagedStaff.Count);
-
-                return _excelExportService.ExportToExcelMultiSheet(BuildStaffSheet(stagedStaff));
-            }
+                return await _staffService.ExportStagingDataAsync(entry.JobQueueId, ct);
 
             if (string.Equals(entry.JobName, BulkRatesJobNames.Animal, StringComparison.OrdinalIgnoreCase))
-            {
-                var stagedAnimal = await _repository.GetAnimalStagingRowsAsync(entry.JobQueueId, ct);
+                return await _animalService.ExportStagingDataAsync(entry.JobQueueId, ct);
 
-                _logger.LogInformation(
-                    "[BulkRates.ExportStagingData] JobExecutionId={JobExecutionId} | AnimalRows={AnimalRows}",
-                    jobExecutionId, stagedAnimal.Count);
-
-                return _excelExportService.ExportToExcelMultiSheet(BuildAnimalSheet(stagedAnimal));
-            }
-
-            var stagedFec = await _repository.GetTestOrProductStagingRowsAsync(entry.JobQueueId, ct);
-            var stagedAgrup = await _repository.GetTestRequirementStagingRowsAsync(entry.JobQueueId, ct);
-
-            _logger.LogInformation(
-                "[BulkRates.ExportStagingData] JobExecutionId={JobExecutionId} | FecRows={FecRows} | AgrupRows={AgrupRows}",
-                jobExecutionId, stagedFec.Count, stagedAgrup.Count);
-
-            return _excelExportService.ExportToExcelMultiSheet(BuildFecAgrupSheets(stagedFec, stagedAgrup));
-        }
-
-        /// <summary>
-        private static List<ExcelSheetDefinition> BuildFecAgrupSheets(
-            IReadOnlyList<TestOrProductStagingRow> fecRows, IReadOnlyList<TestRequirementStagingRow> agrupRows)
-        {
-            var fecExportRows = fecRows.Select(r => new BulkRatesFecExportRowDto
-            {
-                TestCode         = r.TestCode,
-                UnitPriceVla     = r.UnitPriceVla,
-                DefraUnitPrice   = r.DefraUnitPrice,
-                FecNew           = r.FecNewRate,
-                Change           = r.Change,
-                ItemDescription  = r.ItemDescription,
-                ShortDescription = r.ShortDescription,
-                Owner            = r.Owner,
-                Comments         = r.Comments
-            }).ToList();
-
-            var agrupExportRows = agrupRows.Select(r => new BulkRatesAgrupExportRowDto
-            {
-                TestCode           = r.TestCode,
-                Buyer              = r.Buyer,
-                Agrup              = r.Agrup,
-                AgrupNew           = r.AgrupNew,
-                Change             = r.Change,
-                NoRequired         = r.NoRequired,
-                DateCreated        = r.DateCreated,
-                Active             = r.Active,
-                Comments           = r.Comments,
-                ProjectBuyerCode   = r.ProjectBuyerCode,
-                TestBuyerCode      = r.TestBuyerCode,
-                TestBuyerWorkGroup = r.TestBuyerWorkGroup
-            }).ToList();
-
-            // Change is a live Excel formula, not the stored value above — it's for the user's
-            // visibility only (Recommended behaviour: Excel formula populates Change; the
-            // backend ignores it and recalculates independently, matching how
-            // BulkRatesExcelParser already discards the uploaded Change cell and recomputes it
-            // from FecNew/AgrupNew vs. the current rate). Blank FEC New/Agrup New maps to
-            // "0 minus current rate" rather than a blank result, matching the existing-row
-            // blank/zero = Zero-Rate Withdrawal business rule (reconciliation §2.1/§2.2) instead
-            // of implying "no change" for a row the reviewer deliberately cleared.
-            return
-            [
-                new()
-                {
-                    SheetName = "FEC",
-                    Data = fecExportRows.Cast<object>(),
-                    DataType = typeof(BulkRatesFecExportRowDto),
-                    FormulaColumns = new Dictionary<string, string>
-                    {
-                        [nameof(BulkRatesFecExportRowDto.Change)] = "IF({FecNew}=\"\",0-{DefraUnitPrice},{FecNew}-{DefraUnitPrice})"
-                    }
-                },
-                new()
-                {
-                    SheetName = "AGRUP",
-                    Data = agrupExportRows.Cast<object>(),
-                    DataType = typeof(BulkRatesAgrupExportRowDto),
-                    FormulaColumns = new Dictionary<string, string>
-                    {
-                        [nameof(BulkRatesAgrupExportRowDto.Change)] = "IF({AgrupNew}=\"\",0-{Agrup},{AgrupNew}-{Agrup})"
-                    }
-                }
-            ];
-        }
-
-        // Sheet name matches BulkRatesExcelParser's StaffSheet ("Staff") so a downloaded
-        // template re-uploads without modification.
-        private static List<ExcelSheetDefinition> BuildStaffSheet(IReadOnlyList<ProfitCentreGradeStagingRow> rows)
-        {
-            var exportRows = rows.Select(r => new BulkRatesStaffExportRowDto
-            {
-                PcGrade = r.PcGrade,
-                PayRate = r.PayRate,
-                Npr     = r.Npr,
-                Ohr     = r.Ohr
-            }).ToList();
-
-            // PcGrade is the sole identity/business key (fps.profitcentregrade is keyed by
-            // PcGrade+FpsYear, and FpsYear is fixed by the request, not the sheet) — protect it
-            // so a retyped grade can't silently produce an unmatched "Not Found" row on
-            // re-upload, matching FEC/AGRUP's template protection. PayRate/Npr/Ohr stay
-            // editable. Staff is update-only (see BulkRatesStaffStagingRowDto), so there's no
-            // insert-a-new-row path this protection could block.
-            return [new()
-            {
-                SheetName = "Staff",
-                Data = exportRows.Cast<object>(),
-                DataType = typeof(BulkRatesStaffExportRowDto)
-            }];
-        }
-
-        // Sheet name matches BulkRatesExcelParser's AnimalSheet ("Animals") so a downloaded
-        // template re-uploads without modification.
-        private static List<ExcelSheetDefinition> BuildAnimalSheet(IReadOnlyList<AnimalStagingRow> rows)
-        {
-            var exportRows = rows.Select(r => new BulkRatesAnimalExportRowDto
-            {
-                AnimalType     = r.AnimalType,
-                Species        = r.Species,
-                SecurityLevel  = r.SecurityLevel,
-                DailyRate      = r.DailyRate,
-                DefraDailyRate = r.DefraDailyRate,
-                PlanByWeek     = r.PlanByWeek
-            }).ToList();
-
-            // AnimalType is the sole identity/business key (fps.tblanimals is keyed by
-            // AnimalType+FpsYear) — protect it only. Species/SecurityLevel are NOT protected:
-            // BulkAnimalRatesService.UpdateAnimalRowAsync actively applies changes to both
-            // alongside the rate fields, so they're legitimately mutable business data here, not
-            // immutable reference data. Animal is update-only (see BulkRatesAnimalStagingRowDto),
-            // so there's no insert-a-new-row path this protection could block.
-            return [new()
-            {
-                SheetName = "Animals",
-                Data = exportRows.Cast<object>(),
-                DataType = typeof(BulkRatesAnimalExportRowDto)
-            }];
+            return await _testService.ExportStagingDataAsync(entry.JobQueueId, ct);
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────────
