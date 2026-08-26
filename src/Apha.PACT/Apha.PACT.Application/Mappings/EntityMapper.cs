@@ -30,6 +30,7 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<SubContractRmsImport, SubContractRmsImportDto>().ReverseMap();
             CreateMap<SubContractRmsImportResult, SubContractRmsImportResultDto>().ReverseMap();
             CreateMap<TestCapability, TestCapabilityDto>().ReverseMap();
+            CreateMap<TestCapabilityWithDescription, TestCapabilityDto>();
             CreateMap<TestRequirement, TestRequirementtDto>().ReverseMap();
             CreateMap<TestRequirementDetail, TestRequirementtDto>();
             CreateMap<TestSupplierView, TestSupplierViewDto>().ReverseMap();

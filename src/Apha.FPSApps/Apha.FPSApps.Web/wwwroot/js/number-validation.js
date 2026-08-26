@@ -89,7 +89,26 @@ function formatDecimalTo4Places(value) {
     if (isNaN(num)) {
         return value;
     }
-    return num.toFixed(4);
+    // First format to 4 decimal places
+    var result = num.toFixed(4);
+
+    // Remove trailing zeros, but keep at least 2 decimal places
+    result = result.replace(/(\.\d{2,4}?)0+$/, '$1');
+
+    // Ensure at least 2 decimal places
+    if (result.indexOf('.') === -1) {
+        result += '.00';
+    } else {
+        var decimalPlaces = result.split('.')[1].length;
+
+        if (decimalPlaces === 0) {
+            result += '00';
+        } else if (decimalPlaces === 1) {
+            result += '0';
+        }
+    }
+
+    return result;
 }
 
 /**

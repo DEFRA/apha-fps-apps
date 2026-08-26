@@ -520,10 +520,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.True(grid.ShowPagination);
             Assert.Equal(25, grid.Pagination.TotalRecords);
-            // Default page size is 20.
-            Assert.Equal(20, grid.Pagination.PageSize);
+            // Default page size is 10.
+            Assert.Equal(10, grid.Pagination.PageSize);
             Assert.Equal(1, grid.Pagination.PageNumber);
-            Assert.Equal(20, grid.Data.Count);
+            Assert.Equal(10, grid.Data.Count);
         }
 
         [Fact]
@@ -562,8 +562,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal(1, grid.Pagination.PageNumber);
-            Assert.Equal(20, grid.Pagination.PageSize);
-            Assert.Equal(20, grid.Data.Count);
+            Assert.Equal(10, grid.Pagination.PageSize);
+            Assert.Equal(10, grid.Data.Count);
         }
 
         [Fact]

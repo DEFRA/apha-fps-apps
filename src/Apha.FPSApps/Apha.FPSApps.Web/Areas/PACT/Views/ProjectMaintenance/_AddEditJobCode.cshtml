@@ -79,6 +79,6 @@
     // Initialize WorkGroup dropdown for this Job Code modal
     initializeJobCodeWorkGroupDropdown({
         workGroupData: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.WorkGroupsData ?? new object[] {})),
-        selectedWorkGroup: '@(Model.JobCodeWorkGroup ?? string.Empty)'
+        selectedWorkGroup: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.JobCodeWorkGroup ?? string.Empty))
     });
 </script>
