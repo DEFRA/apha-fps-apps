@@ -47,13 +47,13 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         {
             YearlyFinancialDataViewModel viewModel = new();
 
-            
+
             await PopulateDropdownsAsync(viewModel);
 
-            viewModel.SelectedProject = project ?? string.Empty;
+            viewModel.SelectedProject = project ?? null;
 
-            
-            viewModel.Parentproject = parentproject ?? viewModel.SelectedProject;
+
+            viewModel.Parentproject = parentproject ?? viewModel.SelectedProject ?? string.Empty;
 
             viewModel.HoursInDay = await GetRequiredDoubleSettingAsync("HoursInDay");
             viewModel.DaysInYear = await GetRequiredDoubleSettingAsync("DaysInYear");
@@ -88,7 +88,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 GridId             = "costCenterListGrid",
                 Title              = "Yearly Financial Details",
                 ShowCheckboxColumn = false,
-                ShowPagination     = false,
+                ShowPagination     = true,
                 KeyProperty        = "Year",
                 AllowAdd           = true,
                 AddFunction        = "addYearlyFinancialData",
@@ -211,7 +211,6 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 ?? string.Empty;
 
             QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            queryParameters.Page = -1;
 
             ApiResponseDto<List<YearlyFinancialDataDto>> pagedData =
                 await _service.GetAllAsync(resolvedProject, queryParameters);
@@ -231,7 +230,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 GridId             = "costCenterListGrid",
                 Title              = "Yearly Financial Details",
                 ShowCheckboxColumn = false,
-                ShowPagination     = false,
+                ShowPagination     = true,
                 KeyProperty        = "Year",
                 AllowAdd           = true,
                 AddFunction        = "addYearlyFinancialData",

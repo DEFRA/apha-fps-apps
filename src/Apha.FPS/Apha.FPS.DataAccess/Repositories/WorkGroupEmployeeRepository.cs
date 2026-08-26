@@ -134,43 +134,42 @@ namespace Apha.FPS.DataAccess.Repositories
             PaginationParameters<string> query,
             string wgGrade)
         {
-            var all = await _dbContext.WorkGroupEmployeeViews
+            var all = _dbContext.WorkGroupEmployeeViews
                 .AsNoTracking()
                 .Where(x => x.WorkGroupGrade == wgGrade
                          && x.PersonStatus != "I"
-                         && x.UserEmail != null && x.UserEmail.ToLower() == _requestContext.UserEmailId)
+                         && x.UserEmail != null && EF.Functions.ILike(x.UserEmail, _requestContext.UserEmailId))
                 .Join(
                     _dbContext.Employees.AsNoTracking(),
                     wg => wg.SpNumber,
                     e => e.SPNumber,
                     (wg, e) => new WorkGroupEmployeeView
                     {
-                        PactId         = wg.PactId,
-                        SpNumber       = wg.SpNumber,
+                        PactId = wg.PactId,
+                        SpNumber = wg.SpNumber,
                         WorkGroupGrade = wg.WorkGroupGrade,
-                        Name           = (e.LastName ?? "") + " " + (e.FirstName ?? ""),
-                        PersonStatus   = wg.PersonStatus,
-                        PersonClass    = wg.PersonClass,
-                        HrsPaid        = wg.HrsPaid,
-                        Leave          = wg.Leave,
-                        SickSpecial    = wg.SickSpecial,
-                        HrsAvail       = wg.HrsAvail,
-                        MakeAvailable  = wg.MakeAvailable,
-                        TimeRecorder   = wg.TimeRecorder,
-                        StartDate      = wg.StartDate,
-                        EndDate        = wg.EndDate,
-                        HoursPerWeek   = wg.HoursPerWeek,
-                        FpsYear        = wg.FpsYear,
-                        UserId         = wg.UserId,
-                        Dt2Username    = wg.Dt2Username,
-                        UserEmail      = wg.UserEmail,
-                    })
-                .ToListAsync();
+                        Name = (e.LastName ?? "") + " " + (e.FirstName ?? ""),
+                        PersonStatus = wg.PersonStatus,
+                        PersonClass = wg.PersonClass,
+                        HrsPaid = wg.HrsPaid,
+                        Leave = wg.Leave,
+                        SickSpecial = wg.SickSpecial,
+                        HrsAvail = wg.HrsAvail,
+                        MakeAvailable = wg.MakeAvailable,
+                        TimeRecorder = wg.TimeRecorder,
+                        StartDate = wg.StartDate,
+                        EndDate = wg.EndDate,
+                        HoursPerWeek = wg.HoursPerWeek,
+                        FpsYear = wg.FpsYear,
+                        UserId = wg.UserId,
+                        Dt2Username = wg.Dt2Username,
+                        UserEmail = wg.UserEmail,
+                    });
 
-            var filtered = ApplyFilter(all.AsQueryable(), query.Filter);
+            var filtered = ApplyFilter(all, query.Filter);
             var sorted   = ApplySorting(filtered, query.SortBy, query.Descending);
 
-            return ApplyPaging(sorted, query.Page, query.PageSize);
+            return await ApplyPagingAsync(sorted, query.Page, query.PageSize);
         }
 
         public async Task<PagedData<WorkGroupEmployeeView>> GetAllActiveWorkGroupEmployeesAsync(
@@ -272,7 +271,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("PactId", out var pactId) && pactId != null)
-                query = query.Where(x => EF.Functions.ILike(x.PactId, $"%{pactId}%"));
+                query = query.Where(x => x.PactId != null && EF.Functions.ILike(x.PactId, $"%{pactId}%"));
 
             if (dict.TryGetValue("SpNumber", out var spNumber) && spNumber != null)
                 query = query.Where(x => x.SpNumber != null && EF.Functions.ILike(x.SpNumber, $"%{spNumber}%"));
@@ -360,13 +359,24 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return sortBy?.ToLower() switch
             {
-                "pactid" => descending ? query.OrderByDescending(x => x.PactId) : query.OrderBy(x => x.PactId),
-                "spnumber" => descending ? query.OrderByDescending(x => x.SpNumber) : query.OrderBy(x => x.SpNumber),
-                "name" or "staffname" => descending ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name),
-                "workgroupgrade" or "wggrade" => descending ? query.OrderByDescending(x => x.WorkGroupGrade) : query.OrderBy(x => x.WorkGroupGrade),
-                "personstatus" => descending ? query.OrderByDescending(x => x.PersonStatus) : query.OrderBy(x => x.PersonStatus),
+                "pactid" => ApplyOrder(query, x => x.PactId, descending),
+                "sickspecial" => ApplyOrder(query, x => x.SickSpecial, descending),
+                "hrspaid" => ApplyOrder(query, x => x.HrsPaid, descending),
+                "leave" => ApplyOrder(query, x => x.Leave, descending),
+                "makeavailable" => ApplyOrder(query, x => x.MakeAvailable, descending),
+                "hrsavai" => ApplyOrder(query, x => x.HrsAvail, descending),
+                "spnumber" => ApplyOrder(query, x => x.SpNumber, descending),
+                "name" or "staffname" => ApplyOrder(query, x => x.Name, descending),
+                "workgroupgrade" or "wggrade" => ApplyOrder(query, x => x.WorkGroupGrade, descending),
+                "personstatus" => ApplyOrder(query, x => x.PersonStatus, descending),
                 _ => query.OrderBy(x => x.Name)
             };
         }
+
+        private static IQueryable<WorkGroupEmployeeView> ApplyOrder<T>(
+            IQueryable<WorkGroupEmployeeView> query,
+            Expression<Func<WorkGroupEmployeeView, T>> keySelector,
+            bool descending)
+            => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
     }
 }
