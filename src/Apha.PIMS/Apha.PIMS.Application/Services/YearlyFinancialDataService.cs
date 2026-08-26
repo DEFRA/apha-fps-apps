@@ -123,7 +123,7 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<YearlyFinancialDataDto>(updated);
         }
 
-        private List<BusinessValidationError> ValidateForSave(YearlyFinancialDataDto dto)
+        private static List<BusinessValidationError> ValidateForSave(YearlyFinancialDataDto dto)
         {
             const decimal maxNumeric19_4Value = 999999999999999.9999m;
 

@@ -58,7 +58,7 @@ namespace Apha.PIMS.Application.Services
         
         public async Task<AccessUserLevelDto> CreateAsync(AccessUserLevelDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
             if (dto.SystemId <= 0)
                 throw new ArgumentException("A valid SystemId is required.");
             if (dto.AccessLevelId <= 0)

@@ -46,7 +46,7 @@ namespace Apha.PIMS.Application.Services
         
         public async Task<RadTrackProgDto> CreateRadTrackProgAsync(RadTrackProgDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
             if (string.IsNullOrWhiteSpace(dto.Program)) throw new ArgumentException("Program must not be empty.", nameof(dto));
 
             // Trim the program name to normalize it (remove leading/trailing spaces)
@@ -65,7 +65,7 @@ namespace Apha.PIMS.Application.Services
         
         public async Task<RadTrackProgDto> UpdateRadTrackProgAsync(RadTrackProgDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
             if (string.IsNullOrWhiteSpace(dto.Program)) throw new ArgumentException("Program must not be empty.", nameof(dto));
 
             // Trim the program name to normalize it (remove leading/trailing spaces)

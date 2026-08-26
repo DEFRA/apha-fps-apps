@@ -64,7 +64,7 @@ namespace Apha.PIMS.Application.Services
        
         public async Task<AccessUserDto> CreateAsync(AccessUserDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
             if (string.IsNullOrWhiteSpace(dto.NtLogin))
                 throw new ArgumentException("NT login is required.", nameof(dto));
 
@@ -93,7 +93,7 @@ namespace Apha.PIMS.Application.Services
 
         public async Task<AccessUserDto> UpdateAsync(AccessUserDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
             if (string.IsNullOrWhiteSpace(dto.NtLogin))
                 throw new ArgumentException("NT login is required.", nameof(dto));
 

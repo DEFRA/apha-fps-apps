@@ -55,6 +55,11 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserLevelRepositoryTes
         private static AccessUser MakeUser(int systemId = 1, string ntLogin = "DOM\\user1", string userName = "User One") =>
             new() { SystemId = systemId, NtLogin = ntLogin, UserName = userName, UserEmail = "user@example.com" };
 
+        private static readonly int[] AccessLevelIdsDescending = [3, 2, 1];
+        private static readonly string[] NtLoginsByUserNameAscending = ["dom\\u2", "dom\\u3", "dom\\u1"];
+        private static readonly string[] NtLoginsByUserNameDescending = ["dom\\u1", "dom\\u3", "dom\\u2"];
+        private static readonly int[] AccessLevelIdsAscending = [1, 3];
+
         #region GetPagedAccessUserLevelAllAsync
 
         [Fact]
@@ -121,7 +126,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserLevelRepositoryTes
             var result = await repo.GetPagedAccessUserLevelAllAsync(query);
 
             // Assert
-            Assert.Equal(new[] { 3, 2, 1 }, result.Data.Select(x => x.AccessLevelId).ToArray());
+            Assert.Equal(AccessLevelIdsDescending, result.Data.Select(x => x.AccessLevelId).ToArray());
         }
 
         [Fact]
@@ -168,7 +173,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserLevelRepositoryTes
             var result = await repo.GetPagedAccessUserLevelAllAsync(query);
 
             // Assert
-            Assert.Equal(new[] { "dom\\u2", "dom\\u3", "dom\\u1" }, result.Data.Select(x => x.NtLogin).ToArray());
+            Assert.Equal(NtLoginsByUserNameAscending, result.Data.Select(x => x.NtLogin).ToArray());
         }
 
         [Fact]
@@ -195,7 +200,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserLevelRepositoryTes
             var result = await repo.GetPagedAccessUserLevelAllAsync(query);
 
             // Assert
-            Assert.Equal(new[] { "dom\\u1", "dom\\u3", "dom\\u2" }, result.Data.Select(x => x.NtLogin).ToArray());
+            Assert.Equal(NtLoginsByUserNameDescending, result.Data.Select(x => x.NtLogin).ToArray());
         }
 
         #endregion
@@ -267,7 +272,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserLevelRepositoryTes
                 Assert.Equal(1, r.SystemId);
                 Assert.Equal(ntLogin, r.NtLogin);
             });
-            Assert.Equal(new[] { 1, 3 }, result.Select(x => x.AccessLevelId).ToArray());
+            Assert.Equal(AccessLevelIdsAscending, result.Select(x => x.AccessLevelId).ToArray());
         }
 
         [Fact]
