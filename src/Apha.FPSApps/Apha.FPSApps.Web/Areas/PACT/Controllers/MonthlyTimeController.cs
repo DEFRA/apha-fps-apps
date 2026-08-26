@@ -408,7 +408,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> DeleteAllStagingRecords()
         {
             var response = await _monthlyTimeService.DeleteAllStagingByUserAsync();
-            return Json(new { success = response.Success && response.Data });
+            return Json(new
+            {
+                success = response.Success && response.Data,
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to delete staging records."
+            });
         }
 
         /// <summary>

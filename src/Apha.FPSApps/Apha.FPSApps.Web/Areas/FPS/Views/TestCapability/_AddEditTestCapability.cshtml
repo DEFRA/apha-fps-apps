@@ -134,9 +134,8 @@
                         }
                         else
                         {
-                            <input class="govuk-input govuk-!-font-size-16" id="UnitCost" name="UnitCost"
-                                   type="number" step="0.01" min="0" readonly
-                                   style="background-color:#f3f2f1; cursor:default;"
+                            <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal" id="UnitCost" name="UnitCost"
+                                   type="text" maxlength="20"
                                    value="@(Model.UnitCost.HasValue ? Model.UnitCost.Value.ToString() : "")" />
                         }
                     </div>

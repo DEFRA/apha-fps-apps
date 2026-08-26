@@ -11,6 +11,7 @@ namespace Apha.FPS.Core.Interfaces
         Task<WorkGroupEmployeeView?> GetWorkGroupEmployeeByIdAsync(string pactId);
         Task<WorkGroupEmployeeView?> GetWorkGroupEmployeeByIdForStaffAsync(string pactId);
         Task<WorkGroupEmployee> CreateWorkGroupEmployeeForStaffAsync(WorkGroupEmployee entity);
+        Task<string> GetNextPactIdAsync();
         Task<WorkGroupEmployee> UpdateWorkGroupEmployeeAsync(WorkGroupEmployee entity);
         Task<WorkGroupEmployee> UpdateWorkGroupEmployeeForStaffAsync(WorkGroupEmployee entity);
         Task<bool> DeleteWorkGroupEmployeeAsync(string pactId);

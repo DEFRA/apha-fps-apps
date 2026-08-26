@@ -75,7 +75,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// </summary>
         [HttpPost]
         [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> LoadGrid(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
+        public async Task<IActionResult> LoadGrid(string? profitCentre, string? sortBy = null, bool 
+            descending = false, string? filter = null, int page = 1, int pageSize = 10)
         {
             await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, profitCentre ?? string.Empty);
 
@@ -83,7 +84,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return PartialView("_DataGrid", grid);
         }
 
-        private async Task<DataGridConfig<Dictionary<string, string?>>> BuildGridAsync(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
+        private async Task<DataGridConfig<Dictionary<string, string?>>> BuildGridAsync(string? profitCentre, 
+            string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 10)
         {
             var rows = new List<Dictionary<string, string?>>();
             var columns = new List<DataGridColumn>
@@ -163,7 +165,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             rows = ApplySorting(rows, sortBy, descending);
 
             var pageNumber = page > 0 ? page : 1;
-            var itemsPerPage = pageSize > 0 ? pageSize : 20;
+            var itemsPerPage = pageSize > 0 ? pageSize : 10;
             var totalRecords = rows.Count;
 
             var pagedRows = rows

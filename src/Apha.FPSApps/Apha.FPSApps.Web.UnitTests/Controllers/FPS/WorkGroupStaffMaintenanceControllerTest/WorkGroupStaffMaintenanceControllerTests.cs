@@ -252,7 +252,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
             var value = GetJsonResultValue<JsonResponse>(jsonResult);
             Assert.NotNull(value);
             Assert.True(value!.success);
-            Assert.Equal("WG Staff record created successfully", value.message);
+            Assert.Equal("WG Staff record created successfully. PACT Id for the record is: P001", value.message);
         }
 
         [Fact]
