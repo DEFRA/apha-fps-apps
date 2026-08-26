@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -19,6 +20,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffPlanDetailsControllerT
         private readonly IMapper _mapper;
         private readonly IProjectStaffPlanDetailsService _staffPlanDetailsService;
         private readonly IProfitCentreService _profitCentreService;
+        private readonly IAppStateService _appStateService;
         private readonly StaffPlanDetailsController _controller;
 
         public StaffPlanDetailsControllerTests()
@@ -26,7 +28,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffPlanDetailsControllerT
             _mapper                  = Substitute.For<IMapper>();
             _staffPlanDetailsService = Substitute.For<IProjectStaffPlanDetailsService>();
             _profitCentreService     = Substitute.For<IProfitCentreService>();
-            _controller              = new StaffPlanDetailsController(_mapper, _staffPlanDetailsService, _profitCentreService);
+            _appStateService         = Substitute.For<IAppStateService>();
+            _controller              = new StaffPlanDetailsController(_mapper, _staffPlanDetailsService, _profitCentreService, _appStateService);
 
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());

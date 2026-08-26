@@ -302,7 +302,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return response.Success && response.Data != null
                 ? response.Data
                     .Select(t => new SelectListItem(
-                        string.IsNullOrWhiteSpace(t.ItemDescription) ? t.ItemCode : $"{t.ItemCode} – {t.ItemDescription}",
+                        string.IsNullOrWhiteSpace(t.ItemDescription) ? t.ItemCode : t.ItemDescription,
                         t.ItemCode))
                     .ToList()
                 : new List<SelectListItem>();

@@ -103,6 +103,52 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
             await _costCentreService.Received(1).GetAllCostCentresAsync();
         }
 
+        [Fact]
+        public async Task Index_GridHasNoDefaultSortColumn()
+        {
+            // Arrange
+            _costCentreService.GetAllCostCentresPagedAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(BuildPagedSuccess());
+            _costCentreService.GetAllCostCentresAsync().Returns(BuildWorkgroupSuccess());
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string> { Page = 1, PageSize = 10 });
+            _mapper.Map<List<CostCentreItem>>(Arg.Any<List<CostCentreDto>>())
+                .Returns(new List<CostCentreItem>());
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model      = Assert.IsType<CostCentreMaintenanceViewModel>(viewResult.Model);
+            Assert.True(string.IsNullOrEmpty(model.CostCentreGrid.Pagination.SortColumn),
+                "No sort column should be applied on initial page load.");
+        }
+
+        [Fact]
+        public async Task Index_GridHasNoDefaultSortDirection()
+        {
+            // Arrange
+            _costCentreService.GetAllCostCentresPagedAsync(Arg.Any<QueryParameters<string>>())
+                .Returns(BuildPagedSuccess());
+            _costCentreService.GetAllCostCentresAsync().Returns(BuildWorkgroupSuccess());
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string> { Page = 1, PageSize = 10 });
+            _mapper.Map<List<CostCentreItem>>(Arg.Any<List<CostCentreDto>>())
+                .Returns(new List<CostCentreItem>());
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model      = Assert.IsType<CostCentreMaintenanceViewModel>(viewResult.Model);
+            Assert.False(model.CostCentreGrid.Pagination.SortDirection,
+                "Sort direction should default to ascending (false) on initial page load.");
+        }
+
         #endregion
 
         #region LoadCostCentreGrid Tests

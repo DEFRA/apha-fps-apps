@@ -9,6 +9,7 @@
 }
 
 /* ============================================================
+
    2. BASE RESET
    ============================================================ */
 html, body {
@@ -4032,6 +4033,10 @@ table#tblMonthPeriod > tbody > tr:hover {
     padding-left: 0 !important;
 }
 
+.isResourceManagementSection .tr-section-box.isOverflowHidden {
+    overflow: visible;
+}
+
 .tr-section-box {
     position: static;
     border-radius: 6px;
@@ -4135,4 +4140,7 @@ table#tblMonthPeriod > tbody > tr:hover {
 #gridContainer_releaseLogsGrid td[data-property="Period"] {
     width: 100px;
     max-width: 100px;
+}
+#tbl_wgTestCapabilitiesGrid td[data-property="ItemDescription"]{
+    text-align: left !important;
 }

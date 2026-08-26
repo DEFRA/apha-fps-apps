@@ -153,11 +153,22 @@
 
     <script>
         var RRA_ANTIFORGERY_TOKEN  = document.getElementById('rra-af-holder').innerHTML;
-        var RRA_WORKGROUPS_URL     = '@Url.Action("GetWorkGroups",   "ResourceMgmtReplan", new { area = "FPS" })';
-        var RRA_LOAD_GRID_URL      = '@Url.Action("LoadRePlanGrid",  "ResourceMgmtReplan", new { area = "FPS" })';
-        var RRA_LOAD_ALLTIME_URL   = '@Url.Action("LoadAllTimeGrid", "ResourceMgmtReplan", new { area = "FPS" })';
-        var RRA_LOAD_STAGED_URL    = '@Url.Action("GetStagedRows",   "ResourceMgmtReplan", new { area = "FPS" })';
-        var RRA_COMMIT_URL         = '@Url.Action("CommitRePlan",    "ResourceMgmtReplan", new { area = "FPS" })';
+        var RRA_WORKGROUPS_URL     = '@Url.Action("GetWorkGroups",         "ResourceMgmtReplan", new { area = "FPS" })';
+        var RRA_LOAD_GRID_URL      = '@Url.Action("LoadRePlanGrid",        "ResourceMgmtReplan", new { area = "FPS" })';
+        var RRA_LOAD_ALLTIME_URL   = '@Url.Action("LoadAllTimeGrid",       "ResourceMgmtReplan", new { area = "FPS" })';
+        var RRA_LOAD_STAGED_URL    = '@Url.Action("GetStagedRows",         "ResourceMgmtReplan", new { area = "FPS" })';
+        var RRA_COMMIT_URL         = '@Url.Action("CommitRePlan",          "ResourceMgmtReplan", new { area = "FPS" })';
+        var RRA_SAVE_PC_SESSION_URL= '@Url.Action("SaveProfitCentreSession","ResourceMgmtReplan", new { area = "FPS" })';
+    </script>
+    <script src="~/js/fps_js/ResourceMgmtReplan.js"></script>
+    <script>
+        // Auto-trigger workgroup load when session value is restored on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            var sel = document.getElementById('resourceCentreSelect');
+            if (sel && sel.value) {
+                rraUpdateResourceCentre();
+            }
+        });
     </script>
     <script src="~/js/fps_js/ResourceMgmtReplan.js"></script>
 }

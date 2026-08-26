@@ -20,6 +20,16 @@
         const nameEl = el('ssrSelectedCentreName');
         currentCentre = sel ? sel.value : '';
 
+        // Save selection to session (empty string clears it)
+        if (cfg.savePcSessionUrl) {
+            fetch(cfg.savePcSessionUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(currentCentre),
+                keepalive: true
+            });
+        }
+
         if (!currentCentre) {
             if (nameEl) nameEl.textContent = '';
             currentGrade = '';

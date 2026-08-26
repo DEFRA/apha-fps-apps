@@ -63,6 +63,7 @@
             required: false,
             disabled: false,
             clearButtonClearsSelection: false, // false: clear search only, true: clear both search and selection
+            showClearButton: true, // false: hide the clear (X) button in the search box
             callbacks: {
                 onSelect: null,
                 onChange: null,
@@ -157,14 +158,16 @@
                                 placeholder="${config.searchPlaceholder}" 
                                 aria-label="Search by code or name"
                             />
-                            <button 
-                                type="button" 
-                                class="govuk-button govuk-button--secondary clear-search-btn" 
-                                id="${dropdownId}_clearSearch"
-                                aria-label="Clear search"
-                            >
-                                <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
-                            </button>
+                            ${config.showClearButton ? `
+                                <button 
+                                    type="button" 
+                                    class="govuk-button govuk-button--secondary clear-search-btn" 
+                                    id="${dropdownId}_clearSearch"
+                                    aria-label="Clear search"
+                                >
+                                    <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
+                                </button>
+                            ` : ''}
                         </div>
                     ` : ''}
                     

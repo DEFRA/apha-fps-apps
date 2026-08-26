@@ -1,7 +1,9 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -20,15 +22,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IMapper _mapper;
         private readonly IProfitCentreService _profitCentreService;
         private readonly IWorkGroupService _workGroupService;
+        private readonly IAppStateService _appStateService;
 
         public WgStaffPlanController(
             IMapper mapper,
             IProfitCentreService profitCentreService,
-            IWorkGroupService workGroupService)
+            IWorkGroupService workGroupService,
+            IAppStateService appStateService)
         {
             _mapper = mapper;
             _profitCentreService = profitCentreService;
             _workGroupService = workGroupService;
+            _appStateService = appStateService;
         }
 
         /// <summary>
@@ -37,7 +42,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> Index(string? resourceCentre = null, string? workGroup = null)
         {
             var resourceCentreList = await GetResourceCentreListAsync();
-            var selectedRc = resourceCentreList.Any(r => r.Value == resourceCentre) ? resourceCentre! : string.Empty;
+
+            // Fall back to the session value only when no resource centre was supplied on the
+            // request (e.g. navigating in from another screen). An explicitly supplied empty
+            // value means the user reset the selection, so it must clear the session.
+            if (resourceCentre == null)
+                resourceCentre = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProfitCentre);
+
+            var selectedRc = !string.IsNullOrWhiteSpace(resourceCentre)
+                && resourceCentreList.Any(r => r.Value == resourceCentre)
+                ? resourceCentre
+                : string.Empty;
+
+            // Persist the selection so it is retained across screens that show the Resource Centre dropdown.
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, selectedRc);
 
             var workGroupList = string.IsNullOrWhiteSpace(selectedRc)
                 ? new List<SelectListItem>()
@@ -65,6 +83,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             if (string.IsNullOrWhiteSpace(resourceCentre))
                 return Json(new { success = false, message = "Resource Centre is required." });
+
+            // Persist the selection so it is retained across screens that show the Resource Centre dropdown.
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, resourceCentre);
 
             var response = await _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync(resourceCentre);
             if (!response.Success)

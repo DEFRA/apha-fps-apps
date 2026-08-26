@@ -7,7 +7,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     {
         [Display(Name = "PACTId")]
         [GridColumn(Width = 90, Type = GridColumnType.ReadOnly, IsFilterable = true)]
-        public string PactId { get; set; } = null!;
+        public string? PactId { get; set; }
 
         [Display(Name = "Staff Name")]
         [GridColumn(Width = 220, Type = GridColumnType.ReadOnly, IsFilterable = true)]
