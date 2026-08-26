@@ -149,12 +149,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
         }
 
         [Fact]
-        public async Task Index_WithNoProject_LeavesSelectedProjectEmpty()
+        public async Task Index_WithNoProject_LeavesSelectedProjectNull()
         {
             SetupDefaultIndexMocks(projects: [new ProjectListMilestoneDto { Parentproject = "PP001" }]);
             var result = await _controller.Index(null);
             var model  = Assert.IsType<YearlyFinancialDataViewModel>(Assert.IsType<ViewResult>(result).Model);
-            Assert.Equal(string.Empty, model.SelectedProject);
+            Assert.Null(model.SelectedProject);
+            Assert.Equal(string.Empty, model.Parentproject);
         }
 
         [Fact]

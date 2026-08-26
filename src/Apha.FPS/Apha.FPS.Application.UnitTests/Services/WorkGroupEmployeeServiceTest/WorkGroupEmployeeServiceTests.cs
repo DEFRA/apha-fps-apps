@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -228,16 +229,24 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         [Theory]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task CreateWorkGroupEmployeeForStaffAsync_WithNullOrWhitespacePactId_ThrowsArgumentException(string pactId)
+        public async Task CreateWorkGroupEmployeeForStaffAsync_WithNullOrWhitespacePactId_ProceedsAndCallsRepository(string pactId)
         {
             // Arrange
-            var dto = new WorkGroupEmployeeDto { PactId = pactId, WorkGroupGrade = DefaultWgGrade };
+            var dto     = new WorkGroupEmployeeDto { PactId = pactId, WorkGroupGrade = DefaultWgGrade };
+            var entity  = new WorkGroupEmployee    { PactId = pactId, WorkGroupGrade = DefaultWgGrade };
+            var created = new WorkGroupEmployee    { PactId = "1", WorkGroupGrade = DefaultWgGrade };
+            var expected = new WorkGroupEmployeeDto { PactId = "1", WorkGroupGrade = DefaultWgGrade };
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.CreateWorkGroupEmployeeForStaffAsync(dto));
+            _mockMapper.Map<WorkGroupEmployee>(dto).Returns(entity);
+            _mockRepository.CreateWorkGroupEmployeeForStaffAsync(entity).Returns(created);
+            _mockMapper.Map<WorkGroupEmployeeDto>(created).Returns(expected);
 
-            await _mockRepository.DidNotReceive().CreateWorkGroupEmployeeForStaffAsync(Arg.Any<WorkGroupEmployee>());
+            // Act
+            var result = await _sut.CreateWorkGroupEmployeeForStaffAsync(dto);
+
+            // Assert
+            result.Should().Be(expected);
+            await _mockRepository.Received(1).CreateWorkGroupEmployeeForStaffAsync(entity);
         }
 
         [Theory]
@@ -406,6 +415,21 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
             await Assert.ThrowsAsync<ArgumentException>(() =>
                 _sut.DeleteWorkGroupEmployeeAsync(pactId));
 
+            await _mockRepository.DidNotReceive().DeleteWorkGroupEmployeeAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteWorkGroupEmployeeAsync_WhenEmployeeAssignedToWorkgroup_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var existing = new WorkGroupEmployeeView { PactId = DefaultPactId };
+            _mockRepository.GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId).Returns(existing);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
+                _sut.DeleteWorkGroupEmployeeAsync(DefaultPactId));
+
+            exception.Errors.Should().ContainSingle(e => e.Code == "WORKGROUPEMPLOYEE_HAS_ASSOCIATIONS");
             await _mockRepository.DidNotReceive().DeleteWorkGroupEmployeeAsync(Arg.Any<string>());
         }
 

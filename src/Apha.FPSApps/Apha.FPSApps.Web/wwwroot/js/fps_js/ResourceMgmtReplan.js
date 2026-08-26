@@ -41,6 +41,16 @@
         rraResetAllTimeFields();
         rraResetStagedPanel();
 
+        // Save selection to session (empty string clears it).
+        // Use fetch with keepalive so the request completes even if the user
+        // navigates to another screen immediately after changing the dropdown.
+        fetch(RRA_SAVE_PC_SESSION_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(centre),
+            keepalive: true
+        });
+
         if (!centre) return;
 
         showLoader();

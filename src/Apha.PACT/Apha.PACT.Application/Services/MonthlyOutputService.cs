@@ -253,12 +253,28 @@ namespace Apha.PACT.Application.Services
             }
 
             var result = await _repository.MakeLiveAsync(importedBy);
+
+            if (result.ProcessedCount == 0)
+            {
+                throw new BusinessValidationErrorException([
+                    new BusinessValidationError(
+                        "No staging records found to make live.",
+                        "NO_STAGING_RECORDS")
+                ]);
+            }
+
+            var message = $"{result.ImportedCount} of {result.ProcessedCount} records have been successfully made live.";
+            if (result.FailedCount > 0)
+            {
+                message += $"{Environment.NewLine}The remaining {result.FailedCount} records require revalidation.";
+            }
+
             return new MonthlyOutputMakeLiveResultDto
             {
                 ProcessedCount = result.ProcessedCount,
                 ImportedCount = result.ImportedCount,
                 FailedCount = result.FailedCount,
-                Message = $"{result.ImportedCount} of {result.ProcessedCount} records have been successfully made live.{Environment.NewLine}The remaining {result.FailedCount} records require revalidation."
+                Message = message
             };
         }
 
