@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -27,6 +28,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WgStaffPlanControllerTest
         private readonly IMapper _mapper;
         private readonly IProfitCentreService _profitCentreService;
         private readonly IWorkGroupService _workGroupService;
+        private readonly IAppStateService _appStateService;
         private readonly WgStaffPlanController _controller;
 
         public WgStaffPlanControllerTests()
@@ -34,7 +36,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WgStaffPlanControllerTest
             _mapper = Substitute.For<IMapper>();
             _profitCentreService = Substitute.For<IProfitCentreService>();
             _workGroupService = Substitute.For<IWorkGroupService>();
-            _controller = new WgStaffPlanController(_mapper, _profitCentreService, _workGroupService);
+            _appStateService = Substitute.For<IAppStateService>();
+            _controller = new WgStaffPlanController(_mapper, _profitCentreService, _workGroupService, _appStateService);
         }
 
         // Helper method to extract properties from JsonResult

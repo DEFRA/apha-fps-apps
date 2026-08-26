@@ -1,6 +1,8 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -19,33 +21,39 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IMapper _mapper;
         private readonly IProjectStaffPlanDetailsService _staffPlanDetailsService;
         private readonly IProfitCentreService _profitCentreService;
+        private readonly IAppStateService _appStateService;
 
         public StaffPlanDetailsController(
             IMapper mapper,
             IProjectStaffPlanDetailsService staffPlanDetailsService,
-            IProfitCentreService profitCentreService)
+            IProfitCentreService profitCentreService,
+            IAppStateService appStateService)
         {
             _mapper = mapper;
             _staffPlanDetailsService = staffPlanDetailsService;
             _profitCentreService = profitCentreService;
+            _appStateService = appStateService;
         }
 
-        /// <summary>
-        /// Displays the staff plan details page. Records are read from fps.vwprojectstaffplandetails
-        /// filtered by the selected Profit Centre and the current FPS year (applied server-side).
-        /// </summary>
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? profitCentre = null)
         {
             var profitCentreOptions = await GetProfitCentreSelectListAsync();
 
-            // No profit centre is preselected: the grid stays empty until the user picks one.
-            var grid = await BuildGridAsync(new PaginationFilter<string>(), null);
+            if (profitCentre == null)
+                profitCentre = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProfitCentre);
+
+            var selected = !string.IsNullOrWhiteSpace(profitCentre)
+                && profitCentreOptions.Any(p => p.Value == profitCentre) ? profitCentre : null;
+
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, selected ?? string.Empty);
+
+            var grid = await BuildGridAsync(new PaginationFilter<string>(), selected);
 
             return View(new StaffPlanDetailsViewModel
             {
                 Grid = grid,
                 ProfitCentreOptions = profitCentreOptions,
-                SelectedProfitCentre = null
+                SelectedProfitCentre = selected
             });
         }
 
@@ -58,6 +66,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, profitCentre ?? string.Empty);
 
             var grid = await BuildGridAsync(request, profitCentre);
             return PartialView("_DataGrid", grid);

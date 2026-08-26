@@ -20,7 +20,7 @@
                     <table class="govuk-table govuk-!-margin-bottom-0 isFloatRight isHalfGrid isResourceSetUp">
                         <tbody class="govuk-table__body">
                             <tr class="govuk-table__row">
-                                <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-0 isNoBottomBorder govuk-!-text-align-right">
+                                <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-0 isNoBottomBorder govuk-!-text-align-right" style="white-space: nowrap; vertical-align: middle;">
                                     <label class="fw-bold me-2" for="profitCentreSelect">Resource Centre: </label>
                                 </th>
                                 <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
@@ -91,7 +91,7 @@
                             <table id="tbl_wgStaffTotals" class="govuk-table govuk-!-margin-top-0 govuk-!-margin-bottom-0" style="table-layout: fixed; width: 100%; border-top: 2px solid #b1b4b6;">
                                 <tbody>
                                     <tr class="govuk-table__row" style="background-color: #f3f2f1;">
-                                        <td class="govuk-table__cell" id="fpsSrTotalsLabelCol1" style="font-weight:bold;">Totals</td>
+                                        <th scope="row" class="govuk-table__cell" id="fpsSrTotalsLabelCol1" style="font-weight:bold;">Totals</th>
                                         <td class="govuk-table__cell" id="fpsSrTotalsLabelCol2"></td>
                                         <td class="govuk-table__cell" id="fpsSrTotalHrsPaid" style="text-align:right; font-weight:bold;">@Model.WgHrsPaid</td>
                                         <td class="govuk-table__cell" id="fpsSrTotalLeave"   style="text-align:right; font-weight:bold;">@Model.WgLeave</td>
@@ -114,6 +114,7 @@
                                        class="govuk-input govuk-!-margin-bottom-3"
                                        style="width: 100%;"
                                        readonly
+                                       aria-label="Person selected"
                                        value="@Model.SelectedPersonName" />
                                 <input type="hidden" id="fpsSrSelectedPactId" value="@Model.SelectedPactId" />
                                 <button type="button" id="fpsSrPlanBtn"
@@ -207,7 +208,7 @@
                         onWgGradeRowClick(wgGrade);
                     });
                 } else {
-                    // No WG grade rows — reset dependent state and show empty highlighted row in staff grid
+                    // No WG grade rows — reset dependent state and show "No records found" in staff grid
                     currentWgGrade = '';
                     document.getElementById('fpsSrSelectedWg').value = '';
                     document.getElementById('fpsSrPersonName').value = '';
@@ -216,8 +217,13 @@
                     var $staffTbody = $('#gridContainer_' + wgStaffGridId + ' table tbody');
                     if ($staffTbody.length) {
                         var colCount = $('#gridContainer_' + wgStaffGridId + ' table thead tr:first th').length;
-                        $staffTbody.html('<tr class="selected-row"><td colspan="' + colCount + '" style="padding:6px;"></td></tr>');
+                        $staffTbody.html('<tr><td colspan="' + colCount + '" class="govuk-table__cell" ' +
+                            'style="text-align:center; color:#505a5f; font-style:italic; padding:16px;">' +
+                            'No records found.</td></tr>');
                     }
+                    resetStaffPaginationFooter();
+                    syncTotalsRow();
+                    updateStaffTotals();
                 }
             }
 
@@ -326,6 +332,57 @@
             });
         }
 
+        // Delete WG Grade
+        function deleteWgGrade(btn) {
+            var wgGrade = $(btn).data('id');
+            showGovukConfirm('Are you sure you want to delete this WG Grade record?').then(function (result) {
+                if (!result) return;
+                $.ajax({
+                    url: '/FPS/ResourceSetUp/DeleteWgGrade',
+                    type: 'DELETE',
+                    data: { wgGrade: wgGrade },
+                    success: function (response) {
+                        if (response.success) {
+                            showAlertMessage('WG Grade deleted successfully', AlertType.SUCCESS).then(function () {
+                                getWgGradeGridManager().reloadGrid({ page: 1 });
+                            });
+                        } else {
+                            showAlertMessage('Error: ' + (response.message || 'Delete failed.'), AlertType.ERROR);
+                        }
+                    },
+                    error: function () {
+                        showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
+                    }
+                });
+            });
+        }
+
+        // Delete WG Staff
+        function deleteWgStaff(btn) {
+            var pactId = $(btn).data('id');
+            showGovukConfirm('Are you sure you want to delete this WG Staff record?').then(function (result) {
+                if (!result) return;
+                $.ajax({
+                    url: '/FPS/ResourceSetUp/DeleteWgStaff',
+                    type: 'DELETE',
+                    data: { pactId: pactId },
+                    success: function (response) {
+                        if (response.success) {
+                            showAlertMessage('WG Staff record deleted successfully', AlertType.SUCCESS).then(function () {
+                                getWgStaffGridManager().reloadGrid({ page: 1 });
+                                updateStaffTotals();
+                            });
+                        } else {
+                            showAlertMessage('Error: ' + (response.message || 'Delete failed.'), AlertType.ERROR);
+                        }
+                    },
+                    error: function () {
+                        showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
+                    }
+                });
+            });
+        }
+
        
 
         // Plan Person onto ZT Codes — navigates to PlanStaffZTCode for the selected person (Button46_Click)
@@ -386,10 +443,24 @@
             $('#modaPopupBody').html('');
         }
 
+        // Resets the wgStaffGrid pagination footer to reflect an empty grid (0 records)
+        function resetStaffPaginationFooter() {
+            var $footer = $('#gridContainer_' + wgStaffGridId + ' .sup_pagination_footer');
+            if (!$footer.length) return;
+            // "of X" total records label
+            $footer.find('#' + wgStaffGridId + '_pageSize').nextAll('span').first().text('of 0');
+            // Rebuild pagination nav to a single disabled page
+            var $nav = $footer.find('nav.pagination ul.govuk-pagination__list');
+            if ($nav.length) {
+                $nav.find('.govuk-pagination__link').addClass('pagination--disabled').attr('aria-disabled', 'true');
+                $nav.find('.govuk-pagination__item--current .record-info').text('1').attr('data-pageno', '1');
+            }
+        }
+
         // Syncs totals footer cell widths to match the actual rendered wgStaffGrid header columns
         function syncTotalsRow() {
             var $headerCols = $('#tbl_' + wgStaffGridId + ' thead tr:first th');
-            var $totalCols  = $('#tbl_wgStaffTotals tbody tr:first td');
+            var $totalCols  = $('#tbl_wgStaffTotals tbody tr:first').children('th, td');
             if ($headerCols.length === $totalCols.length) {
                 $headerCols.each(function (i) {
                     $totalCols.eq(i).css('width', $(this).outerWidth() + 'px');

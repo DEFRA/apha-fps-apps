@@ -30,6 +30,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet("projectyearmanagers/{year:int}")]
         public async Task<IActionResult> GetProjectYearManagers(int year)
         {
+            //test
             bool viewSpecificProject = User.IsInRole("API-PIMSProjectManager") && !User.IsInRole("API-PMDAdmin");
             string? loginEmail = viewSpecificProject
                 ? User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue("preferred_username") ?? User.Identity?.Name
