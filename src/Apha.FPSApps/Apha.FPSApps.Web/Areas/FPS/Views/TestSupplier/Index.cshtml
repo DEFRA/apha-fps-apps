@@ -19,7 +19,7 @@
                 <tr class="govuk-table__row">
                     <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
                         <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0 govuk-!-text-align-right" for="testCodePick">
-                            Select a Test:
+                            Select a Test:&nbsp;
                         </label>
                     </th>
                     <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
@@ -179,7 +179,9 @@
                 { field: 'Text', header: 'ItemDescription' }
             ],
             data: testCodeOptionsListData,
-            displayField: 'Text',
+            // Show the Test code in the closed control; the description remains
+            // visible as a column inside the dropdown panel.
+            displayField: 'Value',
             valueField: 'Value',
             showClearButton: false,
 
