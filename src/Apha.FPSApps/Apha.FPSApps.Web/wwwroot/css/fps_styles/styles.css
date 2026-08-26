@@ -265,7 +265,7 @@ button a {
 
 .btn-close:hover {
     color: #fff;
-    background: #6f0a13;
+    background: #ca3535 !important;
 }
 
 .form-control:focus {
@@ -4581,10 +4581,12 @@ body,
 }
 
 .modal-content & .modal-header .btn-close,
-.modal-header .btn-close {
+.modal-header .btn-close,
+.modal-content & .modal-header .btn-close,
+.modal-header .btn-close:hover {
     padding: .3rem .3rem;
-    margin: -.5rem -.5rem -.5rem auto;
-    background: #8f0b18;
+/*    margin: -.5rem -.5rem -.5rem auto;*/
+    background: #ca3535;
     opacity: 1;
     font-size: 14px !important;
 }
@@ -5463,6 +5465,11 @@ body,
 .isSideNav {
     .sidenav{
         padding-left: 0 !important;
+    }
+}
+.isTestSupplierPage {
+    .multicolumn-dropdown-panel {
+        left: -154px !important;
     }
 }
 #gridContainer_testListVlaGrid {
