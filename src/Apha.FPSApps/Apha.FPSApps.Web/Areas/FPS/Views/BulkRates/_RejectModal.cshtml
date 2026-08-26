@@ -2,15 +2,17 @@
     _RejectModal.cshtml — Rejection modal with mandatory reason.
     Toggled by BulkRates.showRejectModal() / BulkRates.closeRejectModal().
     BulkRates.confirmReject() validates the reason and POSTs to /FPS/BulkRates/Reject.
+    Restyled to match the shared govuk-modal-dialog.js informational popup used
+    elsewhere in the app (and already used for Release/Approve on this same
+    page) — backdrop, box, button layout, and isDanger colour band. Kept as a
+    static partial rather than the shared JS-built dialog because it needs a
+    reason textarea the shared dialog doesn't support.
 *@
-<div id="rejectModalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9999;"
+<div id="rejectModalOverlay" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(11,12,12,.6); align-items:center; justify-content:center; padding:20px;"
      role="dialog" aria-modal="true" aria-labelledby="rejectModalTitle">
-    <div style="background:#fff; max-width:480px; margin:10vh auto; padding:2rem; border:2px solid #0b0c0c;">
-        <div class="modal-header">
-            <h2 class="govuk-heading-m" id="rejectModalTitle">Reject request</h2>
-            <button type="button" class="btn-close btn-red" aria-label="Close" onclick="BulkRates.closeRejectModal()">X</button>
-        </div>
-        <p class="govuk-body-s">You must enter a reason before confirming rejection.</p>
+    <div class="govuk-body isDanger" style="background:#fff; max-width:620px; width:100%; max-height:calc(100vh - 40px); overflow-y:auto; padding:30px; box-shadow:0 8px 24px rgba(11,12,12,.3); border:2px solid #0b0c0c;">
+        <h2 class="govuk-heading-m govuk-!-margin-bottom-3" id="rejectModalTitle">Reject request</h2>
+        <p class="govuk-body govuk-!-margin-bottom-5">You must enter a reason before confirming rejection.</p>
 
         <div class="govuk-form-group govuk-!-margin-bottom-4" id="rejectReasonGroup">
             <label class="govuk-label govuk-!-font-weight-bold" for="rejectReason">Rejection reason</label>
@@ -21,13 +23,11 @@
                       aria-describedby="rejectReasonError" maxlength="500"></textarea>
         </div>
 
-        <div class="govuk-button-group govuk-!-margin-bottom-0">
-            <button type="button" class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
-                    id="btnConfirmReject" onclick="BulkRates.confirmReject()">
+        <div class="govuk-button-group govuk-!-margin-bottom-0" style="display:flex; justify-content:flex-end; width:100%;">
+            <button type="button" class="govuk-button" id="btnConfirmReject" onclick="BulkRates.confirmReject()">
                 Confirm Rejection
             </button>
-            <button type="button" class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 govuk-!-margin-left-2"
-                    onclick="BulkRates.closeRejectModal()">
+            <button type="button" class="govuk-button govuk-button--secondary" onclick="BulkRates.closeRejectModal()">
                 Cancel
             </button>
         </div>

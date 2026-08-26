@@ -402,7 +402,7 @@ var BulkRates = (function () {
         if (reason)  { reason.value = ''; }
         if (errEl)   { errEl.style.display = 'none'; }
         if (group)   { group.classList.remove('govuk-form-group--error'); }
-        overlay.style.display = '';
+        overlay.style.display = 'flex';
         if (reason)  { reason.focus(); }
     }
 
@@ -458,7 +458,7 @@ var BulkRates = (function () {
         var reason  = document.getElementById('cancelReason');
         if (!overlay) { return; }
         if (reason)  { reason.value = ''; }
-        overlay.style.display = '';
+        overlay.style.display = 'flex';
         if (reason)  { reason.focus(); }
     }
 

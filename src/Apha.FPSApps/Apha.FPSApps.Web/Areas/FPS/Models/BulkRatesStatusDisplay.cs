@@ -27,7 +27,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
             "ReleasedForApproval" => "govuk-tag--yellow",
             "Approved" => "govuk-tag--turquoise", // shown as "Submitted" — queued, not yet running
             "Running" => "govuk-tag--purple",
-            "Completed" => "",
+            "Completed" => "govuk-tag--green",
             "Failed" => "govuk-tag--red",
             "Rejected" => "govuk-tag--orange",
             "Cancelled" => "govuk-tag--grey",
