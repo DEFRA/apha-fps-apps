@@ -639,6 +639,54 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
         #endregion
 
         // ════════════════════════════════════════════════════════════════════════════
+        //  OTHER TAB — SaveOtherReportGroup
+        // ════════════════════════════════════════════════════════════════════════════
+
+        #region SaveOtherReportGroup
+
+        [Fact]
+        public async Task SaveOtherReportGroup_AddMode_WithGroupIdZero_CallsCreateAndReturnsSuccess()
+        {
+            // Arrange
+            var model = new ReportGroupItem { GroupId = 0, Description = "New Group" };
+            var dto = new ReportGroupDto { GroupId = 0, Description = "New Group" };
+
+            _mapper.Map<ReportGroupDto>(model).Returns(dto);
+            _service.CreateReportGroupAsync(Arg.Any<ReportGroupDto>())
+                .Returns(SuccessResponse(new ReportGroupDto { GroupId = 8, Description = "New Group" }));
+
+            // Act
+            var result = await _controller.SaveOtherReportGroup(model, isEdit: false);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var element = GetJsonElement(json);
+            Assert.True(element.GetProperty("success").GetBoolean());
+            await _service.Received(1).CreateReportGroupAsync(
+                Arg.Is<ReportGroupDto>(x => x.GroupId == 0 && x.Description == "New Group"));
+            await _service.DidNotReceive().UpdateReportGroupAsync(Arg.Any<int>(), Arg.Any<ReportGroupDto>());
+        }
+
+        [Fact]
+        public async Task SaveOtherReportGroup_AddMode_WithoutDescription_ReturnsValidationError()
+        {
+            // Arrange
+            var model = new ReportGroupItem { GroupId = 0, Description = "" };
+
+            // Act
+            var result = await _controller.SaveOtherReportGroup(model, isEdit: false);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var element = GetJsonElement(json);
+            Assert.False(element.GetProperty("success").GetBoolean());
+            Assert.Equal("Description is required.", element.GetProperty("message").GetString());
+            await _service.DidNotReceive().CreateReportGroupAsync(Arg.Any<ReportGroupDto>());
+        }
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════════════
         //  PROGRAMME TAB — LoadRadTrackProgsGrid
         // ════════════════════════════════════════════════════════════════════════════
 

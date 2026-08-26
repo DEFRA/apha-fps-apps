@@ -282,7 +282,8 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
             _repository.ExistsAsync(1, "dom\\existing").Returns(true);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
+            Assert.Equal("NTLogin 'dom\\existing' already exists. Please enter a unique NTLogin", ex.Message);
         }
 
         [Fact]

@@ -249,10 +249,33 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(e => e.WorkGroupGrade == wgGrade);
         }
 
+        public async Task<string> GetNextPactIdAsync()
+        {
+            var pactIds = await _dbContext.WorkGroupEmployees
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(e => e.FpsYear == _requestContext.FpsYear)
+                .Select(e => e.PactId)
+                .ToListAsync(default);
+
+            var maxNumeric = pactIds
+                .Select(id => int.TryParse(id, out var n) ? n : (int?)null)
+                .Where(n => n.HasValue)
+                .Select(n => n!.Value)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            return (maxNumeric + 1).ToString();
+        }
+
         public async Task<WorkGroupEmployee> CreateWorkGroupEmployeeForStaffAsync(WorkGroupEmployee entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
             entity.FpsYear = _requestContext.FpsYear;
+            if (string.IsNullOrWhiteSpace(entity.PactId))
+            {
+                entity.PactId = await GetNextPactIdAsync();
+            }
             await _dbContext.WorkGroupEmployees.AddAsync(entity);
             await _dbContext.SaveChangesAsync(default);
             return entity;
@@ -359,7 +382,9 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return sortBy?.ToLower() switch
             {
-                "pactid" => ApplyOrder(query, x => x.PactId, descending),
+                "pactid" => descending
+                    ? query.OrderByDescending(x => x.PactId!.Length).ThenByDescending(x => x.PactId)
+                    : query.OrderBy(x => x.PactId!.Length).ThenBy(x => x.PactId),
                 "sickspecial" => ApplyOrder(query, x => x.SickSpecial, descending),
                 "hrspaid" => ApplyOrder(query, x => x.HrsPaid, descending),
                 "leave" => ApplyOrder(query, x => x.Leave, descending),

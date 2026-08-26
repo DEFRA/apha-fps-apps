@@ -6,7 +6,6 @@ using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
-using System.Text.Json;
 
 namespace Apha.PACT.Application.Services
 {
@@ -48,32 +47,12 @@ namespace Apha.PACT.Application.Services
 
         public async Task<PaginatedResult<TestCapabilityDto>> GetPagedTestCapabilityByPortfolioAsync(QueryParameters<string> query, string? portfolio)
         {
+            // Description and Unit Cost are owned by the TestorProduct master. The repository now joins
+            // to that master so filtering, sorting and paging (including on Description) all happen in a
+            // single database query with correct paging metadata.
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
             var pagedData = await _testCapabilityRepository.GetPagedTestCapabilityByPortfolioAsync(parameters, portfolio);
-            var result = _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData);
-
-            if (result.Data != null && result.Data.Any())
-            {
-                var testCodes = result.Data.Select(d => d.TestCode).Distinct().ToList();
-                var descriptions = await _testorProductRepository.GetDescriptionsByCodesAsync(testCodes);
-                var unitPrices = await _testorProductRepository.GetUnitPricesByCodesAsync(testCodes);
-                foreach (var dto in result.Data)
-                {
-                    if (descriptions != null && descriptions.TryGetValue(dto.TestCode, out var desc))
-                        dto.ItemDescription = desc;
-
-                    // Unit Cost is sourced from the TestorProduct master (testorproduct.unitpricevla),
-                    // not from tlkptestcapability, so every portfolio row for the same Test Code shows
-                    // the same master price and reflects any update made to it.
-                    if (unitPrices != null && unitPrices.TryGetValue(dto.TestCode, out var unitPrice))
-                        dto.UnitCost = unitPrice;
-                }
-
-                if (HasItemDescriptionFilterOrSort(query))
-                    result.Data = ApplyItemDescriptionFilterAndSort(result.Data, query);
-            }
-
-            return result;
+            return _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData);
         }
 
         public async Task<TestCapabilityDto?> GetTestCapabilityByIdAsync(string testCode, string workGroup)
@@ -104,7 +83,13 @@ namespace Apha.PACT.Application.Services
 
             var entity = _mapper.Map<TestCapability>(dto);
             var created = await _testCapabilityRepository.AddAsync(entity);
-            return _mapper.Map<TestCapabilityDto>(created);
+
+            if (dto.UnitCost.HasValue)
+                await _testorProductRepository.UpdateUnitPriceByCodeAsync(dto.TestCode, dto.UnitCost);
+
+            var resultDto = _mapper.Map<TestCapabilityDto>(created);
+            resultDto.UnitCost = dto.UnitCost;
+            return resultDto;
         }
 
         public async Task<TestCapabilityDto> UpdateTestCapabilityAsync(TestCapabilityDto dto)
@@ -137,49 +122,7 @@ namespace Apha.PACT.Application.Services
             return _mapper.Map<TestCapabilityDto>(updated);
         }
 
-        private static IEnumerable<TestCapabilityDto> ApplyItemDescriptionFilterAndSort(
-            IEnumerable<TestCapabilityDto> data, QueryParameters<string> query)
-        {
-            if (!string.IsNullOrWhiteSpace(query.Filter))
-            {
-                var filters = JsonSerializer.Deserialize<Dictionary<string, string>>(query.Filter);
-                if (filters != null
-                    && filters.TryGetValue("ItemDescription", out var itemDescFilter)
-                    && !string.IsNullOrWhiteSpace(itemDescFilter))
-                {
-                    data = data
-                        .Where(d => d.ItemDescription != null
-                            && d.ItemDescription.Contains(itemDescFilter, StringComparison.OrdinalIgnoreCase))
-                        .ToList();
-                }
-            }
-
-            if (string.Equals(query.SortBy, "ItemDescription", StringComparison.OrdinalIgnoreCase))
-            {
-                data = query.Descending
-                    ? data.OrderByDescending(d => d.ItemDescription).ToList()
-                    : data.OrderBy(d => d.ItemDescription).ToList();
-            }
-
-            return data;
-        }
-
-        private static bool HasItemDescriptionFilterOrSort(QueryParameters<string> query)
-        {
-            if (string.Equals(query.SortBy, "ItemDescription", StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            if (!string.IsNullOrWhiteSpace(query.Filter))
-            {
-                var filters = JsonSerializer.Deserialize<Dictionary<string, string>>(query.Filter);
-                if (filters != null
-                    && filters.TryGetValue("ItemDescription", out var value)
-                    && !string.IsNullOrWhiteSpace(value))
-                    return true;
-            }
-
-            return false;
-        }
+            
 
         private static void ValidateRequiredFields(TestCapabilityDto dto)
         {

@@ -8,10 +8,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
        
         public string Parentproject { get; set; } = string.Empty;
 
-        
-        public string SelectedProject { get; set; } = string.Empty;
 
-        
+        public string? SelectedProject { get; set; } = null;
+
+
         public string StartDate { get; set; } = string.Empty;
 
         public string EndDate { get; set; } = string.Empty;

@@ -362,10 +362,10 @@
             parentProject: '@Html.Raw(Uri.EscapeDataString(parentProject))',
             jobCodeGridId: '@Model.JobCodeGrid.GridId',
             timeCodeGridId: '@Model.TimeCodeGrid.GridId',
-        programListData:  @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Programs)),
+            programListData: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Programs)),
             contractListData: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Contracts)),
-            selectedProgramValue: '@Model.Project.Program',
-            selectedContractValue: '@Model.Project.Contract'
+            selectedProgramValue: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Project.Program)),
+            selectedContractValue: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Project.Contract))
         });
     </script>
     @{

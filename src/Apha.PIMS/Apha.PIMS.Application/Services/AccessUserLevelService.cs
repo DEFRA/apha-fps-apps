@@ -58,7 +58,7 @@ namespace Apha.PIMS.Application.Services
         
         public async Task<AccessUserLevelDto> CreateAsync(AccessUserLevelDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
             if (dto.SystemId <= 0)
                 throw new ArgumentException("A valid SystemId is required.");
             if (dto.AccessLevelId <= 0)
@@ -68,8 +68,7 @@ namespace Apha.PIMS.Application.Services
 
             bool alreadyExists = await _repository.ExistsAsync(dto.SystemId, dto.NtLogin, dto.AccessLevelId);
             if (alreadyExists)
-                throw new InvalidOperationException(
-                    $"AccessUserLevel (systemid={dto.SystemId}, ntlogin='{dto.NtLogin}', accesslevelid={dto.AccessLevelId}) already exists.");
+                throw new InvalidOperationException("User already exists. Please enter a unique User.");
 
             AccessUserLevel entity = _mapper.Map<AccessUserLevel>(dto);
             AccessUserLevel created = await _repository.AddAsync(entity);

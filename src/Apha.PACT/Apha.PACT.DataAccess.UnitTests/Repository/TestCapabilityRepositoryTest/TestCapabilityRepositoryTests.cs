@@ -894,7 +894,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
                 new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
                 new() { TestCode = "TC2", WorkGroup = "WG2", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear }
             };
-            var repo = CreateRepository(capabilities);
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, []);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, null);
@@ -910,7 +910,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
                 new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
                 new() { TestCode = "TC2", WorkGroup = "WG2", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear }
             };
-            var repo = CreateRepository(capabilities);
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, []);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, "");
@@ -926,7 +926,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
                 new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
                 new() { TestCode = "TC2", WorkGroup = "WG2", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear }
             };
-            var repo = CreateRepository(capabilities);
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, []);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, "   ");
@@ -942,13 +942,20 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
                 new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
                 new() { TestCode = "TC2", WorkGroup = "WG2", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear }
             };
-            var repo = CreateRepository(capabilities);
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Alpha", UnitPriceVla = 10m, FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
 
             Assert.Single(result.Data);
             Assert.Equal("TC1", result.Data.First().TestCode);
+            // Description and Unit Cost are joined from the TestorProduct master.
+            Assert.Equal("Alpha", result.Data.First().ItemDescription);
+            Assert.Equal(10m, result.Data.First().UnitCost);
         }
 
         [Fact]
@@ -958,7 +965,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
             {
                 new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
             };
-            var repo = CreateRepository(capabilities);
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, []);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, "MISSING");
@@ -969,7 +976,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
         [Fact]
         public async Task GetPagedTestCapabilityByPortfolioAsync_EmptyData_ReturnsEmpty()
         {
-            var repo = CreateRepository([]);
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription([], []);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, null);
@@ -985,7 +992,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
                 new() { TestCode = "ZZZ", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
                 new() { TestCode = "AAA", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
             };
-            var repo = CreateRepository(capabilities);
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, []);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, null);
@@ -995,14 +1002,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
         }
 
         [Fact]
-        public async Task GetPagedTestCapabilityByPortfolioAsync_SortByItemDescription_DefaultsToOrderByTestCode()
+        public async Task GetPagedTestCapabilityByPortfolioAsync_SortByItemDescription_OrdersByDescriptionAscending()
         {
-            var capabilities = new List<TestCapability>
-            {
-                new() { TestCode = "ZZZ", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
-                new() { TestCode = "AAA", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
-            };
-            var repo = CreateRepository(capabilities);
+            var (context, repo) = CreateInMemoryContext(DefaultFpsYear);
+            context.TestCapabilities.AddRange(
+                new TestCapability { TestCode = "ZZZ", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new TestCapability { TestCode = "AAA", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear });
+            context.TestorProducts.AddRange(
+                new TestorProduct { ItemCode = "ZZZ", ItemDescription = "Apple", FpsYear = DefaultFpsYear },
+                new TestorProduct { ItemCode = "AAA", ItemDescription = "Zebra", FpsYear = DefaultFpsYear });
+            await context.SaveChangesAsync();
+
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1011,19 +1021,23 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
 
             var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, null);
 
-            Assert.Equal("AAA", result.Data.ElementAt(0).TestCode);
-            Assert.Equal("ZZZ", result.Data.ElementAt(1).TestCode);
+            // Sorted by the joined description: Apple (ZZZ) before Zebra (AAA).
+            Assert.Equal("Apple", result.Data.ElementAt(0).ItemDescription);
+            Assert.Equal("Zebra", result.Data.ElementAt(1).ItemDescription);
         }
 
         [Fact]
-        public async Task GetPagedTestCapabilityByPortfolioAsync_SortByItemDescriptionDescending_DefaultsToOrderByTestCode()
+        public async Task GetPagedTestCapabilityByPortfolioAsync_SortByItemDescriptionDescending_OrdersByDescriptionDescending()
         {
-            var capabilities = new List<TestCapability>
-            {
-                new() { TestCode = "ZZZ", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
-                new() { TestCode = "AAA", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
-            };
-            var repo = CreateRepository(capabilities);
+            var (context, repo) = CreateInMemoryContext(DefaultFpsYear);
+            context.TestCapabilities.AddRange(
+                new TestCapability { TestCode = "ZZZ", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new TestCapability { TestCode = "AAA", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear });
+            context.TestorProducts.AddRange(
+                new TestorProduct { ItemCode = "ZZZ", ItemDescription = "Apple", FpsYear = DefaultFpsYear },
+                new TestorProduct { ItemCode = "AAA", ItemDescription = "Zebra", FpsYear = DefaultFpsYear });
+            await context.SaveChangesAsync();
+
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1032,46 +1046,51 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
 
             var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, null);
 
-            Assert.Equal("AAA", result.Data.ElementAt(0).TestCode);
-            Assert.Equal("ZZZ", result.Data.ElementAt(1).TestCode);
+            // Sorted by the joined description descending: Zebra (AAA) before Apple (ZZZ).
+            Assert.Equal("Zebra", result.Data.ElementAt(0).ItemDescription);
+            Assert.Equal("Apple", result.Data.ElementAt(1).ItemDescription);
         }
 
         [Fact]
         public async Task GetPagedTestCapabilityByPortfolioAsync_SortByValidColumnAscending_UsesEfPropertySort()
         {
-            var capabilities = new List<TestCapability>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
-                new() { TestCode = "TC2", WorkGroup = "WG2", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear }
-            };
-            var repo = CreateRepository(capabilities);
+            var (context, repo) = CreateInMemoryContext(DefaultFpsYear);
+            context.TestCapabilities.AddRange(
+                new TestCapability { TestCode = "TC1", WorkGroup = "WG2", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new TestCapability { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear });
+            await context.SaveChangesAsync();
+
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
                 SortBy = "WorkGroup", Descending = false
             };
 
-            await Assert.ThrowsAsync<InvalidOperationException>(
-                () => repo.GetPagedTestCapabilityByPortfolioAsync(query, null));
+            var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, null);
+
+            Assert.Equal("WG1", result.Data.ElementAt(0).WorkGroup);
+            Assert.Equal("WG2", result.Data.ElementAt(1).WorkGroup);
         }
 
         [Fact]
         public async Task GetPagedTestCapabilityByPortfolioAsync_SortByValidColumnDescending_UsesEfPropertySort()
         {
-            var capabilities = new List<TestCapability>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
-                new() { TestCode = "TC2", WorkGroup = "WG2", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear }
-            };
-            var repo = CreateRepository(capabilities);
+            var (context, repo) = CreateInMemoryContext(DefaultFpsYear);
+            context.TestCapabilities.AddRange(
+                new TestCapability { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new TestCapability { TestCode = "TC2", WorkGroup = "WG2", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear });
+            await context.SaveChangesAsync();
+
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
                 SortBy = "WorkGroup", Descending = true
             };
 
-            await Assert.ThrowsAsync<InvalidOperationException>(
-                () => repo.GetPagedTestCapabilityByPortfolioAsync(query, null));
+            var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, null);
+
+            Assert.Equal("WG2", result.Data.ElementAt(0).WorkGroup);
+            Assert.Equal("WG1", result.Data.ElementAt(1).WorkGroup);
         }
 
         [Fact]
@@ -1082,7 +1101,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
                 new() { TestCode = "BLOOD", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
                 new() { TestCode = "URINE", WorkGroup = "WG2", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear }
             };
-            var repo = CreateRepository(capabilities);
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, []);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1100,7 +1119,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
         {
             var capabilities = Enumerable.Range(1, 5).Select(i =>
                 new TestCapability { TestCode = $"TC{i:D3}", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }).ToList();
-            var repo = CreateRepository(capabilities);
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, []);
             var query = new PaginationParameters<string> { Page = 2, PageSize = 2 };
 
             var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, null);
