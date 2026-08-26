@@ -4140,3 +4140,11 @@ table#tblMonthPeriod > tbody > tr:hover {
 #tbl_wgTestCapabilitiesGrid td[data-property="ItemDescription"]{
     text-align: left !important;
 }
+/* Ensure dropdowns appended inside the testCode container render above the modal */
+#testCodeSelectMultiDropdown .dropdown-menu,
+#testCodeSelectMultiDropdown .select2-container--open .select2-dropdown,
+#testCodeSelectMultiDropdown .select2-dropdown,
+#testCodeSelectMultiDropdown .ss-dropdown {
+    z-index: 2050 !important;
+    position: absolute;
+}
