@@ -4,7 +4,7 @@
 
 @{
     var t = Model;
-    string Gbp(decimal? v) => v.HasValue ? v.Value.ToString("C2") : "£0.00";
+    string Gbp(decimal? v) => v.HasValue ? v.Value.ToString("C2") : "0.00";
     string GbpD(decimal v) => v.ToString("C2");
 }
 
@@ -12,59 +12,87 @@
 <div id="cs-grid-total-row" class="fps-dg-total-row sup_border"
      aria-label="Contribution summary total count">
     <div class="fps-dg-total-cell fps-dg-total-spacer" aria-hidden="true"></div>
-    <div class="fps-dg-total-cell fps-dg-total-label">Total Cont</div>
-    <div class="fps-dg-total-cell fps-dg-total-value text-AlignRight"
-         id="cs-grid-total-cont">@GbpD(t.TotalContribution)</div>
+    <div class="summary-item" style="display: flex; justify-content: space-between; align-items: center;">
+        <label class="govuk-label--s govuk-!-font-size-16" for="cs-grid-total-cont">Total Cont:</label>
+        <div class="govuk-input__wrapper" style="width: auto;">
+            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+            <input type="text" value="@(t.TotalContribution.ToString("N2"))" aria-label="Total Cont" id="cs-grid-total-cont" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TotalCont" readonly style="color:#1d70b8;font-weight:400;">
+        </div>
+    </div>
 </div>
 
 <div id="cs-summary-grid" class="fps-dg-summary-grid govuk-!-margin-top-2">
 
     @* ── Box 1: Budget / Target / Recover ── *@
     <div id="cs-summary-base-box" class="fps-dg-summary-box sup_border">
-        <div class="fps-dg-summary-row">
-            <span>Total Budget Bids</span>
-            <strong id="cs-total-budget-bids" class="text-AlignRight">@Gbp(t.SumOfGenBid)</strong>
+        <div class="summary-item" style="display: flex; justify-content: space-between; align-items: center;">
+            <label class="govuk-label--s govuk-!-font-size-16" for="cs-total-budget-bids">Total Budget Bids:</label>
+            <div class="govuk-input__wrapper" style="width: auto;">
+                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                <input type="text" value="@(t.SumOfGenBid.HasValue ? t.SumOfGenBid.Value.ToString("N2") : "0.00")" aria-label="Total Budget Bids" id="cs-total-budget-bids" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TotalBudgetBids" readonly style="color:#1d70b8;font-weight:400;">
+            </div>
         </div>
-        <div class="fps-dg-summary-row">
-            <span>+ Contribution Target</span>
-            <strong id="cs-contribution-target" class="text-AlignRight">@Gbp(t.ContTarget)</strong>
+        <div class="summary-item" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #b1b4b6; padding-bottom: 10px; margin-bottom: 10px;">
+            <label class="govuk-label--s govuk-!-font-size-16" for="cs-contribution-target">+ Contribution Target:</label>
+            <div class="govuk-input__wrapper" style="width: auto;">
+                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                <input type="text" value="@(t.ContTarget.HasValue ? t.ContTarget.Value.ToString("N2") : "0.00")" aria-label="Contribution Target" id="cs-contribution-target" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="ContributionTarget" readonly style="color:#1d70b8;font-weight:400;">
+            </div>
         </div>
-        <div class="fps-dg-summary-row fps-dg-summary-total">
-            <span>= Total to Recover</span>
-            <strong id="cs-total-to-recover" class="text-AlignRight">@GbpD(t.TotalToRecover)</strong>
+        <div class="summary-item" style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; margin-top: 10px;">
+            <label class="govuk-label--s govuk-!-font-size-16" for="cs-total-to-recover" style="font-weight: 700;">= Total to Recover:</label>
+            <div class="govuk-input__wrapper" style="width: auto;">
+                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                <input type="text" value="@(t.TotalToRecover.ToString("N2"))" aria-label="Total to Recover" id="cs-total-to-recover" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TotalToRecover" readonly style="color:#1d70b8;font-weight:700;">
+            </div>
         </div>
     </div>
 
     @* ── Box 2: Total Time ── *@
     <div id="cs-summary-total-time-box" class="fps-dg-summary-box sup_border">
         <div class="fps-dg-summary-box-title">Total Time</div>
-        <div class="fps-dg-summary-row">
-            <span>Total Time Fee from PlanHrs</span>
-            <strong id="cs-total-time-fee" class="text-AlignRight">@GbpD(t.TotalFec)</strong>
+        <div class="summary-item" style="display: flex; justify-content: space-between; align-items: center;">
+            <label class="govuk-label--s govuk-!-font-size-16" for="cs-total-time-fee">Total Time Fee from PlanHrs:</label>
+            <div class="govuk-input__wrapper" style="width: auto;">
+                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                <input type="text" value="@(t.TotalFec.ToString("N2"))" aria-label="Total Time Fee from PlanHrs" id="cs-total-time-fee" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TotalTimeFee" readonly style="color:#1d70b8;font-weight:400;">
+            </div>
         </div>
         @if (t.IsAsuMode)
         {
-            <div class="fps-dg-summary-row">
-                <span>Total Animal Costs</span>
-                <strong class="text-AlignRight">@GbpD(t.AnimalCosts)</strong>
+            <div class="summary-item" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #b1b4b6; padding-bottom: 10px; margin-bottom: 10px;">
+                <label class="govuk-label--s govuk-!-font-size-16" for="cs-total-animal-costs">Total Animal Costs:</label>
+                <div class="govuk-input__wrapper" style="width: auto;">
+                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                    <input type="text" value="@(t.AnimalCosts.ToString("N2"))" aria-label="Total Animal Costs" id="cs-total-animal-costs" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TotalAnimalCosts" readonly style="color:#1d70b8;font-weight:400;">
+                </div>
             </div>
         }
-        <div class="fps-dg-summary-row fps-dg-summary-total @(t.Surplus < 0 ? "fps-dg-summary-shortfall" : "")">
-            <span>Surplus/Shortfall</span>
-            <strong id="cs-total-surplus" class="text-AlignRight">@GbpD(t.Surplus)</strong>
+        <div class="summary-item" style="display: flex; justify-content: space-between; align-items: center;padding-top: 10px; margin-top: 10px;">
+            <label class="govuk-label--s govuk-!-font-size-16" for="cs-total-surplus" style="font-weight: 700;">Surplus/Shortfall:</label>
+            <div class="govuk-input__wrapper" style="width: auto;">
+                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                <input type="text" value="@(t.Surplus < 0 ? $"({Math.Abs(t.Surplus):N2})" : t.Surplus.ToString("N2"))" aria-label="Surplus/Shortfall" id="cs-total-surplus" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TotalSurplus" readonly style="color:@(t.Surplus < 0 ? "#d4351c" : "#1d70b8");font-weight:700;">
+            </div>
         </div>
     </div>
 
     @* ── Box 3: Assured Time Only ── *@
     <div id="cs-summary-assured-time-box" class="fps-dg-summary-box sup_border">
         <div class="fps-dg-summary-box-title">Assured Time</div>
-        <div class="fps-dg-summary-row">
-            <span>Assured Time Only Fee from PlanHrs</span>
-            <strong id="cs-assured-time-fee" class="text-AlignRight">@GbpD(t.TotalAppFec)</strong>
+        <div class="summary-item" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #b1b4b6; padding-bottom: 10px; margin-bottom: 10px;">
+            <label class="govuk-label--s govuk-!-font-size-16" for="cs-assured-time-fee">Assured Time Only Fee from PlanHrs:</label>
+            <div class="govuk-input__wrapper" style="width: auto;">
+                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                <input type="text" value="@(t.TotalAppFec.ToString("N2"))" aria-label="Assured Time Only Fee from PlanHrs" id="cs-assured-time-fee" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="AssuredTimeFee" readonly style="color:#1d70b8;font-weight:400;">
+            </div>
         </div>
-        <div class="fps-dg-summary-row fps-dg-summary-total @(t.AssuredSurplus < 0 ? "fps-dg-summary-shortfall" : "")">
-            <span>Surplus/Shortfall</span>
-            <strong id="cs-assured-surplus" class="text-AlignRight">@GbpD(t.AssuredSurplus)</strong>
+        <div class="summary-item" style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; margin-top: 10px;">
+            <label class="govuk-label--s govuk-!-font-size-16" for="cs-assured-surplus" style="font-weight: 700;">Surplus/Shortfall:</label>
+            <div class="govuk-input__wrapper" style="width: auto;">
+                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                <input type="text" value="@(t.AssuredSurplus < 0 ? $"({Math.Abs(t.AssuredSurplus):N2})" : t.AssuredSurplus.ToString("N2"))" aria-label="Surplus/Shortfall" id="cs-assured-surplus" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="AssuredSurplus" readonly style="color:@(t.AssuredSurplus < 0 ? "#d4351c" : "#1d70b8");font-weight:700;">
+            </div>
         </div>
     </div>
 
