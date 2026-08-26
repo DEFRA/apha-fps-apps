@@ -1260,6 +1260,28 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         }
 
         [Fact]
+        public async Task GetAllStagingRowsAsync_SortsByNumberDescending_WhenSortByNumberProvided()
+        {
+            // Arrange
+            var staging = new List<StagingMilestone>
+            {
+                new() { Id = 1, Project = "PP001", Number = "01/01" },
+                new() { Id = 2, Project = "PP001", Number = "03/01" },
+                new() { Id = 3, Project = "PP001", Number = "02/01" }
+            };
+            var repo = CreateRepository(stagingMilestones: staging);
+            var parameters = DefaultParameters(page: 1, pageSize: 10);
+            parameters.SortBy = "number";
+            parameters.Descending = true;
+
+            // Act
+            var result = await repo.GetAllStagingRowsAsync(parameters);
+
+            // Assert
+            Assert.Equal(new[] { "03/01", "02/01", "01/01" }, result.Data.Select(x => x.Number));
+        }
+
+        [Fact]
         public async Task GetAllStagingRowsAsync_FiltersById_WhenIdFilterProvided()
         {
             // Arrange

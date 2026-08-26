@@ -242,7 +242,7 @@ namespace Apha.PIMS.DataAccess.Repository
             => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         private static IQueryable<StagingMilestone> ApplyStagingSorting(IQueryable<StagingMilestone> query, string? sortBy, bool descending)
         {
-            if (string.IsNullOrEmpty(sortBy) || string.Equals(sortBy, "number", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrEmpty(sortBy) || string.Equals(sortBy, SortByNumber, StringComparison.OrdinalIgnoreCase))
                 return ApplyStagingOrder(query, m => m.Number, descending);
 
             return query.OrderBy(m => m.Number);
@@ -259,8 +259,8 @@ namespace Apha.PIMS.DataAccess.Repository
             {
                 ("project", true) => ApplyLogOrder(query, m => m.Project, true),
                 ("project", false) => ApplyLogOrder(query, m => m.Project, false),
-                ("number", true) => ApplyLogOrder(query, m => m.Number, true),
-                ("number", false) => ApplyLogOrder(query, m => m.Number, false),
+                (SortByNumber, true) => ApplyLogOrder(query, m => m.Number, true),
+                (SortByNumber, false) => ApplyLogOrder(query, m => m.Number, false),
                 ("description", true) => ApplyLogOrder(query, m => m.Description, true),
                 ("description", false) => ApplyLogOrder(query, m => m.Description, false),
                 ("datedue", true) => ApplyLogOrder(query, m => m.DateDue, true),
