@@ -208,10 +208,24 @@ namespace Apha.PIMS.DataAccess.Repository
 
         private static IQueryable<Milestone> ApplySorting(IQueryable<Milestone> query, string? sortBy, bool descending)
         {
-            if (string.IsNullOrEmpty(sortBy) || string.Equals(sortBy, "number", StringComparison.OrdinalIgnoreCase))
-                    return ApplyOrder(query, m => m.Number, descending);
+            return (sortBy?.ToLowerInvariant(), descending) switch
+            {
+                ("number", true) => ApplyOrder(query, m => m.Number, true),
+                ("number", false) => ApplyOrder(query, m => m.Number, false),
+                ("description", true) => ApplyOrder(query, m => m.Description, true),
+                ("description", false) => ApplyOrder(query, m => m.Description, false),
+                ("projectleadercomment", true) => ApplyOrder(query, m => m.ProjectLeaderComment, true),
+                ("projectleadercomment", false) => ApplyOrder(query, m => m.ProjectLeaderComment, false),
+                ("capscomment", true) => ApplyOrder(query, m => m.CapsComment, true),
+                ("capscomment", false) => ApplyOrder(query, m => m.CapsComment, false),
+                ("datedue", true) => ApplyOrder(query, m => m.DateDue, true),
+                ("datedue", false) => ApplyOrder(query, m => m.DateDue, false),
+                ("datecompleted", true) => ApplyOrder(query, m => m.DateCompleted, true),
+                ("datecompleted", false) => ApplyOrder(query, m => m.DateCompleted, false),
+                (_, true) => ApplyOrder(query, m => m.Number, true),
+                _ => ApplyOrder(query, m => m.Number, false)
 
-            return query.OrderBy(m => m.Number);
+            };
         }
 
         private static IQueryable<Milestone> ApplyOrder<T>(
@@ -231,6 +245,50 @@ namespace Apha.PIMS.DataAccess.Repository
             Expression<Func<StagingMilestone, T>> keySelector,
             bool descending)
             => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+
+        private static IQueryable<LogMilestone> ApplyLogSorting(IQueryable<LogMilestone> query, string? sortBy, bool descending)
+        {
+            return (sortBy?.ToLowerInvariant(), descending) switch
+            {
+                ("project", true) => ApplyLogOrder(query, m => m.Project, true),
+                ("project", false) => ApplyLogOrder(query, m => m.Project, false),
+                ("number", true) => ApplyLogOrder(query, m => m.Number, true),
+                ("number", false) => ApplyLogOrder(query, m => m.Number, false),
+                ("description", true) => ApplyLogOrder(query, m => m.Description, true),
+                ("description", false) => ApplyLogOrder(query, m => m.Description, false),
+                ("datedue", true) => ApplyLogOrder(query, m => m.DateDue, true),
+                ("datedue", false) => ApplyLogOrder(query, m => m.DateDue, false),
+                ("datecompleted", true) => ApplyLogOrder(query, m => m.DateCompleted, true),
+                ("datecompleted", false) => ApplyLogOrder(query, m => m.DateCompleted, false),
+                ("undersdreview", true) => ApplyLogOrder(query, m => m.UnderSdReview, true),
+                ("undersdreview", false) => ApplyLogOrder(query, m => m.UnderSdReview, false),
+                ("ontarget", true) => ApplyLogOrder(query, m => m.OnTarget, true),
+                ("ontarget", false) => ApplyLogOrder(query, m => m.OnTarget, false),
+                ("projectleadercomment", true) => ApplyLogOrder(query, m => m.ProjectLeaderComment, true),
+                ("projectleadercomment", false) => ApplyLogOrder(query, m => m.ProjectLeaderComment, false),
+                ("capscomment", true) => ApplyLogOrder(query, m => m.CapsComment, true),
+                ("capscomment", false) => ApplyLogOrder(query, m => m.CapsComment, false),
+                ("idtype", true) => ApplyLogOrder(query, m => m.IdType, true),
+                ("idtype", false) => ApplyLogOrder(query, m => m.IdType, false),
+                ("datechanged", true) => ApplyLogOrder(query, m => m.DateChanged, true),
+                ("datechanged", false) => ApplyLogOrder(query, m => m.DateChanged, false),
+                ("datechangeddisplay", true) => ApplyLogOrder(query, m => m.DateChanged, true),
+                ("datechangeddisplay", false) => ApplyLogOrder(query, m => m.DateChanged, false),
+                ("changedby", true) => ApplyLogOrder(query, m => m.ChangedBy, true),
+                ("changedby", false) => ApplyLogOrder(query, m => m.ChangedBy, false),
+                ("updatetype", true) => ApplyLogOrder(query, m => m.UpdateType, true),
+                ("updatetype", false) => ApplyLogOrder(query, m => m.UpdateType, false),
+                (_, true) => ApplyLogOrder(query, m => m.DateChanged, true),
+                _ => ApplyLogOrder(query, m => m.DateChanged, false)
+            };
+        }
+
+        private static IQueryable<LogMilestone> ApplyLogOrder<T>(
+            IQueryable<LogMilestone> query,
+            Expression<Func<LogMilestone, T>> keySelector,
+            bool descending)
+            => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+
         public async Task<bool> UpdateFormRequiredAsync(string parentproject, bool formRequired)
         {
             int rows = await _dbContext.ProjectRadTrackData
@@ -266,7 +324,6 @@ namespace Apha.PIMS.DataAccess.Repository
                 join pm in _dbContext.ProjectManagers.AsNoTracking()
                     on l.ChangedBy equals pm.Mnumber into pmGroup
                 from pm in pmGroup.DefaultIfEmpty()
-                orderby l.DateChanged descending
                 select new LogMilestone
                 {
                     Id                   = l.Id,
@@ -287,6 +344,8 @@ namespace Apha.PIMS.DataAccess.Repository
                                                : l.ChangedBy != null ? "(" + l.ChangedBy + ")" : null,
                     UpdateType           = l.UpdateType
                 };
+
+            query = ApplyLogSorting(query, parameters.SortBy, parameters.Descending);
 
             return await ApplyPaging(query, parameters.Page, parameters.PageSize);
         }
