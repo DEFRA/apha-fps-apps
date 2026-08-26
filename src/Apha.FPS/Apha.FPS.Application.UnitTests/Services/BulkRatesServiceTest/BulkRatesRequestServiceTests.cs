@@ -6,7 +6,6 @@ using Apha.FPS.Application.Common.BulkRates;
 using Apha.FPS.Application.Dtos.BulkRates;
 using Apha.FPS.Application.Enums;
 using Apha.FPS.Application.Interfaces;
-using Apha.FPS.Application.Validation.BulkRates;
 using Microsoft.Extensions.Configuration;
 using Apha.FPS.Application.Services;
 using NSubstitute.ExceptionExtensions;
@@ -121,7 +120,6 @@ public class BulkRatesRequestServiceTests
         return new BulkRatesRequestService(
             r,
             new BulkRatesExcelParser(),
-            new BulkRatesValidator(r, new BulkRatesValidationService(), new StaffAnimalValidationService()),
             testService, staffService, animalService,
             e, n,
             excel,
@@ -325,7 +323,7 @@ public class BulkRatesRequestServiceTests
         await repo.Received(1).FreezeStagingCalculatedActionsAsync(
             QueueId, 1,
             Arg.Is<IReadOnlyList<TestFreezeEntry>>(list =>
-                list.Count == 1 && list[0].TestCode == "TC001" && list[0].CalculatedAction == ValidationCalculatedAction.Update),
+                list.Count == 1 && list[0].TestCode == "TC001" && list[0].CalculatedAction == "Update"),
             Arg.Any<IReadOnlyList<TestFreezeEntry>>(),
             Arg.Any<CancellationToken>());
         await repo.Received(1).TransitionStatusAsync(QueueId, 1, 42, Arg.Any<CancellationToken>());
@@ -1287,7 +1285,6 @@ public class BulkRatesRequestServiceTests
         return new BulkRatesRequestService(
             r,
             new BulkRatesExcelParser(),
-            new BulkRatesValidator(r, new BulkRatesValidationService(), new StaffAnimalValidationService()),
             testService, staffService, animalService,
             e, n, ex,
             s3 ?? DefaultS3(),

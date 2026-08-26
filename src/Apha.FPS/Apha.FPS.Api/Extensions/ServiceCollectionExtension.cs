@@ -5,7 +5,6 @@ using Apha.Common.Utilities.StateManagement;
 using Apha.FPS.Application.Common.BulkRates;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Services;
-using Apha.FPS.Application.Validation.BulkRates;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Context;
 using Apha.FPS.DataAccess.Repositories;
@@ -64,10 +63,6 @@ namespace Apha.FPS.Api.Extensions
             // Bulk Rates
             services.AddScoped<IBulkRatesRequestService, BulkRatesRequestService>();
             services.AddScoped<BulkRatesExcelParser>();
-            services.AddScoped<IBulkRatesValidationService, BulkRatesValidationService>();
-            services.AddScoped<IStaffAnimalValidationService, StaffAnimalValidationService>();
-            services.AddScoped<BulkRatesValidator>();
-            // Process services (upload only, as of Phase 5 — Release still uses BulkRatesValidator above)
             services.AddScoped<IBulkTestRatesService, BulkTestRatesService>();
             services.AddScoped<IBulkStaffRatesService, BulkStaffRatesService>();
             services.AddScoped<IBulkAnimalRatesService, BulkAnimalRatesService>();

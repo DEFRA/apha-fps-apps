@@ -10,7 +10,6 @@ using Apha.FPS.Application.Enums;
 using Apha.FPS.Application.Common.BulkRates;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
-using Apha.FPS.Application.Validation.BulkRates;
 using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
@@ -31,7 +30,6 @@ namespace Apha.FPS.Application.Services
 
         private readonly IBulkRatesRepository _repository;
         private readonly BulkRatesExcelParser _parser;
-        private readonly BulkRatesValidator _validator;
         private readonly IBulkTestRatesService _testService;
         private readonly IBulkStaffRatesService _staffService;
         private readonly IBulkAnimalRatesService _animalService;
@@ -45,7 +43,6 @@ namespace Apha.FPS.Application.Services
         public BulkRatesRequestService(
             IBulkRatesRepository repository,
             BulkRatesExcelParser parser,
-            BulkRatesValidator validator,
             IBulkTestRatesService testService,
             IBulkStaffRatesService staffService,
             IBulkAnimalRatesService animalService,
@@ -58,7 +55,6 @@ namespace Apha.FPS.Application.Services
         {
             _repository = repository;
             _parser = parser;
-            _validator = validator;
             _testService = testService;
             _staffService = staffService;
             _animalService = animalService;
