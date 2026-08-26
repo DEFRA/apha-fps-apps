@@ -14,7 +14,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
        
         [Required(ErrorMessage = "Year is required")]
         [Display(Name = "Year")]
-        [GridColumn(Order = 1, Width = 60, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 1, Width = 60, Type = GridColumnType.Text, IsFilterable = true)]
         public short Year { get; set; }
 
        

@@ -5,6 +5,8 @@ namespace Apha.PIMS.Application.Interfaces
 {
     public interface IYearlyFinancialDataService
     {
+        Task<PaginatedResult<YearlyFinancialDataDto>> GetAllAsync(string project, QueryParameters<string> parameters);
+
         Task<PaginatedResult<YearlyFinancialDataDto>> GetAllAsync(QueryParameters<string> parameters);
 
         Task<YearlyFinancialDataDto?> GetByKeyAsync(short year, string project);
