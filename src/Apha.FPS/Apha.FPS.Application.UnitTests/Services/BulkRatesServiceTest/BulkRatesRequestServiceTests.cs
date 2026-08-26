@@ -92,6 +92,20 @@ public class BulkRatesRequestServiceTests
         return cfg;
     }
 
+    // Real BulkTestRatesService/BulkStaffRatesService/BulkAnimalRatesService instances wired to
+    // the given (mocked) repository — Phase 5 upload-only wiring, sociable-test style matching
+    // how BulkRatesValidator below is wired to real BulkRatesValidationService/
+    // StaffAnimalValidationService rather than mocked.
+    private static (IBulkTestRatesService Test, IBulkStaffRatesService Staff, IBulkAnimalRatesService Animal)
+        CreateProcessServices(IBulkRatesRepository repo)
+    {
+        var excel = Substitute.For<IExcelExportService>();
+        return (
+            new BulkTestRatesService(repo, excel, NullLogger<BulkTestRatesService>.Instance),
+            new BulkStaffRatesService(repo, excel, NullLogger<BulkStaffRatesService>.Instance),
+            new BulkAnimalRatesService(repo, excel, NullLogger<BulkAnimalRatesService>.Instance));
+    }
+
     private static BulkRatesRequestService CreateService(
         IBulkRatesRepository? repo = null,
         IEventPublisherService? eb = null,
@@ -102,10 +116,12 @@ public class BulkRatesRequestServiceTests
         var r  = repo  ?? Substitute.For<IBulkRatesRepository>();
         var e  = eb    ?? Substitute.For<IEventPublisherService>();
         var n  = notif ?? Substitute.For<IBulkRatesNotificationService>();
+        var (testService, staffService, animalService) = CreateProcessServices(r);
         return new BulkRatesRequestService(
             r,
             new BulkRatesExcelParser(),
             new BulkRatesValidator(r, new BulkRatesValidationService(), new StaffAnimalValidationService()),
+            testService, staffService, animalService,
             e, n,
             Substitute.For<IExcelExportService>(),
             s3 ?? DefaultS3(),
@@ -1265,10 +1281,12 @@ public class BulkRatesRequestServiceTests
         var e  = Substitute.For<IEventPublisherService>();
         var n  = Substitute.For<IBulkRatesNotificationService>();
         var ex = excel ?? DefaultExcel();
+        var (testService, staffService, animalService) = CreateProcessServices(r);
         return new BulkRatesRequestService(
             r,
             new BulkRatesExcelParser(),
             new BulkRatesValidator(r, new BulkRatesValidationService(), new StaffAnimalValidationService()),
+            testService, staffService, animalService,
             e, n, ex,
             s3 ?? DefaultS3(),
             config ?? DefaultConfiguration(),

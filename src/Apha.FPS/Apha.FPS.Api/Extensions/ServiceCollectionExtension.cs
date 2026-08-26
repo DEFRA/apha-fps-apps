@@ -67,6 +67,10 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IBulkRatesValidationService, BulkRatesValidationService>();
             services.AddScoped<IStaffAnimalValidationService, StaffAnimalValidationService>();
             services.AddScoped<BulkRatesValidator>();
+            // Process services (upload only, as of Phase 5 — Release still uses BulkRatesValidator above)
+            services.AddScoped<IBulkTestRatesService, BulkTestRatesService>();
+            services.AddScoped<IBulkStaffRatesService, BulkStaffRatesService>();
+            services.AddScoped<IBulkAnimalRatesService, BulkAnimalRatesService>();
             services.AddScoped<IBulkRatesNotificationService, GraphEmailBulkRatesNotificationService>();
             services.AddScoped<ICostCentreService, CostCentreService>();
             services.AddScoped<ITestRCCostService, TestRCCostService>();

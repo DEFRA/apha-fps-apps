@@ -32,6 +32,9 @@ namespace Apha.FPS.Application.Services
         private readonly IBulkRatesRepository _repository;
         private readonly BulkRatesExcelParser _parser;
         private readonly BulkRatesValidator _validator;
+        private readonly IBulkTestRatesService _testService;
+        private readonly IBulkStaffRatesService _staffService;
+        private readonly IBulkAnimalRatesService _animalService;
         private readonly IEventPublisherService _eventPublisherService;
         private readonly IBulkRatesNotificationService _notificationService;
         private readonly IExcelExportService _excelExportService;
@@ -43,6 +46,9 @@ namespace Apha.FPS.Application.Services
             IBulkRatesRepository repository,
             BulkRatesExcelParser parser,
             BulkRatesValidator validator,
+            IBulkTestRatesService testService,
+            IBulkStaffRatesService staffService,
+            IBulkAnimalRatesService animalService,
             IEventPublisherService eventPublisherService,
             IBulkRatesNotificationService notificationService,
             IExcelExportService excelExportService,
@@ -53,6 +59,9 @@ namespace Apha.FPS.Application.Services
             _repository = repository;
             _parser = parser;
             _validator = validator;
+            _testService = testService;
+            _staffService = staffService;
+            _animalService = animalService;
             _eventPublisherService = eventPublisherService;
             _notificationService = notificationService;
             _excelExportService = excelExportService;
@@ -204,11 +213,21 @@ namespace Apha.FPS.Application.Services
                 throw;
             }
 
-            // Step 5: Business validation and staging (workbook is now retained in S3)
-            var validationResult = await _validator.ValidateAsync(
-                parseResult, entry.FpsYear, entry.JobName, newVersion, entry.ActiveDownloadVersion, ct);
+            // Step 5: Business validation and staging (workbook is now retained in S3) — each
+            // process service validates its own type and persists its own staging rows; no
+            // separate ReplaceStaging*Async dispatch survives here.
+            var validationResult = entry.JobName switch
+            {
+                BulkRatesJobNames.Fec => await _testService.ProcessUploadAsync(
+                    parseResult, entry.FpsYear, newVersion, entry.ActiveDownloadVersion, ct),
+                BulkRatesJobNames.Staff => await _staffService.ProcessUploadAsync(
+                    parseResult, entry.FpsYear, newVersion, ct),
+                BulkRatesJobNames.Animal => await _animalService.ProcessUploadAsync(
+                    parseResult, entry.FpsYear, newVersion, ct),
+                _ => throw new BusinessValidationErrorException([
+                    new($"Unknown job: {entry.JobName}", "UNKNOWN_JOB")])
+            };
 
-            await ReplaceStagingAsync(entry.JobName, jobQueueId, parseResult, ct);
             await _repository.ReplaceValidationErrorsAsync(jobQueueId, validationResult.Errors, ct);
 
             var counts = validationResult.RowCounts;
@@ -1345,19 +1364,6 @@ namespace Apha.FPS.Application.Services
                 ErrorCount = errors.Count(e => string.Equals(e.Severity, "Error", StringComparison.OrdinalIgnoreCase)),
                 WarningCount = errors.Count(e => string.Equals(e.Severity, "Warning", StringComparison.OrdinalIgnoreCase))
             };
-        }
-
-        private async Task ReplaceStagingAsync(
-            string jobName, Guid jobQueueId,
-            BulkRatesParseResult parseResult,
-            CancellationToken ct)
-        {
-            if (jobName == BulkRatesJobNames.Fec)
-                await _repository.ReplaceStagingFecAsync(jobQueueId, parseResult.FecRows, parseResult.AgrupRows, ct);
-            else if (jobName == BulkRatesJobNames.Staff)
-                await _repository.ReplaceStagingStaffAsync(jobQueueId, parseResult.StaffRows, ct);
-            else if (jobName == BulkRatesJobNames.Animal)
-                await _repository.ReplaceStagingAnimalAsync(jobQueueId, parseResult.AnimalRows, ct);
         }
 
         private static BulkRatesUploadMetadata? BuildUploadMetadata(BulkRatesQueueRow entry)
