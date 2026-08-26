@@ -837,7 +837,7 @@ function deleteAllStagingRecords() {
                     document.getElementById('failedmsg').style.display = 'none';
                     showAlertMessage('All staging records deleted.', AlertType.SUCCESS);
                 } else {
-                    showAlertMessage('Failed to delete all staging records.', AlertType.ERROR);
+                    showAlertMessage(response.message || 'Failed to delete all staging records.', AlertType.ERROR);
                 }
             },
             error: function () {

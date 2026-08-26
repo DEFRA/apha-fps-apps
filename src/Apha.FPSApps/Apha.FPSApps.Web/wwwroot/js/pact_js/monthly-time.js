@@ -1173,20 +1173,20 @@ function deleteAllMonthlyTime() {
                 if (response.success) {
                     window.monthlyTimePassedFilter = null;
                     reloadStagingGrid();
-                    showAlertMessage('Imported records deleted successfully.', AlertType.SUCCESS);
+                    showAlertMessage('Staging records deleted successfully.', AlertType.SUCCESS);
                 } else {
-                    showAlertMessage('Delete all failed.', AlertType.ERROR);
+                    showAlertMessage(response.message || 'Failed to delete staging records.', AlertType.ERROR);
                 }
             },
             error: function () {
-                showAlertMessage('An error occurred while deleting imported records.', AlertType.ERROR);
+                showAlertMessage('An error occurred while deleting staging records.', AlertType.ERROR);
             }
         });
     });
 }
 
 function deleteFailedMonthlyTime() {
-    showGovukConfirm('Delete failed imported records for the current user?').then(function (confirmed) {
+    showGovukConfirm('Delete failed staging records for the current user?').then(function (confirmed) {
         if (!confirmed) {
             return;
         }
@@ -1197,13 +1197,13 @@ function deleteFailedMonthlyTime() {
                 if (response.success) {
                     window.monthlyTimePassedFilter = null;
                     reloadStagingGrid();
-                    showAlertMessage('Failed imported records deleted successfully.', AlertType.SUCCESS);
+                    showAlertMessage('Failed staging records deleted successfully.', AlertType.SUCCESS);
                 } else {
-                    showAlertMessage(response.message || 'Delete failed records failed.', AlertType.ERROR);
+                    showAlertMessage(response.message || 'Failed to delete failed staging records.', AlertType.ERROR);
                 }
             },
             error: function () {
-                showAlertMessage('An error occurred while deleting failed imported records.', AlertType.ERROR);
+                showAlertMessage('An error occurred while deleting failed staging records.', AlertType.ERROR);
             }
         });
     });
