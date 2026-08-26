@@ -86,7 +86,7 @@
             var programNo = document.getElementById('programmeDropdown').value;
             // Clear the project field when programme changes
             var projectNameInput = document.getElementById('projectNameInput');
-            //if (projectNameInput) projectNameInput.value = '';
+            if (projectNameInput) projectNameInput.value = '';
             if (programNo) {
                 fpsNavigateTo('@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })?programNo=' + encodeURIComponent(programNo));
             } else {
