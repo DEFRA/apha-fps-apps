@@ -6,31 +6,38 @@
 
 <div class="govuk-!-margin-bottom-5">
     <div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-3">
-        <div class="govuk-grid-column-one-full govuk-!-margin-bottom-3">
-            <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 govuk-!-margin-left-6 isCustomPageHeadings">
+        <div class="govuk-grid-column-one-half govuk-!-margin-bottom-3">
+            <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 govuk-!-margin-left-3 isCustomPageHeadings">
                 ASU Data View
             </h1>
         </div>
-    </div>
 
-    <div class="govuk-grid-row sup_margin_left_right_10">
-        <!-- Left column: filter + grid + totals -->
-        <div class="govuk-grid-column-two-thirds govuk-!-padding-left-0 govuk-!-padding-right-0">
-
+        <div class="govuk-grid-column-one-half govuk-!-margin-bottom-0 govuk-!-margin-top-0">
             <!-- Animal Type multicolumn dropdown (mirrors pickAnimalType RowSource on frmAnimalCosts) -->
-            <div class="govuk-form-group govuk-!-margin-bottom-2 fps-test-inline-select asu-dropdown-wrapper"
-                 id="animal-type-dropdown">
-                <label class="govuk-label govuk-!-font-weight-bold" for="animal-type-input">
-                    Choose an Animal Type
-                </label>
-                <input type="text"
-                       id="animal-type-input"
-                       value=""
-                       class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
-                       readonly
-                       aria-label="Choose an animal type">
+            <div class="govuk-form-group govuk-!-margin-bottom-0 govuk-!-margin-top-0  govuk-!-margin-right-3 isFloatRight isSelectDropdown"
+                 id="animal-type-dropdown">                
+                <table class="govuk-table govuk-table govuk-!-margin-bottom-0">
+                    <tbody class="govuk-table__body">
+                        <tr class="govuk-table__row">
+                            <td class="govuk-table__cell govuk-!-text-align-right isNoBottomBorder govuk-!-padding-right-1">
+                                <label class="govuk-label govuk-!-font-weight-bold" for="animal-type-input">
+                                    Choose an Animal Type:
+                                </label>
+                            </td>
+                        
+                            <td class="govuk-table__cell isNoBottomBorder">
+                                <input type="text"
+                                       id="animal-type-input"
+                                       value=""
+                                       class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                                       readonly
+                                       aria-label="Choose an animal type">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
 
-                <div class="multicolumn-dropdown-panel" id="animal-type-panel">
+                <div class="multicolumn-dropdown-panel isAnimalTypePanel" id="animal-type-panel">
                     <div class="search-box-wrapper">
                         <input type="text"
                                class="search-box"
@@ -38,17 +45,25 @@
                                placeholder="Type to search animal type"
                                aria-label="Type to search animal type">
                     </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Animal Type</th>
-                                <th>Daily Rate</th>
+                    <table class="govuk-table">
+                        <thead class="govuk-table__head">
+                            <tr class="govuk-table__row">
+                                <th scope="col" class="govuk-table__header">Animal Type</th>
+                                <th scope="col" class="govuk-table__header">Daily Rate</th>
                             </tr>
                         </thead>
-                        <tbody id="animal-type-body"></tbody>
+                        <tbody class="govuk-table__body" id="animal-type-body"></tbody>
                     </table>
                 </div>
             </div>
+        </div>            
+    </div>
+
+    <div class="govuk-grid-row sup_margin_left_right_10">
+        <!-- Left column: filter + grid + totals -->
+        <div class="govuk-grid-column-two-thirds govuk-!-padding-left-0 govuk-!-padding-right-0">
+
+            
 
             <!-- Read-only animal costs DataGrid (fsubAnimalCosts — DefaultView=2, all Allow* disabled) -->
             <div id="gridContainer_@Model.AnimalCostsGrid.GridId">
@@ -83,7 +98,7 @@
         </div>
 
         <div class="govuk-grid-column-one-third govuk-!-padding-right-0">
-            <div class="pva-summary-card asu-side-card">
+            <div class="pva-summary-card asu-side-card govuk-!-margin-top-0">
                 <div class="asu-side-actions">
                      <button type="button"
                             id="asuExportBtn"

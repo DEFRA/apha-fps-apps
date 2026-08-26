@@ -143,21 +143,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<bool>> DeleteAsync(string wgGrade)
         {
-            try
-            {
-                var response = await _http.DeleteAsync<bool>(string.Format(FpsApiEndpoints.DeleteWorkgroupGrade, wgGrade));
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<bool>>(response);
+            var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteWorkgroupGrade, wgGrade));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<bool>>(response);
-                return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<bool>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to delete WorkgroupGrade (maintain)", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<List<string>>> GetAllGradeCodesAsync()

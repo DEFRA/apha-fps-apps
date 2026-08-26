@@ -65,6 +65,15 @@
             var pc = document.getElementById('SelectedProfitCentre');
             if (!pc) return;
 
+            // Auto-trigger grid when session value is restored on page load
+            if (pc.value) {
+                var gm = window['gridManager_staffPlanDetailsGrid'];
+                if (gm) {
+                    showLoader();
+                    gm.reloadGrid({ filter: '{}', sortBy: '', descending: false, page: 1 });
+                }
+            }
+
             pc.addEventListener('change', function () {
                 var gm = window['gridManager_staffPlanDetailsGrid'];
                 if (gm) {

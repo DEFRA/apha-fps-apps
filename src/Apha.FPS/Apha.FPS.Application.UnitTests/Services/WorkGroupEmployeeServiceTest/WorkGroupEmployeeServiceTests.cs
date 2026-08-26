@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -406,6 +407,21 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
             await Assert.ThrowsAsync<ArgumentException>(() =>
                 _sut.DeleteWorkGroupEmployeeAsync(pactId));
 
+            await _mockRepository.DidNotReceive().DeleteWorkGroupEmployeeAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteWorkGroupEmployeeAsync_WhenEmployeeAssignedToWorkgroup_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var existing = new WorkGroupEmployeeView { PactId = DefaultPactId };
+            _mockRepository.GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId).Returns(existing);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
+                _sut.DeleteWorkGroupEmployeeAsync(DefaultPactId));
+
+            exception.Errors.Should().ContainSingle(e => e.Code == "WORKGROUPEMPLOYEE_HAS_ASSOCIATIONS");
             await _mockRepository.DidNotReceive().DeleteWorkGroupEmployeeAsync(Arg.Any<string>());
         }
 

@@ -29,11 +29,9 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet("{project}")]
         public async Task<IActionResult> GetAll(string project, [FromQuery] PaginationReq<string> query)
         {
-            
             QueryParameters<string> parameters = _mapper.Map<QueryParameters<string>>(query);
-            parameters.Filter = project;
 
-            PaginatedResult<YearlyFinancialDataDto> result = await _service.GetAllAsync(parameters);
+            PaginatedResult<YearlyFinancialDataDto> result = await _service.GetAllAsync(project, parameters);
             return Ok(_mapper.Map<PaginationRes<YearlyFinancialDataRes>>(result));
         }
 

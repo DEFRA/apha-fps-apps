@@ -5465,11 +5465,6 @@ body,
         padding-left: 0 !important;
     }
 }
-.isTestSupplierPage {
-    .multicolumn-dropdown-panel {
-        left: -154px !important;
-    }
-}
 #gridContainer_testListVlaGrid {
     .editable-grid-container {
         .sup_border_bottom_0 {
@@ -5540,4 +5535,58 @@ body,
 }
 .isDateSection {
     width: 23%;
+}
+.isSelectDropdown {
+    width: 27vw;
+}
+.isAnimalTypePanel {
+    position: absolute;
+    top: 20.5vh;
+    width: 20vw;
+    left: 79.2vw;
+
+    th {
+        white-space: nowrap;
+        width: calc(100%/2);
+    }
+
+    .govuk-tabs__list {
+        padding-top: 10px !important;
+    }
+}
+
+.modal-body {
+    .govuk-form-group {
+        margin-top: 1em !important;
+    }
+}
+
+#ManagerDropdownPanel {
+    left: -24px !important;
+    width: auto !important;
+
+    table {
+        th {
+            white-space: nowrap;
+            width: calc(100%/3) !important;
+        }
+    }
+}
+#editWorkgroupForm {
+    position: relative;
+}
+#modaPopupBody {
+    .modal-body {
+        overflow: visible;
+    }
+}
+
+.isNoGlobalScrollBar {
+    .grid-scroll-container {
+        max-height: none !important;
+        height: 50.55vh !important;
+    }
+}
+.isClearfix{
+    overflow: hidden;
 }
