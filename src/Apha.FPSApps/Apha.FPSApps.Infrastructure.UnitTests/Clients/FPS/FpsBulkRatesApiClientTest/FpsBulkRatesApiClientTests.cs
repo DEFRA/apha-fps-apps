@@ -289,27 +289,43 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsBulkRatesApiClien
 
         #endregion
 
-        #region GetActiveRequestAsync / GetStagingDataAsync
+        #region CanInitiateRequestAsync
 
         [Fact]
-        public async Task GetActiveRequestAsync_WhenApiReturnsSuccess_ReturnsMappedEntry()
+        public async Task CanInitiateRequestAsync_WhenApiReturnsSuccessTrue_ReturnsTrue()
         {
-            var entryRes = new BulkRatesQueueEntryRes { JobQueueId = Guid.NewGuid(), Status = "Initiated" };
-            var apiResponse = new ApiResponse<BulkRatesQueueEntryRes?> { Success = true, Data = entryRes };
-            var mappedDto = ApiResponseDto<BulkRatesQueueEntryDto?>.SuccessResponse(
-                new BulkRatesQueueEntryDto { Status = "Initiated" });
+            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var mappedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.GetAsync<BulkRatesQueueEntryRes?>(Arg.Any<string>(), true).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<BulkRatesQueueEntryDto?>>(apiResponse).Returns(mappedDto);
+            _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedDto);
 
-            var result = await _client.GetActiveRequestAsync("BulkTestRatesUpdate");
+            var result = await _client.CanInitiateRequestAsync("BulkTestRatesUpdate");
 
             Assert.True(result.Success);
-            Assert.Equal("Initiated", result.Data!.Status);
-            // GetActiveRequestAsync is the one caller allowed to treat 204 (no active request)
-            // as success — locks in that it actually opts in, not just that a mock happens to match.
-            await _http.Received(1).GetAsync<BulkRatesQueueEntryRes?>(Arg.Any<string>(), true);
+            Assert.True(result.Data);
+            // No allowNoContent argument — a bool result can never produce a 204.
+            await _http.Received(1).GetAsync<bool>(Arg.Any<string>());
         }
+
+        [Fact]
+        public async Task CanInitiateRequestAsync_WhenApiReturnsSuccessFalse_ReturnsFalse()
+        {
+            var apiResponse = new ApiResponse<bool> { Success = true, Data = false };
+            var mappedDto = ApiResponseDto<bool>.SuccessResponse(false);
+
+            _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedDto);
+
+            var result = await _client.CanInitiateRequestAsync("BulkTestRatesUpdate");
+
+            Assert.True(result.Success);
+            Assert.False(result.Data);
+        }
+
+        #endregion
+
+        #region GetStagingDataAsync
 
         [Fact]
         public async Task GetStagingDataAsync_WhenApiReturnsSuccess_ReturnsMappedStagingData()

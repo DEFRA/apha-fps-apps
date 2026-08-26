@@ -170,16 +170,16 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        public Task<BulkRatesQueueRow?> GetActiveRequestAsync(string jobName, CancellationToken ct = default)
+        public async Task<bool> CanInitiateRequestAsync(string jobName, CancellationToken ct = default)
         {
-            // Matches the pre-existing SQL's IN-list exactly (Initiated/ReleasedForApproval/
-            // Approved/Running) — NOT "Failed", despite what the interface doc comment says;
-            // preserved as-is, not this conversion's place to change.
+            // Built on QueueRowsQuery()'s job/status join and IgnoreQueryFilters() — see the class
+            // doc comment. Blocking-status list matches the pre-existing SQL's IN-list exactly
+            // (Initiated/ReleasedForApproval/Approved/Running); no new exclusion-based predicate.
             var blockingStatuses = new[] { "Initiated", "ReleasedForApproval", "Approved", "Running" };
-            return QueueRowsQuery()
+            var hasBlockingRequest = await QueueRowsQuery()
                 .Where(r => r.JobName == jobName && blockingStatuses.Contains(r.Status))
-                .OrderByDescending(r => r.RequestedAtUtc)
-                .FirstOrDefaultAsync(ct);
+                .AnyAsync(ct);
+            return !hasBlockingRequest;
         }
 
         // ── Status transitions ───────────────────────────────────────────────────

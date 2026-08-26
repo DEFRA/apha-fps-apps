@@ -134,13 +134,13 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<BulkRatesQueueEntryRes>>(result));
         }
 
-        /// <summary>Returns the currently active (blocking-status) request for a job name, or null if none exists.</summary>
-        [HttpGet("requests/active")]
-        public async Task<ActionResult<BulkRatesQueueEntryRes?>> GetActiveRequestAsync(
+        /// <summary>True when no request for a job name is in a blocking status; false when one is.</summary>
+        [HttpGet("requests/can-initiate")]
+        public async Task<ActionResult<bool>> CanInitiateRequestAsync(
             [FromQuery] string jobName, CancellationToken ct)
         {
-            var result = await _service.GetActiveRequestAsync(jobName, ct);
-            return Ok(_mapper.Map<BulkRatesQueueEntryRes?>(result));
+            var result = await _service.CanInitiateRequestAsync(jobName, ct);
+            return Ok(result);
         }
 
         /// <summary>Returns the staged FEC/AGRUP rows for a request's staging grids, classified against live data.</summary>

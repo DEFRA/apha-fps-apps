@@ -157,86 +157,6 @@ var BulkRates = (function () {
         });
     }
 
-    // ── Upload Updated Data (tracker button on Index) ──────────────────────
-
-    var _trackerUploadRequestId = null;
-
-    function showUploadTrackerModal() {
-        var btn = document.getElementById('btnUploadUpdatedData');
-        var requestId = btn ? btn.getAttribute('data-request-id') : null;
-
-        if (!requestId) {
-            showActionError('No open request is available to upload against. Create a new request first.');
-            return;
-        }
-
-        _trackerUploadRequestId = requestId;
-
-        var overlay  = document.getElementById('uploadTrackerModalOverlay');
-        var fileEl   = document.getElementById('uploadTrackerFile');
-        var errEl    = document.getElementById('uploadTrackerFileError');
-        var group    = document.getElementById('uploadTrackerFileGroup');
-        if (!overlay) { return; }
-        if (fileEl) { fileEl.value = ''; }
-        if (errEl)  { errEl.style.display = 'none'; }
-        if (group)  { group.classList.remove('govuk-form-group--error'); }
-        overlay.style.display = '';
-    }
-
-    function closeUploadTrackerModal() {
-        var overlay = document.getElementById('uploadTrackerModalOverlay');
-        if (overlay) { overlay.style.display = 'none'; }
-        _trackerUploadRequestId = null;
-    }
-
-    function confirmTrackerUpload() {
-        var fileEl = document.getElementById('uploadTrackerFile');
-        var errEl  = document.getElementById('uploadTrackerFileError');
-        var group  = document.getElementById('uploadTrackerFileGroup');
-
-        if (!fileEl || !fileEl.files || fileEl.files.length === 0) {
-            if (errEl)  { errEl.style.display = ''; }
-            if (group)  { group.classList.add('govuk-form-group--error'); }
-            return;
-        }
-        if (errEl) { errEl.style.display = 'none'; }
-        if (group) { group.classList.remove('govuk-form-group--error'); }
-
-        var formData = new FormData();
-        formData.append('id', _trackerUploadRequestId);
-        formData.append('file', fileEl.files[0]);
-
-        var btn      = document.getElementById('btnConfirmTrackerUpload');
-        var progress = document.getElementById('uploadTrackerProgress');
-        if (btn)      { btn.disabled = true; }
-        if (progress) { progress.style.display = ''; }
-
-        $.ajax({
-            url: '/FPS/BulkRates/Upload',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            headers: { 'RequestVerificationToken': getAntiForgeryToken() },
-            success: function (result) {
-                if (result && result.success) {
-                    window.fpsNavigateTo('/FPS/BulkRates/Detail/' + _trackerUploadRequestId);
-                } else {
-                    if (btn)      { btn.disabled = false; }
-                    if (progress) { progress.style.display = 'none'; }
-                    showActionError((result && result.message) ? result.message : 'Upload failed.');
-                }
-            },
-            error: function (xhr) {
-                if (btn)      { btn.disabled = false; }
-                if (progress) { progress.style.display = 'none'; }
-                var msg = 'Upload failed. Please try again.';
-                if (xhr.responseJSON && xhr.responseJSON.message) { msg = xhr.responseJSON.message; }
-                showActionError(msg);
-            }
-        });
-    }
-
     // ── FEC Data (Staging) — Download Staging Data ──────────────────────────
 
     function downloadStagingData(requestId) {
@@ -276,67 +196,81 @@ var BulkRates = (function () {
     }
 
     // ── Active-request grid polling ─────────────────────────────────────────
-    // Approved/Running requests change status in the background (worker
-    // pickup, completion) with no user action to trigger a refresh. Poll the
-    // grid so the row catches up on its own. Bounded so an abandoned tab
-    // doesn't poll forever; stops itself once nothing is left to watch for.
-    //
-    // The grid reload alone only replaces the grid's own HTML — it does not
-    // touch the "request already in progress" banner or the disabled "New
-    // Request" button above it, both server-rendered once from a separate
-    // GetActiveRequestAsync call at page load. So once the watched row
-    // reaches a terminal status, update those two elements directly instead
-    // of a full page reload — the only thing gating them was this specific
-    // request being active, and we just learned it no longer is.
+    // Two different questions, answered independently on the same timer:
+    //   - "What is the worker actually doing?" — the grid reload every tick,
+    //     unchanged, giving the Status column its live Approved/Running/
+    //     Completed/Failed updates. Never depended on a specific row.
+    //   - "Can another request be created now?" — CanInitiateRequest, checked
+    //     only after each reload's 'gridReloaded' event fires (so the page has
+    //     already shown the latest status before polling can stop on it), used
+    //     purely to decide when to swap the banner/button.
+    // No hard cutoff: fast (3s) for the first ~40 ticks, then slow (20s)
+    // indefinitely — a fixed cap would silently freeze the page on "Running"
+    // for any request that legitimately runs long. The only two ways this
+    // ends are CanInitiateRequest genuinely becoming true, or the tab closing.
     var _pollTimer = null;
-    var _pollJobExecutionId = null;
     var _pollJobName = null;
+    var _pollTickCount = 0;
+    var POLL_FAST_INTERVAL_MS = 3000;
+    var POLL_SLOW_INTERVAL_MS = 20000;
+    var POLL_FAST_PHASE_TICKS = 40;
 
-    function onPollGridReloaded(e) {
-        if (!e.detail || e.detail.gridId !== 'bulkRatesGrid') { return; }
-        var $statusCell = $('tr[data-id="' + _pollJobExecutionId + '"] td[data-property="Status"]');
-        if ($statusCell.length === 0) { return; }
-        var currentStatus = $.trim($statusCell.text());
-        // The grid's Status cell renders the friendly label (BulkRatesStatusDisplay.FriendlyLabel
-        // on the server), not the raw status — "Approved" is displayed as "Submitted". Comparing
-        // against the raw value here meant the cell text never matched, so polling always stopped
-        // after the first reload and the grid got stuck showing "Submitted".
-        if (currentStatus !== 'Submitted' && currentStatus !== 'Running') {
-            stopActiveRequestPolling();
-            $('#activeRequestBanner').remove();
-            var $btnArea = $('#newRequestButtonArea');
-            if ($btnArea.length) {
-                $btnArea.html('<a href="/FPS/BulkRates/Create?jobName=' + encodeURIComponent(_pollJobName) +
-                    '" class="govuk-button govuk-button--secondary sup_margin_0">New Request</a>');
-            }
-        }
-    }
-
-    function stopActiveRequestPolling() {
-        if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
-        document.removeEventListener('gridReloaded', onPollGridReloaded);
-    }
-
-    function startActiveRequestPolling(jobExecutionId, status, jobName) {
-        if (status !== 'Approved' && status !== 'Running') { return; }
-        if (_pollTimer) { return; }
-
-        _pollJobExecutionId = jobExecutionId;
-        _pollJobName = jobName;
-        document.addEventListener('gridReloaded', onPollGridReloaded);
-
-        var pollsRemaining = 40; // ~2 minutes at 3s intervals
-        _pollTimer = setInterval(function () {
-            pollsRemaining--;
-            if (pollsRemaining <= 0) {
-                stopActiveRequestPolling();
-                return;
-            }
+    function scheduleNextPoll() {
+        var delay = _pollTickCount < POLL_FAST_PHASE_TICKS ? POLL_FAST_INTERVAL_MS : POLL_SLOW_INTERVAL_MS;
+        _pollTimer = setTimeout(function () {
+            _pollTickCount++;
             var gm = window['gridManager_bulkRatesGrid'];
             // silent: true — background poll, not a user action; skip the full-page loader
             // flash so only the Status badge visibly changes between ticks.
             if (gm) { gm.reloadGrid({ page: 1 }, { silent: true }); }
-        }, 3000);
+            else { scheduleNextPoll(); } // grid manager not ready yet — retry on schedule
+        }, delay);
+    }
+
+    function onPollGridReloaded(e) {
+        if (!_pollTimer || !_pollJobName) { return; } // polling already stopped — ignore a stray/late event
+        if (!e.detail || e.detail.gridId !== 'bulkRatesGrid') { return; }
+
+        // Capture before any stop() call, which clears the shared _pollJobName state as part of
+        // fully tearing polling down — building the "New Request" link from it afterwards would
+        // put a literal "null" in the URL.
+        var pollingJobName = _pollJobName;
+
+        $.ajax({
+            url: '/FPS/BulkRates/CanInitiateRequest',
+            type: 'GET',
+            data: { jobName: pollingJobName },
+            success: function (result) {
+                if (!_pollTimer) { return; } // stopped while this request was in flight
+                if (!result || !result.success) { scheduleNextPoll(); return; } // unknown state — retry, don't guess
+                if (result.canInitiate) {
+                    stopActiveRequestPolling();
+                    $('#activeRequestBanner').remove();
+                    var $btnArea = $('#newRequestButtonArea');
+                    if ($btnArea.length) {
+                        $btnArea.html('<a href="/FPS/BulkRates/Create?jobName=' + encodeURIComponent(pollingJobName) +
+                            '" class="govuk-button govuk-button--secondary sup_margin_0">New Request</a>');
+                    }
+                    return;
+                }
+                scheduleNextPoll();
+            },
+            error: function () { scheduleNextPoll(); /* request failed — retry, don't guess */ }
+        });
+    }
+
+    function stopActiveRequestPolling() {
+        if (_pollTimer) { clearTimeout(_pollTimer); _pollTimer = null; }
+        _pollJobName = null;
+        document.removeEventListener('gridReloaded', onPollGridReloaded);
+    }
+
+    function startActiveRequestPolling(jobName) {
+        if (_pollTimer) { return; }
+        _pollJobName = jobName;
+        _pollTickCount = 0;
+        document.addEventListener('gridReloaded', onPollGridReloaded);
+        scheduleNextPoll();
     }
 
     // ── Release for Approval modal ──────────────────────────────────────────
@@ -495,7 +429,6 @@ var BulkRates = (function () {
         if (e.key === 'Escape') {
             closeRejectModal();
             closeCancelModal();
-            closeUploadTrackerModal();
         }
     });
 
@@ -504,10 +437,6 @@ var BulkRates = (function () {
         var btnDownload = document.getElementById('btnDownloadTestData');
         if (btnDownload) {
             btnDownload.addEventListener('click', downloadTestData);
-        }
-        var btnUploadTracker = document.getElementById('btnUploadUpdatedData');
-        if (btnUploadTracker) {
-            btnUploadTracker.addEventListener('click', showUploadTrackerModal);
         }
     });
 
@@ -526,10 +455,7 @@ var BulkRates = (function () {
         filterGrid:             filterGrid,
         startActiveRequestPolling: startActiveRequestPolling,
         downloadTestData:       downloadTestData,
-        downloadStagingData:    downloadStagingData,
-        showUploadTrackerModal: showUploadTrackerModal,
-        closeUploadTrackerModal:closeUploadTrackerModal,
-        confirmTrackerUpload:   confirmTrackerUpload
+        downloadStagingData:    downloadStagingData
     };
 }());
 

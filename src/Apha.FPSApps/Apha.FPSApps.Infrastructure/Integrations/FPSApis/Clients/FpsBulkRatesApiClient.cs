@@ -156,16 +156,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         }
 
         /// <inheritdoc/>
-        public async Task<ApiResponseDto<BulkRatesQueueEntryDto?>> GetActiveRequestAsync(string jobName)
+        public async Task<ApiResponseDto<bool>> CanInitiateRequestAsync(string jobName)
         {
-            var url = string.Format(FpsApiEndpoints.GetActiveBulkRatesRequest, Uri.EscapeDataString(jobName));
-            var response = await _http.GetAsync<BulkRatesQueueEntryRes?>(url, allowNoContent: true);
+            var url = string.Format(FpsApiEndpoints.CanInitiateBulkRatesRequest, Uri.EscapeDataString(jobName));
+            var response = await _http.GetAsync<bool>(url);
 
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<BulkRatesQueueEntryDto?>>(response);
+                return _mapper.Map<ApiResponseDto<bool>>(response);
 
-            var responseDto = _mapper.Map<ApiResponseDto<BulkRatesQueueEntryDto?>>(response);
-            return ApiResponseDto<BulkRatesQueueEntryDto?>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         /// <inheritdoc/>

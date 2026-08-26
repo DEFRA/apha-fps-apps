@@ -34,11 +34,11 @@ namespace Apha.FPS.Core.Interfaces
             CancellationToken ct = default);
 
         /// <summary>
-        /// Returns the most recent request for <paramref name="jobName"/> that is still in a
-        /// blocking status (Initiated, ReleasedForApproval, Approved, Running, or Failed), or
-        /// null if none exists. Used to enforce the single-active-request-per-job-type rule.
+        /// True when no request for <paramref name="jobName"/> is in a blocking status (Initiated,
+        /// ReleasedForApproval, Approved, Running); false when one is. Used to enforce the
+        /// single-active-request-per-job-type rule.
         /// </summary>
-        Task<BulkRatesQueueRow?> GetActiveRequestAsync(string jobName, CancellationToken ct = default);
+        Task<bool> CanInitiateRequestAsync(string jobName, CancellationToken ct = default);
 
         // ── Status transitions ───────────────────────────────────────────────────
         /// <summary>

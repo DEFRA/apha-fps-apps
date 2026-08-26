@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -13,8 +12,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? StatusFilter { get; set; }
         public string CurrentUserEmail { get; set; } = string.Empty;
 
-        /// <summary>The active (blocking-status) request for JobNameFilter, if any. Only populated when JobNameFilter is set.</summary>
-        public BulkRatesQueueEntryDto? ActiveRequest { get; set; }
+        /// <summary>
+        /// True when a new JobNameFilter request may be created — false when a blocking request
+        /// already exists, or when the check itself failed (fails closed; see ActiveRequestCheckError
+        /// for which case it was). Only meaningful when JobNameFilter is set.
+        /// </summary>
+        public bool CanInitiateRequest { get; set; } = true;
+
+        /// <summary>
+        /// Set when the CanInitiateRequestAsync check itself failed (Success == false) — distinct
+        /// from CanInitiateRequest == false meaning "a request genuinely exists". Never say "an
+        /// active request already exists" when this is what actually happened.
+        /// </summary>
+        public string? ActiveRequestCheckError { get; set; }
 
         /// <summary>True when this page was reached via a rate-type-locked entry point — hides the "Job type" picker.</summary>
         public bool IsJobNameLocked { get; set; }
@@ -38,19 +48,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// silently looking like "genuinely no requests".
         /// </summary>
         public string? GridLoadError { get; set; }
-
-        /// <summary>
-        /// The current user's own open (Initiated/Rejected) request for JobNameFilter, if it is
-        /// also the active blocking request — i.e. available for (re-)upload via the "Upload
-        /// Updated Data" tracker button. Derived from ActiveRequest rather than the (now paged)
-        /// grid data, since at most one request can be in a blocking status per job type at a time.
-        /// </summary>
-        public Guid? UploadTargetId =>
-            ActiveRequest != null
-            && ActiveRequest.Status is "Initiated" or "Rejected"
-            && string.Equals(ActiveRequest.RequestedBy, CurrentUserEmail, StringComparison.OrdinalIgnoreCase)
-                ? ActiveRequest.JobExecutionId
-                : null;
     }
 
     /// <summary>

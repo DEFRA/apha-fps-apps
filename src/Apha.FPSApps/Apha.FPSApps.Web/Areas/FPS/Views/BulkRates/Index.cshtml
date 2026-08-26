@@ -54,11 +54,6 @@
         _                      => j
     };
 
-    // "A Staff Rates request" / "An Animal Rates request" — English article agreement
-    // on the first letter of the friendly name.
-    string Article(string friendlyName) =>
-        friendlyName.Length > 0 && "AEIOU".Contains(char.ToUpperInvariant(friendlyName[0])) ? "An" : "A";
-
     string SideNavItem(string? j) => j switch
     {
         "BulkStaffRatesUpdate"  => "BulkRatesStaff",
@@ -124,7 +119,7 @@
             </div>
         }
 
-        @if (Model.ActiveRequest != null)
+        @if (!string.IsNullOrEmpty(Model.ActiveRequestCheckError))
         {
             <div class="govuk-grid-row govuk-!-margin-top-2 govuk-!-margin-bottom-2" id="activeRequestBanner">
                 <div class="govuk-grid-column-full">
@@ -132,11 +127,22 @@
                         <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
                         <strong class="govuk-warning-text__text">
                             <span class="govuk-visually-hidden">Warning</span>
-                            @Article(FriendlyJobName(Model.ActiveRequest.JobName)) @FriendlyJobName(Model.ActiveRequest.JobName) request is already in progress
-                            (Status: @Model.ActiveRequest.Status, requested by @Model.ActiveRequest.RequestedBy).
-                            A new request cannot be created until it is completed, rejected, or cancelled.
-                            <a asp-area="FPS" asp-controller="BulkRates" asp-action="Detail"
-                               asp-route-id="@Model.ActiveRequest.JobExecutionId" class="govuk-link">View Active Request</a>
+                            @Model.ActiveRequestCheckError
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (!Model.CanInitiateRequest)
+        {
+            <div class="govuk-grid-row govuk-!-margin-top-2 govuk-!-margin-bottom-2" id="activeRequestBanner">
+                <div class="govuk-grid-column-full">
+                    <div class="govuk-warning-text">
+                        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+                        <strong class="govuk-warning-text__text">
+                            <span class="govuk-visually-hidden">Warning</span>
+                            An active @FriendlyJobName(Model.JobNameFilter ?? string.Empty) request is already in progress.
+                            A new request cannot be created until it is completed, rejected, or cancelled — find it in the list below.
                         </strong>
                     </div>
                 </div>
@@ -177,7 +183,7 @@
                             <div class="govuk-grid-column-one-half">
                                 <div class="action-buttons">
                                     <span id="newRequestButtonArea">
-                                    @if (Model.ActiveRequest != null)
+                                    @if (!Model.CanInitiateRequest)
                                     {
                                         <span class="govuk-button govuk-button--secondary govuk-button--disabled sup_margin_0"
                                               aria-disabled="true" title="An active request already exists for this job type.">
@@ -326,11 +332,11 @@
             }
         });
     </script>
-    @if (Model.ActiveRequest != null)
+    @if (!Model.CanInitiateRequest)
     {
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                BulkRates.startActiveRequestPolling('@Model.ActiveRequest.JobExecutionId', '@Model.ActiveRequest.Status', '@Model.ActiveRequest.JobName');
+                BulkRates.startActiveRequestPolling('@Model.JobNameFilter');
             });
         </script>
     }

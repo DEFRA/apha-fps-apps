@@ -67,25 +67,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Integrations.HttpExecutor
         }
 
         [Fact]
-        public async Task ToApiResponse_WhenNoContentAndAllowNoContentFalse_Throws()
+        public async Task ToApiResponse_WhenNoContent_Throws()
         {
-            // Default (allowNoContent: false) — a 204 the caller never opted into is treated
-            // as an anomaly, not silently mapped to a successful empty response.
+            // An unexpected 204 through the shared executor is never silently treated as
+            // success — this is the invariant the allowNoContent revert restores.
             using var response = new HttpResponseMessage(HttpStatusCode.NoContent);
 
             await Assert.ThrowsAsync<InvalidOperationException>(
                 () => response.ToApiResponse<BulkRatesQueueEntryRes>());
-        }
-
-        [Fact]
-        public async Task ToApiResponse_WhenNoContentAndAllowNoContentTrue_ReturnsSuccessWithDefaultData()
-        {
-            using var response = new HttpResponseMessage(HttpStatusCode.NoContent);
-
-            var result = await response.ToApiResponse<BulkRatesQueueEntryRes>(allowNoContent: true);
-
-            Assert.True(result.Success);
-            Assert.Null(result.Data);
         }
     }
 }

@@ -4,7 +4,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
 {
     public interface IHttpExecutor
     {
-        Task<ApiResponse<T>> GetAsync<T>(string url, bool allowNoContent = false);
+        Task<ApiResponse<T>> GetAsync<T>(string url);
 
         Task<byte[]> GetFileAsync(string url);
 

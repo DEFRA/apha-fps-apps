@@ -79,8 +79,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (!string.IsNullOrEmpty(jobName))
             {
-                var activeResponse = await _bulkRatesService.GetActiveRequestAsync(jobName);
-                vm.ActiveRequest = activeResponse.Success ? activeResponse.Data : null;
+                var canInitiateResponse = await _bulkRatesService.CanInitiateRequestAsync(jobName);
+                if (canInitiateResponse.Success)
+                {
+                    vm.CanInitiateRequest = canInitiateResponse.Data;
+                }
+                else
+                {
+                    // Fail closed (don't let a transient error open the door to a duplicate), but
+                    // say so honestly rather than the "an active request already exists" message,
+                    // which would be false in this case.
+                    vm.CanInitiateRequest = false;
+                    vm.ActiveRequestCheckError = "Unable to determine request status. Please try again.";
+                }
 
                 if (jobName is JobNameFec or JobNameStaff or JobNameAnimal)
                 {
@@ -164,13 +175,22 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> Create(string jobName = JobNameFec)
         {
-            var activeResponse = await _bulkRatesService.GetActiveRequestAsync(jobName);
-            if (activeResponse.Success && activeResponse.Data != null)
+            var canInitiateResponse = await _bulkRatesService.CanInitiateRequestAsync(jobName);
+            if (canInitiateResponse.Success)
             {
-                TempData["ErrorMessage"] =
-                    $"An active {jobName} request already exists (Status={activeResponse.Data.Status}, " +
-                    $"Requested by {activeResponse.Data.RequestedBy}). Complete, reject, or cancel it before creating a new one.";
-                return RedirectToAction(nameof(Detail), new { id = activeResponse.Data.JobExecutionId });
+                if (!canInitiateResponse.Data)
+                {
+                    TempData["ErrorMessage"] =
+                        $"An active {jobName} request already exists. Complete, reject, or cancel it before creating a new one.";
+                    return RedirectToAction(IndexActionFor(jobName));
+                }
+            }
+            else
+            {
+                // Fail closed here too — still block creation, but never claim a request exists
+                // when what actually happened is the check itself failed.
+                TempData["ErrorMessage"] = "Unable to determine request status. Please try again.";
+                return RedirectToAction(IndexActionFor(jobName));
             }
 
             // Direct-navigation guard — the Index page already hides/disables "New Request" for
@@ -192,6 +212,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 JobName = jobName,
                 FpsYear = _fpsYearContext.Year
             });
+        }
+
+        // AJAX poll target for Index's retargeted "active request" polling (fec_testmanagement.js).
+        // 3-state payload, not a flattened boolean — success:false must never be read as "blocked".
+        [HttpGet]
+        public async Task<IActionResult> CanInitiateRequest(string jobName)
+        {
+            var response = await _bulkRatesService.CanInitiateRequestAsync(jobName);
+            return Json(new { success = response.Success, canInitiate = response.Data });
         }
 
         private static string IndexActionFor(string jobName) => jobName switch

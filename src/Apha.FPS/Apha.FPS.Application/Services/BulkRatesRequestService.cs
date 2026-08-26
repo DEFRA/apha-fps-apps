@@ -75,11 +75,10 @@ namespace Apha.FPS.Application.Services
                 ?? throw new BusinessValidationErrorException([
                     new($"Job name '{jobName}' is not a registered Bulk Rates job.", "INVALID_JOB_NAME")]);
 
-            var active = await _repository.GetActiveRequestAsync(jobName, ct);
-            if (active != null)
+            var canInitiate = await _repository.CanInitiateRequestAsync(jobName, ct);
+            if (!canInitiate)
                 throw new BusinessValidationErrorException([
-                    new($"An active {jobName} request already exists (JobExecutionId={active.JobExecutionId}, " +
-                        $"Status={active.Status}, Requested by {active.RequestedBy}). Complete, reject, " +
+                    new($"An active {jobName} request already exists. Complete, reject, " +
                         "or cancel it before creating a new one.", "ACTIVE_REQUEST_EXISTS")]);
 
             var yearStatus = await _repository.GetFpsYearStatusAsync(fpsYear, ct);
@@ -605,11 +604,8 @@ namespace Apha.FPS.Application.Services
             };
         }
 
-        public async Task<BulkRatesQueueEntryDto?> GetActiveRequestAsync(string jobName, CancellationToken ct = default)
-        {
-            var entry = await _repository.GetActiveRequestAsync(jobName, ct);
-            return entry is null ? null : ToDto(entry);
-        }
+        public Task<bool> CanInitiateRequestAsync(string jobName, CancellationToken ct = default) =>
+            _repository.CanInitiateRequestAsync(jobName, ct);
 
         // ── Export ───────────────────────────────────────────────────────────────
 

@@ -289,7 +289,7 @@ namespace Apha.Common.Constants
         // Bulk Rates Update (FEC Phase 3)
         public const string CreateBulkRatesRequest = "api/v1/bulk-rates/requests";
         public const string GetBulkRatesRequests = "api/v1/bulk-rates/requests";
-        public const string GetActiveBulkRatesRequest = "api/v1/bulk-rates/requests/active?jobName={0}";
+        public const string CanInitiateBulkRatesRequest = "api/v1/bulk-rates/requests/can-initiate?jobName={0}";
         public const string GetBulkRatesRequest = "api/v1/bulk-rates/requests/{0}";
         public const string UploadBulkRatesFile = "api/v1/bulk-rates/requests/{0}/upload";
         public const string GetBulkRatesValidation = "api/v1/bulk-rates/requests/{0}/validation";

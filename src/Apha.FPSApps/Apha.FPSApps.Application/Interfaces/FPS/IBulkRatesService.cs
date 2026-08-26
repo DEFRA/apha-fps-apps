@@ -56,8 +56,8 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         /// <summary>Download current Animal rates for the given FPS year as an Excel byte array.</summary>
         Task<byte[]> DownloadAnimalTestDataAsync(int fpsYear);
 
-        /// <summary>Returns the currently active (blocking-status) request for a job name, or null if none exists.</summary>
-        Task<ApiResponseDto<BulkRatesQueueEntryDto?>> GetActiveRequestAsync(string jobName);
+        /// <summary>True when no request for a job name is in a blocking status; false when one is.</summary>
+        Task<ApiResponseDto<bool>> CanInitiateRequestAsync(string jobName);
 
         /// <summary>Returns the staged FEC/AGRUP rows for the "FEC Data (Staging)" / "Agrup Details" grids.</summary>
         Task<ApiResponseDto<BulkRatesStagingDataDto>> GetStagingDataAsync(Guid jobExecutionId);

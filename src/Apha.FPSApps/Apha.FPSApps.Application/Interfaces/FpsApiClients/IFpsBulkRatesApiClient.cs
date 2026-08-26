@@ -39,8 +39,8 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<BulkRatesQueueEntryDto>>> GetRequestsAsync(
             QueryParameters<string> query, string? jobName = null, int? fpsYear = null, string? status = null);
 
-        /// <summary>Returns the currently active (blocking-status) request for a job name, or null if none exists.</summary>
-        Task<ApiResponseDto<BulkRatesQueueEntryDto?>> GetActiveRequestAsync(string jobName);
+        /// <summary>True when no request for a job name is in a blocking status; false when one is.</summary>
+        Task<ApiResponseDto<bool>> CanInitiateRequestAsync(string jobName);
 
         /// <summary>Atomically snapshot live FEC/AGRUP data for a specific request and return the workbook.</summary>
         Task<byte[]> DownloadFecTestDataForRequestAsync(Guid jobExecutionId);

@@ -78,8 +78,8 @@ namespace Apha.FPS.Application.Interfaces
         /// <summary>As DownloadStaffTestDataAsync, for Animal (fps.bulk_rates_animal_download_detail).</summary>
         Task<byte[]> DownloadAnimalTestDataAsync(Guid jobExecutionId, CancellationToken ct = default);
 
-        /// <summary>Returns the currently active (blocking-status) request for jobName, or null if none exists.</summary>
-        Task<BulkRatesQueueEntryDto?> GetActiveRequestAsync(string jobName, CancellationToken ct = default);
+        /// <summary>True when no request for jobName is in a blocking status; false when one is.</summary>
+        Task<bool> CanInitiateRequestAsync(string jobName, CancellationToken ct = default);
 
         /// <summary>
         /// Returns the staged FEC/AGRUP rows for a request's "FEC Data (Staging)" / "Agrup Details" grids,

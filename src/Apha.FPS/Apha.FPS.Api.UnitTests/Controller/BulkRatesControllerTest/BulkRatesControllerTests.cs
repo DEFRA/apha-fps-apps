@@ -94,5 +94,32 @@ namespace Apha.FPS.Api.UnitTests.Controller.BulkRatesControllerTest
             await _service.DidNotReceive().DownloadAnimalTestDataAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
             await _service.DidNotReceive().DownloadFecTestDataAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
         }
+
+        [Fact]
+        public async Task CanInitiateRequestAsync_WhenServiceReturnsTrue_ReturnsTrue()
+        {
+            const string jobName = "BulkTestRatesUpdate";
+            _service.CanInitiateRequestAsync(jobName, Arg.Any<CancellationToken>()).Returns(true);
+
+            var result = await _sut.CanInitiateRequestAsync(jobName, CancellationToken.None);
+
+            // return Ok(result) populates ActionResult<bool>.Result (an OkObjectResult), not .Value
+            // directly — asserting .Value here would silently always read false/default regardless
+            // of what the action actually returned.
+            var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+            ok.Value.Should().Be(true);
+        }
+
+        [Fact]
+        public async Task CanInitiateRequestAsync_WhenServiceReturnsFalse_ReturnsFalse()
+        {
+            const string jobName = "BulkTestRatesUpdate";
+            _service.CanInitiateRequestAsync(jobName, Arg.Any<CancellationToken>()).Returns(false);
+
+            var result = await _sut.CanInitiateRequestAsync(jobName, CancellationToken.None);
+
+            var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+            ok.Value.Should().Be(false);
+        }
     }
 }

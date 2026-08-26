@@ -182,6 +182,7 @@ public class BulkRatesRequestServiceTests
     {
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetJobIdByNameAsync(JobName, Arg.Any<CancellationToken>()).Returns((int?)10);
+        repo.CanInitiateRequestAsync(JobName, Arg.Any<CancellationToken>()).Returns(true);
         repo.GetFpsYearStatusAsync(FpsYear, Arg.Any<CancellationToken>()).Returns((string?)null);
 
         var svc = CreateService(repo);
@@ -200,6 +201,7 @@ public class BulkRatesRequestServiceTests
     {
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetJobIdByNameAsync(BulkRatesJobNames.Fec, Arg.Any<CancellationToken>()).Returns((int?)10);
+        repo.CanInitiateRequestAsync(BulkRatesJobNames.Fec, Arg.Any<CancellationToken>()).Returns(true);
         repo.GetFpsYearStatusAsync(FpsYear, Arg.Any<CancellationToken>()).Returns("Planned");
 
         var svc = CreateService(repo);
@@ -214,6 +216,7 @@ public class BulkRatesRequestServiceTests
     {
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetJobIdByNameAsync(BulkRatesJobNames.Staff, Arg.Any<CancellationToken>()).Returns((int?)10);
+        repo.CanInitiateRequestAsync(BulkRatesJobNames.Staff, Arg.Any<CancellationToken>()).Returns(true);
         repo.GetFpsYearStatusAsync(FpsYear, Arg.Any<CancellationToken>()).Returns("Open");
 
         var svc = CreateService(repo);
@@ -228,6 +231,7 @@ public class BulkRatesRequestServiceTests
     {
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetJobIdByNameAsync(BulkRatesJobNames.Animal, Arg.Any<CancellationToken>()).Returns((int?)10);
+        repo.CanInitiateRequestAsync(BulkRatesJobNames.Animal, Arg.Any<CancellationToken>()).Returns(true);
         repo.GetFpsYearStatusAsync(FpsYear, Arg.Any<CancellationToken>()).Returns("Open");
 
         var svc = CreateService(repo);
@@ -238,11 +242,28 @@ public class BulkRatesRequestServiceTests
     }
 
     [Fact]
+    public async Task CreateRequest_WhenActiveRequestExists_ThrowsBusinessValidationWithGenericMessage()
+    {
+        // No JobExecutionId/Status/RequestedBy interpolation any more — this check never touched
+        // HTTP/204, so the only change here is dropping row detail the guard no longer has access to.
+        var repo = Substitute.For<IBulkRatesRepository>();
+        repo.GetJobIdByNameAsync(BulkRatesJobNames.Fec, Arg.Any<CancellationToken>()).Returns((int?)10);
+        repo.CanInitiateRequestAsync(BulkRatesJobNames.Fec, Arg.Any<CancellationToken>()).Returns(false);
+
+        var svc = CreateService(repo);
+
+        var ex = await svc.Invoking(s => s.CreateRequestAsync(BulkRatesJobNames.Fec, FpsYear, Initiator))
+            .Should().ThrowAsync<BusinessValidationErrorException>();
+
+        ex.Which.Message.Should().Contain("already exists").And.NotContain("JobExecutionId").And.NotContain("Status=");
+    }
+
+    [Fact]
     public async Task CreateRequest_WhenFecJobAndYearIsOpen_Succeeds()
     {
         var repo = Substitute.For<IBulkRatesRepository>();
         repo.GetJobIdByNameAsync(BulkRatesJobNames.Fec, Arg.Any<CancellationToken>()).Returns((int?)10);
-        repo.GetActiveRequestAsync(BulkRatesJobNames.Fec, Arg.Any<CancellationToken>()).Returns((BulkRatesQueueRow?)null);
+        repo.CanInitiateRequestAsync(BulkRatesJobNames.Fec, Arg.Any<CancellationToken>()).Returns(true);
         repo.GetFpsYearStatusAsync(FpsYear, Arg.Any<CancellationToken>()).Returns("Open");
         repo.GetStatusIdByNameAsync(10, "Initiated", Arg.Any<CancellationToken>()).Returns((int?)1);
         repo.CreateRequestAsync(
@@ -256,6 +277,19 @@ public class BulkRatesRequestServiceTests
         var result = await svc.CreateRequestAsync(BulkRatesJobNames.Fec, FpsYear, Initiator);
 
         result.Entry.Status.Should().Be("Initiated");
+    }
+
+    [Fact]
+    public async Task CanInitiateRequestAsync_PassesThroughToRepository()
+    {
+        var repo = Substitute.For<IBulkRatesRepository>();
+        repo.CanInitiateRequestAsync(BulkRatesJobNames.Fec, Arg.Any<CancellationToken>()).Returns(true);
+        var svc = CreateService(repo);
+
+        var result = await svc.CanInitiateRequestAsync(BulkRatesJobNames.Fec);
+
+        result.Should().BeTrue();
+        await repo.Received(1).CanInitiateRequestAsync(BulkRatesJobNames.Fec, Arg.Any<CancellationToken>());
     }
 
     // ── ReleaseForApprovalAsync status guards ────────────────────────────────
