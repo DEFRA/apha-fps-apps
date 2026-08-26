@@ -440,34 +440,42 @@
         return pending.then(function (result) {
             return result;
         });
-    };
+    };  
+    var isDragging = false;
 
-
-    var isDragging = true;
     var startX = 0;
     var startY = 0;
     var startLeft = 0;
     var startTop = 0;
 
+    // Minimum part of modal that must remain visible
+    var minVisible = 50;
+
+
+    // =========================================================
+    // DRAG START
+    // =========================================================
+
     $(document).on("mousedown", ".modal-dialog .modal-header", function (e) {
 
-        // Don't start dragging when clicking buttons/links inside header
+        // Do not drag when clicking buttons/links
         if ($(e.target).closest("button, a, input, select, textarea").length) {
             return;
         }
 
         var $dialog = $(this).closest(".modal-dialog");
 
-        isDragging = true;
-
         var offset = $dialog.offset();
+
+        isDragging = true;
 
         startX = e.clientX;
         startY = e.clientY;
+
         startLeft = offset.left;
         startTop = offset.top;
 
-        // Important: remove margin:auto so left/top can control position
+        // Convert to fixed positioning
         $dialog.css({
             position: "fixed",
             margin: 0,
@@ -481,6 +489,11 @@
         e.preventDefault();
     });
 
+
+    // =========================================================
+    // DRAGGING
+    // =========================================================
+
     $(document).on("mousemove", function (e) {
 
         if (!isDragging) {
@@ -489,14 +502,57 @@
 
         var $dialog = $(".modal-dialog:has(.modal-header)");
 
+        if (!$dialog.length) {
+            return;
+        }
+
+        var dialogWidth = $dialog.outerWidth();
+        var dialogHeight = $dialog.outerHeight();
+
+        var viewportWidth = $(window).width();
+        var viewportHeight = $(window).height();
+
         var newLeft = startLeft + (e.clientX - startX);
         var newTop = startTop + (e.clientY - startY);
 
+
+        // =====================================================
+        // X LIMIT
+        // =====================================================
+
+        var minLeft = -(dialogWidth - minVisible);
+        var maxLeft = viewportWidth - minVisible;
+
+        newLeft = Math.max(
+            minLeft,
+            Math.min(newLeft, maxLeft)
+        );
+
+
+        // =====================================================
+        // Y LIMIT
+        // =====================================================
+
+        var minTop = -(dialogHeight - minVisible);
+        var maxTop = viewportHeight - minVisible;
+
+        newTop = Math.max(
+            minTop,
+            Math.min(newTop, maxTop)
+        );
+
+
+        // Apply position
         $dialog.css({
             left: newLeft,
             top: newTop
         });
     });
+
+
+    // =========================================================
+    // DRAG END
+    // =========================================================
 
     $(document).on("mouseup", function () {
 
@@ -508,5 +564,53 @@
 
         $("body").css("user-select", "");
     });
+
+
+    // =========================================================
+    // CLICK FADED BACKGROUND
+    // =========================================================
+    //
+    // IMPORTANT:
+    // This will NOT automatically reset the modal.
+    //
+    // Modal resets ONLY when the user clicks the faded
+    // background outside the modal.
+    //
+    // =========================================================
+
+    $(document).on("click", function (e) {
+
+        var $dialog = $(".modal-dialog:has(.modal-header)");
+
+        if (!$dialog.length) {
+            return;
+        }
+
+        // If click happened INSIDE modal, do nothing
+        if ($(e.target).closest(".modal-dialog").length) {
+            return;
+        }
+
+        // Click happened outside modal = faded background
+        resetModalPosition($dialog);
+    });
+
+
+    // =========================================================
+    // RESET MODAL TO ORIGINAL POSITION
+    // =========================================================
+
+    function resetModalPosition($dialog) {
+
+        $dialog.css({
+            position: "",
+            left: "",
+            top: "",
+            margin: "auto",
+            width: "100%",
+            maxWidth: "700px"
+        });
+
+    }
 
 })();
