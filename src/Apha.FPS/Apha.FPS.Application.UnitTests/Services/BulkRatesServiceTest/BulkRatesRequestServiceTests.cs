@@ -141,9 +141,10 @@ public class BulkRatesRequestServiceTests
         repo.GetValidationErrorsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<StagingValidationError>() as IReadOnlyList<StagingValidationError>);
         repo.GetJobQueueLogsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<BatchJobQueueLog>() as IReadOnlyList<BatchJobQueueLog>);
 
-        // wiring (BulkRatesValidator.BuildContextAsync / BuildFreezeAsync) — default
-        // to empty so Upload/Release exercise the real BulkRatesValidationService without any
-        // live/staged data unless a test overrides one of these.
+        // wiring (BulkTestRatesService's internal BuildContextAsync, used by both
+        // ProcessUploadAsync and PrepareForReleaseAsync) — default to empty so Upload/Release
+        // exercise the real validation rules without any live/staged data unless a test
+        // overrides one of these.
         repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>()).Returns(Array.Empty<TestOrProductStagingRow>() as IReadOnlyList<TestOrProductStagingRow>);
         repo.GetAgrupRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>()).Returns(Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
         repo.GetExistingProjectCodesAsync(Arg.Any<IEnumerable<string>>(), FpsYear, Arg.Any<CancellationToken>()).Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) as IReadOnlySet<string>);

@@ -329,48 +329,25 @@ namespace Apha.FPS.Application.Services
                 throw new BusinessValidationErrorException([
                     new($"Cannot release: {blockingCount} blocking validation error(s) must be corrected first.", "BLOCKING_ERRORS")]);
 
-            // re-run validation (or, for Staff/Animal, the
-            // equivalent) against the currently staged rows and *current* live/reference data —
-            // not the errors recorded at upload time — because live data (a project, a
+            // Re-run validation against the currently staged rows and *current* live/reference
+            // data — not the errors recorded at upload time — because live data (a project, a
             // capability, another request's FEC change, or a live Staff/Animal row) can drift
-            // between upload and release. Only once this comes back clean is the reviewed
-            // classification frozen onto staging for the worker's revalidation to compare against.
+            // between upload and release. Each process service owns its own complete unit here:
+            // load current/staged state, revalidate, throw BusinessValidationErrorException on
+            // blocking errors, and persist the frozen calculated actions — nothing left for this
+            // method to check or write itself.
             if (string.Equals(entry.JobName, BulkRatesJobNames.Fec, StringComparison.OrdinalIgnoreCase))
             {
-                var freeze = await _validator.BuildFreezeAsync(
+                await _testService.PrepareForReleaseAsync(
                     jobQueueId, entry.FpsYear, entry.UploadVersion!.Value, entry.ActiveDownloadVersion, ct);
-
-                if (freeze.BlockingErrors.Count > 0)
-                    throw new BusinessValidationErrorException(freeze.BlockingErrors
-                        .Select(f => new BusinessValidationError(f.Message, f.ValidationCode))
-                        .ToList());
-
-                await _repository.FreezeStagingCalculatedActionsAsync(
-                    jobQueueId, entry.UploadVersion.Value, freeze.FecFreezes, freeze.AgrupFreezes, ct);
             }
             else if (string.Equals(entry.JobName, BulkRatesJobNames.Staff, StringComparison.OrdinalIgnoreCase))
             {
-                var freeze = await _validator.BuildStaffFreezeAsync(jobQueueId, entry.FpsYear, ct);
-
-                if (freeze.BlockingErrors.Count > 0)
-                    throw new BusinessValidationErrorException(freeze.BlockingErrors
-                        .Select(f => new BusinessValidationError(f.Message, f.ValidationCode))
-                        .ToList());
-
-                await _repository.FreezeStaffStagingAsync(
-                    jobQueueId, StaffAnimalValidationVersion.Current, freeze.Freezes, ct);
+                await _staffService.PrepareForReleaseAsync(jobQueueId, entry.FpsYear, ct);
             }
             else if (string.Equals(entry.JobName, BulkRatesJobNames.Animal, StringComparison.OrdinalIgnoreCase))
             {
-                var freeze = await _validator.BuildAnimalFreezeAsync(jobQueueId, entry.FpsYear, ct);
-
-                if (freeze.BlockingErrors.Count > 0)
-                    throw new BusinessValidationErrorException(freeze.BlockingErrors
-                        .Select(f => new BusinessValidationError(f.Message, f.ValidationCode))
-                        .ToList());
-
-                await _repository.FreezeAnimalStagingAsync(
-                    jobQueueId, StaffAnimalValidationVersion.Current, freeze.Freezes, ct);
+                await _animalService.PrepareForReleaseAsync(jobQueueId, entry.FpsYear, ct);
             }
 
             var initiatedStatusId = entry.StatusId;
