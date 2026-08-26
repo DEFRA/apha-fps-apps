@@ -7,6 +7,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class ProgrammeNewProjectViewModel
     {
         [Display(Name = "Parent Project")]
+        [RegularExpression("^[A-Za-z0-9]+$", ErrorMessage = "Project Code must contain only letters (A-Z, a-z) and numbers (0-9).")]
         public string ParentProject { get; set; } = null!;
         [Display(Name = "Project Title")]
         public string ProjectTitle { get; set; } = null!;

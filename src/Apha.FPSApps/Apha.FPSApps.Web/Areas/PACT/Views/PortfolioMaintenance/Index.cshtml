@@ -225,7 +225,7 @@
                                 </label>
                                 <div class="govuk-input__wrapper">
                                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                    <input class="govuk-input govuk-!-font-size-16 decfmt-input" asp-for="CurrentPortfolio.BudgetCvl"
+                                    <input class="govuk-input govuk-!-font-size-16 decfmt-input" aria-label="txtBudgetCvl" asp-for="CurrentPortfolio.BudgetCvl"
                                            id="txtBudgetCvl" type="text" />
                                 </div>
                                 <span asp-validation-for="CurrentPortfolio.BudgetCvl" class="govuk-error-message"></span>
@@ -254,7 +254,7 @@
 
                         <div class="govuk-grid-row" style="text-align:right; margin:5px 0 5px 0;">
                             <button type="button" class="govuk-button sup_margin_0" id="btnSavePortfolio"
-                                    data-module="govuk-button" allow-edit="false">
+                                    data-module="govuk-button" allow-edit="false" disabled>
                                 Save
                             </button>
                         </div>

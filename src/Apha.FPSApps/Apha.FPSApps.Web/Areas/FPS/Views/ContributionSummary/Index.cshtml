@@ -5,10 +5,10 @@
 }
 
 @* ── Header row ── *@
-<div class="govuk-grid-row sup_margin_left_right_0 sup_padding_bottom_10 sup_border-bottom" style="margin-top:10px; align-items:flex-end;">
+<div class="govuk-grid-row sup_margin_left_right_0 sup_padding_bottom_10 sup_border-bottom isContributionSummaryPage" style="margin-top:10px; align-items:flex-end;">
 
     <div class="govuk-grid-column-one-third">
-        <h1 class="govuk-heading-s sup_margin_bottom_0">Income / Contribution from Time Sales</h1>
+        <h1 class="govuk-heading-s sup_margin_bottom_0 govuk-!-margin-top-1">Income / Contribution from Time Sales</h1>
     </div>
 
     @* Resource Center dropdown *@
@@ -24,7 +24,14 @@
                 <option value="">-- Select Resource Center --</option>
                 @foreach (var pc in Model.SellingProfitCentres)
                 {
-                    <option value="@pc.Value">@pc.Text</option>
+                    if (Model.SelectedSellingPc == pc.Value)
+                    {
+                        <option value="@pc.Value" selected>@pc.Text</option>
+                    }
+                    else
+                    {
+                        <option value="@pc.Value">@pc.Text</option>
+                    }
                 }
             </select>
         </div>
@@ -63,6 +70,14 @@
         // ── Grid + totals load ─────────────────────────────────────────────
 
         function loadContributionData(sellingPc) {
+            // Save to session (empty string clears it)
+            $.ajax({
+                url: '@Url.Action("SaveProfitCentreSession", "ContributionSummary", new { area = "FPS" })',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(sellingPc || '')
+            });
+
             if (!sellingPc) {
                 $('#contributionSummaryGridArea').hide();
                 $('#contributionSummaryPrompt').show();
@@ -98,5 +113,13 @@
                 function (html) { $('#contributionSummaryTotalsArea').html(html); }
             );
         }
+
+        // Auto-trigger grid when session value was restored on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            var preSelected = document.getElementById('sellingPcSelect')?.value;
+            if (preSelected) {
+                loadContributionData(preSelected);
+            }
+        });
     </script>
 }

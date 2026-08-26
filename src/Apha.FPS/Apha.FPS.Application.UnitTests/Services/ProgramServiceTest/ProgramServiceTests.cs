@@ -166,6 +166,22 @@ namespace Apha.FPS.Application.UnitTests.Services.ProgramServiceTest
         }       
 
         [Fact]
+        public async Task AddProgramAsync_CaseInsensitiveDuplicate_ThrowsFriendlyInvalidOperationException()
+        {
+            var dto = new ProgramDto { ProgramNo = "admin", ProgramName = "Test" };
+
+            // Existing program stored as "ADMIN" - detected case-insensitively
+            _mockRepository.ExistsByProgramNoAsync("admin").Returns(true);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddProgramAsync(dto));
+
+            ex.Message.Should().Contain("admin");
+            ex.Message.Should().Contain("already exists");
+            await _mockRepository.Received(1).ExistsByProgramNoAsync("admin");
+            await _mockRepository.DidNotReceive().AddProgramAsync(Arg.Any<Program>());
+        }
+
+        [Fact]
         public async Task UpdateProgramAsync_ValidInput_ReturnsMappedDto()
         {
             var dto = new ProgramDto { ProgramNo = "P1", ProgramName = "Test" };

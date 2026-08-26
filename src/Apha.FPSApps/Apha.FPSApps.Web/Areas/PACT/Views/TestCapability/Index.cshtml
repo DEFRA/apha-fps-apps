@@ -164,11 +164,9 @@
 
         // ── WorkGroup dropdown change ──────────────────────────────────────────
         function onWorkGroupPickChange(value) {
+            selectedTest = null;
             $('#mainTestPick').val('');
 
-            if (testSelectDropdown) {
-                 testSelectDropdown.setValue('');
-            }
             currentViewBy = 1;
             currentFilterValue = value || null;
             currentSelectedTestCode = null;
@@ -179,10 +177,9 @@
 
         // ── Test dropdown change ───────────────────────────────────────────────
         function onTestPickChange(value) {
+            selectedWorkGroup = null;
             $('#workGroupPick').val('');
-            if (workGroupSelectDropdown) {
-                workGroupSelectDropdown.setValue('');
-            }
+
             currentViewBy = 2;
             currentFilterValue = value || null;
             currentSelectedTestCode = null;
@@ -401,8 +398,7 @@
 
         // ── Grid 2 CRUD ────────────────────────────────────────────────────────
         function addTestReqmt() {
-            var hasRows = $('#tbl_' + testReqmtGridId + ' tbody tr[data-id]').length > 0;
-            if (!hasRows || !currentSelectedTestCode) {
+            if (!currentSelectedTestCode) {
                 showAlertMessage('Please select a Test Capability record before adding the test requirement', AlertType.INFO);
                 return;
             }
@@ -545,20 +541,20 @@
 
         callbacks: {
             onSelect: function (selectedItem) {
+                // Clear test dropdown if it has a value
+                if (testSelectDropdown && testSelectDropdown.selectedValue) {
+                    testSelectDropdown.clear();
+                }
 
                 selectedWorkGroup = selectedItem.Value;
-
                 $('#workGroupPick').val(selectedWorkGroup);
-
                 onWorkGroupPickChange(selectedWorkGroup);
             },
 
             onClear: function () {
-
                 selectedWorkGroup = null;
                 $('#workGroupPick').val('');
-
-                onWorkGroupPickChange('');
+                onWorkGroupPickChange(null);
             }
         }
     });
@@ -578,27 +574,27 @@ function initializeTestMultiColumnDropdown() {
             { field: 'Text', header: 'Test Description', width: '180px' }
         ],
         data: testOptionsListData,
-        displayField: 'Text',
+        displayField: 'Value',
         valueField: 'Value',
         clearButtonClearsSelection: true,
         showClearButton: true,
 
         callbacks: {
             onSelect: function (selectedItem) {
+                // Clear workgroup dropdown if it has a value
+                if (workGroupSelectDropdown && workGroupSelectDropdown.selectedValue) {
+                    workGroupSelectDropdown.clear();
+                }
 
                 selectedTest = selectedItem.Value;
-
                 $('#mainTestPick').val(selectedTest);
-
                 onTestPickChange(selectedTest);
             },
 
             onClear: function () {
-
                 selectedTest = null;
                 $('#mainTestPick').val('');
-
-                onTestPickChange('');
+                onTestPickChange(null);
             }
         }
     });

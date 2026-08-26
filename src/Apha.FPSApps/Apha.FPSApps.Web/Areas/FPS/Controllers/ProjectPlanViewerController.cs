@@ -678,7 +678,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 // Single project selected - fetch that specific project
                 var singleResult = await _projectService.GetProjectByIdAsync(parentProject);
-                if (singleResult.Success && singleResult.Data != null)
+                if (singleResult.Success && singleResult.Data != null
+                    && MatchesProjectDetailsFilter(singleResult.Data, filterDict))
                 {
                     result = new ApiResponseDto<List<ProjectDto>>
                     {
@@ -689,12 +690,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 }
                 else
                 {
-                    result = new ApiResponseDto<List<ProjectDto>> { Success = true, Data = new List<ProjectDto>() };
+                    result = new ApiResponseDto<List<ProjectDto>>
+                    {
+                        Success = true,
+                        Data = new List<ProjectDto>(),
+                        Pagination = new Application.Dtos.PaginationDto { TotalRecords = 0, PageNumber = 1, PageSize = query.PageSize }
+                    };
                 }
             }
             else if (!string.IsNullOrWhiteSpace(program))
             {
-                    result = await _projectService.GetProjectsByProgramAsync(query, program);
+                result = await _projectService.GetProjectsByProgramAsync(query, program);
             }
             else if (!string.IsNullOrWhiteSpace(projectGroup))
             {
@@ -725,7 +731,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var paginationModel = result?.Pagination is null
                 ? new PaginationModel()
-                : _mapper.Map<PaginationModel>(result.Pagination);
+                : _mapper.Map<PaginationModel>(result.Pagination) ?? new PaginationModel();
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
@@ -737,6 +743,35 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             return PartialView("_DataGrid", gridConfig);
         }
+
+        private static bool MatchesProjectDetailsFilter(ProjectDto project, Dictionary<string, string>? filterDict)
+        {
+            if (filterDict == null || filterDict.Count == 0)
+                return true;
+
+            foreach (var filter in filterDict)
+            {
+                if (string.IsNullOrWhiteSpace(filter.Value))
+                    continue;
+
+                var value = filter.Key switch
+                {
+                    nameof(ProjectDetailsGridItem.ParentProject) => project.ParentProject,
+                    nameof(ProjectDetailsGridItem.ProjectTitle) => project.ProjectTitle,
+                    nameof(ProjectDetailsGridItem.Manager) => project.Manager,
+                    _ => null
+                };
+
+                if (value == null ||
+                    value.IndexOf(filter.Value, StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
 
         [HttpPost]
         public async Task<IActionResult> LoadStaffPlanGrid(PaginationFilter<string> request, string? parentProject = null, string? gridId = null)
@@ -765,6 +800,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyStaffGrid(gridId ?? "planSummaryStaffGrid", "Staff Plans");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }
@@ -798,6 +837,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyTestPlanGrid(gridId ?? "planSummaryTestGrid", "Test Plans");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }
@@ -829,6 +872,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyAnimalGrid(gridId ?? "planSummaryAnimalGrid", "Animal Plans");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }
@@ -860,6 +907,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyAdditionalGrid(gridId ?? "planSummaryAdditionalGrid", "Additional Cost Plans");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }
@@ -891,12 +942,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyCompareStaff2Grid();
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadTestActualGrid(PaginationFilter<string> request, string? parentProject= null)
+        public async Task<IActionResult> LoadTestActualGrid(PaginationFilter<string> request, string? parentProject = null)
         {
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
@@ -937,6 +992,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyTestActualGrid();
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }
@@ -968,6 +1027,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = GetReadOnlyActualCostGrid(gridId ?? "actualAnimalCostGrid", animalOnly ? "Actual Animal Costs (PACT)" : "Actual Additional Costs (PACT)");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+            gridConfig.CurrentFilters = filterDict;
 
             return PartialView("_DataGrid", gridConfig);
         }

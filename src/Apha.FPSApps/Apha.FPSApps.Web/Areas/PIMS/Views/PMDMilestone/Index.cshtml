@@ -48,7 +48,11 @@
                     <div class="govuk-grid-column-full sup_p_0">
                         <div class="sup_flex_align_end sup_flex_gap_10">
                             <span id="pmdConfirmationLabel" class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold ">@Model.ConfirmationLabelText</span>
-                            <button id="pmdConfirmationSubmit" type="button" class="govuk-button govuk-!-margin-bottom-0" onclick="submitPmdConfirmation()">Submit</button>
+                            <button id="pmdConfirmationSubmit"
+                                    type="button"
+                                    class="govuk-button govuk-!-margin-bottom-0"
+                                    disabled="@(Model.ShowSubmitButton ? (string?)null : "disabled")"
+                                    onclick="submitPmdConfirmation()">Submit</button>
                         </div>
                     </div>
                 </div>
@@ -105,21 +109,28 @@
             if (gmMilestone) { gmMilestone.reloadGrid({ page: 1 }); }
         }
 
+        function applyConfirmationState(data) {
+            var section = document.getElementById('pmdConfirmationSection');
+            var label = document.getElementById('pmdConfirmationLabel');
+            var button = document.getElementById('pmdConfirmationSubmit');
+            if (!section || !label || !button) return;
+
+            if (data && data.showConfirmationSection === true) {
+                label.textContent = data.confirmationLabelText || '';
+                section.style.display = '';
+                button.disabled = data.showSubmitButton !== true;
+            } else {
+                label.textContent = '';
+                section.style.display = 'none';
+                button.disabled = true;
+            }
+        }
+
         function updateConfirmationSection(project) {
             $.get('@Url.Action("GetConfirmationState", "PMDMilestone", new { area = "PIMS" })',
                 { parentproject: project },
                 function (data) {
-                    var section = document.getElementById('pmdConfirmationSection');
-                    var label = document.getElementById('pmdConfirmationLabel');
-                    if (!section || !label) return;
-
-                    if (data && data.showConfirmationSection === true) {
-                        label.textContent = data.confirmationLabelText || '';
-                        section.style.display = '';
-                    } else {
-                        label.textContent = '';
-                        section.style.display = 'none';
-                    }
+                    applyConfirmationState(data);
                 });
         }
 
@@ -132,8 +143,33 @@
         }
 
         function submitPmdConfirmation() {
-            // Placeholder for confirmation submit action.
-            // Hook API call here when backend endpoint is available.
+            if (!currentProject) {
+                showAlertMessage('Project is required.', AlertType.ERROR);
+                return;
+            }
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '@Url.Action("SubmitConfirmation", "PMDMilestone", new { area = "PIMS" })',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': token },
+                data: {
+                    parentproject: currentProject,
+                    __RequestVerificationToken: token
+                },
+                success: function (result) {
+                    if (result.success) {
+                        applyConfirmationState(result);
+                        showAlertMessage(result.message, AlertType.SUCCESS);
+                    } else {
+                        showAlertMessage((result.errors || []).join(', ') || result.message || 'Failed to confirm information.', AlertType.ERROR);
+                    }
+                },
+                error: function () {
+                    showAlertMessage('An error occurred while confirming the information.', AlertType.ERROR);
+                }
+            });
         }
 
         function getMilestoneExtraFilters() {

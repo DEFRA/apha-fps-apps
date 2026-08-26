@@ -583,7 +583,6 @@ function getPimsAntiForgeryToken() {
 function saveRadTrackProg() {
     const $form = $('#formRadTrackProg');
     const $banner = $('#progProgDbError');
-    const $bannerText = $('#progProgDbErrorText');
 
     displayClientValidationErrors($form, $form);
 
@@ -605,13 +604,6 @@ function saveRadTrackProg() {
             if (data.errors) {
                 displayServerValidationErrors(data.errors, data.message, $form);
             }
-
-            const serverMessage = data.message
-                || (Array.isArray(data.errors) && data.errors.length > 0 && data.errors[0].message)
-                || 'Save failed.';
-
-            $bannerText.text(serverMessage);
-            $banner.removeClass('ra-hidden');
         })
         .fail(function (xhr) {
             const response = xhr && xhr.responseJSON ? xhr.responseJSON : null;
@@ -620,15 +612,13 @@ function saveRadTrackProg() {
                 || xhr.responseText
                 || 'An error occurred while saving.';
 
-            $bannerText.text(serverMessage);
-            $banner.removeClass('ra-hidden');
+            displayServerValidationErrors([{ field: 'Program', message: serverMessage }], null, $form);
         });
 }
 
 $(document).off('change.radtrackprog', '#progProgName').on('change.radtrackprog', '#progProgName', function () {
     clearValidationErrors('#formRadTrackProg');
     $('#progProgDbError').addClass('ra-hidden');
-    $('#progProgDbErrorText').text('');
 });
 
 function addRadTrackProg() {
@@ -812,7 +802,7 @@ function initializeProgramManagerLinkDropdown() {
     $displayInput.attr({
         name: 'Program',
         required: 'required',
-        'data-val-required': 'Programme is required',
+        'data-val-required': 'Program is required',
         'aria-describedby': 'mgrAssignValueError'
     });
 
@@ -1288,6 +1278,23 @@ function cancelTimeTab() {
 //  ADMIN MAINTENANCE TAB — Access Users
 // ════════════════════════════════════════════════════════════════════════════
 
+function normalizeAdminMaintenanceValidationMessage(message) {
+    if (!message || typeof message !== 'string') {
+        return message;
+    }
+
+    var accessUserMatch = message.match(/^AccessUser\s*\(.*ntlogin='([^']+)'.*\)\s*already exists\.$/i);
+    if (accessUserMatch && accessUserMatch[1]) {
+        return "NTLogin '" + accessUserMatch[1] + "' already exists. Please enter a unique NTLogin";
+    }
+
+    if (/^AccessUserLevel\s*\(.*\)\s*already exists\.$/i.test(message)) {
+        return 'User already exists. Please enter a unique User.';
+    }
+
+    return message;
+}
+
 function addAccessUser() {
     $.get('/PIMS/Maintenance/GetAddEditAccessUserPartial', function (html) {
         $('#modaPopupBody').html(html);
@@ -1364,17 +1371,28 @@ function saveAccessUser() {
                 if (data.errors && data.errors.length > 0) {
                     if (dbErrorText) dbErrorText.textContent = '';
                     if (dbError) dbError.classList.add('ra-hidden');
-                    displayServerValidationErrors(data.errors, data.message || 'Save failed.', $form);
+
+                    var normalizedErrors = data.errors.map(function (err) {
+                        return {
+                            field: err.field,
+                            message: normalizeAdminMaintenanceValidationMessage(err.message)
+                        };
+                    });
+
+                    displayServerValidationErrors(
+                        normalizedErrors,
+                        normalizeAdminMaintenanceValidationMessage(data.message) || 'Save failed.',
+                        $form);
                     return;
                 }
 
-                if (dbErrorText) dbErrorText.textContent = data.message || 'Save failed.';
+                if (dbErrorText) dbErrorText.textContent = normalizeAdminMaintenanceValidationMessage(data.message) || 'Save failed.';
                 if (dbError) dbError.classList.remove('ra-hidden');
             }
         },
         error: function (xhr) {
             var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'An error occurred while saving.';
-            if (dbErrorText) dbErrorText.textContent = msg;
+            if (dbErrorText) dbErrorText.textContent = normalizeAdminMaintenanceValidationMessage(msg);
             if (dbError) dbError.classList.remove('ra-hidden');
         }
     });
@@ -1437,17 +1455,27 @@ function saveAccessUserLevel() {
             }
 
             if (data.errors && data.errors.length > 0) {
-                displayServerValidationErrors(data.errors, data.message, $form);
+                var normalizedErrors = data.errors.map(function (err) {
+                    return {
+                        field: err.field,
+                        message: normalizeAdminMaintenanceValidationMessage(err.message)
+                    };
+                });
+
+                displayServerValidationErrors(
+                    normalizedErrors,
+                    normalizeAdminMaintenanceValidationMessage(data.message),
+                    $form);
                 $banner.removeClass('ra-hidden');
             } else {
-                var msg = data.message || 'Save failed.';
+                var msg = normalizeAdminMaintenanceValidationMessage(data.message) || 'Save failed.';
                 $bannerText.text(msg);
                 $banner.removeClass('ra-hidden');
             }
         },
         error: function (xhr) {
             var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'An error occurred while saving.';
-            $bannerText.text(msg);
+            $bannerText.text(normalizeAdminMaintenanceValidationMessage(msg));
             $banner.removeClass('ra-hidden');
         }
     });
@@ -2008,6 +2036,11 @@ function saveOtherReportGroup() {
     $banner.hide();
 
     const formData = $form.serializeArray();
+
+    if (!isEdit && !formData.some(function (x) { return x.name === 'GroupId'; })) {
+        formData.push({ name: 'GroupId', value: 0 });
+    }
+
     formData.push({ name: 'isEdit', value: isEdit });
 
     $.post('/PIMS/Maintenance/SaveOtherReportGroup', $.param(formData))

@@ -369,12 +369,58 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectControllerTest
             await _projectService.DidNotReceive().ChangeProjectCodeAsync(Arg.Any<string>(), Arg.Any<string>());
         }
 
+        [Theory]
+        [InlineData("NEW-1")]
+        [InlineData("NEW_1")]
+        [InlineData("NEW 1")]
+        [InlineData("NEW@1")]
+        [InlineData("2024/001")]
+        public async Task ChangeCode_WithNonAlphanumericNewCode_ReturnsJsonError(string newCode)
+        {
+            var result = await _controller.ChangeCode("OLD1", newCode);
+
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.False(value!.success);
+            Assert.Equal("Project Code must contain only letters (A-Z, a-z) and numbers (0-9)", value.message);
+            Assert.NotNull(value.errors);
+        }
+
+        [Theory]
+        [InlineData("NEW-1")]
+        [InlineData("NEW 1")]
+        public async Task ChangeCode_WithNonAlphanumericNewCode_DoesNotCallService(string newCode)
+        {
+            await _controller.ChangeCode("OLD1", newCode);
+
+            await _projectService.DidNotReceive().ChangeProjectCodeAsync(Arg.Any<string>(), Arg.Any<string>());
+        }
+
+        [Theory]
+        [InlineData("NEW1")]
+        [InlineData("new1")]
+        [InlineData("NEW001")]
+        [InlineData("abc123XYZ")]
+        public async Task ChangeCode_WithAlphanumericNewCode_CallsService(string newCode)
+        {
+            var apiResponse = ApiResponseDto<bool>.SuccessResponse(true);
+            _projectService.ChangeProjectCodeAsync("OLD1", newCode).Returns(apiResponse);
+
+            var result = await _controller.ChangeCode("OLD1", newCode);
+
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.True(value!.success);
+            await _projectService.Received(1).ChangeProjectCodeAsync("OLD1", newCode);
+        }
+
         #endregion
 
         #region Helpers
 
-        private ProgrammeNewProjectViewModel CreateValidProjectViewModel()
+        private static ProgrammeNewProjectViewModel CreateValidProjectViewModel()
         {
+
             return new ProgrammeNewProjectViewModel
             {
                 ParentProject = "PP001",

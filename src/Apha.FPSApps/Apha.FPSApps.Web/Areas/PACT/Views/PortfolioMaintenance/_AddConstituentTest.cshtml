@@ -10,7 +10,7 @@
     <button type="button" class="btn-close" onclick="$('#modalPopup').removeClass('show')">×</button>
 </div>
 
-<div class="modal-body" style="overflow:hidden; padding:8px 16px 0 16px;">
+<div class="modal-body" style="overflow:visible; padding:8px 16px 0 16px;">
     <form id="formAddTest" class="govuk-grid-column-full">
 
         <input type="hidden" asp-for="PlanPortfolio" />
@@ -42,7 +42,7 @@
                 Item Description <span class="sup_color_red">*</span>
             </label>
             <input type="text" class="govuk-input govuk-!-font-size-16" asp-for="ItemDescription"
-                   id="txtmodal-description" placeholder="Description" disabled />
+                   id="txtmodal-description" aria-label="txtmodal-description" placeholder="Description" disabled />
             <span asp-validation-for="ItemDescription" class="govuk-error-message"></span>
         </div>
 
@@ -61,7 +61,6 @@
 
     </form>
 </div>
-
 <div class="modal-footer" style="padding:8px 16px;">
     <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
             onclick="$('#modalPopup').removeClass('show')">
@@ -72,12 +71,3 @@
         Save
     </button>
 </div>
-
-<script>
-    (function () {
-        $('#txtmodal-testcode').on('change', function () {
-            var desc = $(this).find('option:selected').data('description') || '';
-            $('#txtmodal-description').val(desc);
-        });
-    })();
-</script>

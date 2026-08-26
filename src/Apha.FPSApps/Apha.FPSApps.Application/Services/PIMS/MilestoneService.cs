@@ -23,6 +23,9 @@ namespace Apha.FPSApps.Application.Services.PIMS
         public async Task<ApiResponseDto<MilestoneDto>> GetMilestoneAsync(string project, string number)
             => await _client.PimsMilestone.GetMilestoneAsync(project, number);
 
+        public async Task<ApiResponseDto<MilestoneDto>> GetMilestoneAsync_PMD(string project, string number)
+            => await _client.PimsMilestone.GetMilestoneAsync_PMD(project, number);
+
         public async Task<ApiResponseDto<MilestoneDto>> SaveMilestoneAsync(string project, MilestoneDto dto)
             => await _client.PimsMilestone.SaveMilestoneAsync(project, dto);
 
@@ -45,8 +48,14 @@ namespace Apha.FPSApps.Application.Services.PIMS
         public async Task<ApiResponseDto<MilestoneFormDatesDto>> GetMilestoneFormDatesAsync(string parentProject, short year)
             => await _client.PimsMilestone.GetMilestoneFormDatesAsync(parentProject, year);
 
+        public async Task<ApiResponseDto<MilestoneFormDatesDto>> GetMilestoneFormDatesAsync_PMD(string parentProject, short year)
+            => await _client.PimsMilestone.GetMilestoneFormDatesAsync_PMD(parentProject, year);
+
         public async Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync(string parentProject, MilestoneFormDatesDto dto)
             => await _client.PimsMilestone.SaveMilestoneFormDatesAsync(parentProject, dto);
+
+        public async Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync_PMD(string parentProject, MilestoneFormDatesDto dto)
+            => await _client.PimsMilestone.SaveMilestoneFormDatesAsync_PMD(parentProject, dto);
 
         public async Task<ApiResponseDto<object>> DeleteMilestoneFormDatesAsync(string parentProject, short year)
             => await _client.PimsMilestone.DeleteMilestoneFormDatesAsync(parentProject, year);

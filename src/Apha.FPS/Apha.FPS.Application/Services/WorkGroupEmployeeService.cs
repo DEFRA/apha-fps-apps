@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -59,20 +60,19 @@ namespace Apha.FPS.Application.Services
         {
             ArgumentNullException.ThrowIfNull(dto);
 
-            if (string.IsNullOrWhiteSpace(dto.PactId))
-            {
-                throw new ArgumentException("PACT Id is required.");
-            }
-
             if (string.IsNullOrWhiteSpace(dto.WorkGroupGrade))
             {
                 throw new ArgumentException("Work Group Grade is required.");
             }
 
-            var existing = await _repository.GetWorkGroupEmployeeByIdForStaffAsync(dto.PactId);
-            if (existing != null)
+            // Only duplicate-check when a PactId is explicitly provided (e.g. future manual entry)
+            if (!string.IsNullOrWhiteSpace(dto.PactId))
             {
-                throw new ArgumentException($"WorkGroupEmployee with PACT Id '{dto.PactId}' already exists.");
+                var existing = await _repository.GetWorkGroupEmployeeByIdForStaffAsync(dto.PactId);
+                if (existing != null)
+                {
+                    throw new ArgumentException($"WorkGroupEmployee with PACT Id '{dto.PactId}' already exists.");
+                }
             }
 
             var entity = _mapper.Map<WorkGroupEmployee>(dto);
@@ -111,8 +111,21 @@ namespace Apha.FPS.Application.Services
         public async Task<bool> DeleteWorkGroupEmployeeAsync(string pactId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(pactId);
-            return await _repository.DeleteWorkGroupEmployeeAsync(pactId);
-        }
 
+            var existing = await _repository.GetWorkGroupEmployeeByIdForStaffAsync(pactId);
+            if (existing == null)
+            {
+                return await _repository.DeleteWorkGroupEmployeeAsync(pactId);
+            }
+            else
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        "Selected record cannot be deleted because it is currently assigned to a employee. Please remove the assignment first.",
+                        "WORKGROUPEMPLOYEE_HAS_ASSOCIATIONS")
+                ]);
+            }
+        }
     }
 }

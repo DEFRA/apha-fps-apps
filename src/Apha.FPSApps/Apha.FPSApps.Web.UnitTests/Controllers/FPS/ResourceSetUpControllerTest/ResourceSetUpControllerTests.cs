@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -8,6 +9,8 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using System.Text.Json;
+using Apha.FPSApps.Web.Constants;
+using Microsoft.AspNetCore.Http;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
 {
@@ -23,8 +26,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         private readonly IProfitCentreGradeService _rcGradeService;
         private readonly IWorkGroupGradeService _wgGradeService;
         private readonly IWorkGroupEmployeeService _wgEmployeeService;
+        private readonly IAppStateService _appStateService;
         private readonly ResourceSetUpController _controller;
-
+        private const string SelectedProfitCentreSessionKey = "SelectedProfitCentre";
         public ResourceSetUpControllerTests()
         {
             _mapper              = Substitute.For<IMapper>();
@@ -32,13 +36,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             _rcGradeService      = Substitute.For<IProfitCentreGradeService>();
             _wgGradeService      = Substitute.For<IWorkGroupGradeService>();
             _wgEmployeeService   = Substitute.For<IWorkGroupEmployeeService>();
+            _appStateService     = Substitute.For<IAppStateService>();
 
             _controller = new ResourceSetUpController(
                 _mapper,
                 _profitCentreService,
                 _rcGradeService,
                 _wgGradeService,
-                _wgEmployeeService);
+                _wgEmployeeService,
+                _appStateService);
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
@@ -59,6 +65,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             new() { PcGrade = "G002", ProfitCentre = DefaultProfitCentre, ChargeRate = 200m }
         ];
 
+        private void SetHttpContext(string queryString = "")
+        {
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.QueryString = new QueryString(queryString);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = httpContext
+            };
+        }
+
         #region Index Tests
 
         [Fact]
@@ -66,6 +83,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             var profitCentres = BuildProfitCentreList();
+            SetHttpContext();
             _profitCentreService.GetProfitCentresAsync()
                 .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
 
@@ -89,6 +107,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             var profitCentres = BuildProfitCentreList();
+            SetHttpContext($"?profitCentre={DefaultProfitCentre}");
             var rcGrades      = BuildRcGradeList();
 
             _profitCentreService.GetProfitCentresAsync()
@@ -117,7 +136,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
             _profitCentreService.GetProfitCentresAsync()
                 .Returns(ApiResponseDto<List<ProfitCentreDto>>.FailureResponse(errors, new ApiMetaDto()));
-
+            SetHttpContext();
             // Act
             var result = await _controller.Index(null);
 
@@ -133,6 +152,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             var profitCentres = BuildProfitCentreList();
+            SetHttpContext();
             var errors        = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
 
             _profitCentreService.GetProfitCentresAsync()
@@ -155,6 +175,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             var profitCentres = BuildProfitCentreList();
+            SetHttpContext();
             _profitCentreService.GetProfitCentresAsync()
                 .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
 
@@ -176,6 +197,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             // Arrange
             _profitCentreService.GetProfitCentresAsync()
                 .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(BuildProfitCentreList()));
+            SetHttpContext();
 
             // Act
             var result = await _controller.Index(null);
@@ -195,6 +217,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             // Arrange
             _profitCentreService.GetProfitCentresAsync()
                 .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(BuildProfitCentreList()));
+            SetHttpContext();
 
             // Act
             var result = await _controller.Index(null);
@@ -205,7 +228,60 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
 
             Assert.True(model.WgStaffGrid.AllowEdit);
             Assert.False(model.WgStaffGrid.AllowAdd);
-            Assert.False(model.WgStaffGrid.AllowDelete);
+            Assert.True(model.WgStaffGrid.AllowDelete);
+        }
+
+        [Fact]
+        public async Task Index_WhenProfitCentreQueryIsMissing_UsesSessionValue()
+        {
+            // Arrange
+            var profitCentres = BuildProfitCentreList();
+            SetHttpContext();
+
+            SetHttpContext();
+            _profitCentreService.GetProfitCentresAsync()
+                .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
+            _appStateService.GetSessionAsync<string>(SelectedProfitCentreSessionKey)
+                .Returns(DefaultProfitCentre);
+            _rcGradeService.GetProfitCentreGradesAsync(DefaultProfitCentre)
+                .Returns(ApiResponseDto<List<ProfitCentreGradeDto>>.SuccessResponse(BuildRcGradeList()));
+
+            // Act
+            var result = await _controller.Index(null);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResourceSetUpViewModel>(viewResult.Model);
+
+            Assert.Equal(DefaultProfitCentre, model.ProfitCentre);
+            await _appStateService.Received(1).GetSessionAsync<string>(SelectedProfitCentreSessionKey);
+            await _appStateService.Received(1).SetSessionAsync(SelectedProfitCentreSessionKey, DefaultProfitCentre);
+        }
+
+        [Fact]
+        public async Task Index_WhenProfitCentreQueryIsPresentButEmpty_ClearsSelectionInsteadOfUsingSession()
+        {
+            // Arrange
+            var profitCentres = BuildProfitCentreList();
+            SetHttpContext();
+
+            SetHttpContext("?profitCentre=");
+            _profitCentreService.GetProfitCentresAsync()
+                .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
+            _appStateService.GetSessionAsync<string>(SelectedProfitCentreSessionKey)
+                .Returns(DefaultProfitCentre);
+
+            // Act
+            var result = await _controller.Index(string.Empty);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResourceSetUpViewModel>(viewResult.Model);
+
+            Assert.Equal(string.Empty, model.ProfitCentre);
+            await _appStateService.DidNotReceive().GetSessionAsync<string>(SelectedProfitCentreSessionKey);
+            await _appStateService.Received(1).SetSessionAsync(SelectedProfitCentreSessionKey, string.Empty);
+            await _rcGradeService.DidNotReceive().GetProfitCentreGradesAsync(Arg.Any<string>());
         }
 
         #endregion
@@ -528,6 +604,120 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             var value      = GetJsonResultElement(jsonResult);
 
             Assert.False(value.GetProperty("success").GetBoolean());
+        }
+
+        #endregion
+
+        #region DeleteWgGrade Tests
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task DeleteWgGrade_WithMissingWgGrade_ReturnsFailureJson(string wgGrade)
+        {
+            // Act
+            var result = await _controller.DeleteWgGrade(wgGrade);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value      = GetJsonResultElement(jsonResult);
+
+            Assert.False(value.GetProperty("success").GetBoolean());
+            await _wgGradeService.DidNotReceive().DeleteAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteWgGrade_WithValidWgGrade_ReturnsSuccessJson()
+        {
+            // Arrange
+            _wgGradeService.DeleteAsync(DefaultWgGrade)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.DeleteWgGrade(DefaultWgGrade);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value      = GetJsonResultElement(jsonResult);
+
+            Assert.True(value.GetProperty("success").GetBoolean());
+            await _wgGradeService.Received(1).DeleteAsync(DefaultWgGrade);
+        }
+
+        [Fact]
+        public async Task DeleteWgGrade_WhenServiceFails_ReturnsFailureJson()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Associated with staff", Code = "WORKGROUPGRADE_HAS_ASSOCIATIONS" } };
+            _wgGradeService.DeleteAsync(DefaultWgGrade)
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.DeleteWgGrade(DefaultWgGrade);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value      = GetJsonResultElement(jsonResult);
+
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("Associated with staff", value.GetProperty("message").GetString());
+        }
+
+        #endregion
+
+        #region DeleteWgStaff Tests
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task DeleteWgStaff_WithMissingPactId_ReturnsFailureJson(string pactId)
+        {
+            // Act
+            var result = await _controller.DeleteWgStaff(pactId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value      = GetJsonResultElement(jsonResult);
+
+            Assert.False(value.GetProperty("success").GetBoolean());
+            await _wgEmployeeService.DidNotReceive().DeleteWorkGroupEmployeeAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteWgStaff_WithValidPactId_ReturnsSuccessJson()
+        {
+            // Arrange
+            _wgEmployeeService.DeleteWorkGroupEmployeeAsync(DefaultPactId)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.DeleteWgStaff(DefaultPactId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value      = GetJsonResultElement(jsonResult);
+
+            Assert.True(value.GetProperty("success").GetBoolean());
+            await _wgEmployeeService.Received(1).DeleteWorkGroupEmployeeAsync(DefaultPactId);
+        }
+
+        [Fact]
+        public async Task DeleteWgStaff_WhenServiceFails_ReturnsFailureJson()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Selected record cannot be deleted", Code = "WORKGROUPEMPLOYEE_HAS_ASSOCIATIONS" } };
+            _wgEmployeeService.DeleteWorkGroupEmployeeAsync(DefaultPactId)
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.DeleteWgStaff(DefaultPactId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value      = GetJsonResultElement(jsonResult);
+
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("Selected record cannot be deleted", value.GetProperty("message").GetString());
         }
 
         #endregion

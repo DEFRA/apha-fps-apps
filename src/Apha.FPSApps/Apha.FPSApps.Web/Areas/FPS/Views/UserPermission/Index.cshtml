@@ -6,17 +6,18 @@
     var options = ViewBag.PermissionOptions as PermissionOptionsDto ?? new PermissionOptionsDto();
 }
 
-<main id="main-content">
+<main id="main-content" class="isClearfix isNoGlobalScrollBar">
     <div class="container-fluid">
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-                <div class="govuk-grid-row">
-                    <div class="govuk-grid-column-full govuk-!-margin-left-3">
-                        <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2">
+                <div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-3">
+                    <div class="govuk-grid-column-one-full govuk-!-margin-bottom-3">
+                        <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 govuk-!-margin-left-3 isCustomPageHeadings">
                             Maintain User Permissions
                         </h1>
                     </div>
                 </div>
+
 
                 <div class="govuk-grid-row">
                     <div class="wgg-container-fluid">
@@ -30,7 +31,7 @@
                                     <div class="govuk-grid-column-full">
                                         <div class="fps-mup-search-group govuk-grid-column-one-quarter">
                                             <label class="govuk-label govuk-visually-hidden" for="mupSelectedUser">Selected user</label>
-                                            <input id="mupSelectedUser" class="govuk-input govuk-input--width-20" type="text" readonly value="No user selected">
+                                            <input id="mupSelectedUser" class="govuk-input govuk-input--width-20 govuk-!-font-weight-bold" type="text" readonly value="No user selected">
                                         </div>
                                     </div>
                                 </div>
@@ -96,8 +97,8 @@
                                 <!-- Footer note -->
                                 <div class="fps-mup-help sup_border_t_1" role="note" aria-label="User permissions note">
                                     <p class="govuk-body-s govuk-!-margin-bottom-0">
-                                        <strong>Note:</strong> This form is only for updating existing user permissions.<br>
-                                        If new users need to be added, contact the IT dept.
+                                        <strong>Note: This form is only for updating existing user permissions.<br>
+                                        If new users need to be added, contact the IT dept.</strong>
                                     </p>
                                 </div>
                             </section>

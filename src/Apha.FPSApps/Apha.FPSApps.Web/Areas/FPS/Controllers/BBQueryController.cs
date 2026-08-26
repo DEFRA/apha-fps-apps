@@ -1,7 +1,9 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,15 +21,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IWorkGroupService _workGroupService;
         private readonly IBudgetBidsService _budgetBidsService;
         private readonly IProfitCentreService _profitCentreService;
+        private readonly IAppStateService _appStateService;
 
         public BBQueryController(
             IWorkGroupService workGroupService,
             IBudgetBidsService budgetBidsService,
-            IProfitCentreService profitCentreService)
+            IProfitCentreService profitCentreService,
+            IAppStateService appStateService)
         {
             _workGroupService = workGroupService;
             _budgetBidsService = budgetBidsService;
             _profitCentreService = profitCentreService;
+            _appStateService = appStateService;
         }
 
         /// <summary>
@@ -35,18 +40,32 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// Resource Centre is selected. Data is built from the selected Resource Centre and the
         /// current FPS year, mirroring the Budget Bids cross-tab Excel report.
         /// </summary>
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? profitCentre = null)
         {
             var profitCentreOptions = await GetProfitCentreSelectListAsync();
             var year = GetSelectedFpsYear();
 
-            var grid = await BuildGridAsync(null);
+            if (profitCentre == null)
+                profitCentre = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProfitCentre);
+
+            var selected = !string.IsNullOrWhiteSpace(profitCentre)
+                && profitCentreOptions.Any(p => p.Value == profitCentre) ? profitCentre : null;
+
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, selected ?? string.Empty);
+
+            if (selected != null)
+            {
+                var matchedItem = profitCentreOptions.FirstOrDefault(p => p.Value == selected);
+                if (matchedItem != null) matchedItem.Selected = true;
+            }
+
+            var grid = await BuildGridAsync(selected);
 
             return View(new BBQueryViewModel
             {
                 Grid = grid,
                 ProfitCentreOptions = profitCentreOptions,
-                SelectedProfitCentre = null,
+                SelectedProfitCentre = selected,
                 FpsYear = year
             });
         }
@@ -56,13 +75,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// </summary>
         [HttpPost]
         [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> LoadGrid(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
+        public async Task<IActionResult> LoadGrid(string? profitCentre, string? sortBy = null, bool 
+            descending = false, string? filter = null, int page = 1, int pageSize = 10)
         {
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProfitCentre, profitCentre ?? string.Empty);
+
             var grid = await BuildGridAsync(profitCentre, sortBy, descending, filter, page, pageSize);
             return PartialView("_DataGrid", grid);
         }
 
-        private async Task<DataGridConfig<Dictionary<string, string?>>> BuildGridAsync(string? profitCentre, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
+        private async Task<DataGridConfig<Dictionary<string, string?>>> BuildGridAsync(string? profitCentre, 
+            string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 10)
         {
             var rows = new List<Dictionary<string, string?>>();
             var columns = new List<DataGridColumn>
@@ -142,7 +165,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             rows = ApplySorting(rows, sortBy, descending);
 
             var pageNumber = page > 0 ? page : 1;
-            var itemsPerPage = pageSize > 0 ? pageSize : 20;
+            var itemsPerPage = pageSize > 0 ? pageSize : 10;
             var totalRecords = rows.Count;
 
             var pagedRows = rows

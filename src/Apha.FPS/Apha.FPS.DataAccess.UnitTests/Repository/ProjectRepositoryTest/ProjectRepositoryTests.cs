@@ -2387,6 +2387,30 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         #region ApplyProjectFilter Additional Branch Tests
 
         [Fact]
+        public async Task GetPagedProjectsAsync_FilterByProgram_ReturnsMatchingProjects()
+        {
+            // Arrange
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "PP001", Program = "PRG100", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+                new() { ParentProject = "PP002", Program = "PRG101", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+                new() { ParentProject = "PP003", Program = "OTH999", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+            };
+            var repo  = CreateRepository(projectViews: projectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                Filter = "{\"Program\":\"PRG\"}"
+            };
+
+            // Act
+            var result = await repo.GetPagedProjectsAsync(query);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Contains("PRG", p.Program));
+        }
+
+        [Fact]
         public async Task GetPagedProjectsAsync_FilterByOracleProjectCode_ReturnsMatchingProjects()
         {
             // Arrange
@@ -3116,7 +3140,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             decimal? budgetCvl   = null,
             decimal? custIncome  = null,
             decimal? transferIncome    = null,
-            decimal? planCaseWorkDebit = null) => new()
+            decimal? planCaseWorkDebit = null,
+            short? isDefraProject      = 0) => new()
         {
             ParentProject     = parentProject,
             Program           = "P001",
@@ -3129,7 +3154,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             CustIncome        = custIncome,
             TransferIncome    = transferIncome,
             PlanCaseWorkDebit = planCaseWorkDebit,
-            IsDefraProject    = 0,
+            IsDefraProject    = isDefraProject,
             UserEmail         = "test@example.com"
         };
 
@@ -3215,6 +3240,68 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal("CustomerC", items[0].Customer);
             Assert.Equal("CustomerB", items[1].Customer);
             Assert.Equal("CustomerA", items[2].Customer);
+        }
+
+        // -- isdefraproject ------------------------------------------------------
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByIsDefraProject_Ascending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", isDefraProject: 0),
+                MakeSortView("PP002", isDefraProject: -1),
+                MakeSortView("PP003", isDefraProject: 0),
+                MakeSortView("PP004", isDefraProject: -1),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "isdefraproject", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(4, items.Count);
+            Assert.Equal(new short[] { -1, -1, 0, 0 }, items.Select(i => i.IsDefraProject));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByIsDefraProject_Descending()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", isDefraProject: -1),
+                MakeSortView("PP002", isDefraProject: 0),
+                MakeSortView("PP003", isDefraProject: -1),
+                MakeSortView("PP004", isDefraProject: 0),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "isdefraproject", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(4, items.Count);
+            Assert.Equal(new short[] { 0, 0, -1, -1 }, items.Select(i => i.IsDefraProject));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramAsync_SortsByIsDefraProject_GroupingHoldsOnSecondPage()
+        {
+            var views = new List<ProjectView>
+            {
+                MakeSortView("PP001", isDefraProject: 0),
+                MakeSortView("PP002", isDefraProject: -1),
+                MakeSortView("PP003", isDefraProject: 0),
+                MakeSortView("PP004", isDefraProject: -1),
+            };
+            var repo  = CreateRepository(projectViews: views);
+            var query = new PaginationParameters<string>(sortBy: "isdefraproject", descending: false, page: 2, pageSize: 2);
+
+            var result = await repo.GetProjectsByProgramAsync(query, "P001");
+
+            var items = result.Data.ToList();
+            Assert.Equal(2, items.Count);
+            Assert.All(items, i => Assert.Equal((short)0, i.IsDefraProject));
         }
 
         // ?? contract ???????????????????????????????????????????????????????????
@@ -3581,10 +3668,47 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         [Theory]
+        [InlineData("ParentProject", "PP001", "PP001")]
+        [InlineData("ProjectTitle", "Title 1", "PP001")]
+        [InlineData("ShortTitle", "S2", "PP002")]
+        [InlineData("ProjectStatus", "Closed", "PP002")]
+        [InlineData("Account", "ACC1", "PP001")]
+        [InlineData("Description", "Desc 2", "PP002")]
+        [InlineData("AccountDescription", "Account 1", "PP001")]
+        [InlineData("ConstituentAccountCodes", "2000", "PP002")]
+        [InlineData("Freq", "Y", "PP002")]
+        [InlineData("Supplier", "Sup1", "PP001")]
+        [InlineData("Manager", "Mgr2", "PP002")]
+        public async Task GetPagedProjectSpecificQueryAsync_FiltersByTextColumn(string key, string value, string expectedParentProject)
+        {
+            var (views, costs, categories) = MakeSpecificQueryData();
+            var repo = CreateRepository(projectViews: views, additionalCostViews: costs, accountCategories: categories);
+            var filter = Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> { { key, value } });
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10) { Filter = filter };
+
+            var result = await repo.GetPagedProjectSpecificQueryAsync(query);
+
+            var items = result.Data.ToList();
+            Assert.Single(items);
+            Assert.Equal(expectedParentProject, items[0].ParentProject);
+        }
+
+        [Theory]
         [InlineData("account", false, "ACC1")]
         [InlineData("account", true, "ACC2")]
         [InlineData("itemcost", true, "ACC2")]
         [InlineData("manager", false, "ACC1")]
+        [InlineData("program", false, "ACC1")]
+        [InlineData("program", true, "ACC2")]
+        [InlineData("parentproject", true, "ACC2")]
+        [InlineData("projecttitle", false, "ACC1")]
+        [InlineData("shorttitle", true, "ACC2")]
+        [InlineData("projectstatus", false, "ACC2")]
+        [InlineData("description", true, "ACC2")]
+        [InlineData("accountdescription", false, "ACC1")]
+        [InlineData("constituentaccountcodes", true, "ACC2")]
+        [InlineData("freq", false, "ACC1")]
+        [InlineData("supplier", true, "ACC2")]
         public async Task GetPagedProjectSpecificQueryAsync_SortsByColumn(string sortBy, bool descending, string expectedFirstAccount)
         {
             var (views, costs, categories) = MakeSpecificQueryData();
@@ -3710,6 +3834,85 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Assert
             Assert.Equal(1, result.PaginationData.TotalRecords);
             Assert.Equal("DIR1", result.Data.Single().Directorate);
+        }
+
+        [Theory]
+        [InlineData("Directorate", "DIR2", "PP002")]
+        [InlineData("Programme", "P001", "PP001")]
+        [InlineData("ContractNumber", "CON2", "PP002")]
+        [InlineData("Project", "PP001", "PP001")]
+        [InlineData("AccountCat", "ACC2", "PP002")]
+        [InlineData("Description", "Travel", "PP001")]
+        public async Task GetProjectExceptionalCostsPagedAsync_FiltersByTextColumn(string key, string value, string expectedProject)
+        {
+            // Arrange
+            var (projects, programs, additionalCosts) = BuildExceptionalCostData();
+            var repo = CreateRepository(projects: projects, programs: programs, additionalCosts: additionalCosts);
+            var filter = Newtonsoft.Json.JsonConvert.SerializeObject(new Dictionary<string, string> { { key, value } });
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10) { Filter = filter };
+
+            // Act
+            var result = await repo.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal(expectedProject, result.Data.Single().Project);
+        }
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_FilterByNullField_ExcludesRow()
+        {
+            // Arrange - one project's directorate resolves to null so the null-field branch is exercised
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P001", Contract = "CON1", Customer = "DEFRA", ProjectStatus = "Active", IncomeAccountCode = "IA1", Disease = "TB" }
+            };
+            var programs = new List<FpsProgram> { new() { ProgramNo = "P001", Directorate = null } };
+            var additionalCosts = new List<AdditionalCost> { new() { JobCode = "PP001", Account = "ACC1", Description = "Travel", ItemCost = 100m } };
+            var repo = CreateRepository(projects: projects, programs: programs, additionalCosts: additionalCosts);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                Filter = "{\"Directorate\":\"DIR1\"}"
+            };
+
+            // Act
+            var result = await repo.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
+        [Theory]
+        [InlineData("directorate", false, "DIR1")]
+        [InlineData("directorate", true, "DIR2")]
+        [InlineData("programme", true, "P002")]
+        [InlineData("contractnumber", false, "CON1")]
+        [InlineData("project", true, "PP002")]
+        [InlineData("accountcat", false, "ACC1")]
+        [InlineData("description", true, "Travel")]
+        public async Task GetProjectExceptionalCostsPagedAsync_SortsByColumn(string sortBy, bool descending, string expectedFirstValue)
+        {
+            // Arrange
+            var (projects, programs, additionalCosts) = BuildExceptionalCostData();
+            var repo = CreateRepository(projects: projects, programs: programs, additionalCosts: additionalCosts);
+            var query = new PaginationParameters<string>(sortBy: sortBy, descending: descending, page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            var first = result.Data.First();
+            var actual = sortBy switch
+            {
+                "directorate" => first.Directorate,
+                "programme" => first.Programme,
+                "contractnumber" => first.ContractNumber,
+                "project" => first.Project,
+                "accountcat" => first.AccountCat,
+                "description" => first.Description,
+                _ => null
+            };
+            Assert.Equal(expectedFirstValue, actual);
         }
 
         [Fact]

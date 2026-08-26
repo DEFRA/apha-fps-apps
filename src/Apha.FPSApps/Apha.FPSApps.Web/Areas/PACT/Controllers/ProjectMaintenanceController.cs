@@ -150,7 +150,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> Details([FromRoute(Name = "id")] string parentProject)
         {
             TempData["PactOrigin"] = "Project";
-            ViewBag.NavigationSource = TempData["NavigationSource"]?.ToString();
+            ViewBag.NavigationSource = TempData.Peek("NavigationSource")?.ToString();
+            TempData["OriginalParentProject"] = parentProject;
+
             var projectResponse = await _projectService.GetProjectByIdAsync(parentProject);
             if (!projectResponse.Success || projectResponse.Data == null)
                 return NotFound();
@@ -159,7 +161,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var jobCodeGrid = await BuildJobCodeGridAsync(defaultRequest, parentProject);
 
             var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
-            var programs = await _programService.GetAllProgramsAsync();
+            var programs = await _programService.GetAllProgramsForAllUsersAsync();
             var statuses = await _projectService.GetAllStatusesAsync();
             var diseases = await _projectService.GetAllDiseasesAsync();
             var customers = await _projectService.GetAllCustomersAsync();
@@ -206,6 +208,16 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return BadRequest("Parent project and job code are required");
 
             var gridConfig = await BuildTimeCodeGridAsync(request, parentProject, jobCodeId);
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        [HttpPost]
+        public IActionResult LoadTimeCodeEmptyGrid(string parentProject)
+        {
+            if (String.IsNullOrEmpty(parentProject))
+                return BadRequest("Parent project is required");
+
+            var gridConfig = BuildEmptyTimeCodeGrid(parentProject);
             return PartialView("_DataGrid", gridConfig);
         }
 

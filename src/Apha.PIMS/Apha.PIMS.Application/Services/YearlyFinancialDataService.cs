@@ -20,6 +20,27 @@ namespace Apha.PIMS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
+        public async Task<PaginatedResult<YearlyFinancialDataDto>> GetAllAsync(string project, QueryParameters<string> parameters)
+        {
+            if (string.IsNullOrWhiteSpace(project))
+                throw new ArgumentException("Project must not be null or empty.", nameof(project));
+
+            if (parameters is null)
+                throw new ArgumentException("Query parameters must not be null.", nameof(parameters));
+
+            PaginationParameters<string> paginationParams =
+                _mapper.Map<PaginationParameters<string>>(parameters);
+
+            PagedData<YearlyFinancialData> pagedData =
+                await _repository.GetAllAsync(project, paginationParams);
+
+            return new PaginatedResult<YearlyFinancialDataDto>
+            {
+                Data = _mapper.Map<List<YearlyFinancialDataDto>>(pagedData.Data),
+                PaginationData = _mapper.Map<PaginationDto>(pagedData.PaginationData)
+            };
+        }
+
         public async Task<PaginatedResult<YearlyFinancialDataDto>> GetAllAsync(QueryParameters<string> parameters)
         {
             if (parameters is null)
@@ -102,8 +123,10 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<YearlyFinancialDataDto>(updated);
         }
 
-        private List<BusinessValidationError> ValidateForSave(YearlyFinancialDataDto dto)
+        private static List<BusinessValidationError> ValidateForSave(YearlyFinancialDataDto dto)
         {
+            const decimal maxNumeric19_4Value = 999999999999999.9999m;
+
             var errors = new List<BusinessValidationError>();
 
             if (dto.Year <= 0)
@@ -121,7 +144,33 @@ namespace Apha.PIMS.Application.Services
                     "Please enter reason for adjustment figure, (or remove the adjustment figure).",
                     "ADJUSTMENT_COMMENT_REQUIRED"));
 
+            ValidateDecimalRange(dto.BfBudget, nameof(dto.BfBudget), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.PyBudget, nameof(dto.PyBudget), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.VlaBudget, nameof(dto.VlaBudget), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.Seedcorn, nameof(dto.Seedcorn), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.PayCosts, nameof(dto.PayCosts), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.NonPayOhCosts, nameof(dto.NonPayOhCosts), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.TestCosts, nameof(dto.TestCosts), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.AnimalCosts, nameof(dto.AnimalCosts), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.NonAnimalCosts, nameof(dto.NonAnimalCosts), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.Adjustment, nameof(dto.Adjustment), maxNumeric19_4Value, errors);
+            ValidateDecimalRange(dto.ActualExpenditure, nameof(dto.ActualExpenditure), maxNumeric19_4Value, errors);
+
             return errors;
+        }
+
+        private static void ValidateDecimalRange(
+            decimal? value,
+            string fieldName,
+            decimal maxValue,
+            List<BusinessValidationError> errors)
+        {
+            if (value.HasValue && Math.Abs(value.Value) > maxValue)
+            {
+                errors.Add(new BusinessValidationError(
+                    $"{fieldName} exceeds the maximum allowed value of {maxValue:N4}.",
+                    "DECIMAL_OVERFLOW"));
+            }
         }
 
         private async Task ApplyLegacyCostingRulesAsync(YearlyFinancialDataDto dto)

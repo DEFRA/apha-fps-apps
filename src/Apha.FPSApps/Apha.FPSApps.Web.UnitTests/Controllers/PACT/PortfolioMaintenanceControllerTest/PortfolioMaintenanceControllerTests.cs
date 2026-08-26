@@ -65,7 +65,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioMaintenanceContro
                 [
                     new ProjectDto { ParentProject = "PP1", ProjectTitle = "Portfolio One" }
                 ]));
-            _programService.GetAllProgramsAsync()
+            _programService.GetAllProgramsForAllUsersAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(
                 [
                     new ProgramDto { ProgramNo = "P001", ProgramName = "Programme A" }
@@ -116,7 +116,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioMaintenanceContro
         {
             _projectService.GetAllPactProjectsAsync()
                 .Returns(new ApiResponseDto<List<ProjectDto>> { Success = true });
-            _programService.GetAllProgramsAsync()
+            _programService.GetAllProgramsForAllUsersAsync()
                 .Returns(new ApiResponseDto<IEnumerable<ProgramDto>> { Success = true });
             _employeeService.GetAllPactManagersAsync()
                 .Returns(new ApiResponseDto<List<ManagerDto>> { Success = true });

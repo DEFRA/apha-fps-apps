@@ -38,9 +38,9 @@ namespace Apha.FPS.Application.Services
             ArgumentException.ThrowIfNullOrWhiteSpace(accountCategory.AccShortName);
             ArgumentException.ThrowIfNullOrWhiteSpace(accountCategory.AccountType);
 
-            var existing = await _repository.GetByIdAsync(accountCategory.AccShortName);
+            var exists = await _repository.ExistsByAccShortNameAsync(accountCategory.AccShortName);
 
-            if (existing != null)
+            if (exists)
                 throw new InvalidOperationException(
                     $"An account category with AccShortName '{accountCategory.AccShortName}' already exists.");
 

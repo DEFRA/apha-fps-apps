@@ -8,9 +8,9 @@
     <div class="govuk-main-wrapper govuk-!-padding-top-0">
 
         @* Page title *@
-        <div class="govuk-grid-row sup_margin_left_right_10">
-            <div class="govuk-grid-column-full">
-                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
+        <div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-3">
+            <div class="govuk-grid-column-one-full govuk-!-margin-bottom-3">
+                <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 govuk-!-margin-left-6 isCustomPageHeadings">
                     Edit Portfolio Details
                 </h1>
             </div>
@@ -36,10 +36,6 @@
                     </div>
                     <div class="govuk-grid-column-one-half">
                         <div class="action-buttons">
-                            <button class="govuk-button sup_margin_0" type="button"
-                                    onclick="addAnotherPortfolio()">
-                                Add Another Portfolio
-                            </button>
                             <button class="govuk-button sup_margin_0" type="button"
                                     onclick="planPortfolio()">
                                 Plan This Portfolio
@@ -86,16 +82,21 @@
 
                             @* Manager — searchable multi-column dropdown *@
                             <div class="govuk-form-group sup_margin_0" id="manager-dropdown" style="position: relative;">
-                                <label class="govuk-label required" asp-for="Manager">Manager:</label>
+                                <label id="ManagerLabel" class="govuk-label required" asp-for="Manager">Manager:</label>
                                 <input type="text" id="manager-input"
                                        class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
-                                       value="@Model.Manager" readonly>
+                                       value="@Model.Manager" readonly
+                                       aria-labelledby="ManagerLabel"
+                                       aria-haspopup="listbox"
+                                       aria-expanded="false"
+                                       aria-controls="manager-body" />
                                 <input type="hidden" asp-for="Manager" id="manager-value" />
 
                                 <div class="multicolumn-dropdown-panel" id="manager-panel" style="display:none;">
                                     <div class="search-box-wrapper">
+                                        <label for="manager-search" class="govuk-label govuk-visually-hidden">Search managers</label>
                                         <input type="text" class="search-box" id="manager-search"
-                                               placeholder="Type to search manager">
+                                               placeholder="Type to search manager" aria-label="Search managers">
                                     </div>
                                     <table>
                                         <thead>
@@ -103,12 +104,13 @@
                                                 <th style="padding:6px 8px; text-align:left;">Name</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="manager-body">
+                                        <tbody id="manager-body" role="listbox" aria-label="Manager results">
                                             @foreach (var item in Model.ManagerList)
                                             {
                                                 if (!string.IsNullOrEmpty(item.Value))
                                                 {
-                                                    <tr data-value="@item.Value" class="manager-row">
+                                                    var mId = "manager_row_" + item.Value.Replace(" ", "_");
+                                                    <tr id="@mId" data-value="@item.Value" class="manager-row" role="option" tabindex="-1">
                                                         <td>@item.Text</td>
                                                     </tr>
                                                 }
@@ -159,16 +161,21 @@
 
                             @* Contract — searchable multi-column dropdown *@
                             <div class="govuk-form-group sup_margin_0" id="contract-dropdown" style="position: relative;">
-                                <label class="govuk-label required" asp-for="Contract">Contract No:</label>
+                                <label id="ContractLabel" class="govuk-label required" asp-for="Contract">Contract No:</label>
                                 <input type="text" id="contract-input"
                                        class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
-                                       value="@Model.Contract" readonly>
+                                       value="@Model.Contract" readonly
+                                       aria-labelledby="ContractLabel"
+                                       aria-haspopup="listbox"
+                                       aria-expanded="false"
+                                       aria-controls="contract-body" />
                                 <input type="hidden" asp-for="Contract" id="contract-value" />
 
                                 <div class="multicolumn-dropdown-panel" id="contract-panel" style="display:none;">
                                     <div class="search-box-wrapper">
+                                        <label for="contract-search" class="govuk-label govuk-visually-hidden">Search contracts</label>
                                         <input type="text" class="search-box" id="contract-search"
-                                               placeholder="Type to search contract">
+                                               placeholder="Type to search contract" aria-label="Search contracts">
                                     </div>
                                     <table>
                                         <thead>
@@ -176,12 +183,13 @@
                                                 <th style="padding:6px 8px; text-align:left;">Name</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="contract-body">
+                                        <tbody id="contract-body" role="listbox" aria-label="Contract results">
                                             @foreach (var item in Model.ContractList)
                                             {
                                                 if (!string.IsNullOrEmpty(item.Value))
                                                 {
-                                                    <tr data-value="@item.Value" class="contract-row">
+                                                    var cId = "contract_row_" + item.Value.Replace(" ", "_");
+                                                    <tr id="@cId" data-value="@item.Value" class="contract-row" role="option" tabindex="-1">
                                                         <td>@item.Text</td>
                                                     </tr>
                                                 }
@@ -278,7 +286,7 @@
 
         function planPortfolio() {
             var parentProject = document.getElementById('portfolioNewForm').dataset.parentProject;
-            window.location.href = '@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })?parentProject=' + encodeURIComponent(parentProject);
+            window.location.href = '@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })?projectCode=' + encodeURIComponent(parentProject);
         }
 
         function setupComponents() {

@@ -31,16 +31,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [MaxLength(10)]
         public string? Program { get; set; }
 
-        [Display(Name = "Cost Centre")]
+        [Display(Name = "CostCentre")]
         [GridColumn(Order = 3, Width = 130, Type = GridColumnType.Number, IsFilterable = true)]
         public double? CostCentre { get; set; }
 
-        [Display(Name = "Oracle Project Code")]
+        [Display(Name = "OracleProjectCode")]
         [GridColumn(Order = 4, Width = 180, Type = GridColumnType.Text, IsFilterable = true)]
         [MaxLength(50)]
         public string? OracleProjectCode { get; set; }
 
-        [Display(Name = "Sub Account Code")]
+        [Display(Name = "SubAccountCode")]
         [GridColumn(Order = 5, Width = 220, Type = GridColumnType.Text, IsFilterable = true)]
         [MaxLength(50)]
         public string? SubAccountCode { get; set; }

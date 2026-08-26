@@ -240,5 +240,57 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupGradeApi
         }
 
         #endregion
+
+        #region DeleteAsync (maintain) Tests
+
+        [Fact]
+        public async Task DeleteAsync_WithSuccessResponse_ReturnsSuccess()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _http.DeleteAsync<bool?>(Arg.Is<string>(url => url.Contains(DefaultWgGrade))).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.DeleteAsync(DefaultWgGrade);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            await _http.Received(1).DeleteAsync<bool?>(
+                Arg.Is<string>(url => url.Contains(DefaultWgGrade)));
+        }
+
+        [Fact]
+        public async Task DeleteAsync_WhenApiReturnsBusinessValidationFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?>
+            {
+                Success = false,
+                Errors  = new List<ApiError> { new() { Message = "Associated with staff records", Code = "WORKGROUPGRADE_HAS_ASSOCIATIONS" } }
+            };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto> { new() { Message = "Associated with staff records", Code = "WORKGROUPGRADE_HAS_ASSOCIATIONS" } },
+                Meta    = new ApiMetaDto()
+            };
+
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.DeleteAsync(DefaultWgGrade);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Contains(result.Errors!, e => e.Code == "WORKGROUPGRADE_HAS_ASSOCIATIONS");
+        }
+
+        #endregion
     }
 }

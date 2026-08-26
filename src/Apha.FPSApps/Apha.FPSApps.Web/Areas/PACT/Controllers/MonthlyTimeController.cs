@@ -408,7 +408,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> DeleteAllStagingRecords()
         {
             var response = await _monthlyTimeService.DeleteAllStagingByUserAsync();
-            return Json(new { success = response.Success && response.Data });
+            return Json(new
+            {
+                success = response.Success && response.Data,
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to delete staging records."
+            });
         }
 
         /// <summary>
@@ -429,6 +433,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// Imports a monthly time file into staging.
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Import(IFormFile file, short importType)
         {
             if (!ModelState.IsValid)
@@ -674,7 +679,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             var response = await _monthService.GetAllMonthsAsync();
             return response.Success && response.Data != null
-                ? response.Data.OrderBy(x => x.Monthnumber).Select(x => new SelectListItem(x.Monthname, x.Monthnumber.ToString())).ToList()
+                ? response.Data.OrderBy(x => x.Monthnumber).Select(x => new SelectListItem(x.Monthnumber.ToString(), x.Monthnumber.ToString())).ToList()
                 : [];
         }
     }

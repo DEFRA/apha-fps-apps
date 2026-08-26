@@ -621,6 +621,66 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
             Assert.Equal(2, result.Data.Count());
         }
 
+        [Theory]
+        [InlineData("alpha")]
+        [InlineData("ALPHA")]
+        [InlineData("AlPhA")]
+        public async Task GetAllProfitCentresPagedAsync_FiltersByProfitCentreName_IsCaseInsensitive(string filterValue)
+        {
+            var entities = new List<ProfitCentre>
+            {
+                BuildEntity("PC01", "Alpha Centre"),
+                BuildEntity("PC02", "Beta Centre"),
+                BuildEntity("PC03", "Alpha North")
+            };
+            var repo = CreateRepository(profitCentres: entities);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { "ProfitCentreName", filterValue } });
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllProfitCentresPagedAsync(query);
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Theory]
+        [InlineData("pc0")]
+        [InlineData("PC0")]
+        [InlineData("Pc0")]
+        public async Task GetAllProfitCentresPagedAsync_FiltersByProfitCentreId_IsCaseInsensitive(string filterValue)
+        {
+            var entities = new List<ProfitCentre>
+            {
+                BuildEntity("PC01", "Alpha Centre"),
+                BuildEntity("PC02", "Beta Centre"),
+                BuildEntity("XX03", "Alpha North")
+            };
+            var repo = CreateRepository(profitCentres: entities);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { "ProfitCentreId", filterValue } });
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllProfitCentresPagedAsync(query);
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Theory]
+        [InlineData("div1")]
+        [InlineData("DIV1")]
+        [InlineData("Div1")]
+        public async Task GetAllProfitCentresPagedAsync_FiltersByDivision_IsCaseInsensitive(string filterValue)
+        {
+            var entities = new List<ProfitCentre>
+            {
+                BuildEntity("PC01", "Alpha Centre", "DIV1"),
+                BuildEntity("PC02", "Beta Centre", "DIV2"),
+                BuildEntity("PC03", "Alpha North", "DIV1")
+            };
+            var repo = CreateRepository(profitCentres: entities);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { "Division", filterValue } });
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllProfitCentresPagedAsync(query);
+            Assert.Equal(2, result.Data.Count());
+        }
+
         [Fact]
         public async Task GetAllProfitCentresPagedAsync_ThrowsJsonException_WhenFilterIsInvalidJson()
         {
@@ -1127,6 +1187,152 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
             // Assert
             Assert.Equal(2, result.Data.Count());
             Assert.All(result.Data, item => Assert.Equal("WG001", item.WorkGroup));
+        }
+
+        [Theory]
+        [InlineData("GradeCode", "g1")]
+        [InlineData("Name", "alice")]
+        [InlineData("Manager", "manager01")]
+        [InlineData("Program", "prog01")]
+        [InlineData("JobCode", "job001")]
+        [InlineData("ProjectStatus", "active")]
+        public async Task GetPagedWgStaffPlanAsync_FiltersByField_IsCaseInsensitive(string field, string filterValue)
+        {
+            // Arrange
+            const string workGroup = "WG001";
+            var staffPlanViews = new List<WgStaffPlanView>
+            {
+                BuildWgStaffPlanView(workGroup, "G1", "Alice"),
+                BuildWgStaffPlanView(workGroup, "G9", "Zebra")
+            };
+            // Give the second row non-matching values so only the first row matches
+            staffPlanViews[1].Manager = "Other";
+            staffPlanViews[1].Program = "OTHER";
+            staffPlanViews[1].JobCode = "OTHER";
+            staffPlanViews[1].ProjectStatus = "Closed";
+
+            var repo = CreateRepositoryWithWgStaffPlan(staffPlanViews);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { field, filterValue } });
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+
+            // Act
+            var result = await repo.GetPagedWgStaffPlanAsync(parameters, workGroup);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("Alice", result.Data.First().Name);
+        }
+
+        [Fact]
+        public async Task GetPagedWgStaffPlanAsync_FiltersByWorkGroupInFilter_IsCaseInsensitive()
+        {
+            // Arrange
+            const string workGroup = "WG001";
+            var staffPlanViews = new List<WgStaffPlanView>
+            {
+                BuildWgStaffPlanView(workGroup, "G1", "Alice"),
+                BuildWgStaffPlanView(workGroup, "G2", "Bob")
+            };
+            var repo = CreateRepositoryWithWgStaffPlan(staffPlanViews);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { "WorkGroup", "wg001" } });
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+
+            // Act
+            var result = await repo.GetPagedWgStaffPlanAsync(parameters, workGroup);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("{}")]
+        [InlineData("null")]
+        public async Task GetPagedWgStaffPlanAsync_WithEmptyOrNoOpFilter_ReturnsAllRecords(string filter)
+        {
+            // Arrange
+            const string workGroup = "WG001";
+            var staffPlanViews = new List<WgStaffPlanView>
+            {
+                BuildWgStaffPlanView(workGroup, "G1", "Alice"),
+                BuildWgStaffPlanView(workGroup, "G2", "Bob")
+            };
+            var repo = CreateRepositoryWithWgStaffPlan(staffPlanViews);
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+
+            // Act
+            var result = await repo.GetPagedWgStaffPlanAsync(parameters, workGroup);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Theory]
+        [InlineData("workgroup", false)]
+        [InlineData("workgroup", true)]
+        [InlineData("gradecode", false)]
+        [InlineData("gradecode", true)]
+        [InlineData("manager", false)]
+        [InlineData("manager", true)]
+        [InlineData("program", false)]
+        [InlineData("program", true)]
+        [InlineData("jobcode", false)]
+        [InlineData("jobcode", true)]
+        [InlineData("projectstatus", false)]
+        [InlineData("projectstatus", true)]
+        [InlineData("plannedhours", false)]
+        [InlineData("plannedhours", true)]
+        [InlineData("fee", false)]
+        [InlineData("fee", true)]
+        [InlineData("UnknownColumn", false)]
+        public async Task GetPagedWgStaffPlanAsync_SortsByField_ReturnsOrderedResults(string sortBy, bool descending)
+        {
+            // Arrange
+            const string workGroup = "WG001";
+            var first = BuildWgStaffPlanView(workGroup, "G1", "Alice");
+            first.Manager = "AAA";
+            first.Program = "AAA";
+            first.JobCode = "AAA";
+            first.ProjectStatus = "AAA";
+            first.PlannedHours = 10.0;
+            first.Fee = 100m;
+
+            var second = BuildWgStaffPlanView(workGroup, "G2", "Bob");
+            second.Manager = "ZZZ";
+            second.Program = "ZZZ";
+            second.JobCode = "ZZZ";
+            second.ProjectStatus = "ZZZ";
+            second.PlannedHours = 20.0;
+            second.Fee = 200m;
+
+            var staffPlanViews = new List<WgStaffPlanView> { second, first };
+            var repo = CreateRepositoryWithWgStaffPlan(staffPlanViews);
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = sortBy,
+                Descending = descending
+            };
+
+            // Act
+            var result = await repo.GetPagedWgStaffPlanAsync(parameters, workGroup);
+
+            // Assert
+            var data = result.Data.ToList();
+            Assert.Equal(2, data.Count);
+
+            // "workgroup" sort ties because both rows share the same toolbar-filtered
+            // work group, so ordering is not deterministic on Name for that branch.
+            if (sortBy == "workgroup")
+                return;
+
+            if (descending)
+                Assert.Equal("Bob", data[0].Name);
+            else
+                Assert.Equal("Alice", data[0].Name);
         }
 
         #endregion

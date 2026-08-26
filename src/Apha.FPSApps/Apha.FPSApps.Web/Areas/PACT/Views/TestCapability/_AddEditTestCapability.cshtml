@@ -56,12 +56,13 @@
             @if (isEdit)
             {
                 <input type="hidden" name="WorkGroup" value="@Model.WorkGroup" />
-                <input class="govuk-input govuk-!-font-size-16" value="@Model.WorkGroup" disabled />
+                <input class="govuk-input govuk-!-font-size-16" aria-label="Test Workgroup" value="@Model.WorkGroup" disabled />
             }
             else
             {
                 <select class="govuk-select govuk-!-font-size-16" asp-for="WorkGroup"
                         asp-items="@(ViewBag.WorkGroupOptions as List<SelectListItem>)"
+                        aria-label="test workgroup select"
                         style="width:100%;" required>
                     <option value="">-- Select Work Group --</option>
                 </select>

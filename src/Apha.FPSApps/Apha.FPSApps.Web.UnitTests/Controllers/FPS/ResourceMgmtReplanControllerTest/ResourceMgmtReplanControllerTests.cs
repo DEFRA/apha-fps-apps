@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -26,6 +27,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceMgmtReplanControlle
         private readonly IWorkGroupService _workGroupService;
         private readonly IProjectService _projectService;
         private readonly IPlanStaffZTCodeService _planStaffZTCodeService;
+        private readonly IAppStateService _appStateService;
         private readonly ResourceMgmtReplanController _controller;
 
         public ResourceMgmtReplanControllerTests()
@@ -35,13 +37,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceMgmtReplanControlle
             _workGroupService = Substitute.For<IWorkGroupService>();
             _projectService = Substitute.For<IProjectService>();
             _planStaffZTCodeService = Substitute.For<IPlanStaffZTCodeService>();
+            _appStateService = Substitute.For<IAppStateService>();
 
             _controller = new ResourceMgmtReplanController(
                 _mapper,
                 _profitCentreService,
                 _workGroupService,
                 _projectService,
-                _planStaffZTCodeService);
+                _planStaffZTCodeService,
+                _appStateService);
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
@@ -83,35 +87,35 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceMgmtReplanControlle
         public void Constructor_WithNullMapper_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new ResourceMgmtReplanController(
-                null!, _profitCentreService, _workGroupService, _projectService, _planStaffZTCodeService));
+                null!, _profitCentreService, _workGroupService, _projectService, _planStaffZTCodeService, _appStateService));
         }
 
         [Fact]
         public void Constructor_WithNullProfitCentreService_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new ResourceMgmtReplanController(
-                _mapper, null!, _workGroupService, _projectService, _planStaffZTCodeService));
+                _mapper, null!, _workGroupService, _projectService, _planStaffZTCodeService, _appStateService));
         }
 
         [Fact]
         public void Constructor_WithNullWorkGroupService_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new ResourceMgmtReplanController(
-                _mapper, _profitCentreService, null!, _projectService, _planStaffZTCodeService));
+                _mapper, _profitCentreService, null!, _projectService, _planStaffZTCodeService, _appStateService));
         }
 
         [Fact]
         public void Constructor_WithNullProjectService_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new ResourceMgmtReplanController(
-                _mapper, _profitCentreService, _workGroupService, null!, _planStaffZTCodeService));
+                _mapper, _profitCentreService, _workGroupService, null!, _planStaffZTCodeService, _appStateService));
         }
 
         [Fact]
         public void Constructor_WithNullPlanStaffZTCodeService_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new ResourceMgmtReplanController(
-                _mapper, _profitCentreService, _workGroupService, _projectService, null!));
+                _mapper, _profitCentreService, _workGroupService, _projectService, null!, _appStateService));
         }
 
         #endregion

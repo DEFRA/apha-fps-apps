@@ -233,21 +233,23 @@
 </div>
 
 @* ── Email send results (populated by AJAX) ──────────────────────────────── *@
-<div id="sendResultsContainer" class="govuk-!-margin-top-4" style="display:none;">
-    <div class="govuk-body">
-        <h2 class="govuk-heading-m">Email Send Results</h2>
-        <div style="overflow-x: auto;">
-            <table class="govuk-table" id="sendResultsTable">
-                <thead class="govuk-table__head">
-                    <tr class="govuk-table__row">
-                        <th scope="col" class="govuk-table__header" style="width:200px">Work Group</th>
-                        <th scope="col" class="govuk-table__header" style="width:250px">Email Recipient</th>
-                        <th scope="col" class="govuk-table__header" style="width:100px">Status</th>
-                        <th scope="col" class="govuk-table__header">Reason / Note</th>
-                    </tr>
-                </thead>
-                <tbody class="govuk-table__body" id="sendResultsBody"></tbody>
-            </table>
+<div id="sendResultsContainer" class="govuk-grid-row govuk-!-margin-top-4" style="display:none;">
+    <div class="govuk-grid-column-full govuk-!-margin-left-4">
+        <div class="govuk-body">
+            <h2 class="govuk-heading-s">Email Send Results</h2>
+            <div style="overflow-x: auto;">
+                <table class="govuk-table" id="sendResultsTable">
+                    <thead class="govuk-table__head">
+                        <tr class="govuk-table__row">
+                            <th scope="col" class="govuk-table__header" style="width:200px">Work Group</th>
+                            <th scope="col" class="govuk-table__header" style="width:250px">Email Recipient</th>
+                            <th scope="col" class="govuk-table__header" style="width:100px">Status</th>
+                            <th scope="col" class="govuk-table__header">Reason / Note</th>
+                        </tr>
+                    </thead>
+                    <tbody class="govuk-table__body" id="sendResultsBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -303,7 +305,7 @@
                                 '<td class="govuk-table__cell">' + (p.monthNumber ?? '') + '</td>';
                             tr.addEventListener('click', function () {
                                 input.value         = p.period + ' - ' + p.monthName;
-                                hidden.value        = p.monthNumber;
+                                hidden.value = p.period;
                                 panel.style.display = 'none';
                             });
                             tbody.appendChild(tr);

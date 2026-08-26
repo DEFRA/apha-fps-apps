@@ -559,11 +559,6 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                     model = _mapper.Map<RadTrackProgItem>(result.Data);
             }
 
-            var programsResult = await _service.GetRadTrackProgProgramsAsync();
-            ViewBag.ProgramOptions = programsResult.Success && programsResult.Data != null
-                ? programsResult.Data.Select(p => new SelectListItem { Value = p, Text = p }).ToList()
-                : new List<SelectListItem>();
-
             ViewBag.IsAddingNew = string.IsNullOrWhiteSpace(program);
             return PartialView("_AddEditRadTrackProg", model);
         }

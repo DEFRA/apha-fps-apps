@@ -121,6 +121,11 @@ function readDropdownJsonData(selector) {
     }
 }
 
+function getAntiForgeryToken() {
+    const el = document.querySelector('input[name="__RequestVerificationToken"]');
+    return el ? el.value : '';
+}
+
 function resetTimeCodeOptions() {
     $('#ddTimeCode').val('');
     if (window.monthlyTimeTimeCodeDropdown) {
@@ -407,7 +412,9 @@ function initLiveModalDropdowns(existingWorkGroup, existingName, existingPactId)
             },
             onClear: function () {
                 $('#LiveWorkGroup').val('');
-                if (window.liveNameDropdown) window.liveNameDropdown.updateData([]);
+                if (window.liveNameDropdown) {
+                    window.liveNameDropdown.updateData([]);
+                }
                 $('#LivePactStaffId').val('');
                 $('#LiveName').val('');
             }
@@ -622,11 +629,6 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
                 workGroupInput.removeClass('govuk-input--error');
                 errorMsg.hide().text('');
 
-                const isInitialRestore = existingWorkGroup && selectedWorkGroup === existingWorkGroup;
-                if (isInitialRestore) {
-                    return;
-                }
-
                 loadStagingModalStaffByWorkGroup(selectedWorkGroup);
                 loadStagingModalTimeCodesByWorkGroup(selectedWorkGroup);
             },
@@ -634,8 +636,8 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
                 $('#StagingWorkGroup').val('');
                 $('#StagingPactId').val('');
                 loadStagingModalStaffByWorkGroup('');
-                loadAllStagingModalTimeCodes();
-                loadAllStagingModalProjects();
+                resetStagingModalTimeCodeOptions();
+                resetStagingModalParentProjectOptions();
             }
         }
     });
@@ -719,14 +721,8 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
                 }
             },
             onClear: function () {
-                const workGroup = $('#StagingWorkGroup').val();
                 $('#StagingTimeCode').val('');
-
-                if (workGroup) {
-                    resetStagingModalParentProjectOptions();
-                } else {
-                    loadAllStagingModalProjects();
-                }
+                resetStagingModalParentProjectOptions();
             }
         }
     });
@@ -768,11 +764,11 @@ function initStagingModalDropdowns(existingWorkGroup, existingName, existingPact
     if (existingWorkGroup) {
         window.stagingWorkGroupDropdown.setValue(existingWorkGroup);
         loadStagingModalStaffByWorkGroup(existingWorkGroup, existingName, existingPactId);
-        loadAllStagingModalTimeCodes(existingTimeCode, existingParentProject);
+        loadStagingModalTimeCodesByWorkGroup(existingWorkGroup, existingTimeCode, existingParentProject);
     } else {
-        loadStagingModalStaffByWorkGroup($('#StagingWorkGroup').val());
-        loadAllStagingModalTimeCodes();
-        loadAllStagingModalProjects();
+        const currentWorkGroup = $('#StagingWorkGroup').val();
+        loadStagingModalStaffByWorkGroup(currentWorkGroup);
+        loadStagingModalTimeCodesByWorkGroup(currentWorkGroup);
     }
 }
 
@@ -810,9 +806,10 @@ function loadStagingModalStaffByWorkGroup(workGroup, restoreName, restorePactId)
                     $('#StagingPactStaffId').val(match.spNumber);
                     $('#StagingPactId').val(match.pactId);
                 } else {
-                    // Employee not in list (e.g. inactive) — show stored text directly
+                    // No matching selectable staff item in dropdown:
+                    // keep name text, but do not show Staff Pact ID unless a dropdown item is selected.
                     $('#StagingName').val(restoreName || '');
-                    $('#StagingPactStaffId').val(restorePactId || '');
+                    $('#StagingPactStaffId').val('');
                     $('#StagingPactId').val(restorePactId || '');
                 }
             }
@@ -824,7 +821,7 @@ function loadStagingModalStaffByWorkGroup(workGroup, restoreName, restorePactId)
     });
 }
 
-function loadStagingModalTimeCodesByWorkGroup(workGroup, restoreTimeCode, loadProjectsOnRestore = true) {
+function loadStagingModalTimeCodesByWorkGroup(workGroup, restoreTimeCode, restoreParentProject) {
     resetStagingModalTimeCodeOptions();
     resetStagingModalParentProjectOptions();
 
@@ -842,11 +839,11 @@ function loadStagingModalTimeCodesByWorkGroup(workGroup, restoreTimeCode, loadPr
                 window.stagingTimeCodeDropdown.updateData(items);
 
                 if (restoreTimeCode && items.some(function (item) { return item.value === restoreTimeCode; })) {
+                    window._stagingSkipTimeCodeOnSelect = true;
                     window.stagingTimeCodeDropdown.setValue(restoreTimeCode);
+                    window._stagingSkipTimeCodeOnSelect = false;
                     $('#StagingTimeCode').val(restoreTimeCode);
-                    if (loadProjectsOnRestore) {
-                        loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, restoreTimeCode);
-                    }
+                    loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, restoreTimeCode, restoreParentProject);
                 }
             }
         },
@@ -938,8 +935,6 @@ function loadAllStagingModalTimeCodes(restoreTimeCode, restoreParentProject) {
                     const workGroup = $('#StagingWorkGroup').val();
                     if (workGroup) {
                         loadStagingModalParentProjectsByWorkGroupAndTimeCode(workGroup, restoreTimeCode, restoreParentProject);
-                    } else if (restoreParentProject !== undefined) {
-                        loadAllStagingModalProjects(restoreParentProject);
                     }
                 }
             }
@@ -1097,13 +1092,16 @@ function confirmImportType() {
 }
 
 function importMonthlyTime(file) {
+    const antiForgeryToken = getAntiForgeryToken();
     const formData = new FormData();
     formData.append('file', file);
     formData.append('importType', window.monthlyTimeImportType || '2');
+    formData.append('__RequestVerificationToken', antiForgeryToken);
 
     $.ajax({
         url: '/PACT/MonthlyTime/Import',
         type: 'POST',
+        headers: { 'RequestVerificationToken': antiForgeryToken },
         data: formData,
         processData: false,
         contentType: false,
@@ -1129,6 +1127,7 @@ function validateMonthlyTime() {
         type: 'POST',
         success: function (response) {
             if (response.success) {
+                window.monthlyTimePassedFilter = null;
                 reloadStagingGrid();
                 showAlertMessage(response.message, AlertType.SUCCESS);
             } else {
@@ -1148,6 +1147,7 @@ function makeLiveMonthlyTime() {
         type: 'POST',
         success: function (response) {
             if (response.success) {
+                window.monthlyTimePassedFilter = null;
                 reloadLiveGrid();
                 reloadStagingGrid();
                 showAlertMessage(response.message, AlertType.SUCCESS);
@@ -1171,21 +1171,22 @@ function deleteAllMonthlyTime() {
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
+                    window.monthlyTimePassedFilter = null;
                     reloadStagingGrid();
-                    showAlertMessage('Imported records deleted successfully.', AlertType.SUCCESS);
+                    showAlertMessage('Staging records deleted successfully.', AlertType.SUCCESS);
                 } else {
-                    showAlertMessage('Delete all failed.', AlertType.ERROR);
+                    showAlertMessage(response.message || 'Failed to delete staging records.', AlertType.ERROR);
                 }
             },
             error: function () {
-                showAlertMessage('An error occurred while deleting imported records.', AlertType.ERROR);
+                showAlertMessage('An error occurred while deleting staging records.', AlertType.ERROR);
             }
         });
     });
 }
 
 function deleteFailedMonthlyTime() {
-    showGovukConfirm('Delete failed imported records for the current user?').then(function (confirmed) {
+    showGovukConfirm('Delete failed staging records for the current user?').then(function (confirmed) {
         if (!confirmed) {
             return;
         }
@@ -1194,14 +1195,15 @@ function deleteFailedMonthlyTime() {
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
+                    window.monthlyTimePassedFilter = null;
                     reloadStagingGrid();
-                    showAlertMessage('Failed imported records deleted successfully.', AlertType.SUCCESS);
+                    showAlertMessage('Failed staging records deleted successfully.', AlertType.SUCCESS);
                 } else {
-                    showAlertMessage(response.message || 'Delete failed records failed.', AlertType.ERROR);
+                    showAlertMessage(response.message || 'Failed to delete failed staging records.', AlertType.ERROR);
                 }
             },
             error: function () {
-                showAlertMessage('An error occurred while deleting failed imported records.', AlertType.ERROR);
+                showAlertMessage('An error occurred while deleting failed staging records.', AlertType.ERROR);
             }
         });
     });

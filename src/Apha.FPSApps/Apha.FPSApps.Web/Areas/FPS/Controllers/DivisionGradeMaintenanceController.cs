@@ -36,7 +36,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var viewModel = new DivisionGradeViewModel();
             viewModel.SelectedYear = year;
-            var defaultRequest = new PaginationFilter<string> { Filter = "{}", SortBy = "DivisionGradeCode", Descending = false };
+            // Build the initial grid with no default sort applied.
+            // Sorting is only applied after the user explicitly clicks a column header.
+            var defaultRequest = new PaginationFilter<string>
+            {
+                Filter = "{}"
+            };
             viewModel.DivisionGradeGrid = await GetDivisionGradeGridConfigAsync(defaultRequest);
 
             return View(viewModel);
