@@ -64,7 +64,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.YearlyFinancialDataControllerTest
             var paginationRes       = new PaginationRes<YearlyFinancialDataRes>(resList, new Pagination { TotalRecords = 1 });
 
             _mapper.Map<QueryParameters<string>>(paginationReq).Returns(queryParams);
-            _service.GetAllAsync(Arg.Is<QueryParameters<string>>(p => p.Filter == project)).Returns(paginatedResult);
+            _service.GetAllAsync(project, queryParams).Returns(paginatedResult);
             _mapper.Map<PaginationRes<YearlyFinancialDataRes>>(paginatedResult).Returns(paginationRes);
 
             // Act
@@ -73,7 +73,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.YearlyFinancialDataControllerTest
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(paginationRes, okResult.Value);
-            await _service.Received(1).GetAllAsync(Arg.Is<QueryParameters<string>>(p => p.Filter == project));
+            await _service.Received(1).GetAllAsync(project, queryParams);
             _mapper.Received(1).Map<PaginationRes<YearlyFinancialDataRes>>(paginatedResult);
         }
 
@@ -88,7 +88,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.YearlyFinancialDataControllerTest
             var emptyPageRes      = new PaginationRes<YearlyFinancialDataRes>();
 
             _mapper.Map<QueryParameters<string>>(req).Returns(queryParams);
-            _service.GetAllAsync(Arg.Any<QueryParameters<string>>()).Returns(emptyResult);
+            _service.GetAllAsync(project, Arg.Any<QueryParameters<string>>()).Returns(emptyResult);
             _mapper.Map<PaginationRes<YearlyFinancialDataRes>>(emptyResult).Returns(emptyPageRes);
 
             // Act
@@ -97,11 +97,11 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.YearlyFinancialDataControllerTest
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(emptyPageRes, okResult.Value);
-            await _service.Received(1).GetAllAsync(Arg.Any<QueryParameters<string>>());
+            await _service.Received(1).GetAllAsync(project, Arg.Any<QueryParameters<string>>());
         }
 
         [Fact]
-        public async Task GetAll_SetsFilterToProjectBeforeCallingService()
+        public async Task GetAll_PassesProjectRouteParamDirectlyToService()
         {
             // Arrange
             const string project = "PP002";
@@ -111,14 +111,14 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.YearlyFinancialDataControllerTest
             var pageRes          = new PaginationRes<YearlyFinancialDataRes>();
 
             _mapper.Map<QueryParameters<string>>(req).Returns(baseParams);
-            _service.GetAllAsync(Arg.Any<QueryParameters<string>>()).Returns(paginated);
+            _service.GetAllAsync(project, Arg.Any<QueryParameters<string>>()).Returns(paginated);
             _mapper.Map<PaginationRes<YearlyFinancialDataRes>>(paginated).Returns(pageRes);
 
             // Act
             await _controller.GetAll(project, req);
 
-            // Assert — the controller must override Filter with the project route param
-            await _service.Received(1).GetAllAsync(Arg.Is<QueryParameters<string>>(p => p.Filter == project));
+            // Assert — the controller passes the project route param as a separate argument
+            await _service.Received(1).GetAllAsync(project, Arg.Any<QueryParameters<string>>());
         }
 
         [Fact]
@@ -128,7 +128,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.YearlyFinancialDataControllerTest
             var req        = new PaginationReq<string> { Page = 1, PageSize = 10 };
             var queryParams = new QueryParameters<string> { Page = 1, PageSize = 10 };
             _mapper.Map<QueryParameters<string>>(req).Returns(queryParams);
-            _service.GetAllAsync(Arg.Any<QueryParameters<string>>()).Throws(new Exception("DB error"));
+            _service.GetAllAsync(Arg.Any<string>(), Arg.Any<QueryParameters<string>>()).Throws(new Exception("DB error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.GetAll("PP001", req));

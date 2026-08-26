@@ -215,7 +215,8 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserLevelServiceTest
             _repository.ExistsAsync(1, "dom\\existing", 7).Returns(true);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
+            Assert.Equal("User already exists. Please enter a unique User.", ex.Message);
         }
 
         [Fact]

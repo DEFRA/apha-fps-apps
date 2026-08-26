@@ -12,6 +12,7 @@ namespace Apha.PIMS.Api.Controllers
     [Authorize(Roles = "API-PIMSUser,API-PIMSAdmin")]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/accesslevel")]
+
     public class AccessLevelController : ControllerBase
     {
         private readonly IAccessLevelService _service;
