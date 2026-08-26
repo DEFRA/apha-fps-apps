@@ -177,6 +177,68 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             Assert.Equal(new[] { "M1", "M2", "M3" }, numbers);
         }
 
+        [Theory]
+        [InlineData("Number", false, "M1")]
+        [InlineData("Number", true, "M3")]
+        [InlineData("Description", false, "M2")]
+        [InlineData("Description", true, "M1")]
+        [InlineData("ProjectLeaderComment", false, "M3")]
+        [InlineData("ProjectLeaderComment", true, "M2")]
+        [InlineData("CapsComment", false, "M2")]
+        [InlineData("CapsComment", true, "M1")]
+        [InlineData("DateDue", false, "M2")]
+        [InlineData("DateDue", true, "M1")]
+        [InlineData("DateCompleted", false, "M2")]
+        [InlineData("DateCompleted", true, "M1")]
+        public async Task GetAllMilestonesAsync_SortsBySupportedColumns(string sortBy, bool descending, string expectedFirstNumber)
+        {
+            // Arrange
+            var milestones = new List<Milestone>
+            {
+                new()
+                {
+                    Project = "PP001",
+                    Number = "M1",
+                    Description = "C",
+                    ProjectLeaderComment = "B",
+                    CapsComment = "C",
+                    DateDue = new DateTime(2024, 3, 1),
+                    DateCompleted = new DateTime(2024, 4, 1)
+                },
+                new()
+                {
+                    Project = "PP001",
+                    Number = "M2",
+                    Description = "A",
+                    ProjectLeaderComment = "C",
+                    CapsComment = "A",
+                    DateDue = new DateTime(2024, 1, 1),
+                    DateCompleted = new DateTime(2024, 2, 1)
+                },
+                new()
+                {
+                    Project = "PP001",
+                    Number = "M3",
+                    Description = "B",
+                    ProjectLeaderComment = "A",
+                    CapsComment = "B",
+                    DateDue = new DateTime(2024, 2, 1),
+                    DateCompleted = new DateTime(2024, 3, 1)
+                }
+            };
+
+            var repo = CreateRepository(milestones: milestones);
+            var parameters = DefaultParameters();
+            parameters.SortBy = sortBy;
+            parameters.Descending = descending;
+
+            // Act
+            var result = await repo.GetAllMilestonesAsync(parameters, "PP001");
+
+            // Assert
+            Assert.Equal(expectedFirstNumber, result.Data.First().Number);
+        }
+
         [Fact]
         public async Task GetAllMilestonesAsync_PaginationData_ReflectsTotalRecords()
         {
