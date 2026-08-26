@@ -10,7 +10,7 @@
     <button type="button" class="btn-close" onclick="$('#modalPopup').removeClass('show')">×</button>
 </div>
 
-<div class="modal-body" style="overflow:hidden; padding:8px 16px 0 16px;">
+<div class="modal-body" style="overflow:visible; padding:8px 16px 0 16px;">
     <form id="formAddTest" class="govuk-grid-column-full">
 
         <input type="hidden" asp-for="PlanPortfolio" />
@@ -61,7 +61,6 @@
 
     </form>
 </div>
-
 <div class="modal-footer" style="padding:8px 16px;">
     <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
             onclick="$('#modalPopup').removeClass('show')">
