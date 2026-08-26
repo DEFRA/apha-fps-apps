@@ -95,7 +95,9 @@ namespace Apha.PIMS.DataAccess.Repository
 
         public async Task<ProposedProject> UpdateProposedProjectAsync(ProposedProject entity, string transferTo)
         {
-            
+            bool isTransferToPresent = await _dbContext.ProposedProjects
+                .AnyAsync(p => p.Parentproject == transferTo);
+
                 _dbContext.ProposedProjects.Update(entity);
                 _dbContext.Entry(entity).Property(x => x.Parentproject).IsModified = false;
                 await _dbContext.SaveChangesAsync();
@@ -106,7 +108,7 @@ namespace Apha.PIMS.DataAccess.Repository
                     bool codeChanged = await ChangeProjectCodeAsync(entity.Parentproject!, transferTo);
                     if (!codeChanged)
                         throw new InvalidOperationException("Failed to change project code for proposed project update.");
-
+                    if(!isTransferToPresent)
                     entity.Parentproject = transferTo;
                 }
             
