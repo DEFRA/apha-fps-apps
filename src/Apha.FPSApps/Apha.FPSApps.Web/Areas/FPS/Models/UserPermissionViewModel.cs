@@ -5,13 +5,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
     public class UserPermissionViewModel
     {
-        [Display(Name = "User ID")]
+        [Display(Name = "User_ID")]
         [GridColumn(IsFilterable = false)]
         public int UserId { get; set; }
 
-        [Required(ErrorMessage = "SQL Username is required")]
-        [StringLength(50, ErrorMessage = "SQL Username cannot exceed 50 characters")]
-        [Display(Name = "SQL Username")]
+        [Required(ErrorMessage = "SQL UserName is required")]
+        [StringLength(50, ErrorMessage = "SQL UserName cannot exceed 50 characters")]
+        [Display(Name = "SQL UserName")]
         [GridColumn(IsFilterable = true)]
         public string? Username { get; set; }
 
@@ -26,8 +26,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(IsFilterable = true)]
         public string? UserEmail { get; set; }
 
-        [StringLength(100, ErrorMessage = "DT2 Username cannot exceed 100 characters")]
-        [Display(Name = "DT2 Username")]
+        [StringLength(100, ErrorMessage = "DT2 UserName cannot exceed 100 characters")]
+        [Display(Name = "DT2 UserName")]
         [GridColumn(IsFilterable = true)]
         public string? Dt2Username { get; set; }
     }
