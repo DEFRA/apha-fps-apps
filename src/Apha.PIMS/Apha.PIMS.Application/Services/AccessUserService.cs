@@ -64,7 +64,7 @@ namespace Apha.PIMS.Application.Services
        
         public async Task<AccessUserDto> CreateAsync(AccessUserDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
             if (string.IsNullOrWhiteSpace(dto.NtLogin))
                 throw new ArgumentException("NT login is required.", nameof(dto));
 
@@ -72,8 +72,7 @@ namespace Apha.PIMS.Application.Services
 
             bool alreadyExists = await _repository.ExistsAsync(dto.SystemId, dto.NtLogin);
             if (alreadyExists)
-                throw new InvalidOperationException(
-                    $"AccessUser (systemid={dto.SystemId}, ntlogin='{dto.NtLogin}') already exists.");
+                throw new InvalidOperationException($"NTLogin '{dto.NtLogin}' already exists. Please enter a unique NTLogin");
 
             if (!string.IsNullOrWhiteSpace(dto.UserEmail))
             {
@@ -94,7 +93,7 @@ namespace Apha.PIMS.Application.Services
 
         public async Task<AccessUserDto> UpdateAsync(AccessUserDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
             if (string.IsNullOrWhiteSpace(dto.NtLogin))
                 throw new ArgumentException("NT login is required.", nameof(dto));
 

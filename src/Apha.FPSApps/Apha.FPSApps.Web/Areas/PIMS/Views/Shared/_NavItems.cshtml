@@ -11,13 +11,13 @@
                         <div class="align-menu-text"><span>Choose Project</span></div>
                     </a>
                 </div>
-
-                <!-- Print Reports -->
-                <div class="nav-item dropdown">
-                    <a class="nav-button" asp-area="PIMS" asp-controller="Queries" asp-action="Index">
-                        <div class="align-menu-text"><span>Print Reports</span></div>
+                <!-- Yearly Financial Details -->
+                <div class="nav-item">
+                    <a class="nav-button" asp-area="PIMS" asp-controller="YearlyFinancialData" asp-action="Index">
+                        <div class="align-menu-text"><span>Yearly Financial Details</span></div>
                     </a>
                 </div>
+              
 
                 <!-- Milestones -->
                 <div class="nav-item dropdown">
@@ -26,12 +26,7 @@
                     </a>
                 </div>
 
-                <!-- Yearly Financial Details -->
-                <div class="nav-item">
-                    <a class="nav-button" asp-area="PIMS" asp-controller="YearlyFinancialData" asp-action="Index">
-                        <div class="align-menu-text"><span>Yearly Financial Details</span></div>
-                    </a>
-                </div>
+             
             }
 
                 <!-- PMD Milestones -->
@@ -58,7 +53,12 @@
             <div class="align-menu-text"><span>Maintenance</span></div>
         </a>
     </div>
-
+    <!-- Print Reports -->
+    <div class="nav-item dropdown">
+        <a class="nav-button" asp-area="PIMS" asp-controller="Queries" asp-action="Index">
+            <div class="align-menu-text"><span>Print Reports</span></div>
+        </a>
+    </div>
     <!-- Power BI Reports -->
     <div class="nav-item">
         <a class="nav-button" href="@pimsPowerBiReportUrl"

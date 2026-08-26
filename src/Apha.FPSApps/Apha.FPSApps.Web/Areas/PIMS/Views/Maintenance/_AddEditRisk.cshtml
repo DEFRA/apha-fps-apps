@@ -27,7 +27,7 @@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10" id="editRiskidGroup">
-                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Riskid">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="editRiskid">
                         RiskID: <span class="ra-required-star" aria-hidden="true">*</span>
                     </label>
                     @if (isEditMode)
@@ -57,7 +57,6 @@
                                aria-describedby="editRiskidError"
                                data-val-required="RiskID is required" />
                     }
-                    
                     <span asp-validation-for="Riskid"
                           data-valmsg-for="Riskid"
                           class="govuk-error-message"
