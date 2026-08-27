@@ -441,6 +441,7 @@
             return result;
         });
     };  
+
     var isDragging = false;
 
     var startX = 0;
@@ -456,38 +457,47 @@
     // DRAG START
     // =========================================================
 
-    $(document).on("mousedown", ".modal-dialog .modal-header", function (e) {
+    $(document).on(
+        "mousedown",
+        ".modal-dialog .modal-header, .govuk-edit-modal-dialog .govuk-edit-modal__header",
+        function (e) {
 
-        // Do not drag when clicking buttons/links
-        if ($(e.target).closest("button, a, input, select, textarea").length) {
-            return;
-        }
+            // Do not drag when clicking buttons/links
+            if ($(e.target).closest("button, a, input, select, textarea").length) {
+                return;
+            }
 
-        var $dialog = $(this).closest(".modal-dialog");
+            var $dialog = $(this).closest(
+                ".modal-dialog, .govuk-edit-modal-dialog"
+            );
 
-        var offset = $dialog.offset();
+            if (!$dialog.length) {
+                return;
+            }
 
-        isDragging = true;
+            var offset = $dialog.offset();
 
-        startX = e.clientX;
-        startY = e.clientY;
+            isDragging = true;
 
-        startLeft = offset.left;
-        startTop = offset.top;
+            startX = e.clientX;
+            startY = e.clientY;
 
-        // Convert to fixed positioning
-        $dialog.css({
-            position: "fixed",
-            margin: 0,
-            left: startLeft,
-            top: startTop,
-            width: $dialog.outerWidth()
+            startLeft = offset.left;
+            startTop = offset.top;
+
+            // Convert to fixed positioning
+            $dialog.css({
+                position: "fixed",
+                margin: 0,
+                left: startLeft,
+                top: startTop,
+                width: $dialog.outerWidth()
+            });
+
+            $("body").css("user-select", "none");
+
+            e.preventDefault();
         });
-
-        $("body").css("user-select", "none");
-
-        e.preventDefault();
-    });
 
 
     // =========================================================
@@ -500,7 +510,10 @@
             return;
         }
 
-        var $dialog = $(".modal-dialog:has(.modal-header)");
+        var $dialog = $(
+            ".modal-dialog:has(.modal-header), " +
+            ".govuk-edit-modal-dialog:has(.govuk-edit-modal__header)"
+        ).filter(":visible").first();
 
         if (!$dialog.length) {
             return;
@@ -547,6 +560,7 @@
             left: newLeft,
             top: newTop
         });
+
     });
 
 
@@ -567,32 +581,51 @@
 
 
     // =========================================================
-    // CLICK FADED BACKGROUND
+    // CLICK ANYWHERE OUTSIDE MODAL
     // =========================================================
     //
     // IMPORTANT:
-    // This will NOT automatically reset the modal.
     //
-    // Modal resets ONLY when the user clicks the faded
-    // background outside the modal.
+    // Clicking INSIDE modal
+    //      -> DO NOTHING
+    //
+    // Clicking OUTSIDE modal / faded background
+    //      -> RESET modal position
     //
     // =========================================================
 
     $(document).on("click", function (e) {
 
-        var $dialog = $(".modal-dialog:has(.modal-header)");
+        var $dialog = $(
+            ".modal-dialog:has(.modal-header), " +
+            ".govuk-edit-modal-dialog:has(.govuk-edit-modal__header)"
+        ).filter(":visible").first();
 
         if (!$dialog.length) {
             return;
         }
 
-        // If click happened INSIDE modal, do nothing
-        if ($(e.target).closest(".modal-dialog").length) {
+
+        // =====================================================
+        // CLICK INSIDE MODAL
+        // =====================================================
+
+        if (
+            $(e.target).closest(
+                ".modal-dialog, .govuk-edit-modal-dialog"
+            ).length
+        ) {
             return;
         }
 
-        // Click happened outside modal = faded background
+
+        // =====================================================
+        // CLICK OUTSIDE MODAL
+        // / FADED BACKGROUND
+        // =====================================================
+
         resetModalPosition($dialog);
+
     });
 
 

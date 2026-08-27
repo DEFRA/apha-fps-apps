@@ -1903,3 +1903,12 @@ textarea {
         }
     }
 }
+.govuk-edit-modal-dialog {
+    .govuk-edit-modal__header {
+        cursor: move;
+
+        .btn-close {
+            cursor: pointer;
+        }
+    }
+}
