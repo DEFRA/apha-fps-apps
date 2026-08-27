@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
@@ -10,18 +10,18 @@ namespace Apha.FPSApps.Web.Extensions
         public static IServiceCollection AddAuthenticationServices(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
         {
             var authBuilder = services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-             .AddMicrosoftIdentityWebApp(
-                 options =>
-                 {
-                     configuration.Bind("AzureAd", options);
+             .AddMicrosoftIdentityWebApp(options =>
+             {
+                 configuration.Bind("AzureAd", options);
 
-                     options.Events = new OpenIdConnectEvents
-                     {
-                         OnTokenValidated = context => HandleTokenValidatedAsync(context),
-                         OnRedirectToIdentityProvider = context => HandleRedirectToIdentityProvider(context),
-                         OnRemoteFailure = context => HandleRemoteFailure(context)
-                     };
-                 })
+                 options.Events = new OpenIdConnectEvents
+                 {
+                     OnTokenValidated = context => HandleTokenValidatedAsync(context),
+                     OnRedirectToIdentityProvider = context => HandleRedirectToIdentityProvider(context),
+                     OnRemoteFailure = context => HandleRemoteFailure(context)
+                 };
+
+             })
             .EnableTokenAcquisitionToCallDownstreamApi();
 
             if (!environment.IsEnvironment("local"))
