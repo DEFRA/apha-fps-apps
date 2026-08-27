@@ -128,6 +128,10 @@ namespace Apha.FPS.Api.Extensions
 
             builder.Services.AddScoped<IEventPublisherService, EventBridgePublisherService>();
 
+            // No S3 client/IS3StorageService registration here — Bulk Rates audit-copy retention
+            // moved to the FPSApps Web/Application layer (best-effort, post-success only); FPS API
+            // has no remaining S3 consumer. See docs/bulkrates-review-fixes, Point 2.
+
             // Authentication
             services.AddAuthenticationServices(configuration);
 
