@@ -1897,7 +1897,16 @@ textarea {
 .modal-dialog {
     .modal-header {
         cursor: move;
-
+        .close,
+        .btn-close {
+            cursor: pointer;
+        }
+    }
+}
+.govuk-edit-modal-dialog {
+    .govuk-edit-modal__header {
+        cursor: move;
+        .close,
         .btn-close {
             cursor: pointer;
         }
