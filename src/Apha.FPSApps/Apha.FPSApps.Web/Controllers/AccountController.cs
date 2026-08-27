@@ -19,7 +19,6 @@ namespace Apha.FPSApps.Web.Controllers
                     new { area = "FPS", returnUrl });
             }
 
-            ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
     }
