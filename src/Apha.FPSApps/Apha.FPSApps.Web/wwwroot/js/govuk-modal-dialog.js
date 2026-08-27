@@ -457,6 +457,8 @@
     // DRAG START
     // =========================================================
 
+    // Existing selector is NOT removed.
+    // Added .govuk-edit-modal-dialog .govuk-edit-modal__header
     $(document).on(
         "mousedown",
         ".modal-dialog .modal-header, .govuk-edit-modal-dialog .govuk-edit-modal__header",
@@ -467,6 +469,7 @@
                 return;
             }
 
+            // Keep existing selector + add new selector
             var $dialog = $(this).closest(
                 ".modal-dialog, .govuk-edit-modal-dialog"
             );
@@ -510,6 +513,8 @@
             return;
         }
 
+        // Existing selector is preserved.
+        // New GOV.UK selector is added.
         var $dialog = $(
             ".modal-dialog:has(.modal-header), " +
             ".govuk-edit-modal-dialog:has(.govuk-edit-modal__header)"
@@ -560,7 +565,6 @@
             left: newLeft,
             top: newTop
         });
-
     });
 
 
@@ -581,21 +585,19 @@
 
 
     // =========================================================
-    // CLICK ANYWHERE OUTSIDE MODAL
+    // CLICK FADED BACKGROUND
     // =========================================================
     //
-    // IMPORTANT:
+    // This will NOT automatically reset the modal.
     //
-    // Clicking INSIDE modal
-    //      -> DO NOTHING
-    //
-    // Clicking OUTSIDE modal / faded background
-    //      -> RESET modal position
+    // Modal resets ONLY when the user clicks the faded
+    // background outside the modal.
     //
     // =========================================================
 
     $(document).on("click", function (e) {
 
+        // Existing modal selector + new GOV.UK modal selector
         var $dialog = $(
             ".modal-dialog:has(.modal-header), " +
             ".govuk-edit-modal-dialog:has(.govuk-edit-modal__header)"
@@ -605,11 +607,7 @@
             return;
         }
 
-
-        // =====================================================
-        // CLICK INSIDE MODAL
-        // =====================================================
-
+        // If click happened INSIDE modal, do nothing
         if (
             $(e.target).closest(
                 ".modal-dialog, .govuk-edit-modal-dialog"
@@ -618,14 +616,8 @@
             return;
         }
 
-
-        // =====================================================
-        // CLICK OUTSIDE MODAL
-        // / FADED BACKGROUND
-        // =====================================================
-
+        // Click happened outside modal = faded background
         resetModalPosition($dialog);
-
     });
 
 
