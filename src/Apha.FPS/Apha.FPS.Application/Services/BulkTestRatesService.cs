@@ -945,6 +945,7 @@ namespace Apha.FPS.Application.Services
             // "no change" for a row the reviewer deliberately cleared.
             return
             [
+                BuildFecAgrupInstructionsSheet(),
                 new()
                 {
                     SheetName = "FEC",
@@ -966,6 +967,52 @@ namespace Apha.FPS.Application.Services
                     }
                 }
             ];
+        }
+
+        // Column references below are kept in lockstep with BulkRatesFecExportRowDto/
+        // BulkRatesAgrupExportRowDto's actual property order (= actual Excel column letters)
+        // rather than copied from the legacy process this replaces — the two have drifted
+        // (e.g. AGRUP's routing columns J/K/L did not exist in the legacy workbook).
+        private static ExcelSheetDefinition BuildFecAgrupInstructionsSheet()
+        {
+            // This same builder feeds three downloads with different purposes — an open request's
+            // editable workbook (meant to be edited and re-uploaded), an ad-hoc year-level
+            // reference dump, and a read-only staging-review export. The instructions below
+            // describe how to fill in an editable copy; the preamble scopes that so a reference/
+            // review copy of this same sheet doesn't read as "edit and upload this".
+            var rows = new List<BulkRatesFecAgrupInstructionRowDto>
+            {
+                new() { Text = "These instructions apply if this workbook was downloaded from an open Bulk Rates request for editing and re-upload. If this copy was downloaded for reference or for staging review, it is read-only — do not edit or upload it." },
+                new() { Item = "1", Text = "FEC Tab. You must either complete ALL rows in the worksheet OR delete those where there is no change." },
+                new() { SubItem = "a", Text = "Where a Test Code is given a new FEC value, enter the value into Column D (FEC New) on the appropriate row in the worksheet." },
+                new() { SubItem = "b", Text = "All rows must be completed. If the new FEC value is the same as the current rate, copy the value from Column C (Defra Unit Price) into Column D (FEC New). Leaving Column D blank is treated as a Zero-Rate Withdrawal, not \"no change\"." },
+                new() { SubItem = "c", Text = "If a new Test Code is added, it can be added either at the end or by inserting a new row at the appropriate place in the worksheet." },
+                new() { SubItem = "d", Text = "For a new Test Code record, the following columns must be completed:" },
+                new() { ColumnRef = "A", Text = "Test Code" },
+                new() { ColumnRef = "D", Text = "FEC New" },
+                new() { ColumnRef = "F", Text = "Item Description" },
+                new() { ColumnRef = "G", Text = "Short Description" },
+                new() { ColumnRef = "H", Text = "Owner" },
+                new() { SubItem = "e", Text = "The value in Column E (Change) is calculated automatically — do not enter a value directly." },
+                new() { Item = "2", Text = "Agrup Tab. You must either complete ALL rows in the worksheet OR delete those where there is no change." },
+                new() { SubItem = "a", Text = "Where the Agrup value is the same as the FEC value for the coming year, enter the value into Column D (Agrup New) and enter \"Same as FEC\" into Column I (Comments)." },
+                new() { SubItem = "b", Text = "If the Agrup value is changed, but is not the same as the FEC value, enter the new value into Column D (Agrup New) and ensure Column I (Comments) is blank." },
+                new() { SubItem = "c", Text = "If the Agrup value does not change, then do nothing. If, as a result, it is no longer the same as the FEC value, ensure Column I (Comments) is blank." },
+                new() { SubItem = "d", Text = "If there is a new Agrup record to be added, it can either be appended or inserted into a new row at the appropriate place in the worksheet. Ensure that the following columns are completed:" },
+                new() { ColumnRef = "A", Text = "Test Code" },
+                new() { ColumnRef = "B", Text = "Buyer" },
+                new() { ColumnRef = "D", Text = "Agrup New" },
+                new() { ColumnRef = "I", Text = "Comments — should be \"Same as FEC\" or left empty." },
+                new() { ColumnRef = "F, G, H", Text = "Can be completed if the information is known. If Column G (Date Created) is left empty, it will default to the date the request is uploaded." },
+                new() { ColumnRef = "J and/or L", Text = "At least one of Project Buyer Code (J) or Test Buyer Work Group (L) must be completed for a new Agrup record, to establish routing. Test Buyer Code (K) is reference-only and does not need to be set." },
+            };
+
+            return new ExcelSheetDefinition
+            {
+                SheetName = "Instructions",
+                Data = rows.Cast<object>(),
+                DataType = typeof(BulkRatesFecAgrupInstructionRowDto)
+            };
         }
 
         // ── Temporary private duplicates of the still-standalone FEC/AGRUP-only support

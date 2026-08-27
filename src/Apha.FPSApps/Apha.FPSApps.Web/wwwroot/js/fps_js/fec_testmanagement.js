@@ -195,88 +195,68 @@ var BulkRates = (function () {
         if (gm) { gm.reloadGrid({ page: 1 }); }
     }
 
-    // ── Active-request grid polling ─────────────────────────────────────────
-    // Two different questions, answered independently on the same timer:
-    //   - "What is the worker actually doing?" — the grid reload every tick,
-    //     unchanged, giving the Status column its live Approved/Running/
-    //     Completed/Failed updates. Never depended on a specific row.
-    //   - "Can another request be created now?" — CanInitiateRequest, checked
-    //     only after each reload's 'gridReloaded' event fires (so the page has
-    //     already shown the latest status before polling can stop on it), used
-    //     purely to decide when to swap the banner/button.
-    // No hard cutoff: fast (3s) for the first ~40 ticks, then slow (20s)
-    // indefinitely — a fixed cap would silently freeze the page on "Running"
-    // for any request that legitimately runs long. The only two ways this
-    // ends are CanInitiateRequest genuinely becoming true, or the tab closing.
-    var _pollTimer = null;
-    var _pollJobName = null;
-    var _pollTickCount = 0;
-    var POLL_FAST_INTERVAL_MS = 3000;
-    var POLL_SLOW_INTERVAL_MS = 20000;
-    var POLL_FAST_PHASE_TICKS = 40;
+    // ── Transient-status grid polling ────────────────────────────────────────
+    // After every grid render — the initial server-rendered page, or any
+    // reload (sort/filter/page/this poll's own reload) — check whether any
+    // *visible* row is still in a transient state: "Submitted" (the display
+    // label for the underlying Approved status — the worker hasn't picked it
+    // up yet) or "Running". If so, reload again in POLL_INTERVAL_MS to pick up
+    // the next status change; if not, do nothing. Entirely driven by what's
+    // actually on the page rather than a separate server-computed flag, so it
+    // starts and stops correctly regardless of how the grid was reached (the
+    // Approve redirect, a manual refresh, revisiting later while still in
+    // flight) and never runs at all when nothing on the page needs watching.
+    //
+    // Visible-rows-only is a real scope limit, not just an implementation detail:
+    // the reload below always requests page 1 (matching every other reload in
+    // this file), so a transient row sitting on a different page than the one
+    // currently shown won't be seen and won't keep the poll going. Same applies
+    // to an active status/job-type filter that hides the transient row entirely.
+    // Fine for the common case (Approve redirects straight back to page 1,
+    // unfiltered), but worth knowing if this ever needs to track a transient
+    // row regardless of the viewer's current page/filter.
+    //
+    // Detection matches against the *display* label ("Submitted"/"Running"),
+    // not the raw status ("Approved"/"Running") — the raw value never reaches
+    // this grid's HTML (FpsViewModelMapper maps Status through
+    // BulkRatesStatusDisplay.FriendlyLabel before the view model is built), so
+    // matching display text is what's actually available here without adding
+    // a new data attribute solely for this.
+    var TRANSIENT_STATUS_LABELS = ['Submitted', 'Running'];
+    var POLL_INTERVAL_MS = 10000;
+    var _transientPollTimer = null;
 
-    function scheduleNextPoll() {
-        var delay = _pollTickCount < POLL_FAST_PHASE_TICKS ? POLL_FAST_INTERVAL_MS : POLL_SLOW_INTERVAL_MS;
-        _pollTimer = setTimeout(function () {
-            _pollTickCount++;
+    function hasTransientStatusRow() {
+        var spans = document.querySelectorAll('#gridContainer_bulkRatesGrid [data-property="Status"] span');
+        for (var i = 0; i < spans.length; i++) {
+            if (TRANSIENT_STATUS_LABELS.indexOf(spans[i].textContent.trim()) !== -1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function checkAndScheduleTransientPoll() {
+        if (_transientPollTimer) { return; } // one timer at a time — the pending poll will re-check when it fires
+        if (!hasTransientStatusRow()) { return; }
+        _transientPollTimer = setTimeout(function () {
+            _transientPollTimer = null;
             var gm = window['gridManager_bulkRatesGrid'];
-            // silent: true — background poll, not a user action; skip the full-page loader
-            // flash so only the Status badge visibly changes between ticks.
-            if (gm) { gm.reloadGrid({ page: 1 }, { silent: true }); }
-            else { scheduleNextPoll(); } // grid manager not ready yet — retry on schedule
-        }, delay);
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+        }, POLL_INTERVAL_MS);
     }
 
-    function onPollGridReloaded(e) {
-        if (!_pollTimer || !_pollJobName) { return; } // polling already stopped — ignore a stray/late event
+    document.addEventListener('gridReloaded', function (e) {
         if (!e.detail || e.detail.gridId !== 'bulkRatesGrid') { return; }
-
-        // Capture before any stop() call, which clears the shared _pollJobName state as part of
-        // fully tearing polling down — building the "New Request" link from it afterwards would
-        // put a literal "null" in the URL.
-        var pollingJobName = _pollJobName;
-
-        $.ajax({
-            url: '/FPS/BulkRates/CanInitiateRequest',
-            type: 'GET',
-            data: { jobName: pollingJobName },
-            success: function (result) {
-                if (!_pollTimer) { return; } // stopped while this request was in flight
-                if (!result || !result.success) { scheduleNextPoll(); return; } // unknown state — retry, don't guess
-                if (result.canInitiate) {
-                    stopActiveRequestPolling();
-                    $('#activeRequestBanner').remove();
-                    var $btnArea = $('#newRequestButtonArea');
-                    if ($btnArea.length) {
-                        $btnArea.html('<a href="/FPS/BulkRates/Create?jobName=' + encodeURIComponent(pollingJobName) +
-                            '" class="govuk-button govuk-button--secondary sup_margin_0">New Request</a>');
-                    }
-                    return;
-                }
-                scheduleNextPoll();
-            },
-            error: function () { scheduleNextPoll(); /* request failed — retry, don't guess */ }
-        });
-    }
-
-    function stopActiveRequestPolling() {
-        if (_pollTimer) { clearTimeout(_pollTimer); _pollTimer = null; }
-        _pollJobName = null;
-        document.removeEventListener('gridReloaded', onPollGridReloaded);
-    }
-
-    function startActiveRequestPolling(jobName) {
-        if (_pollTimer) { return; }
-        _pollJobName = jobName;
-        _pollTickCount = 0;
-        document.addEventListener('gridReloaded', onPollGridReloaded);
-        scheduleNextPoll();
-    }
+        checkAndScheduleTransientPoll();
+    });
 
     // ── Release for Approval modal ──────────────────────────────────────────
-    // Uses the same custom-overlay pattern as the Cancel/Reject modals below,
-    // rather than the generic showGovukConfirm() dialog, so the four action
-    // modals on this page look and behave consistently with each other.
+    // Uses the shared govuk-modal-dialog.js showGovukConfirm() dialog directly
+    // — no reason input needed, unlike Reject/Cancel below, which use their own
+    // static partials (_RejectModal.cshtml/_CancelModal.cshtml) styled to look
+    // identical (same isInfo "Please confirm" colour band) since they need a
+    // reason textarea the shared dialog doesn't support.
 
     function showReleaseModal(requestId) {
         showGovukConfirm('Release this request for approval? This action cannot be undone.')
@@ -438,6 +418,10 @@ var BulkRates = (function () {
         if (btnDownload) {
             btnDownload.addEventListener('click', downloadTestData);
         }
+        // Bootstrap the transient-status poll for the initial server-rendered grid —
+        // 'gridReloaded' only fires from reloadGrid()'s own AJAX callback, never for
+        // the first page load. No-ops harmlessly on pages without the grid (e.g. Detail).
+        checkAndScheduleTransientPoll();
     });
 
     // ── Public API ──────────────────────────────────────────────────────────
@@ -453,7 +437,6 @@ var BulkRates = (function () {
         closeCancelModal:       closeCancelModal,
         confirmCancel:          confirmCancel,
         filterGrid:             filterGrid,
-        startActiveRequestPolling: startActiveRequestPolling,
         downloadTestData:       downloadTestData,
         downloadStagingData:    downloadStagingData
     };

@@ -160,6 +160,80 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BulkRatesControllerTest
             Assert.DoesNotContain("already exists", vm.ActiveRequestCheckError); // never the false message
         }
 
+        // ── CanCreateForYear × CanInitiateRequest UI-precedence matrix ───────────
+        // Index.cshtml is a pure function of these two ViewModel booleans: it checks
+        // !CanCreateForYear before !CanInitiateRequest, so whenever the year is wrong that
+        // message must win regardless of CanInitiateRequest's value. JobNameFec's
+        // RequiredYearStatus is "Open" (BulkRatesJobNames.RequiredYearStatus), so stubbing
+        // _fpsYearContext.YearStatus to "Open" vs anything else drives CanCreateForYear here.
+        // No Razor-rendering harness exists in this project, so asserting both booleans is the
+        // full coverage available for "which banner/tooltip renders" at this test layer.
+
+        [Fact]
+        public async Task Index_WhenYearMismatchAndBlockingRequestExists_YearStatusTakesPrecedence()
+        {
+            // Row 1 of the matrix — the exact regression: a stale cross-year blocking request
+            // must not hide the year-status message when the selected year is also wrong.
+            StubGridLoad();
+            _bulkRatesService.CanInitiateRequestAsync(BulkRatesController.JobNameFec)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(false));
+            _fpsYearContext.YearStatus.Returns("Planned"); // JobNameFec requires "Open"
+
+            var result = await _sut.Index(BulkRatesController.JobNameFec);
+
+            var vm = Assert.IsType<BulkRatesQueueViewModel>(Assert.IsType<ViewResult>(result).Model);
+            Assert.False(vm.CanCreateForYear);
+            Assert.False(vm.CanInitiateRequest);
+        }
+
+        [Fact]
+        public async Task Index_WhenYearMismatchAndNoBlockingRequest_YearStatusTakesPrecedence()
+        {
+            // Row 2 — year-status message must still win even with no concurrency block at all.
+            StubGridLoad();
+            _bulkRatesService.CanInitiateRequestAsync(BulkRatesController.JobNameFec)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+            _fpsYearContext.YearStatus.Returns("Planned");
+
+            var result = await _sut.Index(BulkRatesController.JobNameFec);
+
+            var vm = Assert.IsType<BulkRatesQueueViewModel>(Assert.IsType<ViewResult>(result).Model);
+            Assert.False(vm.CanCreateForYear);
+            Assert.True(vm.CanInitiateRequest);
+        }
+
+        [Fact]
+        public async Task Index_WhenYearMatchesButBlockingRequestExists_ActiveRequestMessageShown()
+        {
+            // Row 3 — year is fine, so the active-request message becomes the correct one.
+            StubGridLoad();
+            _bulkRatesService.CanInitiateRequestAsync(BulkRatesController.JobNameFec)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(false));
+            _fpsYearContext.YearStatus.Returns("Open");
+
+            var result = await _sut.Index(BulkRatesController.JobNameFec);
+
+            var vm = Assert.IsType<BulkRatesQueueViewModel>(Assert.IsType<ViewResult>(result).Model);
+            Assert.True(vm.CanCreateForYear);
+            Assert.False(vm.CanInitiateRequest);
+        }
+
+        [Fact]
+        public async Task Index_WhenYearMatchesAndNoBlockingRequest_NewRequestEnabled()
+        {
+            // Row 4 — nothing blocks: "New Request" must be enabled, no banner shown.
+            StubGridLoad();
+            _bulkRatesService.CanInitiateRequestAsync(BulkRatesController.JobNameFec)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+            _fpsYearContext.YearStatus.Returns("Open");
+
+            var result = await _sut.Index(BulkRatesController.JobNameFec);
+
+            var vm = Assert.IsType<BulkRatesQueueViewModel>(Assert.IsType<ViewResult>(result).Model);
+            Assert.True(vm.CanCreateForYear);
+            Assert.True(vm.CanInitiateRequest);
+        }
+
         [Fact]
         public async Task Create_WhenCanInitiateRequestTrue_ReturnsCreateView()
         {

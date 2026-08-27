@@ -519,7 +519,10 @@ public class BulkTestRatesServiceTests
         await sut.ExportTestDataAsync(FpsYear);
 
         excel.Received(1).ExportToExcelMultiSheet(Arg.Is<IEnumerable<ExcelSheetDefinition>>(
-            sheets => sheets.Count() == 2 && sheets.Any(s => s.SheetName == "FEC") && sheets.Any(s => s.SheetName == "AGRUP")));
+            sheets => sheets.Count() == 3
+                && sheets.Any(s => s.SheetName == "Instructions")
+                && sheets.Any(s => s.SheetName == "FEC")
+                && sheets.Any(s => s.SheetName == "AGRUP")));
     }
 
     [Fact]

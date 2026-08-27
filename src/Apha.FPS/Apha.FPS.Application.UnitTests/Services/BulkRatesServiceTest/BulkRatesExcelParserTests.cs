@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Common.BulkRates;
 using Apha.FPS.Application.Services;
 using FluentAssertions;
@@ -94,6 +95,47 @@ public class BulkRatesExcelParserTests
 
         result.HasParseErrors.Should().BeTrue();
         result.ParseErrors.Should().Contain(e => e.Contains("AGRUP"));
+    }
+
+    // ── Sheet lookup is name-based, not positional (BuildFecAgrupSheets now emits
+    //    Instructions/FEC/AGRUP in that order — this proves the added leading sheet,
+    //    and the protected metadata sheet, don't disturb FEC/AGRUP identification). ──
+
+    [Fact]
+    public void Parse_WhenInstructionsSheetPrecedesFecAndAgrup_StillParsesBothByName()
+    {
+        var bytes = BuildWorkbook(wb =>
+        {
+            // Deliberately added first, matching BuildFecAgrupSheets' actual sheet order.
+            var instructions = wb.Worksheets.Add("Instructions");
+            instructions.Cell(1, 4).Value = "FEC Tab. You must either complete ALL rows...";
+
+            var fec = AddFecSheet(wb);
+            fec.Cell(2, 1).Value = "TC001";
+            fec.Cell(2, 4).Value = 200.75;   // FEC New
+
+            var agrup = AddAgrupSheet(wb);
+            agrup.Cell(2, 1).Value = "TC001";
+            agrup.Cell(2, 2).Value = "VET";
+            agrup.Cell(2, 4).Value = 55.50;  // Agrup New
+
+            // Same VeryHidden sheet ExcelExportService.ExportToExcelMultiSheet(sheets, metadata)
+            // writes, in the same trailing position DownloadTestDataAsync actually produces it.
+            // "BulkRatesDownloadVersion" mirrors BulkRatesDownloadMetadataKeys.DownloadVersion,
+            // which is internal to Apha.FPS.Application and not visible from this test assembly.
+            var meta = wb.Worksheets.Add(ExcelExportService.ProtectedMetadataSheetName);
+            meta.Cell(1, 1).Value = "BulkRatesDownloadVersion";
+            meta.Cell(1, 2).Value = "3";
+            meta.Visibility = XLWorksheetVisibility.VeryHidden;
+        });
+
+        var result = _parser.Parse(bytes, "rates.xlsx", "BulkTestRatesUpdate", QueueId);
+
+        result.HasParseErrors.Should().BeFalse();
+        result.FecRows.Should().ContainSingle(r => r.TestCode == "TC001" && r.FecNewRate == 200.75m);
+        result.AgrupRows.Should().ContainSingle(r => r.TestCode == "TC001" && r.AgrupNew == 55.50m);
+        result.WorkbookMetadata.Should().ContainKey("BulkRatesDownloadVersion")
+            .WhoseValue.Should().Be("3");
     }
 
     // ── Correct decimal parsing ──────────────────────────────────────────────

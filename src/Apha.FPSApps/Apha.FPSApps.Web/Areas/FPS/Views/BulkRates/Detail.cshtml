@@ -190,7 +190,11 @@
                                             };
                                         }
                                         <div class="govuk-button-group govuk-!-margin-bottom-2">
-                                            <a href="@testDataDownloadUrl"
+                                            @* data-no-loader: this link's response is a file attachment, not a page
+                                               navigation — the browser never unloads/reloads this page, so the global
+                                               navigation loader (govuk-modal-dialog.js) would show on click and never
+                                               hide again without this opt-out. *@
+                                            <a href="@testDataDownloadUrl" data-no-loader
                                                class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0">
                                                 @testDataDownloadLabel
                                             </a>
