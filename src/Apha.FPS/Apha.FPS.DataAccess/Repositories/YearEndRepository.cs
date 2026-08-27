@@ -253,13 +253,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, _requestContext.FpsYear);
                     _context.BatchJobQueues.Add(jobQueueEntry);
 
-                    // BuildJobQueueEntry always stamps StartDateTime, so it's non-null here — the
-                    // guard makes that invariant explicit now that the shared column (also written
-                    // by the Batch Worker's Running transition) is nullable.
-                    DateTime logStartDateTime = jobQueueEntry.StartDateTime
-                        ?? throw new InvalidOperationException(
-                            $"Job queue entry {jobQueueEntry.JobqueueId} was built without a StartDateTime.");
-                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, logStartDateTime, initiatedStatus.StatusId);
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId);
                     _context.BatchJobQueueLogs.Add(logEntry);
 
                     await _context.SaveChangesAsync();
