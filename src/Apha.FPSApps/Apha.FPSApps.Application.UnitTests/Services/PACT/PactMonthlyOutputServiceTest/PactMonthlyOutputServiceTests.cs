@@ -313,7 +313,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServ
         {
             var dto = new PactMonthlyOutputDto
             {
-                WorkGroup = null,
+                WorkGroup = null!,
                 TestCode = "TC1",
                 Buyer = "Buyer1",
                 Month = 6,
@@ -831,7 +831,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServ
 
             _excelImportService.BuildHeaderMap(Arg.Any<IXLRangeRow>()).Returns(new Dictionary<string, int>());
             _excelImportService.GetMissingRequiredHeaders(Arg.Any<Dictionary<string, int>>(), Arg.Any<IEnumerable<string>>())
-                .Returns(new[] { "StagingId" });
+                .Returns(["StagingId"]);
 
             var result = await _service.ImportMonthlyOutputAsync(file, 4);
 
