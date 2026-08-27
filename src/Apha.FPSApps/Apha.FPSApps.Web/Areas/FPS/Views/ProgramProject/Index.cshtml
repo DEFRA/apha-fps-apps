@@ -412,7 +412,7 @@
         }
 
         function formatGbp(value) {
-            return '£' + (value || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return (value || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function loadProjectTotals() {

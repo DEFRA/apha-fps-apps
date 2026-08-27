@@ -101,7 +101,7 @@
     <script>
         // Initialize the WorkGroup Test Capability module
         $(document).ready(function () {
-            WorkGroupTestCapability.initialize('@Model.TestCapabilityGrid.GridId', '@Html.Raw(Model.SelectedWorkGroup)');
+            WorkGroupTestCapability.initialize('@Model.TestCapabilityGrid.GridId', @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedWorkGroup ?? string.Empty)));
         });
     </script>
 
