@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Enums;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -275,9 +276,13 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<string>> GetAllProfitCentreOptionsAsync()
         {
-            return await _dbContext.ProfitCentres
+            var currentUserId = await GetCurrentUserIdAsync();
+
+            return await _dbContext.UserProfitcentres
+                .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Select(p => p.ProfitCentreId)
+                .Where(p => p.UserId == currentUserId && p.FpsYear == _requestContext.FpsYear)
+                .Select(p => p.ProfitCentre)
                 .Distinct()
                 .OrderBy(p => p)
                 .ToListAsync();
@@ -285,9 +290,12 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<string>> GetAllProgramOptionsAsync()
         {
-            return await _dbContext.Programs
+            var currentUserId = await GetCurrentUserIdAsync();
+
+            return await _dbContext.UserPrograms
+                .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(p => p.FpsYear == _requestContext.FpsYear)
+                .Where(p => p.UserID == currentUserId && p.FpsYear == _requestContext.FpsYear)
                 .Select(p => p.ProgramNo)
                 .Distinct()
                 .OrderBy(p => p)
@@ -325,6 +333,16 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Distinct()
                 .OrderBy(pg => pg)
                 .ToListAsync();
+        }
+
+        private async Task<int> GetCurrentUserIdAsync()
+        {
+            var currentUser = await _dbContext.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserEmail != null
+                    && EF.Functions.ILike(u.UserEmail, _requestContext.UserEmailId));
+
+            return currentUser?.UserId ?? (int)SuperUser.SuperUserId;
         }
 
         private static IQueryable<User> ApplyUserSorting(IQueryable<User> query, string? sortBy, bool descending)
