@@ -1463,8 +1463,9 @@ public class BulkRatesRequestServiceTests
 
         capturedSheets.Should().NotBeNull();
         capturedSheets!.Should().HaveCountGreaterThanOrEqualTo(2);
-        // FEC sheet rows come from snapshot only (T200 present)
-        var fecSheet = capturedSheets[0];
+        // FEC sheet rows come from snapshot only (T200 present) — looked up by name, not
+        // position: BuildFecAgrupSheets now also emits a leading Instructions sheet.
+        var fecSheet = capturedSheets.Single(s => s.SheetName == "FEC");
         fecSheet.Data.Cast<BulkRatesFecExportRowDto>().Should().Contain(r => r.TestCode == "T200");
     }
 
