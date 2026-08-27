@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
 
 namespace Apha.FPSApps.Web.Extensions
-{
+{ 
     public static class AuthenticationExtension
     {
         public static IServiceCollection AddAuthenticationServices(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
