@@ -32,7 +32,6 @@ namespace Apha.FPS.Application.UnitTests.Services.BulkRatesServiceTest
                 [nameof(BulkRatesQueueEntryDto.RequestedAtUtc)] = typeof(DateTime),
                 [nameof(BulkRatesQueueEntryDto.FpsYear)] = typeof(int),
                 [nameof(BulkRatesQueueEntryDto.UploadFilename)] = typeof(string),
-                [nameof(BulkRatesQueueEntryDto.UploadChecksumSha256)] = typeof(string),
                 [nameof(BulkRatesQueueEntryDto.UploadVersion)] = typeof(int?),
                 [nameof(BulkRatesQueueEntryDto.UploadValidatedAtUtc)] = typeof(DateTime?),
                 [nameof(BulkRatesQueueEntryDto.UploadRowCountsJson)] = typeof(string),
@@ -51,7 +50,6 @@ namespace Apha.FPS.Application.UnitTests.Services.BulkRatesServiceTest
                 [nameof(BulkRatesQueueEntryDto.ErrorMessage)] = typeof(string),
                 [nameof(BulkRatesQueueEntryDto.FailureReason)] = typeof(string),
                 [nameof(BulkRatesQueueEntryDto.ActiveDownloadVersion)] = typeof(int?),
-                [nameof(BulkRatesQueueEntryDto.S3ObjectKey)] = typeof(string),
             });
         }
 
@@ -61,7 +59,6 @@ namespace Apha.FPS.Application.UnitTests.Services.BulkRatesServiceTest
             AssertContract<BulkRatesUploadMetadataDto>(new Dictionary<string, Type>
             {
                 [nameof(BulkRatesUploadMetadataDto.Filename)] = typeof(string),
-                [nameof(BulkRatesUploadMetadataDto.ChecksumSha256)] = typeof(string),
                 [nameof(BulkRatesUploadMetadataDto.UploadVersion)] = typeof(int),
                 [nameof(BulkRatesUploadMetadataDto.ValidationCompletedAtUtc)] = typeof(DateTime?),
                 [nameof(BulkRatesUploadMetadataDto.RowCounts)] = typeof(BulkRatesRowCountsDto),

@@ -68,11 +68,8 @@ namespace Apha.FPS.Core.Interfaces
 
         // ── Upload metadata ──────────────────────────────────────────────────────
         Task UpdateUploadMetadataAsync(
-            Guid jobQueueId, string filename, string checksumSha256, int uploadVersion,
+            Guid jobQueueId, string filename, int uploadVersion,
             DateTime validatedAtUtc, string rowCountsJson, CancellationToken ct = default);
-
-        Task UpdateS3ObjectKeyAsync(
-            Guid jobQueueId, string s3ObjectKey, CancellationToken ct = default);
 
         // ── Audit log ────────────────────────────────────────────────────────────
         Task WriteJobQueueLogAsync(

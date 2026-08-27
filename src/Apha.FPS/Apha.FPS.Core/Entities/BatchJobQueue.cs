@@ -21,10 +21,16 @@
         // ── Bulk Rates workflow columns ──────────────────────────────────────────
         // Added for BulkRatesRepository's LINQ conversion rather than a second entity
         // mapped to this table — EF Core rejects two unrelated entity types sharing one
-        // table without an explicit linking relationship. YearEnd (this entity's original
-        // consumer) never sets or reads these; they stay null for every row it creates.
+        // table without an explicit linking relationship.
+        //
+        // Not all of these are Bulk-Rates-exclusive. ApprovedBy/ApprovedAtUtc/RejectedBy/
+        // RejectedAtUtc/TriggeredBy/TriggeredAtUtc are shared lifecycle/audit columns —
+        // Year End's own approval/cutover flow already reads and writes these via the
+        // BatchJobs worker's JobExecutionRepository (CR025). The rest (UploadFilename,
+        // UploadVersion, UploadValidatedAtUtc, UploadRowCountsJson, CancelledBy,
+        // CancelledAtUtc, CancellationReason, ActiveDownloadVersion) are Bulk-Rates-only;
+        // YearEnd never sets or reads those and they stay null for every row it creates.
         public string? UploadFilename { get; set; }
-        public string? UploadChecksumSha256 { get; set; }
         public int? UploadVersion { get; set; }
         public DateTime? UploadValidatedAtUtc { get; set; }
         public string? UploadRowCountsJson { get; set; }
@@ -39,6 +45,5 @@
         public string? TriggeredBy { get; set; }
         public DateTime? TriggeredAtUtc { get; set; }
         public int? ActiveDownloadVersion { get; set; }
-        public string? S3ObjectKey { get; set; }
     }
 }

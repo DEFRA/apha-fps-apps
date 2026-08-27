@@ -1,10 +1,7 @@
-using System.Security.Cryptography;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Apha.Common.Constants;
 using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
-using Apha.Common.Utilities.Storage;
 using Apha.FPS.Application.Dtos.BulkRates;
 using Apha.FPS.Application.Enums;
 using Apha.FPS.Application.Common.BulkRates;
@@ -13,7 +10,6 @@ using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Apha.FPS.Application.Services
@@ -36,8 +32,6 @@ namespace Apha.FPS.Application.Services
         private readonly IEventPublisherService _eventPublisherService;
         private readonly IBulkRatesNotificationService _notificationService;
         private readonly IExcelExportService _excelExportService;
-        private readonly IS3StorageService _s3StorageService;
-        private readonly IConfiguration _configuration;
         private readonly ILogger<BulkRatesRequestService> _logger;
 
         public BulkRatesRequestService(
@@ -49,8 +43,6 @@ namespace Apha.FPS.Application.Services
             IEventPublisherService eventPublisherService,
             IBulkRatesNotificationService notificationService,
             IExcelExportService excelExportService,
-            IS3StorageService s3StorageService,
-            IConfiguration configuration,
             ILogger<BulkRatesRequestService> logger)
         {
             _repository = repository;
@@ -61,8 +53,6 @@ namespace Apha.FPS.Application.Services
             _eventPublisherService = eventPublisherService;
             _notificationService = notificationService;
             _excelExportService = excelExportService;
-            _s3StorageService = s3StorageService;
-            _configuration = configuration;
             _logger = logger;
         }
 
@@ -166,51 +156,13 @@ namespace Apha.FPS.Application.Services
                             "Download the current workbook and upload it without editing the hidden metadata.", "STALE_DOWNLOAD_VERSION")]);
             }
 
-            // Compute SHA-256 and upload version — needed for S3 key before any DB writes
-            var checksum = ComputeSha256(fileBytes);
             var newVersion = (entry.UploadVersion ?? 0) + 1;
 
-            // Step 3: Persist original workbook bytes to S3
-            var bucket = _configuration["S3Storage:BucketName"]
-                ?? throw new InvalidOperationException("S3Storage:BucketName is not configured.");
-
-            var safeFilename = SanitizeS3Filename(filename);
-            var folderPath = $"FPS{entry.FpsYear}/BulkRates/{entry.JobName}/{jobQueueId}/v{newVersion}";
-
-            S3UploadResult s3Result;
-            using (var stream = new MemoryStream(fileBytes))
-            {
-                s3Result = await _s3StorageService.UploadFileAsync(
-                    stream, bucket, folderPath, safeFilename,
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ct);
-            }
-
-            if (!s3Result.Success)
-            {
-                _logger.LogError(
-                    "[BulkRates.S3UploadFailed] JobQueueId={JobQueueId} | JobName={JobName} | FpsYear={FpsYear} | Actor={Actor} | UploadVersion={UploadVersion} | ErrorCode={ErrorCode} | Message={Message}",
-                    jobQueueId, entry.JobName, entry.FpsYear, requestedBy, newVersion, s3Result.ErrorCode, s3Result.Message);
-                throw new InvalidOperationException(
-                    $"Failed to retain uploaded workbook in S3 ({s3Result.ErrorCode}: {s3Result.Message}). Upload aborted.");
-            }
-
-            // Step 4: Persist S3 object key — if this fails the S3 object is intentionally retained
-            var s3ObjectKey = s3Result.ObjectKey!;
-            try
-            {
-                await _repository.UpdateS3ObjectKeyAsync(jobQueueId, s3ObjectKey, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex,
-                    "[BulkRates.S3KeyPersistFailed] JobQueueId={JobQueueId} | JobName={JobName} | FpsYear={FpsYear} | Actor={Actor} | UploadVersion={UploadVersion} | Bucket={Bucket} | S3ObjectKey={S3ObjectKey}",
-                    jobQueueId, entry.JobName, entry.FpsYear, requestedBy, newVersion, bucket, s3ObjectKey);
-                throw;
-            }
-
-            // Step 5: Business validation and staging (workbook is now retained in S3) — each
-            // process service validates its own type and persists its own staging rows; no
-            // separate ReplaceStaging*Async dispatch survives here.
+            // Step 3: Business validation and staging — each process service validates its own
+            // type and persists its own staging rows; no separate ReplaceStaging*Async dispatch
+            // survives here. S3 audit retention of the original workbook (if any) is handled
+            // best-effort by the caller after this succeeds — see Point 2 of
+            // docs/bulkrates-review-fixes; it is not this service's concern.
             var validationResult = entry.JobName switch
             {
                 BulkRatesJobNames.Fec => await _testService.ProcessUploadAsync(
@@ -227,17 +179,17 @@ namespace Apha.FPS.Application.Services
 
             var counts = validationResult.RowCounts;
             await _repository.UpdateUploadMetadataAsync(
-                jobQueueId, filename, checksum, newVersion, DateTime.UtcNow,
+                jobQueueId, filename, newVersion, DateTime.UtcNow,
                 JsonSerializer.Serialize(counts, JsonOptions), ct);
 
             await _repository.WriteJobQueueLogAsync(
                 jobQueueId,
-                $"File uploaded (v{newVersion}): {filename}. S3: {s3ObjectKey}. Rows: {counts.Total} total, {counts.Invalid} invalid, {counts.Insert} insert, {counts.Update} update, {counts.Unchanged} unchanged.",
+                $"File uploaded (v{newVersion}): {filename}. Rows: {counts.Total} total, {counts.Invalid} invalid, {counts.Insert} insert, {counts.Update} update, {counts.Unchanged} unchanged.",
                 requestedBy, ct);
 
             _logger.LogInformation(
-                "[BulkRates.FileUploaded] JobQueueId={JobQueueId} | JobName={JobName} | FpsYear={FpsYear} | Actor={Actor} | UploadVersion={UploadVersion} | S3ObjectKey={S3ObjectKey} | TotalRows={TotalRows} | InvalidRows={InvalidRows}",
-                jobQueueId, entry.JobName, entry.FpsYear, requestedBy, newVersion, s3ObjectKey, counts.Total, counts.Invalid);
+                "[BulkRates.FileUploaded] JobQueueId={JobQueueId} | JobName={JobName} | FpsYear={FpsYear} | Actor={Actor} | UploadVersion={UploadVersion} | TotalRows={TotalRows} | InvalidRows={InvalidRows}",
+                jobQueueId, entry.JobName, entry.FpsYear, requestedBy, newVersion, counts.Total, counts.Invalid);
 
             return new BulkRatesUploadResultDto
             {
@@ -248,18 +200,6 @@ namespace Apha.FPS.Application.Services
                 RowCounts = ToDto(counts),
                 ValidationErrors = ToDto(validationResult.Errors)
             };
-        }
-
-        /// <summary>
-        /// Strips characters that are illegal or problematic in S3 object key path segments.
-        /// Preserves the file extension; replaces path separators and control characters with underscores.
-        /// </summary>
-        private static string SanitizeS3Filename(string filename)
-        {
-            // Split on both separators so backslash paths are handled correctly on Linux too
-            var basename = filename.Split('/', '\\').LastOrDefault(s => !string.IsNullOrWhiteSpace(s)) ?? filename;
-            var sanitized = Regex.Replace(basename, @"[/\\?#%\x00-\x1f]", "_");
-            return string.IsNullOrWhiteSpace(sanitized) ? "upload" : sanitized;
         }
 
         // ── Get validation results ──────────────────────────────────────────────
@@ -302,16 +242,16 @@ namespace Apha.FPS.Application.Services
 
             RequireStatus(entry, StatusInitiated, "release for approval");
 
-            // Verify upload metadata (checksum) exists
-            if (entry.UploadChecksumSha256 == null)
+            // Verify upload metadata exists
+            if (entry.UploadFilename == null)
                 throw new BusinessValidationErrorException([
                     new("No file has been uploaded for this request. Upload a valid file before releasing.", "NO_UPLOAD")]);
-            // BuildUploadMetadata only returns null when both UploadChecksumSha256 and
-            // UploadFilename are null — already ruled out by the check above.
+            // BuildUploadMetadata only returns null when UploadFilename is null —
+            // already ruled out by the check above.
             var metadata = BuildUploadMetadata(entry)
-                ?? throw new InvalidOperationException("Upload metadata missing despite checksum present.");
+                ?? throw new InvalidOperationException("Upload metadata missing despite filename present.");
 
-            // A checksum can exist for a file that parsed to zero data rows — releasing that
+            // A file can exist that parsed to zero data rows — releasing that
             // would approve/run a no-op bulk update, which makes no business sense.
             if (metadata.RowCounts.Total == 0)
                 throw new BusinessValidationErrorException([
@@ -393,10 +333,10 @@ namespace Apha.FPS.Application.Services
             // TEMPORARILY DISABLED at the requester's request so a single admin can
             // self-approve during testing. Restore this check before release.
 
-            // Verify checksum is stored (immutability of frozen upload)
-            if (entry.UploadChecksumSha256 == null)
+            // Verify upload metadata is stored (immutability of frozen upload)
+            if (entry.UploadFilename == null)
                 throw new BusinessValidationErrorException([
-                    new("Upload metadata is missing. The request cannot be approved.", "MISSING_CHECKSUM")]);
+                    new("Upload metadata is missing. The request cannot be approved.", "MISSING_UPLOAD")]);
 
             var releasedStatusId = entry.StatusId;
             var approvedStatusId = await _repository.GetStatusIdByNameAsync(entry.JobId, StatusApproved, ct)
@@ -657,7 +597,7 @@ namespace Apha.FPS.Application.Services
 
             // No file uploaded yet — there is nothing staged to diff against live data, so every
             // live row would otherwise look "Deleted"/"Not Found". Return no rows until an upload exists.
-            if (entry.UploadChecksumSha256 == null)
+            if (entry.UploadFilename == null)
                 return new BulkRatesStagingDataDto();
 
             if (string.Equals(entry.JobName, BulkRatesJobNames.Fec, StringComparison.OrdinalIgnoreCase))
@@ -762,13 +702,12 @@ namespace Apha.FPS.Application.Services
 
         private static BulkRatesUploadMetadata? BuildUploadMetadata(BulkRatesQueueRow entry)
         {
-            if (entry.UploadChecksumSha256 == null && entry.UploadFilename == null)
+            if (entry.UploadFilename == null)
                 return null;
 
             return new BulkRatesUploadMetadata
             {
                 Filename = entry.UploadFilename,
-                ChecksumSha256 = entry.UploadChecksumSha256,
                 UploadVersion = entry.UploadVersion ?? 0,
                 ValidationCompletedAtUtc = entry.UploadValidatedAtUtc,
                 RowCounts = DeserializeRowCounts(entry.UploadRowCountsJson)
@@ -797,7 +736,6 @@ namespace Apha.FPS.Application.Services
             RequestedAtUtc = entry.RequestedAtUtc,
             FpsYear = entry.FpsYear,
             UploadFilename = entry.UploadFilename,
-            UploadChecksumSha256 = entry.UploadChecksumSha256,
             UploadVersion = entry.UploadVersion,
             UploadValidatedAtUtc = entry.UploadValidatedAtUtc,
             UploadRowCountsJson = entry.UploadRowCountsJson,
@@ -816,13 +754,11 @@ namespace Apha.FPS.Application.Services
             ErrorMessage = entry.ErrorMessage,
             FailureReason = entry.FailureReason,
             ActiveDownloadVersion = entry.ActiveDownloadVersion,
-            S3ObjectKey = entry.S3ObjectKey,
         };
 
         private static BulkRatesUploadMetadataDto? ToDto(BulkRatesUploadMetadata? metadata) => metadata is null ? null : new BulkRatesUploadMetadataDto
         {
             Filename = metadata.Filename,
-            ChecksumSha256 = metadata.ChecksumSha256,
             UploadVersion = metadata.UploadVersion,
             ValidationCompletedAtUtc = metadata.ValidationCompletedAtUtc,
             RowCounts = ToDto(metadata.RowCounts),
@@ -884,12 +820,6 @@ namespace Apha.FPS.Application.Services
 
         private static IReadOnlyList<BulkRatesValidationErrorDto> ToDto(IReadOnlyList<StagingValidationError> errors) =>
             errors.Select(ToDto).ToList();
-
-        private static string ComputeSha256(byte[] data)
-        {
-            var hash = SHA256.HashData(data);
-            return Convert.ToHexString(hash).ToLowerInvariant();
-        }
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {

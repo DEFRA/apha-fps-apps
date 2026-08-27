@@ -16,7 +16,6 @@ namespace Apha.FPS.Application.Common.BulkRates
     public class BulkRatesUploadMetadata
     {
         public string? Filename { get; set; }
-        public string? ChecksumSha256 { get; set; }
         public int UploadVersion { get; set; }
         public DateTime? ValidationCompletedAtUtc { get; set; }
         public BulkRatesRowCounts RowCounts { get; set; } = new();

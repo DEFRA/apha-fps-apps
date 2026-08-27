@@ -57,7 +57,6 @@ namespace Apha.FPS.DataAccess.Data
 
             // ── Bulk Rates workflow columns — see BatchJobQueue for why they're here ──
             entity.Property(e => e.UploadFilename).HasColumnName("upload_filename");
-            entity.Property(e => e.UploadChecksumSha256).HasColumnName("upload_checksum_sha256");
             entity.Property(e => e.UploadVersion).HasColumnName("upload_version");
             entity.Property(e => e.UploadValidatedAtUtc).HasColumnName("upload_validated_at_utc");
             entity.Property(e => e.UploadRowCountsJson)
@@ -74,7 +73,6 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.TriggeredBy).HasColumnName("triggered_by");
             entity.Property(e => e.TriggeredAtUtc).HasColumnName("triggered_at_utc");
             entity.Property(e => e.ActiveDownloadVersion).HasColumnName("active_download_version");
-            entity.Property(e => e.S3ObjectKey).HasColumnName("s3_object_key");
         }
     }
 }

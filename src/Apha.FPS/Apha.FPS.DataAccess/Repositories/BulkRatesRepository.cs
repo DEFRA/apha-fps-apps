@@ -83,7 +83,6 @@ namespace Apha.FPS.DataAccess.Repositories
                 RequestedAtUtc = q.RequestedAtUtc ?? default,
                 FpsYear = q.FpsYear,
                 UploadFilename = q.UploadFilename,
-                UploadChecksumSha256 = q.UploadChecksumSha256,
                 UploadVersion = q.UploadVersion,
                 UploadValidatedAtUtc = q.UploadValidatedAtUtc,
                 UploadRowCountsJson = q.UploadRowCountsJson,
@@ -102,8 +101,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 // Physical column "errormessage" surfaces as FailureReason, not ErrorMessage —
                 // matches the pre-existing raw-SQL mapping exactly.
                 FailureReason = q.ErrorMessage,
-                ActiveDownloadVersion = q.ActiveDownloadVersion,
-                S3ObjectKey = q.S3ObjectKey
+                ActiveDownloadVersion = q.ActiveDownloadVersion
             };
 
         public async Task<BulkRatesQueueRow> CreateRequestAsync(
@@ -247,24 +245,15 @@ namespace Apha.FPS.DataAccess.Repositories
         // ── Upload metadata ──────────────────────────────────────────────────────
 
         public Task UpdateUploadMetadataAsync(
-            Guid jobQueueId, string filename, string checksumSha256, int uploadVersion,
+            Guid jobQueueId, string filename, int uploadVersion,
             DateTime validatedAtUtc, string rowCountsJson, CancellationToken ct = default) =>
             _dbContext.BatchJobQueues.IgnoreQueryFilters()
                 .Where(q => q.JobqueueId == jobQueueId)
                 .ExecuteUpdateAsync(setters => setters
                     .SetProperty(q => q.UploadFilename, filename)
-                    .SetProperty(q => q.UploadChecksumSha256, checksumSha256)
                     .SetProperty(q => q.UploadVersion, uploadVersion)
                     .SetProperty(q => q.UploadValidatedAtUtc, validatedAtUtc)
                     .SetProperty(q => q.UploadRowCountsJson, rowCountsJson)
-                    .SetProperty(q => q.UpdatedAt, DateTime.UtcNow), ct);
-
-        public Task UpdateS3ObjectKeyAsync(
-            Guid jobQueueId, string s3ObjectKey, CancellationToken ct = default) =>
-            _dbContext.BatchJobQueues.IgnoreQueryFilters()
-                .Where(q => q.JobqueueId == jobQueueId)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(q => q.S3ObjectKey, s3ObjectKey)
                     .SetProperty(q => q.UpdatedAt, DateTime.UtcNow), ct);
 
         // ── Audit log ────────────────────────────────────────────────────────────

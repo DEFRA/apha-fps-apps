@@ -15,7 +15,6 @@ namespace Apha.FPSApps.Application.Dtos.FPS
         public DateTime RequestedAtUtc { get; set; }
         public int FpsYear { get; set; }
         public string? UploadFilename { get; set; }
-        public string? UploadChecksumSha256 { get; set; }
         public int? UploadVersion { get; set; }
         public DateTime? UploadValidatedAtUtc { get; set; }
         public string? UploadRowCountsJson { get; set; }

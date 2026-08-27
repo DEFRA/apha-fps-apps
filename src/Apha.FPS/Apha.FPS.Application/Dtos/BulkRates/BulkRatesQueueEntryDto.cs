@@ -18,7 +18,6 @@ namespace Apha.FPS.Application.Dtos.BulkRates
         public DateTime RequestedAtUtc { get; set; }
         public int FpsYear { get; set; }
         public string? UploadFilename { get; set; }
-        public string? UploadChecksumSha256 { get; set; }
         public int? UploadVersion { get; set; }
         public DateTime? UploadValidatedAtUtc { get; set; }
         public string? UploadRowCountsJson { get; set; }
@@ -37,6 +36,5 @@ namespace Apha.FPS.Application.Dtos.BulkRates
         public string? ErrorMessage { get; set; }
         public string? FailureReason { get; set; }
         public int? ActiveDownloadVersion { get; set; }
-        public string? S3ObjectKey { get; set; }
     }
 }
