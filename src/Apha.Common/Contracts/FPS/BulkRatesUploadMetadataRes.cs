@@ -6,7 +6,6 @@ namespace Apha.Common.Contracts.FPS
     public class BulkRatesUploadMetadataRes
     {
         public string? Filename { get; set; }
-        public string? ChecksumSha256 { get; set; }
         public int UploadVersion { get; set; }
         public DateTime? ValidationCompletedAtUtc { get; set; }
         public BulkRatesRowCountsRes RowCounts { get; set; } = new();
