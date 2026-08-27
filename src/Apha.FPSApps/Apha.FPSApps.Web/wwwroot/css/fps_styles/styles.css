@@ -5591,7 +5591,7 @@ body,
 .isNoGlobalScrollBar {
     .grid-scroll-container {
         max-height: none !important;
-        height: 50.55vh !important;
+        height: 51vh !important;
     }
 }
 .isClearfix{
@@ -5606,5 +5606,16 @@ body,
 .isCustomTableHeight {
     h2.sup_align_heading {
         line-height: 34px;
+    }
+}
+
+.isAccountCategoryMaintenancePage,
+.isWorkGroupStaffPage {
+    .govuk-checkboxes__item.sup_chk_margin {
+        padding-bottom: 0 !important;
+    }
+
+    .grid-scroll-container {
+        height: 62vh !important;
     }
 }
