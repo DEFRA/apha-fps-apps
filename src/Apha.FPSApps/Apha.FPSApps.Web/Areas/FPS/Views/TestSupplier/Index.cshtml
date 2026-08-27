@@ -19,7 +19,7 @@
                 <tr class="govuk-table__row">
                     <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
                         <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0 govuk-!-text-align-right" for="testCodePick">
-                            Select a Test:
+                            Select a Test:&nbsp;
                         </label>
                     </th>
                     <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
@@ -45,7 +45,10 @@
             </div>
             <div class="govuk-form-group govuk-!-margin-bottom-0">
                 <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0" for="totalTestCost">Total Cost</label>
+                <div class="govuk-input__wrapper">
+                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
                 <input type="text" id="totalTestCost" class="govuk-input fps-summary-input" value="£0.00" readonly aria-label="Total test cost" />
+            </div>
             </div>
         </div>
     </div>
@@ -179,7 +182,9 @@
                 { field: 'Text', header: 'ItemDescription' }
             ],
             data: testCodeOptionsListData,
-            displayField: 'Text',
+            // Show the Test code in the closed control; the description remains
+            // visible as a column inside the dropdown panel.
+            displayField: 'Value',
             valueField: 'Value',
             showClearButton: false,
 
@@ -245,7 +250,7 @@
     function calculateTotals() {
         if (!currentTestCode) {
             $('#totalTests').val('0.00');
-            $('#totalTestCost').val('£0.00');
+            $('#totalTestCost').val('0.00');
             return;
         }
 
@@ -257,7 +262,7 @@
                 var totalTests = parseFloat(result.totalTests) || 0;
                 var totalCost = parseFloat(result.totalCost) || 0;
                 $('#totalTests').val(totalTests.toFixed(2));
-                $('#totalTestCost').val('£' + totalCost.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                $('#totalTestCost').val(totalCost.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
             }
         });
     }

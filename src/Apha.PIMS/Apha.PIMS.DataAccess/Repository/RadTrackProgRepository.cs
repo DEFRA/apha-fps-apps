@@ -69,7 +69,7 @@ namespace Apha.PIMS.DataAccess.Repository
         {
             return await _dbContext.RadtrackProgs
                 .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.Program == program);
+                .FirstOrDefaultAsync(r => EF.Functions.ILike(r.Program, program));
         }
         public async Task<RadtrackProg> AddRadTrackProgAsync(RadtrackProg entity)
         {
@@ -86,7 +86,7 @@ namespace Apha.PIMS.DataAccess.Repository
         public async Task<bool> DeleteRadTrackProgAsync(string program)
         {
             int rowsAffected = await _dbContext.RadtrackProgs
-                .Where(r => r.Program == program)
+                .Where(r => EF.Functions.ILike(r.Program, program))
                 .ExecuteDeleteAsync();
 
             return rowsAffected > 0;
@@ -94,7 +94,7 @@ namespace Apha.PIMS.DataAccess.Repository
         public async Task<bool> RadTrackProgExistsAsync(string program)
         {
             return await _dbContext.RadtrackProgs
-                .AnyAsync(r => r.Program == program);
+                .AnyAsync(r => EF.Functions.ILike(r.Program, program));
         }
 
         // Returns distinct non-null Program values from MY_tlkpProject ordered alphabetically

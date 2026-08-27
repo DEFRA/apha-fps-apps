@@ -85,7 +85,7 @@
 <script>
     $(document).ready(function () {
         var workGroupData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.WorkGroupsData ?? new List<object>()));
-        var selectedWorkGroup = '@Html.Raw(Model.JobCodeWorkGroup ?? "")';
+        var selectedWorkGroup = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.JobCodeWorkGroup ?? string.Empty));
 
         initializeJobCodeWorkGroupDropdown({
             workGroupData: workGroupData,

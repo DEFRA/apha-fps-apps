@@ -163,7 +163,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             var a2 = grid.Data[1];
             Assert.Equal("A2", a2["AccShortName"]);
             Assert.Equal("5", a2["WG1"]);
-            Assert.Equal("0", a2["WG2"]);
+            // A2/WG2 has no row in vtblbid, so the cell is blank rather than 0.
+            Assert.Null(a2["WG2"]);
             Assert.Equal("5", a2["RowSummary"]);
         }
 
@@ -228,9 +229,67 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             var a1 = Assert.Single(grid.Data);
-            Assert.Equal("0", a1["WG1"]);
+            Assert.DoesNotContain(grid.Columns, c => c.PropertyName == "WG1");
+            Assert.False(a1.ContainsKey("WG1"));
             Assert.Equal("15", a1["WG2"]);
             Assert.Equal("15", a1["RowSummary"]);
+        }
+
+        [Fact]
+        public async Task LoadGrid_MatchesBids_WhenAccountAndWorkgroupCasingOrPaddingDiffer()
+        {
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync("PC1")
+                .Returns(ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(new List<WorkGroupViewDto>
+                {
+                    new() { WorkGroupName = "WG1", ProfitCentre = "PC1" }
+                }));
+            _budgetBidsService.GetBidViewAsync("WG1").Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(
+                new List<BidViewDto>
+                {
+                    new() { Account = " a1 ", WorkGroupName = " wg1 ", GenBid = 25m }
+                }));
+            _budgetBidsService.GetAccountCategoriesAsync().Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(
+                new List<AccountCategoryDto> { new() { AccShortName = "A1" } }));
+
+            var result = await _controller.LoadGrid("PC1");
+
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
+            var a1 = Assert.Single(grid.Data);
+            Assert.Equal("25", a1["WG1"]);
+            Assert.Equal("25", a1["RowSummary"]);
+        }
+
+        [Fact]
+        public async Task LoadGrid_ShowsZeroForRecordedZeroBid_AndBlankWhenBidMissing()
+        {
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync("PC1")
+                .Returns(ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(new List<WorkGroupViewDto>
+                {
+                    new() { WorkGroupName = "WG1", ProfitCentre = "PC1" },
+                    new() { WorkGroupName = "WG2", ProfitCentre = "PC1" }
+                }));
+            _budgetBidsService.GetBidViewAsync("WG1").Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(
+                new List<BidViewDto>
+                {
+                    new() { Account = "A1", WorkGroupName = "WG1", GenBid = 0m }
+                }));
+            _budgetBidsService.GetBidViewAsync("WG2").Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(
+                new List<BidViewDto>
+                {
+                    new() { Account = "A1", WorkGroupName = "WG2", GenBid = 12m }
+                }));
+            _budgetBidsService.GetAccountCategoriesAsync().Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(
+                new List<AccountCategoryDto> { new() { AccShortName = "A1" }, new() { AccShortName = "A2" } }));
+
+            var result = await _controller.LoadGrid("PC1");
+
+            var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
+            var a1 = Assert.Single(grid.Data);
+
+            // An explicit 0 bid still renders as "0"; only a missing bid renders blank.
+            Assert.Equal("0", a1["WG1"]);
+            Assert.Equal("12", a1["WG2"]);
+            Assert.Equal("12", a1["RowSummary"]);
         }
 
         private void ArrangeSortableGrid()
@@ -520,10 +579,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.True(grid.ShowPagination);
             Assert.Equal(25, grid.Pagination.TotalRecords);
-            // Default page size is 20.
-            Assert.Equal(20, grid.Pagination.PageSize);
+            // Default page size is 10.
+            Assert.Equal(10, grid.Pagination.PageSize);
             Assert.Equal(1, grid.Pagination.PageNumber);
-            Assert.Equal(20, grid.Data.Count);
+            Assert.Equal(10, grid.Data.Count);
         }
 
         [Fact]
@@ -562,8 +621,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
 
             var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal(1, grid.Pagination.PageNumber);
-            Assert.Equal(20, grid.Pagination.PageSize);
-            Assert.Equal(20, grid.Data.Count);
+            Assert.Equal(10, grid.Pagination.PageSize);
+            Assert.Equal(10, grid.Data.Count);
         }
 
         [Fact]

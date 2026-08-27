@@ -90,6 +90,13 @@ namespace Apha.PIMS.DataAccess.Repository
         }
         public async Task<ReportGroup> AddReportGroupAsync(ReportGroup entity)
         {
+            if (entity.GroupId <= 0)
+            {
+                int maxExistingGroupId = await _dbContext.ReportGroups
+                    .MaxAsync(g => (int?)g.GroupId) ?? 0;
+                entity.GroupId = maxExistingGroupId + 1;
+            }
+
             _dbContext.ReportGroups.Add(entity);
             await _dbContext.SaveChangesAsync();
             return entity;

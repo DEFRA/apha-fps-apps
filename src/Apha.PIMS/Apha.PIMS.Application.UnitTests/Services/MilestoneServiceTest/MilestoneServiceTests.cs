@@ -40,6 +40,9 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             Year          = 2024
         };
 
+        private static void SetFormDate(MilestoneFormDatesDto dto, string propertyName, DateTime? value)
+            => typeof(MilestoneFormDatesDto).GetProperty(propertyName)!.SetValue(dto, value);
+
         #region GetAllMilestonesAsync
 
         [Fact]
@@ -1271,11 +1274,38 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             ex.Errors.Should().ContainSingle(e => e.Code == "YEAR_REQUIRED");
         }
 
+        [Theory]
+        [InlineData(nameof(MilestoneFormDatesDto.Jan), "JAN_DATE_FUTURE")]
+        [InlineData(nameof(MilestoneFormDatesDto.Feb), "FEB_DATE_FUTURE")]
+        [InlineData(nameof(MilestoneFormDatesDto.Mar), "MAR_DATE_FUTURE")]
+        [InlineData(nameof(MilestoneFormDatesDto.Apr), "APR_DATE_FUTURE")]
+        [InlineData(nameof(MilestoneFormDatesDto.May), "MAY_DATE_FUTURE")]
+        [InlineData(nameof(MilestoneFormDatesDto.Jun), "JUN_DATE_FUTURE")]
+        [InlineData(nameof(MilestoneFormDatesDto.Jul), "JUL_DATE_FUTURE")]
+        [InlineData(nameof(MilestoneFormDatesDto.Aug), "AUG_DATE_FUTURE")]
+        [InlineData(nameof(MilestoneFormDatesDto.Sep), "SEP_DATE_FUTURE")]
+        [InlineData(nameof(MilestoneFormDatesDto.Oct), "OCT_DATE_FUTURE")]
+        [InlineData(nameof(MilestoneFormDatesDto.Nov), "NOV_DATE_FUTURE")]
+        [InlineData(nameof(MilestoneFormDatesDto.Dec), "DEC_DATE_FUTURE")]
+        public async Task SaveMilestoneFormDatesAsync_ThrowsBusinessValidationError_WhenMonthDateIsInFuture(string propertyName, string errorCode)
+        {
+            // Arrange
+            var dto = ValidFormDatesDto();
+            SetFormDate(dto, propertyName, DateTime.Today.AddDays(1));
+
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.SaveMilestoneFormDatesAsync(dto));
+
+            // Assert
+            ex.Errors.Should().ContainSingle(e => e.Code == errorCode);
+        }
+
         [Fact]
         public async Task SaveMilestoneFormDatesAsync_CollectsAllValidationErrors()
         {
             // Arrange
-            var dto = new MilestoneFormDatesDto { ParentProject = string.Empty, Year = 0 };
+            var dto = new MilestoneFormDatesDto { ParentProject = string.Empty, Year = 0, Jan = DateTime.Today.AddDays(1) };
 
             // Act
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
@@ -1284,6 +1314,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             // Assert
             ex.Errors.Should().Contain(e => e.Code == "PROJECT_REQUIRED");
             ex.Errors.Should().Contain(e => e.Code == "YEAR_REQUIRED");
+            ex.Errors.Should().Contain(e => e.Code == "JAN_DATE_FUTURE");
         }
 
         #endregion

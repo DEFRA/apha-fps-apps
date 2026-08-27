@@ -124,7 +124,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var response = await _workGroupEmployeeService.CreateWorkGroupEmployeeForStaffAsync(model);
             if (response.Success)
             {
-                return Json(new { success = true, data = response.Data, message = "WG Staff record created successfully" });
+                var newPactId = response.Data?.PactId;
+                var message = string.IsNullOrWhiteSpace(newPactId)
+                    ? "WG Staff record created successfully"
+                    : $"WG Staff record created successfully. PACT Id for the record is: {newPactId}";
+                return Json(new { success = true, data = response.Data, message });
             }
 
             return Json(new
@@ -239,7 +243,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<WorkGroupEmployeeStaffItem>
             {
                 GridId = "wgStaffGrid",
-                Title = "WG Staff",
+                Title = "Work Group Staff",
                 ShowPagination = true,
                 KeyProperty = "PactId",
                 AddFunction = "addMaintWGStaff",

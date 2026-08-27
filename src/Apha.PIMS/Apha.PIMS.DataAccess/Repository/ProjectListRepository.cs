@@ -36,6 +36,7 @@ namespace Apha.PIMS.DataAccess.Repository
                       r => r.Program,
                       (v, r) => new { v, r })
                 .Where(x => x.v.Active == "Y")
+                .OrderBy(x => x.v.ParentProject)
                 .Select(x => new ProjectListView
                 {
                     Parentproject = x.v.ParentProject,
