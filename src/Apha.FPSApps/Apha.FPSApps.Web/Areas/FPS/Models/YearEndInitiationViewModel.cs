@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -54,15 +55,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public short? Fmonth { get; set; }
 
         [Display(Name = "Days")]
-        [GridColumn(Order = 6, Width = 80, Type = GridColumnType.Text)]
+        [NonFinancialRange]
+        [GridColumn(Order = 6, Width = 80, Type = GridColumnType.DecimalNumber)]
         public decimal? Days { get; set; }
 
         [Display(Name = "CVL Hours")]
-        [GridColumn(Order = 7, Width = 100, Type = GridColumnType.Text)]
+        [NonFinancialRange]
+        [GridColumn(Order = 7, Width = 100, Type = GridColumnType.DecimalNumber)]
         public decimal? CvlHours { get; set; }
 
         [Display(Name = "VID Hours")]
-        [GridColumn(Order = 8, Width = 100, Type = GridColumnType.Text)]
+        [NonFinancialRange]
+        [GridColumn(Order = 8, Width = 100, Type = GridColumnType.DecimalNumber)]
         public decimal? VidHours { get; set; }
 
         [Display(Name = "Exists For Planned Year")]
@@ -85,8 +89,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public short Month { get; set; }
         public short? Fmonth { get; set; }
         public int FpsYear { get; set; }
+        [NonFinancialRange]
         public decimal? Days { get; set; }
+        [NonFinancialRange]
         public decimal? CvlHours { get; set; }
+        [NonFinancialRange]
         public decimal? VidHours { get; set; }
     }
 

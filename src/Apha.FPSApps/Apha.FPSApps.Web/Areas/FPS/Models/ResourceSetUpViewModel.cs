@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -36,9 +37,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? SelectedPactId { get; set; }
 
         // Footer totals from fsubWGStaff
+        [NonFinancialRange]
         public double WgHrsPaid { get; set; }
+        [NonFinancialRange]
         public double WgLeave { get; set; }
+        [NonFinancialRange]
         public double WgSickSpecial { get; set; }
+        [NonFinancialRange]
         public double WgHrsAvail { get; set; }
     }
 }

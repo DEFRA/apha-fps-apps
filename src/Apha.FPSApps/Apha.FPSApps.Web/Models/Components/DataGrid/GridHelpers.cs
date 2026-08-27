@@ -103,6 +103,10 @@
                 case GridColumnType.DecimalNumber:
                     if (value is decimal decValue)
                         return decValue.ToString("F2");
+                    if (value is double decDouble)
+                        return decDouble.ToString("F2");
+                    if (value is float decFloat)
+                        return ((double)decFloat).ToString("F2");
                     break;
                 case GridColumnType.Date:
                     if (value is DateTime dateValue)

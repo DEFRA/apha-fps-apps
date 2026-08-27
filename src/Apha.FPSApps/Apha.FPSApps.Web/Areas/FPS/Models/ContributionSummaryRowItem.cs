@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -28,7 +29,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? WgGrade { get; set; }
 
         [Display(Name = "Avail Hrs")]
-        [GridColumn(Order = 4, Width = 85, Type = GridColumnType.DoubleNumber)]
+        [NonFinancialRange]
+        [GridColumn(Order = 4, Width = 85, Type = GridColumnType.DecimalNumber)]
         public double? AvHrs { get; set; }
 
         [Display(Name = "Chrg Rate")]
@@ -38,7 +40,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         // ── Total Planned Time group ────────────────────────────────────────
 
         [Display(Name = "PlanHrs")]
-        [GridColumn(Order = 6, Width = 85, Type = GridColumnType.DoubleNumber)]
+        [NonFinancialRange]
+        [GridColumn(Order = 6, Width = 85, Type = GridColumnType.DecimalNumber)]
         public double? Hrs { get; set; }
 
         [Display(Name = "FEC")]
@@ -46,13 +49,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal? Fec { get; set; }
 
         [Display(Name = "% Planned")]
+        [NonFinancialRange]
         [GridColumn(Order = 8, Width = 90, Type = GridColumnType.DoubleNumber)]
         public double? PctPlanned { get; set; }
 
         // ── Assured Planned Time group ──────────────────────────────────────
 
         [Display(Name = "App Hrs")]
-        [GridColumn(Order = 9, Width = 85, Type = GridColumnType.DoubleNumber)]
+        [NonFinancialRange]
+        [GridColumn(Order = 9, Width = 85, Type = GridColumnType.DecimalNumber)]
         public double? AppHours { get; set; }
 
         [Display(Name = "App FEC")]
@@ -60,6 +65,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal? AppFec { get; set; }
 
         [Display(Name = "% Assured")]
+        [NonFinancialRange]
         [GridColumn(Order = 11, Width = 90, Type = GridColumnType.DoubleNumber)]
         public double? PctAssuredPlanned { get; set; }
 

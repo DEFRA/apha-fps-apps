@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
@@ -25,7 +26,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 60, Type = GridColumnType.ReadOnly)]
         public double? Month { get; set; }
 
-        [GridColumn(Width = 70, Type = GridColumnType.ReadOnly)]
+        [NonFinancialRange]
+        [GridColumn(Width = 70, Type = GridColumnType.DecimalNumber)]
         public double? Time { get; set; }
 
         [GridColumn(Width = 90, Type = GridColumnType.GbpValue)]

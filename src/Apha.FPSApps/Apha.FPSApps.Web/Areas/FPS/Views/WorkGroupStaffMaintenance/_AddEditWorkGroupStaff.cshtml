@@ -175,11 +175,11 @@
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="HrsPaid">
                     HrsPaid: <span class="sup_color_red">*</span>
                 </label>
-                <input class="govuk-input govuk-!-font-size-16"
+                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                        id="HrsPaid"
                        asp-for="HrsPaid"
-                       type="number"
-                       step="0.01"
+                       type="text"
+                       maxlength="20"
                        required
                        value="@(isEditMode ? Model?.HrsPaid.ToString() : string.Empty)" />
                 <span asp-validation-for="HrsPaid" class="govuk-error-message" style="display:none;"></span>
@@ -191,11 +191,11 @@
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Leave">
                     Leave: <span class="sup_color_red">*</span>
                 </label>
-                <input class="govuk-input govuk-!-font-size-16"
+                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                        id="Leave"
                        asp-for="Leave"
-                       type="number"
-                       step="0.01"
+                       type="text"
+                       maxlength="20"
                        required
                        value="@(isEditMode ? Model?.Leave.ToString() : string.Empty)" />
                 <span asp-validation-for="Leave" class="govuk-error-message" style="display:none;"></span>
@@ -207,11 +207,11 @@
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="SickSpecial">
                     SickSpecial: <span class="sup_color_red">*</span>
                 </label>
-                <input class="govuk-input govuk-!-font-size-16"
+                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                        id="SickSpecial"
                        asp-for="SickSpecial"
-                       type="number"
-                       step="0.01"
+                       type="text"
+                       maxlength="20"
                        required
                        value="@(isEditMode ? Model?.SickSpecial.ToString() : string.Empty)" />
                 <span asp-validation-for="SickSpecial" class="govuk-error-message" style="display:none;"></span>
@@ -223,11 +223,11 @@
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="HrsAvail">
                     HrsAvail: <span class="sup_color_red">*</span>
                 </label>
-                <input class="govuk-input govuk-!-font-size-16"
+                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                        id="HrsAvail"
                        asp-for="HrsAvail"
-                       type="number"
-                       step="0.01"
+                       type="text"
+                       maxlength="20"
                        required
                        value="@(isEditMode ? Model?.HrsAvail.ToString() : string.Empty)" />
             </div>
@@ -294,11 +294,11 @@
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="HoursPerWeek">
                     Hours per week:
                 </label>
-                <input class="govuk-input govuk-!-font-size-16"
+                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                        id="HoursPerWeek"
                        asp-for="HoursPerWeek"
-                       type="number"
-                       step="0.01" />
+                       type="text"
+                       maxlength="20" />
                 <span asp-validation-for="HoursPerWeek" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
