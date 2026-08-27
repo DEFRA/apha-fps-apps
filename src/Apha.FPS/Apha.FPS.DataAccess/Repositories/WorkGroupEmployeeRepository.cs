@@ -389,7 +389,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 "hrspaid" => ApplyOrder(query, x => x.HrsPaid, descending),
                 "leave" => ApplyOrder(query, x => x.Leave, descending),
                 "makeavailable" => ApplyOrder(query, x => x.MakeAvailable, descending),
-                "hrsavai" => ApplyOrder(query, x => x.HrsAvail, descending),
+                "hrsavail" => ApplyOrder(query, x => x.HrsAvail, descending),
                 "spnumber" => ApplyOrder(query, x => x.SpNumber, descending),
                 "name" or "staffname" => ApplyOrder(query, x => x.Name, descending),
                 "workgroupgrade" or "wggrade" => ApplyOrder(query, x => x.WorkGroupGrade, descending),

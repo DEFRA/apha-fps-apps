@@ -602,7 +602,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
                 new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsAvail = 15 }
             };
             var repo  = CreateRepository(employees);
-            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "hrsavai", Descending = false };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "hrsavail", Descending = false };
 
             var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
 
@@ -622,7 +622,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
                 new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", HrsAvail = 15 }
             };
             var repo  = CreateRepository(employees);
-            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "hrsavai", Descending = true };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "hrsavail", Descending = true };
 
             var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
 
