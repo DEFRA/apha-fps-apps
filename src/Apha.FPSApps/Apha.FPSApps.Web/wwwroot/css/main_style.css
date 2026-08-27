@@ -1893,3 +1893,13 @@ textarea {
 .govuk-back-link{
     font-weight: bold !important;
 }
+
+.modal-dialog {
+    .modal-header {
+        cursor: move;
+
+        .btn-close {
+            cursor: pointer;
+        }
+    }
+}
