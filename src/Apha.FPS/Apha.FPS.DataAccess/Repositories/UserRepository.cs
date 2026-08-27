@@ -202,66 +202,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _dbContext.Database.BeginTransactionAsync();
                 try
                 {
-                    await _dbContext.UserProfitcentres
-                        .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
-                    await _dbContext.UserPrograms
-                        .Where(x => x.UserID == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
-                    await _dbContext.UserCategories
-                        .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
-                    await _dbContext.UserTestOwners
-                        .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
-                    await _dbContext.UserProjectGroups
-                        .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
-
-                    if (profitCentres.Count > 0)
-                    {
-                        _dbContext.UserProfitcentres.AddRange(profitCentres.Select(pc => new UserProfitcentre
-                        {
-                            UserId = userId,
-                            ProfitCentre = pc,
-                            FpsYear = fpsYear
-                        }));
-                    }
-
-                    if (programs.Count > 0)
-                    {
-                        _dbContext.UserPrograms.AddRange(programs.Select(p => new UserProgram
-                        {
-                            UserID = userId,
-                            ProgramNo = p,
-                            FpsYear = fpsYear
-                        }));
-                    }
-
-                    if (categories.Count > 0)
-                    {
-                        _dbContext.UserCategories.AddRange(categories.Select(c => new UserCategory
-                        {
-                            UserId = userId,
-                            Category = c,
-                            FpsYear = fpsYear
-                        }));
-                    }
-
-                    if (testOwners.Count > 0)
-                    {
-                        _dbContext.UserTestOwners.AddRange(testOwners.Select(t => new UserTestOwner
-                        {
-                            UserId = userId,
-                            TestOwner = t,
-                            FpsYear = fpsYear
-                        }));
-                    }
-
-                    if (projectGroups.Count > 0)
-                    {
-                        _dbContext.UserProjectGroups.AddRange(projectGroups.Select(pg => new UserProjectGroup
-                        {
-                            UserId = userId,
-                            ProjectGroup = pg,
-                            FpsYear = fpsYear
-                        }));
-                    }
+                    await DeleteExistingPermissionsAsync(userId, fpsYear);
+                    AddPermissions(userId, fpsYear, profitCentres, programs, categories, testOwners, projectGroups);
 
                     await _dbContext.SaveChangesAsync();
                     await transaction.CommitAsync();
@@ -272,6 +214,76 @@ namespace Apha.FPS.DataAccess.Repositories
                     throw;
                 }
             });
+        }
+
+        [ExcludeFromCodeCoverage(Justification = "Uses ExecuteDeleteAsync which cannot be unit tested with mocked DbContext.")]
+        private async Task DeleteExistingPermissionsAsync(int userId, int fpsYear)
+        {
+            await _dbContext.UserProfitcentres
+                .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
+            await _dbContext.UserPrograms
+                .Where(x => x.UserID == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
+            await _dbContext.UserCategories
+                .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
+            await _dbContext.UserTestOwners
+                .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
+            await _dbContext.UserProjectGroups
+                .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
+        }
+
+        [ExcludeFromCodeCoverage(Justification = "Uses AddRange with in-memory entity creation which cannot be meaningfully unit tested with mocked DbContext.")]
+        private void AddPermissions(int userId, int fpsYear, List<string> profitCentres, List<string> programs,
+            List<string> categories, List<string> testOwners, List<string> projectGroups)
+        {
+            if (profitCentres.Count > 0)
+            {
+                _dbContext.UserProfitcentres.AddRange(profitCentres.Select(pc => new UserProfitcentre
+                {
+                    UserId = userId,
+                    ProfitCentre = pc,
+                    FpsYear = fpsYear
+                }));
+            }
+
+            if (programs.Count > 0)
+            {
+                _dbContext.UserPrograms.AddRange(programs.Select(p => new UserProgram
+                {
+                    UserID = userId,
+                    ProgramNo = p,
+                    FpsYear = fpsYear
+                }));
+            }
+
+            if (categories.Count > 0)
+            {
+                _dbContext.UserCategories.AddRange(categories.Select(c => new UserCategory
+                {
+                    UserId = userId,
+                    Category = c,
+                    FpsYear = fpsYear
+                }));
+            }
+
+            if (testOwners.Count > 0)
+            {
+                _dbContext.UserTestOwners.AddRange(testOwners.Select(t => new UserTestOwner
+                {
+                    UserId = userId,
+                    TestOwner = t,
+                    FpsYear = fpsYear
+                }));
+            }
+
+            if (projectGroups.Count > 0)
+            {
+                _dbContext.UserProjectGroups.AddRange(projectGroups.Select(pg => new UserProjectGroup
+                {
+                    UserId = userId,
+                    ProjectGroup = pg,
+                    FpsYear = fpsYear
+                }));
+            }
         }
 
         public async Task<List<string>> GetAllProfitCentreOptionsAsync()
