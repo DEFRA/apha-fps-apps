@@ -6,7 +6,8 @@ namespace Apha.FPSApps.Web.Controllers
     [AllowAnonymous]
     public class AccountController : Controller
     {
-        public IActionResult AccessDenied(string? returnUrl)
+        
+        public IActionResult AccessDenied()
         {
             return View();
         }
