@@ -87,12 +87,15 @@
                     <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0" for="asuTotalCost">
                         Total Cost
                     </label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                     <input type="text"
                            id="asuTotalCost"
                            class="govuk-input text-AlignRight pva-input-160"
-                           value="£0.00"
+                           value="0.00"
                            readonly
                            aria-label="Total cost">
+                </div>
                 </div>
             </div>
         </div>
@@ -164,7 +167,7 @@
 
             // Reset totals while grid reloads
             document.getElementById('asuTotalDays').value = '0';
-            document.getElementById('asuTotalCost').value = '£0.00';
+            document.getElementById('asuTotalCost').value = '0.00';
 
             // Reload the DataGrid with the selected animal type as an extra filter
             window['gridManager_@Model.AnimalCostsGrid.GridId'].reloadGrid({ page: 1 });
@@ -222,7 +225,7 @@
             });
 
             document.getElementById('asuTotalDays').value = totalDays.toFixed(2);
-            document.getElementById('asuTotalCost').value = '£' + totalCost.toFixed(4)
+            document.getElementById('asuTotalCost').value = totalCost.toFixed(4)
                 .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 

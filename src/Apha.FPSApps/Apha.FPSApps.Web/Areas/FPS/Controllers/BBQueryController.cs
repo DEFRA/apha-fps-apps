@@ -111,16 +111,32 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     allBids.AddRange(bidResponse.Data);
                 }
 
+                // Account keys come from tblkpaccountcategory (AccShortName) while bid rows come from
+                // vtblbid (account). The two are stored with inconsistent casing/padding, so the lookup
+                // must be case-insensitive and trimmed, otherwise every cell falls back to 0.
                 var bidLookup = allBids
-                    .GroupBy(b => b.Account)
+                    .GroupBy(b => NormaliseKey(b.Account), StringComparer.OrdinalIgnoreCase)
                     .ToDictionary(
                         g => g.Key,
-                        g => g.ToDictionary(b => b.WorkGroupName, b => b.GenBid));
+                        g => g.GroupBy(b => NormaliseKey(b.WorkGroupName), StringComparer.OrdinalIgnoreCase)
+                              .ToDictionary(wgGroup => wgGroup.Key, wgGroup => wgGroup.Sum(b => b.GenBid),
+                                  StringComparer.OrdinalIgnoreCase),
+                        StringComparer.OrdinalIgnoreCase);
 
                 var categoriesResponse = await _budgetBidsService.GetAccountCategoriesAsync();
                 var accounts = categoriesResponse.Success && categoriesResponse.Data?.Count > 0
                     ? categoriesResponse.Data.Select(a => a.AccShortName).OrderBy(a => a).ToList()
                     : allBids.Select(b => b.Account).Distinct().OrderBy(a => a).ToList();
+
+                // The Access crosstab only emits accounts/workgroups that actually have bid rows.
+                // Keep the same shape here so the grid does not show extra all-zero rows/columns.
+                accounts = accounts
+                    .Where(a => bidLookup.ContainsKey(NormaliseKey(a)))
+                    .ToList();
+
+                workgroups = workgroups
+                    .Where(wg => bidLookup.Values.Any(wgBids => wgBids.ContainsKey(NormaliseKey(wg))))
+                    .ToList();
 
                 foreach (var wg in workgroups)
                 {
@@ -144,15 +160,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
                     foreach (var wg in workgroups)
                     {
-                        decimal amount = 0;
-                        if (bidLookup.TryGetValue(account, out var wgBids) &&
-                            wgBids.TryGetValue(wg, out var value))
+                        // A missing bid in vtblbid is rendered as a blank cell rather than 0, so a
+                        // genuine zero bid stays distinguishable from "no bid recorded".
+                        decimal? amount = null;
+                        if (bidLookup.TryGetValue(NormaliseKey(account), out var wgBids) &&
+                            wgBids.TryGetValue(NormaliseKey(wg), out var value))
                         {
                             amount = value;
                         }
 
-                        row[wg] = amount.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                        rowTotal += amount;
+                        row[wg] = amount?.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                        rowTotal += amount ?? 0;
                     }
 
                     row["RowSummary"] = rowTotal.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -315,6 +333,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 }
             }
         }
+
+        private static string NormaliseKey(string? value) => (value ?? string.Empty).Trim();
 
         private int GetSelectedFpsYear()
         {

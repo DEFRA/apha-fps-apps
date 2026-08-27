@@ -77,7 +77,7 @@ function selectTestListVlaRow(btn) {
 
     // Show VLA Unit Price from selected row
     var unitPriceText = $row.find('td[data-property="UnitPriceVla"] span').text().trim();
-    $('#stage2-vla-unit-price').val(unitPriceText);
+    $('#stage2-vla-unit-price').val(unitPriceText.replace(/[£,]/g, ''));
 
     // Clear total while component charges grid reloads
     $('#stage2-component-total').val('');
@@ -94,6 +94,7 @@ function updateComponentTotalPrice() {
     });
     var formatted = total === 0 ? ''
         : '\u00A3' + total.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    formatted = formatted.replace(/[£,]/g, '');
     $('#stage2-component-total').val(formatted);
 }
 
