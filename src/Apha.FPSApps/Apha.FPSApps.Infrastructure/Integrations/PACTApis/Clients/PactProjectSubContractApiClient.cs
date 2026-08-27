@@ -167,8 +167,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<MonthlySubContractsPivotDto>.FailureResponse(failresponseDto.Errors, failresponseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<SubContractRmsImportRowDto>>> GetFailedSubContractRmsAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<List<SubContractRmsImportRowDto>>> GetFailedSubContractRmsAsync(QueryParameters<string> query, bool isReadOnlyYear = false)
         {
+            if (isReadOnlyYear)
+            {
+                return ApiResponseDto<List<SubContractRmsImportRowDto>>.SuccessResponse([], total: 0);
+            }
+
             string url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetFailedProjectSubContractRms, query);
             var response = await _http.GetAsync<List<SubContractRmsImportRowRes>>(url);
             if (response.Success)

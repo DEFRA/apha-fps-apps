@@ -75,8 +75,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<MonthlyTimeDto>.FailureResponse(responseDto.Errors, responseDto.Meta ?? new ApiMetaDto());
         }        
 
-        public async Task<ApiResponseDto<List<StagingMonthlyTimeDto>>> GetStagingAsync(QueryParameters<string> query, bool? passed)
+        public async Task<ApiResponseDto<List<StagingMonthlyTimeDto>>> GetStagingAsync(QueryParameters<string> query, bool? passed, bool IsReadOnlyYear = false)
         {
+            if (IsReadOnlyYear)
+            {
+                return ApiResponseDto<List<StagingMonthlyTimeDto>>.SuccessResponse([], total: 0);
+            }
+
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedStagingMonthlyTime, query);
             if (passed.HasValue)
                 url += $"&passed={passed.Value.ToString().ToLowerInvariant()}";

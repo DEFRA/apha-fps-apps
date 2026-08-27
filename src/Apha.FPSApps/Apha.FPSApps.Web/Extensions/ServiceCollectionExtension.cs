@@ -14,6 +14,7 @@ using Apha.FPSApps.Application.Services.PACT;
 using Apha.FPSApps.Application.Services.PIMS;
 using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Web.Handler;
+using Apha.FPSApps.Web.Areas.PACT.Dependencies;
 
 namespace Apha.FPSApps.Web.Extensions
 {
@@ -97,8 +98,10 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
+            services.AddScoped<IMonthlyPactServiceDependencies, MonthlyPactServiceDependencies>();
             services.AddScoped<IPactMonthlyOutputService, PactMonthlyOutputService>();
             services.AddScoped<IPactMonthlyTimeService, PactMonthlyTimeService>();
+            services.AddScoped<IMonthlyPactControllerDependencies, MonthlyPactControllerDependencies>();
             services.AddScoped<IProjectProfileService, ProjectProfileService>();
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();

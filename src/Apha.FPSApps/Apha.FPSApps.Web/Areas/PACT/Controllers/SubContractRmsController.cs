@@ -14,6 +14,7 @@ using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 using System.IO;
 using Apha.Common.Utilities.ExcelExport;
+using Apha.FPSApps.Web.Handler;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
@@ -27,19 +28,22 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly IProjectService _projectService;
         private readonly IMonthService _monthService;
         private readonly IExcelExportService _excelExportService;
+        private readonly IFpsYearContext _fpsYearContext;
 
         public SubContractRmsController(
             IMapper mapper,
             PactProjectSubContractService subContractService,
             IProjectService projectService,
             IMonthService monthService,
-            IExcelExportService excelExportService)
+            IExcelExportService excelExportService,
+            IFpsYearContext fpsYearContext)
         {
             _mapper = mapper;
             _subContractService = subContractService;
             _projectService = projectService;
             _monthService = monthService;
             _excelExportService = excelExportService;
+            _fpsYearContext = fpsYearContext;
         }
 
         [HttpGet]
@@ -388,7 +392,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private async Task<DataGridConfig<SubContractRmsFailedItem>> BuildFailedSubContractRmsGridAsync(PaginationFilter<string> request)
         {
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _subContractService.GetFailedSubContractRmsAsync(query);
+            var isReadOnlyYear = _fpsYearContext.IsReadOnly;
+            var response = await _subContractService.GetFailedSubContractRmsAsync(query, isReadOnlyYear);
 
             var items = response.Data != null
                 ? _mapper.Map<List<SubContractRmsFailedItem>>(response.Data)

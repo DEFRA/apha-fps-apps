@@ -3,8 +3,10 @@ using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Controllers;
-using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Areas.PACT.Dependencies;
 using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Web.Handler;
+using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -21,6 +23,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyOutputControllerTes
         private readonly Apha.Common.Utilities.ExcelExport.IExcelExportService _excelExportService;
         private readonly ITestCapabilityService _testCapabilityService;
         private readonly ITestRequirementService _testRequirementService;
+        private readonly IMonthlyPactControllerDependencies _monthlyPactDependencies;
+        private readonly IFpsYearContext _fpsYearContext;
         private readonly MonthlyOutputController _controller;
 
         public MonthlyOutputControllerTests()
@@ -32,15 +36,21 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyOutputControllerTes
             _excelExportService = Substitute.For<Apha.Common.Utilities.ExcelExport.IExcelExportService>();
             _testCapabilityService = Substitute.For<ITestCapabilityService>();
             _testRequirementService = Substitute.For<ITestRequirementService>();
+            _monthlyPactDependencies = Substitute.For<IMonthlyPactControllerDependencies>();
+            _fpsYearContext = Substitute.For<IFpsYearContext>();
+
+            _monthlyPactDependencies.WorkGroupService.Returns(_workGroupService);
+            _monthlyPactDependencies.MonthService.Returns(_monthService);
+            _monthlyPactDependencies.TestCapabilityService.Returns(_testCapabilityService);
+            _monthlyPactDependencies.TestRequirementService.Returns(_testRequirementService);
+            _fpsYearContext.IsReadOnly.Returns(false);
 
             _controller = new MonthlyOutputController(
                 _mapper,
                 _monthlyOutputService,
-                _workGroupService,
-                _monthService,
+                _monthlyPactDependencies,
                 _excelExportService,
-                _testCapabilityService,
-                _testRequirementService);
+                _fpsYearContext);
         }
 
         [Fact]

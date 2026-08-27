@@ -5,8 +5,10 @@ using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Controllers;
-using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Areas.PACT.Dependencies;
 using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Web.Handler;
+using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -22,6 +24,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyTimeControllerTest
         private readonly IPactTimeCodeValidService _timeCodeValidService;
         private readonly IMonthService _monthService;
         private readonly Apha.Common.Utilities.ExcelExport.IExcelExportService _excelExportService;
+        private readonly IMonthlyPactControllerDependencies _monthlyPactDependencies;
+        private readonly IFpsYearContext _fpsYearContext;
         private readonly MonthlyTimeController _controller;
 
         public MonthlyTimeControllerTests()
@@ -33,15 +37,21 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyTimeControllerTest
             _timeCodeValidService = Substitute.For<IPactTimeCodeValidService>();
             _monthService = Substitute.For<IMonthService>();
             _excelExportService = Substitute.For<Apha.Common.Utilities.ExcelExport.IExcelExportService>();
+            _monthlyPactDependencies = Substitute.For<IMonthlyPactControllerDependencies>();
+            _fpsYearContext = Substitute.For<IFpsYearContext>();
+
+            _monthlyPactDependencies.WorkGroupService.Returns(_workGroupService);
+            _monthlyPactDependencies.EmployeeService.Returns(_employeeService);
+            _monthlyPactDependencies.TimeCodeValidService.Returns(_timeCodeValidService);
+            _monthlyPactDependencies.MonthService.Returns(_monthService);
+            _fpsYearContext.IsReadOnly.Returns(false);
 
             _controller = new MonthlyTimeController(
                 _mapper,
                 _monthlyTimeService,
-                _workGroupService,
-                _employeeService,
-                _timeCodeValidService,
-                _monthService,
-                _excelExportService);
+                _monthlyPactDependencies,
+                _excelExportService,
+                _fpsYearContext);
         }
 
         [Fact]

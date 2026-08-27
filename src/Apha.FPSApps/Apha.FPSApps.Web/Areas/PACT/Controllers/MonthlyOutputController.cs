@@ -2,6 +2,7 @@ using Apha.Common.Utilities.ExcelExport;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
+using Apha.FPSApps.Web.Areas.PACT.Dependencies;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
+using Apha.FPSApps.Web.Handler;
 using PactMonthlyOutputDto = Apha.FPSApps.Application.Dtos.PACT.PactMonthlyOutputDto;
 using StagingMonthlyOutputDto = Apha.FPSApps.Application.Dtos.PACT.StagingMonthlyOutputDto;
 
@@ -24,11 +26,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         private readonly IMapper _mapper;
         private readonly IPactMonthlyOutputService _monthlyOutputService;
-        private readonly IWorkGroupService _workGroupService;
-        private readonly IMonthService _monthService;
+        private readonly IMonthlyPactControllerDependencies _monthlyPactDependencies;
         private readonly IExcelExportService _excelExportService;
-        private readonly ITestCapabilityService _testCapabilityService;
-        private readonly ITestRequirementService _testRequirementService;
+        private readonly IFpsYearContext _fpsYearContext;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MonthlyOutputController"/> class.
@@ -36,19 +36,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public MonthlyOutputController(
             IMapper mapper,
             IPactMonthlyOutputService monthlyOutputService,
-            IWorkGroupService workGroupService,
-            IMonthService monthService,
+            IMonthlyPactControllerDependencies monthlyPactDependencies,
             IExcelExportService excelExportService,
-            ITestCapabilityService testCapabilityService,
-            ITestRequirementService testRequirementService)
+            IFpsYearContext fpsYearContext)
         {
             _mapper = mapper;
             _monthlyOutputService = monthlyOutputService;
-            _workGroupService = workGroupService;
-            _monthService = monthService;
+            _monthlyPactDependencies = monthlyPactDependencies;
             _excelExportService = excelExportService;
-            _testCapabilityService = testCapabilityService;
-            _testRequirementService = testRequirementService;
+            _fpsYearContext = fpsYearContext;
         }
 
         /// <summary>
@@ -117,7 +113,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTestCodesByWorkGroup(string? workGroup)
         {
-            var response = await _testCapabilityService.GetPagedByWorkGroupAsync(
+            var response = await _monthlyPactDependencies.TestCapabilityService.GetPagedByWorkGroupAsync(
                 new QueryParameters<string> { Page = -1 },
                 string.IsNullOrWhiteSpace(workGroup) ? null : workGroup);
 
@@ -141,7 +137,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetBuyersByTestCode(string? workGroup, string? testCode)
         {
-            var response = await _testRequirementService.GetAllActiveAsync();
+            var response = await _monthlyPactDependencies.TestRequirementService.GetAllActiveAsync();
 
             if (!response.Success || response.Data == null)
                 return Json(Array.Empty<object>());
@@ -530,7 +526,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             bool? passed)
         {
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _monthlyOutputService.GetStagingAsync(query, passed);
+            var isReadOnlyYear = _fpsYearContext.IsReadOnly;
+            var response = await _monthlyOutputService.GetStagingAsync(query, passed, isReadOnlyYear);
             var items = response.Success && response.Data != null
                 ? _mapper.Map<List<StagingMonthlyOutputItem>>(response.Data)
                 : [];
@@ -566,7 +563,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetWorkGroupOptionsAsync()
         {
-            var response = await _workGroupService.GetAllWorkGroupsAsync();
+            var response = await _monthlyPactDependencies.WorkGroupService.GetAllWorkGroupsAsync();
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x.WorkGroupName).Select(x => new SelectListItem(x.WorkGroupName, x.WorkGroupName)).ToList()
                 : [];
@@ -577,7 +574,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetMonthOptionsAsync()
         {
-            var response = await _monthService.GetAllMonthsAsync();
+            var response = await _monthlyPactDependencies.MonthService.GetAllMonthsAsync();
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x.Monthnumber).Select(x => new SelectListItem(x.Monthnumber.ToString(), x.Monthnumber.ToString())).ToList()
                 : [];
@@ -588,7 +585,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetAllTestCodesAsync()
         {
-            var response = await _testCapabilityService.GetPagedByWorkGroupAsync(
+            var response = await _monthlyPactDependencies.TestCapabilityService.GetPagedByWorkGroupAsync(
                 new QueryParameters<string> { Page = -1 }, null);
 
             if (!response.Success || response.Data == null)
@@ -608,7 +605,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetAllBuyersAsync()
         {
-            var response = await _testRequirementService.GetAllActiveAsync();
+            var response = await _monthlyPactDependencies.TestRequirementService.GetAllActiveAsync();
 
             if (!response.Success || response.Data == null)
                 return [];
