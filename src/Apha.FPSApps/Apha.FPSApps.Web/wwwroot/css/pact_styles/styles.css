@@ -4033,6 +4033,10 @@ table#tblMonthPeriod > tbody > tr:hover {
     padding-left: 0 !important;
 }
 
+.isResourceManagementSection .tr-section-box.isOverflowHidden {
+    overflow: visible;
+}
+
 .tr-section-box {
     position: static;
     border-radius: 6px;
@@ -4139,12 +4143,4 @@ table#tblMonthPeriod > tbody > tr:hover {
 }
 #tbl_wgTestCapabilitiesGrid td[data-property="ItemDescription"]{
     text-align: left !important;
-}
-/* Ensure dropdowns appended inside the testCode container render above the modal */
-#testCodeSelectMultiDropdown .dropdown-menu,
-#testCodeSelectMultiDropdown .select2-container--open .select2-dropdown,
-#testCodeSelectMultiDropdown .select2-dropdown,
-#testCodeSelectMultiDropdown .ss-dropdown {
-    z-index: 2050 !important;
-    position: absolute;
 }

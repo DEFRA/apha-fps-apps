@@ -65,12 +65,19 @@
             <div class="sub-dropdown-menu" id="rm-review-plans">
                 <a class="dropdown-item" asp-area="FPS" asp-controller="ContributionSummary" asp-action="Index">Contribution Summary</a>
                 <a class="dropdown-item" asp-area="FPS" asp-controller="StaffPlanDetails" asp-action="Index">Staff Plan Pivot</a>
-                <a class="dropdown-item" asp-area="FPS" asp-controller="BBQuery" asp-action="Index">BB Query</a>
                 <a class="dropdown-item" asp-area="FPS" asp-controller="StaffResource" asp-action="Index">Resource Utilization View</a>
                 <a class="dropdown-item" asp-area="FPS" asp-controller="ResourceMgmtReplan" asp-action="Index">View/Replan Staff Hours</a>
             </div>
         </div>
-        <a class="dropdown-item" href="#">Reports</a>
+        <div class="sub-dropdown">
+            <button class="sub-dropdown-toggle" data-subdropdown="rm-review-plans">
+                Reports
+                <img src="~/images/right-arrow.png" class="sub-right-arrow" alt="expand" width="14" />
+            </button>
+            <div class="sub-dropdown-menu" id="rm-reports">
+                <a class="dropdown-item" asp-area="FPS" asp-controller="BBQuery" asp-action="Index">BB Query</a>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -90,7 +97,7 @@
             <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectAuditTrail" asp-action="Index">Project Audit Trails</a>
         </div>
         <div class="dropdown-col" style="min-width:310px">
-             <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectMisc" asp-action="Index">Project Misc</a>
+             <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectMisc" asp-action="Index">Misc Project Data</a>
             <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectSpecificQuery" asp-action="Index">Project Specific - Query</a>
             <a class="dropdown-item" asp-area="FPS" asp-controller="DepartmentIncome" asp-action="Index">Dept. Income</a>
         </div>
