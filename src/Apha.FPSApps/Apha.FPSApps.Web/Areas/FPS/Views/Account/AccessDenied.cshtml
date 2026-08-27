@@ -27,12 +27,9 @@
             If you believe this is incorrect, please contact your system administrator.
         </p>
 
-        @if (!string.IsNullOrEmpty(Model))
-        {
-            <a href="@Model" class="govuk-button govuk-button--secondary">
-                Back
-            </a>
-        }
+        <a href="javascript:history.back()" class="govuk-button govuk-button--secondary">
+            Back
+        </a>
 
     </div>
 </div>
