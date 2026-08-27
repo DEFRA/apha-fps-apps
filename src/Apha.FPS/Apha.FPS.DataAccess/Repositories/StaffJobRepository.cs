@@ -541,26 +541,28 @@ namespace Apha.FPS.DataAccess.Repositories
             // string.Equals(StringComparison) overload cannot be translated by Npgsql,
             // whereas ToUpper() maps to SQL UPPER().
 #pragma warning disable CA1862
-            return await (from sj in _dbContext.StaffJobTblViews
-                          join jc in _dbContext.JobCodes on sj.JobCode equals jc.JobCodeId
-                          where sj.StaffId == staffId
-                                && jc.Type != null && jc.Type.ToUpper() == "ZT"
-                          select sj.PlannedHours)
-                .SumAsync(h => h ?? 0);
+            var query = from sj in _dbContext.StaffJobs
+                        join jc in _dbContext.ProjectViews on sj.JobCode equals jc.ParentProject
+                        where sj.StaffId == staffId
+                              && jc.Program != null && EF.Functions.ILike(jc.Program, "zt_prog")
+                        select new { sj.StaffId, sj.JobCode, sj.PlannedHours };
+
+            var distinctRecords = await query.Distinct().ToListAsync();
+            return distinctRecords.Sum(x => x.PlannedHours);
 #pragma warning restore CA1862
         }
 
         public async Task<PagedData<StaffJobZtView>> GetZtStaffJobsByStaffIdPagedAsync(PaginationParameters<string> query, string staffId)
         {
-            var baseQuery = (from sj in _dbContext.StaffJobTblViews
+            var baseQuery = (from sj in _dbContext.StaffJobs
                              join jc in _dbContext.ProjectViews on sj.JobCode equals jc.ParentProject
                              where sj.StaffId == staffId
-                             && (EF.Functions.ILike(jc.UserEmail!, _requestContext.UserEmailId))
+                             && jc.Program != null && EF.Functions.ILike(jc.Program, "zt_prog")
                              select new StaffJobZtView
                              {
                                  StaffID = sj.StaffId,
                                  JobCode = sj.JobCode,
-                                 PlannedHours = sj.PlannedHours ?? 0,
+                                 PlannedHours = sj.PlannedHours,
                                  Name = jc.ProjectTitle
                              }).Distinct().AsQueryable();
 

@@ -40,6 +40,18 @@
         <div id="@($"gridContainer_{Model.GridConfig.GridId}")">
             @await Html.PartialAsync("_DataGrid", Model.GridConfig)
         </div>
+        <div class="govuk-!-margin-top-2 sup_border" style="padding: 10px; background-color: #f3f2f1;">
+            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+                <span class="govuk-label govuk-!-font-weight-bold">Total Planned Hours:</span>
+                <input type="text"
+                       id="total-planned-hours"
+                       class="govuk-input text-AlignRight"
+                       style="width: 150px; text-align: right;"
+                       value="@Model.PlannedAdminZT"
+                       readonly
+                       aria-label="Total Planned Hours" />
+            </div>
+        </div>
     </div>
 
     <div class="govuk-grid-column-one-quarter isTimeSummary">
