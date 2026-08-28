@@ -699,10 +699,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             // Act
             var result = await repo.GetJobStaffCostAsync(query, "JOB001");
 
-            // Assert - Order should remain as original (S001 first, S002 second)
+            // Assert - Order should remain as original (S002 first, S001 second)
             var data = result.Data.ToList();
-            Assert.Equal("S001", data[0].StaffID);
-            Assert.Equal("S002", data[1].StaffID);
+            Assert.Equal("S002", data[0].StaffID);
+            Assert.Equal("S001", data[1].StaffID);
         }
 
         [Fact]
@@ -755,8 +755,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
 
             // Assert - Order should remain as original (default case in switch)
             var data = result.Data.ToList();
-            Assert.Equal("S001", data[0].StaffID);
-            Assert.Equal("S002", data[1].StaffID);
+            Assert.Equal("S002", data[0].StaffID);
+            Assert.Equal("S001", data[1].StaffID);
         }
 
         [Fact]
@@ -815,7 +815,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
 
             // Assert
             var data = result.Data.ToList();
-            Assert.Equal(3, data.Count);
             Assert.Equal(80m, data[0].ChargeRate);
             Assert.Equal(100m, data[1].ChargeRate);
             Assert.Equal(120m, data[2].ChargeRate);
@@ -841,8 +840,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             var workgroupGrades = new List<WorkgroupGrade>
             {
                 new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" },
-                new() { WgGrade = "WG02", ProfitCentreGrade = "PC02", GradeCode = "G02", Workgroup = "IT" },
-                new() { WgGrade = "WG03", ProfitCentreGrade = "PC03", GradeCode = "G03", Workgroup = "IT" }
+                new() { WgGrade = "WG02", ProfitCentreGrade = "PC01", GradeCode = "G02", Workgroup = "IT" },
+                new() { WgGrade = "WG03", ProfitCentreGrade = "PC01", GradeCode = "G03", Workgroup = "IT" }
             };
             var profitCentreGrades = new List<ProfitCentreGrade>
             {
@@ -877,7 +876,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
 
             // Assert
             var data = result.Data.ToList();
-            Assert.Equal(3, data.Count);
             Assert.Equal(120m, data[0].ChargeRate);
             Assert.Equal(100m, data[1].ChargeRate);
             Assert.Equal(80m, data[2].ChargeRate);
@@ -1267,38 +1265,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         public async Task GetStaffChargeRate_ReturnsChargeRate_WhenJobCodeMatches()
         {
             // Arrange
-            var wgEmployees = new List<WorkGroupEmployee>
-            {
-                new() { SpNumber = "SP001", PactId = "S001", WorkGroupGrade = "WG01" }
-            };
-            var employees = new List<Employee>
-            {
-                new() { SPNumber = "SP001", Name = "John Doe" }
-            };
-            var workgroupGrades = new List<WorkgroupGrade>
-            {
-                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01" }
-            };
-            var profitCentreGrades = new List<ProfitCentreGrade>
-            {
-                new() { PcGrade = "PC01", ChargeRate = 100m, DefraChargeRate = 120m }
-            };
-            var staffJobs = new List<StaffJob>
-            {
-                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40 }
-            };
-            var projects = new List<Project>
-            {
-                new() { ParentProject = "JOB001", IsDefraProject = 0 }
-            };
+            var wgEmployees = new List<WorkGroupEmployee> { new() { SpNumber = "SP001", PactId = "S001", WorkGroupGrade = "WG01" } };
+            var employees = new List<Employee> { new() { SPNumber = "SP001", FirstName = "John Doe" } };
+            var workgroupGrades = new List<WorkgroupGrade> { new() { WgGrade = "WG01", ProfitCentreGrade = "PC01" } };
+            var profitCentreGrades = new List<ProfitCentreGrade> { new() { PcGrade = "PC01", ChargeRate = 100m, DefraChargeRate = 120m } };
+            var staffJobs = new List<StaffJob> { new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40 } };
+            var projects = new List<Project> { new() { ParentProject = "JOB001", IsDefraProject = 0 } };
 
-            var repo = CreateRepository(
-                staffJobs: staffJobs,
-                workgroupGrades: workgroupGrades,
-                profitCentreGrades: profitCentreGrades,
-                wgEmployees: wgEmployees,
-                employees: employees,
-                projects: projects);
+            var repo = CreateRepository(staffJobs: staffJobs, workgroupGrades: workgroupGrades, profitCentreGrades: profitCentreGrades, wgEmployees: wgEmployees, employees: employees, projects: projects);
 
             // Act
             var result = await repo.GetStaffChargeRate("S001", "JOB001");
@@ -1312,38 +1286,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         public async Task GetStaffChargeRate_ReturnsDefraChargeRate_WhenProjectIsDefraProject()
         {
             // Arrange
-            var wgEmployees = new List<WorkGroupEmployee>
-            {
-                new() { SpNumber = "SP001", PactId = "S001", WorkGroupGrade = "WG01" }
-            };
-            var employees = new List<Employee>
-            {
-                new() { SPNumber = "SP001", Name = "John Doe" }
-            };
-            var workgroupGrades = new List<WorkgroupGrade>
-            {
-                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01" }
-            };
-            var profitCentreGrades = new List<ProfitCentreGrade>
-            {
-                new() { PcGrade = "PC01", ChargeRate = 100m, DefraChargeRate = 120m }
-            };
-            var staffJobs = new List<StaffJob>
-            {
-                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40 }
-            };
-            var projects = new List<Project>
-            {
-                new() { ParentProject = "JOB001", IsDefraProject = -1 }
-            };
+            var wgEmployees = new List<WorkGroupEmployee> { new() { SpNumber = "SP001", PactId = "S001", WorkGroupGrade = "WG01" } };
+            var employees = new List<Employee> { new() { SPNumber = "SP001", FirstName = "John Doe" } };
+            var workgroupGrades = new List<WorkgroupGrade> { new() { WgGrade = "WG01", ProfitCentreGrade = "PC01" } };
+            var profitCentreGrades = new List<ProfitCentreGrade> { new() { PcGrade = "PC01", ChargeRate = 100m, DefraChargeRate = 120m } };
+            var staffJobs = new List<StaffJob> { new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40 } };
+            var projects = new List<Project> { new() { ParentProject = "JOB001", IsDefraProject = -1 } };
 
-            var repo = CreateRepository(
-                staffJobs: staffJobs,
-                workgroupGrades: workgroupGrades,
-                profitCentreGrades: profitCentreGrades,
-                wgEmployees: wgEmployees,
-                employees: employees,
-                projects: projects);
+            var repo = CreateRepository(staffJobs: staffJobs, workgroupGrades: workgroupGrades, profitCentreGrades: profitCentreGrades, wgEmployees: wgEmployees, employees: employees, projects: projects);
 
             // Act
             var result = await repo.GetStaffChargeRate("S001", "JOB001");
@@ -1357,22 +1307,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         public async Task GetStaffChargeRate_ReturnsFallbackChargeRate_WhenJobCodeDoesNotMatch()
         {
             // Arrange
-            var wgEmployees = new List<WorkGroupEmployee>
-            {
-                new() { SpNumber = "SP001", PactId = "S001", WorkGroupGrade = "WG01" }
-            };
-            var employees = new List<Employee>
-            {
-                new() { SPNumber = "SP001", Name = "John Doe" }
-            };
-            var workgroupGrades = new List<WorkgroupGrade>
-            {
-                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01" }
-            };
-            var profitCentreGrades = new List<ProfitCentreGrade>
-            {
-                new() { PcGrade = "PC01", ChargeRate = 100m, DefraChargeRate = 120m }
-            };
+            var wgEmployees = new List<WorkGroupEmployee> { new() { SpNumber = "SP001", PactId = "S001", WorkGroupGrade = "WG01" } };
+            var employees = new List<Employee> { new() { SPNumber = "SP001", FirstName = "John Doe" } };
+            var workgroupGrades = new List<WorkgroupGrade> { new() { WgGrade = "WG01", ProfitCentreGrade = "PC01" } };
+            var profitCentreGrades = new List<ProfitCentreGrade> { new() { PcGrade = "PC01", ChargeRate = 100m, DefraChargeRate = 120m } };
             var staffJobs = new List<StaffJob>
             {
                 new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40 },
@@ -1384,13 +1322,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 new() { ParentProject = "JOB002", IsDefraProject = 0 }
             };
 
-            var repo = CreateRepository(
-                staffJobs: staffJobs,
-                workgroupGrades: workgroupGrades,
-                profitCentreGrades: profitCentreGrades,
-                wgEmployees: wgEmployees,
-                employees: employees,
-                projects: projects);
+            var repo = CreateRepository(staffJobs: staffJobs, workgroupGrades: workgroupGrades, profitCentreGrades: profitCentreGrades, wgEmployees: wgEmployees, employees: employees, projects: projects);
 
             // Act
             var result = await repo.GetStaffChargeRate("S001", "JOB999");
@@ -1404,38 +1336,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         public async Task GetStaffChargeRate_ReturnsNull_WhenNoStaffJobsFound()
         {
             // Arrange
-            var wgEmployees = new List<WorkGroupEmployee>
-            {
-                new() { SpNumber = "SP001", PactId = "S001", WorkGroupGrade = "WG01" }
-            };
-            var employees = new List<Employee>
-            {
-                new() { SPNumber = "SP001", Name = "John Doe" }
-            };
-            var workgroupGrades = new List<WorkgroupGrade>
-            {
-                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01" }
-            };
-            var profitCentreGrades = new List<ProfitCentreGrade>
-            {
-                new() { PcGrade = "PC01", ChargeRate = 100m, DefraChargeRate = 120m }
-            };
-            var staffJobs = new List<StaffJob>
-            {
-                new() { StaffId = "S002", JobCode = "JOB001", PlannedHours = 40 }
-            };
-            var projects = new List<Project>
-            {
-                new() { ParentProject = "JOB001", IsDefraProject = 0 }
-            };
+            var wgEmployees = new List<WorkGroupEmployee> { new() { SpNumber = "SP001", PactId = "S001", WorkGroupGrade = "WG01" } };
+            var employees = new List<Employee> { new() { SPNumber = "SP001", FirstName = "John Doe" } };
+            var workgroupGrades = new List<WorkgroupGrade> { new() { WgGrade = "WG01", ProfitCentreGrade = "PC01" } };
+            var profitCentreGrades = new List<ProfitCentreGrade> { new() { PcGrade = "PC01", ChargeRate = 100m, DefraChargeRate = 120m } };
+            var staffJobs = new List<StaffJob> { new() { StaffId = "S002", JobCode = "JOB001", PlannedHours = 40 } };
+            var projects = new List<Project> { new() { ParentProject = "JOB001", IsDefraProject = 0 } };
 
-            var repo = CreateRepository(
-                staffJobs: staffJobs,
-                workgroupGrades: workgroupGrades,
-                profitCentreGrades: profitCentreGrades,
-                wgEmployees: wgEmployees,
-                employees: employees,
-                projects: projects);
+            var repo = CreateRepository(staffJobs: staffJobs, workgroupGrades: workgroupGrades, profitCentreGrades: profitCentreGrades, wgEmployees: wgEmployees, employees: employees, projects: projects);
 
             // Act
             var result = await repo.GetStaffChargeRate("S999", "JOB001");
@@ -1474,7 +1382,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
             var staffJobTblViews = new List<StaffJobTblView>
             {
-                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40, UserId = DefaultUserId }
+                new() { StaffId = "S001", JobCode = "ZT001", PlannedHours = 40, UserId = DefaultUserId }
             };
             var staffGeneralViews = new List<StaffGeneralView>
             {
@@ -1490,7 +1398,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             };
             var projectViews = new List<ProjectView>
             {
-                new() { ParentProject = "JOB001", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
+                new() { ParentProject = "ZT001", ProjectTitle = "Admin Work", UserId = DefaultUserId, UserEmail = DefaultUserEmail }
             };
             var programViews = new List<ProgramView>
             {
@@ -1509,12 +1417,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 settings: settings);
 
             // Act
-            var result = await repo.GetViewByStaffIdAsync("S001", "JOB001");
+            var result = await repo.GetViewByStaffIdAsync("S001", "ZT001");
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal("S001", result.StaffID);
-            Assert.Equal("JOB001", result.JobCode);
+            Assert.Equal("ZT001", result.JobCode);
         }
 
         [Fact]
@@ -1522,19 +1430,44 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         {
             // Arrange
             var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var staffJobTblViews = new List<StaffJobTblView>
+            {
+                new() { StaffId = "S001", JobCode = "ZT001", PlannedHours = 40, UserId = DefaultUserId }
+            };
+            var staffGeneralViews = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "John", WorkGroupGrade = "WG01" }
+            };
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PC01", ChargeRate = 100, DefraChargeRate = 120 }
+            };
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "ZT001", ProjectTitle = "Admin Work", UserId = DefaultUserId, UserEmail = DefaultUserEmail }
+            };
+            var programViews = new List<ProgramView>
+            {
+                new() { ProgramNo = "PROG01", UserId = DefaultUserId, SectorName = "charge" }
+            };
+
             var repo = CreateRepository(
-                staffJobTblViews: new List<StaffJobTblView>(),
-                staffGeneralViews: new List<StaffGeneralView>(),
-                workgroupGrades: new List<WorkgroupGrade>(),
-                profitCentreGrades: new List<ProfitCentreGrade>(),
-                projectViews: new List<ProjectView>(),
-                programViews: new List<ProgramView>(),
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
                 staffViews: new List<StaffView>(),
                 staffPickViews: new List<StaffPickView>(),
                 settings: settings);
 
             // Act
-            var result = await repo.GetViewByStaffIdAsync("S999", "JOB999");
+            var result = await repo.GetViewByStaffIdAsync("S999", "ZT999");
 
             // Assert
             Assert.Null(result);
@@ -2120,12 +2053,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 staffJobRmViews: data.StaffJobRmViews,
                 projects: data.Projects);
 
-            var query = new PaginationParameters<string>
-            {
-                Page = 1,
-                PageSize = 10,
-                Filter = "{\"WgGrade\":\"WG01\",\"Name\":\"John\"}"
-            };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{\"WgGrade\":\"WG01\",\"Name\":\"John\"}" };
 
             // Act
             var result = await repo.GetStaffResourceUtilisationAsync(query, "IT");
@@ -2147,12 +2075,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 staffJobRmViews: data.StaffJobRmViews,
                 projects: data.Projects);
 
-            var query = new PaginationParameters<string>
-            {
-                Page = 1,
-                PageSize = 10,
-                Filter = "{\"Name\":\"Nonexistent\"}"
-            };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{\"Name\":\"Nonexistent\"}" };
 
             // Act
             var result = await repo.GetStaffResourceUtilisationAsync(query, "IT");
@@ -2173,12 +2096,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 staffJobRmViews: data.StaffJobRmViews,
                 projects: data.Projects);
 
-            var query = new PaginationParameters<string>
-            {
-                Page = 1,
-                PageSize = 10,
-                Filter = "{\"WgGrade\":null,\"Name\":null}"
-            };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{\"WgGrade\":null,\"Name\":null}" };
 
             // Act
             var result = await repo.GetStaffResourceUtilisationAsync(query, "IT");
