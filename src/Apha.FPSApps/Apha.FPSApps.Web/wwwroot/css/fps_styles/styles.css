@@ -5624,3 +5624,11 @@ body,
         font-weight: bold;
     }
 }
+#gridContainer_wgGradeGrid {
+    table {
+        th:nth-child(2),
+        td:nth-child(2) {
+            text-align: center !important;
+        }
+    }
+}
