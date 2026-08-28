@@ -266,7 +266,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractRmsControllerTe
             _subContractService.GetFailedSubContractRmsAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(ApiResponseDto<List<SubContractRmsImportRowDto>>.SuccessResponse(responseData));
             _mapper.Map<List<SubContractRmsFailedItem>>(responseData).Returns(mappedItems);
-            _excelExportService.ExportToExcel(mappedItems, "SubContractRMS_Failed").Returns(bytes);
+            _excelExportService.ExportToExcel(mappedItems, "SubContractRMS", Arg.Any<Dictionary<string, string>?>()).Returns(bytes);
 
             // Act
             var result = await _controller.ExportFailedSubContractRms();

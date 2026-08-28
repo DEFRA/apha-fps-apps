@@ -256,8 +256,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ? _mapper.Map<List<SubContractRmsFailedItem>>(response.Data)
                 : new List<SubContractRmsFailedItem>();
 
-            var bytes = _excelExportService.ExportToExcel(items, "SubContractRMS_Failed");
-            var fileName = $"SubContractRMS_{DateTime.Now:yyyyMMdd}_failed.xlsx";
+            var bytes = _excelExportService.ExportToExcel(items, "SubContractRMS", new Dictionary<string, string>
+            {
+                [nameof(SubContractRmsFailedItem.Amount)] = "#,##0.00;-#,##0.00",
+                [nameof(SubContractRmsFailedItem.DailyRate)] = "#,##0.00;-#,##0.00"
+            });
+            var fileName = $"ExportedRMS_{DateTime.Now:ddMMyyyy}.xlsx";
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
