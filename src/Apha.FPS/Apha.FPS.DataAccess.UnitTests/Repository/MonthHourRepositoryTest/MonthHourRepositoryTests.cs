@@ -373,11 +373,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
             };
             var repo = CreateRepository(monthHours);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(async () =>
-            {
-                _ = (await repo.GetDistinctYearsAsync()).ToList();
-            });
+            // Act
+            var result = (await repo.GetDistinctYearsAsync()).ToList();
+
+            // Assert
+            Assert.Equal(new short[] { 2023, 2024, 2025 }, result);
         }
 
         [Fact]
@@ -392,11 +392,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
             };
             var repo = CreateRepository(monthHours);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(async () =>
-            {
-                _ = (await repo.GetDistinctYearsAsync()).ToList();
-            });
+            // Act
+            var result = (await repo.GetDistinctYearsAsync()).ToList();
+
+            // Assert
+            Assert.Equal(new short[] { 2023, 2024 }, result);
         }
 
         [Fact]
@@ -409,11 +409,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
             };
             var repo = CreateRepository(monthHours);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(async () =>
-            {
-                _ = (await repo.GetDistinctYearsAsync()).ToList();
-            });
+            // Act
+            var result = (await repo.GetDistinctYearsAsync()).ToList();
+
+            // Assert
+            Assert.Equal((short)2024, Assert.Single(result));
         }
 
         #endregion

@@ -840,8 +840,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             var workgroupGrades = new List<WorkgroupGrade>
             {
                 new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" },
-                new() { WgGrade = "WG02", ProfitCentreGrade = "PC01", GradeCode = "G02", Workgroup = "IT" },
-                new() { WgGrade = "WG03", ProfitCentreGrade = "PC01", GradeCode = "G03", Workgroup = "IT" }
+                new() { WgGrade = "WG02", ProfitCentreGrade = "PC02", GradeCode = "G02", Workgroup = "IT" },
+                new() { WgGrade = "WG03", ProfitCentreGrade = "PC03", GradeCode = "G03", Workgroup = "IT" }
             };
             var profitCentreGrades = new List<ProfitCentreGrade>
             {
@@ -1398,7 +1398,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             };
             var projectViews = new List<ProjectView>
             {
-                new() { ParentProject = "ZT001", ProjectTitle = "Admin Work", UserId = DefaultUserId, UserEmail = DefaultUserEmail }
+                new() { ParentProject = "ZT001", ProjectTitle = "Admin Work", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
             };
             var programViews = new List<ProgramView>
             {
