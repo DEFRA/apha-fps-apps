@@ -370,7 +370,8 @@ namespace Apha.FPS.DataAccess.Repositories
             if (dict.TryGetValue("PlannedHours", out var plannedHours) && plannedHours != null &&
                 double.TryParse(plannedHours.ToString(), out var hoursVal))
             {
-                list = list.Where(x => x.PlannedHours == hoursVal).ToList();
+                const double tolerance = 0.0001;
+                list = list.Where(x => Math.Abs(x.PlannedHours - hoursVal) < tolerance).ToList();
             }
 
             return list;
@@ -602,6 +603,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 "jobcode" => descending ? query.OrderByDescending(x => x.JobCode) : query.OrderBy(x => x.JobCode),
                 "plannedhours" => descending ? query.OrderByDescending(x => x.PlannedHours) : query.OrderBy(x => x.PlannedHours),
                 "name" => descending ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name),
+                "ztdescription" => descending ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name),
                 _ => query
             };
         }
