@@ -68,7 +68,14 @@ namespace Apha.FPSApps.Application.Services.PACT
            => await _pactClient.PactProjectSubContract.GetMonthlySubContractsSummaryAsync(query);
 
         public async Task<ApiResponseDto<List<SubContractRmsImportRowDto>>> GetFailedSubContractRmsAsync(QueryParameters<string> query, bool isReadOnlyYear = false)
-            => await _pactClient.PactProjectSubContract.GetFailedSubContractRmsAsync(query, isReadOnlyYear);
+        {
+            if (isReadOnlyYear)
+            {
+                return ApiResponseDto<List<SubContractRmsImportRowDto>>.SuccessResponse([], total: 0);
+            }
+
+            return await _pactClient.PactProjectSubContract.GetFailedSubContractRmsAsync(query);
+        }
 
         public async Task<ApiResponseDto<SubContractRmsImportRowDto>> GetFailedSubContractRmsByIdAsync(int id)
             => await _pactClient.PactProjectSubContract.GetFailedSubContractRmsByIdAsync(id);

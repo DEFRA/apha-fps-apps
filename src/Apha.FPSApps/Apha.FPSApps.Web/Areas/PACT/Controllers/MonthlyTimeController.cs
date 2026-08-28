@@ -26,7 +26,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         private readonly IMapper _mapper;
         private readonly IPactMonthlyTimeService _monthlyTimeService;
-        private readonly IMonthlyPactControllerDependencies _monthlyPactDependencies;
+        private readonly IMonthlyImportControllerDependencies _monthlyImportDependencies;
         private readonly IExcelExportService _excelExportService;
         private readonly IFpsYearContext _fpsYearContext;
 
@@ -36,13 +36,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public MonthlyTimeController(
             IMapper mapper,
             IPactMonthlyTimeService monthlyTimeService,
-            IMonthlyPactControllerDependencies monthlyPactDependencies,
+            IMonthlyImportControllerDependencies monthlyImportDependencies,
             IExcelExportService excelExportService,
             IFpsYearContext fpsYearContext)
         {
             _mapper = mapper;
             _monthlyTimeService = monthlyTimeService;
-            _monthlyPactDependencies = monthlyPactDependencies;
+            _monthlyImportDependencies = monthlyImportDependencies;
             _excelExportService = excelExportService;
             _fpsYearContext = fpsYearContext;
         }
@@ -127,7 +127,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetStaffByWorkGroup(string? workGroup)
         {
-            var response = await _monthlyPactDependencies.EmployeeService.GetPactWorkGroupStaffAsync(workGroup);
+            var response = await _monthlyImportDependencies.EmployeeService.GetPactWorkGroupStaffAsync(workGroup);
             if (!response.Success || response.Data == null)
                 return Json(Array.Empty<object>());
 
@@ -180,7 +180,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllTimeCodes()
         {
-            var response = await _monthlyPactDependencies.TimeCodeValidService.GetAllDistinctTimeCodesAsync();
+            var response = await _monthlyImportDependencies.TimeCodeValidService.GetAllDistinctTimeCodesAsync();
             if (!response.Success || response.Data == null)
                 return Json(Array.Empty<object>());
 
@@ -194,7 +194,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllProjects()
         {
-            var response = await _monthlyPactDependencies.TimeCodeValidService.GetAllDistinctProjectsAsync();
+            var response = await _monthlyImportDependencies.TimeCodeValidService.GetAllDistinctProjectsAsync();
             if (!response.Success || response.Data == null)
                 return Json(Array.Empty<object>());
 
@@ -641,7 +641,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetWorkGroupOptionsAsync()
         {
-            var response = await _monthlyPactDependencies.WorkGroupService.GetAllWorkGroupsAsync();
+            var response = await _monthlyImportDependencies.WorkGroupService.GetAllWorkGroupsAsync();
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x.WorkGroupName).Select(x => new SelectListItem(x.WorkGroupName, x.WorkGroupName)).ToList()
                 : [];
@@ -652,7 +652,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetTimeCodeOptionsAsync(string workGroup)
         {
-            var response = await _monthlyPactDependencies.TimeCodeValidService.GetTimeCodeValidsByWorkGroupAsync(workGroup);
+            var response = await _monthlyImportDependencies.TimeCodeValidService.GetTimeCodeValidsByWorkGroupAsync(workGroup);
             return response.Success && response.Data != null
                 ? response.Data.Select(x => x.TimeCode).Distinct().OrderBy(x => x).Select(x => new SelectListItem(x, x)).ToList()
                 : [];
@@ -663,7 +663,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetProjectOptionsAsync(string workGroup, string timeCode)
         {
-            var response = await _monthlyPactDependencies.TimeCodeValidService.GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync(workGroup, timeCode);
+            var response = await _monthlyImportDependencies.TimeCodeValidService.GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync(workGroup, timeCode);
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x).Select(x => new SelectListItem(x, x)).ToList()
                 : [];
@@ -674,7 +674,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetMonthOptionsAsync()
         {
-            var response = await _monthlyPactDependencies.MonthService.GetAllMonthsAsync();
+            var response = await _monthlyImportDependencies.MonthService.GetAllMonthsAsync();
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x.Monthnumber).Select(x => new SelectListItem(x.Monthnumber.ToString(), x.Monthnumber.ToString())).ToList()
                 : [];

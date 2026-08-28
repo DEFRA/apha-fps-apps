@@ -26,7 +26,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         private readonly IMapper _mapper;
         private readonly IPactMonthlyOutputService _monthlyOutputService;
-        private readonly IMonthlyPactControllerDependencies _monthlyPactDependencies;
+        private readonly IMonthlyImportControllerDependencies _monthlyImportDependencies;
         private readonly IExcelExportService _excelExportService;
         private readonly IFpsYearContext _fpsYearContext;
 
@@ -36,13 +36,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public MonthlyOutputController(
             IMapper mapper,
             IPactMonthlyOutputService monthlyOutputService,
-            IMonthlyPactControllerDependencies monthlyPactDependencies,
+            IMonthlyImportControllerDependencies monthlyImportDependencies,
             IExcelExportService excelExportService,
             IFpsYearContext fpsYearContext)
         {
             _mapper = mapper;
             _monthlyOutputService = monthlyOutputService;
-            _monthlyPactDependencies = monthlyPactDependencies;
+            _monthlyImportDependencies = monthlyImportDependencies;
             _excelExportService = excelExportService;
             _fpsYearContext = fpsYearContext;
         }
@@ -113,7 +113,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTestCodesByWorkGroup(string? workGroup)
         {
-            var response = await _monthlyPactDependencies.TestCapabilityService.GetPagedByWorkGroupAsync(
+            var response = await _monthlyImportDependencies.TestCapabilityService.GetPagedByWorkGroupAsync(
                 new QueryParameters<string> { Page = -1 },
                 string.IsNullOrWhiteSpace(workGroup) ? null : workGroup);
 
@@ -137,7 +137,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetBuyersByTestCode(string? workGroup, string? testCode)
         {
-            var response = await _monthlyPactDependencies.TestRequirementService.GetAllActiveAsync();
+            var response = await _monthlyImportDependencies.TestRequirementService.GetAllActiveAsync();
 
             if (!response.Success || response.Data == null)
                 return Json(Array.Empty<object>());
@@ -563,7 +563,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetWorkGroupOptionsAsync()
         {
-            var response = await _monthlyPactDependencies.WorkGroupService.GetAllWorkGroupsAsync();
+            var response = await _monthlyImportDependencies.WorkGroupService.GetAllWorkGroupsAsync();
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x.WorkGroupName).Select(x => new SelectListItem(x.WorkGroupName, x.WorkGroupName)).ToList()
                 : [];
@@ -574,7 +574,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetMonthOptionsAsync()
         {
-            var response = await _monthlyPactDependencies.MonthService.GetAllMonthsAsync();
+            var response = await _monthlyImportDependencies.MonthService.GetAllMonthsAsync();
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x.Monthnumber).Select(x => new SelectListItem(x.Monthnumber.ToString(), x.Monthnumber.ToString())).ToList()
                 : [];
@@ -585,7 +585,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetAllTestCodesAsync()
         {
-            var response = await _monthlyPactDependencies.TestCapabilityService.GetPagedByWorkGroupAsync(
+            var response = await _monthlyImportDependencies.TestCapabilityService.GetPagedByWorkGroupAsync(
                 new QueryParameters<string> { Page = -1 }, null);
 
             if (!response.Success || response.Data == null)
@@ -605,7 +605,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetAllBuyersAsync()
         {
-            var response = await _monthlyPactDependencies.TestRequirementService.GetAllActiveAsync();
+            var response = await _monthlyImportDependencies.TestRequirementService.GetAllActiveAsync();
 
             if (!response.Success || response.Data == null)
                 return [];

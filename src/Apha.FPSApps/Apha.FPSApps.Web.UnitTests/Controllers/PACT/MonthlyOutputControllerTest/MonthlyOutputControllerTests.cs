@@ -26,7 +26,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyOutputControllerTes
         private readonly IExcelExportService _excelExportService;
         private readonly ITestCapabilityService _testCapabilityService;
         private readonly ITestRequirementService _testRequirementService;
-        private readonly IMonthlyPactControllerDependencies _monthlyPactDependencies;
+        private readonly IMonthlyImportControllerDependencies _monthlyImportDependencies;
         private readonly IFpsYearContext _fpsYearContext;
         private readonly MonthlyOutputController _controller;
 
@@ -39,19 +39,19 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyOutputControllerTes
             _excelExportService = Substitute.For<IExcelExportService>();
             _testCapabilityService = Substitute.For<ITestCapabilityService>();
             _testRequirementService = Substitute.For<ITestRequirementService>();
-            _monthlyPactDependencies = Substitute.For<IMonthlyPactControllerDependencies>();
+            _monthlyImportDependencies = Substitute.For<IMonthlyImportControllerDependencies>();
             _fpsYearContext = Substitute.For<IFpsYearContext>();
 
-            _monthlyPactDependencies.WorkGroupService.Returns(_workGroupService);
-            _monthlyPactDependencies.MonthService.Returns(_monthService);
-            _monthlyPactDependencies.TestCapabilityService.Returns(_testCapabilityService);
-            _monthlyPactDependencies.TestRequirementService.Returns(_testRequirementService);
+            _monthlyImportDependencies.WorkGroupService.Returns(_workGroupService);
+            _monthlyImportDependencies.MonthService.Returns(_monthService);
+            _monthlyImportDependencies.TestCapabilityService.Returns(_testCapabilityService);
+            _monthlyImportDependencies.TestRequirementService.Returns(_testRequirementService);
             _fpsYearContext.IsReadOnly.Returns(false);
 
             _controller = new MonthlyOutputController(
                 _mapper,
                 _monthlyOutputService,
-                _monthlyPactDependencies,
+                _monthlyImportDependencies,
                 _excelExportService,
                 _fpsYearContext);
             SetupDefaultServiceMocks();

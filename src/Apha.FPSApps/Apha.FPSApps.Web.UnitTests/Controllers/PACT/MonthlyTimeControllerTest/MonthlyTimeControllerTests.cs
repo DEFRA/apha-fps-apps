@@ -25,8 +25,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyTimeControllerTest
         private readonly IEmployeeService _employeeService;
         private readonly IPactTimeCodeValidService _timeCodeValidService;
         private readonly IMonthService _monthService;
-        private readonly Apha.Common.Utilities.ExcelExport.IExcelExportService _excelExportService;
-        private readonly IMonthlyPactControllerDependencies _monthlyPactDependencies;
+        private readonly IExcelExportService _excelExportService;
+        private readonly IMonthlyImportControllerDependencies _monthlyImportDependencies;
         private readonly IFpsYearContext _fpsYearContext;
         private readonly MonthlyTimeController _controller;
 
@@ -38,20 +38,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyTimeControllerTest
             _employeeService = Substitute.For<IEmployeeService>();
             _timeCodeValidService = Substitute.For<IPactTimeCodeValidService>();
             _monthService = Substitute.For<IMonthService>();
-            _excelExportService = Substitute.For<Apha.Common.Utilities.ExcelExport.IExcelExportService>();
-            _monthlyPactDependencies = Substitute.For<IMonthlyPactControllerDependencies>();
+            _excelExportService = Substitute.For<IExcelExportService>();
+            _monthlyImportDependencies = Substitute.For<IMonthlyImportControllerDependencies>();
             _fpsYearContext = Substitute.For<IFpsYearContext>();
 
-            _monthlyPactDependencies.WorkGroupService.Returns(_workGroupService);
-            _monthlyPactDependencies.EmployeeService.Returns(_employeeService);
-            _monthlyPactDependencies.TimeCodeValidService.Returns(_timeCodeValidService);
-            _monthlyPactDependencies.MonthService.Returns(_monthService);
+            _monthlyImportDependencies.WorkGroupService.Returns(_workGroupService);
+            _monthlyImportDependencies.EmployeeService.Returns(_employeeService);
+            _monthlyImportDependencies.TimeCodeValidService.Returns(_timeCodeValidService);
+            _monthlyImportDependencies.MonthService.Returns(_monthService);
             _fpsYearContext.IsReadOnly.Returns(false);
 
             _controller = new MonthlyTimeController(
                 _mapper,
                 _monthlyTimeService,
-                _monthlyPactDependencies,
+                _monthlyImportDependencies,
                 _excelExportService,
                 _fpsYearContext);
             SetupDefaultServiceMocks();

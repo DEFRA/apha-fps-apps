@@ -3,7 +3,7 @@ using Apha.FPSApps.Application.Interfaces.PACT;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Dependencies
 {
-    public interface IMonthlyPactControllerDependencies
+    public interface IMonthlyImportControllerDependencies
     {
         IWorkGroupService WorkGroupService { get; }
         IEmployeeService EmployeeService { get; }
@@ -13,9 +13,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Dependencies
         ITestRequirementService TestRequirementService { get; }
     }
 
-    public class MonthlyPactControllerDependencies : IMonthlyPactControllerDependencies
+    public class MonthlyImportControllerDependencies : IMonthlyImportControllerDependencies
     {
-        public MonthlyPactControllerDependencies(
+        public MonthlyImportControllerDependencies(
             IWorkGroupService workGroupService,
             IEmployeeService employeeService,
             IPactTimeCodeValidService timeCodeValidService,

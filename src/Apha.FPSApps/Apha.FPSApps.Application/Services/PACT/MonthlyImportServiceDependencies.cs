@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Apha.FPSApps.Application.Services.PACT
 {
-    public interface IMonthlyPactServiceDependencies
+    public interface IMonthlyImportServiceDependencies
     {
         IExcelImportService ExcelImportService { get; }
         IWorkGroupService WorkGroupService { get; }
@@ -17,9 +17,9 @@ namespace Apha.FPSApps.Application.Services.PACT
         IConfiguration Configuration { get; }
     }
 
-    public class MonthlyPactServiceDependencies : IMonthlyPactServiceDependencies
+    public class MonthlyImportServiceDependencies : IMonthlyImportServiceDependencies
     {
-        public MonthlyPactServiceDependencies(
+        public MonthlyImportServiceDependencies(
             IExcelImportService excelImportService,
             IWorkGroupService workGroupService,
             IPactTimeCodeValidService timeCodeValidService,

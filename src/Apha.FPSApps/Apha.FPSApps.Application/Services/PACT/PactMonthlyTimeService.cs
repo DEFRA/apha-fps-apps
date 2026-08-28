@@ -33,17 +33,17 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public PactMonthlyTimeService(
             IPactApiClient pactApiClient,
-            IMonthlyPactServiceDependencies monthlyPactServiceDependencies,
+            IMonthlyImportServiceDependencies monthlyImportServiceDependencies,
             ILogger<PactMonthlyTimeService> logger)
         {
             _pactApiClient = pactApiClient;
-            _excelImportService = monthlyPactServiceDependencies.ExcelImportService;
-            _workGroupService = monthlyPactServiceDependencies.WorkGroupService;
-            _timeCodeValidService = monthlyPactServiceDependencies.TimeCodeValidService;
-            _monthService = monthlyPactServiceDependencies.MonthService;
-            _s3StorageService = monthlyPactServiceDependencies.S3StorageService;
-            _httpContextAccessor = monthlyPactServiceDependencies.HttpContextAccessor;
-            _configuration = monthlyPactServiceDependencies.Configuration;
+            _excelImportService = monthlyImportServiceDependencies.ExcelImportService;
+            _workGroupService = monthlyImportServiceDependencies.WorkGroupService;
+            _timeCodeValidService = monthlyImportServiceDependencies.TimeCodeValidService;
+            _monthService = monthlyImportServiceDependencies.MonthService;
+            _s3StorageService = monthlyImportServiceDependencies.S3StorageService;
+            _httpContextAccessor = monthlyImportServiceDependencies.HttpContextAccessor;
+            _configuration = monthlyImportServiceDependencies.Configuration;
             _logger = logger;
         }
 
@@ -129,7 +129,14 @@ namespace Apha.FPSApps.Application.Services.PACT
         }
 
         public async Task<ApiResponseDto<List<StagingMonthlyTimeDto>>> GetStagingAsync(QueryParameters<string> query, bool? passed, bool isReadOnlyYear = false)
-            => await _pactApiClient.PactMonthlyTime.GetStagingAsync(query, passed, isReadOnlyYear);
+        {
+            if (isReadOnlyYear)
+            {
+                return ApiResponseDto<List<StagingMonthlyTimeDto>>.SuccessResponse([], total: 0);
+            }
+
+            return await _pactApiClient.PactMonthlyTime.GetStagingAsync(query, passed);
+        }
 
         public async Task<ApiResponseDto<StagingMonthlyTimeDto>> GetStagingByIdAsync(int id)
             => await _pactApiClient.PactMonthlyTime.GetStagingByIdAsync(id);

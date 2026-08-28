@@ -26,7 +26,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyTimeServic
         private readonly IS3StorageService _s3StorageService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
-        private readonly IMonthlyPactServiceDependencies _monthlyPactServiceDependencies;
+        private readonly IMonthlyImportServiceDependencies _monthlyImportServiceDependencies;
         private readonly ILogger<PactMonthlyTimeService> _logger;
         private readonly PactMonthlyTimeService _service;
 
@@ -41,21 +41,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyTimeServic
             _s3StorageService = Substitute.For<IS3StorageService>();
             _httpContextAccessor = Substitute.For<IHttpContextAccessor>();
             _configuration = Substitute.For<IConfiguration>();
-            _monthlyPactServiceDependencies = Substitute.For<IMonthlyPactServiceDependencies>();
+            _monthlyImportServiceDependencies = Substitute.For<IMonthlyImportServiceDependencies>();
             _logger = Substitute.For<ILogger<PactMonthlyTimeService>>();
 
-            _monthlyPactServiceDependencies.ExcelImportService.Returns(_excelImportService);
-            _monthlyPactServiceDependencies.WorkGroupService.Returns(_workGroupService);
-            _monthlyPactServiceDependencies.TimeCodeValidService.Returns(_timeCodeValidService);
-            _monthlyPactServiceDependencies.MonthService.Returns(_monthService);
-            _monthlyPactServiceDependencies.S3StorageService.Returns(_s3StorageService);
-            _monthlyPactServiceDependencies.HttpContextAccessor.Returns(_httpContextAccessor);
-            _monthlyPactServiceDependencies.Configuration.Returns(_configuration);
+            _monthlyImportServiceDependencies.ExcelImportService.Returns(_excelImportService);
+            _monthlyImportServiceDependencies.WorkGroupService.Returns(_workGroupService);
+            _monthlyImportServiceDependencies.TimeCodeValidService.Returns(_timeCodeValidService);
+            _monthlyImportServiceDependencies.MonthService.Returns(_monthService);
+            _monthlyImportServiceDependencies.S3StorageService.Returns(_s3StorageService);
+            _monthlyImportServiceDependencies.HttpContextAccessor.Returns(_httpContextAccessor);
+            _monthlyImportServiceDependencies.Configuration.Returns(_configuration);
 
             _pactClient.PactMonthlyTime.Returns(_pactMonthlyTimeApiClient);
             _service = new PactMonthlyTimeService(
                 _pactClient,
-                _monthlyPactServiceDependencies,
+                _monthlyImportServiceDependencies,
                 _logger);
         }
 
