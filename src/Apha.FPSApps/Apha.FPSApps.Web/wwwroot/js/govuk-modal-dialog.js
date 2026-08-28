@@ -204,6 +204,19 @@
         event.stopPropagation();
     }
 
+    // Isolates clicks inside the modal from the rest of the page, but lets
+    // events on the header through so the drag handlers delegated on the
+    // document can still receive them. Without this exception, any modal
+    // container carrying the "modal" class (e.g. the CostBook YearlyDetails
+    // #project1ModalContainer) becomes undraggable.
+    function stopModalContentPropagation(event) {
+        if (event.target.closest(".modal-header, .govuk-edit-modal__header")) {
+            return;
+        }
+
+        stopPropagation(event);
+    }
+
     function applySafeBootstrapConfig(modalElement) {
         if (!modalElement) {
             return;
@@ -250,7 +263,7 @@
         var modalContent = modalElement.querySelector(".modal-content");
         if (modalContent) {
             ["click", "mousedown", "mouseup"].forEach(function (eventName) {
-                modalContent.addEventListener(eventName, stopPropagation);
+                modalContent.addEventListener(eventName, stopModalContentPropagation);
             });
         }
 
@@ -499,7 +512,6 @@
     };
 
 
-
     var isDragging = false;
 
     var startX = 0;
@@ -635,7 +647,7 @@
         if (!isDragging) {
             return;
         }
-
+        
         isDragging = false;
 
         $("body").css("user-select", "");
