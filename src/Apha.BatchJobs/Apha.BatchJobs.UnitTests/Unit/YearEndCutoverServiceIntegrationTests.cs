@@ -98,11 +98,167 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
 
             Assert.Equal("Closed", currentStatus);
             Assert.Equal("Open", targetStatus);
+
+            // Phase 6 hardening: staging tables must be empty after a successful cutover,
+            // regardless of what (if anything) PACT import activity left in them beforehand — this
+            // assertion is valid whether or not the tables had rows before this test ran.
+            foreach (var table in StagingTables)
+            {
+                var remaining = await CountRowsAsync(table);
+                Assert.Equal(0, remaining);
+            }
         }
         finally
         {
             await DeleteYearAsync(currentYear);
             await DeleteYearAsync(targetYear);
+            await DeleteJobQueueRowAsync(dataSetupJobQueueId);
+        }
+    }
+
+    [SkippableFact]
+    public async Task ExecuteCutoverAsync_WhenLatestDataSetupExecutionForTargetYearIsNotCompleted_ThrowsEvenWhenAnOlderCompletedRowExists()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Skip.IfNot(
+            _yearEndDataSetupCompletedCatalogAvailable,
+            $"job_master/job_status seed for '{BatchJobNames.YearEndDataSetup}' + 'Completed' is not yet provisioned on this database.");
+
+        const int currentYear = 9807;
+        const int targetYear = 9808;
+
+        await SeedYearAsync(currentYear, "Open", active: true);
+        await SeedYearAsync(targetYear, "Planned", active: true);
+
+        // Older row: Completed. Newer row: Failed. Proves the repository's in-transaction
+        // predecessor check uses the LATEST matching execution (ORDER BY startdatetime DESC),
+        // not just "does any Completed row exist for this target year" — the older Completed row
+        // alone would wrongly let this through if the query weren't order-sensitive.
+        var olderCompletedJobQueueId = Guid.NewGuid();
+        var newerFailedJobQueueId = Guid.NewGuid();
+        await SeedDataSetupExecutionAsync(targetYear, olderCompletedJobQueueId, "Completed", DateTime.UtcNow.AddHours(-1));
+        await SeedDataSetupExecutionAsync(targetYear, newerFailedJobQueueId, "Failed", DateTime.UtcNow);
+
+        try
+        {
+            var repository = new YearEndCutoverRepository(CreateDbContextFactory());
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repository.ExecuteCutoverAsync(currentYear, targetYear));
+
+            Assert.Contains(BatchJobNames.YearEndDataSetup, ex.Message, StringComparison.Ordinal);
+            Assert.Contains("'Failed'", ex.Message, StringComparison.Ordinal);
+
+            var (currentStatus, _) = await GetYearStateAsync(currentYear);
+            var (targetStatus, _) = await GetYearStateAsync(targetYear);
+
+            Assert.Equal("Open", currentStatus);
+            Assert.Equal("Planned", targetStatus);
+        }
+        finally
+        {
+            await DeleteYearAsync(currentYear);
+            await DeleteYearAsync(targetYear);
+            await DeleteJobQueueRowAsync(olderCompletedJobQueueId);
+            await DeleteJobQueueRowAsync(newerFailedJobQueueId);
+        }
+    }
+
+    [SkippableFact]
+    public async Task ExecuteCutoverAsync_WhenStagingTableIsLocked_ThrowsAndLeavesYearRowsUnchanged()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Skip.IfNot(
+            _yearEndDataSetupCompletedCatalogAvailable,
+            $"job_master/job_status seed for '{BatchJobNames.YearEndDataSetup}' + 'Completed' is not yet provisioned on this database.");
+
+        const int currentYear = 9809;
+        const int targetYear = 9810;
+        var dataSetupJobQueueId = Guid.NewGuid();
+
+        await SeedYearAsync(currentYear, "Open", active: true);
+        await SeedYearAsync(targetYear, "Planned", active: true);
+        await SeedCompletedDataSetupExecutionAsync(targetYear, dataSetupJobQueueId);
+
+        // Hold an exclusive lock on one staging table from a separate connection/transaction that
+        // stays open for the duration of the cutover attempt below — simulates in-flight PACT
+        // import activity. Never committed/rolled back until this test's own finally block.
+        await using var lockingContext = CreateDbContext();
+        await lockingContext.Database.OpenConnectionAsync();
+        await using var lockingTransaction = await lockingContext.Database.BeginTransactionAsync();
+        await lockingContext.Database.ExecuteSqlRawAsync($"LOCK TABLE {StagingTables[0]} IN ACCESS EXCLUSIVE MODE;");
+
+        try
+        {
+            var repository = new YearEndCutoverRepository(CreateDbContextFactory());
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repository.ExecuteCutoverAsync(currentYear, targetYear));
+
+            Assert.Contains(StagingTables[0], ex.Message, StringComparison.Ordinal);
+
+            var (currentStatus, _) = await GetYearStateAsync(currentYear);
+            var (targetStatus, _) = await GetYearStateAsync(targetYear);
+
+            Assert.Equal("Open", currentStatus);
+            Assert.Equal("Planned", targetStatus);
+        }
+        finally
+        {
+            await lockingTransaction.RollbackAsync();
+            await DeleteYearAsync(currentYear);
+            await DeleteYearAsync(targetYear);
+            await DeleteJobQueueRowAsync(dataSetupJobQueueId);
+        }
+    }
+
+    [SkippableFact]
+    public async Task ExecuteCutoverAsync_WhenAnotherYearIsUnexpectedlyOpen_ThrowsAtFinalValidationAndRollsBackStatusFlips()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Skip.IfNot(
+            _yearEndDataSetupCompletedCatalogAvailable,
+            $"job_master/job_status seed for '{BatchJobNames.YearEndDataSetup}' + 'Completed' is not yet provisioned on this database.");
+
+        const int currentYear = 9811;
+        const int targetYear = 9812;
+        // An unrelated third year, already Open, present for the entire test — its existence is
+        // exactly what makes ValidateFinalYearStateAsync's "exactly one Open year" check fail once
+        // the status flips (current->Closed, target->Open) have already happened inside the same
+        // transaction, proving the whole transaction — flips included — rolls back on a
+        // final-assertion failure, not just on an up-front precondition failure.
+        const int unrelatedOpenYear = 9813;
+        var dataSetupJobQueueId = Guid.NewGuid();
+
+        await SeedYearAsync(currentYear, "Open", active: true);
+        await SeedYearAsync(targetYear, "Planned", active: true);
+        await SeedYearAsync(unrelatedOpenYear, "Open", active: true);
+        await SeedCompletedDataSetupExecutionAsync(targetYear, dataSetupJobQueueId);
+
+        try
+        {
+            var repository = new YearEndCutoverRepository(CreateDbContextFactory());
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repository.ExecuteCutoverAsync(currentYear, targetYear));
+
+            Assert.Contains("exactly one Open year", ex.Message, StringComparison.Ordinal);
+
+            var (currentStatus, _) = await GetYearStateAsync(currentYear);
+            var (targetStatus, _) = await GetYearStateAsync(targetYear);
+            var (unrelatedStatus, _) = await GetYearStateAsync(unrelatedOpenYear);
+
+            // Proves rollback undid the flips even though they were already applied and committed
+            // to the transaction's own view of the data before the final check ran.
+            Assert.Equal("Open", currentStatus);
+            Assert.Equal("Planned", targetStatus);
+            Assert.Equal("Open", unrelatedStatus);
+        }
+        finally
+        {
+            await DeleteYearAsync(currentYear);
+            await DeleteYearAsync(targetYear);
+            await DeleteYearAsync(unrelatedOpenYear);
             await DeleteJobQueueRowAsync(dataSetupJobQueueId);
         }
     }
@@ -194,6 +350,48 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
             await DeleteYearAsync(currentYear);
             await DeleteYearAsync(targetYear);
         }
+    }
+
+    /// <summary>The three PACT-owned staging tables Phase 6 hardening locks/truncates during cutover.</summary>
+    private static readonly string[] StagingTables =
+    {
+        "fps.proj_subcontract_staging",
+        "fps.tblstagingmonthlyoutput",
+        "fps.tblstagingmonthlytime"
+    };
+
+    private async Task<long> CountRowsAsync(string qualifiedTableName)
+    {
+        await using var context = CreateDbContext();
+        return await context.Database
+            .SqlQueryRaw<long>($@"SELECT COUNT(*)::bigint AS ""Value"" FROM {qualifiedTableName}")
+            .SingleAsync();
+    }
+
+    /// <summary>
+    /// Generalizes <see cref="SeedCompletedDataSetupExecutionAsync"/> to an arbitrary status and
+    /// start time, so a test can control which of two job_queue rows for the same target year is
+    /// "latest" by <c>startdatetime</c>.
+    /// </summary>
+    private async Task SeedDataSetupExecutionAsync(int targetYear, Guid jobQueueId, string status, DateTime startDateTimeUtc)
+    {
+        await using var context = CreateDbContext();
+
+        var jobId = await context.Database
+            .SqlQuery<int>($@"
+                SELECT jobid AS ""Value"" FROM fps.job_master WHERE jobname = {BatchJobNames.YearEndDataSetup}")
+            .SingleAsync();
+
+        var statusId = await context.Database
+            .SqlQuery<int>($@"
+                SELECT statusid AS ""Value"" FROM fps.job_status WHERE jobid = {jobId} AND status = {status}")
+            .SingleAsync();
+
+        await context.Database.ExecuteSqlInterpolatedAsync($@"
+            INSERT INTO fps.job_queue
+                (jobqueueid, jobexecutionid, jobid, statusid, requestedby, requested_at_utc, startdatetime, fpsyear)
+            VALUES
+                ({jobQueueId}, {Guid.NewGuid()}, {jobId}, {statusId}, 'integration-test-requester', NOW(), {startDateTimeUtc}, {targetYear});");
     }
 
     private async Task SeedYearAsync(int fpsYear, string yearStatus, bool active)

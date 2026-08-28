@@ -1,3 +1,4 @@
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -5,32 +6,14 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
 /// <summary>
-/// Resets project financial fields for target-year project rows using strict year scoping.
+/// Applies the <see cref="YearEndResetPhase.ProjectFinancialReset"/> column overrides — matrix-driven,
+/// currently just <c>tlkpproject</c>'s financial/planning fields — to target-year rows using strict
+/// year scoping. FPS-only: MABArchive participation in Year End is gated exclusively through
+/// <see cref="ConditionalMabArchiveYearSetupStep"/>, which defaults to no-op unless separately
+/// approved — this step must not reset any <c>mabarchive.my_*</c> table.
 /// </summary>
 public sealed class ProjectFinancialResetStep : IYearEndDataSetupStep
 {
-    private static readonly IReadOnlyDictionary<string, string> ResetRules =
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["transferincome"] = "0",
-            ["custincome"] = "0",
-            ["wip_eoy"] = "0",
-            ["feccost"] = "0",
-            ["profit"] = "0",
-            ["budget_cvl"] = "0",
-            ["carryover"] = "0",
-            ["wip_limit"] = "NULL",
-            ["wip_current"] = "NULL",
-            ["pvsincome"] = "NULL",
-            ["plancaseworkdebit"] = "NULL"
-        };
-
-    private static readonly IReadOnlyList<ResetTarget> ResetTargets =
-    [
-        new("fps", "tlkpproject", "fpsyear"),
-        new("mabarchive", "my_tlkpproject", "year")
-    ];
-
     private readonly IYearEndDataSetupRepository _repository;
     private readonly ILogger<ProjectFinancialResetStep> _logger;
 
@@ -53,43 +36,18 @@ public sealed class ProjectFinancialResetStep : IYearEndDataSetupStep
             throw new InvalidOperationException("Year End context must include targetFpsYear before project financial reset.");
         }
 
-        foreach (var target in ResetTargets)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
+        var updated = await YearEndMatrixResetApplier.ApplyResetsForPhaseAsync(
+            _repository,
+            YearEndResetPhase.ProjectFinancialReset,
+            context.TargetFpsYear.Value,
+            context.CorrelationId,
+            _logger,
+            cancellationToken);
 
-            if (!await _repository.TableExistsAsync(target.Schema, target.Table, cancellationToken))
-            {
-                _logger.LogWarning(
-                    "YearEnd project reset skipped missing table | CorrelationId={CorrelationId} | Table={Schema}.{Table}",
-                    context.CorrelationId,
-                    target.Schema,
-                    target.Table);
-                continue;
-            }
-
-            if (!await _repository.ColumnExistsAsync(target.Schema, target.Table, target.YearColumn, cancellationToken))
-            {
-                throw new InvalidOperationException(
-                    $"Table {target.Schema}.{target.Table} does not contain required year column {target.YearColumn} for safe reset.");
-            }
-
-            var updated = await _repository.ResetFieldsByYearAsync(
-                target.Schema,
-                target.Table,
-                target.YearColumn,
-                ResetRules,
-                context.TargetFpsYear.Value,
-                cancellationToken);
-
-            _logger.LogInformation(
-                "YearEnd project financial reset completed | CorrelationId={CorrelationId} | Table={Schema}.{Table} | TargetYear={TargetYear} | UpdatedRows={UpdatedRows}",
-                context.CorrelationId,
-                target.Schema,
-                target.Table,
-                context.TargetFpsYear,
-                updated);
-        }
+        _logger.LogInformation(
+            "YearEnd project financial reset completed | CorrelationId={CorrelationId} | TargetYear={TargetYear} | UpdatedRows={UpdatedRows}",
+            context.CorrelationId,
+            context.TargetFpsYear,
+            updated);
     }
-
-    private sealed record ResetTarget(string Schema, string Table, string YearColumn);
 }

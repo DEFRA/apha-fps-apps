@@ -1,4 +1,6 @@
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 using Apha.BatchJobs.Domain.Constants;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -94,6 +96,23 @@ public sealed class BatchJobFactory : IBatchJobFactory
 
     internal static string GetConventionalName(Type type)
     {
+        // Keep the official job-name contract (job_master.jobname / BATCH_JOB_NAME / EventBridge
+        // payloads) for handlers whose C# type name can't literally match it — a hyphen, or
+        // historical capitalization, that a C# identifier can't contain. Phase 7D (main-port,
+        // 2026-08-28): YearEnd-DataSetup/YearEnd-CutOver's hyphens were previously lost to the
+        // generic Job/Handler/JobHandler-suffix stripping below, so BatchJobFactory.Create would
+        // reject the real, hyphenated names used everywhere else in the system. A type-name-derived
+        // guess must never be allowed to silently diverge from the real dispatch contract like that
+        // again — checking the concrete type up front, before any stripping, closes that off.
+        if (type == typeof(MabArchiveJob))
+            return BatchJobNames.MabArchive;
+
+        if (type == typeof(YearEndDataSetupJobHandler))
+            return BatchJobNames.YearEndDataSetup;
+
+        if (type == typeof(YearEndCutoverJobHandler))
+            return BatchJobNames.YearEndCutover;
+
         var name = type.Name;
 
         if (name.EndsWith("JobHandler", StringComparison.Ordinal))
@@ -102,10 +121,6 @@ public sealed class BatchJobFactory : IBatchJobFactory
             name = name[..^"Handler".Length];
         else if (name.EndsWith("Job", StringComparison.Ordinal))
             name = name[..^"Job".Length];
-
-        // Keep historical capitalization used by callers.
-        if (string.Equals(name, nameof(BatchJobNames.MabArchive), StringComparison.Ordinal))
-            return BatchJobNames.MabArchive;
 
         return name;
     }

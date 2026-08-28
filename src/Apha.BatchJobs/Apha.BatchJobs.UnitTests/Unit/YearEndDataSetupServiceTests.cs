@@ -64,7 +64,19 @@ public sealed class YearEndDataSetupServiceTests
 
     private static YearEndDataSetupService CreateService(params IYearEndDataSetupStep[] steps)
     {
-        return new YearEndDataSetupService(steps, NullLogger<YearEndDataSetupService>.Instance);
+        return new YearEndDataSetupService(steps, new PassThroughTransactionManager(), NullLogger<YearEndDataSetupService>.Instance);
+    }
+
+    /// <summary>
+    /// Just invokes the wrapped operation directly — no real transaction. These tests exercise step
+    /// ordering/error-propagation with fake in-memory steps, not the real Phase 7A atomicity
+    /// guarantee (that's proven against a real database, see
+    /// <c>YearEndDataSetupRollbackValidationTests</c>).
+    /// </summary>
+    private sealed class PassThroughTransactionManager : IYearEndDataSetupTransactionManager
+    {
+        public Task ExecuteAsync(Func<CancellationToken, Task> operation, CancellationToken cancellationToken) =>
+            operation(cancellationToken);
     }
 
     private sealed class RecordingStep : IYearEndDataSetupStep

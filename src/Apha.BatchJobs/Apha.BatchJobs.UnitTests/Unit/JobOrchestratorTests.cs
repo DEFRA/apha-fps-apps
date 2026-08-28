@@ -376,6 +376,86 @@ public sealed class JobOrchestratorTests
         _factory.DidNotReceive().Create(Arg.Any<string>());
     }
 
+    /// <summary>
+    /// Phase 7E regression proof — reproduces the real Phase 8 Gate C2b incident exactly: a
+    /// pre-created <c>YearEnd-DataSetup</c> Approved execution row was adopted by a request for
+    /// <c>MABArchive</c> (Scheduled run mode), because <c>shouldAutoCreateInitiated</c>'s fast path
+    /// previously skipped identity validation entirely whenever an existing row was found —
+    /// regardless of which job it actually belonged to — since it assumed "no pre-created row exists
+    /// yet." The requested job here is deliberately the worker-managed-scheduled kind
+    /// (<see cref="BatchJobNames.MabArchive"/> + <see cref="RunMode.Scheduled"/>) specifically to
+    /// prove the identity check now fires even on that fast path, not just the ordinary Manual one.
+    /// </summary>
+    [Fact]
+    public async Task RunAsync_WhenExecutionIdBelongsToADifferentJob_ThrowsBeforeLockAcquisitionOrDispatch()
+    {
+        // Arrange
+        var jobExecutionId = Guid.NewGuid();
+        _execRepo.GetExecutionByJobExecutionIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(args => Task.FromResult<JobExecutionRecord?>(new JobExecutionRecord
+            {
+                ExecutionId = 1,
+                JobExecutionId = (Guid)args[0],
+                JobQueueId = Guid.NewGuid(),
+                JobName = BatchJobNames.YearEndDataSetup,
+                UserId = "phase8-yearend-e2e",
+                JobType = JobType.Unknown,
+                RunMode = RunMode.Manual,
+                Status = JobStatus.Approved,
+                StartedAt = DateTime.UtcNow,
+                RetryAttempts = 0,
+                FpsYear = 2026
+            }));
+
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns(BatchJobNames.MabArchive);
+        _factory.Create(BatchJobNames.MabArchive).Returns(job);
+
+        // Act / Assert
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _orchestrator.RunAsync(BatchJobNames.MabArchive, RunMode.Scheduled, jobExecutionId, "scheduler-user"));
+
+        Assert.Contains("already belongs to job", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(BatchJobNames.YearEndDataSetup, ex.Message, StringComparison.Ordinal);
+
+        // The whole point of Phase 7E: none of this must have happened before the throw.
+        await _lockRepo.DidNotReceive().TryAcquireLockAsync(
+            Arg.Any<string>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await _execRepo.DidNotReceive().CreateExecutionRecordAsync(
+            Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
+        _factory.DidNotReceive().Create(Arg.Any<string>());
+        await job.DidNotReceive().ExecuteAsync(Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>
+    /// Positive counterpart to the incident-reproduction test above: when the pre-created
+    /// execution's JobName genuinely matches the requested job, Phase 7E's new check is a no-op and
+    /// the run proceeds exactly as before.
+    /// </summary>
+    [Fact]
+    public async Task RunAsync_WhenExecutionIdBelongsToTheRequestedJob_ContinuesNormally()
+    {
+        // Arrange
+        SetupApprovedExecution(BatchJobNames.YearEndDataSetup);
+
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns(BatchJobNames.YearEndDataSetup);
+        _factory.Create(BatchJobNames.YearEndDataSetup).Returns(job);
+        _lockRepo.TryAcquireLockAsync(Arg.Any<string>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+            .Returns(42);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _orchestrator.RunAsync(BatchJobNames.YearEndDataSetup, RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        // Assert
+        await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
+        Assert.Equal(JobStatus.Completed, result.Status);
+    }
+
     // ─────────────────────────────────────────────────────────────
     // Lock already held — job must be skipped (not executed)
     // ─────────────────────────────────────────────────────────────
@@ -1262,6 +1342,95 @@ public sealed class JobOrchestratorTests
 
         Assert.Equal(JobStatus.Completed, result.Status);
         await notifier.Received(1).NotifyAsync(Arg.Any<BatchJobCompletionContext>(), Arg.Any<CancellationToken>());
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // FPS year extraction from job parameters (TryExtractFpsYearFromParameters) — generic across
+    // every approval-based job, not Year-End-specific. Reads plannedYear (the field production
+    // actually sends), falling back to the legacy targetFpsYear alias, and must fail fast rather
+    // than silently skip the pre-created-record year cross-check when both are present and disagree.
+    // ─────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task RunAsync_WhenParametersHavePlannedYearOnly_MatchesPreCreatedRecordAndSucceeds()
+    {
+        SetupSuccessJobWithFpsYear("PlannedYearOnlyJob", fpsYear: 2027);
+
+        var result = await _orchestrator.RunAsync(
+            "PlannedYearOnlyJob", RunMode.Manual, Guid.NewGuid(), "test-user",
+            parametersJson: "{\"plannedYear\":2027}");
+
+        Assert.Equal(JobStatus.Completed, result.Status);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenParametersHaveLegacyTargetFpsYearOnly_MatchesPreCreatedRecordAndSucceeds()
+    {
+        SetupSuccessJobWithFpsYear("LegacyTargetFpsYearOnlyJob", fpsYear: 2027);
+
+        var result = await _orchestrator.RunAsync(
+            "LegacyTargetFpsYearOnlyJob", RunMode.Manual, Guid.NewGuid(), "test-user",
+            parametersJson: "{\"targetFpsYear\":2027}");
+
+        Assert.Equal(JobStatus.Completed, result.Status);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenPlannedYearAndTargetFpsYearBothPresentAndEqual_Succeeds()
+    {
+        SetupSuccessJobWithFpsYear("BothYearFieldsEqualJob", fpsYear: 2027);
+
+        var result = await _orchestrator.RunAsync(
+            "BothYearFieldsEqualJob", RunMode.Manual, Guid.NewGuid(), "test-user",
+            parametersJson: "{\"plannedYear\":2027,\"targetFpsYear\":2027}");
+
+        Assert.Equal(JobStatus.Completed, result.Status);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenPlannedYearAndTargetFpsYearDisagree_ThrowsBeforeAnyClaim()
+    {
+        SetupInitiatedExecution("ConflictingYearFieldsJob");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _orchestrator.RunAsync(
+            "ConflictingYearFieldsJob", RunMode.Manual, Guid.NewGuid(), "test-user",
+            parametersJson: "{\"plannedYear\":2027,\"targetFpsYear\":2028}"));
+
+        await _lockRepo.DidNotReceiveWithAnyArgs().TryAcquireLockAsync(default!, default, default, default);
+        await _execRepo.DidNotReceiveWithAnyArgs().CreateExecutionRecordAsync(default!, default);
+    }
+
+    /// <summary>
+    /// Configures an Initiated record with <paramref name="fpsYear"/> set (so the pre-created-record
+    /// year cross-check has something to compare against) and a job that completes successfully.
+    /// </summary>
+    private void SetupSuccessJobWithFpsYear(string jobName, int fpsYear)
+    {
+        _execRepo.GetExecutionByJobExecutionIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(args => Task.FromResult<JobExecutionRecord?>(new JobExecutionRecord
+            {
+                ExecutionId = 1,
+                JobExecutionId = (Guid)args[0],
+                JobQueueId = Guid.NewGuid(),
+                JobName = jobName,
+                UserId = "test-user",
+                JobType = JobType.Unknown,
+                RunMode = RunMode.Manual,
+                Status = JobStatus.Initiated,
+                StartedAt = DateTime.UtcNow,
+                RetryAttempts = 0,
+                FpsYear = fpsYear
+            }));
+
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns(jobName);
+        _factory.Create(jobName).Returns(job);
+        _lockRepo.TryAcquireLockAsync(jobName, Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(42);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
     }
 
     // --- Helpers ----------------------------------------------------------------

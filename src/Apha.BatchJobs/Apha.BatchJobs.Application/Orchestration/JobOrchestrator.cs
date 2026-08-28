@@ -117,6 +117,19 @@ public sealed class JobOrchestrator : IJobOrchestrator
         // Fetch the Initiated record created by API layer
         var existingExecution = await _executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
 
+        // Phase 7E (main-port, 2026-08-28): a JobExecutionId that already resolves to a row must
+        // belong to the job actually being requested — checked unconditionally, before the
+        // worker-managed-scheduled fast path below, which otherwise assumes "no pre-created row
+        // exists yet" and would silently skip validating one that does. Incident precedent: a
+        // requested job of "MABArchive" was allowed to adopt and complete against a pre-created
+        // "YearEnd-DataSetup" row, corrupting that row's lifecycle history, because this check
+        // previously lived only inside ValidatePreCreatedExecutionRecordAsync, which
+        // shouldAutoCreateInitiated bypasses entirely.
+        if (existingExecution is not null)
+        {
+            ValidateExecutionBelongsToRequestedJob(jobName, jobExecutionId, existingExecution);
+        }
+
         var shouldAutoCreateInitiated = IsWorkerManagedScheduledRun(jobName, runMode);
         // Worker-managed MABArchive Scheduled runs may self-create their initiated record below.
         if (!shouldAutoCreateInitiated)
@@ -707,6 +720,22 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
     // ─── Execution contract validation ──────────────────────────────────────────
 
+    /// <summary>
+    /// A pre-created execution row found by <see cref="Guid"/> alone (jobExecutionId) is not proof
+    /// it belongs to the job actually being requested — a colliding/reused execution ID for a
+    /// different job must never be silently adopted. Called unconditionally in
+    /// <see cref="RunAsync"/> whenever a row is found, before any other branching (including the
+    /// worker-managed-scheduled auto-create fast path), so nothing can bypass it.
+    /// </summary>
+    private static void ValidateExecutionBelongsToRequestedJob(string jobName, Guid jobExecutionId, JobExecutionRecord existingExecution)
+    {
+        if (!string.Equals(existingExecution.JobName, jobName, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' already belongs to job '{existingExecution.JobName}', not '{jobName}'.");
+        }
+    }
+
     private async Task ValidatePreCreatedExecutionRecordAsync(
         string jobName,
         Guid jobExecutionId,
@@ -723,11 +752,9 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 $"API must insert and prepare {expectedPickupStatus} before worker start.");
         }
 
-        if (!string.Equals(existingExecution.JobName, jobName, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException(
-                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' already belongs to job '{existingExecution.JobName}', not '{jobName}'.");
-        }
+        // Job identity is already validated unconditionally in RunAsync before this method is ever
+        // called (Phase 7E) — not re-checked here to avoid two copies of the same policy drifting
+        // apart.
 
         _logger.LogInformation(
             "Found existing execution record | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | Status={Status}",
@@ -796,7 +823,30 @@ public sealed class JobOrchestrator : IJobOrchestrator
         string.Equals(jobName, BatchJobNames.YearEndDataSetup, StringComparison.OrdinalIgnoreCase)
         || string.Equals(jobName, BatchJobNames.YearEndCutover, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Extracts the requested FPS year from a batch job parameters payload, used generically across
+    /// every approval-based job (not just Year End) for the pre-created-record cross-check. Reads
+    /// <c>plannedYear</c> (the field the production event actually sends), falling back to the legacy
+    /// <c>targetFpsYear</c> alias when absent. Throws when both are present and disagree, rather than
+    /// silently picking one or letting the caller's cross-check be silently skipped — an ambiguous
+    /// payload must fail fast, not weaken validation.
+    /// </summary>
     private static int? TryExtractFpsYearFromParameters(string? parametersJson)
+    {
+        var plannedYear = TryExtractIntField(parametersJson, "plannedYear");
+        var legacyTargetFpsYear = TryExtractIntField(parametersJson, "targetFpsYear");
+
+        if (plannedYear.HasValue && legacyTargetFpsYear.HasValue && plannedYear.Value != legacyTargetFpsYear.Value)
+        {
+            throw new InvalidOperationException(
+                $"Job parameters contain conflicting year values: plannedYear={plannedYear.Value}, " +
+                $"targetFpsYear={legacyTargetFpsYear.Value}. These must agree or only one should be supplied.");
+        }
+
+        return plannedYear ?? legacyTargetFpsYear;
+    }
+
+    private static int? TryExtractIntField(string? parametersJson, string propertyName)
     {
         if (string.IsNullOrWhiteSpace(parametersJson))
             return null;
@@ -807,7 +857,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
             // EventBridge passes "null" when parametersJson is absent; treat non-object root as absent.
             if (doc.RootElement.ValueKind != JsonValueKind.Object)
                 return null;
-            if (!doc.RootElement.TryGetProperty("targetFpsYear", out var el))
+            if (!doc.RootElement.TryGetProperty(propertyName, out var el))
                 return null;
 
             if (el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var num))

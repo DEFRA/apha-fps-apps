@@ -10,6 +10,13 @@ namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 /// Service-layer entry point for Year End Cutover.
 /// Closes the current FPS year and activates the target FPS year in a single transaction.
 /// </summary>
+/// <remarks>
+/// The Data-Setup-Completed check below runs before <see cref="IYearEndCutoverRepository.ExecuteCutoverAsync"/>
+/// opens its transaction — it is a fast-fail only (avoids opening a transaction for an obviously-not-ready
+/// target year), not the correctness guarantee. <see cref="IYearEndCutoverRepository"/> re-validates the
+/// same precondition from inside its own transaction, which is what actually guarantees correctness —
+/// this pre-check alone cannot, since state could change between here and the transaction opening.
+/// </remarks>
 public sealed class YearEndCutoverService : IYearEndCutoverService
 {
     private readonly IYearEndCutoverRepository _cutoverRepository;
