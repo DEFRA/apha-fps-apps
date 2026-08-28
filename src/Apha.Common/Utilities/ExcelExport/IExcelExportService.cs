@@ -4,7 +4,8 @@ namespace Apha.Common.Utilities.ExcelExport
     {
         byte[] ExportToExcel<T>(
             IEnumerable<T> data,
-            string sheetName = "Sheet1");
+            string sheetName = "Sheet1",
+            Dictionary<string, string>? columnFormats = null);
 
         byte[] BuildTimeSheetExcel(
             string WorkGroupName,

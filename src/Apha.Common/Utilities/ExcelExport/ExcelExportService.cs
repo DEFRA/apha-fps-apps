@@ -1,5 +1,6 @@
 ﻿using ClosedXML.Excel;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -14,19 +15,32 @@ namespace Apha.Common.Utilities.ExcelExport
     {
         public byte[] ExportToExcel<T>(
         IEnumerable<T> data,
-        string sheetName = "Sheet1")
+        string sheetName = "Sheet1",
+        Dictionary<string, string>? columnFormats = null)
         {
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add(sheetName);
 
             var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var normalizedFormats = columnFormats != null
+                ? new Dictionary<string, string>(columnFormats, StringComparer.OrdinalIgnoreCase)
+                : null;
+            var formatByColumn = new string?[properties.Length];
 
             for (int i = 0; i < properties.Length; i++)
             {
                 worksheet.Cell(1, i + 1).Value = GetColumnHeader(properties[i]);
+                formatByColumn[i] = GetColumnFormat(normalizedFormats, properties[i].Name);
+
+                var column = worksheet.Column(i + 1);
+                if (!string.IsNullOrWhiteSpace(formatByColumn[i]))
+                {
+                    column.Style.NumberFormat.Format = formatByColumn[i]!;
+                }
+
                 if (IsHiddenColumn(properties[i]))
                 {
-                    worksheet.Column(i + 1).Hide();
+                    column.Hide();
                 }
             }
 
@@ -37,7 +51,8 @@ namespace Apha.Common.Utilities.ExcelExport
                 for (int col = 0; col < properties.Length; col++)
                 {
                     var rawValue = ConvertExcelValue(properties[col].GetValue(item));
-                    worksheet.Cell(row, col + 1).Value = XLCellValue.FromObject(rawValue);
+                    var valueForExport = ConvertValueForColumnFormat(rawValue, formatByColumn[col]);
+                    worksheet.Cell(row, col + 1).Value = XLCellValue.FromObject(valueForExport);
                 }
 
                 row++;
@@ -52,6 +67,7 @@ namespace Apha.Common.Utilities.ExcelExport
             var allCellsRange = worksheet.Range(1, 1, lastDataRow, lastDataColumn);
             allCellsRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
             allCellsRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
             // Auto-fit all used columns
             worksheet.Columns().AdjustToContents();
 
@@ -207,6 +223,38 @@ namespace Apha.Common.Utilities.ExcelExport
                 columnNumber = (columnNumber - 1) / 26;
             }
             return new string(letters.ToArray());
+        }
+
+        private static string? GetColumnFormat(Dictionary<string, string>? columnFormats, string propertyName)
+        {
+            if (columnFormats == null)
+            {
+                return null;
+            }
+
+            return columnFormats.TryGetValue(propertyName, out var format)
+                ? format
+                : null;
+        }
+
+        private static object? ConvertValueForColumnFormat(object? value, string? format)
+        {
+            if (string.IsNullOrWhiteSpace(format) || value is not string text || string.IsNullOrWhiteSpace(text))
+            {
+                return value;
+            }
+
+            if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.CurrentCulture, out var currentCultureValue))
+            {
+                return currentCultureValue;
+            }
+
+            if (decimal.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var invariantCultureValue))
+            {
+                return invariantCultureValue;
+            }
+
+            return value;
         }
 
         private object? ConvertExcelValue(object? value)
