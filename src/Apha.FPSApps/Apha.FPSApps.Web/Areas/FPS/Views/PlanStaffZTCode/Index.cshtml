@@ -22,21 +22,32 @@
                     <dd class="isFloatLeft" id="staff-grade">@Model.WorkGroupGrade</dd>
                 </div>
             </dl>
-            @if (Model.ReturnToSsr)
-            {
-                <a href="@Url.Action("Index", "SetUpStaffResources", new { area = "FPS" })" class="govuk-back-link isFloatRight">Back</a>
+            @{
+                // Resolve the single Back target up-front so the page renders exactly one
+                // "Back" link. Multiple anchors sharing identical link text but pointing at
+                // different destinations is an accessibility failure.
+                string backLinkUrl;
+                if (Model.ReturnToSsr)
+                {
+                    backLinkUrl = Url.Action("Index", "SetUpStaffResources", new { area = "FPS" })!;
+                }
+                else if (Context.Request.Query["source"] == "resource")
+                {
+                    backLinkUrl = Url.Action("Index", "ResourceSetUp", new
+                    {
+                        area = "FPS",
+                        profitCentre = Context.Request.Query["profitCentre"].ToString(),
+                        pcGrade = Context.Request.Query["pcGrade"].ToString(),
+                        wgGrade = Context.Request.Query["wgGrade"].ToString(),
+                        staffId = Model.StaffId
+                    })!;
+                }
+                else
+                {
+                    backLinkUrl = "JavaScript:history.back()";
+                }
             }
-            else if (!string.IsNullOrEmpty(Context.Request.Query["source"]) && Context.Request.Query["source"] == "resource")
-            {
-                var profitCentre = Context.Request.Query["profitCentre"].ToString();
-                var pcGrade = Context.Request.Query["pcGrade"].ToString();
-                var wgGrade = Context.Request.Query["wgGrade"].ToString();
-                <a href="@Url.Action("Index", "ResourceSetUp", new { area = "FPS", profitCentre = profitCentre, pcGrade = pcGrade, wgGrade = wgGrade, staffId = Model.StaffId })" class="govuk-back-link isFloatRight">Back</a>
-            }
-            else
-            {
-                <a href="JavaScript:history.back()" class="govuk-back-link isFloatRight">Back</a>
-            }
+            <a href="@backLinkUrl" class="govuk-back-link isFloatRight">Back</a>
         </div>
     </div>
 </div>
