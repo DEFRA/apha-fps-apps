@@ -225,8 +225,7 @@
             });
 
             document.getElementById('asuTotalDays').value = totalDays.toFixed(2);
-            document.getElementById('asuTotalCost').value = totalCost.toFixed(4)
-                .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            document.getElementById('asuTotalCost').value = totalCost.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function escapeHtml(str) {

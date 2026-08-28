@@ -50,7 +50,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 TestCapabilityGrid = new DataGridConfig<TestCapabilityItem>
                 {
                     GridId = "testCapabilityGrid",
-                    Title = "Portfolio Components",
+                    Title = "Test Capabilities Managed within this Portfolio..",
                     ShowCheckboxColumn = false,
                     ShowPagination = true,
                     AllowRowSelection = false,
@@ -233,7 +233,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<TestCapabilityItem>
             {
                 GridId = "testCapabilityGrid",
-                Title = "Portfolio Components",
+                Title = "Test Capabilities Managed within this Portfolio..",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 AllowRowSelection = false,

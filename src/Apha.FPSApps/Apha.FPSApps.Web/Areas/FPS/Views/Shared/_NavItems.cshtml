@@ -90,7 +90,10 @@
     </button>
     <div class="dropdown-menu dropdown-menu--columns" id="mab-menu">
         <div class="dropdown-col" style="min-width:200px">
-            <a class="dropdown-item" asp-area="FPS" asp-controller="StaffMaintenance" asp-action="Index">Maintenance Menu</a>
+            @if (User.IsInRole("FPSAdmin"))
+            {
+                <a class="dropdown-item" asp-area="FPS" asp-controller="StaffMaintenance" asp-action="Index">Maintenance Menu</a>
+            }
             <a class="dropdown-item" asp-area="FPS" asp-controller="AnimalCosts" asp-action="Index">ASU Data View</a>
             <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectProfitabilityVla" asp-action="Index">VLA Project Totals</a>
             <a class="dropdown-item" asp-area="FPS" asp-controller="BudgetResourceLevel" asp-action="Index">Generic Bids</a>
@@ -100,7 +103,10 @@
         <div class="dropdown-col" style="min-width:310px">
              <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectMisc" asp-action="Index">Misc Project Data</a>
             <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectSpecificQuery" asp-action="Index">Project Specific - Query</a>
+            @if (User.IsInRole("FPSAdmin"))
+            {
             <a class="dropdown-item" asp-area="FPS" asp-controller="DepartmentIncome" asp-action="Index">Dept. Income</a>
+            }
         </div>
         <div class="dropdown-col" style="min-width:240px">
             <a class="dropdown-item" asp-area="FPS" asp-controller="AnimalSnapshotData" asp-action="Index">Run Snapshot Queries</a>

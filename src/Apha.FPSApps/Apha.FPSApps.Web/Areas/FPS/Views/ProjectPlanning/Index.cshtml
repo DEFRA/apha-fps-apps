@@ -147,7 +147,7 @@
         // ---- Currency helpers ----
 
         function formatGBP(value) {
-            var formatted = new Intl.NumberFormat('en-GB', { style: 'decimal', maximumFractionDigits: 2 }).format(Math.abs(value));
+            var formatted = new Intl.NumberFormat('en-GB', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(value));
             return value < 0 ? '-(' + formatted + ')' : formatted;
         }
 

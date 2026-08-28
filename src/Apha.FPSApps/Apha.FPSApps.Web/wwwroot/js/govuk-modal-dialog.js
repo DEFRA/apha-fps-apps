@@ -497,4 +497,203 @@
             return result;
         });
     };
+
+
+
+    var isDragging = false;
+
+    var startX = 0;
+    var startY = 0;
+    var startLeft = 0;
+    var startTop = 0;
+
+    // Minimum part of modal that must remain visible
+    var minVisible = 50;
+
+
+    // =========================================================
+    // DRAG START
+    // =========================================================
+
+    // Existing selector is NOT removed.
+    // Added .govuk-edit-modal-dialog .govuk-edit-modal__header
+    $(document).on(
+        "mousedown",
+        ".modal-dialog .modal-header, .govuk-edit-modal-dialog .govuk-edit-modal__header",
+        function (e) {
+
+            // Do not drag when clicking buttons/links
+            if ($(e.target).closest("button, a, input, select, textarea").length) {
+                return;
+            }
+
+            // Keep existing selector + add new selector
+            var $dialog = $(this).closest(
+                ".modal-dialog, .govuk-edit-modal-dialog"
+            );
+
+            if (!$dialog.length) {
+                return;
+            }
+
+            var offset = $dialog.offset();
+
+            isDragging = true;
+
+            startX = e.clientX;
+            startY = e.clientY;
+
+            startLeft = offset.left;
+            startTop = offset.top;
+
+            // Convert to fixed positioning
+            $dialog.css({
+                position: "fixed",
+                margin: 0,
+                left: startLeft,
+                top: startTop,
+                width: $dialog.outerWidth()
+            });
+
+            $("body").css("user-select", "none");
+
+            e.preventDefault();
+        });
+
+
+    // =========================================================
+    // DRAGGING
+    // =========================================================
+
+    $(document).on("mousemove", function (e) {
+
+        if (!isDragging) {
+            return;
+        }
+
+        // Existing selector is preserved.
+        // New GOV.UK selector is added.
+        var $dialog = $(
+            ".modal-dialog:has(.modal-header), " +
+            ".govuk-edit-modal-dialog:has(.govuk-edit-modal__header)"
+        ).filter(":visible").first();
+
+        if (!$dialog.length) {
+            return;
+        }
+
+        var dialogWidth = $dialog.outerWidth();
+        var dialogHeight = $dialog.outerHeight();
+
+        var viewportWidth = $(window).width();
+        var viewportHeight = $(window).height();
+
+        var newLeft = startLeft + (e.clientX - startX);
+        var newTop = startTop + (e.clientY - startY);
+
+
+        // =====================================================
+        // X LIMIT
+        // =====================================================
+
+        var minLeft = -(dialogWidth - minVisible);
+        var maxLeft = viewportWidth - minVisible;
+
+        newLeft = Math.max(
+            minLeft,
+            Math.min(newLeft, maxLeft)
+        );
+
+
+        // =====================================================
+        // Y LIMIT
+        // =====================================================
+
+        var minTop = -(dialogHeight - minVisible);
+        var maxTop = viewportHeight - minVisible;
+
+        newTop = Math.max(
+            minTop,
+            Math.min(newTop, maxTop)
+        );
+
+
+        // Apply position
+        $dialog.css({
+            left: newLeft,
+            top: newTop
+        });
+    });
+
+
+    // =========================================================
+    // DRAG END
+    // =========================================================
+
+    $(document).on("mouseup", function () {
+
+        if (!isDragging) {
+            return;
+        }
+
+        isDragging = false;
+
+        $("body").css("user-select", "");
+    });
+
+
+    // =========================================================
+    // CLICK FADED BACKGROUND
+    // =========================================================
+    //
+    // This will NOT automatically reset the modal.
+    //
+    // Modal resets ONLY when the user clicks the faded
+    // background outside the modal.
+    //
+    // =========================================================
+
+    $(document).on("click", function (e) {
+
+        // Existing modal selector + new GOV.UK modal selector
+        var $dialog = $(
+            ".modal-dialog:has(.modal-header), " +
+            ".govuk-edit-modal-dialog:has(.govuk-edit-modal__header)"
+        ).filter(":visible").first();
+
+        if (!$dialog.length) {
+            return;
+        }
+
+        // If click happened INSIDE modal, do nothing
+        if (
+            $(e.target).closest(
+                ".modal-dialog, .govuk-edit-modal-dialog"
+            ).length
+        ) {
+            return;
+        }
+
+        // Click happened outside modal = faded background
+        resetModalPosition($dialog);
+    });
+
+
+    // =========================================================
+    // RESET MODAL TO ORIGINAL POSITION
+    // =========================================================
+
+    function resetModalPosition($dialog) {
+
+        $dialog.css({
+            position: "",
+            left: "",
+            top: "",
+            margin: "auto",
+            width: "100%",
+            maxWidth: "700px"
+        });
+
+    }
+
 })();
