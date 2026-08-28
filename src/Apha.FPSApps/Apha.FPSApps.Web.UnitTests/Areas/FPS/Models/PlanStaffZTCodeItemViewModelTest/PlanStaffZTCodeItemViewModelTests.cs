@@ -75,7 +75,8 @@ namespace Apha.FPSApps.Web.UnitTests.Areas.FPS.Models.PlanStaffZTCodeItemViewMod
             var results = ValidateModel(model);
 
             var failure = Assert.Single(
-                results.Where(r => r.MemberNames.Contains(nameof(PlanStaffZTCodeItemViewModel.PlannedHours))));
+                results,
+                r => r.MemberNames.Contains(nameof(PlanStaffZTCodeItemViewModel.PlannedHours)));
             Assert.Equal("Hours must be a valid number", failure.ErrorMessage);
         }
 
