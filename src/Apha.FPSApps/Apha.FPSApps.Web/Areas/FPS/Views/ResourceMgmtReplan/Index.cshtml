@@ -6,28 +6,6 @@
 <main class="govuk-main-wrapper govuk-!-padding-top-0" id="main-content" role="main">
     <div class="container-fluid">
 
-        @*── Page heading + Resource Centre selector ─────────────────────*@
-        @* <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <div class="ssr-heading-row sup_border-bottom govuk-!-margin-bottom-2">
-                    <h1 class="govuk-heading-s ssr-main-title">
-                        Resource Re-allocation Screen for <span id="ssrMainCentreName">@Model.SelectedResourceCentre</span>
-                    </h1>
-                    <div class="ssr-heading-controls">
-                        <label for="resourceCentreSelect" class="govuk-label govuk-!-margin-bottom-0">Select a Resource Center:</label>
-                        <select class="govuk-select ssr-resource-select"
-                                id="resourceCentreSelect"
-                                aria-label="Select a Resource Center"
-                                asp-for="SelectedResourceCentre"
-                                asp-items="Model.ResourceCentres"
-                                onchange="rraUpdateResourceCentre()">
-                            <option value="">-- Select a Resource Center --</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div> *@
-
         <div class="govuk-grid-row sup_border-bottom">
             <div class="govuk-grid-column-one-half isFloatLeft">
 		        <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 govuk-!-margin-left-3 isCustomPageHeadings">
@@ -39,7 +17,7 @@
 				        <tbody class="govuk-table__body">
 					        <tr class="govuk-table__row">
 						        <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
-							        <label for="resourceCentreSelect" class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-0 govuk-!-font-weight-bold isNoWrap" >Select a Resource Center:</label>
+							        <label for="resourceCentreSelect" class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-1 govuk-!-font-weight-bold isNoWrap" >Select a Resource Center:</label>
 						        </th>
 						        <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
 							         <select class="govuk-select"

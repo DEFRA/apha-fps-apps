@@ -5331,7 +5331,7 @@ body,
     width: 51%;
 }
 .isResourceSetUp.isHalfGrid {
-    width: 29vw;
+    width: 27vw;
 }
 .isPlanAllStaff.isHalfGrid,
 .isCompareFPSPlan.isHalfGrid,
@@ -5352,10 +5352,10 @@ body,
     width: 42%;
 }
 .isSetUpStaffResources {
-    width: 65%;
+    width: 63%;
 }
 .isBudgetBidsQuery{
-    width: 21%;
+    width: 20%;
 }
 .isProjectGroupManagement {
     width: 37%;
@@ -5538,7 +5538,7 @@ body,
     }
 }
 .govuk-tabs__list {
-    padding-top: 7px;
+    padding-top: 7px !important;
 }
 .isDateSection {
     width: 23%;
@@ -5617,5 +5617,10 @@ body,
 
     .grid-scroll-container {
         height: 62vh !important;
+    }
+}
+.modal-header {
+    .modal-title {
+        font-weight: bold;
     }
 }
