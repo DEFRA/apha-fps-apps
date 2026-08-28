@@ -141,7 +141,7 @@
                         <input class="govuk-input text-AlignRight pva-input-185"
                                id="ppf-total-staff-costs"
                                type="text"
-                               value="@(Model.TotalStaffCosts.HasValue ? Model.TotalStaffCosts.Value.ToString("N0") : "0")"
+                               value="@(Model.TotalStaffCosts.HasValue ? Model.TotalStaffCosts.Value.ToString("N2") : "0.00")"
                                readonly />
                     </div>
                 </div>
@@ -155,7 +155,7 @@
                         <input class="govuk-input text-AlignRight pva-input-185"
                                id="ppf-total-test-cost"
                                type="text"
-                               value="@(Model.TotalTestCost.HasValue ? Model.TotalTestCost.Value.ToString("N0") : "0")"
+                               value="@(Model.TotalTestCost.HasValue ? Model.TotalTestCost.Value.ToString("N2") : "0.00")"
                                readonly />
                     </div>
                 </div>
@@ -169,7 +169,7 @@
                         <input class="govuk-input text-AlignRight pva-input-185"
                                id="ppf-total-animal"
                                type="text"
-                               value="@(Model.TotalAnimalCosts.HasValue ? Model.TotalAnimalCosts.Value.ToString("N0") : "0")"
+                               value="@(Model.TotalAnimalCosts.HasValue ? Model.TotalAnimalCosts.Value.ToString("N2") : "0.00")"
                                readonly />
                     </div>
                 </div>
@@ -183,7 +183,7 @@
                         <input class="govuk-input text-AlignRight pva-input-185"
                                id="ppf-total-add-costs"
                                type="text"
-                               value="@(Model.TotalAdditionalCosts.HasValue ? Model.TotalAdditionalCosts.Value.ToString("N0") : "0")"
+                               value="@(Model.TotalAdditionalCosts.HasValue ? Model.TotalAdditionalCosts.Value.ToString("N2") : "0.00")"
                                readonly />
                     </div>
                 </div>
@@ -197,7 +197,7 @@
                         <input class="govuk-input text-AlignRight pva-input-185"
                                id="ppf-total-total-costs"
                                type="text"
-                               value="@(Model.TotalTotalCosts.HasValue ? Model.TotalTotalCosts.Value.ToString("N0") : "0")"
+                               value="@(Model.TotalTotalCosts.HasValue ? Model.TotalTotalCosts.Value.ToString("N2") : "0.00")"
                                readonly />
                     </div>
                 </div>
@@ -211,7 +211,7 @@
                         <input class="govuk-input text-AlignRight pva-input-185"
                                id="ppf-total-budget"
                                type="text"
-                               value="@(Model.TotalBudget.HasValue ? Model.TotalBudget.Value.ToString("N0") : "0")"
+                               value="@(Model.TotalBudget.HasValue ? Model.TotalBudget.Value.ToString("N2") : "0.00")"
                                readonly />
                     </div>
                 </div>
@@ -225,7 +225,7 @@
                         <input class="govuk-input text-AlignRight pva-input-185"
                                id="ppf-total-profit"
                                type="text"
-                               value="@(Model.TotalProfit.HasValue ? Model.TotalProfit.Value.ToString("N0") : "0")"
+                               value="@(Model.TotalProfit.HasValue ? Model.TotalProfit.Value.ToString("N2") : "0.00")"
                                readonly />
                     </div>
                 </div>
@@ -239,7 +239,7 @@
                         <input class="govuk-input text-AlignRight pva-input-185"
                                id="ppf-total-target-profit"
                                type="text"
-                               value="@(Model.TotalTargetProfit.HasValue ? Model.TotalTargetProfit.Value.ToString("N0") : "0")"
+                               value="@(Model.TotalTargetProfit.HasValue ? Model.TotalTargetProfit.Value.ToString("N2") : "0.00")"
                                readonly />
                     </div>
                 </div>
@@ -255,7 +255,7 @@
                             <input class="govuk-input text-AlignRight pva-input-185 fps-profit-offtarget"
                                    id="ppf-total-off-target"
                                    type="text"
-                                   value="@Model.TotalOffTarget.Value.ToString("N0")"
+                                   value="@Model.TotalOffTarget.Value.ToString("N2")"
                                    readonly />
                         }
                         else
@@ -263,7 +263,7 @@
                             <input class="govuk-input text-AlignRight pva-input-185"
                                    id="ppf-total-off-target"
                                    type="text"
-                                   value="@(Model.TotalOffTarget.HasValue ? Model.TotalOffTarget.Value.ToString("N0") : "0")"
+                                   value="@(Model.TotalOffTarget.HasValue ? Model.TotalOffTarget.Value.ToString("N2") : "0.00")"
                                    readonly />
                         }
                     </div>
@@ -315,7 +315,7 @@
         //   Called on page load and after every grid reload.
         function formatSummaryValue(value) {
             var numeric = Number(value) || 0;
-            var absolute = Math.abs(numeric).toLocaleString('en-GB', { maximumFractionDigits: 0 });
+            var absolute = Math.abs(numeric).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             return numeric < 0 ? '-' + absolute : absolute;
         }
 

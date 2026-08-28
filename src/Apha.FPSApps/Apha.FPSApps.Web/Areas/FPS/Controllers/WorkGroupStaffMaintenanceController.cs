@@ -243,7 +243,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<WorkGroupEmployeeStaffItem>
             {
                 GridId = "wgStaffGrid",
-                Title = "WG Staff",
+                Title = "Work Group Staff",
                 ShowPagination = true,
                 KeyProperty = "PactId",
                 AddFunction = "addMaintWGStaff",
