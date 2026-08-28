@@ -267,17 +267,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 PageSize = 5000
             };
 
-            var employeeResponse = await _employeeService.GetFilteredEmployeesAsync(lookupQuery, 0);
-            var employees = employeeResponse.Success && employeeResponse.Data != null
-                ? employeeResponse.Data
+            // Source the Staff Name dropdown from the logged-in user's work group staff,
+            // scoped by UserEmail and FPS Year (vtblwgemployee joined to Employees).
+            var staffResponse = await _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(lookupQuery, string.Empty);
+            var staff = staffResponse.Success && staffResponse.Data != null
+                ? staffResponse.Data
                 : [];
 
-            model.StaffLookupOptions = employees
+            model.StaffLookupOptions = staff
                 .Select(e => new WorkGroupStaffLookupItem
                 {
-                    PactId = string.Empty,
-                    Name = ResolveEmployeeName(e),
-                    SpNumber = ResolveEmployeeSpNumber(e)
+                    PactId = e.PactId ?? string.Empty,
+                    Name = e.Name,
+                    SpNumber = e.SpNumber
                 })
                 .Where(s => !string.IsNullOrWhiteSpace(s.Name) && !string.IsNullOrWhiteSpace(s.SpNumber))
                 .GroupBy(s => s.SpNumber, StringComparer.OrdinalIgnoreCase)
@@ -325,35 +327,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     .OrderBy(g => g)
                     .ToList();
             }
-        }
-
-        private static string ResolveEmployeeName(EmployeeDto employee)
-        {
-            var directName = GetEmployeePropertyValue(employee, "Name", "FullName");
-            if (!string.IsNullOrWhiteSpace(directName))
-                return directName;
-
-            var firstName = GetEmployeePropertyValue(employee, "FirstName");
-            var lastName = GetEmployeePropertyValue(employee, "LastName");
-            return $"{firstName} {lastName}".Trim();
-        }
-
-        private static string ResolveEmployeeSpNumber(EmployeeDto employee)
-        {
-            return GetEmployeePropertyValue(employee, "SPNumber", "SpNumber", "EmployeeNumber", "StaffNumber");
-        }
-
-        private static string GetEmployeePropertyValue(EmployeeDto employee, params string[] propertyNames)
-        {
-            foreach (var propertyName in propertyNames)
-            {
-                var prop = employee.GetType().GetProperty(propertyName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-                var value = prop?.GetValue(employee)?.ToString();
-                if (!string.IsNullOrWhiteSpace(value))
-                    return value.Trim();
-            }
-
-            return string.Empty;
         }
     }
 }

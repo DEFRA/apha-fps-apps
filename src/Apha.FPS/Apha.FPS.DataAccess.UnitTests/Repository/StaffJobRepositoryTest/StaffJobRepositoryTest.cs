@@ -373,18 +373,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             // Arrange
             var staffViews = new List<StaffView>
             {
-                new() { StaffId = "S003", Name = "Charlie", WorkgroupGrade = "WG01", HrsAvail = 40, UserId = DefaultUserId, UserEmail = DefaultUserEmail },
-                new() { StaffId = "S001", Name = "Alice", WorkgroupGrade = "WG02", HrsAvail = 35, UserId = DefaultUserId, UserEmail = DefaultUserEmail },
-                new() { StaffId = "S002", Name = "Bob", WorkgroupGrade = "WG03", HrsAvail = 38, UserId = DefaultUserId, UserEmail = DefaultUserEmail }
-            };
-            var staffPickViews = new List<StaffPickView>
-            {
-                new() { StaffId = "S001" },
-                new() { StaffId = "S002" },
-                new() { StaffId = "S003" }
+                new() { StaffId = "S003", Name = "Charlie", WorkgroupGrade = "WG01", HrsAvail = 40, MakeAvailable = -1, UserId = DefaultUserId, UserEmail = DefaultUserEmail },
+                new() { StaffId = "S001", Name = "Alice", WorkgroupGrade = "WG02", HrsAvail = 35, MakeAvailable = 1, UserId = DefaultUserId, UserEmail = DefaultUserEmail },
+                new() { StaffId = "S002", Name = "Bob", WorkgroupGrade = "WG03", HrsAvail = 38, MakeAvailable = -1, UserId = DefaultUserId, UserEmail = DefaultUserEmail }
             };
 
-            var repo = CreateRepository(staffViews: staffViews, staffPickViews: staffPickViews);
+            var repo = CreateRepository(staffViews: staffViews);
 
             // Act
             var result = await repo.GetStaffWorkgroupLookup();
@@ -398,25 +392,60 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         }      
 
         [Fact]
+        public async Task GetStaffWorkgroupLookup_IncludesStaff_WhenMakeAvailableIsPositiveOne()
+        {
+            // Arrange - modern database stores Access boolean True as 1 (not -1)
+            var staffViews = new List<StaffView>
+            {
+                new() { StaffId = "S001", Name = "Alf, Kalli", WorkgroupGrade = "E_RONT", HrsAvail = 0, MakeAvailable = 1, UserId = DefaultUserId, UserEmail = DefaultUserEmail }
+            };
+
+            var repo = CreateRepository(staffViews: staffViews);
+
+            // Act
+            var result = await repo.GetStaffWorkgroupLookup();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("Alf, Kalli", result[0].Name);
+        }
+
+        [Fact]
         public async Task GetStaffWorkgroupLookup_ReturnsEmpty_WhenNoMatches()
         {
             // Arrange
             var staffViews = new List<StaffView>
             {
-                new() { StaffId = "S001", Name = "John", UserId = 999 }
-            };
-            var staffPickViews = new List<StaffPickView>
-            {
-                new() { StaffId = "S002" }
+                new() { StaffId = "S001", Name = "John", MakeAvailable = -1, UserId = 999 }
             };
 
-            var repo = CreateRepository(staffViews: staffViews, staffPickViews: staffPickViews);
+            var repo = CreateRepository(staffViews: staffViews);
 
             // Act
             var result = await repo.GetStaffWorkgroupLookup();
 
             // Assert
             Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetStaffWorkgroupLookup_ExcludesStaff_WhenNotMarkedAvailable()
+        {
+            // Arrange
+            var staffViews = new List<StaffView>
+            {
+                new() { StaffId = "S001", Name = "Available", WorkgroupGrade = "WG01", HrsAvail = -5, MakeAvailable = -1, UserId = DefaultUserId, UserEmail = DefaultUserEmail },
+                new() { StaffId = "S002", Name = "Unavailable", WorkgroupGrade = "WG02", HrsAvail = 40, MakeAvailable = 0, UserId = DefaultUserId, UserEmail = DefaultUserEmail }
+            };
+
+            var repo = CreateRepository(staffViews: staffViews);
+
+            // Act
+            var result = await repo.GetStaffWorkgroupLookup();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("Available", result[0].Name);
         }
 
         #endregion

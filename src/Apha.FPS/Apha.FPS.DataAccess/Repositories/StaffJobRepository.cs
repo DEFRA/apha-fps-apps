@@ -55,13 +55,11 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<StaffWorkgroupLookup>> GetStaffWorkgroupLookup()
         {
-            // CA1862 suppressed: this is an EF Core query translated to SQL. The
-            // string.Equals(StringComparison) overload cannot be translated by Npgsql,
-            // whereas ToLower() maps to SQL LOWER(). UserEmailId is already lower-cased.
+            
 #pragma warning disable CA1862
             var query = (from s in _dbContext.StaffViews
-                         join sp in _dbContext.StaffPickViews on s.StaffId equals sp.StaffId
-                         where s.UserEmail != null && s.UserEmail.ToLower() == _requestContext.UserEmailId
+                         where s.MakeAvailable != 0
+                            && s.UserEmail != null && s.UserEmail.ToLower() == _requestContext.UserEmailId
                          select new StaffWorkgroupLookup
                          {
                              StaffID = s.StaffId ?? "",
