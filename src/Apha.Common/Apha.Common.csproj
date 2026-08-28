@@ -11,12 +11,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Remove="Apha.Common.UnitTests\**\*.cs" />
-		<EmbeddedResource Remove="Apha.Common.UnitTests\**\*" />
-		<None Remove="Apha.Common.UnitTests\**\*" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="AWSSDK.EventBridge" Version="4.0.6.10" />
 		<PackageReference Include="AWSSDK.S3" Version="4.0.17.1" />
 		<PackageReference Include="ClosedXML" Version="0.105.0" />
