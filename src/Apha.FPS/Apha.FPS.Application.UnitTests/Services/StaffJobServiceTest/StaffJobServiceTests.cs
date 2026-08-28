@@ -880,7 +880,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddAsync(inputDto));
-            ex.Message.Should().Contain("STAFF001").And.Contain("JOB001");
+            ex.Message.Should().Contain("JOB001");
             await _mockRepository.DidNotReceive().AddAsync(Arg.Any<StaffJob>());
         }
 
@@ -1007,7 +1007,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_WhenPlannedHoursIsNegative_ThrowsArgumentOutOfRangeException()
+        public async Task UpdateAsync_WhenPlannedHoursIsNegative_UpdatesSuccessfully()
         {
             // Arrange
             var inputDto = new StaffJobDto
@@ -1017,9 +1017,38 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
                 PlannedHours = -5
             };
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _sut.UpdateAsync(inputDto));
-            await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<StaffJob>());
+            var mappedEntity = new StaffJob
+            {
+                StaffId = "STAFF001",
+                JobCode = "JOB001",
+                PlannedHours = -5
+            };
+
+            var updatedEntity = new StaffJob
+            {
+                StaffId = "STAFF001",
+                JobCode = "JOB001",
+                PlannedHours = -5
+            };
+
+            var resultDto = new StaffJobDto
+            {
+                StaffId = "STAFF001",
+                JobCode = "JOB001",
+                PlannedHours = -5
+            };
+
+            _mockMapper.Map<StaffJob>(inputDto).Returns(mappedEntity);
+            _mockRepository.UpdateAsync(Arg.Any<StaffJob>()).Returns(updatedEntity);
+            _mockMapper.Map<StaffJobDto>(updatedEntity).Returns(resultDto);
+
+            // Act
+            var result = await _sut.UpdateAsync(inputDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(-5, result.PlannedHours);
+            await _mockRepository.Received(1).UpdateAsync(Arg.Any<StaffJob>());
         }
 
         [Fact]

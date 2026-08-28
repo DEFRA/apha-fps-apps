@@ -859,27 +859,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         public async Task GetZtStaffJobsByStaffIdPagedAsync_ReturnsPagedData_WithValidStaffId()
         {
             // Arrange
-            var staffJobTblViews = new List<StaffJobTblView>
+            var staffJobs = new List<StaffJob>
             {
-                new() { StaffId = "S001", JobCode = "ZT001", PlannedHours = 40, UserId = DefaultUserId },
-                new() { StaffId = "S001", JobCode = "ZT002", PlannedHours = 20, UserId = DefaultUserId }
+                new() { StaffId = "S001", JobCode = "ZT001", PlannedHours = 40 },
+                new() { StaffId = "S001", JobCode = "ZT002", PlannedHours = 20 }
             };
             var projectViews = new List<ProjectView>
             {
-                new() { ParentProject = "ZT001", ProjectTitle = "Admin Work", UserId = DefaultUserId, UserEmail = DefaultUserEmail },
-                new() { ParentProject = "ZT002", ProjectTitle = "Training", UserId = DefaultUserId, UserEmail = DefaultUserEmail }
+                new() { ParentProject = "ZT001", ProjectTitle = "Admin Work", Program = "zt_prog", UserId = DefaultUserId, UserEmail = DefaultUserEmail },
+                new() { ParentProject = "ZT002", ProjectTitle = "Training", Program = "zt_prog", UserId = DefaultUserId, UserEmail = DefaultUserEmail }
             };
 
-            var mockFpsYearContext = CreateMockFpsYearContext();
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
+            var repo = CreateRepository(
+                staffJobs: staffJobs,
+                projectViews: projectViews);
 
-            var staffJobTblViewsMockSet = RepositoryTestHelper.CreateMockDbSet(staffJobTblViews);
-            mockContext.Setup(x => x.StaffJobTblViews).Returns(staffJobTblViewsMockSet.Object);
-
-            var projectViewsMockSet = RepositoryTestHelper.CreateMockDbSet(projectViews);
-            mockContext.Setup(x => x.ProjectViews).Returns(projectViewsMockSet.Object);
-
-            var repo = new StaffJobRepository(mockContext.Object, mockFpsYearContext.Object);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
@@ -895,25 +889,19 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         public async Task GetZtStaffJobsByStaffIdPagedAsync_ReturnsEmpty_WhenNoMatchingStaff()
         {
             // Arrange
-            var staffJobTblViews = new List<StaffJobTblView>
+            var staffJobs = new List<StaffJob>
             {
-                new() { StaffId = "S001", JobCode = "ZT001", PlannedHours = 40, UserId = DefaultUserId }
+                new() { StaffId = "S001", JobCode = "ZT001", PlannedHours = 40 }
             };
             var projectViews = new List<ProjectView>
             {
-                new() { ParentProject = "ZT001", ProjectTitle = "Admin Work", UserId = DefaultUserId, UserEmail = DefaultUserEmail }
+                new() { ParentProject = "ZT001", ProjectTitle = "Admin Work", Program = "zt_prog", UserId = DefaultUserId, UserEmail = DefaultUserEmail }
             };
 
-            var mockFpsYearContext = CreateMockFpsYearContext();
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
+            var repo = CreateRepository(
+                staffJobs: staffJobs,
+                projectViews: projectViews);
 
-            var staffJobTblViewsMockSet = RepositoryTestHelper.CreateMockDbSet(staffJobTblViews);
-            mockContext.Setup(x => x.StaffJobTblViews).Returns(staffJobTblViewsMockSet.Object);
-
-            var projectViewsMockSet = RepositoryTestHelper.CreateMockDbSet(projectViews);
-            mockContext.Setup(x => x.ProjectViews).Returns(projectViewsMockSet.Object);
-
-            var repo = new StaffJobRepository(mockContext.Object, mockFpsYearContext.Object);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
@@ -941,16 +929,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 new() { ParentProject = "ZT001", ProjectTitle = "Admin Work", UserId = DefaultUserId, UserEmail = DefaultUserEmail }
             };
 
-            var mockFpsYearContext = CreateMockFpsYearContext();
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
-
-            var staffJobTblViewsMockSet = RepositoryTestHelper.CreateMockDbSet(staffJobTblViews);
-            mockContext.Setup(x => x.StaffJobTblViews).Returns(staffJobTblViewsMockSet.Object);
-
-            var projectViewsMockSet = RepositoryTestHelper.CreateMockDbSet(projectViews);
-            mockContext.Setup(x => x.ProjectViews).Returns(projectViewsMockSet.Object);
-
-            var repo = new StaffJobRepository(mockContext.Object, mockFpsYearContext.Object);
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                projectViews: projectViews);
 
             // Act
             var result = await repo.GetZtStaffJobDetailsByIdAsync("S001", "ZT001");
@@ -976,16 +957,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 new() { ParentProject = "ZT001", ProjectTitle = "Admin Work", UserId = DefaultUserId, UserEmail = DefaultUserEmail }
             };
 
-            var mockFpsYearContext = CreateMockFpsYearContext();
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
-
-            var staffJobTblViewsMockSet = RepositoryTestHelper.CreateMockDbSet(staffJobTblViews);
-            mockContext.Setup(x => x.StaffJobTblViews).Returns(staffJobTblViewsMockSet.Object);
-
-            var projectViewsMockSet = RepositoryTestHelper.CreateMockDbSet(projectViews);
-            mockContext.Setup(x => x.ProjectViews).Returns(projectViewsMockSet.Object);
-
-            var repo = new StaffJobRepository(mockContext.Object, mockFpsYearContext.Object);
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                projectViews: projectViews);
 
             // Act
             var result = await repo.GetZtStaffJobDetailsByIdAsync("S999", "ZT999");
@@ -1007,16 +981,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 new() { ParentProject = "ZT001", ProjectTitle = "Admin Work", UserId = DefaultUserId, UserEmail = DefaultUserEmail }
             };
 
-            var mockFpsYearContext = CreateMockFpsYearContext();
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
-
-            var staffJobTblViewsMockSet = RepositoryTestHelper.CreateMockDbSet(staffJobTblViews);
-            mockContext.Setup(x => x.StaffJobTblViews).Returns(staffJobTblViewsMockSet.Object);
-
-            var projectViewsMockSet = RepositoryTestHelper.CreateMockDbSet(projectViews);
-            mockContext.Setup(x => x.ProjectViews).Returns(projectViewsMockSet.Object);
-
-            var repo = new StaffJobRepository(mockContext.Object, mockFpsYearContext.Object);
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                projectViews: projectViews);
 
             // Act
             var result = await repo.GetZtStaffJobDetailsByIdAsync("S002", "ZT001");
