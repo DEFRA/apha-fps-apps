@@ -24,6 +24,8 @@ namespace Apha.FPSApps.Application.Services.PACT
         private readonly ILogger<PactMonthlyOutputService> _logger;
         private static readonly string[] RequiredHeaders =
             ["Work Group", "Test Code", "Buyer", "Month", "Volume"];
+        private static readonly string[] LimsRequiredHeaders =
+            ["Group", "Test", "Project", "Month", "SumOfCountTotal"];
         private static readonly string[] DisallowedHeadersForFreshImport =
             ["Passed", "Failure Comments", "Filename", "StagingId"];
 
@@ -143,6 +145,10 @@ namespace Apha.FPSApps.Application.Services.PACT
             if (importType == 4)
             {
                 importResponse = await ImportExportedDataAsync(file.FileName, workbook);
+            }
+            else if (importType == 2)
+            {
+                importResponse = await ImportLimsDataAsync(file.FileName, workbook);
             }
             else
             {
@@ -295,6 +301,81 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<MonthlyOutputMakeLiveResultDto>> MakeLiveAsync()
             => await _pactApiClient.PactMonthlyOutput.MakeLiveAsync();
+
+        private async Task<ApiResponseDto<MonthlyOutputImportResultDto>> ImportLimsDataAsync(string fileName, XLWorkbook workbook)
+        {
+            // Reject files that contain headers belonging to exported/correction files
+            var worksheet = workbook.Worksheet(1);
+            var headerRow = worksheet.RangeUsed()?.RowsUsed().FirstOrDefault();
+            if (headerRow != null)
+            {
+                var headerMap = _excelImportService.BuildHeaderMap(headerRow);
+                var disallowedHeadersFound = DisallowedHeadersForFreshImport
+                    .Where(h => headerMap.ContainsKey(_excelImportService.NormalizeHeader(h)))
+                    .ToList();
+
+                if (disallowedHeadersFound.Count > 0)
+                {
+                    return ApiResponseDto<MonthlyOutputImportResultDto>.FailureResponse(
+                        [new ApiErrorDto
+                        {
+                            Code = "INVALID_TEMPLATE",
+                            Message = "This file appears to be an exported or correction file. Please use the correct LIMS file template for fresh import."
+                        }],
+                        new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
+                }
+            }
+
+            var importResult = _excelImportService.ReadExcel(
+                workbook,
+                MapLimsOutputRow,
+                LimsRequiredHeaders,
+                1,
+                "The uploaded Excel file format is not correct. Please use the correct LIMS file template.");
+
+            if (!importResult.IsSuccess)
+            {
+                var errors = new List<ApiErrorDto>();
+                if (importResult.MissingHeaders?.Count > 0)
+                    errors.Add(new ApiErrorDto
+                    {
+                        Code = "INVALID_TEMPLATE",
+                        Message = $"Missing columns: {string.Join(", ", importResult.MissingHeaders)}. " +
+                                  "Please use the correct LIMS file template."
+                    });
+                else
+                    errors.Add(new ApiErrorDto
+                    {
+                        Code = "EMPTY_FILE",
+                        Message = importResult.ErrorMessage ?? "No data rows found in the uploaded Excel file."
+                    });
+
+                return ApiResponseDto<MonthlyOutputImportResultDto>.FailureResponse(
+                    errors,
+                    new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
+            }
+
+            var request = new MonthlyOutputImportReqDto
+            {
+                FileName = fileName,
+                ImportType = 2,
+                Rows = importResult.Rows
+            };
+
+            return await _pactApiClient.PactMonthlyOutput.ImportStagingAsync(request);
+        }
+
+        private MonthlyOutputImportRowDto MapLimsOutputRow(IXLRangeRow row, Dictionary<string, int> headerMap)
+        {
+            return new MonthlyOutputImportRowDto
+            {
+                WorkGroup       = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Group")])),
+                TestCode        = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Test")])),
+                Buyer           = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Project")])),
+                Month           = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Month")])),
+                Volume          = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("SumOfCountTotal")]))
+            };
+        }
 
         private MonthlyOutputImportRowDto MapOutputRow(IXLRangeRow row, Dictionary<string, int> headerMap)
         {
