@@ -128,8 +128,8 @@ namespace Apha.FPSApps.Application.Services.PACT
             return ApiResponseDto<List<ValidationFieldErrorDto>>.SuccessResponse(errors);
         }
 
-        public async Task<ApiResponseDto<List<StagingMonthlyTimeDto>>> GetStagingAsync(QueryParameters<string> query, bool? passed, bool IsReadOnlyYear = false)
-            => await _pactApiClient.PactMonthlyTime.GetStagingAsync(query, passed, IsReadOnlyYear);
+        public async Task<ApiResponseDto<List<StagingMonthlyTimeDto>>> GetStagingAsync(QueryParameters<string> query, bool? passed, bool isReadOnlyYear = false)
+            => await _pactApiClient.PactMonthlyTime.GetStagingAsync(query, passed, isReadOnlyYear);
 
         public async Task<ApiResponseDto<StagingMonthlyTimeDto>> GetStagingByIdAsync(int id)
             => await _pactApiClient.PactMonthlyTime.GetStagingByIdAsync(id);
