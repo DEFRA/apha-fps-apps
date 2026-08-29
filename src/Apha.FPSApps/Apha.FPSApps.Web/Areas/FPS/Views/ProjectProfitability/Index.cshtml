@@ -43,7 +43,7 @@
 
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
-        <div class="sup_margin_left_right_10 ppf-filter-panel">
+        <div class="sup_margin_left_right_10 ppf-filter-panel ppf-filter-panel-joined">
             <div class="govuk-grid-row ppf-filter-row">
                 <div class="govuk-grid-column-two-thirds">
                     <fieldset class="govuk-fieldset sup_margin_0">
@@ -86,7 +86,6 @@
                            class="govuk-input govuk-!-font-size-16"
                            style="width:160px;">
                     <button type="button" id="btnPlanThisProject" class="govuk-button sup_margin_0"
-                            style="display:none;"
                             aria-label="Plan this project"
                             onclick="planThisProject()">
                         <i class="fa fa-cogs" aria-hidden="true"></i> Plan
@@ -101,10 +100,10 @@
                     @await Html.PartialAsync("_DataGrid", Model.ProfitabilityGrid)
                 </div>
 
-                <div class="financial-summary govuk-!-margin-top-2 govuk-!-margin-bottom-0">
-                    <div class="summary-row govuk-!-margin-top-0 govuk-!-margin-bottom-0 sup_justify_content">
-                        @if (!Model.IsProjectGroupMode)
-                        {
+                @if (!Model.IsProjectGroupMode)
+                {
+                    <div class="financial-summary govuk-!-margin-top-2 govuk-!-margin-bottom-0">
+                        <div class="summary-row govuk-!-margin-top-0 govuk-!-margin-bottom-0 sup_justify_content">
                             <div class="summary-row pva-inline-summary govuk-!-margin-top-0 govuk-!-margin-bottom-0 sup_flex_column ppf-summary-column">
                                 <div class="summary-item sup_gap_8">
                                     <label class="govuk-label govuk-!-font-weight-bold sup_margin_0 pva-nowrap-label"
@@ -115,23 +114,23 @@
                                                class="govuk-input text-AlignRight pva-input-185"
                                                asp-for="ProgrammeTarget"
                                                readonly>
-                                        </div>
                                     </div>
-                                    <div class="summary-item sup_gap_8">
-                                        <label class="govuk-label govuk-!-font-weight-bold sup_margin_0 pva-nowrap-label sup_text_align_right"
-                                               for="ppf-programme-shortfall">Programme Level Surplus/Shortfall:</label>
-                                        <div class="govuk-input__wrapper">
-                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                            <input type="text" id="ppf-programme-shortfall"
-                                                   class="govuk-input text-AlignRight pva-input-185"
-                                                   asp-for="ProgrammeSurplusShortfall"
-                                                   readonly>
-                                            </div>
-                                        </div>
+                                </div>
+                                <div class="summary-item sup_gap_8">
+                                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0 pva-nowrap-label sup_text_align_right"
+                                           for="ppf-programme-shortfall">Programme Level Surplus/Shortfall:</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input type="text" id="ppf-programme-shortfall"
+                                               class="govuk-input text-AlignRight pva-input-185"
+                                               asp-for="ProgrammeSurplusShortfall"
+                                               readonly>
                                     </div>
-                                }
+                                </div>
                             </div>
                         </div>
+                    </div>
+                }
 
                         <div id="projectProfitabilityTotalSummary"
                              class="sup_margin_top_5 financial-summary govuk-!-margin-top-2 govuk-!-margin-bottom-2">
@@ -279,7 +278,6 @@
                     resetSelectedProject();
                     window['gridManager_isProjectProfitGrid'].reloadGrid({ page: 1 });
                 }
-
                 function loadSummary() {
                     var params = isProjectGroupMode
                         ? { projectGroup: currentProjectGroup, workTypeFilter: currentWorkTypeFilter }
@@ -323,11 +321,11 @@
                       var parentProject = $(row).data('id');
                       selectedJobCode = parentProject;
 
+                      $('#gridContainer_isProjectProfitGrid table tbody tr').removeClass('selected-row');
+                      $(row).addClass('selected-row');
+
                       var input = document.getElementById('selected-project-input');
                       if (input) input.value = parentProject || '';
-
-                      var planBtn = document.getElementById('btnPlanThisProject');
-                      if (planBtn) planBtn.style.display = parentProject ? '' : 'none';
                 }
 
                 function resetSelectedProject() {
@@ -335,9 +333,17 @@
 
                     var input = document.getElementById('selected-project-input');
                     if (input) input.value = '';
+                }
 
-                    var planBtn = document.getElementById('btnPlanThisProject');
-                    if (planBtn) planBtn.style.display = 'none';
+                // ── Select the first grid row by default ─────────────────────────────────
+                function selectFirstProjectRow() {
+                    var firstRow = document.querySelector(
+                        '#gridContainer_isProjectProfitGrid table tbody tr[data-id]');
+                    if (firstRow) {
+                        selectJobcodeTotal(firstRow);
+                    } else {
+                        resetSelectedProject();
+                    }
                 }
 
                 function previewProfitabilityReport() {
@@ -356,6 +362,7 @@
                 document.addEventListener('DOMContentLoaded', function () {
                     document.addEventListener('gridReloaded', function (e) {
                         if (e.detail && e.detail.gridId === 'isProjectProfitGrid') {
+                            selectFirstProjectRow();
                             loadSummary();
                             hideLoader();
                         }
@@ -364,6 +371,8 @@
                     if (isProjectGroupMode ? currentProjectGroup : currentProgramNo) {
                         showLoader();
                         reloadGrid();
+                    } else {
+                        selectFirstProjectRow();
                     }
                 });
             </script>

@@ -2895,28 +2895,44 @@ table.custom-table th {
     background-color: #f8f8f8;
 }
 
+/* Filter panel sits directly on top of the grid, sharing its border */
+.ppf-filter-panel-joined {
+    border-bottom: 0;
+    margin-bottom: 0;
+}
+
 .ppf-filter-row {
     display: flex;
     align-items: flex-end;
 }
 
-.ppf-summary-column {
+/* Right-align the Programme Target / Surplus-Shortfall block.
+   Specificity note: this element also carries .summary-row and
+   .pva-inline-summary. `.summary-row { margin: 20px 0 }` in main_style.css
+   loads AFTER this file and resets margin-left to 0, and
+   `.summary-row.pva-inline-summary { align-items: center }` (two classes)
+   outranks a lone .ppf-summary-column. Both selectors below are therefore
+   qualified with .summary-row so they win on specificity and source order. */
+.summary-row.ppf-summary-column {
     align-items: flex-end;
     gap: 8px;
     overflow: visible;
+    margin-left: auto;
+    margin-right: 0;
+    width: fit-content;
 }
 
-.ppf-summary-column .summary-item {
+.summary-row.ppf-summary-column .summary-item {
     display: flex;
     justify-content: flex-end;
     align-items: center;
     gap: 12px;
-    width: auto;
+    width: 100%;
 }
 
-.ppf-summary-column .summary-item label {
-    width: 360px;
-    min-width: 360px;
+.summary-row.ppf-summary-column .summary-item label {
+    width: auto;
+    min-width: 0;
     text-align: right;
     margin-bottom: 0;
     white-space: nowrap;
@@ -2948,6 +2964,21 @@ table.custom-table th {
     margin-bottom: 0;
     min-width: auto;
     white-space: nowrap;
+}
+
+/* Bold the figures in the totals controls (value + £ prefix). Qualified with
+   the #id so it outranks `.govuk-input` in govuk-frontend, which loads first
+   but would otherwise tie on the plain-class selector. */
+#projectProfitabilityTotalSummary .govuk-input,
+#projectProfitabilityTotalSummary .govuk-input__prefix {
+    font-weight: 700;
+}
+
+/* Programme Target / Surplus-Shortfall are totals too, so match the bold
+   treatment. Two-class prefix keeps this above `.govuk-input`. */
+.summary-row.ppf-summary-column .govuk-input,
+.summary-row.ppf-summary-column .govuk-input__prefix {
+    font-weight: 700;
 }
 
 .ac-table th:nth-child(5),
