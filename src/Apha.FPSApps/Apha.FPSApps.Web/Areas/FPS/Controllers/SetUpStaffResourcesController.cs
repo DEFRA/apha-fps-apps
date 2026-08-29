@@ -291,7 +291,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             new()
             {
                 GridId = "ssrStaffGrid",
-                Title = "Staff",
+                Title = "Staff of this Grade",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "PactId",
