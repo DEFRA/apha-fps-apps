@@ -77,6 +77,24 @@
             </div>
         </div>
 
+        <div class="govuk-grid-row sup_margin_left_right_10 govuk-!-margin-bottom-2">
+            <div class="govuk-grid-column-full sup_p_0">
+                <div class="project-code-section">
+                    <label class="govuk-label--s" for="selected-project-input">Selected project: </label>
+                    <input type="text" id="selected-project-input" value=""
+                           placeholder="Project" readonly
+                           class="govuk-input govuk-!-font-size-16"
+                           style="width:160px;">
+                    <button type="button" id="btnPlanThisProject" class="govuk-button sup_margin_0"
+                            style="display:none;"
+                            aria-label="Plan this project"
+                            onclick="planThisProject()">
+                        <i class="fa fa-cogs" aria-hidden="true"></i> Plan
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
             <div class="govuk-grid-column-full sup_p_0">
                 <div id="gridContainer_isProjectProfitGrid">
@@ -85,14 +103,6 @@
 
                 <div class="financial-summary govuk-!-margin-top-2 govuk-!-margin-bottom-0">
                     <div class="summary-row govuk-!-margin-top-0 govuk-!-margin-bottom-0 sup_justify_content">
-                        <div class="action-buttons govuk-!-margin-0">
-                            <button type="button" class="govuk-button sup_margin_0"
-                                    id="btnPlanThisProject"
-                                    aria-label="Plan this project"
-                                    onclick="planThisProject()">
-                                Plan this Project
-                            </button>
-                        </div>
                         @if (!Model.IsProjectGroupMode)
                         {
                             <div class="summary-row pva-inline-summary govuk-!-margin-top-0 govuk-!-margin-bottom-0 sup_flex_column ppf-summary-column">
@@ -266,6 +276,7 @@
 
                 // ── Reload grid then refresh summary ─────────────────────────────────────
                 function reloadGrid() {
+                    resetSelectedProject();
                     window['gridManager_isProjectProfitGrid'].reloadGrid({ page: 1 });
                 }
 
@@ -311,6 +322,22 @@
                 function selectJobcodeTotal(row) {
                       var parentProject = $(row).data('id');
                       selectedJobCode = parentProject;
+
+                      var input = document.getElementById('selected-project-input');
+                      if (input) input.value = parentProject || '';
+
+                      var planBtn = document.getElementById('btnPlanThisProject');
+                      if (planBtn) planBtn.style.display = parentProject ? '' : 'none';
+                }
+
+                function resetSelectedProject() {
+                    selectedJobCode = null;
+
+                    var input = document.getElementById('selected-project-input');
+                    if (input) input.value = '';
+
+                    var planBtn = document.getElementById('btnPlanThisProject');
+                    if (planBtn) planBtn.style.display = 'none';
                 }
 
                 function previewProfitabilityReport() {

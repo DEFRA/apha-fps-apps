@@ -188,7 +188,7 @@
             return;
         }
         var total = parseFloat(payRate) + parseFloat(npr) + parseFloat(ohr);
-        $('#ChargeRate').val(isNaN(total) ? '' : total.toFixed(2));
+        $('#ChargeRate').val(isNaN(total) ? '' : total.toFixed(4));
     }
 
     function loadMaintPCGradeDropdowns() {
