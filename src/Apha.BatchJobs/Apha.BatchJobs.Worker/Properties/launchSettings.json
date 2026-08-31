@@ -11,6 +11,18 @@
     "HealthCheck": {
       "commandName": "Project",
       "commandLineArgs": "HealthCheck"
+    },
+    "YearEndDataSetup-Debug": {
+      "commandName": "Project",
+      "commandLineArgs": "YearEnd-DataSetup",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "local",
+        "BATCH_RUN_MODE": "Manual",
+        "BATCH_JOB_EXECUTION_ID": "a0f1ff20-39f3-4cf7-9739-7f7ba6180084",
+        "BATCH_JOB_PARAMETERS_JSON": "{\"currentFpsYear\":\"2025\",\"plannedYear\":\"2026\"}",
+        "BATCH_REQUESTED_BY": "claude-debug-session",
+        "YEAR_END_DEBUG_DRY_RUN": "true"
+      }
     }
   }
 }
