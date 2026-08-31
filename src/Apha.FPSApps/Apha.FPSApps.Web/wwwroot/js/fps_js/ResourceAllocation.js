@@ -38,6 +38,7 @@ function ajaxPost(url, params) {
     function LoadGroupsByResourceCentre() {
         const centre = el('resourceCentreSelect')?.value || '';
         const nameEl = el('ssrSelectedCentreName');
+        clearGrids();
 
         if (!centre) {
             if (nameEl) nameEl.textContent = '';
@@ -49,11 +50,9 @@ function ajaxPost(url, params) {
 
         if (nameEl) nameEl.textContent = centre;
         resetSelect(el('workGroupSelect'), WG_PLACEHOLDER);
-        showLoader();
 
         $.get(WG_URL, { resourceCentre: centre })
             .done(r => {
-                hideLoader();
                 if (r?.success) {
                     buildSelectOptions(el('workGroupSelect'), r.data, wg => wg, wg => wg);
                 } else {
@@ -61,23 +60,21 @@ function ajaxPost(url, params) {
                 }
             })
             .fail(() => {
-                hideLoader();
                 showAlertMessage(`Could not load work groups for '${centre}'. Please try selecting the Resource Centre again.`, AlertType.ERROR);
             });
     }
 
     function LoadGradeByGroup() {
         const selectedGroup = el('workGroupSelect')?.value || '';
+        clearGrids();
 
         if (!selectedGroup) {
             resetSelect(el('workGroupGradeSelect'), GRADE_PLACEHOLDER);
             return;
         }
 
-        showLoader();
         $.get(GRADE_URL, { workGroup: selectedGroup })
             .done(r => {
-                hideLoader();
                 if (r?.success) {
                     resetSelect(el('workGroupGradeSelect'), GRADE_PLACEHOLDER);
                     buildSelectOptions(el('workGroupGradeSelect'), r.data, wg => wg.wgGrade, wg => wg.wgGrade);
@@ -86,7 +83,6 @@ function ajaxPost(url, params) {
                 }
             })
             .fail(() => {
-                hideLoader();
                 showAlertMessage(`Could not load grades for work group '${selectedGroup}'. Please try selecting the work group again.`, AlertType.ERROR);
             });
     }

@@ -238,9 +238,10 @@
                 var table = document.getElementById('tbl_@Model.StaffAllocationGrid.GridId');
                 if (!table) return;
 
-                // Clear any previously rendered totals tfoot before rebuilding it.
-                var existingFoot = table.querySelector('tfoot');
-                if (existingFoot) existingFoot.remove();
+                // Clear any previously rendered totals row before rebuilding it,
+                // otherwise a new totals row gets appended on every selection change.
+                var existingTotals = document.getElementById('ra-staff-totals-container');
+                if (existingTotals) existingTotals.remove();
 
                 var rows = table.querySelectorAll('tbody tr');
                 if (!rows.length) return;
