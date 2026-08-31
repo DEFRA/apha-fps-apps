@@ -21,7 +21,7 @@
                         <tbody class="govuk-table__body">
                             <tr class="govuk-table__row">
                                 <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-0 isNoBottomBorder govuk-!-text-align-right" style="white-space: nowrap; vertical-align: middle;">
-                                    <label class="fw-bold me-2" for="profitCentreSelect">Resource Centre: </label>
+                                    <label class="fw-bold govuk-!-padding-right-1" for="profitCentreSelect">Resource Centre: </label>
                                 </th>
                                 <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
                                     <form asp-action="Index" asp-controller="ResourceSetUp" asp-area="FPS" method="get"
@@ -65,7 +65,7 @@
                                    style="width: 100%;"
                                    aria-label="Selected RC grade" readonly
                                    value="" />
-                            <div id="gridContainer_@Model.WgGradeGrid.GridId">
+                            <div class="isWgGradesGrid" id="gridContainer_@Model.WgGradeGrid.GridId">
                                 @await Html.PartialAsync("_DataGrid", Model.WgGradeGrid)
                             </div>
                         </div>
