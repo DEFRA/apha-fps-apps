@@ -238,13 +238,17 @@
                 var table = document.getElementById('tbl_@Model.StaffAllocationGrid.GridId');
                 if (!table) return;
 
-                // Clear any previously rendered totals row before rebuilding it,
-                // otherwise a new totals row gets appended on every selection change.
-                var existingTotals = document.getElementById('ra-staff-totals-container');
-                if (existingTotals) existingTotals.remove();
+                // Clear any previously rendered totals tfoot before rebuilding it.
+                var existingFoot = table.querySelector('tfoot');
+                if (existingFoot) existingFoot.remove();
 
                 var rows = table.querySelectorAll('tbody tr');
                 if (!rows.length) return;
+
+                // Skip the totals row when the grid has no data — the empty grid
+                // renders a single "No records found." placeholder row (one cell
+                // spanning all columns), which must not produce a Staff Totals row.
+                if (rows.length === 1 && rows[0].querySelectorAll('td').length <= 1) return;
 
                 // Visible column layout (0-based):
                 //  0:Name(text)
@@ -271,22 +275,25 @@
                     });
                 });
 
-                // Build totals table row (rendered outside the main grid)
-                var totalsHtml = '<table class="govuk-table custom-table ra-totals-table" style="width: 100%; margin-top: 0;">';
-                totalsHtml += '<tbody class="govuk-table__body">';
-                totalsHtml += '<tr class="ruv-totals-row govuk-table__row">';
+                // Build the totals row as a <tfoot> inside the grid table so the
+                // browser's own table layout keeps every total aligned under its
+                // column, and the totals sit above the pagination (which lives
+                // outside the table).
+                var tfoot = document.createElement('tfoot');
+                var tr    = document.createElement('tr');
+                tr.className = 'ruv-totals-row govuk-table__row';
 
                 for (var i = 0; i < colCount; i++) {
-                    var cellContent = '';
-                    var cellClass = 'govuk-table__cell';
+                    var td = document.createElement('td');
+                    td.className = 'govuk-table__cell';
 
                     if (i === 0) {
-                        cellContent = 'Staff Totals:';
-                        cellClass += ' ruv-totals-label';
+                        td.textContent = 'Staff Totals:';
+                        td.className += ' ruv-totals-label';
                     } else if (sums.hasOwnProperty(i)) {
                         // Sum columns: just display the total
-                        cellContent = (Math.round(sums[i] * 100) / 100).toFixed(2);
-                        cellClass += ' govuk-table__cell--numeric';
+                        td.textContent = (Math.round(sums[i] * 100) / 100).toFixed(2);
+                        td.className += ' govuk-table__cell--numeric';
                     } else if (derivedPercentageCols.indexOf(i) !== -1) {
                         // Derived percentage columns: calculate from component sums
                         var numerator = 0, denominator = 0;
@@ -307,28 +314,18 @@
 
                         if (denominator !== 0) {
                             var pct = (numerator / denominator) * 100;
-                            cellContent = pct.toFixed(2) + '%';
+                            td.textContent = pct.toFixed(2) + '%';
                         } else {
-                            cellContent = '0.00%';
+                            td.textContent = '0.00%';
                         }
-                        cellClass += ' govuk-table__cell--numeric';
+                        td.className += ' govuk-table__cell--numeric';
                     }
 
-                    totalsHtml += '<td class="' + cellClass + '">' + cellContent + '</td>';
+                    tr.appendChild(td);
                 }
 
-                totalsHtml += '</tr>';
-                totalsHtml += '</tbody>';
-                totalsHtml += '</table>';
-
-                // Insert the totals table after the grid container
-                var gridContainer = document.getElementById('gridContainer_@Model.StaffAllocationGrid.GridId');
-                if (gridContainer) {
-                    var totalsDiv = document.createElement('div');
-                    totalsDiv.id = 'ra-staff-totals-container';
-                    totalsDiv.innerHTML = totalsHtml;
-                    gridContainer.parentNode.insertBefore(totalsDiv, gridContainer.nextSibling);
-                }
+                tfoot.appendChild(tr);
+                table.appendChild(tfoot);
             }
 
             // Expose so ResourceAllocation.js can rebuild totals after it replaces
