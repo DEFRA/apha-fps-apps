@@ -6,8 +6,10 @@ using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Controllers;
-using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Areas.PACT.Dependencies;
 using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Web.Handler;
+using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +26,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyTimeControllerTest
         private readonly IPactTimeCodeValidService _timeCodeValidService;
         private readonly IMonthService _monthService;
         private readonly IExcelExportService _excelExportService;
+        private readonly IMonthlyImportControllerDependencies _monthlyImportDependencies;
+        private readonly IFpsYearContext _fpsYearContext;
         private readonly MonthlyTimeController _controller;
 
         public MonthlyTimeControllerTests()
@@ -35,16 +39,21 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyTimeControllerTest
             _timeCodeValidService = Substitute.For<IPactTimeCodeValidService>();
             _monthService = Substitute.For<IMonthService>();
             _excelExportService = Substitute.For<IExcelExportService>();
+            _monthlyImportDependencies = Substitute.For<IMonthlyImportControllerDependencies>();
+            _fpsYearContext = Substitute.For<IFpsYearContext>();
+
+            _monthlyImportDependencies.WorkGroupService.Returns(_workGroupService);
+            _monthlyImportDependencies.EmployeeService.Returns(_employeeService);
+            _monthlyImportDependencies.TimeCodeValidService.Returns(_timeCodeValidService);
+            _monthlyImportDependencies.MonthService.Returns(_monthService);
+            _fpsYearContext.IsReadOnly.Returns(false);
 
             _controller = new MonthlyTimeController(
                 _mapper,
                 _monthlyTimeService,
-                _workGroupService,
-                _employeeService,
-                _timeCodeValidService,
-                _monthService,
-                _excelExportService);
-
+                _monthlyImportDependencies,
+                _excelExportService,
+                _fpsYearContext);
             SetupDefaultServiceMocks();
         }
 

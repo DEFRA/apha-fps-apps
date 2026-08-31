@@ -181,7 +181,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<AnimalMaintenanceViewModel>
             {
                 GridId = "animalMasterGrid",
-                Title = "Animals",
+                Title = "Animal Maintenance",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "AnimalType",

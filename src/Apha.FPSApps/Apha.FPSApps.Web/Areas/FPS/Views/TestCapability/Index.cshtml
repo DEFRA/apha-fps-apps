@@ -6,14 +6,14 @@
 }
 
 @* Page Title with the Portfolio selector inline (matches the MS Access layout) *@
-<div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-3">
-    <div class="govuk-grid-column-one-full govuk-!-margin-bottom-3">
+<div class="govuk-grid-row sup_margin_left_right_0 sup_border-bottom govuk-!-margin-bottom-3">
+    <div class="govuk-grid-column-full govuk-!-margin-bottom-3">
         <div class="portfolio-heading-row">
             <h1 class="govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 govuk-!-margin-left-6 isCustomPageHeadings">
                 Test Capabilities within..&nbsp;<span id="portfolioHeadingCode"></span>
             </h1>
 
-            <div class="portfolio-select-inline">
+            <div class="portfolio-select-inline govuk-!-margin-right-6 govuk-!-margin-top-3">
                 <label for="portfolioDisplay" class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0 isNoWrap">
                     Select a Portfolio:
                 </label>
@@ -21,18 +21,16 @@
                     <input type="text" id="portfolioDisplay" placeholder="Select Portfolio" autocomplete="off"
                            class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly
                            onclick="togglePortfolioPanel()" />
-                    <div id="PortfolioDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
-                            max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
-                            box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                    <div id="PortfolioDropdownPanel" class="portfolio-dropdown-panel">
                         <label for="PortfolioSearchBox" class="govuk-visually-hidden">Type to search portfolio</label>
                         <input type="text" id="PortfolioSearchBox" placeholder="Type to search portfolio..."
-                               style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;"
+                               class="portfolio-dropdown-search"
                                oninput="filterPortfolioPanel(this.value)" />
-                        <table style="width:100%; border-collapse:collapse; font-size:14px;">
-                            <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
+                        <table class="portfolio-dropdown-table">
+                            <thead>
                                 <tr>
-                                    <th style="padding:6px 8px; text-align:left;">Portfolio</th>
-                                    <th style="padding:6px 8px; text-align:left;">Description</th>
+                                    <th>Portfolio</th>
+                                    <th>Description</th>
                                 </tr>
                             </thead>
                             <tbody id="PortfolioDropdownBody">
@@ -44,10 +42,9 @@
                                     <tr data-portfolio="@item.Value" data-code="@pCode" data-description="@pDesc"
                                         tabindex="0"
                                         onclick="selectPortfolio('@item.Value', '@Html.Raw(pCode.Replace("'", "\\'"))', '@Html.Raw(pDesc.Replace("'", "\\'"))', this)"
-                                        onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectPortfolio('@item.Value', '@Html.Raw(pCode.Replace("'", "\\'"))', '@Html.Raw(pDesc.Replace("'", "\\'"))', this); }"
-                                        style="cursor:pointer;">
-                                        <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@pCode</td>
-                                        <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@pDesc</td>
+                                        onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectPortfolio('@item.Value', '@Html.Raw(pCode.Replace("'", "\\'"))', '@Html.Raw(pDesc.Replace("'", "\\'"))', this); }">
+                                        <td>@pCode</td>
+                                        <td>@pDesc</td>
                                     </tr>
                                 }
                             </tbody>
@@ -108,13 +105,81 @@
             align-items: center;
             gap: 10px;
             margin-top: 3px;
+            /* Keeps the control inside the column gutter rather than bleeding
+               past the right edge of the page. */
+            min-width: 0;
+            max-width: 100%;
         }
 
         /* Anchors the absolutely positioned dropdown panel. */
         .portfolio-select-control {
             position: relative;
             width: 220px;
+            max-width: 100%;
+            flex: 0 1 220px;
         }
+
+        /* The panel is wider than its 220px anchor, so it is pinned to the
+           anchor's right edge and grows leftwards. This keeps it within the
+           page instead of overflowing the viewport. */
+        .portfolio-dropdown-panel {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: auto;
+            width: 420px;
+            max-width: 90vw;
+            max-height: 260px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #b1b4b6;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, .2);
+            z-index: 2000;
+        }
+
+        .portfolio-dropdown-search {
+            width: 100%;
+            padding: 6px 8px;
+            border: 0;
+            border-bottom: 1px solid #b1b4b6;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .portfolio-dropdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            table-layout: fixed;
+        }
+
+            .portfolio-dropdown-table thead {
+                background: #f3f2f1;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
+
+            .portfolio-dropdown-table th,
+            .portfolio-dropdown-table td {
+                padding: 6px 8px;
+                text-align: left;
+                word-break: break-word;
+            }
+
+            .portfolio-dropdown-table td {
+                border-bottom: 1px solid #f3f2f1;
+            }
+
+            .portfolio-dropdown-table th:first-child,
+            .portfolio-dropdown-table td:first-child {
+                width: 40%;
+            }
+
+            .portfolio-dropdown-table tbody tr {
+                cursor: pointer;
+            }
 
         /* Label, 2-line text area and button all share one line. */
         .portfolio-description-section {
@@ -157,6 +222,12 @@
 
             .portfolio-select-control {
                 width: 100%;
+                flex: 1 1 auto;
+            }
+
+            .portfolio-dropdown-panel {
+                width: 100%;
+                max-width: 100%;
             }
         }
     </style>
@@ -183,7 +254,7 @@
         function togglePortfolioPanel() {
             var panel = document.getElementById('PortfolioDropdownPanel');
             if (!panel) return;
-            var isOpen = panel.style.display !== 'none';
+            var isOpen = window.getComputedStyle(panel).display !== 'none';
             panel.style.display = isOpen ? 'none' : 'block';
             if (!isOpen) {
                 var searchBox = document.getElementById('PortfolioSearchBox');

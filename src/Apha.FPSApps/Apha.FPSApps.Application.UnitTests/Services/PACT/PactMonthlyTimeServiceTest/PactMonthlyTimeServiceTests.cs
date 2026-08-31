@@ -26,6 +26,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyTimeServic
         private readonly IS3StorageService _s3StorageService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
+        private readonly IMonthlyImportServiceDependencies _monthlyImportServiceDependencies;
         private readonly ILogger<PactMonthlyTimeService> _logger;
         private readonly PactMonthlyTimeService _service;
 
@@ -40,18 +41,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyTimeServic
             _s3StorageService = Substitute.For<IS3StorageService>();
             _httpContextAccessor = Substitute.For<IHttpContextAccessor>();
             _configuration = Substitute.For<IConfiguration>();
+            _monthlyImportServiceDependencies = Substitute.For<IMonthlyImportServiceDependencies>();
             _logger = Substitute.For<ILogger<PactMonthlyTimeService>>();
+
+            _monthlyImportServiceDependencies.ExcelImportService.Returns(_excelImportService);
+            _monthlyImportServiceDependencies.WorkGroupService.Returns(_workGroupService);
+            _monthlyImportServiceDependencies.TimeCodeValidService.Returns(_timeCodeValidService);
+            _monthlyImportServiceDependencies.MonthService.Returns(_monthService);
+            _monthlyImportServiceDependencies.S3StorageService.Returns(_s3StorageService);
+            _monthlyImportServiceDependencies.HttpContextAccessor.Returns(_httpContextAccessor);
+            _monthlyImportServiceDependencies.Configuration.Returns(_configuration);
 
             _pactClient.PactMonthlyTime.Returns(_pactMonthlyTimeApiClient);
             _service = new PactMonthlyTimeService(
                 _pactClient,
-                _excelImportService,
-                _workGroupService,
-                _timeCodeValidService,
-                _monthService,
-                _s3StorageService,
-                _httpContextAccessor,
-                _configuration,
+                _monthlyImportServiceDependencies,
                 _logger);
         }
 
