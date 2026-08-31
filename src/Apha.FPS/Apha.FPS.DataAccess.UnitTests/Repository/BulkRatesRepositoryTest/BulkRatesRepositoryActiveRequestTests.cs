@@ -1,4 +1,5 @@
 using Apha.Common.Constants;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
@@ -95,8 +96,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BulkRatesRepositoryTest
             var jobQueueId = Guid.NewGuid();
             var jobExecutionId = Guid.NewGuid();
             await repo.CreateRequestAsync(
-                jobQueueId, jobExecutionId, jobId, statusId,
-                "active-request-test", DateTime.UtcNow, DateTime.UtcNow.Year);
+                new CreateBulkRatesRequestParams(
+                    jobQueueId, jobExecutionId, jobId, statusId,
+                    "active-request-test", DateTime.UtcNow, DateTime.UtcNow.Year));
             _createdJobQueueIds.Add(jobQueueId);
 
             return (repo, jobId);

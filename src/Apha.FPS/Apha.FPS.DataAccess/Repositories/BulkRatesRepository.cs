@@ -105,34 +105,32 @@ namespace Apha.FPS.DataAccess.Repositories
             };
 
         public async Task<BulkRatesQueueRow> CreateRequestAsync(
-            Guid jobQueueId, Guid jobExecutionId, int jobId, int initiatedStatusId,
-            string requestedBy, DateTime requestedAtUtc, int fpsYear,
-            CancellationToken ct = default)
+            CreateBulkRatesRequestParams request, CancellationToken ct = default)
         {
             _dbContext.BatchJobQueues.Add(new BatchJobQueue
             {
-                JobqueueId = jobQueueId,
-                JobExecutionId = jobExecutionId,
-                JobId = jobId,
-                StatusId = initiatedStatusId,
-                RequestedBy = requestedBy,
-                RequestedAtUtc = requestedAtUtc,
-                FpsYear = fpsYear,
+                JobqueueId = request.JobQueueId,
+                JobExecutionId = request.JobExecutionId,
+                JobId = request.JobId,
+                StatusId = request.InitiatedStatusId,
+                RequestedBy = request.RequestedBy,
+                RequestedAtUtc = request.RequestedAtUtc,
+                FpsYear = request.FpsYear,
                 // Populated at creation to match the existing Year End / Recreate Summary
                 // producer convention. The Batch Worker's Running transition
                 // (JobExecutionRepository) unconditionally overwrites this with the actual
                 // execution start once the job is picked up. TriggeredAtUtc (set in
                 // SetApprovalAsync) remains the field Bulk Rates uses to tell "released" from
                 // "dispatch to the worker succeeded" — this value is not used for that purpose.
-                StartDateTime = requestedAtUtc
+                StartDateTime = request.RequestedAtUtc
             });
             await _dbContext.SaveChangesAsync(ct);
 
             _logger.LogInformation("Created job_queue row | JobQueueId={JobQueueId} | JobId={JobId} | FpsYear={FpsYear}",
-                jobQueueId, jobId, fpsYear);
+                request.JobQueueId, request.JobId, request.FpsYear);
 
-            return await GetRequestAsync(jobExecutionId, ct)
-                ?? throw new InvalidOperationException($"Row just inserted (jobExecutionId={jobExecutionId}) could not be read back.");
+            return await GetRequestAsync(request.JobExecutionId, ct)
+                ?? throw new InvalidOperationException($"Row just inserted (jobExecutionId={request.JobExecutionId}) could not be read back.");
         }
 
         public Task<BulkRatesQueueRow?> GetRequestAsync(Guid jobExecutionId, CancellationToken ct = default) =>
@@ -141,32 +139,31 @@ namespace Apha.FPS.DataAccess.Repositories
                 .FirstOrDefaultAsync(ct);
 
         public async Task<PagedData<BulkRatesQueueRow>> GetRequestsAsync(
-            string? jobName, int? fpsYear, string? status,
-            int page, int pageSize, string? sortBy, bool descending,
-            CancellationToken ct = default)
+            PaginationParameters<BulkRatesRequestFilter> query, CancellationToken ct = default)
         {
-            var query = QueueRowsQuery();
-            if (jobName != null) query = query.Where(r => r.JobName == jobName);
-            if (fpsYear.HasValue) query = query.Where(r => r.FpsYear == fpsYear.Value);
-            if (status != null) query = query.Where(r => r.Status == status);
+            var filter = query.Filter;
+            var rows = QueueRowsQuery();
+            if (filter?.JobName != null) rows = rows.Where(r => r.JobName == filter.JobName);
+            if (filter?.FpsYear.HasValue == true) rows = rows.Where(r => r.FpsYear == filter.FpsYear.Value);
+            if (filter?.Status != null) rows = rows.Where(r => r.Status == filter.Status);
 
-            var totalRecords = await query.CountAsync(ct);
+            var totalRecords = await rows.CountAsync(ct);
 
-            // sortBy is user input (via the DataGrid's sortable-header clicks) — the switch
-            // below is the whitelist; anything unrecognised falls back to RequestedAtUtc rather
-            // than being interpolated into anything.
-            query = ApplySortOrder(query, sortBy, descending);
+            // query.SortBy is user input (via the DataGrid's sortable-header clicks) — the
+            // switch below is the whitelist; anything unrecognised falls back to
+            // RequestedAtUtc rather than being interpolated into anything.
+            rows = ApplySortOrder(rows, query.SortBy, query.Descending);
 
-            var results = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
+            var results = await rows
+                .Skip((query.Page - 1) * query.PageSize)
+                .Take(query.PageSize)
                 .ToListAsync(ct);
 
             return new PagedData<BulkRatesQueueRow>(results, new PaginationData
             {
-                PageNumber = page,
-                PageSize = pageSize,
-                TotalPages = pageSize > 0 ? (int)Math.Ceiling(totalRecords / (double)pageSize) : 0,
+                PageNumber = query.Page,
+                PageSize = query.PageSize,
+                TotalPages = query.PageSize > 0 ? (int)Math.Ceiling(totalRecords / (double)query.PageSize) : 0,
                 TotalRecords = totalRecords
             });
         }
@@ -200,20 +197,15 @@ namespace Apha.FPS.DataAccess.Repositories
             return affected > 0;
         }
 
-        public Task SetApprovalAsync(
-            Guid jobQueueId, Guid jobExecutionId,
-            string approvedBy, DateTime approvedAtUtc,
-            string triggeredBy, DateTime triggeredAtUtc,
-            int approvedStatusId,
-            CancellationToken ct = default) =>
+        public Task SetApprovalAsync(SetBulkRatesApprovalParams request, CancellationToken ct = default) =>
             _dbContext.BatchJobQueues.IgnoreQueryFilters()
-                .Where(q => q.JobqueueId == jobQueueId)
+                .Where(q => q.JobqueueId == request.JobQueueId)
                 .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(q => q.StatusId, approvedStatusId)
-                    .SetProperty(q => q.ApprovedBy, approvedBy)
-                    .SetProperty(q => q.ApprovedAtUtc, approvedAtUtc)
-                    .SetProperty(q => q.TriggeredBy, triggeredBy)
-                    .SetProperty(q => q.TriggeredAtUtc, triggeredAtUtc)
+                    .SetProperty(q => q.StatusId, request.ApprovedStatusId)
+                    .SetProperty(q => q.ApprovedBy, request.ApprovedBy)
+                    .SetProperty(q => q.ApprovedAtUtc, request.ApprovedAtUtc)
+                    .SetProperty(q => q.TriggeredBy, request.TriggeredBy)
+                    .SetProperty(q => q.TriggeredAtUtc, request.TriggeredAtUtc)
                     .SetProperty(q => q.UpdatedAt, DateTime.UtcNow), ct);
 
         public Task SetRejectionAsync(
@@ -481,10 +473,10 @@ namespace Apha.FPS.DataAccess.Repositories
             await using var tx = await conn.BeginTransactionAsync(ct);
 
             // FEC/AGRUP: AGRUP first (child FK), then FEC
-            await DeleteFromAsync(conn, tx, "fps.tblstagingtlkptestreqmt", jobQueueId, ct);
-            await DeleteFromAsync(conn, tx, "fps.tblstagingtestorproduct", jobQueueId, ct);
-            await DeleteFromAsync(conn, tx, "fps.tblstagingprofitcentregrade", jobQueueId, ct);
-            await DeleteFromAsync(conn, tx, "fps.tblstaginganimals", jobQueueId, ct);
+            await DeleteFromAsync(conn, tx, StagingTable.AgrupRequirements, jobQueueId, ct);
+            await DeleteFromAsync(conn, tx, StagingTable.FecTestOrProduct, jobQueueId, ct);
+            await DeleteFromAsync(conn, tx, StagingTable.ProfitCentreGrade, jobQueueId, ct);
+            await DeleteFromAsync(conn, tx, StagingTable.Animals, jobQueueId, ct);
 
             await tx.CommitAsync(ct);
 
@@ -731,10 +723,10 @@ namespace Apha.FPS.DataAccess.Repositories
             }
 
             // Clear all staging rows within the same transaction
-            await DeleteFromAsync(conn, tx, "fps.tblstagingtlkptestreqmt",   jobQueueId, ct);
-            await DeleteFromAsync(conn, tx, "fps.tblstagingtestorproduct",    jobQueueId, ct);
-            await DeleteFromAsync(conn, tx, "fps.tblstagingprofitcentregrade", jobQueueId, ct);
-            await DeleteFromAsync(conn, tx, "fps.tblstaginganimals",          jobQueueId, ct);
+            await DeleteFromAsync(conn, tx, StagingTable.AgrupRequirements, jobQueueId, ct);
+            await DeleteFromAsync(conn, tx, StagingTable.FecTestOrProduct, jobQueueId, ct);
+            await DeleteFromAsync(conn, tx, StagingTable.ProfitCentreGrade, jobQueueId, ct);
+            await DeleteFromAsync(conn, tx, StagingTable.Animals, jobQueueId, ct);
 
             // Clear validation errors within the same transaction
             await using (var del = conn.CreateCommand())
@@ -1029,21 +1021,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var result = new List<TestRequirementStagingRow>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
-            {
-                result.Add(new TestRequirementStagingRow
-                {
-                    JobQueueId = jobQueueId,
-                    TestCode = reader.GetString(0),
-                    Buyer = reader.GetString(1),
-                    Agrup = reader.IsDBNull(2) ? null : reader.GetDecimal(2),
-                    NoRequired = reader.IsDBNull(3) ? null : reader.GetDouble(3),
-                    DateCreated = reader.IsDBNull(4) ? null : reader.GetDateTime(4),
-                    Active = reader.IsDBNull(5) ? null : (short?)(reader.GetBoolean(5) ? 1 : 0),
-                    ProjectBuyerCode = reader.IsDBNull(6) ? null : reader.GetString(6),
-                    TestBuyerCode = reader.IsDBNull(7) ? null : reader.GetString(7),
-                    AgrupNew = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
-                });
-            }
+                result.Add(MapAgrupSnapshotRow(jobQueueId, reader));
             return result;
         }
 
@@ -1269,23 +1247,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var rows = new List<TestRequirementStagingRow>();
             await using var reader = await cmd.ExecuteReaderAsync(ct);
             while (await reader.ReadAsync(ct))
-            {
-                rows.Add(new TestRequirementStagingRow
-                {
-                    JobQueueId  = Guid.Empty,
-                    TestCode    = reader.GetString(0),
-                    Buyer       = reader.GetString(1),
-                    Agrup       = reader.IsDBNull(2) ? null : reader.GetDecimal(2),
-                    AgrupNew    = reader.IsDBNull(3) ? null : reader.GetDecimal(3),
-                    Change      = null,
-                    NoRequired  = reader.IsDBNull(5) ? null : reader.GetDouble(5),
-                    DateCreated = reader.IsDBNull(6) ? null : reader.GetDateTime(6),
-                    Active      = reader.IsDBNull(7) ? null : reader.GetInt16(7),
-                    Comments    = reader.IsDBNull(8) ? null : reader.GetString(8),
-                    ProjectBuyerCode = reader.IsDBNull(9) ? null : reader.GetString(9),
-                    TestBuyerCode    = reader.IsDBNull(10) ? null : reader.GetString(10)
-                });
-            }
+                rows.Add(MapAgrupExportRow(reader));
             return rows;
         }
 
@@ -1487,14 +1449,23 @@ namespace Apha.FPS.DataAccess.Repositories
 
         // ── Private helpers ──────────────────────────────────────────────────────
 
+        private enum StagingTable { AgrupRequirements, FecTestOrProduct, ProfitCentreGrade, Animals }
+
         private static async Task DeleteFromAsync(
             NpgsqlConnection conn, NpgsqlTransaction tx,
-            string qualifiedTable, Guid jobQueueId, CancellationToken ct)
+            StagingTable table, Guid jobQueueId, CancellationToken ct)
         {
             await using var cmd = conn.CreateCommand();
             cmd.Transaction = tx;
-            // Table name is hardcoded in callers — no user input reaches here
-            cmd.CommandText = $"DELETE FROM {qualifiedTable} WHERE jobqueueid = @jqid;";
+            // Fully literal per table — no string formatting into SQL, even from a closed set.
+            cmd.CommandText = table switch
+            {
+                StagingTable.AgrupRequirements  => "DELETE FROM fps.tblstagingtlkptestreqmt WHERE jobqueueid = @jqid;",
+                StagingTable.FecTestOrProduct   => "DELETE FROM fps.tblstagingtestorproduct WHERE jobqueueid = @jqid;",
+                StagingTable.ProfitCentreGrade  => "DELETE FROM fps.tblstagingprofitcentregrade WHERE jobqueueid = @jqid;",
+                StagingTable.Animals            => "DELETE FROM fps.tblstaginganimals WHERE jobqueueid = @jqid;",
+                _ => throw new ArgumentOutOfRangeException(nameof(table))
+            };
             cmd.Parameters.AddWithValue("jqid", jobQueueId);
             await cmd.ExecuteNonQueryAsync(ct);
         }
@@ -1549,6 +1520,44 @@ namespace Apha.FPS.DataAccess.Repositories
                 EffectiveNewRate   = r.IsDBNull(14) ? null : r.GetDecimal(14),
                 SourceCurrentRate  = r.IsDBNull(15) ? null : r.GetDecimal(15),
                 ValidationVersion  = r.IsDBNull(16) ? null : r.GetInt32(16)
+            };
+
+        private static TestRequirementStagingRow MapAgrupSnapshotRow(Guid jobQueueId, NpgsqlDataReader r)
+        {
+            short? active = null;
+            if (!r.IsDBNull(5))
+                active = (short)(r.GetBoolean(5) ? 1 : 0);
+
+            return new()
+            {
+                JobQueueId       = jobQueueId,
+                TestCode         = r.GetString(0),
+                Buyer            = r.GetString(1),
+                Agrup            = r.IsDBNull(2) ? null : r.GetDecimal(2),
+                NoRequired       = r.IsDBNull(3) ? null : r.GetDouble(3),
+                DateCreated      = r.IsDBNull(4) ? null : r.GetDateTime(4),
+                Active           = active,
+                ProjectBuyerCode = r.IsDBNull(6) ? null : r.GetString(6),
+                TestBuyerCode    = r.IsDBNull(7) ? null : r.GetString(7),
+                AgrupNew         = r.IsDBNull(8) ? null : r.GetDecimal(8),
+            };
+        }
+
+        private static TestRequirementStagingRow MapAgrupExportRow(NpgsqlDataReader r) =>
+            new()
+            {
+                JobQueueId       = Guid.Empty,
+                TestCode         = r.GetString(0),
+                Buyer            = r.GetString(1),
+                Agrup            = r.IsDBNull(2) ? null : r.GetDecimal(2),
+                AgrupNew         = r.IsDBNull(3) ? null : r.GetDecimal(3),
+                Change           = null,
+                NoRequired       = r.IsDBNull(5) ? null : r.GetDouble(5),
+                DateCreated      = r.IsDBNull(6) ? null : r.GetDateTime(6),
+                Active           = r.IsDBNull(7) ? null : r.GetInt16(7),
+                Comments         = r.IsDBNull(8) ? null : r.GetString(8),
+                ProjectBuyerCode = r.IsDBNull(9) ? null : r.GetString(9),
+                TestBuyerCode    = r.IsDBNull(10) ? null : r.GetString(10)
             };
 
         private static void ApplyFecFreezeParams(

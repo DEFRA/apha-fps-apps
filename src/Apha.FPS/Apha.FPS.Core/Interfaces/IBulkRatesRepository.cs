@@ -17,21 +17,17 @@ namespace Apha.FPS.Core.Interfaces
 
         // ── Queue entry CRUD ─────────────────────────────────────────────────────
         Task<BulkRatesQueueRow> CreateRequestAsync(
-            Guid jobQueueId, Guid jobExecutionId, int jobId, int initiatedStatusId,
-            string requestedBy, DateTime requestedAtUtc, int fpsYear,
-            CancellationToken ct = default);
+            CreateBulkRatesRequestParams request, CancellationToken ct = default);
 
         Task<BulkRatesQueueRow?> GetRequestAsync(Guid jobExecutionId, CancellationToken ct = default);
 
         /// <summary>
         /// Server-side paged/sorted list, matching the app-wide DataGrid pagination convention.
-        /// <paramref name="sortBy"/> is validated against a column whitelist internally — never
-        /// interpolated directly into SQL.
+        /// <paramref name="query"/>'s SortBy is validated against a column whitelist internally
+        /// — never interpolated directly into SQL.
         /// </summary>
         Task<PagedData<BulkRatesQueueRow>> GetRequestsAsync(
-            string? jobName, int? fpsYear, string? status,
-            int page, int pageSize, string? sortBy, bool descending,
-            CancellationToken ct = default);
+            PaginationParameters<BulkRatesRequestFilter> query, CancellationToken ct = default);
 
         /// <summary>
         /// True when no request for <paramref name="jobName"/> is in a blocking status (Initiated,
@@ -50,11 +46,7 @@ namespace Apha.FPS.Core.Interfaces
             CancellationToken ct = default);
 
         Task SetApprovalAsync(
-            Guid jobQueueId, Guid jobExecutionId,
-            string approvedBy, DateTime approvedAtUtc,
-            string triggeredBy, DateTime triggeredAtUtc,
-            int approvedStatusId,
-            CancellationToken ct = default);
+            SetBulkRatesApprovalParams request, CancellationToken ct = default);
 
         Task SetRejectionAsync(
             Guid jobQueueId, string rejectedBy, DateTime rejectedAtUtc,

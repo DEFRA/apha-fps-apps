@@ -92,8 +92,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BulkRatesRepositoryTest
 
             var jobQueueId = Guid.NewGuid();
             await repo.CreateRequestAsync(
-                jobQueueId, Guid.NewGuid(), jobId, statusId,
-                "integration-test-requester", DateTime.UtcNow, fpsYear);
+                new CreateBulkRatesRequestParams(
+                    jobQueueId, Guid.NewGuid(), jobId, statusId,
+                    "integration-test-requester", DateTime.UtcNow, fpsYear));
             _createdJobQueueIds.Add(jobQueueId);
             return jobQueueId;
         }

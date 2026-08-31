@@ -243,7 +243,9 @@ public class BulkRatesRequestServiceTests
         repo.GetFpsYearStatusAsync(FpsYear, Arg.Any<CancellationToken>()).Returns("Open");
         repo.GetStatusIdByNameAsync(10, "Initiated", Arg.Any<CancellationToken>()).Returns((int?)1);
         repo.CreateRequestAsync(
-                Arg.Any<Guid>(), Arg.Any<Guid>(), 10, 1, Initiator, Arg.Any<DateTime>(), FpsYear, Arg.Any<CancellationToken>())
+                Arg.Is<CreateBulkRatesRequestParams>(p =>
+                    p.JobId == 10 && p.InitiatedStatusId == 1 && p.RequestedBy == Initiator && p.FpsYear == FpsYear),
+                Arg.Any<CancellationToken>())
             .Returns(Entry(status: "Initiated"));
         repo.GetJobQueueLogsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<BatchJobQueueLog>() as IReadOnlyList<BatchJobQueueLog>);
         repo.GetValidationErrorsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<StagingValidationError>() as IReadOnlyList<StagingValidationError>);
@@ -506,10 +508,11 @@ public class BulkRatesRequestServiceTests
         await svc.ApproveAsync(QueueId, Initiator);
 
         await repo.Received(1).SetApprovalAsync(
-            QueueId, ExecId,
-            Initiator, Arg.Any<DateTime>(),
-            Initiator, Arg.Any<DateTime>(),
-            42, Arg.Any<CancellationToken>());
+            Arg.Is<SetBulkRatesApprovalParams>(p =>
+                p.JobQueueId == QueueId && p.JobExecutionId == ExecId &&
+                p.ApprovedBy == Initiator && p.TriggeredBy == Initiator &&
+                p.ApprovedStatusId == 42),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -628,7 +631,12 @@ public class BulkRatesRequestServiceTests
         var result = await svc.ApproveAsync(QueueId, Approver);
 
         result.Should().NotBeNull();
-        await repo.Received(1).SetApprovalAsync(QueueId, ExecId, Approver, Arg.Any<DateTime>(), Approver, Arg.Any<DateTime>(), 42, Arg.Any<CancellationToken>());
+        await repo.Received(1).SetApprovalAsync(
+            Arg.Is<SetBulkRatesApprovalParams>(p =>
+                p.JobQueueId == QueueId && p.JobExecutionId == ExecId &&
+                p.ApprovedBy == Approver && p.TriggeredBy == Approver &&
+                p.ApprovedStatusId == 42),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]

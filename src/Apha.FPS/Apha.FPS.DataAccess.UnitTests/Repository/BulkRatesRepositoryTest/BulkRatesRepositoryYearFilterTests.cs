@@ -1,4 +1,5 @@
 using Apha.Common.Constants;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
@@ -93,8 +94,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BulkRatesRepositoryTest
             var jobQueueId = Guid.NewGuid();
             var jobExecutionId = Guid.NewGuid();
             var created = await repo.CreateRequestAsync(
-                jobQueueId, jobExecutionId, jobId, statusId,
-                "year-filter-test", DateTime.UtcNow, requestYear);
+                new CreateBulkRatesRequestParams(
+                    jobQueueId, jobExecutionId, jobId, statusId,
+                    "year-filter-test", DateTime.UtcNow, requestYear));
             _createdJobQueueIds.Add(jobQueueId);
 
             Assert.Equal(requestYear, created.FpsYear);

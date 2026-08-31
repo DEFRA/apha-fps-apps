@@ -66,13 +66,13 @@
                                 @Html.AntiForgeryToken()
 
                                 <div class="govuk-form-group govuk-!-margin-bottom-4">
-                                    <label class="govuk-label govuk-!-font-weight-bold">Job type</label>
+                                    <div class="govuk-label govuk-!-font-weight-bold">Job type</div>
                                     <p class="govuk-body govuk-!-margin-bottom-0">@FriendlyJobName(Model.JobName)</p>
                                     <input type="hidden" id="jobName" name="jobName" value="@Model.JobName">
                                 </div>
 
                                 <div class="govuk-form-group govuk-!-margin-bottom-6">
-                                    <label class="govuk-label govuk-!-font-weight-bold">FPS year</label>
+                                    <div class="govuk-label govuk-!-font-weight-bold">FPS year</div>
                                     <p class="govuk-body govuk-!-margin-bottom-0">@Model.FpsYear</p>
                                     <input type="hidden" id="fpsYear" name="fpsYear" value="@Model.FpsYear">
                                 </div>

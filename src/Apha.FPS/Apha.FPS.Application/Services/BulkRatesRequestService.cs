@@ -10,6 +10,7 @@ using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Core.Pagination;
 using Microsoft.Extensions.Logging;
 
 namespace Apha.FPS.Application.Services
@@ -90,8 +91,10 @@ namespace Apha.FPS.Application.Services
             var now = DateTime.UtcNow;
 
             var entry = await _repository.CreateRequestAsync(
-                jobQueueId, jobExecutionId, jobId, initiatedStatusId,
-                requestedBy, now, fpsYear, ct);
+                new CreateBulkRatesRequestParams(
+                    jobQueueId, jobExecutionId, jobId, initiatedStatusId,
+                    requestedBy, now, fpsYear),
+                ct);
 
             await _repository.WriteJobQueueLogAsync(
                 jobQueueId,
@@ -345,10 +348,12 @@ namespace Apha.FPS.Application.Services
             var now = DateTime.UtcNow;
 
             await _repository.SetApprovalAsync(
-                jobQueueId, entry.JobExecutionId,
-                approvedBy, now,
-                approvedBy, now,
-                approvedStatusId, ct);
+                new SetBulkRatesApprovalParams(
+                    jobQueueId, entry.JobExecutionId,
+                    approvedBy, now,
+                    approvedBy, now,
+                    approvedStatusId),
+                ct);
 
             await _repository.WriteJobQueueLogAsync(
                 jobQueueId, "Request approved.", approvedBy, ct);
@@ -529,7 +534,12 @@ namespace Apha.FPS.Application.Services
             var pageSize = query.PageSize < 1 ? 10 : query.PageSize;
 
             var paged = await _repository.GetRequestsAsync(
-                jobName, fpsYear, status, page, pageSize, query.SortBy, query.Descending, ct);
+                new PaginationParameters<BulkRatesRequestFilter>(
+                    sortBy: query.SortBy, descending: query.Descending, page: page, pageSize: pageSize)
+                {
+                    Filter = new BulkRatesRequestFilter(jobName, fpsYear, status)
+                },
+                ct);
 
             return new PaginatedResult<BulkRatesQueueEntryDto>
             {
