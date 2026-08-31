@@ -20,9 +20,9 @@
                 <div class="row" style="display:flex; align-items: center;">
                     <div class="col-sm-12" style="padding:0px;">
                         <div class="sup_border-bottom" style="min-height:42px;">
-                            <h1 style="padding: 0 17px; height:42px; font-size:16px; font-weight: 700; margin: 0; display:flex; align-items:center; justify-content:space-between;">
+                            <h1 class="govuk-heading-s isCustomPageHeadings sup_margin_bottom_0 sup_project_addedit_heading">
                                 <span>@fpsYearCode : @(isEditMode ? $"Edit Project - {Model.ParentProject}" : "Set Up New Project")</span>
-                                <a href="@(Context.Request.Query.ContainsKey("returnUrl") ? Context.Request.Query["returnUrl"].ToString() : "javascript:history.back()")" class="govuk-back-link sup_align_right sup_back_link_center_right">Back</a>
+                                <a href="@(Context.Request.Query.ContainsKey("returnUrl") ? Context.Request.Query["returnUrl"].ToString() : "javascript:history.back()")" class="govuk-back-link sup_back_link_center_right">Back</a>
                             </h1>
                         </div>
                     </div>

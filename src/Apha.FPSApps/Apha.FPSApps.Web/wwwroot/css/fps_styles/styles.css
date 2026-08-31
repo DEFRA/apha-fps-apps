@@ -5504,8 +5504,18 @@ input.govuk-input.ssr-total-input[readonly] {
 }
 .isPlanProjectIndividually {
     table {
-        width: 19vw;
+        width: auto;
         float: right;
+    }
+
+    /* Label and select sit inline on one row; nowrap stops the narrow cell
+       from breaking them onto separate lines. */
+    .govuk-table__cell {
+        white-space: nowrap;
+    }
+
+    .govuk-select {
+        vertical-align: middle;
     }
 }
 
@@ -5611,9 +5621,11 @@ input.govuk-input.ssr-total-input[readonly] {
 
 .isCustomLabels {
     text-align: right;
-    display: block;
-    margin-top: 7px;
-    width: 47%;
+    display: inline-block;
+    width: auto;
+    white-space: nowrap;
+    vertical-align: middle;
+    margin-right: 8px;
 }
 .isWidthAuto{
     width: auto;
@@ -5722,4 +5734,21 @@ input.govuk-input.ssr-total-input[readonly] {
             text-align: center !important;
         }
     }
+}
+/* Set Up New Project / Edit Project heading: keeps the standard govuk-heading-s
+   font size while laying the title and Back link out on one line. */
+.sup_project_addedit_heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 42px;
+    padding: 0 17px;
+}
+
+/* Back link: a single right gutter for every FPS page so the button lines up
+   consistently across the module. Individual pages previously used a mix of
+   sup_align_right (12px), no margin at all, or bespoke overrides, which made
+   the spacing vary from screen to screen. */
+.govuk-back-link {
+    margin-right: 15px;
 }
