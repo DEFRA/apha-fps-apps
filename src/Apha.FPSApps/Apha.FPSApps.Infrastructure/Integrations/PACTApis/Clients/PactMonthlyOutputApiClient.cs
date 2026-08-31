@@ -166,7 +166,20 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             var response = await _http.DeleteAsync<bool?>(PactApiEndpoints.DeleteAllStagingMonthlyOutputByUser);
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<bool>>(response);
+            {
+                var mappedResponse = _mapper.Map<ApiResponseDto<bool>>(response);
+
+                // If no records were deleted (Data is false), add a specific message
+                if (!mappedResponse.Data)
+                {
+                    mappedResponse.Errors = new List<ApiErrorDto>
+                    {
+                        new ApiErrorDto { Message = "No staging records found to delete." }
+                    };
+                }
+
+                return mappedResponse;
+            }
 
             var dto = _mapper.Map<ApiResponseDto<bool>>(response);
             return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
@@ -228,7 +241,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             if (response.Success)
             {
                 var dto = _mapper.Map<MonthlyOutputMakeLiveResultDto>(response.Data);
-                return ApiResponseDto<MonthlyOutputMakeLiveResultDto>.SuccessResponse(dto);
+                var result = ApiResponseDto<MonthlyOutputMakeLiveResultDto>.SuccessResponse(dto);
+
+                // If there are failed records, add a specific message
+                if (dto.FailedCount > 0)
+                {
+                    result.Errors = new List<ApiErrorDto>
+                    {
+                        new ApiErrorDto { Message = dto.Message }
+                    };
+                }
+
+                return result;
             }
 
             var failDto = _mapper.Map<ApiResponseDto<MonthlyOutputMakeLiveResultDto>>(response);

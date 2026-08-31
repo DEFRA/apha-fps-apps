@@ -1,4 +1,4 @@
-﻿* {
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -265,7 +265,7 @@ button a {
 
 .btn-close:hover {
     color: #fff;
-    background: #6f0a13;
+    background: #ca3535 !important;
 }
 
 .form-control:focus {
@@ -4581,10 +4581,12 @@ body,
 }
 
 .modal-content & .modal-header .btn-close,
-.modal-header .btn-close {
+.modal-header .btn-close,
+.modal-content & .modal-header .btn-close,
+.modal-header .btn-close:hover {
     padding: .3rem .3rem;
-    margin: -.5rem -.5rem -.5rem auto;
-    background: #8f0b18;
+/*    margin: -.5rem -.5rem -.5rem auto;*/
+    background: #ca3535;
     opacity: 1;
     font-size: 14px !important;
 }
@@ -5563,5 +5565,57 @@ body,
 .modal-body {
     .govuk-form-group {
         margin-top: 1em !important;
+    }
+}
+
+#ManagerDropdownPanel {
+    left: -24px !important;
+    width: auto !important;
+
+    table {
+        th {
+            white-space: nowrap;
+            width: calc(100%/3) !important;
+        }
+    }
+}
+#editWorkgroupForm {
+    position: relative;
+}
+#modaPopupBody {
+    .modal-body {
+        overflow: visible;
+    }
+}
+
+.isNoGlobalScrollBar {
+    .grid-scroll-container {
+        max-height: none !important;
+        height: 51vh !important;
+    }
+}
+.isClearfix{
+    overflow: hidden;
+}
+
+.btn-close
+.btn-close:hover {
+    background: #ca3535 !important;
+}
+
+.isCustomTableHeight {
+    h2.sup_align_heading {
+        line-height: 34px;
+    }
+}
+
+.isAccountCategoryMaintenancePage,
+.isWorkGroupStaffPage {
+    .govuk-checkboxes__item.sup_chk_margin {
+        padding-bottom: 0 !important;
+    }
+
+    .grid-scroll-container {
+        height: 62vh !important;
     }
 }

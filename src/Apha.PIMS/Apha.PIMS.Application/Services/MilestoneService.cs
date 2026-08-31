@@ -213,6 +213,27 @@ namespace Apha.PIMS.Application.Services
                 errors.Add(new BusinessValidationError("Project is required.", "PROJECT_REQUIRED"));
             if (dto.Year == 0)
                 errors.Add(new BusinessValidationError("Financial Year is required.", "YEAR_REQUIRED"));
+
+            foreach ((DateTime? Value, string Name, string Code) dateField in new[]
+            {
+                (dto.Jan, "January", "JAN_DATE_FUTURE"),
+                (dto.Feb, "February", "FEB_DATE_FUTURE"),
+                (dto.Mar, "March", "MAR_DATE_FUTURE"),
+                (dto.Apr, "April", "APR_DATE_FUTURE"),
+                (dto.May, "May", "MAY_DATE_FUTURE"),
+                (dto.Jun, "June", "JUN_DATE_FUTURE"),
+                (dto.Jul, "July", "JUL_DATE_FUTURE"),
+                (dto.Aug, "August", "AUG_DATE_FUTURE"),
+                (dto.Sep, "September", "SEP_DATE_FUTURE"),
+                (dto.Oct, "October", "OCT_DATE_FUTURE"),
+                (dto.Nov, "November", "NOV_DATE_FUTURE"),
+                (dto.Dec, "December", "DEC_DATE_FUTURE")
+            })
+            {
+                if (dateField.Value.HasValue && dateField.Value.Value.Date > DateTime.Today)
+                    errors.Add(new BusinessValidationError($"{dateField.Name} date cannot be in the future.", dateField.Code));
+            }
+
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 

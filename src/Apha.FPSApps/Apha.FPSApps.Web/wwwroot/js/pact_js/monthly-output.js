@@ -710,6 +710,26 @@ function deleteStagingMonthlyOutput(btn) {
 
 // ── Import (direct file browse — PACT flat file .xls, ImportOption 1) ─────────
 
+function openImportTypeModal() {
+    $('input[name="importType"]').prop('checked', false);
+    $('#importTypeModal').addClass('show').css('display', 'flex');
+}
+
+function closeImportTypeModal() {
+    $('#importTypeModal').removeClass('show').hide();
+}
+
+function confirmImportType() {
+    const selected = $('input[name="importType"]:checked').val();
+    if (!selected) {
+        showAlertMessage('Please select an import type.', AlertType.INFO);
+        return;
+    }
+
+    closeImportTypeModal();
+    triggerMonthlyOutputImportSelection(selected);
+}
+
 function triggerMonthlyOutputImportSelection(importType) {
     window.monthlyOutputImportType = importType;
     openImportFilePicker();
@@ -837,7 +857,7 @@ function deleteAllStagingRecords() {
                     document.getElementById('failedmsg').style.display = 'none';
                     showAlertMessage('All staging records deleted.', AlertType.SUCCESS);
                 } else {
-                    showAlertMessage('Failed to delete all staging records.', AlertType.ERROR);
+                    showAlertMessage(response.message || 'Failed to delete all staging records.', AlertType.ERROR);
                 }
             },
             error: function () {
@@ -917,10 +937,8 @@ $(document).ready(function () {
         reloadLiveGrid();
     });
 
-    // Import — direct file browse, PACT flat file default
-    $('#importBtn').on('click', function () {
-        triggerMonthlyOutputImportSelection('1');
-    });
+    // Import — show import type selection modal
+    $('#importBtn').on('click', openImportTypeModal);
 
     $('#csvInput').on('change', function () {
         const file = this.files[0];

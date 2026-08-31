@@ -34,7 +34,7 @@
     }
     @await Html.PartialAsync("_PvaSummaryCard")
     <div class="govuk-grid-row">
-        <div class="govuk-grid-column-one-half mt-2">
+        <div class="govuk-grid-column-one-half mt-2 isCustomTableHeight">
             <div id="gridContainer_@Model.TestPlanGrid.GridId" style="padding:5px;">@await Html.PartialAsync("_DataGrid", Model.TestPlanGrid)</div>
             <div class="financial-summary mt-1" style="padding:0 5px;">
                 <div style="display:flex; align-items:center;">
@@ -46,7 +46,7 @@
                 </div>
             </div>
         </div>
-        <div class="govuk-grid-column-one-half mt-2">
+        <div class="govuk-grid-column-one-half mt-2 isCustomTableHeight">
             <div id="gridContainer_@Model.CompareTests2Grid.GridId" style="padding:5px;">@await Html.PartialAsync("_DataGrid", Model.CompareTests2Grid)</div>
             <div class="financial-summary mt-1" style="padding:0 5px;">
                 <div style="display:flex; align-items:center; margin-bottom:4px;">

@@ -114,8 +114,8 @@
 <input type="hidden" id="hiddenJobTitleLookup" value='@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.JobTitleLookup ?? new Dictionary<string, string>()))' />
 
 <script>
-    var currentWorkGroup   = '@Html.Raw(Model.SelectedWorkGroup ?? "")';
-    var currentStaffName   = '@Html.Raw(Model.SelectedPersonName ?? "")';
+    var currentWorkGroup   = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedWorkGroup ?? string.Empty));
+    var currentStaffName   = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedPersonName ?? string.Empty));
     var jobTitleLookup     = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.JobTitleLookup ?? new Dictionary<string, string>()))
 </script>
 

@@ -19,7 +19,7 @@
                 <tr class="govuk-table__row">
                     <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
                         <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0 govuk-!-text-align-right" for="testCodePick">
-                            Select a Test:
+                            Select a Test:&nbsp;
                         </label>
                     </th>
                     <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
@@ -45,7 +45,10 @@
             </div>
             <div class="govuk-form-group govuk-!-margin-bottom-0">
                 <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0" for="totalTestCost">Total Cost</label>
+                <div class="govuk-input__wrapper">
+                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
                 <input type="text" id="totalTestCost" class="govuk-input fps-summary-input" value="£0.00" readonly aria-label="Total test cost" />
+            </div>
             </div>
         </div>
     </div>
@@ -53,6 +56,102 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+    <style>
+        /* Scoped to this page only so PACT and other apps are unaffected.
+           Widen the control so the full item description is visible, but keep it
+           inside the page on narrower viewports. */
+        .isTestSupplierPage .govuk-table {
+            width: 100%;
+            max-width: 100%;
+            table-layout: auto;
+        }
+
+        .isTestSupplierPage .govuk-table__cell {
+            width: 100%;
+        }
+
+        #testCodePickMultiDropdown {
+            width: 100%;
+            max-width: 520px;
+            margin-left: auto;
+        }
+
+        /* Keep the "Select a Test:" label vertically centred against the wider
+           control and stop it from wrapping. */
+        .isTestSupplierPage .govuk-table__row th,
+        .isTestSupplierPage .govuk-table__row td {
+            vertical-align: middle;
+        }
+
+        .isTestSupplierPage .govuk-table__row th label {
+            white-space: nowrap;
+            margin-bottom: 0;
+            padding-bottom: 0;
+            line-height: 40px;
+        }
+
+        #testCodePickMultiDropdown .dropdown-input.down-arrow-img {
+            width: 100%;
+            padding-right: 34px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        /* Anchor the panel to the control and align its right edge with the
+           control's right edge, so the panel never drifts off to one side. */
+        #testCodePickMultiDropdown .tableselectdropdown {
+            position: relative;
+        }
+
+        #testCodePickMultiDropdown .multicolumn-dropdown-panel {
+            left: 0;
+            right: 0;
+            top: 100%;
+            margin: 0;
+            /* Match the control width exactly, like the PACT WorkGroup dropdown. */
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+            #testCodePickMultiDropdown .multicolumn-dropdown-panel table {
+                width: 100%;
+                table-layout: auto;
+                border-collapse: collapse;
+            }
+
+            /* Keep the two headers clearly separated instead of colliding. */
+            #testCodePickMultiDropdown .multicolumn-dropdown-panel th,
+            #testCodePickMultiDropdown .multicolumn-dropdown-panel td {
+                padding: 6px 10px;
+                text-align: left;
+                vertical-align: top;
+            }
+
+            /* The shared component reserves the first column for a serial number
+               (60px fixed). This dropdown has no serial number column, so that
+               rule squashes ItemCode. Let it size to its content instead. */
+            #testCodePickMultiDropdown .dropdown-table-wrapper thead th:first-child,
+            #testCodePickMultiDropdown .dropdown-table-wrapper tbody td:first-child {
+                width: 1%;
+                min-width: 0;
+                max-width: none;
+                white-space: nowrap;
+                overflow: visible;
+                text-overflow: clip;
+                text-align: left;
+            }
+
+            /* Description takes the remaining width and wraps if needed. */
+            #testCodePickMultiDropdown .multicolumn-dropdown-panel th:last-child,
+            #testCodePickMultiDropdown .multicolumn-dropdown-panel td:last-child {
+                width: auto;
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+    </style>
 }
 
 @section Scripts {
@@ -79,23 +178,20 @@
             searchPlaceholder: 'Search by Test',
             labelText: '',
             columns: [
-                { field: 'Value', header: 'ItemCode', width: '100px' },
-                { field: 'Text', header: 'ItemDescription', width: '180px' }
+                { field: 'Value', header: 'ItemCode' },
+                { field: 'Text', header: 'ItemDescription' }
             ],
             data: testCodeOptionsListData,
-            displayField: 'Text',
+            // Show the Test code in the closed control; the description remains
+            // visible as a column inside the dropdown panel.
+            displayField: 'Value',
             valueField: 'Value',
-            clearButtonClearsSelection: true,
-            showClearButton: true,
+            showClearButton: false,
 
             callbacks: {
                 onSelect: function (selectedItem) {
                     $('#testCodePick').val(selectedItem.Value);
                     onTestCodeChange(selectedItem.Value);
-                },
-                onClear: function () {
-                    $('#testCodePick').val('');
-                    onTestCodeChange('');
                 }
             }
         });
@@ -154,7 +250,7 @@
     function calculateTotals() {
         if (!currentTestCode) {
             $('#totalTests').val('0.00');
-            $('#totalTestCost').val('£0.00');
+            $('#totalTestCost').val('0.00');
             return;
         }
 
@@ -166,7 +262,7 @@
                 var totalTests = parseFloat(result.totalTests) || 0;
                 var totalCost = parseFloat(result.totalCost) || 0;
                 $('#totalTests').val(totalTests.toFixed(2));
-                $('#totalTestCost').val('£' + totalCost.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                $('#totalTestCost').val(totalCost.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
             }
         });
     }

@@ -1,8 +1,11 @@
 @using Apha.FPSApps.Web.Areas.FPS.Models
 @using Apha.FPSApps.Web.Models.Components.DataGrid
-@model DataGridConfig<AnimalMaintenanceViewModel>
+@model Apha.FPSApps.Web.Models.Components.DataGrid.DataGridConfig<Apha.FPSApps.Web.Areas.FPS.Models.AnimalMaintenanceViewModel>
 
-<main id="main-content">
+@{
+    ViewData["Title"] = "Animal Maintenance";
+}
+<main id="main-content" class="isClearfix isNoGlobalScrollBar">
     <div class="container-fluid">
         <!-- Title section -->
         <div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-3">
@@ -21,7 +24,7 @@
                             <div class="container-fluid" style="padding-left:0px;">
                                 <div style="display: flex; flex-direction: row; align-items: flex-start;">
                                     <!-- Side nav -->
-                                    @await Html.PartialAsync("_MaintenanceSideNav", "AnimalMaster")
+                                    @await Html.PartialAsync("_MaintenanceSideNav", "AnimalMaintenance")
                                     <div style="display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; margin: 0 0px 5px 8px;">
                                         <!-- Grid Container -->
                                         <div class="govuk-grid-row">
