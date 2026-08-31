@@ -31,6 +31,7 @@
         public const string GetAllManagers = "api/v1/employee/managers";
         public const string GetAllPactManagers = "api/v1/employee/pactmanagers";
         public const string GetAllPerson = "api/v1/employee/persons";
+        public const string GetStaffNameLookup = "api/v1/employee/stafflookup";
         public const string GetWorkGroupStaffPaginated = "api/v1/employee/WorkGroupStaff/paginated";
         public const string GetpactStaffs = "api/v1/employee/pactstaff";
         public const string GetPactWorkGroupStaff = "api/v1/employee/PactWorkGroupStaff?workGroup={0}";

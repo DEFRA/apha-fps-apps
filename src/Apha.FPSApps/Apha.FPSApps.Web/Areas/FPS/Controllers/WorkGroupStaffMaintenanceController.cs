@@ -261,15 +261,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private async Task PopulateLookupDataAsync(WorkGroupEmployeeStaffItem model)
         {
-            var lookupQuery = new QueryParameters<string>
-            {
-                Page = 1,
-                PageSize = 5000
-            };
-
-            // Source the Staff Name dropdown from the logged-in user's work group staff,
-            // scoped by UserEmail and FPS Year (vtblwgemployee joined to Employees).
-            var staffResponse = await _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(lookupQuery, string.Empty);
+            // Source the Staff Name dropdown from a dedicated staff lookup (employee master)
+            // so that newly created staff (not yet assigned to any work group) are available
+            // for selection when adding them to a work group.
+            var staffResponse = await _employeeService.GetStaffNameLookupAsync();
             var staff = staffResponse.Success && staffResponse.Data != null
                 ? staffResponse.Data
                 : [];
@@ -277,8 +272,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             model.StaffLookupOptions = staff
                 .Select(e => new WorkGroupStaffLookupItem
                 {
-                    PactId = e.PactId ?? string.Empty,
-                    Name = e.Name,
+                    PactId = string.Empty,
+                    Name = (e.Name ?? string.Empty).Trim(),
                     SpNumber = e.SpNumber
                 })
                 .Where(s => !string.IsNullOrWhiteSpace(s.Name) && !string.IsNullOrWhiteSpace(s.SpNumber))

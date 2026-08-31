@@ -7,6 +7,7 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
     public interface IEmployeeService
     {
         Task<ApiResponseDto<List<EmployeeDto>>> GetFilteredEmployeesAsync(QueryParameters<string> criteria, int filterOption);
+        Task<ApiResponseDto<List<StaffLookupDto>>> GetStaffNameLookupAsync();
         Task<ApiResponseDto<EmployeeDto>> GetEmployeeByIdAsync(string spNumber);
         Task<ApiResponseDto<EmployeeDto>> CreateEmployeeAsync(EmployeeDto employee);
         Task<ApiResponseDto<EmployeeDto>> UpdateEmployeeAsync(EmployeeDto employee);
