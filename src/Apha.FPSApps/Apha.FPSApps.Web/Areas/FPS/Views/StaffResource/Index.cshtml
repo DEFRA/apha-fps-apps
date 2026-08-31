@@ -2,7 +2,7 @@
 @model Apha.FPSApps.Web.Areas.FPS.Models.StaffResourceViewModel
 
 @{
-    ViewData["Title"] = "Resource Utilization View";
+    ViewData["Title"] = "Staff Resource Utilisation View";
 }
 
 @section Styles {
@@ -15,7 +15,7 @@
     <div class="govuk-grid-column-one-half isFloatLeft">
 		<h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 govuk-!-margin-left-3 isCustomPageHeadings">
 			<div class="sup_flex_left_center">
-				Resource Utilization View
+				Staff Resource Utilisation View:
 				@if (!string.IsNullOrWhiteSpace(Model.SelectedProfitCentre))
 				{
 					<div class="display-flex sup_margin_left_5">
@@ -66,20 +66,21 @@
 
         <!-- Right panel: Staff Resource Utilisation grid -->
         <div class="ruv-right-panel">
-            <div class="sup_border-bottom sup_p_5">
-                <div class="sup_flex_between_center">
-                    <div>
-                        <label for="ruvSelectedWorkgroup" class="govuk-!-font-size-16 sup_margin_0 govuk-!-font-weight-bold">
+            <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading">
+                <div class="sup_flex_space_between sup_flex_align_center">
+                    <span>Staff Resource Utilisation</span>
+                    <div class="sup_flex_row_center_center">
+                        <label for="ruvSelectedWorkgroup" class="govuk-!-font-size-16 sup_margin_0 govuk-!-font-weight-bold sup_margin_right_5 isNoWrap">
                             Staff of Workgroup
                         </label>
                         <input id="ruvSelectedWorkgroup"
                                type="text"
-                               class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                               class="govuk-input govuk-!-font-size-16 govuk-input--width-10 govuk-!-margin-bottom-0"
                                readonly
                                value="@Model.SelectedWorkgroup" />
                     </div>
                 </div>
-            </div>
+            </h2>
             <div id="gridContainer_@Model.StaffGrid.GridId">
                 @await Html.PartialAsync("_DataGrid", Model.StaffGrid)
             </div>

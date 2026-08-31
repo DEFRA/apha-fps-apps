@@ -144,6 +144,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<WgStaffPlanViewItem>
             {
                 GridId         = "wgStaffPlanGrid",
+                Title          = "Staff/Project Pivot Table",
                 KeyProperty    = "StaffId",
                 AllowAdd       = false,
                 AllowEdit      = false,

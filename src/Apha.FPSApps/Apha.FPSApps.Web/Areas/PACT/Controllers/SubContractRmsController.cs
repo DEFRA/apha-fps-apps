@@ -14,6 +14,7 @@ using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 using System.IO;
 using Apha.Common.Utilities.ExcelExport;
+using Apha.FPSApps.Web.Handler;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
@@ -27,19 +28,22 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly IProjectService _projectService;
         private readonly IMonthService _monthService;
         private readonly IExcelExportService _excelExportService;
+        private readonly IFpsYearContext _fpsYearContext;
 
         public SubContractRmsController(
             IMapper mapper,
             PactProjectSubContractService subContractService,
             IProjectService projectService,
             IMonthService monthService,
-            IExcelExportService excelExportService)
+            IExcelExportService excelExportService,
+            IFpsYearContext fpsYearContext)
         {
             _mapper = mapper;
             _subContractService = subContractService;
             _projectService = projectService;
             _monthService = monthService;
             _excelExportService = excelExportService;
+            _fpsYearContext = fpsYearContext;
         }
 
         [HttpGet]
@@ -252,8 +256,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ? _mapper.Map<List<SubContractRmsFailedItem>>(response.Data)
                 : new List<SubContractRmsFailedItem>();
 
-            var bytes = _excelExportService.ExportToExcel(items, "SubContractRMS_Failed");
-            var fileName = $"SubContractRMS_{DateTime.Now:yyyyMMdd}_failed.xlsx";
+            var bytes = _excelExportService.ExportToExcel(items, "SubContractRMS", new Dictionary<string, string>
+            {
+                [nameof(SubContractRmsFailedItem.Amount)] = "#,##0.00;-#,##0.00",
+                [nameof(SubContractRmsFailedItem.DailyRate)] = "#,##0.00;-#,##0.00"
+            });
+            var fileName = $"ExportedRMS_{DateTime.Now:ddMMyyyy}.xlsx";
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
@@ -388,7 +396,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private async Task<DataGridConfig<SubContractRmsFailedItem>> BuildFailedSubContractRmsGridAsync(PaginationFilter<string> request)
         {
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _subContractService.GetFailedSubContractRmsAsync(query);
+            var isReadOnlyYear = _fpsYearContext.IsReadOnly;
+            var response = await _subContractService.GetFailedSubContractRmsAsync(query, isReadOnlyYear);
 
             var items = response.Data != null
                 ? _mapper.Map<List<SubContractRmsFailedItem>>(response.Data)

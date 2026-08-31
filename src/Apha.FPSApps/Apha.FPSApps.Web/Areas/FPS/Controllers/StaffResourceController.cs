@@ -138,7 +138,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<StaffResourceWorkgroupItem>
             {
                 GridId = "ruvWorkgroupGrid",
-                Title = "Workgroup",
+                Title = string.Empty,
                 ShowCheckboxColumn = false,
                 ShowPagination = false,
                 KeyProperty = "WorkGroupName",
@@ -160,7 +160,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<StaffResourceStaffItem>
             {
                 GridId = "ruvStaffGrid",
-                Title = "Staff Resource Utilisation",
+                Title = string.Empty,
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffName",
@@ -212,7 +212,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<StaffResourceStaffItem>
             {
                 GridId = "ruvStaffGrid",
-                Title = "Staff Resource Utilisation",
+                Title = string.Empty,
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffName",
