@@ -21,12 +21,11 @@
                     <tbody class="govuk-table__body">
                         <tr class="govuk-table__row">
                             <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
-                                <label class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-0 govuk-!-font-weight-bold isNoWrap" for="programmeDropdown">Select a Resource Center:</label>
+                                <label class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-0 govuk-!-font-weight-bold isNoWrap" for="resourceCentreSelect">Select a Resource Center:</label>
                             </th>
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
                                 <select class="govuk-select"
                                         id="resourceCentreSelect"
-                                        aria-label="Select a Resource Center"
                                         asp-for="SelectedResourceCentre"
                                         asp-items="Model.ResourceCentres"
                                         onchange="LoadGroupsByResourceCentre()">
@@ -35,12 +34,11 @@
                             </td>
 
                             <th scope="row" class="govuk-table__header  govuk-!-padding-right-1 govuk-!-padding-bottom-0 isNoBottomBorder">
-                                <label for="ssrSelectedWorkgroup" class="govuk-label govuk-!-margin-bottom-0 govuk-!-font-weight-bold isNoWrap">Select WorkGroup: </label>
+                                <label for="workGroupSelect" class="govuk-label govuk-!-margin-bottom-0 govuk-!-font-weight-bold isNoWrap">Select WorkGroup: </label>
                             </th>
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 isNoBottomBorder">
                                 <select class="govuk-select"
                                         id="workGroupSelect"
-                                        aria-label="Select a Work Group"
                                         asp-for="SelectedWorkGroup"
                                         asp-items="Model.WorkGroupList"
                                         onchange="LoadGradeByGroup()">
@@ -49,14 +47,13 @@
                             </td>
 
                             <th scope="row" class="govuk-table__header  govuk-!-padding-right-1 govuk-!-padding-bottom-0 isNoBottomBorder">
-                                <label for="ssrSelectedWorkgroup" class="govuk-label govuk-!-margin-bottom-0 govuk-!-font-weight-bold isNoWrap">Select WorkGroup Grade: </label>
+                                <label for="workGroupGradeSelect" class="govuk-label govuk-!-margin-bottom-0 govuk-!-font-weight-bold isNoWrap">Select WorkGroup Grade: </label>
                             </th>
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 isNoBottomBorder">
                                 <select class="govuk-select"
                                         id="workGroupGradeSelect"
-                                        aria-label="Select a Work Group Grade"
                                         onchange="WorkgroupGradeChange()">
-                                    <option value="">-- Select a Work Group --</option>
+                                    <option value="">-- Select a Work Group Grade --</option>
                                 </select>
                             </td>
                         </tr>
@@ -98,12 +95,14 @@
                                                     <div id="gridContainer_StaffJobsGrid" class="s2cra-grid-host s2cra-jobs-grid-host">
                                                         @await Html.PartialAsync("_DataGrid", Model.StaffJobsGrid)
                                                     </div>
-                                                    <div class="s2cra-jobs-footer-highlight" aria-label="Selected staff hours highlight">
-                                                        <input class="govuk-input s2cra-selected-hours-input"
-                                                               id="stage2SelectedStaffHoursInput"
-                                                               type="text"
-                                                               readonly
-                                                               aria-label="Selected staff planned hours" />
+                                                    <div class="s2cra-jobs-footer-highlight">
+                                                        <div class="govuk-form-group s2cra-summary-field govuk-!-margin-bottom-0">
+                                                            <label class="govuk-label" for="stage2SelectedStaffHoursInput">Total Hours</label>
+                                                            <input class="govuk-input s2cra-selected-hours-input"
+                                                                   id="stage2SelectedStaffHoursInput"
+                                                                   type="text"
+                                                                   readonly />
+                                                        </div>
                                                     </div>
 
                                                 </div>

@@ -14,6 +14,12 @@
         if (input) input.value = value;
     }
 
+    // Keeps the "Staff in WorkGroup <WorkGroup>" heading in sync.
+    function setWorkGroupHeading(workGroup) {
+        const wgNameEl = el('ssrSelectedWorkGroupName');
+        if (wgNameEl) wgNameEl.textContent = workGroup || '';
+    }
+
     /* ── Resource-centre cascade ────────────────────────────────────── */
     function LoadGroupsByResourceCentre() {
         const sel = el('resourceCentreSelect');
@@ -33,15 +39,17 @@
         if (!currentCentre) {
             if (nameEl) nameEl.textContent = '';
             currentGrade = '';
+            setWorkGroupHeading('');
             const list = el('ssrGradeList');
             if (list) list.innerHTML = '';
             ssrClearAll();
             return;
         }
-        
+
         if (nameEl) nameEl.textContent = currentCentre;
         currentWorkGroup = '';
         currentGrade = '';
+        setWorkGroupHeading('');
         bindGroupDropdownList([]);
         showLoader();
         $.get('/FPS/SetUpStaffResources/GetGroupsByResourceCentre',
@@ -78,6 +86,7 @@
         const sel = el('workGroupSelect');
         const selectedGroup = sel ? sel.value : '';
         currentWorkGroup = selectedGroup;
+        setWorkGroupHeading(selectedGroup);
 
         if (!selectedGroup) {
             bindGradeList([], null);
@@ -389,6 +398,7 @@
 
                 wgSelect.value = saved.workGroup;
                 currentWorkGroup = saved.workGroup;
+                setWorkGroupHeading(saved.workGroup);
 
                 // ── 3. Load grades for the restored workgroup, activate saved grade ─
                 $.get('/FPS/SetUpStaffResources/GetGradesByGroups',
@@ -426,6 +436,7 @@
         if (rcSelect && rcSelect.value && wgSelect && wgSelect.value) {
             currentCentre = rcSelect.value;
             currentWorkGroup = wgSelect.value;
+            setWorkGroupHeading(currentWorkGroup);
 
             // Update the centre name display
             const nameEl = el('ssrSelectedCentreName');

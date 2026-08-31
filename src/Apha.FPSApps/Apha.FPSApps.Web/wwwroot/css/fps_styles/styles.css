@@ -4283,7 +4283,7 @@ body,
 }
 
 .ssr-summary-label {
-    flex: 0 0 170px;
+    flex: 0 0 190px;
     font-size: 0.875rem;
     line-height: 1.3;
     margin-bottom: 0 !important;
@@ -4303,7 +4303,8 @@ body,
 }
 
 .ssr-person-input {
-    width: 100% !important;
+    /* Width is governed by the .ssr-person-row flex layout further down. */
+    min-width: 0;
 }
 
 .ssr-person-divider {
@@ -4336,6 +4337,15 @@ body,
     .ssr-summary-box {
         flex: 0 0 auto;
         max-width: 100%;
+    }
+
+    .ssr-person-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ssr-person-action {
+        width: 100%;
     }
 }
 
@@ -4453,7 +4463,9 @@ body,
 .s2cra-jobs-footer-highlight {
     margin-top: 6px;
     margin-left: auto;
-    width: 132px;
+    /* Matches the summary panel width so the labelled total lines up with the
+       "Overall Position for the Grade" fields on the right. */
+    width: 160px;
     border: 1px solid #c8cdd3;
     padding: 8px;
     background: #fff;
@@ -4476,6 +4488,7 @@ body,
 
 .s2cra-summary-title {
     margin: 0 0 6px;
+    font-weight: 700;
 }
 
 .s2cra-summary-field {
@@ -4490,6 +4503,7 @@ body,
     .s2cra-summary-field .govuk-input {
         height: 28px;
         font-size: 16px;
+        font-weight: 700;
         border: 2px solid #0b0c0c;
         padding-top: 0;
         padding-bottom: 0;
@@ -5213,19 +5227,24 @@ input.govuk-input.ssr-total-input[readonly] {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: nowrap;
 }
 
 .ssr-summary-label {
-    flex: 0 0 130px;
+    /* Shared fixed width so both inputs start at the same x-position. Wide
+       enough to hold the longest label ("WorkHrs at Staff Level:") on one line. */
+    flex: 0 0 190px;
     font-size: 1rem !important;
-    margin-bottom: 0;
+    margin-bottom: 0 !important;
+    white-space: nowrap;
 }
 
 .ssr-summary-input {
-    flex: 1 1 auto;
+    flex: 0 0 110px;
     max-width: 110px;
     text-align: right;
     height: 30px;
+    border: 2px solid #0b0c0c;
 }
 
 /* Person Selected box */
@@ -5236,10 +5255,26 @@ input.govuk-input.ssr-total-input[readonly] {
     background-color: #f3f2f1;
 }
 
+/* Value and action button share a single line, matching Stage 2. */
+.ssr-person-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .ssr-person-input {
-    font-weight: 600;
-    margin-bottom: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+    font-weight: 700;
+    margin-bottom: 0;
     height: 30px;
+    border: 2px solid #0b0c0c;
+}
+
+.ssr-person-action {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    white-space: nowrap;
 }
 
 .ssr-person-divider {

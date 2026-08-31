@@ -248,7 +248,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             new()
             {
                 GridId = "StaffJobsGrid",
-                Title = "Jobs for Staff",
+                Title = "",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffId",
