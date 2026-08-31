@@ -38,11 +38,11 @@
 
         if (!currentCentre) {
             if (nameEl) nameEl.textContent = '';
+            currentWorkGroup = '';
             currentGrade = '';
             setWorkGroupHeading('');
-            const list = el('ssrGradeList');
-            if (list) list.innerHTML = '';
-            ssrClearAll();
+            bindGroupDropdownList([]);
+            bindGradeList([], null);
             return;
         }
 
@@ -51,6 +51,9 @@
         currentGrade = '';
         setWorkGroupHeading('');
         bindGroupDropdownList([]);
+        // Clear the previous centre's Grade list, summary and staff rows straight
+        // away so stale data is not shown while the new work groups are fetched.
+        bindGradeList([], null);
         showLoader();
         $.get('/FPS/SetUpStaffResources/GetGroupsByResourceCentre',
             { resourceCentre: currentCentre },
@@ -135,7 +138,10 @@
         });
 
         if (grades && grades.length > 0) {
-            const allGrades = grades.map(function (g) { return typeof g === 'object' ? g.wgGrade : g; });
+            applyGradeSort();
+            const allGrades = Array.prototype.slice
+                .call(list.querySelectorAll('.ssr-grade-item'))
+                .map(function (li) { return li.textContent.trim(); });
             const target    = (restoreGrade && allGrades.includes(restoreGrade))
                 ? restoreGrade
                 : allGrades[0];
@@ -145,6 +151,33 @@
             ssrClearAll();
             reloadStaffGrid();
         }
+    }
+
+    /* ── Grade list sorting ─────────────────────────────────────────── */
+    let gradeSortAsc = true;
+
+    // Reorders the existing grade <li> nodes; keeps the active selection intact.
+    function applyGradeSort() {
+        const list = el('ssrGradeList');
+        if (!list) return;
+
+        const items = Array.prototype.slice.call(list.querySelectorAll('.ssr-grade-item'));
+        items.sort(function (a, b) {
+            const result = a.textContent.trim().localeCompare(b.textContent.trim(), undefined, { numeric: true, sensitivity: 'base' });
+            return gradeSortAsc ? result : -result;
+        });
+        items.forEach(function (li) { list.appendChild(li); });
+
+        const indicator = el('ssrGradeSortIndicator');
+        if (indicator) indicator.textContent = gradeSortAsc ? '▲' : '▼';
+
+        const button = el('ssrGradeSortButton');
+        if (button) button.setAttribute('aria-sort', gradeSortAsc ? 'ascending' : 'descending');
+    }
+
+    function ssrToggleGradeSort() {
+        gradeSortAsc = !gradeSortAsc;
+        applyGradeSort();
     }
 
     /* ── Grade selection ────────────────────────────────────────────── */
@@ -460,9 +493,13 @@
 
     // Execute immediately if DOM is already loaded, otherwise wait for DOMContentLoaded
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializePageLoadState);
+        document.addEventListener('DOMContentLoaded', function () {
+            applyGradeSort();
+            initializePageLoadState();
+        });
     } else {
         // DOM is already loaded, execute immediately
+        applyGradeSort();
         initializePageLoadState();
     }
 
@@ -477,6 +514,7 @@
     window.LoadGroupsByResourceCentre = LoadGroupsByResourceCentre;
     window.LoadGradeByGroup = LoadGradeByGroup;
     window.ssrSelectWorkGroup = ssrSelectWorkGroup;
+    window.ssrToggleGradeSort = ssrToggleGradeSort;
     window.ssrGetStaffExtraFilters = ssrGetStaffExtraFilters;
     window.ssrOnStaffRowSelect = ssrOnStaffRowSelect;
     window.editSsrStaff = editSsrStaff;
