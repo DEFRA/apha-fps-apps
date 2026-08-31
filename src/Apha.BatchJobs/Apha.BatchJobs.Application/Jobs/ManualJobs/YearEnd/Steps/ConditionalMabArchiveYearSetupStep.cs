@@ -4,8 +4,7 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
 /// <summary>
-/// MABArchive is not baseline Year End scope (governing design decision) — this step is a no-op
-/// until MABArchive participation is separately approved as a future, explicit change.
+/// No-op — MABArchive is out of scope for Year End until separately approved.
 /// </summary>
 public sealed class ConditionalMabArchiveYearSetupStep : IYearEndDataSetupStep
 {

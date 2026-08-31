@@ -6,13 +6,10 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
 /// <summary>
-/// Copies every year-scoped fps schema table classified <see cref="YearEndTableRuleAction.CopyToTargetYear"/>
-/// in the <see cref="YearEndTableRuleMatrix"/> from the current FPS year into the target FPS year,
-/// using strict year scoping. Matrix-driven and dependency-ordered: processes entries in ascending
-/// <see cref="YearEndTableRuleMatrixEntry.CopyOrder"/> so a referenced table's target-year row
-/// always exists before the referencing table is copied. This step performs a pure copy only —
-/// column-level resets are applied later by <see cref="ProjectFinancialResetStep"/>/
-/// <see cref="ConfiguredPlanningResetStep"/>.
+/// Copies every matrix table marked <see cref="YearEndTableRuleAction.CopyToTargetYear"/> from the
+/// current FPS year to the target year, in ascending <see cref="YearEndTableRuleMatrixEntry.CopyOrder"/>
+/// so referenced rows exist before referencing ones. Pure copy only — column resets happen later in
+/// <see cref="ProjectFinancialResetStep"/>/<see cref="ConfiguredPlanningResetStep"/>.
 /// </summary>
 public sealed class CopyFpsYearScopedTablesStep : IYearEndDataSetupStep
 {

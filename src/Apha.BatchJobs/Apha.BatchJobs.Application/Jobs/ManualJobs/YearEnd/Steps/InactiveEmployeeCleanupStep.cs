@@ -5,24 +5,14 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
 /// <summary>
-/// Removes target-year <c>fps.tblwgemployee</c> rows (and their dependent <c>fps.tblstaffjob</c>
-/// rows) for employees who were inactive in the target year and are not the General Staff exemption,
-/// per the legacy <c>Annual_WGEmployeeList.sql</c> Year End rule:
-///
+/// Removes target-year tblwgemployee rows (and their tblstaffjob rows) for inactive employees,
+/// unless they match the General Staff exemption:
 /// <list type="bullet">
-/// <item>Inactive candidate: <c>personstatus = 'I'</c> (case-insensitive) AND
-/// <c>enddate IS NULL</c>, evaluated against the target year's own row only.</item>
-/// <item>General Staff exemption (retained even if inactive):
-/// <c>spnumber LIKE 'G%'</c> (case-sensitive) AND <c>UPPER(firstname) = 'GENERAL'</c>. Both
-/// conditions required — this AND reading is not equivalent to OR against live data.</item>
-/// <item>Any <c>personstatus</c> value other than <c>A</c>/<c>a</c>/<c>I</c>/<c>i</c> is a
-/// data-quality error, surfaced before any deletion — never silently treated as active or
-/// inactive.</item>
+/// <item>Inactive: <c>personstatus = 'I'</c> AND <c>enddate IS NULL</c> on the target year's row.</item>
+/// <item>Exempt: <c>spnumber LIKE 'G%'</c> AND <c>firstname = 'GENERAL'</c> (both required).</item>
+/// <item>Any other <c>personstatus</c> value fails validation before any deletion happens.</item>
 /// </list>
-///
-/// FPS-only: no <c>mabarchive</c> table is referenced. MABArchive participation in Year End is
-/// gated exclusively through the dedicated MABArchive setup step — this step must not reach into
-/// MABArchive outside that gate.
+/// FPS-only — never touches mabarchive tables.
 /// </summary>
 public sealed class InactiveEmployeeCleanupStep : IYearEndDataSetupStep
 {

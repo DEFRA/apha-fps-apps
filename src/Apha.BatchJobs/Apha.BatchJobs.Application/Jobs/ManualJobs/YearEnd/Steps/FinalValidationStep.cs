@@ -77,10 +77,7 @@ public sealed class FinalValidationStep : IYearEndDataSetupStep
                 break;
 
             default:
-                // PendingClassification/CreateTargetYearRow/ResetTargetYearRows/SkipLegacyObsolete/
-                // ManualReviewRequired: none of these are ever expected on a live matrix entry.
-                // Deliberately no default validation — an unresolved action reaching here is a
-                // matrix authoring gap, not something to silently pass or silently skip.
+                // Any other action isn't expected on a live entry — fail loudly rather than skip.
                 throw new InvalidOperationException(
                     $"Matrix entry {entry.Schema}.{entry.TableName} has action {entry.Action}, which final validation does not know how to check.");
         }
@@ -214,11 +211,8 @@ public sealed class FinalValidationStep : IYearEndDataSetupStep
         int targetFpsYear,
         CancellationToken cancellationToken)
     {
-        // Independent re-check, run at the very end of the pipeline — deliberately keeps its own
-        // skip-if-missing behaviour (unlike ValidateTargetYearEmptyTablesStep, which treats a missing
-        // table/column as a hard failure). This step is defense-in-depth, not the schema's contract
-        // owner; ValidateYearScopedSchemaStep and ValidateTargetYearEmptyTablesStep already enforce
-        // that guarantee earlier in the pipeline.
+        // Defense-in-depth re-check — unlike ValidateTargetYearEmptyTablesStep, a missing
+        // table/column here is skipped, not a hard failure.
         if (!await _repository.TableExistsAsync(entry.Schema, entry.TableName, cancellationToken))
         {
             return;

@@ -8,9 +8,8 @@ namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 public static class YearEndPlannedYearParser
 {
     /// <summary>
-    /// Parses <c>plannedYear</c> (the production event field), falling back to the legacy
-    /// <c>targetFpsYear</c> alias when <c>plannedYear</c> is absent. Throws when both are present
-    /// and disagree, so a malformed/ambiguous payload fails fast rather than silently picking one.
+    /// Parses <c>plannedYear</c>, falling back to the legacy <c>targetFpsYear</c> alias if absent.
+    /// Throws if both are present but disagree, rather than silently picking one.
     /// </summary>
     public static int? Parse(string? parametersJson)
     {

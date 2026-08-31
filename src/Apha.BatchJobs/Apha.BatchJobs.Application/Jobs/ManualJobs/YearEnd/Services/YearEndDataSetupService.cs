@@ -8,13 +8,9 @@ namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 /// Service-layer entry point for Year End Data Setup.
 /// </summary>
 /// <remarks>
-/// The entire step pipeline runs inside <see cref="IYearEndDataSetupTransactionManager.ExecuteAsync"/>
-/// (main-port Phase 7A, 2026-08-28) — all 11 steps commit together, or any step's exception rolls back
-/// every mutation made so far in this run. Steps themselves are unchanged: they still just take
-/// <see cref="YearEndExecutionContext"/> and a <see cref="CancellationToken"/>, with no
-/// transaction/connection type in their signature — atomicity comes entirely from the Year End Data
-/// Setup repository sharing one scoped <c>BatchJobsDbContext</c> for the duration of this call, not
-/// from anything the steps do differently.
+/// Runs all steps inside one <see cref="IYearEndDataSetupTransactionManager.ExecuteAsync"/> call so
+/// they commit together, or roll back together if any step throws. Atomicity comes from the
+/// repository sharing one scoped <c>BatchJobsDbContext</c> across all steps.
 /// </remarks>
 public sealed class YearEndDataSetupService : IYearEndDataSetupService
 {

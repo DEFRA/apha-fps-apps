@@ -6,11 +6,8 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
 /// <summary>
-/// Applies the <see cref="YearEndResetPhase.ProjectFinancialReset"/> column overrides — matrix-driven,
-/// currently just <c>tlkpproject</c>'s financial/planning fields — to target-year rows using strict
-/// year scoping. FPS-only: MABArchive participation in Year End is gated exclusively through
-/// <see cref="ConditionalMabArchiveYearSetupStep"/>, which defaults to no-op unless separately
-/// approved — this step must not reset any <c>mabarchive.my_*</c> table.
+/// Resets tlkpproject's financial/planning columns for the target year (matrix-driven). FPS-only —
+/// never touches mabarchive tables.
 /// </summary>
 public sealed class ProjectFinancialResetStep : IYearEndDataSetupStep
 {

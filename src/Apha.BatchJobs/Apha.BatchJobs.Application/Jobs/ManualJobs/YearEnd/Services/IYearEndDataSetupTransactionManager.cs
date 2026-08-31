@@ -1,11 +1,8 @@
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
 /// <summary>
-/// Wraps the full Year End Data Setup pipeline (all registered <see cref="Steps.IYearEndDataSetupStep"/>
-/// invocations) in a single atomic transaction — mirrors
-/// <see cref="Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Ports.IMabArchiveTransactionManager"/>'s
-/// shape exactly. All steps succeed and commit together, or any step throws and every mutation made
-/// so far in this run rolls back.
+/// Runs the full Year End Data Setup step pipeline in one transaction — all steps commit together,
+/// or all roll back if any step throws.
 /// </summary>
 public interface IYearEndDataSetupTransactionManager
 {

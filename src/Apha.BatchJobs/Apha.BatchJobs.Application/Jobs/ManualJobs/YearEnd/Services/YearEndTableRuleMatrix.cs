@@ -11,10 +11,8 @@ public enum YearEndTableRole
     YearScopedBusinessParticipant,
 
     /// <summary>
-    /// Not a Table 23 business-copy participant, but still year-scoped (partitioned by
-    /// <c>fpsyear</c>) and depended on by Year End — <c>fps.tblsettings</c>/<c>fps.tlkpmonthhours</c>,
-    /// read by the Year End context/configuration validation step (source branch's
-    /// <c>ValidateYearEndConfigurationStep</c> — not yet ported to `main`, out of this port's scope).
+    /// Not a business-copy table, but still year-scoped and read during schema validation
+    /// (e.g. <c>fps.tblsettings</c>/<c>fps.tlkpmonthhours</c>).
     /// </summary>
     YearScopedConfigurationDependency,
 
@@ -22,27 +20,24 @@ public enum YearEndTableRole
     GlobalReference,
 
     /// <summary>
-    /// Spec §19 legacy candidates — year-scoped (partitioned by <c>fpsyear</c>) but must start (and
-    /// stay) empty in the target year: validated, never populated, never deleted, by
-    /// <see cref="ValidateTargetYearEmptyTablesStep"/> and independently re-verified by
-    /// <see cref="FinalValidationStep"/>. Not Table 23 business participants.
+    /// Year-scoped but must stay empty in the target year — validated, never populated or deleted,
+    /// by <see cref="ValidateTargetYearEmptyTablesStep"/> and re-checked by <see cref="FinalValidationStep"/>.
     /// </summary>
     YearScopedTargetMustBeEmpty
 }
 
 /// <summary>
 /// The Year End action approved for a table. <see cref="PendingClassification"/> and
-/// <see cref="AlreadyImplementedViaDedicatedStep"/> are placeholders pending Phase 2 steps 3-4 —
-/// they must not be treated as "safe to generically copy" by any step.
+/// <see cref="AlreadyImplementedViaDedicatedStep"/> are placeholders — not safe to treat as a
+/// generic copy.
 /// </summary>
 public enum YearEndTableRuleAction
 {
-    /// <summary>Not yet decided — Phase 2 steps 3-4 replace this with an approved action.</summary>
+    /// <summary>Not yet decided.</summary>
     PendingClassification,
 
     /// <summary>
-    /// Already has bespoke handling via an existing dedicated step (e.g. <c>tblperiod</c> via
-    /// <see cref="PeriodSetupStep"/>) — must not be folded into a generic action.
+    /// Has bespoke handling via its own step (e.g. <c>tblperiod</c> via <see cref="PeriodSetupStep"/>).
     /// </summary>
     AlreadyImplementedViaDedicatedStep,
 
@@ -55,22 +50,17 @@ public enum YearEndTableRuleAction
     ManualReviewRequired,
 
     /// <summary>
-    /// This matrix entry's target-year rows must be absent — validated and never populated by any
-    /// Year End step, and never deleted by one either. The pre-modernization architecture (one
-    /// database per FPS year) deleted these tables' contents as part of Year End; the current
-    /// multi-year, single-database architecture instead never copies/inserts target-year rows for
-    /// them in the first place, so the correct production behaviour is "assert zero rows, fail if
-    /// not" — never a DELETE. Owned by <see cref="ValidateTargetYearEmptyTablesStep"/>, independently
-    /// re-verified by <see cref="FinalValidationStep"/>.
+    /// Target-year rows must be absent — validated, never populated or deleted by any Year End
+    /// step. Owned by <see cref="ValidateTargetYearEmptyTablesStep"/>, re-checked by
+    /// <see cref="FinalValidationStep"/>.
     /// </summary>
     TargetYearMustBeEmpty
 }
 
 /// <summary>
-/// Names for the pipeline reset step responsible for applying a matrix entry's
-/// <see cref="YearEndTableRuleMatrixEntry.Overrides"/>. Shared between the matrix data below and
-/// <see cref="ProjectFinancialResetStep"/>/<see cref="ConfiguredPlanningResetStep"/> so the two
-/// never drift out of sync via a typo'd literal.
+/// Reset-phase names shared between the matrix data below and
+/// <see cref="ProjectFinancialResetStep"/>/<see cref="ConfiguredPlanningResetStep"/> so they can't
+/// drift out of sync via a typo'd literal.
 /// </summary>
 public static class YearEndResetPhase
 {
@@ -79,67 +69,44 @@ public static class YearEndResetPhase
 }
 
 /// <summary>
-/// How <see cref="FinalValidationStep"/> should compare a <see cref="YearEndTableRuleAction.CopyToTargetYear"/>
-/// table's final target-year row count against its source-year row count. Deliberately an enum, not
-/// a boolean flag — "does row count change after copy, and how" is a business rule with more than
-/// two meaningfully different answers, and an enum reads that intent directly at each call site
-/// instead of requiring a reader to know what <c>true</c>/<c>false</c> means for this specific flag.
+/// How <see cref="FinalValidationStep"/> compares a <see cref="YearEndTableRuleAction.CopyToTargetYear"/>
+/// table's final row count against its source-year count.
 /// </summary>
 public enum YearEndFinalRowCountRule
 {
     /// <summary>Row-count comparison doesn't apply (non-<c>CopyToTargetYear</c> entries).</summary>
     NotApplicable,
 
-    /// <summary>
-    /// Target-year row count must equal source-year row count — the default for a plain copy.
-    /// Nothing between <see cref="CopyFpsYearScopedTablesStep"/> and Data Setup completion is
-    /// expected to change this table's row count.
-    /// </summary>
+    /// <summary>Target row count must equal source row count — the default for a plain copy.</summary>
     MatchSource,
 
     /// <summary>
-    /// Target-year row count must be less than or equal to source-year row count — for tables a
-    /// later pipeline step is expected to legitimately remove rows from after the copy (currently
-    /// only <c>tblstaffjob</c>, via <see cref="InactiveEmployeeCleanupStep"/>). This is a row-count
-    /// sanity check only ("did *something* run"), not proof the removal itself was correct — that's
-    /// a business-invariant check <see cref="InactiveEmployeeCleanupStep"/>'s own correctness fixes
-    /// are responsible for, not <see cref="FinalValidationStep"/>'s row-count arithmetic.
+    /// Target row count must be at most the source row count — for tables a later step legitimately
+    /// removes rows from after the copy (currently only <c>tblstaffjob</c>, via
+    /// <see cref="InactiveEmployeeCleanupStep"/>).
     /// </summary>
     AtMostSource
 }
 
 /// <summary>
 /// One row of the Year End Table Rule Matrix — the single source of truth for which tables Year
-/// End is aware of, how each relates to the FPS year, and what (if anything) has been approved to
-/// happen to it. Consumed by <see cref="ValidateYearScopedSchemaStep"/> (partition-existence
-/// validation), <see cref="CopyFpsYearScopedTablesStep"/> (<see cref="CopyOrder"/>-driven copy),
-/// <see cref="ProjectFinancialResetStep"/>/<see cref="ConfiguredPlanningResetStep"/>
-/// (<see cref="ResetPhase"/>/<see cref="Overrides"/>-driven resets), <see cref="ValidateTargetYearEmptyTablesStep"/>
-/// (<see cref="YearEndTableRuleAction.TargetYearMustBeEmpty"/>-driven validation), and
-/// <see cref="FinalValidationStep"/> (dispatches per-entry validation by <see cref="Role"/>/<see cref="Action"/>,
-/// including <see cref="FinalRowCountRule"/>).
+/// End knows about, how each relates to the FPS year, and what's approved to happen to it.
 /// </summary>
 /// <param name="CopyOrder">
-/// Dependency-ordering key for <see cref="YearEndTableRuleAction.CopyToTargetYear"/> entries only —
-/// derived from the Phase 2 FK/dependency scan's topological layers (0 = no dependency on another
-/// matrix entry, higher numbers depend on lower ones). <c>null</c> for every other action.
-/// <see cref="CopyFpsYearScopedTablesStep"/> processes entries in ascending <see cref="CopyOrder"/>
-/// so a referenced table's target-year row always exists before the referencing table is copied.
+/// Dependency order for <see cref="YearEndTableRuleAction.CopyToTargetYear"/> entries — lower
+/// numbers are copied first so referenced rows exist before referencing ones. <c>null</c> otherwise.
 /// </param>
 /// <param name="ResetPhase">
-/// Which reset step (see <see cref="YearEndResetPhase"/>) applies <see cref="Overrides"/> to this
-/// table's target-year rows, after <see cref="CopyFpsYearScopedTablesStep"/> has run. <c>null</c>
-/// when the table has no column-level reset — <c>CopyToTargetYear</c> alone is a plain copy.
+/// Which reset step applies <see cref="Overrides"/> to this table, after the copy step has run.
+/// <c>null</c> if the table has no column-level reset.
 /// </param>
 /// <param name="Overrides">
-/// Column name -> literal SQL value (e.g. <c>"0"</c>, <c>"NULL"</c>) applied via <c>UPDATE ... SET</c>
-/// to this table's target-year rows by whichever step matches <see cref="ResetPhase"/>. Only
-/// meaningful when <see cref="ResetPhase"/> is set.
+/// Column name -> literal SQL value applied via <c>UPDATE ... SET</c> to target-year rows, by
+/// whichever step matches <see cref="ResetPhase"/>.
 /// </param>
 /// <param name="FinalRowCountRule">
-/// How <see cref="FinalValidationStep"/> compares this table's final target-year row count against
-/// its source-year row count. Only meaningful for <see cref="YearEndTableRuleAction.CopyToTargetYear"/>
-/// entries — <see cref="YearEndFinalRowCountRule.NotApplicable"/> everywhere else.
+/// How <see cref="FinalValidationStep"/> checks this table's final row count. Only meaningful for
+/// <see cref="YearEndTableRuleAction.CopyToTargetYear"/> entries.
 /// </param>
 public sealed record YearEndTableRuleMatrixEntry(
     string Schema,
@@ -154,35 +121,22 @@ public sealed record YearEndTableRuleMatrixEntry(
     YearEndFinalRowCountRule FinalRowCountRule = YearEndFinalRowCountRule.NotApplicable);
 
 /// <summary>
-/// The Year End Table Rule Matrix. All 38 Table 23 entries, the 3 year-scoped configuration
-/// dependencies, the 3 global/reference participants, and the 21 spec §19 must-start-empty
-/// tables — every table Year End's schema validation and business-data steps are aware of. Every
-/// table-name list Year End steps use lives here; no step should own a second, independent list.
-///
-/// <para>
-/// <see cref="Entries"/> totals <b>65</b> rows across 4 <see cref="YearEndTableRole"/> values —
-/// the full schema-validation universe (<see cref="ValidateYearScopedSchemaStep"/> checks routing
-/// for all 65). A commonly-quoted narrower figure, <b>59</b>, is the mutable-business-data subset:
-/// 38 <see cref="YearEndTableRole.YearScopedBusinessParticipant"/> + 21
-/// <see cref="YearEndTableRole.YearScopedTargetMustBeEmpty"/> — the tables Year End actually
-/// copies, resets, or clears. The excluded 6 (3 <see cref="YearEndTableRole.YearScopedConfigurationDependency"/>
-/// + 3 <see cref="YearEndTableRole.GlobalReference"/>) are validated but never written by the
-/// business-data steps. Both numbers are correct; they answer different questions — don't collapse
-/// them into a single count.
-/// </para>
+/// The Year End Table Rule Matrix — single source of truth for every table Year End's schema
+/// validation and business-data steps use. No step should keep its own second, independent list.
 /// </summary>
+/// <remarks>
+/// 65 entries total: 38 business participants + 21 must-stay-empty tables (the 59 that Year End
+/// actually copies, resets, or checks are empty) plus 6 read-only reference/config tables.
+/// </remarks>
 public static class YearEndTableRuleMatrix
 {
     private const string Schema = "fps";
 
     public static IReadOnlyList<YearEndTableRuleMatrixEntry> Entries { get; } =
     [
-        // 38 year-scoped business participants (Table 23). Actions/CopyOrder/ResetPhase/Overrides/
-        // FinalRowCountRule confirmed 2026-08-14 against the Table 23 workbook + a read-only FK/
-        // dependency scan — see docs/fps-year-end-phase2-table-classification-draft-2026-08-14.md
-        // for full rationale and evidence per table. CopyOrder values are the scan's 6 topological
-        // layers (0-5). FinalRowCountRule is MatchSource for every CopyToTargetYear entry except
-        // tblstaffjob (AtMostSource — InactiveEmployeeCleanupStep may remove rows afterward).
+        // 38 year-scoped business participants (Table 23). CopyOrder = FK-dependency layer (0-5).
+        // FinalRowCountRule is MatchSource except tblstaffjob (AtMostSource — InactiveEmployeeCleanupStep
+        // may remove rows after copy).
         new(Schema, "costcentre", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["costcentre", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
         new(Schema, "divisiongrade", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["divisiongrade", "fpsyear"], CopyOrder: 1, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
         new(Schema, "grade", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["gradecode", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
@@ -278,27 +232,10 @@ public static class YearEndTableRuleMatrix
         new(Schema, "tblcategory", YearEndTableRole.GlobalReference, YearEndTableRuleAction.ValidateExists, []),
         new(Schema, "tblkpprofitcentre", YearEndTableRole.GlobalReference, YearEndTableRuleAction.ValidateExists, []),
 
-        // 21 spec §19 "must start empty in the target year" legacy candidates. Migrated 2026-08-14
-        // from TargetYearEmptyTablesStep's own hardcoded CandidateTables list and
-        // FinalValidationStep's separate (and incomplete — only 7 of these 21) hardcoded
-        // MustBeEmptyTargetYearTables list, so there is exactly one authoritative table-name list
-        // instead of three. All 21 confirmed to exist in batchjob_testing (read-only scan,
-        // 2026-08-14), all use fpsyear (not year) as their partition column, all are native
-        // LIST(fpsyear) partitioned tables like the Table 23 set, all have a real primary key.
-        //
-        // Action/step renamed 2026-08-28 (Phase 7B), off the Year End Process New Approach workbook:
-        // every one of these 21 tables' old-architecture Annual_UpdateOtherTables.sql DELETE is
-        // marked N/A there, remarked "Year Identification column in table" — the one-database-per-year
-        // architecture deleted these tables' contents as part of Year End; the current multi-year,
-        // single-database architecture never copies/inserts target-year rows for them at all, so the
-        // correct production behaviour is "assert zero target-year rows, fail if not", never a DELETE.
-        // ValidateTargetYearEmptyTablesStep (was TargetYearEmptyTablesStep) now only validates this;
-        // it does not mutate. Unlike the old delete-then-continue behaviour, a missing table or
-        // unresolvable year column is now a hard failure in that step, not a silent skip — schema
-        // existence for these 21 is ValidateYearScopedSchemaStep's contract, and this step trusts and
-        // re-affirms it rather than quietly tolerating drift. FinalValidationStep's independent
-        // re-check at the end of the pipeline keeps its own pre-existing skip-if-missing behaviour,
-        // unchanged — it is a defense-in-depth re-verification, not the schema's contract owner.
+        // 21 tables that must stay empty in the target year. The old one-database-per-year
+        // architecture deleted these each Year End; the current single-database architecture never
+        // writes target-year rows for them at all, so the correct check is "assert zero rows", never
+        // a DELETE. Validated by ValidateTargetYearEmptyTablesStep, re-checked by FinalValidationStep.
         new(Schema, "additionalcosts_log", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["sequenceno", "fpsyear"]),
         new(Schema, "animalreq_log", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["sequenceno", "fpsyear"]),
         new(Schema, "fpsyeartotals", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["parentproject", "fpsyear"]),

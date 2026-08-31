@@ -6,30 +6,14 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
 /// <summary>
-/// Validates that every <see cref="YearEndTableRuleMatrix"/> entry classified
-/// <see cref="YearEndTableRuleAction.TargetYearMustBeEmpty"/> (the spec §19 "must start empty in the
-/// target year" legacy candidates) has zero target-year rows. Matrix-driven — no local table list; the
-/// matrix is the single authoritative list, also consumed by <see cref="FinalValidationStep"/> to
-/// independently re-verify the same result at the end of the pipeline.
+/// Validates that every matrix entry marked <see cref="YearEndTableRuleAction.TargetYearMustBeEmpty"/>
+/// has zero target-year rows. Matrix-driven, no local table list — also re-checked independently at
+/// the end of the pipeline by <see cref="FinalValidationStep"/>.
 /// </summary>
 /// <remarks>
-/// Renamed and rewritten 2026-08-28 (Phase 7B) off the Year End Process New Approach workbook: every
-/// one of these 21 tables' old-architecture <c>Annual_UpdateOtherTables.sql</c> DELETE is marked N/A
-/// there, remarked "Year Identification column in table". The one-database-per-year architecture
-/// deleted these tables' contents as part of Year End; the current multi-year, single-database
-/// architecture never copies/inserts target-year rows for them at all (see
-/// <see cref="CopyFpsYearScopedTablesStep"/>, which filters strictly to
-/// <see cref="YearEndTableRuleAction.CopyToTargetYear"/>), so the correct production behaviour is to
-/// assert absence and fail loudly if it doesn't hold — never a DELETE. This step performs no mutation.
-///
-/// <para>
-/// A missing table or unresolvable year column is a hard failure here, not a skip:
-/// <see cref="ValidateYearScopedSchemaStep"/> runs earlier specifically to guarantee these 21 tables'
-/// schema exists, and silently tolerating its absence this late would quietly weaken that guarantee
-/// and could mask pipeline/configuration drift. <see cref="FinalValidationStep"/>'s independent
-/// re-check keeps its own pre-existing skip-if-missing behaviour — it is defense-in-depth, not the
-/// schema's contract owner.
-/// </para>
+/// No mutation — this only asserts absence and fails loudly if rows exist. A missing table or year
+/// column is a hard failure here (not a skip): <see cref="ValidateYearScopedSchemaStep"/> already
+/// guarantees this schema exists earlier in the pipeline.
 /// </remarks>
 public sealed class ValidateTargetYearEmptyTablesStep : IYearEndDataSetupStep
 {
@@ -75,11 +59,8 @@ public sealed class ValidateTargetYearEmptyTablesStep : IYearEndDataSetupStep
     }
 
     /// <summary>
-    /// Validates one matrix entry: table and year column must exist (a hard failure otherwise — see
-    /// the type-level remarks), and the target year must have zero rows in it. Internal, rather than
-    /// private, purely so tests can exercise this step's missing-table/missing-year-column failure
-    /// modes directly with a synthetic <see cref="YearEndTableRuleMatrixEntry"/>, without needing to
-    /// fake an entry into the real, single-source-of-truth <see cref="YearEndTableRuleMatrix"/>.
+    /// Validates one entry: table/year column must exist, target year must have zero rows. Internal
+    /// (not private) so tests can exercise it directly with a synthetic entry.
     /// </summary>
     internal async Task ValidateEntryAsync(YearEndTableRuleMatrixEntry entry, int targetFpsYear, CancellationToken cancellationToken)
     {

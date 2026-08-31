@@ -3,13 +3,9 @@ using Apha.BatchJobs.Domain.Interfaces;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
 /// <summary>
-/// Shared policy check for <see cref="YearEndTableRuleAction.TargetYearMustBeEmpty"/> matrix entries:
-/// the target year must have zero rows in this table. Used by both
-/// <see cref="Steps.ValidateTargetYearEmptyTablesStep"/> (runs mid-pipeline) and
-/// <see cref="Steps.FinalValidationStep"/> (independent re-check at the end of the pipeline) so the
-/// same policy can't drift between the two call sites. Callers are responsible for resolving
-/// <c>yearColumn</c> and deciding what to do if the table/column doesn't exist — this
-/// method assumes both are already known-good and only enforces the row-count policy itself.
+/// Shared check that a table has zero target-year rows. Used by both
+/// <see cref="Steps.ValidateTargetYearEmptyTablesStep"/> and <see cref="Steps.FinalValidationStep"/>
+/// so the check can't drift between the two. Assumes the table/column already exist.
 /// </summary>
 internal static class YearEndTargetYearEmptyPolicy
 {

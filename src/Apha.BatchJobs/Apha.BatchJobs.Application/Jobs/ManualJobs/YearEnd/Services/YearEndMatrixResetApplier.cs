@@ -4,13 +4,9 @@ using Microsoft.Extensions.Logging;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
 /// <summary>
-/// Applies matrix-defined column overrides (<see cref="YearEndTableRuleMatrixEntry.Overrides"/>) for
-/// whichever <see cref="YearEndTableRuleMatrixEntry.ResetPhase"/> a pipeline reset step owns. Shared
-/// by <see cref="Steps.ProjectFinancialResetStep"/> and <see cref="Steps.ConfiguredPlanningResetStep"/>
-/// so the reset rule for each table is represented once in the matrix and executed once, rather than
-/// hardcoded independently in every step that applies it. Table-name source is
-/// <see cref="YearEndTableRuleMatrix"/> only — never <c>mabarchive</c>, since the matrix has no
-/// <c>mabarchive</c> entries.
+/// Applies matrix-defined column overrides for a given reset phase. Shared by
+/// <see cref="Steps.ProjectFinancialResetStep"/> and <see cref="Steps.ConfiguredPlanningResetStep"/>
+/// so each table's reset rule lives once in <see cref="YearEndTableRuleMatrix"/>, not per-step.
 /// </summary>
 internal static class YearEndMatrixResetApplier
 {

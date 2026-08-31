@@ -6,9 +6,8 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
 /// <summary>
-/// Validates that Year End year-control metadata exists and contains the current year row, and that
-/// every year-scoped table in <see cref="YearEndTableRuleMatrix"/> has a routing destination for the
-/// target year.
+/// Validates that fps.tblyearmaster has the current year, and every year-scoped table in the matrix
+/// has a routing destination for the target year.
 /// </summary>
 public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
 {
@@ -68,15 +67,9 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
     }
 
     /// <summary>
-    /// Year End performs no DDL. <c>fpsyear</c> is the authoritative business-year discriminator —
-    /// the physical partition a row lands in is a storage implementation detail, not a business
-    /// concept Year End enforces. Every year-scoped table — the 38 Table 23 business participants,
-    /// the 3 year-scoped configuration dependencies, and the 21
-    /// <see cref="YearEndTableRole.YearScopedTargetMustBeEmpty"/> tables (62 total) — must already
-    /// have a routing destination for the target year before any business-data mutation begins: an
-    /// explicit <c>FOR VALUES IN (targetYear)</c> partition, or an attached <c>DEFAULT</c>
-    /// partition. Either is a legitimate, DDL-free destination; this only validates routability,
-    /// never creates partitions.
+    /// Checks every year-scoped table has a routing destination for the target year — an explicit
+    /// partition or an attached DEFAULT partition. Read-only: Year End never creates partitions
+    /// itself, that's a DB/DBA prerequisite.
     /// </summary>
     private async Task ValidateTargetYearPartitionsAsync(int targetYear, CancellationToken cancellationToken)
     {
