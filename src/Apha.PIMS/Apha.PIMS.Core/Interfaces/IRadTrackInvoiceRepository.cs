@@ -23,7 +23,7 @@ namespace Apha.PIMS.Core.Interfaces
         Task<RadTrackInvoice> CreateAsync(RadTrackInvoice entity);
         Task<RadTrackInvoice> UpdateAsync(RadTrackInvoice entity);
         Task<bool> DeleteAsync(int invoiceCounter);
-        Task<RadTrackInvoiceTotals> GetTotalsAsync(RadTrackInvoiceFilter? filter);
+        Task<RadTrackInvoiceTotals> GetTotalsAsync(RadTrackInvoiceFilter? filter, string? search = null);
         Task<bool> ExistsAsync(string? project, string? contract, string? invoiceRef, int? excludeInvoiceCounter = null);
 
         // Lookup queries matching Access qryShowWhichProjects_GRadtrack, tlkpYear, tblRadtrackContract
