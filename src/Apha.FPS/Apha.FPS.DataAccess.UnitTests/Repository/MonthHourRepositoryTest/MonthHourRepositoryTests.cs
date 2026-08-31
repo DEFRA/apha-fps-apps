@@ -361,16 +361,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
 
         #region GetDistinctYearsAsync
 
-        // GetDistinctYearsAsync projects MonthHour.Year (short) via .Select(m => m.Year).
-        // TestAsyncEnumerable<T> has a 'where T : class' constraint; projecting to a value type
-        // causes TestAsyncQueryProvider.CreateQuery<short>() to throw ArgumentException when it
-        // attempts to construct TestAsyncEnumerable<short>.
-        // The tests below confirm each code path is entered by verifying that exception.
-
         [Fact]
-        public async Task GetDistinctYearsAsync_WithData_ThrowsDueToValueTypeProjectionConstraint()
+        public async Task GetDistinctYearsAsync_WithData_ReturnsAllYearsOrderedAscending()
         {
-            // Arrange — TestAsyncEnumerable<T> requires T : class; short violates that constraint
+            // Arrange
             var monthHours = new List<MonthHour>
             {
                 new() { Year = 2025, Month = 1, FpsYear = DefaultFpsYear },
@@ -379,14 +373,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
             };
             var repo = CreateRepository(monthHours);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => repo.GetDistinctYearsAsync());
+            // Act
+            var result = (await repo.GetDistinctYearsAsync()).ToList();
+
+            // Assert
+            Assert.Equal(new short[] { 2023, 2024, 2025 }, result);
         }
 
         [Fact]
-        public async Task GetDistinctYearsAsync_WithDuplicateYears_ThrowsDueToValueTypeProjectionConstraint()
+        public async Task GetDistinctYearsAsync_WithDuplicateYears_ReturnsDistinctYearsOrderedAscending()
         {
-            // Arrange — year 2024 appears for multiple months; projection to short still violates the constraint
+            // Arrange
             var monthHours = new List<MonthHour>
             {
                 new() { Year = 2024, Month = 1,  FpsYear = DefaultFpsYear },
@@ -395,12 +392,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
             };
             var repo = CreateRepository(monthHours);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => repo.GetDistinctYearsAsync());
+            // Act
+            var result = (await repo.GetDistinctYearsAsync()).ToList();
+
+            // Assert
+            Assert.Equal(new short[] { 2023, 2024 }, result);
         }
 
         [Fact]
-        public async Task GetDistinctYearsAsync_WithSingleRecord_ThrowsDueToValueTypeProjectionConstraint()
+        public async Task GetDistinctYearsAsync_WithSingleRecord_ReturnsThatYear()
         {
             // Arrange
             var monthHours = new List<MonthHour>
@@ -409,8 +409,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
             };
             var repo = CreateRepository(monthHours);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => repo.GetDistinctYearsAsync());
+            // Act
+            var result = (await repo.GetDistinctYearsAsync()).ToList();
+
+            // Assert
+            Assert.Equal((short)2024, Assert.Single(result));
         }
 
         #endregion

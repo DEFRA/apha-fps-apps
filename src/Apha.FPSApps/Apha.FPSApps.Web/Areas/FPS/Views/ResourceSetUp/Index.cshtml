@@ -154,6 +154,11 @@
         var currentPcGrade  = '';
         var currentWgGrade  = '';
 
+        // Restoration state from query parameters (when returning from PlanStaffZTCode)
+        var restorePcGrade = '@Model.RestorePcGrade';
+        var restoreWgGrade = '@Model.RestoreWgGrade';
+        var restoreStaffId = '@Model.RestoreStaffId';
+
         function getRcGradeGridManager()  { return window['gridManager_' + rcGradeGridId]; }
         function getWgGradeGridManager()  { return window['gridManager_' + wgGradeGridId]; }
         function getWgStaffGridManager()  { return window['gridManager_' + wgStaffGridId]; }
@@ -169,13 +174,56 @@
         // On initial page load auto-select first RC grade row if grid already has data
         $(function () {
             if (currentProfitCentre) {
+                // If we have restoration parameters, wait for grid to be ready then restore
+                if (restorePcGrade) {
+                    // Wait a bit longer to ensure grid is fully initialized
+                    setTimeout(function() {
+                        restoreSelections();
+                    }, 500);
+                } else {
+                    selectFirstRow(rcGradeGridId, function (row) {
+                        var pcGrade = row.data('id');
+                        onRcGradeRowClick(pcGrade);
+                    });
+                }
+            }
+            syncTotalsRow();
+        });
+
+        // Function to restore all selections by triggering clicks
+        function restoreSelections() {
+            // Step 1: Find and click RC Grade row
+            var rcRow = $('#gridContainer_' + rcGradeGridId + ' table tbody tr[data-id="' + restorePcGrade + '"]');
+            if (rcRow.length) {
+                rcRow.trigger('click');
+
+                // Step 2: After RC Grade loads WG Grade grid, find and click WG Grade row
+                setTimeout(function() {
+                    if (restoreWgGrade) {
+                        var wgRow = $('#gridContainer_' + wgGradeGridId + ' table tbody tr[data-id="' + restoreWgGrade + '"]');
+                        if (wgRow.length) {
+                            wgRow.trigger('click');
+
+                            // Step 3: After WG Grade loads Staff grid, find and click Staff row
+                            setTimeout(function() {
+                                if (restoreStaffId) {
+                                    var staffRow = $('#gridContainer_' + wgStaffGridId + ' table tbody tr[data-id="' + restoreStaffId + '"]');
+                                    if (staffRow.length) {
+                                        staffRow.trigger('click');
+                                    }
+                                }
+                            }, 800);
+                        }
+                    }
+                }, 800);
+            } else {
+                // Fallback to first row if not found
                 selectFirstRow(rcGradeGridId, function (row) {
                     var pcGrade = row.data('id');
                     onRcGradeRowClick(pcGrade);
                 });
             }
-            syncTotalsRow();
-        });
+        }
 
         // Resource Centre dropdown change — handled by form GET submit (onchange="this.form.submit()").
         // RC grade row click — cascade to WG grades grid via AJAX reloadGrid
@@ -191,22 +239,46 @@
             }
         }
 
+        // Select specific row by ID (for restoration)
+        function selectAndRestoreRow(gridId, rowId, onRowSelected) {
+            setTimeout(function() {
+                var targetRow = $('#gridContainer_' + gridId + ' table tbody tr[data-id="' + rowId + '"]');
+                if (targetRow.length) {
+                    targetRow.closest('table').find('tbody tr').removeClass('selected-row');
+                    targetRow.addClass('selected-row');
+                    onRowSelected();
+                } else {
+                    // Fallback to first row if target not found
+                    selectFirstRow(gridId, function(row) {
+                        var id = row.data('id');
+                        onRowSelected();
+                    });
+                }
+            }, 100);
+        }
+
         // After RC Grade grid reloads — auto-select first row and cascade to WG grades
         document.addEventListener('gridReloaded', function (e) {
             if (e.detail.gridId === rcGradeGridId) {
-                selectFirstRow(rcGradeGridId, function (row) {
-                    var pcGrade = row.data('id');
-                    onRcGradeRowClick(pcGrade);
-                });
+                // Only auto-select if not in restoration mode
+                if (!restorePcGrade) {
+                    selectFirstRow(rcGradeGridId, function (row) {
+                        var pcGrade = row.data('id');
+                        onRcGradeRowClick(pcGrade);
+                    });
+                }
             }
 
             if (e.detail.gridId === wgGradeGridId) {
                 var firstWgRow = $('#gridContainer_' + wgGradeGridId + ' table tbody tr:first');
                 if (firstWgRow.length && firstWgRow.data('id')) {
-                    selectFirstRow(wgGradeGridId, function (row) {
-                        var wgGrade = row.data('id');
-                        onWgGradeRowClick(wgGrade);
-                    });
+                    // Only auto-select if not in restoration mode
+                    if (!restoreWgGrade) {
+                        selectFirstRow(wgGradeGridId, function (row) {
+                            var wgGrade = row.data('id');
+                            onWgGradeRowClick(wgGrade);
+                        });
+                    }
                 } else {
                     // No WG grade rows — reset dependent state and show "No records found" in staff grid
                     currentWgGrade = '';
@@ -232,11 +304,14 @@
                 updateStaffTotals();
                 var firstStaffRow = $('#gridContainer_' + wgStaffGridId + ' table tbody tr:first');
                 if (firstStaffRow.length && firstStaffRow.data('id')) {
-                    selectFirstRow(wgStaffGridId, function (row) {
-                        var pactId = row.data('id');
-                        var name   = row.find('td').eq(1).text().trim();
-                        onWgStaffRowClick(pactId, name);
-                    });
+                    // Only auto-select if not in restoration mode
+                    if (!restoreStaffId) {
+                        selectFirstRow(wgStaffGridId, function (row) {
+                            var pactId = row.data('id');
+                            var name   = row.find('td').eq(1).text().trim();
+                            onWgStaffRowClick(pactId, name);
+                        });
+                    }
                 } else {
                     // No staff rows — clear Person Selected panel
                     document.getElementById('fpsSrPersonName').value = '';
@@ -392,7 +467,15 @@
                 showAlertMessage('Please select a person first.', AlertType.INFO);
                 return;
             }
-            window.location.href = '/FPS/PlanStaffZTCode/Index?staffId=' + encodeURIComponent(pactId);
+
+            // Store current selections to restore state when returning
+            var url = '/FPS/PlanStaffZTCode/Index?staffId=' + encodeURIComponent(pactId) +
+                      '&source=resource' +
+                      '&profitCentre=' + encodeURIComponent(currentProfitCentre) +
+                      '&pcGrade=' + encodeURIComponent(currentPcGrade) +
+                      '&wgGrade=' + encodeURIComponent(currentWgGrade);
+
+            window.location.href = url;
         }
 
         // Save (Update) WG Staff from modal
