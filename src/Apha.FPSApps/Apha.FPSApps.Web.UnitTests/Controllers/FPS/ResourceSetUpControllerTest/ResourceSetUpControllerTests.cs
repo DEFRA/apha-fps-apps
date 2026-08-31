@@ -284,6 +284,117 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             await _rcGradeService.DidNotReceive().GetProfitCentreGradesAsync(Arg.Any<string>());
         }
 
+        [Fact]
+        public async Task Index_WithRestoreParameters_PopulatesRestoreFieldsOnViewModel()
+        {
+            // Arrange - these are round-tripped back from PlanStaffZTCode to restore grid selection
+            var profitCentres = BuildProfitCentreList();
+            SetHttpContext($"?profitCentre={DefaultProfitCentre}");
+            _profitCentreService.GetProfitCentresAsync()
+                .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
+            _rcGradeService.GetProfitCentreGradesAsync(DefaultProfitCentre)
+                .Returns(ApiResponseDto<List<ProfitCentreGradeDto>>.SuccessResponse(BuildRcGradeList()));
+
+            // Act
+            var result = await _controller.Index(DefaultProfitCentre, DefaultPcGrade, DefaultWgGrade, DefaultPactId);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResourceSetUpViewModel>(viewResult.Model);
+
+            Assert.Equal(DefaultPcGrade, model.RestorePcGrade);
+            Assert.Equal(DefaultWgGrade, model.RestoreWgGrade);
+            Assert.Equal(DefaultPactId, model.RestoreStaffId);
+        }
+
+        [Fact]
+        public async Task Index_WithoutRestoreParameters_LeavesRestoreFieldsNull()
+        {
+            // Arrange
+            var profitCentres = BuildProfitCentreList();
+            SetHttpContext();
+            _profitCentreService.GetProfitCentresAsync()
+                .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
+
+            // Act
+            var result = await _controller.Index(null);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResourceSetUpViewModel>(viewResult.Model);
+
+            Assert.Null(model.RestorePcGrade);
+            Assert.Null(model.RestoreWgGrade);
+            Assert.Null(model.RestoreStaffId);
+        }
+
+        [Fact]
+        public async Task Index_WithPartialRestoreParameters_PopulatesOnlySuppliedFields()
+        {
+            // Arrange
+            var profitCentres = BuildProfitCentreList();
+            SetHttpContext($"?profitCentre={DefaultProfitCentre}");
+            _profitCentreService.GetProfitCentresAsync()
+                .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
+            _rcGradeService.GetProfitCentreGradesAsync(DefaultProfitCentre)
+                .Returns(ApiResponseDto<List<ProfitCentreGradeDto>>.SuccessResponse(BuildRcGradeList()));
+
+            // Act - only the RC grade is restored
+            var result = await _controller.Index(DefaultProfitCentre, DefaultPcGrade, null, null);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResourceSetUpViewModel>(viewResult.Model);
+
+            Assert.Equal(DefaultPcGrade, model.RestorePcGrade);
+            Assert.Null(model.RestoreWgGrade);
+            Assert.Null(model.RestoreStaffId);
+        }
+
+        [Fact]
+        public async Task Index_RestoreParameters_DoNotAffectProfitCentreSelection()
+        {
+            // Arrange - restore values are presentation-only and must not change the persisted selection
+            var profitCentres = BuildProfitCentreList();
+            SetHttpContext($"?profitCentre={DefaultProfitCentre}");
+            _profitCentreService.GetProfitCentresAsync()
+                .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
+            _rcGradeService.GetProfitCentreGradesAsync(DefaultProfitCentre)
+                .Returns(ApiResponseDto<List<ProfitCentreGradeDto>>.SuccessResponse(BuildRcGradeList()));
+
+            // Act
+            var result = await _controller.Index(DefaultProfitCentre, DefaultPcGrade, DefaultWgGrade, DefaultPactId);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResourceSetUpViewModel>(viewResult.Model);
+
+            Assert.Equal(DefaultProfitCentre, model.ProfitCentre);
+            await _appStateService.Received(1).SetSessionAsync(SelectedProfitCentreSessionKey, DefaultProfitCentre);
+        }
+
+        [Fact]
+        public async Task Index_WithRestoreParameters_AndNoProfitCentre_StillPopulatesRestoreFields()
+        {
+            // Arrange
+            var profitCentres = BuildProfitCentreList();
+            SetHttpContext("?profitCentre=");
+            _profitCentreService.GetProfitCentresAsync()
+                .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
+
+            // Act
+            var result = await _controller.Index(string.Empty, DefaultPcGrade, DefaultWgGrade, DefaultPactId);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResourceSetUpViewModel>(viewResult.Model);
+
+            Assert.Equal(string.Empty, model.ProfitCentre);
+            Assert.Equal(DefaultPcGrade, model.RestorePcGrade);
+            Assert.Equal(DefaultWgGrade, model.RestoreWgGrade);
+            Assert.Equal(DefaultPactId, model.RestoreStaffId);
+        }
+
         #endregion
 
         #region LoadRcGradeGrid Tests

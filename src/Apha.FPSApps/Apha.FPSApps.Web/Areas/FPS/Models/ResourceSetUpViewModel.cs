@@ -45,5 +45,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public double WgSickSpecial { get; set; }
         [NonFinancialRange]
         public double WgHrsAvail { get; set; }
+
+        // Restoration parameters for preserving state when returning from PlanStaffZTCode
+        public string? RestorePcGrade { get; set; }
+        public string? RestoreWgGrade { get; set; }
+        public string? RestoreStaffId { get; set; }
     }
 }

@@ -2895,28 +2895,44 @@ table.custom-table th {
     background-color: #f8f8f8;
 }
 
+/* Filter panel sits directly on top of the grid, sharing its border */
+.ppf-filter-panel-joined {
+    border-bottom: 0;
+    margin-bottom: 0;
+}
+
 .ppf-filter-row {
     display: flex;
     align-items: flex-end;
 }
 
-.ppf-summary-column {
+/* Right-align the Programme Target / Surplus-Shortfall block.
+   Specificity note: this element also carries .summary-row and
+   .pva-inline-summary. `.summary-row { margin: 20px 0 }` in main_style.css
+   loads AFTER this file and resets margin-left to 0, and
+   `.summary-row.pva-inline-summary { align-items: center }` (two classes)
+   outranks a lone .ppf-summary-column. Both selectors below are therefore
+   qualified with .summary-row so they win on specificity and source order. */
+.summary-row.ppf-summary-column {
     align-items: flex-end;
     gap: 8px;
     overflow: visible;
+    margin-left: auto;
+    margin-right: 0;
+    width: fit-content;
 }
 
-.ppf-summary-column .summary-item {
+.summary-row.ppf-summary-column .summary-item {
     display: flex;
     justify-content: flex-end;
     align-items: center;
     gap: 12px;
-    width: auto;
+    width: 100%;
 }
 
-.ppf-summary-column .summary-item label {
-    width: 360px;
-    min-width: 360px;
+.summary-row.ppf-summary-column .summary-item label {
+    width: auto;
+    min-width: 0;
     text-align: right;
     margin-bottom: 0;
     white-space: nowrap;
@@ -2948,6 +2964,21 @@ table.custom-table th {
     margin-bottom: 0;
     min-width: auto;
     white-space: nowrap;
+}
+
+/* Bold the figures in the totals controls (value + £ prefix). Qualified with
+   the #id so it outranks `.govuk-input` in govuk-frontend, which loads first
+   but would otherwise tie on the plain-class selector. */
+#projectProfitabilityTotalSummary .govuk-input,
+#projectProfitabilityTotalSummary .govuk-input__prefix {
+    font-weight: 700;
+}
+
+/* Programme Target / Surplus-Shortfall are totals too, so match the bold
+   treatment. Two-class prefix keeps this above `.govuk-input`. */
+.summary-row.ppf-summary-column .govuk-input,
+.summary-row.ppf-summary-column .govuk-input__prefix {
+    font-weight: 700;
 }
 
 .ac-table th:nth-child(5),
@@ -4252,7 +4283,7 @@ body,
 }
 
 .ssr-summary-label {
-    flex: 0 0 170px;
+    flex: 0 0 190px;
     font-size: 0.875rem;
     line-height: 1.3;
     margin-bottom: 0 !important;
@@ -4272,7 +4303,8 @@ body,
 }
 
 .ssr-person-input {
-    width: 100% !important;
+    /* Width is governed by the .ssr-person-row flex layout further down. */
+    min-width: 0;
 }
 
 .ssr-person-divider {
@@ -4305,6 +4337,15 @@ body,
     .ssr-summary-box {
         flex: 0 0 auto;
         max-width: 100%;
+    }
+
+    .ssr-person-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ssr-person-action {
+        width: 100%;
     }
 }
 
@@ -4422,7 +4463,9 @@ body,
 .s2cra-jobs-footer-highlight {
     margin-top: 6px;
     margin-left: auto;
-    width: 132px;
+    /* Matches the summary panel width so the labelled total lines up with the
+       "Overall Position for the Grade" fields on the right. */
+    width: 160px;
     border: 1px solid #c8cdd3;
     padding: 8px;
     background: #fff;
@@ -4445,6 +4488,7 @@ body,
 
 .s2cra-summary-title {
     margin: 0 0 6px;
+    font-weight: 700;
 }
 
 .s2cra-summary-field {
@@ -4459,6 +4503,7 @@ body,
     .s2cra-summary-field .govuk-input {
         height: 28px;
         font-size: 16px;
+        font-weight: 700;
         border: 2px solid #0b0c0c;
         padding-top: 0;
         padding-bottom: 0;
@@ -5062,31 +5107,45 @@ body,
 }
 
 .ssr-mid-title {
-    margin-bottom: 6px;
+    margin-bottom: 0;
     font-size: 18px !important;
+    white-space: nowrap;
+}
+
+/* Section 3 header: title + Project/WG-Grade fields share one line */
+.ssr-alltime-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 24px;
+    row-gap: 6px;
+    margin-bottom: 6px;
 }
 
 .ssr-alltime-fields {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 6px;
-    margin-bottom: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 24px;
+    row-gap: 6px;
+    margin-bottom: 0;
 }
 
 .ssr-alltime-field {
-    display: grid;
-    grid-template-columns: 105px 1fr;
+    display: flex;
     align-items: center;
     gap: 8px;
 }
 
     .ssr-alltime-field .govuk-label {
         margin-bottom: 0;
+        white-space: nowrap;
     }
 
 .ssr-mid-input {
     max-width: 180px;
     height: 30px;
+    margin-bottom: 0;
 }
 
 .ssr-alltime-table-wrap {
@@ -5117,9 +5176,20 @@ body,
     margin-top: 6px;
 }
 
-.ssr-total-input {
+    .ssr-alltime-total-row .govuk-label {
+        margin-bottom: 0;
+        font-weight: 700;
+        color: #0b0c0c;
+        white-space: nowrap;
+    }
+
+.ssr-total-input,
+input.govuk-input.ssr-total-input[readonly] {
     width: 70px;
     height: 30px;
+    margin-bottom: 0;
+    font-weight: 700;
+    color: #0b0c0c;
 }
 
 .ssr-replan-actions {
@@ -5157,19 +5227,24 @@ body,
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: nowrap;
 }
 
 .ssr-summary-label {
-    flex: 0 0 130px;
+    /* Shared fixed width so both inputs start at the same x-position. Wide
+       enough to hold the longest label ("WorkHrs at Staff Level:") on one line. */
+    flex: 0 0 190px;
     font-size: 1rem !important;
-    margin-bottom: 0;
+    margin-bottom: 0 !important;
+    white-space: nowrap;
 }
 
 .ssr-summary-input {
-    flex: 1 1 auto;
+    flex: 0 0 110px;
     max-width: 110px;
     text-align: right;
     height: 30px;
+    border: 2px solid #0b0c0c;
 }
 
 /* Person Selected box */
@@ -5180,10 +5255,26 @@ body,
     background-color: #f3f2f1;
 }
 
+/* Value and action button share a single line, matching Stage 2. */
+.ssr-person-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .ssr-person-input {
-    font-weight: 600;
-    margin-bottom: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+    font-weight: 700;
+    margin-bottom: 0;
     height: 30px;
+    border: 2px solid #0b0c0c;
+}
+
+.ssr-person-action {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    white-space: nowrap;
 }
 
 .ssr-person-divider {
@@ -5331,7 +5422,7 @@ body,
     width: 51%;
 }
 .isResourceSetUp.isHalfGrid {
-    width: 29vw;
+    width: 27vw;
 }
 .isPlanAllStaff.isHalfGrid,
 .isCompareFPSPlan.isHalfGrid,
@@ -5352,10 +5443,10 @@ body,
     width: 42%;
 }
 .isSetUpStaffResources {
-    width: 65%;
+    width: 63%;
 }
 .isBudgetBidsQuery{
-    width: 21%;
+    width: 20%;
 }
 .isProjectGroupManagement {
     width: 37%;
@@ -5538,7 +5629,7 @@ body,
     }
 }
 .govuk-tabs__list {
-    padding-top: 7px;
+    padding-top: 7px !important;
 }
 .isDateSection {
     width: 23%;
@@ -5617,5 +5708,18 @@ body,
 
     .grid-scroll-container {
         height: 62vh !important;
+    }
+}
+.modal-header {
+    .modal-title {
+        font-weight: bold;
+    }
+}
+#gridContainer_wgGradeGrid {
+    table {
+        th:nth-child(2),
+        td:nth-child(2) {
+            text-align: center !important;
+        }
     }
 }
