@@ -5548,6 +5548,12 @@ input.govuk-input.ssr-total-input[readonly] {
 .sup_margin_bottom_10.content-wrapper:has(.isContributionSummaryPage) {
     margin-bottom: 10vh !important;
 }
+
+.isContributionSummaryPage .cs-selected-resource-centre {
+    color: #1d70b8;
+    font-weight: 700;
+    text-decoration: underline;
+}
     .govuk-footer {
         position: fixed;
         bottom: 0;
