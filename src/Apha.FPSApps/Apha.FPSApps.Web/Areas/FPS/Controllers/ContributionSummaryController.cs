@@ -162,7 +162,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<ContributionSummaryRowItem>
             {
                 GridId            = "contributionSummaryGrid",
-                Title             = $"Resource Center: {sellingPc}",
+                Title             = string.Empty,
                 KeyProperty       = "WgGrade",
                 ShowCheckboxColumn = false,
                 ShowPagination    = true,

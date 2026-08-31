@@ -5062,31 +5062,45 @@ body,
 }
 
 .ssr-mid-title {
-    margin-bottom: 6px;
+    margin-bottom: 0;
     font-size: 18px !important;
+    white-space: nowrap;
+}
+
+/* Section 3 header: title + Project/WG-Grade fields share one line */
+.ssr-alltime-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 24px;
+    row-gap: 6px;
+    margin-bottom: 6px;
 }
 
 .ssr-alltime-fields {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 6px;
-    margin-bottom: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 24px;
+    row-gap: 6px;
+    margin-bottom: 0;
 }
 
 .ssr-alltime-field {
-    display: grid;
-    grid-template-columns: 105px 1fr;
+    display: flex;
     align-items: center;
     gap: 8px;
 }
 
     .ssr-alltime-field .govuk-label {
         margin-bottom: 0;
+        white-space: nowrap;
     }
 
 .ssr-mid-input {
     max-width: 180px;
     height: 30px;
+    margin-bottom: 0;
 }
 
 .ssr-alltime-table-wrap {
@@ -5117,9 +5131,20 @@ body,
     margin-top: 6px;
 }
 
-.ssr-total-input {
+    .ssr-alltime-total-row .govuk-label {
+        margin-bottom: 0;
+        font-weight: 700;
+        color: #0b0c0c;
+        white-space: nowrap;
+    }
+
+.ssr-total-input,
+input.govuk-input.ssr-total-input[readonly] {
     width: 70px;
     height: 30px;
+    margin-bottom: 0;
+    font-weight: 700;
+    color: #0b0c0c;
 }
 
 .ssr-replan-actions {
