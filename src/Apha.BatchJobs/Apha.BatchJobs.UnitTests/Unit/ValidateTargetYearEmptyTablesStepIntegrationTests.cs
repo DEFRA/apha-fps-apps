@@ -10,11 +10,11 @@ using Xunit;
 namespace Apha.BatchJobs.UnitTests;
 
 /// <summary>
-/// PostgreSQL-backed integration tests for <see cref="ValidateTargetYearEmptyTablesStep"/> (Year End
-/// main-port Phase 7B). Proves the corrected, workbook-backed contract: a nonempty target year is a
-/// hard failure that leaves the offending row untouched (never a DELETE — the pre-Phase-7B behaviour),
-/// a genuinely empty target year passes, and a missing table/year column is a hard failure rather than
-/// a silent skip, since <c>ValidateYearScopedSchemaStep</c> is supposed to already guarantee both exist.
+/// PostgreSQL-backed integration tests for <see cref="ValidateTargetYearEmptyTablesStep"/>. Proves the
+/// contract: a nonempty target year is a hard failure that leaves the offending row untouched (never a
+/// DELETE), a genuinely empty target year passes, and a missing table/year column is a hard failure
+/// rather than a silent skip, since <c>ValidateYearScopedSchemaStep</c> is supposed to already
+/// guarantee both exist.
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class ValidateTargetYearEmptyTablesStepIntegrationTests : IAsyncLifetime

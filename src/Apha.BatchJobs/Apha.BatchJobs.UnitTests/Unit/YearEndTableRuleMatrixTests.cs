@@ -5,11 +5,9 @@ namespace Apha.BatchJobs.UnitTests;
 public sealed class YearEndTableRuleMatrixTests
 {
     /// <summary>
-    /// Every (referencing, referenced) pair found by the Phase 2 read-only FK/dependency scan
-    /// (2026-08-14, batchjob_testing) where both sides are CopyToTargetYear matrix entries — i.e.
-    /// the referencing table's target-year row cannot exist until the referenced table's target-year
-    /// row does. See docs/fps-year-end-phase2-table-classification-draft-2026-08-14.md for the full
-    /// scan output this was derived from.
+    /// Every (referencing, referenced) pair found by a read-only FK/dependency scan of
+    /// batchjob_testing where both sides are CopyToTargetYear matrix entries — i.e. the referencing
+    /// table's target-year row cannot exist until the referenced table's target-year row does.
     /// </summary>
     private static readonly (string Referencing, string Referenced)[] KnownFkEdges =
     [
