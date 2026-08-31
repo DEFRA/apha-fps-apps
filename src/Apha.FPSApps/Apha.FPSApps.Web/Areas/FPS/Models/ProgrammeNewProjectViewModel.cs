@@ -7,9 +7,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class ProgrammeNewProjectViewModel
     {
         [Display(Name = "Parent Project")]
+        [StringLength(20, ErrorMessage = "Project Code cannot exceed 20 characters.")]
         [RegularExpression("^[A-Za-z0-9]+$", ErrorMessage = "Project Code must contain only letters (A-Z, a-z) and numbers (0-9).")]
         public string ParentProject { get; set; } = null!;
         [Display(Name = "Project Title")]
+        [StringLength(200, ErrorMessage = "Description cannot exceed 200 characters.")]
         public string ProjectTitle { get; set; } = null!;
         public string Program { get; set; } = null!;
         public string Customer { get; set; } = null!;
@@ -28,6 +30,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "Project Status")]
         public string ProjectStatus { get; set; } = null!;
 
+        [Display(Name = "CostBookNo")]
+        [StringLength(50, ErrorMessage = "CostBookNo cannot exceed 50 characters.")]
         public string? CostBookNo { get; set; }
 
         [CurrencyRange]
@@ -41,6 +45,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string Disease { get; set; } = null!;
         public string Contract { get; set; } = null!;
         [Display(Name = "Short Title")]
+        [StringLength(30, ErrorMessage = "Short Title cannot exceed 30 characters.")]
         public string ShortTitle { get; set; } = null!;
         [Display(Name = "PVS Income")]
         [CurrencyRange]

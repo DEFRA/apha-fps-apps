@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -39,6 +40,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         // Not required — JS modal validation only checks numeric format if a value is provided.
         [Display(Name = "AvSalary")]
         [GridColumn(Width = 170, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [CurrencyRange]
         public decimal? AvSalary { get; set; }
 
         // Hidden field; FPS financial year partition managed server-side via HasQueryFilter on FpsDbContext.

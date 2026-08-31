@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Enums;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -149,7 +150,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.UserProfitcentres
                 .AsNoTracking()
-                .Where(x => x.UserId == userId)
+                .Where(x => x.UserId == userId && x.FpsYear == _requestContext.FpsYear)
                 .Select(x => x.ProfitCentre)
                 .ToListAsync();
         }
@@ -158,7 +159,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.UserPrograms
                 .AsNoTracking()
-                .Where(x => x.UserID == userId)
+                .Where(x => x.UserID == userId && x.FpsYear == _requestContext.FpsYear)
                 .Select(x => x.ProgramNo)
                 .ToListAsync();
         }
@@ -167,7 +168,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.UserCategories
                 .AsNoTracking()
-                .Where(x => x.UserId == userId)
+                .Where(x => x.UserId == userId && x.FpsYear == _requestContext.FpsYear)
                 .Select(x => x.Category)
                 .ToListAsync();
         }
@@ -176,7 +177,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.UserTestOwners
                 .AsNoTracking()
-                .Where(x => x.UserId == userId)
+                .Where(x => x.UserId == userId && x.FpsYear == _requestContext.FpsYear)
                 .Select(x => x.TestOwner)
                 .ToListAsync();
         }
@@ -185,7 +186,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.UserProjectGroups
                 .AsNoTracking()
-                .Where(x => x.UserId == userId)
+                .Where(x => x.UserId == userId && x.FpsYear == _requestContext.FpsYear)
                 .Select(x => x.ProjectGroup)
                 .ToListAsync();
         }
@@ -201,66 +202,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _dbContext.Database.BeginTransactionAsync();
                 try
                 {
-                    await _dbContext.UserProfitcentres
-                        .Where(x => x.UserId == userId).ExecuteDeleteAsync();
-                    await _dbContext.UserPrograms
-                        .Where(x => x.UserID == userId).ExecuteDeleteAsync();
-                    await _dbContext.UserCategories
-                        .Where(x => x.UserId == userId).ExecuteDeleteAsync();
-                    await _dbContext.UserTestOwners
-                        .Where(x => x.UserId == userId).ExecuteDeleteAsync();
-                    await _dbContext.UserProjectGroups
-                        .Where(x => x.UserId == userId).ExecuteDeleteAsync();
-
-                    if (profitCentres.Count > 0)
-                    {
-                        _dbContext.UserProfitcentres.AddRange(profitCentres.Select(pc => new UserProfitcentre
-                        {
-                            UserId = userId,
-                            ProfitCentre = pc,
-                            FpsYear = fpsYear
-                        }));
-                    }
-
-                    if (programs.Count > 0)
-                    {
-                        _dbContext.UserPrograms.AddRange(programs.Select(p => new UserProgram
-                        {
-                            UserID = userId,
-                            ProgramNo = p,
-                            FpsYear = fpsYear
-                        }));
-                    }
-
-                    if (categories.Count > 0)
-                    {
-                        _dbContext.UserCategories.AddRange(categories.Select(c => new UserCategory
-                        {
-                            UserId = userId,
-                            Category = c,
-                            FpsYear = fpsYear
-                        }));
-                    }
-
-                    if (testOwners.Count > 0)
-                    {
-                        _dbContext.UserTestOwners.AddRange(testOwners.Select(t => new UserTestOwner
-                        {
-                            UserId = userId,
-                            TestOwner = t,
-                            FpsYear = fpsYear
-                        }));
-                    }
-
-                    if (projectGroups.Count > 0)
-                    {
-                        _dbContext.UserProjectGroups.AddRange(projectGroups.Select(pg => new UserProjectGroup
-                        {
-                            UserId = userId,
-                            ProjectGroup = pg,
-                            FpsYear = fpsYear
-                        }));
-                    }
+                    await DeleteExistingPermissionsAsync(userId, fpsYear);
+                    AddPermissions(userId, fpsYear, profitCentres, programs, categories, testOwners, projectGroups);
 
                     await _dbContext.SaveChangesAsync();
                     await transaction.CommitAsync();
@@ -273,11 +216,85 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
+        [ExcludeFromCodeCoverage(Justification = "Uses ExecuteDeleteAsync which cannot be unit tested with mocked DbContext.")]
+        private async Task DeleteExistingPermissionsAsync(int userId, int fpsYear)
+        {
+            await _dbContext.UserProfitcentres
+                .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
+            await _dbContext.UserPrograms
+                .Where(x => x.UserID == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
+            await _dbContext.UserCategories
+                .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
+            await _dbContext.UserTestOwners
+                .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
+            await _dbContext.UserProjectGroups
+                .Where(x => x.UserId == userId && x.FpsYear == fpsYear).ExecuteDeleteAsync();
+        }
+
+        [ExcludeFromCodeCoverage(Justification = "Uses AddRange with in-memory entity creation which cannot be meaningfully unit tested with mocked DbContext.")]
+        private void AddPermissions(int userId, int fpsYear, List<string> profitCentres, List<string> programs,
+            List<string> categories, List<string> testOwners, List<string> projectGroups)
+        {
+            if (profitCentres.Count > 0)
+            {
+                _dbContext.UserProfitcentres.AddRange(profitCentres.Select(pc => new UserProfitcentre
+                {
+                    UserId = userId,
+                    ProfitCentre = pc,
+                    FpsYear = fpsYear
+                }));
+            }
+
+            if (programs.Count > 0)
+            {
+                _dbContext.UserPrograms.AddRange(programs.Select(p => new UserProgram
+                {
+                    UserID = userId,
+                    ProgramNo = p,
+                    FpsYear = fpsYear
+                }));
+            }
+
+            if (categories.Count > 0)
+            {
+                _dbContext.UserCategories.AddRange(categories.Select(c => new UserCategory
+                {
+                    UserId = userId,
+                    Category = c,
+                    FpsYear = fpsYear
+                }));
+            }
+
+            if (testOwners.Count > 0)
+            {
+                _dbContext.UserTestOwners.AddRange(testOwners.Select(t => new UserTestOwner
+                {
+                    UserId = userId,
+                    TestOwner = t,
+                    FpsYear = fpsYear
+                }));
+            }
+
+            if (projectGroups.Count > 0)
+            {
+                _dbContext.UserProjectGroups.AddRange(projectGroups.Select(pg => new UserProjectGroup
+                {
+                    UserId = userId,
+                    ProjectGroup = pg,
+                    FpsYear = fpsYear
+                }));
+            }
+        }
+
         public async Task<List<string>> GetAllProfitCentreOptionsAsync()
         {
-            return await _dbContext.ProfitCentres
+            var currentUserId = await GetCurrentUserIdAsync();
+
+            return await _dbContext.UserProfitcentres
+                .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Select(p => p.ProfitCentreId)
+                .Where(p => p.UserId == currentUserId && p.FpsYear == _requestContext.FpsYear)
+                .Select(p => p.ProfitCentre)
                 .Distinct()
                 .OrderBy(p => p)
                 .ToListAsync();
@@ -285,8 +302,12 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<string>> GetAllProgramOptionsAsync()
         {
-            return await _dbContext.Programs
+            var currentUserId = await GetCurrentUserIdAsync();
+
+            return await _dbContext.UserPrograms
+                .IgnoreQueryFilters()
                 .AsNoTracking()
+                .Where(p => p.UserID == currentUserId && p.FpsYear == _requestContext.FpsYear)
                 .Select(p => p.ProgramNo)
                 .Distinct()
                 .OrderBy(p => p)
@@ -308,6 +329,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return await _dbContext.UserTestOwners
                 .IgnoreQueryFilters()
                 .AsNoTracking()
+                .Where(p => p.FpsYear == _requestContext.FpsYear)
                 .Select(t => t.TestOwner)
                 .Distinct()
                 .OrderBy(t => t)
@@ -318,10 +340,21 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.ProjectGroups
                 .AsNoTracking()
+                .Where(p => p.FpsYear == _requestContext.FpsYear)
                 .Select(pg => pg.ProjectGroupName)
                 .Distinct()
                 .OrderBy(pg => pg)
                 .ToListAsync();
+        }
+
+        private async Task<int> GetCurrentUserIdAsync()
+        {
+            var currentUser = await _dbContext.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserEmail != null
+                    && EF.Functions.ILike(u.UserEmail, _requestContext.UserEmailId));
+
+            return currentUser?.UserId ?? (int)SuperUser.SuperUserId;
         }
 
         private static IQueryable<User> ApplyUserSorting(IQueryable<User> query, string? sortBy, bool descending)
