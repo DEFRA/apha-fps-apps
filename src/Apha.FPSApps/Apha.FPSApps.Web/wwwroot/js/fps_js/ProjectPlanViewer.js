@@ -91,8 +91,8 @@ window.getAdditionalActualExtraFilters = function () { return { projectCode: get
     }
 
     function formatCurrency(value) {
-        if (value == null || isNaN(value)) return '£0.00';
-        return '£' + Number(value).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (value == null || isNaN(value)) return '0.00';
+        return Number(value).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function reloadGrid(gridId) {
