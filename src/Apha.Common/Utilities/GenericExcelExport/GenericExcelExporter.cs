@@ -289,8 +289,31 @@ namespace Apha.Common.Utilities.GenericExcelExport
                     "P" or "p" or "P2" or "p2" => "0.00%",
                     "P0" or "p0" => "0%",
                     "D" or "d" => "dd/MM/yyyy",
-                    _ => token
+                    _ => ConvertFixedPointFormat(token) ?? token
                 };
+            }
+
+            // Maps a .NET fixed-point specifier such as "F", "F2" or "F4" to the equivalent
+            // Excel numeric format ("0", "0.00", "0.0000"). Returns null when the token is not
+            // a fixed-point specifier so the caller can fall back to the raw token.
+            private static string? ConvertFixedPointFormat(string token)
+            {
+                if (string.IsNullOrEmpty(token) || (token[0] != 'F' && token[0] != 'f'))
+                {
+                    return null;
+                }
+
+                if (token.Length == 1)
+                {
+                    return "0.00";
+                }
+
+                if (int.TryParse(token.AsSpan(1), out var decimals) && decimals >= 0)
+                {
+                    return decimals == 0 ? "0" : "0." + new string('0', decimals);
+                }
+
+                return null;
             }
         }
     }
