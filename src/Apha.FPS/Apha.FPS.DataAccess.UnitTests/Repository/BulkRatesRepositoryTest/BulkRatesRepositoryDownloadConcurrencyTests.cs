@@ -25,8 +25,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BulkRatesRepositoryTest
     /// </summary>
     public sealed class BulkRatesRepositoryDownloadConcurrencyTests : IAsyncLifetime
     {
+        // No working credential is checked in - set ConnectionStrings__FPSConnectionString locally to run
+        // this suite against a real Postgres instance. Without it, the connection attempt fails and
+        // InitializeAsync soft-skips, matching the "Postgres unreachable" path this suite already handles.
         private const string DefaultConnectionString =
-            "Host=localhost;Port=5432;Database=batch_jobs_foundation_db_cloud;Username=postgres;Password=admin123;SSL Mode=Disable";
+            "Host=localhost;Port=5432;Database=batch_jobs_foundation_db_cloud;Username=postgres;Password=<LOCAL_DB_PASSWORD>;SSL Mode=Disable";
         private readonly string _connectionString;
         private bool _dbAvailable;
         private readonly List<Guid> _createdJobQueueIds = new();
