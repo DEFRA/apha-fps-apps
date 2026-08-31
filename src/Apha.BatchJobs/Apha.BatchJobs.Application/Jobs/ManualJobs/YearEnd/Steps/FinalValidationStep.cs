@@ -170,6 +170,18 @@ public sealed class FinalValidationStep : IYearEndDataSetupStep
         }
 
         var count = await _repository.CountRowsByYearAsync(entry.Schema, entry.TableName, "fpsyear", targetFpsYear, cancellationToken);
+
+        if (entry.ExpectedTargetRowCount.HasValue)
+        {
+            if (count != entry.ExpectedTargetRowCount.Value)
+            {
+                throw new InvalidOperationException(
+                    $"Expected exactly {entry.ExpectedTargetRowCount.Value} target-year rows in {entry.Schema}.{entry.TableName} for year {targetFpsYear}, but found {count}.");
+            }
+
+            return;
+        }
+
         if (count <= 0)
         {
             throw new InvalidOperationException(

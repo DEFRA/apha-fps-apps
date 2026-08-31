@@ -108,6 +108,13 @@ public enum YearEndFinalRowCountRule
 /// How <see cref="FinalValidationStep"/> checks this table's final row count. Only meaningful for
 /// <see cref="YearEndTableRuleAction.CopyToTargetYear"/> entries.
 /// </param>
+/// <param name="ExpectedTargetRowCount">
+/// Exact target-year row count <see cref="FinalValidationStep"/> must see for
+/// <see cref="YearEndTableRuleAction.AlreadyImplementedViaDedicatedStep"/> entries (e.g. tblperiod's
+/// fixed 12 calendar periods). <c>null</c> falls back to the looser "at least one row" check — use
+/// only when the dedicated step's output count is a genuine fixed business invariant, not an
+/// incidental default.
+/// </param>
 public sealed record YearEndTableRuleMatrixEntry(
     string Schema,
     string TableName,
@@ -118,7 +125,8 @@ public sealed record YearEndTableRuleMatrixEntry(
     int? CopyOrder = null,
     string? ResetPhase = null,
     IReadOnlyDictionary<string, string>? Overrides = null,
-    YearEndFinalRowCountRule FinalRowCountRule = YearEndFinalRowCountRule.NotApplicable);
+    YearEndFinalRowCountRule FinalRowCountRule = YearEndFinalRowCountRule.NotApplicable,
+    int? ExpectedTargetRowCount = null);
 
 /// <summary>
 /// The Year End Table Rule Matrix — single source of truth for every table Year End's schema
@@ -167,7 +175,8 @@ public static class YearEndTableRuleMatrix
         new(Schema, "tblemployee", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["spnumber", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
         new(Schema, "tblkpaccountcategory", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["accshortname", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
         new(Schema, "tblperiod", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.AlreadyImplementedViaDedicatedStep, ["periodname", "fpsyear"],
-            Notes: "Implemented via PeriodSetupStep, not the generic copy mechanism — no CopyOrder. FinalValidationStep only checks target-year rows exist; enforcing exactly 12 periods isn't implemented yet."),
+            Notes: "Implemented via PeriodSetupStep, not the generic copy mechanism — no CopyOrder. PeriodSetupStep enforces exactly 12 source/target rows itself; FinalValidationStep re-checks the same invariant via ExpectedTargetRowCount.",
+            ExpectedTargetRowCount: 12),
         new(Schema, "tblstaffjob", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["staffid", "jobcode", "fpsyear"],
             CopyOrder: 5,
             ResetPhase: YearEndResetPhase.ConfiguredPlanningReset,

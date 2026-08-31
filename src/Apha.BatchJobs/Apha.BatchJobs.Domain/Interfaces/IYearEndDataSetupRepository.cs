@@ -52,8 +52,9 @@ public interface IYearEndDataSetupRepository
 
     /// <summary>
     /// Copies fps.tblperiod rows from sourceYear into targetYear, using a dynamic column projection
-    /// resolved from information_schema. Resets <c>periodlocked</c> to <c>0</c> on the copied rows when
-    /// that column exists, rather than carrying the source year's lock state forward.
+    /// resolved from information_schema. Resets <c>periodlocked</c> and <c>finalsummariesrun</c> to
+    /// <c>0</c> on the copied rows, rather than carrying the source year's lock/release state forward,
+    /// and regenerates <c>periodname</c> for the target year instead of copying the source year's text.
     /// </summary>
     Task<int> CopyPeriodRowsAsync(int sourceYear, int targetYear, CancellationToken cancellationToken = default);
 

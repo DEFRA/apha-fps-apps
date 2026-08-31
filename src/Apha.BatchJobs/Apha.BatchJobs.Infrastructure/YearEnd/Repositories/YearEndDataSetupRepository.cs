@@ -278,7 +278,7 @@ public sealed class YearEndDataSetupRepository : IYearEndDataSetupRepository
     {
         const string schema = "fps";
         const string table = "tblperiod";
-        const string periodLockColumn = "periodlocked";
+        var resetToZeroColumns = new[] { "periodlocked", "finalsummariesrun" };
 
         var connection = await GetOpenConnectionAsync(cancellationToken);
 
@@ -288,8 +288,7 @@ public sealed class YearEndDataSetupRepository : IYearEndDataSetupRepository
             throw new InvalidOperationException($"Could not resolve copyable columns for {schema}.{table}.");
         }
 
-        var hasPeriodLockedColumn = await ColumnExistsAsync(schema, table, periodLockColumn, cancellationToken);
-        var selectProjection = await GetPeriodSelectProjectionAsync(connection, schema, table, periodLockColumn, hasPeriodLockedColumn, cancellationToken);
+        var selectProjection = await GetPeriodSelectProjectionAsync(connection, schema, table, resetToZeroColumns, cancellationToken);
         if (string.IsNullOrWhiteSpace(selectProjection))
         {
             throw new InvalidOperationException($"Could not resolve select projection for {schema}.{table}.");
@@ -308,14 +307,22 @@ public sealed class YearEndDataSetupRepository : IYearEndDataSetupRepository
         return await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    private static async Task<string?> GetPeriodSelectProjectionAsync(DbConnection connection, string schema, string table, string periodLockColumn, bool resetPeriodLock, CancellationToken cancellationToken)
+    /// <summary>
+    /// Builds the tblperiod SELECT projection: <c>fpsyear</c> becomes the target year,
+    /// <paramref name="resetToZeroColumns"/> (periodlocked/finalsummariesrun — nothing locked or
+    /// released yet in a brand-new year) reset to <c>0</c>, <c>periodname</c> is regenerated for the
+    /// target year (see <see cref="PeriodNameExpression"/>) instead of carried over from the source
+    /// year's text, and every other column passes through unchanged.
+    /// </summary>
+    private static async Task<string?> GetPeriodSelectProjectionAsync(DbConnection connection, string schema, string table, IReadOnlyCollection<string> resetToZeroColumns, CancellationToken cancellationToken)
     {
         await using var command = connection.CreateCommand();
         command.CommandText = @"
             SELECT string_agg(
                 CASE
                     WHEN c.column_name = 'fpsyear' THEN '@target_year AS fpsyear'
-                    WHEN c.column_name = @period_lock_column AND @reset_period_lock THEN '0 AS ' || format('%I', c.column_name)
+                    WHEN c.column_name = 'periodname' THEN @periodname_expression || ' AS periodname'
+                    WHEN c.column_name = ANY(@reset_to_zero_columns) THEN '0 AS ' || format('%I', c.column_name)
                     ELSE format('%I', c.column_name)
                 END,
                 ', ' ORDER BY c.ordinal_position)
@@ -327,12 +334,39 @@ public sealed class YearEndDataSetupRepository : IYearEndDataSetupRepository
 
         AddParameter(command, "schema", schema);
         AddParameter(command, "table", table);
-        AddParameter(command, "period_lock_column", periodLockColumn);
-        AddParameter(command, "reset_period_lock", resetPeriodLock);
+        AddParameter(command, "reset_to_zero_columns", resetToZeroColumns.ToArray());
+        AddParameter(command, "periodname_expression", PeriodNameExpression);
 
         var scalar = await command.ExecuteScalarAsync(cancellationToken);
         return scalar?.ToString();
     }
+
+    /// <summary>
+    /// Target-year <c>fps.tblperiod.periodname</c> text, keyed off the source row's own
+    /// <c>endperiod</c> (1-12, cumulative month count from April). Reverse-engineered from the
+    /// legacy wording still intact in FY2016-2018/2021 (e.g. "April - May 2016/17", "Year Total
+    /// 2016/17" — note the double space before the year). Several later years show drifted text
+    /// (e.g. "April - May 2023/23" instead of "2023/24") that is exactly the symptom of this column
+    /// having previously been carried over unchanged instead of regenerated per target year — this
+    /// expression is a best-effort fix, not verified against a documented legacy spec (none exists
+    /// in this repo). <c>@target_year</c> resolves against the caller's own parameter of that name.
+    /// </summary>
+    private const string PeriodNameExpression = @"
+        CASE
+            WHEN endperiod = 1 THEN 'April ' || @target_year::text || ' Only'
+            WHEN endperiod = 2 THEN 'April - May ' || @target_year::text || '/' || lpad(((@target_year + 1) % 100)::text, 2, '0')
+            WHEN endperiod = 3 THEN 'April - June ' || @target_year::text || '/' || lpad(((@target_year + 1) % 100)::text, 2, '0')
+            WHEN endperiod = 4 THEN 'April - July ' || @target_year::text || '/' || lpad(((@target_year + 1) % 100)::text, 2, '0')
+            WHEN endperiod = 5 THEN 'April - August ' || @target_year::text || '/' || lpad(((@target_year + 1) % 100)::text, 2, '0')
+            WHEN endperiod = 6 THEN 'April - September ' || @target_year::text || '/' || lpad(((@target_year + 1) % 100)::text, 2, '0')
+            WHEN endperiod = 7 THEN 'April - October ' || @target_year::text || '/' || lpad(((@target_year + 1) % 100)::text, 2, '0')
+            WHEN endperiod = 8 THEN 'April - November ' || @target_year::text || '/' || lpad(((@target_year + 1) % 100)::text, 2, '0')
+            WHEN endperiod = 9 THEN 'April - December ' || @target_year::text || '/' || lpad(((@target_year + 1) % 100)::text, 2, '0')
+            WHEN endperiod = 10 THEN 'April ' || @target_year::text || ' - January ' || (@target_year + 1)::text
+            WHEN endperiod = 11 THEN 'April ' || @target_year::text || ' - February ' || (@target_year + 1)::text
+            WHEN endperiod = 12 THEN 'Year Total  ' || @target_year::text || '/' || lpad(((@target_year + 1) % 100)::text, 2, '0')
+            ELSE periodname
+        END";
 
     public async Task<int> ResetFieldsByYearAsync(string schema, string table, string yearColumn, IReadOnlyDictionary<string, string> rules, int targetYear, CancellationToken cancellationToken = default)
     {
