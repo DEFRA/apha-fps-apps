@@ -5736,11 +5736,10 @@ input.govuk-input.ssr-total-input[readonly] {
     }
 }
 /* Set Up New Project / Edit Project heading: keeps the standard govuk-heading-s
-   font size while laying the title and Back link out on one line. */
+   font size while vertically centring the title in the header band. */
 .sup_project_addedit_heading {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     height: 42px;
     padding: 0 17px;
 }
