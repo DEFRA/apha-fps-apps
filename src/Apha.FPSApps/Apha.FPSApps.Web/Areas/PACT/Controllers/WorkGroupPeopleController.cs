@@ -39,6 +39,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <param name="workGroup">Optional work group name used to pre-select the work group dropdown on page load.</param>
         public async Task<IActionResult> Index(string workGroup = "")
         {
+            var stopwatch = Stopwatch.StartNew();
+            Console.WriteLine("Web WorkGroupPeople Controller method Index execution started :" + DateTime.Now);
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
             var peopleGrid = await BuildPeopleGridAsync(defaultRequest, string.IsNullOrWhiteSpace(workGroup) ? null : workGroup);
             var workGroupOptions = await GetWorkGroupSelectListAsync();
@@ -51,7 +53,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 WorkGroupOptions = workGroupOptions,
                 PersonOptions = personOptions
             };
-
+            
+            stopwatch.Stop();
+            Console.WriteLine("Web WorkGroupPeople Controller method Index execution completed :" + DateTime.Now);
+            Console.WriteLine("Web WorkGroupPeople Controller method Index total execution time (in ms):" + stopwatch.ElapsedMilliseconds);
             return View(viewModel);
         }
 
