@@ -72,8 +72,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> LoadPeopleGrid(PaginationFilter<string> request, string? workGroup)
         {
-            var stopwatch = Stopwatch.StartNew();            
-            Console.WriteLine("Web WorkGroupPeople Controller method LoadPeopleGrid execution started :" + DateTime.Now);
+            var stopwatch = Stopwatch.StartNew();
+            Console.WriteLine($"Web WorkGroupPeople Controller method LoadPeopleGrid execution started (page - {request.Page})  :{DateTime.Now}");
             if (!ModelState.IsValid)
                 return Json(new
                 {
@@ -84,8 +84,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
            
             var gridConfig = await BuildPeopleGridAsync(request, workGroup);            
             stopwatch.Stop();
-            Console.WriteLine("Web WorkGroupPeople Controller method LoadPeopleGrid execution completed :" + DateTime.Now);
-            Console.WriteLine("Web WorkGroupPeople Controller method LoadPeopleGrid total execution time (in ms):" + stopwatch.ElapsedMilliseconds);
+            Console.WriteLine($"Web WorkGroupPeople Controller method LoadPeopleGrid execution completed (page - {request.Page}):{DateTime.Now}");
+            Console.WriteLine($"Web WorkGroupPeople Controller method LoadPeopleGrid total execution time (in ms) (page - {request.Page}):{stopwatch.ElapsedMilliseconds}");
             return PartialView("_DataGrid", gridConfig);
         }
 

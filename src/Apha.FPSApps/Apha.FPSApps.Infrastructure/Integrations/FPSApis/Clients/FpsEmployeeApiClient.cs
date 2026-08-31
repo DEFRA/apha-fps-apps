@@ -142,7 +142,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<PaginatedResult<PactStaffDto>>> GetWorkGroupStaffAsync(QueryParameters<string> query, string? workGroup = null)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync started at: {DateTime.Now:O}");
+            Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync started at (page - {query.Page}): {DateTime.Now:O}");
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetWorkGroupStaffPaginated, query);
             if (!string.IsNullOrWhiteSpace(workGroup))
                 url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
@@ -150,8 +150,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             if (response.Success)
             {
                 stopwatch.Stop();
-                Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync completed at: {DateTime.Now:O}");
-                Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync total execution time (in ms): {stopwatch.ElapsedMilliseconds}");
+                Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync completed at (page - {query.Page}): {DateTime.Now:O}");
+                Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync total execution time (in ms)(page - {query.Page}): {stopwatch.ElapsedMilliseconds}");
 
                 var dto = _mapper.Map<ApiResponseDto<List<PactStaffDto>>>(response);
                 var pagination = response.Pagination;
