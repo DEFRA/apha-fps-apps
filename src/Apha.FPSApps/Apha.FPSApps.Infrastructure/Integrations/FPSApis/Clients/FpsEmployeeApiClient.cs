@@ -141,12 +141,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<PaginatedResult<PactStaffDto>>> GetWorkGroupStaffAsync(QueryParameters<string> query, string? workGroup = null)
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync started at: {DateTime.Now:O}");
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetWorkGroupStaffPaginated, query);
             if (!string.IsNullOrWhiteSpace(workGroup))
                 url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
             var response = await _http.GetAsync<List<PactStaffRes>>(url);
             if (response.Success)
             {
+                stopwatch.Stop();
+                Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync completed at: {DateTime.Now:O}");
+                Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync total execution time (in ms): {stopwatch.ElapsedMilliseconds}");
+
                 var dto = _mapper.Map<ApiResponseDto<List<PactStaffDto>>>(response);
                 var pagination = response.Pagination;
                 var result = new PaginatedResult<PactStaffDto>(
@@ -156,6 +162,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     pagination?.PageSize ?? query.PageSize);
                 return ApiResponseDto<PaginatedResult<PactStaffDto>>.SuccessResponse(result);
             }
+            stopwatch.Stop();
+            Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync completed at: {DateTime.Now:O}");
+            Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync total execution time (in ms): {stopwatch.ElapsedMilliseconds}");
 
             var failDto = _mapper.Map<ApiResponseDto<List<PactStaffDto>>>(response);
             return ApiResponseDto<PaginatedResult<PactStaffDto>>.FailureResponse(failDto.Errors, failDto.Meta);

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
@@ -66,6 +67,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> LoadPeopleGrid(PaginationFilter<string> request, string? workGroup)
         {
+            var stopwatch = Stopwatch.StartNew();            
+            Console.WriteLine("Web WorkGroupPeople Controller method LoadPeopleGrid execution started :" + DateTime.Now);
             if (!ModelState.IsValid)
                 return Json(new
                 {
@@ -73,8 +76,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     message = "Invalid request data",
                     errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                 });
-
-            var gridConfig = await BuildPeopleGridAsync(request, workGroup);
+           
+            var gridConfig = await BuildPeopleGridAsync(request, workGroup);            
+            stopwatch.Stop();
+            Console.WriteLine("Web WorkGroupPeople Controller method LoadPeopleGrid execution completed :" + DateTime.Now);
+            Console.WriteLine("Web WorkGroupPeople Controller method LoadPeopleGrid total execution time (in ms):" + stopwatch.ElapsedMilliseconds);
             return PartialView("_DataGrid", gridConfig);
         }
 

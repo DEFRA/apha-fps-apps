@@ -245,6 +245,9 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<PagedData<PactStaff>> GetPagedWorkGroupStaffAsync(PaginationParameters<string> query, string? workGroup = null)
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            Console.WriteLine($"FPS DataAccess EmployeeRepository method GetPagedWorkGroupStaffAsync started at: {DateTime.Now:O}");
+
             IQueryable<PactStaff> queryStaff;
 
             if (string.IsNullOrWhiteSpace(workGroup))
@@ -272,7 +275,14 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var result = await queryStaff.ToListAsync();
             result = ApplyWorkGroupStaffNumericFilter(result, query.Filter);
-            return ApplyPaging(result, query.Page, query.PageSize);
+
+            var pagedResult = ApplyPaging(result, query.Page, query.PageSize);
+
+            stopwatch.Stop();
+            Console.WriteLine($"FPS DataAccess EmployeeRepository method GetPagedWorkGroupStaffAsync completed at: {DateTime.Now:O}");
+            Console.WriteLine($"FPS DataAccess EmployeeRepository method GetPagedWorkGroupStaffAsync total execution time (in ms): {stopwatch.ElapsedMilliseconds}");
+
+            return pagedResult;
         }
 
         public async Task<IEnumerable<PactStaff>> GetPactStaffAsync()

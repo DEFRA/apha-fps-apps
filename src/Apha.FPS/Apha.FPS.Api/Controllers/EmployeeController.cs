@@ -159,8 +159,14 @@ namespace Apha.FPS.Api.Controllers
         [HttpGet("WorkGroupStaff/paginated")]
         public async Task<IActionResult> GetWorkGroupStaffPaginatedAsync([FromQuery] PaginationReq<string> query, [FromQuery] string? workGroup = null)
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            Console.WriteLine($"FPS WebAPI Employee Controller method GetWorkGroupStaffPaginatedAsync started at: {DateTime.Now:O}");
+
             var filter = _mapper.Map<QueryParameters<string>>(query);
             var result = await _employeeService.GetPagedWorkGroupStaffAsync(filter, workGroup);
+            stopwatch.Stop();
+            Console.WriteLine($"FPS WebAPI Employee Controller method GetWorkGroupStaffPaginatedAsync completed at: {DateTime.Now:O}");
+            Console.WriteLine($"FPS WebAPI Employee Controller method GetWorkGroupStaffPaginatedAsync total execution time (in ms): {stopwatch.ElapsedMilliseconds}");
             return Ok(_mapper.Map<PaginationRes<PactStaffRes>>(result));
         }
 
