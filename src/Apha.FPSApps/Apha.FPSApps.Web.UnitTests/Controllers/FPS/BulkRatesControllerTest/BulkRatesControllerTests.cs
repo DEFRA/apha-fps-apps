@@ -281,8 +281,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BulkRatesControllerTest
             var result = await _sut.CanInitiateRequest(BulkRatesController.JobNameFec);
 
             var json = Assert.IsType<JsonResult>(result);
-            Assert.Equal(true, json.Value!.GetType().GetProperty("success")!.GetValue(json.Value));
-            Assert.Equal(false, json.Value!.GetType().GetProperty("canInitiate")!.GetValue(json.Value));
+            Assert.True((bool)json.Value!.GetType().GetProperty("success")!.GetValue(json.Value)!);
+            Assert.False((bool)json.Value!.GetType().GetProperty("canInitiate")!.GetValue(json.Value)!);
         }
 
         [Fact]
@@ -294,7 +294,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BulkRatesControllerTest
             var result = await _sut.CanInitiateRequest(BulkRatesController.JobNameFec);
 
             var json = Assert.IsType<JsonResult>(result);
-            Assert.Equal(false, json.Value!.GetType().GetProperty("success")!.GetValue(json.Value));
+            Assert.False((bool)json.Value!.GetType().GetProperty("success")!.GetValue(json.Value)!);
         }
     }
 }
