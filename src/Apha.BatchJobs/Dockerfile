@@ -49,3 +49,5 @@ RUN find . -type f -exec chmod 444 {} \; && \
 USER app
 
 ENTRYPOINT ["dotnet", "Apha.BatchJobs.Worker.dll"]
+
+# no-op: dummy change to trigger an ECR image build, 2026-09-01
