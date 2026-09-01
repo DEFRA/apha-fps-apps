@@ -28,9 +28,7 @@ public sealed class MabArchiveYearSelectionRepository : IMabArchiveYearSelection
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <summary>
-    /// Reads fps.tblyearmaster and validates the year configuration.
-    /// </summary>
+    /// <summary>Reads fps.tblyearmaster and validates the year configuration.</summary>
     public async Task<MabArchiveExecutionContext> GetProcessableYearsAsync(CancellationToken cancellationToken)
     {
         var rows = await ReadYearMasterRowsAsync(cancellationToken);
@@ -96,10 +94,7 @@ public sealed class MabArchiveYearSelectionRepository : IMabArchiveYearSelection
         return (openYears, plannedYears);
     }
 
-    /// <summary>
-    /// Validates the bucketed years against the MABArchive selection rules and returns
-    /// the resolved execution context.
-    /// </summary>
+    /// <summary>Validates the bucketed years against the MABArchive selection rules and returns the resolved execution context.</summary>
     internal static MabArchiveExecutionContext Validate(
         IReadOnlyList<int> openYears,
         IReadOnlyList<int> plannedYears)
