@@ -5554,6 +5554,12 @@ input.govuk-input.ssr-total-input[readonly] {
     font-weight: 700;
     text-decoration: underline;
 }
+
+/* Contribution Summary totals: Access underlines the box heading text only,
+   not the full width of the box (which already has its own bottom border). */
+#cs-summary-grid .cs-summary-box-title-text {
+    text-decoration: underline;
+}
     .govuk-footer {
         position: fixed;
         bottom: 0;

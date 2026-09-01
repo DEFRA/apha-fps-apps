@@ -57,9 +57,9 @@
         </div>
     </div>
 
-    @* ── Box 2: Total Time ── *@
+    @* ── Box 2: Total Time (Access shows "+ Animals Sold" only for ASU) ── *@
     <div id="cs-summary-total-time-box" class="fps-dg-summary-box sup_border">
-        <div class="fps-dg-summary-box-title">Total Time</div>
+        <div class="fps-dg-summary-box-title"><span class="cs-summary-box-title-text">@(t.IsAsuMode ? "Total Time + Animals Sold" : "Total Time")</span></div>
         <div class="fps-dg-summary-item">
             <label class="govuk-label--s govuk-!-font-size-16 fps-dg-summary-label" for="cs-total-time-fee">Fee from PlanHrs:</label>
             <div class="govuk-input__wrapper">
@@ -88,7 +88,7 @@
 
     @* ── Box 3: Assured Time Only ── *@
     <div id="cs-summary-assured-time-box" class="fps-dg-summary-box sup_border">
-        <div class="fps-dg-summary-box-title">Assured Time Only</div>
+        <div class="fps-dg-summary-box-title"><span class="cs-summary-box-title-text">Assured Time Only</span></div>
         <div class="fps-dg-summary-item">
             <label class="govuk-label--s govuk-!-font-size-16 fps-dg-summary-label" for="cs-assured-time-fee">Fee from PlanHrs:</label>
             <div class="govuk-input__wrapper">
