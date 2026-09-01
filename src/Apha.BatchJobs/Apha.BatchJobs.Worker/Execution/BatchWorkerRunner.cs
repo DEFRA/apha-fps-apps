@@ -11,9 +11,8 @@ using Apha.BatchJobs.Worker.Configuration;
 namespace Apha.BatchJobs.Worker.Execution;
 
 /// <summary>
-/// Coordinates one worker invocation: resolve the request, open a correlation scope, run the
-/// orchestrator under a linked cancellation token, map the outcome, and write exactly one final
-/// summary. HealthCheck never reaches this type — <c>Program.cs</c> short-circuits before it.
+/// Coordinates one worker invocation: resolve the request, run the orchestrator, and write one
+/// final summary. HealthCheck never reaches this type — <c>Program.cs</c> short-circuits before it.
 /// </summary>
 public sealed class BatchWorkerRunner : IBatchWorkerRunner
 {
@@ -53,8 +52,7 @@ public sealed class BatchWorkerRunner : IBatchWorkerRunner
         }
         catch (Exception ex)
         {
-            // Nothing has logged this yet — request resolution runs before any scope or
-            // orchestrator work, so this is the first and only place it gets a marker.
+            // First and only place this can be logged — resolution runs before any scope exists.
             var classification = _failureClassifier.Classify(ex);
             _logger.LogError(ex, "[{ErrorType}] Batch execution request could not be resolved: {ErrorMessage}", classification.ErrorType, ex.Message);
 
@@ -73,9 +71,7 @@ public sealed class BatchWorkerRunner : IBatchWorkerRunner
 
         var startedAt = DateTime.UtcNow;
 
-        // Established before the execution scope below (not after) so the entire invocation —
-        // scope creation, orchestrator resolution, and execution — is governed by one
-        // cancellation boundary, rather than the scope being created under an unbounded token.
+        // Created before the execution scope so the whole invocation shares one cancellation boundary.
         using var cancellationContext = new ExecutionCancellationContext(_hostLifetime, _runtimeOptions.Value.WorkerOverallTimeoutSeconds);
 
         BatchExecutionResult result;
@@ -101,8 +97,7 @@ public sealed class BatchWorkerRunner : IBatchWorkerRunner
         }
         catch (Exception ex)
         {
-            // Already logged once, with the correct marker, by JobOrchestrator.ThrowWithStructuredLog
-            // before it re-threw — do not log it again here.
+            // Already logged by JobOrchestrator.ThrowWithStructuredLog before it re-threw — don't log again.
             result = BatchExecutionResult.Failure(request, _failureClassifier.Classify(ex), ex);
         }
 
