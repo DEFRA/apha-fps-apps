@@ -6,10 +6,7 @@ public interface IBatchJob
     /// <summary>Gets the unique name of the batch job.</summary>
     string Name { get; }
 
-    /// <summary>
-    /// Gets the explicit idempotency strategy used by this job.
-    /// Examples: Upsert, DedupKey, Checkpointing.
-    /// </summary>
+    /// <summary>Gets the explicit idempotency strategy used by this job. Examples: Upsert, DedupKey, Checkpointing.</summary>
     string IdempotencyStrategy { get; }
 
     /// <summary>
@@ -19,20 +16,12 @@ public interface IBatchJob
     /// </summary>
     string? ScheduleExpression => null;
 
-    /// <summary>
-    /// Gets the optional human-readable schedule description.
-    /// Used for documentation and operational clarity.
-    /// </summary>
+    /// <summary>Gets the optional human-readable schedule description, used for documentation and operational clarity.</summary>
     string? ScheduleDescription => null;
 
-    /// <summary>
-    /// Gets the optional maximum execution timeout in seconds.
-    /// If not specified, defaults to BatchJobs:JobTimeout from configuration.
-    /// </summary>
+    /// <summary>Gets the optional maximum execution timeout in seconds. Defaults to BatchJobs:JobTimeout from configuration when not specified.</summary>
     int? MaxExecutionSeconds => null;
 
     /// <summary>Executes the batch job asynchronously.</summary>
-    /// <param name="cancellationToken">Token used to cancel the operation.</param>
-    /// <returns>A task representing the async operation.</returns>
     Task ExecuteAsync(CancellationToken cancellationToken = default);
 }

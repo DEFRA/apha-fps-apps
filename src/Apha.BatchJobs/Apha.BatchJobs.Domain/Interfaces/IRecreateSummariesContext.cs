@@ -1,21 +1,15 @@
 namespace Apha.BatchJobs.Domain.Interfaces;
 
 /// <summary>
-/// Scoped execution context carrying the parameters supplied when
-/// a RecreateSummaries job run is triggered.
-/// Populated by the caller before the job handler executes.
+/// Scoped execution context carrying the parameters supplied when a RecreateSummaries
+/// job run is triggered. Populated by the caller before the job handler executes.
 /// </summary>
 public interface IRecreateSummariesContext
 {
-    /// <summary>
-    /// The FPS period month (equivalent to legacy <c>@Month</c>).
-    /// Valid range: 1–12.
-    /// </summary>
+    /// <summary>The FPS period month (equivalent to legacy <c>@Month</c>). Valid range: 1–12.</summary>
     int Month { get; set; }
 
-    /// <summary>
-    /// FPS year scoped for this execution.
-    /// </summary>
+    /// <summary>FPS year scoped for this execution.</summary>
     int Year { get; set; }
 
     /// <summary>
