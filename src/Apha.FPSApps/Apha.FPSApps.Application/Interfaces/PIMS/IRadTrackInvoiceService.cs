@@ -7,7 +7,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
     public interface IRadTrackInvoiceService
     {
         Task<ApiResponseDto<List<RadTrackInvoiceDto>>> GetAllAsync(QueryParameters<string> query, string? project = null, string? contract = null, int? year = null, string? program = null);
-        Task<ApiResponseDto<RadTrackInvoiceTotalsDto>> GetTotalsAsync(string? project = null, string? contract = null, int? year = null, string? program = null);
+        Task<ApiResponseDto<RadTrackInvoiceTotalsDto>> GetTotalsAsync(string? project = null, string? contract = null, int? year = null, string? program = null, string? search = null);
         Task<ApiResponseDto<RadTrackInvoiceDto>> GetByIdAsync(int id);
         Task<ApiResponseDto<RadTrackInvoiceDto>> CreateAsync(RadTrackInvoiceDto dto);
         Task<ApiResponseDto<RadTrackInvoiceDto>> UpdateAsync(int id, RadTrackInvoiceDto dto);

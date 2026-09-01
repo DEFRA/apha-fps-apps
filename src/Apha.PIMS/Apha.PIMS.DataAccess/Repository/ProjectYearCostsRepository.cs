@@ -376,9 +376,35 @@ namespace Apha.PIMS.DataAccess.Repository
 
         public async Task<FpsYearTotal?> GetFpsYearTotalsAsync(string project, short year)
         {
-            return await _context.FpsYearTotals
-                .AsNoTracking()
-                .FirstOrDefaultAsync(f => f.Parentproject == project && f.Year == year);
+            return await (
+                from yearTotal in _context.FpsYearTotals.AsNoTracking()
+                join projectYear in _context.MyTlkpProjects.AsNoTracking()
+                    on new { yearTotal.Parentproject, yearTotal.Year }
+                    equals new { projectYear.Parentproject, projectYear.Year }
+                where yearTotal.Parentproject == project && yearTotal.Year == year
+                select new FpsYearTotal
+                {
+                    Year                 = yearTotal.Year,
+                    Parentproject        = yearTotal.Parentproject,
+                    Program              = yearTotal.Program,
+                    Totaladditionalcosts = yearTotal.Totaladditionalcosts,
+                    Totalanimalcosts     = yearTotal.Totalanimalcosts,
+                    Totalstaffcosts      = yearTotal.Totalstaffcosts,
+                    Totaltestcosts       = yearTotal.Totaltestcosts,
+                    Totalcosts           = yearTotal.Totalcosts,
+                    Custincome           = projectYear.Custincome ?? 0m,
+                    Transferincome       = projectYear.Transferincome ?? 0m,
+                    Totalincome          = (projectYear.Custincome ?? 0m) + (projectYear.Transferincome ?? 0m),
+                    BudgetCvl            = yearTotal.BudgetCvl,
+                    Requiredprofit       = yearTotal.Requiredprofit,
+                    Manager              = projectYear.Manager,
+                    Customer             = projectYear.Customer,
+                    Projectstatus        = projectYear.Projectstatus ?? yearTotal.Projectstatus,
+                    Pvsincome            = projectYear.Pvsincome ?? yearTotal.Pvsincome,
+                    Plancaseworkdebit    = projectYear.Plancaseworkdebit ?? yearTotal.Plancaseworkdebit,
+                    Totalpaycosts        = yearTotal.Totalpaycosts
+                })
+                .FirstOrDefaultAsync();
         }
     }
 }
