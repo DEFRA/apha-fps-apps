@@ -15,11 +15,6 @@ public class BatchLockRepository : IBatchLockRepository
     private readonly BatchJobsDbContext _context;
     private readonly ILogger<BatchLockRepository> _logger;
 
-    /// <summary>
-    /// Initializes a new instance of the BatchLockRepository.
-    /// </summary>
-    /// <param name="context">The database context.</param>
-    /// <param name="logger">Optional logger for structured lock lifecycle events.</param>
     public BatchLockRepository(BatchJobsDbContext context, ILogger<BatchLockRepository>? logger = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -47,9 +42,8 @@ public class BatchLockRepository : IBatchLockRepository
             .Where(l => l.JobName == jobName && l.ExpiresAt < now)
             .ExecuteDeleteAsync(cancellationToken);
 
-        // Attempt atomic insert without raising an error on contention.
-        // With uq_job_lock_job_name_active (partial unique on active rows),
-        // this returns 1 when lock is acquired and 0 when already held.
+        // Atomic insert; ON CONFLICT relies on uq_job_lock_job_name_active (partial unique on
+        // active rows) — returns 1 row inserted when acquired, 0 when already held.
         var expiresAt = timeoutSeconds > 0
             ? now.AddSeconds(timeoutSeconds)
             : DateTime.MaxValue;
@@ -79,8 +73,7 @@ public class BatchLockRepository : IBatchLockRepository
         if (jobQueueId == Guid.Empty)
             throw new ArgumentException("Job queue ID cannot be empty.", nameof(jobQueueId));
 
-        // Guard against stale tracking state leaking from prior operations in the
-        // same scoped DbContext (e.g., failed job step writes).
+        // Guards against stale tracking state from prior operations in this scoped DbContext.
         _context.ChangeTracker.Clear();
 
         var lockToRelease = await _context.BatchLocks

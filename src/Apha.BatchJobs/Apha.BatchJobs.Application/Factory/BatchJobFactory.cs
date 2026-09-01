@@ -15,10 +15,6 @@ public sealed class BatchJobFactory : IBatchJobFactory
     private static readonly IReadOnlyDictionary<string, Type> ConventionalJobMap =
         BuildConventionalJobMap(GetCandidateJobTypes(typeof(IBatchJob).Assembly));
 
-    /// <summary>
-    /// Initializes a new instance of the BatchJobFactory.
-    /// </summary>
-    /// <param name="serviceProvider">Service provider for resolving job instances.</param>
     public BatchJobFactory(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
@@ -30,9 +26,8 @@ public sealed class BatchJobFactory : IBatchJobFactory
         if (string.IsNullOrWhiteSpace(jobName))
             throw new ArgumentException("Job name cannot be null or empty.", nameof(jobName));
 
-        // Resolve only the requested job type. No fallback: an unresolvable job name is a
-        // registration/naming bug and must fail loudly here, not silently construct every
-        // other registered job (which can fail for reasons unrelated to the requested job).
+        // No fallback: an unresolvable job name is a registration bug and must fail loudly
+        // here, not silently construct every other registered job.
         if (!ConventionalJobMap.TryGetValue(jobName, out var jobType))
         {
             throw new InvalidOperationException(
@@ -65,9 +60,8 @@ public sealed class BatchJobFactory : IBatchJobFactory
     }
 
     /// <summary>
-    /// Builds the conventional-name lookup from a set of candidate <see cref="IBatchJob"/> types.
-    /// Internal (not private) so the collision-detection behavior is directly unit-testable
-    /// without relying on reflection over the real production assembly.
+    /// Builds the conventional-name lookup from candidate <see cref="IBatchJob"/> types. Internal
+    /// (not private) so collision detection is unit-testable without reflecting the real assembly.
     /// </summary>
     internal static IReadOnlyDictionary<string, Type> BuildConventionalJobMap(IEnumerable<Type> candidateTypes)
     {
@@ -80,8 +74,7 @@ public sealed class BatchJobFactory : IBatchJobFactory
             .GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        // No fallback here either: a naming collision between two job types must fail the
-        // process at startup, not silently drop both from the fast-path map.
+        // A naming collision must fail startup, not silently drop both types from the map.
         var collisions = grouped.Where(g => g.Count() > 1).ToList();
         if (collisions.Count > 0)
         {
@@ -96,14 +89,9 @@ public sealed class BatchJobFactory : IBatchJobFactory
 
     internal static string GetConventionalName(Type type)
     {
-        // Keep the official job-name contract (job_master.jobname / BATCH_JOB_NAME / EventBridge
-        // payloads) for handlers whose C# type name can't literally match it — a hyphen, or
-        // historical capitalization, that a C# identifier can't contain. Phase 7D (main-port,
-        // 2026-08-28): YearEnd-DataSetup/YearEnd-CutOver's hyphens were previously lost to the
-        // generic Job/Handler/JobHandler-suffix stripping below, so BatchJobFactory.Create would
-        // reject the real, hyphenated names used everywhere else in the system. A type-name-derived
-        // guess must never be allowed to silently diverge from the real dispatch contract like that
-        // again — checking the concrete type up front, before any stripping, closes that off.
+        // Explicit overrides for names a C# identifier can't hold (hyphens). Generic suffix
+        // stripping below would otherwise drop YearEnd-DataSetup/YearEnd-CutOver's hyphens and
+        // reject the real dispatch names used everywhere else in the system.
         if (type == typeof(MabArchiveJob))
             return BatchJobNames.MabArchive;
 

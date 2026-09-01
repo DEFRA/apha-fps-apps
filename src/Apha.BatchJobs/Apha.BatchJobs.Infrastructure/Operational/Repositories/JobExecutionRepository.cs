@@ -19,11 +19,6 @@ public class JobExecutionRepository : IJobExecutionRepository
     private readonly BatchJobsDbContext _context;
     private readonly ILogger<JobExecutionRepository> _logger;
 
-    /// <summary>
-    /// Initializes a new instance of the JobExecutionRepository.
-    /// </summary>
-    /// <param name="context">The database context.</param>
-    /// <param name="logger">Optional logger for structured execution record events.</param>
     public JobExecutionRepository(BatchJobsDbContext context, ILogger<JobExecutionRepository>? logger = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -403,8 +398,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             RequestedBy = requestedBy,
             RequestedAtUtc = requestedAtUtc,
             FpsYear = fpsYear,
-            // Keep compatibility with environments where startdatetime is still NOT NULL.
-            // Status remains Initiated; worker updates the value when transitioning to Running.
+            // startdatetime kept non-null for compatibility; worker updates it on transition to Running.
             StartDateTime = requestedAtUtc,
             EndDateTime = null,
             ErrorMessage = null,
