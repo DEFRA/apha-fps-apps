@@ -157,9 +157,9 @@
                     break;
                 case GridColumnType.GbpValueRoundedAccounting:
                     if (value is decimal gbpAccounting)
-                        return Math.Round(gbpAccounting, MidpointRounding.AwayFromZero).ToString("£#,##0;- (£#,##0)");
+                        return Math.Round(gbpAccounting, MidpointRounding.AwayFromZero).ToString("£#,##0;-(£#,##0)");
                     if (value is double gbpAccountingDouble)
-                        return Math.Round(gbpAccountingDouble, MidpointRounding.AwayFromZero).ToString("£#,##0;- (£#,##0)");
+                        return Math.Round(gbpAccountingDouble, MidpointRounding.AwayFromZero).ToString("£#,##0;-(£#,##0)");
                     break;
                 case GridColumnType.DoubleNumber:
                     if (value is double doubleValue)

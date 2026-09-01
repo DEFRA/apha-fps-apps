@@ -95,8 +95,8 @@ namespace Apha.FPSApps.Web.UnitTests.Models.Components.DataGrid
             new() { PropertyName = "OffTarget", ColumnType = GridColumnType.GbpValueRoundedAccounting };
 
         [Theory]
-        [InlineData(-2569, "- (£2,569)")]
-        [InlineData(-0.6, "- (£1)")]
+        [InlineData(-2569, "-(£2,569)")]
+        [InlineData(-0.6, "-(£1)")]
         [InlineData(0, "£0")]
         [InlineData(214, "£214")]
         [InlineData(1234567, "£1,234,567")]
@@ -108,7 +108,7 @@ namespace Apha.FPSApps.Web.UnitTests.Models.Components.DataGrid
         [Fact]
         public void FormatValue_Accounting_HandlesDoubleValues()
         {
-            Assert.Equal("- (£2,569)", GridHelpers.FormatValue(-2568.7d, AccountingColumn()));
+            Assert.Equal("-(£2,569)", GridHelpers.FormatValue(-2568.7d, AccountingColumn()));
         }
 
         [Fact]
