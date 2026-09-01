@@ -60,12 +60,13 @@ namespace Apha.PIMS.DataAccess.Repository
             return rows > 0;
         }
 
-        public async Task<RadTrackInvoiceTotals> GetTotalsAsync(RadTrackInvoiceFilter? filter)
+        public async Task<RadTrackInvoiceTotals> GetTotalsAsync(RadTrackInvoiceFilter? filter, string? search = null)
         {
             IQueryable<RadTrackInvoice> query = _dbContext.RadTrackInvoices.AsNoTracking();
 
             query = BuildFilterQuery(query, filter);
             query = BuildProgramFilterQuery(query, filter?.Program);
+            query = ApplyColumnFilter(query, search);
             var totals = await query
                 .GroupBy(_ => 1)
                 .Select(g => new RadTrackInvoiceTotals
@@ -106,15 +107,13 @@ namespace Apha.PIMS.DataAccess.Repository
             return await query.AnyAsync();
         }
 
-      
+
         public async Task<List<string>> GetProjectsAsync()
-            => await (from rd in _dbContext.ProjectRadTrackData.AsNoTracking()
-                      join vp in _dbContext.ProjectLatestDetails.AsNoTracking()
-                          on rd.Parentproject equals vp.ParentProject
-                      orderby rd.Parentproject
-                      select rd.Parentproject)
-                     .Distinct()
-                     .ToListAsync();
+            => await _dbContext.ProjectRadTrackData.AsNoTracking()
+                .Select(rd => rd.Parentproject)
+                .Distinct()
+                .OrderBy(p => p)
+                .ToListAsync();
 
         
         public async Task<List<int>> GetYearsAsync()

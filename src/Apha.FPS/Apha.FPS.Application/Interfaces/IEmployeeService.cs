@@ -7,6 +7,7 @@ namespace Apha.FPS.Application.Interfaces
     {        
         Task<PaginatedResult<EmployeeDto>> GetFilteredEmployeesAsync(QueryParameters<string> queryFilter, int filterOption);
         Task<IEnumerable<EmployeeDto>> GetFilteredEmployeesAsync(int filterOption);
+        Task<IEnumerable<EmployeeDto>> GetStaffNameLookupAsync();
         Task<EmployeeDto?> GetEmployeeByIdAsync(string spNumber);
         Task<EmployeeDto> AddEmployeeAsync(EmployeeDto employeeDto);
         Task<EmployeeDto> UpdateEmployeeAsync(EmployeeDto employeeDto);
