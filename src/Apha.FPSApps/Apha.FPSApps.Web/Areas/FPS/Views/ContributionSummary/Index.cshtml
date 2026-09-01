@@ -17,11 +17,10 @@
     @* Resource Center dropdown *@
     <div class="govuk-grid-column-one-third" style="display:flex; justify-content:flex-end;">
         <div style="display:flex; align-items:center; gap:8px;">
-            <label for="sellingPcSelect" class="govuk-label govuk-!-font-size-16 sup_margin_bottom_0">Resource Center:&nbsp;</label>
+            <label for="sellingPcSelect" class="govuk-label govuk-!-font-size-16 sup_margin_bottom_0 isNoWrap">Resource Center:</label>
             <select id="sellingPcSelect"
                     class="govuk-select govuk-!-font-size-16"
                     style="width:auto; min-width:260px;"
-                    aria-label="Resource Center"
                     onchange="loadContributionData(this.value)">
                 <option value="">-- Select Resource Center --</option>
                 @foreach (var pc in Model.SellingProfitCentres)

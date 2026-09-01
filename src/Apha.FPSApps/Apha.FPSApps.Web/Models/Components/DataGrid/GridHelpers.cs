@@ -30,7 +30,6 @@
                 GridColumnType.GbpValue => true,
                 GridColumnType.GbpValueRounded => true,
                 GridColumnType.Percentage => true,
-                GridColumnType.PercentageRatio => true,
                 GridColumnType.RoundTwoDecimal => true,
                 _ => false
             };
@@ -140,14 +139,6 @@
                         return (pctDecimal < 1 ? pctDecimal * 100 : pctDecimal).ToString("F2") + "%";
                     if (value is float pctFloat)
                         return (((double)pctFloat) < 1 ? ((double)pctFloat) * 100 : ((double)pctFloat)).ToString("F2") + "%";
-                    break;
-                case GridColumnType.PercentageRatio:
-                    if (value is double pctRatioDouble)
-                        return (pctRatioDouble * 100).ToString("F2") + "%";
-                    if (value is decimal pctRatioDecimal)
-                        return (pctRatioDecimal * 100).ToString("F2") + "%";
-                    if (value is float pctRatioFloat)
-                        return (((double)pctRatioFloat) * 100).ToString("F2") + "%";
                     break;
                 case GridColumnType.RoundTwoDecimal:
                     if (value is decimal rtdDecimal)
