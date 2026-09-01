@@ -5,6 +5,7 @@ using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -20,7 +21,13 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
         {
             _serviceMock = Substitute.For<IEmployeeService>();
             _mapperMock = Substitute.For<IMapper>();
-            _controller = new EmployeeController(_serviceMock, _mapperMock);
+            _controller = new EmployeeController(_serviceMock, _mapperMock)
+            {
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext()
+                }
+            };
         }
 
         #region GetFilteredEmployeesAsync (Paginated)

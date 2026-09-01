@@ -75,7 +75,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var stopwatch = Stopwatch.StartNew();
             var correlationId = HttpContext.Request.Headers["X-Correlation-ID"].ToString();
             if (string.IsNullOrWhiteSpace(correlationId))
+            {
                 correlationId = HttpContext.TraceIdentifier;
+            }               
 
             Console.WriteLine($"Web WorkGroupPeopleController - LoadPeopleGrid() started (corrId - {correlationId}) (page - {request.Page}) :{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffff")}");
             if (!ModelState.IsValid)

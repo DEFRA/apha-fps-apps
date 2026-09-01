@@ -162,7 +162,9 @@ namespace Apha.FPS.Api.Controllers
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var correlationId = HttpContext.Request.Headers["X-Correlation-ID"].ToString();
             if (string.IsNullOrWhiteSpace(correlationId))
+            {
                 correlationId = HttpContext.TraceIdentifier;
+            }               
 
             Console.WriteLine($"FPSAPI EmployeeController - GetWorkGroupStaffPaginatedAsync() started (corrId - {correlationId}) (page - {query.Page}): {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffff")}");
 

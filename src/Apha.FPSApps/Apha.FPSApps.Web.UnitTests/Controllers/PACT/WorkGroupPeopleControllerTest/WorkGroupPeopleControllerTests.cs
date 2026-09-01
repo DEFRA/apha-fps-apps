@@ -8,6 +8,7 @@ using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 
@@ -25,7 +26,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             _mapper = Substitute.For<IMapper>();
             _employeeService = Substitute.For<IEmployeeService>();
             _testCapabilityService = Substitute.For<ITestCapabilityService>();
-            _controller = new WorkGroupPeopleController(_mapper, _employeeService, _testCapabilityService);
+            _controller = new WorkGroupPeopleController(_mapper, _employeeService, _testCapabilityService)
+            {
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext()
+                }
+            };
         }
 
         // ── helpers ────────────────────────────────────────────────────────────
