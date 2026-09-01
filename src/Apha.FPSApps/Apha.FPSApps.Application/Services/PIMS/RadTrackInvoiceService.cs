@@ -29,8 +29,9 @@ namespace Apha.FPSApps.Application.Services.PIMS
             string? project = null,
             string? contract = null,
             int? year = null,
-            string? program = null)
-            => await _client.PimsRadTrackInvoice.GetTotalsAsync(project, contract, year, program);
+            string? program = null,
+            string? search = null)
+            => await _client.PimsRadTrackInvoice.GetTotalsAsync(project, contract, year, program, search);
         
         public async Task<ApiResponseDto<RadTrackInvoiceDto>> GetByIdAsync(int id)
             => await _client.PimsRadTrackInvoice.GetByIdAsync(id);

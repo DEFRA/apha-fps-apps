@@ -231,6 +231,12 @@
        
         function refreshInvoiceTotals() {
             var filters = getInvoiceExtraFilters();
+            var gm = window['gridManager_invoicesGrid'];
+            var filterModel = gm && typeof gm.getFilterModel === 'function'
+                ? gm.getFilterModel()
+                : {};
+            filters.search = JSON.stringify(filterModel);
+
             $.get('@Url.Action("GetInvoiceTotals", "Invoice", new { area = "PIMS" })', filters,
                 function (data) {
                     if (!$invTotals) return;
