@@ -6,13 +6,9 @@ namespace Apha.BatchJobs.Domain.Interfaces;
 /// </summary>
 public interface IExecutionYearContext
 {
-    /// <summary>
-    /// Gets or sets the active FPS year for the current execution scope.
-    /// </summary>
+    /// <summary>Gets or sets the active FPS year for the current execution scope.</summary>
     int? FpsYear { get; set; }
 
-    /// <summary>
-    /// Gets or sets the source used to resolve the current year value.
-    /// </summary>
+    /// <summary>Gets or sets the source used to resolve the current year value.</summary>
     string YearSource { get; set; }
 }
