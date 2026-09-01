@@ -1,6 +1,6 @@
 @model Apha.FPSApps.Web.Areas.FPS.Models.SetUpStaffResourcesViewModel
 @{
-    ViewData["Title"] = "2025-2026 : Set Up Staff Resources";
+    ViewData["Title"] = "Set Up Staff Resources";
 }
 
 <main class="govuk-main-wrapper govuk-!-padding-top-0" id="main-content" role="main">
@@ -11,7 +11,7 @@
                 <div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-2">
             <div class="govuk-grid-column-one-half">
                 <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 govuk-!-margin-left-0 isCustomPageHeadings">
-                    Set Up Staff Resources
+                    WorkGroup Selection Screen for <span id="ssrSelectedCentreName">@Model.SelectedResourceCentre</span>
                 </h1>
             </div>
             <div class="govuk-grid-column-one-half isFloatRight">
@@ -37,7 +37,6 @@
                                     <td class="govuk-table__cell govuk-!-padding-bottom-0 isNoBottomBorder">
                                         <select class="govuk-select"
                                                 id="workGroupSelect"
-                                                aria-label="Select a Work Group"
                                                 asp-for="SelectedWorkgroup"
                                                 asp-items="Model.WorkGroupList"
                                                 onchange="LoadGradeByGroup()">
@@ -67,14 +66,14 @@
 
                                         <section class="ssr-workgroup-section sup_border" aria-labelledby="ssr-workgroup-title">
                                             <h2 class="govuk-heading-s ssr-section-title" id="ssr-workgroup-title">
-                                                WorkGroup Selection Screen for <span id="ssrSelectedCentreName">@Model.SelectedResourceCentre</span>
+                                                Staff in WorkGroup <span id="ssrSelectedWorkGroupName">@Model.SelectedWorkgroup</span>
                                             </h2>
 
                                             <div class="ssr-top-layout">
 
                                                 <div class="ssr-grade-panel">
                                                     <div class="ssr-grade-header">
-                                                        <span class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0">Grade</span>
+                                                        <span class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0">Grades in this Work Group</span>
                                                     </div>
                                                     <ul class="ssr-grade-list" id="ssrGradeList" role="listbox" aria-label="Select workgroup grade">
                                                         @foreach (var grade in Model.GradeList)
@@ -102,7 +101,7 @@
                                         <div class="ssr-bottom-row">
                                             <div class="ssr-summary-box">
                                                 <div class="ssr-summary-field">
-                                                    <span class="govuk-label govuk-!-font-weight-bold ssr-summary-label">Summary for<br>Grade:</span>
+                                                    <span class="govuk-label govuk-!-font-weight-bold ssr-summary-label">Summary for Grade:</span>
                                                     <input type="text"
                                                            id="ssrSummaryGrade"
                                                            class="govuk-input ssr-summary-input text-AlignRight"
@@ -111,7 +110,7 @@
                                                            aria-label="Summary grade" />
                                                 </div>
                                                 <div class="ssr-summary-field">
-                                                    <span class="govuk-label govuk-!-font-weight-bold ssr-summary-label">WorkHrs at Staff<br>Level:</span>
+                                                    <span class="govuk-label govuk-!-font-weight-bold ssr-summary-label">WorkHrs at Staff Level:</span>
                                                     <input type="text"
                                                            id="ssrWorkHrs"
                                                            class="govuk-input ssr-summary-input text-AlignRight"
@@ -123,21 +122,22 @@
 
                                             <div class="ssr-person-box">
                                                 <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Person Selected</h3>
-                                                <input type="text"
-                                                       id="ssrPersonSelected"
-                                                       class="govuk-input ssr-person-input govuk-!-font-weight-bold govuk-!-margin-bottom-2"
-                                                       value="@Model.SelectedPersonName"
-                                                       readonly
-                                                       aria-label="Selected person" />
-                                                <input type="hidden" id="ssrSelectedPersonId" value="" />
-                                                <hr class="ssr-person-divider" />
-                                                <button type="submit"
-                                                        id="planPersontoZTCodes"
-                                                        class="govuk-button govuk-button--secondary"
-                                                        data-module="govuk-button"
-                                                        onclick="ssrPlanPersonOntoZT()">
-                                                    Plan Person onto ZT Codes
-                                                </button>
+                                                <div class="ssr-person-row">
+                                                    <input type="text"
+                                                           id="ssrPersonSelected"
+                                                           class="govuk-input ssr-person-input govuk-!-font-weight-bold"
+                                                           value="@Model.SelectedPersonName"
+                                                           readonly
+                                                           aria-label="Selected person" />
+                                                    <input type="hidden" id="ssrSelectedPersonId" value="" />
+                                                    <button type="submit"
+                                                            id="planPersontoZTCodes"
+                                                            class="govuk-button govuk-button--start ssr-person-action"
+                                                            data-module="govuk-button"
+                                                            onclick="ssrPlanPersonOntoZT()">
+                                                        Plan Person onto ZT Codes
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
 
