@@ -325,6 +325,29 @@
             }
         });
 
+        // Keyboard support: open dropdown from the (readonly) input via keyboard
+        input.addEventListener('keydown', function (e) {
+            if (self.config.disabled) return;
+
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+                e.preventDefault();
+                self.toggleDropdown();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!self.isOpen) {
+                    self.openDropdown();
+                } else if (self.config.enableSearch) {
+                    var sb = document.getElementById(self.config.dropdownId + '_search');
+                    if (sb) sb.focus();
+                } else if (self.filteredData.length > 0) {
+                    self.focusRow(0);
+                }
+            } else if (e.key === 'Escape' && self.isOpen) {
+                e.preventDefault();
+                self.closeDropdown();
+            }
+        });
+
         // Search functionality
         if (searchBox && this.config.enableSearch) {
             searchBox.addEventListener('input', function () {

@@ -1893,3 +1893,72 @@ textarea {
 .govuk-back-link{
     font-weight: bold !important;
 }
+/*
+ * -----------------------------------------------------------------------
+ * Global keyboard-accessibility fix.
+
+ * ----------------------------------------------------------------------- */
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible,
+[role="button"]:focus-visible,
+[role="option"]:focus-visible,
+[role="tab"]:focus-visible,
+.govuk-select:focus-visible,
+.govuk-input:focus-visible,
+.govuk-tab:focus-visible,
+.govuk-button:focus-visible,
+.custom-table :focus-visible,
+.editable-grid-table :focus-visible {
+    outline: 3px solid #fd0 !important;
+    outline-offset: 0 !important;
+}
+
+/* Fallback for browsers that don't support :focus-visible */
+.js-focus-visible a:focus:not(.focus-visible),
+.js-focus-visible button:focus:not(.focus-visible),
+.js-focus-visible input:focus:not(.focus-visible),
+.js-focus-visible select:focus:not(.focus-visible) {
+    outline: none;
+}
+
+/* -----------------------------------------------------------------------
+ * Sidebar item highlight
+ * ----------------------------------------------------------------------- */
+
+.sidebar-item-highlight,
+.sidebar-link-two active {
+    outline: 3px solid #fd0 !important;
+    outline-offset: 2px !important;
+    background-color: red !important;
+    color: white !important;
+}
+
+/* -----------------------------------------------------------------------
+ * Main (top) navigation menu + side navigation focus highlight
+ * ----------------------------------------------------------------------- */
+
+
+.sidenav a:focus-visible,
+#shortnav a:focus-visible {
+    border-radius: 0 8px 8px 0;
+    outline: 3px solid #fd0 !important;
+    outline-offset: 0 !important;
+    background-color: #1d70b8 !important;
+    color: white !important;
+}
+.main-nav .nav-button:focus-visible,
+.main-nav .dropdown-item:focus-visible,
+.main-nav .sub-dropdown-toggle:focus-visible,
+#shortnav button:focus-visible,
+.sidenav button:focus-visible {
+    outline: 3px solid #fd0 !important;
+    outline-offset: 0 !important;
+    background-color: #1d70b8 !important;
+    color: white !important;
+}

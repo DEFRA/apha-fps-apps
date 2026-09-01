@@ -368,7 +368,7 @@ body {
     display: inline-flex;
     width: 100%;
     visibility: hidden;
-    color: #fff";
+    color: #fff;
 
 }
 
@@ -384,7 +384,7 @@ body {
     /* border-bottom: 1px solid #25257e;*/
     color: #ffffff;
     background: rgba(255, 255, 255, 0.1);
-    overflow: hidden;
+/*    overflow: hidden;*/
 }
 
     .sidebar-link-two:hover {
