@@ -132,9 +132,9 @@ namespace Apha.PIMS.Application.Services
             => await _repository.DeleteAsync(invoiceCounter);
 
         
-        public async Task<RadTrackInvoiceTotalsDto> GetTotalsAsync(RadTrackInvoiceFilter? filter)
+        public async Task<RadTrackInvoiceTotalsDto> GetTotalsAsync(RadTrackInvoiceFilter? filter, string? search = null)
         {
-            RadTrackInvoiceTotals totals = await _repository.GetTotalsAsync(filter);
+            RadTrackInvoiceTotals totals = await _repository.GetTotalsAsync(filter, search);
             return _mapper.Map<RadTrackInvoiceTotalsDto>(totals);
         }
 

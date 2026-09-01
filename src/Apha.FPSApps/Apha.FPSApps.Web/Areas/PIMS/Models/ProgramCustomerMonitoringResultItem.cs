@@ -61,36 +61,40 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         [GridColumn(Order = 14, Width = 140, Type = GridColumnType.DecimalNumber)]
         public decimal? PercentOfBudget { get; set; }
 
+        [Display(Name = "CustomerComment")]
+        [GridColumn(Order = 15, Width = 220, Type = GridColumnType.ReadOnly)]
+        public string? MonitoringComment { get; set; }
+
         [Display(Name = "PCForecastSpend")]
-        [GridColumn(Order = 15, Width = 140, Type = GridColumnType.DoubleNumber)]
+        [GridColumn(Order = 16, Width = 140, Type = GridColumnType.DoubleNumber)]
         public double? PcForecastSpend { get; set; }
 
         [Display(Name = "EstimateSpend")]
-        [GridColumn(Order = 16, Width = 130, Type = GridColumnType.DecimalNumber)]
+        [GridColumn(Order = 17, Width = 130, Type = GridColumnType.DecimalNumber)]
         public decimal? EstimateSpend { get; set; }
 
         [Display(Name = "LinearSpend")]
-        [GridColumn(Order = 17, Width = 130, Type = GridColumnType.DecimalNumber)]
+        [GridColumn(Order = 18, Width = 130, Type = GridColumnType.DecimalNumber)]
         public decimal? LinearSpend { get; set; }
 
         [Display(Name = "BFBudget")]
-        [GridColumn(Order = 18, Width = 120, Type = GridColumnType.GbpValue)]
+        [GridColumn(Order = 19, Width = 120, Type = GridColumnType.GbpValue)]
         public decimal? BfBudget { get; set; }
 
+        [Display(Name = "TotalIncome")]
+        [GridColumn(Order = 20, Width = 120, Type = GridColumnType.GbpValue)]
+        public decimal? TotalIncome { get; set; }
+
         [Display(Name = "CumInvoice")]
-        [GridColumn(Order = 19, Width = 120, Type = GridColumnType.GbpValue)]
+        [GridColumn(Order = 21, Width = 120, Type = GridColumnType.GbpValue)]
         public decimal? CumInvoice { get; set; }
 
         [Display(Name = "StartDate")]
-        [GridColumn(Order = 20, Width = 120, Type = GridColumnType.Date)]
+        [GridColumn(Order = 22, Width = 120, Type = GridColumnType.Date)]
         public DateTime? StartDate { get; set; }
 
         [Display(Name = "EndDate")]
-        [GridColumn(Order = 21, Width = 120, Type = GridColumnType.Date)]
+        [GridColumn(Order = 23, Width = 120, Type = GridColumnType.Date)]
         public DateTime? EndDate { get; set; }
-
-        [Display(Name = "Comments")]
-        [GridColumn(Order = 22, Width = 220, Type = GridColumnType.ReadOnly)]
-        public string? MonitoringComment { get; set; }
     }
 }
