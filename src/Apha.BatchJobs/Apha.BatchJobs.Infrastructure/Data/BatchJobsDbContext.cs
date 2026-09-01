@@ -3,78 +3,47 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Data;
 
-/// <summary>
-/// Database context for batch jobs fps schema.
-/// </summary>
+/// <summary>Database context for batch jobs fps schema.</summary>
 public class BatchJobsDbContext : DbContext
 {
-    /// <summary>
-    /// Initializes a new instance of the BatchJobsDbContext.
-    /// </summary>
-    /// <param name="options">DbContext configuration options.</param>
     public BatchJobsDbContext(DbContextOptions<BatchJobsDbContext> options) : base(options)
     {
     }
 
-    /// <summary>
-    /// Gets or sets the batch locks table.
-    /// </summary>
+    /// <summary>Gets or sets the batch locks table.</summary>
     public DbSet<BatchLock> BatchLocks { get; set; }
 
-    /// <summary>
-    /// Gets or sets the foundation job master table.
-    /// </summary>
+    /// <summary>Gets or sets the foundation job master table.</summary>
     internal DbSet<TblJobMaster> TblJobMaster { get; set; }
 
-    /// <summary>
-    /// Gets or sets the foundation job status table.
-    /// </summary>
+    /// <summary>Gets or sets the foundation job status table.</summary>
     internal DbSet<TblJobStatus> TblJobStatus { get; set; }
 
-    /// <summary>
-    /// Gets or sets the foundation job queue table.
-    /// </summary>
+    /// <summary>Gets or sets the foundation job queue table.</summary>
     internal DbSet<TblJobQueue> TblJobQueue { get; set; }
 
-    /// <summary>
-    /// Gets or sets the foundation job queue log table.
-    /// </summary>
+    /// <summary>Gets or sets the foundation job queue log table.</summary>
     internal DbSet<TblJobQueueLog> TblJobQueueLog { get; set; }
 
-
-    /// <summary>
-    /// Gets or sets scheduled load run lifecycle rows.
-    /// </summary>
+    /// <summary>Gets or sets scheduled load run lifecycle rows.</summary>
     internal DbSet<ScheduledLoadRunTable> ScheduledLoadRun { get; set; }
 
-    /// <summary>
-    /// Gets or sets scheduled load step audit rows.
-    /// </summary>
+    /// <summary>Gets or sets scheduled load step audit rows.</summary>
     internal DbSet<ScheduledLoadStepRunTable> ScheduledLoadStepRun { get; set; }
 
-    /// <summary>
-    /// Gets or sets scheduled load validation result rows.
-    /// </summary>
+    /// <summary>Gets or sets scheduled load validation result rows.</summary>
     internal DbSet<ScheduledLoadValidationResultTable> ScheduledLoadValidationResult { get; set; }
 
-    /// <summary>
-    /// Gets or sets source fixture rows for FPS year processing.
-    /// </summary>
+    /// <summary>Gets or sets source fixture rows for FPS year processing.</summary>
     internal DbSet<FpsSourceProjectYearTable> FpsSourceProjectYear { get; set; }
 
-    /// <summary>
-    /// Gets or sets yearly totals rows.
-    /// </summary>
+    /// <summary>Gets or sets yearly totals rows.</summary>
     internal DbSet<FpsYearTotalsTable> FpsYearTotals { get; set; }
 
-    /// <summary>
-    /// Gets or sets archived yearly totals rows.
-    /// </summary>
+    /// <summary>Gets or sets archived yearly totals rows.</summary>
     internal DbSet<FpsYearArchiveTable> FpsYearArchive { get; set; }
 
-    /// <summary>
-    /// Gets or sets current year project snapshot rows.
-    /// </summary>
+    /// <summary>Gets or sets current year project snapshot rows.</summary>
     internal DbSet<FpsProjectAllCurrentYearTable> FpsProjectAllCurrentYear { get; set; }
 
     // RecreateSummaries table/view model sets
@@ -175,10 +144,6 @@ public class BatchJobsDbContext : DbContext
     internal DbSet<MaVProjectReportsPmMilestoneEmail> MaVProjectReportsPmMilestoneEmail { get; set; }
     internal DbSet<MaTblSettings> MaTblSettings { get; set; }
 
-    /// <summary>
-    /// Configures the model for the database context.
-    /// </summary>
-    /// <param name="modelBuilder">The model builder.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
