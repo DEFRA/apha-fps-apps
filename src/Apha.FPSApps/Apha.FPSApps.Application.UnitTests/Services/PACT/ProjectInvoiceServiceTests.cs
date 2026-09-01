@@ -1,8 +1,13 @@
+using Apha.Common.Utilities.ExcelImport;
+using Apha.Common.Utilities.Storage;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.PACT;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 
 namespace Apha.FPSApps.Application.UnitTests.Services.PACT
@@ -18,7 +23,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT
             _pactClient = Substitute.For<IPactApiClient>();
             _invoiceApiClient = Substitute.For<IPactProjectInvoiceApiClient>();
             _pactClient.PactProjectInvoice.Returns(_invoiceApiClient);
-            _service = new ProjectInvoiceService(_pactClient);
+            _service = new ProjectInvoiceService(
+                _pactClient,
+                Substitute.For<IExcelImportService>(),
+                Substitute.For<IS3StorageService>(),
+                Substitute.For<IHttpContextAccessor>(),
+                Substitute.For<IConfiguration>(),
+                Substitute.For<ILogger<ProjectInvoiceService>>());
         }
 
         #region GetMonthlyInvoicesSummaryAsync

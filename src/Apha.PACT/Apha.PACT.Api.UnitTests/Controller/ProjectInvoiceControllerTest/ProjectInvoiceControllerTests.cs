@@ -4,6 +4,7 @@ using Apha.PACT.Api.Controllers;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
+using Apha.PACT.Core.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -15,13 +16,16 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
     {
         private readonly IProjectInvoiceService _serviceMock;
         private readonly IMapper _mapperMock;
+        private readonly ICurrentUserContext _currentUserContextMock;
         private readonly ProjectInvoiceController _controller;
 
         public ProjectInvoiceControllerTests()
         {
             _serviceMock = Substitute.For<IProjectInvoiceService>();
             _mapperMock = Substitute.For<IMapper>();
-            _controller = new ProjectInvoiceController(_serviceMock, _mapperMock);
+            _currentUserContextMock = Substitute.For<ICurrentUserContext>();
+            _currentUserContextMock.UserId.Returns("test-user");
+            _controller = new ProjectInvoiceController(_serviceMock, _mapperMock, _currentUserContextMock);
         }
 
         #region GetPaged
@@ -529,6 +533,414 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.True((bool)okResult.Value!);
             await _serviceMock.Received(1).DeleteAsync(5);
+        }
+
+        #endregion
+
+        #region GetMonthlyInvoicesSummary
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummary_ValidQuery_ReturnsOk()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new MonthlyInvoicesPivotDto();
+            var mapped = new MonthlyInvoicesPivotRes();
+
+            _serviceMock.GetMonthlyInvoicesSummaryAsync(query).Returns(dto);
+            _mapperMock.Map<MonthlyInvoicesPivotRes>(dto).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetMonthlyInvoicesSummary(query);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummary_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            _serviceMock.GetMonthlyInvoicesSummaryAsync(query).ThrowsAsync(new InvalidOperationException("Error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetMonthlyInvoicesSummary(query));
+        }
+
+        #endregion
+
+        #region GetFailedInvoiceImport
+
+        [Fact]
+        public async Task GetFailedInvoiceImport_ValidQuery_ReturnsOk()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<InvoiceImportRowDto>(
+                new List<InvoiceImportRowDto> { new() { Id = 1 } }, new PaginationDto());
+            var mapped = new PaginationRes<InvoiceImportRowRes>
+            {
+                Data = new List<InvoiceImportRowRes> { new() { Id = 1 } }
+            };
+
+            _serviceMock.GetFailedInvoiceImportAsync(query, "test-user").Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<InvoiceImportRowRes>>(serviceResult).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetFailedInvoiceImport(query);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetFailedInvoiceImport_UsesCurrentUserContext()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var serviceResult = new PaginatedResult<InvoiceImportRowDto>(
+                Enumerable.Empty<InvoiceImportRowDto>(), new PaginationDto());
+            _serviceMock.GetFailedInvoiceImportAsync(query, "test-user").Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<InvoiceImportRowRes>>(serviceResult).Returns(new PaginationRes<InvoiceImportRowRes>());
+
+            // Act
+            await _controller.GetFailedInvoiceImport(query);
+
+            // Assert
+            await _serviceMock.Received(1).GetFailedInvoiceImportAsync(query, "test-user");
+        }
+
+        [Fact]
+        public async Task GetFailedInvoiceImport_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            _serviceMock.GetFailedInvoiceImportAsync(query, "test-user")
+                .ThrowsAsync(new InvalidOperationException("Error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetFailedInvoiceImport(query));
+        }
+
+        #endregion
+
+        #region GetFailedInvoiceImportById
+
+        [Fact]
+        public async Task GetFailedInvoiceImportById_ExistingId_ReturnsOk()
+        {
+            // Arrange
+            var dto = new InvoiceImportRowDto { Id = 5, ProjectParent = "PRJ1" };
+            var mapped = new InvoiceImportRowRes { Id = 5, ProjectParent = "PRJ1" };
+
+            _serviceMock.GetFailedInvoiceImportByIdAsync(5, "test-user").Returns(dto);
+            _mapperMock.Map<InvoiceImportRowRes>(dto).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetFailedInvoiceImportById(5);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetFailedInvoiceImportById_NullResult_ThrowsKeyNotFoundException()
+        {
+            // Arrange
+            _serviceMock.GetFailedInvoiceImportByIdAsync(99, "test-user").Returns((InvoiceImportRowDto?)null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _controller.GetFailedInvoiceImportById(99));
+        }
+
+        [Fact]
+        public async Task GetFailedInvoiceImportById_UsesCurrentUserContext()
+        {
+            // Arrange
+            var dto = new InvoiceImportRowDto { Id = 1 };
+            _serviceMock.GetFailedInvoiceImportByIdAsync(1, "test-user").Returns(dto);
+            _mapperMock.Map<InvoiceImportRowRes>(dto).Returns(new InvoiceImportRowRes());
+
+            // Act
+            await _controller.GetFailedInvoiceImportById(1);
+
+            // Assert
+            await _serviceMock.Received(1).GetFailedInvoiceImportByIdAsync(1, "test-user");
+        }
+
+        [Fact]
+        public async Task GetFailedInvoiceImportById_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _serviceMock.GetFailedInvoiceImportByIdAsync(1, "test-user")
+                .ThrowsAsync(new InvalidOperationException("Error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetFailedInvoiceImportById(1));
+        }
+
+        #endregion
+
+        #region SaveFailedInvoiceImport
+
+        [Fact]
+        public async Task SaveFailedInvoiceImport_ValidRequest_ReturnsOkWithResult()
+        {
+            // Arrange
+            var req = new InvoiceImportRowReq { ProjectParent = "PRJ1" };
+            var dto = new InvoiceImportRowDto { ProjectParent = "PRJ1" };
+
+            _mapperMock.Map<InvoiceImportRowDto>(req).Returns(dto);
+            _serviceMock.SaveFailedInvoiceImportAsync(5, dto, "test-user").Returns(true);
+
+            // Act
+            var result = await _controller.SaveFailedInvoiceImport(5, req);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)okResult.Value!);
+        }
+
+        [Fact]
+        public async Task SaveFailedInvoiceImport_NotMoved_ReturnsOkWithFalse()
+        {
+            // Arrange
+            var req = new InvoiceImportRowReq { ProjectParent = "PRJ1" };
+            var dto = new InvoiceImportRowDto { ProjectParent = "PRJ1" };
+
+            _mapperMock.Map<InvoiceImportRowDto>(req).Returns(dto);
+            _serviceMock.SaveFailedInvoiceImportAsync(5, dto, "test-user").Returns(false);
+
+            // Act
+            var result = await _controller.SaveFailedInvoiceImport(5, req);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.False((bool)okResult.Value!);
+        }
+
+        [Fact]
+        public async Task SaveFailedInvoiceImport_UsesCurrentUserContext()
+        {
+            // Arrange
+            var req = new InvoiceImportRowReq();
+            var dto = new InvoiceImportRowDto();
+            _mapperMock.Map<InvoiceImportRowDto>(req).Returns(dto);
+            _serviceMock.SaveFailedInvoiceImportAsync(1, dto, "test-user").Returns(true);
+
+            // Act
+            await _controller.SaveFailedInvoiceImport(1, req);
+
+            // Assert
+            await _serviceMock.Received(1).SaveFailedInvoiceImportAsync(1, dto, "test-user");
+        }
+
+        [Fact]
+        public async Task SaveFailedInvoiceImport_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var req = new InvoiceImportRowReq();
+            _mapperMock.Map<InvoiceImportRowDto>(req).Returns(new InvoiceImportRowDto());
+            _serviceMock.SaveFailedInvoiceImportAsync(Arg.Any<int>(), Arg.Any<InvoiceImportRowDto>(), "test-user")
+                .ThrowsAsync(new InvalidOperationException("Error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.SaveFailedInvoiceImport(1, req));
+        }
+
+        #endregion
+
+        #region DeleteFailedInvoiceImportById
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportById_ExistingId_ReturnsOkWithTrue()
+        {
+            // Arrange
+            _serviceMock.DeleteFailedInvoiceImportByIdAsync(5, "test-user").Returns(true);
+
+            // Act
+            var result = await _controller.DeleteFailedInvoiceImportById(5);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)okResult.Value!);
+        }
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportById_NonExistingId_ReturnsOkWithFalse()
+        {
+            // Arrange
+            _serviceMock.DeleteFailedInvoiceImportByIdAsync(99, "test-user").Returns(false);
+
+            // Act
+            var result = await _controller.DeleteFailedInvoiceImportById(99);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.False((bool)okResult.Value!);
+        }
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportById_UsesCurrentUserContext()
+        {
+            // Arrange
+            _serviceMock.DeleteFailedInvoiceImportByIdAsync(1, "test-user").Returns(true);
+
+            // Act
+            await _controller.DeleteFailedInvoiceImportById(1);
+
+            // Assert
+            await _serviceMock.Received(1).DeleteFailedInvoiceImportByIdAsync(1, "test-user");
+        }
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportById_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _serviceMock.DeleteFailedInvoiceImportByIdAsync(1, "test-user")
+                .ThrowsAsync(new InvalidOperationException("Error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.DeleteFailedInvoiceImportById(1));
+        }
+
+        #endregion
+
+        #region DeleteFailedInvoiceImportByUser
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportByUser_RecordsDeleted_ReturnsOkWithTrue()
+        {
+            // Arrange
+            _serviceMock.DeleteFailedInvoiceImportByUserAsync("test-user").Returns(5);
+
+            // Act
+            var result = await _controller.DeleteFailedInvoiceImportByUser();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)okResult.Value!);
+        }
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportByUser_NoRecordsDeleted_ReturnsOkWithFalse()
+        {
+            // Arrange
+            _serviceMock.DeleteFailedInvoiceImportByUserAsync("test-user").Returns(0);
+
+            // Act
+            var result = await _controller.DeleteFailedInvoiceImportByUser();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.False((bool)okResult.Value!);
+        }
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportByUser_UsesCurrentUserContext()
+        {
+            // Arrange
+            _serviceMock.DeleteFailedInvoiceImportByUserAsync("test-user").Returns(1);
+
+            // Act
+            await _controller.DeleteFailedInvoiceImportByUser();
+
+            // Assert
+            await _serviceMock.Received(1).DeleteFailedInvoiceImportByUserAsync("test-user");
+        }
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportByUser_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _serviceMock.DeleteFailedInvoiceImportByUserAsync("test-user")
+                .ThrowsAsync(new InvalidOperationException("Error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.DeleteFailedInvoiceImportByUser());
+        }
+
+        #endregion
+
+        #region ImportInvoice
+
+        [Fact]
+        public async Task ImportInvoice_ValidRequest_ReturnsOkWithMappedResult()
+        {
+            // Arrange
+            var req = new InvoiceImportReq { FileName = "test.xlsx" };
+            var dto = new InvoiceImportDto { FileName = "test.xlsx" };
+            var resultDto = new InvoiceImportResultDto { PassedCount = 10, FailedCount = 2, Message = "Imported" };
+            var mapped = new InvoiceImportRes { PassedCount = 10, FailedCount = 2, Message = "Imported" };
+
+            _mapperMock.Map<InvoiceImportDto>(req).Returns(dto);
+            _serviceMock.ImportInvoiceAsync(dto, "test-user").Returns(resultDto);
+            _mapperMock.Map<InvoiceImportRes>(resultDto).Returns(mapped);
+
+            // Act
+            var result = await _controller.ImportInvoice(req);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+        }
+
+        [Fact]
+        public async Task ImportInvoice_UsesCurrentUserContext()
+        {
+            // Arrange
+            var req = new InvoiceImportReq();
+            var dto = new InvoiceImportDto();
+            var resultDto = new InvoiceImportResultDto();
+            _mapperMock.Map<InvoiceImportDto>(req).Returns(dto);
+            _serviceMock.ImportInvoiceAsync(dto, "test-user").Returns(resultDto);
+            _mapperMock.Map<InvoiceImportRes>(resultDto).Returns(new InvoiceImportRes());
+
+            // Act
+            await _controller.ImportInvoice(req);
+
+            // Assert
+            await _serviceMock.Received(1).ImportInvoiceAsync(dto, "test-user");
+        }
+
+        [Fact]
+        public async Task ImportInvoice_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var req = new InvoiceImportReq();
+            _mapperMock.Map<InvoiceImportDto>(req).Returns(new InvoiceImportDto());
+            _serviceMock.ImportInvoiceAsync(Arg.Any<InvoiceImportDto>(), "test-user")
+                .ThrowsAsync(new InvalidOperationException("Import error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.ImportInvoice(req));
+        }
+
+        [Fact]
+        public async Task ImportInvoice_MapsRequestCorrectly()
+        {
+            // Arrange
+            var req = new InvoiceImportReq { FileName = "data.xlsx" };
+            var dto = new InvoiceImportDto { FileName = "data.xlsx" };
+            var resultDto = new InvoiceImportResultDto { PassedCount = 0, FailedCount = 5 };
+            var mapped = new InvoiceImportRes { PassedCount = 0, FailedCount = 5 };
+
+            _mapperMock.Map<InvoiceImportDto>(req).Returns(dto);
+            _serviceMock.ImportInvoiceAsync(dto, "test-user").Returns(resultDto);
+            _mapperMock.Map<InvoiceImportRes>(resultDto).Returns(mapped);
+
+            // Act
+            var result = await _controller.ImportInvoice(req);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<InvoiceImportRes>(okResult.Value);
+            Assert.Equal(0, response.PassedCount);
+            Assert.Equal(5, response.FailedCount);
         }
 
         #endregion

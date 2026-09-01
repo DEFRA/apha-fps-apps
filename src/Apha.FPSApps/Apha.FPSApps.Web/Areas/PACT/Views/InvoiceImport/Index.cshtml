@@ -1,0 +1,129 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model Apha.FPSApps.Web.Areas.PACT.Models.InvoiceViewModel
+
+@{
+    ViewData["Title"] = "Invoice Import";
+}
+
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full sup_border-bottom">
+        <h1 class="heading_with_txtbox govuk-heading-s govuk-!-margin-top-2 govuk-!-margin-bottom-2">Invoice Import</h1>
+    </div>
+</div>
+
+<div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2 ">
+    <div class="govuk-grid-column-full">
+        <div class="govuk-form-group govuk-!-margin-bottom-3">
+            <fieldset class="govuk-fieldset">
+                <div style="display: flex; gap: 20px; align-items: flex-end;">
+                    <div class="govuk-form-group" style="margin-bottom: 0; flex: 1;">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="projectPick">
+                            Project
+                        </label>
+                        <select id="projectPick"
+                                class="govuk-select"
+                                style="width: 100%;"
+                                onchange="onProjectPickChange(this.value)">
+                            <option value="">-- All Projects --</option>
+                            @foreach (var project in Model.FilterProjects)
+                            {
+                                @if (project.Value == Model.ParentProject)
+                                {
+                                    <option value="@project.Value" selected>@project.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@project.Value">@project.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="govuk-form-group" style="margin-bottom: 0; flex: 1;">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="monthPick">
+                            Month
+                        </label>
+                        <select id="monthPick" 
+                                class="govuk-select"
+                                style="width: 200px;"
+                                onchange="onMonthPickChange(this.value)">
+                            <option value="">All Months</option>
+                            @foreach (var month in Model.FilterMonths)
+                            {
+                                @if (month.Value == Model.Month?.ToString())
+                                {
+                                    <option value="@month.Value" selected>@month.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@month.Value">@month.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+</div>
+<div class="govuk-grid-row sup_margin_left_right_0 ">
+    <div class="govuk-grid-column-full">
+        <div id="gridContainer_invoicesGrid">
+            @await Html.PartialAsync("_DataGrid", Model.InvoicesGrid)
+        </div>
+    </div>
+</div>
+
+<div class="govuk-grid-column-full">
+    <div class="sup_margin_left_right_0 sup_margin_bottom_10 sup_margin_top_10" style="display:flex; align-items:flex-start; gap:10px;">
+        <div style="flex:1; min-width:0;">
+            <div id="gridContainer_@Model.FailedInvoicesGrid.GridId">
+                @await Html.PartialAsync("_DataGrid", Model.FailedInvoicesGrid)
+            </div>
+        </div>
+
+        <div style="width:fit-content; flex:0 0 auto;">
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button class="govuk-button sup_margin_0 sup_gov_blue_bg sup_flex sup_width_140" id="templateExcel" type="button">
+                    <img src="~/images/file-export-solid-full.svg" width="16" alt="icon for download template for import excel file format">&nbsp; Template
+                </button>
+
+                <div class="upload-container sup_width_140">
+                    <input type="file" id="csvInput" class="file-input" accept=".xls,.xlsx,.csv" hidden>
+                    <button type="button" id="importBtn" class="govuk-button sup_margin_0 sup_flex sup_width_140">
+                        <img src="~/images/file-import-solid-full.svg" width="16" alt="icon for import excel file">&nbsp; Import
+                    </button>
+                </div>
+
+                <button class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_flex sup_width_140" id="exportFailedBtn" type="button" title="Export failed records to Excel">
+                    <img src="~/images/file-export-solid-full.svg" width="16" alt="icon for export data into excel file">&nbsp; Excel Export
+                </button>
+
+                <button class="govuk-button govuk-button--warning sup_margin_0 sup_flex sup_width_140" id="deleteAllFailedBtn" type="button" title="Delete all failed records">
+                    <img src="~/images/trash-can-regular-full-white.svg" width="16" alt="Delete all failed records">&nbsp; Delete All
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        // State
+        var currentParentProject = '@(Model.ParentProject ?? "")';
+        var currentMonth = '@(Model.Month?.ToString() ?? "")';
+        var invoicesGridId = '@Model.InvoicesGrid.GridId';
+        var failedInvoicesGridId = '@Model.FailedInvoicesGrid.GridId';
+
+        // Initialize state
+        if (currentParentProject) {
+            document.getElementById('projectPick').value = currentParentProject;
+        }
+        if (currentMonth) {
+            document.getElementById('monthPick').value = currentMonth;
+        }
+    </script>
+    <script src="~/js/pact_js/invoice.js"></script>
+    <script src="~/js/pact_js/invoice-import.js"></script>
+}

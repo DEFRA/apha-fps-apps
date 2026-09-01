@@ -152,5 +152,175 @@ namespace Apha.PACT.DataAccess.Repository
                 .ThenBy(x => x.Month)
                 .ToListAsync();
         }
+
+        public async Task<HashSet<string>> GetValidProjectsAsync()
+        {
+            var fpsYear = _fpsRequestContext.FpsYear;
+            return await _context.Projects
+                .AsNoTracking()
+                .Where(p => p.FpsYear == fpsYear)
+                .Select(p => p.ParentProject)
+                .ToHashSetAsync(StringComparer.OrdinalIgnoreCase);
+        }
+
+        public int GetCurrentFpsYear() => _fpsRequestContext.FpsYear;
+
+        public async Task<PagedData<InvoiceImportRow>> GetFailedInvoiceImportAsync(PaginationParameters<string> query, string importedBy)
+        {
+            var latestImportedDate = await _context.ProjectInvoiceStagings
+                .AsNoTracking()
+                .Where(x => x.ImportedBy == importedBy && x.IsPassed == false)
+                .MaxAsync(x => x.ImportedDate);
+
+            if (!latestImportedDate.HasValue)
+            {
+                return new PagedData<InvoiceImportRow>(
+                    Array.Empty<InvoiceImportRow>(),
+                    new PaginationData
+                    {
+                        PageNumber = query.Page,
+                        PageSize = query.PageSize,
+                        TotalRecords = 0,
+                        TotalPages = 0
+                    });
+            }
+
+            IQueryable<ProjectInvoiceStaging> failedQuery = _context.ProjectInvoiceStagings
+                .AsNoTracking()
+                .Where(x => x.ImportedBy == importedBy && x.IsPassed == false && x.ImportedDate == latestImportedDate.Value);
+
+            failedQuery = ApplyFailedInvoiceFilter(failedQuery, query.Filter);
+            failedQuery = ApplyFailedInvoiceSorting(failedQuery, query.SortBy, query.Descending);
+
+            IQueryable<InvoiceImportRow> rows = failedQuery
+                .Select(x => new InvoiceImportRow
+                {
+                    Id = x.Id,
+                    ProjectParent = x.ProjectParent,
+                    Month = x.Month,
+                    Amount = x.Amount,
+                    CostOfWork = x.CostOfWork,
+                    Wip = x.Wip,
+                    ProfitLoss = x.ProfitLoss,
+                    Detail = x.Detail,
+                    Type = x.Type,
+                    ValidationFailure = x.ValidationFailure,
+                    ImportedDate = x.ImportedDate
+                });
+
+            return await ApplyPaging(rows, query.Page, query.PageSize);
+        }
+
+        public async Task<ProjectInvoiceStaging?> GetFailedInvoiceImportByIdAsync(int id, string importedBy)
+        {
+            return await _context.ProjectInvoiceStagings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == id && s.ImportedBy == importedBy);
+        }
+
+        public async Task<bool> DeleteFailedInvoiceImportByIdAsync(int id, string importedBy)
+        {
+            var entity = await _context.ProjectInvoiceStagings
+                .FirstOrDefaultAsync(s => s.Id == id && s.ImportedBy == importedBy);
+            if (entity == null) return false;
+            _context.ProjectInvoiceStagings.Remove(entity);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<int> DeleteFailedInvoiceImportByUserAsync(string importedBy)
+        {
+            var rows = await _context.ProjectInvoiceStagings
+                .Where(x => x.ImportedBy == importedBy)
+                .ToListAsync();
+
+            if (rows.Count == 0)
+                return 0;
+
+            _context.ProjectInvoiceStagings.RemoveRange(rows);
+            return await _context.SaveChangesAsync();
+        }
+
+        public async Task<InvoiceImportResult> ImportInvoiceAsync(List<ProjectInvoice> passedRows, List<ProjectInvoiceStaging> failedRows)
+        {
+            if (passedRows.Count == 0 && failedRows.Count == 0)
+                return new InvoiceImportResult { PassedCount = 0, FailedCount = 0 };
+
+            if (passedRows.Count > 0)
+                await _context.ProjectInvoices.AddRangeAsync(passedRows);
+
+            if (failedRows.Count > 0)
+                await _context.ProjectInvoiceStagings.AddRangeAsync(failedRows);
+
+            await _context.SaveChangesAsync();
+
+            return new InvoiceImportResult
+            {
+                PassedCount = passedRows.Count,
+                FailedCount = failedRows.Count
+            };
+        }
+
+        public async Task UpdateFailedInvoiceImportRecordsAsync(List<ProjectInvoiceStaging> records)
+        {
+            foreach (var record in records)
+            {
+                _context.Entry(record).State = EntityState.Modified;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteFailedInvoiceImportByIdsAsync(List<int> ids, string importedBy)
+        {
+            var rows = await _context.ProjectInvoiceStagings
+                .Where(s => ids.Contains(s.Id) && s.ImportedBy == importedBy)
+                .ToListAsync();
+
+            if (rows.Count > 0)
+            {
+                _context.ProjectInvoiceStagings.RemoveRange(rows);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        private static IQueryable<ProjectInvoiceStaging> ApplyFailedInvoiceFilter(IQueryable<ProjectInvoiceStaging> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter)) return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null) return query;
+
+            IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("ProjectParent", out object? projectParent) && projectParent != null)
+                query = query.Where(x => x.ProjectParent != null && EF.Functions.ILike(x.ProjectParent, $"%{projectParent}%"));
+
+            if (dict.TryGetValue("Month", out object? month) && month != null)
+                query = query.Where(x => x.Month != null && EF.Functions.ILike(x.Month, $"%{month}%"));
+
+            return query;
+        }
+
+        private static IQueryable<ProjectInvoiceStaging> ApplyFailedInvoiceSorting(IQueryable<ProjectInvoiceStaging> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+                return query.OrderBy(e => e.Id);
+
+            return sortBy.ToLower() switch
+            {
+                "id" => descending ? query.OrderByDescending(e => e.Id) : query.OrderBy(e => e.Id),
+                "projectparent" => descending ? query.OrderByDescending(e => e.ProjectParent) : query.OrderBy(e => e.ProjectParent),
+                "month" => descending ? query.OrderByDescending(e => e.Month) : query.OrderBy(e => e.Month),
+                "amount" => descending ? query.OrderByDescending(e => e.Amount) : query.OrderBy(e => e.Amount),
+                "costofwork" => descending ? query.OrderByDescending(e => e.CostOfWork) : query.OrderBy(e => e.CostOfWork),
+                "wip" => descending ? query.OrderByDescending(e => e.Wip) : query.OrderBy(e => e.Wip),
+                "profitloss" => descending ? query.OrderByDescending(e => e.ProfitLoss) : query.OrderBy(e => e.ProfitLoss),
+                "detail" => descending ? query.OrderByDescending(e => e.Detail) : query.OrderBy(e => e.Detail),
+                "type" => descending ? query.OrderByDescending(e => e.Type) : query.OrderBy(e => e.Type),
+                "validationfailure" => descending ? query.OrderByDescending(e => e.ValidationFailure) : query.OrderBy(e => e.ValidationFailure),
+                _ => query.OrderBy(e => e.Id)
+            };
+        }
     }
 }

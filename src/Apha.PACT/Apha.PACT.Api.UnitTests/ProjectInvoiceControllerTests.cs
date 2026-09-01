@@ -4,6 +4,7 @@ using Apha.PACT.Api.Controllers;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
+using Apha.PACT.Core.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -15,13 +16,16 @@ namespace Apha.PACT.Api.UnitTests
     {
         private readonly IProjectInvoiceService _service;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserContext _currentUserContext;
         private readonly ProjectInvoiceController _controller;
 
         public ProjectInvoiceControllerTests()
         {
             _service = Substitute.For<IProjectInvoiceService>();
             _mapper = Substitute.For<IMapper>();
-            _controller = new ProjectInvoiceController(_service, _mapper);
+            _currentUserContext = Substitute.For<ICurrentUserContext>();
+            _currentUserContext.UserId.Returns("test-user");
+            _controller = new ProjectInvoiceController(_service, _mapper, _currentUserContext);
         }
 
         #region GetMonthlyInvoicesSummary

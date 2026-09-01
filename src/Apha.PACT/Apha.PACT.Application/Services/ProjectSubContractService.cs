@@ -158,6 +158,8 @@ namespace Apha.PACT.Application.Services
             var now = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
             var fileName = request.FileName ?? "SubContractRMS-Import.xlsx";
 
+            var rowsToUpdate = new List<ProjectSubcontractStaging>();
+            var stagingIdsToDelete = new List<int>();
             var passedRows = new List<ProjectSubContract>(request.Rows.Count);
             var failedRows = new List<ProjectSubcontractStaging>(request.Rows.Count);
 
@@ -170,6 +172,51 @@ namespace Apha.PACT.Application.Services
                 var parsedSupplierNumber = ExcelParseHelper.TryParseInt(source.SupplierNumber);
                 var parsedDailyRate = ExcelParseHelper.TryParseDecimal(source.DailyRate);
                 var parsedAnimalDays = ExcelParseHelper.TryParseInt(source.AnimalDays);
+
+                if (source.Id > 0)
+                {
+                    var existing = await _repository.GetFailedSubContractRmsByIdAsync(source.Id, importedBy);
+                    if (existing != null)
+                    {
+                        if (failures.Count == 0)
+                        {
+                            passedRows.Add(new ProjectSubContract
+                            {
+                                Project = source.Project,
+                                TestJob = source.TestJob,
+                                Month = parsedMonth,
+                                Amount = parsedAmount,
+                                WorkGroup = source.WorkGroup,
+                                AcctCode = source.AcctCode,
+                                Supplier = source.Supplier,
+                                Description = source.Description,
+                                SupplierNumber = parsedSupplierNumber,
+                                DailyRate = parsedDailyRate,
+                                AnimalDays = parsedAnimalDays,
+                                FpsYear = fpsYear
+                            });
+                            stagingIdsToDelete.Add(source.Id);
+                        }
+                        else
+                        {
+                            existing.Project = source.Project;
+                            existing.TestJob = source.TestJob;
+                            existing.Month = source.Month;
+                            existing.Amount = source.Amount;
+                            existing.WorkGroup = source.WorkGroup;
+                            existing.AcctCode = source.AcctCode;
+                            existing.Supplier = source.Supplier;
+                            existing.Description = source.Description;
+                            existing.SupplierNumber = source.SupplierNumber;
+                            existing.DailyRate = source.DailyRate;
+                            existing.AnimalDays = source.AnimalDays;
+                            existing.IsPassed = false;
+                            existing.ValidationFailure = string.Join("\n", failures);
+                            rowsToUpdate.Add(existing);
+                        }
+                        continue;
+                    }
+                }
 
                 if (failures.Count == 0)
                 {
@@ -214,14 +261,27 @@ namespace Apha.PACT.Application.Services
                 }
             }
 
+            if (rowsToUpdate.Count > 0)
+            {
+                await _repository.UpdateFailedSubContractRmsRecordsAsync(rowsToUpdate);
+            }
+
             var result = await _repository.ImportSubContractRmsAsync(passedRows, failedRows);
-            var totalCount = result.PassedCount + result.FailedCount;
+
+            if (stagingIdsToDelete.Count > 0)
+            {
+                await _repository.DeleteFailedSubContractRmsByIdsAsync(stagingIdsToDelete, importedBy);
+            }
+
+            var totalPassed = result.PassedCount;
+            var totalFailed = result.FailedCount + rowsToUpdate.Count;
+            var totalCount = totalPassed + totalFailed;
 
             return new SubContractRmsImportResultDto
             {
-                PassedCount = result.PassedCount,
-                FailedCount = result.FailedCount,                
-                Message = $"Import completed successfully. {result.PassedCount} out of {totalCount} records successfully validated and is now live."
+                PassedCount = totalPassed,
+                FailedCount = totalFailed,
+                Message = $"Import completed successfully. {totalPassed} out of {totalCount} records successfully validated and is now live."
             };
         }
 

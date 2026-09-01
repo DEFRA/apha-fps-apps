@@ -257,6 +257,29 @@ namespace Apha.PACT.DataAccess.Repository
             return true;
         }
 
+        public async Task UpdateFailedSubContractRmsRecordsAsync(List<ProjectSubcontractStaging> records)
+        {
+            foreach (var record in records)
+            {
+                _context.Entry(record).State = EntityState.Modified;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteFailedSubContractRmsByIdsAsync(List<int> ids, string importedBy)
+        {
+            var rows = await _context.ProjectSubcontractStagings
+                .Where(s => ids.Contains(s.Id) && s.ImportedBy == importedBy)
+                .ToListAsync();
+
+            if (rows.Count > 0)
+            {
+                _context.ProjectSubcontractStagings.RemoveRange(rows);
+                await _context.SaveChangesAsync();
+            }
+        }
+
         private static IQueryable<ProjectSubContract> ApplySubContractFilter(IQueryable<ProjectSubContract> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter)) return query;
