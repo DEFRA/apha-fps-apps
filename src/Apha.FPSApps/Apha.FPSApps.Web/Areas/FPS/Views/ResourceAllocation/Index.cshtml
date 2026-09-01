@@ -231,15 +231,20 @@
         };
 
             // ─── Totals row for the "Staff of this Grade" grid ──────────────────
-            // Rendered as a <tfoot> inside the grid table so the browser's own
-            // table layout keeps every total aligned under its column. Mirrors the
-            // totals row shown on the Staff Resource Utilisation page.
+            // Rendered as a separate, standalone table placed AFTER the grid's
+            // pagination footer so the totals sit below the pager. Column widths
+            // are copied from the main grid so every total stays aligned under its
+            // column. Mirrors the totals row shown on the Staff Resource
+            // Utilisation page.
             function buildRaStaffTotalsRow() {
                 var table = document.getElementById('tbl_@Model.StaffAllocationGrid.GridId');
                 if (!table) return;
 
-                // Clear any previously rendered totals tfoot before rebuilding it.
-                var existingFoot = table.querySelector('tfoot');
+                var container = table.closest('.editable-grid-container');
+                if (!container) return;
+
+                // Clear any previously rendered totals table before rebuilding it.
+                var existingFoot = container.querySelector('.ruv-totals-table-wrapper');
                 if (existingFoot) existingFoot.remove();
 
                 var rows = table.querySelectorAll('tbody tr');
@@ -275,11 +280,25 @@
                     });
                 });
 
-                // Build the totals row as a <tfoot> inside the grid table so the
-                // browser's own table layout keeps every total aligned under its
-                // column, and the totals sit above the pagination (which lives
-                // outside the table).
-                var tfoot = document.createElement('tfoot');
+                // Build the totals row as a standalone table placed AFTER the
+                // grid's pagination footer. Column widths are measured from the
+                // main grid's first data row so every total stays aligned under
+                // its column while sitting below the pager.
+                var totalsTable = document.createElement('table');
+                totalsTable.className = table.className + ' ruv-totals-table';
+
+                var colgroup = document.createElement('colgroup');
+                for (var c = 0; c < colCount; c++) {
+                    var col = document.createElement('col');
+                    if (refCells[c]) {
+                        col.style.width = refCells[c].getBoundingClientRect().width + 'px';
+                    }
+                    colgroup.appendChild(col);
+                }
+                totalsTable.appendChild(colgroup);
+
+                var tbody = document.createElement('tbody');
+                tbody.className = 'govuk-table__body';
                 var tr    = document.createElement('tr');
                 tr.className = 'ruv-totals-row govuk-table__row';
 
@@ -324,8 +343,16 @@
                     tr.appendChild(td);
                 }
 
-                tfoot.appendChild(tr);
-                table.appendChild(tfoot);
+                tbody.appendChild(tr);
+                totalsTable.appendChild(tbody);
+
+                var wrapper = document.createElement('div');
+                wrapper.className = 'ruv-totals-table-wrapper';
+                wrapper.appendChild(totalsTable);
+
+                // Place the totals table after the pagination footer (which lives
+                // outside the grid table) so the totals render below the pager.
+                container.appendChild(wrapper);
             }
 
             // Expose so ResourceAllocation.js can rebuild totals after it replaces

@@ -159,7 +159,7 @@ function ajaxPost(url, params) {
         showLoader();
         try {
             const html = await ajaxPost(staffGridUrl, { workGroupGrade: grade, page: 1, pageSize: 10 });
-            el('gridContainer_StaffAllocationGrid').innerHTML = html;
+            $('#gridContainer_StaffAllocationGrid').html(html);
             refreshStaffTotalsRow();
             SelectFirstStaffRow();
             await loadStaffAllocationTotals(grade);
@@ -218,7 +218,10 @@ function ajaxPost(url, params) {
         showLoader();
         try {
             const html = await ajaxPost(jobsGridUrl, { staffId, page: 1, pageSize: 10 });
-            el('gridContainer_StaffJobsGrid').innerHTML = html;
+            // Use jQuery .html() (not native innerHTML) so the DataGrid's embedded
+            // <script> executes and re-binds its handlers (e.g. the page-size
+            // dropdown) to the freshly injected markup.
+            $('#gridContainer_StaffJobsGrid').html(html);
         } catch {
             showAlertMessage('Error loading staff jobs grid.', AlertType.ERROR);
         } finally {
@@ -245,7 +248,7 @@ function ajaxPost(url, params) {
     /* ── Grid clear helpers ─────────────────────────────────────────────── */
     function clearStaffGrid() {
         $.post(staffGridUrl, { workGroupGrade: '' }, html => {
-            el('gridContainer_StaffAllocationGrid').innerHTML = html;
+            $('#gridContainer_StaffAllocationGrid').html(html);
             refreshStaffTotalsRow();
         });
         clearSummaryPanel();
@@ -253,7 +256,7 @@ function ajaxPost(url, params) {
 
     function clearJobsGrid() {
         $.post(jobsGridUrl, { staffId: '' }, html => {
-            el('gridContainer_StaffJobsGrid').innerHTML = html;
+            $('#gridContainer_StaffJobsGrid').html(html);
         });
         setVal('stage2PersonSelectedInput', '');
         setText('stage2SelectedStaffName', '');
@@ -342,7 +345,7 @@ function ajaxPost(url, params) {
 
             // ── 4. Reload staff grid and re-select saved staff row ────────
             const html = await ajaxPost(staffGridUrl, { workGroupGrade: saved.grade, page: 1, pageSize: 10 });
-            el('gridContainer_StaffAllocationGrid').innerHTML = html;
+            $('#gridContainer_StaffAllocationGrid').html(html);
             refreshStaffTotalsRow();
             await loadStaffAllocationTotals(saved.grade);
 
