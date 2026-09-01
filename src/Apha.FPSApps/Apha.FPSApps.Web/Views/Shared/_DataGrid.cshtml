@@ -268,14 +268,14 @@
                                             {
                                                 <span name="@column.PropertyName"
                                                       id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")"
-                                                      class="@GridHelpers.GetTypeCssClass(column) @column.CssClass"
+                                                      class="@GridHelpers.GetTypeCssClass(column) @column.CssClass @GridHelpers.GetValueCssClass(value, column)"
                                                       title="@GridHelpers.FormatValue(value, column)">@GridHelpers.FormatValue(value, column)</span>
                                             }
                                             else
                                             {
                                                 <span name="@column.PropertyName"
                                                       id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")"
-                                                      class="@GridHelpers.GetTypeCssClass(column) @column.CssClass">@GridHelpers.FormatValue(value, column)</span>
+                                                      class="@GridHelpers.GetTypeCssClass(column) @column.CssClass @GridHelpers.GetValueCssClass(value, column)">@GridHelpers.FormatValue(value, column)</span>
                                             }
                                         </td>
                                     }

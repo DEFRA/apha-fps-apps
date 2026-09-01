@@ -29,6 +29,7 @@
                 GridColumnType.UsdValue => true,
                 GridColumnType.GbpValue => true,
                 GridColumnType.GbpValueRounded => true,
+                GridColumnType.GbpValueRoundedAccounting => true,
                 GridColumnType.Percentage => true,
                 GridColumnType.RoundTwoDecimal => true,
                 _ => false
@@ -94,6 +95,32 @@
             };
         }
 
+        /// <summary>
+        /// Returns the negative-value CSS class for accounting-formatted columns so that
+        /// negatives render in red, matching the MS Access presentation.
+        /// </summary>
+        public static string GetValueCssClass(object? value, DataGridColumn column)
+        {
+            if (column.ColumnType != GridColumnType.GbpValueRoundedAccounting || value == null)
+                return string.Empty;
+
+            return IsNegative(value) ? "grid-negative-value" : string.Empty;
+        }
+
+        private static bool IsNegative(object value)
+        {
+            return value switch
+            {
+                decimal d => d < 0,
+                double db => db < 0,
+                float f => f < 0,
+                int i => i < 0,
+                long l => l < 0,
+                _ => decimal.TryParse(value.ToString(), System.Globalization.NumberStyles.Any,
+                         System.Globalization.CultureInfo.InvariantCulture, out var parsed) && parsed < 0
+            };
+        }
+
         public static string FormatValue(object? value, DataGridColumn column)
         {
             if (value == null) return string.Empty;
@@ -127,6 +154,12 @@
                         return Math.Round(gbpRounded, MidpointRounding.AwayFromZero).ToString("£#,##0;-£#,##0");
                     if (value is double gbpRoundedDouble)
                         return Math.Round(gbpRoundedDouble, MidpointRounding.AwayFromZero).ToString("£#,##0;-£#,##0");
+                    break;
+                case GridColumnType.GbpValueRoundedAccounting:
+                    if (value is decimal gbpAccounting)
+                        return Math.Round(gbpAccounting, MidpointRounding.AwayFromZero).ToString("£#,##0;- (£#,##0)");
+                    if (value is double gbpAccountingDouble)
+                        return Math.Round(gbpAccountingDouble, MidpointRounding.AwayFromZero).ToString("£#,##0;- (£#,##0)");
                     break;
                 case GridColumnType.DoubleNumber:
                     if (value is double doubleValue)

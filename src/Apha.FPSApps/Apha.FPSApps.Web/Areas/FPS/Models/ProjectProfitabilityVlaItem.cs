@@ -71,10 +71,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 130, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal TargetProfit { get; set; }
 
-        //   Negative value triggers red highlight (fps-profit-offtarget CSS class) in Razor view.
+        //   Negative values render in brackets and red, matching the MS Access presentation.
         [Display(Name = "Off-Target")]
         [DisplayFormat(DataFormatString = "{0:C0}", ApplyFormatInEditMode = false)]
-        [GridColumn(Width = 130, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
+        [GridColumn(Width = 130, Type = GridColumnType.GbpValueRoundedAccounting, IsFilterable = false)]
         public decimal OffTarget { get; set; }
 
         //   retained as hidden properties to allow round-trip filter state if needed.
