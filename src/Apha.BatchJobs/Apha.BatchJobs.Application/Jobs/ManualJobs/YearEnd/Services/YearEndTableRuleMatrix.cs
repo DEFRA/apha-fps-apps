@@ -2,12 +2,10 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
-/// <summary>
-/// How a table relates to the FPS year for Year End purposes.
-/// </summary>
+/// <summary>How a table relates to the FPS year for Year End purposes.</summary>
 public enum YearEndTableRole
 {
-    /// <summary>One of the 38 Table 23 entries — year-scoped business data.</summary>
+    /// <summary>Copy to target year.</summary>
     YearScopedBusinessParticipant,
 
     /// <summary>
@@ -33,12 +31,9 @@ public enum YearEndTableRole
 /// </summary>
 public enum YearEndTableRuleAction
 {
-    /// <summary>Not yet decided.</summary>
     PendingClassification,
 
-    /// <summary>
-    /// Has bespoke handling via its own step (e.g. <c>tblperiod</c> via <see cref="PeriodSetupStep"/>).
-    /// </summary>
+    /// <summary>Has bespoke handling via its own step (e.g. <c>tblperiod</c> via <see cref="PeriodSetupStep"/>).</summary>
     AlreadyImplementedViaDedicatedStep,
 
     CopyToTargetYear,
@@ -49,11 +44,7 @@ public enum YearEndTableRuleAction
     SkipLegacyObsolete,
     ManualReviewRequired,
 
-    /// <summary>
-    /// Target-year rows must be absent — validated, never populated or deleted by any Year End
-    /// step. Owned by <see cref="ValidateTargetYearEmptyTablesStep"/>, re-checked by
-    /// <see cref="FinalValidationStep"/>.
-    /// </summary>
+    /// <summary>See <see cref="YearEndTableRole.YearScopedTargetMustBeEmpty"/>.</summary>
     TargetYearMustBeEmpty
 }
 
@@ -92,6 +83,10 @@ public enum YearEndFinalRowCountRule
 /// One row of the Year End Table Rule Matrix — the single source of truth for which tables Year
 /// End knows about, how each relates to the FPS year, and what's approved to happen to it.
 /// </summary>
+/// <param name="PrimaryKeyColumns">
+/// Composite primary key, in column order. Year-scoped roles must end the list with
+/// <c>"fpsyear"</c>; <see cref="YearEndTableRole.GlobalReference"/> entries leave it empty.
+/// </param>
 /// <param name="CopyOrder">
 /// Dependency order for <see cref="YearEndTableRuleAction.CopyToTargetYear"/> entries — lower
 /// numbers are copied first so referenced rows exist before referencing ones. <c>null</c> otherwise.
