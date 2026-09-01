@@ -1913,14 +1913,23 @@ namespace Apha.FPS.DataAccess.Repositories
             if (!string.IsNullOrWhiteSpace(projectStatus))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ProjectStatus, $"%{projectStatus}%"));
 
+            // Program and Customer are picked from dropdowns that supply the exact stored
+            // value, so they must match exactly. A contains-style ILike would wrongly include
+            // e.g. "P10" when "P1" is selected, or "ACME Ltd" when "ACME" is selected.
             if (!string.IsNullOrWhiteSpace(programNo))
-                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Program, $"%{programNo}%"));
+            {
+                var programFilter = programNo.Trim().ToLower();
+                rawQuery = rawQuery.Where(x => x.p.Program.ToLower() == programFilter);
+            }
 
             if (!string.IsNullOrWhiteSpace(manager))
                 rawQuery = rawQuery.Where(x => x.pg != null && EF.Functions.ILike(x.pg.Manager!, $"%{manager}%"));
 
             if (!string.IsNullOrWhiteSpace(customer))
-                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Customer, $"%{customer}%"));
+            {
+                var customerFilter = customer.Trim().ToLower();
+                rawQuery = rawQuery.Where(x => x.p.Customer.ToLower() == customerFilter);
+            }
 
             if (!string.IsNullOrWhiteSpace(query.Search))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject, $"%{query.Search}%"));
@@ -1930,6 +1939,11 @@ namespace Apha.FPS.DataAccess.Repositories
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject, $"%{jobCode}%"));
             if (filterDict.TryGetValue(FilterKeyParentProject, out var parentProject))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject, $"%{parentProject}%"));
+            // In-grid column filters are free-text "contains" boxes, unlike the exact-match dropdowns above.
+            if (filterDict.TryGetValue("Program", out var programColumnFilter))
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Program, $"%{programColumnFilter}%"));
+            if (filterDict.TryGetValue("Customer", out var customerColumnFilter))
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Customer, $"%{customerColumnFilter}%"));
 
             var projects = await rawQuery
                 .Select(x => new VlaProjectEntry(
