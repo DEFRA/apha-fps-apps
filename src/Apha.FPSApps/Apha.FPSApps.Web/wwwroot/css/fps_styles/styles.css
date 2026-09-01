@@ -5550,6 +5550,18 @@ input.govuk-input.ssr-total-input[readonly] {
 .sup_margin_bottom_10.content-wrapper:has(.isContributionSummaryPage) {
     margin-bottom: 10vh !important;
 }
+
+.isContributionSummaryPage .cs-selected-resource-centre {
+    color: #1d70b8;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* Contribution Summary totals: Access underlines the box heading text only,
+   not the full width of the box (which already has its own bottom border). */
+#cs-summary-grid .cs-summary-box-title-text {
+    text-decoration: underline;
+}
     .govuk-footer {
         position: fixed;
         bottom: 0;
