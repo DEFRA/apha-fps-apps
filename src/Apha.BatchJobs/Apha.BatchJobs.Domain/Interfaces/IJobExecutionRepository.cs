@@ -3,31 +3,20 @@ using Apha.BatchJobs.Domain.Enums;
 
 namespace Apha.BatchJobs.Domain.Interfaces;
 
-/// <summary>
-/// Repository for managing job execution records and history.
-/// </summary>
+/// <summary>Repository for managing job execution records and history.</summary>
 public interface IJobExecutionRepository
 {
-    /// <summary>
-    /// Records the start of a job execution.
-    /// </summary>
+    /// <summary>Records the start of a job execution.</summary>
     /// <param name="record">The execution record to create.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The ID of the created execution record.</returns>
     Task<int> CreateExecutionRecordAsync(JobExecutionRecord record, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Updates an existing execution record.
-    /// </summary>
+    /// <summary>Updates an existing execution record.</summary>
     /// <param name="record">The execution record to update.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
     Task UpdateExecutionRecordAsync(JobExecutionRecord record, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Gets the last execution record for a given job.
-    /// </summary>
+    /// <summary>Gets the last execution record for a given job.</summary>
     /// <param name="jobName">The name of the job.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
     Task<JobExecutionRecord?> GetLastExecutionAsync(string jobName, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -37,14 +26,10 @@ public interface IJobExecutionRepository
     /// </summary>
     /// <param name="jobName">The name of the job.</param>
     /// <param name="fpsYear">The FPS year to scope the lookup to.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
     Task<JobExecutionRecord?> GetLastExecutionByFpsYearAsync(string jobName, int fpsYear, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Gets an execution record by its external execution identifier.
-    /// </summary>
+    /// <summary>Gets an execution record by its external execution identifier.</summary>
     /// <param name="jobExecutionId">External job execution id.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
     Task<JobExecutionRecord?> GetExecutionByJobExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -57,7 +42,6 @@ public interface IJobExecutionRepository
     /// <param name="requestedBy">Identity of the caller.</param>
     /// <param name="requestedAtUtc">UTC timestamp when the API accepted the request.</param>
     /// <param name="runMode">Manual or Scheduled.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
     /// <param name="fpsYear">Optional FPS year context for year-scoped jobs.</param>
     /// <returns>The JobQueueId of the newly created record.</returns>
     Task<Guid> CreateInitiatedRecordAsync(
@@ -69,19 +53,13 @@ public interface IJobExecutionRepository
         CancellationToken cancellationToken = default,
         int? fpsYear = null);
 
-    /// <summary>
-    /// Updates heartbeat metadata while the execution remains in Running status.
-    /// </summary>
+    /// <summary>Updates heartbeat metadata while the execution remains in Running status.</summary>
     /// <param name="jobQueueId">Current job queue identifier.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True when heartbeat was written; false when the row is not in Running status.</returns>
     Task<bool> TouchRunningExecutionAsync(Guid jobQueueId, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Returns true when the execution row has already transitioned to Failed.
-    /// </summary>
+    /// <summary>Returns true when the execution row has already transitioned to Failed.</summary>
     /// <param name="jobExecutionId">External job execution identifier.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
     Task<bool> IsExecutionMarkedFailedAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -89,6 +67,5 @@ public interface IJobExecutionRepository
     /// Returns null when the row does not exist.
     /// </summary>
     /// <param name="jobExecutionId">External job execution identifier.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
     Task<JobQueueApprovalMetadata?> GetApprovalMetadataAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
 }
