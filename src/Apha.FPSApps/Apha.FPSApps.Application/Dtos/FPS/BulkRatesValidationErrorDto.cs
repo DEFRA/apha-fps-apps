@@ -1,0 +1,29 @@
+namespace Apha.FPSApps.Application.Dtos.FPS
+{
+    /// <summary>
+    /// A single row-level validation error returned by the upload / validation endpoints.
+    /// Mirrors <c>BulkRatesValidationErrorDto</c> (Apha.FPS.Application) as serialised over the
+    /// wire, minus <c>Id</c>/<c>JobQueueId</c>/<c>UploadVersion</c> (redundant once nested under
+    /// a parent already scoped to those — a deliberate Web-side narrowing, not a gap).
+    /// </summary>
+    public class BulkRatesValidationErrorDto
+    {
+        public int SourceRowNumber { get; set; }
+        public string? FieldName { get; set; }
+        public string? ValidationCode { get; set; }
+        public string Severity { get; set; } = "Error";
+        public string ValidationMessage { get; set; } = string.Empty;
+        public string? SheetName { get; set; }
+        public string? TestCode { get; set; }
+        public string? Buyer { get; set; }
+        public string? CurrentValue { get; set; }
+        public string? ExpectedValue { get; set; }
+
+        /// <summary>
+        /// True when this finding has no single uploaded row to attach to (e.g. a downloaded
+        /// key missing from the re-upload) — rendered as a request-level message,
+        /// not an ordinary per-row error.
+        /// </summary>
+        public bool IsRequestLevel { get; set; }
+    }
+}
