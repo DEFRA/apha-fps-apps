@@ -97,17 +97,17 @@
             wgDropdown.innerHTML = '<option value="">-- Select Work Group --</option>';
             wgDropdown.disabled = true;
 
+            clearWgStaffPlanGrid();
+
             window.sideNavState.resourceCentre = resourceCentre;
             window.sideNavState.workGroup = '';
             sideNavUpdateLinks();
 
             if (!resourceCentre) return;
 
-            showLoader();
             $.get('@Url.Action("GetWorkGroupsByResourceCentre", "WgStaffPlan", new { area = "FPS" })',
                 { resourceCentre: resourceCentre },
                 function (response) {
-                    hideLoader();
                     if (response && response.success) {
                         (response.data || []).forEach(function (wg) {
                             var opt = document.createElement('option');
@@ -121,7 +121,6 @@
                     }
                 }
             ).fail(function () {
-                hideLoader();
                 showAlertMessage('Could not load work groups. Please try selecting the Resource Centre again.', AlertType.WARNING);
             });
         }
@@ -138,6 +137,21 @@
             fpsNavigateTo('@Url.Action("Index", "WgStaffPlan", new { area = "FPS" })?resourceCentre='
                 + encodeURIComponent(resourceCentre)
                 + '&workGroup=' + encodeURIComponent(workGroup));
+        }
+
+        // Clear all data rows from the pivot grid, leaving a "No records" placeholder.
+        function clearWgStaffPlanGrid() {
+            var table = document.getElementById('tbl_wgStaffPlanGrid');
+            if (!table) return;
+
+            var tbody = table.querySelector('tbody');
+            if (!tbody) return;
+
+            var colCount = table.querySelectorAll('thead tr:last-child th').length || 100;
+            tbody.innerHTML =
+                '<tr><td colspan="' + colCount + '" class="govuk-table__cell" ' +
+                'style="text-align:center; color:#505a5f; font-style:italic; padding:16px;">' +
+                'No records found.</td></tr>';
         }
 
         function getWgStaffPlanExtraFilters() {

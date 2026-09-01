@@ -1,4 +1,5 @@
-﻿using Amazon;
+﻿// FPS API startup extensions — service registration and middleware pipeline configuration.
+using Amazon;
 using Amazon.EventBridge;
 using Apha.Common.Contracts.Email;
 using Apha.Common.Helpers.Converter;
@@ -6,6 +7,7 @@ using Apha.Common.Utilities.EventPublisher;
 using Apha.FPS.Api.Filters;
 using Apha.FPS.Api.Mappings;
 using Apha.FPS.Api.Middleware;
+using Apha.FPS.Application.Email;
 using Apha.FPS.Application.Mappings;
 using Apha.FPS.DataAccess.Data;
 using Asp.Versioning;
@@ -115,12 +117,21 @@ namespace Apha.FPS.Api.Extensions
             services.AddOptions<YearEndEmailSettings>()
                 .Bind(configuration.GetRequiredSection(YearEndEmailSettings.SectionName))
                 .ValidateOnStart();
+
+            services.AddOptions<BulkRatesEmailSettings>()
+                .Bind(configuration.GetRequiredSection(BulkRatesEmailSettings.SectionName))
+                .ValidateOnStart();
            
             builder.Services.AddSingleton<IAmazonEventBridge>(_ =>
            new AmazonEventBridgeClient(
                RegionEndpoint.GetBySystemName(configuration.GetValue<string>("EventBridge:Region"))));
 
             builder.Services.AddScoped<IEventPublisherService, EventBridgePublisherService>();
+
+            // No S3 client/IS3StorageService registration here — Bulk Rates audit-copy retention
+            // moved to the FPSApps Web/Application layer (best-effort, post-success only); FPS API
+            // has no remaining S3 consumer. See docs/bulkrates-review-fixes, Point 2.
+
             // Authentication
             services.AddAuthenticationServices(configuration);
 

@@ -6,6 +6,17 @@
     var t = Model;
 }
 
+@functions {
+    // Positive values render blue, negative red and zero black, matching the
+    // colour conventions used across the rest of the application.
+    static string ValueColourClass(decimal value)
+    {
+        if (value > 0) return "fps-dg-summary-value--positive";
+        if (value < 0) return "fps-dg-summary-value--negative";
+        return "fps-dg-summary-value--zero";
+    }
+}
+
 @* ── Grid total row: pinned directly below the data grid ── *@
 <div id="cs-grid-total-row" class="fps-dg-total-row sup_border"
      aria-label="Contribution summary total count">
@@ -14,7 +25,7 @@
         <label class="govuk-label--s govuk-!-font-size-16 fps-dg-summary-label" for="cs-grid-total-cont">Total Cont:</label>
         <div class="govuk-input__wrapper">
             <div class="govuk-input__prefix" aria-hidden="true">£</div>
-            <input type="text" value="@(t.TotalContribution.ToString("N2"))" aria-label="Total Cont" id="cs-grid-total-cont" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value" name="TotalCont" readonly>
+            <input type="text" value="@(t.TotalContribution.ToString("N2"))" aria-label="Total Cont" id="cs-grid-total-cont" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value @ValueColourClass(t.TotalContribution)" name="TotalCont" readonly>
         </div>
     </div>
 </div>
@@ -27,33 +38,33 @@
             <label class="govuk-label--s govuk-!-font-size-16 fps-dg-summary-label" for="cs-total-budget-bids">Total Budget Bids:</label>
             <div class="govuk-input__wrapper">
                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                <input type="text" value="@(t.SumOfGenBid.HasValue ? t.SumOfGenBid.Value.ToString("N2") : "0.00")" aria-label="Total Budget Bids" id="cs-total-budget-bids" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value" name="TotalBudgetBids" readonly>
+                <input type="text" value="@(t.SumOfGenBid.HasValue ? t.SumOfGenBid.Value.ToString("N2") : "0.00")" aria-label="Total Budget Bids" id="cs-total-budget-bids" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value @ValueColourClass(t.SumOfGenBid ?? 0m)" name="TotalBudgetBids" readonly>
             </div>
         </div>
         <div class="fps-dg-summary-item">
             <label class="govuk-label--s govuk-!-font-size-16 fps-dg-summary-label" for="cs-contribution-target">+ Contribution Target:</label>
             <div class="govuk-input__wrapper">
                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                <input type="text" value="@(t.ContTarget.HasValue ? t.ContTarget.Value.ToString("N2") : "0.00")" aria-label="Contribution Target" id="cs-contribution-target" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value" name="ContributionTarget" readonly>
+                <input type="text" value="@(t.ContTarget.HasValue ? t.ContTarget.Value.ToString("N2") : "0.00")" aria-label="Contribution Target" id="cs-contribution-target" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value @ValueColourClass(t.ContTarget ?? 0m)" name="ContributionTarget" readonly>
             </div>
         </div>
         <div class="fps-dg-summary-item fps-dg-summary-item--total">
             <label class="govuk-label--s govuk-!-font-size-16 fps-dg-summary-label" for="cs-total-to-recover">= Total to Recover:</label>
             <div class="govuk-input__wrapper">
                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                <input type="text" value="@(t.TotalToRecover.ToString("N2"))" aria-label="Total to Recover" id="cs-total-to-recover" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value" name="TotalToRecover" readonly>
+                <input type="text" value="@(t.TotalToRecover.ToString("N2"))" aria-label="Total to Recover" id="cs-total-to-recover" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value @ValueColourClass(t.TotalToRecover)" name="TotalToRecover" readonly>
             </div>
         </div>
     </div>
 
-    @* ── Box 2: Total Time ── *@
+    @* ── Box 2: Total Time (Access shows "+ Animals Sold" only for ASU) ── *@
     <div id="cs-summary-total-time-box" class="fps-dg-summary-box sup_border">
-        <div class="fps-dg-summary-box-title">Total Time</div>
+        <div class="fps-dg-summary-box-title"><span class="cs-summary-box-title-text">@(t.IsAsuMode ? "Total Time + Animals Sold" : "Total Time")</span></div>
         <div class="fps-dg-summary-item">
             <label class="govuk-label--s govuk-!-font-size-16 fps-dg-summary-label" for="cs-total-time-fee">Fee from PlanHrs:</label>
             <div class="govuk-input__wrapper">
                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                <input type="text" value="@(t.TotalFec.ToString("N2"))" aria-label="Total Time Fee from PlanHrs" id="cs-total-time-fee" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value" name="TotalTimeFee" readonly>
+                <input type="text" value="@(t.TotalFec.ToString("N2"))" aria-label="Total Time Fee from PlanHrs" id="cs-total-time-fee" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value @ValueColourClass(t.TotalFec)" name="TotalTimeFee" readonly>
             </div>
         </div>
         @if (t.IsAsuMode)
@@ -62,7 +73,7 @@
                 <label class="govuk-label--s govuk-!-font-size-16 fps-dg-summary-label" for="cs-total-animal-costs">Total Animal Costs:</label>
                 <div class="govuk-input__wrapper">
                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                    <input type="text" value="@(t.AnimalCosts.ToString("N2"))" aria-label="Total Animal Costs" id="cs-total-animal-costs" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value" name="TotalAnimalCosts" readonly>
+                    <input type="text" value="@(t.AnimalCosts.ToString("N2"))" aria-label="Total Animal Costs" id="cs-total-animal-costs" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value @ValueColourClass(t.AnimalCosts)" name="TotalAnimalCosts" readonly>
                 </div>
             </div>
         }
@@ -70,26 +81,26 @@
             <label class="govuk-label--s govuk-!-font-size-16 fps-dg-summary-label" for="cs-total-surplus">Surplus/Shortfall:</label>
             <div class="govuk-input__wrapper">
                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                <input type="text" value="@(t.Surplus < 0 ? $"({Math.Abs(t.Surplus):N2})" : t.Surplus.ToString("N2"))" aria-label="Surplus/Shortfall" id="cs-total-surplus" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value" name="TotalSurplus" readonly>
+                <input type="text" value="@(t.Surplus < 0 ? $"({Math.Abs(t.Surplus):N2})" : t.Surplus.ToString("N2"))" aria-label="Surplus/Shortfall" id="cs-total-surplus" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value @ValueColourClass(t.Surplus)" name="TotalSurplus" readonly>
             </div>
         </div>
     </div>
 
     @* ── Box 3: Assured Time Only ── *@
     <div id="cs-summary-assured-time-box" class="fps-dg-summary-box sup_border">
-        <div class="fps-dg-summary-box-title">Assured Time Only</div>
+        <div class="fps-dg-summary-box-title"><span class="cs-summary-box-title-text">Assured Time Only</span></div>
         <div class="fps-dg-summary-item">
             <label class="govuk-label--s govuk-!-font-size-16 fps-dg-summary-label" for="cs-assured-time-fee">Fee from PlanHrs:</label>
             <div class="govuk-input__wrapper">
                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                <input type="text" value="@(t.TotalAppFec.ToString("N2"))" aria-label="Assured Time Only Fee from PlanHrs" id="cs-assured-time-fee" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value" name="AssuredTimeFee" readonly>
+                <input type="text" value="@(t.TotalAppFec.ToString("N2"))" aria-label="Assured Time Only Fee from PlanHrs" id="cs-assured-time-fee" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value @ValueColourClass(t.TotalAppFec)" name="AssuredTimeFee" readonly>
             </div>
         </div>
         <div class="fps-dg-summary-item fps-dg-summary-item--total">
             <label class="govuk-label--s govuk-!-font-size-16 fps-dg-summary-label" for="cs-assured-surplus">Surplus/Shortfall:</label>
             <div class="govuk-input__wrapper">
                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                <input type="text" value="@(t.AssuredSurplus < 0 ? $"({Math.Abs(t.AssuredSurplus):N2})" : t.AssuredSurplus.ToString("N2"))" aria-label="Surplus/Shortfall" id="cs-assured-surplus" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value" name="AssuredSurplus" readonly>
+                <input type="text" value="@(t.AssuredSurplus < 0 ? $"({Math.Abs(t.AssuredSurplus):N2})" : t.AssuredSurplus.ToString("N2"))" aria-label="Surplus/Shortfall" id="cs-assured-surplus" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight fps-dg-summary-value @ValueColourClass(t.AssuredSurplus)" name="AssuredSurplus" readonly>
             </div>
         </div>
     </div>

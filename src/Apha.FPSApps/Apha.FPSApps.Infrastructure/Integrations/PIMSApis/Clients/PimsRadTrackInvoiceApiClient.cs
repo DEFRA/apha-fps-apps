@@ -62,7 +62,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             string? project = null,
             string? contract = null,
             int? year = null,
-            string? program = null)
+            string? program = null,
+            string? search = null)
         {
             try
             {
@@ -76,6 +77,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     queryParts.Add($"year={year.Value}");
                 if (!string.IsNullOrWhiteSpace(program))
                     queryParts.Add($"program={Uri.EscapeDataString(program)}");
+                if (!string.IsNullOrWhiteSpace(search))
+                    queryParts.Add($"search={Uri.EscapeDataString(search)}");
                 if (queryParts.Count > 0)
                     url += "?" + string.Join("&", queryParts);
 

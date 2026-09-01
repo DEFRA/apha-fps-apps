@@ -3,7 +3,9 @@
     padding: 0;
     box-sizing: border-box;
 }
-
+body{
+    padding-bottom: 10vh;
+}
 .main-content {
 
     margin: 0 auto;
@@ -5558,6 +5560,18 @@ input.govuk-input.ssr-total-input[readonly] {
 .sup_margin_bottom_10.content-wrapper:has(.isContributionSummaryPage) {
     margin-bottom: 10vh !important;
 }
+
+.isContributionSummaryPage .cs-selected-resource-centre {
+    color: #1d70b8;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* Contribution Summary totals: Access underlines the box heading text only,
+   not the full width of the box (which already has its own bottom border). */
+#cs-summary-grid .cs-summary-box-title-text {
+    text-decoration: underline;
+}
     .govuk-footer {
         position: fixed;
         bottom: 0;
@@ -5750,4 +5764,21 @@ input.govuk-input.ssr-total-input[readonly] {
    the spacing vary from screen to screen. */
 .govuk-back-link {
     margin-right: 15px;
+}
+
+.isBlock{
+    display:block;
+}
+.isFullWidth{
+    width: 100%;
+}
+.isTimeSummary {
+    .govuk-summary-list__key {
+        width: 60%;
+    }
+}
+.isZtCodesModal {
+    .modal-title{
+        font-size: 19px;
+    }
 }

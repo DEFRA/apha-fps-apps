@@ -121,8 +121,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                              ?? [];
 
-            // Fetch all rows for this PC then apply client-side pagination
-            var rowsResult = await _service.GetRowsAsync(sellingPc);
+            // Fetch all rows for this PC (sorted by the repository) then apply client-side pagination
+            var rowsResult = await _service.GetRowsAsync(sellingPc, request.SortBy, request.Descending);
             var allRows    = rowsResult.Success && rowsResult.Data != null
                              ? rowsResult.Data
                              : [];
@@ -138,21 +138,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 items = items.Where(r => r.WorkGroup != null && r.WorkGroup.Contains(wgNameFilter, StringComparison.OrdinalIgnoreCase)).ToList();
             if (filterDict.TryGetValue("ProfitCentreGrade", out var pcgFilter) && !string.IsNullOrWhiteSpace(pcgFilter))
                 items = items.Where(r => r.ProfitCentreGrade != null && r.ProfitCentreGrade.Contains(pcgFilter, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            // Sort
-            if (!string.IsNullOrWhiteSpace(request.SortBy))
-            {
-                items = request.SortBy switch
-                {
-                    "WgGrade"           => request.Descending ? items.OrderByDescending(r => r.WgGrade).ToList()           : items.OrderBy(r => r.WgGrade).ToList(),
-                    "WorkGroup"         => request.Descending ? items.OrderByDescending(r => r.WorkGroup).ToList()         : items.OrderBy(r => r.WorkGroup).ToList(),
-                    "ProfitCentreGrade" => request.Descending ? items.OrderByDescending(r => r.ProfitCentreGrade).ToList() : items.OrderBy(r => r.ProfitCentreGrade).ToList(),
-                    "Hrs"               => request.Descending ? items.OrderByDescending(r => r.Hrs).ToList()               : items.OrderBy(r => r.Hrs).ToList(),
-                    "Fec"               => request.Descending ? items.OrderByDescending(r => r.Fec).ToList()               : items.OrderBy(r => r.Fec).ToList(),
-                    "Contribution"      => request.Descending ? items.OrderByDescending(r => r.Contribution).ToList()      : items.OrderBy(r => r.Contribution).ToList(),
-                    _                   => items
-                };
-            }
 
             var totalRecords = items.Count;
             var pageSize     = request.PageSize > 0 ? request.PageSize : 10;
