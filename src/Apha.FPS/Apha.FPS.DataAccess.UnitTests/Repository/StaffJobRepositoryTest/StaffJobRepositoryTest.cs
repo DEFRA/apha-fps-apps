@@ -2137,15 +2137,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         [Theory]
         [InlineData("Name", false)]
         [InlineData("Name", true)]
-        [InlineData("HrsAvail", true)]
-        [InlineData("PlannedZt", false)]
-        [InlineData("AvailSoct", true)]
-        [InlineData("NotApprovedSoct", false)]
-        [InlineData("ApprovedSoct", true)]
+        [InlineData("TotalH", true)]
+        [InlineData("Ztw", false)]
+        [InlineData("Avail", true)]
+        [InlineData("NotApprovedPlan", false)]
+        [InlineData("ApprovedPlan", true)]
         [InlineData("Left", false)]
-        [InlineData("ApprovedUtilPct", true)]
-        [InlineData("NotApprovedUtilPct", false)]
-        [InlineData("TotalUtilPct", true)]
+        [InlineData("ApprovedUtil", true)]
+        [InlineData("NotApprovedUtil", false)]
+        [InlineData("TotalPlan", true)]
+        [InlineData("TotalUtil", true)]
+        [InlineData("WgGrade", false)]
         [InlineData("Unknown", true)]
         [InlineData(null, false)]
         public async Task GetStaffResourceUtilisationAsync_AppliesSorting_ForEachSortKey(string? sortBy, bool descending)
@@ -2184,6 +2186,68 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
 
             // Assert
             Assert.Equal(2, result.Data.Count());
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task GetStaffResourceUtilisationAsync_SortsByAvailNumerically_GroupsZeroValues(bool descending)
+        {
+            // Arrange - three staff, two of which produce AvailSoct == 0
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG_A", ProfitCentreGrade = "PC01", Workgroup = "IT", FpsYear = DefaultTestFpsYear },
+                new() { WgGrade = "WG_B", ProfitCentreGrade = "PC01", Workgroup = "IT", FpsYear = DefaultTestFpsYear },
+                new() { WgGrade = "WG_C", ProfitCentreGrade = "PC01", Workgroup = "IT", FpsYear = DefaultTestFpsYear }
+            };
+            var staffViews = new List<StaffView>
+            {
+                new() { StaffId = "S001", Name = "Alpha General", WorkgroupGrade = "WG_A", FpsYear = DefaultTestFpsYear, UserEmail = DefaultUserEmail, HrsAvail = 0 },
+                new() { StaffId = "S002", Name = "Bravo General", WorkgroupGrade = "WG_B", FpsYear = DefaultTestFpsYear, UserEmail = DefaultUserEmail, HrsAvail = 50 },
+                new() { StaffId = "S003", Name = "Charlie General", WorkgroupGrade = "WG_C", FpsYear = DefaultTestFpsYear, UserEmail = DefaultUserEmail, HrsAvail = 0 }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PC01", ProfitCentre = "PC-Alpha", FpsYear = DefaultTestFpsYear }
+            };
+            var staffJobRmViews = new List<StaffJobRmView>
+            {
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 0, FpsYear = DefaultTestFpsYear },
+                new() { StaffId = "S002", JobCode = "JOB001", PlannedHours = 30, FpsYear = DefaultTestFpsYear },
+                new() { StaffId = "S003", JobCode = "JOB001", PlannedHours = 0, FpsYear = DefaultTestFpsYear }
+            };
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "JOB001", Program = "prog", ProjectStatus = "Approved", FpsYear = DefaultTestFpsYear }
+            };
+
+            var repo = CreateRepository(
+                workgroupGrades: workgroupGrades,
+                staffViews: staffViews,
+                profitCentreGrades: profitCentreGrades,
+                staffJobRmViews: staffJobRmViews,
+                projects: projects);
+
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "Avail",
+                Descending = descending
+            };
+
+            // Act
+            var result = await repo.GetStaffResourceUtilisationAsync(query, "IT");
+
+            // Assert - AvailSoct values are 0, 50, 0; the two zero records must be
+            // adjacent (grouped), never interleaved with the non-zero record.
+            var availValues = result.Data.Select(x => x.AvailSoct).ToList();
+
+            var expected = descending
+                ? new List<double> { 50, 0, 0 }
+                : new List<double> { 0, 0, 50 };
+
+            Assert.Equal(expected, availValues);
         }
 
         #endregion

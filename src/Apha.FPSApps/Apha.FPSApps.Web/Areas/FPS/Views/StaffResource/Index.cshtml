@@ -127,9 +127,13 @@
     });
 
     // ─── Totals row — rendered as a <tfoot> inside the grid table ──────────
-    // Rendering the totals inside the actual table lets the browser's own
-    // table layout keep every total aligned under its column, so the cells
-    // can never overlap or drift out of sync with the grid columns.
+    // Totals must always reflect the complete underlying dataset for the
+    // selected workgroup, independent of pagination, filtering, sorting, or the
+    // number of rows currently displayed. They are therefore calculated
+    // server-side over the full dataset and fetched here, rather than summed
+    // from the visible rows.
+    var ruvStaffTotalsUrl = '@Url.Action("LoadStaffTotals", "StaffResource", new { area = "FPS" })';
+
     function buildRuvTotalsRow() {
         var table = document.getElementById('tbl_@Model.StaffGrid.GridId');
         if (!table) return;
@@ -140,6 +144,30 @@
 
         var rows = table.querySelectorAll('tbody tr');
         if (!rows.length) return;
+        if (!currentWorkgroup) return;
+
+        $.ajax({
+            url: ruvStaffTotalsUrl,
+            type: 'GET',
+            data: { workgroup: currentWorkgroup },
+            success: function (totals) {
+                renderRuvTotalsRow(totals);
+            }
+        });
+    }
+
+    function renderRuvTotalsRow(totals) {
+        var table = document.getElementById('tbl_@Model.StaffGrid.GridId');
+        if (!table || !totals) return;
+
+        var existingFoot = table.querySelector('tfoot');
+        if (existingFoot) existingFoot.remove();
+
+        var rows = table.querySelectorAll('tbody tr');
+        if (!rows.length) return;
+
+        var refCells = rows[0].querySelectorAll('td');
+        var colCount = refCells.length;
 
         // Column layout (0-based):
         //  0:WgGrade(text) 1:Name(text)
@@ -147,27 +175,20 @@
         //  6:ApprovedPlan  7:ApprovedUtil(%)
         //  8:NotApprovedPlan  9:NotApprovedUtil(%)
         // 10:TotalPlan  11:TotalUtil(%)
-        var refCells  = rows[0].querySelectorAll('td');
-        var colCount  = refCells.length;
-        var sumCols   = [2, 3, 4, 5, 6, 8, 10];
-        var avgCols   = [7, 9, 11];
-        var sums = {}, avgTotals = {}, avgCounts = {};
-        sumCols.forEach(function (i) { sums[i] = 0; });
-        avgCols.forEach(function (i) { avgTotals[i] = 0; avgCounts[i] = 0; });
-
-        rows.forEach(function (row) {
-            var cells = row.querySelectorAll('td');
-            sumCols.forEach(function (i) {
-                if (!cells[i]) return;
-                var val = parseFloat(cells[i].textContent.trim().replace(/,/g, ''));
-                if (!isNaN(val)) sums[i] += val;
-            });
-            avgCols.forEach(function (i) {
-                if (!cells[i]) return;
-                var val = parseFloat(cells[i].textContent.trim().replace(/,/g, '').replace('%', ''));
-                if (!isNaN(val)) { avgTotals[i] += val; avgCounts[i]++; }
-            });
-        });
+        var sumValues = {
+            2: totals.totalH,
+            3: totals.ztw,
+            4: totals.avail,
+            5: totals.left,
+            6: totals.approvedPlan,
+            8: totals.notApprovedPlan,
+            10: totals.totalPlan
+        };
+        var avgValues = {
+            7: totals.approvedUtil,
+            9: totals.notApprovedUtil,
+            11: totals.totalUtil
+        };
 
         var tfoot = document.createElement('tfoot');
         var tr    = document.createElement('tr');
@@ -178,11 +199,10 @@
             td.className = 'govuk-table__cell';
             if (i === 0) {
                 td.textContent = 'Staff Totals:';
-            } else if (sums.hasOwnProperty(i)) {
-                td.textContent = (Math.round(sums[i] * 100) / 100).toFixed(2);
-            } else if (avgCols.indexOf(i) !== -1 && avgCounts[i] > 0) {
-                td.textContent = (Math.round((avgTotals[i] / avgCounts[i]) * 100) / 100).toFixed(2) + '%';
-                td.title = 'Average of ' + avgCounts[i] + ' values';
+            } else if (sumValues.hasOwnProperty(i) && sumValues[i] !== null && sumValues[i] !== undefined) {
+                td.textContent = Number(sumValues[i]).toFixed(2);
+            } else if (avgValues.hasOwnProperty(i) && avgValues[i] !== null && avgValues[i] !== undefined) {
+                td.textContent = Number(avgValues[i]).toFixed(2) + '%';
             }
             // Name col (1) stays blank
             tr.appendChild(td);
