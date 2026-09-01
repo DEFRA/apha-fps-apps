@@ -6,5 +6,6 @@ namespace Apha.FPS.DataAccess.Context
     {
         public int FpsYear { get; set; }
         public string UserEmailId { get; set; } = string.Empty;
+        public string CorrelationId { get; set; } = string.Empty;
     }
 }

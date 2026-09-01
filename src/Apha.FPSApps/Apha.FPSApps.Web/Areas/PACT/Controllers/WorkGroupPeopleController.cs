@@ -73,7 +73,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> LoadPeopleGrid(PaginationFilter<string> request, string? workGroup)
         {
             var stopwatch = Stopwatch.StartNew();
-            Console.WriteLine($"Web WorkGroupPeople Controller method LoadPeopleGrid execution started (page - {request.Page})  :{DateTime.Now}");
+            var correlationId = HttpContext.Request.Headers["X-Correlation-ID"].ToString();
+            if (string.IsNullOrWhiteSpace(correlationId))
+                correlationId = HttpContext.TraceIdentifier;
+
+            Console.WriteLine($"Web WorkGroupPeopleController - LoadPeopleGrid() started (corrId - {correlationId}) (page - {request.Page}) :{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffff")}");
             if (!ModelState.IsValid)
                 return Json(new
                 {
@@ -81,11 +85,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     message = "Invalid request data",
                     errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                 });
-           
-            var gridConfig = await BuildPeopleGridAsync(request, workGroup);            
+
+            var gridConfig = await BuildPeopleGridAsync(request, workGroup);
             stopwatch.Stop();
-            Console.WriteLine($"Web WorkGroupPeople Controller method LoadPeopleGrid execution completed (page - {request.Page}):{DateTime.Now}");
-            Console.WriteLine($"Web WorkGroupPeople Controller method LoadPeopleGrid total execution time (in ms) (page - {request.Page}):{stopwatch.ElapsedMilliseconds}");
+            Console.WriteLine($"Web WorkGroupPeopleController - LoadPeopleGrid() completed (corrId - {correlationId}) (page - {request.Page}) :{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffff")}");
+            Console.WriteLine($"Web WorkGroupPeopleController - LoadPeopleGrid() total time (corrId - {correlationId}) (page - {request.Page}):{stopwatch.ElapsedMilliseconds}");
             return PartialView("_DataGrid", gridConfig);
         }
 

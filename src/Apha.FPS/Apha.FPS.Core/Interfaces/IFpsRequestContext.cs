@@ -4,5 +4,6 @@
     {
         int FpsYear { get; set; }
         string UserEmailId { get; set; }
+        string CorrelationId { get; set; }
     }
 }

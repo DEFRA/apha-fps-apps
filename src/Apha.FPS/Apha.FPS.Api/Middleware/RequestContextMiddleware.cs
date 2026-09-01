@@ -40,7 +40,8 @@ namespace Apha.FPS.Api.Middleware
 
             requestContext.FpsYear = fpsYear;
             requestContext.UserEmailId = (context.User?.Identity?.Name ?? string.Empty).ToLowerInvariant();
-            
+            requestContext.CorrelationId = context.Request.Headers[CorrelationIdHeader].ToString();
+
             await _next(context);
         }
 

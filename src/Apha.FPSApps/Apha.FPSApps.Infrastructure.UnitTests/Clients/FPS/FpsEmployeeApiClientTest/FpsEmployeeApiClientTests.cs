@@ -6,6 +6,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using NSubstitute;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClientTest
@@ -15,12 +16,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
         private readonly IFpsHttpExecutor _httpExecutor;
         private readonly IMapper _mapper;
         private readonly FpsEmployeeApiClient _client;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public FpsEmployeeApiClientTests()
         {
             _httpExecutor = Substitute.For<IFpsHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            _client = new FpsEmployeeApiClient(_httpExecutor, _mapper);
+            _httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+            _client = new FpsEmployeeApiClient(_httpExecutor, _mapper, _httpContextAccessor);
         }
 
         #region GetFilteredEmployeesAsync Tests

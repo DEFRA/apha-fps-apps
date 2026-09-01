@@ -2,6 +2,7 @@ using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Xunit;
 
@@ -11,13 +12,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsApiClientTest
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly FpsApiClient _client;
 
         public FpsApiClientTests()
         {
             _http = Substitute.For<IFpsHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            _client = new FpsApiClient(_http, _mapper);
+            _httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+            _client = new FpsApiClient(_http, _mapper, _httpContextAccessor);
         }
 
         [Fact]

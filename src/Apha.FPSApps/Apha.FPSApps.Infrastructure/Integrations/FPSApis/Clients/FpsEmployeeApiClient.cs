@@ -7,6 +7,7 @@ using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
@@ -14,12 +15,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private const string internalCodeError = "INTERNAL_ERROR";
 
-        public FpsEmployeeApiClient(IFpsHttpExecutor http, IMapper mapper)
+        public FpsEmployeeApiClient(IFpsHttpExecutor http, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _http = http;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ApiResponseDto<List<EmployeeDto>>> GetFilteredEmployeesAsync(QueryParameters<string> criteria, int filterOption)
@@ -142,7 +145,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<PaginatedResult<PactStaffDto>>> GetWorkGroupStaffAsync(QueryParameters<string> query, string? workGroup = null)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync started at (page - {query.Page}): {DateTime.Now:O}");
+            var correlationId = _httpContextAccessor.HttpContext?.Request.Headers["X-Correlation-ID"].ToString();
+            if (string.IsNullOrWhiteSpace(correlationId))
+                correlationId = _httpContextAccessor.HttpContext?.TraceIdentifier ?? Guid.NewGuid().ToString();
+
+            Console.WriteLine($"Infra FpsEmployeeApiClient - GetWorkGroupStaffAsync() started (corrId - {correlationId}) (page - {query.Page}): {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffff")}");
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetWorkGroupStaffPaginated, query);
             if (!string.IsNullOrWhiteSpace(workGroup))
                 url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
@@ -150,8 +157,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             if (response.Success)
             {
                 stopwatch.Stop();
-                Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync completed at (page - {query.Page}): {DateTime.Now:O}");
-                Console.WriteLine($"Infra Employee client method GetWorkGroupStaffAsync total execution time (in ms)(page - {query.Page}): {stopwatch.ElapsedMilliseconds}");
+                Console.WriteLine($"Infra FpsEmployeeApiClient - GetWorkGroupStaffAsync() completed (corrId - {correlationId}) (page - {query.Page}): {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffff")}");
+                Console.WriteLine($"Infra FpsEmployeeApiClient - GetWorkGroupStaffAsync() total time (corrId - {correlationId}) (page - {query.Page}): {stopwatch.ElapsedMilliseconds}");
 
                 var dto = _mapper.Map<ApiResponseDto<List<PactStaffDto>>>(response);
                 var pagination = response.Pagination;

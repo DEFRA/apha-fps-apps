@@ -246,7 +246,8 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<PactStaff>> GetPagedWorkGroupStaffAsync(PaginationParameters<string> query, string? workGroup = null)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            Console.WriteLine($"FPS DataAccess EmployeeRepository method GetPagedWorkGroupStaffAsync started at (page - {query.Page}): {DateTime.Now:O}");
+            var correlationId = _fpsYearContext.CorrelationId;
+            Console.WriteLine($"FPSDataAccess EmployeeRepository - GetPagedWorkGroupStaffAsync() started (corrId - {correlationId}) (page - {query.Page}): {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffff")}");
 
             IQueryable<PactStaff> queryStaff;
 
@@ -279,8 +280,8 @@ namespace Apha.FPS.DataAccess.Repositories
             var pagedResult = ApplyPaging(result, query.Page, query.PageSize);
 
             stopwatch.Stop();
-            Console.WriteLine($"FPS DataAccess EmployeeRepository method GetPagedWorkGroupStaffAsync completed at (page - {query.Page}): {DateTime.Now:O}");
-            Console.WriteLine($"FPS DataAccess EmployeeRepository method GetPagedWorkGroupStaffAsync total execution time (in ms)(page - {query.Page}): {stopwatch.ElapsedMilliseconds}");
+            Console.WriteLine($"FPSDataAccess EmployeeRepository - GetPagedWorkGroupStaffAsync() completed (corrId - {correlationId}) (page - {query.Page}): {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffff")}");
+            Console.WriteLine($"FPSDataAccess EmployeeRepository - GetPagedWorkGroupStaffAsync() total time (corrId - {correlationId}) (page - {query.Page}): {stopwatch.ElapsedMilliseconds}");
 
             return pagedResult;
         }

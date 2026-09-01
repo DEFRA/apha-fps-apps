@@ -7,6 +7,7 @@ namespace Apha.FPSApps.Web.Middleware
 {
     public class ExceptionMiddleware
     {
+        private const string CorrelationIdHeader = "X-Correlation-ID";
         private readonly RequestDelegate _next;
         private readonly ILogger<ExceptionMiddleware> _logger;
         private readonly IConfiguration _configuration;
@@ -20,13 +21,14 @@ namespace Apha.FPSApps.Web.Middleware
 
         public async Task InvokeAsync(HttpContext context)
         {
+            var correlationId = EnsureCorrelationId(context);
+
             try
             {
                 await _next(context);
             }
             catch (Exception ex)
             {
-                var correlationId = context.Request.Headers["X-Correlation-ID"].ToString();
                 var (errorType, errorCode, statusCode) = ClassifyException(ex);
                 LogException(context, ex, errorType, errorCode, correlationId);
 
@@ -102,6 +104,25 @@ namespace Apha.FPSApps.Web.Middleware
             }
 
             return (errorType, errorCode, statusCode);
+        }
+
+        private static string EnsureCorrelationId(HttpContext context)
+        {
+            var correlationId = context.Request.Headers[CorrelationIdHeader].ToString();
+
+            if (string.IsNullOrWhiteSpace(correlationId))
+                correlationId = Guid.NewGuid().ToString();
+
+            context.Request.Headers[CorrelationIdHeader] = correlationId;
+            context.TraceIdentifier = correlationId;
+
+            context.Response.OnStarting(() =>
+            {
+                context.Response.Headers[CorrelationIdHeader] = correlationId;
+                return Task.CompletedTask;
+            });
+
+            return correlationId;
         }
 
         private void LogException(

@@ -1,6 +1,7 @@
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
@@ -55,10 +56,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
        
         public IFpsDepartmentIncomeApiClient FpsDepartmentIncome { get; }
 
-        public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
+        public FpsApiClient(IFpsHttpExecutor http, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             FpsStaffJob = new FpsStaffJobApiClient(http, mapper);
-            FpsEmployee = new FpsEmployeeApiClient(http, mapper);
+            FpsEmployee = new FpsEmployeeApiClient(http, mapper, httpContextAccessor);
             FpsProgram = new FpsProgramApiClient(http, mapper);
             FpsProject = new FpsProjectApiClient(http, mapper);
             FpsLookup = new FpsLookupApiClient(http, mapper);

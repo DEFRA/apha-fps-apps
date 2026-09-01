@@ -160,13 +160,17 @@ namespace Apha.FPS.Api.Controllers
         public async Task<IActionResult> GetWorkGroupStaffPaginatedAsync([FromQuery] PaginationReq<string> query, [FromQuery] string? workGroup = null)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            Console.WriteLine($"FPS WebAPI Employee Controller method GetWorkGroupStaffPaginatedAsync started at (page - {query.Page}): {DateTime.Now:O}");
+            var correlationId = HttpContext.Request.Headers["X-Correlation-ID"].ToString();
+            if (string.IsNullOrWhiteSpace(correlationId))
+                correlationId = HttpContext.TraceIdentifier;
+
+            Console.WriteLine($"FPSAPI EmployeeController - GetWorkGroupStaffPaginatedAsync() started (corrId - {correlationId}) (page - {query.Page}): {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffff")}");
 
             var filter = _mapper.Map<QueryParameters<string>>(query);
             var result = await _employeeService.GetPagedWorkGroupStaffAsync(filter, workGroup);
             stopwatch.Stop();
-            Console.WriteLine($"FPS WebAPI Employee Controller method GetWorkGroupStaffPaginatedAsync completed at (page - {query.Page}): {DateTime.Now:O}");
-            Console.WriteLine($"FPS WebAPI Employee Controller method GetWorkGroupStaffPaginatedAsync total execution time (in ms)(page - {query.Page}): {stopwatch.ElapsedMilliseconds}");
+            Console.WriteLine($"FPSAPI EmployeeController - GetWorkGroupStaffPaginatedAsync() completed (corrId - {correlationId}) (page - {query.Page}): {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffff")}");
+            Console.WriteLine($"FPSAPI EmployeeController - GetWorkGroupStaffPaginatedAsync() total time (corrId - {correlationId}) (page - {query.Page}): {stopwatch.ElapsedMilliseconds}");
             return Ok(_mapper.Map<PaginationRes<PactStaffRes>>(result));
         }
 
