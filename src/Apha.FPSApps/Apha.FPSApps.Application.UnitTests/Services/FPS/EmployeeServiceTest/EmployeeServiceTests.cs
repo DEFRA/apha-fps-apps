@@ -132,6 +132,72 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.EmployeeServiceTest
 
         #endregion
 
+        #region GetStaffNameLookupAsync Tests
+
+        [Fact]
+        public async Task GetStaffNameLookupAsync_WithValidData_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var staff = new List<StaffLookupDto>
+            {
+                new StaffLookupDto { SpNumber = "000001", Name = "Doe John" },
+                new StaffLookupDto { SpNumber = "000002", Name = "Smith Jane" }
+            };
+            var expectedResponse = ApiResponseDto<List<StaffLookupDto>>.SuccessResponse(staff);
+
+            _fpsEmployeeApiClient.GetStaffNameLookupAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetStaffNameLookupAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _fpsEmployeeApiClient.Received(1).GetStaffNameLookupAsync();
+        }
+
+        [Fact]
+        public async Task GetStaffNameLookupAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<StaffLookupDto>>.SuccessResponse(new List<StaffLookupDto>());
+
+            _fpsEmployeeApiClient.GetStaffNameLookupAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetStaffNameLookupAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetStaffNameLookupAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Message = "API Error", Code = "API_ERROR" }
+            };
+            var expectedResponse = ApiResponseDto<List<StaffLookupDto>>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsEmployeeApiClient.GetStaffNameLookupAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetStaffNameLookupAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        #endregion
+
         #region GetEmployeeByIdAsync Tests
 
         [Fact]

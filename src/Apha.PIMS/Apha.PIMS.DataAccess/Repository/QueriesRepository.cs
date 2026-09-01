@@ -145,21 +145,22 @@ namespace Apha.PIMS.DataAccess.Repository
 
             var query = from myProject in _context.MyTlkpProjects.AsNoTracking()
                         join gProject in _context.Projects.AsNoTracking()
-                            on myProject.Parentproject equals gProject.Parentproject
+                            on myProject.Parentproject.Trim() equals gProject.Parentproject.Trim()
                         join radTrackContract in _context.RadTrackContracts.AsNoTracking()
-                            on gProject.Contract equals radTrackContract.Contract
+                            on gProject.Contract.Trim() equals radTrackContract.Contract.Trim()
                         join yearTotal in _context.FpsYearTotals.AsNoTracking()
-                            on new { myProject.Year, myProject.Parentproject }
-                            equals new { yearTotal.Year, yearTotal.Parentproject }
+                            on new { myProject.Year, Parentproject = gProject.Parentproject.Trim() }
+                            equals new { yearTotal.Year, Parentproject = yearTotal.Parentproject.Trim() }
                         join monthFinal in _context.ProjectMonthFinals.AsNoTracking()
-                            on new { myProject.Year, Project = myProject.Parentproject, MonthNo = fiscalMonth }
-                            equals new { monthFinal.Year, Project = monthFinal.Project, MonthNo = monthFinal.Monthno }
+                            on new { myProject.Year, Project = myProject.Parentproject.Trim() }
+                            equals new { monthFinal.Year, Project = monthFinal.Project.Trim() }
                         join comment in monitoringComments
-                            on new { Project = myProject.Parentproject, myProject.Year }
-                            equals new { Project = comment.Project, comment.Year }
+                            on new { Project = myProject.Parentproject.Trim(), myProject.Year }
+                            equals new { Project = comment.Project.Trim(), comment.Year }
                             into commentGroup
                         from comment in commentGroup.DefaultIfEmpty()
                         where myProject.Year == reportYear
+                              && monthFinal.Monthno == fiscalMonth
                               && (!applySurveillanceProgramFilter
                                   || (myProject.Program != null
                                       && myProject.Program.ToUpper().EndsWith("SURV")))
@@ -196,35 +197,36 @@ namespace Apha.PIMS.DataAccess.Repository
             double fiscalMonth,
             IEnumerable<string>? programFilter)
         {
+            // qryPMonitoringComments: SELECT Project, Year, Comment FROM tblComments WHERE Topic='P&C Monitoring Report'
             var monitoringComments = _context.Comments
                 .AsNoTracking()
                 .Where(c => c.Topic == "P&C Monitoring Report");
 
             var query = from myProject in _context.MyTlkpProjects.AsNoTracking()
                         join gProject in _context.Projects.AsNoTracking()
-                            on myProject.Parentproject.Trim().ToUpper() equals gProject.Parentproject.Trim().ToUpper()
+                            on myProject.Parentproject.Trim() equals gProject.Parentproject.Trim()
                         join yearTotalJoin in _context.FpsYearTotals.AsNoTracking()
-                            on new { myProject.Year, myProject.Parentproject }
-                            equals new { yearTotalJoin.Year, yearTotalJoin.Parentproject }
+                            on new { myProject.Year, Parentproject = myProject.Parentproject.Trim() }
+                            equals new { yearTotalJoin.Year, Parentproject = yearTotalJoin.Parentproject.Trim() }
                             into yearTotalGroup
                         from yearTotal in yearTotalGroup.DefaultIfEmpty()
                         join monthFinalJoin in _context.ProjectMonthFinals.AsNoTracking()
-                            on new { Year = yearTotal.Year, Project = yearTotal.Parentproject }
-                            equals new { Year = monthFinalJoin.Year, Project = monthFinalJoin.Project }
+                            on new { myProject.Year, Project = myProject.Parentproject.Trim() }
+                            equals new { Year = monthFinalJoin.Year, Project = monthFinalJoin.Project.Trim() }
                             into monthFinalGroup
                         from monthFinal in monthFinalGroup.DefaultIfEmpty()
                         join yearlyDataJoin in _context.YearlyFinancialData.AsNoTracking()
-                            on new { myProject.Year, Project = myProject.Parentproject }
-                            equals new { yearlyDataJoin.Year, yearlyDataJoin.Project }
+                            on new { myProject.Year, Project = myProject.Parentproject.Trim() }
+                            equals new { yearlyDataJoin.Year, Project = yearlyDataJoin.Project.Trim() }
                             into yearlyDataGroup
                         from yearlyData in yearlyDataGroup.DefaultIfEmpty()
                         join radTrackDataJoin in _context.ProjectRadTrackData.AsNoTracking()
-                            on myProject.Parentproject equals radTrackDataJoin.Parentproject
+                            on myProject.Parentproject.Trim() equals radTrackDataJoin.Parentproject.Trim()
                             into radTrackDataGroup
                         from radTrackData in radTrackDataGroup.DefaultIfEmpty()
                         join commentJoin in monitoringComments
-                            on new { Year = yearTotal.Year, Project = yearTotal.Parentproject }
-                            equals new { Year = commentJoin.Year, Project = commentJoin.Project }
+                            on new { myProject.Year, Project = myProject.Parentproject.Trim() }
+                            equals new { commentJoin.Year, Project = commentJoin.Project.Trim() }
                             into commentGroup
                         from comment in commentGroup.DefaultIfEmpty()
                         where myProject.Year == reportYear
@@ -238,23 +240,28 @@ namespace Apha.PIMS.DataAccess.Repository
                             ProjectTitle = gProject.Projecttitle,
                             Manager = myProject.Manager,
                             ProjectStatus = myProject.Projectstatus,
-                            Customer = yearTotal != null ? yearTotal.Customer : myProject.Customer,
+                            Customer = myProject.Customer,
                             Contract = gProject.Contract,
                             PlannedCosts = yearTotal != null && yearTotal.Totalcosts.HasValue
                                 ? Convert.ToDecimal(yearTotal.Totalcosts.Value)
                                 : null,
-                            BudgetCvl = yearTotal != null ? yearTotal.BudgetCvl : null,
-                            CustIncome = yearTotal != null ? yearTotal.Custincome : null,
+                            BudgetCvl = myProject.BudgetCvl,
+                            CustIncome = myProject.Custincome,
                             ActualCostsYt = monthFinal != null ? monthFinal.Cumcost : null,
-                            PercentOfBudget = yearTotal != null && yearTotal.BudgetCvl != 0
+                            PercentOfBudget = myProject.BudgetCvl != null && myProject.BudgetCvl != 0
                                 ? monthFinal != null && monthFinal.Cumcost.HasValue
-                                    ? monthFinal.Cumcost.Value / yearTotal.BudgetCvl.Value
+                                    ? monthFinal.Cumcost.Value / myProject.BudgetCvl.Value
                                     : 0
                                 : null,
                             PcForecastSpend = radTrackData != null ? radTrackData.Pcforecastspend : null,
-                            EstimateSpend = monthFinal != null ? monthFinal.Sumofcostprofile : null,
-                            LinearSpend = monthFinal != null ? monthFinal.Cumprofile : null,
+                            EstimateSpend = radTrackData != null && radTrackData.Pcforecastspend.HasValue && myProject.BudgetCvl.HasValue
+                                ? (decimal?)(radTrackData.Pcforecastspend.Value * (double)myProject.BudgetCvl.Value / 100.0)
+                                : null,
+                            LinearSpend = monthFinal != null && monthFinal.Cumcost.HasValue && fiscalMonth != 0
+                                ? (decimal?)((double)monthFinal.Cumcost.Value * 12.0 / fiscalMonth)
+                                : null,
                             BfBudget = yearlyData != null ? yearlyData.BfBudget : null,
+                            TotalIncome = (myProject.Custincome ?? 0m) + (myProject.Transferincome ?? 0m),
                             CumInvoice = monthFinal != null ? monthFinal.Cuminvoices : null,
                             StartDate = radTrackData != null ? radTrackData.Startdate : null,
                             EndDate = radTrackData != null ? radTrackData.Enddate : null,
@@ -366,6 +373,7 @@ namespace Apha.PIMS.DataAccess.Repository
                 "estimatespend" => ApplyProgramCustomerMonitoringOrder(query, x => x.EstimateSpend, descending),
                 "linearspend" => ApplyProgramCustomerMonitoringOrder(query, x => x.LinearSpend, descending),
                 "bfbudget" => ApplyProgramCustomerMonitoringOrder(query, x => x.BfBudget, descending),
+                "totalincome" => ApplyProgramCustomerMonitoringOrder(query, x => x.TotalIncome, descending),
                 "cuminvoice" => ApplyProgramCustomerMonitoringOrder(query, x => x.CumInvoice, descending),
                 "startdate" => ApplyProgramCustomerMonitoringOrder(query, x => x.StartDate, descending),
                 "enddate" => ApplyProgramCustomerMonitoringOrder(query, x => x.EndDate, descending),
@@ -487,6 +495,7 @@ namespace Apha.PIMS.DataAccess.Repository
 
         /// <summary>
         /// Apply sorting to the query based on column name and sort direction.
+        /// Covers all columns visible in the All Contracts and Contracts Monitoring grids.
         /// </summary>
         private static IQueryable<MonitoringReportData> ApplySorting(
             IQueryable<MonitoringReportData> query,
@@ -498,15 +507,20 @@ namespace Apha.PIMS.DataAccess.Repository
 
             return sortBy.Trim().ToLowerInvariant() switch
             {
-                "program" => ApplyOrder(query, x => x.Program, descending),
-                "parentproject" => ApplyOrder(query, x => x.ParentProject, descending),
-                "project" => ApplyOrder(query, x => x.ParentProject, descending),
-                "projecttitle" => ApplyOrder(query, x => x.ProjectTitle, descending),
-                "manager" => ApplyOrder(query, x => x.Manager, descending),
-                "projectstatus" => ApplyOrder(query, x => x.ProjectStatus, descending),
-                "status" => ApplyOrder(query, x => x.ProjectStatus, descending),
-                "contract" => ApplyOrder(query, x => x.Contract, descending),
-                _ => query.OrderBy(r => r.ParentProject)
+                "year"              => ApplyOrder(query, x => x.Year,              descending),
+                "program"           => ApplyOrder(query, x => x.Program,           descending),
+                "parentproject"     => ApplyOrder(query, x => x.ParentProject,     descending),
+                "project"           => ApplyOrder(query, x => x.ParentProject,     descending),
+                "projecttitle"      => ApplyOrder(query, x => x.ProjectTitle,      descending),
+                "manager"           => ApplyOrder(query, x => x.Manager,           descending),
+                "projectstatus"     => ApplyOrder(query, x => x.ProjectStatus,     descending),
+                "status"            => ApplyOrder(query, x => x.ProjectStatus,     descending),
+                "contract"          => ApplyOrder(query, x => x.Contract,          descending),
+                "totalplancosts"    => ApplyOrder(query, x => x.TotalPlanCosts,    descending),
+                "totalytdcosts"     => ApplyOrder(query, x => x.TotalYtdCosts,     descending),
+                "monitoringcomment" => ApplyOrder(query, x => x.MonitoringComment, descending),
+                "comment"           => ApplyOrder(query, x => x.MonitoringComment, descending),
+                _                   => query.OrderBy(r => r.ParentProject)
             };
         }
 

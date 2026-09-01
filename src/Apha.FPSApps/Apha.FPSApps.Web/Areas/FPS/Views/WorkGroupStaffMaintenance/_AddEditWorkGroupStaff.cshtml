@@ -181,7 +181,7 @@
                        type="text"
                        maxlength="20"
                        required
-                       value="@(isEditMode ? Model?.HrsPaid.ToString() : string.Empty)" />
+                       value="@(isEditMode ? Model?.HrsPaid.ToString() : "0")" />
                 <span asp-validation-for="HrsPaid" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
@@ -197,7 +197,7 @@
                        type="text"
                        maxlength="20"
                        required
-                       value="@(isEditMode ? Model?.Leave.ToString() : string.Empty)" />
+                       value="@(isEditMode ? Model?.Leave.ToString() : "0")" />
                 <span asp-validation-for="Leave" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
@@ -213,7 +213,7 @@
                        type="text"
                        maxlength="20"
                        required
-                       value="@(isEditMode ? Model?.SickSpecial.ToString() : string.Empty)" />
+                       value="@(isEditMode ? Model?.SickSpecial.ToString() : "0")" />
                 <span asp-validation-for="SickSpecial" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
@@ -229,7 +229,7 @@
                        type="text"
                        maxlength="20"
                        required
-                       value="@(isEditMode ? Model?.HrsAvail.ToString() : string.Empty)" />
+                       value="@(isEditMode ? Model?.HrsAvail.ToString() : "0")" />
             </div>
         </div>
 

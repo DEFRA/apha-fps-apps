@@ -5,7 +5,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 {
     public class ReviewItemItem
     {
-        [Display(Name = "Item Id")]
+        [Display(Name = "ItemID")]
         [GridColumn(Order = 1, Width = 80, Type = GridColumnType.Number, IsFilterable = true)]
         public int Itemid { get; set; }
 

@@ -5,7 +5,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 {
     public class ReportGroupItem
     {
-        [Display(Name = "Group ID")]
+        [Display(Name = "GroupID")]
         [GridColumn(Order = 1, Width = 100, Type = GridColumnType.Number, IsFilterable = true, IsVisible = false)]
         public int GroupId { get; set; }
 
