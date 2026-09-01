@@ -5723,3 +5723,20 @@ input.govuk-input.ssr-total-input[readonly] {
         }
     }
 }
+
+.isBlock{
+    display:block;
+}
+.isFullWidth{
+    width: 100%;
+}
+.isTimeSummary {
+    .govuk-summary-list__key {
+        width: 60%;
+    }
+}
+.isZtCodesModal {
+    .modal-title{
+        font-size: 19px;
+    }
+}

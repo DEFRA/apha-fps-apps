@@ -8,12 +8,12 @@
     var saveAction = isEditMode ? "updateZtPlan()" : "saveZtPlan()";
 }
 
-<div class="modal-header">
+<div class="modal-header isZtCodesModal">
     <h5 class="modal-title">@title</h5>
     <button type="button" class="btn-close btn-red" onclick="closeZtModal()">X</button>
 </div>
 
-<div class="modal-body" style="overflow-y: auto; max-height: calc(80vh - 120px);">
+<div class="modal-body isZtCodesModal" style="overflow-y: auto; max-height: calc(80vh - 120px);">
     <div class="govuk-error-summary" role="alert"
          aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
         <h2 class="govuk-error-summary__title" id="error-summary-title">
