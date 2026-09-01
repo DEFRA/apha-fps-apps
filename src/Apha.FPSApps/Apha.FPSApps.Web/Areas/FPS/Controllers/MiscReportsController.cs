@@ -14,6 +14,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class MiscReportsController : Controller
     {
+        private const string DefaultReport = "TestManagerWgPivot";
+        private const string RcPivotReport = "TestManagerRcPivot";
+        private const int DefaultPageSize = 10;
+
         private readonly IProfitCentreService _profitCentreService;
         private readonly ITestsRequiredByWgService _testsRequiredByWgService;
         private readonly ITestsRequiredByRcService _testsRequiredByRcService;
@@ -37,37 +41,46 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var profitCentreOptions = await GetProfitCentreSelectListAsync();
             var year = GetSelectedFpsYear();
 
-            var grid = await BuildGridAsync(profitCentre, report);
+            // The first side navigation item is selected and loaded by default.
+            var selectedReport = string.IsNullOrWhiteSpace(report) ? DefaultReport : report;
+
+            var grid = await BuildGridAsync(profitCentre, selectedReport);
 
             return View(new MiscReportsViewModel
             {
                 Grid = grid,
                 ProfitCentreOptions = profitCentreOptions,
                 SelectedProfitCentre = profitCentre,
-                SelectedReport = report,
+                SelectedReport = selectedReport,
+                SelectedReportTitle = GetReportTitle(selectedReport),
                 FpsYear = year
             });
         }
 
+        private static string GetReportTitle(string? report) =>
+            string.Equals(report, RcPivotReport, StringComparison.OrdinalIgnoreCase)
+                ? "Test Manager RC Pivot"
+                : "Test Manager WG Pivot";
+
         /// <summary>
-        /// Reloads the Misc Reports grid partial for the selected Resource Centre.
+        /// Reloads the Misc Reports grid partial for the selected Profit Centre.
         /// </summary>
         [HttpPost]
         [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> LoadGrid(string? profitCentre, string? report = null, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
+        public async Task<IActionResult> LoadGrid(string? profitCentre, string? report = null, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = DefaultPageSize)
         {
-            var grid = await BuildGridAsync(profitCentre, report, sortBy, descending, filter, page, pageSize);
+            var grid = await BuildGridAsync(profitCentre, string.IsNullOrWhiteSpace(report) ? DefaultReport : report, sortBy, descending, filter, page, pageSize);
             return PartialView("_DataGrid", grid);
         }
 
-        private async Task<DataGridConfig<Dictionary<string, string?>>> BuildGridAsync(string? profitCentre, string? report, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = 20)
+        private async Task<DataGridConfig<Dictionary<string, string?>>> BuildGridAsync(string? profitCentre, string? report, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = DefaultPageSize)
         {
             var rows = new List<Dictionary<string, string?>>();
-            var isRcReport = string.Equals(report, "TestManagerRcPivot", StringComparison.OrdinalIgnoreCase);
+            var isRcReport = string.Equals(report, RcPivotReport, StringComparison.OrdinalIgnoreCase);
 
             var columns = new List<DataGridColumn>
             {
-                new() { PropertyName = "ProfitCentre",    DisplayName = "Resource Centre", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 160 }
+                new() { PropertyName = "ProfitCentre",    DisplayName = "Profit Centre", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 160 }
             };
 
             if (!isRcReport)
@@ -127,7 +140,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             rows = ApplySorting(rows, sortBy, descending);
 
             var pageNumber = page > 0 ? page : 1;
-            var itemsPerPage = pageSize > 0 ? pageSize : 20;
+            var itemsPerPage = pageSize > 0 ? pageSize : DefaultPageSize;
             var totalRecords = rows.Count;
 
             var pagedRows = rows
