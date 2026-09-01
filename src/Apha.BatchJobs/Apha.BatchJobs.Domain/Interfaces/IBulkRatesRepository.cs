@@ -19,30 +19,22 @@ public interface IBulkRatesRepository
         Guid jobExecutionId,
         CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Reads all tblstagingtestorproduct rows scoped to the request.
-    /// </summary>
+    /// <summary>Reads all tblstagingtestorproduct rows scoped to the request.</summary>
     Task<IReadOnlyList<FecStagingRow>> GetFecStagingRowsAsync(
         Guid jobQueueId,
         CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Reads all tblstagingtlkptestreqmt rows scoped to the request.
-    /// </summary>
+    /// <summary>Reads all tblstagingtlkptestreqmt rows scoped to the request.</summary>
     Task<IReadOnlyList<AgrupStagingRow>> GetAgrupStagingRowsAsync(
         Guid jobQueueId,
         CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Reads all tblstagingprofitcentregrade rows scoped to the request.
-    /// </summary>
+    /// <summary>Reads all tblstagingprofitcentregrade rows scoped to the request.</summary>
     Task<IReadOnlyList<StaffStagingRow>> GetStaffStagingRowsAsync(
         Guid jobQueueId,
         CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Reads all tblstaginganimals rows scoped to the request.
-    /// </summary>
+    /// <summary>Reads all tblstaginganimals rows scoped to the request.</summary>
     Task<IReadOnlyList<AnimalStagingRow>> GetAnimalStagingRowsAsync(
         Guid jobQueueId,
         CancellationToken cancellationToken = default);
