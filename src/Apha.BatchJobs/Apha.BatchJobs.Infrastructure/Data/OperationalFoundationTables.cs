@@ -1,8 +1,6 @@
 namespace Apha.BatchJobs.Infrastructure.Data;
 
-/// <summary>
-/// EF entity for fps.job_master.
-/// </summary>
+/// <summary>EF entity for fps.job_master.</summary>
 internal sealed class TblJobMaster
 {
     public int JobId { get; set; }
@@ -14,9 +12,7 @@ internal sealed class TblJobMaster
     public DateTime UpdatedAt { get; set; }
 }
 
-/// <summary>
-/// EF entity for fps.job_status.
-/// </summary>
+/// <summary>EF entity for fps.job_status.</summary>
 internal sealed class TblJobStatus
 {
     public int StatusId { get; set; }
@@ -25,9 +21,7 @@ internal sealed class TblJobStatus
     public DateTime CreatedAt { get; set; }
 }
 
-/// <summary>
-/// EF entity for fps.job_queue.
-/// </summary>
+/// <summary>EF entity for fps.job_queue.</summary>
 internal sealed class TblJobQueue
 {
     /// <summary>
@@ -53,9 +47,7 @@ internal sealed class TblJobQueue
     public DateTime UpdatedAt { get; set; }
 }
 
-/// <summary>
-/// EF entity for fps.job_queue_log.
-/// </summary>
+/// <summary>EF entity for fps.job_queue_log.</summary>
 internal sealed class TblJobQueueLog
 {
     public int JobQueueLogId { get; set; }

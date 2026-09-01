@@ -8,14 +8,10 @@ namespace Apha.BatchJobs.Application.Configuration;
 /// </summary>
 public sealed class BatchAlertingSettings
 {
-    /// <summary>
-    /// When true, failure notification emails are sent to <see cref="AdminNotificationEmail"/>.
-    /// </summary>
+    /// <summary>When true, failure notification emails are sent to <see cref="AdminNotificationEmail"/>.</summary>
     public bool EnableEmailNotifications { get; set; }
 
-    /// <summary>
-    /// Email recipient for failure notifications.
-    /// </summary>
+    /// <summary>Email recipient for failure notifications.</summary>
     public string? AdminNotificationEmail { get; set; }
 
     /// <summary>
