@@ -141,17 +141,32 @@
 
         function openQuery() {
             const selectedQuery = document.querySelector('input[name="exportQuery"]:checked');
-            const month = document.getElementById('qryFilterMonth').value;
-            const year = document.getElementById('qryFilterYear').value;
+            const monthSelect = document.getElementById('qryFilterMonth');
+            const yearSelect = document.getElementById('qryFilterYear');
+            const month = monthSelect.value;
+            const year = yearSelect.value;
             const contract = document.getElementById('qryFilterContract').value;
 
-            if (!selectedQuery) {
-                showAlertMessage('Please select an Export Query before opening the query.', AlertType.WARNING);
+            const isMonthSelected = monthSelect.selectedIndex > 0 && month.trim() !== '';
+            const isYearSelected = yearSelect.selectedIndex > 0 && year.trim() !== '';
+
+            if (!isMonthSelected && !isYearSelected) {
+                showAlertMessage('Please select Month and Year before opening the query.', AlertType.INFORMATION);
                 return;
             }
 
-            if (!month || !year) {
-                showAlertMessage('Please select Month and Year before opening the query.', AlertType.WARNING);
+            if (!isMonthSelected) {
+                showAlertMessage('Please select Month before opening the query.', AlertType.INFORMATION);
+                return;
+            }
+
+            if (!isYearSelected) {
+                showAlertMessage('Please select Year before opening the query.', AlertType.INFORMATION);
+                return;
+            }
+
+            if (!selectedQuery) {
+                showAlertMessage('Please select an Export Query before opening the query.', AlertType.INFORMATION);
                 return;
             }
 
