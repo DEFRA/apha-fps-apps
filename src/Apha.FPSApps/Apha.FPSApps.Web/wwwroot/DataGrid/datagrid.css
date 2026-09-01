@@ -94,6 +94,51 @@
     color: #d4351c;
 }
 
+/* Contribution summary totals: consistent label/value rows */
+.fps-dg-summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.fps-dg-summary-item:last-child {
+    margin-bottom: 0;
+}
+
+.fps-dg-summary-item .fps-dg-summary-label {
+    font-weight: 700;
+    color: #0b0c0c;
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.fps-dg-summary-item .govuk-input__wrapper {
+    width: auto;
+    flex: 0 0 auto;
+}
+
+/* Readonly totals render bold black, matching the MS Access form */
+.fps-dg-summary-item input.govuk-input.fps-dg-summary-value,
+input.fps-dg-summary-value[readonly],
+.fps-dg-summary-value {
+    color: #0b0c0c;
+    font-weight: 700;
+}
+
+.fps-dg-summary-item .govuk-input__prefix {
+    font-weight: 700;
+    color: #0b0c0c;
+}
+
+/* Divider above a derived total (= Total to Recover, Surplus/Shortfall) */
+.fps-dg-summary-item--total {
+    border-top: 1px solid #b1b4b6;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
 @media (max-width: 1200px) {
     .fps-dg-summary-grid {
         grid-template-columns: repeat(2, minmax(220px, 1fr));

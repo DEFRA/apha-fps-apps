@@ -22,14 +22,32 @@
                     <dd class="isFloatLeft" id="staff-grade">@Model.WorkGroupGrade</dd>
                 </div>
             </dl>
-            @if (Model.ReturnToSsr)
-            {
-                <a href="@Url.Action("Index", "SetUpStaffResources", new { area = "FPS" })" class="govuk-back-link isFloatRight">Back</a>
+            @{
+                // Resolve the single Back target up-front so the page renders exactly one
+                // "Back" link. Multiple anchors sharing identical link text but pointing at
+                // different destinations is an accessibility failure.
+                string backLinkUrl;
+                if (Model.ReturnToSsr)
+                {
+                    backLinkUrl = Url.Action("Index", "SetUpStaffResources", new { area = "FPS" })!;
+                }
+                else if (Context.Request.Query["source"] == "resource")
+                {
+                    backLinkUrl = Url.Action("Index", "ResourceSetUp", new
+                    {
+                        area = "FPS",
+                        profitCentre = Context.Request.Query["profitCentre"].ToString(),
+                        pcGrade = Context.Request.Query["pcGrade"].ToString(),
+                        wgGrade = Context.Request.Query["wgGrade"].ToString(),
+                        staffId = Model.StaffId
+                    })!;
+                }
+                else
+                {
+                    backLinkUrl = "JavaScript:history.back()";
+                }
             }
-            else
-            {
-                <a href="JavaScript:history.back()" class="govuk-back-link isFloatRight">Back</a>
-            }
+            <a href="@backLinkUrl" class="govuk-back-link isFloatRight">Back</a>
         </div>
     </div>
 </div>
@@ -39,6 +57,18 @@
     <div class="govuk-grid-column-three-quarters">
         <div id="@($"gridContainer_{Model.GridConfig.GridId}")">
             @await Html.PartialAsync("_DataGrid", Model.GridConfig)
+        </div>
+        <div class="govuk-!-margin-top-2 sup_border" style="padding: 10px; background-color: #f3f2f1;">
+            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+                <span class="govuk-label govuk-!-font-weight-bold">Total Planned Hours:</span>
+                <input type="text"
+                       id="total-planned-hours"
+                       class="govuk-input text-AlignRight"
+                       style="width: 150px; text-align: right;"
+                       value="@Model.PlannedAdminZT"
+                       readonly
+                       aria-label="Total Planned Hours" />
+            </div>
         </div>
     </div>
 

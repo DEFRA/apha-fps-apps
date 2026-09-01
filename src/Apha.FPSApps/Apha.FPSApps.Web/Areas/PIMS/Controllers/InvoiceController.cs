@@ -156,12 +156,13 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             string? project = null,
             string? contract = null,
             int? year = null,
-            string? program = null)
+            string? program = null,
+            string? search = null)
         {
             year = NormalizeYear(year);
 
             ApiResponseDto<RadTrackInvoiceTotalsDto> result =
-                await _invoiceService.GetTotalsAsync(project, contract, year, program);
+                await _invoiceService.GetTotalsAsync(project, contract, year, program, search);
 
             if (!result.Success || result.Data == null)
             {

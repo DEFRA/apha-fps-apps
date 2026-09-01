@@ -116,7 +116,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 serviceFilterDict["ExportQueryType"] = selectedQuery;
                 queryParameters.Filter = JsonConvert.SerializeObject(serviceFilterDict);
 
-                bool shouldApplyContractFilter = string.Equals(selectedQuery, "contractMonitoring", StringComparison.OrdinalIgnoreCase);
+                bool shouldApplyContractFilter = string.Equals(selectedQuery, "contractMonitoring", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(selectedQuery, "allContract", StringComparison.OrdinalIgnoreCase);
                 string contractFilter = shouldApplyContractFilter && !string.IsNullOrWhiteSpace(contract)
                     ? contract
                     : "*";
@@ -234,26 +235,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         {
             List<DataGridColumn> columns = GridDataProvider.GetColumnsDefination<QueryResultItem>();
 
-            DataGridColumn? yearColumn = columns.FirstOrDefault(c => c.PropertyName == nameof(QueryResultItem.Year));
-            DataGridColumn? projectColumn = columns.FirstOrDefault(c => c.PropertyName == nameof(QueryResultItem.Project));
-            DataGridColumn? parentProjectColumn = columns.FirstOrDefault(c => c.PropertyName == nameof(QueryResultItem.ParentProject));
-
-            if (yearColumn != null)
-                yearColumn.IsVisible = false;
-
-            if (projectColumn != null)
-                projectColumn.IsVisible = false;
-
-            if (parentProjectColumn != null)
-            {
-                parentProjectColumn.IsVisible = true;
-                parentProjectColumn.DisplayName = "Project";
-            }
-
             string[] filterableColumns =
             [
                 nameof(QueryResultItem.Program),
-                nameof(QueryResultItem.Project),
                 nameof(QueryResultItem.ParentProject),
                 nameof(QueryResultItem.ProjectTitle),
                 nameof(QueryResultItem.Manager),

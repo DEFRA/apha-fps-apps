@@ -94,8 +94,8 @@ namespace Apha.FPS.Application.Services
 
             var existing = await _staffJobRepository.GetByIdAsync(staffJob.StaffId, staffJob.JobCode);
             if (existing != null)
-                throw new InvalidOperationException($"A staff job entry for staff '" +
-                    $"{staffJob.StaffId}' and job code '{staffJob.JobCode}' already exists.");
+                throw new InvalidOperationException($"Record already exist for ZT Code "+
+                    $"'{staffJob.JobCode}'. Please update the existing record.");
 
             var mapStaffJob = _mapper.Map<StaffJob>(staffJob);
             var staffWorkgroup = await _staffJobRepository.AddAsync(mapStaffJob);
@@ -105,7 +105,6 @@ namespace Apha.FPS.Application.Services
         public async Task<StaffJobDto> UpdateAsync(StaffJobDto staffJob)
         {
             ArgumentNullException.ThrowIfNull(staffJob);
-            ArgumentOutOfRangeException.ThrowIfNegative(staffJob.PlannedHours);
 
             // If the JobCode has changed (user selected a different ZT code), we need to
             // delete the old record and create a new one because JobCode is part of the composite primary key.
