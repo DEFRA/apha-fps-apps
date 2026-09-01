@@ -33,9 +33,9 @@ namespace Apha.PIMS.Api.Controllers
         }
 
         [HttpGet("totals")]
-        public async Task<IActionResult> GetTotals([FromQuery] RadTrackInvoiceFilter? filter)
+        public async Task<IActionResult> GetTotals([FromQuery] RadTrackInvoiceFilter? filter, [FromQuery] string? search = null)
         {
-            RadTrackInvoiceTotalsDto result = await _service.GetTotalsAsync(filter);
+            RadTrackInvoiceTotalsDto result = await _service.GetTotalsAsync(filter, search);
             return Ok(result);
         }
 

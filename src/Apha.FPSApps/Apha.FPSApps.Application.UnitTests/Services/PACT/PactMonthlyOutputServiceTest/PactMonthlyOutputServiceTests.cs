@@ -26,6 +26,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServ
         private readonly IS3StorageService _s3StorageService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
+        private readonly IMonthlyImportServiceDependencies _monthlyImportServiceDependencies;
         private readonly ILogger<PactMonthlyOutputService> _logger;
         private readonly PactMonthlyOutputService _service;
 
@@ -39,17 +40,20 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServ
             _s3StorageService = Substitute.For<IS3StorageService>();
             _httpContextAccessor = Substitute.For<IHttpContextAccessor>();
             _configuration = Substitute.For<IConfiguration>();
+            _monthlyImportServiceDependencies = Substitute.For<IMonthlyImportServiceDependencies>();
             _logger = Substitute.For<ILogger<PactMonthlyOutputService>>();
+
+            _monthlyImportServiceDependencies.ExcelImportService.Returns(_excelImportService);
+            _monthlyImportServiceDependencies.WorkGroupService.Returns(_workGroupService);
+            _monthlyImportServiceDependencies.MonthService.Returns(_monthService);
+            _monthlyImportServiceDependencies.S3StorageService.Returns(_s3StorageService);
+            _monthlyImportServiceDependencies.HttpContextAccessor.Returns(_httpContextAccessor);
+            _monthlyImportServiceDependencies.Configuration.Returns(_configuration);
 
             _pactClient.PactMonthlyOutput.Returns(_pactMonthlyOutputApiClient);
             _service = new PactMonthlyOutputService(
                 _pactClient,
-                _excelImportService,
-                _workGroupService,
-                _monthService,
-                _s3StorageService,
-                _httpContextAccessor,
-                _configuration,
+                _monthlyImportServiceDependencies,
                 _logger);
         }
 

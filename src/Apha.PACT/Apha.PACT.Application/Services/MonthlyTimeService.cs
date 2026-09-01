@@ -386,7 +386,8 @@ namespace Apha.PACT.Application.Services
             List<string> failures)
         {
             var matchBySpNumber = staffByWorkGroup
-                .Where(x => x.WorkGroup == workGroup && x.SpNumber == staffId)
+                .Where(x => string.Equals(x.WorkGroup, workGroup, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(x.SpNumber, staffId, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             ProcessStaffMatches(matchBySpNumber, staffId, workGroup, record, failures);
@@ -401,9 +402,9 @@ namespace Apha.PACT.Application.Services
             List<string> failures)
         {
             var matchByName = staffByWorkGroup
-                .Where(x => x.WorkGroup == workGroup &&
-                ((!string.IsNullOrWhiteSpace(staffId) && x.Name == staffId) ||
-                (!string.IsNullOrWhiteSpace(name) && x.Name == name)))
+                .Where(x => string.Equals(x.WorkGroup, workGroup, StringComparison.OrdinalIgnoreCase) &&
+                ((!string.IsNullOrWhiteSpace(staffId) && string.Equals(x.Name, staffId, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(name) && string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase))))
                 .ToList();
 
             ProcessStaffMatches(matchByName, staffId, workGroup, record, failures);
@@ -458,7 +459,8 @@ namespace Apha.PACT.Application.Services
             }
 
             var validTimeCodes = timeCodeRows
-                .Where(x => x.WorkGroup == workGroup && x.TimeCode == timeCode)
+                .Where(x => string.Equals(x.WorkGroup, workGroup, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(x.TimeCode, timeCode, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             if (validTimeCodes.Count == 0)
@@ -482,7 +484,9 @@ namespace Apha.PACT.Application.Services
             {
                 failures.Add("The Project is blank.");
             }
-            else if (!timeCodeRows.Any(x => x.WorkGroup == workGroup && x.TimeCode == timeCode && x.ParentProject == parentProject))
+            else if (!timeCodeRows.Any(x => string.Equals(x.WorkGroup, workGroup, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(x.TimeCode, timeCode, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(x.ParentProject, parentProject, StringComparison.OrdinalIgnoreCase)))
             {
                 failures.Add($"Not valid timecode/Project/WG combination: {timeCode}, {parentProject}, {workGroup}");
             }

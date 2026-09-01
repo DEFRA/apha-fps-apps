@@ -567,5 +567,91 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffResourceControllerTest
         }
 
         #endregion
+
+        // ─── LoadStaffTotals ──────────────────────────────────────────────────────────
+
+        #region LoadStaffTotals
+
+        [Fact]
+        public async Task LoadStaffTotals_WithNoWorkgroup_ReturnsEmptyTotals()
+        {
+            // Act
+            var result = await _controller.LoadStaffTotals(null);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var totals = Assert.IsType<StaffResourceTotals>(jsonResult.Value);
+            Assert.Equal(0, totals.TotalH);
+            Assert.Equal(0, totals.Avail);
+            Assert.Null(totals.TotalUtil);
+            await _staffJobService.DidNotReceive()
+                .GetStaffResourceUtilisationAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task LoadStaffTotals_RequestsFullDataset_IgnoringPagingAndFilter()
+        {
+            // Arrange
+            SetupUtilisationSuccess(DefaultWorkgroup);
+
+            // Act
+            await _controller.LoadStaffTotals(DefaultWorkgroup);
+
+            // Assert — totals must be computed from the complete dataset, so the
+            // service is called with no filter and an unbounded page size.
+            await _staffJobService.Received(1).GetStaffResourceUtilisationAsync(
+                Arg.Is<QueryParameters<string>>(q =>
+                    q.Filter == null &&
+                    q.Page == 1 &&
+                    q.PageSize == int.MaxValue &&
+                    q.SortBy == null),
+                DefaultWorkgroup);
+        }
+
+        [Fact]
+        public async Task LoadStaffTotals_WithData_ComputesSumsAndAverages()
+        {
+            // Arrange
+            SetupUtilisationSuccess(DefaultWorkgroup);
+
+            // Act
+            var result = await _controller.LoadStaffTotals(DefaultWorkgroup);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var totals = Assert.IsType<StaffResourceTotals>(jsonResult.Value);
+
+            // HrsAvail: 37.5 + 30.0 = 67.5
+            Assert.Equal(67.5, totals.TotalH);
+            // AvailSoct: 37.5 + 30.0 = 67.5
+            Assert.Equal(67.5, totals.Avail);
+            // ApprovedSoct: 20.0 + 15.0 = 35.0
+            Assert.Equal(35.0, totals.ApprovedPlan);
+            // NotApprovedSoct: 5.0 + 3.0 = 8.0
+            Assert.Equal(8.0, totals.NotApprovedPlan);
+            // TotalPlan: 35.0 + 8.0 = 43.0
+            Assert.Equal(43.0, totals.TotalPlan);
+            // TotalUtil average: (66.67 + 60.00) / 2 = 63.34 (rounded)
+            Assert.Equal(63.34, totals.TotalUtil);
+        }
+
+        [Fact]
+        public async Task LoadStaffTotals_WithNoData_ReturnsEmptyTotals()
+        {
+            // Arrange
+            _staffJobService.GetStaffResourceUtilisationAsync(Arg.Any<QueryParameters<string>>(), DefaultWorkgroup)
+                .Returns(ApiResponseDto<List<StaffResourceUtilisationDto>>.SuccessResponse(new List<StaffResourceUtilisationDto>()));
+
+            // Act
+            var result = await _controller.LoadStaffTotals(DefaultWorkgroup);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var totals = Assert.IsType<StaffResourceTotals>(jsonResult.Value);
+            Assert.Equal(0, totals.TotalH);
+            Assert.Null(totals.TotalUtil);
+        }
+
+        #endregion
     }
 }

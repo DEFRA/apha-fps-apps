@@ -1,46 +1,17 @@
 @using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.FPS.Models.WgStaffPlanViewModel
 @{
-    ViewData["Title"] = "Workgroup Staff Plan";
+    ViewData["Title"] = "Staff/Project Pivot Table";
 }
 
 <main class="govuk-main-wrapper govuk-!-padding-top-0" id="main-content" role="main">
     <div class="container-fluid">
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-                @* <div class="ssr-heading-row">
-                    <h1 class="govuk-heading-s sup_border-bottom ssr-main-title">
-                        Workgroup Staff Plan
-                    </h1>
-                    <div class="ssr-heading-controls">
-                        <label for="resourceCentreDropdown" class="govuk-label govuk-!-font-weight-bold">Select a Resource Centre: </label>
-                        <select class="govuk-select ssr-resource-select"
-                                id="resourceCentreDropdown"
-                                aria-label="Select a Resource Centre"
-                                asp-for="SelectedResourceCentre"
-                                asp-items="Model.ResourceCentreList"
-                                onchange="onResourceCentreChange()">
-                            <option value="">-- Select a Resource Centre --</option>
-                        </select>
-                    </div>
-                    <div class="govuk-form-group ssr-wg-input-group">
-                        <label for="workGroupDropdown" class="govuk-label govuk-!-font-weight-bold">Select a Work Group: </label>
-                        <select class="govuk-select ssr-resource-select"
-                                id="workGroupDropdown"
-                                aria-label="Select a Work Group"
-                                asp-for="SelectedWorkGroup"
-                                asp-items="Model.WorkGroupList"
-                                onchange="onWorkGroupChange()"
-                                data-disabled="@(string.IsNullOrEmpty(Model.SelectedResourceCentre) ? "true" : "false")">
-                            <option value="">-- Select Work Group --</option>
-                        </select>
-                    </div>
-                </div> *@
-
                 <div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-2">
                     <div class="govuk-grid-column-one-half isFloatLeft">
                         <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 govuk-!-margin-left-0 isCustomPageHeadings">
-                            Workgroup Staff Plan
+                            Staff/Project Pivot Table
                         </h1>
                     </div>
                     <div class="govuk-grid-column-one-half isFloatRight isWorkgroupStaffPlan">
@@ -48,7 +19,7 @@
                             <tbody class="govuk-table__body">
                                 <tr class="govuk-table__row">
                                     <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
-                                        <label for="resourceCentreDropdown" class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-0 govuk-!-font-weight-bold isNoWrap">Select a Resource Centre: </label>
+                                        <label for="resourceCentreDropdown" class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-0 govuk-!-font-weight-bold isNoWrap govuk-!-padding-right-1">Select a Resource Centre: </label>
                                     </th>
                                     <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
                                         <select class="govuk-select"
@@ -126,17 +97,17 @@
             wgDropdown.innerHTML = '<option value="">-- Select Work Group --</option>';
             wgDropdown.disabled = true;
 
+            clearWgStaffPlanGrid();
+
             window.sideNavState.resourceCentre = resourceCentre;
             window.sideNavState.workGroup = '';
             sideNavUpdateLinks();
 
             if (!resourceCentre) return;
 
-            showLoader();
             $.get('@Url.Action("GetWorkGroupsByResourceCentre", "WgStaffPlan", new { area = "FPS" })',
                 { resourceCentre: resourceCentre },
                 function (response) {
-                    hideLoader();
                     if (response && response.success) {
                         (response.data || []).forEach(function (wg) {
                             var opt = document.createElement('option');
@@ -150,7 +121,6 @@
                     }
                 }
             ).fail(function () {
-                hideLoader();
                 showAlertMessage('Could not load work groups. Please try selecting the Resource Centre again.', AlertType.WARNING);
             });
         }
@@ -167,6 +137,21 @@
             fpsNavigateTo('@Url.Action("Index", "WgStaffPlan", new { area = "FPS" })?resourceCentre='
                 + encodeURIComponent(resourceCentre)
                 + '&workGroup=' + encodeURIComponent(workGroup));
+        }
+
+        // Clear all data rows from the pivot grid, leaving a "No records" placeholder.
+        function clearWgStaffPlanGrid() {
+            var table = document.getElementById('tbl_wgStaffPlanGrid');
+            if (!table) return;
+
+            var tbody = table.querySelector('tbody');
+            if (!tbody) return;
+
+            var colCount = table.querySelectorAll('thead tr:last-child th').length || 100;
+            tbody.innerHTML =
+                '<tr><td colspan="' + colCount + '" class="govuk-table__cell" ' +
+                'style="text-align:center; color:#505a5f; font-style:italic; padding:16px;">' +
+                'No records found.</td></tr>';
         }
 
         function getWgStaffPlanExtraFilters() {

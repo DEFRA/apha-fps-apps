@@ -20,9 +20,8 @@
                 <div class="row" style="display:flex; align-items: center;">
                     <div class="col-sm-12" style="padding:0px;">
                         <div class="sup_border-bottom" style="min-height:42px;">
-                            <h1 style="padding: 0 17px; height:42px; font-size:16px; font-weight: 700; margin: 0; display:flex; align-items:center; justify-content:space-between;">
+                            <h1 class="govuk-heading-s isCustomPageHeadings sup_margin_bottom_0 sup_project_addedit_heading">
                                 <span>@fpsYearCode : @(isEditMode ? $"Edit Project - {Model.ParentProject}" : "Set Up New Project")</span>
-                                <a href="@(Context.Request.Query.ContainsKey("returnUrl") ? Context.Request.Query["returnUrl"].ToString() : "javascript:history.back()")" class="govuk-back-link sup_align_right sup_back_link_center_right">Back</a>
                             </h1>
                         </div>
                     </div>
@@ -53,12 +52,12 @@
                         }
 
                         <div class="row d-flex align-items-center mt-2 mb-2">
-                            <div class="col-lg-6">
-                                <h2 class="sup_text_color govuk-heading-s sup_align_flexheading">
+                            <div class="govuk-grid-column-one-half">
+                                <h2 class="sup_text_color govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 isInnerHeading">
                                     Please insert data for mandatory fields marked with *
                                 </h2>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="govuk-grid-column-one-half">
                                 <div class="action-buttons">
                                     @if (isEditMode)
                                     {

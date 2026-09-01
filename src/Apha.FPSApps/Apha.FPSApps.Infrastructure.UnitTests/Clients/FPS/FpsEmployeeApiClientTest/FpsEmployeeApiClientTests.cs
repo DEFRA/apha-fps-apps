@@ -125,6 +125,98 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
 
         #endregion
 
+        #region GetStaffNameLookupAsync Tests
+
+        [Fact]
+        public async Task GetStaffNameLookupAsync_WithSuccessResponse_ReturnsMappedStaffLookupList()
+        {
+            // Arrange
+            var employeeResList = new List<EmployeeRes>
+            {
+                new EmployeeRes { SPNumber = "000001", FirstName = "John", LastName = "Doe" },
+                new EmployeeRes { SPNumber = "000002", FirstName = "Jane", LastName = "Smith" }
+            };
+            var apiResponse = new ApiResponse<List<EmployeeRes>>
+            {
+                Success = true,
+                Data = employeeResList
+            };
+            var mappedDto = ApiResponseDto<List<EmployeeDto>>.SuccessResponse(
+                new List<EmployeeDto>
+                {
+                    new EmployeeDto { SPNumber = "000001", FirstName = "John", LastName = "Doe" },
+                    new EmployeeDto { SPNumber = "000002", FirstName = "Jane", LastName = "Smith" }
+                });
+
+            _httpExecutor.GetAsync<List<EmployeeRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<EmployeeDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetStaffNameLookupAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            Assert.Equal("000001", result.Data![0].SpNumber);
+            Assert.Equal("Doe John", result.Data[0].Name);
+            await _httpExecutor.Received(1).GetAsync<List<EmployeeRes>>(Arg.Is<string>(url => url.Contains("stafflookup")));
+        }
+
+        [Fact]
+        public async Task GetStaffNameLookupAsync_WithEmptyData_ReturnsEmptyList()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<List<EmployeeRes>>
+            {
+                Success = true,
+                Data = new List<EmployeeRes>()
+            };
+            var mappedDto = ApiResponseDto<List<EmployeeDto>>.SuccessResponse(new List<EmployeeDto>());
+
+            _httpExecutor.GetAsync<List<EmployeeRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<EmployeeDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetStaffNameLookupAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetStaffNameLookupAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError> { new ApiError { Message = "API Error", Code = "ERROR" } };
+            var apiResponse = new ApiResponse<List<EmployeeRes>>
+            {
+                Success = false,
+                Errors = errors
+            };
+            var mappedResponse = new ApiResponseDto<List<StaffLookupDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _httpExecutor.GetAsync<List<EmployeeRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<StaffLookupDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetStaffNameLookupAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
         #region GetEmployeeIdAsync Tests
 
         [Fact]

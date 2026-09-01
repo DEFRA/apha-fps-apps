@@ -1,6 +1,7 @@
 ﻿using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Dtos.BulkRates;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
 using AutoMapper;
@@ -192,7 +193,24 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<MonthHourReq, MonthHourDto>().ReverseMap();
             CreateMap<YearEndMonthHourRes, YearEndMonthHourDto>().ReverseMap();
 
-           
+            // Bulk Rates — Application DTO -> Common Res (API response contract). One-directional:
+            // these DTOs are never built from a Res, so a ReverseMap here would just declare an
+            // unused, misleading equivalence. The three mutation Req bodies (Create/Reject/Cancel)
+            // are small enough to unpack directly in the controller instead of mapping through
+            // AutoMapper, matching the YearEndDataSetupReq precedent.
+            CreateMap<BulkRatesQueueEntryDto, BulkRatesQueueEntryRes>();
+            CreateMap<BulkRatesUploadMetadataDto, BulkRatesUploadMetadataRes>();
+            CreateMap<BulkRatesRowCountsDto, BulkRatesRowCountsRes>();
+            CreateMap<BulkRatesQueueLogDto, BulkRatesQueueLogRes>();
+            CreateMap<BulkRatesValidationErrorDto, BulkRatesValidationErrorRes>();
+            CreateMap<BulkRatesFecStagingRowDto, BulkRatesFecStagingRowRes>();
+            CreateMap<BulkRatesAgrupStagingRowDto, BulkRatesAgrupStagingRowRes>();
+            CreateMap<BulkRatesAnimalStagingRowDto, BulkRatesAnimalStagingRowRes>();
+            CreateMap<BulkRatesStaffStagingRowDto, BulkRatesStaffStagingRowRes>();
+            CreateMap<BulkRatesRequestDto, BulkRatesRequestDetailRes>();
+            CreateMap<BulkRatesUploadResultDto, BulkRatesUploadResultRes>();
+            CreateMap<BulkRatesStagingDataDto, BulkRatesStagingDataRes>();
+
             // All property names are identical across Dto and Res; .ReverseMap() covers both directions.
             CreateMap<DepartmentIncomeTimeDto, DepartmentIncomeTimeRes>().ReverseMap();
             CreateMap<DepartmentIncomeTestDto, DepartmentIncomeTestRes>().ReverseMap();

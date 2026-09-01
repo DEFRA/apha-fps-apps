@@ -62,6 +62,17 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Gets a lightweight lookup list of all staff (SP number and name) for populating dropdowns.
+        /// </summary>
+        /// <returns>A list of staff ordered by name.</returns>
+        [HttpGet("stafflookup")]
+        public async Task<IActionResult> GetStaffNameLookupAsync()
+        {
+            var result = await _employeeService.GetStaffNameLookupAsync();
+            return Ok(_mapper.Map<List<EmployeeRes>>(result));
+        }
+
+        /// <summary>
         /// Gets an employee by their SP number.
         /// </summary>
         /// <param name="spNumber">The SP number of the employee.</param>
