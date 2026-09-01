@@ -34,7 +34,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Agency ID")]
         [GridColumn(Width = 100, Type = GridColumnType.Number, IsFilterable = true)]
-        [Required(ErrorMessage = "Agency is required")]
+        [Required(ErrorMessage = "Agency ID is required")]
         public int AgencyId { get; set; }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Division Name")]
         [GridColumn(Width = 250, Type = GridColumnType.Text, IsFilterable = true)]
-        [Required(ErrorMessage = "Division name is required")]
+        [Required(ErrorMessage = "Division Name is required")]
         [StringLength(255, ErrorMessage = "Division name cannot exceed 255 characters")]
         public string DivName { get; set; } = null!;
 
