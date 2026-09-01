@@ -1,0 +1,32 @@
+@*
+    _CancelModal.cshtml — Cancellation modal with optional reason.
+    Toggled by BulkRates.showCancelModal() / BulkRates.closeCancelModal().
+    BulkRates.confirmCancel() POSTs to /FPS/BulkRates/Cancel.
+    Restyled to match the shared govuk-modal-dialog.js informational popup used
+    elsewhere in the app (and already used for Release/Approve on this same
+    page) — backdrop, box, button layout, and isInfo colour band (matches
+    Release/Approve's "Please confirm" styling exactly). Kept as a static
+    partial rather than the shared JS-built dialog because it needs a reason
+    textarea the shared dialog doesn't support.
+*@
+<div id="cancelModalOverlay" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(11,12,12,.6); align-items:center; justify-content:center; padding:20px;"
+     role="dialog" aria-modal="true" aria-labelledby="cancelModalTitle">
+    <div class="govuk-body isInfo" style="background:#fff; max-width:620px; width:100%; max-height:calc(100vh - 40px); overflow-y:auto; padding:30px; box-shadow:0 8px 24px rgba(11,12,12,.3); border:2px solid #0b0c0c;">
+        <h2 class="govuk-heading-m govuk-!-margin-bottom-3" id="cancelModalTitle">Cancel request</h2>
+        <p class="govuk-body govuk-!-margin-bottom-5">You may optionally enter a reason for cancelling this request.</p>
+
+        <div class="govuk-form-group govuk-!-margin-bottom-4" id="cancelReasonGroup">
+            <label class="govuk-label govuk-!-font-weight-bold" for="cancelReason">Cancellation reason (optional)</label>
+            <textarea class="govuk-textarea" id="cancelReason" name="cancelReason" rows="4" maxlength="500"></textarea>
+        </div>
+
+        <div class="govuk-button-group govuk-!-margin-bottom-0" style="display:flex; justify-content:flex-end; width:100%;">
+            <button type="button" class="govuk-button" id="btnConfirmCancel" onclick="BulkRates.confirmCancel()">
+                Confirm Cancellation
+            </button>
+            <button type="button" class="govuk-button govuk-button--secondary" onclick="BulkRates.closeCancelModal()">
+                Keep Request
+            </button>
+        </div>
+    </div>
+</div>

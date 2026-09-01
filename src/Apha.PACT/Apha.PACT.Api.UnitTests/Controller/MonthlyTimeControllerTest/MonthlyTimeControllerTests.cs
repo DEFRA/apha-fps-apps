@@ -218,6 +218,237 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthlyTimeControllerTest
             Assert.Equal(nameof(MonthlyTimeController.GetStagingById), created.ActionName);
         }
 
+        [Fact]
+        public async Task GetLive_ReturnsOkWithMappedResult()
+        {
+            var query = new QueryParameters<string>();
+            var paginatedResult = new PaginatedResult<MonthlyTimeDto>();
+            var mappedResult = new PaginationRes<MonthlyTimeRes>();
+
+            _serviceMock.SearchLiveAsync(query, "WG1", "TC1", "S1", "PP1", 6.0).Returns(paginatedResult);
+            _mapperMock.Map<PaginationRes<MonthlyTimeRes>>(paginatedResult).Returns(mappedResult);
+
+            var result = await _controller.GetLive(query, "WG1", "TC1", "S1", "PP1", 6.0);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetLiveByKey_WhenItemExists_ReturnsOkWithMappedResult()
+        {
+            var dto = new MonthlyTimeDto { PactStaffId = "S1", TimeCode = "TC1", Month = 6, ParentProject = "PP1" };
+            var res = new MonthlyTimeRes { PactStaffId = "S1", TimeCode = "TC1" };
+
+            _serviceMock.GetLiveByKeyAsync("S1", "TC1", 6, "PP1").Returns(dto);
+            _mapperMock.Map<MonthlyTimeRes>(dto).Returns(res);
+
+            var result = await _controller.GetLiveByKey("S1", "TC1", 6, "PP1");
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(res, okResult.Value);
+        }
+
+        [Fact]
+        public async Task UpdateLive_ReturnsOkWithMappedResult()
+        {
+            var request = new MonthlyTimeReq();
+            var dto = new MonthlyTimeDto { PactStaffId = "S1" };
+            var updatedDto = new MonthlyTimeDto { PactStaffId = "S1" };
+            var res = new MonthlyTimeRes { PactStaffId = "S1" };
+
+            _mapperMock.Map<MonthlyTimeDto>(request).Returns(dto);
+            _serviceMock.UpdateLiveAsync(dto).Returns(updatedDto);
+            _mapperMock.Map<MonthlyTimeRes>(updatedDto).Returns(res);
+
+            var result = await _controller.UpdateLive(request);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(res, okResult.Value);
+        }
+
+        [Fact]
+        public async Task DeleteLive_ReturnsOkWithResult()
+        {
+            _serviceMock.DeleteLiveAsync("S1", "TC1", 6, "PP1").Returns(true);
+
+            var result = await _controller.DeleteLive("S1", "TC1", 6, "PP1");
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(true, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetStaging_ReturnsOkWithMappedResult()
+        {
+            var query = new QueryParameters<string>();
+            var paginatedResult = new PaginatedResult<StagingMonthlyTimeDto>();
+            var mappedResult = new PaginationRes<StagingMonthlyTimeRes>();
+
+            _serviceMock.SearchStagingAsync(query, "test-user-id", true).Returns(paginatedResult);
+            _mapperMock.Map<PaginationRes<StagingMonthlyTimeRes>>(paginatedResult).Returns(mappedResult);
+
+            var result = await _controller.GetStaging(query, true);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetStagingById_WhenItemExists_ReturnsOkWithMappedResult()
+        {
+            var dto = new StagingMonthlyTimeDto { Id = 5, PactStaffId = "S1" };
+            var res = new StagingMonthlyTimeRes { Id = 5, PactStaffId = "S1" };
+
+            _serviceMock.GetStagingByIdAsync(5, "test-user-id").Returns(dto);
+            _mapperMock.Map<StagingMonthlyTimeRes>(dto).Returns(res);
+
+            var result = await _controller.GetStagingById(5);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(res, okResult.Value);
+        }
+
+        [Fact]
+        public async Task UpdateStaging_ReturnsOkWithMappedResult()
+        {
+            var request = new StagingMonthlyTimeReq { PactStaffId = "S1" };
+            var dto = new StagingMonthlyTimeDto { PactStaffId = "S1" };
+            var updatedDto = new StagingMonthlyTimeDto { Id = 7, PactStaffId = "S1" };
+            var res = new StagingMonthlyTimeRes { Id = 7, PactStaffId = "S1" };
+
+            _mapperMock.Map<StagingMonthlyTimeDto>(request).Returns(dto);
+            _serviceMock.UpdateStagingAsync(dto, "test-user-id").Returns(updatedDto);
+            _mapperMock.Map<StagingMonthlyTimeRes>(updatedDto).Returns(res);
+
+            var result = await _controller.UpdateStaging(7, request);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(res, okResult.Value);
+            Assert.Equal(7, dto.Id);
+        }
+
+        [Fact]
+        public async Task BulkUpdateStagingNames_ReturnsOkWithMappedResult()
+        {
+            var request = new BulkUpdateStagingMonthlyTimeNamesReq();
+            var dto = new BulkUpdateStagingMonthlyTimeNamesDto { OriginalWorkGroup = "WG1", OriginalPactStaffId = "S1" };
+            var resultDto = new BulkUpdateStagingMonthlyTimeNamesResultDto { UpdatedCount = 3 };
+            var res = new BulkUpdateStagingMonthlyTimeNamesRes();
+
+            _mapperMock.Map<BulkUpdateStagingMonthlyTimeNamesDto>(request).Returns(dto);
+            _serviceMock.BulkUpdateStagingNamesAsync(dto, "test-user-id").Returns(resultDto);
+            _mapperMock.Map<BulkUpdateStagingMonthlyTimeNamesRes>(resultDto).Returns(res);
+
+            var result = await _controller.BulkUpdateStagingNames(request);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(res, okResult.Value);
+        }
+
+        [Fact]
+        public async Task DeleteStaging_ReturnsOkWithResult()
+        {
+            _serviceMock.DeleteStagingAsync(5, "test-user-id").Returns(true);
+
+            var result = await _controller.DeleteStaging(5);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(true, okResult.Value);
+        }
+
+        [Fact]
+        public async Task DeleteAllStagingByUser_WhenDeleted_ReturnsOkTrue()
+        {
+            _serviceMock.DeleteAllStagingByUserAsync("test-user-id").Returns(3);
+
+            var result = await _controller.DeleteAllStagingByUser();
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(true, okResult.Value);
+        }
+
+        [Fact]
+        public async Task DeleteAllStagingByUser_WhenNoneDeleted_ReturnsOkFalse()
+        {
+            _serviceMock.DeleteAllStagingByUserAsync("test-user-id").Returns(0);
+
+            var result = await _controller.DeleteAllStagingByUser();
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(false, okResult.Value);
+        }
+
+        [Fact]
+        public async Task DeleteFailedStagingByUser_WhenDeleted_ReturnsOkTrue()
+        {
+            _serviceMock.DeleteFailedStagingByUserAsync("test-user-id").Returns(2);
+
+            var result = await _controller.DeleteFailedStagingByUser();
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(true, okResult.Value);
+        }
+
+        [Fact]
+        public async Task DeleteFailedStagingByUser_WhenNoneDeleted_ReturnsOkFalse()
+        {
+            _serviceMock.DeleteFailedStagingByUserAsync("test-user-id").Returns(0);
+
+            var result = await _controller.DeleteFailedStagingByUser();
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(false, okResult.Value);
+        }
+
+        [Fact]
+        public async Task ImportStaging_ReturnsOkWithMappedResult()
+        {
+            var request = new MonthlyTimeImportReq();
+            var dto = new MonthlyTimeImportDto();
+            var resultDto = new MonthlyTimeImportResultDto { ImportedCount = 5 };
+            var res = new MonthlyTimeImportRes();
+
+            _mapperMock.Map<MonthlyTimeImportDto>(request).Returns(dto);
+            _serviceMock.ImportStagingAsync(dto, "test-user-id").Returns(resultDto);
+            _mapperMock.Map<MonthlyTimeImportRes>(resultDto).Returns(res);
+
+            var result = await _controller.ImportStaging(request);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(res, okResult.Value);
+        }
+
+        [Fact]
+        public async Task ValidateStaging_ReturnsOkWithMappedResult()
+        {
+            var resultDto = new MonthlyTimeValidateResultDto { PassedCount = 3, FailedCount = 1 };
+            var res = new MonthlyTimeValidateRes();
+
+            _serviceMock.ValidateStagingAsync("test-user-id").Returns(resultDto);
+            _mapperMock.Map<MonthlyTimeValidateRes>(resultDto).Returns(res);
+
+            var result = await _controller.ValidateStaging();
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(res, okResult.Value);
+        }
+
+        [Fact]
+        public async Task MakeLive_ReturnsOkWithMappedResult()
+        {
+            var resultDto = new MonthlyTimeMakeLiveResultDto { ProcessedCount = 5, ImportedCount = 5 };
+            var res = new MonthlyTimeMakeLiveRes();
+
+            _serviceMock.MakeLiveAsync("test-user-id").Returns(resultDto);
+            _mapperMock.Map<MonthlyTimeMakeLiveRes>(resultDto).Returns(res);
+
+            var result = await _controller.MakeLive();
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(res, okResult.Value);
+        }
+
         #endregion
     }
 }

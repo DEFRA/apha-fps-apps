@@ -26,7 +26,7 @@
                     <div>
                         <form asp-action="Index" asp-controller="BudgetResourceLevel" asp-area="FPS" method="get" class="sup_flex_align_center">
                             <input type="hidden" name="year" value="@FpsYearContext.Year" />
-                            <label class="govuk-label sup_visually_hidden" for="profitCentreSelect">Resource Centre</label>
+                            <label class="govuk-label pva-nowrap-label govuk-!-padding-right-1" for="profitCentreSelect">Resource Centre:</label>
                             <select id="profitCentreSelect"
                                     name="profitCentre"
                                     asp-items="Model.ProfitCentreList"

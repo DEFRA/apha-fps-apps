@@ -79,6 +79,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 "gradecode"     => ApplyOrder(query, x => x.GradeCode,     descending),
                 "plannedhours"  => ApplyOrder(query, x => x.PlannedHours,  descending),
                 "cost"          => ApplyOrder(query, x => x.Cost,          descending),
+                "chargerate" => ApplyOrder(query, x => x.ChargeRate,    descending),
                 _               => query.OrderBy(x => x.ProfitCentre).ThenBy(x => x.WorkGroup).ThenBy(x => x.Program)
             };
         }
