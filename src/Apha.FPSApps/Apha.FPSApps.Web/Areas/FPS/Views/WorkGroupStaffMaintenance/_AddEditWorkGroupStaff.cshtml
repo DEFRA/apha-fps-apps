@@ -230,6 +230,7 @@
                        step="0.01"
                        required
                        value="@(isEditMode ? Model?.HrsAvail.ToString() : "0")" />
+            <span asp-validation-for="HrsAvail" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
 
