@@ -3,7 +3,9 @@
     padding: 0;
     box-sizing: border-box;
 }
-
+body{
+    padding-bottom: 10vh;
+}
 .main-content {
 
     margin: 0 auto;
@@ -5722,4 +5724,7 @@ input.govuk-input.ssr-total-input[readonly] {
             text-align: center !important;
         }
     }
+}
+.isInnerHeading {
+    font-size: 17px !important;
 }
