@@ -43,7 +43,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "Division Name")]
         [GridColumn(Width = 250, Type = GridColumnType.Text, IsFilterable = true)]
         [Required(ErrorMessage = "Division Name is required")]
-        [StringLength(255, ErrorMessage = "Division name cannot exceed 255 characters")]
+        [StringLength(255, ErrorMessage = "Division Name cannot exceed 255 characters")]
         public string DivName { get; set; } = null!;
 
         /// <summary>
