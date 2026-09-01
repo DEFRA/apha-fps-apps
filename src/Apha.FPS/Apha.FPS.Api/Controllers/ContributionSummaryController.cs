@@ -35,11 +35,13 @@ namespace Apha.FPS.Api.Controllers
         [HttpGet("{sellingPc}/rows")]
         public async Task<IActionResult> GetRowsAsync(
             string sellingPc,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] bool descending = false)
         {
             ValidateSellingPc(sellingPc);
 
-            var result = await _service.GetRowsAsync(sellingPc, cancellationToken);
+            var result = await _service.GetRowsAsync(sellingPc, sortBy, descending, cancellationToken);
             return Ok(_mapper.Map<List<ContributionSummaryRowRes>>(result));
         }
 

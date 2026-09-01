@@ -9,8 +9,13 @@ namespace Apha.Common.Helpers.Repository
     /// Provides test infrastructure for mocking IQueryable and IAsyncEnumerable
     /// to enable Entity Framework Core DbSet mocking without database dependencies.
     /// </summary>
-    /// <typeparam name="T">The entity type.</typeparam>
-    public class TestAsyncEnumerable<T> : IOrderedQueryable<T>, IAsyncEnumerable<T> where T : class
+    /// <remarks>
+    /// No <c>class</c> constraint is applied because LINQ projections inside repositories
+    /// can produce value or nullable element types (for example <c>decimal?</c>), and the
+    /// query provider re-creates this type for every intermediate projection.
+    /// </remarks>
+    /// <typeparam name="T">The element type.</typeparam>
+    public class TestAsyncEnumerable<T> : IOrderedQueryable<T>, IAsyncEnumerable<T>
     {
         private readonly IQueryable<T> _inner;
 
@@ -44,33 +49,39 @@ namespace Apha.Common.Helpers.Repository
         public Expression Expression => _inner.Expression;
 
         public IQueryProvider Provider => new TestAsyncQueryProvider<T>(_inner.Provider);
+    }
 
+    /// <summary>
+    /// DbSet mocking helpers for <see cref="TestAsyncEnumerable{T}"/>.
+    /// </summary>
+    public static class TestAsyncEnumerableExtensions
+    {
         /// <summary>
-        /// Creates a mocked DbSet from the current test data.
+        /// Creates a mocked DbSet from the supplied test data.
         /// </summary>
-        public Mock<DbSet<T>> AsDbSetMock()
+        public static Mock<DbSet<T>> AsDbSetMock<T>(this TestAsyncEnumerable<T> source) where T : class
         {
             var mockSet = new Mock<DbSet<T>>();
 
             mockSet.As<IQueryable<T>>()
                 .Setup(m => m.Provider)
-                .Returns(Provider);
+                .Returns(source.Provider);
 
             mockSet.As<IQueryable<T>>()
                 .Setup(m => m.Expression)
-                .Returns(Expression);
+                .Returns(source.Expression);
 
             mockSet.As<IQueryable<T>>()
                 .Setup(m => m.ElementType)
-                .Returns(ElementType);
+                .Returns(source.ElementType);
 
             mockSet.As<IQueryable<T>>()
                 .Setup(m => m.GetEnumerator())
-                .Returns(GetEnumerator());
+                .Returns(source.GetEnumerator());
 
             mockSet.As<IAsyncEnumerable<T>>()
                 .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
-                .Returns(GetAsyncEnumerator());
+                .Returns(source.GetAsyncEnumerator());
 
             return mockSet;
         }

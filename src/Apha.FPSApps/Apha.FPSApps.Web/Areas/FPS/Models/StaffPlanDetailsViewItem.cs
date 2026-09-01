@@ -4,7 +4,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
     public class StaffPlanDetailsViewItem
     {
-        [GridColumn(Order = 1, Width = 100, Type = GridColumnType.ReadOnly, IsFilterable = true)]
+        [GridColumn(Order = 1, Width = 100, Type = GridColumnType.ReadOnly, IsFilterable = false)]
         public string? ProfitCentre { get; set; }
 
         [GridColumn(Order = 2, Width = 90, Type = GridColumnType.ReadOnly, IsFilterable = true)]

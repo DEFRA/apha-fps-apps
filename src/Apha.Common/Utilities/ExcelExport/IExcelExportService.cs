@@ -4,7 +4,8 @@ namespace Apha.Common.Utilities.ExcelExport
     {
         byte[] ExportToExcel<T>(
             IEnumerable<T> data,
-            string sheetName = "Sheet1");
+            string sheetName = "Sheet1",
+            Dictionary<string, string>? columnFormats = null);
 
         byte[] BuildTimeSheetExcel(
             string WorkGroupName,
@@ -18,6 +19,14 @@ namespace Apha.Common.Utilities.ExcelExport
             IEnumerable<WorkGroupOutputSheetRow> rows);        
 
         byte[] ExportToExcelMultiSheet(IEnumerable<ExcelSheetDefinition> sheets);
+
+        /// <summary>
+        /// Same as <see cref="ExportToExcelMultiSheet(IEnumerable{ExcelSheetDefinition})"/>, plus a
+        /// key/value block written to a VeryHidden worksheet — not a normal data cell a user could
+        /// edit or discover via Excel's own "Unhide Sheet" dialog (the
+        /// bulk-rates download_version protected-metadata carrier).
+        /// </summary>
+        byte[] ExportToExcelMultiSheet(IEnumerable<ExcelSheetDefinition> sheets, IReadOnlyDictionary<string, string> protectedMetadata);
 
         byte[] BuildBudgetBidsCrosstabExcel(
             IEnumerable<string> accounts,

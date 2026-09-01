@@ -386,6 +386,15 @@
     line-height: 1.4;
 }
 
+/* Cells must stay table cells so they keep their borders and row alignment.
+   The wrapping/sizing is handled by the inner span instead. */
+th.grid-column-wrap,
+td.grid-column-wrap {
+    display: table-cell;
+    width: auto;
+    max-width: 260px;
+}
+
 /* Allow the wrapping cell to grow in height so the full description is visible */
 td.grid-column-wrap,
 td .grid-column-wrap {

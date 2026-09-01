@@ -117,6 +117,49 @@ $(function () {
         saveProfitCentreSettings();
     });
 
+    // ── Inline save on SendEmail Yes / No checkbox click in grid ─────────────
+    // The inner checkbox div has pointer-events:none so clicks bubble to the <td>.
+    // We apply an optimistic visual update first, then revert on AJAX error.
+    $(document).on('click', '#gridContainer_workGroupGrid td.checkbox-cell[data-property="SendEmailYes"], #gridContainer_workGroupGrid td.checkbox-cell[data-property="SendEmailNo"]', function () {
+        if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) { return; }
+
+        var $td        = $(this);
+        var $row       = $td.closest('tr');
+        var $chkYes    = $row.find('td[data-property="SendEmailYes"] input[type="checkbox"]');
+        var $chkNo     = $row.find('td[data-property="SendEmailNo"]  input[type="checkbox"]');
+        var wgName     = $row.find('td[data-property="WorkGroupName"] span').text().trim();
+        var recipient  = $row.find('td[data-property="EmailRecipient"] span').text().trim();
+        var sendEmail  = $td.data('property') === 'SendEmailYes' ? 1 : 0;
+
+        // Capture previous state so we can revert on error
+        var prevYes = $chkYes.prop('checked');
+        var prevNo  = $chkNo.prop('checked');
+
+        // Optimistic update — give immediate visual feedback
+        $chkYes.prop('checked', sendEmail === 1);
+        $chkNo.prop('checked',  sendEmail === 0);
+
+        $.ajax({
+            url: '/PACT/WorkGroupReport/UpdateWorkGroupEmail',
+            type: 'POST',
+            data: { workGroupName: wgName, sendEmail: sendEmail, emailRecipient: recipient },
+            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').first().val() },
+            error: function () {
+                // Revert to previous state on failure
+                $chkYes.prop('checked', prevYes);
+                $chkNo.prop('checked',  prevNo);
+                showAlertMessage('Failed to save changes. Please try again.', AlertType.ERROR);
+            }
+        });
+    });
+
+    // Make the SendEmail checkbox cells look interactive
+    $(document).on('mouseenter', '#gridContainer_workGroupGrid td.checkbox-cell[data-property="SendEmailYes"], #gridContainer_workGroupGrid td.checkbox-cell[data-property="SendEmailNo"]', function () {
+        if (typeof isFPSYearClosed === 'undefined' || !isFPSYearClosed) {
+            $(this).css('cursor', 'pointer');
+        }
+    });
+
     // ── Select PC's Work Groups ───────────────────────────────────────────────
     $('#btn-select-pc').on('click', function () {
         var pc = $('#SelectedProfitCentre').val();

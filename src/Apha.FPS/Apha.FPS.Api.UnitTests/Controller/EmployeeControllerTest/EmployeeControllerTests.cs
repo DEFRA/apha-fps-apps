@@ -150,6 +150,73 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
 
         #endregion
 
+        #region GetStaffNameLookupAsync
+
+        [Fact]
+        public async Task GetStaffNameLookupAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var serviceResult = new List<EmployeeDto>
+            {
+                new EmployeeDto { SPNumber = "SP001", FirstName = "John", LastName = "Smith" }
+            };
+            var mappedResult = new List<EmployeeRes>
+            {
+                new EmployeeRes { SPNumber = "SP001", FirstName = "John", LastName = "Smith" }
+            };
+
+            _serviceMock.GetStaffNameLookupAsync().Returns(serviceResult);
+            _mapperMock.Map<List<EmployeeRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetStaffNameLookupAsync();
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, ((OkObjectResult)result).Value);
+        }
+
+        [Fact]
+        public async Task GetStaffNameLookupAsync_EdgeCase_EmptyList()
+        {
+            // Arrange
+            var serviceResult = new List<EmployeeDto>();
+            var mappedResult = new List<EmployeeRes>();
+
+            _serviceMock.GetStaffNameLookupAsync().Returns(serviceResult);
+            _mapperMock.Map<List<EmployeeRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetStaffNameLookupAsync();
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task GetStaffNameLookupAsync_Error_ServiceThrows()
+        {
+            // Arrange
+            _serviceMock.GetStaffNameLookupAsync().Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetStaffNameLookupAsync());
+        }
+
+        [Fact]
+        public async Task GetStaffNameLookupAsync_Error_MapperThrows()
+        {
+            // Arrange
+            var serviceResult = new List<EmployeeDto>();
+            _serviceMock.GetStaffNameLookupAsync().Returns(serviceResult);
+            _mapperMock.Map<List<EmployeeRes>>(serviceResult).Throws(new Exception("Mapping error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetStaffNameLookupAsync());
+        }
+
+        #endregion
+
         #region GetEmployeeByIdAsync
 
         [Fact]
