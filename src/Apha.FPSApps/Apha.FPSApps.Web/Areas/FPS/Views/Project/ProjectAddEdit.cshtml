@@ -16,11 +16,16 @@
     <div class="container-fluid">
         <!-- Title section -->
         <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full sup_border-bottom govuk-grid-column-full sup_border-bottom isAddEditProjectPage govuk-!-padding-top-3 govuk-!-padding-bottom-2 isClearFix isAddEditProjectPage">
-                <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-0 govuk-!-margin-left-0 isCustomPageHeadings isFloatLeft">
-                    <span>@fpsYearCode : @(isEditMode ? $"Edit Project - {Model.ParentProject}" : "Set Up New Project")</span>
-                </h1>
-                <a href="@(Context.Request.Query.ContainsKey("returnUrl") ? Context.Request.Query["returnUrl"].ToString() : "javascript:history.back()")" class="govuk-back-link sup_align_right sup_back_link_center_right govuk-!-margin-right-6 isFloatRight">Back</a>
+            <div class="govuk-grid-column-full">
+                <div class="row" style="display:flex; align-items: center;">
+                    <div class="col-sm-12" style="padding:0px;">
+                        <div class="sup_border-bottom" style="min-height:42px;">
+                            <h1 class="govuk-heading-s isCustomPageHeadings sup_margin_bottom_0 sup_project_addedit_heading">
+                                <span>@fpsYearCode : @(isEditMode ? $"Edit Project - {Model.ParentProject}" : "Set Up New Project")</span>
+                            </h1>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
