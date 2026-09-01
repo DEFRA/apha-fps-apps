@@ -65,5 +65,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Integrations.HttpExecutor
             Assert.NotNull(result.Pagination);
             Assert.Equal(1, result.Pagination!.TotalRecords);
         }
+
+        [Fact]
+        public async Task ToApiResponse_WhenNoContent_Throws()
+        {
+            // An unexpected 204 through the shared executor is never silently treated as
+            // success — this is the invariant the allowNoContent revert restores.
+            using var response = new HttpResponseMessage(HttpStatusCode.NoContent);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => response.ToApiResponse<BulkRatesQueueEntryRes>());
+        }
     }
 }

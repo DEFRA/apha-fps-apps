@@ -55,6 +55,12 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<IEnumerable<EmployeeDto>>(employees);
         }
 
+        public async Task<IEnumerable<EmployeeDto>> GetStaffNameLookupAsync()
+        {
+            var employees = await _employeeRepository.GetAllEmployeesAsync();
+            return _mapper.Map<IEnumerable<EmployeeDto>>(employees);
+        }
+
         public async Task<EmployeeDto?> GetEmployeeByIdAsync(string spNumber)
         {
             if (string.IsNullOrWhiteSpace(spNumber))

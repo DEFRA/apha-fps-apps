@@ -20,6 +20,7 @@ namespace Apha.Common.Contracts.PIMS
         public decimal? EstimateSpend { get; set; }
         public decimal? LinearSpend { get; set; }
         public decimal? BfBudget { get; set; }
+        public decimal? TotalIncome { get; set; }
         public decimal? CumInvoice { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }

@@ -11,7 +11,7 @@ namespace Apha.PIMS.Application.Interfaces
         Task<RadTrackInvoiceDto> CreateAsync(RadTrackInvoiceDto dto);
         Task<RadTrackInvoiceDto> UpdateAsync(RadTrackInvoiceDto dto);
         Task<bool> DeleteAsync(int invoiceCounter);
-        Task<RadTrackInvoiceTotalsDto> GetTotalsAsync(RadTrackInvoiceFilter? filter);
+        Task<RadTrackInvoiceTotalsDto> GetTotalsAsync(RadTrackInvoiceFilter? filter, string? search = null);
         Task<bool> ExistsAsync(string? project, string? contract, string? invoiceRef, int? excludeInvoiceCounter = null);
 
         // Lookup methods for filter dropdowns
