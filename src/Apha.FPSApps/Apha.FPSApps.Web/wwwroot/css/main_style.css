@@ -1911,8 +1911,10 @@ summary:focus-visible,
 [role="tab"]:focus-visible,
 .govuk-select:focus-visible,
 .govuk-input:focus-visible,
-.govuk-tab:focus-visible,
+.govuk-tabs:focus-visible,
 .govuk-button:focus-visible,
+.app-log:focus-visible,
+select.app-log:focus-visible,
 .custom-table :focus-visible,
 .editable-grid-table :focus-visible {
     outline: 3px solid #fd0 !important;
