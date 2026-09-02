@@ -311,27 +311,70 @@
         }
 
         // ── Save (called from _AddEditComment partial) ────────────────────────────
-        
+        function clearCommentValidationErrors() {
+            $('#tblCommentsDbError').addClass('sup_display_none');
+            $('#tblCommentsDbErrorText').text('');
+
+            $('[data-field-group="modal-commentYear"]').removeClass('govuk-form-group--error');
+            $('[data-field-group="modal-commentYearTopic"]').removeClass('govuk-form-group--error');
+            $('[data-field-group="modal-commentText"]').removeClass('govuk-form-group--error');
+
+            $('#modal-commentYear-error').addClass('sup_display_none').find('span:last').text('');
+            $('#modal-commentYearTopic-error').addClass('sup_display_none').find('span:last').text('');
+            $('#modal-commentText-error').addClass('sup_display_none').find('span:last').text('');
+        }
+
+        function setCommentFieldError(fieldGroup, errorId, message) {
+            if (!message) return;
+            $('[data-field-group="' + fieldGroup + '"]').addClass('govuk-form-group--error');
+            $('#' + errorId).removeClass('sup_display_none').find('span:last').text(message);
+        }
+
+        function showCommentSummaryError(message) {
+            if (!message) return;
+            $('#tblCommentsDbErrorText').text(message);
+            $('#tblCommentsDbError').removeClass('sup_display_none');
+        }
+
+        function displayCommentValidationErrors(errors) {
+            clearCommentValidationErrors();
+
+            (errors || []).forEach(function (error) {
+                var field = ((error && error.field) || '').toString().toLowerCase();
+                var message = ((error && error.message) || '').toString().trim();
+                if (!message) return;
+
+                if (field === 'year') {
+                    setCommentFieldError('modal-commentYear', 'modal-commentYear-error', message);
+                } else if (field === 'topic' || field === 'yeartopic') {
+                    setCommentFieldError('modal-commentYearTopic', 'modal-commentYearTopic-error', message);
+                } else if (field === 'commenttext' || field === 'comment') {
+                    setCommentFieldError('modal-commentText', 'modal-commentText-error', message);
+                }
+            });
+        }
+
         function saveComment() {
             var isAddingValue = (document.getElementById('hdnIsAddingNew')?.value || '').toString().toLowerCase();
             var isAdding      = isAddingValue === 'true' || isAddingValue === '1' || isAddingValue === 'yes';
             var commentNo     = parseInt(document.getElementById('hdnCommentNo')?.value  || '0', 10);
             var project       = document.getElementById('hdnProject')?.value             || '';
-            var year          = document.getElementById('selCommentYear')?.value         || null;
-            var topic         = document.getElementById('selCommentTopic')?.value        || '';
+            var year          = (document.getElementById('selCommentYear')?.value || '').trim();
+            var topic         = (document.getElementById('selCommentTopic')?.value || '').trim();
             var commentTxt    = document.getElementById('txtCommentText')?.value         || '';
+            var commentTxtVal = commentTxt.trim();
 
-            // Basic client-side validation
             var errors = [];
-            if (!year)       { errors.push('Year is required.'); }
-            if (!topic)      { errors.push('Topic is required.'); }
-            if (!commentTxt) { errors.push('Comment is required.'); }
+            if (!year)          { errors.push({ field: 'Year', message: 'Please select Year.' }); }
+            if (!topic)         { errors.push({ field: 'Topic', message: 'Please select Year Topic.' }); }
+            if (!commentTxtVal) { errors.push({ field: 'CommentText', message: 'Please enter Comment.' }); }
             if (errors.length > 0) {
-                showAlertMessage(errors.join('\n'), AlertType.ERROR);
+                displayCommentValidationErrors(errors);
                 return;
             }
 
-            
+            clearCommentValidationErrors();
+
             var token = $('#formTblComments input[name="__RequestVerificationToken"]').val();
 
             var dto = {
@@ -339,8 +382,8 @@
                 project:     project,
                 year:        parseInt(year, 10),
                 topic:       topic,
-                comment:     commentTxt,
-                commentText: commentTxt
+                comment:     commentTxtVal,
+                commentText: commentTxtVal
             };
 
             var url  = isAdding ? '/PIMS/Comment/CreateComment' : '/PIMS/Comment/UpdateComment';
@@ -358,13 +401,37 @@
                             reloadCommentsGrid();
                         });
                     } else {
-                        var msg = (data.errors && data.errors.length > 0)
-                            ? data.errors.map(function(e) { return e.message || e; }).join(', ')
-                            : 'Save failed.';
-                        showAlertMessage('Save failed: ' + msg, AlertType.ERROR);
+                        var serverErrors = Array.isArray(data?.errors) ? data.errors : [];
+                        var normalizedErrors = serverErrors.map(function (e) {
+                            if (typeof e === 'string') {
+                                return { field: 'CommentText', message: e };
+                            }
+                            return {
+                                field: (e?.field || e?.key || e?.propertyName || 'CommentText').toString(),
+                                message: (e?.message || e?.errorMessage || '').toString()
+                            };
+                        }).filter(function (e) { return e.message && e.message.trim(); });
+
+                        if (normalizedErrors.length === 0) {
+                            normalizedErrors.push({ field: 'CommentText', message: data?.message || 'Failed to save comment. Please check the form and try again.' });
+                        }
+
+                        var duplicateError = normalizedErrors.find(function (e) {
+                            return /already exists/i.test((e && e.message) || '');
+                        });
+
+                        if (duplicateError) {
+                            clearCommentValidationErrors();
+                            showCommentSummaryError(duplicateError.message);
+                            return;
+                        }
+
+                        displayCommentValidationErrors(normalizedErrors);
                     }
                 },
-                error: function () { showAlertMessage('An error occurred while saving the comment.', AlertType.ERROR); }
+                error: function () {
+                    displayCommentValidationErrors([{ field: 'CommentText', message: 'An error occurred while saving the comment. Please try again.' }]);
+                }
             });
         }
 
