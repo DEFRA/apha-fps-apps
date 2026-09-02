@@ -389,6 +389,77 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
 
         #endregion
 
+        #region GetStaffNameLookupAsync
+
+        [Fact]
+        public async Task GetStaffNameLookupAsync_ReturnsAllEmployees()
+        {
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new Employee { SPNumber = "SP001", FirstName = "John", LastName = "Smith" },
+                new Employee { SPNumber = "SP002", FirstName = "Jane", LastName = "Brown" }
+            };
+
+            var expectedDtos = new List<EmployeeDto>
+            {
+                new EmployeeDto { SPNumber = "SP001", FirstName = "John", LastName = "Smith" },
+                new EmployeeDto { SPNumber = "SP002", FirstName = "Jane", LastName = "Brown" }
+            };
+
+            _mockRepository.GetAllEmployeesAsync().Returns(employees);
+            _mockMapper.Map<IEnumerable<EmployeeDto>>(employees).Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetStaffNameLookupAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(2);
+            result.First().SPNumber.Should().Be("SP001");
+
+            await _mockRepository.Received(1).GetAllEmployeesAsync();
+            _mockMapper.Received(1).Map<IEnumerable<EmployeeDto>>(employees);
+        }
+
+        [Fact]
+        public async Task GetStaffNameLookupAsync_WithEmptyResult_ReturnsEmptyList()
+        {
+            // Arrange
+            var emptyEmployees = new List<Employee>();
+            var emptyDtos = new List<EmployeeDto>();
+
+            _mockRepository.GetAllEmployeesAsync().Returns(emptyEmployees);
+            _mockMapper.Map<IEnumerable<EmployeeDto>>(emptyEmployees).Returns(emptyDtos);
+
+            // Act
+            var result = await _sut.GetStaffNameLookupAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+
+            await _mockRepository.Received(1).GetAllEmployeesAsync();
+        }
+
+        [Fact]
+        public async Task GetStaffNameLookupAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            _mockRepository.GetAllEmployeesAsync()
+                .Throws(new Exception("Database connection failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetStaffNameLookupAsync()
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+            _mockMapper.DidNotReceive().Map<IEnumerable<EmployeeDto>>(Arg.Any<IEnumerable<Employee>>());
+        }
+
+        #endregion
+
         #region GetEmployeeByIdAsync
 
         [Fact]

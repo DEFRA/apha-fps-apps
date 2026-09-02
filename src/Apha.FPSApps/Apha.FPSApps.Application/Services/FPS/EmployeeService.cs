@@ -21,6 +21,11 @@ namespace Apha.FPSApps.Application.Services.FPS
             return employees;
         }
 
+        public async Task<ApiResponseDto<List<StaffLookupDto>>> GetStaffNameLookupAsync()
+        {
+            return await _fpsClient.FpsEmployee.GetStaffNameLookupAsync();
+        }
+
         public async Task<ApiResponseDto<EmployeeDto>> GetEmployeeByIdAsync(string spNumber)
         {
             var employee = await _fpsClient.FpsEmployee.GetEmployeeIdAsync(spNumber);

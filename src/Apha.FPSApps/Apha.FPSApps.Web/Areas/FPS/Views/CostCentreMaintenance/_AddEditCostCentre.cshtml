@@ -1,7 +1,7 @@
 @model Apha.FPSApps.Web.Areas.FPS.Models.CostCentreItem
 
 @{
-    var isEditMode = Model?.CostCentreNo != 0;
+    var isEditMode = Model?.CostCentreNo.HasValue == true && Model.CostCentreNo.Value != 0;
     var title = isEditMode ? "Edit Cost Centre" : "Add Cost Centre";
     var formId = isEditMode ? "editCostCentreForm" : "addCostCentreForm";
     var saveLabel = isEditMode ? "Update" : "Save";
@@ -32,7 +32,7 @@
         <form id="@formId">
             @Html.AntiForgeryToken()
 
-            <input type="hidden" id="hdnOriginalCostCentreNo" value="@(Model?.CostCentreNo.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0")" />
+            <input type="hidden" id="hdnOriginalCostCentreNo" value="@(Model?.CostCentreNo?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0")" />
             <input type="hidden" id="hdnIsEdit" value="@isEditMode.ToString().ToLower()" />
 
             <div class="cc-modal-form-grid">
@@ -49,31 +49,28 @@
                             {
                                 <input class="govuk-input govuk-!-font-size-16"
                                        id="modal-cc-number"
-                                       name="CostCentreNo"
+                                       asp-for="CostCentreNo"
                                        type="number"
                                        step="any"
                                        required
                                        aria-required="true"
-                                       aria-label="Enter cost centre number"
+                                       aria-label="Enter cost centre"
                                        aria-describedby="err-modal-cc-number" />
                             }
                             else
                             {
                                 <input class="govuk-input govuk-!-font-size-16"
                                        id="modal-cc-number"
-                                       name="CostCentreNo"
+                                       asp-for="CostCentreNo"
                                        type="number"
                                        step="any"
                                        required
                                        aria-required="true"
-                                       aria-label="Enter cost centre number"
+                                       aria-label="Enter cost centre"
                                        aria-describedby="err-modal-cc-number"
-                                       value="@(Model!.CostCentreNo.ToString(System.Globalization.CultureInfo.InvariantCulture))" />
+                                       value="@(Model!.CostCentreNo!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture))" />
                             }
-                            <span id="err-modal-cc-number"
-                                  data-valmsg-for="CostCentreNo"
-                                  class="govuk-error-message field-validation-valid"
-                                  style="display:none;"></span>
+                            <span asp-validation-for="CostCentreNo" class="govuk-error-message field-validation-valid"></span>
                         </div>
                     </div>
 

@@ -28,7 +28,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Required(ErrorMessage = "Hours are required")]
         [Display(Name = "Hrs")]
-        [Range(0, int.MaxValue, ErrorMessage = "Hours must be 0 or greater")]
+        [Range(double.MinValue, double.MaxValue, ErrorMessage = "Hours must be a valid number")]
         [GridColumn(Order = 3, Width = 100, IsFilterable = false)]
         public double PlannedHours { get; set; }
 

@@ -26,15 +26,15 @@
                             <td class="govuk-table__cell govuk-!-padding-bottom-2 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
                                 @if (Model.IsProjectGroupMode)
                                 {
-                                    <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0 isFloatLeft isCustomLabels" for="projectGroupSelect">Project Group: </label>
-                                    <select id="projectGroupSelect" asp-items="Model.ProjectGroupList" asp-for="SelectedProjectGroup" class="govuk-select govuk-!-font-size-16 govuk-input--width-10 isFloatRight">
+                                    <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0 isCustomLabels" for="projectGroupSelect">Project Group: </label>
+                                    <select id="projectGroupSelect" asp-items="Model.ProjectGroupList" asp-for="SelectedProjectGroup" class="govuk-select govuk-!-font-size-16 govuk-input--width-10">
                                         <option value="">-- Select Project Group --</option>
                                     </select>
                                 }
                                 else
                                 {
-                                    <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0 isFloatLeft isCustomLabels" for="programmeSelect">Programme: </label>
-                                    <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo" class="govuk-select govuk-!-font-size-16 govuk-input--width-10 isFloatRight">
+                                    <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0 isCustomLabels" for="programmeSelect">Programme: </label>
+                                    <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo" class="govuk-select govuk-!-font-size-16 govuk-input--width-10">
                                         <option value="">-- Select Programme --</option>
                                     </select>
                                 }

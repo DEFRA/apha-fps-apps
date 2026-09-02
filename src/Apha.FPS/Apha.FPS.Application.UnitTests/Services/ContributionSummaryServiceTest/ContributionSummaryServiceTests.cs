@@ -157,6 +157,54 @@ namespace Apha.FPS.Application.UnitTests.Services.ContributionSummaryServiceTest
 
         #endregion
 
+        #region GetRowsAsync — Sort pass-through
+
+        [Fact]
+        public async Task GetRowsAsync_WhenSortArgumentsSupplied_ForwardsThemToRepository()
+        {
+            // Arrange
+            _mockRepository.GetBySellingPcAsync("ENV", "Contribution", true).Returns([MakeView()]);
+
+            // Act
+            await _sut.GetRowsAsync("ENV", "Contribution", descending: true);
+
+            // Assert — sorting is owned by the repository
+            await _mockRepository.Received(1).GetBySellingPcAsync("ENV", "Contribution", true);
+        }
+
+        [Fact]
+        public async Task GetRowsAsync_WhenNoSortSupplied_PassesNullSortAndAscending()
+        {
+            // Arrange
+            _mockRepository.GetBySellingPcAsync("ENV", null, false).Returns([MakeView()]);
+
+            // Act
+            await _sut.GetRowsAsync("ENV");
+
+            // Assert
+            await _mockRepository.Received(1).GetBySellingPcAsync("ENV", null, false);
+        }
+
+        [Fact]
+        public async Task GetRowsAsync_PreservesRepositoryRowOrder()
+        {
+            // Arrange — the service must not re-order what the repository returned
+            _mockRepository.GetBySellingPcAsync("ENV", "WorkGroup", true).Returns(
+            [
+                MakeView(workGroup: "WG3"),
+                MakeView(workGroup: "WG2"),
+                MakeView(workGroup: "WG1")
+            ]);
+
+            // Act
+            var result = await _sut.GetRowsAsync("ENV", "WorkGroup", descending: true);
+
+            // Assert
+            result.Select(r => r.WorkGroup).Should().ContainInOrder("WG3", "WG2", "WG1");
+        }
+
+        #endregion
+
         #region GetRowsAsync — Validation
 
         [Fact]
