@@ -19,6 +19,20 @@
             </div>
         </div>
 
+        @if (!string.IsNullOrWhiteSpace(Model.ValidationFailure))
+        {
+            <div class="govuk-warning-text" style="font-size: 14px;">
+                <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+                <div class="govuk-warning-text__text">
+                    <strong style="display: block; margin-bottom: 4px;">
+                        <span class="govuk-warning-text__assistive">Warning</span>
+                        Current Validation Errors:
+                    </strong>
+                    <div style="font-weight: normal; white-space: pre-wrap; word-wrap: break-word;">@Model.ValidationFailure</div>
+                </div>
+            </div>
+        }
+
         <div class="govuk-grid-row sup_margin_top_10">
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
@@ -108,16 +122,6 @@
             <span asp-validation-for="Type" class="govuk-error-message"></span>
         </div>
 
-        @if (!string.IsNullOrEmpty(Model.ValidationFailure))
-        {
-            <div class="govuk-warning-text govuk-!-margin-bottom-2">
-                <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
-                <strong class="govuk-warning-text__text">
-                    <span class="govuk-visually-hidden">Warning</span>
-                    @Model.ValidationFailure
-                </strong>
-            </div>
-        }
 
     </form>
 </div>
