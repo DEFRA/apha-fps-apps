@@ -875,3 +875,104 @@
         document.addEventListener('DOMContentLoaded', init);
     }
 })();
+
+// ── Global nav menubar semantics (fixes arrow keys under NVDA / JAWS) ───────
+// Screen readers run web pages in "browse mode" by default, where they
+// capture the arrow keys for their own virtual cursor - the keydown event
+// never reaches the page, so the arrow-key navigation implemented in
+// navmenu.js appears dead whenever NVDA is running. Screen readers only
+// switch to "focus mode" (passing keys straight through to the page) when
+// focus lands on an element exposed as a recognised interactive widget.
+// The header nav is built from plain <div>/<button>/<a> markup with no menu
+// semantics, so nothing triggers that switch.
+//
+// Applying the WAI-ARIA menubar pattern fixes it: menubar / menu / menuitem
+// are widget roles screen readers auto-switch to focus mode for. This adds
+// markup only - the existing navmenu.js keyboard handlers are untouched,
+// they simply start receiving the events again.
+(function () {
+    'use strict';
+
+    function applyMenuRoles() {
+        var mainNav = document.querySelector('.main-nav');
+        if (!mainNav) return;
+
+        // Level-1 bar and its top-level items.
+        if (mainNav.getAttribute('role') !== 'menubar') {
+            mainNav.setAttribute('role', 'menubar');
+            mainNav.setAttribute('aria-orientation', 'horizontal');
+        }
+        mainNav.querySelectorAll(':scope > .nav-item').forEach(function (item) {
+            item.setAttribute('role', 'none');
+        });
+        mainNav.querySelectorAll(':scope > .nav-item > .nav-button').forEach(function (btn) {
+            btn.setAttribute('role', 'menuitem');
+            var dropdownId = btn.getAttribute('data-dropdown');
+            if (dropdownId) {
+                btn.setAttribute('aria-haspopup', 'true');
+                btn.setAttribute('aria-controls', dropdownId);
+                var menu = document.getElementById(dropdownId);
+                btn.setAttribute('aria-expanded', menu && menu.classList.contains('show') ? 'true' : 'false');
+            }
+        });
+
+        // Level-2 / level-3 menus and their entries.
+        document.querySelectorAll('.dropdown-menu, .sub-dropdown-menu').forEach(function (menu) {
+            menu.setAttribute('role', 'menu');
+            menu.setAttribute('aria-orientation', 'vertical');
+        });
+        // Presentational wrappers must not break the menubar > menuitem chain.
+        document.querySelectorAll('.dropdown-col, .sub-dropdown').forEach(function (wrapper) {
+            wrapper.setAttribute('role', 'none');
+        });
+        document.querySelectorAll('a.dropdown-item').forEach(function (link) {
+            link.setAttribute('role', 'menuitem');
+        });
+        document.querySelectorAll('.sub-dropdown-toggle').forEach(function (toggle) {
+            toggle.setAttribute('role', 'menuitem');
+            toggle.setAttribute('aria-haspopup', 'true');
+            var subDropdown = toggle.closest('.sub-dropdown');
+            var subMenu = subDropdown ? subDropdown.querySelector(':scope > .sub-dropdown-menu') : null;
+            toggle.setAttribute('aria-expanded', subMenu && subMenu.classList.contains('show') ? 'true' : 'false');
+        });
+
+        // The user-profile dropdown is the same kind of widget.
+        var userBtn = document.getElementById('userdropdownbtn');
+        var userMenu = document.getElementById('userdropdowndp');
+        if (userBtn && userMenu) {
+            userBtn.setAttribute('aria-haspopup', 'true');
+            userBtn.setAttribute('aria-expanded', userMenu.classList.contains('show') ? 'true' : 'false');
+            userMenu.setAttribute('role', 'menu');
+            userMenu.querySelectorAll('a, button').forEach(function (el) {
+                el.setAttribute('role', 'menuitem');
+            });
+        }
+    }
+
+    function initMenuRoles() {
+        var mainNav = document.querySelector('.main-nav');
+        if (!mainNav) return;
+
+        applyMenuRoles();
+
+        // Menus are shown/hidden by toggling the "show"/"active" classes, so
+        // keep aria-expanded (and roles on any late-injected markup) in sync.
+        var observer = new MutationObserver(applyMenuRoles);
+        observer.observe(mainNav, {
+            attributes: true, attributeFilter: ['class'], subtree: true, childList: true
+        });
+
+        var userMenu = document.getElementById('userdropdowndp');
+        if (userMenu) {
+            observer.observe(userMenu, {
+                attributes: true, attributeFilter: ['class'], subtree: true, childList: true
+            });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMenuRoles);
+    } else {
+        initMenuRoles();
+    }
+})();
