@@ -400,21 +400,40 @@ namespace Apha.FPS.DataAccess.Repositories
             }).ToList();
         }
 
+        private static readonly Dictionary<string, Func<ProjectExceptionalCostView, string?>> ExceptionalCostTextSelectors =
+            new()
+            {
+                ["directorate"] = r => r.Directorate,
+                ["programme"] = r => r.Programme,
+                ["contractnumber"] = r => r.ContractNumber,
+                ["project"] = r => r.Project,
+                ["projectstatus"] = r => r.ProjectStatus,
+                ["accountcat"] = r => r.AccountCat,
+                ["description"] = r => r.Description
+            };
+
         private static List<ProjectExceptionalCostView> ApplyProjectExceptionalCostSort(
             List<ProjectExceptionalCostView> rows, string? sortBy, bool descending)
         {
-            return sortBy?.ToLower() switch
-            {
-                "directorate"    => descending ? rows.OrderByDescending(r => r.Directorate).ToList()    : rows.OrderBy(r => r.Directorate).ToList(),
-                "programme"      => descending ? rows.OrderByDescending(r => r.Programme).ToList()      : rows.OrderBy(r => r.Programme).ToList(),
-                "contractnumber" => descending ? rows.OrderByDescending(r => r.ContractNumber).ToList() : rows.OrderBy(r => r.ContractNumber).ToList(),
-                "project"        => descending ? rows.OrderByDescending(r => r.Project).ToList()        : rows.OrderBy(r => r.Project).ToList(),
-                "projectstatus"  => descending ? rows.OrderByDescending(r => r.ProjectStatus).ToList()  : rows.OrderBy(r => r.ProjectStatus).ToList(),
-                "accountcat"     => descending ? rows.OrderByDescending(r => r.AccountCat).ToList()     : rows.OrderBy(r => r.AccountCat).ToList(),
-                "description"    => descending ? rows.OrderByDescending(r => r.Description).ToList()    : rows.OrderBy(r => r.Description).ToList(),
-                "itemcost"       => descending ? rows.OrderByDescending(r => r.ItemCost).ToList()       : rows.OrderBy(r => r.ItemCost).ToList(),
-                _                => rows
-            };
+            var key = sortBy?.ToLower();
+
+            if (key == "itemcost")
+                return Order(rows, r => r.ItemCost, descending);
+
+            if (key != null && ExceptionalCostTextSelectors.TryGetValue(key, out var selector))
+                return Order(rows, selector, descending);
+
+            return rows;
+        }
+
+        private static List<ProjectExceptionalCostView> Order<TKey>(
+            List<ProjectExceptionalCostView> rows,
+            Func<ProjectExceptionalCostView, TKey> keySelector,
+            bool descending)
+        {
+            return descending
+                ? rows.OrderByDescending(keySelector).ToList()
+                : rows.OrderBy(keySelector).ToList();
         }
 
         public async Task<PagedData<ProjectView>> GetPagedProjectsByUserAsync(PaginationParameters<string> query)
