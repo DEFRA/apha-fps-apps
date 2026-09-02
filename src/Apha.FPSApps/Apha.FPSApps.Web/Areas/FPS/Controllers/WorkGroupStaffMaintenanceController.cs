@@ -124,7 +124,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var response = await _workGroupEmployeeService.CreateWorkGroupEmployeeForStaffAsync(model);
             if (response.Success)
             {
-                return Json(new { success = true, data = response.Data, message = "WG Staff record created successfully" });
+                var newPactId = response.Data?.PactId;
+                var message = string.IsNullOrWhiteSpace(newPactId)
+                    ? "WG Staff record created successfully"
+                    : $"WG Staff record created successfully. PACT Id for the record is: {newPactId}";
+                return Json(new { success = true, data = response.Data, message });
             }
 
             return Json(new
@@ -239,7 +243,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<WorkGroupEmployeeStaffItem>
             {
                 GridId = "wgStaffGrid",
-                Title = "WG Staff",
+                Title = "Work Group Staff",
                 ShowPagination = true,
                 KeyProperty = "PactId",
                 AddFunction = "addMaintWGStaff",
@@ -257,23 +261,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private async Task PopulateLookupDataAsync(WorkGroupEmployeeStaffItem model)
         {
-            var lookupQuery = new QueryParameters<string>
-            {
-                Page = 1,
-                PageSize = 5000
-            };
-
-            var employeeResponse = await _employeeService.GetFilteredEmployeesAsync(lookupQuery, 0);
-            var employees = employeeResponse.Success && employeeResponse.Data != null
-                ? employeeResponse.Data
+            // Source the Staff Name dropdown from a dedicated staff lookup (employee master)
+            // so that newly created staff (not yet assigned to any work group) are available
+            // for selection when adding them to a work group.
+            var staffResponse = await _employeeService.GetStaffNameLookupAsync();
+            var staff = staffResponse.Success && staffResponse.Data != null
+                ? staffResponse.Data
                 : [];
 
-            model.StaffLookupOptions = employees
+            model.StaffLookupOptions = staff
                 .Select(e => new WorkGroupStaffLookupItem
                 {
                     PactId = string.Empty,
-                    Name = ResolveEmployeeName(e),
-                    SpNumber = ResolveEmployeeSpNumber(e)
+                    Name = (e.Name ?? string.Empty).Trim(),
+                    SpNumber = e.SpNumber
                 })
                 .Where(s => !string.IsNullOrWhiteSpace(s.Name) && !string.IsNullOrWhiteSpace(s.SpNumber))
                 .GroupBy(s => s.SpNumber, StringComparer.OrdinalIgnoreCase)
@@ -321,35 +322,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     .OrderBy(g => g)
                     .ToList();
             }
-        }
-
-        private static string ResolveEmployeeName(EmployeeDto employee)
-        {
-            var directName = GetEmployeePropertyValue(employee, "Name", "FullName");
-            if (!string.IsNullOrWhiteSpace(directName))
-                return directName;
-
-            var firstName = GetEmployeePropertyValue(employee, "FirstName");
-            var lastName = GetEmployeePropertyValue(employee, "LastName");
-            return $"{firstName} {lastName}".Trim();
-        }
-
-        private static string ResolveEmployeeSpNumber(EmployeeDto employee)
-        {
-            return GetEmployeePropertyValue(employee, "SPNumber", "SpNumber", "EmployeeNumber", "StaffNumber");
-        }
-
-        private static string GetEmployeePropertyValue(EmployeeDto employee, params string[] propertyNames)
-        {
-            foreach (var propertyName in propertyNames)
-            {
-                var prop = employee.GetType().GetProperty(propertyName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-                var value = prop?.GetValue(employee)?.ToString();
-                if (!string.IsNullOrWhiteSpace(value))
-                    return value.Trim();
-            }
-
-            return string.Empty;
         }
     }
 }

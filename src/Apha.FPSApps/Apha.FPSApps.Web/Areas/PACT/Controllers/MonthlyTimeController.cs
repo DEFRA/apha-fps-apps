@@ -4,6 +4,7 @@ using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
+using Apha.FPSApps.Web.Areas.PACT.Dependencies;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
+using Apha.FPSApps.Web.Handler;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
@@ -24,11 +26,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         private readonly IMapper _mapper;
         private readonly IPactMonthlyTimeService _monthlyTimeService;
-        private readonly IWorkGroupService _workGroupService;
-        private readonly IEmployeeService _employeeService;
-        private readonly IPactTimeCodeValidService _timeCodeValidService;
-        private readonly IMonthService _monthService;
+        private readonly IMonthlyImportControllerDependencies _monthlyImportDependencies;
         private readonly IExcelExportService _excelExportService;
+        private readonly IFpsYearContext _fpsYearContext;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MonthlyTimeController"/> class.
@@ -36,19 +36,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public MonthlyTimeController(
             IMapper mapper,
             IPactMonthlyTimeService monthlyTimeService,
-            IWorkGroupService workGroupService,
-            IEmployeeService employeeService,
-            IPactTimeCodeValidService timeCodeValidService,
-            IMonthService monthService,
-            IExcelExportService excelExportService)
+            IMonthlyImportControllerDependencies monthlyImportDependencies,
+            IExcelExportService excelExportService,
+            IFpsYearContext fpsYearContext)
         {
             _mapper = mapper;
             _monthlyTimeService = monthlyTimeService;
-            _workGroupService = workGroupService;
-            _employeeService = employeeService;
-            _timeCodeValidService = timeCodeValidService;
-            _monthService = monthService;
+            _monthlyImportDependencies = monthlyImportDependencies;
             _excelExportService = excelExportService;
+            _fpsYearContext = fpsYearContext;
         }
 
         /// <summary>
@@ -131,7 +127,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetStaffByWorkGroup(string? workGroup)
         {
-            var response = await _employeeService.GetPactWorkGroupStaffAsync(workGroup);
+            var response = await _monthlyImportDependencies.EmployeeService.GetPactWorkGroupStaffAsync(workGroup);
             if (!response.Success || response.Data == null)
                 return Json(Array.Empty<object>());
 
@@ -184,7 +180,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllTimeCodes()
         {
-            var response = await _timeCodeValidService.GetAllDistinctTimeCodesAsync();
+            var response = await _monthlyImportDependencies.TimeCodeValidService.GetAllDistinctTimeCodesAsync();
             if (!response.Success || response.Data == null)
                 return Json(Array.Empty<object>());
 
@@ -198,7 +194,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllProjects()
         {
-            var response = await _timeCodeValidService.GetAllDistinctProjectsAsync();
+            var response = await _monthlyImportDependencies.TimeCodeValidService.GetAllDistinctProjectsAsync();
             if (!response.Success || response.Data == null)
                 return Json(Array.Empty<object>());
 
@@ -408,7 +404,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> DeleteAllStagingRecords()
         {
             var response = await _monthlyTimeService.DeleteAllStagingByUserAsync();
-            return Json(new { success = response.Success && response.Data });
+            return Json(new
+            {
+                success = response.Success && response.Data,
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to delete staging records."
+            });
         }
 
         /// <summary>
@@ -594,7 +594,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private async Task<DataGridConfig<StagingMonthlyTimeItem>> BuildStagingGridAsync(PaginationFilter<string> request, bool? passed)
         {
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _monthlyTimeService.GetStagingAsync(query, passed);
+            var isReadOnlyYear = _fpsYearContext.IsReadOnly;
+            var response = await _monthlyTimeService.GetStagingAsync(query, passed, isReadOnlyYear);
             var items = response.Success && response.Data != null ? _mapper.Map<List<StagingMonthlyTimeItem>>(response.Data) : [];
             var total = response.Total;
             var pagination = response.Pagination != null
@@ -640,7 +641,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetWorkGroupOptionsAsync()
         {
-            var response = await _workGroupService.GetAllWorkGroupsAsync();
+            var response = await _monthlyImportDependencies.WorkGroupService.GetAllWorkGroupsAsync();
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x.WorkGroupName).Select(x => new SelectListItem(x.WorkGroupName, x.WorkGroupName)).ToList()
                 : [];
@@ -651,7 +652,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetTimeCodeOptionsAsync(string workGroup)
         {
-            var response = await _timeCodeValidService.GetTimeCodeValidsByWorkGroupAsync(workGroup);
+            var response = await _monthlyImportDependencies.TimeCodeValidService.GetTimeCodeValidsByWorkGroupAsync(workGroup);
             return response.Success && response.Data != null
                 ? response.Data.Select(x => x.TimeCode).Distinct().OrderBy(x => x).Select(x => new SelectListItem(x, x)).ToList()
                 : [];
@@ -662,7 +663,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetProjectOptionsAsync(string workGroup, string timeCode)
         {
-            var response = await _timeCodeValidService.GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync(workGroup, timeCode);
+            var response = await _monthlyImportDependencies.TimeCodeValidService.GetTimeCodesProjectsByWorkGroupAndTimeCodeAsync(workGroup, timeCode);
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x).Select(x => new SelectListItem(x, x)).ToList()
                 : [];
@@ -673,7 +674,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<SelectListItem>> GetMonthOptionsAsync()
         {
-            var response = await _monthService.GetAllMonthsAsync();
+            var response = await _monthlyImportDependencies.MonthService.GetAllMonthsAsync();
             return response.Success && response.Data != null
                 ? response.Data.OrderBy(x => x.Monthnumber).Select(x => new SelectListItem(x.Monthnumber.ToString(), x.Monthnumber.ToString())).ToList()
                 : [];

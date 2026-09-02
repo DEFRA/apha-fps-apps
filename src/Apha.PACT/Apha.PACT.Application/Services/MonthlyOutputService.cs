@@ -253,6 +253,16 @@ namespace Apha.PACT.Application.Services
             }
 
             var result = await _repository.MakeLiveAsync(importedBy);
+
+            if (result.ProcessedCount == 0)
+            {
+                throw new BusinessValidationErrorException([
+                    new BusinessValidationError(
+                        "No staging records found to make live.",
+                        "NO_STAGING_RECORDS")
+                ]);
+            }
+
             var message = $"{result.ImportedCount} of {result.ProcessedCount} records have been successfully made live.";
             if (result.FailedCount > 0)
             {
@@ -287,7 +297,9 @@ namespace Apha.PACT.Application.Services
                 ActiveBuyerKeys = new HashSet<string>(
                     allActiveTestRequirements.Select(tr => $"{tr.TestCode}|{tr.Buyer}"),
                     StringComparer.OrdinalIgnoreCase),
-                ExistingLiveKeys = await _repository.GetExistingLiveKeysAsync(),
+                ExistingLiveKeys = new HashSet<string>(
+                    await _repository.GetExistingLiveKeysAsync(),
+                    StringComparer.OrdinalIgnoreCase),
                 PassedStagingKeys = await _repository.GetPassedStagingKeysAsync(importedBy)
             };
         }
@@ -325,11 +337,15 @@ namespace Apha.PACT.Application.Services
             HashSet<string> stagingKeys)
         {
             var failures = new List<string>();
-            var workGroup = record.WorkGroup?.Trim();
-            var testCode = record.TestCode?.Trim();
-            var buyer = record.Buyer?.Trim();
+            var workGroup = record.WorkGroup?.Trim() ?? string.Empty;
+            var testCode = record.TestCode?.Trim() ?? string.Empty;
+            var buyer = record.Buyer?.Trim() ?? string.Empty;
             var month = record.Month;
             var volume = record.Volume;
+
+            record.WorkGroup = workGroup;
+            record.TestCode = testCode;
+            record.Buyer = buyer;
 
             // Volume must be numeric and non-zero
             if (volume == null || volume == 0)

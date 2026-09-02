@@ -204,6 +204,19 @@
         event.stopPropagation();
     }
 
+    // Isolates clicks inside the modal from the rest of the page, but lets
+    // events on the header through so the drag handlers delegated on the
+    // document can still receive them. Without this exception, any modal
+    // container carrying the "modal" class (e.g. the CostBook YearlyDetails
+    // #project1ModalContainer) becomes undraggable.
+    function stopModalContentPropagation(event) {
+        if (event.target.closest(".modal-header, .govuk-edit-modal__header")) {
+            return;
+        }
+
+        stopPropagation(event);
+    }
+
     function applySafeBootstrapConfig(modalElement) {
         if (!modalElement) {
             return;
@@ -250,7 +263,7 @@
         var modalContent = modalElement.querySelector(".modal-content");
         if (modalContent) {
             ["click", "mousedown", "mouseup"].forEach(function (eventName) {
-                modalContent.addEventListener(eventName, stopPropagation);
+                modalContent.addEventListener(eventName, stopModalContentPropagation);
             });
         }
 
@@ -395,6 +408,62 @@
         window.jQuery.__loaderBound = true;
     }
 
+    // Centralised loader handling for full-page navigation.
+    // Shows the global loader whenever the user navigates to another page via a
+    // standard link click or a form submission, giving visual feedback while the
+    // next page loads. Elements can opt out with the data-no-loader attribute
+    // (e.g. downloads, new-tab links, or in-page anchors). The loader is hidden
+    // again if the user returns via the browser back/forward cache (pageshow).
+    if (!window.__navigationLoaderBound) {
+        window.__navigationLoaderBound = true;
+
+        var shouldSkipNavigationLoader = function (el) {
+            return !el || el.hasAttribute("data-no-loader") || el.closest("[data-no-loader]") !== null;
+        };
+
+        document.addEventListener("click", function (event) {
+            if (event.defaultPrevented || event.button !== 0 ||
+                event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                return;
+            }
+
+            var link = event.target.closest ? event.target.closest("a[href]") : null;
+            if (!link || shouldSkipNavigationLoader(link)) {
+                return;
+            }
+
+            var href = link.getAttribute("href");
+            if (!href || href.charAt(0) === "#" ||
+                href.indexOf("javascript:") === 0 ||
+                link.getAttribute("target") === "_blank" ||
+                link.hasAttribute("download")) {
+                return;
+            }
+
+            showLoader();
+        }, true);
+
+        document.addEventListener("submit", function (event) {
+            var form = event.target;
+            if (event.defaultPrevented || !form || shouldSkipNavigationLoader(form)) {
+                return;
+            }
+
+            if (form.getAttribute("target") === "_blank") {
+                return;
+            }
+
+            showLoader();
+        }, true);
+
+        // Hide the loader when the page is restored from the back/forward cache.
+        window.addEventListener("pageshow", function (event) {
+            if (event.persisted) {
+                hideLoader();
+            }
+        });
+    }
+
     // Downloads a file from the given URL, showing the global loader until the
     // download completes. Reusable for any Excel/PDF/CSV export endpoint.
     window.downloadFile = function (url, fileName) {
@@ -441,4 +510,202 @@
             return result;
         });
     };
+
+
+    var isDragging = false;
+
+    var startX = 0;
+    var startY = 0;
+    var startLeft = 0;
+    var startTop = 0;
+
+    // Minimum part of modal that must remain visible
+    var minVisible = 50;
+
+
+    // =========================================================
+    // DRAG START
+    // =========================================================
+
+    // Existing selector is NOT removed.
+    // Added .govuk-edit-modal-dialog .govuk-edit-modal__header
+    $(document).on(
+        "mousedown",
+        ".modal-dialog .modal-header, .govuk-edit-modal-dialog .govuk-edit-modal__header",
+        function (e) {
+
+            // Do not drag when clicking buttons/links
+            if ($(e.target).closest("button, a, input, select, textarea").length) {
+                return;
+            }
+
+            // Keep existing selector + add new selector
+            var $dialog = $(this).closest(
+                ".modal-dialog, .govuk-edit-modal-dialog"
+            );
+
+            if (!$dialog.length) {
+                return;
+            }
+
+            var offset = $dialog.offset();
+
+            isDragging = true;
+
+            startX = e.clientX;
+            startY = e.clientY;
+
+            startLeft = offset.left;
+            startTop = offset.top;
+
+            // Convert to fixed positioning
+            $dialog.css({
+                position: "fixed",
+                margin: 0,
+                left: startLeft,
+                top: startTop,
+                width: $dialog.outerWidth()
+            });
+
+            $("body").css("user-select", "none");
+
+            e.preventDefault();
+        });
+
+
+    // =========================================================
+    // DRAGGING
+    // =========================================================
+
+    $(document).on("mousemove", function (e) {
+
+        if (!isDragging) {
+            return;
+        }
+
+        // Existing selector is preserved.
+        // New GOV.UK selector is added.
+        var $dialog = $(
+            ".modal-dialog:has(.modal-header), " +
+            ".govuk-edit-modal-dialog:has(.govuk-edit-modal__header)"
+        ).filter(":visible").first();
+
+        if (!$dialog.length) {
+            return;
+        }
+
+        var dialogWidth = $dialog.outerWidth();
+        var dialogHeight = $dialog.outerHeight();
+
+        var viewportWidth = $(window).width();
+        var viewportHeight = $(window).height();
+
+        var newLeft = startLeft + (e.clientX - startX);
+        var newTop = startTop + (e.clientY - startY);
+
+
+        // =====================================================
+        // X LIMIT
+        // =====================================================
+
+        var minLeft = -(dialogWidth - minVisible);
+        var maxLeft = viewportWidth - minVisible;
+
+        newLeft = Math.max(
+            minLeft,
+            Math.min(newLeft, maxLeft)
+        );
+
+
+        // =====================================================
+        // Y LIMIT
+        // =====================================================
+
+        var minTop = -(dialogHeight - minVisible);
+        var maxTop = viewportHeight - minVisible;
+
+        newTop = Math.max(
+            minTop,
+            Math.min(newTop, maxTop)
+        );
+
+
+        // Apply position
+        $dialog.css({
+            left: newLeft,
+            top: newTop
+        });
+    });
+
+
+    // =========================================================
+    // DRAG END
+    // =========================================================
+
+    $(document).on("mouseup", function () {
+
+        if (!isDragging) {
+            return;
+        }
+        
+        isDragging = false;
+
+        $("body").css("user-select", "");
+    });
+
+
+    // =========================================================
+    // CLICK FADED BACKGROUND
+    // =========================================================
+    //
+    // This will NOT automatically reset the modal.
+    //
+    // Modal resets ONLY when the user clicks the faded
+    // background outside the modal.
+    //
+    // =========================================================
+
+    $(document).on("click", function (e) {
+
+        // Existing modal selector + new GOV.UK modal selector
+        var $dialog = $(
+            ".modal-dialog:has(.modal-header), " +
+            ".govuk-edit-modal-dialog:has(.govuk-edit-modal__header)"
+        ).filter(":visible").first();
+
+        if (!$dialog.length) {
+            return;
+        }
+
+        // If click happened INSIDE modal, do nothing
+        if (
+            $(e.target).closest(
+                ".modal-dialog, .govuk-edit-modal-dialog"
+            ).length
+        ) {
+            return;
+        }
+
+        // Click happened outside modal = faded background
+        resetModalPosition($dialog);
+    });
+
+
+    // =========================================================
+    // RESET MODAL TO ORIGINAL POSITION
+    // =========================================================
+
+    function resetModalPosition($dialog) {
+
+        $dialog.css({
+            position: "",
+            left: "",
+            top: "",
+            margin: "auto",
+            width: "100%",
+            maxWidth: "700px"
+        });
+
+    }
+
 })();

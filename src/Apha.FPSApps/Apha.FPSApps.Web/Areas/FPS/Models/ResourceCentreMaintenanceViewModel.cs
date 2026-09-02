@@ -27,8 +27,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// </summary>
         [Display(Name = "Centre")]
         [GridColumn(Width = 120, Type = GridColumnType.Text, IsFilterable = true)]
-        [Required(ErrorMessage = "Centre ID is required")]
-        [StringLength(50, ErrorMessage = "Centre ID cannot exceed 50 characters")]
+        [Required(ErrorMessage = "Centre is required")]
+        [StringLength(50, ErrorMessage = "Centre cannot exceed 50 characters")]
         public string ProfitCentreId { get; set; } = null!;
 
         /// <summary>

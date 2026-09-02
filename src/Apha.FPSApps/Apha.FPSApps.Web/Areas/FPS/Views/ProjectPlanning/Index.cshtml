@@ -11,7 +11,7 @@
             <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
                 Project Planning : <span class="projectcode_color">@Model.ProjectCode</span>
                 <input id="hdnProjectCode" type="hidden" value="@Model.ProjectCode" />
-                <a href="@(Context.Request.Query.ContainsKey("returnUrl") ? Context.Request.Query["returnUrl"].ToString() : "javascript:history.back()")" class="govuk-back-link sup_align_right">Back</a>
+                <a href="@(Context.Request.Query.ContainsKey("returnUrl") ? Context.Request.Query["returnUrl"].ToString() : "javascript:history.back()")" class="govuk-back-link isFloatRight">Back</a>
             </h1>
         </div>
     </div>
@@ -19,7 +19,8 @@
     <div class="project-code-section govuk-!-margin-bottom-2 govuk-!-padding-left-0">
         <textarea class="govuk-textarea pp-project-description" id="projectDescription" aria-label="Project description" rows="2" asp-for="ProjectDescription" readonly>@Model.ProjectDescription</textarea>
         <a href="@Url.Action("ExportToExcel", "ProjectPlanning", new { area = "FPS", projectCode = Model.ProjectCode })"
-           class="govuk-button sup_margin_0" aria-label="Export to Excel">Export to Excel</a>
+           class="govuk-button sup_margin_0" aria-label="Export to Excel" data-no-loader
+           onclick='event.preventDefault(); window.downloadFile(this.href, "ProjectPlanningData-ProjectCode-@Model.ProjectCode");'>Export to Excel</a>
     </div>
 
     <div class="main-grid">
@@ -147,7 +148,7 @@
         // ---- Currency helpers ----
 
         function formatGBP(value) {
-            var formatted = new Intl.NumberFormat('en-GB', { style: 'decimal', maximumFractionDigits: 2 }).format(Math.abs(value));
+            var formatted = new Intl.NumberFormat('en-GB', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(value));
             return value < 0 ? '-(' + formatted + ')' : formatted;
         }
 

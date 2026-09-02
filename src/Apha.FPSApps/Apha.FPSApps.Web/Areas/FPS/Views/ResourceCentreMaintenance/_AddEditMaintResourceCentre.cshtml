@@ -93,20 +93,26 @@
 </div>
 
 <script>
-    $(document).ready(function () {
-        loadDivisions();
-    });
+    // Call loadDivisions immediately since this partial is loaded via AJAX
+    // and $(document).ready won't fire again
+    loadDivisions();
 
     function loadDivisions() {
         var $select = $('#Division');
         var currentDivision = '@(Model?.Division ?? string.Empty)';
+
+        // Remove any existing change handlers to prevent accumulation
+        $select.off('change');
 
         $.ajax({
             url: '@Url.Action("GetDistinctDivisions", "ResourceCentreMaintenance", new { area = "FPS" })',
             type: 'GET',
             success: function (response) {
                 if (response.success && response.data) {
+                    // Clear existing options except the first placeholder
                     $select.find('option:not(:first)').remove();
+
+                    // Append new options
                     $.each(response.data, function (index, div) {
                         $select.append($('<option></option>')
                             .attr('value', div.divisionName)
@@ -122,16 +128,24 @@
                         }
                     } else {
                         $select.val('');
+                        $('#DivisionId').val('');
                     }
 
                     // Update DivisionId when Division selection changes
+                    // Use one-time binding with current response.data
                     $select.on('change', function () {
-                        var selectedOption = response.data.find(d => d.divisionName === $(this).val());
-                        $('#DivisionId').val(selectedOption ? selectedOption.divisionId : '');
+                        var selectedValue = $(this).val();
+                        if (selectedValue) {
+                            var selectedOption = response.data.find(d => d.divisionName === selectedValue);
+                            $('#DivisionId').val(selectedOption ? selectedOption.divisionId : '');
+                        } else {
+                            $('#DivisionId').val('');
+                        }
                     });
                 }
             },
             error: function () {
+                $select.find('option:not(:first)').remove();
                 $select.append($('<option value=""></option>').text('Error loading divisions'));
             }
         });

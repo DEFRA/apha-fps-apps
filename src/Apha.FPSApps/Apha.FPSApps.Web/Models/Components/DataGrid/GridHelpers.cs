@@ -134,11 +134,11 @@
                     break;
                 case GridColumnType.Percentage:
                     if (value is double pctDouble)
-                        return (pctDouble < 1 ? pctDouble * 100 : pctDouble).ToString("F2") + "%";
+                        return (pctDouble * 100).ToString("F2") + "%";
                     if (value is decimal pctDecimal)
-                        return (pctDecimal < 1 ? pctDecimal * 100 : pctDecimal).ToString("F2") + "%";
+                        return (pctDecimal * 100).ToString("F2") + "%";
                     if (value is float pctFloat)
-                        return (((double)pctFloat) < 1 ? ((double)pctFloat) * 100 : ((double)pctFloat)).ToString("F2") + "%";
+                        return (((double)pctFloat) * 100).ToString("F2") + "%";
                     break;
                 case GridColumnType.RoundTwoDecimal:
                     if (value is decimal rtdDecimal)

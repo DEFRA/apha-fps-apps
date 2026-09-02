@@ -154,6 +154,7 @@
                 clearValidationErrors($form);
                 if (!isFormValid($form)) {
                     e.preventDefault();
+                    hideLoader();
                     displayClientValidationErrors($form, $form);
                 }
             });

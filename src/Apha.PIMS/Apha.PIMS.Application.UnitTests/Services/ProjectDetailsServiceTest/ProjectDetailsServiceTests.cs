@@ -496,6 +496,55 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectDetailsServiceTest
         }
 
         [Fact]
+        public async Task UpdateProposedProjectAsync_WithDuplicateTransferTo_PassesToRepository()
+        {
+            // Arrange
+            var transferTo = "PP002";
+            var dto = new ProposedProjectDto
+            {
+                Id = 1,
+                Parentproject = "PP001",
+                Projecttitle = "Updated FMD Survey"
+            };
+
+            var mappedEntity = new ProposedProject
+            {
+                Id = 1,
+                Parentproject = "PP001",
+                Projecttitle = "Updated FMD Survey"
+            };
+
+            var updatedEntity = new ProposedProject
+            {
+                Id = 1,
+                Parentproject = "PP001",
+                Projecttitle = "Updated FMD Survey"
+            };
+
+            var expectedDto = new ProposedProjectDto
+            {
+                Id = 1,
+                Parentproject = "PP001",
+                Projecttitle = "Updated FMD Survey"
+            };
+
+            _mockMapper.Map<ProposedProject>(dto).Returns(mappedEntity);
+            _mockRepository.UpdateProposedProjectAsync(mappedEntity, transferTo).Returns(updatedEntity);
+            _mockMapper.Map<ProposedProjectDto>(updatedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.UpdateProposedProjectAsync(dto, transferTo);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Parentproject.Should().Be("PP001");
+            _mockMapper.Received(1).Map<ProposedProject>(dto);
+            await _mockRepository.Received(1).UpdateProposedProjectAsync(mappedEntity, transferTo);
+            _mockMapper.Received(1).Map<ProposedProjectDto>(updatedEntity);
+            await _mockRepository.DidNotReceive().GetProposedProjectAsync(Arg.Any<string>());
+        }
+
+        [Fact]
         public async Task UpdateProposedProjectAsync_WithValidDto_SameTransferTo_ReturnsMappedUpdatedDto()
         {
             // Arrange — transferTo == dto.Parentproject (no project-code change)

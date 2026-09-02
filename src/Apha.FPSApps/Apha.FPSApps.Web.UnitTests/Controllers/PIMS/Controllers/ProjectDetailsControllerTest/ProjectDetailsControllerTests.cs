@@ -1207,6 +1207,34 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             await _projectDetailsServiceMock.Received(1).UpdateProposedProjectAsync("PP001", dto);
         }
 
+        [Fact]
+        public async Task UpdateProposedProject_WhenServiceReturnsFailure_ReturnsIndexViewWithErrors()
+        {
+            // Arrange
+            var dto = new ProposedProjectDto { Parentproject = "PP001", TransferTo = "PP002", Projecttitle = "Updated Title" };
+            var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = dto };
+            SetupSuccessfulIndexMocks(proposedProject: new ProposedProjectDto { Parentproject = "PP001" });
+            _projectDetailsServiceMock.UpdateProposedProjectAsync("PP001", dto)
+                .Returns(new ApiResponseDto<ProposedProjectDto>
+                {
+                    Success = false,
+                    Errors = [new ApiErrorDto { Message = "Project code 'PP002' already exists.", Code = "PROJECT_CODE_EXISTS" }]
+                });
+
+            // Act
+            var result = await _controller.UpdateProposedProject("PP001", viewModel);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Equal("Index", viewResult.ViewName);
+            var returnedModel = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
+            Assert.NotNull(returnedModel.ProposedProjectDetails);
+            Assert.Equal("PP002", returnedModel.ProposedProjectDetails!.TransferTo);
+            Assert.False(returnedModel.IsFPS);
+            Assert.False(_controller.ModelState.IsValid);
+            Assert.Contains(_controller.ModelState[string.Empty]!.Errors, e => e.ErrorMessage == "Project code 'PP002' already exists.");
+        }
+
         #endregion
 
         #region GetComment Tests

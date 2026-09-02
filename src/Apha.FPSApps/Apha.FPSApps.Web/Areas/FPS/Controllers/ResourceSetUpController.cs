@@ -43,7 +43,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             _appStateService = appStateService;
         }
 
-        public async Task<IActionResult> Index(string? profitCentre = null)
+        public async Task<IActionResult> Index(string? profitCentre = null, string? pcGrade = null, string? wgGrade = null, string? staffId = null)
         {
             // Fall back to the session value only when no profit centre was supplied on the
             // request (e.g. navigating in from another screen). An explicitly supplied empty
@@ -76,7 +76,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var viewModel = new ResourceSetUpViewModel
             {
                 ProfitCentre = selectedProfitCentre,
-                ProfitCentreList = profitCentreList
+                ProfitCentreList = profitCentreList,
+                RestorePcGrade = pcGrade,
+                RestoreWgGrade = wgGrade,
+                RestoreStaffId = staffId
             };
 
             // Load RC grades server-side when a profit centre is selected (same pattern as ProgramStaffPlan)

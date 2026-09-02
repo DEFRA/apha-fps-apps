@@ -60,20 +60,19 @@ namespace Apha.FPS.Application.Services
         {
             ArgumentNullException.ThrowIfNull(dto);
 
-            if (string.IsNullOrWhiteSpace(dto.PactId))
-            {
-                throw new ArgumentException("PACT Id is required.");
-            }
-
             if (string.IsNullOrWhiteSpace(dto.WorkGroupGrade))
             {
                 throw new ArgumentException("Work Group Grade is required.");
             }
 
-            var existing = await _repository.GetWorkGroupEmployeeByIdForStaffAsync(dto.PactId);
-            if (existing != null)
+            // Only duplicate-check when a PactId is explicitly provided (e.g. future manual entry)
+            if (!string.IsNullOrWhiteSpace(dto.PactId))
             {
-                throw new ArgumentException($"WorkGroupEmployee with PACT Id '{dto.PactId}' already exists.");
+                var existing = await _repository.GetWorkGroupEmployeeByIdForStaffAsync(dto.PactId);
+                if (existing != null)
+                {
+                    throw new ArgumentException($"WorkGroupEmployee with PACT Id '{dto.PactId}' already exists.");
+                }
             }
 
             var entity = _mapper.Map<WorkGroupEmployee>(dto);

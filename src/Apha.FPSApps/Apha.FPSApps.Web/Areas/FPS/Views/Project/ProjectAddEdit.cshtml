@@ -6,6 +6,10 @@
     
     var formId = isEditMode ? "editProgrammeNewProjectForm" : "addProgrammeNewProjectForm";
     var submitButtonText = isEditMode ? "Save" : "Save";
+
+    var allYears = await AppStateService.GetCacheValueAsync<IEnumerable<YearMasterDto>>(FpsCacheKeys.AllYears);
+    var fpsYearCode = allYears?.FirstOrDefault(y => y.FpsYear == FyContext.Year)?.FpsYearCode
+                      ?? FyContext.Year.ToString();
 }
 
 <main id="main-content">
@@ -16,9 +20,8 @@
                 <div class="row" style="display:flex; align-items: center;">
                     <div class="col-sm-12" style="padding:0px;">
                         <div class="sup_border-bottom" style="min-height:42px;">
-                            <h1 style="padding: 0 17px; height:42px; font-size:16px; font-weight: 700; margin: 0; display:flex; align-items:center; justify-content:space-between;">
-                                <span>2025-2026 : @(isEditMode ? $"Edit Project - {Model.ParentProject}" : "Set Up New Project")</span>
-                                <a href="@(Context.Request.Query.ContainsKey("returnUrl") ? Context.Request.Query["returnUrl"].ToString() : "javascript:history.back()")" class="govuk-back-link sup_align_right sup_back_link_center_right">Back</a>
+                            <h1 class="govuk-heading-s isCustomPageHeadings sup_margin_bottom_0 sup_project_addedit_heading">
+                                <span>@fpsYearCode : @(isEditMode ? $"Edit Project - {Model.ParentProject}" : "Set Up New Project")</span>
                             </h1>
                         </div>
                     </div>
@@ -49,12 +52,12 @@
                         }
 
                         <div class="row d-flex align-items-center mt-2 mb-2">
-                            <div class="col-lg-6">
-                                <h2 class="sup_text_color govuk-heading-s sup_align_flexheading">
+                            <div class="govuk-grid-column-one-half">
+                                <h2 class="sup_text_color govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 isInnerHeading">
                                     Please insert data for mandatory fields marked with *
                                 </h2>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="govuk-grid-column-one-half">
                                 <div class="action-buttons">
                                     @if (isEditMode)
                                     {
@@ -111,13 +114,13 @@
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="ProjectTitle">Description:</label>
-                                    <input type="text" asp-for="ProjectTitle" class="govuk-input" required />
+                                    <input type="text" asp-for="ProjectTitle" class="govuk-input" maxlength="200" required />
                                     <span asp-validation-for="ProjectTitle" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="ShortTitle">Short Title:</label>
-                                    <input type="text" asp-for="ShortTitle" class="govuk-input" required />
+                                    <input type="text" asp-for="ShortTitle" class="govuk-input" maxlength="30" required />
                                     <span asp-validation-for="ShortTitle" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
@@ -226,7 +229,7 @@
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="CostBookNo">CostBookNo:</label>
-                                    <input type="text" asp-for="CostBookNo" class="govuk-input" />
+                                    <input type="text" asp-for="CostBookNo" class="govuk-input" maxlength="50" />
                                     <span asp-validation-for="CostBookNo" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 

@@ -31,7 +31,7 @@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="PactId">
-                    PACT Id: <span class="sup_color_red">*</span>
+                    PACT Id: @if (isEditMode) { <span class="sup_color_red">*</span> }
                 </label>
                 @if (isEditMode)
                 {
@@ -45,12 +45,13 @@
                 }
                 else
                 {
-                    <input class="govuk-input govuk-!-font-size-16"
+                    <input class="govuk-input govuk-!-font-size-16 govuk-input--disabled"
                            id="PactId"
                            asp-for="PactId"
-                           type="number"
-                           min="1"
-                           required />
+                           type="text"
+                           placeholder="PACTId will be auto-generated"
+                           readonly
+                           tabindex="-1" />
                 }
                 <span asp-validation-for="PactId" class="govuk-error-message" style="display:none;"></span>
             </div>
@@ -180,7 +181,7 @@
                        type="number"
                        step="0.01"
                        required
-                       value="@(isEditMode ? Model?.HrsPaid.ToString() : string.Empty)" />
+                       value="@(isEditMode ? Model?.HrsPaid.ToString() : "0")" />
                 <span asp-validation-for="HrsPaid" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
@@ -196,7 +197,7 @@
                        type="number"
                        step="0.01"
                        required
-                       value="@(isEditMode ? Model?.Leave.ToString() : string.Empty)" />
+                       value="@(isEditMode ? Model?.Leave.ToString() : "0")" />
                 <span asp-validation-for="Leave" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
@@ -212,7 +213,7 @@
                        type="number"
                        step="0.01"
                        required
-                       value="@(isEditMode ? Model?.SickSpecial.ToString() : string.Empty)" />
+                       value="@(isEditMode ? Model?.SickSpecial.ToString() : "0")" />
                 <span asp-validation-for="SickSpecial" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
@@ -228,7 +229,8 @@
                        type="number"
                        step="0.01"
                        required
-                       value="@(isEditMode ? Model?.HrsAvail.ToString() : string.Empty)" />
+                       value="@(isEditMode ? Model?.HrsAvail.ToString() : "0")" />
+            <span asp-validation-for="HrsAvail" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
 

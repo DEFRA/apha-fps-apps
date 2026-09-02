@@ -81,9 +81,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             var descriptions = new[]
             {
                 new { key = "Frequency",        value = "Frequency" },
-                new { key = "PublicationTypes",  value = "Publication Types" },
-                new { key = "ReportGroups",      value = "Report Groups" },
-                new { key = "ReviewItems",       value = "Review Items" },
+                new { key = "PublicationTypes",  value = "PublicationTypes" },
+                new { key = "ReportGroups",      value = "ReportGroups" },
+                new { key = "ReviewItems",       value = "ReviewItems" },
                 new { key = "Risk",              value = "Risk" }
             };
             return Json(descriptions);
@@ -343,7 +343,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<OtherReportGroupItem>
             {
                 GridId = gridId,
-                Title = "Report Groups",
+                Title = "ReportGroups",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "GroupId",
@@ -1727,7 +1727,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<ReviewItemItem>
             {
                 GridId = gridId,
-                Title = "Review Items",
+                Title = "ReviewItems",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "Itemid",
@@ -1971,7 +1971,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<PublicationTypeItem>
             {
                 GridId = gridId,
-                Title = "Publication Types",
+                Title = "PublicationTypes",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "Type",

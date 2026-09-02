@@ -200,10 +200,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
         [Fact]
         public async Task Create_Get_ReturnsPartialView_WithLookupOptionsPopulated()
         {
-            var employeeResponse = ApiResponseDto<List<EmployeeDto>>.SuccessResponse(
-                new List<EmployeeDto>
+            var staffResponse = ApiResponseDto<List<StaffLookupDto>>.SuccessResponse(
+                new List<StaffLookupDto>
                 {
-                    new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Brown" }
+                    new() { SpNumber = "SP001", Name = "Brown Alice" }
                 });
             var gradeResponse = ApiResponseDto<List<WorkgroupGradeDto>>.SuccessResponse(
                 new List<WorkgroupGradeDto>
@@ -211,7 +211,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
                     new() { WgGrade = "A_BAC1", ProfitCentreGrade = "A-Bact", GradeCode = "A", Workgroup = "BAC1" }
                 });
 
-            _employeeService.GetFilteredEmployeesAsync(Arg.Any<QueryParameters<string>>(), 0).Returns(employeeResponse);
+            _employeeService.GetStaffNameLookupAsync().Returns(staffResponse);
             _workGroupGradeService.GetAllWorkgroupGradesPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(gradeResponse);
 
             var result = await _controller.Create();
@@ -252,7 +252,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
             var value = GetJsonResultValue<JsonResponse>(jsonResult);
             Assert.NotNull(value);
             Assert.True(value!.success);
-            Assert.Equal("WG Staff record created successfully", value.message);
+            Assert.Equal("WG Staff record created successfully. PACT Id for the record is: P001", value.message);
         }
 
         [Fact]
@@ -277,8 +277,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
                 WorkGroupGrade = "WG-A"
             };
 
-            var employeeResponse = ApiResponseDto<List<EmployeeDto>>.SuccessResponse(
-                new List<EmployeeDto> { new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Brown" } });
+            var staffResponse = ApiResponseDto<List<StaffLookupDto>>.SuccessResponse(
+                new List<StaffLookupDto> { new() { SpNumber = "SP001", Name = "Brown Alice" } });
             var gradeResponse = ApiResponseDto<List<WorkgroupGradeDto>>.SuccessResponse(
                 new List<WorkgroupGradeDto> { new() { WgGrade = "WG-A" } });
             var mappedModel = new WorkGroupEmployeeStaffItem { PactId = "P001", SpNumber = "SP001", Name = "Alice Brown", WorkGroupGrade = "WG-A" };
@@ -286,7 +286,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
             _workGroupEmployeeService.GetWorkGroupEmployeeByIdForStaffAsync("P001")
                 .Returns(ApiResponseDto<WorkGroupEmployeeStaffDto>.SuccessResponse(dto));
             _mapper.Map<WorkGroupEmployeeStaffItem>(dto).Returns(mappedModel);
-            _employeeService.GetFilteredEmployeesAsync(Arg.Any<QueryParameters<string>>(), 0).Returns(employeeResponse);
+            _employeeService.GetStaffNameLookupAsync().Returns(staffResponse);
             _workGroupGradeService.GetAllWorkgroupGradesPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(gradeResponse);
 
             var result = await _controller.Edit("P001");

@@ -64,7 +64,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ContributionSummaryControllerTest
                 new() { WorkGroup = "WG2", WgGrade = "G2" }
             };
 
-            _serviceMock.GetRowsAsync(sellingPc, Arg.Any<CancellationToken>()).Returns(dtos);
+            _serviceMock.GetRowsAsync(sellingPc, Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(dtos);
             _mapperMock.Map<List<ContributionSummaryRowRes>>(dtos).Returns(mappedResult);
 
             // Act
@@ -73,7 +73,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ContributionSummaryControllerTest
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mappedResult, okResult.Value);
-            await _serviceMock.Received(1).GetRowsAsync(sellingPc, Arg.Any<CancellationToken>());
+            await _serviceMock.Received(1).GetRowsAsync(sellingPc, Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
             _mapperMock.Received(1).Map<List<ContributionSummaryRowRes>>(dtos);
         }
 
@@ -85,7 +85,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ContributionSummaryControllerTest
             var dtos         = MakeRowDtos(0);
             var mappedResult = new List<ContributionSummaryRowRes>();
 
-            _serviceMock.GetRowsAsync(sellingPc, Arg.Any<CancellationToken>()).Returns(dtos);
+            _serviceMock.GetRowsAsync(sellingPc, Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(dtos);
             _mapperMock.Map<List<ContributionSummaryRowRes>>(dtos).Returns(mappedResult);
 
             // Act
@@ -99,6 +99,66 @@ namespace Apha.FPS.Api.UnitTests.Controller.ContributionSummaryControllerTest
 
         #endregion
 
+        #region GetRowsAsync — Sort parameters
+
+        [Theory]
+        [InlineData("WorkGroup", false)]
+        [InlineData("PctPlannedDisplay", true)]
+        [InlineData("Contribution", true)]
+        public async Task GetRowsAsync_ForwardsSortParametersToService(string sortBy, bool descending)
+        {
+            // Arrange
+            var sellingPc = "ENV";
+            var dtos      = MakeRowDtos(1);
+
+            _serviceMock.GetRowsAsync(sellingPc, sortBy, descending, Arg.Any<CancellationToken>()).Returns(dtos);
+            _mapperMock.Map<List<ContributionSummaryRowRes>>(dtos).Returns(new List<ContributionSummaryRowRes>());
+
+            // Act
+            var result = await _controller.GetRowsAsync(sellingPc, CancellationToken.None, sortBy, descending);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            await _serviceMock.Received(1).GetRowsAsync(sellingPc, sortBy, descending, Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GetRowsAsync_WhenSortParametersOmitted_UsesNullSortAndAscending()
+        {
+            // Arrange
+            var sellingPc = "ENV";
+            var dtos      = MakeRowDtos(1);
+
+            _serviceMock.GetRowsAsync(sellingPc, null, false, Arg.Any<CancellationToken>()).Returns(dtos);
+            _mapperMock.Map<List<ContributionSummaryRowRes>>(dtos).Returns(new List<ContributionSummaryRowRes>());
+
+            // Act
+            await _controller.GetRowsAsync(sellingPc, CancellationToken.None);
+
+            // Assert
+            await _serviceMock.Received(1).GetRowsAsync(sellingPc, null, false, Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GetRowsAsync_PassesCancellationTokenToService()
+        {
+            // Arrange
+            var sellingPc = "ENV";
+            using var cts = new CancellationTokenSource();
+            var dtos      = MakeRowDtos(1);
+
+            _serviceMock.GetRowsAsync(sellingPc, Arg.Any<string?>(), Arg.Any<bool>(), cts.Token).Returns(dtos);
+            _mapperMock.Map<List<ContributionSummaryRowRes>>(dtos).Returns(new List<ContributionSummaryRowRes>());
+
+            // Act
+            await _controller.GetRowsAsync(sellingPc, cts.Token);
+
+            // Assert
+            await _serviceMock.Received(1).GetRowsAsync(sellingPc, Arg.Any<string?>(), Arg.Any<bool>(), cts.Token);
+        }
+
+        #endregion
+
         #region GetRowsAsync — Validation
 
         [Fact]
@@ -108,7 +168,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ContributionSummaryControllerTest
             var ex = await Assert.ThrowsAsync<ArgumentException>(
                 () => _controller.GetRowsAsync(null!, CancellationToken.None));
             Assert.Equal("sellingPc is required. (Parameter 'sellingPc')", ex.Message);
-            await _serviceMock.DidNotReceive().GetRowsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await _serviceMock.DidNotReceive().GetRowsAsync(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         }
 
         [Theory]
@@ -119,7 +179,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ContributionSummaryControllerTest
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(
                 () => _controller.GetRowsAsync(sellingPc, CancellationToken.None));
-            await _serviceMock.DidNotReceive().GetRowsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await _serviceMock.DidNotReceive().GetRowsAsync(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         }
 
         #endregion
@@ -131,7 +191,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ContributionSummaryControllerTest
         {
             // Arrange
             var sellingPc = "ENV";
-            _serviceMock.GetRowsAsync(sellingPc, Arg.Any<CancellationToken>())
+            _serviceMock.GetRowsAsync(sellingPc, Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
                 .Throws(new Exception("Service error"));
 
             // Act & Assert

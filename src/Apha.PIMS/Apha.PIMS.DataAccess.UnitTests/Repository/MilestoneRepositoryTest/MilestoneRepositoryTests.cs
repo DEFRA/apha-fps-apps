@@ -21,7 +21,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             IEnumerable<MilestoneFormDates>? milestoneFormDates = null,
             IEnumerable<ProjectRadTrackData>? radtrackData = null,
             IEnumerable<StagingMilestone>? stagingMilestones = null,
-            IEnumerable<ProjectManager>? projectManagers = null)
+            IEnumerable<ProjectManager>? projectManagers = null,
+            IEnumerable<LogMilestone>? logMilestones = null)
         {
             var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
 
@@ -29,7 +30,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             var milestoneTypesMockSet = RepositoryTestHelper.CreateMockDbSet(milestoneTypes ?? Enumerable.Empty<MilestoneType>());
             var milestoneFormDatesMockSet = RepositoryTestHelper.CreateMockDbSet(milestoneFormDates ?? Enumerable.Empty<MilestoneFormDates>());
             var radtrackDataMockSet = RepositoryTestHelper.CreateMockDbSet(radtrackData ?? Enumerable.Empty<ProjectRadTrackData>());
-            var logMilestonesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<LogMilestone>());
+            var logMilestonesMockSet = RepositoryTestHelper.CreateMockDbSet(logMilestones ?? Enumerable.Empty<LogMilestone>());
             var stagingMilestonesMockSet = RepositoryTestHelper.CreateMockDbSet(stagingMilestones ?? Enumerable.Empty<StagingMilestone>());
             var projectManagersMockSet = RepositoryTestHelper.CreateMockDbSet(projectManagers ?? Enumerable.Empty<ProjectManager>());
 
@@ -67,7 +68,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
                 IEnumerable<MilestoneFormDates>? milestoneFormDates = null,
                 IEnumerable<ProjectRadTrackData>? radtrackData = null,
                 IEnumerable<StagingMilestone>? stagingMilestones = null,
-                IEnumerable<ProjectManager>? projectManagers = null)
+                IEnumerable<ProjectManager>? projectManagers = null,
+                IEnumerable<LogMilestone>? logMilestones = null)
         {
             var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
 
@@ -75,7 +77,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             var milestoneTypesMockSet = RepositoryTestHelper.CreateMockDbSet(milestoneTypes ?? Enumerable.Empty<MilestoneType>());
             var milestoneFormDatesMockSet = RepositoryTestHelper.CreateMockDbSet(milestoneFormDates ?? Enumerable.Empty<MilestoneFormDates>());
             var radtrackDataMockSet = RepositoryTestHelper.CreateMockDbSet(radtrackData ?? Enumerable.Empty<ProjectRadTrackData>());
-            var logMilestonesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<LogMilestone>());
+            var logMilestonesMockSet = RepositoryTestHelper.CreateMockDbSet(logMilestones ?? Enumerable.Empty<LogMilestone>());
             var stagingMilestonesMockSet = RepositoryTestHelper.CreateMockDbSet(stagingMilestones ?? Enumerable.Empty<StagingMilestone>());
             var projectManagersMockSet = RepositoryTestHelper.CreateMockDbSet(projectManagers ?? Enumerable.Empty<ProjectManager>());
 
@@ -173,6 +175,68 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             // Assert
             var numbers = result.Data.Select(m => m.Number).ToList();
             Assert.Equal(new[] { "M1", "M2", "M3" }, numbers);
+        }
+
+        [Theory]
+        [InlineData("Number", false, "M1")]
+        [InlineData("Number", true, "M3")]
+        [InlineData("Description", false, "M2")]
+        [InlineData("Description", true, "M1")]
+        [InlineData("ProjectLeaderComment", false, "M3")]
+        [InlineData("ProjectLeaderComment", true, "M2")]
+        [InlineData("CapsComment", false, "M2")]
+        [InlineData("CapsComment", true, "M1")]
+        [InlineData("DateDue", false, "M2")]
+        [InlineData("DateDue", true, "M1")]
+        [InlineData("DateCompleted", false, "M2")]
+        [InlineData("DateCompleted", true, "M1")]
+        public async Task GetAllMilestonesAsync_SortsBySupportedColumns(string sortBy, bool descending, string expectedFirstNumber)
+        {
+            // Arrange
+            var milestones = new List<Milestone>
+            {
+                new()
+                {
+                    Project = "PP001",
+                    Number = "M1",
+                    Description = "C",
+                    ProjectLeaderComment = "B",
+                    CapsComment = "C",
+                    DateDue = new DateTime(2024, 3, 1),
+                    DateCompleted = new DateTime(2024, 4, 1)
+                },
+                new()
+                {
+                    Project = "PP001",
+                    Number = "M2",
+                    Description = "A",
+                    ProjectLeaderComment = "C",
+                    CapsComment = "A",
+                    DateDue = new DateTime(2024, 1, 1),
+                    DateCompleted = new DateTime(2024, 2, 1)
+                },
+                new()
+                {
+                    Project = "PP001",
+                    Number = "M3",
+                    Description = "B",
+                    ProjectLeaderComment = "A",
+                    CapsComment = "B",
+                    DateDue = new DateTime(2024, 2, 1),
+                    DateCompleted = new DateTime(2024, 3, 1)
+                }
+            };
+
+            var repo = CreateRepository(milestones: milestones);
+            var parameters = DefaultParameters();
+            parameters.SortBy = sortBy;
+            parameters.Descending = descending;
+
+            // Act
+            var result = await repo.GetAllMilestonesAsync(parameters, "PP001");
+
+            // Assert
+            Assert.Equal(expectedFirstNumber, result.Data.First().Number);
         }
 
         [Fact]
@@ -1196,6 +1260,28 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         }
 
         [Fact]
+        public async Task GetAllStagingRowsAsync_SortsByNumberDescending_WhenSortByNumberProvided()
+        {
+            // Arrange
+            var staging = new List<StagingMilestone>
+            {
+                new() { Id = 1, Project = "PP001", Number = "01/01" },
+                new() { Id = 2, Project = "PP001", Number = "03/01" },
+                new() { Id = 3, Project = "PP001", Number = "02/01" }
+            };
+            var repo = CreateRepository(stagingMilestones: staging);
+            var parameters = DefaultParameters(page: 1, pageSize: 10);
+            parameters.SortBy = "number";
+            parameters.Descending = true;
+
+            // Act
+            var result = await repo.GetAllStagingRowsAsync(parameters);
+
+            // Assert
+            Assert.Equal(new[] { "03/01", "02/01", "01/01" }, result.Data.Select(x => x.Number));
+        }
+
+        [Fact]
         public async Task GetAllStagingRowsAsync_FiltersById_WhenIdFilterProvided()
         {
             // Arrange
@@ -1612,34 +1698,110 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             {
                 new() { Id = 1, Project = "PP001", Number = "25/01", UpdateType = 'I', DateChanged = new DateTime(2024, 1, 1) },
                 new() { Id = 2, Project = "PP001", Number = "25/02", UpdateType = 'U', DateChanged = new DateTime(2024, 1, 2) },
-                new() { Id = 3, Project = "PP002", Number = "25/01", UpdateType = 'I', DateChanged = new DateTime(2024, 1, 1) }
+                new() { Id = 3, Project = "PP002", Number = "25/03", UpdateType = 'D', DateChanged = new DateTime(2024, 1, 3) }
             };
-            var repo = CreateRepository();
+            var repo = CreateRepository(logMilestones: logMilestones);
 
             // Act
             var result = await repo.GetLogMilestonesAsync(DefaultParameters(), "PP001", null, null);
 
             // Assert
             Assert.NotNull(result);
-            // Note: This would return empty in mock context, but shows the concept
+            Assert.Equal(2, result.Data.Count);
+            Assert.All(result.Data, x => Assert.Equal("PP001", x.Project));
         }
 
         [Fact]
-        public async Task GetLogMilestonesAsync_FiltersByNumberPattern()
+        public async Task GetLogMilestonesAsync_SortsByNumberAscending()
         {
             // Arrange
-            var repo = CreateRepository();
+            var logMilestones = new List<LogMilestone>
+            {
+                new() { Id = 1, Project = "PP001", Number = "25/03", DateChanged = new DateTime(2024, 1, 1) },
+                new() { Id = 2, Project = "PP001", Number = "25/01", DateChanged = new DateTime(2024, 1, 2) },
+                new() { Id = 3, Project = "PP001", Number = "25/02", DateChanged = new DateTime(2024, 1, 3) }
+            };
+            var repo = CreateRepository(logMilestones: logMilestones);
+            var parameters = DefaultParameters();
+            parameters.SortBy = "Number";
+            parameters.Descending = false;
 
             // Act
-            var result = await repo.GetLogMilestonesAsync(DefaultParameters(), null, "25", "01");
+            var result = await repo.GetLogMilestonesAsync(parameters, "PP001", null, null);
 
             // Assert
-            Assert.NotNull(result);
+            Assert.Equal(new[] { "25/01", "25/02", "25/03" }, result.Data.Select(x => x.Number));
         }
-    }
-}
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_SortsByDateChangedDescending()
+        {
+            // Arrange
+            var logMilestones = new List<LogMilestone>
+            {
+                new() { Id = 1, Project = "PP001", Number = "25/01", DateChanged = new DateTime(2024, 1, 1) },
+                new() { Id = 2, Project = "PP001", Number = "25/02", DateChanged = new DateTime(2024, 1, 3) },
+                new() { Id = 3, Project = "PP001", Number = "25/03", DateChanged = new DateTime(2024, 1, 2) }
+            };
+            var repo = CreateRepository(logMilestones: logMilestones);
+            var parameters = DefaultParameters();
+            parameters.SortBy = "DateChanged";
+            parameters.Descending = true;
+
+            // Act
+            var result = await repo.GetLogMilestonesAsync(parameters, "PP001", null, null);
+
+            // Assert
+            Assert.Equal(new[] { "25/02", "25/03", "25/01" }, result.Data.Select(x => x.Number));
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_SortsByChangedByAscending_UsingJoinedManagerName()
+        {
+            // Arrange
+            var logMilestones = new List<LogMilestone>
+            {
+                new() { Id = 1, Project = "PP001", Number = "25/01", ChangedBy = "M002", DateChanged = new DateTime(2024, 1, 1) },
+                new() { Id = 2, Project = "PP001", Number = "25/02", ChangedBy = "M001", DateChanged = new DateTime(2024, 1, 2) }
+            };
+            var projectManagers = new List<ProjectManager>
+            {
+                new() { Mnumber = "M001", Projectmanager = "Alice" },
+                new() { Mnumber = "M002", Projectmanager = "Bob" }
+            };
+
+            var repo = CreateRepository(logMilestones: logMilestones, projectManagers: projectManagers);
+            var parameters = DefaultParameters();
+            parameters.SortBy = "ChangedBy";
+            parameters.Descending = false;
+
+            // Act
+            var result = await repo.GetLogMilestonesAsync(parameters, "PP001", null, null);
+
+            // Assert
+            Assert.Equal(new[] { "Alice", "Bob" }, result.Data.Select(x => x.ChangedBy));
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_FiltersByNumberPattern_ThrowsException_BecauseLikeRequiresDatabase()
+        {
+            // Arrange - EF.Functions.Like cannot be translated by this mock query provider
+            var logMilestones = new List<LogMilestone>
+            {
+                new() { Id = 1, Project = "PP001", Number = "25/01", DateChanged = new DateTime(2024, 1, 1) },
+                new() { Id = 2, Project = "PP001", Number = "25/02", DateChanged = new DateTime(2024, 1, 2) },
+                new() { Id = 3, Project = "PP001", Number = "26/01", DateChanged = new DateTime(2024, 1, 3) }
+            };
+            var repo = CreateRepository(logMilestones: logMilestones);
+
+            // Act + Assert
+            await Assert.ThrowsAnyAsync<Exception>(() =>
+                repo.GetLogMilestonesAsync(DefaultParameters(), null, "25", "01"));
+        }
 
         #endregion
+    }
+}
 
         
 

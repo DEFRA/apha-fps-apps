@@ -430,21 +430,14 @@ td.action-cell:nth-child(5) {
 .custom-table td {
   padding: 4px 10px !important;
   border: 1px solid #ddd;
-  white-space: nowrap;
   vertical-align: middle;
 }
  
 .custom-table th {
   padding: 9px 10px !important;
   border: 1px solid #ddd;
-  white-space: nowrap;
   vertical-align: middle;
 }
- 
-/* Prevent data bleed-through */
-/* .custom-table tbody td {
-  background-color: #ffffff;
-} */
  
 /* Optional row hover */
 .custom-table tbody tr:hover td {
@@ -1892,4 +1885,23 @@ textarea {
 }
 .govuk-back-link{
     font-weight: bold !important;
+}
+
+.modal-dialog {
+    .modal-header {
+        cursor: move;
+        .close,
+        .btn-close {
+            cursor: pointer;
+        }
+    }
+}
+.govuk-edit-modal-dialog {
+    .govuk-edit-modal__header {
+        cursor: move;
+        .close,
+        .btn-close {
+            cursor: pointer;
+        }
+    }
 }

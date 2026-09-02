@@ -4,6 +4,7 @@
 @model DataGridConfig<UserPermissionViewModel>
 @{
     var options = ViewBag.PermissionOptions as PermissionOptionsDto ?? new PermissionOptionsDto();
+    ViewData["Title"] = "Maintain User Permissions";
 }
 
 <main id="main-content" class="isClearfix isNoGlobalScrollBar">

@@ -1,4 +1,4 @@
-﻿namespace Apha.Common.Constants
+namespace Apha.Common.Constants
 {
     public static class FpsApiEndpoints
     {
@@ -31,6 +31,7 @@
         public const string GetAllManagers = "api/v1/employee/managers";
         public const string GetAllPactManagers = "api/v1/employee/pactmanagers";
         public const string GetAllPerson = "api/v1/employee/persons";
+        public const string GetStaffNameLookup = "api/v1/employee/stafflookup";
         public const string GetWorkGroupStaffPaginated = "api/v1/employee/WorkGroupStaff/paginated";
         public const string GetpactStaffs = "api/v1/employee/pactstaff";
         public const string GetPactWorkGroupStaff = "api/v1/employee/PactWorkGroupStaff?workGroup={0}";
@@ -257,7 +258,7 @@
         public const string GetTestsRequiredByRc = "api/v1/testsrequiredbyrc?profitCentre={0}";
 
         // Income/Contribution from Time Sales (frmTimeSellerPC)
-        public const string GetContributionSummaryRows   = "api/v1/timeseller/{0}/rows";
+        public const string GetContributionSummaryRows   = "api/v1/timeseller/{0}/rows?sortBy={1}&descending={2}";
         public const string GetContributionSummaryTotals = "api/v1/timeseller/{0}/totals";
         // Project Audit Trail (frmProjectChangesLog → api/v1/projectaudittrail)
         public const string GetProjectLogs = "api/v1/projectaudittrail/projectlogs";
@@ -286,7 +287,28 @@
         public const string SaveUserPermissions = "api/v1/user/{0}/permissions";
         public const string GetPermissionOptions = "api/v1/user/options";
 
-       
+        // Bulk Rates Update (FEC Phase 3)
+        public const string CreateBulkRatesRequest = "api/v1/bulk-rates/requests";
+        public const string GetBulkRatesRequests = "api/v1/bulk-rates/requests";
+        public const string CanInitiateBulkRatesRequest = "api/v1/bulk-rates/requests/can-initiate?jobName={0}";
+        public const string GetBulkRatesRequest = "api/v1/bulk-rates/requests/{0}";
+        public const string UploadBulkRatesFile = "api/v1/bulk-rates/requests/{0}/upload";
+        public const string GetBulkRatesValidation = "api/v1/bulk-rates/requests/{0}/validation";
+        public const string ReleaseBulkRatesRequest = "api/v1/bulk-rates/requests/{0}/release";
+        public const string ApproveBulkRatesRequest = "api/v1/bulk-rates/requests/{0}/approve";
+        public const string RejectBulkRatesRequest = "api/v1/bulk-rates/requests/{0}/reject";
+        public const string CancelBulkRatesRequest = "api/v1/bulk-rates/requests/{0}/cancel";
+        public const string DownloadBulkRatesFecTestDataForRequest = "api/v1/bulk-rates/requests/{0}/download";
+        public const string DownloadBulkRatesStaffTestDataForRequest = "api/v1/bulk-rates/requests/{0}/download/staff";
+        public const string DownloadBulkRatesAnimalTestDataForRequest = "api/v1/bulk-rates/requests/{0}/download/animal";
+        public const string ExportBulkRatesFecTestData = "api/v1/bulk-rates/export?fpsYear={0}";
+        public const string ExportBulkRatesStaffTestData = "api/v1/bulk-rates/export/staff?fpsYear={0}";
+        public const string ExportBulkRatesAnimalTestData = "api/v1/bulk-rates/export/animal?fpsYear={0}";
+        public const string GetBulkRatesStagingData = "api/v1/bulk-rates/requests/{0}/staging";
+        public const string ExportBulkRatesStagingData = "api/v1/bulk-rates/requests/{0}/staging/export";
+
+        // TRANSFORMENGINE: WorkgroupMaintenance (frmMaintWorkGroup2 — fps.workgroup) — added Phase 6
+        // CRUD endpoints
         public const string GetPagedWorkgroups = "api/v1/workgroup/paged";
         public const string GetWorkgroupByName = "api/v1/workgroup/{0}";
         public const string CreateWorkgroup = "api/v1/workgroup";
