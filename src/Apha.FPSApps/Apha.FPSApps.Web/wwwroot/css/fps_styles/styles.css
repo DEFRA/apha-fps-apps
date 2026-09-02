@@ -5341,6 +5341,29 @@ input.govuk-input.ssr-total-input[readonly] {
     height: 26px;
 }
 
+.ssr-grade-sort-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #0b0c0c;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+    .ssr-grade-sort-button:hover {
+        text-decoration: underline;
+    }
+
+.ssr-grade-sort-indicator {
+    font-size: 10px;
+    margin-left: 4px;
+}
+
 .asu-dropdown-wrapper {
     position: relative;
     display: flex;

@@ -13,11 +13,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 110, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? Program { get; set; }
 
-        [Display(Name = "Parent")]
+        [Display(Name = "Parent Project")]
         [GridColumn(Width = 110, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string ParentProject { get; set; } = null!;
 
-        [Display(Name = "ProjectTitle")]
+        [Display(Name = "Project Title")]
         [GridColumn(Width = 180, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string ProjectTitle { get; set; } = null!;
 
@@ -49,16 +49,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 120, Type = GridColumnType.GbpValue)]
         public decimal CustIncome { get; set; }
 
-        [Display(Name = "Budget CVL")]
+        [Display(Name = "Budget_CVL")]
         [DataType(DataType.Currency)]
         [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
         [GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
         public decimal? BudgetCvl { get; set; }
 
 
-        [DataType(DataType.Currency)]
-        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
-        [GridColumn(Width = 110, Type = GridColumnType.GbpValue)]
+        [Display(Name = "CaseWorkSub")]
+        [GridColumn(Width = 110, Type = GridColumnType.DecimalNumber)]
         public decimal? CaseWorkSub { get; set; }
 
 
