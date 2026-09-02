@@ -1928,7 +1928,11 @@ summary:focus-visible,
 .app-log:focus-visible,
 select.app-log:focus-visible,
 .custom-table :focus-visible,
-.editable-grid-table :focus-visible {
+.editable-grid-table :focus-visible,
+/* Forces the visible focus ring for elements focused programmatically via
+   JavaScript (e.g. re-focusing a dropdown trigger after selection), since
+   some browsers don't apply :focus-visible to script-driven .focus() calls. */
+.js-force-focus-visible {
     outline: 3px solid #fd0 !important;
     outline-offset: 0 !important;
 }
