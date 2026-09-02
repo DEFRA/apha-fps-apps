@@ -6,6 +6,7 @@
 
 <script src="~/js/common/_govuk_tabs.js"></script>
 <link href="~/css/common/_govuk_tabs.css" rel="stylesheet" />
+<link href="~/css/common/searchable-select.css" rel="stylesheet" />
 
 
 <div class="container-fluid">
@@ -27,7 +28,8 @@
                     <div class="govuk-grid-column-one-third">
                         <div class="govuk-form-group govuk-!-margin-bottom-0">
                             <label class="govuk-label govuk-!-font-weight-bold" for="programSelect">Select a Programme</label>
-                            <select class="govuk-select govuk-!-font-size-16" id="programSelect" asp-items="Model.ProgramList">
+                            <select class="govuk-select govuk-!-font-size-16" id="programSelect" asp-items="Model.ProgramList"
+                                    data-searchable-select data-placeholder="Type to search programme">
                                 <option value="">--select--</option>
                             </select>
                         </div>
@@ -36,7 +38,8 @@
                     <div class="govuk-grid-column-one-third">
                         <div class="govuk-form-group govuk-!-margin-bottom-0">
                             <label class="govuk-label govuk-!-font-weight-bold" for="projectGroupSelect">or Select Group</label>
-                            <select class="govuk-select govuk-!-font-size-16" id="projectGroupSelect" asp-items="Model.ProjectGroupList">
+                            <select class="govuk-select govuk-!-font-size-16" id="projectGroupSelect" asp-items="Model.ProjectGroupList"
+                                    data-searchable-select data-placeholder="Type to search group">
                                 <option value="">--select--</option>
                             </select>
                         </div>
@@ -45,7 +48,8 @@
                     <div class="govuk-grid-column-one-third">
                         <div class="govuk-form-group govuk-!-margin-bottom-0">
                             <label class="govuk-label govuk-!-font-weight-bold" for="projectSelect">or Find Project</label>
-                            <select class="govuk-select govuk-!-font-size-16" id="projectSelect" asp-items="Model.ProjectList">
+                            <select class="govuk-select govuk-!-font-size-16" id="projectSelect" asp-items="Model.ProjectList"
+                                    data-searchable-select data-placeholder="Type to search project">
                                 <option value="">--select--</option>
                             </select>
                         </div>
@@ -77,5 +81,6 @@
 
 
 @section Scripts {
+    <script src="~/js/common/searchable-select.js"></script>
     <script src="~/js/fps_js/ProjectPlanViewer.js"></script>
 }
