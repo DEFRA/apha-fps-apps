@@ -26,6 +26,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? ProjectManager { get; set; }
 
         [Display(Name = "No Tests")]  // ✅ Renamed from "No. Required" to "No Tests"
+        [NonFinancialRange]
         [GridColumn(Order = 3, Width = 90, Type = GridColumnType.DecimalNumber)]
         public decimal? NoRequired { get; set; }
 
