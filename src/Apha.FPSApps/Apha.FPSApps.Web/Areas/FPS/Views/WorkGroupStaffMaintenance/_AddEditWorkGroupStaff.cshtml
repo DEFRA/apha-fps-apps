@@ -146,12 +146,16 @@
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="PersonStatus">
                     Status: <span class="sup_color_red">*</span>
                 </label>
-                <input class="govuk-input govuk-!-font-size-16"
-                       id="PersonStatus"
-                       asp-for="PersonStatus"
-                       type="text"
-                       maxlength="10"
-                       required />
+                <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                        id="PersonStatus"
+                        asp-for="PersonStatus"
+                        required>
+                    <option value="">-- Select Status --</option>
+                    @foreach (var status in Apha.FPSApps.Application.Common.StaffStatus.All)
+                    {
+                        <option value="@status">@status</option>
+                    }
+                </select>
                 <span asp-validation-for="PersonStatus" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
