@@ -18,7 +18,7 @@
                        asp-for="WorkGroupGrade"
                        id="ssrEditGradeCode"
                        type="text"
-                       disabled />
+                       readonly />
             </div>
         </div>
         <div class="govuk-grid-column-one-half">
@@ -28,7 +28,7 @@
                        asp-for="SpNumber"
                        id="ssrEditSpNo"
                        type="text"
-                       disabled />
+                       readonly />
             </div>
         </div>
 
@@ -39,8 +39,8 @@
                 <input class="govuk-input govuk-!-font-size-16"
                        asp-for="Name"
                        id="ssrEditName"
-                       type="text" />
-                <span asp-validation-for="Name" class="govuk-error-message" style="display:none;"></span>
+                       type="text"
+                       readonly />
             </div>
         </div>
         <div class="govuk-grid-column-one-half">
@@ -92,7 +92,7 @@
                        type="number"
                        min="0"
                        step="0.01"
-                       disabled />
+                       readonly />
             </div>
         </div>
         <div class="govuk-grid-column-one-half">
