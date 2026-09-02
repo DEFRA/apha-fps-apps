@@ -52,6 +52,9 @@
                 @await Html.PartialAsync("_MiscReportsSideNav", Model.SelectedReport)
 
                 <div class="cc-content-column">
+                    <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading">
+                        @Model.SelectedReportTitle
+                    </h2>
                     <div id="gridContainer_miscReportsGrid">
                         @await Html.PartialAsync("_DataGrid", Model.Grid)
                     </div>
@@ -80,7 +83,8 @@
         function getMiscReportsExtraFilters() {
             return {
                 profitCentre: document.getElementById('SelectedProfitCentre')?.value ?? '',
-                report: '@Model.SelectedReport'
+                report: '@Model.SelectedReport',
+                FPSYear: '@Model.FpsYear'
             };
         }
 
