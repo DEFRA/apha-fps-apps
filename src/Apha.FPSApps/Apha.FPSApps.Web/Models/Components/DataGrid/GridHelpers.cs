@@ -107,6 +107,9 @@
                         return decDouble.ToString("F2");
                     if (value is float decFloat)
                         return ((double)decFloat).ToString("F2");
+                    if (value is string decString
+                        && decimal.TryParse(decString, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.CurrentCulture, out var parsedDec))
+                        return parsedDec.ToString("F2");
                     break;
                 case GridColumnType.Date:
                     if (value is DateTime dateValue)
