@@ -30,7 +30,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "Avail Hrs")]
         [NonFinancialRange]
-        [GridColumn(Order = 4, Width = 85, Type = GridColumnType.DecimalNumber)]
+        [GridColumn(Order = 4, Width = 85, Type = GridColumnType.DoubleNumber)]
         public double? AvHrs { get; set; }
 
         [Display(Name = "Chrg Rate")]
@@ -41,7 +41,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "PlanHrs")]
         [NonFinancialRange]
-        [GridColumn(Order = 6, Width = 85, Type = GridColumnType.DecimalNumber)]
+        [GridColumn(Order = 6, Width = 85, Type = GridColumnType.DoubleNumber)]
         public double? Hrs { get; set; }
 
         [Display(Name = "FEC")]
@@ -64,7 +64,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "PlanHrs")]
         [NonFinancialRange]
-        [GridColumn(Order = 9, Width = 85, Type = GridColumnType.DecimalNumber)]
+        [GridColumn(Order = 9, Width = 85, Type = GridColumnType.DoubleNumber)]
         public double? AppHours { get; set; }
 
         [Display(Name = "FEC")]
