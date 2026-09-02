@@ -115,6 +115,24 @@ namespace Apha.FPS.DataAccess.Repositories
             return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, true);
         }
 
+        public async Task SetTriggeredMetadataAsync(string jobExecutionId, string triggeredBy)
+        {
+            if (string.IsNullOrWhiteSpace(jobExecutionId) || !Guid.TryParse(jobExecutionId, out var parsedJobExecutionId))
+                throw new ArgumentException("A valid jobExecutionId is required.", nameof(jobExecutionId));
+
+            var queueRow = await _context.BatchJobQueues
+                .AsNoTracking().FirstOrDefaultAsync(q => q.JobExecutionId == parsedJobExecutionId)
+                ?? throw new KeyNotFoundException($"Batch job queue row for JobExecutionId '{jobExecutionId}' was not found.");
+
+            var nowUtc = DateTime.UtcNow;
+            queueRow.TriggeredBy = triggeredBy;
+            queueRow.TriggeredAtUtc = nowUtc;
+            queueRow.UpdatedAt = nowUtc;
+
+            _context.BatchJobQueues.Update(queueRow);
+            await _context.SaveChangesAsync();
+        }
+
         private async Task<bool> CanInitiateRequest(string jobName)
         {
             // Returns true when no records exist for the job, OR every record is in a terminal status (rejected / failed / cancelled).
@@ -204,12 +222,28 @@ namespace Apha.FPS.DataAccess.Repositories
                     .AsNoTracking().FirstOrDefaultAsync(j => j.JobqueueId == jobqueue.JobqueueId)
                     ?? throw new KeyNotFoundException($"Batch job queue for job '{jobName}' was not found.");
 
-                    //update the status of the job queue entry to "approved"
+                    //update the status of the job queue entry to "approved" or "rejected"
+                    var decidedAtUtc = DateTime.UtcNow;
                     queueRow.StatusId = jobStatus.StatusId;
                     queueRow.RequestedBy = requestedBy;
-                    queueRow.RequestedAtUtc = DateTime.UtcNow;
-                    queueRow.StartDateTime = DateTime.UtcNow;
+                    queueRow.RequestedAtUtc = decidedAtUtc;
+                    queueRow.StartDateTime = decidedAtUtc;
                     queueRow.ErrorMessage = note;
+
+                    // Approval/rejection audit columns - previously never written by this
+                    // repository at all.
+                    if (isReject)
+                    {
+                        queueRow.RejectedBy = requestedBy;
+                        queueRow.RejectedAtUtc = decidedAtUtc;
+                        queueRow.RejectionReason = note;
+                    }
+                    else
+                    {
+                        queueRow.ApprovedBy = requestedBy;
+                        queueRow.ApprovedAtUtc = decidedAtUtc;
+                    }
+
                     _context.BatchJobQueues.Update(queueRow);
 
                     BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, jobStatus.StatusId);

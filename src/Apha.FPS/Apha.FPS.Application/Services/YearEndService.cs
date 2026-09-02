@@ -111,9 +111,14 @@ namespace Apha.FPS.Application.Services
 
             var queued = await _yearEndRepository.EnqueueDataSetupApprovalBatchJobAsync(jobName, requestedBy, correlationId, note);
 
-            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, correlationId, plannedYear);
+            // Row's own persisted JobExecutionId, not the raw correlationId - Initiate and Approve
+            // are separate requests that never share a correlation id.
+            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, queued.JobExecutionId.ToString(), plannedYear);
 
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
+
+            // Only reached if PublishAsync succeeded - a failed publish leaves triggered_at_utc NULL.
+            await _yearEndRepository.SetTriggeredMetadataAsync(queued.JobExecutionId.ToString(), requestedBy);
 
             var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
             result.EventId = eventId;
@@ -218,9 +223,12 @@ namespace Apha.FPS.Application.Services
 
             var queued = await _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(jobName, requestedBy, correlationId, note);
 
-            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, correlationId, plannedYear);
+            // Same JobExecutionId reasoning as the DataSetup approval path above.
+            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, queued.JobExecutionId.ToString(), plannedYear);
 
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
+
+            await _yearEndRepository.SetTriggeredMetadataAsync(queued.JobExecutionId.ToString(), requestedBy);
 
             var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
             result.EventId = eventId;

@@ -1327,6 +1327,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.Equal(20,              result.StatusId);
             Assert.Equal(DefaultUserEmail, result.RequestedBy);
             Assert.Equal("approve note",  result.ErrorMessage);
+
+            // Assert — approval audit columns are now populated; previously never written at all.
+            Assert.Equal(DefaultUserEmail, result.ApprovedBy);
+            Assert.NotNull(result.ApprovedAtUtc);
+            Assert.Null(result.RejectedBy);
+            Assert.Null(result.RejectedAtUtc);
         }
 
         [Fact]
@@ -1497,6 +1503,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.Equal(30,               result.StatusId);
             Assert.Equal(DefaultUserEmail, result.RequestedBy);
             Assert.Equal("reject note",    result.ErrorMessage);
+
+            // Assert — rejection audit columns are now populated; previously never written at all.
+            Assert.Equal(DefaultUserEmail, result.RejectedBy);
+            Assert.NotNull(result.RejectedAtUtc);
+            Assert.Equal("reject note",    result.RejectionReason);
+            Assert.Null(result.ApprovedBy);
+            Assert.Null(result.ApprovedAtUtc);
         }
 
         [Fact]
@@ -2044,6 +2057,70 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             await Assert.ThrowsAsync<InvalidOperationException>(
                 () => repo.EnqueueCutOverRejectBatchJobAsync(
                     DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+        }
+
+        #endregion
+
+        #region SetTriggeredMetadataAsync
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("not-a-guid")]
+        public async Task SetTriggeredMetadataAsync_ThrowsArgumentException_WhenJobExecutionIdIsInvalid(string invalidId)
+        {
+            // Arrange
+            var (repo, _, _, _) = CreateRepository();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(
+                () => repo.SetTriggeredMetadataAsync(invalidId, DefaultUserEmail));
+        }
+
+        [Fact]
+        public async Task SetTriggeredMetadataAsync_ThrowsKeyNotFoundException_WhenRowDoesNotExist()
+        {
+            // Arrange — no queue rows exist at all
+            var (repo, _, _, _) = CreateRepository();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => repo.SetTriggeredMetadataAsync(Guid.NewGuid().ToString(), DefaultUserEmail));
+        }
+
+        [Fact]
+        public async Task SetTriggeredMetadataAsync_UpdatesQueueEntry_OnSuccess()
+        {
+            // Arrange
+            var job           = BuildJob(1, DefaultJobName);
+            var approvedStatus = BuildStatus(20, 1, "approved");
+            var existingQueue = BuildQueue(1, 20);
+
+            var (repo, _, queueSet, _) = CreateRepository(
+                jobs: [job], queues: [existingQueue], statuses: [approvedStatus]);
+
+            // Act
+            await repo.SetTriggeredMetadataAsync(existingQueue.JobExecutionId.ToString(), DefaultUserEmail);
+
+            // Assert
+            queueSet.Verify(x => x.Update(It.IsAny<BatchJobQueue>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task SetTriggeredMetadataAsync_CallsSaveChangesAsync_OnSuccess()
+        {
+            // Arrange
+            var job           = BuildJob(1, DefaultJobName);
+            var approvedStatus = BuildStatus(20, 1, "approved");
+            var existingQueue = BuildQueue(1, 20);
+
+            var (repo, mockContext, _, _) = CreateRepository(
+                jobs: [job], queues: [existingQueue], statuses: [approvedStatus]);
+
+            // Act
+            await repo.SetTriggeredMetadataAsync(existingQueue.JobExecutionId.ToString(), DefaultUserEmail);
+
+            // Assert
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
         }
 
         #endregion

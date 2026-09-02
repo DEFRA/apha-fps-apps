@@ -768,6 +768,88 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
                 Arg.Any<CancellationToken>());
         }
 
+        [Fact]
+        public async Task EnqueueYearEndDataSetupApprovalJobAsync_WhenAllValid_PublishesEventWithRowsJobExecutionId_NotCorrelationId()
+        {
+            // Arrange — JobExecutionId is deliberately different from CorrelationId here: Initiate
+            // and Approve are separate HTTP requests that never actually share a correlation id in
+            // practice, so the event must carry the job_queue row's own persisted JobExecutionId,
+            // not the raw X-Correlation-ID header of this Approval call.
+            SetupValidConfiguration();
+            SetupYearMasterNotFound();
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
+
+            var jobExecutionId = Guid.NewGuid();
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), JobExecutionId = jobExecutionId, RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueDataSetupApprovalBatchJobAsync(JobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
+                .Returns("evt-jobexec");
+
+            var triggerDto = new BatchJobEventTriggerDto();
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(triggerDto);
+            _mapper.Map<BatchJobEventTriggerDto>(triggerDto).Returns(triggerDto);
+
+            // Act
+            await _sut.EnqueueYearEndDataSetupApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            await _eventPublisherService.Received(1).PublishAsync(
+                Arg.Is<EventDetail>(e => e.JobExecutionId == jobExecutionId.ToString() && e.JobExecutionId != CorrelationId),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupApprovalJobAsync_WhenPublishSucceeds_CallsSetTriggeredMetadataWithRowsJobExecutionId()
+        {
+            // Arrange
+            SetupValidConfiguration();
+            SetupYearMasterNotFound();
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
+
+            var jobExecutionId = Guid.NewGuid();
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), JobExecutionId = jobExecutionId, RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueDataSetupApprovalBatchJobAsync(JobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
+                .Returns("evt-trigger");
+
+            var triggerDto = new BatchJobEventTriggerDto();
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(triggerDto);
+            _mapper.Map<BatchJobEventTriggerDto>(triggerDto).Returns(triggerDto);
+
+            // Act
+            await _sut.EnqueueYearEndDataSetupApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            await _yearEndRepository.Received(1).SetTriggeredMetadataAsync(jobExecutionId.ToString(), RequestedBy);
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupApprovalJobAsync_WhenPublishFails_DoesNotSetTriggeredMetadataAndPropagatesException()
+        {
+            // Arrange — a failed publish must leave the row Approved with triggered_at_utc still
+            // NULL, so SetTriggeredMetadataAsync must never be called on this path.
+            SetupValidConfiguration();
+            SetupYearMasterNotFound();
+            _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(JobName).Returns(true);
+            _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(JobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), JobExecutionId = Guid.NewGuid(), RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueDataSetupApprovalBatchJobAsync(JobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
+                .Throws(new InvalidOperationException("EventBridge unavailable"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _sut.EnqueueYearEndDataSetupApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            await _yearEndRepository.DidNotReceive().SetTriggeredMetadataAsync(Arg.Any<string>(), Arg.Any<string>());
+        }
+
         #endregion
 
         #region EnqueueYearEndDataSetupRejectJobAsync — validation
@@ -1234,6 +1316,81 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             await _yearEndRepository.Received(1).EnqueueCutOverApprovalBatchJobAsync(
                 CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>());
             await _eventPublisherService.Received(1).PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverApprovalJobAsync_WhenAllValid_PublishesEventWithRowsJobExecutionId_NotCorrelationId()
+        {
+            // Arrange — see the DataSetup approval equivalent for the full rationale.
+            SetupValidCutOverYearMaster();
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
+
+            var jobExecutionId = Guid.NewGuid();
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), JobExecutionId = jobExecutionId, RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
+                .Returns("evt-cutover-jobexec");
+
+            var triggerDto = new BatchJobEventTriggerDto();
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(triggerDto);
+            _mapper.Map<BatchJobEventTriggerDto>(triggerDto).Returns(triggerDto);
+
+            // Act
+            await _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            await _eventPublisherService.Received(1).PublishAsync(
+                Arg.Is<EventDetail>(e => e.JobExecutionId == jobExecutionId.ToString() && e.JobExecutionId != CorrelationId),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverApprovalJobAsync_WhenPublishSucceeds_CallsSetTriggeredMetadataWithRowsJobExecutionId()
+        {
+            // Arrange
+            SetupValidCutOverYearMaster();
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
+
+            var jobExecutionId = Guid.NewGuid();
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), JobExecutionId = jobExecutionId, RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
+                .Returns("evt-cutover-trigger");
+
+            var triggerDto = new BatchJobEventTriggerDto();
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(triggerDto);
+            _mapper.Map<BatchJobEventTriggerDto>(triggerDto).Returns(triggerDto);
+
+            // Act
+            await _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            await _yearEndRepository.Received(1).SetTriggeredMetadataAsync(jobExecutionId.ToString(), RequestedBy);
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverApprovalJobAsync_WhenPublishFails_DoesNotSetTriggeredMetadataAndPropagatesException()
+        {
+            // Arrange
+            SetupValidCutOverYearMaster();
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), JobExecutionId = Guid.NewGuid(), RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
+                .Throws(new InvalidOperationException("EventBridge unavailable"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            await _yearEndRepository.DidNotReceive().SetTriggeredMetadataAsync(Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Fact]
