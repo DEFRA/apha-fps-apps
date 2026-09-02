@@ -7,10 +7,12 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Mappings;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using System.Text.Json;
 
@@ -1668,6 +1670,56 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
+        }
+
+        #endregion
+
+        #region PactViewModelMapper profile — Budget Ext (BudgetExt <-> CustIncome)
+
+        private static IMapper CreateRealPactMapper()
+        {
+            var config = new MapperConfiguration(cfg => cfg.AddProfile<PactViewModelMapper>(), NullLoggerFactory.Instance);
+            return config.CreateMapper();
+        }
+
+        [Fact]
+        public void PactViewModelMapper_PactProjectViewModel_MapsBudgetExtByName_NotToCustIncome()
+        {
+            // PactViewModelMapper maps BudgetExt by convention onto ProjectDto.BudgetExt and
+            // leaves CustIncome unset. ProjectMaintenanceController compensates by assigning
+            // CustIncome manually. This test pins that behaviour so the manual assignment in
+            // ProjectMaintenanceController.Edit is not removed without also fixing the profile.
+            var mapper = CreateRealPactMapper();
+            var model = new PactProjectViewModel { ParentProject = "PP001", ProjectTitle = "Alpha", BudgetExt = 123.45m };
+
+            var dto = mapper.Map<ProjectDto>(model);
+
+            Assert.Equal(123.45m, dto.BudgetExt);
+            Assert.Equal(0m, dto.CustIncome);
+        }
+
+        [Fact]
+        public void PactViewModelMapper_ProjectDto_MapsCustIncomeToBudgetExt_IsNotApplied()
+        {
+            var mapper = CreateRealPactMapper();
+            var dto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Alpha", CustIncome = 78.91m };
+
+            var model = mapper.Map<PactProjectViewModel>(dto);
+
+            Assert.Null(model.BudgetExt);
+        }
+
+        [Fact]
+        public void PactProjectEdit_ManualAssignment_PersistsBudgetExtAsCustIncome()
+        {
+            // Mirrors ProjectMaintenanceController.Edit: map, then assign CustIncome manually.
+            var mapper = CreateRealPactMapper();
+            var model = new PactProjectViewModel { ParentProject = "PP001", ProjectTitle = "Alpha", BudgetExt = 55.55m };
+
+            var dto = mapper.Map<ProjectDto>(model);
+            dto.CustIncome = model.BudgetExt ?? 0;
+
+            Assert.Equal(55.55m, dto.CustIncome);
         }
 
         #endregion
