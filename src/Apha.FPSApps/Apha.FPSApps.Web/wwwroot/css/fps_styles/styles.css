@@ -5742,3 +5742,8 @@ input.govuk-input.ssr-total-input[readonly] {
         font-size: 19px;
     }
 }
+.sup_pagination_wrapper{
+    *{
+        font-size: 16px !important;
+    }
+}
