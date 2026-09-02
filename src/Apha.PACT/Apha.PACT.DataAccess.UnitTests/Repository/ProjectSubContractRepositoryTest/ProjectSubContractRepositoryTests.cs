@@ -722,7 +722,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
         }
 
         [Fact]
-        public async Task GetFailedSubContractRmsAsync_WithRows_ReturnsLatestImportDateRowsOnly()
+        public async Task GetFailedSubContractRmsAsync_WithRows_ReturnsAllFailedRowsForUser()
         {
             // Arrange
             var oldDate = new DateTime(2024, 4, 1, 9, 0, 0);
@@ -742,9 +742,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             var result = await repo.GetFailedSubContractRmsAsync(query, "user2");
 
             // Assert
-            Assert.Single(result.Data);
-            Assert.Equal(2, result.Data.First().Id);
-            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.Data.Count);
+            Assert.Equal(new[] { 1, 2 }, result.Data.Select(x => x.Id).ToArray());
+            Assert.Equal(2, result.PaginationData.TotalRecords);
         }
 
         [Fact]

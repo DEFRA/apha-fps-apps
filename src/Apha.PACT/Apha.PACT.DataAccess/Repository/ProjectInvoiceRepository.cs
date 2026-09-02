@@ -167,27 +167,9 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<PagedData<InvoiceImportRow>> GetFailedInvoiceImportAsync(PaginationParameters<string> query, string importedBy)
         {
-            var latestImportedDate = await _context.ProjectInvoiceStagings
-                .AsNoTracking()
-                .Where(x => x.ImportedBy == importedBy && x.IsPassed == false)
-                .MaxAsync(x => x.ImportedDate);
-
-            if (!latestImportedDate.HasValue)
-            {
-                return new PagedData<InvoiceImportRow>(
-                    Array.Empty<InvoiceImportRow>(),
-                    new PaginationData
-                    {
-                        PageNumber = query.Page,
-                        PageSize = query.PageSize,
-                        TotalRecords = 0,
-                        TotalPages = 0
-                    });
-            }
-
             IQueryable<ProjectInvoiceStaging> failedQuery = _context.ProjectInvoiceStagings
                 .AsNoTracking()
-                .Where(x => x.ImportedBy == importedBy && x.IsPassed == false && x.ImportedDate == latestImportedDate.Value);
+                .Where(x => x.ImportedBy == importedBy && x.IsPassed == false);
 
             failedQuery = ApplyFailedInvoiceFilter(failedQuery, query.Filter);
             failedQuery = ApplyFailedInvoiceSorting(failedQuery, query.SortBy, query.Descending);

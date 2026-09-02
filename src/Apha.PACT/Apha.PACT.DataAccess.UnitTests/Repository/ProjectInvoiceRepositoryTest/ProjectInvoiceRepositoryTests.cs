@@ -634,7 +634,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
         }
 
         [Fact]
-        public async Task GetFailedInvoiceImportAsync_WithRecords_ReturnsLatestImportOnly()
+        public async Task GetFailedInvoiceImportAsync_WithRecords_ReturnsAllFailedRowsForUser()
         {
             var oldDate = new DateTime(2024, 1, 1);
             var newDate = new DateTime(2024, 6, 1);
@@ -649,7 +649,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
 
             var result = await repo.GetFailedInvoiceImportAsync(query, "user1");
 
-            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.Equal(3, result.PaginationData.TotalRecords);
         }
 
         [Fact]
