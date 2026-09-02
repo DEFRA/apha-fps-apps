@@ -2025,6 +2025,115 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         }
 
         [Fact]
+        public async Task GetStaffResourceUtilisationAsync_MatchesZtProgramCaseInsensitively()
+        {
+            // Arrange - the stored program value uses different casing ("ZT_Prog")
+            // than the internal "zt_prog" literal. ZT hours must still be recognised.
+            var data = BuildUtilisationDataset();
+            var ztProject = data.Projects.Single(p => p.ParentProject == "ZTJOB");
+            ztProject.Program = "ZT_Prog";
+
+            var repo = CreateRepository(
+                workgroupGrades: data.WorkgroupGrades,
+                staffViews: data.StaffViews,
+                profitCentreGrades: data.ProfitCentreGrades,
+                staffJobRmViews: data.StaffJobRmViews,
+                projects: data.Projects);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetStaffResourceUtilisationAsync(query, "IT");
+
+            // Assert - ZT hours (5) are attributed to PlannedZt (ZTW column),
+            // not left inside the Approved plan.
+            var row = Assert.Single(result.Data);
+            Assert.Equal(5, row.PlannedZt);
+            Assert.Equal(40, row.ApprovedSoct);   // 45 - 5
+            Assert.Equal(95, row.AvailSoct);      // 100 - 5
+        }
+
+        [Fact]
+        public async Task GetStaffResourceUtilisationAsync_CollapsesDuplicateStaffNames_IntoSingleRow()
+        {
+            // Arrange - fps.vtblstaff can surface the same StaffID under two different names
+            // (e.g. "D_DSG, General" and "D_IMT1, General"). This mirrors the Access query, which
+            // groups by StaffID (not Name) and projects First(Name); the web must produce ONE row
+            // per staff with the ZTW/planned hours counted once, not two duplicate double-counted rows.
+            var data = BuildUtilisationDataset();
+            data.StaffViews.Add(new StaffView
+            {
+                StaffId = "S001",
+                Name = "IMT1, General",
+                WorkgroupGrade = "WG01",
+                FpsYear = DefaultTestFpsYear,
+                UserEmail = DefaultUserEmail,
+                HrsAvail = 100
+            });
+
+            var repo = CreateRepository(
+                workgroupGrades: data.WorkgroupGrades,
+                staffViews: data.StaffViews,
+                profitCentreGrades: data.ProfitCentreGrades,
+                staffJobRmViews: data.StaffJobRmViews,
+                projects: data.Projects);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetStaffResourceUtilisationAsync(query, "IT");
+
+            // Assert - a single collapsed row; ZTW/planned hours counted once, not doubled.
+            var row = Assert.Single(result.Data);
+            Assert.Equal("S001", row.StaffId);
+            Assert.Equal(5, row.PlannedZt);
+            Assert.Equal(40, row.ApprovedSoct);
+            Assert.Equal(95, row.AvailSoct);
+            Assert.Equal(10, row.NotApprovedSoct);
+        }
+
+        [Fact]
+        public async Task GetStaffResourceUtilisationAsync_SumsMultipleZtJobs_WithIdenticalHoursAndProgram()
+        {
+            // Arrange - two DISTINCT ZT codes allocated against the same staff, each with the same
+            // hours, program and status (e.g. NCAM0003 = 10 and NCEB0004 = 10). They differ only by
+            // JobCode, so both must be counted: ZTW = 10 + 10 = 20 (not collapsed to a single 10).
+            var data = BuildUtilisationDataset();
+            data.StaffJobRmViews.Add(new StaffJobRmView
+            {
+                StaffId = "S001",
+                JobCode = "ZTJOB2",
+                PlannedHours = 5,
+                FpsYear = DefaultTestFpsYear
+            });
+            data.Projects.Add(new Project
+            {
+                ParentProject = "ZTJOB2",
+                Program = "zt_prog",
+                ProjectStatus = "Approved",
+                FpsYear = DefaultTestFpsYear
+            });
+
+            var repo = CreateRepository(
+                workgroupGrades: data.WorkgroupGrades,
+                staffViews: data.StaffViews,
+                profitCentreGrades: data.ProfitCentreGrades,
+                staffJobRmViews: data.StaffJobRmViews,
+                projects: data.Projects);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetStaffResourceUtilisationAsync(query, "IT");
+
+            // Assert - both ZT allocations are summed (5 + 5 = 10), not collapsed by Distinct.
+            var row = Assert.Single(result.Data);
+            Assert.Equal(10, row.PlannedZt);
+            Assert.Equal(40, row.ApprovedSoct);   // (40 + 5 + 5) approvedRaw - 10 plannedZt
+            Assert.Equal(90, row.AvailSoct);      // 100 - 10
+        }
+
+        [Fact]
         public async Task GetStaffResourceUtilisationAsync_ReturnsNullPercentages_WhenHrsAvailIsZero()
         {
             // Arrange
