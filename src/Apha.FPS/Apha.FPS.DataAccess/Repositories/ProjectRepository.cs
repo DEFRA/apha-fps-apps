@@ -337,6 +337,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     Programme      = prj.Program,
                     ContractNumber = prj.Contract,
                     Project        = prj.ParentProject,
+                    ProjectStatus  = prj.ProjectStatus,
                     AccountCat     = ac.Account,
                     Description    = ac.Description,
                     ItemCost       = ac.ItemCost
@@ -371,6 +372,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 ("Programme", r => r.Programme),
                 ("ContractNumber", r => r.ContractNumber),
                 ("Project", r => r.Project),
+                ("ProjectStatus", r => r.ProjectStatus),
                 ("AccountCat", r => r.AccountCat),
                 ("Description", r => r.Description)
             };
@@ -407,6 +409,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 "programme"      => descending ? rows.OrderByDescending(r => r.Programme).ToList()      : rows.OrderBy(r => r.Programme).ToList(),
                 "contractnumber" => descending ? rows.OrderByDescending(r => r.ContractNumber).ToList() : rows.OrderBy(r => r.ContractNumber).ToList(),
                 "project"        => descending ? rows.OrderByDescending(r => r.Project).ToList()        : rows.OrderBy(r => r.Project).ToList(),
+                "projectstatus"  => descending ? rows.OrderByDescending(r => r.ProjectStatus).ToList()  : rows.OrderBy(r => r.ProjectStatus).ToList(),
                 "accountcat"     => descending ? rows.OrderByDescending(r => r.AccountCat).ToList()     : rows.OrderBy(r => r.AccountCat).ToList(),
                 "description"    => descending ? rows.OrderByDescending(r => r.Description).ToList()    : rows.OrderBy(r => r.Description).ToList(),
                 "itemcost"       => descending ? rows.OrderByDescending(r => r.ItemCost).ToList()       : rows.OrderBy(r => r.ItemCost).ToList(),
@@ -735,6 +738,22 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
+        /// <summary>
+        /// Orders a nullable column using MS Access null semantics, where Null is treated as the
+        /// lowest value (blanks first ascending, last descending). PostgreSQL defaults to
+        /// NULLS LAST ascending, so a null-rank key is sorted ahead of the value to match Access.
+        /// </summary>
+        private static IQueryable ApplyOrderWithAccessNullSemantics<T>(
+            IQueryable<Project> query,
+            Expression<Func<Project, T?>> keySelector,
+            Expression<Func<Project, int>> nullRankSelector,
+            bool descending) where T : struct
+        {
+            return descending
+                ? query.OrderByDescending(nullRankSelector).ThenByDescending(keySelector)
+                : query.OrderBy(nullRankSelector).ThenBy(keySelector);
+        }
+
         private static IQueryable<Project> ApplyProjectFilter(IQueryable<Project> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
@@ -841,6 +860,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 "budget"           => ApplyOrder(query, p => p.BudgetCvl, descending),
                 "budgetcvl"        => ApplyOrder(query, p => p.BudgetCvl, descending),
                 "transferincome"   => ApplyOrder(query, p => p.TransferIncome, descending),
+                "caseworksub"      => ApplyOrderWithAccessNullSemantics(query, p => p.CaseWorkSub, p => p.CaseWorkSub == null ? 0 : 1, descending),
+                "pvsincome"        => ApplyOrder(query, p => p.PvsIncome, descending),
                 "plancaseworkdebit"=> ApplyOrder(query, p => p.PlanCaseWorkDebit, descending),
                 "costcentre"       => ApplyOrder(query, p => p.CostCentre, descending),
                 "oracleprojectcode"=> ApplyOrder(query, p => p.OracleProjectCode, descending),
