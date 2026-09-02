@@ -58,7 +58,8 @@ namespace Apha.PIMS.Application.Services
         {
             var errors = new List<BusinessValidationError>();
             if (string.IsNullOrWhiteSpace(dto.Parentproject))
-                errors.Add(new BusinessValidationError("Project is required.", "PROJECT_REQUIRED"));
+                errors.Add(new BusinessValidationError("Project is required.", "PROJECT_REQUIRED"));           
+
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
