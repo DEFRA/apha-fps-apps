@@ -1355,6 +1355,29 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Null(items[3].CaseWorkSub);
         }
 
+        [Theory]
+        [InlineData("Contract", "CON2", "PP002")]
+        [InlineData("ProjectStatus", "Closed", "PP002")]
+        [InlineData("Customer", "Beta Corp", "PP002")]
+        public async Task GetPagedProjectSnapshotDataAsync_FiltersByTextColumn(string key, string value, string expectedParentProject)
+        {
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P1", Customer = "Alpha Ltd", Contract = "CON1", Disease = "D1", ProjectStatus = "Active", IncomeAccountCode = "I1" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta",  Program = "P1", Customer = "Beta Corp", Contract = "CON2", Disease = "D1", ProjectStatus = "Closed", IncomeAccountCode = "I1" },
+            };
+            var repo = CreateRepository(projects: projects);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                Filter = $"{{\"{key}\":\"{value}\"}}"
+            };
+
+            var result = await repo.GetPagedProjectSnapshotDataAsync(query);
+
+            var item = Assert.Single(result.Data);
+            Assert.Equal(expectedParentProject, item.ParentProject);
+        }
+
         private static List<Project> BuildCaseWorkSubProjects()
         {
             return new List<Project>

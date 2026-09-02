@@ -771,6 +771,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 ("Program", x => x.Program),
                 ("ProjectTitle", x => x.ProjectTitle),
                 ("Manager", x => x.Manager),
+                ("Contract", x => x.Contract),
+                ("ProjectStatus", x => x.ProjectStatus),
+                ("Customer", x => x.Customer),
                 ("OracleProjectCode", x => x.OracleProjectCode),
                 ("SubAccountCode", x => x.SubAccountCode)
             };
