@@ -33,26 +33,11 @@
                          style="margin: 8px; display: flex; align-items: flex-end;">
 
                         <div style="margin: 0 7px; flex: 1;">
-                            <label for="dpprojectSelect " class="govuk-label tab-font-size govuk-!-font-weight-bold sup_font_weight_700">
+                            <label for="dpprojectSelectMulti_input" class="govuk-label tab-font-size govuk-!-font-weight-bold sup_font_weight_700">
                                 Select a Project
                             </label>
-                            <select id="dpprojectSelect"
-                                    class="govuk-select project-dropdown tab-font-size"
-                                    style="width: 100%;">
-                                <option value="">Select a Project</option>
-                                    @foreach (var item in Model.ProjectOptions)
-                                    {
-                                    if (item.Value == Model.Parentproject)
-                                    {
-                                        <option value="@item.Value" selected="selected">@item.Text</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@item.Value">@item.Text</option>
-                                    }
-                                }
-                            </select>
-                                </div>
+                            <div id="dpprojectSelectMultiDropdown" style="width: 100%;"></div>
+                        </div>
 
                         <div style="margin: 0 5px; flex: 1;">
                             <label for="dpyear" class="govuk-label govuk-!-font-weight-bold tab-font-size sup_font_weight_700">Year</label>
@@ -315,27 +300,27 @@
                             </div>
                             <div class="govuk-form-group">
                                 <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pd-transferincome">Transfer Income</label>
-                                <input class="govuk-input govuk-!-font-size-16" id="pd-transferincome" name="transferincome" type="text" readonly>
+                                <input class="govuk-input govuk-!-font-size-16 govuk-!-text-align-right" id="pd-transferincome" name="transferincome" type="text" readonly>
                             </div>
                             <div class="govuk-form-group">
                                 <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pd-custincome">Cust Income</label>
-                                <input class="govuk-input govuk-!-font-size-16" id="pd-custincome" name="custincome" type="text" readonly>
+                                <input class="govuk-input govuk-!-font-size-16 govuk-!-text-align-right" id="pd-custincome" name="custincome" type="text" readonly>
                             </div>
                             <div class="govuk-form-group">
                                 <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pd-feecost">FE Cost</label>
-                                <input class="govuk-input govuk-!-font-size-16" id="pd-feecost" name="feecost" type="text" readonly>
+                                <input class="govuk-input govuk-!-font-size-16 govuk-!-text-align-right" id="pd-feecost" name="feecost" type="text" readonly>
                             </div>
                             <div class="govuk-form-group">
                                 <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pd-profit">Profit</label>
-                                <input class="govuk-input govuk-!-font-size-16" id="pd-profit" name="profit" type="text" readonly>
+                                <input class="govuk-input govuk-!-font-size-16 govuk-!-text-align-right" id="pd-profit" name="profit" type="text" readonly>
                             </div>
                             <div class="govuk-form-group">
                                 <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pd-carryover">Carry Over</label>
-                                <input class="govuk-input govuk-!-font-size-16" id="pd-carryover" name="carryover" type="text" readonly>
+                                <input class="govuk-input govuk-!-font-size-16 govuk-!-text-align-right" id="pd-carryover" name="carryover" type="text" readonly>
                             </div>
                             <div class="govuk-form-group">
                                 <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pd-budgetcvl">Budget CVL</label>
-                                <input class="govuk-input govuk-!-font-size-16" id="pd-budgetcvl" name="budgetcvl" type="text" readonly>
+                                <input class="govuk-input govuk-!-font-size-16 govuk-!-text-align-right" id="pd-budgetcvl" name="budgetcvl" type="text" readonly>
                             </div>
                             <div class="govuk-form-group">
                                 <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pd-caseworksub">Casework Sub</label>
@@ -343,7 +328,7 @@
                             </div>
                             <div class="govuk-form-group">
                                 <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pd-costcentre">Cost Centre</label>
-                                <input class="govuk-input govuk-!-font-size-16" id="pd-costcentre" name="costcentre" type="text" readonly>
+                                <input class="govuk-input govuk-!-font-size-16 govuk-!-text-align-right" id="pd-costcentre" name="costcentre" type="text" readonly>
                             </div>
                             <div class="govuk-form-group">
                                 <label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="pd-pvsincome">PVS Income</label>
@@ -597,8 +582,18 @@
     </main>
 </div>
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+}
+
 @section Scripts {
+<script src="~/js/common/multicolumn-dropdown.component.js"></script>
 <script>
+    const projectOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ProjectOptions));
+    const preselectedProject = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Parentproject ?? string.Empty));
+    var projectSelectDropdown = null;
+    var selectedProjectValue = preselectedProject || '';
+
     var plansGridId            = '@Model.AdditionalPlansGrid.GridId';
     var actualsGridId          = '@Model.AdditionalActualsGrid.GridId';
     var animalPlansGridId      = '@Model.AnimalPlansGrid.GridId';
@@ -619,9 +614,16 @@
         document.querySelector('.sidenav').classList.toggle('collapsed');
     }
 
+    function getSelectedProjectValue() {
+        if (projectSelectDropdown) {
+            return projectSelectDropdown.getValue() || '';
+        }
+        return selectedProjectValue || '';
+    }
+
     function getYearCostsExtraFilters() {
         return {
-            project: document.getElementById('dpprojectSelect').value,
+            project: getSelectedProjectValue(),
             year:    document.getElementById('dpyear').value
         };
     }
@@ -640,54 +642,6 @@
     function getPlanAdditionalGridManager() { return window['gridManager_' + planAdditionalGridId]; }
     function getPactPayGridManager()        { return window['gridManager_' + pactPayGridId]; }
     function getMonthlyPactGridManager()   { return window['gridManager_' + monthlyPactGridId]; }
-
-    function positionProjectPickerPanel() {
-        var panel = document.getElementById('dpprojectSelectPanel');
-        var display = document.getElementById('dpprojectSelectDisplay');
-        if (!panel || !display) return;
-
-        panel.style.top = 'calc(100% + 2px)';
-        panel.style.bottom = 'auto';
-
-        var rect = display.getBoundingClientRect();
-        var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-        var spaceBelow = viewportHeight - rect.bottom - 12;
-        var spaceAbove = rect.top - 12;
-        var preferredHeight = 240;
-
-        if (spaceBelow < preferredHeight && spaceAbove > spaceBelow) {
-            panel.style.top = 'auto';
-            panel.style.bottom = 'calc(100% + 2px)';
-            panel.style.maxHeight = Math.max(120, Math.min(preferredHeight, spaceAbove)) + 'px';
-        } else {
-            panel.style.maxHeight = Math.max(120, Math.min(preferredHeight, spaceBelow)) + 'px';
-        }
-    }
-
-    function toggleProjectPicker(forceOpen) {
-        var panel = document.getElementById('dpprojectSelectPanel');
-        var display = document.getElementById('dpprojectSelectDisplay');
-        if (!panel || !display) return;
-
-        var shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : panel.hidden;
-        panel.hidden = !shouldOpen;
-        display.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
-
-        if (shouldOpen) {
-            positionProjectPickerPanel();
-        }
-    }
-
-    function selectProjectPickerOption(value, text) {
-        var hidden = document.getElementById('dpprojectSelect');
-        var display = document.getElementById('dpprojectSelectDisplay');
-        if (!hidden || !display) return;
-
-        hidden.value = value || '';
-        display.textContent = text || 'Select a Project';
-        toggleProjectPicker(false);
-        hidden.dispatchEvent(new Event('change'));
-    }
 
 
     function syncPactPayFooterColumns() {
@@ -711,7 +665,7 @@
     }
 
     function refreshPactPayTotals() {
-        var project = document.getElementById('dpprojectSelect').value;
+        var project = getSelectedProjectValue();
         var year    = document.getElementById('dpyear').value;
         if (!project || !year) return;
 
@@ -725,7 +679,7 @@
     }
 
     function refreshPlanTotals() {
-        var project = document.getElementById('dpprojectSelect').value;
+        var project = getSelectedProjectValue();
         var year    = document.getElementById('dpyear').value;
         if (!project || !year) return;
 
@@ -739,7 +693,7 @@
     }
 
     function refreshMonthlyPactTotals() {
-        var project = document.getElementById('dpprojectSelect').value;
+        var project = getSelectedProjectValue();
         var year    = document.getElementById('dpyear').value;
         if (!project || !year) return;
 
@@ -757,7 +711,7 @@
     }
 
     function refreshMonthlyPactFpsPlanned() {
-        var project = document.getElementById('dpprojectSelect').value;
+        var project = getSelectedProjectValue();
         var year    = document.getElementById('dpyear').value;
         if (!project || !year) return;
 
@@ -776,7 +730,7 @@
     }
 
     function refreshPlanVsActualsTotals() {
-        var project = document.getElementById('dpprojectSelect').value;
+        var project = getSelectedProjectValue();
         var year    = document.getElementById('dpyear').value;
         if (!project || !year) return;
 
@@ -863,7 +817,7 @@
     }
 
     function refreshTabById(tabId) {
-        var project = document.getElementById('dpprojectSelect').value;
+        var project = getSelectedProjectValue();
         var year    = document.getElementById('dpyear').value;
         if (!project || !year) return;
 
@@ -917,38 +871,37 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        var projectPickerDisplay = document.getElementById('dpprojectSelectDisplay');
-        var projectPickerPanel = document.getElementById('dpprojectSelectPanel');
+        projectSelectDropdown = new MultiColumnDropdownComponent({
+            dropdownId: 'dpprojectSelectMulti',
+            containerSelector: '#dpprojectSelectMultiDropdown',
+            placeholder: 'Select a Project',
+            searchPlaceholder: 'Search by project',
+            showSerialNumber: false,
+            columns: [
+                { field: 'Text', header: 'Project', width: '320px' }
+            ],
+            data: projectOptionsListData || [],
+            displayField: 'Text',
+            valueField: 'Value',
+            clearButtonClearsSelection: false,
+            callbacks: {
+                onSelect: function (selectedItem) {
+                    if (!selectedItem) return;
 
-        if (projectPickerDisplay && projectPickerPanel) {
-            projectPickerDisplay.addEventListener('click', function (e) {
-                e.stopPropagation();
-                toggleProjectPicker();
-            });
+                    var selectedValue = selectedItem.Value || '';
+                    var previousValue = selectedProjectValue;
+                    selectedProjectValue = selectedValue;
 
-            window.addEventListener('resize', function () {
-                if (!projectPickerPanel.hidden) {
-                    positionProjectPickerPanel();
+                    if (previousValue !== selectedValue) {
+                        refreshActiveTab();
+                    }
                 }
-            });
+            }
+        });
 
-            window.addEventListener('scroll', function () {
-                if (!projectPickerPanel.hidden) {
-                    positionProjectPickerPanel();
-                }
-            }, true);
-
-            projectPickerPanel.addEventListener('click', function (e) {
-                var option = e.target.closest('.pims-project-picker__option');
-                if (!option) return;
-                selectProjectPickerOption(option.getAttribute('data-value'), option.getAttribute('data-text'));
-            });
-
-            document.addEventListener('click', function (e) {
-                if (!e.target.closest('.pims-project-picker')) {
-                    toggleProjectPicker(false);
-                }
-            });
+        if (preselectedProject) {
+            selectedProjectValue = preselectedProject;
+            projectSelectDropdown.setValue(preselectedProject);
         }
 
         localStorage.removeItem('monthlyPactGrid_colWidths');
@@ -986,11 +939,10 @@
         }
     });
 
-    document.getElementById('dpprojectSelect').addEventListener('change', refreshActiveTab);
     document.getElementById('dpyear').addEventListener('change', refreshActiveTab);
 
     document.getElementById('btnExport').addEventListener('click', function () {
-        var project = document.getElementById('dpprojectSelect').value;
+        var project = getSelectedProjectValue();
         var year    = document.getElementById('dpyear').value;
         if (!project || !year) {
             alert('Please select a project and year before exporting.');
