@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
@@ -28,8 +29,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Required(ErrorMessage = "Hours are required")]
         [Display(Name = "Hrs")]
-        [Range(double.MinValue, double.MaxValue, ErrorMessage = "Hours must be a valid number")]
-        [GridColumn(Order = 3, Width = 100, IsFilterable = false)]
+        [NonFinancialRange]
+        [GridColumn(Order = 3, Width = 100, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double PlannedHours { get; set; }
 
         [GridColumn(IsVisible = false)]
@@ -45,10 +46,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string WorkGroupGrade { get; set; } = string.Empty;
 
         // Time summary fields
+        [NonFinancialRange]
         public double HrsPaid { get; set; }
+        [NonFinancialRange]
         public double Leave { get; set; }
+        [NonFinancialRange]
         public double SickSpecial { get; set; }
+        [NonFinancialRange]
         public double HrsAvail { get; set; }
+        [NonFinancialRange]
         public double PlannedAdminZT { get; set; }   // sum of planned ZT hours = Admin
         public double FreeForChargeableWork => HrsAvail - PlannedAdminZT;  // Remainder
 

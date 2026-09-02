@@ -328,7 +328,7 @@ namespace Apha.FPS.DataAccess.Repositories
                        JobCode = ar.JobCode,
                        NumberOfDays = ar.NumberOfDays,
                        NumberOfAnimals = ar.NumberOfAnimals,
-                       Cost = 0//(decimal)((an.DailyRate ?? 0m) * (decimal)ar.NumberOfAnimals * (decimal)ar.NumberOfDays) 
+                       Cost = (an.DailyRate ?? 0m) * (decimal)ar.NumberOfAnimals * (decimal)ar.NumberOfDays
                    };
         }
 

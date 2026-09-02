@@ -1,4 +1,5 @@
 ﻿using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -23,21 +24,25 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "HrsPaid")]
         [Required(ErrorMessage = "HrsPaid is required")]
+        [NonFinancialRange]
         [GridColumn(Width = 100, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double HrsPaid { get; set; }
 
         [Display(Name = "Leave")]
         [Required(ErrorMessage = "Leave is required")]
+        [NonFinancialRange]
         [GridColumn(Width = 100, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double Leave { get; set; }
 
         [Display(Name = "SickSp")]
         [Required(ErrorMessage = "SickSp is required")]
+        [NonFinancialRange]
         [GridColumn(Width = 100, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double SickSpecial { get; set; }
 
         [Display(Name = "AtWork")]
-        [GridColumn(Width = 100, Type = GridColumnType.ReadOnly, IsFilterable = false)]
+        [NonFinancialRange]
+        [GridColumn(Width = 100, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double HrsAvail { get; set; }
 
         [Display(Name = "Planable")]

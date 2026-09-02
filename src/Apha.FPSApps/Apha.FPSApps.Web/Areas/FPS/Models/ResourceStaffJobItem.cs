@@ -20,7 +20,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? Description { get; set; }
 
         [Display(Name = "Hour")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
+        [GridColumn(Width = 90, Type = GridColumnType.DecimalNumber)]
         public double? Hour { get; set; }
 
         [Display(Name = "Status")]

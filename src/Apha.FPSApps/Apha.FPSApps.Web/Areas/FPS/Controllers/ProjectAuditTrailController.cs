@@ -65,7 +65,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     .Select(p => new SelectListItem
                     {
                         Value = p.ParentProject,
-                        Text = p.ParentProject,
+                        Text = p.Program ?? string.Empty,
                         Selected = string.Equals(model.ParentProject, p.ParentProject,
                             StringComparison.OrdinalIgnoreCase)
                     })

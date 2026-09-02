@@ -10,6 +10,8 @@ namespace Apha.Common.Contracts.FPS
 
         public string? Project { get; set; }
 
+        public string? ProjectStatus { get; set; }
+
         public string? AccountCat { get; set; }
 
         public string? Description { get; set; }
