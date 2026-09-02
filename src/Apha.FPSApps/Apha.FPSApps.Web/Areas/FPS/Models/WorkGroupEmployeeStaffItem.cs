@@ -1,3 +1,4 @@
+using Apha.FPSApps.Application.Common;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
@@ -20,6 +21,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "Status")]
         [Required(ErrorMessage = "Status is required")]
+        [AllowedValues(StaffStatus.Active, StaffStatus.Inactive, ErrorMessage = "Status must be either A or I")]
         [GridColumn(Width = 70, Type = GridColumnType.Text, IsFilterable = false)]
         public string PersonStatus { get; set; } = null!;
 
