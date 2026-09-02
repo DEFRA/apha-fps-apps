@@ -46,22 +46,33 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal? Fec { get; set; }
 
         [Display(Name = "% Planned")]
-        [GridColumn(Order = 8, Width = 90, Type = GridColumnType.DoubleNumber)]
+        [GridColumn(IsVisible = false)]
         public double? PctPlanned { get; set; }
+
+        /// <summary>
+        /// Access shows "!" for the percentage when Avail Hrs is zero (division by zero).
+        /// </summary>
+        [Display(Name = "% Planned")]
+        [GridColumn(Order = 8, Width = 90, Type = GridColumnType.Text, CssClass = "govuk-table__cell--numeric")]
+        public string PctPlannedDisplay => FormatPercentage(AvHrs, PctPlanned);
 
         // ── Assured Planned Time group ──────────────────────────────────────
 
-        [Display(Name = "App Hrs")]
+        [Display(Name = "PlanHrs")]
         [GridColumn(Order = 9, Width = 85, Type = GridColumnType.DoubleNumber)]
         public double? AppHours { get; set; }
 
-        [Display(Name = "App FEC")]
+        [Display(Name = "FEC")]
         [GridColumn(Order = 10, Width = 100, Type = GridColumnType.GbpValue)]
         public decimal? AppFec { get; set; }
 
-        [Display(Name = "% Assured")]
-        [GridColumn(Order = 11, Width = 90, Type = GridColumnType.DoubleNumber)]
+        [Display(Name = "% Planned")]
+        [GridColumn(IsVisible = false)]
         public double? PctAssuredPlanned { get; set; }
+
+        [Display(Name = "% Planned")]
+        [GridColumn(Order = 11, Width = 90, Type = GridColumnType.Text, CssClass = "govuk-table__cell--numeric")]
+        public string PctAssuredPlannedDisplay => FormatPercentage(AvHrs, PctAssuredPlanned);
 
         // ── Rate "Efficacy" Checker group ───────────────────────────────────
 
@@ -72,5 +83,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "Total Cont")]
         [GridColumn(Order = 13, Width = 105, Type = GridColumnType.GbpValue)]
         public decimal? Contribution { get; set; }
+
+        private static string FormatPercentage(double? availableHours, double? ratio)
+        {
+            // Access shows "!" whenever the percentage cannot be calculated
+            // (Avail Hrs is null/zero, or the numerator is missing).
+            if (!availableHours.HasValue || availableHours.Value == 0 || !ratio.HasValue)
+                return "!";
+
+            return (ratio.Value * 100).ToString("F2") + "%";
+        }
     }
 }

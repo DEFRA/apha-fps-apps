@@ -260,7 +260,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.QueriesRepositoryTest
             // Arrange
             var myProjects = new List<Projects>
             {
-                new() { Year = 2025, Parentproject = "PP001", Program = "TB", Customer = "FromProject", Manager = "M1", Projectstatus = "Live" },
+                new() { Year = 2025, Parentproject = "PP001", Program = "TB", Customer = "FromProject", Manager = "M1", Projectstatus = "Live", BudgetCvl = 300m },
                 new() { Year = 2025, Parentproject = "PP002", Program = "AMR", Customer = "FromProject2", Manager = "M2", Projectstatus = "Live" }
             };
 
@@ -319,13 +319,117 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.QueriesRepositoryTest
             Assert.Equal(1, result.PaginationData.TotalRecords);
             var row = Assert.Single(result.Data);
             Assert.Equal("TB", row.Program);
-            Assert.Equal("CustomerA", row.Customer);
+            Assert.Equal("FromProject", row.Customer);
             Assert.Equal(150m, row.PlannedCosts);
             Assert.Equal(60m, row.ActualCostsYt);
             Assert.Equal(0.2m, row.PercentOfBudget);
             Assert.Equal(12.5, row.PcForecastSpend);
             Assert.Equal(33m, row.BfBudget);
             Assert.Equal("pc-comment", row.MonitoringComment);
+        }
+
+        [Fact]
+        public async Task GetAllContractsMonitoringReportDataAsync_WithContractFilter_FiltersToMatchingContract()
+        {
+            // Arrange
+            var myProjects = new List<Projects>
+            {
+                new() { Year = 2025, Parentproject = "PP001", Program = "END_SURV", Manager = "M1", Projectstatus = "Live" },
+                new() { Year = 2025, Parentproject = "PP002", Program = "TB_SURV", Manager = "M2", Projectstatus = "Live" }
+            };
+
+            var baseProjects = new List<Project>
+            {
+                new() { Parentproject = "PP001", Projecttitle = "Project 1", Contract = "SurvA" },
+                new() { Parentproject = "PP002", Projecttitle = "Project 2", Contract = "SurvG" }
+            };
+
+            var radContracts = new List<RadTrackContract>
+            {
+                new() { Contract = "SurvA" },
+                new() { Contract = "SurvG" }
+            };
+
+            var yearTotals = new List<FpsYearTotal>
+            {
+                new() { Year = 2025, Parentproject = "PP001", Totalcosts = 100.0, Customer = "C1", Projectstatus = "Live" },
+                new() { Year = 2025, Parentproject = "PP002", Totalcosts = 200.0, Customer = "C2", Projectstatus = "Live" }
+            };
+
+            var monthFinals = new List<ProjectMonthFinal>
+            {
+                new() { Year = 2025, Project = "PP001", Monthno = 5, Cumcost = 10m },
+                new() { Year = 2025, Project = "PP002", Monthno = 5, Cumcost = 20m }
+            };
+
+            var repo = CreateRepository(
+                myTlkpProjects: myProjects,
+                projects: baseProjects,
+                radTrackContracts: radContracts,
+                fpsYearTotals: yearTotals,
+                projectMonthFinals: monthFinals,
+                comments: new List<Comment>());
+
+            // Act — filter by SurvA, should return only PP001
+            var result = await repo.GetAllContractsMonitoringReportDataAsync(
+                Params(),
+                reportYear: 2025,
+                fiscalMonth: 5,
+                contractFilter: "SurvA",
+                programFilter: null);
+
+            // Assert
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal("PP001", Assert.Single(result.Data).ParentProject);
+        }
+
+        [Fact]
+        public async Task GetProgramCustomerMonitoringReportDataAsync_DuplicateComments_ProducesDuplicateRowsLikeAccess()
+        {
+            // Arrange — PP001 has 2 comment rows for the same Year/Project/Topic
+            var myProjects = new List<Projects>
+            {
+                new() { Year = 2025, Parentproject = "PP001", Program = "TB", Manager = "M1", Projectstatus = "Live" }
+            };
+
+            var baseProjects = new List<Project>
+            {
+                new() { Parentproject = "PP001", Projecttitle = "Project 1", Contract = "LabTGen" }
+            };
+
+            var yearTotals = new List<FpsYearTotal>
+            {
+                new() { Year = 2025, Parentproject = "PP001", Totalcosts = 100.0, BudgetCvl = 200m, Customer = "C1", Projectstatus = "Live" }
+            };
+
+            var monthFinals = new List<ProjectMonthFinal>
+            {
+                new() { Year = 2025, Project = "PP001", Monthno = 5, Cumcost = 50m }
+            };
+
+            var comments = new List<Comment>
+            {
+                new() { CommentNo = 1, Project = "PP001", Year = 2025, Topic = "P&C Monitoring Report", CommentText = "first comment" },
+                new() { CommentNo = 2, Project = "PP001", Year = 2025, Topic = "P&C Monitoring Report", CommentText = "second comment" }
+            };
+
+            var repo = CreateRepository(
+                myTlkpProjects: myProjects,
+                projects: baseProjects,
+                fpsYearTotals: yearTotals,
+                projectMonthFinals: monthFinals,
+                comments: comments);
+
+            // Act
+            var result = await repo.GetProgramCustomerMonitoringReportDataAsync(
+                Params(),
+                reportYear: 2025,
+                fiscalMonth: 5,
+                programFilter: null);
+
+            // Assert — 2 comment rows produce 2 result rows, mirroring Access LEFT JOIN behaviour
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.Data.Count);
         }
 
         [Fact]
@@ -375,6 +479,167 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.QueriesRepositoryTest
             Assert.Equal(2, result.PaginationData.PageNumber);
             var row = Assert.Single(result.Data);
             Assert.Equal("PP002", row.ParentProject);
+        }
+
+        // -----------------------------------------------------------------------
+        // Sorting tests for All Contracts / Contracts Monitoring (MonitoringReportData)
+        // -----------------------------------------------------------------------
+
+        private static (QueriesRepository repo, List<Projects> myProjects) CreateMonitoringRepo()
+        {
+            var myProjects = new List<Projects>
+            {
+                new() { Year = 2025, Parentproject = "AA001", Program = "END_SURV", Manager = "Alpha", Projectstatus = "Approved" },
+                new() { Year = 2025, Parentproject = "BB002", Program = "TB_SURV",  Manager = "Zeta",  Projectstatus = "Not Approved" }
+            };
+            var baseProjects = new List<Project>
+            {
+                new() { Parentproject = "AA001", Projecttitle = "Zebra Project",   Contract = "SurvA" },
+                new() { Parentproject = "BB002", Projecttitle = "Alpha Project",   Contract = "SurvG" }
+            };
+            var radContracts = new List<RadTrackContract>
+            {
+                new() { Contract = "SurvA" },
+                new() { Contract = "SurvG" }
+            };
+            var yearTotals = new List<FpsYearTotal>
+            {
+                new() { Year = 2025, Parentproject = "AA001", Totalcosts = 500.0, Projectstatus = "Approved" },
+                new() { Year = 2025, Parentproject = "BB002", Totalcosts = 100.0, Projectstatus = "Not Approved" }
+            };
+            var monthFinals = new List<ProjectMonthFinal>
+            {
+                new() { Year = 2025, Project = "AA001", Monthno = 6, Cumcost = 200m },
+                new() { Year = 2025, Project = "BB002", Monthno = 6, Cumcost = 800m }
+            };
+            var repo = CreateRepository(
+                myTlkpProjects: myProjects,
+                projects: baseProjects,
+                radTrackContracts: radContracts,
+                fpsYearTotals: yearTotals,
+                projectMonthFinals: monthFinals,
+                comments: new List<Comment>());
+            return (repo, myProjects);
+        }
+
+        [Theory]
+        [InlineData("program",        false, "AA001",    "BB002")]   // END_SURV < TB_SURV asc → AA001 first
+        [InlineData("program",        true,  "BB002",    "AA001")]   // desc → BB002 first
+        [InlineData("project",        false, "AA001",    "BB002")]
+        [InlineData("project",        true,  "BB002",    "AA001")]
+        [InlineData("parentproject",  false, "AA001",    "BB002")]
+        [InlineData("parentproject",  true,  "BB002",    "AA001")]
+        [InlineData("projecttitle",   false, "BB002",    "AA001")]   // Alpha Project < Zebra Project
+        [InlineData("projecttitle",   true,  "AA001",    "BB002")]
+        [InlineData("manager",        false, "AA001",    "BB002")]   // Alpha < Zeta
+        [InlineData("manager",        true,  "BB002",    "AA001")]
+        [InlineData("status",         false, "AA001",    "BB002")]   // "Approved" < "Not Approved" asc → AA001 first
+        [InlineData("projectstatus",  false, "AA001",    "BB002")]
+        [InlineData("contract",       false, "AA001",    "BB002")]   // SurvA < SurvG
+        [InlineData("contract",       true,  "BB002",    "AA001")]
+        [InlineData("totalplancosts", false, "BB002",    "AA001")]   // 100 < 500
+        [InlineData("totalplancosts", true,  "AA001",    "BB002")]
+        [InlineData("totalytdcosts",  false, "AA001",    "BB002")]   // 200 < 800
+        [InlineData("totalytdcosts",  true,  "BB002",    "AA001")]
+        public async Task GetContractsMonitoringReportDataAsync_Sorting_OrdersCorrectly(
+            string sortBy, bool descending, string expectedFirst, string expectedSecond)
+        {
+            var (repo, _) = CreateMonitoringRepo();
+
+            var result = await repo.GetContractsMonitoringReportDataAsync(
+                Params(sortBy: sortBy, descending: descending),
+                reportYear: 2025,
+                fiscalMonth: 6,
+                contractFilter: "*",
+                programFilter: null);
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.Equal(expectedFirst,  result.Data.ElementAt(0).ParentProject);
+            Assert.Equal(expectedSecond, result.Data.ElementAt(1).ParentProject);
+        }
+
+        [Theory]
+        [InlineData("program",        false, "AA001",    "BB002")]   // END_SURV < TB_SURV
+        [InlineData("program",        true,  "BB002",    "AA001")]
+        [InlineData("totalplancosts", false, "BB002",    "AA001")]
+        [InlineData("totalplancosts", true,  "AA001",    "BB002")]
+        [InlineData("totalytdcosts",  false, "AA001",    "BB002")]
+        [InlineData("totalytdcosts",  true,  "BB002",    "AA001")]
+        public async Task GetAllContractsMonitoringReportDataAsync_Sorting_OrdersCorrectly(
+            string sortBy, bool descending, string expectedFirst, string expectedSecond)
+        {
+            // All Contracts adds a surveillance-program filter — supply SURV programs only
+            var myProjects = new List<Projects>
+            {
+                new() { Year = 2025, Parentproject = "AA001", Program = "END_SURV", Manager = "Alpha", Projectstatus = "Approved" },
+                new() { Year = 2025, Parentproject = "BB002", Program = "TB_SURV",  Manager = "Zeta",  Projectstatus = "Not Approved" }
+            };
+            var baseProjects = new List<Project>
+            {
+                new() { Parentproject = "AA001", Projecttitle = "Zebra Project", Contract = "SurvA" },
+                new() { Parentproject = "BB002", Projecttitle = "Alpha Project", Contract = "SurvG" }
+            };
+            var radContracts = new List<RadTrackContract> { new() { Contract = "SurvA" }, new() { Contract = "SurvG" } };
+            var yearTotals = new List<FpsYearTotal>
+            {
+                new() { Year = 2025, Parentproject = "AA001", Totalcosts = 500.0, Projectstatus = "Approved" },
+                new() { Year = 2025, Parentproject = "BB002", Totalcosts = 100.0, Projectstatus = "Not Approved" }
+            };
+            var monthFinals = new List<ProjectMonthFinal>
+            {
+                new() { Year = 2025, Project = "AA001", Monthno = 6, Cumcost = 200m },
+                new() { Year = 2025, Project = "BB002", Monthno = 6, Cumcost = 800m }
+            };
+            var repo = CreateRepository(
+                myTlkpProjects: myProjects,
+                projects: baseProjects,
+                radTrackContracts: radContracts,
+                fpsYearTotals: yearTotals,
+                projectMonthFinals: monthFinals,
+                comments: new List<Comment>());
+
+            var result = await repo.GetAllContractsMonitoringReportDataAsync(
+                Params(sortBy: sortBy, descending: descending),
+                reportYear: 2025,
+                fiscalMonth: 6,
+                contractFilter: "*",
+                programFilter: null);
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.Equal(expectedFirst,  result.Data.ElementAt(0).ParentProject);
+            Assert.Equal(expectedSecond, result.Data.ElementAt(1).ParentProject);
+        }
+
+        [Fact]
+        public async Task GetContractsMonitoringReportDataAsync_UnknownSortBy_DefaultsToParentProjectAsc()
+        {
+            var (repo, _) = CreateMonitoringRepo();
+
+            var result = await repo.GetContractsMonitoringReportDataAsync(
+                Params(sortBy: "nonexistentcolumn", descending: false),
+                reportYear: 2025,
+                fiscalMonth: 6,
+                contractFilter: "*",
+                programFilter: null);
+
+            Assert.Equal("AA001", result.Data.ElementAt(0).ParentProject);
+            Assert.Equal("BB002", result.Data.ElementAt(1).ParentProject);
+        }
+
+        [Fact]
+        public async Task GetContractsMonitoringReportDataAsync_NullSortBy_DefaultsToParentProjectAsc()
+        {
+            var (repo, _) = CreateMonitoringRepo();
+
+            var result = await repo.GetContractsMonitoringReportDataAsync(
+                Params(sortBy: null),
+                reportYear: 2025,
+                fiscalMonth: 6,
+                contractFilter: "*",
+                programFilter: null);
+
+            Assert.Equal("AA001", result.Data.ElementAt(0).ParentProject);
+            Assert.Equal("BB002", result.Data.ElementAt(1).ParentProject);
         }
     }
 }
