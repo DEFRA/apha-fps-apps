@@ -143,8 +143,47 @@
         <textarea class="govuk-textarea govuk-!-font-size-16 error-textarea" id="txt-description" rows="2" aria-label="Failed message"></textarea>
     </div>
 
-    @Html.AntiForgeryToken()
-</div>
+    <div class="modal import-type-modal" id="importTypeModal" tabindex="-1" aria-labelledby="importTypeModalTitle" aria-modal="true">
+        <div class="modal-dialog modal-md" style="max-width:500px !important;">
+            <div class="modal-content">
+                <div class="modal-header flex-space-center">
+                    <h3 class="modal-title m-0" id="importTypeModalTitle">Output Record Data Entry</h3>
+                    <button type="button" class="btn-close btn-red" onclick="closeImportTypeModal()" aria-label="Close import type dialog">X</button>
+                </div>
+
+                <div class="modal-body">
+                    <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-4 modal-heading-text">What type of output file do you want to import?</p>
+
+                    <div class="govuk-form-group govuk-!-margin-bottom-4">
+                        <fieldset class="govuk-fieldset">
+                            <legend class="govuk-visually-hidden">Select spreadsheet type</legend>
+
+                            <div class="govuk-radios govuk-radios--small govuk-radios--inline" data-module="govuk-radios" id="importTypeRadios">
+                                <div class="govuk-radios__item">
+                                    <input class="govuk-radios__input" id="importType-flatfile-rd" name="importType" type="radio" value="1">
+                                    <label class="govuk-label govuk-radios__label radio-label-nowrap" for="importType-flatfile-rd">PACT flat file .xlsx</label>
+                                </div>
+
+                                <div class="govuk-radios__item">
+                                    <input class="govuk-radios__input" id="importType-lims-rd" name="importType" type="radio" value="2">
+                                    <label class="govuk-label govuk-radios__label radio-label-nowrap" for="importType-lims-rd">LIMS file .xlsx</label>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" onclick="closeImportTypeModal()">Cancel</button>
+                    <button type="button" class="govuk-button sup_margin_0" onclick="confirmImportType()">OK</button>
+                </div>
+            </div>
+        </div>
+
+            </div>
+
+            @Html.AntiForgeryToken()
+        </div>
 
 @section Styles {
     <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />

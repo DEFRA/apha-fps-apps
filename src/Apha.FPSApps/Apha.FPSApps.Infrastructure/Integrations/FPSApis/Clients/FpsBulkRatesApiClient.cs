@@ -1,0 +1,254 @@
+using Apha.Common.Constants;
+using Apha.Common.Contracts.FPS;
+using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Pagination;
+using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
+using AutoMapper;
+
+namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
+{
+    /// <summary>
+    /// Infrastructure implementation of <see cref="IFpsBulkRatesApiClient"/>.
+    /// Calls the FPS API Bulk Rates endpoints (Phase 3). Deserializes the shared
+    /// <c>Apha.Common.Contracts.FPS.BulkRates*</c> wire contracts and maps them onto this app's
+    /// own <c>Apha.FPSApps.Application.Dtos.FPS.BulkRates*</c>-named shapes via AutoMapper.
+    /// </summary>
+    public class FpsBulkRatesApiClient : IFpsBulkRatesApiClient
+    {
+        private readonly IFpsHttpExecutor _http;
+        private readonly IMapper _mapper;
+
+        public FpsBulkRatesApiClient(IFpsHttpExecutor http, IMapper mapper)
+        {
+            _http = http ?? throw new ArgumentNullException(nameof(http));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponseDto<BulkRatesRequestDetailDto>> CreateRequestAsync(
+            string jobName, int fpsYear)
+        {
+            var response = await _http.PostAsync<CreateBulkRatesRequestReq, BulkRatesRequestDetailRes>(
+                FpsApiEndpoints.CreateBulkRatesRequest,
+                new CreateBulkRatesRequestReq { JobName = jobName, FpsYear = fpsYear });
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
+            return ApiResponseDto<BulkRatesRequestDetailDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponseDto<BulkRatesUploadResultDto>> UploadFileAsync(
+            Guid jobExecutionId, byte[] fileBytes, string fileName)
+        {
+            var content = new MultipartFormDataContent();
+            var fileContent = new ByteArrayContent(fileBytes);
+            fileContent.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            content.Add(fileContent, "file", fileName);
+
+            var url = string.Format(FpsApiEndpoints.UploadBulkRatesFile, jobExecutionId);
+            var response = await _http.PostMultipartAsync<BulkRatesUploadResultRes>(url, content);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<BulkRatesUploadResultDto>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<BulkRatesUploadResultDto>>(response);
+            return ApiResponseDto<BulkRatesUploadResultDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponseDto<BulkRatesUploadResultDto>> GetValidationResultsAsync(Guid jobExecutionId)
+        {
+            var url = string.Format(FpsApiEndpoints.GetBulkRatesValidation, jobExecutionId);
+            var response = await _http.GetAsync<BulkRatesUploadResultRes>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<BulkRatesUploadResultDto>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<BulkRatesUploadResultDto>>(response);
+            return ApiResponseDto<BulkRatesUploadResultDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponseDto<BulkRatesRequestDetailDto>> ReleaseForApprovalAsync(Guid jobExecutionId)
+        {
+            var url = string.Format(FpsApiEndpoints.ReleaseBulkRatesRequest, jobExecutionId);
+            var response = await _http.PostAsync<object, BulkRatesRequestDetailRes>(url, new { });
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
+            return ApiResponseDto<BulkRatesRequestDetailDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponseDto<BulkRatesRequestDetailDto>> ApproveAsync(Guid jobExecutionId)
+        {
+            var url = string.Format(FpsApiEndpoints.ApproveBulkRatesRequest, jobExecutionId);
+            var response = await _http.PostAsync<object, BulkRatesRequestDetailRes>(url, new { });
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
+            return ApiResponseDto<BulkRatesRequestDetailDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponseDto<BulkRatesRequestDetailDto>> RejectAsync(Guid jobExecutionId, string reason)
+        {
+            var url = string.Format(FpsApiEndpoints.RejectBulkRatesRequest, jobExecutionId);
+            var response = await _http.PostAsync<RejectBulkRatesRequestReq, BulkRatesRequestDetailRes>(
+                url, new RejectBulkRatesRequestReq { Reason = reason });
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
+            return ApiResponseDto<BulkRatesRequestDetailDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponseDto<BulkRatesRequestDetailDto>> CancelAsync(Guid jobExecutionId, string? reason)
+        {
+            var url = string.Format(FpsApiEndpoints.CancelBulkRatesRequest, jobExecutionId);
+            var response = await _http.PostAsync<CancelBulkRatesRequestReq, BulkRatesRequestDetailRes>(
+                url, new CancelBulkRatesRequestReq { Reason = reason });
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto>>(response);
+            return ApiResponseDto<BulkRatesRequestDetailDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponseDto<BulkRatesRequestDetailDto?>> GetRequestAsync(Guid jobExecutionId)
+        {
+            var url = string.Format(FpsApiEndpoints.GetBulkRatesRequest, jobExecutionId);
+            var response = await _http.GetAsync<BulkRatesRequestDetailRes?>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto?>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<BulkRatesRequestDetailDto?>>(response);
+            return ApiResponseDto<BulkRatesRequestDetailDto?>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponseDto<List<BulkRatesQueueEntryDto>>> GetRequestsAsync(
+            QueryParameters<string> query, string? jobName = null, int? fpsYear = null, string? status = null)
+        {
+            var url = BuildGetRequestsUrl(jobName, fpsYear, status, query);
+            var response = await _http.GetAsync<List<BulkRatesQueueEntryRes>>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<BulkRatesQueueEntryDto>>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<List<BulkRatesQueueEntryDto>>>(response);
+            return ApiResponseDto<List<BulkRatesQueueEntryDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponseDto<bool>> CanInitiateRequestAsync(string jobName)
+        {
+            var url = string.Format(FpsApiEndpoints.CanInitiateBulkRatesRequest, Uri.EscapeDataString(jobName));
+            var response = await _http.GetAsync<bool>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ApiResponseDto<BulkRatesStagingDataDto>> GetStagingDataAsync(Guid jobExecutionId)
+        {
+            var url = string.Format(FpsApiEndpoints.GetBulkRatesStagingData, jobExecutionId);
+            var response = await _http.GetAsync<BulkRatesStagingDataRes>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<BulkRatesStagingDataDto>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<BulkRatesStagingDataDto>>(response);
+            return ApiResponseDto<BulkRatesStagingDataDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        // ── Helpers ────────────────────────────────────────────────────────────────
+        /// <inheritdoc/>
+        public Task<byte[]> DownloadFecTestDataForRequestAsync(Guid jobExecutionId)
+        {
+            var url = string.Format(FpsApiEndpoints.DownloadBulkRatesFecTestDataForRequest, jobExecutionId);
+            return _http.GetFileAsync(url);
+        }
+
+        /// <inheritdoc/>
+        public Task<byte[]> DownloadStaffTestDataForRequestAsync(Guid jobExecutionId)
+        {
+            var url = string.Format(FpsApiEndpoints.DownloadBulkRatesStaffTestDataForRequest, jobExecutionId);
+            return _http.GetFileAsync(url);
+        }
+
+        /// <inheritdoc/>
+        public Task<byte[]> DownloadAnimalTestDataForRequestAsync(Guid jobExecutionId)
+        {
+            var url = string.Format(FpsApiEndpoints.DownloadBulkRatesAnimalTestDataForRequest, jobExecutionId);
+            return _http.GetFileAsync(url);
+        }
+
+        /// <inheritdoc/>
+        public Task<byte[]> DownloadFecTestDataAsync(int fpsYear)
+        {
+            var url = string.Format(FpsApiEndpoints.ExportBulkRatesFecTestData, fpsYear);
+            return _http.GetFileAsync(url);
+        }
+
+        /// <inheritdoc/>
+        public Task<byte[]> DownloadStaffTestDataAsync(int fpsYear)
+        {
+            var url = string.Format(FpsApiEndpoints.ExportBulkRatesStaffTestData, fpsYear);
+            return _http.GetFileAsync(url);
+        }
+
+        /// <inheritdoc/>
+        public Task<byte[]> DownloadAnimalTestDataAsync(int fpsYear)
+        {
+            var url = string.Format(FpsApiEndpoints.ExportBulkRatesAnimalTestData, fpsYear);
+            return _http.GetFileAsync(url);
+        }
+
+        /// <inheritdoc/>
+        public Task<byte[]> DownloadStagingDataAsync(Guid jobExecutionId)
+        {
+            var url = string.Format(FpsApiEndpoints.ExportBulkRatesStagingData, jobExecutionId);
+            return _http.GetFileAsync(url);
+        }
+        private static string BuildGetRequestsUrl(
+            string? jobName, int? fpsYear, string? status, QueryParameters<string> query)
+        {
+            var queryParts = new List<string>
+            {
+                $"Page={query.Page}",
+                $"PageSize={query.PageSize}",
+                $"Descending={query.Descending}"
+            };
+            if (!string.IsNullOrWhiteSpace(jobName))
+                queryParts.Add($"jobName={Uri.EscapeDataString(jobName)}");
+            if (fpsYear.HasValue)
+                queryParts.Add($"fpsYear={fpsYear.Value}");
+            if (!string.IsNullOrWhiteSpace(status))
+                queryParts.Add($"status={Uri.EscapeDataString(status)}");
+            if (!string.IsNullOrWhiteSpace(query.SortBy))
+                queryParts.Add($"SortBy={Uri.EscapeDataString(query.SortBy)}");
+
+            return $"{FpsApiEndpoints.GetBulkRatesRequests}?{string.Join("&", queryParts)}";
+        }
+    }
+}

@@ -7,6 +7,7 @@ using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Web.Handler;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
@@ -23,6 +24,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractRmsControllerTe
         private readonly IProjectService _projectService;
         private readonly IMonthService _monthService;
         private readonly IExcelExportService _excelExportService;
+        private readonly IFpsYearContext _fpsYearContext;
         private readonly SubContractRmsController _controller;
 
         public SubContractRmsControllerTests()
@@ -32,13 +34,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractRmsControllerTe
             _projectService = Substitute.For<IProjectService>();
             _monthService = Substitute.For<IMonthService>();
             _excelExportService = Substitute.For<IExcelExportService>();
+            _fpsYearContext = Substitute.For<IFpsYearContext>();
+            _fpsYearContext.IsReadOnly.Returns(false);
 
             _controller = new SubContractRmsController(
                 _mapper,
                 _subContractService,
                 _projectService,
                 _monthService,
-                _excelExportService);
+                _excelExportService,
+                _fpsYearContext);
 
             SetupDefaultDependencies();
         }
@@ -261,7 +266,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractRmsControllerTe
             _subContractService.GetFailedSubContractRmsAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(ApiResponseDto<List<SubContractRmsImportRowDto>>.SuccessResponse(responseData));
             _mapper.Map<List<SubContractRmsFailedItem>>(responseData).Returns(mappedItems);
-            _excelExportService.ExportToExcel(mappedItems, "SubContractRMS_Failed").Returns(bytes);
+            _excelExportService.ExportToExcel(mappedItems, "SubContractRMS", Arg.Any<Dictionary<string, string>?>()).Returns(bytes);
 
             // Act
             var result = await _controller.ExportFailedSubContractRms();

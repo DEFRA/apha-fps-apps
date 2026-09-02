@@ -110,6 +110,61 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return PartialView("_DataGrid", gridConfig);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> LoadStaffTotals(string? workgroup = null)
+        {
+            var totals = await GetStaffTotalsAsync(workgroup);
+            return Json(totals);
+        }
+
+        private async Task<StaffResourceTotals> GetStaffTotalsAsync(string? workgroup)
+        {
+            var totals = new StaffResourceTotals();
+
+            if (string.IsNullOrWhiteSpace(workgroup))
+                return totals;
+
+            // Totals must always reflect the complete underlying dataset for the
+            // workgroup, regardless of pagination, filtering, sorting, or the
+            // number of rows currently displayed. Request all rows with no filter.
+            var fullQuery = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = int.MaxValue,
+                Filter = null,
+                SortBy = null,
+                Descending = false
+            };
+
+            var response = await _staffJobService.GetStaffResourceUtilisationAsync(fullQuery, workgroup);
+            if (!response.Success || response.Data == null || response.Data.Count == 0)
+                return totals;
+
+            var data = response.Data;
+
+            totals.TotalH = Round2(data.Sum(d => d.HrsAvail));
+            totals.Ztw = Round2(data.Sum(d => d.PlannedZt));
+            totals.Avail = Round2(data.Sum(d => d.AvailSoct));
+            totals.Left = Round2(data.Sum(d => d.Left));
+            totals.ApprovedPlan = Round2(data.Sum(d => d.ApprovedSoct));
+            totals.NotApprovedPlan = Round2(data.Sum(d => d.NotApprovedSoct));
+            totals.TotalPlan = Round2(data.Sum(d => d.ApprovedSoct + d.NotApprovedSoct));
+
+            totals.ApprovedUtil = AverageOrNull(data.Where(d => d.ApprovedUtilPct.HasValue).Select(d => d.ApprovedUtilPct!.Value));
+            totals.NotApprovedUtil = AverageOrNull(data.Where(d => d.NotApprovedUtilPct.HasValue).Select(d => d.NotApprovedUtilPct!.Value));
+            totals.TotalUtil = AverageOrNull(data.Where(d => d.TotalUtilPct.HasValue).Select(d => d.TotalUtilPct!.Value));
+
+            return totals;
+        }
+
+        private static double Round2(double value) => Math.Round(value, 2, MidpointRounding.AwayFromZero);
+
+        private static double? AverageOrNull(IEnumerable<double> values)
+        {
+            var list = values.ToList();
+            return list.Count == 0 ? null : Math.Round(list.Average(), 2, MidpointRounding.AwayFromZero);
+        }
+
         private async Task<DataGridConfig<StaffResourceWorkgroupItem>> GetWorkgroupGridConfigAsync(
             QueryParameters<string> queryParameters, Dictionary<string, string>? filterDict, string? profitCentre)
         {
@@ -138,7 +193,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<StaffResourceWorkgroupItem>
             {
                 GridId = "ruvWorkgroupGrid",
-                Title = "Workgroup",
+                Title = string.Empty,
                 ShowCheckboxColumn = false,
                 ShowPagination = false,
                 KeyProperty = "WorkGroupName",
@@ -160,7 +215,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<StaffResourceStaffItem>
             {
                 GridId = "ruvStaffGrid",
-                Title = "Staff Resource Utilisation",
+                Title = string.Empty,
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffName",
@@ -212,7 +267,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<StaffResourceStaffItem>
             {
                 GridId = "ruvStaffGrid",
-                Title = "Staff Resource Utilisation",
+                Title = string.Empty,
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffName",

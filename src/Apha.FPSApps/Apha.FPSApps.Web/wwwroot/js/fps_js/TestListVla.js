@@ -77,10 +77,11 @@ function selectTestListVlaRow(btn) {
 
     // Show VLA Unit Price from selected row
     var unitPriceText = $row.find('td[data-property="UnitPriceVla"] span').text().trim();
-    $('#stage2-vla-unit-price').val(unitPriceText);
+    var unitPrice = parseFloat(unitPriceText.replace(/[£,]/g, '')) || 0;
+    $('#stage2-vla-unit-price').val(unitPrice.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 
     // Clear total while component charges grid reloads
-    $('#stage2-component-total').val('');
+    $('#stage2-component-total').val('0.00');
 
     reloadAllTabGrids();
 }
@@ -92,8 +93,7 @@ function updateComponentTotalPrice() {
         var parsed = parseFloat(priceText.replace(/[£,]/g, ''));
         if (!isNaN(parsed)) { total += parsed; }
     });
-    var formatted = total === 0 ? ''
-        : '\u00A3' + total.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    var formatted = total.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     $('#stage2-component-total').val(formatted);
 }
 
@@ -105,8 +105,8 @@ function selectFirstTestListRowIfAvailable() {
     if ($firstRow.length === 0) {
         selectedTestCode = '';
         selectedGeneralProfitCentre = '';
-        $('#stage2-vla-unit-price').val('');
-        $('#stage2-component-total').val('');
+        $('#stage2-vla-unit-price').val('0.00');
+        $('#stage2-component-total').val('0.00');
         reloadAllTabGrids();
         return;
     }

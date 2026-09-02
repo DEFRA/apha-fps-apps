@@ -843,22 +843,27 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
         #region GetAllProfitCentreOptionsAsync Tests
 
         [Fact]
-        public async Task GetAllProfitCentreOptionsAsync_ReturnsDistinctOrderedProfitCentres()
+        public async Task GetAllProfitCentreOptionsAsync_ReturnsDistinctOrderedProfitCentres_ForCurrentUserAndYear()
         {
             var requestCtx = CreateRequestContextMock();
             var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
 
-            var data = new List<ProfitCentre>
+            var users = new List<User> { BuildUser(userId: 1, userEmail: DefaultUserEmail) };
+            var data = new List<UserProfitcentre>
             {
-                new() { ProfitCentreId = "PC3", ProfitCentreName = "Centre 3", Division = "D1" },
-                new() { ProfitCentreId = "PC1", ProfitCentreName = "Centre 1", Division = "D1" },
-                new() { ProfitCentreId = "PC2", ProfitCentreName = "Centre 2", Division = "D1" },
-                new() { ProfitCentreId = "PC1", ProfitCentreName = "Centre 1 Dup", Division = "D2" }
+                new() { ProfitCentre = "PC3", UserId = 1, FpsYear = DefaultFpsYear },
+                new() { ProfitCentre = "PC1", UserId = 1, FpsYear = DefaultFpsYear },
+                new() { ProfitCentre = "PC2", UserId = 1, FpsYear = DefaultFpsYear },
+                new() { ProfitCentre = "PC1", UserId = 1, FpsYear = DefaultFpsYear },
+                // Different user - must be excluded
+                new() { ProfitCentre = "PC9", UserId = 2, FpsYear = DefaultFpsYear },
+                // Different year - must be excluded
+                new() { ProfitCentre = "PC8", UserId = 1, FpsYear = DefaultFpsYear - 1 }
             };
             var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
             RepositoryTestHelper.SetupDbSetOperations(mockSet);
-            dbContext.Setup(x => x.ProfitCentres).Returns(mockSet.Object);
-            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            dbContext.Setup(x => x.UserProfitcentres).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(users).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
             var repo = new UserRepository(dbContext.Object, requestCtx.Object);
@@ -872,15 +877,16 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
         }
 
         [Fact]
-        public async Task GetAllProfitCentreOptionsAsync_ReturnsEmpty_WhenNoProfitCentres()
+        public async Task GetAllProfitCentreOptionsAsync_ReturnsEmpty_WhenCurrentUserHasNoProfitCentres()
         {
             var requestCtx = CreateRequestContextMock();
             var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
 
-            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<ProfitCentre>());
+            var users = new List<User> { BuildUser(userId: 1, userEmail: DefaultUserEmail) };
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<UserProfitcentre>());
             RepositoryTestHelper.SetupDbSetOperations(mockSet);
-            dbContext.Setup(x => x.ProfitCentres).Returns(mockSet.Object);
-            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            dbContext.Setup(x => x.UserProfitcentres).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(users).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
             var repo = new UserRepository(dbContext.Object, requestCtx.Object);
@@ -895,22 +901,27 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
         #region GetAllProgramOptionsAsync Tests
 
         [Fact]
-        public async Task GetAllProgramOptionsAsync_ReturnsDistinctOrderedPrograms()
+        public async Task GetAllProgramOptionsAsync_ReturnsDistinctOrderedPrograms_ForCurrentUserAndYear()
         {
             var requestCtx = CreateRequestContextMock();
             var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
 
-            var data = new List<Program>
+            var users = new List<User> { BuildUser(userId: 1, userEmail: DefaultUserEmail) };
+            var data = new List<UserProgram>
             {
-                new() { ProgramNo = "B01", FpsYear = DefaultFpsYear },
-                new() { ProgramNo = "A01", FpsYear = DefaultFpsYear },
-                new() { ProgramNo = "C01", FpsYear = DefaultFpsYear },
-                new() { ProgramNo = "A01", FpsYear = DefaultFpsYear }
+                new() { ProgramNo = "B01", UserID = 1, FpsYear = DefaultFpsYear },
+                new() { ProgramNo = "A01", UserID = 1, FpsYear = DefaultFpsYear },
+                new() { ProgramNo = "C01", UserID = 1, FpsYear = DefaultFpsYear },
+                new() { ProgramNo = "A01", UserID = 1, FpsYear = DefaultFpsYear },
+                // Different user - must be excluded
+                new() { ProgramNo = "Z01", UserID = 2, FpsYear = DefaultFpsYear },
+                // Different year - must be excluded
+                new() { ProgramNo = "Y01", UserID = 1, FpsYear = DefaultFpsYear - 1 }
             };
             var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
             RepositoryTestHelper.SetupDbSetOperations(mockSet);
-            dbContext.Setup(x => x.Programs).Returns(mockSet.Object);
-            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            dbContext.Setup(x => x.UserPrograms).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(users).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
             var repo = new UserRepository(dbContext.Object, requestCtx.Object);
@@ -924,15 +935,16 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
         }
 
         [Fact]
-        public async Task GetAllProgramOptionsAsync_ReturnsEmpty_WhenNoPrograms()
+        public async Task GetAllProgramOptionsAsync_ReturnsEmpty_WhenCurrentUserHasNoPrograms()
         {
             var requestCtx = CreateRequestContextMock();
             var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
 
-            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<Program>());
+            var users = new List<User> { BuildUser(userId: 1, userEmail: DefaultUserEmail) };
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<UserProgram>());
             RepositoryTestHelper.SetupDbSetOperations(mockSet);
-            dbContext.Setup(x => x.Programs).Returns(mockSet.Object);
-            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            dbContext.Setup(x => x.UserPrograms).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(users).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
             var repo = new UserRepository(dbContext.Object, requestCtx.Object);

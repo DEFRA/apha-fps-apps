@@ -232,7 +232,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.QueriesControl
         }
 
         [Fact]
-        public async Task LoadQueryResultsGrid_AllContract_WithContract_IgnoresContractAndUsesWildcard()
+        public async Task LoadQueryResultsGrid_AllContract_WithContract_PassesContractToService()
         {
             // Arrange
             SetupMapperForGridBuild();
@@ -258,11 +258,117 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.QueriesControl
             // Act
             await _controller.LoadQueryResultsGrid(request, "1", "2023", "LabTGen", "allContract");
 
+            // Assert — contract value should now be forwarded to the service for allContract query
+            await _queriesService.Received(1).GetMonitoringReportDataAsync(
+                Arg.Any<QueryParameters<string>>(), 2023, 1, "LabTGen", Arg.Any<IEnumerable<string>?>());
+            await _queriesService.DidNotReceive().GetMonitoringReportDataAsync(
+                Arg.Any<QueryParameters<string>>(), 2023, 1, "*", Arg.Any<IEnumerable<string>?>());
+        }
+
+        [Fact]
+        public async Task LoadQueryResultsGrid_AllContract_BlankContract_UsesWildcard()
+        {
+            // Arrange
+            SetupMapperForGridBuild();
+
+            var request = new PaginationFilter<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{}"
+            };
+
+            _queriesService.GetMonitoringReportDataAsync(
+                    Arg.Any<QueryParameters<string>>(),
+                    Arg.Any<short>(),
+                    Arg.Any<short>(),
+                    Arg.Any<string>(),
+                    Arg.Any<IEnumerable<string>?>())
+                .Returns(SuccessResponse(new List<MonitoringReportDataDto>(), new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 0 }));
+
+            _mapper.Map<List<QueryResultItem>>(Arg.Any<List<MonitoringReportDataDto>>())
+                .Returns(new List<QueryResultItem>());
+
+            // Act — empty contract should fall back to wildcard
+            await _controller.LoadQueryResultsGrid(request, "1", "2023", "", "allContract");
+
             // Assert
             await _queriesService.Received(1).GetMonitoringReportDataAsync(
                 Arg.Any<QueryParameters<string>>(), 2023, 1, "*", Arg.Any<IEnumerable<string>?>());
-            await _queriesService.DidNotReceive().GetMonitoringReportDataAsync(
-                Arg.Any<QueryParameters<string>>(), 2023, 1, "LabTGen", Arg.Any<IEnumerable<string>?>());
+        }
+
+        [Fact]
+        public async Task LoadQueryResultsGrid_AllContract_GridColumns_ShowProgramBeforeProject()
+        {
+            // Arrange
+            SetupMapperForGridBuild();
+
+            var request = new PaginationFilter<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{}"
+            };
+
+            _queriesService.GetMonitoringReportDataAsync(
+                    Arg.Any<QueryParameters<string>>(), 2025, 1, "*", Arg.Any<IEnumerable<string>?>())
+                .Returns(SuccessResponse(new List<MonitoringReportDataDto>(), new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 0 }));
+
+            _mapper.Map<List<QueryResultItem>>(Arg.Any<List<MonitoringReportDataDto>>())
+                .Returns(new List<QueryResultItem>());
+
+            // Act
+            var result = await _controller.LoadQueryResultsGrid(request, "1", "2025", "", "allContract");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid = Assert.IsType<DataGridConfig<QueryResultItem>>(partial.Model);
+            var visibleColumnNames = grid.Columns.Where(c => c.IsVisible).Select(c => c.PropertyName).ToList();
+
+            int programIndex = visibleColumnNames.IndexOf(nameof(QueryResultItem.Program));
+            int projectIndex = visibleColumnNames.IndexOf(nameof(QueryResultItem.ParentProject));
+
+            Assert.True(programIndex >= 0);
+            Assert.True(projectIndex >= 0);
+            Assert.True(programIndex < projectIndex);
+            Assert.Equal("ParentProject", grid.Columns.First(c => c.PropertyName == nameof(QueryResultItem.ParentProject)).DisplayName);
+        }
+
+        [Fact]
+        public async Task LoadQueryResultsGrid_ContractMonitoring_GridColumns_ShowProgramBeforeProject()
+        {
+            // Arrange
+            SetupMapperForGridBuild();
+
+            var request = new PaginationFilter<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{}"
+            };
+
+            _queriesService.GetMonitoringReportDataAsync(
+                    Arg.Any<QueryParameters<string>>(), 2025, 1, "LabTGen", Arg.Any<IEnumerable<string>?>())
+                .Returns(SuccessResponse(new List<MonitoringReportDataDto>(), new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 0 }));
+
+            _mapper.Map<List<QueryResultItem>>(Arg.Any<List<MonitoringReportDataDto>>())
+                .Returns(new List<QueryResultItem>());
+
+            // Act
+            var result = await _controller.LoadQueryResultsGrid(request, "1", "2025", "LabTGen", "contractMonitoring");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid = Assert.IsType<DataGridConfig<QueryResultItem>>(partial.Model);
+            var visibleColumnNames = grid.Columns.Where(c => c.IsVisible).Select(c => c.PropertyName).ToList();
+
+            int programIndex = visibleColumnNames.IndexOf(nameof(QueryResultItem.Program));
+            int projectIndex = visibleColumnNames.IndexOf(nameof(QueryResultItem.ParentProject));
+
+            Assert.True(programIndex >= 0);
+            Assert.True(projectIndex >= 0);
+            Assert.True(programIndex < projectIndex);
+            Assert.Equal("ParentProject", grid.Columns.First(c => c.PropertyName == nameof(QueryResultItem.ParentProject)).DisplayName);
         }
 
         [Fact]

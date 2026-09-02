@@ -34,8 +34,7 @@ namespace Apha.PIMS.DataAccess.Repository
                 .Join(_context.RadtrackProgs,
                       v => v.Program,
                       r => r.Program,
-                      (v, r) => new { v, r })
-                .Where(x => x.v.Active == "Y")
+                      (v, r) => new { v, r })               
                 .OrderBy(x => x.v.ParentProject)
                 .Select(x => new ProjectListView
                 {

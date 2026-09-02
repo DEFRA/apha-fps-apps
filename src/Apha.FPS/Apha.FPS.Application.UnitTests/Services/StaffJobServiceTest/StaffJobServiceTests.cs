@@ -880,7 +880,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddAsync(inputDto));
-            ex.Message.Should().Contain("STAFF001").And.Contain("JOB001");
+            ex.Message.Should().Contain("JOB001");
             await _mockRepository.DidNotReceive().AddAsync(Arg.Any<StaffJob>());
         }
 
@@ -1007,7 +1007,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_WhenPlannedHoursIsNegative_ThrowsArgumentOutOfRangeException()
+        public async Task UpdateAsync_WhenPlannedHoursIsNegative_UpdatesSuccessfully()
         {
             // Arrange
             var inputDto = new StaffJobDto
@@ -1017,9 +1017,233 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
                 PlannedHours = -5
             };
 
+            var mappedEntity = new StaffJob
+            {
+                StaffId = "STAFF001",
+                JobCode = "JOB001",
+                PlannedHours = -5
+            };
+
+            var updatedEntity = new StaffJob
+            {
+                StaffId = "STAFF001",
+                JobCode = "JOB001",
+                PlannedHours = -5
+            };
+
+            var resultDto = new StaffJobDto
+            {
+                StaffId = "STAFF001",
+                JobCode = "JOB001",
+                PlannedHours = -5
+            };
+
+            _mockMapper.Map<StaffJob>(inputDto).Returns(mappedEntity);
+            _mockRepository.UpdateAsync(Arg.Any<StaffJob>()).Returns(updatedEntity);
+            _mockMapper.Map<StaffJobDto>(updatedEntity).Returns(resultDto);
+
+            // Act
+            var result = await _sut.UpdateAsync(inputDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(-5, result.PlannedHours);
+            await _mockRepository.Received(1).UpdateAsync(Arg.Any<StaffJob>());
+        }
+
+        [Fact]
+        public async Task AddAsync_WhenEntryAlreadyExists_MessageAsksUserToUpdateExistingRecord()
+        {
+            // Arrange
+            var inputDto = new StaffJobDto
+            {
+                StaffId = "STAFF001",
+                JobCode = "ZT001",
+                PlannedHours = 40
+            };
+
+            _mockRepository.GetByIdAsync(inputDto.StaffId, inputDto.JobCode)
+                .Returns(new StaffJob { StaffId = "STAFF001", JobCode = "ZT001" });
+
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _sut.UpdateAsync(inputDto));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddAsync(inputDto));
+            ex.Message.Should().Contain("Record already exist for ZT Code");
+            ex.Message.Should().Contain("ZT001");
+            ex.Message.Should().Contain("Please update the existing record");
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WhenJobCodeChanged_DeletesOriginalAndAddsNewRecord()
+        {
+            // Arrange - JobCode is part of the composite key, so a change must re-key the row
+            var inputDto = new StaffJobDto
+            {
+                StaffId = "STAFF001",
+                JobCode = "ZT002",
+                OriginalJobCode = "ZT001",
+                PlannedHours = 40
+            };
+
+            var mappedEntity = new StaffJob { StaffId = "STAFF001", JobCode = "ZT002", PlannedHours = 40 };
+            var createdEntity = new StaffJob { StaffId = "STAFF001", JobCode = "ZT002", PlannedHours = 40 };
+            var expectedDto = new StaffJobDto { StaffId = "STAFF001", JobCode = "ZT002", PlannedHours = 40 };
+
+            _mockRepository.DeleteAsync("STAFF001", "ZT001").Returns(true);
+            _mockMapper.Map<StaffJob>(inputDto).Returns(mappedEntity);
+            _mockRepository.AddAsync(mappedEntity).Returns(createdEntity);
+            _mockMapper.Map<StaffJobDto>(createdEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.UpdateAsync(inputDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("ZT002", result.JobCode);
+            await _mockRepository.Received(1).DeleteAsync("STAFF001", "ZT001");
+            await _mockRepository.Received(1).AddAsync(mappedEntity);
             await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<StaffJob>());
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WhenJobCodeUnchanged_UpdatesInPlace()
+        {
+            // Arrange
+            var inputDto = new StaffJobDto
+            {
+                StaffId = "STAFF001",
+                JobCode = "ZT001",
+                OriginalJobCode = "ZT001",
+                PlannedHours = 40
+            };
+
+            var mappedEntity = new StaffJob { StaffId = "STAFF001", JobCode = "ZT001", PlannedHours = 40 };
+            var updatedEntity = new StaffJob { StaffId = "STAFF001", JobCode = "ZT001", PlannedHours = 40 };
+            var expectedDto = new StaffJobDto { StaffId = "STAFF001", JobCode = "ZT001", PlannedHours = 40 };
+
+            _mockMapper.Map<StaffJob>(inputDto).Returns(mappedEntity);
+            _mockRepository.UpdateAsync(mappedEntity).Returns(updatedEntity);
+            _mockMapper.Map<StaffJobDto>(updatedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.UpdateAsync(inputDto);
+
+            // Assert
+            Assert.NotNull(result);
+            await _mockRepository.Received(1).UpdateAsync(mappedEntity);
+            await _mockRepository.DidNotReceive().DeleteAsync(Arg.Any<string>(), Arg.Any<string>());
+            await _mockRepository.DidNotReceive().AddAsync(Arg.Any<StaffJob>());
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WhenJobCodeChangedOnlyByCase_UpdatesInPlace()
+        {
+            // Arrange - comparison is OrdinalIgnoreCase, so this is not a re-key
+            var inputDto = new StaffJobDto
+            {
+                StaffId = "STAFF001",
+                JobCode = "zt001",
+                OriginalJobCode = "ZT001",
+                PlannedHours = 40
+            };
+
+            var mappedEntity = new StaffJob { StaffId = "STAFF001", JobCode = "zt001", PlannedHours = 40 };
+            var updatedEntity = new StaffJob { StaffId = "STAFF001", JobCode = "zt001", PlannedHours = 40 };
+            var expectedDto = new StaffJobDto { StaffId = "STAFF001", JobCode = "zt001", PlannedHours = 40 };
+
+            _mockMapper.Map<StaffJob>(inputDto).Returns(mappedEntity);
+            _mockRepository.UpdateAsync(mappedEntity).Returns(updatedEntity);
+            _mockMapper.Map<StaffJobDto>(updatedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.UpdateAsync(inputDto);
+
+            // Assert
+            Assert.NotNull(result);
+            await _mockRepository.Received(1).UpdateAsync(mappedEntity);
+            await _mockRepository.DidNotReceive().DeleteAsync(Arg.Any<string>(), Arg.Any<string>());
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task UpdateAsync_WhenOriginalJobCodeIsBlank_FallsBackToJobCodeAndUpdatesInPlace(string? originalJobCode)
+        {
+            // Arrange
+            var inputDto = new StaffJobDto
+            {
+                StaffId = "STAFF001",
+                JobCode = "ZT001",
+                OriginalJobCode = originalJobCode,
+                PlannedHours = 40
+            };
+
+            var mappedEntity = new StaffJob { StaffId = "STAFF001", JobCode = "ZT001", PlannedHours = 40 };
+            var updatedEntity = new StaffJob { StaffId = "STAFF001", JobCode = "ZT001", PlannedHours = 40 };
+            var expectedDto = new StaffJobDto { StaffId = "STAFF001", JobCode = "ZT001", PlannedHours = 40 };
+
+            _mockMapper.Map<StaffJob>(inputDto).Returns(mappedEntity);
+            _mockRepository.UpdateAsync(mappedEntity).Returns(updatedEntity);
+            _mockMapper.Map<StaffJobDto>(updatedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.UpdateAsync(inputDto);
+
+            // Assert
+            Assert.NotNull(result);
+            await _mockRepository.Received(1).UpdateAsync(mappedEntity);
+            await _mockRepository.DidNotReceive().DeleteAsync(Arg.Any<string>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WhenJobCodeChangedAndNegativeHours_StillReKeysSuccessfully()
+        {
+            // Arrange - negative hours are permitted on update (no guard clause)
+            var inputDto = new StaffJobDto
+            {
+                StaffId = "STAFF001",
+                JobCode = "ZT002",
+                OriginalJobCode = "ZT001",
+                PlannedHours = -10
+            };
+
+            var mappedEntity = new StaffJob { StaffId = "STAFF001", JobCode = "ZT002", PlannedHours = -10 };
+            var createdEntity = new StaffJob { StaffId = "STAFF001", JobCode = "ZT002", PlannedHours = -10 };
+            var expectedDto = new StaffJobDto { StaffId = "STAFF001", JobCode = "ZT002", PlannedHours = -10 };
+
+            _mockRepository.DeleteAsync("STAFF001", "ZT001").Returns(true);
+            _mockMapper.Map<StaffJob>(inputDto).Returns(mappedEntity);
+            _mockRepository.AddAsync(mappedEntity).Returns(createdEntity);
+            _mockMapper.Map<StaffJobDto>(createdEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.UpdateAsync(inputDto);
+
+            // Assert
+            Assert.Equal(-10, result.PlannedHours);
+            await _mockRepository.Received(1).DeleteAsync("STAFF001", "ZT001");
+            await _mockRepository.Received(1).AddAsync(mappedEntity);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WhenJobCodeChangedAndDeleteThrows_PropagatesAndDoesNotAdd()
+        {
+            // Arrange
+            var inputDto = new StaffJobDto
+            {
+                StaffId = "STAFF001",
+                JobCode = "ZT002",
+                OriginalJobCode = "ZT001",
+                PlannedHours = 40
+            };
+
+            _mockRepository.DeleteAsync("STAFF001", "ZT001")
+                .Throws(new InvalidOperationException("Delete failed"));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateAsync(inputDto));
+            Assert.Equal("Delete failed", ex.Message);
+            await _mockRepository.DidNotReceive().AddAsync(Arg.Any<StaffJob>());
         }
 
         [Fact]

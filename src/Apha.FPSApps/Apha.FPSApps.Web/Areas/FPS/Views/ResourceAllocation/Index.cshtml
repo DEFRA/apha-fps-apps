@@ -21,12 +21,12 @@
                     <tbody class="govuk-table__body">
                         <tr class="govuk-table__row">
                             <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
-                                <label class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-0 govuk-!-font-weight-bold isNoWrap" for="programmeDropdown">Select a Resource Center:</label>
+                                
+                                <label for="programmeDropdown" class="govuk-label govuk-!-margin-bottom-0 govuk-!-font-weight-bold isNoWrap">Select a Resource Center:</label>
                             </th>
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
                                 <select class="govuk-select"
                                         id="resourceCentreSelect"
-                                        aria-label="Select a Resource Center"
                                         asp-for="SelectedResourceCentre"
                                         asp-items="Model.ResourceCentres"
                                         onchange="LoadGroupsByResourceCentre()">
@@ -35,12 +35,11 @@
                             </td>
 
                             <th scope="row" class="govuk-table__header  govuk-!-padding-right-1 govuk-!-padding-bottom-0 isNoBottomBorder">
-                                <label for="ssrSelectedWorkgroup" class="govuk-label govuk-!-margin-bottom-0 govuk-!-font-weight-bold isNoWrap">Select WorkGroup: </label>
+                                <label for="workGroupSelect" class="govuk-label govuk-!-margin-bottom-0 govuk-!-font-weight-bold isNoWrap">Select WorkGroup: </label>
                             </th>
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 isNoBottomBorder">
                                 <select class="govuk-select"
                                         id="workGroupSelect"
-                                        aria-label="Select a Work Group"
                                         asp-for="SelectedWorkGroup"
                                         asp-items="Model.WorkGroupList"
                                         onchange="LoadGradeByGroup()">
@@ -49,14 +48,13 @@
                             </td>
 
                             <th scope="row" class="govuk-table__header  govuk-!-padding-right-1 govuk-!-padding-bottom-0 isNoBottomBorder">
-                                <label for="ssrSelectedWorkgroup" class="govuk-label govuk-!-margin-bottom-0 govuk-!-font-weight-bold isNoWrap">Select WorkGroup Grade: </label>
+                                <label for="workGroupGradeSelect" class="govuk-label govuk-!-margin-bottom-0 govuk-!-font-weight-bold isNoWrap">Select WorkGroup Grade: </label>
                             </th>
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 isNoBottomBorder">
                                 <select class="govuk-select"
                                         id="workGroupGradeSelect"
-                                        aria-label="Select a Work Group Grade"
                                         onchange="WorkgroupGradeChange()">
-                                    <option value="">-- Select a Work Group --</option>
+                                    <option value="">-- Select a Work Group Grade --</option>
                                 </select>
                             </td>
                         </tr>
@@ -98,12 +96,14 @@
                                                     <div id="gridContainer_StaffJobsGrid" class="s2cra-grid-host s2cra-jobs-grid-host">
                                                         @await Html.PartialAsync("_DataGrid", Model.StaffJobsGrid)
                                                     </div>
-                                                    <div class="s2cra-jobs-footer-highlight" aria-label="Selected staff hours highlight">
-                                                        <input class="govuk-input s2cra-selected-hours-input"
-                                                               id="stage2SelectedStaffHoursInput"
-                                                               type="text"
-                                                               readonly
-                                                               aria-label="Selected staff planned hours" />
+                                                    <div class="s2cra-jobs-footer-highlight">
+                                                        <div class="govuk-form-group s2cra-summary-field govuk-!-margin-bottom-0">
+                                                            <label class="govuk-label" for="stage2SelectedStaffHoursInput">Total Hours</label>
+                                                            <input class="govuk-input s2cra-selected-hours-input"
+                                                                   id="stage2SelectedStaffHoursInput"
+                                                                   type="text"
+                                                                   readonly />
+                                                        </div>
                                                     </div>
 
                                                 </div>
@@ -231,19 +231,29 @@
         };
 
             // ─── Totals row for the "Staff of this Grade" grid ──────────────────
-            // Rendered as a <tfoot> inside the grid table so the browser's own
-            // table layout keeps every total aligned under its column. Mirrors the
-            // totals row shown on the Staff Resource Utilisation page.
+            // Rendered as a separate, standalone table placed AFTER the grid's
+            // pagination footer so the totals sit below the pager. Column widths
+            // are copied from the main grid so every total stays aligned under its
+            // column. Mirrors the totals row shown on the Staff Resource
+            // Utilisation page.
             function buildRaStaffTotalsRow() {
                 var table = document.getElementById('tbl_@Model.StaffAllocationGrid.GridId');
                 if (!table) return;
 
-                // Clear any previously rendered totals tfoot before rebuilding it.
-                var existingFoot = table.querySelector('tfoot');
+                var container = table.closest('.editable-grid-container');
+                if (!container) return;
+
+                // Clear any previously rendered totals table before rebuilding it.
+                var existingFoot = container.querySelector('.ruv-totals-table-wrapper');
                 if (existingFoot) existingFoot.remove();
 
                 var rows = table.querySelectorAll('tbody tr');
                 if (!rows.length) return;
+
+                // Skip the totals row when the grid has no data — the empty grid
+                // renders a single "No records found." placeholder row (one cell
+                // spanning all columns), which must not produce a Staff Totals row.
+                if (rows.length === 1 && rows[0].querySelectorAll('td').length <= 1) return;
 
                 // Visible column layout (0-based):
                 //  0:Name(text)
@@ -270,22 +280,39 @@
                     });
                 });
 
-                // Build totals table row (rendered outside the main grid)
-                var totalsHtml = '<table class="govuk-table custom-table ra-totals-table" style="width: 100%; margin-top: 0;">';
-                totalsHtml += '<tbody class="govuk-table__body">';
-                totalsHtml += '<tr class="ruv-totals-row govuk-table__row">';
+                // Build the totals row as a standalone table placed AFTER the
+                // grid's pagination footer. Column widths are measured from the
+                // main grid's first data row so every total stays aligned under
+                // its column while sitting below the pager.
+                var totalsTable = document.createElement('table');
+                totalsTable.className = table.className + ' ruv-totals-table';
+
+                var colgroup = document.createElement('colgroup');
+                for (var c = 0; c < colCount; c++) {
+                    var col = document.createElement('col');
+                    if (refCells[c]) {
+                        col.style.width = refCells[c].getBoundingClientRect().width + 'px';
+                    }
+                    colgroup.appendChild(col);
+                }
+                totalsTable.appendChild(colgroup);
+
+                var tbody = document.createElement('tbody');
+                tbody.className = 'govuk-table__body';
+                var tr    = document.createElement('tr');
+                tr.className = 'ruv-totals-row govuk-table__row';
 
                 for (var i = 0; i < colCount; i++) {
-                    var cellContent = '';
-                    var cellClass = 'govuk-table__cell';
+                    var td = document.createElement('td');
+                    td.className = 'govuk-table__cell';
 
                     if (i === 0) {
-                        cellContent = 'Staff Totals:';
-                        cellClass += ' ruv-totals-label';
+                        td.textContent = 'Staff Totals:';
+                        td.className += ' ruv-totals-label';
                     } else if (sums.hasOwnProperty(i)) {
                         // Sum columns: just display the total
-                        cellContent = (Math.round(sums[i] * 100) / 100).toFixed(2);
-                        cellClass += ' govuk-table__cell--numeric';
+                        td.textContent = (Math.round(sums[i] * 100) / 100).toFixed(2);
+                        td.className += ' govuk-table__cell--numeric';
                     } else if (derivedPercentageCols.indexOf(i) !== -1) {
                         // Derived percentage columns: calculate from component sums
                         var numerator = 0, denominator = 0;
@@ -306,28 +333,26 @@
 
                         if (denominator !== 0) {
                             var pct = (numerator / denominator) * 100;
-                            cellContent = pct.toFixed(2) + '%';
+                            td.textContent = pct.toFixed(2) + '%';
                         } else {
-                            cellContent = '0.00%';
+                            td.textContent = '0.00%';
                         }
-                        cellClass += ' govuk-table__cell--numeric';
+                        td.className += ' govuk-table__cell--numeric';
                     }
 
-                    totalsHtml += '<td class="' + cellClass + '">' + cellContent + '</td>';
+                    tr.appendChild(td);
                 }
 
-                totalsHtml += '</tr>';
-                totalsHtml += '</tbody>';
-                totalsHtml += '</table>';
+                tbody.appendChild(tr);
+                totalsTable.appendChild(tbody);
 
-                // Insert the totals table after the grid container
-                var gridContainer = document.getElementById('gridContainer_@Model.StaffAllocationGrid.GridId');
-                if (gridContainer) {
-                    var totalsDiv = document.createElement('div');
-                    totalsDiv.id = 'ra-staff-totals-container';
-                    totalsDiv.innerHTML = totalsHtml;
-                    gridContainer.parentNode.insertBefore(totalsDiv, gridContainer.nextSibling);
-                }
+                var wrapper = document.createElement('div');
+                wrapper.className = 'ruv-totals-table-wrapper';
+                wrapper.appendChild(totalsTable);
+
+                // Place the totals table after the pagination footer (which lives
+                // outside the grid table) so the totals render below the pager.
+                container.appendChild(wrapper);
             }
 
             // Expose so ResourceAllocation.js can rebuild totals after it replaces

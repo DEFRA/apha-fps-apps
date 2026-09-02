@@ -14,8 +14,8 @@ namespace Apha.FPSApps.Application.Services.FPS
             _fpsClient = fpsClient;
         }
 
-        public Task<ApiResponseDto<List<ContributionSummaryRowDto>>> GetRowsAsync(string sellingPc)
-            => _fpsClient.FpsContributionSummary.GetRowsAsync(sellingPc);
+        public Task<ApiResponseDto<List<ContributionSummaryRowDto>>> GetRowsAsync(string sellingPc, string? sortBy = null, bool descending = false)
+            => _fpsClient.FpsContributionSummary.GetRowsAsync(sellingPc, sortBy, descending);
 
         public Task<ApiResponseDto<ContributionSummaryTotalsDto>> GetTotalsAsync(string sellingPc)
             => _fpsClient.FpsContributionSummary.GetTotalsAsync(sellingPc);
