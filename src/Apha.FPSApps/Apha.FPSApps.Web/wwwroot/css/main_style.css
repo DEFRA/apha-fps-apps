@@ -1896,6 +1896,22 @@ textarea {
         }
     }
 }
+
+/* While a dialog is being dragged, stop the flex modal container from
+   re-centring it. `.modal.show { display:flex; align-items:center;
+   justify-content:center }` above otherwise fights the left/top the
+   drag script writes onto the dialog. */
+.modal.is-dragging-host {
+    display: block !important;
+    align-items: initial !important;
+    justify-content: initial !important;
+}
+
+.modal-dialog.is-dragging,
+.govuk-edit-modal-dialog.is-dragging {
+    transform: none !important;
+    transition: none !important;
+}
 .govuk-edit-modal-dialog {
     .govuk-edit-modal__header {
         cursor: move;

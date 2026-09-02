@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     if (window.showAlertMessage && window.showGovukConfirm) {
         return;
     }
@@ -511,66 +511,130 @@
         });
     };
 
+})();
+
+
+// =============================================================
+// DRAGGABLE MODAL DIALOGS
+// =============================================================
+//
+// NOTE: this deliberately lives in its OWN IIFE.
+//
+// It used to sit inside the alert/confirm IIFE above, which
+// begins with:
+//
+//     if (window.showAlertMessage && window.showGovukConfirm) {
+//         return;
+//     }
+//
+// Once those globals exist (they are assigned by that same
+// IIFE), any later evaluation of this file returned early and
+// the drag handlers below were NEVER registered. Alerts kept
+// working because they were already on `window`, which made it
+// look like "only dragging is broken".
+//
+// =============================================================
+
+(function () {
+
+    if (window.__govukModalDragInitialised) {
+        return;
+    }
+    window.__govukModalDragInitialised = true;
+
+    var HEADER_SELECTOR =
+        ".modal-dialog .modal-header, " +
+        ".govuk-edit-modal-dialog .govuk-edit-modal__header";
+
+    var DIALOG_SELECTOR = ".modal-dialog, .govuk-edit-modal-dialog";
+
+    // Minimum part of modal that must remain visible
+    var minVisible = 50;
 
     var isDragging = false;
+
+    // The dialog captured on mousedown. Previously mousemove
+    // re-queried the DOM and took .first(), which could pick the
+    // shared #modalPopup dialog rendered by _Layout.cshtml instead
+    // of the page's own modal.
+    var $activeDialog = null;
 
     var startX = 0;
     var startY = 0;
     var startLeft = 0;
     var startTop = 0;
 
-    // Minimum part of modal that must remain visible
-    var minVisible = 50;
+    // Inline styles lose to rules like `max-width: 500px !important`
+    // on the dialog and to `.modal.show { display:flex; align-items:center }`
+    // in main_style.css, which keeps re-centring the dialog. Setting the
+    // positional properties with priority is the only reliable way to win.
+    function setImportant(el, prop, value) {
+        el.style.setProperty(prop, value, "important");
+    }
+
+    function clearProps(el, props) {
+        props.forEach(function (prop) {
+            el.style.removeProperty(prop);
+        });
+    }
+
+    function beginDrag($dialog) {
+        var el = $dialog[0];
+
+        $dialog.addClass("is-dragging");
+
+        // Freeze the current size so the flex parent cannot resize it.
+        setImportant(el, "width", $dialog.outerWidth() + "px");
+        setImportant(el, "max-width", "none");
+        setImportant(el, "position", "fixed");
+        setImportant(el, "margin", "0");
+
+        // Stop the flex container re-centring the dialog mid-drag.
+        $dialog.closest(".modal").addClass("is-dragging-host");
+    }
+
+    function moveDialog($dialog, left, top) {
+        var el = $dialog[0];
+        setImportant(el, "left", left + "px");
+        setImportant(el, "top", top + "px");
+    }
 
 
     // =========================================================
     // DRAG START
     // =========================================================
 
-    // Existing selector is NOT removed.
-    // Added .govuk-edit-modal-dialog .govuk-edit-modal__header
-    $(document).on(
-        "mousedown",
-        ".modal-dialog .modal-header, .govuk-edit-modal-dialog .govuk-edit-modal__header",
-        function (e) {
+    $(document).on("mousedown", HEADER_SELECTOR, function (e) {
 
-            // Do not drag when clicking buttons/links
-            if ($(e.target).closest("button, a, input, select, textarea").length) {
-                return;
-            }
+        // Do not drag when clicking buttons/links
+        if ($(e.target).closest("button, a, input, select, textarea").length) {
+            return;
+        }
 
-            // Keep existing selector + add new selector
-            var $dialog = $(this).closest(
-                ".modal-dialog, .govuk-edit-modal-dialog"
-            );
+        var $dialog = $(this).closest(DIALOG_SELECTOR);
 
-            if (!$dialog.length) {
-                return;
-            }
+        if (!$dialog.length) {
+            return;
+        }
 
-            var offset = $dialog.offset();
+        var offset = $dialog.offset();
 
-            isDragging = true;
+        isDragging = true;
+        $activeDialog = $dialog;
 
-            startX = e.clientX;
-            startY = e.clientY;
+        startX = e.clientX;
+        startY = e.clientY;
 
-            startLeft = offset.left;
-            startTop = offset.top;
+        startLeft = offset.left;
+        startTop = offset.top;
 
-            // Convert to fixed positioning
-            $dialog.css({
-                position: "fixed",
-                margin: 0,
-                left: startLeft,
-                top: startTop,
-                width: $dialog.outerWidth()
-            });
+        beginDrag($dialog);
+        moveDialog($dialog, startLeft, startTop);
 
-            $("body").css("user-select", "none");
+        $("body").css("user-select", "none");
 
-            e.preventDefault();
-        });
+        e.preventDefault();
+    });
 
 
     // =========================================================
@@ -579,20 +643,11 @@
 
     $(document).on("mousemove", function (e) {
 
-        if (!isDragging) {
+        if (!isDragging || !$activeDialog || !$activeDialog.length) {
             return;
         }
 
-        // Existing selector is preserved.
-        // New GOV.UK selector is added.
-        var $dialog = $(
-            ".modal-dialog:has(.modal-header), " +
-            ".govuk-edit-modal-dialog:has(.govuk-edit-modal__header)"
-        ).filter(":visible").first();
-
-        if (!$dialog.length) {
-            return;
-        }
+        var $dialog = $activeDialog;
 
         var dialogWidth = $dialog.outerWidth();
         var dialogHeight = $dialog.outerHeight();
@@ -630,11 +685,7 @@
         );
 
 
-        // Apply position
-        $dialog.css({
-            left: newLeft,
-            top: newTop
-        });
+        moveDialog($dialog, newLeft, newTop);
     });
 
 
@@ -647,7 +698,7 @@
         if (!isDragging) {
             return;
         }
-        
+
         isDragging = false;
 
         $("body").css("user-select", "");
@@ -667,27 +718,18 @@
 
     $(document).on("click", function (e) {
 
-        // Existing modal selector + new GOV.UK modal selector
-        var $dialog = $(
-            ".modal-dialog:has(.modal-header), " +
-            ".govuk-edit-modal-dialog:has(.govuk-edit-modal__header)"
-        ).filter(":visible").first();
-
-        if (!$dialog.length) {
+        if (!$activeDialog || !$activeDialog.length) {
             return;
         }
 
         // If click happened INSIDE modal, do nothing
-        if (
-            $(e.target).closest(
-                ".modal-dialog, .govuk-edit-modal-dialog"
-            ).length
-        ) {
+        if ($(e.target).closest(DIALOG_SELECTOR).length) {
             return;
         }
 
         // Click happened outside modal = faded background
-        resetModalPosition($dialog);
+        resetModalPosition($activeDialog);
+        $activeDialog = null;
     });
 
 
@@ -697,15 +739,25 @@
 
     function resetModalPosition($dialog) {
 
-        $dialog.css({
-            position: "",
-            left: "",
-            top: "",
-            margin: "auto",
-            width: "100%",
-            maxWidth: "700px"
-        });
+        if (!$dialog || !$dialog.length) {
+            return;
+        }
 
+        var el = $dialog[0];
+
+        clearProps(el, [
+            "position",
+            "left",
+            "top",
+            "margin",
+            "width",
+            "max-width"
+        ]);
+
+        $dialog.removeClass("is-dragging");
+        $dialog.closest(".modal").removeClass("is-dragging-host");
     }
+
+    window.resetGovukModalPosition = resetModalPosition;
 
 })();
