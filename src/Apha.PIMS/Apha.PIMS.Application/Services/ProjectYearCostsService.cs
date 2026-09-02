@@ -197,10 +197,17 @@ namespace Apha.PIMS.Application.Services
             cell.Style.Font.FontColor = XLColor.White;
         }
 
+        private const string PoundCurrencyFormat = "£#,##0.00";
+
         private static void ApplyTotalsRowStyle(IXLCell cell)
         {
             cell.Style.Font.Bold = true;
             cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#f3f2f1");
+        }
+
+        private static void ApplyPoundCurrencyFormat(IXLCell cell)
+        {
+            cell.Style.NumberFormat.Format = PoundCurrencyFormat;
         }
 
         private static void BuildStaffPlanSheet(XLWorkbook wb, List<ProjectStaffPlan> data)
@@ -221,7 +228,9 @@ namespace Apha.PIMS.Application.Services
                 ws.Cell(row, 2).Value = s.Name;
                 ws.Cell(row, 3).Value = s.Plannedhours ?? 0d;
                 ws.Cell(row, 4).Value = (double)(s.Rate ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 4));
                 ws.Cell(row, 5).Value = (double)(s.Cost ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 5));
                 row++;
             }
 
@@ -231,6 +240,7 @@ namespace Apha.PIMS.Application.Services
             ApplyTotalsRowStyle(totalLabelCell);
             var totalValCell = ws.Cell(row, 5);
             totalValCell.Value = (double)totalCost;
+            ApplyPoundCurrencyFormat(totalValCell);
             ApplyTotalsRowStyle(totalValCell);
 
             ws.Columns().AdjustToContents();
@@ -260,7 +270,9 @@ namespace Apha.PIMS.Application.Services
                 ws.Cell(row, 5).Value = s.Month;
                 ws.Cell(row, 6).Value = s.Time ?? 0d;
                 ws.Cell(row, 7).Value = (double)(s.Chargerate ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 7));
                 ws.Cell(row, 8).Value = (double)actualCost;
+                ApplyPoundCurrencyFormat(ws.Cell(row, 8));
                 row++;
             }
 
@@ -273,6 +285,7 @@ namespace Apha.PIMS.Application.Services
             ApplyTotalsRowStyle(totalLabelCell);
             var totalValCell = ws.Cell(row, 8);
             totalValCell.Value = (double)totalActualCost;
+            ApplyPoundCurrencyFormat(totalValCell);
             ApplyTotalsRowStyle(totalValCell);
 
             ws.Columns().AdjustToContents();
@@ -298,8 +311,10 @@ namespace Apha.PIMS.Application.Services
                 ws.Cell(row, 1).Value = t.Testcode;
                 ws.Cell(row, 2).Value = t.Buyer;
                 ws.Cell(row, 3).Value = (double)(t.Unitprice ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 3));
                 ws.Cell(row, 4).Value = t.Norequired ?? 0d;
                 ws.Cell(row, 5).Value = (double)cost;
+                ApplyPoundCurrencyFormat(ws.Cell(row, 5));
                 row++;
             }
 
@@ -312,6 +327,7 @@ namespace Apha.PIMS.Application.Services
             ApplyTotalsRowStyle(totalLabelCell);
             var totalValCell = ws.Cell(row, 5);
             totalValCell.Value = (double)totalCost;
+            ApplyPoundCurrencyFormat(totalValCell);
             ApplyTotalsRowStyle(totalValCell);
 
             ws.Columns().AdjustToContents();
@@ -340,7 +356,9 @@ namespace Apha.PIMS.Application.Services
                 ws.Cell(row, 4).Value = o.Month;
                 ws.Cell(row, 5).Value = o.Volume ?? 0d;
                 ws.Cell(row, 6).Value = (double)(r.Unitprice ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 6));
                 ws.Cell(row, 7).Value = (double)charge;
+                ApplyPoundCurrencyFormat(ws.Cell(row, 7));
                 row++;
             }
 
@@ -353,6 +371,7 @@ namespace Apha.PIMS.Application.Services
             ApplyTotalsRowStyle(totalLabelCell);
             var totalValCell = ws.Cell(row, 7);
             totalValCell.Value = (double)totalCharge;
+            ApplyPoundCurrencyFormat(totalValCell);
             ApplyTotalsRowStyle(totalValCell);
 
             ws.Columns().AdjustToContents();
@@ -376,7 +395,9 @@ namespace Apha.PIMS.Application.Services
                 ws.Cell(row, 2).Value = a.Numberofdays ?? 0d;
                 ws.Cell(row, 3).Value = a.Numberofanimals ?? 0d;
                 ws.Cell(row, 4).Value = (double)(a.Rate ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 4));
                 ws.Cell(row, 5).Value = (double)(a.Cost ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 5));
                 row++;
             }
 
@@ -386,6 +407,7 @@ namespace Apha.PIMS.Application.Services
             ApplyTotalsRowStyle(totalLabelCell);
             var totalValCell = ws.Cell(row, 5);
             totalValCell.Value = (double)totalCost;
+            ApplyPoundCurrencyFormat(totalValCell);
             ApplyTotalsRowStyle(totalValCell);
 
             ws.Columns().AdjustToContents();
@@ -410,8 +432,10 @@ namespace Apha.PIMS.Application.Services
                 ws.Cell(row, 2).Value = a.Acctcode;
                 ws.Cell(row, 3).Value = a.Description;
                 ws.Cell(row, 4).Value = (double)(a.DailyRate ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 4));
                 ws.Cell(row, 5).Value = a.AnimalDays ?? 0;
                 ws.Cell(row, 6).Value = (double)(a.Amount ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 6));
                 row++;
             }
 
@@ -421,6 +445,7 @@ namespace Apha.PIMS.Application.Services
             ApplyTotalsRowStyle(totalLabelCell);
             var totalValCell = ws.Cell(row, 6);
             totalValCell.Value = (double)totalAmount;
+            ApplyPoundCurrencyFormat(totalValCell);
             ApplyTotalsRowStyle(totalValCell);
 
             ws.Columns().AdjustToContents();
@@ -444,6 +469,7 @@ namespace Apha.PIMS.Application.Services
                 ws.Cell(row, 2).Value = a.Account;
                 ws.Cell(row, 3).Value = a.Description;
                 ws.Cell(row, 4).Value = (double)a.Itemcost;
+                ApplyPoundCurrencyFormat(ws.Cell(row, 4));
                 row++;
             }
 
@@ -453,6 +479,7 @@ namespace Apha.PIMS.Application.Services
             ApplyTotalsRowStyle(totalLabelCell);
             var totalValCell = ws.Cell(row, 4);
             totalValCell.Value = (double)totalCost;
+            ApplyPoundCurrencyFormat(totalValCell);
             ApplyTotalsRowStyle(totalValCell);
 
             ws.Columns().AdjustToContents();
@@ -478,6 +505,7 @@ namespace Apha.PIMS.Application.Services
                 ws.Cell(row, 3).Value = a.Description;
                 ws.Cell(row, 4).Value = a.Supplier;
                 ws.Cell(row, 5).Value = (double)(a.Amount ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 5));
                 row++;
             }
 
@@ -487,6 +515,7 @@ namespace Apha.PIMS.Application.Services
             ApplyTotalsRowStyle(totalLabelCell);
             var totalValCell = ws.Cell(row, 5);
             totalValCell.Value = (double)totalAmount;
+            ApplyPoundCurrencyFormat(totalValCell);
             ApplyTotalsRowStyle(totalValCell);
 
             ws.Columns().AdjustToContents();
