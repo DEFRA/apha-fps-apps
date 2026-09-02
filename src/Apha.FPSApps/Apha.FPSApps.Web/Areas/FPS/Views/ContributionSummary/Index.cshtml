@@ -1,7 +1,7 @@
 @model Apha.FPSApps.Web.Areas.FPS.Models.ContributionSummaryViewModel
 
 @{
-    ViewData["Title"] = "Income/Contribution from Time Sales";
+    ViewData["Title"] = "Income/Contribution From Time Sales";
 }
 
 @* ── Header row ── *@
@@ -9,19 +9,18 @@
 
     <div class="govuk-grid-column-two-thirds">
         <h1 class="govuk-heading-s sup_margin_bottom_0 govuk-!-margin-top-1 isNoWrap">
-            Income / Contribution from Time Sales:
-            <span id="selectedResourceCentreText">@Model.SelectedSellingPc</span>
+            Income/Contribution From Time Sales For:
+            <span id="selectedResourceCentreText" class="cs-selected-resource-centre">@Model.SelectedSellingPc</span>
         </h1>
     </div>
 
     @* Resource Center dropdown *@
     <div class="govuk-grid-column-one-third" style="display:flex; justify-content:flex-end;">
         <div style="display:flex; align-items:center; gap:8px;">
-            <label for="sellingPcSelect" class="govuk-label govuk-!-font-size-16 sup_margin_bottom_0">Resource Center:&nbsp;</label>
+            <label for="sellingPcSelect" class="govuk-label govuk-!-font-size-16 sup_margin_bottom_0 isNoWrap">Resource Center:</label>
             <select id="sellingPcSelect"
                     class="govuk-select govuk-!-font-size-16"
                     style="width:auto; min-width:260px;"
-                    aria-label="Resource Center"
                     onchange="loadContributionData(this.value)">
                 <option value="">-- Select Resource Center --</option>
                 @foreach (var pc in Model.SellingProfitCentres)

@@ -4,8 +4,7 @@
     ViewData["Title"] = "Plan vs Actual - Animals";
     ViewData["SelectedProjectCode"] = Model.SelectedProjectCode;
 }
-<div class="container-fluid">
-    <!-- Project selector -->
+<div class="govuk-grid-column-one-full">
     <div class="govuk-grid-row">
         <div class="govuk-grid-column-one-full isClearFix sup_border-bottom">
             <div class="govuk-grid-column-one-half isFloatLeft">
@@ -20,7 +19,7 @@
                                 @await Html.PartialAsync("_ProjectDropdownSelector")
                             </td>
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
-                                <a asp-area="FPS" asp-controller="ProgramProject" asp-action="Index" class="govuk-back-link">Back</a>
+                                <a asp-area="FPS" asp-controller="ProgramProject" asp-action="Index" class="govuk-back-link govuk-!-margin-bottom-0 govuk-!-margin-top-0">Back</a>
                             </td>
                         </tr>
                     </tbody>

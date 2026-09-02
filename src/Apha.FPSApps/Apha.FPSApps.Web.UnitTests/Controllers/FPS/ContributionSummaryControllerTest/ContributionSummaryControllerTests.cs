@@ -54,7 +54,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
         private void SetupRowsSuccess(string sellingPc, List<ContributionSummaryRowDto>? dtos = null)
         {
             dtos ??= MakeRowDtos();
-            _service.GetRowsAsync(sellingPc)
+            _service.GetRowsAsync(sellingPc, Arg.Any<string?>(), Arg.Any<bool>())
                 .Returns(ApiResponseDto<List<ContributionSummaryRowDto>>.SuccessResponse(dtos));
         }
 
@@ -165,7 +165,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
         {
             // Arrange
             var sellingPc = "ENV";
-            _service.GetRowsAsync(sellingPc)
+            _service.GetRowsAsync(sellingPc, Arg.Any<string?>(), Arg.Any<bool>())
                 .Returns(ApiResponseDto<List<ContributionSummaryRowDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Error" } }, new ApiMetaDto()));
             _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<ContributionSummaryRowDto>>())
@@ -263,16 +263,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
         #region LoadData — Sorting
 
         [Fact]
-        public async Task LoadData_WhenSortByWgGradeAscending_ReturnsSortedRows()
+        public async Task LoadData_WhenSortByWgGradeAscending_DelegatesSortingToService()
         {
-            // Arrange
+            // Arrange — sorting is applied in the repository, so the controller must
+            // forward the sort request and preserve the order it receives back.
             var sellingPc = "ENV";
             var dtos  = MakeRowDtos(3);
             var items = new List<ContributionSummaryRowItem>
             {
-                new() { WgGrade = "GC" },
                 new() { WgGrade = "GA" },
-                new() { WgGrade = "GB" }
+                new() { WgGrade = "GB" },
+                new() { WgGrade = "GC" }
             };
 
             SetupRowsSuccess(sellingPc, dtos);
@@ -283,6 +284,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
                 MakeRequest(sortBy: "WgGrade", descending: false), sellingPc);
 
             // Assert
+            await _service.Received(1).GetRowsAsync(sellingPc, "WgGrade", false);
             var gridConfig = Assert.IsType<DataGridConfig<ContributionSummaryRowItem>>(
                 Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal("GA", gridConfig.Data[0].WgGrade);
@@ -290,16 +292,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
         }
 
         [Fact]
-        public async Task LoadData_WhenSortByWorkGroupDescending_ReturnsSortedRows()
+        public async Task LoadData_WhenSortByWorkGroupDescending_DelegatesSortingToService()
         {
             // Arrange
             var sellingPc = "ENV";
             var dtos  = MakeRowDtos(3);
             var items = new List<ContributionSummaryRowItem>
             {
-                new() { WorkGroup = "Alpha" },
                 new() { WorkGroup = "Charlie" },
-                new() { WorkGroup = "Bravo" }
+                new() { WorkGroup = "Bravo" },
+                new() { WorkGroup = "Alpha" }
             };
 
             SetupRowsSuccess(sellingPc, dtos);
@@ -310,6 +312,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
                 MakeRequest(sortBy: "WorkGroup", descending: true), sellingPc);
 
             // Assert
+            await _service.Received(1).GetRowsAsync(sellingPc, "WorkGroup", true);
             var gridConfig = Assert.IsType<DataGridConfig<ContributionSummaryRowItem>>(
                 Assert.IsType<PartialViewResult>(result).Model);
             Assert.Equal("Charlie", gridConfig.Data[0].WorkGroup);

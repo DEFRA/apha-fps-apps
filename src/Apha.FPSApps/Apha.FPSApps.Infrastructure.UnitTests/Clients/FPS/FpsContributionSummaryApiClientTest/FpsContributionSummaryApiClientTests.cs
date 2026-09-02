@@ -94,6 +94,69 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTimeSellerPcApiCl
         }
 
         [Fact]
+        public async Task GetRowsAsync_WhenNoSortSupplied_SendsEmptySortByAndFalseDescending()
+        {
+            // Arrange
+            var apiResponse = MakeRowsApiResponse();
+            var dto         = ApiResponseDto<List<ContributionSummaryRowDto>>.SuccessResponse(new List<ContributionSummaryRowDto>());
+            string? capturedUrl = null;
+
+            _http.GetAsync<List<ContributionSummaryRowRes>>(Arg.Do<string>(u => capturedUrl = u)).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ContributionSummaryRowDto>>>(Arg.Any<ApiResponse<List<ContributionSummaryRowRes>>>()).Returns(dto);
+
+            // Act
+            await _client.GetRowsAsync("ENV");
+
+            // Assert
+            Assert.NotNull(capturedUrl);
+            Assert.Contains("sortBy=", capturedUrl);
+            Assert.Contains("descending=False", capturedUrl);
+        }
+
+        [Theory]
+        [InlineData("WorkGroup", true)]
+        [InlineData("Contribution", false)]
+        [InlineData("PctPlannedDisplay", true)]
+        public async Task GetRowsAsync_IncludesSortByAndDescendingInUrl(string sortBy, bool descending)
+        {
+            // Arrange
+            var apiResponse = MakeRowsApiResponse();
+            var dto         = ApiResponseDto<List<ContributionSummaryRowDto>>.SuccessResponse(new List<ContributionSummaryRowDto>());
+            string? capturedUrl = null;
+
+            _http.GetAsync<List<ContributionSummaryRowRes>>(Arg.Do<string>(u => capturedUrl = u)).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ContributionSummaryRowDto>>>(Arg.Any<ApiResponse<List<ContributionSummaryRowRes>>>()).Returns(dto);
+
+            // Act
+            await _client.GetRowsAsync("ENV", sortBy, descending);
+
+            // Assert
+            Assert.NotNull(capturedUrl);
+            Assert.Contains($"sortBy={sortBy}", capturedUrl);
+            Assert.Contains($"descending={descending}", capturedUrl);
+        }
+
+        [Fact]
+        public async Task GetRowsAsync_EscapesSortByValueInUrl()
+        {
+            // Arrange — a sort value containing characters that must be encoded
+            var apiResponse = MakeRowsApiResponse();
+            var dto         = ApiResponseDto<List<ContributionSummaryRowDto>>.SuccessResponse(new List<ContributionSummaryRowDto>());
+            string? capturedUrl = null;
+
+            _http.GetAsync<List<ContributionSummaryRowRes>>(Arg.Do<string>(u => capturedUrl = u)).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ContributionSummaryRowDto>>>(Arg.Any<ApiResponse<List<ContributionSummaryRowRes>>>()).Returns(dto);
+
+            // Act
+            await _client.GetRowsAsync("ENV", "% Planned&x=1");
+
+            // Assert
+            Assert.NotNull(capturedUrl);
+            Assert.DoesNotContain("% Planned&x=1", capturedUrl);
+            Assert.Contains(Uri.EscapeDataString("% Planned&x=1"), capturedUrl);
+        }
+
+        [Fact]
         public async Task GetRowsAsync_WhenApiReturnsFail_ReturnsFailureResponse()
         {
             // Arrange

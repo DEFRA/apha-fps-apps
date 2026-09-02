@@ -513,25 +513,32 @@ namespace Apha.FPS.DataAccess.Repositories
         private static IQueryable<StaffResourceUtilisationView> ApplyStaffResourceUtilisationSorting(
             IQueryable<StaffResourceUtilisationView> query, string? sortBy, bool descending)
         {
+            // The grid sends the web-model column property name (see StaffResourceStaffItem),
+            // so the cases must match those names, not the underlying view property names.
             Expression<Func<StaffResourceUtilisationView, object?>> keySelector = (sortBy?.ToLower()) switch
             {
+                "wggrade" => x => x.WgGrade,
                 "name" => x => x.Name,
-                "hrsavail" => x => x.HrsAvail,
-                "plannedzt" => x => x.PlannedZt,
-                "availsoct" => x => x.AvailSoct,
-                "notapprovedsoct" => x => x.NotApprovedSoct,
-                "approvedsoct" => x => x.ApprovedSoct,
+                "totalh" => x => x.HrsAvail,
+                "ztw" => x => x.PlannedZt,
+                "avail" => x => x.AvailSoct,
                 "left" => x => x.Left,
-                "approvedutilpct" => x => x.ApprovedUtilPct,
-                "notapprovedutilpct" => x => x.NotApprovedUtilPct,
-                "totalutilpct" => x => x.TotalUtilPct,
+                "approvedplan" => x => x.ApprovedSoct,
+                "approvedutil" => x => x.ApprovedUtilPct,
+                "notapprovedplan" => x => x.NotApprovedSoct,
+                "notapprovedutil" => x => x.NotApprovedUtilPct,
+                "totalplan" => x => x.ApprovedSoct + x.NotApprovedSoct,
+                "totalutil" => x => x.TotalUtilPct,
                 _ => x => x.WgGrade
             };
 
             bool applyDescending = descending && !string.IsNullOrEmpty(sortBy);
+
+            // Always apply a stable secondary ordering by WgGrade so equal values
+            // (e.g. multiple zero-value records) group together consistently.
             return applyDescending
-                ? query.OrderByDescending(keySelector)
-                : query.OrderBy(keySelector);
+                ? query.OrderByDescending(keySelector).ThenBy(x => x.WgGrade)
+                : query.OrderBy(keySelector).ThenBy(x => x.WgGrade);
         }
 
         public async Task<double> GetZtTotalHoursByStaffIdAsync(string staffId)

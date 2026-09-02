@@ -3,7 +3,9 @@
     padding: 0;
     box-sizing: border-box;
 }
-
+body{
+    padding-bottom: 10vh;
+}
 .main-content {
 
     margin: 0 auto;
@@ -5504,8 +5506,18 @@ input.govuk-input.ssr-total-input[readonly] {
 }
 .isPlanProjectIndividually {
     table {
-        width: 19vw;
+        width: auto;
         float: right;
+    }
+
+    /* Label and select sit inline on one row; nowrap stops the narrow cell
+       from breaking them onto separate lines. */
+    .govuk-table__cell {
+        white-space: nowrap;
+    }
+
+    .govuk-select {
+        vertical-align: middle;
     }
 }
 
@@ -5547,6 +5559,18 @@ input.govuk-input.ssr-total-input[readonly] {
 
 .sup_margin_bottom_10.content-wrapper:has(.isContributionSummaryPage) {
     margin-bottom: 10vh !important;
+}
+
+.isContributionSummaryPage .cs-selected-resource-centre {
+    color: #1d70b8;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* Contribution Summary totals: Access underlines the box heading text only,
+   not the full width of the box (which already has its own bottom border). */
+#cs-summary-grid .cs-summary-box-title-text {
+    text-decoration: underline;
 }
     .govuk-footer {
         position: fixed;
@@ -5611,9 +5635,11 @@ input.govuk-input.ssr-total-input[readonly] {
 
 .isCustomLabels {
     text-align: right;
-    display: block;
-    margin-top: 7px;
-    width: 47%;
+    display: inline-block;
+    width: auto;
+    white-space: nowrap;
+    vertical-align: middle;
+    margin-right: 8px;
 }
 .isWidthAuto{
     width: auto;
@@ -5721,5 +5747,38 @@ input.govuk-input.ssr-total-input[readonly] {
         td:nth-child(2) {
             text-align: center !important;
         }
+    }
+}
+/* Set Up New Project / Edit Project heading: keeps the standard govuk-heading-s
+   font size while vertically centring the title in the header band. */
+.sup_project_addedit_heading {
+    display: flex;
+    align-items: center;
+    height: 42px;
+    padding: 0 17px;
+}
+
+/* Back link: a single right gutter for every FPS page so the button lines up
+   consistently across the module. Individual pages previously used a mix of
+   sup_align_right (12px), no margin at all, or bespoke overrides, which made
+   the spacing vary from screen to screen. */
+.govuk-back-link {
+    margin-right: 15px;
+}
+
+.isBlock{
+    display:block;
+}
+.isFullWidth{
+    width: 100%;
+}
+.isTimeSummary {
+    .govuk-summary-list__key {
+        width: 60%;
+    }
+}
+.isZtCodesModal {
+    .modal-title{
+        font-size: 19px;
     }
 }

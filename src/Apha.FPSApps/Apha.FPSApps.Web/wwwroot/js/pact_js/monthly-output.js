@@ -938,7 +938,11 @@ $(document).ready(function () {
     });
 
     // Import — show import type selection modal
-    $('#importBtn').on('click', openImportTypeModal);
+    $('#importBtn').on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openImportTypeModal();
+    });
 
     $('#csvInput').on('change', function () {
         const file = this.files[0];

@@ -103,6 +103,39 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
         }
 
         [Theory]
+        [InlineData("WorkGroup", false)]
+        [InlineData("PctPlannedDisplay", true)]
+        [InlineData("Contribution", true)]
+        public async Task GetRowsAsync_ForwardsSortArgumentsToApiClient(string sortBy, bool descending)
+        {
+            // Arrange
+            var sellingPc = "ASU";
+            var response  = ApiResponseDto<List<ContributionSummaryRowDto>>.SuccessResponse(new List<ContributionSummaryRowDto>());
+            _apiClient.GetRowsAsync(sellingPc, sortBy, descending).Returns(response);
+
+            // Act
+            await _service.GetRowsAsync(sellingPc, sortBy, descending);
+
+            // Assert
+            await _apiClient.Received(1).GetRowsAsync(sellingPc, sortBy, descending);
+        }
+
+        [Fact]
+        public async Task GetRowsAsync_WhenNoSortSupplied_ForwardsNullSortAndAscending()
+        {
+            // Arrange
+            var sellingPc = "ENV";
+            var response  = ApiResponseDto<List<ContributionSummaryRowDto>>.SuccessResponse(new List<ContributionSummaryRowDto>());
+            _apiClient.GetRowsAsync(sellingPc, null, false).Returns(response);
+
+            // Act
+            await _service.GetRowsAsync(sellingPc);
+
+            // Assert
+            await _apiClient.Received(1).GetRowsAsync(sellingPc, null, false);
+        }
+
+        [Theory]
         [InlineData("ASU")]
         [InlineData("ENV")]
         [InlineData("BIO")]
