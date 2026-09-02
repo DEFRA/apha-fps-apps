@@ -692,4 +692,29 @@
             }
         });
     })();
+
+    $(function() {
+
+        $("table").each(function() {
+
+            var $table = $(this);
+
+            $table.find("thead tr:first th").each(function(columnIndex) {
+
+                var headerText = $.trim($(this).text());
+
+                if (headerText.toLowerCase() === "action") {
+
+                    // Action header
+                    $(this).css("white-space", "nowrap");
+
+                    // All TDs belonging to the Action column
+                    $table.find("tbody tr").each(function() {
+                        $(this).find("td").eq(columnIndex).css("white-space", "nowrap");
+                    });
+                }
+            });
+        });
+
+    });
 </script>
