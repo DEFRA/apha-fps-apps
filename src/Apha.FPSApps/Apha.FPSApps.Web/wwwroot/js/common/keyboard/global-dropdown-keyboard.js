@@ -283,7 +283,7 @@
 
 })();
 
-
+// ── Global key navigation for sidenav and menu bar  ──────────
 (function () {
     'use strict';
 
@@ -357,4 +357,55 @@
         target.dispatchEvent(new Event('input', { bubbles: true }));
         target.dispatchEvent(new Event('change', { bubbles: true }));
     });
+})();
+
+// ── Global GOV.UK tabs keyboard navigation (ArrowLeft/ArrowRight) ──────────
+
+(function () {
+    'use strict';
+
+    // Capture phase on document: guarantees this runs before any other
+    // keydown listener elsewhere in the page (e.g. grid/pagination handlers
+    // that call stopPropagation()/stopImmediatePropagation()) can prevent
+    // the tab navigation from being processed.
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+            return;
+        }
+
+        var tab = e.target && e.target.closest ? e.target.closest('.govuk-tabs__tab') : null;
+        if (!tab) {
+            return;
+        }
+
+        var tabsWrapper = tab.closest('.govuk-tabs');
+        if (!tabsWrapper) {
+            return;
+        }
+
+        var tabs = Array.prototype.slice.call(
+            tabsWrapper.querySelectorAll('.govuk-tabs__tab')
+        );
+        var currentIndex = tabs.indexOf(tab);
+        if (currentIndex === -1) {
+            return;
+        }
+
+        e.preventDefault();
+
+        var delta = e.key === 'ArrowRight' ? 1 : -1;
+        var nextIndex = (currentIndex + delta + tabs.length) % tabs.length;
+        var nextTab = tabs[nextIndex];
+
+        nextTab.focus();
+        nextTab.click();
+
+        // Ensure focus stays on the newly-selected tab even if the click
+        // handler/native anchor navigation would otherwise move it away.
+        window.setTimeout(function () {
+            if (document.activeElement !== nextTab) {
+                nextTab.focus();
+            }
+        }, 0);
+    }, true);
 })();
