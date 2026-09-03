@@ -72,6 +72,21 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Resolves the <c>JobExecutionId</c> of the single Year End Data Setup request currently in
+        /// <c>Initiated</c> status, if any - the request the Confirm workflow is editing. Used by the
+        /// FPSApps UI to recover which request it is editing after a page refresh, without relying on
+        /// any client-side storage.
+        /// </summary>
+        /// <returns><c>200 OK</c> with <see cref="YearEndInitiatedRequestRes"/>; <c>JobExecutionId</c> is
+        /// <see langword="null"/> when no request is Initiated.</returns>
+        [HttpGet("datasetup/initiated")]
+        public async Task<IActionResult> GetInitiatedDataSetupJobExecutionIdAsync()
+        {
+            var jobExecutionId = await _yearEndService.GetInitiatedDataSetupJobExecutionIdAsync();
+            return Ok(new YearEndInitiatedRequestRes { JobExecutionId = jobExecutionId });
+        }
+
+        /// <summary>
         /// Enqueue the YearEndInitiation batch job for approval.
         /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
         /// all config exists, verifies no instance is already running, then enqueues the job. 

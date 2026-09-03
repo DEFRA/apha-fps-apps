@@ -18,6 +18,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
     /// Soft-skips (no assertions run, test still passes) when Postgres is unreachable — same
     /// convention as BulkRatesRepositoryYearFilterTests.
     /// </summary>
+    [Collection("YearEndDataSetupIntegration")]
     public sealed class YearEndStagingRepositoryIntegrationTests : IAsyncLifetime
     {
         // No connection string is checked in - set ConnectionStrings__FPSConnectionString locally to

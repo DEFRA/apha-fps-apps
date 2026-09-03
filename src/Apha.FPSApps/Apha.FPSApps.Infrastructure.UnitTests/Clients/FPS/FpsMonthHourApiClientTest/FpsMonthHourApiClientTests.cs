@@ -405,6 +405,25 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsMonthHourApiClien
         }
 
         [Fact]
+        public async Task GetYearEndMonthHoursAsync_WhenJobExecutionIdSupplied_AppendsItToTheUrl()
+        {
+            // Arrange
+            var jobExecutionId = Guid.NewGuid();
+            var apiResponse = new ApiResponse<List<YearEndMonthHourRes>> { Success = true, Data = [] };
+            var expectedUrl = $"api/v1/monthhour/yearend?jobExecutionId={jobExecutionId}";
+
+            _http.GetAsync<List<YearEndMonthHourRes>>(expectedUrl).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<YearEndMonthHourDto>>>(apiResponse)
+                   .Returns(ApiResponseDto<List<YearEndMonthHourDto>>.SuccessResponse([]));
+
+            // Act
+            await _client.GetYearEndMonthHoursAsync(jobExecutionId);
+
+            // Assert
+            await _http.Received(1).GetAsync<List<YearEndMonthHourRes>>(expectedUrl);
+        }
+
+        [Fact]
         public async Task GetYearEndMonthHoursAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
@@ -442,6 +461,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsMonthHourApiClien
         public async Task SaveMonthHourAsync_WhenApiReturnsSuccess_ReturnsMappedDto()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new MonthHourDto { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
             var req = new MonthHourReq { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
             var apiResponse = new ApiResponse<MonthHourRes>
@@ -452,18 +472,19 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsMonthHourApiClien
             var expectedDto = ApiResponseDto<MonthHourDto>.SuccessResponse(
                 new MonthHourDto { Year = 2024, Month = 3, Days = 20, FpsYear = 2024 });
 
+            var expectedUrl = $"api/v1/monthhour/save?jobExecutionId={jobExecutionId}";
             _mapper.Map<MonthHourReq>(dto).Returns(req);
-            _http.PostAsync<MonthHourReq, MonthHourRes>("api/v1/monthhour/save", req).Returns(apiResponse);
+            _http.PostAsync<MonthHourReq, MonthHourRes>(expectedUrl, req).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<MonthHourDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.SaveMonthHourAsync(dto);
+            var result = await _client.SaveMonthHourAsync(dto, jobExecutionId);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal((short)3, result.Data?.Month);
-            await _http.Received(1).PostAsync<MonthHourReq, MonthHourRes>("api/v1/monthhour/save", req);
+            await _http.Received(1).PostAsync<MonthHourReq, MonthHourRes>(expectedUrl, req);
             _mapper.Received(1).Map<ApiResponseDto<MonthHourDto>>(apiResponse);
         }
 
@@ -471,6 +492,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsMonthHourApiClien
         public async Task SaveMonthHourAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new MonthHourDto { Year = 2024, Month = 1, Days = -1 };
             var req = new MonthHourReq { Year = 2024, Month = 1, Days = -1 };
             var errors = new List<ApiError> { new ApiError { Message = "Validation error", Code = "VALIDATION_ERROR" } };
@@ -482,24 +504,26 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsMonthHourApiClien
                 Meta = new ApiMetaDto()
             };
 
+            var expectedUrl = $"api/v1/monthhour/save?jobExecutionId={jobExecutionId}";
             _mapper.Map<MonthHourReq>(dto).Returns(req);
-            _http.PostAsync<MonthHourReq, MonthHourRes>("api/v1/monthhour/save", req).Returns(apiResponse);
+            _http.PostAsync<MonthHourReq, MonthHourRes>(expectedUrl, req).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<MonthHourDto>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            var result = await _client.SaveMonthHourAsync(dto);
+            var result = await _client.SaveMonthHourAsync(dto, jobExecutionId);
 
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.Single(result.Errors!);
-            await _http.Received(1).PostAsync<MonthHourReq, MonthHourRes>("api/v1/monthhour/save", req);
+            await _http.Received(1).PostAsync<MonthHourReq, MonthHourRes>(expectedUrl, req);
         }
 
         [Fact]
         public async Task SaveMonthHourAsync_MapsInputDtoToRequestBeforePosting()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new MonthHourDto { Year = 2024, Month = 6, Days = 21, FpsYear = 2024 };
             var req = new MonthHourReq { Year = 2024, Month = 6, Days = 21, FpsYear = 2024 };
             var apiResponse = new ApiResponse<MonthHourRes> { Success = true, Data = new MonthHourRes() };
@@ -510,16 +534,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsMonthHourApiClien
             _mapper.Map<ApiResponseDto<MonthHourDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.SaveMonthHourAsync(dto);
+            await _client.SaveMonthHourAsync(dto, jobExecutionId);
 
             // Assert
             _mapper.Received(1).Map<MonthHourReq>(dto);
         }
 
         [Fact]
-        public async Task SaveMonthHourAsync_CallsCorrectEndpointUrl()
+        public async Task SaveMonthHourAsync_CallsCorrectEndpointUrlWithJobExecutionId()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new MonthHourDto { Year = 2024, Month = 1, Days = 20, FpsYear = 2024 };
             var req = new MonthHourReq { Year = 2024, Month = 1, Days = 20, FpsYear = 2024 };
             var apiResponse = new ApiResponse<MonthHourRes> { Success = true, Data = new MonthHourRes() };
@@ -530,10 +555,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsMonthHourApiClien
                    .Returns(ApiResponseDto<MonthHourDto>.SuccessResponse(new MonthHourDto()));
 
             // Act
-            await _client.SaveMonthHourAsync(dto);
+            await _client.SaveMonthHourAsync(dto, jobExecutionId);
 
             // Assert
-            await _http.Received(1).PostAsync<MonthHourReq, MonthHourRes>("api/v1/monthhour/save", req);
+            await _http.Received(1).PostAsync<MonthHourReq, MonthHourRes>($"api/v1/monthhour/save?jobExecutionId={jobExecutionId}", req);
         }
 
         #endregion

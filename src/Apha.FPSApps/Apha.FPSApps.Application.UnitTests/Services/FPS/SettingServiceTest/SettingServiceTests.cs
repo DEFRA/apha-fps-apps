@@ -372,50 +372,53 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.SettingServiceTest
         public async Task SaveSettingAsync_WhenApiReturnsSuccess_ReturnsSavedSetting()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new SettingDto { Id = "HoursInDay", Setting = "7.5", FpsYear = 2024 };
             var saved = new SettingDto { Id = "HoursInDay", Setting = "7.5", FpsYear = 2024 };
             var expectedResponse = ApiResponseDto<SettingDto>.SuccessResponse(saved);
-            _fpsSettingApiClient.SaveSettingAsync(dto).Returns(expectedResponse);
+            _fpsSettingApiClient.SaveSettingAsync(dto, jobExecutionId).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.SaveSettingAsync(dto);
+            var result = await _sut.SaveSettingAsync(dto, jobExecutionId);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("HoursInDay", result.Data?.Id);
-            await _fpsSettingApiClient.Received(1).SaveSettingAsync(dto);
+            await _fpsSettingApiClient.Received(1).SaveSettingAsync(dto, jobExecutionId);
         }
 
         [Fact]
         public async Task SaveSettingAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new SettingDto { Id = "BadKey" };
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Validation failed", Code = "VALIDATION_ERROR" } };
             var expectedResponse = ApiResponseDto<SettingDto>.FailureResponse(errors, new ApiMetaDto());
-            _fpsSettingApiClient.SaveSettingAsync(dto).Returns(expectedResponse);
+            _fpsSettingApiClient.SaveSettingAsync(dto, jobExecutionId).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.SaveSettingAsync(dto);
+            var result = await _sut.SaveSettingAsync(dto, jobExecutionId);
 
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            await _fpsSettingApiClient.Received(1).SaveSettingAsync(dto);
+            await _fpsSettingApiClient.Received(1).SaveSettingAsync(dto, jobExecutionId);
         }
 
         [Fact]
         public async Task SaveSettingAsync_WhenApiClientThrowsException_PropagatesException()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new SettingDto { Id = "Key" };
-            _fpsSettingApiClient.SaveSettingAsync(dto).ThrowsAsync(new Exception("Save failed"));
+            _fpsSettingApiClient.SaveSettingAsync(dto, jobExecutionId).ThrowsAsync(new Exception("Save failed"));
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveSettingAsync(dto));
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveSettingAsync(dto, jobExecutionId));
             Assert.Equal("Save failed", exception.Message);
-            await _fpsSettingApiClient.Received(1).SaveSettingAsync(dto);
+            await _fpsSettingApiClient.Received(1).SaveSettingAsync(dto, jobExecutionId);
         }
 
         #endregion

@@ -42,9 +42,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<SettingDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<YearEndSettingDto>>> GetYearEndSettingsAsync()
+        public async Task<ApiResponseDto<List<YearEndSettingDto>>> GetYearEndSettingsAsync(Guid? jobExecutionId = null)
         {
-            var response = await _http.GetAsync<List<FpsYearEndSettingRes>>(FpsApiEndpoints.GetYearEndSettings);
+            var url = FpsApiEndpoints.GetYearEndSettings;
+            if (jobExecutionId.HasValue)
+                url += $"?jobExecutionId={jobExecutionId.Value}";
+
+            var response = await _http.GetAsync<List<FpsYearEndSettingRes>>(url);
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<YearEndSettingDto>>>(response);
@@ -78,10 +82,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<SettingDto>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<SettingDto>> SaveSettingAsync(SettingDto settingDto)
+        public async Task<ApiResponseDto<SettingDto>> SaveSettingAsync(SettingDto settingDto, Guid jobExecutionId)
         {
             var request = _mapper.Map<FpsSettingReq>(settingDto);
-            var response = await _http.PostAsync<FpsSettingReq, FpsSettingRes>(FpsApiEndpoints.SaveSetting, request);
+            var url = $"{FpsApiEndpoints.SaveSetting}?jobExecutionId={jobExecutionId}";
+            var response = await _http.PostAsync<FpsSettingReq, FpsSettingRes>(url, request);
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<SettingDto>>(response);

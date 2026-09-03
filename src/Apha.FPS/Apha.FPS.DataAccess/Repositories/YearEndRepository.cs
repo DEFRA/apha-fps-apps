@@ -10,6 +10,12 @@ namespace Apha.FPS.DataAccess.Repositories
 {
     public class YearEndRepository : BaseRepository, IYearEndRepository
     {
+        // Matches YearEndService's own YearEndDataSetupJobName constant (and
+        // YearEndStagingRepository's). GetInitiatedDataSetupJobExecutionIdAsync is a Data-Setup-only
+        // concept (it resolves the request the Confirm workflow is editing) — hardcoded here rather
+        // than threaded as a parameter, so the caller can't ask it for a different job's active id.
+        private const string YearEndDataSetupJobName = "YearEnd-DataSetup";
+
         private readonly IFpsRequestContext _requestContext;
 
         // Only used by the DataSetup Approve/Reject path (Workstream 6), specifically for Reject's
@@ -66,6 +72,30 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<string> GetYearEndDataSetupRequestInitiatorAsync(string jobName)
         {
             return await GetInitiator(jobName);
+        }
+
+        public async Task<Guid?> GetInitiatedDataSetupJobExecutionIdAsync()
+        {
+            // IgnoreQueryFilters: BatchJobQueue carries a global HasQueryFilter(e => e.FpsYear ==
+            // FilterFpsYear) — this is recovering workflow state ("is there an editable Data Setup
+            // request, anywhere"), not a year-scoped listing, and must not depend on the caller's
+            // ambient X-FPS-Year header matching whatever FpsYear the request's own row carries.
+            //
+            // (Guid?) cast: without it, SingleOrDefaultAsync over a non-nullable Guid projection
+            // returns Guid.Empty for zero rows, not null — silently breaking the "no request" contract.
+            //
+            // SingleOrDefaultAsync, not FirstOrDefaultAsync + OrderByDescending: at most one Initiated
+            // Data Setup request should ever exist system-wide (CanInitiateRequest's own invariant). If
+            // that's ever violated, this must fail loudly rather than silently picking one.
+            return await (
+                from jq in _context.BatchJobQueues.IgnoreQueryFilters().AsNoTracking()
+                join jm in _context.BatchJobs.AsNoTracking() on jq.JobId equals jm.JobId
+                join js in _context.BatchJobStatuses.AsNoTracking()
+                    on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
+                where jm.JobName.ToLower() == YearEndDataSetupJobName.ToLower()
+                   && js.Status.ToLower() == "initiated"
+                select (Guid?)jq.JobExecutionId
+            ).SingleOrDefaultAsync();
         }
 
         public async Task<BatchJobQueue> EnqueueDataSetupInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note, int targetFpsYear)

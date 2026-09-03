@@ -324,6 +324,71 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
 
         #endregion
 
+        #region GetInitiatedDataSetupJobExecutionIdAsync
+
+        [Fact]
+        public async Task GetInitiatedDataSetupJobExecutionIdAsync_WhenApiReturnsAnId_ReturnsIt()
+        {
+            // Arrange
+            var jobExecutionId = Guid.NewGuid();
+            var apiResponse = new ApiResponse<YearEndInitiatedRequestRes>
+            {
+                Success = true,
+                Data = new YearEndInitiatedRequestRes { JobExecutionId = jobExecutionId }
+            };
+            _http.GetAsync<YearEndInitiatedRequestRes>("api/v1/yearend/datasetup/initiated").Returns(apiResponse);
+
+            // Act
+            var result = await _client.GetInitiatedDataSetupJobExecutionIdAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(jobExecutionId, result.Data);
+        }
+
+        [Fact]
+        public async Task GetInitiatedDataSetupJobExecutionIdAsync_WhenApiReturnsNull_ReturnsNull()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<YearEndInitiatedRequestRes>
+            {
+                Success = true,
+                Data = new YearEndInitiatedRequestRes { JobExecutionId = null }
+            };
+            _http.GetAsync<YearEndInitiatedRequestRes>("api/v1/yearend/datasetup/initiated").Returns(apiResponse);
+
+            // Act
+            var result = await _client.GetInitiatedDataSetupJobExecutionIdAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Null(result.Data);
+        }
+
+        [Fact]
+        public async Task GetInitiatedDataSetupJobExecutionIdAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError> { new ApiError { Message = "Service error", Code = "SERVICE_ERROR" } };
+            var apiResponse = new ApiResponse<YearEndInitiatedRequestRes> { Success = false, Errors = errors, Meta = new ApiMeta { CorrelationId = "corr-1" } };
+            _http.GetAsync<YearEndInitiatedRequestRes>("api/v1/yearend/datasetup/initiated").Returns(apiResponse);
+            _mapper.Map<List<ApiErrorDto>>(errors).Returns([new ApiErrorDto { Message = "Service error", Code = "SERVICE_ERROR" }]);
+            _mapper.Map<ApiMetaDto>(apiResponse.Meta).Returns(new ApiMetaDto { CorrelationId = "corr-1" });
+
+            // Act
+            var result = await _client.GetInitiatedDataSetupJobExecutionIdAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+            Assert.Equal("SERVICE_ERROR", result.Errors![0].Code);
+        }
+
+        #endregion
+
         #region EnqueueYearEndDataSetupInitiationJobAsync
 
         [Fact]
@@ -444,6 +509,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         public async Task TriggerYearEndDataSetupApprovalJobAsync_WhenApiReturnsSuccess_ReturnsMappedBatchJobEventTriggerDto()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var triggerRes = new BatchJobEventTriggerRes
             {
                 EventId = "evt-001",
@@ -453,21 +519,22 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             var expectedDto = ApiResponseDto<BatchJobEventTriggerDto>.SuccessResponse(
                 new BatchJobEventTriggerDto { EventId = "evt-001", Jobqueue = new BatchJobQueueDto { JobId = 1 } });
 
+            var expectedUrl = $"api/v1/yearend/dataSetup/approval?jobExecutionId={jobExecutionId}";
             _http.PostAsync<YearEndDataSetupReq, BatchJobEventTriggerRes>(
-                    "api/v1/yearend/dataSetup/approval",
+                    expectedUrl,
                     Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == PlannedYear))
                  .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.TriggerYearEndDataSetupApprovalJobAsync(PlannedYear);
+            var result = await _client.TriggerYearEndDataSetupApprovalJobAsync(PlannedYear, jobExecutionId);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("evt-001", result.Data?.EventId);
             await _http.Received(1).PostAsync<YearEndDataSetupReq, BatchJobEventTriggerRes>(
-                "api/v1/yearend/dataSetup/approval",
+                expectedUrl,
                 Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == PlannedYear));
             _mapper.Received(1).Map<ApiResponseDto<BatchJobEventTriggerDto>>(apiResponse);
         }
@@ -490,7 +557,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            var result = await _client.TriggerYearEndDataSetupApprovalJobAsync(PlannedYear);
+            var result = await _client.TriggerYearEndDataSetupApprovalJobAsync(PlannedYear, Guid.NewGuid());
 
             // Assert
             Assert.NotNull(result);
@@ -516,7 +583,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            var result = await _client.TriggerYearEndDataSetupApprovalJobAsync(PlannedYear);
+            var result = await _client.TriggerYearEndDataSetupApprovalJobAsync(PlannedYear, Guid.NewGuid());
 
             // Assert
             Assert.NotNull(result);
@@ -529,6 +596,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         public async Task TriggerYearEndDataSetupApprovalJobAsync_PostsRequestWithCorrectPlannedYear(int plannedYear)
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var apiResponse = new ApiResponse<BatchJobEventTriggerRes>
             {
                 Success = true,
@@ -542,11 +610,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.TriggerYearEndDataSetupApprovalJobAsync(plannedYear);
+            await _client.TriggerYearEndDataSetupApprovalJobAsync(plannedYear, jobExecutionId);
 
             // Assert
             await _http.Received(1).PostAsync<YearEndDataSetupReq, BatchJobEventTriggerRes>(
-                "api/v1/yearend/dataSetup/approval",
+                $"api/v1/yearend/dataSetup/approval?jobExecutionId={jobExecutionId}",
                 Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == plannedYear));
         }
 
@@ -558,24 +626,26 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         public async Task EnqueueYearEndDataSetupRejectJobAsync_WhenApiReturnsSuccess_ReturnsSuccessWithTrue()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var mappedSuccess = new ApiResponseDto<bool> { Success = true, Data = true };
 
+            var expectedUrl = $"api/v1/yearend/dataSetup/reject?jobExecutionId={jobExecutionId}";
             _http.PostAsync<YearEndDataSetupReq, bool?>(
-                    "api/v1/yearend/dataSetup/reject",
+                    expectedUrl,
                     Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == PlannedYear))
                  .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedSuccess);
 
             // Act
-            var result = await _client.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear);
+            var result = await _client.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, jobExecutionId);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
             await _http.Received(1).PostAsync<YearEndDataSetupReq, bool?>(
-                "api/v1/yearend/dataSetup/reject",
+                expectedUrl,
                 Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == PlannedYear));
         }
 
@@ -597,7 +667,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            var result = await _client.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear);
+            var result = await _client.EnqueueYearEndDataSetupRejectJobAsync(PlannedYear, Guid.NewGuid());
 
             // Assert
             Assert.NotNull(result);
@@ -612,6 +682,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
         public async Task EnqueueYearEndDataSetupRejectJobAsync_PostsRequestWithCorrectPlannedYear(int plannedYear)
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var mappedSuccess = new ApiResponseDto<bool> { Success = true, Data = true };
 
@@ -620,11 +691,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedSuccess);
 
             // Act
-            await _client.EnqueueYearEndDataSetupRejectJobAsync(plannedYear);
+            await _client.EnqueueYearEndDataSetupRejectJobAsync(plannedYear, jobExecutionId);
 
             // Assert
             await _http.Received(1).PostAsync<YearEndDataSetupReq, bool?>(
-                "api/v1/yearend/dataSetup/reject",
+                $"api/v1/yearend/dataSetup/reject?jobExecutionId={jobExecutionId}",
                 Arg.Is<YearEndDataSetupReq>(r => r.PlannedYear == plannedYear));
         }
 

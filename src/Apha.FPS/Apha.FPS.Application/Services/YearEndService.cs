@@ -71,6 +71,11 @@ namespace Apha.FPS.Application.Services
             return await _yearEndRepository.CanApproveOrRejectYearEndDataSetupRequestAsync(jobName);
         }
 
+        public async Task<Guid?> GetInitiatedDataSetupJobExecutionIdAsync()
+        {
+            return await _yearEndRepository.GetInitiatedDataSetupJobExecutionIdAsync();
+        }
+
         public async Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, int contextYear, 
             string requestedBy, string correlationId)
         {

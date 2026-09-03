@@ -30,14 +30,14 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsClient.FpsMonthHour.GetDistinctYearsAsync();
         }
 
-        public async Task<ApiResponseDto<List<YearEndMonthHourDto>>> GetYearEndMonthHoursAsync()
+        public async Task<ApiResponseDto<List<YearEndMonthHourDto>>> GetYearEndMonthHoursAsync(Guid? jobExecutionId = null)
         {
-            return await _fpsClient.FpsMonthHour.GetYearEndMonthHoursAsync();
+            return await _fpsClient.FpsMonthHour.GetYearEndMonthHoursAsync(jobExecutionId);
         }
 
-        public async Task<ApiResponseDto<MonthHourDto>> SaveMonthHourAsync(MonthHourDto dto)
+        public async Task<ApiResponseDto<MonthHourDto>> SaveMonthHourAsync(MonthHourDto dto, Guid jobExecutionId)
         {
-            return await _fpsClient.FpsMonthHour.SaveMonthHourAsync(dto);
+            return await _fpsClient.FpsMonthHour.SaveMonthHourAsync(dto, jobExecutionId);
         }
     }
 }

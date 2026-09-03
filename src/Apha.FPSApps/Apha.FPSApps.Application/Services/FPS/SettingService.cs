@@ -24,9 +24,9 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsClient.FpsSetting.GetAllSettingsAsync();
         }
 
-        public async Task<ApiResponseDto<List<YearEndSettingDto>>> GetYearEndSettingsAsync()
+        public async Task<ApiResponseDto<List<YearEndSettingDto>>> GetYearEndSettingsAsync(Guid? jobExecutionId = null)
         {
-            return await _fpsClient.FpsSetting.GetYearEndSettingsAsync();
+            return await _fpsClient.FpsSetting.GetYearEndSettingsAsync(jobExecutionId);
         }
 
         public async Task<ApiResponseDto<SettingDto>> AddSettingAsync(SettingDto dto)
@@ -39,9 +39,9 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsClient.FpsSetting.UpdateSettingAsync(id, dto);
         }
 
-        public async Task<ApiResponseDto<SettingDto>> SaveSettingAsync(SettingDto dto)
+        public async Task<ApiResponseDto<SettingDto>> SaveSettingAsync(SettingDto dto, Guid jobExecutionId)
         {
-            return await _fpsClient.FpsSetting.SaveSettingAsync(dto);
+            return await _fpsClient.FpsSetting.SaveSettingAsync(dto, jobExecutionId);
         }
     }
 }

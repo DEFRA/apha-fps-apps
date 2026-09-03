@@ -261,6 +261,25 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
         }
 
         [Fact]
+        public async Task GetYearEndSettingsAsync_WhenJobExecutionIdSupplied_AppendsItToTheUrl()
+        {
+            // Arrange
+            var jobExecutionId = Guid.NewGuid();
+            var apiResponse = new ApiResponse<List<FpsYearEndSettingRes>> { Success = true, Data = [] };
+            var expectedUrl = $"api/v1/setting/yearend?jobExecutionId={jobExecutionId}";
+
+            _http.GetAsync<List<FpsYearEndSettingRes>>(expectedUrl).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<YearEndSettingDto>>>(apiResponse)
+                   .Returns(ApiResponseDto<List<YearEndSettingDto>>.SuccessResponse([]));
+
+            // Act
+            await _client.GetYearEndSettingsAsync(jobExecutionId);
+
+            // Assert
+            await _http.Received(1).GetAsync<List<FpsYearEndSettingRes>>(expectedUrl);
+        }
+
+        [Fact]
         public async Task GetYearEndSettingsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
@@ -461,6 +480,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
         public async Task SaveSettingAsync_WhenApiReturnsSuccess_ReturnsMappedSettingDto()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new SettingDto { Id = "HoursInDay", Setting = "7.5", FpsYear = 2024 };
             var req = new FpsSettingReq { Id = "HoursInDay", Setting = "7.5", FpsYear = 2024 };
             var apiResponse = new ApiResponse<FpsSettingRes>
@@ -471,18 +491,19 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
             var expectedDto = ApiResponseDto<SettingDto>.SuccessResponse(
                 new SettingDto { Id = "HoursInDay", Setting = "7.5", FpsYear = 2024 });
 
+            var expectedUrl = $"api/v1/setting/save?jobExecutionId={jobExecutionId}";
             _mapper.Map<FpsSettingReq>(dto).Returns(req);
-            _http.PostAsync<FpsSettingReq, FpsSettingRes>("api/v1/setting/save", req).Returns(apiResponse);
+            _http.PostAsync<FpsSettingReq, FpsSettingRes>(expectedUrl, req).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<SettingDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.SaveSettingAsync(dto);
+            var result = await _client.SaveSettingAsync(dto, jobExecutionId);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("HoursInDay", result.Data?.Id);
-            await _http.Received(1).PostAsync<FpsSettingReq, FpsSettingRes>("api/v1/setting/save", req);
+            await _http.Received(1).PostAsync<FpsSettingReq, FpsSettingRes>(expectedUrl, req);
             _mapper.Received(1).Map<ApiResponseDto<SettingDto>>(apiResponse);
         }
 
@@ -490,6 +511,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
         public async Task SaveSettingAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new SettingDto { Id = "BadKey" };
             var req = new FpsSettingReq { Id = "BadKey" };
             var errors = new List<ApiError> { new ApiError { Message = "Validation error", Code = "VALIDATION_ERROR" } };
@@ -501,24 +523,26 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
                 Meta = new ApiMetaDto()
             };
 
+            var expectedUrl = $"api/v1/setting/save?jobExecutionId={jobExecutionId}";
             _mapper.Map<FpsSettingReq>(dto).Returns(req);
-            _http.PostAsync<FpsSettingReq, FpsSettingRes>("api/v1/setting/save", req).Returns(apiResponse);
+            _http.PostAsync<FpsSettingReq, FpsSettingRes>(expectedUrl, req).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<SettingDto>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            var result = await _client.SaveSettingAsync(dto);
+            var result = await _client.SaveSettingAsync(dto, jobExecutionId);
 
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.Single(result.Errors!);
-            await _http.Received(1).PostAsync<FpsSettingReq, FpsSettingRes>("api/v1/setting/save", req);
+            await _http.Received(1).PostAsync<FpsSettingReq, FpsSettingRes>(expectedUrl, req);
         }
 
         [Fact]
-        public async Task SaveSettingAsync_CallsCorrectEndpointUrl()
+        public async Task SaveSettingAsync_CallsCorrectEndpointUrlWithJobExecutionId()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new SettingDto { Id = "Key" };
             var req = new FpsSettingReq { Id = "Key" };
             var apiResponse = new ApiResponse<FpsSettingRes> { Success = true, Data = new FpsSettingRes() };
@@ -529,10 +553,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
                    .Returns(ApiResponseDto<SettingDto>.SuccessResponse(new SettingDto()));
 
             // Act
-            await _client.SaveSettingAsync(dto);
+            await _client.SaveSettingAsync(dto, jobExecutionId);
 
             // Assert
-            await _http.Received(1).PostAsync<FpsSettingReq, FpsSettingRes>("api/v1/setting/save", req);
+            await _http.Received(1).PostAsync<FpsSettingReq, FpsSettingRes>($"api/v1/setting/save?jobExecutionId={jobExecutionId}", req);
         }
 
         #endregion

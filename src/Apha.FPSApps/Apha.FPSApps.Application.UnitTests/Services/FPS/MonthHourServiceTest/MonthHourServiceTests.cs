@@ -377,70 +377,74 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.MonthHourServiceTest
         public async Task SaveMonthHourAsync_WhenApiReturnsSuccess_ReturnsSavedDto()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new MonthHourDto { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
             var saved = new MonthHourDto { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
             var expectedResponse = ApiResponseDto<MonthHourDto>.SuccessResponse(saved);
-            _fpsMonthHourApiClient.SaveMonthHourAsync(dto).Returns(expectedResponse);
+            _fpsMonthHourApiClient.SaveMonthHourAsync(dto, jobExecutionId).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.SaveMonthHourAsync(dto);
+            var result = await _sut.SaveMonthHourAsync(dto, jobExecutionId);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal((short)3, result.Data?.Month);
-            await _fpsMonthHourApiClient.Received(1).SaveMonthHourAsync(dto);
+            await _fpsMonthHourApiClient.Received(1).SaveMonthHourAsync(dto, jobExecutionId);
         }
 
         [Fact]
         public async Task SaveMonthHourAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new MonthHourDto { Year = 2024, Month = 1, Days = -1 };
             var errors = new List<ApiErrorDto>
             {
                 new ApiErrorDto { Message = "Validation error", Code = "VALIDATION_ERROR" }
             };
             var expectedResponse = ApiResponseDto<MonthHourDto>.FailureResponse(errors, new ApiMetaDto());
-            _fpsMonthHourApiClient.SaveMonthHourAsync(dto).Returns(expectedResponse);
+            _fpsMonthHourApiClient.SaveMonthHourAsync(dto, jobExecutionId).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.SaveMonthHourAsync(dto);
+            var result = await _sut.SaveMonthHourAsync(dto, jobExecutionId);
 
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.Single(result.Errors!);
-            await _fpsMonthHourApiClient.Received(1).SaveMonthHourAsync(dto);
+            await _fpsMonthHourApiClient.Received(1).SaveMonthHourAsync(dto, jobExecutionId);
         }
 
         [Fact]
         public async Task SaveMonthHourAsync_PassesDtoToApiClient()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new MonthHourDto { Year = 2024, Month = 6, Days = 21, FpsYear = 2024 };
             var expectedResponse = ApiResponseDto<MonthHourDto>.SuccessResponse(dto);
-            _fpsMonthHourApiClient.SaveMonthHourAsync(dto).Returns(expectedResponse);
+            _fpsMonthHourApiClient.SaveMonthHourAsync(dto, jobExecutionId).Returns(expectedResponse);
 
             // Act
-            await _sut.SaveMonthHourAsync(dto);
+            await _sut.SaveMonthHourAsync(dto, jobExecutionId);
 
             // Assert
             await _fpsMonthHourApiClient.Received(1).SaveMonthHourAsync(
-                Arg.Is<MonthHourDto>(d => d.Year == 2024 && d.Month == 6 && d.Days == 21));
+                Arg.Is<MonthHourDto>(d => d.Year == 2024 && d.Month == 6 && d.Days == 21), jobExecutionId);
         }
 
         [Fact]
         public async Task SaveMonthHourAsync_WhenApiClientThrowsException_PropagatesException()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var dto = new MonthHourDto { Year = 2024, Month = 1, Days = 20 };
-            _fpsMonthHourApiClient.SaveMonthHourAsync(dto).ThrowsAsync(new Exception("Save failed"));
+            _fpsMonthHourApiClient.SaveMonthHourAsync(dto, jobExecutionId).ThrowsAsync(new Exception("Save failed"));
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveMonthHourAsync(dto));
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveMonthHourAsync(dto, jobExecutionId));
             Assert.Equal("Save failed", exception.Message);
-            await _fpsMonthHourApiClient.Received(1).SaveMonthHourAsync(dto);
+            await _fpsMonthHourApiClient.Received(1).SaveMonthHourAsync(dto, jobExecutionId);
         }
 
         #endregion

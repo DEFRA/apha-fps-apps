@@ -7,9 +7,9 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
     {
         Task<ApiResponseDto<decimal>> GetHoursPerDayAsync();
         Task<ApiResponseDto<List<SettingDto>>> GetAllSettingsAsync();
-        Task<ApiResponseDto<List<YearEndSettingDto>>> GetYearEndSettingsAsync();
+        Task<ApiResponseDto<List<YearEndSettingDto>>> GetYearEndSettingsAsync(Guid? jobExecutionId = null);
         Task<ApiResponseDto<SettingDto>> AddSettingAsync(SettingDto dto);
         Task<ApiResponseDto<SettingDto>> UpdateSettingAsync(string id, SettingDto dto);
-        Task<ApiResponseDto<SettingDto>> SaveSettingAsync(SettingDto dto);
+        Task<ApiResponseDto<SettingDto>> SaveSettingAsync(SettingDto dto, Guid jobExecutionId);
     }
 }

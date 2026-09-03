@@ -130,6 +130,7 @@
 @section Scripts {
 <script>
     window.YearEndInitiationConfig = {
+        currentJobExecutionId: @(Model.CurrentJobExecutionId.HasValue ? $"'{Model.CurrentJobExecutionId.Value}'" : "null"),
         editConfigValueUrl:  '@Url.Action("EditConfigValue",  "YearEndInitiation", new { area = "FPS" })',
         editMonthHourUrl:    '@Url.Action("EditMonthHour",    "YearEndInitiation", new { area = "FPS" })',
         saveSettingUrl:      '@Url.Action("SaveSetting",      "YearEndInitiation", new { area = "FPS" })',

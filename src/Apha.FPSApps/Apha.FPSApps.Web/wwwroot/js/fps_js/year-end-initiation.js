@@ -5,12 +5,12 @@
 
     var cfg = window.YearEndInitiationConfig || {};
 
-    // Captured from TriggerInitiate's response and retained for the lifetime of this page load —
-    // planned-year staging design (grid reload/Confirm wiring to actually use this lands in a later
-    // workstream; today this only obtains and retains it, per that design's "grids must never fall
-    // back to finding the latest active request" rule). Lost on refresh — recovering it after a
-    // refresh is a separate, later concern, not solved here.
-    var currentJobExecutionId = null;
+    // Server-resolved on every page load (YearEndInitiationController.Index -> GetInitiatedDataSetup
+    // JobExecutionIdAsync), not stored client-side - a refresh re-runs Index() and gets the same value
+    // back, so there is nothing to recover here. Every lifecycle transition that would change this value
+    // (Initiate/Approve/Reject) reloads the whole page rather than mutating this in place - see the
+    // button handlers below - so this is only ever set once, at load, from YearEndInitiationConfig.
+    var currentJobExecutionId = cfg.currentJobExecutionId || null;
 
     function openModalWithHtml(html) {
         $('#modaPopupBody').html(html);
@@ -21,6 +21,14 @@
     window.closeYeiModal = function () {
         $('#modalPopup').removeClass('show');
         $('#modaPopupBody').html('');
+    };
+
+    // _DataGrid.cshtml's grid manager invokes this via window[ExtraFilterMethod](), so it must be
+    // attached to window explicitly rather than declared as a plain function inside this IIFE. Omits
+    // the key entirely (not a literal null) when there is no active request, so a pre-Initiate grid
+    // load exercises the legacy/no-id path cleanly instead of sending an ambiguous empty value.
+    window.getYearEndExtraFilter = function () {
+        return currentJobExecutionId ? { jobExecutionId: currentJobExecutionId } : {};
     };
 
     // ── Grid reload helpers ───────────────────────────────────────────────────
@@ -117,7 +125,7 @@
         $.ajax({
             url: cfg.editConfigValueUrl,
             type: 'GET',
-            data: { id: id },
+            data: currentJobExecutionId ? { id: id, jobExecutionId: currentJobExecutionId } : { id: id },
             success: function (html) {
                 openModalWithHtml(html);
             },
@@ -131,16 +139,24 @@
     window.confirmConfigValue = function (btn) {
         hidePageError();
 
+        // The row's own Confirm button should already be disabled unless there is an active request
+        // (applyConfigGridButtonStates) - this is a defence-in-depth check for if that invariant is
+        // ever violated, not the primary guard.
+        if (!currentJobExecutionId) {
+            showPageError(['No active Year End Data Setup request.']);
+            return;
+        }
+
         var row         = $(btn).closest('tr')[0];
         var id          = getCellValue(row, 'Id');
         var value       = getCellValue(row, 'Setting') || '';
         var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
         var fpsyear = getCellValue(row, 'FpsYear');
- 
+
         showGovukConfirm('Are you sure you want to confirm the config value for "' + id + '"?')
             .then(function (confirmed) {
                 if (!confirmed) return;
-                postJson(cfg.saveSettingUrl, { id: id, setting: value, fpsyear: fpsyear },
+                postJson(cfg.saveSettingUrl + '?jobExecutionId=' + currentJobExecutionId, { id: id, setting: value, fpsyear: fpsyear },
                     function () {
                         showAlertMessage('Config value "' + id + '" confirmed successfully.', AlertType.SUCCESS);
                         reloadConfigGrid();
@@ -152,6 +168,11 @@
 
     // Called by the Save button inside _EditConfigValue.cshtml partial
     window.saveConfigValue = function () {
+        if (!currentJobExecutionId) {
+            showModalError(['No active Year End Data Setup request.']);
+            return;
+        }
+
         var id    = $('#modaPopupBody #configModalId').val();
         var fpsYear = $('#modaPopupBody #configModalFpsYear').val();
 
@@ -160,7 +181,7 @@
         var $input  = $('#modaPopupBody #configModalInput');
         var value   = $select.length ? $select.val() : $input.val();
 
-        postJson(cfg.saveSettingUrl, { id: id, setting: value, fpsYear: fpsYear },
+        postJson(cfg.saveSettingUrl + '?jobExecutionId=' + currentJobExecutionId, { id: id, setting: value, fpsYear: fpsYear },
             function () {
                 window.closeYeiModal();
                 showAlertMessage('Config value "' + value + '" saved successfully.', AlertType.SUCCESS);
@@ -185,7 +206,9 @@
         $.ajax({
             url: cfg.editMonthHourUrl,
             type: 'GET',
-            data: { year: year, month: month, fpsyear: fpsyear, fmonth: fmonth },
+            data: currentJobExecutionId
+                ? { year: year, month: month, fpsyear: fpsyear, fmonth: fmonth, jobExecutionId: currentJobExecutionId }
+                : { year: year, month: month, fpsyear: fpsyear, fmonth: fmonth },
             success: function (html) {
                 openModalWithHtml(html);
             },
@@ -198,6 +221,12 @@
     // ── Month Working Hours grid — Delete/Confirm button ──────────────────────
     window.confirmMonthHour = function (btn) {
         hidePageError();
+
+        // Defence-in-depth - see the identical comment in confirmConfigValue above.
+        if (!currentJobExecutionId) {
+            showPageError(['No active Year End Data Setup request.']);
+            return;
+        }
 
         var row         = $(btn).closest('tr')[0];
         var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
@@ -215,7 +244,7 @@
                     fmonth:   parseInt(getCellValue(row, 'Fmonth'), 10) || null,
                     fpsYear:  parseInt(getCellValue(row, 'FpsYear'), 10)
                 };
-                postJson(cfg.saveMonthHourUrl, dto,
+                postJson(cfg.saveMonthHourUrl + '?jobExecutionId=' + currentJobExecutionId, dto,
                     function () {
                         showAlertMessage('Working hours for ' + monthName + ' saved successfully.', AlertType.SUCCESS);
                         reloadMonthGrid();
@@ -227,6 +256,11 @@
 
     // Called by the Save button inside _EditMonthHour.cshtml partial
     window.saveMonthHour = function () {
+        if (!currentJobExecutionId) {
+            showModalError(['No active Year End Data Setup request.']);
+            return;
+        }
+
         var dto = {
             year:     parseInt($('#modaPopupBody #monthModalYear').val(),    10),
             month:    parseInt($('#modaPopupBody #monthModalMonth').val(),   10),
@@ -237,7 +271,7 @@
             fpsYear:  parseInt($('#modaPopupBody #monthModalFpsYear').val(), 10)
         };
 
-        postJson(cfg.saveMonthHourUrl, dto,
+        postJson(cfg.saveMonthHourUrl + '?jobExecutionId=' + currentJobExecutionId, dto,
             function () {
                 window.closeYeiModal();
                 showAlertMessage('Month working hours saved successfully.', AlertType.SUCCESS);
@@ -312,12 +346,13 @@
 
                         btnInitiate.disabled = true;
                         postJson(cfg.triggerInitiateUrl + '?plannedYear=' + plannedYearVal, {},
-                            function (result) {
-                                currentJobExecutionId = result && result.jobExecutionId;
-                                showAlertMessage('Year End Initiation request submitted successfully.', AlertType.SUCCESS);
-                                reloadHistoryGrid();
-                                var btnapprove = document.getElementById('btnApproveDataSetupRequest');
-                                btnapprove.disabled = false;
+                            function () {
+                                // Full page reload, not a targeted grid/button patch - Index() is the
+                                // single place that resolves CurrentJobExecutionId, CanInitiate,
+                                // CanApprove and both grids' data, and the just-created row is already
+                                // committed by the time this callback runs, so a reload picks it all up
+                                // consistently in one pass (planned-year staging design, Workstream 8).
+                                window.location.reload();
                             },
                             function (msgs) {
                                 showPageError(msgs);
@@ -345,14 +380,22 @@
                     return;
                 }
 
+                if (!currentJobExecutionId) {
+                    showPageError(['No active Year End Data Setup request.']);
+                    return;
+                }
+
                 showGovukApproveReject('Are you sure you want to approve the DataSetup Request for year ' + plannedYearVal + '?')
                     .then(function (confirmed) {
                         if (confirmed) {
                             btnApprove.disabled = true;
-                            postJson(cfg.triggerApproveUrl + '?plannedYear=' + plannedYearVal, {},
+                            postJson(cfg.triggerApproveUrl + '?plannedYear=' + plannedYearVal + '&jobExecutionId=' + currentJobExecutionId, {},
                                 function () {
-                                    showAlertMessage('Year End Approval request submitted successfully.', AlertType.SUCCESS);
-                                    reloadHistoryGrid();
+                                    // Full page reload - see the identical reasoning on the Initiate
+                                    // handler above. The request is no longer Initiated once this
+                                    // succeeds, so CurrentJobExecutionId/CanInitiate/CanApprove and both
+                                    // grids all need to be re-derived from scratch, not patched.
+                                    window.location.reload();
                                 },
                                 function (msgs) {
                                     showPageError(msgs);
@@ -361,11 +404,9 @@
                             );
                         } else {
                             btnApprove.disabled = true;
-                            postJson(cfg.triggerRejectUrl + '?plannedYear=' + plannedYearVal, {},
+                            postJson(cfg.triggerRejectUrl + '?plannedYear=' + plannedYearVal + '&jobExecutionId=' + currentJobExecutionId, {},
                                 function () {
-                                    showAlertMessage('Year End datasetup request rejected successfully.', AlertType.SUCCESS);
-                                    reloadHistoryGrid();
-                                    btnInitiate.disabled = false;
+                                    window.location.reload();
                                 },
                                 function (msgs) {
                                     showPageError(msgs);

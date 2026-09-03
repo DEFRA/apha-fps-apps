@@ -9,6 +9,12 @@ namespace Apha.FPS.Application.Interfaces
 
         Task<bool> CanInitiateYearEndDataSetupRequestAsync(string jobName);
         Task<bool> CanApproveOrRejectYearEndDataSetupRequestAsync(string jobName);
+        /// <summary>
+        /// Resolves the <c>JobExecutionId</c> of the single Year End Data Setup request currently in
+        /// <c>Initiated</c> status, if any - the request the Confirm workflow is editing. Returns
+        /// <see langword="null"/> when none is Initiated.
+        /// </summary>
+        Task<Guid?> GetInitiatedDataSetupJobExecutionIdAsync();
         Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, int contextyear, string requestedBy, string correlationId);
         Task<BatchJobEventTriggerDto> EnqueueYearEndDataSetupApprovalJobAsync(Guid jobExecutionId, int plannedYear, int contextYear, string requestedBy, string correlationId);
         Task<bool> EnqueueYearEndDataSetupRejectJobAsync(Guid jobExecutionId, int plannedYear, int contextYear, string requestedBy, string correlationId);

@@ -10,6 +10,16 @@ namespace Apha.FPS.Core.Interfaces
         Task<bool> CanApproveOrRejectYearEndDataSetupRequestAsync(string jobName);
         Task<string> GetYearEndDataSetupRequestInitiatorAsync(string jobName);
         /// <summary>
+        /// Resolves the <c>JobExecutionId</c> of the single Year End Data Setup request currently in
+        /// <c>Initiated</c> status, if any — the request the Confirm workflow is editing. Deliberately
+        /// scoped to Data Setup only (no <c>jobName</c> parameter, unlike the generic methods above) and
+        /// to <c>Initiated</c> only (not any non-terminal status) — an <c>Approved</c>/<c>Running</c>
+        /// request is not editable. Returns <see langword="null"/> when none is Initiated; throws if more
+        /// than one is found, since the staging model assumes exactly one request is being edited at a
+        /// time.
+        /// </summary>
+        Task<Guid?> GetInitiatedDataSetupJobExecutionIdAsync();
+        /// <summary>
         /// Creates the job_queue row for a Year End Data Setup request. <paramref name="targetFpsYear"/>
         /// is persisted as the row's target_fpsyear (CR067) - fpsyear keeps its existing meaning (the
         /// current/Open year) unchanged.

@@ -9,7 +9,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<MonthHourDto>>> GetAllMonthHourAsync(QueryParameters<string> query);
         Task<ApiResponseDto<IEnumerable<MonthHourDto>>> GetMonthHoursByYearAsync(short year);
         Task<ApiResponseDto<IEnumerable<short>>> GetDistinctYearsAsync();
-        Task<ApiResponseDto<List<YearEndMonthHourDto>>> GetYearEndMonthHoursAsync();
-        Task<ApiResponseDto<MonthHourDto>> SaveMonthHourAsync(MonthHourDto dto);
+        Task<ApiResponseDto<List<YearEndMonthHourDto>>> GetYearEndMonthHoursAsync(Guid? jobExecutionId = null);
+        Task<ApiResponseDto<MonthHourDto>> SaveMonthHourAsync(MonthHourDto dto, Guid jobExecutionId);
     }
 }

@@ -322,6 +322,7 @@ namespace Apha.Common.Constants
         public const string GetYearEndDataSetupBatchJobHistory = "api/v1/yearend/dataSetup/batchjob/history";
         public const string CanInitiateDataSetupRequest = "api/v1/yearend/dataSetup/caninitiate";
         public const string CanApproveOrRejectDataSetupRequest = "api/v1/yearend/dataSetup/canapproveorreject";
+        public const string GetInitiatedDataSetupJobExecutionId = "api/v1/yearend/datasetup/initiated";
         public const string EnqueueYearEndDataSetupInitiationJob = "api/v1/yearend/dataSetup/initiation";
         public const string EnqueueYearEndDataSetupApprovalJob    = "api/v1/yearend/dataSetup/approval";
         public const string EnqueueYearEndDataSetupRejectJob = "api/v1/yearend/dataSetup/reject";

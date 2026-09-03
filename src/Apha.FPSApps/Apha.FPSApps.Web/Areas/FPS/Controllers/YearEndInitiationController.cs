@@ -46,8 +46,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var plannedYear = await GetPlannedYearAsync();
             var canInitiate = await CanInitiateDataSetupRequestAsync();
             var canApprove = await CanApproveOrRejectDataSetupRequestAsync();
-            var configValuesGrid = await BuildConfigValuesGridAsync();
-            var monthHoursGrid = await BuildMonthHoursGridAsync();
+            var currentJobExecutionId = await GetInitiatedDataSetupJobExecutionIdAsync();
+            var configValuesGrid = await BuildConfigValuesGridAsync(currentJobExecutionId);
+            var monthHoursGrid = await BuildMonthHoursGridAsync(currentJobExecutionId);
             var historyGrid = await BuildHistoryGridAsync(new PaginationFilter<string> { Filter = "{}" });
 
             return View(new YearEndInitiationViewModel
@@ -55,6 +56,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 PlannedYear = plannedYear,
                 CanInitiate = canInitiate,
                 CanApprove = canApprove,
+                CurrentJobExecutionId = currentJobExecutionId,
                 ConfigValuesGrid = configValuesGrid,
                 MonthHoursGrid = monthHoursGrid,
                 HistoryGrid = historyGrid
@@ -62,16 +64,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadConfigValuesGrid(PaginationFilter<string> request)
+        public async Task<IActionResult> LoadConfigValuesGrid(PaginationFilter<string> request, Guid? jobExecutionId)
         {
-            var grid = await BuildConfigValuesGridAsync();
+            var grid = await BuildConfigValuesGridAsync(jobExecutionId);
             return PartialView("_DataGrid", grid);
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadMonthHoursGrid(PaginationFilter<string> request)
+        public async Task<IActionResult> LoadMonthHoursGrid(PaginationFilter<string> request, Guid? jobExecutionId)
         {
-            var grid = await BuildMonthHoursGridAsync();
+            var grid = await BuildMonthHoursGridAsync(jobExecutionId);
             return PartialView("_DataGrid", grid);
         }
 
@@ -83,9 +85,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditConfigValue(string id)
+        public async Task<IActionResult> EditConfigValue(string id, Guid? jobExecutionId)
         {
-            var result = await _settingService.GetYearEndSettingsAsync();
+            var result = await _settingService.GetYearEndSettingsAsync(jobExecutionId);
             var setting = result.Data?.FirstOrDefault(s => s.Id == id);
             if (setting == null)
                 return NotFound();
@@ -106,9 +108,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditMonthHour(short year, short month, short fpsyear, short fmonth)
+        public async Task<IActionResult> EditMonthHour(short year, short month, short fpsyear, short fmonth, Guid? jobExecutionId)
         {
-            var result = await _monthHourService.GetYearEndMonthHoursAsync();
+            var result = await _monthHourService.GetYearEndMonthHoursAsync(jobExecutionId);
             var record = result.Data?.FirstOrDefault(m => m.Year == year && m.Month == month && m.FpsYear == fpsyear && m.Fmonth == fmonth);
             if (record == null)
                 return NotFound();
@@ -128,9 +130,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SaveSetting([FromBody] SettingDto dto)
+        public async Task<IActionResult> SaveSetting([FromBody] SettingDto dto, Guid? jobExecutionId)
         {
-            var result = await _settingService.SaveSettingAsync(dto);
+            if (!jobExecutionId.HasValue || jobExecutionId.Value == Guid.Empty)
+                return Json(new { success = false, errors = new[] { new { field = "", message = "No active Year End Data Setup request." } } });
+
+            var result = await _settingService.SaveSettingAsync(dto, jobExecutionId.Value);
             if (result.Success)
                 return Json(new { success = true });
 
@@ -140,9 +145,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SaveMonthHour([FromBody] MonthHourDto dto)
+        public async Task<IActionResult> SaveMonthHour([FromBody] MonthHourDto dto, Guid? jobExecutionId)
         {
-            var result = await _monthHourService.SaveMonthHourAsync(dto);
+            if (!jobExecutionId.HasValue || jobExecutionId.Value == Guid.Empty)
+                return Json(new { success = false, errors = new[] { new { field = "", message = "No active Year End Data Setup request." } } });
+
+            var result = await _monthHourService.SaveMonthHourAsync(dto, jobExecutionId.Value);
             if (result.Success)
                 return Json(new { success = true });
 
@@ -171,9 +179,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> TriggerApprove(int plannedYear)
+        public async Task<IActionResult> TriggerApprove(int plannedYear, Guid? jobExecutionId)
         {
-            var result = await _yearEndService.TriggerYearEndDataSetupApprovalJobAsync(plannedYear);
+            if (!jobExecutionId.HasValue || jobExecutionId.Value == Guid.Empty)
+                return Json(new { success = false, errors = new[] { new { field = "", message = "No active Year End Data Setup request." } } });
+
+            var result = await _yearEndService.TriggerYearEndDataSetupApprovalJobAsync(plannedYear, jobExecutionId.Value);
             if (result.Success)
             {
                 _logger.LogInformation("Year End Approval job triggered. EventId: {EventId}", result?.Data?.EventId);
@@ -186,9 +197,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> TriggerReject(int plannedYear)
+        public async Task<IActionResult> TriggerReject(int plannedYear, Guid? jobExecutionId)
         {
-            var result = await _yearEndService.EnqueueYearEndDataSetupRejectJobAsync(plannedYear);
+            if (!jobExecutionId.HasValue || jobExecutionId.Value == Guid.Empty)
+                return Json(new { success = false, errors = new[] { new { field = "", message = "No active Year End Data Setup request." } } });
+
+            var result = await _yearEndService.EnqueueYearEndDataSetupRejectJobAsync(plannedYear, jobExecutionId.Value);
             if (result.Success)
             {
                 _logger.LogInformation("Year End datasetup reject job triggered");
@@ -217,11 +231,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var result = await _yearEndService.CanApproveOrRejectDataSetupRequestAsync(YearEndInitiationJobName);
             return result.Success && result.Data;
         }
-        
-        private async Task<DataGridConfig<YearEndConfigValueItem>> BuildConfigValuesGridAsync()
+
+        // Resolves which Data Setup request (if any) this page is currently editing - the request the
+        // Confirm/Approve/Reject workflow acts on. Recomputed on every Index() load rather than trusted
+        // from any client-side storage, so a page refresh recovers exactly the same value without relying
+        // on the browser to have retained anything (planned-year staging design, Workstream 8).
+        private async Task<Guid?> GetInitiatedDataSetupJobExecutionIdAsync()
+        {
+            var result = await _yearEndService.GetInitiatedDataSetupJobExecutionIdAsync();
+            return result.Success ? result.Data : null;
+        }
+
+        private async Task<DataGridConfig<YearEndConfigValueItem>> BuildConfigValuesGridAsync(Guid? jobExecutionId)
         {
             var grid = ConfigValuesGridConfig();
-            var result = await _settingService.GetYearEndSettingsAsync();
+            var result = await _settingService.GetYearEndSettingsAsync(jobExecutionId);
             if (result.Success && result.Data != null)
             {
                 grid.Data = result.Data.Select(s => new YearEndConfigValueItem
@@ -236,10 +260,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return grid;
         }
 
-        private async Task<DataGridConfig<YearEndMonthWorkingItem>> BuildMonthHoursGridAsync()
+        private async Task<DataGridConfig<YearEndMonthWorkingItem>> BuildMonthHoursGridAsync(Guid? jobExecutionId)
         {
             var grid = MonthHoursGridConfig();
-            var result = await _monthHourService.GetYearEndMonthHoursAsync();
+            var result = await _monthHourService.GetYearEndMonthHoursAsync(jobExecutionId);
             if (result.Success && result.Data != null)
             {
                 grid.Data = result.Data.Select(m => new YearEndMonthWorkingItem
@@ -301,6 +325,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             AllowCopy = false,
             AllowConfirm = true,
             ConfirmFunction = "confirmConfigValue",
+            ExtraFilterMethod = "getYearEndExtraFilter",
             KeyProperty = "Id",
             Columns = GridDataProvider.GetColumnsDefination<YearEndConfigValueItem>()
         };
@@ -320,6 +345,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             AllowCopy = false,
             AllowConfirm = true,
             ConfirmFunction = "confirmMonthHour",
+            ExtraFilterMethod = "getYearEndExtraFilter",
             KeyProperty = "Month",
             Columns = GridDataProvider.GetColumnsDefination<YearEndMonthWorkingItem>()
         };

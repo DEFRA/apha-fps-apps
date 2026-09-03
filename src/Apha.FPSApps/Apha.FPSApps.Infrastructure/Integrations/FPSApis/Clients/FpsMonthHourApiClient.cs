@@ -57,9 +57,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<IEnumerable<short>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<YearEndMonthHourDto>>> GetYearEndMonthHoursAsync()
+        public async Task<ApiResponseDto<List<YearEndMonthHourDto>>> GetYearEndMonthHoursAsync(Guid? jobExecutionId = null)
         {
-            var response = await _http.GetAsync<List<YearEndMonthHourRes>>(FpsApiEndpoints.GetYearEndMonthHours);
+            var url = FpsApiEndpoints.GetYearEndMonthHours;
+            if (jobExecutionId.HasValue)
+                url += $"?jobExecutionId={jobExecutionId.Value}";
+
+            var response = await _http.GetAsync<List<YearEndMonthHourRes>>(url);
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<YearEndMonthHourDto>>>(response);
@@ -68,10 +72,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<YearEndMonthHourDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<MonthHourDto>> SaveMonthHourAsync(MonthHourDto monthHourDto)
+        public async Task<ApiResponseDto<MonthHourDto>> SaveMonthHourAsync(MonthHourDto monthHourDto, Guid jobExecutionId)
         {
             var request = _mapper.Map<MonthHourReq>(monthHourDto);
-            var response = await _http.PostAsync<MonthHourReq, MonthHourRes>(FpsApiEndpoints.SaveMonthHour, request);
+            var url = $"{FpsApiEndpoints.SaveMonthHour}?jobExecutionId={jobExecutionId}";
+            var response = await _http.PostAsync<MonthHourReq, MonthHourRes>(url, request);
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<MonthHourDto>>(response);
