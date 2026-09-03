@@ -5,6 +5,13 @@
 
     var cfg = window.YearEndInitiationConfig || {};
 
+    // Captured from TriggerInitiate's response and retained for the lifetime of this page load —
+    // planned-year staging design (grid reload/Confirm wiring to actually use this lands in a later
+    // workstream; today this only obtains and retains it, per that design's "grids must never fall
+    // back to finding the latest active request" rule). Lost on refresh — recovering it after a
+    // refresh is a separate, later concern, not solved here.
+    var currentJobExecutionId = null;
+
     function openModalWithHtml(html) {
         $('#modaPopupBody').html(html);
         $('#modalPopup').addClass('show');
@@ -305,7 +312,8 @@
 
                         btnInitiate.disabled = true;
                         postJson(cfg.triggerInitiateUrl + '?plannedYear=' + plannedYearVal, {},
-                            function () {
+                            function (result) {
+                                currentJobExecutionId = result && result.jobExecutionId;
                                 showAlertMessage('Year End Initiation request submitted successfully.', AlertType.SUCCESS);
                                 reloadHistoryGrid();
                                 var btnapprove = document.getElementById('btnApproveDataSetupRequest');

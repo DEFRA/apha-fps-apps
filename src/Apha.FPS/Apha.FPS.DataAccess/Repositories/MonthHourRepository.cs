@@ -82,6 +82,80 @@ namespace Apha.FPS.DataAccess.Repositories
             return existing ?? monthHour;
         }
 
+        /// <summary>
+        /// Grid read path (planned-year staging design, CR067): current/Open-year real values
+        /// overlaid with staged rows for <paramref name="request"/>'s JobQueueId. Deliberately does
+        /// not use YearMasters.Status == "Planned" — pre-Approval there is no such row. The 15-key
+        /// calendar (<see cref="GetMonthHourKeys"/>) and the Fmonth-10/11/12-reset quirk below are
+        /// unchanged from the legacy overload — only what fills each slot changes: staged row first,
+        /// then this exact slot's own current-year value as the preview default (the same lookup the
+        /// legacy overload already did when no planned-year row existed), then nulls.
+        /// </summary>
+        public async Task<List<YearEndMonthHour>> GetYearEndMonthHoursAsync(YearEndRequestSummary request)
+        {
+            if (!request.TargetFpsYear.HasValue)
+                throw new InvalidOperationException(
+                    $"Year End request {request.JobQueueId} has no target_fpsyear set.");
+
+            int openYear = request.FpsYear;
+            int targetYear = request.TargetFpsYear.Value;
+
+            var openMonthHours = await _context.MonthHours.IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(m => m.FpsYear == openYear && m.Fmonth > 0).ToListAsync();
+
+            openMonthHours
+                .Where(m => m.Fmonth == 10 || m.Fmonth == 11 || m.Fmonth == 12)
+                .ToList()
+                .ForEach(m => m.Fmonth = 0);
+
+            var stagedMonthHours = await _context.YearEndMonthHourStagings
+                .AsNoTracking()
+                .Where(s => s.JobQueueId == request.JobQueueId)
+                .ToListAsync();
+
+            var result = new List<YearEndMonthHour>();
+
+            foreach (var key in GetMonthHourKeys(openYear))
+            {
+                var staged = stagedMonthHours.FirstOrDefault(s => s.Month == key.Month && s.Fmonth == key.Fmonth);
+                if (staged is not null)
+                {
+                    result.Add(new YearEndMonthHour
+                    {
+                        Year = (short)key.Year,
+                        Month = (short)key.Month,
+                        Fmonth = (short)key.Fmonth,
+                        Days = staged.Days,
+                        CvlHours = staged.CvlHours,
+                        VidHours = staged.VidHours,
+                        FpsYear = targetYear,
+                        ExistsForPlannedYear = "Yes"
+                    });
+                    continue;
+                }
+
+                // No staged row — fall back to this exact slot's own current-year value as a
+                // preview default (same source the legacy overload already used for this case).
+                var currentYearRow = openMonthHours.FirstOrDefault(m =>
+                    m.Year == key.Year - 1 && m.Month == key.Month && m.Fmonth == key.Fmonth);
+
+                result.Add(new YearEndMonthHour
+                {
+                    Year = (short)key.Year,
+                    Month = (short)key.Month,
+                    Fmonth = (short)key.Fmonth,
+                    Days = currentYearRow?.Days,
+                    CvlHours = currentYearRow?.CvlHours,
+                    VidHours = currentYearRow?.VidHours,
+                    FpsYear = targetYear,
+                    ExistsForPlannedYear = "No"
+                });
+            }
+
+            return result;
+        }
+
         [ExcludeFromCodeCoverage]
         public async Task<List<YearEndMonthHour>> GetYearEndMonthHoursAsync()
         {

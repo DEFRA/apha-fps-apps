@@ -793,6 +793,26 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         }
 
         [Fact]
+        public async Task TriggerInitiate_WhenServiceSucceeds_ReturnsJobExecutionIdInResponse()
+        {
+            // Arrange — planned-year staging design: the browser must be able to obtain
+            // JobExecutionId from Initiate's own response (grids must never fall back to "find the
+            // latest active request").
+            const int plannedYear = 2025;
+            var jobExecutionId = Guid.NewGuid();
+            _yearEndService.EnqueueYearEndDataSetupInitiationJobAsync(plannedYear)
+                .Returns(ApiResponseDto<BatchJobQueueDto>.SuccessResponse(new BatchJobQueueDto { JobExecutionId = jobExecutionId }));
+
+            // Act
+            var result = await _controller.TriggerInitiate(plannedYear);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonElement(jsonResult);
+            Assert.Equal(jobExecutionId, value.GetProperty("jobExecutionId").GetGuid());
+        }
+
+        [Fact]
         public async Task TriggerInitiate_WhenServiceFails_ReturnsJsonWithSuccessFalseAndErrors()
         {
             // Arrange

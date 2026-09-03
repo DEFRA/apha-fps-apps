@@ -14,14 +14,16 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthHourServiceTest
     public class MonthHourServiceTests
     {
         private readonly IMonthHourRepository _mockRepository;
+        private readonly IYearEndStagingRepository _mockYearEndStagingRepository;
         private readonly IMapper _mockMapper;
         private readonly MonthHourService _sut;
 
         public MonthHourServiceTests()
         {
             _mockRepository = Substitute.For<IMonthHourRepository>();
+            _mockYearEndStagingRepository = Substitute.For<IYearEndStagingRepository>();
             _mockMapper = Substitute.For<IMapper>();
-            _sut = new MonthHourService(_mockRepository, _mockMapper);
+            _sut = new MonthHourService(_mockRepository, _mockYearEndStagingRepository, _mockMapper);
         }
 
         // -----------------------------------------------------------------------
@@ -317,7 +319,7 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthHourServiceTest
         // SaveMonthHourAsync — validation
         // -----------------------------------------------------------------------
 
-        #region SaveMonthHourAsync — validation
+        #region SaveMonthHourAsync — value validation (unchanged by the staging design — runs before resolve)
 
         [Fact]
         public async Task SaveMonthHourAsync_WhenDaysIsNegative_ThrowsBusinessValidationError()
@@ -326,10 +328,11 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthHourServiceTest
             var dto = new MonthHourDto { Year = 2024, Month = 1, Days = -1, VidHours = 5, CvlHours = 3 };
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveMonthHourAsync(dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveMonthHourAsync(Guid.NewGuid(), dto));
             ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
 
-            await _mockRepository.DidNotReceive().SaveAsync(Arg.Any<MonthHour>());
+            // Fails before even resolving the request — no staging touched.
+            await _mockYearEndStagingRepository.DidNotReceive().ResolveRequestAsync(Arg.Any<Guid>());
         }
 
         [Fact]
@@ -339,10 +342,10 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthHourServiceTest
             var dto = new MonthHourDto { Year = 2024, Month = 1, Days = 20, VidHours = -1, CvlHours = 3 };
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveMonthHourAsync(dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveMonthHourAsync(Guid.NewGuid(), dto));
             ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
 
-            await _mockRepository.DidNotReceive().SaveAsync(Arg.Any<MonthHour>());
+            await _mockYearEndStagingRepository.DidNotReceive().ResolveRequestAsync(Arg.Any<Guid>());
         }
 
         [Fact]
@@ -352,10 +355,10 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthHourServiceTest
             var dto = new MonthHourDto { Year = 2024, Month = 1, Days = 20, VidHours = 5, CvlHours = -1 };
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveMonthHourAsync(dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveMonthHourAsync(Guid.NewGuid(), dto));
             ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
 
-            await _mockRepository.DidNotReceive().SaveAsync(Arg.Any<MonthHour>());
+            await _mockYearEndStagingRepository.DidNotReceive().ResolveRequestAsync(Arg.Any<Guid>());
         }
 
         [Fact]
@@ -365,103 +368,85 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthHourServiceTest
             var dto = new MonthHourDto { Year = 2024, Month = 1, Days = -5, VidHours = -1, CvlHours = -2 };
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveMonthHourAsync(dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveMonthHourAsync(Guid.NewGuid(), dto));
             ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
 
-            await _mockRepository.DidNotReceive().SaveAsync(Arg.Any<MonthHour>());
+            await _mockYearEndStagingRepository.DidNotReceive().ResolveRequestAsync(Arg.Any<Guid>());
         }
 
         #endregion
 
         // -----------------------------------------------------------------------
-        // SaveMonthHourAsync — success
+        // SaveMonthHourAsync — planned-year staging (Confirm)
         // -----------------------------------------------------------------------
 
-        #region SaveMonthHourAsync — success
+        #region SaveMonthHourAsync — planned-year staging (Confirm)
+
+        private static YearEndRequestSummary InitiatedMonthHourRequest(Guid? jobQueueId = null, int? targetFpsYear = null)
+            => new(jobQueueId ?? Guid.NewGuid(), 2025, targetFpsYear ?? 2026, "Initiated");
 
         [Fact]
-        public async Task SaveMonthHourAsync_WhenAllValuesAreValid_ReturnsMappedDto()
+        public async Task SaveMonthHourAsync_WhenJobExecutionIdDoesNotResolve_ThrowsKeyNotFoundException()
         {
-            // Arrange
-            var dto = new MonthHourDto { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
-            var entity = new MonthHour { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
-            var savedEntity = new MonthHour { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
-            var expectedDto = new MonthHourDto { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
+            // Arrange — value-valid, but the request itself doesn't exist.
+            var jobExecutionId = Guid.NewGuid();
+            var dto = new MonthHourDto { Year = 2026, Month = 1, Days = 20, VidHours = 5, CvlHours = 3 };
+            _mockYearEndStagingRepository.ResolveRequestAsync(jobExecutionId).Returns((YearEndRequestSummary?)null);
 
-            _mockMapper.Map<MonthHour>(dto).Returns(entity);
-            _mockRepository.SaveAsync(entity).Returns(savedEntity);
-            _mockMapper.Map<MonthHourDto>(savedEntity).Returns(expectedDto);
+            // Act & Assert — never falls back to "whichever request is currently active".
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.SaveMonthHourAsync(jobExecutionId, dto));
 
-            // Act
-            var result = await _sut.SaveMonthHourAsync(dto);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Year.Should().Be(2024);
-            result.Month.Should().Be(3);
-            result.Days.Should().Be(20);
-
-            await _mockRepository.Received(1).SaveAsync(entity);
-            _mockMapper.Received(1).Map<MonthHour>(dto);
-            _mockMapper.Received(1).Map<MonthHourDto>(savedEntity);
+            await _mockYearEndStagingRepository.DidNotReceive().UpsertStagedMonthHourAsync(Arg.Any<YearEndMonthHourStaging>());
         }
 
-        [Fact]
-        public async Task SaveMonthHourAsync_WhenValuesAreZero_PassesValidationAndCallsRepository()
+        [Theory]
+        [InlineData("Approved")]
+        [InlineData("Running")]
+        [InlineData("Completed")]
+        [InlineData("Failed")]
+        [InlineData("Rejected")]
+        public async Task SaveMonthHourAsync_WhenRequestIsNotInitiated_ThrowsBusinessValidationError(string status)
         {
-            // Arrange — zero is not negative, so validation should pass
-            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = 0, VidHours = 0, CvlHours = 0 };
-            var entity = new MonthHour { Year = 2024, Month = 1, Days = 0, VidHours = 0, CvlHours = 0 };
-            var savedEntity = new MonthHour { Year = 2024, Month = 1, Days = 0, VidHours = 0, CvlHours = 0 };
-            var expectedDto = new MonthHourDto { Year = 2024, Month = 1, Days = 0, VidHours = 0, CvlHours = 0 };
-
-            _mockMapper.Map<MonthHour>(dto).Returns(entity);
-            _mockRepository.SaveAsync(entity).Returns(savedEntity);
-            _mockMapper.Map<MonthHourDto>(savedEntity).Returns(expectedDto);
-
-            // Act
-            var result = await _sut.SaveMonthHourAsync(dto);
-
-            // Assert
-            result.Should().NotBeNull();
-            await _mockRepository.Received(1).SaveAsync(entity);
-        }
-
-        [Fact]
-        public async Task SaveMonthHourAsync_WhenValuesAreNull_PassesValidationAndCallsRepository()
-        {
-            // Arrange — nullable decimal properties being null are not negative, so validation passes
-            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = null, VidHours = null, CvlHours = null };
-            var entity = new MonthHour { Year = 2024, Month = 1, Days = null, VidHours = null, CvlHours = null };
-            var savedEntity = new MonthHour { Year = 2024, Month = 1, Days = null, VidHours = null, CvlHours = null };
-            var expectedDto = new MonthHourDto { Year = 2024, Month = 1, Days = null, VidHours = null, CvlHours = null };
-
-            _mockMapper.Map<MonthHour>(dto).Returns(entity);
-            _mockRepository.SaveAsync(entity).Returns(savedEntity);
-            _mockMapper.Map<MonthHourDto>(savedEntity).Returns(expectedDto);
-
-            // Act
-            var result = await _sut.SaveMonthHourAsync(dto);
-
-            // Assert
-            result.Should().NotBeNull();
-            await _mockRepository.Received(1).SaveAsync(entity);
-        }
-
-        [Fact]
-        public async Task SaveMonthHourAsync_WhenRepositoryThrowsException_PropagatesException()
-        {
-            // Arrange
-            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = 20, VidHours = 5, CvlHours = 3 };
-            var entity = new MonthHour { Year = 2024, Month = 1, Days = 20, VidHours = 5, CvlHours = 3 };
-            _mockMapper.Map<MonthHour>(dto).Returns(entity);
-            _mockRepository.SaveAsync(entity).Throws(new Exception("Save failed"));
+            // Arrange — staging is immutable once Approve succeeds and stays so through every
+            // terminal/in-flight status.
+            var jobExecutionId = Guid.NewGuid();
+            var dto = new MonthHourDto { Year = 2026, Month = 1, Days = 20, VidHours = 5, CvlHours = 3 };
+            _mockYearEndStagingRepository.ResolveRequestAsync(jobExecutionId)
+                .Returns(new YearEndRequestSummary(Guid.NewGuid(), 2025, 2026, status));
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveMonthHourAsync(dto));
-            exception.Message.Should().Be("Save failed");
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveMonthHourAsync(jobExecutionId, dto));
+            ex.Errors.Should().ContainSingle(e => e.Code == "REQUEST_NOT_EDITABLE");
 
-            await _mockRepository.Received(1).SaveAsync(entity);
+            await _mockYearEndStagingRepository.DidNotReceive().UpsertStagedMonthHourAsync(Arg.Any<YearEndMonthHourStaging>());
+        }
+
+        [Fact]
+        public async Task SaveMonthHourAsync_WhenInitiated_UpsertsStagedRow_NeverWritesRealTable()
+        {
+            // Arrange
+            var jobExecutionId = Guid.NewGuid();
+            var jobQueueId = Guid.NewGuid();
+            var dto = new MonthHourDto { Year = 2026, Month = 3, Fmonth = 1, Days = 20, VidHours = 5, CvlHours = 3 };
+            _mockYearEndStagingRepository.ResolveRequestAsync(jobExecutionId)
+                .Returns(InitiatedMonthHourRequest(jobQueueId, targetFpsYear: 2026));
+
+            // Act
+            var result = await _sut.SaveMonthHourAsync(jobExecutionId, dto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Month.Should().Be(3);
+            result.Days.Should().Be(20);
+            result.FpsYear.Should().Be(2026); // displayed year is the request's target, not the open year
+
+            await _mockYearEndStagingRepository.Received(1).UpsertStagedMonthHourAsync(
+                Arg.Is<YearEndMonthHourStaging>(s =>
+                    s.JobQueueId == jobQueueId && s.MonthYear == 2026 && s.Month == 3 && s.Fmonth == 1 &&
+                    s.Days == 20 && s.VidHours == 5 && s.CvlHours == 3));
+
+            // The real table is never touched by Confirm under the staging design.
+            await _mockRepository.DidNotReceive().SaveAsync(Arg.Any<MonthHour>());
         }
 
         #endregion

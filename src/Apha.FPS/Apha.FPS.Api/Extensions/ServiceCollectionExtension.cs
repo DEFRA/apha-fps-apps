@@ -133,6 +133,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IResourceAllocationRepository, ResourceAllocationRepository>();
             services.AddScoped<IMonthHourRepository, MonthHourRepository>();
             services.AddScoped<IYearEndRepository, YearEndRepository>();
+            services.AddScoped<IYearEndStagingRepository, YearEndStagingRepository>();
             services.AddScoped<IProjectDepartmentIncomeRepository, ProjectDepartmentIncomeRepository>();
             return services;
 

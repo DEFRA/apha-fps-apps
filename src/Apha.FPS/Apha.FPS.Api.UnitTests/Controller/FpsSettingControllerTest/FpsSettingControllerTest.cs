@@ -354,24 +354,25 @@ namespace Apha.FPS.Api.UnitTests.Controller.FpsSettingControllerTest
         public async Task SaveAsync_WhenRequestIsValid_ReturnsOkWithMappedResult()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var request = new FpsSettingReq { Id = "HoursInDay", Setting = "8" };
             var dto = new FpsSettingDto { Id = "HoursInDay", Setting = "8" };
             var serviceResult = new FpsSettingDto { Id = "HoursInDay", Setting = "8" };
             var mappedRes = new FpsSettingRes { Id = "HoursInDay", Setting = "8" };
 
             _mapper.Map<FpsSettingDto>(request).Returns(dto);
-            _fpsSettingService.SaveSettingAsync(dto).Returns(serviceResult);
+            _fpsSettingService.SaveSettingAsync(jobExecutionId, dto).Returns(serviceResult);
             _mapper.Map<FpsSettingRes>(serviceResult).Returns(mappedRes);
 
             // Act
-            var result = await _sut.SaveAsync(request);
+            var result = await _sut.SaveAsync(jobExecutionId, request);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             okResult.StatusCode.Should().Be(200);
             okResult.Value.Should().BeEquivalentTo(mappedRes);
 
-            await _fpsSettingService.Received(1).SaveSettingAsync(dto);
+            await _fpsSettingService.Received(1).SaveSettingAsync(jobExecutionId, dto);
             _mapper.Received(1).Map<FpsSettingDto>(request);
             _mapper.Received(1).Map<FpsSettingRes>(serviceResult);
         }
@@ -380,30 +381,32 @@ namespace Apha.FPS.Api.UnitTests.Controller.FpsSettingControllerTest
         public async Task SaveAsync_WhenServiceThrowsBusinessValidationException_PropagatesException()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var request = new FpsSettingReq { Id = "HoursInDay", Setting = "invalid" };
             var dto = new FpsSettingDto { Id = "HoursInDay", Setting = "invalid" };
             _mapper.Map<FpsSettingDto>(request).Returns(dto);
-            _fpsSettingService.SaveSettingAsync(dto)
+            _fpsSettingService.SaveSettingAsync(jobExecutionId, dto)
                 .Throws(new BusinessValidationErrorException([new BusinessValidationError("Invalid value", "Missing_HoursInDay")]));
 
             // Act & Assert
-            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveAsync(request));
-            await _fpsSettingService.Received(1).SaveSettingAsync(dto);
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveAsync(jobExecutionId, request));
+            await _fpsSettingService.Received(1).SaveSettingAsync(jobExecutionId, dto);
         }
 
         [Fact]
         public async Task SaveAsync_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var request = new FpsSettingReq { Id = "OtherKey", Setting = "value" };
             var dto = new FpsSettingDto { Id = "OtherKey", Setting = "value" };
             _mapper.Map<FpsSettingDto>(request).Returns(dto);
-            _fpsSettingService.SaveSettingAsync(dto).Throws(new Exception("Save failed"));
+            _fpsSettingService.SaveSettingAsync(jobExecutionId, dto).Throws(new Exception("Save failed"));
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveAsync(request));
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveAsync(jobExecutionId, request));
             exception.Message.Should().Be("Save failed");
-            await _fpsSettingService.Received(1).SaveSettingAsync(dto);
+            await _fpsSettingService.Received(1).SaveSettingAsync(jobExecutionId, dto);
         }
 
         #endregion

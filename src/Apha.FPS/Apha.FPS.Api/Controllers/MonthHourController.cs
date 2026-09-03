@@ -69,27 +69,37 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves year-end month-hour records for the current open and planned FPS years.
+        /// Retrieves year-end month-hour records. With <paramref name="jobExecutionId"/>:
+        /// current/Open-year values overlaid with that Data Setup request's staged rows
+        /// (planned-year staging design). Without it: legacy YearMasters-status-driven behavior,
+        /// unchanged — kept for callers that don't yet supply a JobExecutionId (FPSApps page-load
+        /// path; optional until Workstream 8 finishes migrating every caller, at which point this
+        /// becomes required).
         /// </summary>
+        /// <param name="jobExecutionId">The Data Setup request to load month hours for, if known.</param>
         /// <returns><c>200 OK</c> with a <see cref="List{YearEndMonthHourRes}"/>.</returns>
         [HttpGet("yearend")]
-        public async Task<IActionResult> GetYearEndMonthHours()
+        public async Task<IActionResult> GetYearEndMonthHours([FromQuery] Guid? jobExecutionId = null)
         {
-            var result = await _service.GetYearEndMonthHoursAsync();
+            var result = jobExecutionId.HasValue
+                ? await _service.GetYearEndMonthHoursAsync(jobExecutionId.Value)
+                : await _service.GetYearEndMonthHoursAsync();
             return Ok(_mapper.Map<List<YearEndMonthHourRes>>(result));
         }
 
         /// <summary>
-        /// Creates or updates a month-hour record identified by its composite key
-        /// (<c>Year</c>, <c>Month</c>, <c>FpsYear</c>).
+        /// Confirms a year-end Month Working Hours row for a specific Data Setup request
+        /// (planned-year staging design) — upserts a staged row, never writes
+        /// fps.tlkpmonthhours directly. Requires the request to still be Initiated.
         /// </summary>
-        /// <param name="request">The month-hour values to save.</param>
-        /// <returns><c>200 OK</c> with the saved <see cref="MonthHourRes"/>.</returns>
+        /// <param name="jobExecutionId">The Data Setup request this value is being confirmed for.</param>
+        /// <param name="request">The month-hour values to confirm.</param>
+        /// <returns><c>200 OK</c> with the confirmed <see cref="MonthHourRes"/>.</returns>
         [HttpPost("save")]
-        public async Task<IActionResult> Save([FromBody] MonthHourReq request)
+        public async Task<IActionResult> Save([FromQuery] Guid jobExecutionId, [FromBody] MonthHourReq request)
         {
             var dto = _mapper.Map<MonthHourDto>(request);
-            var result = await _service.SaveMonthHourAsync(dto);
+            var result = await _service.SaveMonthHourAsync(jobExecutionId, dto);
             return Ok(_mapper.Map<MonthHourRes>(result));
         }
     }

@@ -9,9 +9,25 @@ namespace Apha.FPS.Core.Interfaces
         Task<bool> CanInitiateYearEndDataSetupRequestAsync(string jobName);
         Task<bool> CanApproveOrRejectYearEndDataSetupRequestAsync(string jobName);
         Task<string> GetYearEndDataSetupRequestInitiatorAsync(string jobName);
-        Task<BatchJobQueue> EnqueueDataSetupInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
-        Task<BatchJobQueue> EnqueueDataSetupApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
-        Task<BatchJobQueue> EnqueueDataSetupRejectBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
+        /// <summary>
+        /// Creates the job_queue row for a Year End Data Setup request. <paramref name="targetFpsYear"/>
+        /// is persisted as the row's target_fpsyear (CR067) - fpsyear keeps its existing meaning (the
+        /// current/Open year) unchanged.
+        /// </summary>
+        Task<BatchJobQueue> EnqueueDataSetupInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note, int targetFpsYear);
+        /// <summary>
+        /// Transitions the exact Data Setup request identified by <paramref name="jobQueueId"/> to
+        /// Approved. Requires the row to still be Initiated at write time (re-checked here, not just
+        /// trusted from an earlier caller read) - planned-year staging design, Workstream 6.
+        /// </summary>
+        Task<BatchJobQueue> EnqueueDataSetupApprovalBatchJobAsync(Guid jobQueueId, string requestedBy, string note);
+
+        /// <summary>
+        /// Transitions the exact Data Setup request identified by <paramref name="jobQueueId"/> to
+        /// Rejected and deletes its staged Config Value/Month Hours rows in the same transaction as the
+        /// status transition, so a Rejected request can never retain editable workflow data.
+        /// </summary>
+        Task<BatchJobQueue> EnqueueDataSetupRejectBatchJobAsync(Guid jobQueueId, string requestedBy, string note);
 
         Task<bool> CanInitiateYearEndCutOverRequestAsync(string jobName);
         Task<bool> CanApproveOrRejectYearEndCutOverRequestAsync(string jobName);

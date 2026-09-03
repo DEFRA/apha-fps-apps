@@ -10,8 +10,8 @@ namespace Apha.FPS.Application.Interfaces
         Task<bool> CanInitiateYearEndDataSetupRequestAsync(string jobName);
         Task<bool> CanApproveOrRejectYearEndDataSetupRequestAsync(string jobName);
         Task<BatchJobQueueDto> EnqueueYearEndDataSetupInitiationJobAsync(int plannedYear, int contextyear, string requestedBy, string correlationId);
-        Task<BatchJobEventTriggerDto> EnqueueYearEndDataSetupApprovalJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId);
-        Task<bool> EnqueueYearEndDataSetupRejectJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId);
+        Task<BatchJobEventTriggerDto> EnqueueYearEndDataSetupApprovalJobAsync(Guid jobExecutionId, int plannedYear, int contextYear, string requestedBy, string correlationId);
+        Task<bool> EnqueueYearEndDataSetupRejectJobAsync(Guid jobExecutionId, int plannedYear, int contextYear, string requestedBy, string correlationId);
 
         Task<bool> CanInitiateYearEndCutOverRequestAsync(string jobName);
         Task<bool> CanApproveOrRejectYearEndCutOverRequestAsync(string jobName);

@@ -306,24 +306,25 @@ namespace Apha.FPS.Api.UnitTests.Controller.MonthHourControllerTest
         public async Task Save_WhenRequestIsValid_ReturnsOkWithMappedResult()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var request = new MonthHourReq { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
             var dto = new MonthHourDto { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
             var serviceResult = new MonthHourDto { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
             var mappedRes = new MonthHourRes { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
 
             _mapper.Map<MonthHourDto>(request).Returns(dto);
-            _service.SaveMonthHourAsync(dto).Returns(serviceResult);
+            _service.SaveMonthHourAsync(jobExecutionId, dto).Returns(serviceResult);
             _mapper.Map<MonthHourRes>(serviceResult).Returns(mappedRes);
 
             // Act
-            var result = await _sut.Save(request);
+            var result = await _sut.Save(jobExecutionId, request);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             okResult.StatusCode.Should().Be(200);
             okResult.Value.Should().BeEquivalentTo(mappedRes);
 
-            await _service.Received(1).SaveMonthHourAsync(dto);
+            await _service.Received(1).SaveMonthHourAsync(jobExecutionId, dto);
             _mapper.Received(1).Map<MonthHourDto>(request);
             _mapper.Received(1).Map<MonthHourRes>(serviceResult);
         }
@@ -332,30 +333,32 @@ namespace Apha.FPS.Api.UnitTests.Controller.MonthHourControllerTest
         public async Task Save_WhenServiceThrowsBusinessValidationException_PropagatesException()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var request = new MonthHourReq { Year = 2024, Month = 1, Days = -1 };
             var dto = new MonthHourDto { Year = 2024, Month = 1, Days = -1 };
             _mapper.Map<MonthHourDto>(request).Returns(dto);
-            _service.SaveMonthHourAsync(dto)
+            _service.SaveMonthHourAsync(jobExecutionId, dto)
                 .Throws(new BusinessValidationErrorException([new BusinessValidationError("Invalid value", "Missing_Config")]));
 
             // Act & Assert
-            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.Save(request));
-            await _service.Received(1).SaveMonthHourAsync(dto);
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.Save(jobExecutionId, request));
+            await _service.Received(1).SaveMonthHourAsync(jobExecutionId, dto);
         }
 
         [Fact]
         public async Task Save_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var request = new MonthHourReq { Year = 2024, Month = 1, Days = 20 };
             var dto = new MonthHourDto { Year = 2024, Month = 1, Days = 20 };
             _mapper.Map<MonthHourDto>(request).Returns(dto);
-            _service.SaveMonthHourAsync(dto).Throws(new Exception("Save failed"));
+            _service.SaveMonthHourAsync(jobExecutionId, dto).Throws(new Exception("Save failed"));
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.Save(request));
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.Save(jobExecutionId, request));
             exception.Message.Should().Be("Save failed");
-            await _service.Received(1).SaveMonthHourAsync(dto);
+            await _service.Received(1).SaveMonthHourAsync(jobExecutionId, dto);
         }
 
         #endregion

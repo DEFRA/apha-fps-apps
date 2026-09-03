@@ -18,6 +18,11 @@
         public DateTime UpdatedAt { get; set; }
         public int FpsYear { get; set; }
 
+        // Year End planned-year staging (CR067). Separate from FpsYear, which keeps its existing
+        // meaning (the current/Open year the request belongs to) unchanged. Only Year End DataSetup
+        // requests set this; every other job type on this shared table leaves it null.
+        public int? TargetFpsYear { get; set; }
+
         // ── Bulk Rates workflow columns ──────────────────────────────────────────
         // Added for BulkRatesRepository's LINQ conversion rather than a second entity
         // mapped to this table — EF Core rejects two unrelated entity types sharing one

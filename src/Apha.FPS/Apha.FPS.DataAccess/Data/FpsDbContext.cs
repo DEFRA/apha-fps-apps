@@ -125,9 +125,12 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<BatchJobQueueLog> BatchJobQueueLogs { get; set; }
         public virtual DbSet<BatchJobStatus> BatchJobStatuses { get; set; }
         public virtual DbSet<MonthHour> MonthHours { get; set; }
-                       
+
         public virtual DbSet<PeriodLookup> PeriodLookups { get; set; }
         public virtual DbSet<Period> Periods { get; set; }
+
+        public virtual DbSet<YearEndSettingStaging> YearEndSettingStagings { get; set; }
+        public virtual DbSet<YearEndMonthHourStaging> YearEndMonthHourStagings { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -397,6 +400,11 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<Period>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PeriodMonthlyOutputMap());
+
+            // ── Year End planned-year staging (CR067): request-scoped by jobqueueid, not year-scoped
+            //    -- no HasQueryFilter, matching the "cross-year tables" precedent above ──
+            modelBuilder.ApplyConfiguration(new YearEndSettingStagingMap());
+            modelBuilder.ApplyConfiguration(new YearEndMonthHourStagingMap());
         }
     }
 }

@@ -13,11 +13,13 @@ namespace Apha.FPS.Application.Services
         private const decimal DefaultHoursPerDay = 8m;
 
         private readonly IFpsSettingRepository _repository;
+        private readonly IYearEndStagingRepository _yearEndStagingRepository;
         private readonly IMapper _mapper;
 
-        public FpsSettingService(IFpsSettingRepository repository, IMapper mapper)
+        public FpsSettingService(IFpsSettingRepository repository, IYearEndStagingRepository yearEndStagingRepository, IMapper mapper)
         {
             _repository = repository;
+            _yearEndStagingRepository = yearEndStagingRepository;
             _mapper = mapper;
         }
 
@@ -50,6 +52,15 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<List<YearEndFpsSettingDto>>(settings);
         }
 
+        public async Task<List<YearEndFpsSettingDto>> GetYearEndSettingsAsync(Guid jobExecutionId)
+        {
+            var request = await _yearEndStagingRepository.ResolveRequestAsync(jobExecutionId)
+                ?? throw new KeyNotFoundException($"Year End Data Setup request '{jobExecutionId}' was not found.");
+
+            var settings = await _repository.GetYearEndSettingsAsync(request);
+            return _mapper.Map<List<YearEndFpsSettingDto>>(settings);
+        }
+
         public async Task<FpsSettingDto> AddSettingAsync(FpsSettingDto dto)
         {
             var entity = _mapper.Map<FpsSetting>(dto);
@@ -64,7 +75,7 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<FpsSettingDto>(result);
         }
 
-        public async Task<FpsSettingDto> SaveSettingAsync(FpsSettingDto dto)
+        public async Task<FpsSettingDto> SaveSettingAsync(Guid jobExecutionId, FpsSettingDto dto)
         {
             var errors = new List<BusinessValidationError>();
 
@@ -95,9 +106,36 @@ namespace Apha.FPS.Application.Services
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            var entity = _mapper.Map<FpsSetting>(dto);
-            var result = await _repository.SaveAsync(entity);
-            return _mapper.Map<FpsSettingDto>(result);
+            // Planned-year staging design: resolve the exact request and require it to still be
+            // Initiated before staging anything — staging is immutable the instant Approve succeeds
+            // (and stays so through Running/Completed/Failed/Rejected). Never falls back to
+            // "whichever request is currently active".
+            var request = await _yearEndStagingRepository.ResolveRequestAsync(jobExecutionId)
+                ?? throw new KeyNotFoundException($"Year End Data Setup request '{jobExecutionId}' was not found.");
+
+            if (!string.Equals(request.Status, "Initiated", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new BusinessValidationErrorException([
+                    new BusinessValidationError(
+                        $"This request is no longer editable (status: {request.Status}).", "REQUEST_NOT_EDITABLE")
+                ]);
+            }
+
+            await _yearEndStagingRepository.UpsertStagedSettingAsync(new YearEndSettingStaging
+            {
+                JobQueueId = request.JobQueueId,
+                Id = dto!.Id,
+                Setting = dto.Setting,
+                Notes = dto.Notes
+            });
+
+            return new FpsSettingDto
+            {
+                Id = dto.Id,
+                Setting = dto.Setting,
+                Notes = dto.Notes,
+                FpsYear = request.TargetFpsYear
+            };
         }
     }
 }

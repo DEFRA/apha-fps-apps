@@ -157,8 +157,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var result = await _yearEndService.EnqueueYearEndDataSetupInitiationJobAsync(plannedYear);
             if (result.Success)
             {
-                _logger.LogInformation("Year End Datasetup initiation job enqueued.");
-                return Json(new { success = true });
+                _logger.LogInformation("Year End Datasetup initiation job enqueued. JobExecutionId: {JobExecutionId}", result.Data?.JobExecutionId);
+                // JobExecutionId is required by the planned-year staging design's grid read path
+                // (Confirm/grid-reload wiring lands in a later workstream) — surfaced here so the
+                // browser can obtain and retain it rather than the grids ever falling back to
+                // "whichever request is currently active".
+                return Json(new { success = true, jobExecutionId = result.Data?.JobExecutionId });
             }
 
             var errors = result?.Errors?.Select(e => new { field = string.Empty, message = e.Message }).ToArray()

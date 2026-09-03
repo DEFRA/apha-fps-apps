@@ -5,6 +5,7 @@ using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Validation;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
@@ -23,6 +24,7 @@ namespace Apha.FPS.Application.Services
         private readonly IFpsSettingRepository _fpsSettingRepository;
         private readonly IMonthHourRepository _monthHourRepository;
         private readonly IYearMasterRepository _yearMasterRepository;
+        private readonly IYearEndStagingRepository _yearEndStagingRepository;
         private readonly IEventPublisherService _eventPublisherService;
         private readonly IGraphEmailService _emailService;
         private readonly ILogger<YearEndService> _logger;
@@ -33,6 +35,7 @@ namespace Apha.FPS.Application.Services
             IFpsSettingRepository fpsSettingRepository,
             IMonthHourRepository monthHourRepository,
             IYearMasterRepository yearMasterRepository,
+            IYearEndStagingRepository yearEndStagingRepository,
             IEventPublisherService eventPublisherService,
             IGraphEmailService emailService,
             IOptions<YearEndEmailSettings> emailSettings,
@@ -43,6 +46,7 @@ namespace Apha.FPS.Application.Services
             _fpsSettingRepository = fpsSettingRepository;
             _monthHourRepository = monthHourRepository;
             _yearMasterRepository = yearMasterRepository;
+            _yearEndStagingRepository = yearEndStagingRepository;
             _eventPublisherService = eventPublisherService;
             _emailService = emailService;
             _logger = logger;
@@ -75,13 +79,16 @@ namespace Apha.FPS.Application.Services
 
             var note = $"'{jobName}' is initiated for {plannedYear}.";
 
-            await ValidateConfiguration(errors);
+            // Deliberately no ValidateConfiguration here (planned-year staging design,
+            // 2026-09-03) - Initiate no longer requires Config Value/Month Hours to already exist.
+            // That requirement moves to Approve, which validates staged rows instead of the real
+            // tables. See fps-year-end-planned-year-staging-design-2026-09-03.md decision-4/8.
             await ValidateDataSetupRequestInput(plannedYear, requestedBy, errors, jobName, false);
 
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            var queued = await _yearEndRepository.EnqueueDataSetupInitiationBatchJobAsync(jobName, requestedBy, correlationId, note);
+            var queued = await _yearEndRepository.EnqueueDataSetupInitiationBatchJobAsync(jobName, requestedBy, correlationId, note, plannedYear);
 
             try
             {
@@ -95,25 +102,75 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<BatchJobQueueDto>(queued);
         }
 
-        public async Task<BatchJobEventTriggerDto> EnqueueYearEndDataSetupApprovalJobAsync(int plannedYear, int contextYear, 
+        public async Task<BatchJobEventTriggerDto> EnqueueYearEndDataSetupApprovalJobAsync(Guid jobExecutionId, int plannedYear, int contextYear,
             string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
             var jobName = YearEndDataSetupJobName;
 
-            var note = $"'{jobName}' is approved for {plannedYear}.";
+            // Planned-year staging design (Workstream 6): resolve the exact request this Approve call is
+            // for - never "whichever request happens to be Initiated". An unresolvable JobExecutionId is
+            // a wiring failure (matches Confirm's Workstream 5 convention), not a business validation
+            // error, so it's left uncaught here.
+            var request = await _yearEndStagingRepository.ResolveRequestAsync(jobExecutionId)
+                ?? throw new KeyNotFoundException($"Year End Data Setup request '{jobExecutionId}' was not found.");
 
-            await ValidateConfiguration(errors);
+            if (!string.Equals(request.Status, "Initiated", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new BusinessValidationErrorException([
+                    new BusinessValidationError(
+                        $"This request is no longer editable (status: {request.Status}).", "REQUEST_NOT_EDITABLE")
+                ]);
+            }
+
+            if (!request.TargetFpsYear.HasValue)
+            {
+                throw new BusinessValidationErrorException([
+                    new BusinessValidationError(
+                        $"Request '{jobExecutionId}' has no target year set and cannot be approved.", "TARGET_FPSYEAR_MISSING")
+                ]);
+            }
+
+            // Once the exact request is resolved, a caller-supplied plannedYear that disagrees with the
+            // persisted target year is stale/wrong - fail here, before running any other validation
+            // against it, rather than silently using the persisted value and hoping the caller notices.
+            if (plannedYear != request.TargetFpsYear.Value)
+            {
+                throw new BusinessValidationErrorException([
+                    new BusinessValidationError(
+                        $"The requested planned year ({plannedYear}) does not match this request's target year ({request.TargetFpsYear.Value}).", "PLANNEDYEAR_MISMATCH")
+                ]);
+            }
+
+            var note = $"'{jobName}' is approved for {request.TargetFpsYear.Value}.";
+
             await ValidateDataSetupRequestInput(plannedYear, requestedBy, errors, jobName, true);
+            await ValidateConfiguration(errors, request);
 
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            var queued = await _yearEndRepository.EnqueueDataSetupApprovalBatchJobAsync(jobName, requestedBy, correlationId, note);
+            BatchJobQueue queued;
+            try
+            {
+                queued = await _yearEndRepository.EnqueueDataSetupApprovalBatchJobAsync(request.JobQueueId, requestedBy, note);
+            }
+            catch (KeyNotFoundException)
+            {
+                // The row was Initiated when resolved above but no longer is by the time the repository
+                // re-checked at write time - someone else approved/rejected it in between. Same
+                // caller-visible error as the earlier, more common check.
+                throw new BusinessValidationErrorException([
+                    new BusinessValidationError(
+                        "This request is no longer editable - it was modified by another request in the meantime.", "REQUEST_NOT_EDITABLE")
+                ]);
+            }
 
             // Row's own persisted JobExecutionId, not the raw correlationId - Initiate and Approve
-            // are separate requests that never share a correlation id.
-            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, queued.JobExecutionId.ToString(), plannedYear);
+            // are separate requests that never share a correlation id. Persisted target year, not the
+            // caller-supplied plannedYear (already verified equal above, but the persisted value is the
+            // one that must drive the Worker regardless).
+            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, queued.JobExecutionId.ToString(), request.TargetFpsYear.Value);
 
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
 
@@ -135,13 +192,28 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<BatchJobEventTriggerDto>(result);
         }
 
-        public async Task<bool> EnqueueYearEndDataSetupRejectJobAsync(int plannedYear, int contextYear, 
+        public async Task<bool> EnqueueYearEndDataSetupRejectJobAsync(Guid jobExecutionId, int plannedYear, int contextYear,
             string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
             var jobName = YearEndDataSetupJobName;
 
-            var note = $"'{jobName}' is rejected for {plannedYear}.";
+            // Resolve the exact request, same as Approve. Deliberately no TargetFpsYear/plannedYear
+            // checks here (unlike Approve) - Reject must remain usable to clean up a malformed/legacy
+            // request even if TargetFpsYear is null or the caller's plannedYear is stale; the exact
+            // JobExecutionId already identifies the target unambiguously, and Reject builds no trigger.
+            var request = await _yearEndStagingRepository.ResolveRequestAsync(jobExecutionId)
+                ?? throw new KeyNotFoundException($"Year End Data Setup request '{jobExecutionId}' was not found.");
+
+            if (!string.Equals(request.Status, "Initiated", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new BusinessValidationErrorException([
+                    new BusinessValidationError(
+                        $"This request is no longer editable (status: {request.Status}).", "REQUEST_NOT_EDITABLE")
+                ]);
+            }
+
+            var note = $"'{jobName}' is rejected for {request.TargetFpsYear?.ToString() ?? "unknown"}.";
 
             if (string.IsNullOrEmpty(requestedBy))
                 errors.Add(new BusinessValidationError($"Unable to identify the rejector. Please sign in again and retry. If the issue persists, contact support.", "INVALID_User"));
@@ -157,7 +229,20 @@ namespace Apha.FPS.Application.Services
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            var queued = await _yearEndRepository.EnqueueDataSetupRejectBatchJobAsync(jobName, requestedBy, correlationId, note);
+            BatchJobQueue queued;
+            try
+            {
+                queued = await _yearEndRepository.EnqueueDataSetupRejectBatchJobAsync(request.JobQueueId, requestedBy, note);
+            }
+            catch (KeyNotFoundException)
+            {
+                // Same narrow-race translation as Approve - the row was Initiated when resolved above
+                // but no longer is by the time the repository re-checked at write time.
+                throw new BusinessValidationErrorException([
+                    new BusinessValidationError(
+                        "This request is no longer editable - it was modified by another request in the meantime.", "REQUEST_NOT_EDITABLE")
+                ]);
+            }
 
             var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
 
@@ -321,15 +406,19 @@ namespace Apha.FPS.Application.Services
             }
         }
 
-        private async Task ValidateConfiguration(List<BusinessValidationError> errors)
+        private async Task ValidateConfiguration(List<BusinessValidationError> errors, YearEndRequestSummary request)
         {
-            await ValidateSettingConfiguration(errors);
-            await ValidateMonthConfiguration(errors);
+            await ValidateSettingConfiguration(errors, request);
+            await ValidateMonthConfiguration(errors, request);
         }
 
-        private async Task ValidateSettingConfiguration(List<BusinessValidationError> errors)
+        private async Task ValidateSettingConfiguration(List<BusinessValidationError> errors, YearEndRequestSummary request)
         {
-            var configs = await _fpsSettingRepository.GetYearEndSettingsAsync();
+            // Planned-year staging design (Workstream 6): staging-only overlay read - ExistsForPlannedYear
+            // is "Yes" only when a staged row exists, never a current-year preview/fallback value, so
+            // this correctly validates what was actually Confirmed for this exact request, not the real
+            // tblsettings table.
+            var configs = await _fpsSettingRepository.GetYearEndSettingsAsync(request);
             bool hasUnplannedOpenConfigs = configs.Any(x => string.Equals(x.ExistsForPlannedYear, "No", StringComparison.OrdinalIgnoreCase));
 
             if (hasUnplannedOpenConfigs)
@@ -360,10 +449,10 @@ namespace Apha.FPS.Application.Services
             }
         }
 
-        private async Task ValidateMonthConfiguration(List<BusinessValidationError> errors)
+        private async Task ValidateMonthConfiguration(List<BusinessValidationError> errors, YearEndRequestSummary request)
         {
-
-            var monthConfigs = await _monthHourRepository.GetYearEndMonthHoursAsync();
+            // Same staging-only overlay reasoning as ValidateSettingConfiguration above.
+            var monthConfigs = await _monthHourRepository.GetYearEndMonthHoursAsync(request);
 
             bool hasUnplannedMonthConfigs = monthConfigs.Any(x => string.Equals(x.ExistsForPlannedYear, "No", StringComparison.OrdinalIgnoreCase));
 

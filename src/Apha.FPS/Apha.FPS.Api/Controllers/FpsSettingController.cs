@@ -56,13 +56,20 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Gets year-end settings for the current open and planned FPS years.
+        /// Gets year-end settings. With <paramref name="jobExecutionId"/>: current/Open-year values
+        /// overlaid with that Data Setup request's staged rows (planned-year staging design).
+        /// Without it: legacy YearMasters-status-driven behavior, unchanged — kept for callers that
+        /// don't yet supply a JobExecutionId (FPSApps page-load path; optional until Workstream 8
+        /// finishes migrating every caller, at which point this becomes required).
         /// </summary>
+        /// <param name="jobExecutionId">The Data Setup request to load settings for, if known.</param>
         /// <returns>A list of year-end settings.</returns>
         [HttpGet("yearend")]
-        public async Task<IActionResult> GetYearEndSettingsAsync()
+        public async Task<IActionResult> GetYearEndSettingsAsync([FromQuery] Guid? jobExecutionId = null)
         {
-            var result = await _fpsSettingService.GetYearEndSettingsAsync();
+            var result = jobExecutionId.HasValue
+                ? await _fpsSettingService.GetYearEndSettingsAsync(jobExecutionId.Value)
+                : await _fpsSettingService.GetYearEndSettingsAsync();
             return Ok(_mapper.Map<List<FpsYearEndSettingRes>>(result));
         }
 
@@ -95,15 +102,18 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Saves an FPS setting (creates or updates).
+        /// Confirms a year-end Config Value for a specific Data Setup request (planned-year staging
+        /// design) — upserts a staged row, never writes fps.tblsettings directly. Requires the
+        /// request to still be Initiated.
         /// </summary>
-        /// <param name="request">The setting to save.</param>
-        /// <returns>The saved FPS setting.</returns>
+        /// <param name="jobExecutionId">The Data Setup request this value is being confirmed for.</param>
+        /// <param name="request">The setting to confirm.</param>
+        /// <returns>The confirmed value.</returns>
         [HttpPost("save")]
-        public async Task<IActionResult> SaveAsync([FromBody] FpsSettingReq request)
+        public async Task<IActionResult> SaveAsync([FromQuery] Guid jobExecutionId, [FromBody] FpsSettingReq request)
         {
             var dto = _mapper.Map<FpsSettingDto>(request);
-            var result = await _fpsSettingService.SaveSettingAsync(dto);
+            var result = await _fpsSettingService.SaveSettingAsync(jobExecutionId, dto);
             return Ok(_mapper.Map<FpsSettingRes>(result));
         }
     }

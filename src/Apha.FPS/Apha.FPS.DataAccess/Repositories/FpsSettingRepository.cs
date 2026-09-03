@@ -69,14 +69,61 @@ namespace Apha.FPS.DataAccess.Repositories
             return existing ?? setting;
         }
 
+        private static readonly string[] YearEndSettingIds =
+        {
+            "HoursInDay",
+            "CapApprovalReceivedForReset"
+        };
+
+        /// <summary>
+        /// Grid read path (planned-year staging design, CR067): current/Open-year real values
+        /// overlaid with staged rows for <paramref name="request"/>'s JobQueueId. Deliberately does
+        /// not use YearMasters.Status == "Planned" — pre-Approval there is no such row.
+        /// </summary>
+        public async Task<List<YearEndFpsSetting>> GetYearEndSettingsAsync(YearEndRequestSummary request)
+        {
+            if (!request.TargetFpsYear.HasValue)
+                throw new InvalidOperationException(
+                    $"Year End request {request.JobQueueId} has no target_fpsyear set.");
+
+            var settingIdsLower = YearEndSettingIds.Select(id => id.ToLowerInvariant()).ToArray();
+
+            var currentYearSettings = await _dbContext.TblSettings.IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(s => s.FpsYear == request.FpsYear && settingIdsLower.Contains(s.Id.ToLower()))
+                .ToListAsync();
+
+            var stagedSettings = await _dbContext.YearEndSettingStagings
+                .AsNoTracking()
+                .Where(s => s.JobQueueId == request.JobQueueId)
+                .ToListAsync();
+
+            var result = new List<YearEndFpsSetting>();
+
+            foreach (var id in YearEndSettingIds)
+            {
+                var staged = stagedSettings.FirstOrDefault(s => s.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+                var current = currentYearSettings.FirstOrDefault(s => s.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+
+                result.Add(new YearEndFpsSetting
+                {
+                    Id = id,
+                    FpsYear = request.TargetFpsYear.Value,
+                    Setting = staged?.Setting ?? current?.Setting,
+                    Notes = staged?.Notes ?? current?.Notes,
+                    UpdatedBy = current?.UpdatedBy,
+                    UpdatedAt = current?.UpdatedAt ?? DateTime.MinValue,
+                    ExistsForPlannedYear = staged is not null ? "Yes" : "No"
+                });
+            }
+
+            return result;
+        }
+
         [ExcludeFromCodeCoverage]
         public async Task<List<YearEndFpsSetting>> GetYearEndSettingsAsync()
         {
-            var settingIds = new[]
-               {
-                    "HoursInDay",
-                    "CapApprovalReceivedForReset"
-                };
+            var settingIds = YearEndSettingIds;
 
             int openYear = await GetOpenYear();
 

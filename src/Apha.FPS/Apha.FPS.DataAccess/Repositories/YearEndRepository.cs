@@ -11,9 +11,17 @@ namespace Apha.FPS.DataAccess.Repositories
     public class YearEndRepository : BaseRepository, IYearEndRepository
     {
         private readonly IFpsRequestContext _requestContext;
-        public YearEndRepository(FpsDbContext context, IFpsRequestContext requestContext) : base(context)
+
+        // Only used by the DataSetup Approve/Reject path (Workstream 6), specifically for Reject's
+        // staging deletion. Relies on both repositories resolving the same scoped FpsDbContext instance
+        // (both AddScoped, both take FpsDbContext directly, not a factory) so DeleteStagingAsync's
+        // SaveChangesAsync joins the transaction opened below rather than committing separately.
+        private readonly IYearEndStagingRepository _yearEndStagingRepository;
+
+        public YearEndRepository(FpsDbContext context, IFpsRequestContext requestContext, IYearEndStagingRepository yearEndStagingRepository) : base(context)
         {
             _requestContext = requestContext;
+            _yearEndStagingRepository = yearEndStagingRepository ?? throw new ArgumentNullException(nameof(yearEndStagingRepository));
         }
 
         public async Task<PagedData<BatchJobHistory>> GetBatchJobsHistoryAsync(PaginationParameters<string> query, string jobName)
@@ -60,19 +68,19 @@ namespace Apha.FPS.DataAccess.Repositories
             return await GetInitiator(jobName);
         }
 
-        public async Task<BatchJobQueue> EnqueueDataSetupInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        public async Task<BatchJobQueue> EnqueueDataSetupInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note, int targetFpsYear)
         {
-            return await EnqueueInitiationRequest(jobName, requestedBy, correlationId, note);
+            return await EnqueueInitiationRequest(jobName, requestedBy, correlationId, note, targetFpsYear);
         }
 
-        public async Task<BatchJobQueue> EnqueueDataSetupApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        public async Task<BatchJobQueue> EnqueueDataSetupApprovalBatchJobAsync(Guid jobQueueId, string requestedBy, string note)
         {
-            return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, false);
+            return await EnqueueDataSetupApprovalOrRejectByJobQueueId(jobQueueId, requestedBy, note, false);
         }
 
-        public async Task<BatchJobQueue> EnqueueDataSetupRejectBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        public async Task<BatchJobQueue> EnqueueDataSetupRejectBatchJobAsync(Guid jobQueueId, string requestedBy, string note)
         {
-            return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, true);
+            return await EnqueueDataSetupApprovalOrRejectByJobQueueId(jobQueueId, requestedBy, note, true);
         }
 
         [SuppressMessage("SonarAnalyzer.CSharp", "S4144:MethodsShouldNotHaveIdenticalImplementations",
@@ -263,7 +271,109 @@ namespace Apha.FPS.DataAccess.Repositories
             return queueRow;
         }
 
-        private async Task<BatchJobQueue> EnqueueInitiationRequest(string jobName, string requestedBy, string correlationId, string note)
+        // Data Setup-only (planned-year staging design, Workstream 6). Deliberately not shared with
+        // EnqueueApprovalOrRejectRequest above (CutOver's own path) - CutOver has no staging concept and
+        // must not be affected by this method's resolve-by-jobQueueId behavior. Resolves the exact
+        // request rather than "whichever row is Initiated for this job name", and re-checks Initiated
+        // status here, at write time, rather than trusting an earlier caller read.
+        private async Task<BatchJobQueue> EnqueueDataSetupApprovalOrRejectByJobQueueId(Guid jobQueueId, string requestedBy, string note, bool isReject)
+        {
+            BatchJobQueue queueRow = null!;
+            BatchJobStatus jobStatus;
+
+            // IgnoreQueryFilters: BatchJobQueue carries a global HasQueryFilter(e => e.FpsYear ==
+            // FilterFpsYear) - a lookup by unique jobQueueId must not depend on the ambient X-FPS-Year
+            // header matching this row's FpsYear (same reasoning as
+            // YearEndStagingRepository.ResolveRequestAsync).
+            var jobqueue = await (
+                from jq in _context.BatchJobQueues.IgnoreQueryFilters().AsNoTracking()
+                join js in _context.BatchJobStatuses.AsNoTracking()
+                    on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
+                where jq.JobqueueId == jobQueueId && js.Status.ToLower() == "initiated"
+                select new { jq.JobqueueId, jq.JobId }
+            ).FirstOrDefaultAsync();
+
+            if (jobqueue == null)
+            {
+                throw new KeyNotFoundException($"No initiated Data Setup request was found for job queue '{jobQueueId}'.");
+            }
+
+            if (isReject)
+            {
+                jobStatus = await _context.BatchJobStatuses
+                .AsNoTracking()
+                .Where(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "rejected")
+                .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'rejected' not found for job queue '{jobQueueId}'.");
+            }
+            else
+            {
+                jobStatus = await _context.BatchJobStatuses
+                .AsNoTracking()
+                .Where(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "approved")
+                .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'approved' not found for job queue '{jobQueueId}'.");
+            }
+
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+                try
+                {
+                    queueRow = await _context.BatchJobQueues
+                    .IgnoreQueryFilters().AsNoTracking().FirstOrDefaultAsync(j => j.JobqueueId == jobQueueId)
+                    ?? throw new KeyNotFoundException($"Batch job queue '{jobQueueId}' was not found.");
+
+                    //update the status of the job queue entry to "approved" or "rejected"
+                    var decidedAtUtc = DateTime.UtcNow;
+                    queueRow.StatusId = jobStatus.StatusId;
+                    queueRow.RequestedBy = requestedBy;
+                    queueRow.RequestedAtUtc = decidedAtUtc;
+                    queueRow.StartDateTime = decidedAtUtc;
+                    queueRow.ErrorMessage = note;
+
+                    if (isReject)
+                    {
+                        queueRow.RejectedBy = requestedBy;
+                        queueRow.RejectedAtUtc = decidedAtUtc;
+                        queueRow.RejectionReason = note;
+                    }
+                    else
+                    {
+                        queueRow.ApprovedBy = requestedBy;
+                        queueRow.ApprovedAtUtc = decidedAtUtc;
+                    }
+
+                    _context.BatchJobQueues.Update(queueRow);
+
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobQueueId, note, DateTime.UtcNow, jobStatus.StatusId);
+                    _context.BatchJobQueueLogs.Add(logEntry);
+
+                    await _context.SaveChangesAsync();
+
+                    if (isReject)
+                    {
+                        // Deletes this request's staged Config Value/Month Hours rows in the same
+                        // transaction as the status flip, so a Rejected request can never retain
+                        // editable workflow data. Relies on _yearEndStagingRepository resolving this same
+                        // scoped FpsDbContext instance (see constructor comment) - its SaveChangesAsync
+                        // joins this ambient transaction rather than committing separately.
+                        await _yearEndStagingRepository.DeleteStagingAsync(jobQueueId);
+                    }
+
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+
+            return queueRow;
+        }
+
+        private async Task<BatchJobQueue> EnqueueInitiationRequest(string jobName, string requestedBy, string correlationId, string note, int? targetFpsYear = null)
         {
             BatchJobQueue jobQueueEntry = null!;
 
@@ -284,7 +394,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, _requestContext.FpsYear);
+                    jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, _requestContext.FpsYear, targetFpsYear);
                     _context.BatchJobQueues.Add(jobQueueEntry);
 
                     BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId);
@@ -332,7 +442,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-        private static BatchJobQueue BuildJobQueueEntry(string requestedBy, string correlationId, string note, int jobId, int statusId, int contextYear)
+        private static BatchJobQueue BuildJobQueueEntry(string requestedBy, string correlationId, string note, int jobId, int statusId, int contextYear, int? targetFpsYear = null)
         {
             return new BatchJobQueue
             {
@@ -344,7 +454,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 RequestedAtUtc = DateTime.UtcNow,
                 StartDateTime = DateTime.UtcNow,
                 ErrorMessage = note,
-                FpsYear = contextYear
+                FpsYear = contextYear,
+                TargetFpsYear = targetFpsYear
             };
         }
 

@@ -88,31 +88,34 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Enqueue the YearEndInitiation approval for batch job and publish event for batch job.
-        /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
-        /// all config exists, aproval and initiator are not same, verifies no instance is already running, then enqueues the job. 
+        /// Approves the exact Year End Data Setup request identified by <paramref name="jobExecutionId"/>
+        /// (planned-year staging design) - validates that request's staged Config Value/Month Hours rows
+        /// (never the real tables), then publishes the event that triggers the Worker for its persisted
+        /// target year.
         /// </summary>
+        /// <param name="jobExecutionId">The Data Setup request being approved.</param>
         /// <param name="request">Request body containing the planned year.</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
         [HttpPost("datasetup/approval")]
-        public async Task<IActionResult> EnqueueYearEndDataSetupApprovalJob([FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
+        public async Task<IActionResult> EnqueueYearEndDataSetupApprovalJob([FromQuery] Guid jobExecutionId, [FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
-            var result = await _yearEndService.EnqueueYearEndDataSetupApprovalJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
+            var result = await _yearEndService.EnqueueYearEndDataSetupApprovalJobAsync(jobExecutionId, request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
 
             return Ok(_mapper.Map<BatchJobEventTriggerRes>(result));
         }
 
         /// <summary>
-        /// Enqueue the YearEnd rejection batch job for Initiation request.
-        /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
-        ///  verifies initiation request is present, then enqueues the job. 
+        /// Rejects the exact Year End Data Setup request identified by <paramref name="jobExecutionId"/>
+        /// (planned-year staging design) and deletes its staged Config Value/Month Hours rows in the same
+        /// transaction as the status transition.
         /// </summary>
+        /// <param name="jobExecutionId">The Data Setup request being rejected.</param>
         /// <param name="request">Request body containing the planned year.</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
         [HttpPost("dataSetup/reject")]
-        public async Task<IActionResult> EnqueueYearEndDataSetupRejectJob([FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
+        public async Task<IActionResult> EnqueueYearEndDataSetupRejectJob([FromQuery] Guid jobExecutionId, [FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
-            var result = await _yearEndService.EnqueueYearEndDataSetupRejectJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
+            var result = await _yearEndService.EnqueueYearEndDataSetupRejectJobAsync(jobExecutionId, request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
 
             return Ok(result);
         }
