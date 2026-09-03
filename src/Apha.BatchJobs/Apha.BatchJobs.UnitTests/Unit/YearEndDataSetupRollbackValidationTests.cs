@@ -1,4 +1,5 @@
 using System.Data.Common;
+using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
@@ -17,7 +18,7 @@ namespace Apha.BatchJobs.UnitTests;
 
 /// <summary>
 /// Proves the Year End main-port Phase 7A atomicity guarantee against live data in the isolated
-/// <c>batchjobs</c> database: the real, unchanged 11 production Data Setup steps (resolved via the
+/// <c>batchjobs</c> database: the real, unchanged 12 production Data Setup steps (resolved via the
 /// actual <see cref="BatchPersistenceServiceExtensions.AddBatchPersistence"/> +
 /// <see cref="YearEndServiceExtensions.AddYearEndJob"/> DI registration, so this cannot silently drift
 /// out of sync) either all commit together, or a failure at any point rolls back everything —
@@ -159,12 +160,15 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
     {
         Skip.IfNot(CanRun(), _skipReason ?? "Integration DB unavailable.");
 
-        var correlationId = $"datasetup-success-{Guid.NewGuid():N}";
+        var jobExecutionId = Guid.NewGuid();
+        var jobQueueId = Guid.NewGuid();
+        var correlationId = jobExecutionId.ToString("D");
         _output.WriteLine($"=== YearEnd Data Setup full-success validation | source={_sourceFpsYear} | target={_targetFpsYear} | correlationId={correlationId} ===");
 
         var baseline = await CaptureTelemetryAsync("Baseline");
         AssertBaselineIsClean(baseline);
 
+        await SeedJobQueueAndStagingAsync(jobExecutionId, jobQueueId, _targetFpsYear);
         try
         {
             await using var provider = BuildRealServiceProvider();
@@ -172,7 +176,7 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
             var context = new YearEndExecutionContext(correlationId, null, CurrentFpsYear: _sourceFpsYear, TargetFpsYear: _targetFpsYear);
 
             await service.ExecuteAsync(context, CancellationToken.None);
-            _output.WriteLine("Full pipeline completed successfully — all 11 steps committed together.");
+            _output.WriteLine("Full pipeline completed successfully — all 12 steps committed together.");
 
             var postCommit = await CaptureTelemetryAsync("PostCommit");
             var committedTargetRows = postCommit.Tables.Sum(t => t.TargetYearCount);
@@ -187,8 +191,21 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
             // A fully successful run is a real, intentional commit — there is no transaction left to
             // roll back at this point. Restore baseline the same way Phase 8's own acceptance cycle
             // will: explicit, matrix-driven cleanup.
+            //
+            // The two cleanups are independent concerns (business-data tables vs. this test's own
+            // job_queue/staging seed) and must not be short-circuited by each other — confirmed live
+            // 2026-09-03: CleanupTargetYearAsync threw (the FK-ordering bug fixed above) and the
+            // job_queue/staging cleanup below never ran as a result, leaking a seed row that had to be
+            // found and removed by hand. Nested try/finally so a failure in one still lets the other run.
             _output.WriteLine("Restoring baseline via matrix-driven cleanup...");
-            await CleanupTargetYearAsync();
+            try
+            {
+                await CleanupTargetYearAsync();
+            }
+            finally
+            {
+                await CleanupJobQueueAndStagingAsync(jobQueueId);
+            }
         }
 
         var postCleanup = await CaptureTelemetryAsync("PostCleanup");
@@ -206,48 +223,63 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
     /// </summary>
     private async Task RunInjectedFailureScenarioAsync(string scenarioLabel, string stepNameToRunThrough)
     {
-        var correlationId = $"datasetup-failure-{scenarioLabel.ToLowerInvariant()}-{Guid.NewGuid():N}";
+        var jobExecutionId = Guid.NewGuid();
+        var jobQueueId = Guid.NewGuid();
+        var correlationId = jobExecutionId.ToString("D");
         _output.WriteLine($"=== YearEnd Data Setup rollback validation [{scenarioLabel}] | source={_sourceFpsYear} | target={_targetFpsYear} | correlationId={correlationId} ===");
 
         var baseline = await CaptureTelemetryAsync("Baseline");
         AssertBaselineIsClean(baseline);
 
-        await using var provider = BuildRealServiceProvider();
-        var transactionManager = provider.GetRequiredService<IYearEndDataSetupTransactionManager>();
-        var steps = provider.GetServices<IYearEndDataSetupStep>().ToList();
+        // MaterializeYearEndConfigurationStep resolves fps.job_queue by JobExecutionId, so every
+        // scenario needs a real seeded row — even "Early", which stops before that step runs, to keep
+        // the seed/cleanup path uniform across scenarios. Seeded outside the pipeline's own transaction
+        // (a separate DbContext/connection), so it never rolls back with the business-data mutations and
+        // must be cleaned up explicitly regardless of how the scenario ends.
+        await SeedJobQueueAndStagingAsync(jobExecutionId, jobQueueId, _targetFpsYear);
+        try
+        {
+            await using var provider = BuildRealServiceProvider();
+            var transactionManager = provider.GetRequiredService<IYearEndDataSetupTransactionManager>();
+            var steps = provider.GetServices<IYearEndDataSetupStep>().ToList();
 
-        var cutoffIndex = steps.FindIndex(s => string.Equals(s.Name, stepNameToRunThrough, StringComparison.Ordinal));
-        Assert.True(cutoffIndex >= 0, $"Step '{stepNameToRunThrough}' was not found in the resolved pipeline — has it been renamed or removed?");
+            var cutoffIndex = steps.FindIndex(s => string.Equals(s.Name, stepNameToRunThrough, StringComparison.Ordinal));
+            Assert.True(cutoffIndex >= 0, $"Step '{stepNameToRunThrough}' was not found in the resolved pipeline — has it been renamed or removed?");
 
-        var context = new YearEndExecutionContext(correlationId, null, CurrentFpsYear: _sourceFpsYear, TargetFpsYear: _targetFpsYear);
+            var context = new YearEndExecutionContext(correlationId, null, CurrentFpsYear: _sourceFpsYear, TargetFpsYear: _targetFpsYear);
 
-        var thrown = await Assert.ThrowsAsync<InjectedTestFailureException>(() =>
-            transactionManager.ExecuteAsync(async ct =>
-            {
-                for (var i = 0; i <= cutoffIndex; i++)
+            var thrown = await Assert.ThrowsAsync<InjectedTestFailureException>(() =>
+                transactionManager.ExecuteAsync(async ct =>
                 {
-                    var step = steps[i];
-                    var startedAt = DateTime.UtcNow;
-                    await step.ExecuteAsync(context, ct);
-                    _output.WriteLine($"  [OK]   {step.Name} ({(DateTime.UtcNow - startedAt).TotalMilliseconds:F0}ms)");
-                }
+                    for (var i = 0; i <= cutoffIndex; i++)
+                    {
+                        var step = steps[i];
+                        var startedAt = DateTime.UtcNow;
+                        await step.ExecuteAsync(context, ct);
+                        _output.WriteLine($"  [OK]   {step.Name} ({(DateTime.UtcNow - startedAt).TotalMilliseconds:F0}ms)");
+                    }
 
-                _output.WriteLine($"  [INJECTED FAILURE] simulating a failure immediately after {steps[cutoffIndex].Name}");
-                throw new InjectedTestFailureException(scenarioLabel, steps[cutoffIndex].Name);
-            }, CancellationToken.None));
+                    _output.WriteLine($"  [INJECTED FAILURE] simulating a failure immediately after {steps[cutoffIndex].Name}");
+                    throw new InjectedTestFailureException(scenarioLabel, steps[cutoffIndex].Name);
+                }, CancellationToken.None));
 
-        _output.WriteLine($"Transaction manager correctly propagated: {thrown.Message}");
+            _output.WriteLine($"Transaction manager correctly propagated: {thrown.Message}");
 
-        var postRollback = await CaptureTelemetryAsync("PostRollback");
-        AssertMatchesBaseline(baseline, postRollback, becauseSuffix: $"after an injected failure following {stepNameToRunThrough} ({scenarioLabel})");
+            var postRollback = await CaptureTelemetryAsync("PostRollback");
+            AssertMatchesBaseline(baseline, postRollback, becauseSuffix: $"after an injected failure following {stepNameToRunThrough} ({scenarioLabel})");
 
-        var targetYearRowExists = await TargetYearMasterRowExistsAsync();
-        Assert.False(
-            targetYearRowExists,
-            $"Expected fps.tblyearmaster to have no row for target year {_targetFpsYear} after rollback ({scenarioLabel}) — " +
-            "CreatePlannedYearStep's insert must not survive a later step's failure.");
+            var targetYearRowExists = await TargetYearMasterRowExistsAsync();
+            Assert.False(
+                targetYearRowExists,
+                $"Expected fps.tblyearmaster to have no row for target year {_targetFpsYear} after rollback ({scenarioLabel}) — " +
+                "CreatePlannedYearStep's insert must not survive a later step's failure.");
 
-        _output.WriteLine($"[{scenarioLabel}] Rollback verified: zero residual mutations, source year unchanged, target year row absent.");
+            _output.WriteLine($"[{scenarioLabel}] Rollback verified: zero residual mutations, source year unchanged, target year row absent.");
+        }
+        finally
+        {
+            await CleanupJobQueueAndStagingAsync(jobQueueId);
+        }
     }
 
     private void AssertBaselineIsClean(TelemetrySnapshot baseline)
@@ -279,19 +311,30 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
     /// or the source year. Only used by the full-success scenario, which has no transaction left to
     /// roll back.
     /// </summary>
+    /// <remarks>
+    /// Deletes in descending <see cref="YearEndTableRuleMatrixEntry.CopyOrder"/> — the exact reverse of
+    /// <see cref="YearEndTableRuleAction.CopyToTargetYear"/>'s own insertion order (lower CopyOrder =
+    /// referenced/parent, higher = referencing/child, per the matrix's own doc comment) — so a
+    /// higher-CopyOrder table's FK to a lower-CopyOrder table is always satisfied. Entries without a
+    /// CopyOrder (<c>tblperiod</c>, <c>tblsettings</c>, <c>tlkpmonthhours</c>) sort last, since nothing
+    /// in the matrix FKs to them and they must still precede the separate <c>tblyearmaster</c> delete
+    /// below (both <c>tblsettings</c> and <c>tlkpmonthhours</c> FK to it). Confirmed live 2026-09-03:
+    /// the previous raw-declaration-order loop hit <c>fk_workgroup_costcentre_11</c> (workgroup,
+    /// CopyOrder 1, FKs to costcentre, CopyOrder 0, declared earlier in the matrix) on its very first
+    /// delete and aborted, leaving a fully-committed 153,636-row target year completely uncleaned.
+    /// </remarks>
     private async Task CleanupTargetYearAsync()
     {
         await using var dbContext = CreateDbContext();
         await dbContext.Database.OpenConnectionAsync();
         var connection = dbContext.Database.GetDbConnection();
 
-        foreach (var entry in YearEndTableRuleMatrix.Entries)
-        {
-            if (entry.Role == YearEndTableRole.GlobalReference || entry.Role == YearEndTableRole.YearScopedConfigurationDependency)
-            {
-                continue;
-            }
+        var deletionOrder = YearEndTableRuleMatrix.Entries
+            .Where(e => e.Role != YearEndTableRole.GlobalReference)
+            .OrderByDescending(e => e.CopyOrder ?? int.MinValue);
 
+        foreach (var entry in deletionOrder)
+        {
             if (!await TableExistsAsync(connection, entry.Schema, entry.TableName))
             {
                 continue;
@@ -320,6 +363,113 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
         return await context.Database
             .SqlQuery<int>($@"SELECT COUNT(*)::int AS ""Value"" FROM fps.tblyearmaster WHERE fpsyear = {_targetFpsYear}")
             .SingleAsync() > 0;
+    }
+
+    /// <summary>
+    /// Seeds a real <c>fps.job_queue</c> row (job type <c>YearEnd-DataSetup</c>) plus one
+    /// <c>yearend_settings_staging</c> row and one <c>yearend_monthhours_staging</c> row, so
+    /// <c>MaterializeYearEndConfigurationStep</c>'s <c>JobExecutionId</c> resolution and staging reads
+    /// have something real to find. Inserted via a separate connection, outside the pipeline's own
+    /// transaction — it never rolls back with the business-data mutations and must be cleaned up
+    /// explicitly by <see cref="CleanupJobQueueAndStagingAsync"/> regardless of how the scenario ends.
+    /// </summary>
+    private async Task SeedJobQueueAndStagingAsync(Guid jobExecutionId, Guid jobQueueId, int targetFpsYear)
+    {
+        await using var dbContext = CreateDbContext();
+        await dbContext.Database.OpenConnectionAsync();
+        var connection = dbContext.Database.GetDbConnection();
+
+        int jobId;
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT jobid FROM fps.job_master WHERE jobname = @jobname;";
+            AddParameter(command, "jobname", BatchJobNames.YearEndDataSetup);
+            jobId = (int)(await command.ExecuteScalarAsync())!;
+        }
+
+        int statusId;
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT statusid FROM fps.job_status WHERE jobid = @jobid AND status = 'Approved';";
+            AddParameter(command, "jobid", jobId);
+            statusId = (int)(await command.ExecuteScalarAsync())!;
+        }
+
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = @"
+                INSERT INTO fps.job_queue
+                    (jobqueueid, jobexecutionid, jobid, statusid, requestedby, requested_at_utc, startdatetime, fpsyear, target_fpsyear)
+                VALUES
+                    (@jobqueueid, @jobexecutionid, @jobid, @statusid, @requestedby, NOW(), NOW(), @fpsyear, @target_fpsyear);";
+            AddParameter(command, "jobqueueid", jobQueueId);
+            AddParameter(command, "jobexecutionid", jobExecutionId);
+            AddParameter(command, "jobid", jobId);
+            AddParameter(command, "statusid", statusId);
+            AddParameter(command, "requestedby", "rollback-validation-test");
+            AddParameter(command, "fpsyear", _sourceFpsYear);
+            AddParameter(command, "target_fpsyear", targetFpsYear);
+            await command.ExecuteNonQueryAsync();
+        }
+
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = @"
+                INSERT INTO fps.yearend_settings_staging (jobqueueid, id, setting, notes)
+                VALUES (@jobqueueid, @id, @setting, @notes);";
+            AddParameter(command, "jobqueueid", jobQueueId);
+            AddParameter(command, "id", "rollback-validation-setting");
+            AddParameter(command, "setting", "1");
+            AddParameter(command, "notes", "Seeded by YearEndDataSetupRollbackValidationTests.");
+            await command.ExecuteNonQueryAsync();
+        }
+
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = @"
+                INSERT INTO fps.yearend_monthhours_staging (jobqueueid, month_year, month, fmonth, days, cvlhours, vidhours)
+                VALUES (@jobqueueid, @month_year, @month, @fmonth, @days, @cvlhours, @vidhours);";
+            AddParameter(command, "jobqueueid", jobQueueId);
+            AddParameter(command, "month_year", (short)targetFpsYear);
+            AddParameter(command, "month", (short)1);
+            AddParameter(command, "fmonth", (short)1);
+            AddParameter(command, "days", 1.0m);
+            AddParameter(command, "cvlhours", 1.0m);
+            AddParameter(command, "vidhours", 1.0m);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    /// <summary>
+    /// Deletes the row(s) seeded by <see cref="SeedJobQueueAndStagingAsync"/>, staging first for the FK
+    /// to <c>job_queue</c>.
+    /// </summary>
+    private async Task CleanupJobQueueAndStagingAsync(Guid jobQueueId)
+    {
+        await using var dbContext = CreateDbContext();
+        await dbContext.Database.OpenConnectionAsync();
+        var connection = dbContext.Database.GetDbConnection();
+
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "DELETE FROM fps.yearend_settings_staging WHERE jobqueueid = @jobqueueid;";
+            AddParameter(command, "jobqueueid", jobQueueId);
+            await command.ExecuteNonQueryAsync();
+        }
+
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "DELETE FROM fps.yearend_monthhours_staging WHERE jobqueueid = @jobqueueid;";
+            AddParameter(command, "jobqueueid", jobQueueId);
+            await command.ExecuteNonQueryAsync();
+        }
+
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "DELETE FROM fps.job_queue WHERE jobqueueid = @jobqueueid;";
+            AddParameter(command, "jobqueueid", jobQueueId);
+            await command.ExecuteNonQueryAsync();
+        }
     }
 
     private async Task<TelemetrySnapshot> CaptureTelemetryAsync(string phase)
@@ -427,7 +577,7 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Resolves the real 11-step pipeline via the actual production DI registration
+    /// Resolves the real 12-step pipeline via the actual production DI registration
     /// (<see cref="BatchPersistenceServiceExtensions.AddBatchPersistence"/> +
     /// <see cref="YearEndServiceExtensions.AddYearEndJob"/>) rather than a hand-copied list, so this
     /// harness cannot silently drift out of sync with the real registration if it ever changes.

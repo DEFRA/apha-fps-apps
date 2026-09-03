@@ -293,6 +293,7 @@ public sealed class ServiceCollectionSetupTests
                 "ValidateYearEndContextStep",
                 "ValidateYearScopedSchemaStep",
                 "CreatePlannedYearStep",
+                "MaterializeYearEndConfigurationStep",
                 "CopyFpsYearScopedTablesStep",
                 "ConditionalMabArchiveYearSetupStep",
                 "PeriodSetupStep",

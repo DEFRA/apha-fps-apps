@@ -33,6 +33,7 @@ public sealed class YearEndTableRuleMatrixTests
         ("tlkpjobcode", "tlkpproject"),
         ("tlkpproject", "tblcontract"),
         ("tlkpproject", "tlkpprogram"),
+        ("tlkpproject", "tlkpprojectgroup"),
         ("tlkptestcapability", "testorproduct"),
         ("tlkptestcapability", "tlkpproject"),
         ("tlkptestcapability", "workgroup"),
@@ -49,8 +50,8 @@ public sealed class YearEndTableRuleMatrixTests
         var entries = YearEndTableRuleMatrix.Entries;
 
         Assert.Equal(65, entries.Count);
-        Assert.Equal(38, entries.Count(e => e.Role == YearEndTableRole.YearScopedBusinessParticipant));
-        Assert.Equal(3, entries.Count(e => e.Role == YearEndTableRole.YearScopedConfigurationDependency));
+        Assert.Equal(39, entries.Count(e => e.Role == YearEndTableRole.YearScopedBusinessParticipant));
+        Assert.Equal(2, entries.Count(e => e.Role == YearEndTableRole.YearScopedConfigurationDependency));
         Assert.Equal(3, entries.Count(e => e.Role == YearEndTableRole.GlobalReference));
         Assert.Equal(21, entries.Count(e => e.Role == YearEndTableRole.YearScopedTargetMustBeEmpty));
     }
@@ -117,19 +118,21 @@ public sealed class YearEndTableRuleMatrixTests
             .Where(e => e.Role is YearEndTableRole.GlobalReference or YearEndTableRole.YearScopedConfigurationDependency)
             .ToList();
 
-        Assert.Equal(6, entries.Count);
+        Assert.Equal(5, entries.Count);
         Assert.All(entries, e => Assert.Equal(YearEndTableRuleAction.ValidateExists, e.Action));
         Assert.All(entries, e => Assert.Null(e.CopyOrder));
     }
 
     [Fact]
-    public void TlkpProjectGroup_ShouldBeAYearScopedConfigurationDependency()
+    public void TlkpProjectGroup_ShouldBeAYearScopedBusinessParticipant()
     {
         var entry = YearEndTableRuleMatrix.Entries.Single(e => e.TableName == "tlkpprojectgroup");
 
-        Assert.Equal(YearEndTableRole.YearScopedConfigurationDependency, entry.Role);
-        Assert.Equal(YearEndTableRuleAction.ValidateExists, entry.Action);
+        Assert.Equal(YearEndTableRole.YearScopedBusinessParticipant, entry.Role);
+        Assert.Equal(YearEndTableRuleAction.CopyToTargetYear, entry.Action);
         Assert.Equal(["projectgroup", "fpsyear"], entry.PrimaryKeyColumns);
+        Assert.Equal(0, entry.CopyOrder);
+        Assert.Equal(YearEndFinalRowCountRule.MatchSource, entry.FinalRowCountRule);
     }
 
     [Fact]
@@ -172,13 +175,13 @@ public sealed class YearEndTableRuleMatrixTests
     }
 
     [Fact]
-    public void CopyToTargetYearEntries_ShouldNumberThirtySevenAndAllHaveCopyOrder()
+    public void CopyToTargetYearEntries_ShouldNumberThirtyEightAndAllHaveCopyOrder()
     {
         var copyEntries = YearEndTableRuleMatrix.Entries
             .Where(e => e.Action == YearEndTableRuleAction.CopyToTargetYear)
             .ToList();
 
-        Assert.Equal(37, copyEntries.Count);
+        Assert.Equal(38, copyEntries.Count);
         Assert.All(copyEntries, e => Assert.NotNull(e.CopyOrder));
     }
 

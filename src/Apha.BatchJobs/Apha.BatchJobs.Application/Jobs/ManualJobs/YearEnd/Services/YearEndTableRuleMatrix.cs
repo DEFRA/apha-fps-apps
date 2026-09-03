@@ -128,8 +128,8 @@ public sealed record YearEndTableRuleMatrixEntry(
 /// validation and business-data steps use. No step should keep its own second, independent list.
 /// </summary>
 /// <remarks>
-/// 65 entries total: 38 business participants + 21 must-stay-empty tables (the 59 that Year End
-/// actually copies, resets, or checks are empty) plus 6 read-only reference/config tables.
+/// 65 entries total: 39 business participants + 21 must-stay-empty tables (the 60 that Year End
+/// actually copies, resets, or checks are empty) plus 5 read-only reference/config tables.
 /// </remarks>
 public static class YearEndTableRuleMatrix
 {
@@ -137,7 +137,7 @@ public static class YearEndTableRuleMatrix
 
     public static IReadOnlyList<YearEndTableRuleMatrixEntry> Entries { get; } =
     [
-        // 38 year-scoped business participants (Table 23). CopyOrder = FK-dependency layer (0-5).
+        // 39 year-scoped business participants (Table 23). CopyOrder = FK-dependency layer (0-5).
         // FinalRowCountRule is MatchSource except tblstaffjob (AtMostSource — InactiveEmployeeCleanupStep
         // may remove rows after copy).
         new(Schema, "costcentre", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["costcentre", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
@@ -196,6 +196,10 @@ public static class YearEndTableRuleMatrix
         new(Schema, "tlkpjobcode", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["jobcode", "fpsyear"], CopyOrder: 2, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
         new(Schema, "tlkpmanager", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["manager", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
         new(Schema, "tlkpprogram", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["programno", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
+        new(Schema, "tlkpprojectgroup", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["projectgroup", "fpsyear"],
+            CopyOrder: 0,
+            FinalRowCountRule: YearEndFinalRowCountRule.MatchSource,
+            Notes: "tlkpproject.projectgroup FKs here, hence CopyOrder 0 (before tlkpproject's CopyOrder 1). Year End now owns and copies this year-scoped dependency directly instead of relying on external provisioning."),
         new(Schema, "tlkpproject", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["parentproject", "fpsyear"],
             CopyOrder: 1,
             ResetPhase: YearEndResetPhase.ProjectFinancialReset,
@@ -225,11 +229,9 @@ public static class YearEndTableRuleMatrix
         new(Schema, "workgroupgrade", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["wggrade", "fpsyear"], CopyOrder: 3, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
         new(Schema, "workgroupmonth", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["workgroup", "month", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
 
-        // 3 year-scoped configuration dependencies — not Table 23, but still partitioned by fpsyear.
+        // 2 year-scoped configuration dependencies — not Table 23, but still partitioned by fpsyear.
         new(Schema, "tblsettings", YearEndTableRole.YearScopedConfigurationDependency, YearEndTableRuleAction.ValidateExists, ["id", "fpsyear"]),
         new(Schema, "tlkpmonthhours", YearEndTableRole.YearScopedConfigurationDependency, YearEndTableRuleAction.ValidateExists, ["year", "month", "fpsyear"]),
-        new(Schema, "tlkpprojectgroup", YearEndTableRole.YearScopedConfigurationDependency, YearEndTableRuleAction.ValidateExists, ["projectgroup", "fpsyear"],
-            Notes: "tlkpproject.projectgroup FKs here, but it's not a Table 23 entry — nothing in this codebase writes to it. Externally provisioned; Year End only validates existence, never copies it."),
 
         // 3 global/reference participants — not year-scoped, no target-year row concept.
         new(Schema, "tblusers", YearEndTableRole.GlobalReference, YearEndTableRuleAction.ValidateExists, []),

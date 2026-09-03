@@ -17,6 +17,7 @@ public static class YearEndServiceExtensions
         services.AddScoped<IYearEndDataSetupStep, ValidateYearEndContextStep>();
         services.AddScoped<IYearEndDataSetupStep, ValidateYearScopedSchemaStep>();
         services.AddScoped<IYearEndDataSetupStep, CreatePlannedYearStep>();
+        services.AddScoped<IYearEndDataSetupStep, MaterializeYearEndConfigurationStep>();
         services.AddScoped<IYearEndDataSetupStep, CopyFpsYearScopedTablesStep>();
         services.AddScoped<IYearEndDataSetupStep, ConditionalMabArchiveYearSetupStep>();
         services.AddScoped<IYearEndDataSetupStep, PeriodSetupStep>();

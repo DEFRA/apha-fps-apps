@@ -97,4 +97,26 @@ public interface IYearEndDataSetupRepository
     /// destination for a target year with no dedicated partition yet, at the cost of partition pruning.
     /// </summary>
     Task<bool> IsDefaultPartitionAttachedAsync(string schema, string table, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resolves the <c>fps.job_queue</c> row for a <c>YearEnd-DataSetup</c> request by its
+    /// <c>jobexecutionid</c>, scoped to that job type via a join to <c>fps.job_master</c> so a
+    /// <c>JobExecutionId</c> belonging to some other job never resolves as if it were a valid Data
+    /// Setup request. Returns null if no matching row exists.
+    /// </summary>
+    Task<(Guid JobQueueId, int? TargetFpsYear)?> ResolveJobQueueByExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Materializes the Approve-frozen <c>fps.yearend_settings_staging</c> rows for
+    /// <paramref name="jobQueueId"/> into <c>fps.tblsettings</c> for <paramref name="targetFpsYear"/>.
+    /// Returns the number of rows inserted.
+    /// </summary>
+    Task<int> MaterializeStagedSettingsAsync(Guid jobQueueId, int targetFpsYear, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Materializes the Approve-frozen <c>fps.yearend_monthhours_staging</c> rows for
+    /// <paramref name="jobQueueId"/> into <c>fps.tlkpmonthhours</c> for <paramref name="targetFpsYear"/>
+    /// — <c>month_year</c> becomes <c>tlkpmonthhours.year</c>. Returns the number of rows inserted.
+    /// </summary>
+    Task<int> MaterializeStagedMonthHoursAsync(Guid jobQueueId, int targetFpsYear, CancellationToken cancellationToken = default);
 }

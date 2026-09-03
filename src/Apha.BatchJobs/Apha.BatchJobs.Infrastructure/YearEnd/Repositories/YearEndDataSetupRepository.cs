@@ -1,3 +1,4 @@
+using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -528,6 +529,64 @@ public sealed class YearEndDataSetupRepository : IYearEndDataSetupRepository
         AddParameter(command, "table", table);
 
         return await ExecuteBooleanAsync(command, cancellationToken);
+    }
+
+    public async Task<(Guid JobQueueId, int? TargetFpsYear)?> ResolveJobQueueByExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
+    {
+        var connection = await GetOpenConnectionAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT jq.jobqueueid, jq.target_fpsyear
+            FROM fps.job_queue jq
+            JOIN fps.job_master jm ON jm.jobid = jq.jobid
+            WHERE jq.jobexecutionid = @jobexecutionid
+              AND jm.jobname = @jobname;";
+        AddParameter(command, "jobexecutionid", jobExecutionId);
+        AddParameter(command, "jobname", BatchJobNames.YearEndDataSetup);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        var jobQueueId = reader.GetGuid(0);
+        var targetFpsYear = reader.IsDBNull(1) ? (int?)null : reader.GetInt32(1);
+        return (jobQueueId, targetFpsYear);
+    }
+
+    public async Task<int> MaterializeStagedSettingsAsync(Guid jobQueueId, int targetFpsYear, CancellationToken cancellationToken = default)
+    {
+        var connection = await GetOpenConnectionAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            INSERT INTO fps.tblsettings (id, setting, notes, fpsyear, updated_by, updated_at)
+            SELECT id, setting, notes, @target_fpsyear, @updated_by, NOW()
+            FROM fps.yearend_settings_staging
+            WHERE jobqueueid = @jobqueueid;";
+        AddParameter(command, "jobqueueid", jobQueueId);
+        AddParameter(command, "target_fpsyear", targetFpsYear);
+        AddParameter(command, "updated_by", BatchCreatedBy);
+
+        return await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task<int> MaterializeStagedMonthHoursAsync(Guid jobQueueId, int targetFpsYear, CancellationToken cancellationToken = default)
+    {
+        var connection = await GetOpenConnectionAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            INSERT INTO fps.tlkpmonthhours (year, month, fmonth, days, cvlhours, vidhours, fpsyear)
+            SELECT month_year, month, fmonth, days, cvlhours, vidhours, @target_fpsyear
+            FROM fps.yearend_monthhours_staging
+            WHERE jobqueueid = @jobqueueid;";
+        AddParameter(command, "jobqueueid", jobQueueId);
+        AddParameter(command, "target_fpsyear", targetFpsYear);
+
+        return await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static async Task<bool> ExecuteBooleanAsync(DbCommand command, CancellationToken cancellationToken)
