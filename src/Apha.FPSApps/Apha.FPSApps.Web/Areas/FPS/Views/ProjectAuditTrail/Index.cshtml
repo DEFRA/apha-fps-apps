@@ -30,19 +30,51 @@
                     <div class="trl-filter-row spc-filter-row-near">
 
                         <!-- Project filter -->
-                        <div class="govuk-grid-column-one-third govuk-form-group sup_margin_bottom_10">
+                        <div class="govuk-grid-column-one-third govuk-form-group sup_margin_bottom_10 isSelectDropdown" id="filter-project-dropdown" style="position:relative;">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
-                                   for="filter-project"
+                                   for="filter-project-input"
                                    id="filter-project-label">Project</label>
-                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
-                                    id="filter-project"
-                                    name="filterProject"
-                                    asp-for="ParentProject"
-                                    asp-items="Model.ProjectList"
-                                    aria-describedby="filter-project-error"
-                                    aria-label="Select project">
-                                <option value="">-- Select a project --</option>
-                            </select>
+                            <input type="hidden"
+                                   id="filter-project"
+                                   name="filterProject"
+                                   asp-for="ParentProject" />
+                            <input type="text"
+                                   id="filter-project-input"
+                                   value=""
+                                   class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                                   readonly
+                                   aria-describedby="filter-project-error"
+                                   aria-label="Select project"
+                                   placeholder="-- Select a project --" />
+                            <div class="multicolumn-dropdown-panel" id="filter-project-panel" style="display:none; width:100%; min-width:100%;">
+                                <div class="search-box-wrapper">
+                                    <input type="text"
+                                           class="search-box"
+                                           id="filter-project-search"
+                                           placeholder="Type to search project"
+                                           aria-label="Type to search project" />
+                                </div>
+                                <table class="govuk-table govuk-!-margin-bottom-0">
+                                    <thead class="govuk-table__head">
+                                        <tr class="govuk-table__row">
+                                            <th scope="col" class="govuk-table__header">Project</th>
+                                            <th scope="col" class="govuk-table__header">Program</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="govuk-table__body" id="filter-project-body">
+                                        @foreach (var project in Model.ProjectList)
+                                        {
+                                            if (!string.IsNullOrWhiteSpace(project.Value))
+                                            {
+                                                <tr class="govuk-table__row" data-value="@project.Value" data-label="@(!string.IsNullOrWhiteSpace(project.Text) ? $"{project.Value} - {project.Text}" : project.Value)" tabindex="0">
+                                                    <td class="govuk-table__cell">@project.Value</td>
+                                                    <td class="govuk-table__cell">@project.Text</td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
                             <p class="govuk-error-message govuk-!-font-size-16 govuk-!-margin-top-1 govuk-!-margin-bottom-0"
                                id="filter-project-error"
                                role="alert"
@@ -53,13 +85,13 @@
 
                         <!-- Date of change fieldset -->
                         <fieldset class="govuk-fieldset sup_margin_bottom_10 border-legend">
-                            <legend class="govuk-fieldset__legend govuk-!-font-weight-bold govuk-!-font-size-16">
-                                Date of change
-                            </legend>
+                           @*  <legend class="govuk-fieldset__legend govuk-!-font-weight-bold govuk-!-font-size-16">
+                                Date of change From
+                            </legend> *@
                             <div class="sup_flex_gap_10">
                                 <div class="govuk-form-group govuk-!-margin-bottom-0">
                                     <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
-                                           for="filter-from">From</label>
+                                           for="filter-from">Date of change From</label>
                                     <input class="govuk-input width-200 govuk-!-font-size-16"
                                            id="filter-from"
                                            name="filterFrom"
@@ -323,29 +355,105 @@
         function applyProjectAuditTrailFilters() {
             var projectVal = document.getElementById('filter-project')?.value || '';
             var errorEl    = document.getElementById('filter-project-error');
-            var selectEl   = document.getElementById('filter-project');
+            var inputEl    = document.getElementById('filter-project-input');
 
             if (!projectVal) {
                 if (errorEl)  { errorEl.style.display = ''; }
-                if (selectEl) { selectEl.classList.add('govuk-select--error'); selectEl.focus(); }
+                if (inputEl) { inputEl.classList.add('govuk-input--error'); inputEl.focus(); }
                 return;
             }
 
             if (errorEl)  { errorEl.style.display = 'none'; }
-            if (selectEl) { selectEl.classList.remove('govuk-select--error'); }
+            if (inputEl) { inputEl.classList.remove('govuk-input--error'); }
             reloadAllAuditGrids();
         }
 
         // ── Reset filters (Clear button) ──────────────────────────────────────────────
         function resetProjectAuditTrailFilters() {
             document.getElementById('filter-project').value = '';
+            document.getElementById('filter-project-input').value = '';
             document.getElementById('filter-from').value   = '';
             document.getElementById('filter-to').value     = '';
             var errorEl  = document.getElementById('filter-project-error');
-            var selectEl = document.getElementById('filter-project');
+            var inputEl = document.getElementById('filter-project-input');
             if (errorEl)  { errorEl.style.display = 'none'; }
-            if (selectEl) { selectEl.classList.remove('govuk-select--error'); }
+            if (inputEl) { inputEl.classList.remove('govuk-input--error'); }
             reloadAllAuditGrids();
+        }
+
+        function wireProjectMultiDropdown() {
+            var wrapper = document.getElementById('filter-project-dropdown');
+            var panel = document.getElementById('filter-project-panel');
+            var input = document.getElementById('filter-project-input');
+            var hidden = document.getElementById('filter-project');
+            var search = document.getElementById('filter-project-search');
+            var errorEl = document.getElementById('filter-project-error');
+
+            if (!wrapper || !panel || !input || !hidden || !search) { return; }
+
+            function selectProject(value, label) {
+                hidden.value = value || '';
+                input.value = label || '';
+                panel.style.display = 'none';
+                if (errorEl) { errorEl.style.display = 'none'; }
+                input.classList.remove('govuk-input--error');
+            }
+
+            function filterRows(term) {
+                var rows = panel.querySelectorAll('#filter-project-body tr');
+                rows.forEach(function (row) {
+                    var label = (row.getAttribute('data-label') || '').toLowerCase();
+                    var value = (row.getAttribute('data-value') || '').toLowerCase();
+                    row.style.display = (!term || label.includes(term) || value.includes(term)) ? '' : 'none';
+                });
+            }
+
+            if (hidden.value) {
+                var selectedRow = null;
+                panel.querySelectorAll('#filter-project-body tr').forEach(function (row) {
+                    if (!selectedRow && row.getAttribute('data-value') === hidden.value) {
+                        selectedRow = row;
+                    }
+                });
+                input.value = selectedRow ? (selectedRow.getAttribute('data-label') || '') : hidden.value;
+            }
+
+            input.addEventListener('click', function (event) {
+                event.stopPropagation();
+                panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+                if (panel.style.display === 'block') {
+                    search.value = '';
+                    filterRows('');
+                    search.focus();
+                }
+            });
+
+            search.addEventListener('click', function (event) {
+                event.stopPropagation();
+            });
+
+            search.addEventListener('input', function () {
+                filterRows((this.value || '').toLowerCase());
+            });
+
+            panel.querySelectorAll('#filter-project-body tr').forEach(function (row) {
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', function () {
+                    selectProject(this.getAttribute('data-value'), this.getAttribute('data-label'));
+                });
+                row.addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        selectProject(this.getAttribute('data-value'), this.getAttribute('data-label'));
+                    }
+                });
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!wrapper.contains(event.target)) {
+                    panel.style.display = 'none';
+                }
+            });
         }
 
         // ── DOMContentLoaded: wire tabs + buttons ─────────────────────────────────────
@@ -377,6 +485,8 @@
             if (btnApply) { btnApply.addEventListener('click', applyProjectAuditTrailFilters); }
             var btnReset = document.getElementById('btnResetProjectAuditFilters');
             if (btnReset) { btnReset.addEventListener('click', resetProjectAuditTrailFilters); }
+
+            wireProjectMultiDropdown();
 
             // Activate first tab on load
             var firstTab = document.querySelector('.govuk-tabs__tab');

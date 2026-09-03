@@ -42,15 +42,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal CustIncome { get; set; }
 
         [Display(Name = "WIP_EOY")]
-        [GridColumn(Width = 120, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 120, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? WipEoy { get; set; }
 
         [Display(Name = "WIP_Limit")]
-        [GridColumn(Width = 120, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 120, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? WipLimit { get; set; }
 
         [Display(Name = "WIP_Current")]
-        [GridColumn(Width = 130, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 130, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? WipCurrent { get; set; }
 
         [Display(Name = "ProjectStatus")]
@@ -66,15 +66,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public DateTime? DateCreated { get; set; }
 
         [Display(Name = "FECost")]
-        [GridColumn(Width = 100, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? FecCost { get; set; }
 
         [Display(Name = "Profit")]
-        [GridColumn(Width = 100, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? Profit { get; set; }
 
         [Display(Name = "Budget_CVL")]
-        [GridColumn(Width = 140, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 140, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? BudgetCvl { get; set; }
 
         [Display(Name = "DateCosted")]
@@ -106,7 +106,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal? PvsIncome { get; set; }
 
         [Display(Name = "PlanCaseworkDebit")]
-        [GridColumn(Width = 180, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 180, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? PlanCaseWorkDebit { get; set; }
 
         [Display(Name = "Finished")]
@@ -122,11 +122,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? Comments { get; set; }
 
         [Display(Name = "CarryOver")]
-        [GridColumn(Width = 120, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 120, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? CarryOver { get; set; }
 
         [Display(Name = "CarryOverSeed")]
-        [GridColumn(Width = 140, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 140, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? CarryOverSeed { get; set; }
 
         [Display(Name = "Date_Time")]
