@@ -5866,3 +5866,8 @@ input.govuk-input.ssr-total-input[readonly] {
 .govuk-checkboxes--small .govuk-checkboxes__item {
     padding-bottom: 0 !important;
 }
+.modal-dialog .govuk-label,
+.pva-inline-summary span, 
+.govuk-label {
+    font-weight: bold !important;
+}
