@@ -389,6 +389,7 @@
 
         var modalBody = document.getElementById('modaPopupBody');
         var previouslyFocused = null;
+        var isOpen = false;
 
         function getFocusableElements() {
             var scope = modalBody || modal;
@@ -399,12 +400,54 @@
             });
         }
 
+        // Keep focus trapped inside the modal while it's open. Buttons like
+        // Save/Cancel/Close often trigger an AJAX call or DOM update that can
+        // remove/disable/hide themselves once clicked; when that happens the
+        // browser drops focus back to <body> (i.e. "the background") instead
+        // of somewhere inside the still-open modal. Whenever focus lands
+        // outside the modal while it's open, pull it back in immediately -
+        // unless the modal is in the middle of closing (isOpen is set false
+        // just before we restore focus to the trigger that opened it).
+        document.addEventListener('focusin', function (e) {
+            if (!isOpen) return;
+            if (modal.contains(e.target)) return;
+
+            var focusable = getFocusableElements();
+            if (focusable.length) {
+                focusable[0].focus();
+            } else {
+                modal.focus();
+            }
+        });
+
+        // Belt-and-braces Tab trap: even if a control is removed from the DOM
+        // between keydown and focusin (so the browser has nowhere obvious to
+        // send focus), Tab/Shift+Tab still cycle only within the modal.
+        modal.addEventListener('keydown', function (e) {
+            if (e.key !== 'Tab') return;
+            var focusable = getFocusableElements();
+            if (!focusable.length) return;
+
+            var first = focusable[0];
+            var last = focusable[focusable.length - 1];
+            var active = document.activeElement;
+
+            if (e.shiftKey && (active === first || !modal.contains(active))) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && (active === last || !modal.contains(active))) {
+                e.preventDefault();
+                first.focus();
+            }
+        });
+
         var observer = new MutationObserver(function () {
             if (modal.classList.contains('show')) {
                 modal.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
 
                 previouslyFocused = document.activeElement;
+                isOpen = true;
 
                 setTimeout(function () {
                     var focusable = getFocusableElements();
@@ -415,6 +458,7 @@
                     }
                 }, 0);
             } else {
+                isOpen = false;
                 modal.style.display = 'none';
                 document.body.style.overflow = '';
 
