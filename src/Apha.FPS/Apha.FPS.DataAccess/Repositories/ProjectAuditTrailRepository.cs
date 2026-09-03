@@ -58,9 +58,7 @@ namespace Apha.FPS.DataAccess.Repositories
             DateTime? toDate)
         {
             var q = from log in _dbContext.StaffJobLogs.AsNoTracking()
-                    join jc in _dbContext.JobCodes.AsNoTracking()
-                        on log.JobCode equals jc.JobCodeId
-                    where jc.ParentProject == parentProject
+                    where log.JobCode == parentProject
                     select log;
 
             if (fromDate.HasValue)
@@ -119,9 +117,7 @@ namespace Apha.FPS.DataAccess.Repositories
             DateTime? toDate)
         {
             var q = from log in _dbContext.TestRequirementLogs.AsNoTracking()
-                    join jc in _dbContext.JobCodes.AsNoTracking()
-                        on log.JobCode equals jc.JobCodeId
-                    where jc.ParentProject == parentProject
+                        where log.JobCode == parentProject
                     select log;
 
             if (fromDate.HasValue)
@@ -153,9 +149,7 @@ namespace Apha.FPS.DataAccess.Repositories
             DateTime? toDate)
         {
             var q = from log in _dbContext.AnimalRequestLogs.AsNoTracking()
-                    join jc in _dbContext.JobCodes.AsNoTracking()
-                        on log.JobCode equals jc.JobCodeId
-                    where jc.ParentProject == parentProject
+                    where log.JobCode == parentProject
                     select log;
 
             if (fromDate.HasValue)
@@ -187,9 +181,7 @@ namespace Apha.FPS.DataAccess.Repositories
             DateTime? toDate)
         {
             var q = from log in _dbContext.AdditionalCostLogs.AsNoTracking()
-                    join jc in _dbContext.JobCodes.AsNoTracking()
-                        on log.JobCode equals jc.JobCodeId
-                    where jc.ParentProject == parentProject
+                    where log.JobCode == parentProject
                     select log;
 
             if (fromDate.HasValue)

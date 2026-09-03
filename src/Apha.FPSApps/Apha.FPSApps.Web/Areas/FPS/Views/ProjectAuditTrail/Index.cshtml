@@ -299,6 +299,30 @@
                 activeLink.setAttribute('tabindex', '0');
                 activeLink.parentElement.classList.add('govuk-tabs__list-item--selected');
             }
+
+            reloadGridForAuditTab(targetId);
+        }
+
+        function reloadGridForAuditTab(targetId) {
+            var gridIdByPanel = {
+                'panel-project-detail-changes': 'projectAuditTrailGrid',
+                'panel-staff-plan-changes': 'staffPlanChangesGrid',
+                'panel-test-requirement-changes': 'testRequirementChangesGrid',
+                'panel-animal-requirement-changes': 'animalRequirementChangesGrid',
+                'panel-exceptional-cost-changes': 'exceptionalCostChangesGrid'
+            };
+
+            var gridId = gridIdByPanel[targetId];
+            if (!gridId) { return; }
+
+            var gm = window['gridManager_' + gridId];
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+        }
+
+        function reloadActiveAuditGrid() {
+            var activePanel = document.querySelector('.govuk-tabs__panel.active');
+            if (!activePanel || !activePanel.id) { return; }
+            reloadGridForAuditTab(activePanel.id);
         }
 
         // ── Extra filter methods — called by each _DataGrid on every AJAX reload ────────
@@ -341,14 +365,7 @@
 
         // ── Grid reload helpers — reloadGrid({ page: 1 }) per _DataGrid contract ────────
         function reloadAllAuditGrids() {
-            ['projectAuditTrailGrid',
-             'staffPlanChangesGrid',
-             'testRequirementChangesGrid',
-             'animalRequirementChangesGrid',
-             'exceptionalCostChangesGrid'].forEach(function (gridId) {
-                var gm = window['gridManager_' + gridId];
-                if (gm) { gm.reloadGrid({ page: 1 }); }
-            });
+            reloadActiveAuditGrid();
         }
 
         // ── Apply filters (Search button) ─────────────────────────────────────────────
@@ -365,7 +382,7 @@
 
             if (errorEl)  { errorEl.style.display = 'none'; }
             if (inputEl) { inputEl.classList.remove('govuk-input--error'); }
-            reloadAllAuditGrids();
+            reloadActiveAuditGrid();
         }
 
         // ── Reset filters (Clear button) ──────────────────────────────────────────────
@@ -378,7 +395,7 @@
             var inputEl = document.getElementById('filter-project-input');
             if (errorEl)  { errorEl.style.display = 'none'; }
             if (inputEl) { inputEl.classList.remove('govuk-input--error'); }
-            reloadAllAuditGrids();
+            reloadActiveAuditGrid();
         }
 
         function wireProjectMultiDropdown() {
