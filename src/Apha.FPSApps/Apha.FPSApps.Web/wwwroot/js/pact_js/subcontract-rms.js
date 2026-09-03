@@ -289,10 +289,18 @@ function deleteFailedSubContractRms(btn) {
 }
 
 function saveFailedSubContractRms() {
-    clearValidationErrors('#modaPopupBody');
     const form = $('#formEditFailedSubContractRms');
 
-    // Check basic form validity (required fields)
+    initializeFormValidation('#formEditFailedSubContractRms');
+    clearValidationErrors('#modaPopupBody');
+
+    // Run unobtrusive validation rules first (regex/range/custom)
+    if (typeof form.valid === 'function' && !form.valid()) {
+        displayClientValidationErrors(form, '#modaPopupBody');
+        return;
+    }
+
+    // Fallback required-fields check
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;

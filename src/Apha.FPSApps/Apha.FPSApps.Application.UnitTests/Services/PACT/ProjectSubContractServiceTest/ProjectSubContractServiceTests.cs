@@ -1304,6 +1304,245 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
                 Arg.Any<Stream>(), "test-bucket", $"FPS{currentYear}/SubContractRms", Arg.Any<string>(), Arg.Any<string>());
         }
 
+        [Fact]
+        public async Task GetFailedSubContractRmsAsync_WhenReadOnlyYear_ReturnsEmptySuccessWithoutCallingApi()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await _service.GetFailedSubContractRmsAsync(query, isReadOnlyYear: true);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Empty(result.Data);
+            await _pactProjectSubContractApiClient.DidNotReceive().GetFailedSubContractRmsAsync(Arg.Any<QueryParameters<string>>());
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_WhenMapRowHasValidId_MapsIdAndAllFieldsInRequest()
+        {
+            // Arrange
+            using var workbookStream = CreateWorkbookStreamWithHeaders();
+            var file = Substitute.For<IFormFile>();
+            file.OpenReadStream().Returns(workbookStream);
+            file.FileName.Returns("subcontract-id.xlsx");
+            file.ContentType.Returns("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            _excelImportService.NormalizeHeader(Arg.Any<string>())
+                .Returns(ci => ci.Arg<string>().Trim().ToLowerInvariant());
+            _excelImportService.GetText(Arg.Any<IXLCell>())
+                .Returns(ci => ci.Arg<IXLCell>().GetString());
+
+            _excelImportService.ReadExcel(
+                Arg.Any<IXLWorkbook>(),
+                Arg.Any<Func<IXLRangeRow, Dictionary<string, int>, SubContractRmsImportRowDto>>(),
+                Arg.Any<IEnumerable<string>>(),
+                1)
+            .Returns(ci =>
+            {
+                var mapper = ci.ArgAt<Func<IXLRangeRow, Dictionary<string, int>, SubContractRmsImportRowDto>>(1);
+                using var wb = new XLWorkbook();
+                var ws = wb.Worksheets.Add("Sheet1");
+                ws.Cell(2, 1).Value = "11";
+                ws.Cell(2, 2).Value = "P10";
+                ws.Cell(2, 3).Value = "TJ1";
+                ws.Cell(2, 4).Value = "5";
+                ws.Cell(2, 5).Value = "100";
+                ws.Cell(2, 6).Value = "ANM01";
+                ws.Cell(2, 7).Value = "SUPP";
+                ws.Cell(2, 8).Value = "Desc";
+                ws.Cell(2, 9).Value = "5001";
+                ws.Cell(2, 10).Value = "55.2";
+                ws.Cell(2, 11).Value = "7";
+
+                var headerMap = new Dictionary<string, int>
+                {
+                    ["id"] = 1,
+                    ["project"] = 2,
+                    ["test job"] = 3,
+                    ["month"] = 4,
+                    ["amount"] = 5,
+                    ["account code"] = 6,
+                    ["supplier"] = 7,
+                    ["description"] = 8,
+                    ["supplier number"] = 9,
+                    ["daily rate"] = 10,
+                    ["animal days"] = 11
+                };
+
+                var mappedRow = mapper(ws.Range(2, 1, 2, 11).Row(1), headerMap);
+                return new ExcelImportResult<SubContractRmsImportRowDto> { IsSuccess = true, Rows = [mappedRow] };
+            });
+
+            _pactProjectSubContractApiClient.ImportSubContractRmsAsync(Arg.Any<SubContractRmsImportReqDto>())
+                .Returns(ApiResponseDto<SubContractRmsImportResultDto>.SuccessResponse(new SubContractRmsImportResultDto { PassedCount = 1, FailedCount = 0 }));
+            _configuration["S3Storage:BucketName"].Returns("test-bucket");
+            _s3StorageService.UploadFileAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(S3UploadResult.SuccessResponse("key"));
+
+            // Act
+            var result = await _service.ImportSubContractRmsAsync(file);
+
+            // Assert
+            Assert.True(result.Success);
+            await _pactProjectSubContractApiClient.Received(1).ImportSubContractRmsAsync(
+                Arg.Is<SubContractRmsImportReqDto>(r =>
+                    r.Rows.Count == 1 &&
+                    r.Rows[0].Id == 11 &&
+                    r.Rows[0].Project == "P10" &&
+                    r.Rows[0].TestJob == "TJ1" &&
+                    r.Rows[0].Month == "5" &&
+                    r.Rows[0].Amount == "100" &&
+                    r.Rows[0].AcctCode == "ANM01" &&
+                    r.Rows[0].Supplier == "SUPP" &&
+                    r.Rows[0].Description == "Desc" &&
+                    r.Rows[0].SupplierNumber == "5001" &&
+                    r.Rows[0].DailyRate == "55.2" &&
+                    r.Rows[0].AnimalDays == "7"));
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_WhenMapRowIdIsNotNumeric_DefaultsIdToZero()
+        {
+            // Arrange
+            using var workbookStream = CreateWorkbookStreamWithHeaders();
+            var file = Substitute.For<IFormFile>();
+            file.OpenReadStream().Returns(workbookStream);
+            file.FileName.Returns("subcontract-invalid-id.xlsx");
+            file.ContentType.Returns("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            _excelImportService.NormalizeHeader(Arg.Any<string>())
+                .Returns(ci => ci.Arg<string>().Trim().ToLowerInvariant());
+            _excelImportService.GetText(Arg.Any<IXLCell>())
+                .Returns(ci => ci.Arg<IXLCell>().GetString());
+
+            _excelImportService.ReadExcel(
+                Arg.Any<IXLWorkbook>(),
+                Arg.Any<Func<IXLRangeRow, Dictionary<string, int>, SubContractRmsImportRowDto>>(),
+                Arg.Any<IEnumerable<string>>(),
+                1)
+            .Returns(ci =>
+            {
+                var mapper = ci.ArgAt<Func<IXLRangeRow, Dictionary<string, int>, SubContractRmsImportRowDto>>(1);
+                using var wb = new XLWorkbook();
+                var ws = wb.Worksheets.Add("Sheet1");
+                ws.Cell(2, 1).Value = "abc";
+                ws.Cell(2, 2).Value = "P10";
+                ws.Cell(2, 3).Value = "TJ1";
+                ws.Cell(2, 4).Value = "5";
+                ws.Cell(2, 5).Value = "100";
+                ws.Cell(2, 6).Value = "ANM01";
+                ws.Cell(2, 7).Value = "SUPP";
+                ws.Cell(2, 8).Value = "Desc";
+                ws.Cell(2, 9).Value = "5001";
+                ws.Cell(2, 10).Value = "55.2";
+                ws.Cell(2, 11).Value = "7";
+
+                var headerMap = new Dictionary<string, int>
+                {
+                    ["id"] = 1,
+                    ["project"] = 2,
+                    ["test job"] = 3,
+                    ["month"] = 4,
+                    ["amount"] = 5,
+                    ["account code"] = 6,
+                    ["supplier"] = 7,
+                    ["description"] = 8,
+                    ["supplier number"] = 9,
+                    ["daily rate"] = 10,
+                    ["animal days"] = 11
+                };
+
+                var mappedRow = mapper(ws.Range(2, 1, 2, 11).Row(1), headerMap);
+                return new ExcelImportResult<SubContractRmsImportRowDto> { IsSuccess = true, Rows = [mappedRow] };
+            });
+
+            _pactProjectSubContractApiClient.ImportSubContractRmsAsync(Arg.Any<SubContractRmsImportReqDto>())
+                .Returns(ApiResponseDto<SubContractRmsImportResultDto>.SuccessResponse(new SubContractRmsImportResultDto { PassedCount = 1, FailedCount = 0 }));
+            _configuration["S3Storage:BucketName"].Returns("test-bucket");
+            _s3StorageService.UploadFileAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(S3UploadResult.SuccessResponse("key"));
+
+            // Act
+            var result = await _service.ImportSubContractRmsAsync(file);
+
+            // Assert
+            Assert.True(result.Success);
+            await _pactProjectSubContractApiClient.Received(1).ImportSubContractRmsAsync(
+                Arg.Is<SubContractRmsImportReqDto>(r => r.Rows.Count == 1 && r.Rows[0].Id == 0));
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_WhenMapRowHeaderDoesNotContainId_DefaultsIdToZero()
+        {
+            // Arrange
+            using var workbookStream = CreateWorkbookStreamWithHeaders();
+            var file = Substitute.For<IFormFile>();
+            file.OpenReadStream().Returns(workbookStream);
+            file.FileName.Returns("subcontract-no-id-header.xlsx");
+            file.ContentType.Returns("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            _excelImportService.NormalizeHeader(Arg.Any<string>())
+                .Returns(ci => ci.Arg<string>().Trim().ToLowerInvariant());
+            _excelImportService.GetText(Arg.Any<IXLCell>())
+                .Returns(ci => ci.Arg<IXLCell>().GetString());
+
+            _excelImportService.ReadExcel(
+                Arg.Any<IXLWorkbook>(),
+                Arg.Any<Func<IXLRangeRow, Dictionary<string, int>, SubContractRmsImportRowDto>>(),
+                Arg.Any<IEnumerable<string>>(),
+                1)
+            .Returns(ci =>
+            {
+                var mapper = ci.ArgAt<Func<IXLRangeRow, Dictionary<string, int>, SubContractRmsImportRowDto>>(1);
+                using var wb = new XLWorkbook();
+                var ws = wb.Worksheets.Add("Sheet1");
+                ws.Cell(2, 1).Value = "P10";
+                ws.Cell(2, 2).Value = "TJ1";
+                ws.Cell(2, 3).Value = "5";
+                ws.Cell(2, 4).Value = "100";
+                ws.Cell(2, 5).Value = "ANM01";
+                ws.Cell(2, 6).Value = "SUPP";
+                ws.Cell(2, 7).Value = "Desc";
+                ws.Cell(2, 8).Value = "5001";
+                ws.Cell(2, 9).Value = "55.2";
+                ws.Cell(2, 10).Value = "7";
+
+                var headerMap = new Dictionary<string, int>
+                {
+                    ["project"] = 1,
+                    ["test job"] = 2,
+                    ["month"] = 3,
+                    ["amount"] = 4,
+                    ["account code"] = 5,
+                    ["supplier"] = 6,
+                    ["description"] = 7,
+                    ["supplier number"] = 8,
+                    ["daily rate"] = 9,
+                    ["animal days"] = 10
+                };
+
+                var mappedRow = mapper(ws.Range(2, 1, 2, 10).Row(1), headerMap);
+                return new ExcelImportResult<SubContractRmsImportRowDto> { IsSuccess = true, Rows = [mappedRow] };
+            });
+
+            _pactProjectSubContractApiClient.ImportSubContractRmsAsync(Arg.Any<SubContractRmsImportReqDto>())
+                .Returns(ApiResponseDto<SubContractRmsImportResultDto>.SuccessResponse(new SubContractRmsImportResultDto { PassedCount = 1, FailedCount = 0 }));
+            _configuration["S3Storage:BucketName"].Returns("test-bucket");
+            _s3StorageService.UploadFileAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(S3UploadResult.SuccessResponse("key"));
+
+            // Act
+            var result = await _service.ImportSubContractRmsAsync(file);
+
+            // Assert
+            Assert.True(result.Success);
+            await _pactProjectSubContractApiClient.Received(1).ImportSubContractRmsAsync(
+                Arg.Is<SubContractRmsImportReqDto>(r => r.Rows.Count == 1 && r.Rows[0].Id == 0));
+        }
+
         #endregion
 
         #region Additional Failure Response Tests

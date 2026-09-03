@@ -19,7 +19,7 @@
 
         @if (!string.IsNullOrWhiteSpace(Model.ValidationFailure))
         {
-            <div class="govuk-warning-text" style="font-size: 14px;">
+            <div class="govuk-warning-text" style="font-size: 14px; display:none;" >
                 <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
                 <div class="govuk-warning-text__text">
                     <strong style="display: block; margin-bottom: 4px;">
@@ -131,7 +131,7 @@
 </div>
 <div class="modal-footer"
      style="display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
-    <button class="govuk-button govuk-button--secondary sup_margin_0" aria-label="Cancel"
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" aria-label="Cancel"
             onclick="$('#modalPopup').removeClass('show')">Cancel</button>
-    <button class="govuk-button sup_margin_0" aria-label="Save" onclick="saveFailedSubContractRms()">Save</button>
+    <button type="button" class="govuk-button sup_margin_0" aria-label="Save" onclick="saveFailedSubContractRms()">Save</button>
 </div>

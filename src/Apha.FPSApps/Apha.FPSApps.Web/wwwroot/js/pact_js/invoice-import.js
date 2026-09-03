@@ -142,9 +142,18 @@ function deleteFailedInvoiceImport(btn) {
 }
 
 function saveFailedInvoice() {
-    clearValidationErrors('#modaPopupBody');
     const form = $('#formEditFailedInvoice');
 
+    initializeFormValidation('#formEditFailedInvoice');
+    clearValidationErrors('#modaPopupBody');
+
+    // Run unobtrusive validation rules first (regex/range/custom)
+    if (typeof form.valid === 'function' && !form.valid()) {
+        displayClientValidationErrors(form, '#modaPopupBody');
+        return;
+    }
+
+    // Fallback required-fields check
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;

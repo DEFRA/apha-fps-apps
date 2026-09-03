@@ -1099,6 +1099,213 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
                 Arg.Any<Stream>(), "test-bucket", $"FPS{currentYear}/InvoiceImport", Arg.Any<string>(), Arg.Any<string>());
         }
 
+        [Fact]
+        public async Task ImportInvoiceAsync_WhenMapRowHasValidId_MapsIdAndAllFieldsInRequest()
+        {
+            // Arrange
+            var file = CreateMockFormFile("invoice-with-id.xlsx");
+
+            _excelImportService.NormalizeHeader(Arg.Any<string>())
+                .Returns(ci => ci.Arg<string>().Trim().ToLowerInvariant());
+            _excelImportService.GetText(Arg.Any<IXLCell>())
+                .Returns(ci => ci.Arg<IXLCell>().GetString());
+
+            _excelImportService.ReadExcel(
+                Arg.Any<IXLWorkbook>(),
+                Arg.Any<Func<IXLRangeRow, Dictionary<string, int>, InvoiceImportRowDto>>(),
+                Arg.Any<IEnumerable<string>>(),
+                Arg.Any<int>(),
+                Arg.Any<string?>())
+                .Returns(ci =>
+                {
+                    var mapper = ci.ArgAt<Func<IXLRangeRow, Dictionary<string, int>, InvoiceImportRowDto>>(1);
+
+                    using var wb = new XLWorkbook();
+                    var ws = wb.Worksheets.Add("Sheet1");
+                    ws.Cell(2, 1).Value = "42";
+                    ws.Cell(2, 2).Value = "PP777";
+                    ws.Cell(2, 3).Value = "3";
+                    ws.Cell(2, 4).Value = "1000";
+                    ws.Cell(2, 5).Value = "600";
+                    ws.Cell(2, 6).Value = "400";
+                    ws.Cell(2, 7).Value = "400";
+                    ws.Cell(2, 8).Value = "detail-text";
+                    ws.Cell(2, 9).Value = "Estimate";
+
+                    var headerMap = new Dictionary<string, int>
+                    {
+                        ["id"] = 1,
+                        ["project parent"] = 2,
+                        ["month"] = 3,
+                        ["amount"] = 4,
+                        ["cost of work"] = 5,
+                        ["wip"] = 6,
+                        ["profit loss"] = 7,
+                        ["detail"] = 8,
+                        ["type"] = 9
+                    };
+
+                    var mappedRow = mapper(ws.Range(2, 1, 2, 9).Rows().First(), headerMap);
+                    return new ExcelImportResult<InvoiceImportRowDto>
+                    {
+                        IsSuccess = true,
+                        Rows = [mappedRow]
+                    };
+                });
+
+            var importResponse = ApiResponseDto<InvoiceImportResultDto>.SuccessResponse(new InvoiceImportResultDto { PassedCount = 1, FailedCount = 0 });
+            _pactProjectInvoiceApiClient.ImportInvoiceAsync(Arg.Any<InvoiceImportReqDto>()).Returns(importResponse);
+            _configuration["S3Storage:BucketName"].Returns("test-bucket");
+            _s3StorageService.UploadFileAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(S3UploadResult.SuccessResponse("key"));
+
+            // Act
+            var result = await _service.ImportInvoiceAsync(file);
+
+            // Assert
+            Assert.True(result.Success);
+            await _pactProjectInvoiceApiClient.Received(1).ImportInvoiceAsync(
+                Arg.Is<InvoiceImportReqDto>(r =>
+                    r.Rows.Count == 1 &&
+                    r.Rows[0].Id == 42 &&
+                    r.Rows[0].ProjectParent == "PP777" &&
+                    r.Rows[0].Month == "3" &&
+                    r.Rows[0].Amount == "1000" &&
+                    r.Rows[0].CostOfWork == "600" &&
+                    r.Rows[0].Wip == "400" &&
+                    r.Rows[0].ProfitLoss == "400" &&
+                    r.Rows[0].Detail == "detail-text" &&
+                    r.Rows[0].Type == "Estimate"));
+        }
+
+        [Fact]
+        public async Task ImportInvoiceAsync_WhenMapRowIdIsNotNumeric_DefaultsIdToZero()
+        {
+            // Arrange
+            var file = CreateMockFormFile("invoice-invalid-id.xlsx");
+
+            _excelImportService.NormalizeHeader(Arg.Any<string>())
+                .Returns(ci => ci.Arg<string>().Trim().ToLowerInvariant());
+            _excelImportService.GetText(Arg.Any<IXLCell>())
+                .Returns(ci => ci.Arg<IXLCell>().GetString());
+
+            _excelImportService.ReadExcel(
+                Arg.Any<IXLWorkbook>(),
+                Arg.Any<Func<IXLRangeRow, Dictionary<string, int>, InvoiceImportRowDto>>(),
+                Arg.Any<IEnumerable<string>>(),
+                Arg.Any<int>(),
+                Arg.Any<string?>())
+                .Returns(ci =>
+                {
+                    var mapper = ci.ArgAt<Func<IXLRangeRow, Dictionary<string, int>, InvoiceImportRowDto>>(1);
+
+                    using var wb = new XLWorkbook();
+                    var ws = wb.Worksheets.Add("Sheet1");
+                    ws.Cell(2, 1).Value = "not-an-int";
+                    ws.Cell(2, 2).Value = "PP001";
+                    ws.Cell(2, 3).Value = "1";
+                    ws.Cell(2, 4).Value = "100";
+                    ws.Cell(2, 5).Value = "50";
+                    ws.Cell(2, 6).Value = "50";
+                    ws.Cell(2, 7).Value = "50";
+                    ws.Cell(2, 8).Value = "detail";
+                    ws.Cell(2, 9).Value = "TypeA";
+
+                    var headerMap = new Dictionary<string, int>
+                    {
+                        ["id"] = 1,
+                        ["project parent"] = 2,
+                        ["month"] = 3,
+                        ["amount"] = 4,
+                        ["cost of work"] = 5,
+                        ["wip"] = 6,
+                        ["profit loss"] = 7,
+                        ["detail"] = 8,
+                        ["type"] = 9
+                    };
+
+                    var mappedRow = mapper(ws.Range(2, 1, 2, 9).Rows().First(), headerMap);
+                    return new ExcelImportResult<InvoiceImportRowDto> { IsSuccess = true, Rows = [mappedRow] };
+                });
+
+            var importResponse = ApiResponseDto<InvoiceImportResultDto>.SuccessResponse(new InvoiceImportResultDto { PassedCount = 1, FailedCount = 0 });
+            _pactProjectInvoiceApiClient.ImportInvoiceAsync(Arg.Any<InvoiceImportReqDto>()).Returns(importResponse);
+            _configuration["S3Storage:BucketName"].Returns("test-bucket");
+            _s3StorageService.UploadFileAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(S3UploadResult.SuccessResponse("key"));
+
+            // Act
+            var result = await _service.ImportInvoiceAsync(file);
+
+            // Assert
+            Assert.True(result.Success);
+            await _pactProjectInvoiceApiClient.Received(1).ImportInvoiceAsync(
+                Arg.Is<InvoiceImportReqDto>(r => r.Rows.Count == 1 && r.Rows[0].Id == 0));
+        }
+
+        [Fact]
+        public async Task ImportInvoiceAsync_WhenMapRowHeaderDoesNotContainId_DefaultsIdToZero()
+        {
+            // Arrange
+            var file = CreateMockFormFile("invoice-no-id-header.xlsx");
+
+            _excelImportService.NormalizeHeader(Arg.Any<string>())
+                .Returns(ci => ci.Arg<string>().Trim().ToLowerInvariant());
+            _excelImportService.GetText(Arg.Any<IXLCell>())
+                .Returns(ci => ci.Arg<IXLCell>().GetString());
+
+            _excelImportService.ReadExcel(
+                Arg.Any<IXLWorkbook>(),
+                Arg.Any<Func<IXLRangeRow, Dictionary<string, int>, InvoiceImportRowDto>>(),
+                Arg.Any<IEnumerable<string>>(),
+                Arg.Any<int>(),
+                Arg.Any<string?>())
+                .Returns(ci =>
+                {
+                    var mapper = ci.ArgAt<Func<IXLRangeRow, Dictionary<string, int>, InvoiceImportRowDto>>(1);
+
+                    using var wb = new XLWorkbook();
+                    var ws = wb.Worksheets.Add("Sheet1");
+                    ws.Cell(2, 1).Value = "PP001";
+                    ws.Cell(2, 2).Value = "1";
+                    ws.Cell(2, 3).Value = "100";
+                    ws.Cell(2, 4).Value = "50";
+                    ws.Cell(2, 5).Value = "50";
+                    ws.Cell(2, 6).Value = "50";
+                    ws.Cell(2, 7).Value = "detail";
+                    ws.Cell(2, 8).Value = "TypeA";
+
+                    var headerMap = new Dictionary<string, int>
+                    {
+                        ["project parent"] = 1,
+                        ["month"] = 2,
+                        ["amount"] = 3,
+                        ["cost of work"] = 4,
+                        ["wip"] = 5,
+                        ["profit loss"] = 6,
+                        ["detail"] = 7,
+                        ["type"] = 8
+                    };
+
+                    var mappedRow = mapper(ws.Range(2, 1, 2, 8).Rows().First(), headerMap);
+                    return new ExcelImportResult<InvoiceImportRowDto> { IsSuccess = true, Rows = [mappedRow] };
+                });
+
+            var importResponse = ApiResponseDto<InvoiceImportResultDto>.SuccessResponse(new InvoiceImportResultDto { PassedCount = 1, FailedCount = 0 });
+            _pactProjectInvoiceApiClient.ImportInvoiceAsync(Arg.Any<InvoiceImportReqDto>()).Returns(importResponse);
+            _configuration["S3Storage:BucketName"].Returns("test-bucket");
+            _s3StorageService.UploadFileAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(S3UploadResult.SuccessResponse("key"));
+
+            // Act
+            var result = await _service.ImportInvoiceAsync(file);
+
+            // Assert
+            Assert.True(result.Success);
+            await _pactProjectInvoiceApiClient.Received(1).ImportInvoiceAsync(
+                Arg.Is<InvoiceImportReqDto>(r => r.Rows.Count == 1 && r.Rows[0].Id == 0));
+        }
+
         #endregion
     }
 }

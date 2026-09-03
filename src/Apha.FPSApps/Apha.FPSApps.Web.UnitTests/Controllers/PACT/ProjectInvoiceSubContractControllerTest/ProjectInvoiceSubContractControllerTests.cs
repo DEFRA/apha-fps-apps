@@ -10,6 +10,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using NSubstitute;
 using System.Text.Json;
@@ -124,6 +125,60 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectInvoiceSubContractC
             Assert.Equal(string.Empty, model.ParentProject);
         }
 
+        [Fact]
+        public async Task Index_WhenOriginalParentProjectAlreadyInTempData_UsesStoredValueAndFromPortfolioTrue()
+        {
+            // Arrange
+            _invoiceService.GetPagedProjectInvoicesAsync(Arg.Any<QueryParameters<string>>(), "PRJ001")
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
+            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), "PRJ001")
+                .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
+            _invoiceService.GetTotalAmountAsync("PRJ001")
+                .Returns(ApiResponseDto<decimal>.SuccessResponse(10m));
+            _subContractService.GetTotalAmountAsync("PRJ001")
+                .Returns(ApiResponseDto<decimal>.SuccessResponse(20m));
+            SetupInvoicesGridMapper();
+            SetupSubContractsGridMapper();
+
+            _controller.TempData["OriginalParentProject"] = "ORIG-PRJ";
+            _controller.TempData["NavigationSource"] = "SomePage";
+            _controller.TempData["PactOrigin"] = "PortfolioMaintenance";
+
+            // Act
+            var result = await _controller.Index("PRJ001");
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectInvoiceSubContractViewModel>(viewResult.Model);
+            Assert.Equal("ORIG-PRJ", model.OriginalParentProject);
+            Assert.True(model.FromPortfolio);
+        }
+
+        [Fact]
+        public async Task Index_WhenFirstVisit_StoresOriginalParentProjectFromNullAsEmpty()
+        {
+            // Arrange
+            _invoiceService.GetPagedProjectInvoicesAsync(Arg.Any<QueryParameters<string>>(), null)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
+            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
+                .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
+            _invoiceService.GetTotalAmountAsync(null)
+                .Returns(ApiResponseDto<decimal>.SuccessResponse(0m));
+            _subContractService.GetTotalAmountAsync(null)
+                .Returns(ApiResponseDto<decimal>.SuccessResponse(0m));
+            SetupInvoicesGridMapper();
+            SetupSubContractsGridMapper();
+
+            // Act
+            var result = await _controller.Index(null);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectInvoiceSubContractViewModel>(viewResult.Model);
+            Assert.Equal(string.Empty, model.OriginalParentProject);
+            Assert.False(model.FromPortfolio);
+        }
+
         #endregion
 
         #region GetInvoiceTotalAmount
@@ -203,6 +258,37 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectInvoiceSubContractC
         }
 
         [Fact]
+        public async Task LoadInvoicesGrid_WithNullDataAndPaginationAndParentProject_UsesMappedDefaultsAndEscapedBindUrl()
+        {
+            // Arrange
+            var request = new PaginationFilter<string>
+            {
+                Filter = null,
+                SortBy = "Month",
+                Descending = true
+            };
+            var parentProject = "PRJ 001/A";
+
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _invoiceService.GetPagedProjectInvoicesAsync(Arg.Any<QueryParameters<string>>(), parentProject)
+                .Returns(new ApiResponseDto<List<ProjectInvoiceDto>> { Success = true, Data = null, Pagination = null });
+
+            // Act
+            var result = await _controller.LoadInvoicesGrid(request, parentProject);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<DataGridConfig<ProjectInvoiceItem>>(partial.Model);
+            Assert.Empty(model.Data);
+            Assert.Equal("Month", model.Pagination.SortColumn);
+            Assert.True(model.Pagination.SortDirection);
+            Assert.Contains("parentProject=PRJ%20001%2FA", model.BindGridUrl);
+            Assert.NotNull(model.CurrentFilters);
+            Assert.Empty(model.CurrentFilters);
+        }
+
+        [Fact]
         public async Task LoadInvoicesGrid_InvalidModelState_ReturnsBadRequest()
         {
             // Arrange
@@ -238,6 +324,36 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectInvoiceSubContractC
         }
 
         [Fact]
+        public async Task LoadSubContractsGrid_WithNullDataAndPaginationAndNoParentProject_UsesDefaults()
+        {
+            // Arrange
+            var request = new PaginationFilter<string>
+            {
+                Filter = null,
+                SortBy = "Project",
+                Descending = false
+            };
+
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
+                .Returns(new ApiResponseDto<List<ProjectSubContractDto>> { Success = true, Data = null, Pagination = null });
+
+            // Act
+            var result = await _controller.LoadSubContractsGrid(request, null);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<DataGridConfig<ProjectSubContractItem>>(partial.Model);
+            Assert.Empty(model.Data);
+            Assert.Equal("Project", model.Pagination.SortColumn);
+            Assert.False(model.Pagination.SortDirection);
+            Assert.Equal("/PACT/ProjectInvoiceSubContract/LoadSubContractsGrid", model.BindGridUrl);
+            Assert.NotNull(model.CurrentFilters);
+            Assert.Empty(model.CurrentFilters);
+        }
+
+        [Fact]
         public async Task LoadSubContractsGrid_InvalidModelState_ReturnsBadRequest()
         {
             // Arrange
@@ -268,6 +384,59 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectInvoiceSubContractC
             Assert.Equal("_AddEditInvoice", partial.ViewName);
             var model = Assert.IsType<ProjectInvoiceItem>(partial.Model);
             Assert.Equal("PRJ001", model.ProjectParent);
+        }
+
+        [Fact]
+        public async Task GetInvoice_WhenProjectsApiFails_SetsEmptyProjectsViewBag()
+        {
+            // Arrange
+            _projectService.GetAllPactProjectsAsync()
+                .Returns(ApiResponseDto<List<ProjectDto>>.FailureResponse([new ApiErrorDto { Message = "fail" }], new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.GetInvoice(0, "PRJ001");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_AddEditInvoice", partial.ViewName);
+            Assert.NotNull(_controller.ViewBag.Projects);
+            var projects = Assert.IsAssignableFrom<List<SelectListItem>>(_controller.ViewBag.Projects);
+            Assert.Empty(projects);
+        }
+
+        [Fact]
+        public async Task GetInvoice_WhenProjectsApiSuccess_ProjectsAreSortedInViewBag()
+        {
+            // Arrange
+            _projectService.GetAllPactProjectsAsync().Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+            [
+                new ProjectDto { ParentProject = "Z2" },
+                new ProjectDto { ParentProject = "A1" }
+            ]));
+
+            // Act
+            var result = await _controller.GetInvoice(0, "PRJ001");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_AddEditInvoice", partial.ViewName);
+            var projects = Assert.IsAssignableFrom<List<SelectListItem>>(_controller.ViewBag.Projects);
+            Assert.Equal(2, projects.Count);
+            Assert.Equal("A1", projects[0].Value);
+            Assert.Equal("Z2", projects[1].Value);
+        }
+
+        [Fact]
+        public async Task GetInvoice_InvalidModelState_ReturnsBadRequest()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("Test", "invalid");
+
+            // Act
+            var result = await _controller.GetInvoice(0, "PRJ001");
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
         }
 
         [Fact]
@@ -403,6 +572,52 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectInvoiceSubContractC
             Assert.False(value.GetProperty("success").GetBoolean());
         }
 
+        [Fact]
+        public async Task SaveInvoice_InvalidModelState_StripsJsonPrefixAndSkipsDollarKeyErrors()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("$.Month", "Invalid month");
+            _controller.ModelState.AddModelError("$", "Top level error should be skipped");
+
+            // Act
+            var result = await _controller.SaveInvoice(new ProjectInvoiceItem());
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            var errors = value.GetProperty("errors").EnumerateArray().ToList();
+            Assert.Single(errors);
+            Assert.Equal("Month", errors[0].GetProperty("field").GetString());
+            Assert.Equal("Invalid month", errors[0].GetProperty("message").GetString());
+        }
+
+        [Fact]
+        public async Task SaveInvoice_ServiceFailsWithNullErrorFields_UsesDefaultsInJsonErrors()
+        {
+            // Arrange
+            var model = new ProjectInvoiceItem { InvoiceCounter = 0, ProjectParent = "PRJ001", Month = 1, Amount = 10m };
+            var dto = new ProjectInvoiceDto();
+            _mapper.Map<ProjectInvoiceDto>(model).Returns(dto);
+            _invoiceService.CreateAsync(dto)
+                .Returns(ApiResponseDto<ProjectInvoiceDto>.FailureResponse(
+                    [new ApiErrorDto { Code = null, Message = null }],
+                    new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.SaveInvoice(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("Failed to create project job code.", value.GetProperty("message").GetString());
+            var errors = value.GetProperty("errors").EnumerateArray().ToList();
+            Assert.Single(errors);
+            Assert.Equal(string.Empty, errors[0].GetProperty("field").GetString());
+            Assert.Equal("An unexpected error occurred.", errors[0].GetProperty("message").GetString());
+        }
+
         #endregion
 
         #region DeleteInvoice
@@ -440,6 +655,19 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectInvoiceSubContractC
             Assert.False(value.GetProperty("success").GetBoolean());
         }
 
+        [Fact]
+        public async Task DeleteInvoice_InvalidModelState_ReturnsBadRequest()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("Id", "invalid");
+
+            // Act
+            var result = await _controller.DeleteInvoice(1);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
         #endregion
 
         #region GetSubContract
@@ -458,6 +686,36 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectInvoiceSubContractC
             Assert.Equal("_AddEditSubContract", partial.ViewName);
             var model = Assert.IsType<ProjectSubContractItem>(partial.Model);
             Assert.Equal("PRJ001", model.Project);
+        }
+
+        [Fact]
+        public async Task GetSubContract_WhenProjectsApiSuccessWithNullData_SetsEmptyProjectsViewBag()
+        {
+            // Arrange
+            _projectService.GetAllPactProjectsAsync()
+                .Returns(new ApiResponseDto<List<ProjectDto>> { Success = true, Data = null });
+
+            // Act
+            var result = await _controller.GetSubContract(0, "PRJ001");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_AddEditSubContract", partial.ViewName);
+            var projects = Assert.IsAssignableFrom<List<SelectListItem>>(_controller.ViewBag.Projects);
+            Assert.Empty(projects);
+        }
+
+        [Fact]
+        public async Task GetSubContract_InvalidModelState_ReturnsBadRequest()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("Test", "invalid");
+
+            // Act
+            var result = await _controller.GetSubContract(0, "PRJ001");
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
         }
 
         [Fact]
@@ -593,6 +851,52 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectInvoiceSubContractC
             Assert.False(value.GetProperty("success").GetBoolean());
         }
 
+        [Fact]
+        public async Task SaveSubContract_InvalidModelState_StripsJsonPrefixAndSkipsDollarKeyErrors()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("$.Month", "Invalid month");
+            _controller.ModelState.AddModelError("$", "Top level error should be skipped");
+
+            // Act
+            var result = await _controller.SaveSubContract(new ProjectSubContractItem());
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            var errors = value.GetProperty("errors").EnumerateArray().ToList();
+            Assert.Single(errors);
+            Assert.Equal("Month", errors[0].GetProperty("field").GetString());
+            Assert.Equal("Invalid month", errors[0].GetProperty("message").GetString());
+        }
+
+        [Fact]
+        public async Task SaveSubContract_ServiceFailsWithNullErrorFields_UsesDefaultsInJsonErrors()
+        {
+            // Arrange
+            var model = new ProjectSubContractItem { SubContCounter = 0, Project = "PRJ001", Month = 1, Amount = 10m };
+            var dto = new ProjectSubContractDto();
+            _mapper.Map<ProjectSubContractDto>(model).Returns(dto);
+            _subContractService.CreateAsync(dto)
+                .Returns(ApiResponseDto<ProjectSubContractDto>.FailureResponse(
+                    [new ApiErrorDto { Code = null, Message = null }],
+                    new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.SaveSubContract(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("Failed to create project job code.", value.GetProperty("message").GetString());
+            var errors = value.GetProperty("errors").EnumerateArray().ToList();
+            Assert.Single(errors);
+            Assert.Equal(string.Empty, errors[0].GetProperty("field").GetString());
+            Assert.Equal("An unexpected error occurred.", errors[0].GetProperty("message").GetString());
+        }
+
         #endregion
 
         #region DeleteSubContract
@@ -628,6 +932,19 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectInvoiceSubContractC
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task DeleteSubContract_InvalidModelState_ReturnsBadRequest()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("Id", "invalid");
+
+            // Act
+            var result = await _controller.DeleteSubContract(2);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
         }
 
         #endregion
