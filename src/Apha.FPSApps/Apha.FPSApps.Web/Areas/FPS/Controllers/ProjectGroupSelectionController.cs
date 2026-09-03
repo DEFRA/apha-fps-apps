@@ -63,7 +63,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         /// <summary>
-        /// Returns a lightweight list of all project codes + project group for the Project lookup dropdown.
+        /// Returns a lightweight list of project codes + project group for the Project lookup dropdown.
+        /// Projects that are not assigned to a project group are excluded, matching the
+        /// behaviour of the legacy MS Access application.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetProjectLookup()
@@ -73,7 +75,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new List<object>());
 
             var data = response.Data
-                .Select(p => new { parentProject = p.ParentProject, projectGroup = p.ProjectGroup ?? string.Empty })
+                .Where(p => !string.IsNullOrWhiteSpace(p.ProjectGroup))
+                .Select(p => new { parentProject = p.ParentProject, projectGroup = p.ProjectGroup! })
                 .ToList();
 
             return Json(data);
