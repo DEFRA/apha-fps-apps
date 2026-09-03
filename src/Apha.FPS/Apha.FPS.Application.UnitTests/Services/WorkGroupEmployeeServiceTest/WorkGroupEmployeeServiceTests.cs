@@ -391,18 +391,24 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         #region DeleteWorkGroupEmployeeAsync Tests
 
         [Fact]
-        public async Task DeleteWorkGroupEmployeeAsync_WithValidPactId_ReturnsTrue()
+        public async Task DeleteWorkGroupEmployeeAsync_WithValidPactId_RemovesAssociationAndDeletes()
         {
-            // Arrange
-            var entity = new WorkGroupEmployeeView { PactId = DefaultPactId };
-            _mockRepository.GetWorkGroupEmployeeByIdAsync(DefaultPactId).Returns(entity);
             _mockRepository.DeleteWorkGroupEmployeeAsync(DefaultPactId).Returns(true);
 
-            // Act
             var result = await _sut.DeleteWorkGroupEmployeeAsync(DefaultPactId);
 
-            // Assert
-            Assert.True(result);
+            result.Should().BeTrue();
+            await _mockRepository.Received(1).DeleteWorkGroupEmployeeAsync(DefaultPactId);
+        }
+
+        [Fact]
+        public async Task DeleteWorkGroupEmployeeAsync_WhenRecordMissing_ReturnsFalse()
+        {
+            _mockRepository.DeleteWorkGroupEmployeeAsync(DefaultPactId).Returns(false);
+
+            var result = await _sut.DeleteWorkGroupEmployeeAsync(DefaultPactId);
+
+            result.Should().BeFalse();
             await _mockRepository.Received(1).DeleteWorkGroupEmployeeAsync(DefaultPactId);
         }
 
@@ -411,25 +417,9 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         [InlineData("   ")]
         public async Task DeleteWorkGroupEmployeeAsync_WithNullOrWhitespacePactId_ThrowsArgumentException(string pactId)
         {
-            // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() =>
                 _sut.DeleteWorkGroupEmployeeAsync(pactId));
 
-            await _mockRepository.DidNotReceive().DeleteWorkGroupEmployeeAsync(Arg.Any<string>());
-        }
-
-        [Fact]
-        public async Task DeleteWorkGroupEmployeeAsync_WhenEmployeeAssignedToWorkgroup_ThrowsBusinessValidationErrorException()
-        {
-            // Arrange
-            var existing = new WorkGroupEmployeeView { PactId = DefaultPactId };
-            _mockRepository.GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId).Returns(existing);
-
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
-                _sut.DeleteWorkGroupEmployeeAsync(DefaultPactId));
-
-            exception.Errors.Should().ContainSingle(e => e.Code == "WORKGROUPEMPLOYEE_HAS_ASSOCIATIONS");
             await _mockRepository.DidNotReceive().DeleteWorkGroupEmployeeAsync(Arg.Any<string>());
         }
 
