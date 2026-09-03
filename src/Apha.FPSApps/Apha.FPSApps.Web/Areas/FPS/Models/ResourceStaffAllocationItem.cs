@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -23,7 +24,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public double? HrsAvail { get; set; }
 
         [Display(Name = "Plan Hrs")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
+        [NonFinancialRange]
+        [GridColumn(Width = 90, Type = GridColumnType.DecimalNumber)]
         public double PlannedHours { get; set; }
 
         [Display(Name = "Allocation")]
@@ -31,7 +33,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public double? Allocation { get; set; }
 
         [Display(Name = "App Chrg Hrs")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
+        [NonFinancialRange]
+        [GridColumn(Width = 90, Type = GridColumnType.DecimalNumber)]
         public double AppChargeHours { get; set; }
 
         [Display(Name = "App Utilization")]
@@ -39,13 +42,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public double? AppUtilization { get; set; }
 
         [Display(Name = "Chrg Hrs")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
+        [NonFinancialRange]
+        [GridColumn(Width = 90, Type = GridColumnType.DecimalNumber)]
         public double ChargeHours { get; set; }
 
         [Display(Name = "Utilization")]
         [GridColumn(Width = 110, Type = GridColumnType.Percentage)]
         public double? Utilization { get; set; }
 
+        [NonFinancialRange]
         [GridColumn(IsVisible = false)]
         public double ZtHours { get; set; }
     }

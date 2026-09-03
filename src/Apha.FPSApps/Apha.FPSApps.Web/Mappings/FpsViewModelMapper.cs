@@ -31,7 +31,13 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();
             CreateMap<ProjectSpecificQueryDto, ProjectSpecificQueryItem>().ReverseMap();
-            CreateMap<ProjectDto, ProgramProjectEditViewModel>().ReverseMap();
+            // The "Cust Inc" field binds to ProgramProjectEditViewModel.BudgetExt, but the value
+            // persisted by the API is ProjectDto.CustIncome (ProjectDto.BudgetExt is read-only
+            // display state). Map both directions explicitly so edits are not silently dropped.
+            CreateMap<ProjectDto, ProgramProjectEditViewModel>()
+                .ForMember(d => d.BudgetExt, o => o.MapFrom(s => s.CustIncome))
+                .ReverseMap()
+                .ForMember(d => d.CustIncome, o => o.MapFrom(s => s.BudgetExt ?? 0m));
             CreateMap<ProjectDto, ProgramProjectItem>()
                 .ForMember(d => d.TransferIncome, o => o.MapFrom(s => s.TransferIncome))
                 .ReverseMap();

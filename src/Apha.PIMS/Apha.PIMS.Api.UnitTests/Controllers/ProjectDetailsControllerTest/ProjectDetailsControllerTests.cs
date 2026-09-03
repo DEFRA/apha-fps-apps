@@ -67,6 +67,25 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectDetailsControllerTest
         
 
         [Fact]
+        public async Task GetPimsDetail_WhenServiceReturnsNull_ReturnsJsonSuccessResponseWithNullData()
+        {
+            // Arrange
+            var parentproject = "PP001";
+            _service.GetPimsDetailAsync(parentproject).Returns((ProjectDetailDto?)null);
+
+            // Act
+            var result = await _controller.GetPimsDetail(parentproject);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var apiResponse = Assert.IsType<Apha.Common.Contracts.ApiResponse<ProjectDetailRes>>(jsonResult.Value);
+            Assert.True(apiResponse.Success);
+            Assert.Null(apiResponse.Data);
+            Assert.NotNull(apiResponse.Meta);
+            _mapper.DidNotReceive().Map<ProjectDetailRes>(Arg.Any<ProjectDetailDto>());
+        }
+
+        [Fact]
         public async Task GetPimsDetail_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
@@ -209,6 +228,25 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectDetailsControllerTest
             _mapper.Received(1).Map<ProposedProjectRes>(proposedDto);
         }
        
+
+        [Fact]
+        public async Task GetProposedProject_WhenServiceReturnsNull_ReturnsJsonSuccessResponseWithNullData()
+        {
+            // Arrange
+            var parentproject = "PP001";
+            _service.GetProposedProjectAsync(parentproject).Returns((ProposedProjectDto?)null);
+
+            // Act
+            var result = await _controller.GetProposedProject(parentproject);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var apiResponse = Assert.IsType<Apha.Common.Contracts.ApiResponse<ProposedProjectRes>>(jsonResult.Value);
+            Assert.True(apiResponse.Success);
+            Assert.Null(apiResponse.Data);
+            Assert.NotNull(apiResponse.Meta);
+            _mapper.DidNotReceive().Map<ProposedProjectRes>(Arg.Any<ProposedProjectDto>());
+        }
 
         [Fact]
         public async Task GetProposedProject_WhenServiceThrowsException_PropagatesException()
@@ -385,6 +423,25 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectDetailsControllerTest
 
             await _service.Received(1).GetFpsProjectByIdAsync(parentproject);
             _mapper.Received(1).Map<ProjectRes>(projectDto);
+        }
+
+        [Fact]
+        public async Task GetFpsProjectById_WhenServiceReturnsNull_ReturnsJsonSuccessResponseWithNullData()
+        {
+            // Arrange
+            var parentproject = "PP001";
+            _service.GetFpsProjectByIdAsync(parentproject).Returns((ProjectDto?)null);
+
+            // Act
+            var result = await _controller.GetFpsProjectById(parentproject);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var apiResponse = Assert.IsType<Apha.Common.Contracts.ApiResponse<ProjectRes>>(jsonResult.Value);
+            Assert.True(apiResponse.Success);
+            Assert.Null(apiResponse.Data);
+            Assert.NotNull(apiResponse.Meta);
+            _mapper.DidNotReceive().Map<ProjectRes>(Arg.Any<ProjectDto>());
         }
 
         [Fact]
