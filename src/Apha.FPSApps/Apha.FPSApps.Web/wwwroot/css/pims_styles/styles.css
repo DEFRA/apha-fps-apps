@@ -85,6 +85,55 @@
     }
 }
 
+/* Yearly Financial Data grid: hide the raw "Changed" flag columns from view */
+#gridContainer_costCenterListGrid th.grid-hidden-flag-column,
+#gridContainer_costCenterListGrid td.grid-hidden-flag-column {
+    display: none;
+}
+
+/* The shared _DataGrid.cshtml filter row doesn't apply the column's CssClass to its <th>,
+   so the flag columns' filter-row header cells aren't caught by the rule above.
+   Target them here by their column position instead (CSS-only fix, no changes made to
+   _DataGrid.cshtml). ShowCheckboxColumn is false for this grid, so column 1 = Year and
+   the six "Changed" flag columns are always columns 15-20. */
+#gridContainer_costCenterListGrid tr.filter-row th:nth-child(n+15):nth-child(-n+20) {
+    display: none;
+}
+
+/* Yearly Financial Data grid: word-wrap long text in the Adjustment Comment column */
+#gridContainer_costCenterListGrid td[data-property="AdjustmentComment"] {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+#gridContainer_costCenterListGrid td[data-property="AdjustmentComment"] span {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    display: inline-block;
+}
+
+/* Yearly Financial Data grid: colour cost cells based on their paired "Changed" flag
+   -1 = pink, 0 = green (values other than 0/-1 are left uncoloured) */
+#gridContainer_costCenterListGrid td[data-property="ManHours"].yfd-cell-changed-neg,
+#gridContainer_costCenterListGrid td[data-property="PayCosts"].yfd-cell-changed-neg,
+#gridContainer_costCenterListGrid td[data-property="NonPayOhCosts"].yfd-cell-changed-neg,
+#gridContainer_costCenterListGrid td[data-property="TestCosts"].yfd-cell-changed-neg,
+#gridContainer_costCenterListGrid td[data-property="AnimalCosts"].yfd-cell-changed-neg,
+#gridContainer_costCenterListGrid td[data-property="NonAnimalCosts"].yfd-cell-changed-neg {
+    background-color: #ffd6e8 !important;
+}
+
+#gridContainer_costCenterListGrid td[data-property="ManHours"].yfd-cell-changed-zero,
+#gridContainer_costCenterListGrid td[data-property="PayCosts"].yfd-cell-changed-zero,
+#gridContainer_costCenterListGrid td[data-property="NonPayOhCosts"].yfd-cell-changed-zero,
+#gridContainer_costCenterListGrid td[data-property="TestCosts"].yfd-cell-changed-zero,
+#gridContainer_costCenterListGrid td[data-property="AnimalCosts"].yfd-cell-changed-zero,
+#gridContainer_costCenterListGrid td[data-property="NonAnimalCosts"].yfd-cell-changed-zero {
+    background-color: #d4f5d4 !important;
+}
+
 /* Milestone grid: word-wrap long text in Description/P Leader's Comment/CAP's Comment columns */
 #gridContainer_pmdMilestonesGrid td[data-property="Description"],
 #gridContainer_pmdMilestonesGrid td[data-property="ProjectLeaderComment"],

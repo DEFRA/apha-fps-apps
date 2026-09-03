@@ -1100,5 +1100,55 @@
                 }
             });
         });
+
+        // ── Colour cost cells based on their paired "*Changed" flag ──────────────────────
+        // -1 → pink, 0 → green (any other value is left uncoloured)
+        // The "*Changed" flag columns are rendered in the grid DOM (hidden visually via the
+        // "grid-hidden-flag-column" CSS class) so their values can be read directly per row,
+        // without any extra server round-trip.
+        function applyYfdCostChangeColours() {
+            var container = document.getElementById('gridContainer_costCenterListGrid');
+            if (!container) return;
+
+            var propertyPairs = [
+                { valueProperty: 'ManHours', flagProperty: 'ManHoursChanged' },
+                { valueProperty: 'PayCosts', flagProperty: 'PayCostsChanged' },
+                { valueProperty: 'NonPayOhCosts', flagProperty: 'NonPayOhCostsChanged' },
+                { valueProperty: 'TestCosts', flagProperty: 'TestCostsChanged' },
+                { valueProperty: 'AnimalCosts', flagProperty: 'AnimalCostsChanged' },
+                { valueProperty: 'NonAnimalCosts', flagProperty: 'NonAnimalCostsChanged' }
+            ];
+
+            var rows = container.querySelectorAll('tbody tr[data-id]');
+            rows.forEach(function (row) {
+                propertyPairs.forEach(function (pair) {
+                    var valueCell = row.querySelector('td[data-property="' + pair.valueProperty + '"]');
+                    var flagCell = row.querySelector('td[data-property="' + pair.flagProperty + '"]');
+
+                    if (!valueCell) return;
+
+                    valueCell.classList.remove('yfd-cell-changed-neg', 'yfd-cell-changed-zero');
+
+                    if (!flagCell) return;
+
+                    var flagValue = parseInt((flagCell.textContent || '').trim(), 10);
+                    if (flagValue === -1) {
+                        valueCell.classList.add('yfd-cell-changed-neg');
+                    } else if (flagValue === 0) {
+                        valueCell.classList.add('yfd-cell-changed-zero');
+                    }
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(applyYfdCostChangeColours, 0);
+
+            document.addEventListener('gridReloaded', function (e) {
+                if (e && e.detail && e.detail.gridId === 'costCenterListGrid') {
+                    setTimeout(applyYfdCostChangeColours, 0);
+                }
+            });
+        });
     </script>
 }
