@@ -1,9 +1,11 @@
 using System.Linq.Expressions;
+using System.Dynamic;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
@@ -40,6 +42,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     (p.InsertDelete != null && p.InsertDelete.ToLower().Contains(search)) ||
                     (p.UserId != null && p.UserId.ToLower().Contains(search)));
             }
+            q = ApplyProjectLogFilter(q, query.Filter);
 
             q = ApplyProjectLogSorting(q, query.SortBy, query.Descending);
 
@@ -74,6 +77,7 @@ namespace Apha.FPS.DataAccess.Repositories
             }
 
             q = ApplyStaffJobLogSorting(q, query.SortBy, query.Descending);
+            q = ApplyStaffJobLogFilter(q, query.Filter);
 
             var result = await q.ToListAsync();
 
@@ -135,6 +139,7 @@ namespace Apha.FPS.DataAccess.Repositories
             }
 
             q = ApplyTestRequirementLogSorting(q, query.SortBy, query.Descending);
+            q = ApplyTestRequirementLogFilter(q, query.Filter);
 
             var result = await q.ToListAsync();
             return ApplyPaging(result, query.Page, query.PageSize);
@@ -168,6 +173,7 @@ namespace Apha.FPS.DataAccess.Repositories
             }
 
             q = ApplyAnimalRequestLogSorting(q, query.SortBy, query.Descending);
+            q = ApplyAnimalRequestLogFilter(q,  query.Filter);
 
             var result = await q.ToListAsync();
             return ApplyPaging(result, query.Page, query.PageSize);
@@ -202,6 +208,7 @@ namespace Apha.FPS.DataAccess.Repositories
             }
 
             q = ApplyAdditionalCostLogSorting(q, query.SortBy, query.Descending);
+            q = ApplyAdditionalCostLogFilter(q, query.Filter);
 
             var result = await q.ToListAsync();
 
@@ -347,5 +354,176 @@ namespace Apha.FPS.DataAccess.Repositories
             };
             return descending ? q.OrderByDescending(keySelector) : q.OrderBy(keySelector);
         }
+        
+        private static IQueryable<ProjectLog> ApplyProjectLogFilter(IQueryable<ProjectLog> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+            {
+                return query;
+            }
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+            {
+                return query;
+            }
+
+            var dict = new Dictionary<string, object>((IDictionary<string, object>)filterModel, StringComparer.OrdinalIgnoreCase);
+
+            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+                query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
+
+            if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
+                query = query.Where(x => EF.Functions.ILike(x.ProjectTitle!, $"%{projectTitle}%"));
+
+            if (dict.TryGetValue("Program", out var program) && program != null)
+                query = query.Where(x => EF.Functions.ILike(x.Program!, $"%{program}%"));
+
+            if (dict.TryGetValue("Customer", out var customer) && customer != null)
+                query = query.Where(x => EF.Functions.ILike(x.Customer!, $"%{customer}%"));
+
+            if (dict.TryGetValue("Manager", out var manager) && manager != null)
+                query = query.Where(x => EF.Functions.ILike(x.Manager!, $"%{manager}%"));
+
+            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && projectStatus != null)
+                query = query.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
+          
+            if (dict.TryGetValue("CostBookNo", out var costBookno) && costBookno != null)
+                query = query.Where(x => EF.Functions.ILike(x.CostBookNo!, $"%{costBookno}%"));
+
+            return query;
+        }
+
+        private static IQueryable<StaffJobLog> ApplyStaffJobLogFilter(IQueryable<StaffJobLog> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+            {
+                return query;
+            }
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+            {
+                return query;
+            }
+
+            var dict = new Dictionary<string, object>((IDictionary<string, object>)filterModel, StringComparer.OrdinalIgnoreCase);
+
+            if (dict.TryGetValue("StaffId", out var staffId) && staffId != null)
+                query = query.Where(x => EF.Functions.ILike(x.StaffId, $"%{staffId}%"));
+
+            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.JobCode!, $"%{jobCode}%"));
+
+            if (dict.TryGetValue("UserId", out var userId) && userId != null)
+                query = query.Where(x => EF.Functions.ILike(x.UserId!, $"%{userId}%"));
+
+            if (dict.TryGetValue("InsertDelete", out var insertDelete) && insertDelete != null)
+                query = query.Where(x => EF.Functions.ILike(x.InsertDelete!, $"%{insertDelete}%"));
+
+            return query;
+        }
+
+        private static IQueryable<TestRequirementLog> ApplyTestRequirementLogFilter(IQueryable<TestRequirementLog> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+            {
+                return query;
+            }
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+            {
+                return query;
+            }
+
+            var dict = new Dictionary<string, object>((IDictionary<string, object>)filterModel, StringComparer.OrdinalIgnoreCase);
+
+            if (dict.TryGetValue("TestCode", out var testCode) && testCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.TestCode, $"%{testCode}%"));
+
+            if (dict.TryGetValue("Buyer", out var buyer) && buyer != null)
+                query = query.Where(x => EF.Functions.ILike(x.Buyer!, $"%{buyer}%"));
+
+            if (dict.TryGetValue("ProjectBuyerCode", out var projectBuyerCode) && projectBuyerCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.ProjectBuyerCode!, $"%{projectBuyerCode}%"));
+
+            if (dict.TryGetValue("TestBuyerCode", out var testBuyerCode) && testBuyerCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.TestBuyerCode!, $"%{testBuyerCode}%"));
+
+            if (dict.TryGetValue("UserId", out var userId) && userId != null)
+                query = query.Where(x => EF.Functions.ILike(x.UserId!, $"%{userId}%"));
+
+            if (dict.TryGetValue("InsertDelete", out var insertDelete) && insertDelete != null)
+                query = query.Where(x => EF.Functions.ILike(x.InsertDelete!, $"%{insertDelete}%"));
+
+            return query;
+        }
+        private static IQueryable<AnimalRequestLog> ApplyAnimalRequestLogFilter(IQueryable<AnimalRequestLog> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+            {
+                return query;
+            }
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+            {
+                return query;
+            }
+
+            var dict = new Dictionary<string, object>((IDictionary<string, object>)filterModel, StringComparer.OrdinalIgnoreCase);
+
+            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.JobCode, $"%{jobCode}%"));
+
+            if (dict.TryGetValue("AnimalType", out var animalType) && animalType != null)
+                query = query.Where(x => EF.Functions.ILike(x.AnimalType!, $"%{animalType}%"));
+
+            if (dict.TryGetValue("UserId", out var userId) && userId != null)
+                query = query.Where(x => EF.Functions.ILike(x.UserId!, $"%{userId}%"));
+
+            if (dict.TryGetValue("InsertDelete", out var insertDelete) && insertDelete != null)
+                query = query.Where(x => EF.Functions.ILike(x.InsertDelete!, $"%{insertDelete}%"));
+
+            return query;
+        }
+
+        private static IQueryable<AdditionalCostLog> ApplyAdditionalCostLogFilter(IQueryable<AdditionalCostLog> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+            {
+                return query;
+            }
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+            {
+                return query;
+            }
+
+            var dict = new Dictionary<string, object>((IDictionary<string, object>)filterModel, StringComparer.OrdinalIgnoreCase);
+
+            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.JobCode, $"%{jobCode}%"));
+
+            if (dict.TryGetValue("Account", out var account) && account != null)
+                query = query.Where(x => EF.Functions.ILike(x.Account!, $"%{account}%"));
+
+            if (dict.TryGetValue("Freq", out var freq) && freq != null)
+                query = query.Where(x => EF.Functions.ILike(x.Freq!, $"%{freq}%"));
+     
+            if (dict.TryGetValue("Supplier", out var supplier) && supplier != null)
+                query = query.Where(x => EF.Functions.ILike(x.Supplier!, $"%{supplier}%"));
+
+            if (dict.TryGetValue("UserId", out var userId) && userId != null)
+                query = query.Where(x => EF.Functions.ILike(x.UserId!, $"%{userId}%"));
+
+            if (dict.TryGetValue("InsertDelete", out var insertDelete) && insertDelete != null)
+                query = query.Where(x => EF.Functions.ILike(x.InsertDelete!, $"%{insertDelete}%"));
+
+            return query;
+        }
+
     }
 }
