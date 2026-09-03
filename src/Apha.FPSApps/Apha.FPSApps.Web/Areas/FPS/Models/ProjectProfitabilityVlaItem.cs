@@ -71,10 +71,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 130, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal TargetProfit { get; set; }
 
-        //   Negative values render in brackets and red, matching the MS Access presentation.
+        //   Negative values render with a leading minus sign in the default text colour.
         [Display(Name = "Off-Target")]
         [DisplayFormat(DataFormatString = "{0:C0}", ApplyFormatInEditMode = false)]
-        [GridColumn(Width = 130, Type = GridColumnType.GbpValueRoundedAccounting, IsFilterable = false)]
+        [GridColumn(Width = 130, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal OffTarget { get; set; }
 
         //   retained as hidden properties to allow round-trip filter state if needed.

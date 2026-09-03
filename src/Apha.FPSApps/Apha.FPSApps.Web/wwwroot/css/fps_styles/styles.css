@@ -3087,17 +3087,9 @@ table.custom-table th {
     color: #d4351c !important;
 }
 
-/* Project Profitability for VLA only: Off Target positives and zero render in blue,
-   matching MS Access. Scoped to this grid so other grids are unaffected; the
-   negative rule above still wins for negatives because it is more specific in intent
-   and re-asserted here. */
-#gridContainer_projectProfitabilityVlaGrid td[data-property="OffTarget"] span {
-    color: #1d70b8 !important;
-}
-
-#gridContainer_projectProfitabilityVlaGrid td[data-property="OffTarget"] span.grid-negative-value {
-    color: #d4351c !important;
-}
+/* Project Profitability for VLA: Off Target uses the default grid text colour
+   (no blue for positives, no red/brackets for negatives). Negatives are shown
+   with a leading minus sign only. */
 
 .ac-table-checkboxes .govuk-checkboxes__item {
     margin: 0;
