@@ -92,8 +92,7 @@ namespace Apha.FPSApps.Application.Services.PACT
                 "Cost Of Work",
                 "WIP",
                 "Profit Loss",
-                "Detail",
-                "Type"
+                "Detail"
             };
 
             var importResult = _excelImportService.ReadExcel(
@@ -172,7 +171,7 @@ namespace Apha.FPSApps.Application.Services.PACT
                 Wip = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("WIP")])),
                 ProfitLoss = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Profit Loss")])),
                 Detail = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Detail")])),
-                Type = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Type")]))
+
             };
         }
 

@@ -599,7 +599,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             ws.Cell(1, 5).Value = "WIP";
             ws.Cell(1, 6).Value = "Profit Loss";
             ws.Cell(1, 7).Value = "Detail";
-            ws.Cell(1, 8).Value = "Type";
             ws.Cell(2, 1).Value = "PP001";
             ws.Cell(2, 2).Value = "1";
             ws.Cell(2, 3).Value = "100";
@@ -1130,7 +1129,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
                     ws.Cell(2, 6).Value = "400";
                     ws.Cell(2, 7).Value = "400";
                     ws.Cell(2, 8).Value = "detail-text";
-                    ws.Cell(2, 9).Value = "Estimate";
 
                     var headerMap = new Dictionary<string, int>
                     {
@@ -1141,11 +1139,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
                         ["cost of work"] = 5,
                         ["wip"] = 6,
                         ["profit loss"] = 7,
-                        ["detail"] = 8,
-                        ["type"] = 9
+                        ["detail"] = 8
                     };
 
-                    var mappedRow = mapper(ws.Range(2, 1, 2, 9).Rows().First(), headerMap);
+                    var mappedRow = mapper(ws.Range(2, 1, 2, 8).Rows().First(), headerMap);
                     return new ExcelImportResult<InvoiceImportRowDto>
                     {
                         IsSuccess = true,
@@ -1174,8 +1171,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
                     r.Rows[0].CostOfWork == "600" &&
                     r.Rows[0].Wip == "400" &&
                     r.Rows[0].ProfitLoss == "400" &&
-                    r.Rows[0].Detail == "detail-text" &&
-                    r.Rows[0].Type == "Estimate"));
+                    r.Rows[0].Detail == "detail-text"));
         }
 
         [Fact]
@@ -1209,7 +1205,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
                     ws.Cell(2, 6).Value = "50";
                     ws.Cell(2, 7).Value = "50";
                     ws.Cell(2, 8).Value = "detail";
-                    ws.Cell(2, 9).Value = "TypeA";
 
                     var headerMap = new Dictionary<string, int>
                     {
@@ -1220,11 +1215,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
                         ["cost of work"] = 5,
                         ["wip"] = 6,
                         ["profit loss"] = 7,
-                        ["detail"] = 8,
-                        ["type"] = 9
+                        ["detail"] = 8
                     };
 
-                    var mappedRow = mapper(ws.Range(2, 1, 2, 9).Rows().First(), headerMap);
+                    var mappedRow = mapper(ws.Range(2, 1, 2, 8).Rows().First(), headerMap);
                     return new ExcelImportResult<InvoiceImportRowDto> { IsSuccess = true, Rows = [mappedRow] };
                 });
 
@@ -1273,7 +1267,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
                     ws.Cell(2, 5).Value = "50";
                     ws.Cell(2, 6).Value = "50";
                     ws.Cell(2, 7).Value = "detail";
-                    ws.Cell(2, 8).Value = "TypeA";
 
                     var headerMap = new Dictionary<string, int>
                     {
@@ -1283,11 +1276,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
                         ["cost of work"] = 4,
                         ["wip"] = 5,
                         ["profit loss"] = 6,
-                        ["detail"] = 7,
-                        ["type"] = 8
+                        ["detail"] = 7
                     };
 
-                    var mappedRow = mapper(ws.Range(2, 1, 2, 8).Rows().First(), headerMap);
+                    var mappedRow = mapper(ws.Range(2, 1, 2, 7).Rows().First(), headerMap);
                     return new ExcelImportResult<InvoiceImportRowDto> { IsSuccess = true, Rows = [mappedRow] };
                 });
 

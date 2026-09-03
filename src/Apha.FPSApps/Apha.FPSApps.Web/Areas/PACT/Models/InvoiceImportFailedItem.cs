@@ -39,12 +39,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         [GridColumn(Order = 7, Width = 150, Type = GridColumnType.Text)]
         public string? Detail { get; set; }
 
-        [Display(Name = "Type")]
-        [GridColumn(Order = 8, Width = 80, Type = GridColumnType.Text)]
-        public string? Type { get; set; }
-
         [Display(Name = "Validation Failure")]
-        [GridColumn(Order = 9, Width = 250, Type = GridColumnType.Text, CssClass = "grid-column-truncate-tooltip")]
+        [GridColumn(Order = 8, Width = 250, Type = GridColumnType.Text, CssClass = "grid-column-truncate-tooltip")]
         public string? ValidationFailure { get; set; }
 
         [GridColumn(IsVisible = false)]
