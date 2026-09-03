@@ -220,6 +220,11 @@
         TestPlanJobConfig.getJobCode   = function () { return $('#hdnProjectCode').val(); };
         AdditionalCostConfig.getJobCode = function () { return $('#hdnProjectCode').val(); };
 
+        StaffJobConfig.fromProjectPlanning = true;
+        AnimalJobConfig.fromProjectPlanning = true;
+        TestPlanJobConfig.fromProjectPlanning = true;
+        AdditionalCostConfig.fromProjectPlanning = true;
+
         // ---- Config: CRUD callbacks ----
 
         StaffJobConfig.onSaved = StaffJobConfig.onUpdated = StaffJobConfig.onDeleted = function () {

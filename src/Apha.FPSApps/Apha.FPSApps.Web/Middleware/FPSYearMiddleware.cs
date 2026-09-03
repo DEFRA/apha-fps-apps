@@ -115,7 +115,7 @@ namespace Apha.FPSApps.Web.Middleware
         private static bool ResolveIsReadOnly(string? area, YearStatus yearStatus) =>
             area?.ToUpperInvariant() switch
             {
-                "FPS" => yearStatus is not (YearStatus.Planned or YearStatus.Open),
+                "FPS" => yearStatus is not (YearStatus.Open),
                 "PACT" => yearStatus != YearStatus.Open,
                 _ => false
             };

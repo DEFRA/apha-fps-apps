@@ -1,4 +1,7 @@
 @model Apha.FPSApps.Web.Models.Components.YearSelector.YearSelectorViewModel
+@{
+    var area = ViewContext.RouteData.Values["area"]?.ToString();
+}
 
 <div style="display: flex; align-items: center; gap: 10px;">
     <select id="yearSelector"
@@ -21,7 +24,14 @@
         }
         else if (Model.SelectedYearStatus.Equals("Planned", StringComparison.OrdinalIgnoreCase))
         {
-            <div class="year-end-message">The selected financial year is in planing stage and is no longer available for modification.</div>
+            @if (string.Equals(area, "FPS", StringComparison.OrdinalIgnoreCase))
+            {
+                <div class="year-end-message">The selected financial year is in planning stage, you can only modify planning data.</div>
+            }
+            else
+            {
+                <div class="year-end-message">The selected financial year is in planing stage and is no longer available for modification.</div>
+            }
         }
     }
 </div>

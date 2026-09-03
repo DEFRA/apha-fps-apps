@@ -12,6 +12,7 @@ namespace Apha.FPSApps.Web.TagHelpers
     {
         // Controllers/pages on which the read-only disable logic should never apply
         private const string UserPermissionController = "UserPermission";
+        private const string ProjectPlanningController = "ProjectPlanning";
 
         private readonly IFpsYearContext _fy;
 
@@ -31,8 +32,7 @@ namespace Apha.FPSApps.Web.TagHelpers
         {
             // Disable button only when year is read-only AND editing is not explicitly allowed
             // This allows specific buttons to remain enabled even in read-only mode.
-            // The UserPermission page is exempt: its buttons are never disabled by year read-only state.
-            if (_fy.IsReadOnly && !AllowEdit && !IsUserPermissionPage())
+            if (_fy.IsReadOnly && !AllowEdit && ShouldDisableForCurrentPage())
             {
                 output.Attributes.SetAttribute("disabled", "disabled");
             }
@@ -45,6 +45,39 @@ namespace Apha.FPSApps.Web.TagHelpers
         {
             var controller = ViewContext?.RouteData.Values["controller"]?.ToString();
             return string.Equals(controller, UserPermissionController, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsProjectPlanningPage()
+        {
+            var controller = ViewContext?.RouteData.Values["controller"]?.ToString();
+            return string.Equals(controller, ProjectPlanningController, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool ShouldDisableForCurrentPage()
+        {
+            if (IsUserPermissionPage())
+            {
+                return false;
+            }
+
+            if (IsProjectPlanningPage())
+            {
+                return string.Equals(_fy.YearStatus?.Trim(), "Closed", StringComparison.OrdinalIgnoreCase);
+            }
+
+            if (IsProjectPlanningPopupRequest())
+            {
+                return string.Equals(_fy.YearStatus?.Trim(), "Closed", StringComparison.OrdinalIgnoreCase);
+            }
+
+            // default for all other pages
+            return true;
+        }
+
+        private bool IsProjectPlanningPopupRequest()
+        {
+            var fromProjectPlanning = ViewContext?.HttpContext?.Request.Query["fromProjectPlanning"].ToString();
+            return string.Equals(fromProjectPlanning, "true", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
