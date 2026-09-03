@@ -1907,6 +1907,17 @@ textarea {
     justify-content: initial !important;
 }
 
+/* Same guard for the govuk-edit-modal overlay used by the PIMS/PACT edit
+   partials (`.govuk-edit-modal.open { display:flex }`), which centres its
+   dialog but does not carry the "modal" class. Without this the overlay kept
+   re-centring the dialog and dragging appeared to do nothing. Scoped to
+   .is-dragging-host so the normal centred appearance is untouched. */
+.govuk-edit-modal.is-dragging-host {
+    display: block !important;
+    align-items: initial !important;
+    justify-content: initial !important;
+}
+
 .modal-dialog.is-dragging,
 .govuk-edit-modal-dialog.is-dragging {
     transform: none !important;
