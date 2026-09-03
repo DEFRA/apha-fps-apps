@@ -1259,5 +1259,231 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
         }
 
         #endregion
+
+        // ── Grid column filters (Filter JSON posted by _DataGrid) ────────────
+
+        #region ColumnFilters
+
+        [Fact]
+        public async Task GetProjectLogsAsync_WithColumnFilter_ReturnsOnlyMatchingRows()
+        {
+            // Arrange
+            var logs = new List<ProjectLog>
+            {
+                new() { SequenceNo = 1, ParentProject = TestProject, ProjectTitle = "Alpha", Program = "P1",
+                        Customer = "C1", ProjectStatus = "Active", Disease = "D1", Contract = "K1",
+                        FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, ParentProject = TestProject, ProjectTitle = "Beta", Program = "P2",
+                        Customer = "C2", ProjectStatus = "Active", Disease = "D1", Contract = "K1",
+                        FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(projectLogs: logs);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"ProjectTitle\":\"alp\"}"
+            };
+
+            // Act
+            var result = await repo.GetProjectLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Equal("Alpha", result.Data.Single().ProjectTitle);
+        }
+
+        [Fact]
+        public async Task GetProjectLogsAsync_WithEmptyColumnFilterValue_ReturnsAllRows()
+        {
+            // Arrange
+            var logs = new List<ProjectLog>
+            {
+                new() { SequenceNo = 1, ParentProject = TestProject, ProjectTitle = "Alpha", Program = "P1",
+                        Customer = "C1", ProjectStatus = "Active", Disease = "D1", Contract = "K1",
+                        FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, ParentProject = TestProject, ProjectTitle = "Beta", Program = "P2",
+                        Customer = "C2", ProjectStatus = "Active", Disease = "D1", Contract = "K1",
+                        FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(projectLogs: logs);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"ProjectTitle\":\"\"}"
+            };
+
+            // Act
+            var result = await repo.GetProjectLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetStaffJobLogsAsync_WithStaffIdColumnFilter_ReturnsOnlyMatchingRows()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<StaffJobLog>
+            {
+                new() { SequenceNo = 1, StaffId = "S001", JobCode = TestJobCode, PlannedHours = 5, FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, StaffId = "S002", JobCode = TestJobCode, PlannedHours = 7, FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(staffJobLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"StaffId\":\"s002\"}"
+            };
+
+            // Act
+            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Equal("S002", result.Data.Single().StaffId);
+        }
+
+        [Fact]
+        public async Task GetStaffJobLogsAsync_WithNameColumnFilter_FiltersOnResolvedStaffName()
+        {
+            // Arrange – Name is resolved in memory, so its filter must also run in memory
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<StaffJobLog>
+            {
+                new() { SequenceNo = 1, StaffId = "S001", JobCode = TestJobCode, PlannedHours = 5, FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, StaffId = "S002", JobCode = TestJobCode, PlannedHours = 7, FpsYear = DefaultFpsYear }
+            };
+            var staffGeneralViews = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Jane Doe" },
+                new() { StaffId = "S002", Name = "John Smith" }
+            };
+            var repo = CreateRepository(staffJobLogs: logs, jobCodes: jobCodes, staffGeneralViews: staffGeneralViews);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"Name\":\"smith\"}"
+            };
+
+            // Act
+            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Equal("John Smith", result.Data.Single().Name);
+        }
+
+        [Fact]
+        public async Task GetTestRequirementLogsAsync_WithColumnFilter_ReturnsOnlyMatchingRows()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<TestRequirementLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, TestCode = "TC001", Buyer = "B1", FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, TestCode = "TC002", Buyer = "B2", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(testRequirementLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"TestCode\":\"tc002\"}"
+            };
+
+            // Act
+            var result = await repo.GetTestRequirementLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Equal("TC002", result.Data.Single().TestCode);
+        }
+
+        [Fact]
+        public async Task GetAnimalRequestLogsAsync_WithColumnFilter_ReturnsOnlyMatchingRows()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AnimalRequestLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, AnimalType = "Cattle", FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, AnimalType = "Sheep", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(animalRequestLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"AnimalType\":\"shee\"}"
+            };
+
+            // Act
+            var result = await repo.GetAnimalRequestLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Equal("Sheep", result.Data.Single().AnimalType);
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_WithColumnFilter_ReturnsOnlyMatchingRows()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Consumables",
+                        ItemCost = 100m, FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, Account = "ACC2", Description = "Travel",
+                        ItemCost = 200m, FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"Account\":\"acc2\"}"
+            };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Equal("ACC2", result.Data.Single().Account);
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_WithUserIdColumnFilter_FiltersOnResolvedEmail()
+        {
+            // Arrange – User_ID is rewritten to an email, so the filter runs on the displayed value
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = "jbloggs", FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, Account = "ACC2", Description = "Desc2",
+                        ItemCost = 200m, UserId = "asmith", FpsYear = DefaultFpsYear }
+            };
+            var users = new List<User>
+            {
+                new() { UserId = 1, Username = "jbloggs", UserEmail = "j.bloggs@example.com" },
+                new() { UserId = 2, Username = "asmith", UserEmail = "a.smith@example.com" }
+            };
+            var repo = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes, users: users);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"UserId\":\"a.smith\"}"
+            };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Equal("a.smith@example.com", result.Data.Single().UserId);
+        }
+
+        #endregion
     }
 }
