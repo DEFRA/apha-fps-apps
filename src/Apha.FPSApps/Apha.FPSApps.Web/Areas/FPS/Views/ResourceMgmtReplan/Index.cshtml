@@ -6,32 +6,10 @@
 <main class="govuk-main-wrapper govuk-!-padding-top-0" id="main-content" role="main">
     <div class="container-fluid">
 
-        @*── Page heading + Resource Centre selector ─────────────────────*@
-        @* <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <div class="ssr-heading-row sup_border-bottom govuk-!-margin-bottom-2">
-                    <h1 class="govuk-heading-s ssr-main-title">
-                        Resource Re-allocation Screen for <span id="ssrMainCentreName">@Model.SelectedResourceCentre</span>
-                    </h1>
-                    <div class="ssr-heading-controls">
-                        <label for="resourceCentreSelect" class="govuk-label govuk-!-margin-bottom-0">Select a Resource Center:</label>
-                        <select class="govuk-select ssr-resource-select"
-                                id="resourceCentreSelect"
-                                aria-label="Select a Resource Center"
-                                asp-for="SelectedResourceCentre"
-                                asp-items="Model.ResourceCentres"
-                                onchange="rraUpdateResourceCentre()">
-                            <option value="">-- Select a Resource Center --</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div> *@
-
         <div class="govuk-grid-row sup_border-bottom">
             <div class="govuk-grid-column-one-half isFloatLeft">
 		        <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 govuk-!-margin-left-3 isCustomPageHeadings">
-			        Resource Re-allocation Screen for <span id="ssrMainCentreName">@Model.SelectedResourceCentre</span>
+			        Resource Re-allocation Screen for:&nbsp;<span id="ssrMainCentreName">@Model.SelectedResourceCentre</span>
 		        </h1>
             </div>
             <div class="govuk-grid-column-one-half isFloatRight isResourceReAllocationScreen">
@@ -39,7 +17,7 @@
 				        <tbody class="govuk-table__body">
 					        <tr class="govuk-table__row">
 						        <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
-							        <label for="resourceCentreSelect" class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-0 govuk-!-font-weight-bold isNoWrap" >Select a Resource Center:</label>
+							        <label for="resourceCentreSelect" class="govuk-label govuk-!-margin-bottom-0 govuk-!-padding-right-1 govuk-!-font-weight-bold isNoWrap" >Select a Resource Center:</label>
 						        </th>
 						        <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
 							         <select class="govuk-select"
@@ -101,22 +79,24 @@
                                         @*── Section 3: All Time for Project ──────────────────────────────*@
                                         <div class="ssr-mid-row">
                                             <section class="ssr-alltime-box sup_border" aria-labelledby="ssr-alltime-title">
-                                                <h3 class="govuk-heading-s ssr-mid-title" id="ssr-alltime-title">3. All Time for Project</h3>
+                                                <div class="ssr-alltime-header">
+                                                    <h3 class="govuk-heading-s ssr-mid-title" id="ssr-alltime-title">3. All Time for Project</h3>
 
-                                                <div class="ssr-alltime-fields govuk-!-margin-bottom-2">
-                                                    <div class="ssr-alltime-field">
-                                                        <label for="ssrAllTimeProject" class="govuk-label govuk-!-font-weight-bold">Project</label>
-                                                        <input type="text" id="ssrAllTimeProject"
-                                                               class="govuk-input ssr-mid-input"
-                                                               readonly
-                                                               aria-label="All time project" />
-                                                    </div>
-                                                    <div class="ssr-alltime-field">
-                                                        <label for="ssrAllTimeWgGrade" class="govuk-label govuk-!-font-weight-bold">for WG-Grade</label>
-                                                        <input type="text" id="ssrAllTimeWgGrade"
-                                                               class="govuk-input ssr-mid-input"
-                                                               readonly
-                                                               aria-label="All time workgroup grade" />
+                                                    <div class="ssr-alltime-fields">
+                                                        <div class="ssr-alltime-field">
+                                                            <label for="ssrAllTimeProject" class="govuk-label govuk-!-font-weight-bold">Project</label>
+                                                            <input type="text" id="ssrAllTimeProject"
+                                                                   class="govuk-input ssr-mid-input"
+                                                                   readonly
+                                                                   aria-label="All time project" />
+                                                        </div>
+                                                        <div class="ssr-alltime-field">
+                                                            <label for="ssrAllTimeWgGrade" class="govuk-label govuk-!-font-weight-bold">for WG-Grade</label>
+                                                            <input type="text" id="ssrAllTimeWgGrade"
+                                                                   class="govuk-input ssr-mid-input"
+                                                                   readonly
+                                                                   aria-label="All time workgroup grade" />
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -127,7 +107,7 @@
                                                 </div>
 
                                                 <div class="ssr-alltime-total-row govuk-!-margin-top-2">
-                                                    <span class="govuk-label govuk-!-font-weight-bold">Total:</span>
+                                                    <span class="govuk-label govuk-!-font-weight-bold">Total Hours:</span>
                                                     <input type="text" id="ssrAllTimeTotal"
                                                            class="govuk-input ssr-total-input text-AlignRight"
                                                            readonly

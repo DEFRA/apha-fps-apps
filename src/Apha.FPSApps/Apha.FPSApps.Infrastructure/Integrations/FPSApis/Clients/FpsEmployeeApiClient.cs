@@ -39,6 +39,29 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         }
 
+        public async Task<ApiResponseDto<List<StaffLookupDto>>> GetStaffNameLookupAsync()
+        {
+            var response = await _http.GetAsync<List<EmployeeRes>>(FpsApiEndpoints.GetStaffNameLookup);
+
+            if (response.Success)
+            {
+                var employees = _mapper.Map<ApiResponseDto<List<EmployeeDto>>>(response);
+                var lookup = (employees.Data ?? new List<EmployeeDto>())
+                    .Select(e => new StaffLookupDto
+                    {
+                        SpNumber = e.SPNumber,
+                        Name = ((e.LastName ?? string.Empty) + " " + (e.FirstName ?? string.Empty)).Trim()
+                    })
+                    .ToList();
+                return ApiResponseDto<List<StaffLookupDto>>.SuccessResponse(lookup);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<StaffLookupDto>>>(response);
+                return ApiResponseDto<List<StaffLookupDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
         public async Task<ApiResponseDto<EmployeeDto>> GetEmployeeIdAsync(string spNumber)
         {
             var response = await _http.GetAsync<EmployeeRes>(string.Format(FpsApiEndpoints.GetEmployeeById, spNumber));

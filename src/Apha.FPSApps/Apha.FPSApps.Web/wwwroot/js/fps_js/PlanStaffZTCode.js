@@ -175,15 +175,60 @@ function refreshZtTimeSummary() {
             ztSetEl('ts-free', json.freeForChargeableWork);
             ztSetEl('staff-name', json.name);
             ztSetEl('staff-grade', json.workGroupGrade);
+            ztSetEl('total-planned-hours', json.plannedAdminZT);
         }
     });
 }
+
+// Calculate total from grid data
+function calculateGridTotal() {
+    var total = 0;
+    var gridManager = window['gridManager_' + ZtPlanConfig.gridId];
+
+    if (gridManager && gridManager.getCurrentPageData) {
+        var pageData = gridManager.getCurrentPageData();
+        if (pageData && Array.isArray(pageData)) {
+            pageData.forEach(function(row) {
+                if (row.PlannedHours) {
+                    total += parseFloat(row.PlannedHours) || 0;
+                }
+            });
+        }
+    }
+
+    // Also try to get from all visible rows in the table
+    if (total === 0) {
+        $('#' + ZtPlanConfig.gridId + ' tbody tr').each(function() {
+            var hoursText = $(this).find('td').eq(2).text().trim(); // Assuming hours is in 3rd column
+            var hours = parseFloat(hoursText) || 0;
+            total += hours;
+        });
+    }
+
+    ztSetEl('total-planned-hours', total.toFixed(2));
+    return total;
+}
+
+// Hook into grid reload to update total
+$(document).ready(function() {
+    // Update total after initial load
+    setTimeout(function() {
+        refreshZtTimeSummary();
+    }, 500);
+});
 
 // ---- Utility ----
 
 function ztSetEl(id, value) {
     var el = document.getElementById(id);
-    if (el) { el.textContent = (value !== undefined && value !== null) ? value : ''; }
+    if (el) {
+        var displayValue = (value !== undefined && value !== null) ? value : '';
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            el.value = displayValue;
+        } else {
+            el.textContent = displayValue;
+        }
+    }
 }
 
 function ztIsFormValid(form) {

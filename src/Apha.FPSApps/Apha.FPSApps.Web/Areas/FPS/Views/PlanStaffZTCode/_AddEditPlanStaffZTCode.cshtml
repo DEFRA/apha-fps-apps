@@ -8,12 +8,12 @@
     var saveAction = isEditMode ? "updateZtPlan()" : "saveZtPlan()";
 }
 
-<div class="modal-header">
+<div class="modal-header isZtCodesModal">
     <h5 class="modal-title">@title</h5>
     <button type="button" class="btn-close btn-red" onclick="closeZtModal()">X</button>
 </div>
 
-<div class="modal-body" style="overflow-y: auto; max-height: calc(80vh - 120px);">
+<div class="modal-body isZtCodesModal" style="overflow-y: auto; max-height: calc(80vh - 120px);">
     <div class="govuk-error-summary" role="alert"
          aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
         <h2 class="govuk-error-summary__title" id="error-summary-title">
@@ -37,6 +37,7 @@
                            value="@Model.JobCode" readonly required>
                     <div class="multicolumn-dropdown-panel" id="modal-zt-code-panel" style="display:none;">
                         <div class="search-box-wrapper">
+                            <label class="govuk-visually-hidden" for="modal-zt-code-search">Search ZT Code</label>
                             <input type="text" class="search-box" id="modal-zt-code-search"
                                    placeholder="Type to search and select ZT code">
                             <button type="button"
@@ -67,8 +68,8 @@
             @* Planned Hours *@
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" for="PlannedHours">Hrs <span class="sup_color_red">*</span></label>
-                <input type="number" min="0" step="0.5" id="PlannedHours" name="PlannedHours"
-                       class="govuk-input" value="@Model.PlannedHours" required>
+                <input type="text" maxlength="20" id="PlannedHours" name="PlannedHours"
+                       class="govuk-input js-numeric-decimal" value="@Model.PlannedHours" required>
                 <span asp-validation-for="PlannedHours" class="govuk-error-message" style="display:none;"></span>
             </div>
         </form>

@@ -41,7 +41,7 @@
                     else
                     {
                         <div class="govuk-form-group sup_margin_0">
-                            <label class="govuk-label" for="PcGrade">RC Grade</label>
+                            <label class="govuk-label" for="PcGrade">RC Grade <span class="sup_color_red">*</span></label>
                             <input type="text" id="PcGrade" name="PcGrade"
                                    class="govuk-input govuk-input--disabled" readonly
                                    value="@Model!.PcGrade">
@@ -146,8 +146,8 @@
                 <div class="govuk-grid-column-one-half">
                     <div class="govuk-form-group sup_margin_0">
                         <label class="govuk-label" for="HrsAvailable">Hours Available</label>
-                        <input type="number" step="0.01" id="HrsAvailable" name="HrsAvailable" asp-for="HrsAvailable"
-                               class="govuk-input" min="0">
+                        <input type="text" maxlength="20" id="HrsAvailable" name="HrsAvailable" asp-for="HrsAvailable"
+                               class="govuk-input js-numeric-decimal">
                         <span data-valmsg-for="HrsAvailable" class="govuk-error-message field-validation-valid" style="display:none;"></span>
                     </div>
                 </div>

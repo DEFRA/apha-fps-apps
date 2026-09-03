@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -25,7 +26,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? Name { get; set; }
 
         [Display(Name = "Hours")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly)]
+        [NonFinancialRange]
+        [GridColumn(Width = 90, Type = GridColumnType.DecimalNumber)]
         public double? PlannedHours { get; set; }
 
         [Display(Name = "Programme")]

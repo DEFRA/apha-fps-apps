@@ -98,6 +98,10 @@
             <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectProfitabilityVla" asp-action="Index">VLA Project Totals</a>
             <a class="dropdown-item" asp-area="FPS" asp-controller="BudgetResourceLevel" asp-action="Index">Generic Bids</a>
             <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectAuditTrail" asp-action="Index">Project Audit Trails</a>
+            @if (User.IsInRole("FPSAdmin"))
+            {
+                <a class="dropdown-item" asp-area="FPS" asp-controller="BulkRates" asp-action="Fec">Bulk Rate Updates</a>
+            }
         </div>
         <div class="dropdown-col" style="min-width:310px">
              <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectMisc" asp-action="Index">Misc Project Data</a>
