@@ -65,25 +65,32 @@ namespace Apha.PIMS.Application.Services
         public async Task<AccessUserDto> CreateAsync(AccessUserDto dto)
         {
             ArgumentNullException.ThrowIfNull(dto);
+
+            dto.NtLogin = string.IsNullOrWhiteSpace(dto.NtLogin) ? null : dto.NtLogin.Trim();
+            dto.UserName = string.IsNullOrWhiteSpace(dto.UserName) ? null : dto.UserName.Trim();
+            dto.UserEmail = string.IsNullOrWhiteSpace(dto.UserEmail) ? null : dto.UserEmail.Trim();
+
             if (string.IsNullOrWhiteSpace(dto.NtLogin))
                 throw new ArgumentException("NT login is required.", nameof(dto));
 
-            dto.UserEmail = string.IsNullOrWhiteSpace(dto.UserEmail) ? null : dto.UserEmail.Trim();
+            var usersForSystem = await _repository.GetBySystemIdAsync(dto.SystemId);
 
-            bool alreadyExists = await _repository.ExistsAsync(dto.SystemId, dto.NtLogin);
-            if (alreadyExists)
-                throw new InvalidOperationException($"NTLogin '{dto.NtLogin}' already exists. Please enter a unique NTLogin");
+            bool duplicateNtLoginExists = usersForSystem.Any(u =>
+                StringEqualsTrimmedIgnoreCase(u.NtLogin, dto.NtLogin));
 
-            if (!string.IsNullOrWhiteSpace(dto.UserEmail))
-            {
-                var usersForSystem = await _repository.GetBySystemIdAsync(dto.SystemId);
-                bool duplicateEmailExists = usersForSystem.Any(u =>
+            bool duplicateEmailExists = !string.IsNullOrWhiteSpace(dto.UserEmail)
+                && usersForSystem.Any(u =>
                     !string.IsNullOrWhiteSpace(u.UserEmail)
-                    && string.Equals(u.UserEmail.Trim(), dto.UserEmail, StringComparison.OrdinalIgnoreCase));
+                    && StringEqualsTrimmedIgnoreCase(u.UserEmail, dto.UserEmail));
 
-                if (duplicateEmailExists)
-                    throw new InvalidOperationException("UserEmail already exists.");
-            }
+            if (duplicateNtLoginExists && duplicateEmailExists)
+                throw new InvalidOperationException("NTLogin and UserEmail already exist. Please enter unique values.");
+
+            if (duplicateNtLoginExists)
+                throw new InvalidOperationException("NTLogin already exists. Please enter a unique NTLogin.");
+
+            if (duplicateEmailExists)
+                throw new InvalidOperationException("UserEmail already exists.");
 
             AccessUser entity = _mapper.Map<AccessUser>(dto);
             AccessUser created = await _repository.AddAsync(entity);
@@ -94,23 +101,27 @@ namespace Apha.PIMS.Application.Services
         public async Task<AccessUserDto> UpdateAsync(AccessUserDto dto)
         {
             ArgumentNullException.ThrowIfNull(dto);
+
+            dto.NtLogin = string.IsNullOrWhiteSpace(dto.NtLogin) ? null : dto.NtLogin.Trim();
+            dto.UserName = string.IsNullOrWhiteSpace(dto.UserName) ? null : dto.UserName.Trim();
+            dto.UserEmail = string.IsNullOrWhiteSpace(dto.UserEmail) ? null : dto.UserEmail.Trim();
+
             if (string.IsNullOrWhiteSpace(dto.NtLogin))
                 throw new ArgumentException("NT login is required.", nameof(dto));
-
-            dto.UserEmail = string.IsNullOrWhiteSpace(dto.UserEmail) ? null : dto.UserEmail.Trim();
 
             bool exists = await _repository.ExistsAsync(dto.SystemId, dto.NtLogin);
             if (!exists)
                 throw new KeyNotFoundException(
                     $"AccessUser (systemid={dto.SystemId}, ntlogin='{dto.NtLogin}') was not found.");
 
+            var usersForSystem = await _repository.GetBySystemIdAsync(dto.SystemId);
+
             if (!string.IsNullOrWhiteSpace(dto.UserEmail))
             {
-                var usersForSystem = await _repository.GetBySystemIdAsync(dto.SystemId);
                 bool duplicateEmailExists = usersForSystem.Any(u =>
                     !string.IsNullOrWhiteSpace(u.UserEmail)
-                    && string.Equals(u.UserEmail.Trim(), dto.UserEmail, StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals(u.NtLogin, dto.NtLogin, StringComparison.OrdinalIgnoreCase));
+                    && StringEqualsTrimmedIgnoreCase(u.UserEmail, dto.UserEmail)
+                    && !StringEqualsTrimmedIgnoreCase(u.NtLogin, dto.NtLogin));
 
                 if (duplicateEmailExists)
                     throw new InvalidOperationException("UserEmail already exists.");
@@ -141,6 +152,16 @@ namespace Apha.PIMS.Application.Services
                 throw new ArgumentException("NT login is required.", nameof(ntlogin));
 
             return await _repository.ExistsAsync(systemid, ntlogin);
+        }
+
+        private static bool StringEqualsTrimmedIgnoreCase(string? left, string? right)
+        {
+            if (left is null || right is null)
+            {
+                return false;
+            }
+
+            return string.Equals(left.Trim(), right.Trim(), StringComparison.OrdinalIgnoreCase);
         }
     }
 }

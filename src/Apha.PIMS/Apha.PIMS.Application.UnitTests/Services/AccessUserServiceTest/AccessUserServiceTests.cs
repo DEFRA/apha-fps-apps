@@ -275,15 +275,51 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         }
 
         [Fact]
-        public async Task CreateAsync_DuplicateUserExists_ThrowsInvalidOperationException()
+        public async Task CreateAsync_DuplicateNtLoginExists_IgnoresCaseAndSpaces_ThrowsInvalidOperationException()
         {
             // Arrange
-            var dto = MakeDto(1, "dom\\existing");
-            _repository.ExistsAsync(1, "dom\\existing").Returns(true);
+            var dto = MakeDto(1, "  DOM\\Existing  ");
+            dto.UserName = "Unique User";
+            _repository.GetBySystemIdAsync(1).Returns(new List<AccessUser>
+            {
+                new AccessUser { SystemId = 1, NtLogin = "dom\\existing", UserName = "Different User" }
+            });
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
-            Assert.Equal("NTLogin 'dom\\existing' already exists. Please enter a unique NTLogin", ex.Message);
+            Assert.Equal("NTLogin already exists. Please enter a unique NTLogin.", ex.Message);
+        }
+
+        [Fact]
+        public async Task CreateAsync_DuplicateEmailExists_IgnoresCaseAndSpaces_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var dto = MakeDto(1, "dom\\newuser");
+            dto.UserEmail = "  sejal.dhotre@DefraDev.onMicrosoft.Com ";
+            _repository.GetBySystemIdAsync(1).Returns(new List<AccessUser>
+            {
+                new AccessUser { SystemId = 1, NtLogin = "dom\\other", UserEmail = "Sejal.Dhotre@defradev.onmicrosoft.com" }
+            });
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
+            Assert.Equal("UserEmail already exists.", ex.Message);
+        }
+
+        [Fact]
+        public async Task CreateAsync_DuplicateNtLoginAndUserEmailExist_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var dto = MakeDto(1, "  aaa ");
+            dto.UserEmail = "  sejal.dhotre@DefraDev.onMicrosoft.Com ";
+            _repository.GetBySystemIdAsync(1).Returns(new List<AccessUser>
+            {
+                new AccessUser { SystemId = 1, NtLogin = "AAA", UserEmail = "Sejal.Dhotre@defradev.onmicrosoft.com" }
+            });
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
+            Assert.Equal("NTLogin and UserEmail already exist. Please enter unique values.", ex.Message);
         }
 
         [Fact]
@@ -291,11 +327,11 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         {
             // Arrange
             var dto = MakeDto(1, "dom\\newuser");
+            dto.UserName = "Unique User";
             dto.UserEmail = "user1@example.com";
-            _repository.ExistsAsync(1, "dom\\newuser").Returns(false);
             _repository.GetBySystemIdAsync(1).Returns(new List<AccessUser>
             {
-                MakeEntity(1, "dom\\existing")
+                new AccessUser { SystemId = 1, NtLogin = "dom\\existing", UserName = "Different User", UserEmail = "user1@example.com" }
             });
 
             // Act & Assert
@@ -321,7 +357,10 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         {
             // Arrange
             var dto = MakeDto(1, "dom\\existing");
-            _repository.ExistsAsync(1, "dom\\existing").Returns(true);
+            _repository.GetBySystemIdAsync(1).Returns(new List<AccessUser>
+            {
+                MakeEntity(1, "DOM\\EXISTING")
+            });
 
             // Act + ignore exception
             try { await _service.CreateAsync(dto); } catch { }
@@ -374,12 +413,13 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         {
             // Arrange
             var dto = MakeDto(1, "dom\\user");
+            dto.UserName = "current";
             dto.UserEmail = "user1@example.com";
             _repository.ExistsAsync(1, "dom\\user").Returns(true);
             _repository.GetBySystemIdAsync(1).Returns(new List<AccessUser>
             {
-                MakeEntity(1, "dom\\user"),
-                MakeEntity(1, "dom\\other")
+                new AccessUser { SystemId = 1, NtLogin = "dom\\user", UserName = "current", UserEmail = "other@example.com" },
+                new AccessUser { SystemId = 1, NtLogin = "dom\\other", UserName = "different", UserEmail = "user1@example.com" }
             });
 
             // Act & Assert
