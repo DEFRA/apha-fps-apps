@@ -125,22 +125,22 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         public string? CostedBy { get; set; }
 
         
-        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
+        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = true, CssClass = "grid-hidden-flag-column")]
         public short ManHoursChanged { get; set; }
 
-        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
+        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = true, CssClass = "grid-hidden-flag-column")]
         public short PayCostsChanged { get; set; }
 
-        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
+        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = true, CssClass = "grid-hidden-flag-column")]
         public short NonPayOhCostsChanged { get; set; }
 
-        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
+        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = true, CssClass = "grid-hidden-flag-column")]
         public short TestCostsChanged { get; set; }
 
-        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
+        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = true, CssClass = "grid-hidden-flag-column")]
         public short AnimalCostsChanged { get; set; }
 
-        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
+        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = true, CssClass = "grid-hidden-flag-column")]
         public short NonAnimalCostsChanged { get; set; }
     }
 }
