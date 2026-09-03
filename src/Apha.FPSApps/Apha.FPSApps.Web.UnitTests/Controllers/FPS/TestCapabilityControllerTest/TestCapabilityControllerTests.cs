@@ -49,7 +49,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestCapabilityControllerTes
             _projectService.GetAllProjectsAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(
                 [
-                    new ProjectDto { ParentProject = DefaultPortfolio, ProjectTitle = "Antibody Testing" }
+                    new ProjectDto { ParentProject = DefaultPortfolio, ProjectTitle = "Antibody Testing", ProjectGroup = "Prod_Port" }
                 ]));
 
         private void SetupWorkGroupOptions() =>
@@ -157,7 +157,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestCapabilityControllerTes
             _projectService.GetAllProjectsAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(
                 [
-                    new ProjectDto { ParentProject = DefaultPortfolio, ProjectTitle = "Antibody Testing" }
+                    new ProjectDto { ParentProject = DefaultPortfolio, ProjectTitle = "Antibody Testing", ProjectGroup = "Prod_Port" }
                 ]));
             SetupWorkGroupOptions();
 
@@ -166,6 +166,64 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestCapabilityControllerTes
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<TestCapabilityViewModel>(viewResult.Model);
             Assert.Contains("\u2013", model.PortfolioOptions.First().Text);
+        }
+
+        [Fact]
+        public async Task Index_OnlyIncludesProjectsWhoseProjectGroupEndsWithPort()
+        {
+            _projectService.GetAllProjectsAsync()
+                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                [
+                    new ProjectDto { ParentProject = "FESPROD", ProjectTitle = "Food Safety", ProjectGroup = "Prod_Port" },
+                    new ProjectDto { ParentProject = "BPUPORT", ProjectTitle = "BPU products", ProjectGroup = "Port" },
+                    new ProjectDto { ParentProject = "NOTPORT1", ProjectTitle = "Non portfolio", ProjectGroup = "Bact" },
+                    new ProjectDto { ParentProject = "NOGROUP1", ProjectTitle = "Unassigned", ProjectGroup = null },
+                    new ProjectDto { ParentProject = "BLANKGRP", ProjectTitle = "Blank group", ProjectGroup = "  " }
+                ]));
+            SetupWorkGroupOptions();
+
+            var result = await _controller.Index();
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<TestCapabilityViewModel>(viewResult.Model);
+            Assert.Equal(2, model.PortfolioOptions.Count);
+            Assert.Equal(new[] { "BPUPORT", "FESPROD" }, model.PortfolioOptions.Select(o => o.Value).ToArray());
+        }
+
+        [Fact]
+        public async Task Index_PortfolioProjectGroupMatchIsCaseInsensitive()
+        {
+            _projectService.GetAllProjectsAsync()
+                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                [
+                    new ProjectDto { ParentProject = "UPPER", ProjectTitle = "Upper", ProjectGroup = "PROD_PORT" },
+                    new ProjectDto { ParentProject = "LOWER", ProjectTitle = "Lower", ProjectGroup = "prod_port" }
+                ]));
+            SetupWorkGroupOptions();
+
+            var result = await _controller.Index();
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<TestCapabilityViewModel>(viewResult.Model);
+            Assert.Equal(2, model.PortfolioOptions.Count);
+        }
+
+        [Fact]
+        public async Task Index_NoProjectIsAPortfolio_ReturnsEmptyPortfolioOptions()
+        {
+            _projectService.GetAllProjectsAsync()
+                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                [
+                    new ProjectDto { ParentProject = "PP001", ProjectTitle = "One", ProjectGroup = "Bact" },
+                    new ProjectDto { ParentProject = "PP002", ProjectTitle = "Two", ProjectGroup = null }
+                ]));
+            SetupWorkGroupOptions();
+
+            var result = await _controller.Index();
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<TestCapabilityViewModel>(viewResult.Model);
+            Assert.Empty(model.PortfolioOptions);
         }
 
         #endregion
