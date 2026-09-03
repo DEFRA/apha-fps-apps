@@ -1015,20 +1015,48 @@
             var totalsTable = document.getElementById('tblYFDTotals');
             if (!gridTable || !totalsTable) return;
 
-            var gridHeaderCells = gridTable.querySelectorAll('thead tr.govuk-table__row > th');
+            // Only consider grid header cells that are actually rendered. The hidden
+            // "*Changed" flag columns (display:none) must be skipped so the remaining
+            // visible grid columns map 1:1 onto the totals table's <col> elements.
+            var gridHeaderCells = Array.prototype.filter.call(
+                gridTable.querySelectorAll('thead tr.govuk-table__row:not(.filter-row) > th'),
+                function (th) { return th.offsetParent !== null && th.offsetWidth > 0; });
+
             var totalsCols = totalsTable.querySelectorAll('colgroup > col');
             if (!gridHeaderCells.length || !totalsCols.length) return;
 
+            // Fixed layout makes the <col> widths authoritative; without it the browser
+            // re-distributes widths based on the totals cells' own content, which is what
+            // pushes the totals values out of alignment with the grid columns.
+            totalsTable.style.tableLayout = 'fixed';
+
             var count = Math.min(gridHeaderCells.length, totalsCols.length);
+            var widths = [];
             for (var i = 0; i < count; i++) {
                 // Use offsetWidth (integer, snapped to the browser's actual rendered
                 // column width) instead of getBoundingClientRect (fractional) to avoid
                 // cumulative sub-pixel drift across many columns.
                 var width = gridHeaderCells[i].offsetWidth;
+                widths[i] = width;
                 if (width > 0) {
                     totalsCols[i].style.width = width + 'px';
                 }
             }
+
+            // Cells that span multiple columns (e.g. the "Totals" label) must be given the
+            // combined width of the columns they cover, otherwise fixed layout mis-sizes them.
+            var colIndex = 0;
+            totalsTable.querySelectorAll('tbody tr > td').forEach(function (cell) {
+                var span = parseInt(cell.getAttribute('colspan') || '1', 10);
+                var spanWidth = 0;
+                for (var s = 0; s < span; s++) {
+                    spanWidth += widths[colIndex + s] || 0;
+                }
+                if (spanWidth > 0) {
+                    cell.style.width = spanWidth + 'px';
+                }
+                colIndex += span;
+            });
 
             // Match the totals table's overall rendered width to the grid table's
             // rendered width exactly, so both tables' columns line up pixel-for-pixel.
