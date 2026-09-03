@@ -1107,7 +1107,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.MilestoneServiceTest
         public async Task ClearStagingAsync_WithSuccessResponse_ReturnsSuccess()
         {
             // Arrange
-            const string project = "PP001";
+            
             var expected = ApiResponseDto<object>.SuccessResponse(new { success = true });
 
             _pimsMilestoneApiClient.ClearStagingAsync().Returns(expected);
@@ -1124,7 +1124,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.MilestoneServiceTest
         public async Task ClearStagingAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
-            const string project = "PP001";
+            
             var expected = ApiResponseDto<object>.FailureResponse(OneError("Server error", "SERVER_ERROR"), new ApiMetaDto());
 
             _pimsMilestoneApiClient.ClearStagingAsync().Returns(expected);
@@ -1141,7 +1141,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.MilestoneServiceTest
         public async Task ClearStagingAsync_PassesCorrectParameters()
         {
             // Arrange
-            const string project = "PP123";
+           
             var expected = ApiResponseDto<object>.SuccessResponse(new object());
 
             _pimsMilestoneApiClient.ClearStagingAsync().Returns(expected);
