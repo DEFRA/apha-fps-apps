@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -28,6 +29,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? WgGrade { get; set; }
 
         [Display(Name = "Avail Hrs")]
+        [NonFinancialRange]
         [GridColumn(Order = 4, Width = 85, Type = GridColumnType.DoubleNumber)]
         public double? AvHrs { get; set; }
 
@@ -38,6 +40,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         // ── Total Planned Time group ────────────────────────────────────────
 
         [Display(Name = "PlanHrs")]
+        [NonFinancialRange]
         [GridColumn(Order = 6, Width = 85, Type = GridColumnType.DoubleNumber)]
         public double? Hrs { get; set; }
 
@@ -47,6 +50,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "% Planned")]
         [GridColumn(IsVisible = false)]
+        [NonFinancialRange]
         public double? PctPlanned { get; set; }
 
         /// <summary>
@@ -59,6 +63,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         // ── Assured Planned Time group ──────────────────────────────────────
 
         [Display(Name = "PlanHrs")]
+        [NonFinancialRange]
         [GridColumn(Order = 9, Width = 85, Type = GridColumnType.DoubleNumber)]
         public double? AppHours { get; set; }
 
@@ -68,6 +73,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "% Planned")]
         [GridColumn(IsVisible = false)]
+        [NonFinancialRange]
         public double? PctAssuredPlanned { get; set; }
 
         [Display(Name = "% Planned")]

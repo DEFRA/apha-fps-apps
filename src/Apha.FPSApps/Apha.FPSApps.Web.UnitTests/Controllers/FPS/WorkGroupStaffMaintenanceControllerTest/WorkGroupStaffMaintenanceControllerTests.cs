@@ -1,3 +1,4 @@
+using Apha.FPSApps.Application.Common;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -8,6 +9,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceControllerTest
@@ -341,6 +343,124 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
             Assert.NotNull(value);
             Assert.False(value!.success);
             Assert.Equal("Please correct the errors below.", value.message);
+        }
+
+        [Theory]
+        [InlineData(StaffStatus.Active)]
+        [InlineData(StaffStatus.Inactive)]
+        public void WorkGroupEmployeeStaffDto_WithAllowedPersonStatus_PassesValidation(string personStatus)
+        {
+            var dto = ValidStaffDto(personStatus);
+
+            var results = Validate(dto);
+
+            Assert.DoesNotContain(results, r => r.MemberNames.Contains(nameof(WorkGroupEmployeeStaffDto.PersonStatus)));
+        }
+
+        [Theory]
+        [InlineData("X")]
+        [InlineData("a")]
+        [InlineData("Active")]
+        [InlineData("")]
+        public void WorkGroupEmployeeStaffDto_WithDisallowedPersonStatus_FailsValidation(string personStatus)
+        {
+            var dto = ValidStaffDto(personStatus);
+
+            var results = Validate(dto);
+
+            Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkGroupEmployeeStaffDto.PersonStatus)));
+        }
+
+        [Theory]
+        [InlineData(StaffStatus.Active)]
+        [InlineData(StaffStatus.Inactive)]
+        public void WorkGroupEmployeeStaffItem_WithAllowedPersonStatus_PassesValidation(string personStatus)
+        {
+            var item = new WorkGroupEmployeeStaffItem
+            {
+                PactId = "P001",
+                SpNumber = "SP001",
+                Name = "Alice",
+                WorkGroupGrade = "WG-A",
+                PersonStatus = personStatus
+            };
+
+            var results = Validate(item);
+
+            Assert.DoesNotContain(results, r => r.MemberNames.Contains(nameof(WorkGroupEmployeeStaffItem.PersonStatus)));
+        }
+
+        [Fact]
+        public void WorkGroupEmployeeStaffItem_WithDisallowedPersonStatus_FailsValidation()
+        {
+            var item = new WorkGroupEmployeeStaffItem
+            {
+                PactId = "P001",
+                SpNumber = "SP001",
+                Name = "Alice",
+                WorkGroupGrade = "WG-A",
+                PersonStatus = "X"
+            };
+
+            var results = Validate(item);
+
+            Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkGroupEmployeeStaffItem.PersonStatus)));
+        }
+
+        [Fact]
+        public async Task Create_Post_WithInvalidPersonStatus_ReturnsValidationJson_AndDoesNotCallService()
+        {
+            var dto = ValidStaffDto("X");
+            _controller.ModelState.AddModelError(nameof(WorkGroupEmployeeStaffDto.PersonStatus), "Status must be either A or I");
+
+            var result = await _controller.Create(dto);
+
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value!.success);
+            Assert.Equal("Please correct the errors below.", value.message);
+            await _workGroupEmployeeService.DidNotReceive()
+                .CreateWorkGroupEmployeeForStaffAsync(Arg.Any<WorkGroupEmployeeStaffDto>());
+        }
+
+        [Fact]
+        public async Task Edit_Post_WithInvalidPersonStatus_ReturnsValidationJson_AndDoesNotCallService()
+        {
+            var dto = ValidStaffDto("X");
+            _controller.ModelState.AddModelError(nameof(WorkGroupEmployeeStaffDto.PersonStatus), "Status must be either A or I");
+
+            var result = await _controller.Edit(dto);
+
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value!.success);
+            Assert.Equal("Please correct the errors below.", value.message);
+            await _workGroupEmployeeService.DidNotReceive()
+                .UpdateWorkGroupEmployeeForStaffAsync(Arg.Any<WorkGroupEmployeeStaffDto>());
+        }
+
+        private static WorkGroupEmployeeStaffDto ValidStaffDto(string personStatus) => new()
+        {
+            PactId = "P001",
+            SpNumber = "SP001",
+            WorkGroupGrade = "WG-A",
+            Name = "Alice",
+            PersonStatus = personStatus,
+            HrsPaid = 37,
+            Leave = 0,
+            SickSpecial = 0,
+            HrsAvail = 37,
+            MakeAvailable = 1,
+            TimeRecorder = 0
+        };
+
+        private static List<ValidationResult> Validate(object instance)
+        {
+            var results = new List<ValidationResult>();
+            Validator.TryValidateObject(instance, new ValidationContext(instance), results, validateAllProperties: true);
+            return results;
         }
 
         [Fact]
