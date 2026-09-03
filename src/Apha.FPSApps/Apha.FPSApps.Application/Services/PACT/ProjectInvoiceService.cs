@@ -158,7 +158,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             if (headerMap.TryGetValue(normalizedIdHeader, out var idCol))
             {
                 var idText = _excelImportService.GetText(row.Cell(idCol));
-                int.TryParse(idText, out stagingId);
+                _ = int.TryParse(idText, out stagingId);
             }
 
             return new InvoiceImportRowDto

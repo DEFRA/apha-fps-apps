@@ -588,7 +588,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
 
         #region ImportInvoiceAsync Tests
 
-        private IFormFile CreateMockFormFile(string fileName = "test.xlsx")
+        private static IFormFile CreateMockFormFile(string fileName = "test.xlsx")
         {
             using var workbook = new XLWorkbook();
             var ws = workbook.Worksheets.Add("Sheet1");

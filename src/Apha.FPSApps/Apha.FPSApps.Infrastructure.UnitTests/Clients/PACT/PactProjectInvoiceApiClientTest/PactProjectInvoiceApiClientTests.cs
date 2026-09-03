@@ -630,7 +630,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             {
                 Success = false,
                 Errors = [new ApiErrorDto { Message = "Error" }],
-                Meta = null
+                Meta = null!
             };
 
             _http.GetAsync<List<InvoiceImportRowRes>>(Arg.Any<string>()).Returns(apiResponse);
@@ -711,7 +711,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             {
                 Success = false,
                 Errors = [new ApiErrorDto { Message = "Error" }],
-                Meta = null
+                Meta = null!
             };
 
             _http.GetAsync<InvoiceImportRowRes>(Arg.Any<string>()).Returns(apiResponse);
@@ -803,7 +803,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             {
                 Success = false,
                 Errors = [new ApiErrorDto { Message = "Error" }],
-                Meta = null
+                Meta = null!
             };
 
             _mapper.Map<InvoiceImportRowReq>(dto).Returns(req);
@@ -835,7 +835,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
 
             // Assert
             await _http.Received(1).PutAsync<InvoiceImportRowReq, bool?>(
-                Arg.Is<string>(url => url.Contains("7")), Arg.Any<InvoiceImportRowReq>());
+                Arg.Is<string>(url => url.Contains('7')), Arg.Any<InvoiceImportRowReq>());
         }
 
         #endregion
@@ -891,7 +891,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             {
                 Success = false,
                 Errors = [new ApiErrorDto { Message = "Error" }],
-                Meta = null
+                Meta = null!
             };
 
             _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
@@ -994,7 +994,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             {
                 Success = false,
                 Errors = [new ApiErrorDto { Message = "Error" }],
-                Meta = null
+                Meta = null!
             };
 
             _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
@@ -1083,7 +1083,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             {
                 Success = false,
                 Errors = [new ApiErrorDto { Message = "Error" }],
-                Meta = null
+                Meta = null!
             };
 
             _mapper.Map<InvoiceImportReq>(requestDto).Returns(req);

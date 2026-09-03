@@ -601,7 +601,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectInvoiceSubContractC
             _mapper.Map<ProjectInvoiceDto>(model).Returns(dto);
             _invoiceService.CreateAsync(dto)
                 .Returns(ApiResponseDto<ProjectInvoiceDto>.FailureResponse(
-                    [new ApiErrorDto { Code = null, Message = null }],
+                    [new ApiErrorDto { Code = null!, Message = null! }],
                     new ApiMetaDto()));
 
             // Act
@@ -880,7 +880,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectInvoiceSubContractC
             _mapper.Map<ProjectSubContractDto>(model).Returns(dto);
             _subContractService.CreateAsync(dto)
                 .Returns(ApiResponseDto<ProjectSubContractDto>.FailureResponse(
-                    [new ApiErrorDto { Code = null, Message = null }],
+                    [new ApiErrorDto { Code = null!, Message = null! }],
                     new ApiMetaDto()));
 
             // Act
