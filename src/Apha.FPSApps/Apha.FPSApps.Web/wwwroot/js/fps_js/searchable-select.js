@@ -16,7 +16,7 @@
  *   // enhanced automatically on DOMContentLoaded.
  *   <select id="programSelect" data-searchable-select>...</select>
  *
- * Requires: /css/common/searchable-select.css
+ * Requires: /css/fps_styles/searchable-select.css
  */
 (function (window, document) {
     'use strict';
