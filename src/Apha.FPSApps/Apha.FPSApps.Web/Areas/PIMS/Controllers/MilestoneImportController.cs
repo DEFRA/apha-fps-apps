@@ -41,10 +41,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 .Select(p => new SelectListItem(p.Parentproject, p.Parentproject))
                 .ToList() ?? [];
 
-            string selectedProject = project ?? viewModel.ProjectOptions.FirstOrDefault()?.Value ?? string.Empty;
-            viewModel.Parentproject = selectedProject;         
-                      
-            var matchedProject = allProjects.Data?.FirstOrDefault(p => p.Parentproject == project);
+            string selectedProject = string.IsNullOrWhiteSpace(project) ? string.Empty : project;
+            viewModel.Parentproject = selectedProject;
+
+            var matchedProject = allProjects.Data?.FirstOrDefault(p => p.Parentproject == selectedProject);
 
             PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
             viewModel.TypeLookUp = matchedProject?.Program?.EndsWith("surv", StringComparison.OrdinalIgnoreCase) == true ? 'D' : 'M';
@@ -237,9 +237,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> ClearImport([FromQuery] string project)
+        public async Task<IActionResult> ClearImport([FromQuery] string? project)
         {
-            var result = await _milestoneService.ClearStagingAsync(project);
+            var result = await _milestoneService.ClearStagingAsync();
             if (!result.Success)
                 return Json(new { success = false, errors = result.Errors });
 

@@ -1,0 +1,87 @@
+/**
+ * Searchable Select Component Styles
+ * Version: 1.0
+ *
+ * Styles for the reusable type-and-search combo box that progressively enhances
+ * a standard <select> element (see /js/common/searchable-select.js).
+ *
+ * Reusable across the FPS application - do not add page specific rules here.
+ */
+
+/* Wrapper injected around the original <select> */
+.fps-searchable-select {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+    /* The original select stays in the DOM (form posts / existing JS keep working)
+       but is hidden once the component has enhanced it. */
+    .fps-searchable-select select.fps-searchable-select__source {
+        display: none;
+    }
+
+/* Text box the user types into */
+.fps-searchable-select__input {
+    width: 100%;
+    padding-right: 30px;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%230b0c0c' d='M1 3.5 6 8.5 11 3.5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px 12px;
+    cursor: text;
+}
+
+    .fps-searchable-select__input:disabled {
+        cursor: not-allowed;
+        background-color: #f3f2f1;
+    }
+
+/* Drop down panel holding the filtered options */
+.fps-searchable-select__panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #aaa;
+    border-top: none;
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 9999;
+    display: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.fps-searchable-select--open .fps-searchable-select__panel {
+    display: block;
+}
+
+/* Individual option rows */
+.fps-searchable-select__option {
+    padding: 6px 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+    .fps-searchable-select__option:hover,
+    .fps-searchable-select__option.fps-searchable-select__option--active {
+        background-color: #f3f2f1;
+    }
+
+    .fps-searchable-select__option.fps-searchable-select__option--selected {
+        background-color: var(--tint-80, #d8dde0);
+        font-weight: bold;
+    }
+
+/* Shown when the typed text matches no options */
+.fps-searchable-select__empty {
+    padding: 6px 8px;
+    color: #505a5f;
+    cursor: default;
+}
