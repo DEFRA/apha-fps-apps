@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -73,6 +74,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal Overhead { get; set; }
 
         [Display(Name = "Time")]
+        [NonFinancialRange]
         [GridColumn(Width = 90, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public decimal Time { get; set; }
 
