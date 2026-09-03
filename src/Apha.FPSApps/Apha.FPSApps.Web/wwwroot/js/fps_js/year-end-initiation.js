@@ -126,7 +126,7 @@
 
         var row         = $(btn).closest('tr')[0];
         var id          = getCellValue(row, 'Id');
-        var value       = getCellValue(row, 'Value') || '';
+        var value       = getCellValue(row, 'Setting') || '';
         var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
         var fpsyear = getCellValue(row, 'FpsYear');
  
