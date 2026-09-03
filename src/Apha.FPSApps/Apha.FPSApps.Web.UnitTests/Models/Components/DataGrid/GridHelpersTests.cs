@@ -91,84 +91,12 @@ namespace Apha.FPSApps.Web.UnitTests.Models.Components.DataGrid
             Assert.Null(GridHelpers.GetPropertyValue(row, "Missing"));
         }
 
-        private static DataGridColumn AccountingColumn() =>
-            new() { PropertyName = "OffTarget", ColumnType = GridColumnType.GbpValueRoundedAccounting };
-
-        [Theory]
-        [InlineData(-2569, "-(£2,569)")]
-        [InlineData(-0.6, "-(£1)")]
-        [InlineData(0, "£0")]
-        [InlineData(214, "£214")]
-        [InlineData(1234567, "£1,234,567")]
-        public void FormatValue_Accounting_WrapsNegativesInBrackets(decimal value, string expected)
-        {
-            Assert.Equal(expected, GridHelpers.FormatValue(value, AccountingColumn()));
-        }
-
         [Fact]
-        public void FormatValue_Accounting_HandlesDoubleValues()
-        {
-            Assert.Equal("-(£2,569)", GridHelpers.FormatValue(-2568.7d, AccountingColumn()));
-        }
-
-        [Fact]
-        public void FormatValue_Accounting_ReturnsEmpty_ForNull()
-        {
-            Assert.Equal(string.Empty, GridHelpers.FormatValue(null, AccountingColumn()));
-        }
-
-        [Fact]
-        public void FormatValue_GbpValueRounded_StillUsesMinusSign()
+        public void FormatValue_GbpValueRounded_UsesMinusSign()
         {
             var column = new DataGridColumn { PropertyName = "Profit", ColumnType = GridColumnType.GbpValueRounded };
 
             Assert.Equal("-£2,569", GridHelpers.FormatValue(-2569m, column));
-        }
-
-        [Theory]
-        [InlineData(-2569)]
-        [InlineData(-1)]
-        public void GetValueCssClass_ReturnsNegativeClass_ForNegativeAccountingValues(decimal value)
-        {
-            Assert.Equal("grid-negative-value", GridHelpers.GetValueCssClass(value, AccountingColumn()));
-        }
-
-        [Theory]
-        [InlineData(0)]
-        [InlineData(214)]
-        public void GetValueCssClass_ReturnsEmpty_ForNonNegativeAccountingValues(decimal value)
-        {
-            Assert.Equal(string.Empty, GridHelpers.GetValueCssClass(value, AccountingColumn()));
-        }
-
-        [Fact]
-        public void GetValueCssClass_HandlesNonDecimalNegativeValues()
-        {
-            Assert.Equal("grid-negative-value", GridHelpers.GetValueCssClass(-5d, AccountingColumn()));
-            Assert.Equal("grid-negative-value", GridHelpers.GetValueCssClass(-5, AccountingColumn()));
-            Assert.Equal("grid-negative-value", GridHelpers.GetValueCssClass("-5", AccountingColumn()));
-            Assert.Equal(string.Empty, GridHelpers.GetValueCssClass("not-a-number", AccountingColumn()));
-        }
-
-        [Fact]
-        public void GetValueCssClass_ReturnsEmpty_ForNullValue()
-        {
-            Assert.Equal(string.Empty, GridHelpers.GetValueCssClass(null, AccountingColumn()));
-        }
-
-        [Fact]
-        public void GetValueCssClass_ReturnsEmpty_ForOtherColumnTypes()
-        {
-            var column = new DataGridColumn { PropertyName = "Profit", ColumnType = GridColumnType.GbpValueRounded };
-
-            Assert.Equal(string.Empty, GridHelpers.GetValueCssClass(-2569m, column));
-        }
-
-        [Fact]
-        public void IsNumericColumn_TreatsAccountingColumnAsNumeric()
-        {
-            Assert.True(GridHelpers.IsNumericColumn(GridColumnType.GbpValueRoundedAccounting));
-            Assert.Equal("govuk-table__cell--numeric", GridHelpers.GetAlignmentCssClass(AccountingColumn()));
         }
     }
 }

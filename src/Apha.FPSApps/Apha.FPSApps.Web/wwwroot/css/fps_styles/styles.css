@@ -3082,15 +3082,6 @@ table.custom-table th {
     font-weight: 400 !important;
 }
 
-/* Accounting-formatted grid values: negatives display in red, matching MS Access. */
-.grid-negative-value {
-    color: #d4351c !important;
-}
-
-/* Project Profitability for VLA: Off Target uses the default grid text colour
-   (no blue for positives, no red/brackets for negatives). Negatives are shown
-   with a leading minus sign only. */
-
 .ac-table-checkboxes .govuk-checkboxes__item {
     margin: 0;
 }

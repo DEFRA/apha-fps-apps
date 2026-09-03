@@ -268,14 +268,14 @@
                                             {
                                                 <span name="@column.PropertyName"
                                                       id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")"
-                                                      class="@GridHelpers.GetTypeCssClass(column) @column.CssClass @GridHelpers.GetValueCssClass(value, column)"
+                                                      class="@GridHelpers.GetTypeCssClass(column) @column.CssClass"
                                                       title="@GridHelpers.FormatValue(value, column)">@GridHelpers.FormatValue(value, column)</span>
                                             }
                                             else
                                             {
                                                 <span name="@column.PropertyName"
                                                       id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")"
-                                                      class="@GridHelpers.GetTypeCssClass(column) @column.CssClass @GridHelpers.GetValueCssClass(value, column)">@GridHelpers.FormatValue(value, column)</span>
+                                                      class="@GridHelpers.GetTypeCssClass(column) @column.CssClass">@GridHelpers.FormatValue(value, column)</span>
                                             }
                                         </td>
                                     }
@@ -284,7 +284,7 @@
                             <!-- Edit / Delete / View Buttons -->
                             @if (Model.AllowEdit || Model.AllowDelete || Model.AllowCopy || Model.AllowView)
                             {
-                                <td class="govuk-table__cell">
+                                <td class="govuk-table__cell isNoWrap">
                                     @if (Model.AllowEdit)
                                     {
                                         <button type="button"
