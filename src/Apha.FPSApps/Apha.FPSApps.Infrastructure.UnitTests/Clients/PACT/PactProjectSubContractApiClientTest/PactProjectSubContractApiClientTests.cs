@@ -1065,6 +1065,27 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
         }
 
         [Fact]
+        public async Task DeleteFailedSubContractRmsByUserAsync_SuccessWithDataFalse_AddsNoRecordsMessage()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = false };
+            var mappedSuccess = ApiResponseDto<bool>.SuccessResponse(false);
+
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedSuccess);
+
+            // Act
+            var result = await _client.DeleteFailedSubContractRmsByUserAsync();
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.False(result.Data);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors!);
+            Assert.Equal("No failed imported records found to delete.", result.Errors[0].Message);
+        }
+
+        [Fact]
         public async Task DeleteFailedSubContractRmsByUserAsync_ApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange

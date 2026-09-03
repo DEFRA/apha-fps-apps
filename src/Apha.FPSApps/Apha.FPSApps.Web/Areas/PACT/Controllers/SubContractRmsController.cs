@@ -269,10 +269,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> DeleteAllFailedSubContractRms()
         {
             var result = await _subContractService.DeleteFailedSubContractRmsByUserAsync();
-            if (result.Success)
-                return Json(new { success = result.Data });
-
-            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete records." });
+            return Json(new
+            {
+                success = result.Success && result.Data,
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete records."
+            });
         }
 
         [HttpGet]

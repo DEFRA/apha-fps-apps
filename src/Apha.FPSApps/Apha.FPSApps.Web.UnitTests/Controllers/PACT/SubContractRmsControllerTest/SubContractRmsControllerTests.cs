@@ -278,6 +278,45 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractRmsControllerTe
         }
 
         [Fact]
+        public async Task DeleteAllFailedSubContractRms_WhenServiceSucceedsWithDataTrue_ReturnsSuccessJson()
+        {
+            // Arrange
+            _subContractService.DeleteFailedSubContractRmsByUserAsync()
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.DeleteAllFailedSubContractRms();
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(json);
+            Assert.True(value.GetProperty("success").GetBoolean());
+            Assert.Equal("Failed to delete records.", value.GetProperty("message").GetString());
+        }
+
+        [Fact]
+        public async Task DeleteAllFailedSubContractRms_WhenServiceSucceedsWithDataFalseAndMessage_ReturnsFailureJsonWithMessage()
+        {
+            // Arrange
+            _subContractService.DeleteFailedSubContractRmsByUserAsync()
+                .Returns(new ApiResponseDto<bool>
+                {
+                    Success = true,
+                    Data = false,
+                    Errors = [new ApiErrorDto { Message = "No failed imported records found to delete." }]
+                });
+
+            // Act
+            var result = await _controller.DeleteAllFailedSubContractRms();
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(json);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("No failed imported records found to delete.", value.GetProperty("message").GetString());
+        }
+
+        [Fact]
         public async Task DeleteAllFailedSubContractRms_WhenServiceFails_ReturnsFailureJson()
         {
             // Arrange
