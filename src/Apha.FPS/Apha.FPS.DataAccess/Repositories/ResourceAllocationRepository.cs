@@ -181,7 +181,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     g.Key.Name,
                     g.Key.HrsAvail,
                     AppPlannedHours = g.Sum(x =>
-                        x.proj.ParentProject != null && x.sj.JobCode != null
+                        x.proj != null && x.proj.ProjectStatus != null &&
+                        EF.Functions.ILike(x.proj.ProjectStatus, "approved")
                             ? x.sj.PlannedHours
                             : 0.0),
                     PlannedHours = g.Sum(x =>
