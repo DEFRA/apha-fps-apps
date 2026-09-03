@@ -479,7 +479,16 @@
         if (method === 'POST') {
             var body = new URLSearchParams();
             data = data || {};
-            Object.keys(data).forEach(function (k) { body.append(k, data[k]); });
+            Object.keys(data).forEach(function (k) {
+                var value = data[k];
+
+                if (value === null || value === undefined) {
+                    return;
+                }
+
+                body.append(k, value);
+            });
+
             fetchOptions.headers = { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' };
             fetchOptions.body = body.toString();
         }

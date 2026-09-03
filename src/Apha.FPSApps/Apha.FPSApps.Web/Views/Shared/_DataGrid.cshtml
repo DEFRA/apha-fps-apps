@@ -18,13 +18,13 @@
             <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading " aria-label="@Model.Title || Datagrid Title">
                 <div class="sup_flex_space_between">
                         @Model.Title
-                        <div style="margin-left:auto;">
+                        <div style="margin-left:auto; display:flex; justify-content:flex-end; align-items:center;">
                             @if (Model.AllowExport)
                             {
                                 <button type="button" class="grid-excel-export-btn sup_margin_0"
                                         id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl" allow-edit ="true"
                                         title="Excel Export" aria-label="Excel Export">
-                                    <img class="excel-icon" src="~/images/excel-export-icon.png" alt="" aria-hidden="true" />
+                                    <img class="excel-icon" src="~/images/excel-svgrepo-com.svg" alt="" aria-hidden="true" />
                                 </button>
                             }
                             @if (Model.AllowExcelExport)
@@ -40,7 +40,7 @@
                                 <button type="button" class="grid-excel-export-btn sup_margin_0"
                                         id="@($"{Model.GridId}_excelExportBtn")" data-excel-export-url="@excelExportUrl" data-excel-file-name="@excelExportFileName"
                                         title="Excel Export" aria-label="Excel Export">
-                                    <img class="excel-icon" src="~/images/excel-export-icon.png" alt="" aria-hidden="true" />
+                                    <img class="excel-icon" src="~/images/excel-svgrepo-com.svg" alt="" aria-hidden="true" />
                                 </button>
                             }
                             @if (Model.AllowAdd)
