@@ -36,7 +36,7 @@ namespace Apha.PIMS.Core.Interfaces
         Task<StagingMilestone> AddStagingRowAsync(StagingMilestone entity, string? createdBy = null);
         Task<StagingMilestone> UpdateStagingRowAsync(StagingMilestone entity, string? createdBy = null);
         Task<bool> DeleteStagingRowAsync(int id, string? createdBy = null);
-        Task<int> ClearStagingAsync(string project, string? createdBy = null);
+        Task<int> ClearStagingAsync(string? createdBy = null);
         Task ValidateStagingAsync(string project, string? typeId, bool isDeliverableMode, string? createdBy = null);
         Task<int> ImportStagingAsync(string project, string? changedBy = null, string? createdBy = null);
         Task<int> ImportWithOverwriteAsync(string project, string? changedBy = null, string? createdBy = null);

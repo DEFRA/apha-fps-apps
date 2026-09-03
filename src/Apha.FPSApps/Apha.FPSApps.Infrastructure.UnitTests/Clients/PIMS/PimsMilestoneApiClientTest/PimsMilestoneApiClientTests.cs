@@ -1649,7 +1649,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
             _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.ClearStagingAsync(project);
+            var result = await _client.ClearStagingAsync();
 
             // Assert
             Assert.True(result.Success);
@@ -1675,7 +1675,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
             _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.ClearStagingAsync(project);
+            var result = await _client.ClearStagingAsync();
 
             // Assert
             Assert.False(result.Success);

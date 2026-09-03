@@ -1110,14 +1110,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.MilestoneServiceTest
             const string project = "PP001";
             var expected = ApiResponseDto<object>.SuccessResponse(new { success = true });
 
-            _pimsMilestoneApiClient.ClearStagingAsync(project).Returns(expected);
+            _pimsMilestoneApiClient.ClearStagingAsync().Returns(expected);
 
             // Act
-            var result = await _sut.ClearStagingAsync(project);
+            var result = await _sut.ClearStagingAsync();
 
             // Assert
             Assert.True(result.Success);
-            await _pimsMilestoneApiClient.Received(1).ClearStagingAsync(project);
+            await _pimsMilestoneApiClient.Received(1).ClearStagingAsync();
         }
 
         [Fact]
@@ -1127,10 +1127,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.MilestoneServiceTest
             const string project = "PP001";
             var expected = ApiResponseDto<object>.FailureResponse(OneError("Server error", "SERVER_ERROR"), new ApiMetaDto());
 
-            _pimsMilestoneApiClient.ClearStagingAsync(project).Returns(expected);
+            _pimsMilestoneApiClient.ClearStagingAsync().Returns(expected);
 
             // Act
-            var result = await _sut.ClearStagingAsync(project);
+            var result = await _sut.ClearStagingAsync();
 
             // Assert
             Assert.False(result.Success);
@@ -1144,13 +1144,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.MilestoneServiceTest
             const string project = "PP123";
             var expected = ApiResponseDto<object>.SuccessResponse(new object());
 
-            _pimsMilestoneApiClient.ClearStagingAsync(project).Returns(expected);
+            _pimsMilestoneApiClient.ClearStagingAsync().Returns(expected);
 
             // Act
-            await _sut.ClearStagingAsync(project);
+            await _sut.ClearStagingAsync();
 
             // Assert
-            await _pimsMilestoneApiClient.Received(1).ClearStagingAsync(Arg.Is<string>(p => p == project));
+            await _pimsMilestoneApiClient.Received(1).ClearStagingAsync();
         }
 
         #endregion
