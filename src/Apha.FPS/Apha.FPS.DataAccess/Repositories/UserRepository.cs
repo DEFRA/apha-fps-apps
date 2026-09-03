@@ -316,9 +316,13 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<string>> GetAllCategoryOptionsAsync()
         {
-            return await _dbContext.Categories
+            var currentUserId = await GetCurrentUserIdAsync();
+
+            return await _dbContext.UserCategories
+                .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Select(c => c.CategoryName)
+                .Where(x => x.UserId == currentUserId && x.FpsYear == _requestContext.FpsYear)
+                .Select(x => x.Category)
                 .Distinct()
                 .OrderBy(c => c)
                 .ToListAsync();
@@ -338,10 +342,13 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<string>> GetAllProjectGroupOptionsAsync()
         {
-            return await _dbContext.ProjectGroups
+            var currentUserId = await GetCurrentUserIdAsync();
+
+            return await _dbContext.UserProjectGroups
+                .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(p => p.FpsYear == _requestContext.FpsYear)
-                .Select(pg => pg.ProjectGroupName)
+                .Where(x => x.UserId == currentUserId && x.FpsYear == _requestContext.FpsYear)
+                .Select(x => x.ProjectGroup)
                 .Distinct()
                 .OrderBy(pg => pg)
                 .ToListAsync();

@@ -46,12 +46,11 @@
         <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group sup_margin_bottom_10">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="HrsPaid">Hrs Paid</label>
-                <input class="govuk-input govuk-!-font-size-16"
+                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                        asp-for="HrsPaid"
                        id="ssrEditHrsPaid"
-                       type="number"
-                       min="0"
-                       step="0.01" />
+                       type="text"
+                       maxlength="20" />
                 <span asp-validation-for="HrsPaid" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
@@ -60,24 +59,22 @@
         <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group sup_margin_bottom_10">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Leave">Leave</label>
-                <input class="govuk-input govuk-!-font-size-16"
+                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                        asp-for="Leave"
                        id="ssrEditLeave"
-                       type="number"
-                       min="0"
-                       step="0.01" />
+                       type="text"
+                       maxlength="20" />
                 <span asp-validation-for="Leave" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
         <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group sup_margin_bottom_10">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="SickSpecial">Sick Sp</label>
-                <input class="govuk-input govuk-!-font-size-16"
+                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                        asp-for="SickSpecial"
                        id="ssrEditSickSp"
-                       type="number"
-                       min="0"
-                       step="0.01" />
+                       type="text"
+                       maxlength="20" />
                 <span asp-validation-for="SickSpecial" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
@@ -86,12 +83,11 @@
         <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group sup_margin_bottom_10">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="HrsAvail">At Work</label>
-                <input class="govuk-input govuk-!-font-size-16"
+                <input class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
                        asp-for="HrsAvail"
                        id="ssrEditAtWork"
-                       type="number"
-                       min="0"
-                       step="0.01"
+                       type="text"
+                       maxlength="20"
                        readonly />
             </div>
         </div>

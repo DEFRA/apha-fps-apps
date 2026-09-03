@@ -34,13 +34,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
        
         [Display(Name = "Hrs")]
         [Range(0, int.MaxValue, ErrorMessage = "Hours must be 0 or greater")]
-        [GridColumn(Width = 69, Type = GridColumnType.Number, IsFilterable = false)]
+        [GridColumn(Width = 69, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double PlannedHours { get; set; } 
         
         
         [Display(Name = "Days")]
         [Range(0, double.MaxValue, ErrorMessage = "Days must be 0 or greater")]
-        [DisplayFormat(DataFormatString = "{0:F2}", ApplyFormatInEditMode = true)]
+        [DisplayFormat(DataFormatString = "{0:0.####}", ApplyFormatInEditMode = true)]
         [GridColumn(Width = 81, Type = GridColumnType.DecimalNumber)]
         public decimal Days { get; set; }
         

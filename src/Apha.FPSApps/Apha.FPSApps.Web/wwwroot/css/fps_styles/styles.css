@@ -2908,6 +2908,48 @@ table.custom-table th {
     align-items: flex-end;
 }
 
+/* Overlay the "Selected project" controls onto the grid's own title bar so they
+   sit on the same line as the grid header and stay inside the grid border. */
+.ppf-grid-with-header-controls {
+    position: relative;
+}
+
+.ppf-grid-with-header-controls .editable-grid-container > .sup_border_bottom_0 > h2.sup_align_heading {
+    min-height: 50px;
+    padding-right: 10px;
+}
+
+.project-code-section.ppf-header-project-controls {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+    height: 50px;
+    padding: 0 10px;
+    background: transparent;
+    border-radius: 0;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.project-code-section.ppf-header-project-controls .govuk-input {
+    width: 160px;
+    height: 30px;
+    margin-bottom: 0;
+    padding: 2px 5px;
+}
+
+.project-code-section.ppf-header-project-controls .govuk-button {
+    margin-bottom: 0;
+    padding: 3px 10px;
+    white-space: nowrap;
+}
+
+.project-code-section.ppf-header-project-controls label {
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
 /* Right-align the Programme Target / Surplus-Shortfall block.
    Specificity note: this element also carries .summary-row and
    .pva-inline-summary. `.summary-row { margin: 20px 0 }` in main_style.css
@@ -5804,4 +5846,19 @@ input.govuk-input.ssr-total-input[readonly] {
     .modal-title{
         font-size: 19px;
     }
+}
+.sup_pagination_wrapper {
+    * {
+        font-size: 16px !important;
+    }
+}
+.govuk-pagination__list,
+.sup_pagination_wrapper {
+    * {
+        font-size: 16px !important;
+    }
+}
+
+.govuk-checkboxes--small .govuk-checkboxes__item {
+    padding-bottom: 0 !important;
 }
