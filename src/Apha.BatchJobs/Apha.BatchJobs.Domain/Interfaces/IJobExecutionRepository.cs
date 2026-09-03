@@ -20,13 +20,15 @@ public interface IJobExecutionRepository
     Task<JobExecutionRecord?> GetLastExecutionAsync(string jobName, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the most recent execution record for a given job scoped to a specific FPS year.
-    /// Used by Year End Cutover to confirm the latest YearEndDataSetup run for the target
-    /// year actually completed before allowing cutover to proceed (spec Section 20.1).
+    /// Gets the most recent execution record for a given job scoped to a specific target FPS year.
+    /// Used by Year End Cutover to confirm the latest YearEndDataSetup run for the target year actually
+    /// completed before allowing cutover to proceed (spec Section 20.1). Filters on
+    /// fps.job_queue.target_fpsyear, not fpsyear — a Data Setup request's own fpsyear is the
+    /// current/open year it was initiated from, not the year it's setting up.
     /// </summary>
     /// <param name="jobName">The name of the job.</param>
-    /// <param name="fpsYear">The FPS year to scope the lookup to.</param>
-    Task<JobExecutionRecord?> GetLastExecutionByFpsYearAsync(string jobName, int fpsYear, CancellationToken cancellationToken = default);
+    /// <param name="targetFpsYear">The target FPS year to scope the lookup to.</param>
+    Task<JobExecutionRecord?> GetLastExecutionByTargetFpsYearAsync(string jobName, int targetFpsYear, CancellationToken cancellationToken = default);
 
     /// <summary>Gets an execution record by its external execution identifier.</summary>
     /// <param name="jobExecutionId">External job execution id.</param>

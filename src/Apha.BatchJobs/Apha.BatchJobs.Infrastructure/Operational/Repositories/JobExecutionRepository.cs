@@ -234,7 +234,7 @@ public class JobExecutionRepository : IJobExecutionRepository
     }
 
     /// <inheritdoc />
-    public async Task<JobExecutionRecord?> GetLastExecutionByFpsYearAsync(string jobName, int fpsYear, CancellationToken cancellationToken = default)
+    public async Task<JobExecutionRecord?> GetLastExecutionByTargetFpsYearAsync(string jobName, int targetFpsYear, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(jobName))
             throw new ArgumentException("Job name cannot be null or empty.", nameof(jobName));
@@ -243,7 +243,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             from q in _context.TblJobQueue
             join m in _context.TblJobMaster on q.JobId equals m.JobId
             join s in _context.TblJobStatus on q.StatusId equals s.StatusId
-            where m.JobName == jobName && q.FpsYear == fpsYear
+            where m.JobName == jobName && q.TargetFpsYear == targetFpsYear
             orderby q.StartDateTime descending
             select new
             {

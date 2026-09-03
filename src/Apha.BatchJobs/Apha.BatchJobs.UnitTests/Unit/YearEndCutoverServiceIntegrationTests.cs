@@ -1,6 +1,7 @@
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 using Apha.BatchJobs.Domain.Constants;
+using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Operational.Repositories;
 using Apha.BatchJobs.Infrastructure.YearEnd.Repositories;
@@ -76,7 +77,7 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
 
         await SeedYearAsync(currentYear, "Open", active: true);
         await SeedYearAsync(targetYear, "Planned", active: true);
-        await SeedCompletedDataSetupExecutionAsync(targetYear, dataSetupJobQueueId);
+        await SeedCompletedDataSetupExecutionAsync(currentYear, targetYear, dataSetupJobQueueId);
 
         try
         {
@@ -136,8 +137,8 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
         // alone would wrongly let this through if the query weren't order-sensitive.
         var olderCompletedJobQueueId = Guid.NewGuid();
         var newerFailedJobQueueId = Guid.NewGuid();
-        await SeedDataSetupExecutionAsync(targetYear, olderCompletedJobQueueId, "Completed", DateTime.UtcNow.AddHours(-1));
-        await SeedDataSetupExecutionAsync(targetYear, newerFailedJobQueueId, "Failed", DateTime.UtcNow);
+        await SeedDataSetupExecutionAsync(currentYear, targetYear, olderCompletedJobQueueId, "Completed", DateTime.UtcNow.AddHours(-1));
+        await SeedDataSetupExecutionAsync(currentYear, targetYear, newerFailedJobQueueId, "Failed", DateTime.UtcNow);
 
         try
         {
@@ -165,6 +166,112 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
     }
 
     [SkippableFact]
+    public async Task ExecuteCutoverAsync_WhenPredecessorRowHasNullTargetFpsYear_TreatsItAsNotFoundAndThrows()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Skip.IfNot(
+            _yearEndDataSetupCompletedCatalogAvailable,
+            $"job_master/job_status seed for '{BatchJobNames.YearEndDataSetup}' + 'Completed' is not yet provisioned on this database.");
+
+        const int currentYear = 9814;
+        const int targetYear = 9815;
+        var jobQueueId = Guid.NewGuid();
+
+        await SeedYearAsync(currentYear, "Open", active: true);
+        await SeedYearAsync(targetYear, "Planned", active: true);
+        // Deliberately fpsyear = targetYear (the OLD defect-masking shape a legacy/pre-migration row
+        // could have) but target_fpsyear left NULL — proves the fix doesn't fall back to matching on
+        // fpsyear when target_fpsyear is absent, which would quietly reintroduce Defect C.
+        await SeedDataSetupExecutionWithNullTargetFpsYearAsync(targetYear, jobQueueId, "Completed", DateTime.UtcNow);
+
+        try
+        {
+            var repository = new YearEndCutoverRepository(CreateDbContextFactory());
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repository.ExecuteCutoverAsync(currentYear, targetYear));
+
+            Assert.Contains(BatchJobNames.YearEndDataSetup, ex.Message, StringComparison.Ordinal);
+            Assert.Contains("'None'", ex.Message, StringComparison.Ordinal);
+
+            var (currentStatus, _) = await GetYearStateAsync(currentYear);
+            var (targetStatus, _) = await GetYearStateAsync(targetYear);
+
+            Assert.Equal("Open", currentStatus);
+            Assert.Equal("Planned", targetStatus);
+        }
+        finally
+        {
+            await DeleteYearAsync(currentYear);
+            await DeleteYearAsync(targetYear);
+            await DeleteJobQueueRowAsync(jobQueueId);
+        }
+    }
+
+    [SkippableFact]
+    public async Task GetLastExecutionByTargetFpsYearAsync_FindsCompletedPredecessorByTargetFpsYear()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Skip.IfNot(
+            _yearEndDataSetupCompletedCatalogAvailable,
+            $"job_master/job_status seed for '{BatchJobNames.YearEndDataSetup}' + 'Completed' is not yet provisioned on this database.");
+
+        // Tests the Defect C lookup contract directly against fps.job_queue/job_master/job_status only —
+        // no fps.tblyearmaster row, no ExecuteCutoverAsync transaction, no year-status flip. Deliberately
+        // isolated from the global "exactly one Open year" invariant (see
+        // fps-year-end-cutover-validate-final-year-state-global-open-year-finding-2026-09-03.md) — this
+        // proves the lookup itself, without touching year state at all.
+        const int currentYear = 9816;
+        const int targetYear = 9817;
+        var jobQueueId = Guid.NewGuid();
+
+        await SeedCompletedDataSetupExecutionAsync(currentYear, targetYear, jobQueueId);
+
+        try
+        {
+            var repository = CreateExecutionRepository();
+
+            var record = await repository.GetLastExecutionByTargetFpsYearAsync(BatchJobNames.YearEndDataSetup, targetYear);
+
+            Assert.NotNull(record);
+            Assert.Equal(JobStatus.Completed, record!.Status);
+        }
+        finally
+        {
+            await DeleteJobQueueRowAsync(jobQueueId);
+        }
+    }
+
+    [SkippableFact]
+    public async Task GetLastExecutionByTargetFpsYearAsync_WhenPredecessorHasNullTargetFpsYear_ReturnsNull()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Skip.IfNot(
+            _yearEndDataSetupCompletedCatalogAvailable,
+            $"job_master/job_status seed for '{BatchJobNames.YearEndDataSetup}' + 'Completed' is not yet provisioned on this database.");
+
+        const int targetYear = 9818;
+        var jobQueueId = Guid.NewGuid();
+
+        // Legacy shape: fpsyear = targetYear (would have matched the OLD defective lookup), target_fpsyear
+        // left NULL. No fps.tblyearmaster row needed — this method never reads that table.
+        await SeedDataSetupExecutionWithNullTargetFpsYearAsync(targetYear, jobQueueId, "Completed", DateTime.UtcNow);
+
+        try
+        {
+            var repository = CreateExecutionRepository();
+
+            var record = await repository.GetLastExecutionByTargetFpsYearAsync(BatchJobNames.YearEndDataSetup, targetYear);
+
+            Assert.Null(record);
+        }
+        finally
+        {
+            await DeleteJobQueueRowAsync(jobQueueId);
+        }
+    }
+
+    [SkippableFact]
     public async Task ExecuteCutoverAsync_WhenStagingTableIsLocked_ThrowsAndLeavesYearRowsUnchanged()
     {
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
@@ -178,7 +285,7 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
 
         await SeedYearAsync(currentYear, "Open", active: true);
         await SeedYearAsync(targetYear, "Planned", active: true);
-        await SeedCompletedDataSetupExecutionAsync(targetYear, dataSetupJobQueueId);
+        await SeedCompletedDataSetupExecutionAsync(currentYear, targetYear, dataSetupJobQueueId);
 
         // Hold an exclusive lock on one staging table from a separate connection/transaction that
         // stays open for the duration of the cutover attempt below — simulates in-flight PACT
@@ -233,7 +340,7 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
         await SeedYearAsync(currentYear, "Open", active: true);
         await SeedYearAsync(targetYear, "Planned", active: true);
         await SeedYearAsync(unrelatedOpenYear, "Open", active: true);
-        await SeedCompletedDataSetupExecutionAsync(targetYear, dataSetupJobQueueId);
+        await SeedCompletedDataSetupExecutionAsync(currentYear, targetYear, dataSetupJobQueueId);
 
         try
         {
@@ -277,7 +384,7 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
 
         await SeedYearAsync(currentYear, "Open", active: true);
         await SeedYearAsync(targetYear, "Open", active: true);
-        await SeedCompletedDataSetupExecutionAsync(targetYear, dataSetupJobQueueId);
+        await SeedCompletedDataSetupExecutionAsync(currentYear, targetYear, dataSetupJobQueueId);
 
         try
         {
@@ -371,9 +478,39 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
     /// <summary>
     /// Generalizes <see cref="SeedCompletedDataSetupExecutionAsync"/> to an arbitrary status and
     /// start time, so a test can control which of two job_queue rows for the same target year is
-    /// "latest" by <c>startdatetime</c>.
+    /// "latest" by <c>startdatetime</c>. <paramref name="currentYear"/> and <paramref name="targetYear"/>
+    /// are deliberately independent, explicit parameters, not derived from each other — matches real
+    /// producer shape (<c>fpsyear</c> = the request's own current/open year, <c>target_fpsyear</c> = the
+    /// year it's preparing) rather than baking in a "target = current + 1" business assumption that has
+    /// nothing to do with the predecessor lookup being tested.
     /// </summary>
-    private async Task SeedDataSetupExecutionAsync(int targetYear, Guid jobQueueId, string status, DateTime startDateTimeUtc)
+    private async Task SeedDataSetupExecutionAsync(int currentYear, int targetYear, Guid jobQueueId, string status, DateTime startDateTimeUtc)
+    {
+        await using var context = CreateDbContext();
+
+        var jobId = await context.Database
+            .SqlQuery<int>($@"
+                SELECT jobid AS ""Value"" FROM fps.job_master WHERE jobname = {BatchJobNames.YearEndDataSetup}")
+            .SingleAsync();
+
+        var statusId = await context.Database
+            .SqlQuery<int>($@"
+                SELECT statusid AS ""Value"" FROM fps.job_status WHERE jobid = {jobId} AND status = {status}")
+            .SingleAsync();
+
+        await context.Database.ExecuteSqlInterpolatedAsync($@"
+            INSERT INTO fps.job_queue
+                (jobqueueid, jobexecutionid, jobid, statusid, requestedby, requested_at_utc, startdatetime, fpsyear, target_fpsyear)
+            VALUES
+                ({jobQueueId}, {Guid.NewGuid()}, {jobId}, {statusId}, 'integration-test-requester', NOW(), {startDateTimeUtc}, {currentYear}, {targetYear});");
+    }
+
+    /// <summary>
+    /// Seeds a Data Setup <c>job_queue</c> row with <c>target_fpsyear</c> deliberately left
+    /// <c>NULL</c> — the legacy/pre-migration shape. Proves the predecessor lookup fails closed (treats
+    /// it as "no predecessor") rather than falling back to matching on <c>fpsyear</c>.
+    /// </summary>
+    private async Task SeedDataSetupExecutionWithNullTargetFpsYearAsync(int fpsYear, Guid jobQueueId, string status, DateTime startDateTimeUtc)
     {
         await using var context = CreateDbContext();
 
@@ -391,7 +528,7 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
             INSERT INTO fps.job_queue
                 (jobqueueid, jobexecutionid, jobid, statusid, requestedby, requested_at_utc, startdatetime, fpsyear)
             VALUES
-                ({jobQueueId}, {Guid.NewGuid()}, {jobId}, {statusId}, 'integration-test-requester', NOW(), {startDateTimeUtc}, {targetYear});");
+                ({jobQueueId}, {Guid.NewGuid()}, {jobId}, {statusId}, 'integration-test-requester', NOW(), {startDateTimeUtc}, {fpsYear});");
     }
 
     private async Task SeedYearAsync(int fpsYear, string yearStatus, bool active)
@@ -404,7 +541,11 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
             VALUES ({fpsYear}, {$"IT{fpsYear}"}, {yearStatus}, 'YearEndCutoverServiceIntegrationTests', {active}, 'IntegrationTest');");
     }
 
-    private async Task SeedCompletedDataSetupExecutionAsync(int targetYear, Guid jobQueueId)
+    /// <summary>
+    /// <paramref name="currentYear"/> and <paramref name="targetYear"/> are deliberately independent,
+    /// explicit parameters — see <see cref="SeedDataSetupExecutionAsync"/>'s doc comment for why.
+    /// </summary>
+    private async Task SeedCompletedDataSetupExecutionAsync(int currentYear, int targetYear, Guid jobQueueId)
     {
         await using var context = CreateDbContext();
 
@@ -420,9 +561,9 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
 
         await context.Database.ExecuteSqlInterpolatedAsync($@"
             INSERT INTO fps.job_queue
-                (jobqueueid, jobexecutionid, jobid, statusid, requestedby, requested_at_utc, startdatetime, enddatetime, fpsyear)
+                (jobqueueid, jobexecutionid, jobid, statusid, requestedby, requested_at_utc, startdatetime, enddatetime, fpsyear, target_fpsyear)
             VALUES
-                ({jobQueueId}, {Guid.NewGuid()}, {jobId}, {statusId}, 'integration-test-requester', NOW(), NOW(), NOW(), {targetYear});");
+                ({jobQueueId}, {Guid.NewGuid()}, {jobId}, {statusId}, 'integration-test-requester', NOW(), NOW(), NOW(), {currentYear}, {targetYear});");
     }
 
     private async Task DeleteJobQueueRowAsync(Guid jobQueueId)

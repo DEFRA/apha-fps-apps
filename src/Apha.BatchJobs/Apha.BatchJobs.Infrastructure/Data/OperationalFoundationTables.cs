@@ -40,6 +40,14 @@ internal sealed class TblJobQueue
     public required string RequestedBy { get; set; }
     public DateTime? RequestedAtUtc { get; set; }
     public int? FpsYear { get; set; }
+
+    /// <summary>
+    /// The year a Year End Data Setup request is preparing — distinct from <see cref="FpsYear"/>,
+    /// which is the request's own current/open year. Only Year End Data Setup requests set this;
+    /// every other job type on this shared table leaves it null.
+    /// </summary>
+    public int? TargetFpsYear { get; set; }
+
     public DateTime? StartDateTime { get; set; }   // Null when Initiated (not yet started)
     public DateTime? EndDateTime { get; set; }
     public string? ErrorMessage { get; set; }

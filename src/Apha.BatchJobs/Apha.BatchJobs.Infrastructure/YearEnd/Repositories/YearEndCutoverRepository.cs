@@ -132,9 +132,11 @@ public sealed class YearEndCutoverRepository : IYearEndCutoverRepository
     /// <summary>
     /// Latest <see cref="BatchJobNames.YearEndDataSetup"/> execution status for
     /// <paramref name="targetYear"/>, read on the same connection/transaction as the rest of Cutover
-    /// (mirrors <c>JobExecutionRepository.GetLastExecutionByFpsYearAsync</c>'s query shape exactly,
+    /// (mirrors <c>JobExecutionRepository.GetLastExecutionByTargetFpsYearAsync</c>'s query shape exactly,
     /// including its <c>ORDER BY startdatetime DESC</c> — that repository can't participate in this
-    /// transaction). Returns <see langword="null"/> when no execution exists for this job/year.
+    /// transaction). Filters on <c>target_fpsyear</c>, not <c>fpsyear</c> — a Data Setup request's own
+    /// <c>fpsyear</c> is the current/open year it was initiated from, not the year it's setting up.
+    /// Returns <see langword="null"/> when no execution exists for this job/target year.
     /// </summary>
     private static async Task<string?> GetLatestDataSetupStatusAsync(
         DbConnection connection,
@@ -149,7 +151,7 @@ public sealed class YearEndCutoverRepository : IYearEndCutoverRepository
             FROM fps.job_queue q
             JOIN fps.job_master m ON m.jobid = q.jobid
             JOIN fps.job_status s ON s.statusid = q.statusid
-            WHERE m.jobname = @jobname AND q.fpsyear = @fpsyear
+            WHERE m.jobname = @jobname AND q.target_fpsyear = @fpsyear
             ORDER BY q.startdatetime DESC
             LIMIT 1;";
 

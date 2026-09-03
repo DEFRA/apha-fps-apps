@@ -49,7 +49,7 @@ public sealed class YearEndCutoverServiceTests
     {
         var executionRepository = Substitute.For<IJobExecutionRepository>();
         executionRepository
-            .GetLastExecutionByFpsYearAsync(BatchJobNames.YearEndDataSetup, 2027, Arg.Any<CancellationToken>())
+            .GetLastExecutionByTargetFpsYearAsync(BatchJobNames.YearEndDataSetup, 2027, Arg.Any<CancellationToken>())
             .Returns((JobExecutionRecord?)null);
 
         var service = CreateService(executionRepository);
@@ -66,7 +66,7 @@ public sealed class YearEndCutoverServiceTests
     {
         var executionRepository = Substitute.For<IJobExecutionRepository>();
         executionRepository
-            .GetLastExecutionByFpsYearAsync(BatchJobNames.YearEndDataSetup, 2027, Arg.Any<CancellationToken>())
+            .GetLastExecutionByTargetFpsYearAsync(BatchJobNames.YearEndDataSetup, 2027, Arg.Any<CancellationToken>())
             .Returns(new JobExecutionRecord
             {
                 ExecutionId = 1,

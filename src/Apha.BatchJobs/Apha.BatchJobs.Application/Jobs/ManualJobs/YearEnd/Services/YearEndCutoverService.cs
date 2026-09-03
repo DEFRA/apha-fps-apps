@@ -59,7 +59,7 @@ public sealed class YearEndCutoverService : IYearEndCutoverService
             targetYear,
             currentYear);
 
-        var latestDataSetupExecution = await _executionRepository.GetLastExecutionByFpsYearAsync(
+        var latestDataSetupExecution = await _executionRepository.GetLastExecutionByTargetFpsYearAsync(
             BatchJobNames.YearEndDataSetup,
             targetYear,
             cancellationToken);
