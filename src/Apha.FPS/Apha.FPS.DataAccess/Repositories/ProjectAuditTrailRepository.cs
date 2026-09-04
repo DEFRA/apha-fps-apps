@@ -19,72 +19,81 @@ namespace Apha.FPS.DataAccess.Repositories
             _dbContext = dbContext;
         }
 
-        // fps.project_log has a direct parentproject column; no join required
-        public async Task<PagedData<ProjectLog>> GetProjectLogsAsync(
+        // Every audit grid runs the same pipeline over a different log table:
+        // date-range window -> free-text search -> per-column grid filter -> sorting ->
+        // materialise -> optional in-memory enrichment/filtering -> paging.
+        // Only the table-specific parts are passed in, so the pipeline itself lives here once.
+        private async Task<PagedData<T>> ExecuteAuditLogQueryAsync<T>(
+            IQueryable<T> source,
             PaginationParameters<string> query,
-            string parentProject,
+            Expression<Func<T, DateTime?>> dateSelector,
             DateTime? fromDate,
-            DateTime? toDate)
+            DateTime? toDate,
+            Func<string, Expression<Func<T, bool>>> searchPredicate,
+            Func<IQueryable<T>, string?, IQueryable<T>> columnFilter,
+            Func<IQueryable<T>, string?, bool, IQueryable<T>> sorting,
+            Func<List<T>, Task>? enrichAsync = null,
+            Func<List<T>, string?, List<T>>? postFilter = null)
         {
-            var q = _dbContext.ProjectLogs
-                .AsNoTracking()
-                .Where(p => p.ParentProject == parentProject);
-
-            if (fromDate.HasValue)
-                q = q.Where(p => p.DateTime >= fromDate.Value);
-            if (toDate.HasValue)
-                q = q.Where(p => p.DateTime <= toDate.Value);
+            var q = ApplyDateRange(source, dateSelector, fromDate, toDate);
 
             if (!string.IsNullOrWhiteSpace(query.Search))
-            {
-                var search = query.Search.ToLower();
-                q = q.Where(p =>
-                    (p.InsertDelete != null && p.InsertDelete.ToLower().Contains(search)) ||
-                    (p.UserId != null && p.UserId.ToLower().Contains(search)));
-            }
-            q = ApplyProjectLogFilter(q, query.Filter);
+                q = q.Where(searchPredicate(query.Search.ToLower()));
 
-            q = ApplyProjectLogSorting(q, query.SortBy, query.Descending);
+            q = columnFilter(q, query.Filter);
+            q = sorting(q, query.SortBy, query.Descending);
 
             var result = await q.ToListAsync();
+
+            if (enrichAsync != null)
+                await enrichAsync(result);
+
+            if (postFilter != null)
+                result = postFilter(result, query.Filter);
+
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        // join to fps.tlkpjob (JobCodes) on jobcode to resolve the parentproject association
-        public async Task<PagedData<StaffJobLog>> GetStaffJobLogsAsync(
+        // fps.project_log has a direct parentproject column; no join required
+        public Task<PagedData<ProjectLog>> GetProjectLogsAsync(
             PaginationParameters<string> query,
             string parentProject,
             DateTime? fromDate,
             DateTime? toDate)
         {
-            var q = from log in _dbContext.StaffJobLogs.AsNoTracking()
-                    where log.JobCode == parentProject
-                    select log;
+            var source = _dbContext.ProjectLogs
+                .AsNoTracking()
+                .Where(p => p.ParentProject == parentProject);
 
-            if (fromDate.HasValue)
-                q = q.Where(p => p.DateTime >= fromDate.Value);
-            if (toDate.HasValue)
-                q = q.Where(p => p.DateTime <= toDate.Value);
+            return ExecuteAuditLogQueryAsync(
+                source, query, p => p.DateTime, fromDate, toDate,
+                search => p =>
+                    (p.InsertDelete != null && p.InsertDelete.ToLower().Contains(search)) ||
+                    (p.UserId != null && p.UserId.ToLower().Contains(search)),
+                ApplyProjectLogFilter,
+                ApplyProjectLogSorting);
+        }
 
-            if (!string.IsNullOrWhiteSpace(query.Search))
-            {
-                var search = query.Search.ToLower();
-                q = q.Where(p =>
+        // join to fps.tlkpjob (JobCodes) on jobcode to resolve the parentproject association
+        public Task<PagedData<StaffJobLog>> GetStaffJobLogsAsync(
+            PaginationParameters<string> query,
+            string parentProject,
+            DateTime? fromDate,
+            DateTime? toDate)
+        {
+            var source = from log in _dbContext.StaffJobLogs.AsNoTracking()
+                         where log.JobCode == parentProject
+                         select log;
+
+            return ExecuteAuditLogQueryAsync(
+                source, query, p => p.DateTime, fromDate, toDate,
+                search => p =>
                     p.JobCode.ToLower().Contains(search) ||
-                    (p.UserId != null && p.UserId.ToLower().Contains(search)));
-            }
-
-            q = ApplyStaffJobLogFilter(q, query.Filter);
-
-            q = ApplyStaffJobLogSorting(q, query.SortBy, query.Descending);
-
-            var result = await q.ToListAsync();
-
-            await PopulateStaffNamesAsync(result);
-
-            result = ApplyStaffJobLogNameFilter(result, query.Filter);
-
-            return ApplyPaging(result, query.Page, query.PageSize);
+                    (p.UserId != null && p.UserId.ToLower().Contains(search)),
+                ApplyStaffJobLogFilter,
+                ApplyStaffJobLogSorting,
+                PopulateStaffNamesAsync,
+                ApplyStaffJobLogNameFilter);
         }
 
         // fps.staffjob_log has no name column; resolve staff display names via a lookup
@@ -113,108 +122,69 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         // jobcode column in testreq_log is derived from projectbuyercode; join to JobCodes on jobcode
-        public async Task<PagedData<TestRequirementLog>> GetTestRequirementLogsAsync(
+        public Task<PagedData<TestRequirementLog>> GetTestRequirementLogsAsync(
             PaginationParameters<string> query,
             string parentProject,
             DateTime? fromDate,
             DateTime? toDate)
         {
-            var q = from log in _dbContext.TestRequirementLogs.AsNoTracking()
-                        where log.JobCode == parentProject
-                    select log;
+            var source = from log in _dbContext.TestRequirementLogs.AsNoTracking()
+                         where log.JobCode == parentProject
+                         select log;
 
-            if (fromDate.HasValue)
-                q = q.Where(p => p.DateTime >= fromDate.Value);
-            if (toDate.HasValue)
-                q = q.Where(p => p.DateTime <= toDate.Value);
-
-            if (!string.IsNullOrWhiteSpace(query.Search))
-            {
-                var search = query.Search.ToLower();
-                q = q.Where(p =>
+            return ExecuteAuditLogQueryAsync(
+                source, query, p => p.DateTime, fromDate, toDate,
+                search => p =>
                     (p.TestCode != null && p.TestCode.ToLower().Contains(search)) ||
                     (p.Buyer != null && p.Buyer.ToLower().Contains(search)) ||
-                    (p.UserId != null && p.UserId.ToLower().Contains(search)));
-            }
-
-            q = ApplyTestRequirementLogFilter(q, query.Filter);
-
-            q = ApplyTestRequirementLogSorting(q, query.SortBy, query.Descending);
-
-            var result = await q.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+                    (p.UserId != null && p.UserId.ToLower().Contains(search)),
+                ApplyTestRequirementLogFilter,
+                ApplyTestRequirementLogSorting);
         }
 
         // join to JobCodes on jobcode to resolve the parentproject association
-        public async Task<PagedData<AnimalRequestLog>> GetAnimalRequestLogsAsync(
+        public Task<PagedData<AnimalRequestLog>> GetAnimalRequestLogsAsync(
             PaginationParameters<string> query,
             string parentProject,
             DateTime? fromDate,
             DateTime? toDate)
         {
-            var q = from log in _dbContext.AnimalRequestLogs.AsNoTracking()
-                    where log.JobCode == parentProject
-                    select log;
+            var source = from log in _dbContext.AnimalRequestLogs.AsNoTracking()
+                         where log.JobCode == parentProject
+                         select log;
 
-            if (fromDate.HasValue)
-                q = q.Where(p => p.DateTime >= fromDate.Value);
-            if (toDate.HasValue)
-                q = q.Where(p => p.DateTime <= toDate.Value);
-
-            if (!string.IsNullOrWhiteSpace(query.Search))
-            {
-                var search = query.Search.ToLower();
-                q = q.Where(p =>
+            return ExecuteAuditLogQueryAsync(
+                source, query, p => p.DateTime, fromDate, toDate,
+                search => p =>
                     p.JobCode.ToLower().Contains(search) ||
                     p.AnimalType.ToLower().Contains(search) ||
-                    (p.UserId != null && p.UserId.ToLower().Contains(search)));
-            }
-
-            q = ApplyAnimalRequestLogFilter(q, query.Filter);
-
-            q = ApplyAnimalRequestLogSorting(q, query.SortBy, query.Descending);
-
-            var result = await q.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+                    (p.UserId != null && p.UserId.ToLower().Contains(search)),
+                ApplyAnimalRequestLogFilter,
+                ApplyAnimalRequestLogSorting);
         }
 
         // join to JobCodes on jobcode to resolve the parentproject association
-        public async Task<PagedData<AdditionalCostLog>> GetAdditionalCostLogsAsync(
+        public Task<PagedData<AdditionalCostLog>> GetAdditionalCostLogsAsync(
             PaginationParameters<string> query,
             string parentProject,
             DateTime? fromDate,
             DateTime? toDate)
         {
-            var q = from log in _dbContext.AdditionalCostLogs.AsNoTracking()
-                    where log.JobCode == parentProject
-                    select log;
+            var source = from log in _dbContext.AdditionalCostLogs.AsNoTracking()
+                         where log.JobCode == parentProject
+                         select log;
 
-            if (fromDate.HasValue)
-                q = q.Where(p => p.DateTime >= fromDate.Value);
-            if (toDate.HasValue)
-                q = q.Where(p => p.DateTime <= toDate.Value);
-
-            if (!string.IsNullOrWhiteSpace(query.Search))
-            {
-                var search = query.Search.ToLower();
-                q = q.Where(p =>
+            return ExecuteAuditLogQueryAsync(
+                source, query, p => p.DateTime, fromDate, toDate,
+                search => p =>
                     p.JobCode.ToLower().Contains(search) ||
                     p.Account.ToLower().Contains(search) ||
                     p.Description.ToLower().Contains(search) ||
-                    (p.UserId != null && p.UserId.ToLower().Contains(search)));
-            }
-
-            q = ApplyAdditionalCostLogFilter(q, query.Filter);
-
-            q = ApplyAdditionalCostLogSorting(q, query.SortBy, query.Descending);
-
-            var result = await q.ToListAsync();
-
-            await ResolveAdditionalCostLogUserEmailsAsync(result);
-
-            result = ApplyAdditionalCostLogUserIdFilter(result, query.Filter);
-
-            return ApplyPaging(result, query.Page, query.PageSize);
+                    (p.UserId != null && p.UserId.ToLower().Contains(search)),
+                ApplyAdditionalCostLogFilter,
+                ApplyAdditionalCostLogSorting,
+                ResolveAdditionalCostLogUserEmailsAsync,
+                ApplyAdditionalCostLogUserIdFilter);
         }
 
         // fps.additionalcosts_log.user_id was historically populated with a raw login/username
@@ -272,6 +242,37 @@ namespace Apha.FPS.DataAccess.Repositories
         // keyed by the grid column PropertyName. Each audit grid deserializes that payload
         // and applies a case-insensitive "contains" match, mirroring ProjectRepository.
 
+        // Every audit grid supports the same optional from/to date window over its
+        // date_time column, so the range predicate is built once here.
+        private static IQueryable<T> ApplyDateRange<T>(
+            IQueryable<T> query,
+            Expression<Func<T, DateTime?>> selector,
+            DateTime? fromDate,
+            DateTime? toDate)
+        {
+            if (fromDate.HasValue)
+            {
+                var predicate = Expression.Lambda<Func<T, bool>>(
+                    Expression.GreaterThanOrEqual(
+                        selector.Body,
+                        Expression.Convert(Expression.Constant(fromDate.Value), typeof(DateTime?))),
+                    selector.Parameters);
+                query = query.Where(predicate);
+            }
+
+            if (toDate.HasValue)
+            {
+                var predicate = Expression.Lambda<Func<T, bool>>(
+                    Expression.LessThanOrEqual(
+                        selector.Body,
+                        Expression.Convert(Expression.Constant(toDate.Value), typeof(DateTime?))),
+                    selector.Parameters);
+                query = query.Where(predicate);
+            }
+
+            return query;
+        }
+
         private static IDictionary<string, object>? ParseFilterDictionary(string? filter)
         {
             if (string.IsNullOrWhiteSpace(filter))
@@ -325,44 +326,85 @@ namespace Apha.FPS.DataAccess.Repositories
             return query;
         }
 
-        private static IQueryable<ProjectLog> ApplyProjectLogFilter(IQueryable<ProjectLog> query, string? filter)
+        // Per-grid column maps: grid PropertyName -> entity column. The matching logic
+        // itself is shared by ApplyTextFilters, so each grid only declares its columns.
+        private static readonly (string, Expression<Func<ProjectLog, string?>>)[] ProjectLogColumns =
         {
-            return ApplyTextFilters(query, filter, new (string, Expression<Func<ProjectLog, string?>>)[]
-            {
-                ("ParentProject", x => x.ParentProject),
-                ("ProjectTitle", x => x.ProjectTitle),
-                ("Program", x => x.Program),
-                ("Customer", x => x.Customer),
-                ("Manager", x => x.Manager),
-                ("ProjectStatus", x => x.ProjectStatus),
-                ("CostBookNo", x => x.CostBookNo),
-                ("Disease", x => x.Disease),
-                ("Contract", x => x.Contract),
-                ("ProjectParent", x => x.ProjectParent),
-                ("ShortTitle", x => x.ShortTitle),
-                ("OwningRc", x => x.OwningRc),
-                ("UserId", x => x.UserId),
-                ("InsertDelete", x => x.InsertDelete)
-            });
-        }
+            ("ParentProject", x => x.ParentProject),
+            ("ProjectTitle", x => x.ProjectTitle),
+            ("Program", x => x.Program),
+            ("Customer", x => x.Customer),
+            ("Manager", x => x.Manager),
+            ("ProjectStatus", x => x.ProjectStatus),
+            ("CostBookNo", x => x.CostBookNo),
+            ("Disease", x => x.Disease),
+            ("Contract", x => x.Contract),
+            ("ProjectParent", x => x.ProjectParent),
+            ("ShortTitle", x => x.ShortTitle),
+            ("OwningRc", x => x.OwningRc),
+            ("UserId", x => x.UserId),
+            ("InsertDelete", x => x.InsertDelete)
+        };
+
+        private static readonly (string, Expression<Func<StaffJobLog, string?>>)[] StaffJobLogColumns =
+        {
+            ("StaffId", x => x.StaffId),
+            ("JobCode", x => x.JobCode),
+            ("UserId", x => x.UserId),
+            ("InsertDelete", x => x.InsertDelete)
+        };
+
+        private static readonly (string, Expression<Func<TestRequirementLog, string?>>)[] TestRequirementLogColumns =
+        {
+            ("TestCode", x => x.TestCode),
+            ("Buyer", x => x.Buyer),
+            ("ProjectBuyerCode", x => x.ProjectBuyerCode),
+            ("TestBuyerCode", x => x.TestBuyerCode),
+            ("UserId", x => x.UserId),
+            ("InsertDelete", x => x.InsertDelete)
+        };
+
+        private static readonly (string, Expression<Func<AnimalRequestLog, string?>>)[] AnimalRequestLogColumns =
+        {
+            ("JobCode", x => x.JobCode),
+            ("AnimalType", x => x.AnimalType),
+            ("UserId", x => x.UserId),
+            ("InsertDelete", x => x.InsertDelete)
+        };
+
+        private static readonly (string, Expression<Func<AdditionalCostLog, string?>>)[] AdditionalCostLogColumns =
+        {
+            ("JobCode", x => x.JobCode),
+            ("Account", x => x.Account),
+            ("Description", x => x.Description),
+            ("Freq", x => x.Freq),
+            ("Supplier", x => x.Supplier),
+            ("InsertDelete", x => x.InsertDelete)
+        };
+
+        private static IQueryable<ProjectLog> ApplyProjectLogFilter(IQueryable<ProjectLog> query, string? filter)
+            => ApplyTextFilters(query, filter, ProjectLogColumns);
 
         private static IQueryable<StaffJobLog> ApplyStaffJobLogFilter(IQueryable<StaffJobLog> query, string? filter)
-        {
-            return ApplyTextFilters(query, filter, new (string, Expression<Func<StaffJobLog, string?>>)[]
-            {
-                ("StaffId", x => x.StaffId),
-                ("JobCode", x => x.JobCode),
-                ("UserId", x => x.UserId),
-                ("InsertDelete", x => x.InsertDelete)
-            });
-        }
+            => ApplyTextFilters(query, filter, StaffJobLogColumns);
 
-        // Name is not a column on fps.staffjob_log; it is resolved in memory by
-        // PopulateStaffNamesAsync, so its grid filter must also be applied in memory.
-        private static List<StaffJobLog> ApplyStaffJobLogNameFilter(List<StaffJobLog> logs, string? filter)
+        private static IQueryable<TestRequirementLog> ApplyTestRequirementLogFilter(IQueryable<TestRequirementLog> query, string? filter)
+            => ApplyTextFilters(query, filter, TestRequirementLogColumns);
+
+        private static IQueryable<AnimalRequestLog> ApplyAnimalRequestLogFilter(IQueryable<AnimalRequestLog> query, string? filter)
+            => ApplyTextFilters(query, filter, AnimalRequestLogColumns);
+
+        private static IQueryable<AdditionalCostLog> ApplyAdditionalCostLogFilter(IQueryable<AdditionalCostLog> query, string? filter)
+            => ApplyTextFilters(query, filter, AdditionalCostLogColumns);
+
+        // Some grid columns are resolved in memory after the query runs, so their filters
+        // cannot be translated to SQL and must be applied against the resolved value the
+        // user actually sees in the grid.
+        private static List<T> ApplyInMemoryFilter<T>(
+            List<T> logs, string? filter, string key, Func<T, string?> selector)
         {
             var dict = ParseFilterDictionary(filter);
-            if (dict == null || !dict.TryGetValue("Name", out var value) || value == null)
+            if (dict == null || !dict.TryGetValue(key, out var value) || value == null)
                 return logs;
 
             var text = value.ToString();
@@ -370,45 +412,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 return logs;
 
             return logs
-                .Where(l => l.Name != null && l.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
+                .Where(l => selector(l) is { } v && v.Contains(text, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
 
-        private static IQueryable<TestRequirementLog> ApplyTestRequirementLogFilter(IQueryable<TestRequirementLog> query, string? filter)
+        // Name is not a column on fps.staffjob_log; it is resolved in memory by
+        // PopulateStaffNamesAsync, so its grid filter must also be applied in memory.
+        private static List<StaffJobLog> ApplyStaffJobLogNameFilter(List<StaffJobLog> logs, string? filter)
         {
-            return ApplyTextFilters(query, filter, new (string, Expression<Func<TestRequirementLog, string?>>)[]
-            {
-                ("TestCode", x => x.TestCode),
-                ("Buyer", x => x.Buyer),
-                ("ProjectBuyerCode", x => x.ProjectBuyerCode),
-                ("TestBuyerCode", x => x.TestBuyerCode),
-                ("UserId", x => x.UserId),
-                ("InsertDelete", x => x.InsertDelete)
-            });
-        }
-
-        private static IQueryable<AnimalRequestLog> ApplyAnimalRequestLogFilter(IQueryable<AnimalRequestLog> query, string? filter)
-        {
-            return ApplyTextFilters(query, filter, new (string, Expression<Func<AnimalRequestLog, string?>>)[]
-            {
-                ("JobCode", x => x.JobCode),
-                ("AnimalType", x => x.AnimalType),
-                ("UserId", x => x.UserId),
-                ("InsertDelete", x => x.InsertDelete)
-            });
-        }
-
-        private static IQueryable<AdditionalCostLog> ApplyAdditionalCostLogFilter(IQueryable<AdditionalCostLog> query, string? filter)
-        {
-            return ApplyTextFilters(query, filter, new (string, Expression<Func<AdditionalCostLog, string?>>)[]
-            {
-                ("JobCode", x => x.JobCode),
-                ("Account", x => x.Account),
-                ("Description", x => x.Description),
-                ("Freq", x => x.Freq),
-                ("Supplier", x => x.Supplier),
-                ("InsertDelete", x => x.InsertDelete)
-            });
+            return ApplyInMemoryFilter(logs, filter, "Name", l => l.Name);
         }
 
         // User_ID is rewritten to an email address after the query runs
@@ -416,50 +428,50 @@ namespace Apha.FPS.DataAccess.Repositories
         // against the resolved value the user actually sees in the grid.
         private static List<AdditionalCostLog> ApplyAdditionalCostLogUserIdFilter(List<AdditionalCostLog> logs, string? filter)
         {
-            var dict = ParseFilterDictionary(filter);
-            if (dict == null || !dict.TryGetValue("UserId", out var value) || value == null)
-                return logs;
-
-            var text = value.ToString();
-            if (string.IsNullOrWhiteSpace(text))
-                return logs;
-
-            return logs
-                .Where(l => l.UserId != null && l.UserId.Contains(text, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            return ApplyInMemoryFilter(logs, filter, "UserId", l => l.UserId);
         }
 
         // ── Private sorting helpers ──────────────────────────────────────────────────────
+        // Each grid resolves its own sortBy -> column key selector, then defers the shared
+        // asc/desc ordering to ApplySorting so the direction logic exists in one place only.
+
+        private static IQueryable<T> ApplySorting<T>(
+            IQueryable<T> q, bool descending, Expression<Func<T, object?>> keySelector)
+        {
+            return descending ? q.OrderByDescending(keySelector) : q.OrderBy(keySelector);
+        }
 
         private static IQueryable<ProjectLog> ApplyProjectLogSorting(
             IQueryable<ProjectLog> q, string? sortBy, bool descending)
         {
-            return sortBy?.ToLower() switch
+            Expression<Func<ProjectLog, object?>> keySelector = sortBy?.ToLower() switch
             {
-                "parentproject" => descending ? q.OrderByDescending(e => e.ParentProject) : q.OrderBy(e => e.ParentProject),
-                "projecttitle"  => descending ? q.OrderByDescending(e => e.ProjectTitle)  : q.OrderBy(e => e.ProjectTitle),
-                "program"       => descending ? q.OrderByDescending(e => e.Program)        : q.OrderBy(e => e.Program),
-                "jobcode"       => descending ? q.OrderByDescending(e => e.JobCode)        : q.OrderBy(e => e.JobCode),
-                "date_time"     => descending ? q.OrderByDescending(e => e.DateTime)       : q.OrderBy(e => e.DateTime),
-                "insert_delete" => descending ? q.OrderByDescending(e => e.InsertDelete)   : q.OrderBy(e => e.InsertDelete),
-                "user_id"       => descending ? q.OrderByDescending(e => e.UserId)         : q.OrderBy(e => e.UserId),
-                _               => q.OrderByDescending(e => e.DateTime),
+                "parentproject" => e => e.ParentProject,
+                "projecttitle"  => e => e.ProjectTitle,
+                "program"       => e => e.Program,
+                "jobcode"       => e => e.JobCode,
+                "date_time"     => e => e.DateTime,
+                "insert_delete" => e => e.InsertDelete,
+                "user_id"       => e => e.UserId,
+                _               => e => e.DateTime,
             };
+            return ApplySorting(q, descending, keySelector);
         }
 
         private static IQueryable<StaffJobLog> ApplyStaffJobLogSorting(
             IQueryable<StaffJobLog> q, string? sortBy, bool descending)
         {
-            return sortBy?.ToLower() switch
+            Expression<Func<StaffJobLog, object?>> keySelector = sortBy?.ToLower() switch
             {
-                "staffid"       => descending ? q.OrderByDescending(e => e.StaffId)      : q.OrderBy(e => e.StaffId),
-                "jobcode"       => descending ? q.OrderByDescending(e => e.JobCode)      : q.OrderBy(e => e.JobCode),
-                "plannedhours"  => descending ? q.OrderByDescending(e => e.PlannedHours) : q.OrderBy(e => e.PlannedHours),
-                "date_time"     => descending ? q.OrderByDescending(e => e.DateTime)     : q.OrderBy(e => e.DateTime),
-                "insert_delete" => descending ? q.OrderByDescending(e => e.InsertDelete) : q.OrderBy(e => e.InsertDelete),
-                "user_id"       => descending ? q.OrderByDescending(e => e.UserId)       : q.OrderBy(e => e.UserId),
-                _               => q.OrderByDescending(e => e.DateTime),
+                "staffid"       => e => e.StaffId,
+                "jobcode"       => e => e.JobCode,
+                "plannedhours"  => e => e.PlannedHours,
+                "date_time"     => e => e.DateTime,
+                "insert_delete" => e => e.InsertDelete,
+                "user_id"       => e => e.UserId,
+                _               => e => e.DateTime,
             };
+            return ApplySorting(q, descending, keySelector);
         }
 
         private static IQueryable<TestRequirementLog> ApplyTestRequirementLogSorting(
@@ -479,23 +491,24 @@ namespace Apha.FPS.DataAccess.Repositories
                 "user_id"          => e => e.UserId,
                 _                  => e => e.DateTime,
             };
-            return descending ? q.OrderByDescending(keySelector) : q.OrderBy(keySelector);
+            return ApplySorting(q, descending, keySelector);
         }
 
         private static IQueryable<AnimalRequestLog> ApplyAnimalRequestLogSorting(
             IQueryable<AnimalRequestLog> q, string? sortBy, bool descending)
         {
-            return sortBy?.ToLower() switch
+            Expression<Func<AnimalRequestLog, object?>> keySelector = sortBy?.ToLower() switch
             {
-                "jobcode"         => descending ? q.OrderByDescending(e => e.JobCode)         : q.OrderBy(e => e.JobCode),
-                "animaltype"      => descending ? q.OrderByDescending(e => e.AnimalType)      : q.OrderBy(e => e.AnimalType),
-                "numberofdays"    => descending ? q.OrderByDescending(e => e.NumberOfDays)    : q.OrderBy(e => e.NumberOfDays),
-                "numberofanimals" => descending ? q.OrderByDescending(e => e.NumberOfAnimals) : q.OrderBy(e => e.NumberOfAnimals),
-                "date_time"       => descending ? q.OrderByDescending(e => e.DateTime)        : q.OrderBy(e => e.DateTime),
-                "insert_delete"   => descending ? q.OrderByDescending(e => e.InsertDelete)    : q.OrderBy(e => e.InsertDelete),
-                "user_id"         => descending ? q.OrderByDescending(e => e.UserId)          : q.OrderBy(e => e.UserId),
-                _                 => q.OrderByDescending(e => e.DateTime),
+                "jobcode"         => e => e.JobCode,
+                "animaltype"      => e => e.AnimalType,
+                "numberofdays"    => e => e.NumberOfDays,
+                "numberofanimals" => e => e.NumberOfAnimals,
+                "date_time"       => e => e.DateTime,
+                "insert_delete"   => e => e.InsertDelete,
+                "user_id"         => e => e.UserId,
+                _                 => e => e.DateTime,
             };
+            return ApplySorting(q, descending, keySelector);
         }
 
         private static IQueryable<AdditionalCostLog> ApplyAdditionalCostLogSorting(
@@ -514,7 +527,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 "user_id"       => e => e.UserId,
                 _               => e => e.DateTime,
             };
-            return descending ? q.OrderByDescending(keySelector) : q.OrderBy(keySelector);
+            return ApplySorting(q, descending, keySelector);
         }
     }
 }
