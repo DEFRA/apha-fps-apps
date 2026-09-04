@@ -165,5 +165,35 @@ namespace Apha.FPS.DataAccess.UnitTests.Data
             Assert.NotNull(property);
             Assert.Equal(expectedColumnName, property.GetColumnName());
         }
+
+        // ── OnModelCreating — Division column constraints ─────────────────────────
+
+        /// <summary>
+        /// Guards against the mapped length drifting from the database column type.
+        /// fps.tlkpdivision.divname is character varying(10), so exceeding this
+        /// length causes PostgreSQL error 22001 (value too long) at save time.
+        /// </summary>
+        [Fact]
+        public void OnModelCreating_DivisionDivName_MaxLengthMatchesDatabaseColumn()
+        {
+            using var ctx = CreateContext(Guid.NewGuid().ToString());
+
+            var property = ctx.Model.FindEntityType(typeof(Division))?.FindProperty(nameof(Division.DivName));
+            Assert.NotNull(property);
+            Assert.Equal(10, property.GetMaxLength());
+        }
+
+        [Fact]
+        public void OnModelCreating_DivisionDivName_IsPrimaryKey()
+        {
+            using var ctx = CreateContext(Guid.NewGuid().ToString());
+
+            var entityType = ctx.Model.FindEntityType(typeof(Division));
+            Assert.NotNull(entityType);
+
+            var primaryKey = entityType.FindPrimaryKey();
+            Assert.NotNull(primaryKey);
+            Assert.Equal(nameof(Division.DivName), Assert.Single(primaryKey.Properties).Name);
+        }
     }
 }

@@ -181,6 +181,24 @@
             });
         }
 
+        // Division ID is stored as a 32-bit integer in the database, so values above
+        // int.MaxValue must be rejected before posting, otherwise the JSON payload
+        // cannot be bound to the view model.
+        var MAX_DIVISION_ID = 2147483647;
+
+        function isDivisionIdInRange(form) {
+            var rawDivisionId = form.find('[name="DivisionId"]').val();
+            if (rawDivisionId === '' || parseInt(rawDivisionId, 10) <= MAX_DIVISION_ID) {
+                return true;
+            }
+
+            displayServerValidationErrors(
+                [{ field: 'DivisionId', message: 'Division ID must be between 1 and ' + MAX_DIVISION_ID + '.' }],
+                'There is a problem',
+                '#modaPopupBody');
+            return false;
+        }
+
         // Checks Division Name uniqueness (case-insensitive) before submitting the modal.
         // Invokes onAvailable() when the name is free, otherwise shows an inline error.
         function checkDivisionNameAvailable(divName, originalDivName, onAvailable) {
@@ -212,6 +230,10 @@
 
             if (!isFormValid(form)) {
                 displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+
+            if (!isDivisionIdInRange(form)) {
                 return;
             }
 
@@ -265,6 +287,10 @@
 
             if (!isFormValid(form)) {
                 displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+
+            if (!isDivisionIdInRange(form)) {
                 return;
             }
 
