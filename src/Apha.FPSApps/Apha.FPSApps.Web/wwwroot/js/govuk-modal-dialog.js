@@ -354,11 +354,24 @@
     window.showLoader = function () {
         $("#loader").show();
         // document.getElementById("loader").style.display = "block";
+        var statusText = document.getElementById("loader-status-text");
+        if (statusText) {
+            statusText.textContent = "";
+            // Force a DOM change so screen readers announce the update even if
+            // the previous message was identical.
+            window.setTimeout(function () {
+                statusText.textContent = "Loading page...";
+            }, 50);
+        }
     }
 
     window.hideLoader = function () {
         $("#loader").hide();
         //document.getElementById("loader").style.display = "none";
+        var statusText = document.getElementById("loader-status-text");
+        if (statusText) {
+            statusText.textContent = "Content loaded.";
+        }
     }
 
     // Centralised loader handling for the native fetch API.

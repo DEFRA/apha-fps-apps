@@ -77,11 +77,11 @@
 
     <div>
         <div class="grid-scroll-container">
-            <table id="@($"tbl_{Model.GridId}")" class="editable-grid-table govuk-table custom-table">
+            <table id="@($"tbl_{Model.GridId}")" class="editable-grid-table govuk-table custom-table" role="table" aria-rowcount="@(Model.Pagination?.TotalRecords ?? ((IEnumerable<dynamic>)Model.Data).Count())">
                 <thead class="govuk-table__head">
                     @if (Model.ColumnGroups != null && ((IEnumerable<dynamic>)Model.ColumnGroups).Any())
                     {
-                        <tr class="govuk-table__row grid-column-group-row">
+                        <tr class="govuk-table__row grid-column-group-row" role="presentation">
                             @if (Model.ShowCheckboxColumn)
                             {
                                 <th scope="col" class="grid-column-group-cell grid-column-group-cell--empty" aria-label="Select column"></th>
@@ -103,7 +103,7 @@
                             }
                         </tr>
                     }
-                    <tr class="govuk-table__row">
+                    <tr class="govuk-table__row" role="presentation">
                         @if (Model.ShowCheckboxColumn)
                         {
                             <th scope="col" class="govuk-table__header sup_p_0">
@@ -148,7 +148,7 @@
                     }
                     @if (hasFilterableColumns)
                     {
-                    <tr class="filter-row govuk-table__row">
+                    <tr class="filter-row govuk-table__row" role="presentation">
                         @if (Model.ShowCheckboxColumn)
                         {
                             <th scope="col" aria-label="Select row checkbox column"></th>
@@ -221,7 +221,8 @@
                         <tr data-row-index="@rowIndex"
                             data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
                             class="@(Model.AllowRowSelection ? "selectable-row" : null)"
-                            data-select-function="@(Model.AllowRowSelection ? selectFnForRow : null)">
+                            data-select-function="@(Model.AllowRowSelection ? selectFnForRow : null)"
+                            aria-rowindex="@(rowIndex + 1)">
                             @if (Model.ShowCheckboxColumn)
                             {
                                 <td class="checkbox-cell govuk-table__cell ">
@@ -353,7 +354,7 @@
          <div class="sup_pagination_footer sup_p_0">
              <div class="sup_pagination_wrapper">
                  <div class="sup_margin_top_bottom_5_10 sup_flex_center">
-                    <label for="recordsPerPage" class="sup_margin_right_5 sup_font_weight_700">Records per page</label>&nbsp;
+                    <label for="@($"{Model.GridId}_pageSize")" class="sup_margin_right_5 sup_font_weight_700">Records per page</label>&nbsp;
                     <select id="@($"{Model.GridId}_pageSize")" class="sup_max_width_3 govuk-select govuk-!-font-size-16">
                          @{
                              var sizes = new[] { 5, 10, 20, 50, 100 };
