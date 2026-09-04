@@ -4243,7 +4243,8 @@ body,
 .ssr-grade-header {
     padding: 6px 10px;
     border-bottom: 1px solid #b1b4b6;
-    background-color: #f3f2f1;
+    background-color: #1d70b8;
+    color: #ffffff;
 }
 
 .ssr-grade-list {
@@ -4507,13 +4508,29 @@ body,
 .s2cra-jobs-footer-highlight {
     margin-top: 6px;
     margin-left: auto;
-    /* Matches the summary panel width so the labelled total lines up with the
-       "Overall Position for the Grade" fields on the right. */
-    width: 160px;
+    /* Wide enough to fit the label and input on a single line, while still
+       aligning to the right like the "Overall Position for the Grade" panel. */
+    width: 250px;
     border: 1px solid #c8cdd3;
     padding: 8px;
     background: #fff;
 }
+
+    .s2cra-jobs-footer-highlight .s2cra-summary-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .s2cra-jobs-footer-highlight .s2cra-summary-field .govuk-label {
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .s2cra-jobs-footer-highlight .s2cra-summary-field .s2cra-selected-hours-input {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
 
 .s2cra-selected-hours-input {
     text-align: right;
@@ -5036,7 +5053,8 @@ body,
 }
 
 .ssr-grade-header {
-    background: #e2e2e2;
+    background: #1d70b8;
+    color: #ffffff;
     padding: 4px 8px;
     border-bottom: 1px solid #b1b4b6;
 }
@@ -5336,7 +5354,8 @@ input.govuk-input.ssr-total-input[readonly] {
 }
 
 .ssr-grade-header {
-    background: #e2e2e2;
+    background: #1d70b8;
+    color: #ffffff;
     padding: 4px 8px;
     border-bottom: 1px solid #b1b4b6;
 }
@@ -5641,6 +5660,7 @@ input.govuk-input.ssr-total-input[readonly] {
         position: fixed;
         bottom: 0;
         width: 100%;
+        z-index: 1000;
     }
 .isSideNav {
     .sidenav{
@@ -5861,4 +5881,9 @@ input.govuk-input.ssr-total-input[readonly] {
 
 .govuk-checkboxes--small .govuk-checkboxes__item {
     padding-bottom: 0 !important;
+}
+.modal-dialog .govuk-label,
+.pva-inline-summary span, 
+.govuk-label {
+    font-weight: bold !important;
 }
