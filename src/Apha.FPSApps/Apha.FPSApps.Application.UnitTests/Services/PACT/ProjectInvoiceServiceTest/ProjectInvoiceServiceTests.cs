@@ -858,7 +858,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             httpContext.Items["SelectedFPSYear"] = "2025";
             _httpContextAccessor.HttpContext.Returns(httpContext);
             _configuration["S3Storage:BucketName"].Returns("test-bucket");
-            _s3StorageService.UploadFileAsync(Arg.Any<Stream>(), "test-bucket", "FPS2025/InvoiceImport", Arg.Any<string>(), Arg.Any<string>())
+            _s3StorageService.UploadFileAsync(Arg.Any<Stream>(), "test-bucket", "FPS2025/Invoice", Arg.Any<string>(), Arg.Any<string>())
                 .Returns(S3UploadResult.SuccessResponse("key"));
 
             // Act
@@ -867,7 +867,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             // Assert
             Assert.True(result.Success);
             await _s3StorageService.Received(1).UploadFileAsync(
-                Arg.Any<Stream>(), "test-bucket", "FPS2025/InvoiceImport", Arg.Any<string>(), Arg.Any<string>());
+                Arg.Any<Stream>(), "test-bucket", "FPS2025/Invoice", Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Fact]
@@ -959,7 +959,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             Assert.True(result.Success);
             var currentYear = DateTime.UtcNow.Year;
             await _s3StorageService.Received(1).UploadFileAsync(
-                Arg.Any<Stream>(), "test-bucket", $"FPS{currentYear}/InvoiceImport", Arg.Any<string>(), Arg.Any<string>());
+                Arg.Any<Stream>(), "test-bucket", $"FPS{currentYear}/Invoice", Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Fact]
@@ -994,7 +994,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             Assert.True(result.Success);
             var currentYear = DateTime.UtcNow.Year;
             await _s3StorageService.Received(1).UploadFileAsync(
-                Arg.Any<Stream>(), "test-bucket", $"FPS{currentYear}/InvoiceImport", Arg.Any<string>(), Arg.Any<string>());
+                Arg.Any<Stream>(), "test-bucket", $"FPS{currentYear}/Invoice", Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Fact]
@@ -1095,7 +1095,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             Assert.True(result.Success);
             var currentYear = DateTime.UtcNow.Year;
             await _s3StorageService.Received(1).UploadFileAsync(
-                Arg.Any<Stream>(), "test-bucket", $"FPS{currentYear}/InvoiceImport", Arg.Any<string>(), Arg.Any<string>());
+                Arg.Any<Stream>(), "test-bucket", $"FPS{currentYear}/Invoice", Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Fact]

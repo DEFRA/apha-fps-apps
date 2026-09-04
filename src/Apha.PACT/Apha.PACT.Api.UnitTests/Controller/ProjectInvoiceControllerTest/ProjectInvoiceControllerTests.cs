@@ -559,6 +559,25 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
         }
 
         [Fact]
+        public async Task GetMonthlyInvoicesSummary_EmptyResult_ReturnsOkWithEmptyRows()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var dto = new MonthlyInvoicesPivotDto();
+            var mapped = new MonthlyInvoicesPivotRes();
+
+            _serviceMock.GetMonthlyInvoicesSummaryAsync(query).Returns(dto);
+            _mapperMock.Map<MonthlyInvoicesPivotRes>(dto).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetMonthlyInvoicesSummary(query);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.IsType<MonthlyInvoicesPivotRes>(okResult.Value);
+        }
+
+        [Fact]
         public async Task GetMonthlyInvoicesSummary_ServiceThrows_PropagatesException()
         {
             // Arrange

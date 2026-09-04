@@ -40,6 +40,11 @@ function reloadFailedGrid() {
     }
 }
 
+function getSubContractRmsAntiForgeryToken() {
+    const el = document.querySelector('input[name="__RequestVerificationToken"]');
+    return el ? el.value : '';
+}
+
 function addSubContractRms() {
     if (!currentRmsMonth) {
         showAlertMessage('Please select a period first.', AlertType.INFO);
@@ -196,12 +201,15 @@ function importSubContractRms(file) {
         return;
     }
 
+    const antiForgeryToken = getSubContractRmsAntiForgeryToken();
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('__RequestVerificationToken', antiForgeryToken);
 
     $.ajax({
         url: '/PACT/SubContractRms/Import',
         type: 'POST',
+        headers: { 'RequestVerificationToken': antiForgeryToken },
         data: formData,
         processData: false,
         contentType: false,

@@ -187,7 +187,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             if (selectedYearItem != null && int.TryParse(selectedYearItem.ToString(), out var parsedYear) && parsedYear > 0)
                 selectedYear = parsedYear;
 
-            var folderPath = $"FPS{selectedYear}/InvoiceImport";
+            var folderPath = $"FPS{selectedYear}/Invoice";
 
             var originalName = Path.GetFileNameWithoutExtension(sourceFileName);
             if (string.IsNullOrWhiteSpace(originalName))

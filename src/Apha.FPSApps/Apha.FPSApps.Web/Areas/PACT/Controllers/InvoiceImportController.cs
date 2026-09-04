@@ -226,12 +226,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public IActionResult DownloadTemplate()
         {
-            var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "PACT", "InvoiceImport-Template.xlsx");
+            var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "PACT", "Invoice-Template.xlsx");
             if (!System.IO.File.Exists(templatePath))
                 return NotFound();
 
             var bytes = System.IO.File.ReadAllBytes(templatePath);
-            var fileName = $"InvoiceImport_{DateTime.Now:yyyyMMdd}.xlsx";
+            var fileName = $"Invoice_{DateTime.Now:yyyyMMdd}.xlsx";
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
@@ -295,7 +295,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 [nameof(InvoiceImportFailedItem.Wip)] = "#,##0.00;-#,##0.00",
                 [nameof(InvoiceImportFailedItem.ProfitLoss)] = "#,##0.00;-#,##0.00"
             });
-            var fileName = $"ExportedInvoiceImport_{DateTime.Now:ddMMyyyy}.xlsx";
+            var fileName = $"ExportedInvoice_{DateTime.Now:ddMMyyyy}.xlsx";
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 

@@ -619,7 +619,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceImportControllerTes
             // Arrange
             var templateDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "PACT");
             Directory.CreateDirectory(templateDir);
-            var templatePath = Path.Combine(templateDir, "InvoiceImport-Template.xlsx");
+            var templatePath = Path.Combine(templateDir, "Invoice-Template.xlsx");
             File.WriteAllBytes(templatePath, [0x50, 0x4B, 0x03, 0x04]); // minimal bytes
 
             try
@@ -630,7 +630,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceImportControllerTes
                 // Assert
                 var fileResult = Assert.IsType<FileContentResult>(result);
                 Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileResult.ContentType);
-                Assert.StartsWith("InvoiceImport_", fileResult.FileDownloadName);
+                Assert.StartsWith("Invoice_", fileResult.FileDownloadName);
                 Assert.EndsWith(".xlsx", fileResult.FileDownloadName);
             }
             finally
@@ -831,7 +831,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceImportControllerTes
             // Assert
             var fileResult = Assert.IsType<FileContentResult>(result);
             Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileResult.ContentType);
-            Assert.StartsWith("ExportedInvoiceImport_", fileResult.FileDownloadName);
+            Assert.StartsWith("ExportedInvoice_", fileResult.FileDownloadName);
         }
 
         [Fact]

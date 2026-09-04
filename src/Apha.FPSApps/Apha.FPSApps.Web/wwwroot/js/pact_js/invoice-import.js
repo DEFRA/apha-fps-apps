@@ -15,6 +15,11 @@ function reloadFailedInvoicesGrid() {
     }
 }
 
+function getInvoiceImportAntiForgeryToken() {
+    const el = document.querySelector('input[name="__RequestVerificationToken"]');
+    return el ? el.value : '';
+}
+
 function downloadInvoiceImportTemplate() {
     const downloadUrl = '/PACT/InvoiceImport/DownloadTemplate';
 
@@ -52,12 +57,15 @@ function importInvoice(file) {
         return;
     }
 
+    const antiForgeryToken = getInvoiceImportAntiForgeryToken();
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('__RequestVerificationToken', antiForgeryToken);
 
     $.ajax({
         url: '/PACT/InvoiceImport/Import',
         type: 'POST',
+        headers: { 'RequestVerificationToken': antiForgeryToken },
         data: formData,
         processData: false,
         contentType: false,
