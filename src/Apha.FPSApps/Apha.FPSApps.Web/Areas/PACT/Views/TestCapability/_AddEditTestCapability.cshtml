@@ -5,6 +5,7 @@
 @{
     var isEdit = !string.IsNullOrEmpty(Model.TestCode);
     var testorProductOptions = ViewBag.TestorProductOptions as List<SelectListItem> ?? new List<SelectListItem>();
+    var workGroupOptions = ViewBag.WorkGroupOptions as List<SelectListItem> ?? new List<SelectListItem>();
     var projects = ViewBag.Projects as List<ProjectDto> ?? new List<ProjectDto>();
     var planPortfolioOptions = projects.Select(p => new SelectListItem(p.ParentProject, p.ParentProject)).ToList();
 }
@@ -30,21 +31,16 @@
 
         <!-- Test Code -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" for="TestCode">Test Code <span class="sup_color_red">*</span></label>
+            <label class="govuk-label govuk-!-font-weight-bold" for="testCapabilityTestCodeDropdown_input">Test Code <span class="sup_color_red">*</span></label>
             @if (isEdit)
             {
-                <input type="hidden" name="TestCode" value="@Model.TestCode" />
-                <select class="govuk-select govuk-!-font-size-16" asp-for="TestCode"
-                        asp-items="testorProductOptions" style="width:100%;" disabled>
-                    <option value="">-- Select Test Code --</option>
-                </select>
+                <input type="hidden" id="TestCode" name="TestCode" value="@Model.TestCode" />
+                <input class="govuk-input govuk-!-font-size-16" aria-label="Test Code" value="@Model.TestCode" disabled />
             }
             else
             {
-                <select class="govuk-select govuk-!-font-size-16" id="TestCode" name="TestCode"
-                        asp-items="testorProductOptions" style="width:100%;" required>
-                    <option value="">-- Select Test Code --</option>
-                </select>
+                <input type="hidden" id="TestCode" name="TestCode" value="@Model.TestCode" required />
+                <div id="testCodeMultiDropdown"></div>
                 <span data-valmsg-for="TestCode"
                       class="govuk-error-message field-validation-valid" style="display:none;"></span>
             }
@@ -52,20 +48,16 @@
 
         <!-- Work Group -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" for="WorkGroup">WorkGroup <span class="sup_color_red">*</span></label>
+            <label class="govuk-label govuk-!-font-weight-bold" for="testCapabilityWorkGroupDropdown_input">WorkGroup <span class="sup_color_red">*</span></label>
             @if (isEdit)
             {
-                <input type="hidden" name="WorkGroup" value="@Model.WorkGroup" />
+                <input type="hidden" id="WorkGroup" name="WorkGroup" value="@Model.WorkGroup" />
                 <input class="govuk-input govuk-!-font-size-16" aria-label="Test Workgroup" value="@Model.WorkGroup" disabled />
             }
             else
             {
-                <select class="govuk-select govuk-!-font-size-16" asp-for="WorkGroup"
-                        asp-items="@(ViewBag.WorkGroupOptions as List<SelectListItem>)"
-                        aria-label="test workgroup select"
-                        style="width:100%;" required>
-                    <option value="">-- Select Work Group --</option>
-                </select>
+                <input type="hidden" id="WorkGroup" name="WorkGroup" value="@Model.WorkGroup" required />
+                <div id="workGroupMultiDropdown"></div>
                 <span data-valmsg-for="WorkGroup"
                       class="govuk-error-message field-validation-valid" style="display:none;"></span>
             }
@@ -73,11 +65,9 @@
 
         <!-- Plan Portfolio -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" for="PlanPortfolio">Plan Portfolio <span class="sup_color_red">*</span></label>
-            <select class="govuk-select govuk-!-font-size-16" asp-for="PlanPortfolio"
-                    asp-items="planPortfolioOptions" style="width:100%;" required>
-                <option value="">-- Select Plan Portfolio --</option>
-            </select>
+            <label class="govuk-label govuk-!-font-weight-bold" for="testCapabilityPlanPortfolioDropdown_input">Plan Portfolio <span class="sup_color_red">*</span></label>
+            <input type="hidden" id="PlanPortfolio" name="PlanPortfolio" value="@Model.PlanPortfolio" required />
+            <div id="planPortfolioMultiDropdown"></div>
             <span data-valmsg-for="PlanPortfolio"
                   class="govuk-error-message field-validation-valid" style="display:none;"></span>
         </div>
@@ -92,3 +82,18 @@
         @(isEdit ? "Update" : "Save")
     </button>
 </div>
+
+<script>
+    (function () {
+        if (typeof window.initializeTestCapabilityAddEditDropdowns !== 'function') {
+            return;
+        }
+
+        window.initializeTestCapabilityAddEditDropdowns({
+            isEditMode: @isEdit.ToString().ToLowerInvariant(),
+            testCodeData: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(testorProductOptions.Select(x => new { x.Value, x.Text }))),
+            workGroupData: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(workGroupOptions.Select(x => new { x.Value, x.Text }))),
+            planPortfolioData: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(planPortfolioOptions.Select(x => new { x.Value, x.Text })))
+        });
+    }());
+</script>
