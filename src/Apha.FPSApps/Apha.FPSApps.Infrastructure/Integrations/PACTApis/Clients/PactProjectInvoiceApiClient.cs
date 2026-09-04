@@ -135,5 +135,89 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var responseDto = _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(response);
             return ApiResponseDto<MonthlyInvoicesPivotDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
+
+        public async Task<ApiResponseDto<List<InvoiceImportRowDto>>> GetFailedInvoiceImportAsync(QueryParameters<string> query)
+        {
+            string url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetFailedInvoiceImport, query);
+            var response = await _http.GetAsync<List<InvoiceImportRowRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<InvoiceImportRowDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<InvoiceImportRowDto>>>(response);
+            return ApiResponseDto<List<InvoiceImportRowDto>>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
+        }
+
+        public async Task<ApiResponseDto<InvoiceImportRowDto>> GetFailedInvoiceImportByIdAsync(int id)
+        {
+            string url = PactApiEndpoints.GetFailedInvoiceImportById.Replace("{id}", id.ToString());
+            var response = await _http.GetAsync<InvoiceImportRowRes>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<InvoiceImportRowDto>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<InvoiceImportRowDto>>(response);
+            return ApiResponseDto<InvoiceImportRowDto>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
+        }
+
+        public async Task<ApiResponseDto<bool>> SaveFailedInvoiceImportAsync(int id, InvoiceImportRowDto dto)
+        {
+            var req = _mapper.Map<InvoiceImportRowReq>(dto);
+            string url = PactApiEndpoints.SaveFailedInvoiceImport.Replace("{id}", id.ToString());
+            var response = await _http.PutAsync<InvoiceImportRowReq, bool?>(url, req);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta ?? new ApiMetaDto());
+        }
+
+        public async Task<ApiResponseDto<bool>> DeleteFailedInvoiceImportByIdAsync(int id)
+        {
+            string url = PactApiEndpoints.DeleteFailedInvoiceImportById.Replace("{id}", id.ToString());
+            var response = await _http.DeleteAsync<bool?>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
+        }
+
+        public async Task<ApiResponseDto<bool>> DeleteFailedInvoiceImportByUserAsync()
+        {
+            var response = await _http.DeleteAsync<bool?>(PactApiEndpoints.DeleteFailedInvoiceImportByUser);
+            if (response.Success)
+            {
+                var mappedResponse = _mapper.Map<ApiResponseDto<bool>>(response);
+
+                // If no records were deleted (Data is false), add a specific message
+                if (!mappedResponse.Data)
+                {
+                    mappedResponse.Errors = new List<ApiErrorDto>
+                    {
+                        new ApiErrorDto { Message = "No failed imported records found to delete." }
+                    };
+                }
+
+                return mappedResponse;
+            }
+
+            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
+        }
+
+        public async Task<ApiResponseDto<InvoiceImportResultDto>> ImportInvoiceAsync(InvoiceImportReqDto request)
+        {
+            var req = _mapper.Map<InvoiceImportReq>(request);
+            var response = await _http.PostAsync<InvoiceImportReq, InvoiceImportRes>(PactApiEndpoints.ImportInvoice, req);
+
+            if (response.Success)
+
+            {
+                var dto = _mapper.Map<InvoiceImportResultDto>(response.Data);
+                return ApiResponseDto<InvoiceImportResultDto>.SuccessResponse(dto);
+            }
+
+            var failDto = _mapper.Map<ApiResponseDto<InvoiceImportResultDto>>(response);
+            return ApiResponseDto<InvoiceImportResultDto>.FailureResponse(failDto.Errors, failDto.Meta ?? new ApiMetaDto());
+        }
     }
 }

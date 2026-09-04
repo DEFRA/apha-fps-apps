@@ -1,6 +1,7 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Pagination;
+using Microsoft.AspNetCore.Http;
 
 namespace Apha.FPSApps.Application.Interfaces.PACT
 {
@@ -14,5 +15,11 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
         Task<ApiResponseDto<ProjectInvoiceDto>> UpdateAsync(int invoiceCounter, ProjectInvoiceDto dto);
         Task<ApiResponseDto<bool>> DeleteAsync(int invoiceCounter);
         Task<ApiResponseDto<MonthlyInvoicesPivotDto>> GetMonthlyInvoicesSummaryAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<List<InvoiceImportRowDto>>> GetFailedInvoiceImportAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<InvoiceImportRowDto>> GetFailedInvoiceImportByIdAsync(int id);
+        Task<ApiResponseDto<bool>> SaveFailedInvoiceImportAsync(int id, InvoiceImportRowDto dto);
+        Task<ApiResponseDto<bool>> DeleteFailedInvoiceImportByIdAsync(int id);
+        Task<ApiResponseDto<InvoiceImportResultDto>> ImportInvoiceAsync(IFormFile file);
+        Task<ApiResponseDto<bool>> DeleteFailedInvoiceImportByUserAsync();
     }
 }

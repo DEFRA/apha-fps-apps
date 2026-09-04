@@ -24,6 +24,8 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<Month, MonthDto>().ReverseMap();
             CreateMap<MonthDto, MonthRes>().ReverseMap();
             CreateMap<ProjectInvoice, ProjectInvoiceDto>().ReverseMap();
+            CreateMap<InvoiceImportRow, InvoiceImportRowDto>().ReverseMap();
+            CreateMap<ProjectInvoiceStaging, InvoiceImportRowDto>();
             CreateMap<ProjectSubContract, ProjectSubContractDto>().ReverseMap();
             CreateMap<SubContractRmsImportRow, SubContractRmsImportRowDto>().ReverseMap();
             CreateMap<ProjectSubcontractStaging, SubContractRmsImportRowDto>();

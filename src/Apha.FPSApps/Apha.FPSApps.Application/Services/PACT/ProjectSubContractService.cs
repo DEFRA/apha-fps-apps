@@ -167,8 +167,17 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         private SubContractRmsImportRowDto MapRowToDto(IXLRangeRow row, Dictionary<string, int> headerMap)
         {
+            var normalizedIdHeader = _excelImportService.NormalizeHeader("Id");
+            var stagingId = 0;
+            if (headerMap.TryGetValue(normalizedIdHeader, out var idCol))
+            {
+                var idText = _excelImportService.GetText(row.Cell(idCol));
+                _ = int.TryParse(idText, out stagingId);
+            }
+
             return new SubContractRmsImportRowDto
             {
+                Id = stagingId,
                 Project = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Project")])),
                 TestJob = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Test Job")])),
                 Month = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Month")])),

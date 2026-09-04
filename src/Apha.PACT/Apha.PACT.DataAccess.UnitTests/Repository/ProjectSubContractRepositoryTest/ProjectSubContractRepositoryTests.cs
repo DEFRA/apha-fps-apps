@@ -722,7 +722,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
         }
 
         [Fact]
-        public async Task GetFailedSubContractRmsAsync_WithRows_ReturnsLatestImportDateRowsOnly()
+        public async Task GetFailedSubContractRmsAsync_WithRows_ReturnsAllFailedRowsForUser()
         {
             // Arrange
             var oldDate = new DateTime(2024, 4, 1, 9, 0, 0);
@@ -742,9 +742,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             var result = await repo.GetFailedSubContractRmsAsync(query, "user2");
 
             // Assert
-            Assert.Single(result.Data);
-            Assert.Equal(2, result.Data.First().Id);
-            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.Data.Count);
+            Assert.Equal(new[] { 1, 2 }, result.Data.Select(x => x.Id).ToArray());
+            Assert.Equal(2, result.PaginationData.TotalRecords);
         }
 
         [Fact]
@@ -821,6 +821,611 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
 
         #endregion
 
+        #region DeleteFailedSubContractRmsByUserAsync
+
+        [Fact]
+        public async Task DeleteFailedSubContractRmsByUserAsync_WithRows_RemovesAndReturnsCount()
+        {
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "user1", IsPassed = false },
+                new() { Id = 2, ImportedBy = "user1", IsPassed = true }
+            };
+            var (repo, stagingSet, context) = CreateRepositoryWithStaging(rows);
+
+            var result = await repo.DeleteFailedSubContractRmsByUserAsync("user1");
+
+            Assert.True(result > 0);
+            stagingSet.Verify(x => x.RemoveRange(It.IsAny<IEnumerable<ProjectSubcontractStaging>>()), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(context);
+        }
+
+        [Fact]
+        public async Task DeleteFailedSubContractRmsByUserAsync_NoRows_ReturnsZero()
+        {
+            var (repo, _, _) = CreateRepositoryWithStaging([]);
+
+            var result = await repo.DeleteFailedSubContractRmsByUserAsync("user1");
+
+            Assert.Equal(0, result);
+        }
+
+        [Fact]
+        public async Task DeleteFailedSubContractRmsByUserAsync_DifferentUser_ReturnsZero()
+        {
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "other", IsPassed = false }
+            };
+            var (repo, _, _) = CreateRepositoryWithStaging(rows);
+
+            var result = await repo.DeleteFailedSubContractRmsByUserAsync("user1");
+
+            Assert.Equal(0, result);
+        }
+
+        #endregion
+
+        #region GetFailedSubContractRmsByIdAsync
+
+        [Fact]
+        public async Task GetFailedSubContractRmsByIdAsync_Found_ReturnsEntity()
+        {
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 10, ImportedBy = "user1", IsPassed = false, Project = "PRJ1" }
+            };
+            var (repo, _, _) = CreateRepositoryWithStaging(rows);
+
+            var result = await repo.GetFailedSubContractRmsByIdAsync(10, "user1");
+
+            Assert.NotNull(result);
+            Assert.Equal(10, result.Id);
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRmsByIdAsync_NotFound_ReturnsNull()
+        {
+            var (repo, _, _) = CreateRepositoryWithStaging([]);
+
+            var result = await repo.GetFailedSubContractRmsByIdAsync(99, "user1");
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRmsByIdAsync_WrongUser_ReturnsNull()
+        {
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 10, ImportedBy = "user1", IsPassed = false }
+            };
+            var (repo, _, _) = CreateRepositoryWithStaging(rows);
+
+            var result = await repo.GetFailedSubContractRmsByIdAsync(10, "other");
+
+            Assert.Null(result);
+        }
+
+        #endregion
+
+        #region UpdateFailedSubContractRmsRecordsAsync
+
+        [Fact]
+        public async Task UpdateFailedSubContractRmsRecordsAsync_WithRecords_SetsModifiedAndSaves()
+        {
+            var staging = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "user1", IsPassed = false, Project = "PRJ1" }
+            };
+            var (repo, _, context) = CreateRepositoryWithStaging(staging);
+
+            context.Setup(x => x.Entry(It.IsAny<ProjectSubcontractStaging>()))
+                .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
+
+            await Assert.ThrowsAsync<NotSupportedException>(() =>
+                repo.UpdateFailedSubContractRmsRecordsAsync(staging));
+        }
+
+        #endregion
+
+        #region DeleteFailedSubContractRmsByIdsAsync
+
+        [Fact]
+        public async Task DeleteFailedSubContractRmsByIdsAsync_WithMatchingRows_RemovesAndSaves()
+        {
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "user1", IsPassed = false },
+                new() { Id = 2, ImportedBy = "user1", IsPassed = false },
+                new() { Id = 3, ImportedBy = "other", IsPassed = false }
+            };
+            var (repo, stagingSet, context) = CreateRepositoryWithStaging(rows);
+
+            await repo.DeleteFailedSubContractRmsByIdsAsync([1, 2], "user1");
+
+            stagingSet.Verify(x => x.RemoveRange(It.IsAny<IEnumerable<ProjectSubcontractStaging>>()), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(context);
+        }
+
+        [Fact]
+        public async Task DeleteFailedSubContractRmsByIdsAsync_NoMatchingRows_DoesNotRemove()
+        {
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "other", IsPassed = false }
+            };
+            var (repo, stagingSet, context) = CreateRepositoryWithStaging(rows);
+
+            await repo.DeleteFailedSubContractRmsByIdsAsync([1], "user1");
+
+            stagingSet.Verify(x => x.RemoveRange(It.IsAny<IEnumerable<ProjectSubcontractStaging>>()), Times.Never);
+            RepositoryTestHelper.VerifySaveChanges(context, 0);
+        }
+
+        [Fact]
+        public async Task DeleteFailedSubContractRmsByIdsAsync_EmptyIds_DoesNotRemove()
+        {
+            var (repo, stagingSet, context) = CreateRepositoryWithStaging([]);
+
+            await repo.DeleteFailedSubContractRmsByIdsAsync([], "user1");
+
+            stagingSet.Verify(x => x.RemoveRange(It.IsAny<IEnumerable<ProjectSubcontractStaging>>()), Times.Never);
+            RepositoryTestHelper.VerifySaveChanges(context, 0);
+        }
+
+        #endregion
+
+        #region ImportSubContractRmsAsync additional branches
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_OnlyPassedRows_AddsPassedAndSkipsFailed()
+        {
+            var (repo, _, context) = CreateRepositoryWithStaging([]);
+            var passedRows = new List<ProjectSubContract>
+            {
+                new() { Project = "PRJ1", FpsYear = DefaultTestFpsYear }
+            };
+
+            var result = await repo.ImportSubContractRmsAsync(passedRows, []);
+
+            Assert.Equal(1, result.PassedCount);
+            Assert.Equal(0, result.FailedCount);
+            context.Verify(x => x.ProjectSubContracts.AddRangeAsync(It.IsAny<IEnumerable<ProjectSubContract>>(), It.IsAny<CancellationToken>()), Times.Once);
+            context.Verify(x => x.ProjectSubcontractStagings.AddRangeAsync(It.IsAny<IEnumerable<ProjectSubcontractStaging>>(), It.IsAny<CancellationToken>()), Times.Never);
+            RepositoryTestHelper.VerifySaveChanges(context);
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_OnlyFailedRows_AddsFailedAndSkipsPassed()
+        {
+            var (repo, _, context) = CreateRepositoryWithStaging([]);
+            var failedRows = new List<ProjectSubcontractStaging>
+            {
+                new() { Project = "PRJ2", ImportedBy = "user1", IsPassed = false }
+            };
+
+            var result = await repo.ImportSubContractRmsAsync([], failedRows);
+
+            Assert.Equal(0, result.PassedCount);
+            Assert.Equal(1, result.FailedCount);
+            context.Verify(x => x.ProjectSubContracts.AddRangeAsync(It.IsAny<IEnumerable<ProjectSubContract>>(), It.IsAny<CancellationToken>()), Times.Never);
+            context.Verify(x => x.ProjectSubcontractStagings.AddRangeAsync(It.IsAny<IEnumerable<ProjectSubcontractStaging>>(), It.IsAny<CancellationToken>()), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(context);
+        }
+
+        #endregion
+
+        #region Sorting
+
+        [Theory]
+        [InlineData("Project", false)]
+        [InlineData("Month", true)]
+        [InlineData("Amount", false)]
+        [InlineData("AcctCode", true)]
+        [InlineData("TestJob", false)]
+        [InlineData("SubContCounter", true)]
+        [InlineData("counter", false)]
+        [InlineData("Description", true)]
+        [InlineData("Supplier", false)]
+        [InlineData("SupplierNumber", true)]
+        [InlineData("DailyRate", false)]
+        [InlineData("AnimalDays", true)]
+        [InlineData("WorkGroup", false)]
+        [InlineData("Unknown_Column", false)]
+        public async Task GetPagedProjectSubContractsAsync_SortBy_DoesNotThrow(string sortBy, bool descending)
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", AcctCode = "A", TestJob = "T", WorkGroup = "W", Description = "D", Supplier = "S", SupplierNumber = 1, DailyRate = 10m, AnimalDays = 5, Month = 1, Amount = 100m, FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "PRJ2", AcctCode = "B", TestJob = "U", WorkGroup = "X", Description = "E", Supplier = "T", SupplierNumber = 2, DailyRate = 20m, AnimalDays = 10, Month = 2, Amount = 200m, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string> { SortBy = sortBy, Descending = descending };
+
+            var result = await repo.GetPagedProjectSubContractsAsync(query, null);
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Theory]
+        [InlineData("id", false)]
+        [InlineData("project", true)]
+        [InlineData("testjob", false)]
+        [InlineData("month", true)]
+        [InlineData("amount", false)]
+        [InlineData("workgroup", true)]
+        [InlineData("acctcode", false)]
+        [InlineData("supplier", true)]
+        [InlineData("description", false)]
+        [InlineData("suppliernumber", true)]
+        [InlineData("dailyrate", false)]
+        [InlineData("animaldays", true)]
+        [InlineData("validationfailure", false)]
+        [InlineData("importeddate", true)]
+        [InlineData("unknown", false)]
+        public async Task GetFailedSubContractRmsAsync_SortBy_DoesNotThrow(string sortBy, bool descending)
+        {
+            var latestDate = new DateTime(2024, 4, 2, 9, 0, 0);
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, Project = "PRJ1", TestJob = "T", Month = "1", Amount = "100", WorkGroup = "W", AcctCode = "A", Supplier = "S", Description = "D", SupplierNumber = "1", DailyRate = "10", AnimalDays = "5", ValidationFailure = "err" },
+                new() { Id = 2, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, Project = "PRJ2", TestJob = "U", Month = "2", Amount = "200", WorkGroup = "X", AcctCode = "B", Supplier = "T", Description = "E", SupplierNumber = "2", DailyRate = "20", AnimalDays = "10", ValidationFailure = "err2" }
+            };
+            var (repo, _, _) = CreateRepositoryWithStaging(rows);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+
+            var result = await repo.GetFailedSubContractRmsAsync(query, "user1");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRmsAsync_NullSortBy_DefaultsToIdOrder()
+        {
+            var latestDate = new DateTime(2024, 4, 2, 9, 0, 0);
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 2, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, Project = "PRJ2" },
+                new() { Id = 1, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, Project = "PRJ1" }
+            };
+            var (repo, _, _) = CreateRepositoryWithStaging(rows);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetFailedSubContractRmsAsync(query, "user1");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.Equal(1, result.Data.First().Id);
+        }
+
+        #endregion
+
+        #region SubContract Filters
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsAsync_FilterByProject_ReturnsMatchingRows()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "PRJ2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string> { Filter = """{"Project":"PRJ1"}""" };
+
+            var result = await repo.GetPagedProjectSubContractsAsync(query, null);
+
+            Assert.Single(result.Data);
+            Assert.Equal("PRJ1", result.Data.First().Project);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsAsync_FilterByMonth_ReturnsMatchingRows()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", Month = 3, FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "PRJ1", Month = 5, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string> { Filter = """{"Month":"3"}""" };
+
+            var result = await repo.GetPagedProjectSubContractsAsync(query, null);
+
+            Assert.Single(result.Data);
+            Assert.Equal(3, result.Data.First().Month);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsAsync_FilterBySupplierNumber_ReturnsMatchingRows()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", SupplierNumber = 42, FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "PRJ1", SupplierNumber = 99, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string> { Filter = """{"SupplierNumber":"42"}""" };
+
+            var result = await repo.GetPagedProjectSubContractsAsync(query, null);
+
+            Assert.Single(result.Data);
+            Assert.Equal(42, result.Data.First().SupplierNumber);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsAsync_FilterByMonth_NonNumeric_ReturnsAll()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", Month = 3, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string> { Filter = """{"Month":"abc"}""" };
+
+            var result = await repo.GetPagedProjectSubContractsAsync(query, null);
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsAsync_FilterBySupplierNumber_NonNumeric_ReturnsAll()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", SupplierNumber = 42, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string> { Filter = """{"SupplierNumber":"abc"}""" };
+
+            var result = await repo.GetPagedProjectSubContractsAsync(query, null);
+
+            Assert.Single(result.Data);
+        }
+
+        #endregion
+
+        #region Failed SubContract Filters
+
+        [Fact]
+        public async Task GetFailedSubContractRmsAsync_FilterByProject_ReturnsMatchingRows()
+        {
+            var latestDate = new DateTime(2024, 4, 2, 9, 0, 0);
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, Project = "PRJ1" },
+                new() { Id = 2, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, Project = "PRJ2" }
+            };
+            var (repo, _, _) = CreateRepositoryWithStaging(rows);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = """{"Project":"PRJ1"}""" };
+
+            var result = await repo.GetFailedSubContractRmsAsync(query, "user1");
+
+            Assert.Single(result.Data);
+            Assert.Equal("PRJ1", result.Data.First().Project);
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRmsAsync_FilterByMonth_ReturnsMatchingRows()
+        {
+            var latestDate = new DateTime(2024, 4, 2, 9, 0, 0);
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, Month = "3" },
+                new() { Id = 2, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, Month = "5" }
+            };
+            var (repo, _, _) = CreateRepositoryWithStaging(rows);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = """{"Month":"3"}""" };
+
+            var result = await repo.GetFailedSubContractRmsAsync(query, "user1");
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRmsAsync_FilterBySupplierNumber_ReturnsMatchingRows()
+        {
+            var latestDate = new DateTime(2024, 4, 2, 9, 0, 0);
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, SupplierNumber = "42" },
+                new() { Id = 2, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, SupplierNumber = "99" }
+            };
+            var (repo, _, _) = CreateRepositoryWithStaging(rows);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = """{"SupplierNumber":"42"}""" };
+
+            var result = await repo.GetFailedSubContractRmsAsync(query, "user1");
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRmsAsync_FilterByValidationFailure_ReturnsMatchingRows()
+        {
+            var latestDate = new DateTime(2024, 4, 2, 9, 0, 0);
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, ValidationFailure = "Invalid project" },
+                new() { Id = 2, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, ValidationFailure = "OK" }
+            };
+            var (repo, _, _) = CreateRepositoryWithStaging(rows);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = """{"ValidationFailure":"Invalid"}""" };
+
+            var result = await repo.GetFailedSubContractRmsAsync(query, "user1");
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRmsAsync_EmptyFilter_ReturnsAllRows()
+        {
+            var latestDate = new DateTime(2024, 4, 2, 9, 0, 0);
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate },
+                new() { Id = 2, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate }
+            };
+            var (repo, _, _) = CreateRepositoryWithStaging(rows);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "" };
+
+            var result = await repo.GetFailedSubContractRmsAsync(query, "user1");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
+
+        #region GetFpsProjectSubContractsAsync Sorting
+
+        [Fact]
+        public async Task GetFpsProjectSubContractsAsync_WithSortBy_SortsCorrectly()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "B", AcctCode = "LargeAnimals", Amount = 200m, FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "A", AcctCode = "SmallAnimals", Amount = 100m, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string> { SortBy = "Project", Descending = false };
+
+            var result = await repo.GetFpsProjectSubContractsAsync(query, null, filterByAnimalAcctCodes: true);
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.Equal("A", result.Data.First().Project);
+        }
+
+        #endregion
+
+        #region Additional edge-case coverage
+
+        [Fact]
+        public async Task GetValidProjectsAsync_NoMatchingFpsYear_ReturnsEmptySet()
+        {
+            // Arrange
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PRJ1", FpsYear = 2020, ProjectTitle = "T", Program = "P", Customer = "C", ProjectStatus = "S", Disease = "D", Contract = "K", IncomeAccountCode = "I", TransferIncome = 0, CustIncome = 0, IsDefraProject = 0 }
+            };
+
+            var projectsSet = RepositoryTestHelper.CreateMockDbSet(projects);
+            var subContractsMockSet = RepositoryTestHelper.CreateMockDbSet<ProjectSubContract>([]);
+            mockContext.Setup(x => x.Projects).Returns(projectsSet.Object);
+            mockContext.Setup(x => x.ProjectSubContracts).Returns(subContractsMockSet.Object);
+
+            var repo = new ProjectSubContractRepository(mockContext.Object, fpsRequestContext);
+
+            // Act
+            var result = await repo.GetValidProjectsAsync();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsAsync_ProjectFilter_IsCaseInsensitiveAndSkipsNullProjects()
+        {
+            // Arrange
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = null, FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 3, Project = "PRJ2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string>();
+
+            // Act
+            var result = await repo.GetPagedProjectSubContractsAsync(query, "prj1");
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal(1, result.Data.First().SubContCounter);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsAsync_FilterLiteralNull_ReturnsUnfilteredRows()
+        {
+            // Arrange
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "PRJ2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string> { Filter = "null" };
+
+            // Act
+            var result = await repo.GetPagedProjectSubContractsAsync(query, null);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRmsAsync_FilterLiteralNull_ReturnsUnfilteredRows()
+        {
+            // Arrange
+            var latestDate = new DateTime(2024, 4, 2, 9, 0, 0);
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate },
+                new() { Id = 2, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate }
+            };
+            var (repo, _, _) = CreateRepositoryWithStaging(rows);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "null" };
+
+            // Act
+            var result = await repo.GetFailedSubContractRmsAsync(query, "user1");
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRmsAsync_FilterByWhitespaceMonth_DoesNotFilterRows()
+        {
+            // Arrange
+            var latestDate = new DateTime(2024, 4, 2, 9, 0, 0);
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, Month = "3" },
+                new() { Id = 2, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, Month = "5" }
+            };
+            var (repo, _, _) = CreateRepositoryWithStaging(rows);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = """{"Month":"   "}""" };
+
+            // Act
+            var result = await repo.GetFailedSubContractRmsAsync(query, "user1");
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRmsAsync_FilterByWhitespaceSupplierNumber_DoesNotFilterRows()
+        {
+            // Arrange
+            var latestDate = new DateTime(2024, 4, 2, 9, 0, 0);
+            var rows = new List<ProjectSubcontractStaging>
+            {
+                new() { Id = 1, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, SupplierNumber = "42" },
+                new() { Id = 2, ImportedBy = "user1", IsPassed = false, ImportedDate = latestDate, SupplierNumber = "99" }
+            };
+            var (repo, _, _) = CreateRepositoryWithStaging(rows);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = """{"SupplierNumber":"   "}""" };
+
+            // Act
+            var result = await repo.GetFailedSubContractRmsAsync(query, "user1");
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
 
     }
 }

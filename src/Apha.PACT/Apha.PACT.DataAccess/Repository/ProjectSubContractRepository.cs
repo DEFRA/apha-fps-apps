@@ -24,7 +24,7 @@ namespace Apha.PACT.DataAccess.Repository
 
             if (!string.IsNullOrEmpty(project))
             {
-                querySubContracts = querySubContracts.Where(s => s.Project.ToLower() == project.ToLower());
+                querySubContracts = querySubContracts.Where(s => !string.IsNullOrEmpty(s.Project) && s.Project.ToLower() == project.ToLower());
             }
 
             querySubContracts = ApplySubContractFilter(querySubContracts, query.Filter);
@@ -152,27 +152,9 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<PagedData<SubContractRmsImportRow>> GetFailedSubContractRmsAsync(PaginationParameters<string> query, string importedBy)
         {
-            var latestImportedDate = await _context.ProjectSubcontractStagings
-                .AsNoTracking()
-                .Where(x => x.ImportedBy == importedBy && x.IsPassed == false)
-                .MaxAsync(x => x.ImportedDate);
-
-            if (!latestImportedDate.HasValue)
-            {
-                return new PagedData<SubContractRmsImportRow>(
-                    Array.Empty<SubContractRmsImportRow>(),                   
-                    new PaginationData
-                    {
-                        PageNumber = query.Page,
-                        PageSize = query.PageSize,
-                        TotalRecords = 0,
-                        TotalPages = 0
-                    });
-            }
-
             IQueryable<ProjectSubcontractStaging> failedQuery = _context.ProjectSubcontractStagings
                 .AsNoTracking()
-                .Where(x => x.ImportedBy == importedBy && x.IsPassed == false && x.ImportedDate == latestImportedDate.Value);
+                .Where(x => x.ImportedBy == importedBy && x.IsPassed == false);
 
             failedQuery = ApplyFailedSubContractFilter(failedQuery, query.Filter);
             failedQuery = (IQueryable<ProjectSubcontractStaging>)ApplyFailedSubContractSorting(failedQuery, query.SortBy, query.Descending);
@@ -255,6 +237,29 @@ namespace Apha.PACT.DataAccess.Repository
             _context.ProjectSubcontractStagings.Remove(entity);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task UpdateFailedSubContractRmsRecordsAsync(List<ProjectSubcontractStaging> records)
+        {
+            foreach (var record in records)
+            {
+                _context.Entry(record).State = EntityState.Modified;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteFailedSubContractRmsByIdsAsync(List<int> ids, string importedBy)
+        {
+            var rows = await _context.ProjectSubcontractStagings
+                .Where(s => ids.Contains(s.Id) && s.ImportedBy == importedBy)
+                .ToListAsync();
+
+            if (rows.Count > 0)
+            {
+                _context.ProjectSubcontractStagings.RemoveRange(rows);
+                await _context.SaveChangesAsync();
+            }
         }
 
         private static IQueryable<ProjectSubContract> ApplySubContractFilter(IQueryable<ProjectSubContract> query, string? filter)
