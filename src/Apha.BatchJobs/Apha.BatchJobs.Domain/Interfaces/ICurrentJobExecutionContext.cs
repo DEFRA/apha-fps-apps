@@ -24,6 +24,9 @@ public interface ICurrentJobExecutionContext
     string RequestedBy { get; }
     string? ParametersJson { get; }
 
+    /// <summary>Original trigger-accepted timestamp. Stable across retries of the same execution.</summary>
+    DateTime? RequestedAtUtc { get; }
+
     /// <summary>Populates the context. Called once per execution, before the job runs.</summary>
     void Initialize(
         Guid jobExecutionId,
@@ -31,5 +34,6 @@ public interface ICurrentJobExecutionContext
         string jobName,
         RunMode runMode,
         string requestedBy,
-        string? parametersJson);
+        string? parametersJson,
+        DateTime? requestedAtUtc = null);
 }

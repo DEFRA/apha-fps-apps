@@ -232,7 +232,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
             // Populates the scoped execution context so the job can read its identity and
             // parameters instead of re-parsing env vars — shared by this orchestrator and the
             // job for the lifetime of this one execution.
-            _currentExecutionContext.Initialize(jobExecutionId, jobQueueId, jobName, runMode, userId, parametersJson);
+            _currentExecutionContext.Initialize(
+                jobExecutionId, jobQueueId, jobName, runMode, userId, parametersJson, existingExecution.RequestedAtUtc);
 
             var runtimeTimeoutSeconds = ResolveRuntimeTimeoutSeconds(job);
 

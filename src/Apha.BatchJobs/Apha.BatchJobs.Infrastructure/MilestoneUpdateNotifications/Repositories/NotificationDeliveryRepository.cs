@@ -47,30 +47,34 @@ public sealed class NotificationDeliveryRepository : INotificationDeliveryReposi
         await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync(cancellationToken);
 
-        // ON CONFLICT (jobqueueid) makes this safe for a whole-job retry that re-invokes the job
-        // with the same jobQueueId: the first attempt's row is found and reused instead of a
-        // unique-violation on the jobqueueid constraint masking the original transient failure.
+        // ON CONFLICT DO NOTHING makes a retry reuse the existing row instead of a
+        // unique-violation. Unlike a DO UPDATE, it never rewrites fpsyear/monthnumber —
+        // a retry resolving a different year/month than the original is an anomaly, checked below.
         const string sql = @"
-            INSERT INTO fps.notification_run_summary (
-                jobqueueid, notificationtype, fpsyear, monthnumber,
-                candidatecount, candidateprojectcount, identifiedrecipientcount,
-                managerdeliverycount, manageremailattemptcount, manageremailsentcount,
-                manageremailfailedcount, manageremailskippedcount,
-                disabledrecipientcount, disabledprojectcount,
-                missingemailrecipientcount, missingemailprojectcount,
-                unresolvedrecipientcount, unresolvedprojectcount,
-                diagnosticavailable, outcomeunknownrecipientcount,
-                duplicateskippedcount, capssummarystatus, createdatutc, updatedatutc
-            ) VALUES (
-                @jobqueueid, @notificationtype, @fpsyear, @monthnumber,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                NULL, NULL, true, 0, 0, 'Pending', now(), now()
+            WITH ins AS (
+                INSERT INTO fps.notification_run_summary (
+                    jobqueueid, notificationtype, fpsyear, monthnumber,
+                    candidatecount, candidateprojectcount, identifiedrecipientcount,
+                    managerdeliverycount, manageremailattemptcount, manageremailsentcount,
+                    manageremailfailedcount, manageremailskippedcount,
+                    disabledrecipientcount, disabledprojectcount,
+                    missingemailrecipientcount, missingemailprojectcount,
+                    unresolvedrecipientcount, unresolvedprojectcount,
+                    diagnosticavailable, outcomeunknownrecipientcount,
+                    duplicateskippedcount, capssummarystatus, createdatutc, updatedatutc
+                ) VALUES (
+                    @jobqueueid, @notificationtype, @fpsyear, @monthnumber,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    NULL, NULL, true, 0, 0, 'Pending', now(), now()
+                )
+                ON CONFLICT (jobqueueid) DO NOTHING
+                RETURNING notificationrunsummaryid, fpsyear, monthnumber
             )
-            ON CONFLICT (jobqueueid) DO UPDATE SET
-                fpsyear      = EXCLUDED.fpsyear,
-                monthnumber  = EXCLUDED.monthnumber,
-                updatedatutc = now()
-            RETURNING notificationrunsummaryid";
+            SELECT notificationrunsummaryid, fpsyear, monthnumber, true AS wasinserted FROM ins
+            UNION ALL
+            SELECT notificationrunsummaryid, fpsyear, monthnumber, false AS wasinserted
+            FROM fps.notification_run_summary
+            WHERE jobqueueid = @jobqueueid AND NOT EXISTS (SELECT 1 FROM ins)";
 
         await using var cmd = new NpgsqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("jobqueueid", jobQueueId);
@@ -78,12 +82,38 @@ public sealed class NotificationDeliveryRepository : INotificationDeliveryReposi
         cmd.Parameters.AddWithValue("fpsyear", fpsYear);
         cmd.Parameters.AddWithValue("monthnumber", monthNumber);
 
-        var result = await cmd.ExecuteScalarAsync(cancellationToken);
-        var id = (Guid)result!;
+        Guid id;
+        bool wasInserted;
+        int existingYear;
+        int existingMonth;
+        await using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
+        {
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                throw new InvalidOperationException(
+                    $"GetOrCreateRunSummaryAsync: no row found or created for JobQueueId={jobQueueId} " +
+                    "— this should never happen.");
+            }
+
+            id = reader.GetGuid(0);
+            existingYear = reader.GetInt32(1);
+            existingMonth = reader.GetInt32(2);
+            wasInserted = reader.GetBoolean(3);
+        }
+
+        if (!wasInserted && (existingYear != fpsYear || existingMonth != monthNumber))
+        {
+            throw new InvalidOperationException(
+                $"Run summary identity mismatch on retry for JobQueueId={jobQueueId}: the existing row " +
+                $"has Year={existingYear}/Month={existingMonth}, but this attempt resolved " +
+                $"Year={fpsYear}/Month={monthNumber}. A run's reporting year/month must be immutable " +
+                "across retries of the same jobQueueId — investigate why resolution produced a " +
+                "different value before retrying.");
+        }
 
         _logger.LogInformation(
-            "notification_run_summary ready | RunSummaryId={RunSummaryId} | JobQueueId={JobQueueId} | Year={Year} | Month={Month}",
-            id, jobQueueId, fpsYear, monthNumber);
+            "notification_run_summary ready | RunSummaryId={RunSummaryId} | JobQueueId={JobQueueId} | Year={Year} | Month={Month} | WasInserted={WasInserted}",
+            id, jobQueueId, fpsYear, monthNumber, wasInserted);
 
         return id;
     }
@@ -322,7 +352,7 @@ public sealed class NotificationDeliveryRepository : INotificationDeliveryReposi
     }
 
     /// <inheritdoc />
-    public async Task UpdateDeliveryToSendingAsync(
+    public async Task<bool> UpdateDeliveryToSendingAsync(
         Guid notificationDeliveryId,
         CancellationToken cancellationToken)
     {
@@ -336,7 +366,17 @@ public sealed class NotificationDeliveryRepository : INotificationDeliveryReposi
 
         await using var cmd = new NpgsqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("id", notificationDeliveryId);
-        await cmd.ExecuteNonQueryAsync(cancellationToken);
+        var rows = await cmd.ExecuteNonQueryAsync(cancellationToken);
+
+        if (rows != 1)
+        {
+            _logger.LogError(
+                "UpdateDeliveryToSendingAsync affected {RowCount} row(s), expected exactly 1 — " +
+                "durable state was not confirmed as Sending | DeliveryId={DeliveryId}",
+                rows, notificationDeliveryId);
+        }
+
+        return rows == 1;
     }
 
     /// <inheritdoc />
@@ -364,7 +404,26 @@ public sealed class NotificationDeliveryRepository : INotificationDeliveryReposi
         parentCmd.Parameters.AddWithValue("status", deliveryStatus);
         AddNullableString(parentCmd, "failuremessage", failureMessage);
         AddNullableTimestampTz(parentCmd, "sentatutc", sentAtUtc);
-        await parentCmd.ExecuteNonQueryAsync(cancellationToken);
+        var parentRows = await parentCmd.ExecuteNonQueryAsync(cancellationToken);
+
+        // Check the parent invariant before touching children — no point committing a
+        // child-row update when the parent write itself didn't land as expected. Unlike
+        // UpdateDeliveryToSendingAsync (a pre-send guard, recipient-local), this runs after
+        // Graph has already been called — a failure here is a durability failure, not a
+        // per-recipient one, so it throws rather than returning a value the caller could
+        // shrug off. The row is left at its pre-outcome status (rolled back); the next run's
+        // duplicate check will find it Sending and route it through OutcomeUnknown.
+        if (parentRows != 1)
+        {
+            await tx.RollbackAsync(cancellationToken);
+            _logger.LogError(
+                "UpdateDeliveryOutcomeAsync affected {RowCount} parent row(s), expected exactly 1 — " +
+                "rolled back, the {Status} outcome was NOT recorded | DeliveryId={DeliveryId}",
+                parentRows, deliveryStatus, notificationDeliveryId);
+            throw new InvalidOperationException(
+                $"Expected exactly one notification_delivery row to update for DeliveryId={notificationDeliveryId}, " +
+                $"but {parentRows} row(s) were affected. Outcome '{deliveryStatus}' was not recorded.");
+        }
 
         // Mirror outcome onto Pending children only — Skipped children retain their status.
         const string childSql = @"

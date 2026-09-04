@@ -14,6 +14,7 @@ using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
 namespace Apha.BatchJobs.UnitTests;
 
@@ -61,12 +62,16 @@ public sealed class MilestoneUpdateNotificationsJobTests
             NullLogger<MilestoneUpdateNotificationsJob>.Instance);
     }
 
-    // Shared delivery repo stub: returns a new RunSummaryId and no-op for other methods.
+    // Shared delivery repo stub: returns a new RunSummaryId, and true (success) for the
+    // Pending->Sending affected-row-count check, so send-path tests exercise the happy path
+    // by default. UpdateDeliveryOutcomeAsync is void (Task) — it either completes or throws,
+    // no stubbing needed for the happy path.
     private static INotificationDeliveryRepository DefaultDeliveryRepo()
     {
         var repo = Substitute.For<INotificationDeliveryRepository>();
         repo.GetOrCreateRunSummaryAsync(default, default!, default, default, default)
             .ReturnsForAnyArgs(Guid.NewGuid());
+        repo.UpdateDeliveryToSendingAsync(default, default).ReturnsForAnyArgs(true);
         return repo;
     }
 
@@ -778,5 +783,135 @@ public sealed class MilestoneUpdateNotificationsJobTests
 
         await emailService.DidNotReceiveWithAnyArgs().SendAsync(default!, default);
         await deliveryRepo.Received(1).TransitionToOutcomeUnknownAsync(priorDeliveryId, Arg.Any<CancellationToken>());
+    }
+
+    // -------------------------------------------------------------------------
+    // OutcomeUnknown: prior OutcomeUnknown row blocks resend, even with forceResend
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public async Task ExecuteAsync_WhenPriorOutcomeUnknownRowExists_ShouldSkipSendWithoutResending()
+    {
+        var readRepo = Substitute.For<IMilestoneNotificationReadRepository>();
+        var preflight = Substitute.For<INotificationSettingsPreflight>();
+        var groupingService = Substitute.For<INotificationGroupingService>();
+        var emailService = Substitute.For<IEmailService>();
+        var deliveryRepo = DefaultDeliveryRepo();
+
+        var candidate = new MilestoneNotificationCandidate(2026, "PROJ-A", "Jane Smith", "M001", "jane@example.com", false, "<a href=\"https://example.com/a\">A</a>");
+        readRepo.GetNotificationCandidatesAsync(default).ReturnsForAnyArgs(
+            (IReadOnlyList<MilestoneNotificationCandidate>)[candidate]);
+        readRepo.GetRecipientResolutionIssuesAsync(default).ReturnsForAnyArgs(
+            (IReadOnlyList<RecipientResolutionIssue>)[]);
+
+        var project = new NotificationProjectLink(2026, "PROJ-A", candidate.EditLink);
+        var group = new NotificationGroup("r1", "M001", "Jane Smith", "M001", "jane@example.com", false, [project]);
+        groupingService.GroupCandidates(Arg.Any<IReadOnlyList<MilestoneNotificationCandidate>>()).Returns([group]);
+
+        deliveryRepo.GetExistingAttemptAsync(Arg.Any<NotificationDeliveryKey>(), Arg.Any<CancellationToken>())
+            .Returns(new ExistingDeliveryAttempt(Guid.NewGuid(), "OutcomeUnknown", Guid.NewGuid()));
+
+        // forceResend=true — must still be blocked; OutcomeUnknown is never auto-resendable.
+        var executionContext = DefaultExecutionContext();
+        executionContext.RunMode.Returns(RunMode.Manual);
+        executionContext.ParametersJson.Returns("{\"forceResend\":true}");
+
+        var handler = CreateHandler(readRepo, preflight, groupingService: groupingService,
+            emailService: emailService, deliveryRepository: deliveryRepo, executionContext: executionContext);
+
+        await handler.ExecuteAsync();
+
+        await emailService.DidNotReceiveWithAnyArgs().SendAsync(default!, default);
+        await deliveryRepo.DidNotReceiveWithAnyArgs().InsertPendingDeliveryAsync(
+            default, default!, default, default!, default, default, default!, default!, default);
+    }
+
+    // -------------------------------------------------------------------------
+    // Pending -> Sending transition failure must not send the email
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public async Task ExecuteAsync_WhenTransitionToSendingFails_ShouldNotSendEmail()
+    {
+        var readRepo = Substitute.For<IMilestoneNotificationReadRepository>();
+        var preflight = Substitute.For<INotificationSettingsPreflight>();
+        var groupingService = Substitute.For<INotificationGroupingService>();
+        var templateRenderer = Substitute.For<IEmailTemplateRenderer>();
+        var emailService = Substitute.For<IEmailService>();
+        var deliveryRepo = DefaultDeliveryRepo();
+        deliveryRepo.InsertPendingDeliveryAsync(default, default!, default, default!, default, default, default!, default!, default)
+            .ReturnsForAnyArgs(Guid.NewGuid());
+        deliveryRepo.UpdateDeliveryToSendingAsync(default, default).ReturnsForAnyArgs(false);
+
+        var candidate = new MilestoneNotificationCandidate(2026, "PROJ-A", "Jane Smith", "M001", "jane@example.com", false, "<a href=\"https://example.com/a\">A</a>");
+        readRepo.GetNotificationCandidatesAsync(default).ReturnsForAnyArgs(
+            (IReadOnlyList<MilestoneNotificationCandidate>)[candidate]);
+        readRepo.GetRecipientResolutionIssuesAsync(default).ReturnsForAnyArgs(
+            (IReadOnlyList<RecipientResolutionIssue>)[]);
+
+        var project = new NotificationProjectLink(2026, "PROJ-A", candidate.EditLink);
+        var group = new NotificationGroup("r1", "M001", "Jane Smith", "M001", "jane@example.com", false, [project]);
+        groupingService.GroupCandidates(Arg.Any<IReadOnlyList<MilestoneNotificationCandidate>>()).Returns([group]);
+
+        templateRenderer.Subject.Returns("Milestone and Deliverable Update Request");
+        templateRenderer.RenderManagerEmailBody(Arg.Any<string>(), Arg.Any<IReadOnlyList<NotificationProjectLink>>(), Arg.Any<bool>())
+            .Returns(new EmailTemplateRenderResult("<html>body</html>", [project], []));
+
+        var handler = CreateHandler(readRepo, preflight, groupingService: groupingService, templateRenderer: templateRenderer,
+            emailService: emailService, deliveryRepository: deliveryRepo);
+
+        await handler.ExecuteAsync();
+
+        await emailService.DidNotReceiveWithAnyArgs().SendAsync(default!, default);
+        await deliveryRepo.Received(1).UpdateDeliveryOutcomeAsync(
+            Arg.Any<Guid>(), "Failed", Arg.Any<string?>(), Arg.Any<DateTime?>(), Arg.Any<CancellationToken>());
+    }
+
+    // -------------------------------------------------------------------------
+    // Outcome-persistence failure after a successful send must fail the job, not
+    // be silently swallowed — the send already happened, so this is a durability
+    // failure, not a per-recipient one.
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public async Task ExecuteAsync_WhenSentOutcomeCannotBePersisted_ShouldPropagateAndFailJob()
+    {
+        var readRepo = Substitute.For<IMilestoneNotificationReadRepository>();
+        var preflight = Substitute.For<INotificationSettingsPreflight>();
+        var groupingService = Substitute.For<INotificationGroupingService>();
+        var templateRenderer = Substitute.For<IEmailTemplateRenderer>();
+        var emailService = Substitute.For<IEmailService>();
+        var deliveryRepo = DefaultDeliveryRepo();
+        deliveryRepo.InsertPendingDeliveryAsync(default, default!, default, default!, default, default, default!, default!, default)
+            .ReturnsForAnyArgs(Guid.NewGuid());
+        deliveryRepo.UpdateDeliveryOutcomeAsync(default, default!, default, default, default)
+            .ThrowsForAnyArgs(new InvalidOperationException("Expected exactly one row, but 0 were affected."));
+
+        var candidate = new MilestoneNotificationCandidate(2026, "PROJ-A", "Jane Smith", "M001", "jane@example.com", false, "<a href=\"https://example.com/a\">A</a>");
+        readRepo.GetNotificationCandidatesAsync(default).ReturnsForAnyArgs(
+            (IReadOnlyList<MilestoneNotificationCandidate>)[candidate]);
+        readRepo.GetRecipientResolutionIssuesAsync(default).ReturnsForAnyArgs(
+            (IReadOnlyList<RecipientResolutionIssue>)[]);
+
+        var project = new NotificationProjectLink(2026, "PROJ-A", candidate.EditLink);
+        var group = new NotificationGroup("r1", "M001", "Jane Smith", "M001", "jane@example.com", false, [project]);
+        groupingService.GroupCandidates(Arg.Any<IReadOnlyList<MilestoneNotificationCandidate>>()).Returns([group]);
+
+        templateRenderer.Subject.Returns("Milestone and Deliverable Update Request");
+        templateRenderer.RenderManagerEmailBody(Arg.Any<string>(), Arg.Any<IReadOnlyList<NotificationProjectLink>>(), Arg.Any<bool>())
+            .Returns(new EmailTemplateRenderResult("<html>body</html>", [project], []));
+
+        emailService.SendAsync(Arg.Any<EmailMessage>(), default).ReturnsForAnyArgs(EmailSendResult.Sent());
+
+        var capsService = Substitute.For<ICapsSummaryService>();
+        var handler = CreateHandler(readRepo, preflight, groupingService: groupingService, templateRenderer: templateRenderer,
+            emailService: emailService, deliveryRepository: deliveryRepo, capsSummaryService: capsService);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.ExecuteAsync());
+
+        // The Graph send did happen — but the run must not go on to look complete.
+        await emailService.ReceivedWithAnyArgs(1).SendAsync(default!, default);
+        await capsService.DidNotReceiveWithAnyArgs().SendAndRecordAsync(
+            default, default, default, default, default!, default);
     }
 }

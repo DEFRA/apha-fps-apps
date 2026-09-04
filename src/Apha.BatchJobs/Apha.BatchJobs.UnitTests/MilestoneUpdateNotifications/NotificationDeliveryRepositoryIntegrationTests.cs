@@ -134,7 +134,7 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
     }
 
     [SkippableFact]
-    public async Task GetOrCreateRunSummaryAsync_WhenCalledTwiceForSameJobQueueId_ReturnsSameRowAndDoesNotThrow()
+    public async Task GetOrCreateRunSummaryAsync_WhenCalledTwiceWithSameYearMonth_ReturnsSameRowAndDoesNotThrow()
     {
         // Simulates a whole-job retry: JobOrchestrator re-invokes the job with the same
         // jobQueueId after a transient failure. The second call must resume the existing row
@@ -147,13 +147,30 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
             _testJobQueueId, "MilestoneUpdate", fpsYear: 2026, monthNumber: 7, CancellationToken.None);
 
         var secondId = await repo.GetOrCreateRunSummaryAsync(
-            _testJobQueueId, "MilestoneUpdate", fpsYear: 2026, monthNumber: 8, CancellationToken.None);
+            _testJobQueueId, "MilestoneUpdate", fpsYear: 2026, monthNumber: 7, CancellationToken.None);
 
         Assert.Equal(firstId, secondId);
 
         var row = await ReadRunSummaryAsync(firstId);
         Assert.NotNull(row);
-        Assert.Equal(8, (int)row!["monthnumber"]);
+        Assert.Equal(7, (int)row!["monthnumber"]);
+    }
+
+    [SkippableFact]
+    public async Task GetOrCreateRunSummaryAsync_WhenRetrySuppliesDifferentYearOrMonth_ShouldThrow()
+    {
+        // Run identity is immutable once created — a retry that resolves a different
+        // year/month than the original attempt indicates a bug upstream and must fail loudly
+        // rather than silently overwrite the original run's identity.
+        Skip.IfNot(CanRun(), _skipReason!);
+
+        var repo = CreateRepository();
+        await repo.GetOrCreateRunSummaryAsync(
+            _testJobQueueId, "MilestoneUpdate", fpsYear: 2026, monthNumber: 7, CancellationToken.None);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            repo.GetOrCreateRunSummaryAsync(
+                _testJobQueueId, "MilestoneUpdate", fpsYear: 2026, monthNumber: 8, CancellationToken.None));
     }
 
     [SkippableFact]

@@ -1,8 +1,10 @@
+using Apha.BatchJobs.Application.Configuration;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Services;
 using Apha.BatchJobs.Domain.Exceptions;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Apha.BatchJobs.Infrastructure.MilestoneUpdateNotifications.Queries;
 
@@ -11,7 +13,10 @@ namespace Apha.BatchJobs.Infrastructure.MilestoneUpdateNotifications.Queries;
 /// mabarchive.tbl_settings ids vprojectreports_pmmail's WHERE clause cross-joins and
 /// filters on — a missing/duplicated/blank row collapses that view (and therefore the
 /// authoritative candidate query) to zero rows, indistinguishable from a genuine empty
-/// period without this explicit upfront check (plan section 8.1).
+/// period without this explicit upfront check (plan section 8.1) — plus that
+/// MilestoneNotifications:CapsMailbox is configured, so a missing recipient fails before
+/// manager emails are sent rather than only being discovered when the CAPS completion
+/// email silently finalizes as NotAttempted at the end of the run.
 /// </summary>
 public sealed class NotificationSettingsPreflight : INotificationSettingsPreflight
 {
@@ -23,11 +28,16 @@ public sealed class NotificationSettingsPreflight : INotificationSettingsPreflig
     ];
 
     private readonly BatchJobsDbContext _context;
+    private readonly MilestoneNotificationsSettings _settings;
     private readonly ILogger<NotificationSettingsPreflight> _logger;
 
-    public NotificationSettingsPreflight(BatchJobsDbContext context, ILogger<NotificationSettingsPreflight> logger)
+    public NotificationSettingsPreflight(
+        BatchJobsDbContext context,
+        IOptions<MilestoneNotificationsSettings> settings,
+        ILogger<NotificationSettingsPreflight> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -61,8 +71,17 @@ public sealed class NotificationSettingsPreflight : INotificationSettingsPreflig
                 "candidates for every project.");
         }
 
+        if (string.IsNullOrWhiteSpace(_settings.CapsMailbox))
+        {
+            throw new NotificationSettingsConfigurationException(
+                "Milestone notification settings preflight failed: MilestoneNotifications:CapsMailbox is " +
+                "not configured. The run must not send manager emails only to silently skip the CAPS " +
+                "completion email at the end — fail before any email goes out instead.");
+        }
+
         _logger.LogInformation(
-            "Milestone notification settings preflight passed for {SettingCount} required tbl_settings rows",
+            "Milestone notification settings preflight passed for {SettingCount} required tbl_settings rows " +
+            "and CapsMailbox configuration",
             RequiredSettingIds.Length);
     }
 }
