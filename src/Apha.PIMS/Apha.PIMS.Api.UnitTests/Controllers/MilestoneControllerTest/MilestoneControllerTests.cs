@@ -1103,27 +1103,25 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         public async Task ClearStaging_ReturnsOkResult_WithDeletedCount()
         {
             // Arrange
-            const string project = "PP001";
-            _service.ClearStagingAsync(project).Returns(3);
+            _service.ClearStagingAsync().Returns(3);
 
             // Act
-            var result = await _controller.ClearStaging(project);
+            var result = await _controller.ClearStaging();
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
-            await _service.Received(1).ClearStagingAsync(project);
+            await _service.Received(1).ClearStagingAsync();
         }
 
         [Fact]
         public async Task ClearStaging_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
-            const string project = "PP001";
-            _service.ClearStagingAsync(project).Throws(new Exception("Database error"));
+            _service.ClearStagingAsync().Throws(new Exception("Database error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.ClearStaging(project));
-            await _service.Received(1).ClearStagingAsync(project);
+            await Assert.ThrowsAsync<Exception>(() => _controller.ClearStaging());
+            await _service.Received(1).ClearStagingAsync();
         }
 
         #endregion

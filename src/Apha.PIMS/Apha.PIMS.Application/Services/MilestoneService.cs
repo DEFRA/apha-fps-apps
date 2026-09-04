@@ -347,8 +347,8 @@ namespace Apha.PIMS.Application.Services
         public async Task<bool> DeleteStagingRowAsync(int id, string? createdBy = null)
             => await _repository.DeleteStagingRowAsync(id, createdBy);
 
-        public async Task<int> ClearStagingAsync(string project, string? createdBy = null)
-            => await _repository.ClearStagingAsync(project, createdBy);
+        public async Task<int> ClearStagingAsync(string? createdBy = null)
+            => await _repository.ClearStagingAsync(createdBy);
 
         public async Task ValidateStagingAsync(string project, string? typeId, bool isDeliverableMode, string? createdBy = null)
             => await _repository.ValidateStagingAsync(project, typeId, isDeliverableMode, createdBy);

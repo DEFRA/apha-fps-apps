@@ -79,8 +79,8 @@ namespace Apha.FPSApps.Application.Services.PIMS
         public async Task<ApiResponseDto<object>> DeleteStagingRowAsync(int id)
             => await _client.PimsMilestone.DeleteStagingRowAsync(id);
 
-        public async Task<ApiResponseDto<object>> ClearStagingAsync(string project)
-            => await _client.PimsMilestone.ClearStagingAsync(project);
+        public async Task<ApiResponseDto<object>> ClearStagingAsync()
+            => await _client.PimsMilestone.ClearStagingAsync();
 
         public async Task<ApiResponseDto<object>> ValidateStagingAsync(string project, string? typeId, bool isDeliverableMode)
             => await _client.PimsMilestone.ValidateStagingAsync(project, typeId, isDeliverableMode);

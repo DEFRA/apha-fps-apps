@@ -466,7 +466,7 @@ namespace Apha.PIMS.DataAccess.Repository
             return rows > 0;
         }
 
-        public async Task<int> ClearStagingAsync(string project, string? createdBy = null)
+        public async Task<int> ClearStagingAsync( string? createdBy = null)
         {
             IQueryable<StagingMilestone> query = _dbContext.StagingMilestones;
               

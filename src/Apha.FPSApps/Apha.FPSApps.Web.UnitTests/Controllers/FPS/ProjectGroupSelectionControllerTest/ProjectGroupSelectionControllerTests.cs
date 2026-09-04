@@ -284,6 +284,103 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectGroupSelectionContro
 
         #endregion
 
+        #region GetProjectLookup Tests
+
+        // The controller projects to an anonymous type, which is internal to the
+        // Web assembly, so the values are read by reflection rather than 'dynamic'.
+        private static List<(string ParentProject, string ProjectGroup)> GetLookupRows(IActionResult result)
+        {
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var rows = Assert.IsAssignableFrom<System.Collections.IEnumerable>(jsonResult.Value);
+
+            var mapped = new List<(string, string)>();
+
+            foreach (var row in rows)
+            {
+                var type = row.GetType();
+                var parentProject = type.GetProperty("parentProject")!.GetValue(row) as string ?? string.Empty;
+                var projectGroup = type.GetProperty("projectGroup")!.GetValue(row) as string ?? string.Empty;
+                mapped.Add((parentProject, projectGroup));
+            }
+
+            return mapped;
+        }
+
+        [Fact]
+        public async Task GetProjectLookup_ReturnsOnlyProjectsAssignedToAProjectGroup()
+        {
+            // Arrange
+            _projectService.GetProjectLookupAsync()
+                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                [
+                    new() { ParentProject = "PP001", ProjectGroup = "GRP1" },
+                    new() { ParentProject = "PP002", ProjectGroup = null },
+                    new() { ParentProject = "PP003", ProjectGroup = string.Empty },
+                    new() { ParentProject = "PP004", ProjectGroup = "   " },
+                    new() { ParentProject = "PP005", ProjectGroup = "GRP2" }
+                ], new PaginationDto()));
+
+            // Act
+            var result = await _controller.GetProjectLookup();
+
+            // Assert
+            var rows = GetLookupRows(result);
+            Assert.Equal(2, rows.Count);
+            Assert.Equal("PP001", rows[0].ParentProject);
+            Assert.Equal("GRP1", rows[0].ProjectGroup);
+            Assert.Equal("PP005", rows[1].ParentProject);
+            Assert.Equal("GRP2", rows[1].ProjectGroup);
+        }
+
+        [Fact]
+        public async Task GetProjectLookup_WhenNoProjectHasAProjectGroup_ReturnsEmptyList()
+        {
+            // Arrange
+            _projectService.GetProjectLookupAsync()
+                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                [
+                    new() { ParentProject = "PP001", ProjectGroup = null },
+                    new() { ParentProject = "PP002", ProjectGroup = string.Empty }
+                ], new PaginationDto()));
+
+            // Act
+            var result = await _controller.GetProjectLookup();
+
+            // Assert
+            Assert.Empty(GetLookupRows(result));
+        }
+
+        [Fact]
+        public async Task GetProjectLookup_WhenServiceFails_ReturnsEmptyList()
+        {
+            // Arrange
+            _projectService.GetProjectLookupAsync()
+                .Returns(ApiResponseDto<List<ProjectDto>>.FailureResponse(
+                    new List<ApiErrorDto> { new() { Message = "Error" } }, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.GetProjectLookup();
+
+            // Assert
+            Assert.Empty(GetLookupRows(result));
+        }
+
+        [Fact]
+        public async Task GetProjectLookup_WhenServiceReturnsNullData_ReturnsEmptyList()
+        {
+            // Arrange
+            _projectService.GetProjectLookupAsync()
+                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(null!, new PaginationDto()));
+
+            // Act
+            var result = await _controller.GetProjectLookup();
+
+            // Assert
+            Assert.Empty(GetLookupRows(result));
+        }
+
+        #endregion
+
         #region SaveProjectGroupSession Tests
 
         [Fact]
