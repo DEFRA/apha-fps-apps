@@ -648,6 +648,7 @@ namespace Apha.PACT.DataAccess.Repository
             return sortBy?.ToLower() switch
             {
                 "workgroupname" => descending ? query.OrderByDescending(w => w.WorkGroupName) : query.OrderBy(w => w.WorkGroupName),
+                "workgroup"     => descending ? query.OrderByDescending(w => w.WorkGroupName) : query.OrderBy(w => w.WorkGroupName),
                 "profitcentre"  => descending ? query.OrderByDescending(w => w.ProfitCentre)  : query.OrderBy(w => w.ProfitCentre),
                 "owner"         => descending ? query.OrderByDescending(w => w.Owner)         : query.OrderBy(w => w.Owner),
                 "description"   => descending ? query.OrderByDescending(w => w.Description)   : query.OrderBy(w => w.Description),
