@@ -148,27 +148,19 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
         }
 
         [Fact]
-        public async Task GetAllAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetAllAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             _http.GetAsync<List<RadTrackInvoiceRes>>(Arg.Any<string>())
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetAllAsync(query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve RadTrack invoice data", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetAllAsync(query));
         }
 
         [Fact]
-        public async Task GetAllAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetAllAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             var query       = new QueryParameters<string> { Page = 1, PageSize = 10 };
@@ -178,13 +170,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
             _mapper.Map<ApiResponseDto<List<RadTrackInvoiceDto>>>(apiResponse)
                 .Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetAllAsync(query);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve RadTrack invoice data", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetAllAsync(query));
         }
 
         #endregion
@@ -289,23 +276,18 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
         }
 
         [Fact]
-        public async Task GetTotalsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetTotalsAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             _http.GetAsync<RadTrackInvoiceTotalsDto>(Arg.Any<string>())
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetTotalsAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve RadTrack invoice totals", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetTotalsAsync());
         }
 
         [Fact]
-        public async Task GetTotalsAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetTotalsAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             var apiResponse = new ApiResponse<RadTrackInvoiceTotalsDto> { Success = true, Data = new RadTrackInvoiceTotalsDto() };
@@ -314,13 +296,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
             _mapper.Map<ApiResponseDto<RadTrackInvoiceTotalsDto>>(apiResponse)
                 .Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetTotalsAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve RadTrack invoice totals", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetTotalsAsync());
         }
 
         #endregion
@@ -405,25 +382,19 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
         }
 
         [Fact]
-        public async Task GetByIdAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetByIdAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             const int id = 1;
             _http.GetAsync<RadTrackInvoiceRes>(Arg.Any<string>())
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetByIdAsync(id);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.Equal("Failed to retrieve RadTrack invoice by ID", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetByIdAsync(id));
         }
 
         [Fact]
-        public async Task GetByIdAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetByIdAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             const int id    = 1;
@@ -433,13 +404,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
             _mapper.Map<ApiResponseDto<RadTrackInvoiceDto>>(apiResponse)
                 .Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetByIdAsync(id);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve RadTrack invoice by ID", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetByIdAsync(id));
         }
 
         #endregion
@@ -532,7 +498,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
         }
 
         [Fact]
-        public async Task CreateAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task CreateAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             var dto     = new RadTrackInvoiceDto { Project = "PP001" };
@@ -542,31 +508,19 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
             _http.PostAsync<RadTrackInvoiceReq, RadTrackInvoiceRes>(PimsApiEndpoints.CreateRadTrackInvoice, request)
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.CreateAsync(dto);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.Equal("Failed to create RadTrack invoice", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.CreateAsync(dto));
         }
 
         [Fact]
-        public async Task CreateAsync_WhenMapperThrowsExceptionOnRequestMapping_ReturnsInternalError()
+        public async Task CreateAsync_WhenMapperThrowsExceptionOnRequestMapping_PropagatesException()
         {
             // Arrange
             var dto = new RadTrackInvoiceDto { Project = "PP001" };
             _mapper.Map<RadTrackInvoiceReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.CreateAsync(dto);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.Equal("Failed to create RadTrack invoice", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.CreateAsync(dto));
         }
 
         #endregion
@@ -661,7 +615,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
         }
 
         [Fact]
-        public async Task UpdateAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task UpdateAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             const int id = 1;
@@ -672,32 +626,20 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
             _http.PutAsync<RadTrackInvoiceReq, RadTrackInvoiceRes>(Arg.Any<string>(), request)
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.UpdateAsync(id, dto);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.Equal("Failed to update RadTrack invoice", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.UpdateAsync(id, dto));
         }
 
         [Fact]
-        public async Task UpdateAsync_WhenMapperThrowsExceptionOnRequestMapping_ReturnsInternalError()
+        public async Task UpdateAsync_WhenMapperThrowsExceptionOnRequestMapping_PropagatesException()
         {
             // Arrange
             const int id = 1;
             var dto = new RadTrackInvoiceDto { InvoiceCounter = id };
             _mapper.Map<RadTrackInvoiceReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.UpdateAsync(id, dto);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.Equal("Failed to update RadTrack invoice", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.UpdateAsync(id, dto));
         }
 
         #endregion
@@ -774,25 +716,19 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
         }
 
         [Fact]
-        public async Task DeleteAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task DeleteAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             const int id = 1;
             _http.DeleteAsync<object>(Arg.Any<string>())
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.DeleteAsync(id);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.Equal("Failed to delete RadTrack invoice", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.DeleteAsync(id));
         }
 
         [Fact]
-        public async Task DeleteAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task DeleteAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             const int id    = 1;
@@ -802,13 +738,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
             _mapper.Map<ApiResponseDto<object>>(apiResponse)
                 .Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.DeleteAsync(id);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to delete RadTrack invoice", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.DeleteAsync(id));
         }
 
         #endregion
@@ -866,23 +797,18 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
         }
 
         [Fact]
-        public async Task GetProjectsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetProjectsAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetRadTrackInvoiceProjects)
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetProjectsAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve projects", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetProjectsAsync());
         }
 
         [Fact]
-        public async Task GetProjectsAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetProjectsAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<string>> { Success = true, Data = ["PP001"] };
@@ -891,13 +817,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
             _mapper.Map<ApiResponseDto<List<string>>>(apiResponse)
                 .Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetProjectsAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve projects", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetProjectsAsync());
         }
 
         [Fact]
@@ -973,23 +894,18 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
         }
 
         [Fact]
-        public async Task GetYearsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetYearsAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             _http.GetAsync<List<int>>(PimsApiEndpoints.GetRadTrackInvoiceYears)
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetYearsAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve years", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetYearsAsync());
         }
 
         [Fact]
-        public async Task GetYearsAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetYearsAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<int>> { Success = true, Data = [2024] };
@@ -998,13 +914,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
             _mapper.Map<ApiResponseDto<List<int>>>(apiResponse)
                 .Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetYearsAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve years", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetYearsAsync());
         }
 
         [Fact]
@@ -1080,23 +991,18 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
         }
 
         [Fact]
-        public async Task GetContractsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetContractsAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetRadTrackInvoiceContracts)
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetContractsAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve contracts", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetContractsAsync());
         }
 
         [Fact]
-        public async Task GetContractsAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetContractsAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<string>> { Success = true, Data = ["C001"] };
@@ -1105,13 +1011,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
             _mapper.Map<ApiResponseDto<List<string>>>(apiResponse)
                 .Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetContractsAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve contracts", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetContractsAsync());
         }
 
         [Fact]
@@ -1187,23 +1088,18 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
         }
 
         [Fact]
-        public async Task GetProgramsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetProgramsAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetRadTrackInvoicePrograms)
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetProgramsAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve programs", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetProgramsAsync());
         }
 
         [Fact]
-        public async Task GetProgramsAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetProgramsAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<string>> { Success = true, Data = ["PROG1"] };
@@ -1212,13 +1108,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
             _mapper.Map<ApiResponseDto<List<string>>>(apiResponse)
                 .Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetProgramsAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve programs", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetProgramsAsync());
         }
 
         [Fact]
