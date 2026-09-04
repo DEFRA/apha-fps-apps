@@ -49,7 +49,7 @@ namespace Apha.Costbook.Api.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "API-CostbookAdmin")]
+        
         public async Task<IActionResult> AddCapsStaff([FromBody] StaffReq req)
         {
             var dto = _mapper.Map<StaffDto>(req);
@@ -58,7 +58,7 @@ namespace Apha.Costbook.Api.Controllers
         }
 
         [HttpPut("{mNumber}")]
-        [Authorize(Roles = "API-CostbookAdmin")]
+        
         public async Task<IActionResult> UpdateCapsStaff(string mNumber, [FromBody] StaffReq req)
         {
             var dto = _mapper.Map<StaffDto>(req);
@@ -67,7 +67,7 @@ namespace Apha.Costbook.Api.Controllers
         }
 
         [HttpDelete("{mNumber}")]
-        [Authorize(Roles = "API-CostbookAdmin")]
+        
         public async Task<IActionResult> DeleteCapsStaff(string mNumber)
         {
             if (string.IsNullOrWhiteSpace(mNumber))
