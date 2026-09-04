@@ -1,3 +1,4 @@
+using System.Dynamic;
 using System.Linq.Expressions;
 using System.Dynamic;
 using Apha.FPS.Core.Entities;
@@ -44,6 +45,8 @@ namespace Apha.FPS.DataAccess.Repositories
             }
             q = ApplyProjectLogFilter(q, query.Filter);
 
+            q = ApplyProjectLogFilter(q, query.Filter);
+
             q = ApplyProjectLogSorting(q, query.SortBy, query.Descending);
 
             var result = await q.ToListAsync();
@@ -74,12 +77,16 @@ namespace Apha.FPS.DataAccess.Repositories
                     (p.UserId != null && p.UserId.ToLower().Contains(search)));
             }
 
+            q = ApplyStaffJobLogFilter(q, query.Filter);
+
             q = ApplyStaffJobLogSorting(q, query.SortBy, query.Descending);
             q = ApplyStaffJobLogFilter(q, query.Filter);
 
             var result = await q.ToListAsync();
 
             await PopulateStaffNamesAsync(result);
+
+            result = ApplyStaffJobLogNameFilter(result, query.Filter);
 
             return ApplyPaging(result, query.Page, query.PageSize);
         }
@@ -134,6 +141,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     (p.UserId != null && p.UserId.ToLower().Contains(search)));
             }
 
+            q = ApplyTestRequirementLogFilter(q, query.Filter);
+
             q = ApplyTestRequirementLogSorting(q, query.SortBy, query.Descending);
             q = ApplyTestRequirementLogFilter(q, query.Filter);
 
@@ -165,6 +174,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     p.AnimalType.ToLower().Contains(search) ||
                     (p.UserId != null && p.UserId.ToLower().Contains(search)));
             }
+
+            q = ApplyAnimalRequestLogFilter(q, query.Filter);
 
             q = ApplyAnimalRequestLogSorting(q, query.SortBy, query.Descending);
             q = ApplyAnimalRequestLogFilter(q,  query.Filter);
@@ -199,12 +210,16 @@ namespace Apha.FPS.DataAccess.Repositories
                     (p.UserId != null && p.UserId.ToLower().Contains(search)));
             }
 
+            q = ApplyAdditionalCostLogFilter(q, query.Filter);
+
             q = ApplyAdditionalCostLogSorting(q, query.SortBy, query.Descending);
             q = ApplyAdditionalCostLogFilter(q, query.Filter);
 
             var result = await q.ToListAsync();
 
             await ResolveAdditionalCostLogUserEmailsAsync(result);
+
+            result = ApplyAdditionalCostLogUserIdFilter(result, query.Filter);
 
             return ApplyPaging(result, query.Page, query.PageSize);
         }
@@ -257,6 +272,168 @@ namespace Apha.FPS.DataAccess.Repositories
                     log.UserId = email2;
                 // else: no matching fps.tblusers record found — legacy value is left as-is.
             }
+        }
+
+        // ── Private column filter helpers ────────────────────────────────────────────────
+        // The shared _DataGrid component posts its per-column filter row as a JSON object
+        // keyed by the grid column PropertyName. Each audit grid deserializes that payload
+        // and applies a case-insensitive "contains" match, mirroring ProjectRepository.
+
+        private static IDictionary<string, object>? ParseFilterDictionary(string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return null;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            return filterModel == null ? null : (IDictionary<string, object>)filterModel;
+        }
+
+        private static IQueryable<T> ApplyLike<T>(
+            IQueryable<T> query,
+            IDictionary<string, object> dict,
+            string key,
+            Expression<Func<T, string?>> selector)
+        {
+            if (!dict.TryGetValue(key, out var value) || value == null)
+                return query;
+
+            var text = value.ToString();
+            if (string.IsNullOrWhiteSpace(text))
+                return query;
+
+            var term = text.ToLower();
+
+            // ToLower().Contains() is used (rather than EF.Functions.ILike) so the predicate
+            // remains provider agnostic and evaluates identically in unit tests.
+            var toLower = Expression.Call(selector.Body, nameof(string.ToLower), Type.EmptyTypes);
+            var contains = Expression.Call(
+                toLower,
+                nameof(string.Contains),
+                Type.EmptyTypes,
+                Expression.Constant(term));
+            var notNull = Expression.NotEqual(selector.Body, Expression.Constant(null, typeof(string)));
+            var predicate = Expression.Lambda<Func<T, bool>>(
+                Expression.AndAlso(notNull, contains), selector.Parameters);
+            return query.Where(predicate);
+        }
+
+        private static IQueryable<T> ApplyTextFilters<T>(
+            IQueryable<T> query,
+            string? filter,
+            (string Key, Expression<Func<T, string?>> Selector)[] textFilters)
+        {
+            var dict = ParseFilterDictionary(filter);
+            if (dict == null)
+                return query;
+
+            foreach (var (key, selector) in textFilters)
+                query = ApplyLike(query, dict, key, selector);
+
+            return query;
+        }
+
+        private static IQueryable<ProjectLog> ApplyProjectLogFilter(IQueryable<ProjectLog> query, string? filter)
+        {
+            return ApplyTextFilters(query, filter, new (string, Expression<Func<ProjectLog, string?>>)[]
+            {
+                ("ParentProject", x => x.ParentProject),
+                ("ProjectTitle", x => x.ProjectTitle),
+                ("Program", x => x.Program),
+                ("Customer", x => x.Customer),
+                ("Manager", x => x.Manager),
+                ("ProjectStatus", x => x.ProjectStatus),
+                ("CostBookNo", x => x.CostBookNo),
+                ("Disease", x => x.Disease),
+                ("Contract", x => x.Contract),
+                ("ProjectParent", x => x.ProjectParent),
+                ("ShortTitle", x => x.ShortTitle),
+                ("OwningRc", x => x.OwningRc),
+                ("UserId", x => x.UserId),
+                ("InsertDelete", x => x.InsertDelete)
+            });
+        }
+
+        private static IQueryable<StaffJobLog> ApplyStaffJobLogFilter(IQueryable<StaffJobLog> query, string? filter)
+        {
+            return ApplyTextFilters(query, filter, new (string, Expression<Func<StaffJobLog, string?>>)[]
+            {
+                ("StaffId", x => x.StaffId),
+                ("JobCode", x => x.JobCode),
+                ("UserId", x => x.UserId),
+                ("InsertDelete", x => x.InsertDelete)
+            });
+        }
+
+        // Name is not a column on fps.staffjob_log; it is resolved in memory by
+        // PopulateStaffNamesAsync, so its grid filter must also be applied in memory.
+        private static List<StaffJobLog> ApplyStaffJobLogNameFilter(List<StaffJobLog> logs, string? filter)
+        {
+            var dict = ParseFilterDictionary(filter);
+            if (dict == null || !dict.TryGetValue("Name", out var value) || value == null)
+                return logs;
+
+            var text = value.ToString();
+            if (string.IsNullOrWhiteSpace(text))
+                return logs;
+
+            return logs
+                .Where(l => l.Name != null && l.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        private static IQueryable<TestRequirementLog> ApplyTestRequirementLogFilter(IQueryable<TestRequirementLog> query, string? filter)
+        {
+            return ApplyTextFilters(query, filter, new (string, Expression<Func<TestRequirementLog, string?>>)[]
+            {
+                ("TestCode", x => x.TestCode),
+                ("Buyer", x => x.Buyer),
+                ("ProjectBuyerCode", x => x.ProjectBuyerCode),
+                ("TestBuyerCode", x => x.TestBuyerCode),
+                ("UserId", x => x.UserId),
+                ("InsertDelete", x => x.InsertDelete)
+            });
+        }
+
+        private static IQueryable<AnimalRequestLog> ApplyAnimalRequestLogFilter(IQueryable<AnimalRequestLog> query, string? filter)
+        {
+            return ApplyTextFilters(query, filter, new (string, Expression<Func<AnimalRequestLog, string?>>)[]
+            {
+                ("JobCode", x => x.JobCode),
+                ("AnimalType", x => x.AnimalType),
+                ("UserId", x => x.UserId),
+                ("InsertDelete", x => x.InsertDelete)
+            });
+        }
+
+        private static IQueryable<AdditionalCostLog> ApplyAdditionalCostLogFilter(IQueryable<AdditionalCostLog> query, string? filter)
+        {
+            return ApplyTextFilters(query, filter, new (string, Expression<Func<AdditionalCostLog, string?>>)[]
+            {
+                ("JobCode", x => x.JobCode),
+                ("Account", x => x.Account),
+                ("Description", x => x.Description),
+                ("Freq", x => x.Freq),
+                ("Supplier", x => x.Supplier),
+                ("InsertDelete", x => x.InsertDelete)
+            });
+        }
+
+        // User_ID is rewritten to an email address after the query runs
+        // (ResolveAdditionalCostLogUserEmailsAsync), so its grid filter is applied in memory
+        // against the resolved value the user actually sees in the grid.
+        private static List<AdditionalCostLog> ApplyAdditionalCostLogUserIdFilter(List<AdditionalCostLog> logs, string? filter)
+        {
+            var dict = ParseFilterDictionary(filter);
+            if (dict == null || !dict.TryGetValue("UserId", out var value) || value == null)
+                return logs;
+
+            var text = value.ToString();
+            if (string.IsNullOrWhiteSpace(text))
+                return logs;
+
+            return logs
+                .Where(l => l.UserId != null && l.UserId.Contains(text, StringComparison.OrdinalIgnoreCase))
+                .ToList();
         }
 
         // ── Private sorting helpers ──────────────────────────────────────────────────────
