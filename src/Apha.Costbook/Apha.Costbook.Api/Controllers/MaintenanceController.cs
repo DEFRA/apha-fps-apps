@@ -17,7 +17,7 @@ namespace Apha.Costbook.Api.Controllers
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/maintenance")]
-    [Authorize(Roles = "API-CostbookAdmin")]
+    [Authorize(Roles = "API-CostbookAdmin,API-CostbookUser")]
     public class MaintenanceController : ControllerBase
     {
         private readonly IMaintenanceSettingsService _settingsService;
@@ -42,8 +42,7 @@ namespace Apha.Costbook.Api.Controllers
             return Ok(_mapper.Map<MaintenanceSettingsRes>(dto));
         }
 
-        [HttpPut("settings")]
-        [Authorize(Roles = "API-CostbookAdmin")]
+        [HttpPut("settings")]        
         public async Task<IActionResult> UpdateSettings([FromBody] MaintenanceSettingsReq req)
         {
             if (!ModelState.IsValid)
@@ -73,7 +72,7 @@ namespace Apha.Costbook.Api.Controllers
         }
 
         [HttpPut("account-categories/{accShortName}")]
-        [Authorize(Roles = "API-CostbookAdmin")]
+        
         public async Task<IActionResult> UpdateAccountCategory(string accShortName, [FromBody] AccountCategoryMaintenanceReq req)
         {
             if (string.IsNullOrWhiteSpace(accShortName))
