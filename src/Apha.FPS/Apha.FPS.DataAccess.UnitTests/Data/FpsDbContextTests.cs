@@ -165,5 +165,29 @@ namespace Apha.FPS.DataAccess.UnitTests.Data
             Assert.NotNull(property);
             Assert.Equal(expectedColumnName, property.GetColumnName());
         }
+
+        // ── OnModelCreating — Workgroup column constraints ────────────────────────
+
+        /// <summary>
+        /// Guards against the mapped lengths drifting from the database column types.
+        /// fps.workgroup.workgroup is character varying(50) and description is
+        /// character varying(45); exceeding either causes PostgreSQL error 22001
+        /// (value too long) at save time.
+        /// </summary>
+        [Theory]
+        [InlineData(nameof(Workgroup.WorkGroupName), 50)]
+        [InlineData(nameof(Workgroup.ProfitCentre), 50)]
+        [InlineData(nameof(Workgroup.Owner), 50)]
+        [InlineData(nameof(Workgroup.EmailRecipient), 50)]
+        [InlineData(nameof(Workgroup.Description), 45)]
+        public void OnModelCreating_Workgroup_MaxLengthsMatchDatabaseColumns(
+            string propertyName, int expectedMaxLength)
+        {
+            using var ctx = CreateContext(Guid.NewGuid().ToString());
+
+            var property = ctx.Model.FindEntityType(typeof(Workgroup))?.FindProperty(propertyName);
+            Assert.NotNull(property);
+            Assert.Equal(expectedMaxLength, property.GetMaxLength());
+        }
     }
 }

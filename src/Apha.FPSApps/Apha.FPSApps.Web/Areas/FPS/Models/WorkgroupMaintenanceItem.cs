@@ -17,6 +17,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         // Also used as KeyProperty in DataGridConfig. Visible because it appears in JS columns array.
         [Display(Name = "WorkGroup")]
         [Required(ErrorMessage = "WorkGroup is required")]
+        [StringLength(50, ErrorMessage = "WorkGroup cannot exceed 50 characters")]
         [GridColumn(Width = 150, Type = GridColumnType.Text, IsFilterable = true)]
         public string WorkGroupName { get; set; } = null!;
 
@@ -24,6 +25,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         // HTML label "ResourceCentre"; modal uses AJAX GET /FPS/WorkgroupMaintenance/GetProfitCentres
         [Display(Name = "ResourceCentre")]
         [Required(ErrorMessage = "ResourceCentre is required")]
+        [StringLength(50, ErrorMessage = "ResourceCentre cannot exceed 50 characters")]
         [GridColumn(Width = 170, Type = GridColumnType.Text, IsFilterable = true)]
         public string ProfitCentre { get; set; } = null!;
 
@@ -36,11 +38,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         // TRANSFORMENGINE: Owner — JS columns[3] { field:'owner', header:'Owner', width:180 }
         // Optional; modal uses AJAX GET /FPS/WorkgroupMaintenance/GetOwners → ManagerDto.Name
         [Display(Name = "Owner")]
+        [StringLength(50, ErrorMessage = "Owner cannot exceed 50 characters")]
         [GridColumn(Width = 180, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Owner { get; set; }
 
         // TRANSFORMENGINE: Description — JS columns[4] { field:'description', header:'Description', width:260 }
         [Display(Name = "Description")]
+        [StringLength(45, ErrorMessage = "Description cannot exceed 45 characters")]
         [GridColumn(Width = 260, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Description { get; set; }
 

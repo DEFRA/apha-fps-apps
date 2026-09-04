@@ -163,6 +163,40 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserRepositoryTest
             Assert.Empty(result);
         }
 
+        [Fact]
+        public async Task GetByNtLoginAsync_IgnoresCaseAndSpaces_WhenMatchingNtLogin()
+        {
+            // Arrange
+            var users = new List<AccessUser> { MakeUser(1, "dom\\user") };
+            var repo = CreateRepository(users);
+
+            // Act
+            var result = await repo.GetByNtLoginAsync("  DOM\\USER  ");
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("dom\\user", result[0].NtLogin);
+        }
+
+        [Fact]
+        public async Task GetByNtLoginAsync_TreatsWildcardsAsLiterals_WhenMatchingNtLogin()
+        {
+            // Arrange
+            var users = new List<AccessUser>
+            {
+                MakeUser(1, "dom\\user_%"),
+                MakeUser(2, "dom\\user_ab")
+            };
+            var repo = CreateRepository(users);
+
+            // Act
+            var result = await repo.GetByNtLoginAsync("dom\\user_%");
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("dom\\user_%", result[0].NtLogin);
+        }
+
         #endregion
 
         // ── GetByIdAsync ──────────────────────────────────────────────────────────
@@ -230,6 +264,21 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserRepositoryTest
 
             // Assert
             Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetByIdAsync_IgnoresCaseAndSpaces_WhenCompositePkExists()
+        {
+            // Arrange
+            var users = new List<AccessUser> { MakeUser(1, "dom\\user") };
+            var repo = CreateRepository(users);
+
+            // Act
+            var result = await repo.GetByIdAsync(1, "  DOM\\USER  ");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("dom\\user", result!.NtLogin);
         }
 
         #endregion
@@ -383,6 +432,38 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserRepositoryTest
 
             // Assert
             Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_IgnoresCaseAndSpaces_WhenCompositePkExists()
+        {
+            // Arrange
+            var users = new List<AccessUser> { MakeUser(1, "dom\\user") };
+            var repo = CreateRepository(users);
+
+            // Act
+            var result = await repo.ExistsAsync(1, "  DOM\\USER  ");
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_TreatsWildcardsAsLiterals_WhenCompositePkExists()
+        {
+            // Arrange
+            var users = new List<AccessUser>
+            {
+                MakeUser(1, "dom\\user_%"),
+                MakeUser(1, "dom\\user_ab")
+            };
+            var repo = CreateRepository(users);
+
+            // Act
+            var result = await repo.ExistsAsync(1, "dom\\user_%");
+
+            // Assert
+            Assert.True(result);
         }
 
         #endregion

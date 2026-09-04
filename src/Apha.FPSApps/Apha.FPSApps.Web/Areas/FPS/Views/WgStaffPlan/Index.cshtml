@@ -132,8 +132,6 @@
             window.sideNavState.workGroup = workGroup;
             sideNavUpdateLinks();
 
-            if (!workGroup) return;
-
             fpsNavigateTo('@Url.Action("Index", "WgStaffPlan", new { area = "FPS" })?resourceCentre='
                 + encodeURIComponent(resourceCentre)
                 + '&workGroup=' + encodeURIComponent(workGroup));

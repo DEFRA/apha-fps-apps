@@ -160,6 +160,26 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
         }
 
         [Fact]
+        public async Task GetTotals_WhenServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            // Arrange
+            _service.GetTotalsAsync(Arg.Any<RadTrackInvoiceFilter?>(), Arg.Any<string?>())
+                .Returns(Task.FromResult<RadTrackInvoiceTotalsDto>(null!));
+
+            // Act
+            var result = await _controller.GetTotals(null);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<RadTrackInvoiceTotalsDto>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+            Assert.False(string.IsNullOrWhiteSpace(response.Meta.CorrelationId));
+            Assert.NotEqual(default, response.Meta.TimestampUtc);
+        }
+
+        [Fact]
         public async Task GetTotals_ReturnsTotalsDirectlyWithoutMapping()
         {
             // Arrange
@@ -212,7 +232,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
         }
 
         [Fact]
-        public async Task GetById_WhenNotFound_ReturnsNotFoundResult()
+        public async Task GetById_WhenNotFound_ReturnsNullSuccessResponse()
         {
             // Arrange
             const int id = 99;
@@ -222,7 +242,14 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
             var result = await _controller.GetById(id);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<RadTrackInvoiceRes>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+            Assert.False(string.IsNullOrWhiteSpace(response.Meta.CorrelationId));
+            Assert.NotEqual(default, response.Meta.TimestampUtc);
+
             await _service.Received(1).GetByIdAsync(id);
             _mapper.DidNotReceive().Map<RadTrackInvoiceRes>(Arg.Any<RadTrackInvoiceDto>());
         }
@@ -506,6 +533,25 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
         }
 
         [Fact]
+        public async Task GetProjects_WhenServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            // Arrange
+            _service.GetProjectsAsync().Returns(Task.FromResult<List<string>>(null!));
+
+            // Act
+            var result = await _controller.GetProjects();
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<List<string>>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+            Assert.False(string.IsNullOrWhiteSpace(response.Meta.CorrelationId));
+            Assert.NotEqual(default, response.Meta.TimestampUtc);
+        }
+
+        [Fact]
         public async Task GetProjects_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
@@ -550,6 +596,25 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
             var value = Assert.IsType<List<int>>(okResult.Value);
             Assert.Empty(value);
             await _service.Received(1).GetYearsAsync();
+        }
+
+        [Fact]
+        public async Task GetYears_WhenServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            // Arrange
+            _service.GetYearsAsync().Returns(Task.FromResult<List<int>>(null!));
+
+            // Act
+            var result = await _controller.GetYears();
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<List<int>>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+            Assert.False(string.IsNullOrWhiteSpace(response.Meta.CorrelationId));
+            Assert.NotEqual(default, response.Meta.TimestampUtc);
         }
 
         [Fact]
@@ -600,6 +665,25 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
         }
 
         [Fact]
+        public async Task GetContracts_WhenServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            // Arrange
+            _service.GetContractsAsync().Returns(Task.FromResult<List<string>>(null!));
+
+            // Act
+            var result = await _controller.GetContracts();
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<List<string>>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+            Assert.False(string.IsNullOrWhiteSpace(response.Meta.CorrelationId));
+            Assert.NotEqual(default, response.Meta.TimestampUtc);
+        }
+
+        [Fact]
         public async Task GetContracts_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
@@ -644,6 +728,25 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
             var value = Assert.IsType<List<string>>(okResult.Value);
             Assert.Empty(value);
             await _service.Received(1).GetProgramsAsync();
+        }
+
+        [Fact]
+        public async Task GetPrograms_WhenServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            // Arrange
+            _service.GetProgramsAsync().Returns(Task.FromResult<List<string>>(null!));
+
+            // Act
+            var result = await _controller.GetPrograms();
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<List<string>>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+            Assert.False(string.IsNullOrWhiteSpace(response.Meta.CorrelationId));
+            Assert.NotEqual(default, response.Meta.TimestampUtc);
         }
 
         [Fact]

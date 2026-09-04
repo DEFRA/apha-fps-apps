@@ -84,17 +84,29 @@ namespace Apha.PIMS.DataAccess.Repository
         }
         public async Task<List<AccessUser>> GetByNtLoginAsync(string ntlogin)
         {
-            return await _dbContext.AccessUsers
+            var normalizedNtLogin = ntlogin.Trim();
+
+            var users = await _dbContext.AccessUsers
                 .AsNoTracking()
-                .Where(u => u.NtLogin == ntlogin)
+                .Where(u => u.NtLogin != null)
                 .OrderBy(u => u.SystemId)
                 .ToListAsync();
+
+            return users
+                .Where(u => string.Equals(u.NtLogin!.Trim(), normalizedNtLogin, StringComparison.OrdinalIgnoreCase))
+                .ToList();
         }
         public async Task<AccessUser?> GetByIdAsync(int systemid, string ntlogin)
         {
-            return await _dbContext.AccessUsers
+            var normalizedNtLogin = ntlogin.Trim();
+
+            var users = await _dbContext.AccessUsers
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.SystemId == systemid && u.NtLogin == ntlogin);
+                .Where(u => u.SystemId == systemid && u.NtLogin != null)
+                .ToListAsync();
+
+            return users
+                .FirstOrDefault(u => string.Equals(u.NtLogin!.Trim(), normalizedNtLogin, StringComparison.OrdinalIgnoreCase));
         }
         public async Task<AccessUser> AddAsync(AccessUser entity)
         {
@@ -118,8 +130,15 @@ namespace Apha.PIMS.DataAccess.Repository
         }
         public async Task<bool> ExistsAsync(int systemid, string ntlogin)
         {
-            return await _dbContext.AccessUsers
-                .AnyAsync(u => u.SystemId == systemid && u.NtLogin == ntlogin);
+            var normalizedNtLogin = ntlogin.Trim();
+
+            var users = await _dbContext.AccessUsers
+                .AsNoTracking()
+                .Where(u => u.SystemId == systemid && u.NtLogin != null)
+                .ToListAsync();
+
+            return users
+                .Any(u => string.Equals(u.NtLogin!.Trim(), normalizedNtLogin, StringComparison.OrdinalIgnoreCase));
         }
     }
 }
