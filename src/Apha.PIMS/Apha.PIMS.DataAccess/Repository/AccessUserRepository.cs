@@ -84,23 +84,24 @@ namespace Apha.PIMS.DataAccess.Repository
         }
         public async Task<List<AccessUser>> GetByNtLoginAsync(string ntlogin)
         {
-            var normalizedNtLogin = ntlogin.Trim().ToLower();
+            var normalizedNtLoginUpper = ntlogin.Trim().ToUpper();
 
             return await _dbContext.AccessUsers
                 .AsNoTracking()
-                .Where(u => u.NtLogin != null && u.NtLogin.Trim().ToLower() == normalizedNtLogin)
+                .Where(u => u.NtLogin != null
+                    && u.NtLogin.Trim().ToUpper() == normalizedNtLoginUpper)
                 .OrderBy(u => u.SystemId)
                 .ToListAsync();
         }
         public async Task<AccessUser?> GetByIdAsync(int systemid, string ntlogin)
         {
-            var normalizedNtLogin = ntlogin.Trim().ToLower();
+            var normalizedNtLoginUpper = ntlogin.Trim().ToUpper();
 
             return await _dbContext.AccessUsers
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.SystemId == systemid
                     && u.NtLogin != null
-                    && u.NtLogin.Trim().ToLower() == normalizedNtLogin);
+                    && u.NtLogin.Trim().ToUpper() == normalizedNtLoginUpper);
         }
         public async Task<AccessUser> AddAsync(AccessUser entity)
         {
@@ -124,12 +125,12 @@ namespace Apha.PIMS.DataAccess.Repository
         }
         public async Task<bool> ExistsAsync(int systemid, string ntlogin)
         {
-            var normalizedNtLogin = ntlogin.Trim().ToLower();
+            var normalizedNtLoginUpper = ntlogin.Trim().ToUpper();
 
             return await _dbContext.AccessUsers
                 .AnyAsync(u => u.SystemId == systemid
                     && u.NtLogin != null
-                    && u.NtLogin.Trim().ToLower() == normalizedNtLogin);
+                    && u.NtLogin.Trim().ToUpper() == normalizedNtLoginUpper);
         }
     }
 }

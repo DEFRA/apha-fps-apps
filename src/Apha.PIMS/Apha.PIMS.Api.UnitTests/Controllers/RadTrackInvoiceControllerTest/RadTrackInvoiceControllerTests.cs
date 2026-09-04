@@ -163,8 +163,8 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
         public async Task GetTotals_WhenServiceReturnsNull_ReturnsNullSuccessResponse()
         {
             // Arrange
-            _service.GetTotalsAsync(Arg.Any<RadTrackInvoiceFilter>(), Arg.Any<string?>())
-                .Returns((RadTrackInvoiceTotalsDto?)null);
+            _service.GetTotalsAsync(Arg.Any<RadTrackInvoiceFilter?>(), Arg.Any<string?>())
+                .Returns(Task.FromResult<RadTrackInvoiceTotalsDto>(null!));
 
             // Act
             var result = await _controller.GetTotals(null);
@@ -536,7 +536,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
         public async Task GetProjects_WhenServiceReturnsNull_ReturnsNullSuccessResponse()
         {
             // Arrange
-            _service.GetProjectsAsync().Returns((List<string>?)null);
+            _service.GetProjectsAsync().Returns(Task.FromResult<List<string>>(null!));
 
             // Act
             var result = await _controller.GetProjects();
@@ -602,7 +602,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
         public async Task GetYears_WhenServiceReturnsNull_ReturnsNullSuccessResponse()
         {
             // Arrange
-            _service.GetYearsAsync().Returns((List<int>?)null);
+            _service.GetYearsAsync().Returns(Task.FromResult<List<int>>(null!));
 
             // Act
             var result = await _controller.GetYears();
@@ -668,7 +668,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
         public async Task GetContracts_WhenServiceReturnsNull_ReturnsNullSuccessResponse()
         {
             // Arrange
-            _service.GetContractsAsync().Returns((List<string>?)null);
+            _service.GetContractsAsync().Returns(Task.FromResult<List<string>>(null!));
 
             // Act
             var result = await _controller.GetContracts();
@@ -734,7 +734,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
         public async Task GetPrograms_WhenServiceReturnsNull_ReturnsNullSuccessResponse()
         {
             // Arrange
-            _service.GetProgramsAsync().Returns((List<string>?)null);
+            _service.GetProgramsAsync().Returns(Task.FromResult<List<string>>(null!));
 
             // Act
             var result = await _controller.GetPrograms();

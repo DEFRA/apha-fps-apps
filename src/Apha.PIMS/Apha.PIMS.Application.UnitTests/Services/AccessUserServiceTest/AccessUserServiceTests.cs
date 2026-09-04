@@ -1,6 +1,7 @@
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Application.Services;
+using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
@@ -190,15 +191,21 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         }
 
         [Fact]
-        public async Task GetByNtLoginAsync_EmptyNtlogin_ThrowsArgumentException()
+        public async Task GetByNtLoginAsync_EmptyNtlogin_ThrowsBusinessValidationErrorException()
         {
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetByNtLoginAsync(""));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.GetByNtLoginAsync(""));
+            Assert.Single(ex.Errors);
+            Assert.Equal("NT login is required.", ex.Errors[0].Message);
+            Assert.Equal("NTLOGIN_REQUIRED", ex.Errors[0].Code);
         }
 
         [Fact]
-        public async Task GetByNtLoginAsync_WhitespaceNtlogin_ThrowsArgumentException()
+        public async Task GetByNtLoginAsync_WhitespaceNtlogin_ThrowsBusinessValidationErrorException()
         {
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetByNtLoginAsync("   "));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.GetByNtLoginAsync("   "));
+            Assert.Single(ex.Errors);
+            Assert.Equal("NT login is required.", ex.Errors[0].Message);
+            Assert.Equal("NTLOGIN_REQUIRED", ex.Errors[0].Code);
         }
 
         #endregion
@@ -239,9 +246,12 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         }
 
         [Fact]
-        public async Task GetByIdAsync_EmptyNtlogin_ThrowsArgumentException()
+        public async Task GetByIdAsync_EmptyNtlogin_ThrowsBusinessValidationErrorException()
         {
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetByIdAsync(1, ""));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.GetByIdAsync(1, ""));
+            Assert.Single(ex.Errors);
+            Assert.Equal("NT login is required.", ex.Errors[0].Message);
+            Assert.Equal("NTLOGIN_REQUIRED", ex.Errors[0].Code);
         }
 
         #endregion
@@ -275,7 +285,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         }
 
         [Fact]
-        public async Task CreateAsync_DuplicateNtLoginExists_IgnoresCaseAndSpaces_ThrowsInvalidOperationException()
+        public async Task CreateAsync_DuplicateNtLoginExists_IgnoresCaseAndSpaces_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = MakeDto(1, "  DOM\\Existing  ");
@@ -286,12 +296,14 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
             });
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
-            Assert.Equal("NTLogin already exists. Please enter a unique NTLogin.", ex.Message);
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CreateAsync(dto));
+            Assert.Single(ex.Errors);
+            Assert.Equal("NTLogin already exists. Please enter a unique NTLogin.", ex.Errors[0].Message);
+            Assert.Equal("ACCESS_USER_DUPLICATE_NTLOGIN", ex.Errors[0].Code);
         }
 
         [Fact]
-        public async Task CreateAsync_DuplicateEmailExists_IgnoresCaseAndSpaces_ThrowsInvalidOperationException()
+        public async Task CreateAsync_DuplicateEmailExists_IgnoresCaseAndSpaces_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = MakeDto(1, "dom\\newuser");
@@ -302,12 +314,14 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
             });
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
-            Assert.Equal("UserEmail already exists.", ex.Message);
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CreateAsync(dto));
+            Assert.Single(ex.Errors);
+            Assert.Equal("UserEmail already exists.", ex.Errors[0].Message);
+            Assert.Equal("ACCESS_USER_DUPLICATE_EMAIL", ex.Errors[0].Code);
         }
 
         [Fact]
-        public async Task CreateAsync_DuplicateNtLoginAndUserEmailExist_ThrowsInvalidOperationException()
+        public async Task CreateAsync_DuplicateNtLoginAndUserEmailExist_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = MakeDto(1, "  aaa ");
@@ -318,12 +332,14 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
             });
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
-            Assert.Equal("NTLogin and UserEmail already exist. Please enter unique values.", ex.Message);
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CreateAsync(dto));
+            Assert.Single(ex.Errors);
+            Assert.Equal("NTLogin and UserEmail already exist. Please enter unique values.", ex.Errors[0].Message);
+            Assert.Equal("ACCESS_USER_DUPLICATE_NTLOGIN_EMAIL", ex.Errors[0].Code);
         }
 
         [Fact]
-        public async Task CreateAsync_DuplicateEmailExists_ThrowsInvalidOperationException()
+        public async Task CreateAsync_DuplicateEmailExists_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = MakeDto(1, "dom\\newuser");
@@ -335,8 +351,10 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
             });
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
-            Assert.Equal("UserEmail already exists.", ex.Message);
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CreateAsync(dto));
+            Assert.Single(ex.Errors);
+            Assert.Equal("UserEmail already exists.", ex.Errors[0].Message);
+            Assert.Equal("ACCESS_USER_DUPLICATE_EMAIL", ex.Errors[0].Code);
         }
 
         [Fact]
@@ -346,10 +364,13 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         }
 
         [Fact]
-        public async Task CreateAsync_EmptyNtlogin_ThrowsArgumentException()
+        public async Task CreateAsync_EmptyNtlogin_ThrowsBusinessValidationErrorException()
         {
             var dto = new AccessUserDto { SystemId = 1, NtLogin = "" };
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateAsync(dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CreateAsync(dto));
+            Assert.Single(ex.Errors);
+            Assert.Equal("NT login is required.", ex.Errors[0].Message);
+            Assert.Equal("NTLOGIN_REQUIRED", ex.Errors[0].Code);
         }
 
         [Fact]
@@ -409,7 +430,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_DuplicateEmailExistsOnAnotherUser_ThrowsInvalidOperationException()
+        public async Task UpdateAsync_DuplicateEmailExistsOnAnotherUser_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = MakeDto(1, "dom\\user");
@@ -423,8 +444,10 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
             });
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.UpdateAsync(dto));
-            Assert.Equal("UserEmail already exists.", ex.Message);
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.UpdateAsync(dto));
+            Assert.Single(ex.Errors);
+            Assert.Equal("UserEmail already exists.", ex.Errors[0].Message);
+            Assert.Equal("ACCESS_USER_DUPLICATE_EMAIL", ex.Errors[0].Code);
         }
 
         [Fact]
@@ -434,10 +457,13 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_EmptyNtlogin_ThrowsArgumentException()
+        public async Task UpdateAsync_EmptyNtlogin_ThrowsBusinessValidationErrorException()
         {
             var dto = new AccessUserDto { SystemId = 1, NtLogin = "" };
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateAsync(dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.UpdateAsync(dto));
+            Assert.Single(ex.Errors);
+            Assert.Equal("NT login is required.", ex.Errors[0].Message);
+            Assert.Equal("NTLOGIN_REQUIRED", ex.Errors[0].Code);
         }
 
         #endregion
@@ -473,9 +499,12 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         }
 
         [Fact]
-        public async Task DeleteAsync_EmptyNtlogin_ThrowsArgumentException()
+        public async Task DeleteAsync_EmptyNtlogin_ThrowsBusinessValidationErrorException()
         {
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.DeleteAsync(1, ""));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.DeleteAsync(1, ""));
+            Assert.Single(ex.Errors);
+            Assert.Equal("NT login is required.", ex.Errors[0].Message);
+            Assert.Equal("NTLOGIN_REQUIRED", ex.Errors[0].Code);
         }
 
         #endregion
@@ -511,9 +540,12 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         }
 
         [Fact]
-        public async Task ExistsAsync_EmptyNtlogin_ThrowsArgumentException()
+        public async Task ExistsAsync_EmptyNtlogin_ThrowsBusinessValidationErrorException()
         {
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.ExistsAsync(1, ""));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.ExistsAsync(1, ""));
+            Assert.Single(ex.Errors);
+            Assert.Equal("NT login is required.", ex.Errors[0].Message);
+            Assert.Equal("NTLOGIN_REQUIRED", ex.Errors[0].Code);
         }
 
         #endregion

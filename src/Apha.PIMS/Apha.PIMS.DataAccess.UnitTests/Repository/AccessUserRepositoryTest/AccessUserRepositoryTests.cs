@@ -247,6 +247,21 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.AccessUserRepositoryTest
             Assert.Null(result);
         }
 
+        [Fact]
+        public async Task GetByIdAsync_IgnoresCaseAndSpaces_WhenCompositePkExists()
+        {
+            // Arrange
+            var users = new List<AccessUser> { MakeUser(1, "dom\\user") };
+            var repo = CreateRepository(users);
+
+            // Act
+            var result = await repo.GetByIdAsync(1, "  DOM\\USER  ");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("dom\\user", result!.NtLogin);
+        }
+
         #endregion
 
         // ── AddAsync ──────────────────────────────────────────────────────────────
