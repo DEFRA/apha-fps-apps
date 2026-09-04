@@ -84,13 +84,13 @@
                         <tr class="govuk-table__row grid-column-group-row">
                             @if (Model.ShowCheckboxColumn)
                             {
-                                <th scope="col" class="grid-column-group-cell grid-column-group-cell--empty"></th>
+                                <th scope="col" class="grid-column-group-cell grid-column-group-cell--empty" aria-label="Select column"></th>
                             }
                             @foreach (var group in Model.ColumnGroups)
                             {
                                 if (string.IsNullOrEmpty(Convert.ToString(group.Label)))
                                 {
-                                    <th scope="col" colspan="@group.Span" class="grid-column-group-cell grid-column-group-cell--empty"></th>
+                                    <th scope="col" colspan="@group.Span" class="grid-column-group-cell grid-column-group-cell--empty" aria-label="Column group"></th>
                                 }
                                 else
                                 {
@@ -99,7 +99,7 @@
                             }
                             @if (Model.AllowEdit || Model.AllowDelete || Model.AllowView)
                             {
-                                <th scope="col" class="grid-column-group-cell grid-column-group-cell--empty"></th>
+                                <th scope="col" class="grid-column-group-cell grid-column-group-cell--empty" aria-label="Actions column"></th>
                             }
                         </tr>
                     }
@@ -151,13 +151,13 @@
                     <tr class="filter-row govuk-table__row">
                         @if (Model.ShowCheckboxColumn)
                         {
-                            <th scope="col" aria-label="Select row checkbox"></th>
+                            <th scope="col" aria-label="Select row checkbox column"></th>
                         }
                         @foreach (var column in Model.Columns)
                         {
                             if (column.IsVisible)
                             {
-                                    <th scope="col" aria-label="Select row checkbox" class="@GridHelpers.GetHeaderAlignmentCssClass(column)">
+                                    <th scope="col" aria-label="@($"Filter {column.DisplayName}")" class="@GridHelpers.GetHeaderAlignmentCssClass(column)">
                                     @if (column.IsFilterable)
                                     {
                                         var filterValue = Model.CurrentFilters != null && Model.CurrentFilters.ContainsKey(column.PropertyName)
@@ -200,8 +200,8 @@
                                         <span class="govuk-visually-hidden">No filter</span>
                                     }
                                 </th>
-                                            }
                                         }
+                                    }
                                         @if (Model.AllowEdit || Model.AllowDelete || Model.AllowView)
                                         {
                                             <th scope="col" aria-label="Actions column"></th>

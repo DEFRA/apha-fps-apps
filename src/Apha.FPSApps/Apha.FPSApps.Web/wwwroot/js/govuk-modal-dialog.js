@@ -512,65 +512,212 @@
     };
 
 
+    // =========================================================
+    // DRAGGABLE MODAL DIALOGS
+    // =========================================================
+    //
+    // Works for BOTH modal markup styles used in the app:
+    //   1) .modal > .modal-dialog > .modal-content > .modal-header
+    //   2) .govuk-edit-modal > .govuk-edit-modal-dialog > .govuk-edit-modal__header
+    //
+    // Key points:
+    //  - The dragged dialog is remembered on mousedown, so pages that
+    //    contain MORE THAN ONE modal in the DOM (Monthly Time,
+    //    Monthly Output, Yearly Financial Data) always move the
+    //    dialog the user actually grabbed.
+    //  - Coordinates are taken from getBoundingClientRect(), which is
+    //    viewport relative, so the page scroll position never shifts
+    //    the dialog when the drag starts.
+    //  - Any CSS transform / auto margins on the dialog are neutralised
+    //    ONLY while dragging, then the exact original inline style is
+    //    restored, so no page loses its own width / max-width styling.
+    // =========================================================
+
     var isDragging = false;
+
+    var $dragDialog = null;
 
     var startX = 0;
     var startY = 0;
     var startLeft = 0;
     var startTop = 0;
 
+    // A transformed ancestor (e.g. PIMS `.modal-dialog` has
+    // `transform: translateY(-20px)`) becomes the containing block for
+    // `position: fixed` children. When that happens, `left`/`top` are NOT
+    // viewport coordinates. These corrections convert a desired viewport
+    // position into the value that must actually be written to left/top.
+    // They are 0 when the viewport is the containing block, so pages that
+    // already worked are completely unaffected.
+    var correctionX = 0;
+    var correctionY = 0;
+
     // Minimum part of modal that must remain visible
     var minVisible = 50;
+
+    var DIALOG_SELECTOR = ".modal-dialog, .govuk-edit-modal-dialog";
+    var HANDLE_SELECTOR =
+        ".modal-dialog .modal-header, " +
+        ".govuk-edit-modal-dialog .govuk-edit-modal__header";
+
+    // Marker attribute so every dialog we have moved can be found again,
+    // even after the page replaces modal markup.
+    var DRAGGED_MARKER = "data-fps-dragged";
+
+    // Remembers the untouched inline style of every dialog we move,
+    // so the dialog can be put back exactly as the page authored it.
+    function rememberOriginalStyle($dialog) {
+        if (!$dialog[0].hasAttribute(DRAGGED_MARKER)) {
+            $dialog[0].setAttribute(
+                DRAGGED_MARKER,
+                $dialog.attr("style") || ""
+            );
+        }
+    }
+
+    // Resets a dialog back to its authored position/size.
+    function resetModalPosition($dialog) {
+
+        if (!$dialog || !$dialog.length) {
+            return;
+        }
+
+        $dialog.each(function () {
+
+            if (!this.hasAttribute(DRAGGED_MARKER)) {
+                return;
+            }
+
+            var original = this.getAttribute(DRAGGED_MARKER);
+
+            if (original === "") {
+                this.removeAttribute("style");
+            } else {
+                this.setAttribute("style", original);
+            }
+
+            this.removeAttribute(DRAGGED_MARKER);
+        });
+    }
+
+    // Restores every dialog that has been dragged on this page.
+    function resetAllDraggedDialogs() {
+        resetModalPosition($("[" + DRAGGED_MARKER + "]"));
+    }
+
+    // A dialog is considered closed when neither it nor its host is visible.
+    function isDialogOpen($dialog) {
+        return $dialog.length > 0 && $dialog.is(":visible");
+    }
+
+    // Watches the modal host so the dialog is re-centred the next time
+    // the modal is opened, without touching any other page behaviour.
+    function watchForClose($dialog) {
+
+        if ($dialog.data("fpsDragCloseWatcher")) {
+            return;
+        }
+
+        // The host is the element that is shown/hidden. Most pages use
+        // `.modal` / `.govuk-edit-modal`, but the PIMS layout uses a plain
+        // `#modalPopup` wrapper, so fall back to the dialog's parent.
+        var host =
+            $dialog.closest(".modal, .govuk-edit-modal, #modalPopup")[0] ||
+            $dialog.parent()[0];
+
+        if (!host || typeof MutationObserver === "undefined") {
+            return;
+        }
+
+        var observer = new MutationObserver(function () {
+            if (!isDialogOpen($dialog)) {
+                resetModalPosition($dialog);
+            }
+        });
+
+        observer.observe(host, {
+            attributes: true,
+            attributeFilter: ["class", "style", "open", "hidden"]
+        });
+
+        $dialog.data("fpsDragCloseWatcher", observer);
+    }
 
 
     // =========================================================
     // DRAG START
     // =========================================================
 
-    // Existing selector is NOT removed.
-    // Added .govuk-edit-modal-dialog .govuk-edit-modal__header
-    $(document).on(
-        "mousedown",
-        ".modal-dialog .modal-header, .govuk-edit-modal-dialog .govuk-edit-modal__header",
-        function (e) {
+    $(document).on("mousedown", HANDLE_SELECTOR, function (e) {
 
-            // Do not drag when clicking buttons/links
-            if ($(e.target).closest("button, a, input, select, textarea").length) {
-                return;
-            }
+        // Only respond to the primary mouse button
+        if (e.which !== 1) {
+            return;
+        }
 
-            // Keep existing selector + add new selector
-            var $dialog = $(this).closest(
-                ".modal-dialog, .govuk-edit-modal-dialog"
-            );
+        // Do not drag when clicking buttons/links/fields
+        if ($(e.target).closest("button, a, input, select, textarea, label").length) {
+            return;
+        }
 
-            if (!$dialog.length) {
-                return;
-            }
+        var $dialog = $(this).closest(DIALOG_SELECTOR);
 
-            var offset = $dialog.offset();
+        if (!$dialog.length) {
+            return;
+        }
 
-            isDragging = true;
+        rememberOriginalStyle($dialog);
+        watchForClose($dialog);
 
-            startX = e.clientX;
-            startY = e.clientY;
+        // Viewport relative box - unaffected by page scroll position
+        var rect = $dialog[0].getBoundingClientRect();
 
-            startLeft = offset.left;
-            startTop = offset.top;
+        $dragDialog = $dialog;
+        isDragging = true;
 
-            // Convert to fixed positioning
-            $dialog.css({
-                position: "fixed",
-                margin: 0,
-                left: startLeft,
-                top: startTop,
-                width: $dialog.outerWidth()
-            });
+        startX = e.clientX;
+        startY = e.clientY;
 
-            $("body").css("user-select", "none");
+        startLeft = rect.left;
+        startTop = rect.top;
 
-            e.preventDefault();
+        correctionX = 0;
+        correctionY = 0;
+
+        // Pin the dialog exactly where it currently appears.
+        // Transform/auto margins are cleared so left/top are authoritative.
+        $dialog.css({
+            position: "fixed",
+            margin: 0,
+            transform: "none",
+            transition: "none",
+            left: startLeft + "px",
+            top: startTop + "px",
+            width: rect.width + "px",
+            maxWidth: "none",
+            right: "auto",
+            bottom: "auto"
         });
+
+        // Measure again. If the dialog did not land where we asked, its
+        // containing block is a transformed ancestor rather than the
+        // viewport, so work out the constant offset and re-apply.
+        var pinned = $dialog[0].getBoundingClientRect();
+
+        correctionX = startLeft - pinned.left;
+        correctionY = startTop - pinned.top;
+
+        if (correctionX !== 0 || correctionY !== 0) {
+            $dialog.css({
+                left: (startLeft + correctionX) + "px",
+                top: (startTop + correctionY) + "px"
+            });
+        }
+
+        $("body").css("user-select", "none");
+
+        e.preventDefault();
+    });
 
 
     // =========================================================
@@ -579,23 +726,12 @@
 
     $(document).on("mousemove", function (e) {
 
-        if (!isDragging) {
+        if (!isDragging || !$dragDialog || !$dragDialog.length) {
             return;
         }
 
-        // Existing selector is preserved.
-        // New GOV.UK selector is added.
-        var $dialog = $(
-            ".modal-dialog:has(.modal-header), " +
-            ".govuk-edit-modal-dialog:has(.govuk-edit-modal__header)"
-        ).filter(":visible").first();
-
-        if (!$dialog.length) {
-            return;
-        }
-
-        var dialogWidth = $dialog.outerWidth();
-        var dialogHeight = $dialog.outerHeight();
+        var dialogWidth = $dragDialog.outerWidth();
+        var dialogHeight = $dragDialog.outerHeight();
 
         var viewportWidth = $(window).width();
         var viewportHeight = $(window).height();
@@ -603,37 +739,21 @@
         var newLeft = startLeft + (e.clientX - startX);
         var newTop = startTop + (e.clientY - startY);
 
-
-        // =====================================================
         // X LIMIT
-        // =====================================================
-
-        var minLeft = -(dialogWidth - minVisible);
-        var maxLeft = viewportWidth - minVisible;
-
         newLeft = Math.max(
-            minLeft,
-            Math.min(newLeft, maxLeft)
+            -(dialogWidth - minVisible),
+            Math.min(newLeft, viewportWidth - minVisible)
         );
 
-
-        // =====================================================
         // Y LIMIT
-        // =====================================================
-
-        var minTop = -(dialogHeight - minVisible);
-        var maxTop = viewportHeight - minVisible;
-
         newTop = Math.max(
-            minTop,
-            Math.min(newTop, maxTop)
+            0,
+            Math.min(newTop, viewportHeight - minVisible)
         );
 
-
-        // Apply position
-        $dialog.css({
-            left: newLeft,
-            top: newTop
+        $dragDialog.css({
+            left: (newLeft + correctionX) + "px",
+            top: (newTop + correctionY) + "px"
         });
     });
 
@@ -647,8 +767,23 @@
         if (!isDragging) {
             return;
         }
-        
+
         isDragging = false;
+        $dragDialog = null;
+
+        $("body").css("user-select", "");
+    });
+
+    // If the pointer leaves the window / focus is lost mid drag,
+    // end the drag cleanly instead of leaving it stuck.
+    $(window).on("blur", function () {
+
+        if (!isDragging) {
+            return;
+        }
+
+        isDragging = false;
+        $dragDialog = null;
 
         $("body").css("user-select", "");
     });
@@ -658,54 +793,27 @@
     // CLICK FADED BACKGROUND
     // =========================================================
     //
-    // This will NOT automatically reset the modal.
-    //
-    // Modal resets ONLY when the user clicks the faded
-    // background outside the modal.
+    // Clicking the faded backdrop restores the dialog it belongs to
+    // back to its authored (centred) position. Only dialogs that have
+    // actually been dragged are touched.
     //
     // =========================================================
 
-    $(document).on("click", function (e) {
+    $(document).on("mousedown", function (e) {
 
-        // Existing modal selector + new GOV.UK modal selector
-        var $dialog = $(
-            ".modal-dialog:has(.modal-header), " +
-            ".govuk-edit-modal-dialog:has(.govuk-edit-modal__header)"
-        ).filter(":visible").first();
-
-        if (!$dialog.length) {
+        // A drag is starting - never reset.
+        if ($(e.target).closest(HANDLE_SELECTOR).length) {
             return;
         }
 
-        // If click happened INSIDE modal, do nothing
-        if (
-            $(e.target).closest(
-                ".modal-dialog, .govuk-edit-modal-dialog"
-            ).length
-        ) {
+        // Ignore clicks inside any dialog itself
+        if ($(e.target).closest(DIALOG_SELECTOR).length) {
             return;
         }
 
-        // Click happened outside modal = faded background
-        resetModalPosition($dialog);
+        // Click landed on the faded backdrop or anywhere else outside a
+        // dialog, so put any moved dialog back where the page put it.
+        resetAllDraggedDialogs();
     });
-
-
-    // =========================================================
-    // RESET MODAL TO ORIGINAL POSITION
-    // =========================================================
-
-    function resetModalPosition($dialog) {
-
-        $dialog.css({
-            position: "",
-            left: "",
-            top: "",
-            margin: "auto",
-            width: "100%",
-            maxWidth: "700px"
-        });
-
-    }
 
 })();
