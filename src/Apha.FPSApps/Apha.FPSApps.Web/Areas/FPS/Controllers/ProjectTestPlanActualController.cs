@@ -68,7 +68,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowEdit = false,
                 AllowDelete = true,
                 KeyProperty = "RowKey",
-                DeleteFunction = "deleteTestPlanJob",
+                DeleteFunction = "deleteTestPlan",
                 ExtraFilterMethod = "getTestPlanExtraFilters",
                 BindGridUrl = "/FPS/ProjectTestPlanActual/LoadTestPlanGrid",
                 Data = new List<TestPlanActualItem>(),
