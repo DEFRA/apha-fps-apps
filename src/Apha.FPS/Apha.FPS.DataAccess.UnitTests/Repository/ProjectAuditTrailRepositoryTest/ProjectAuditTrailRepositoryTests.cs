@@ -231,7 +231,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetStaffJobLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.NotNull(result);
@@ -259,7 +259,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetStaffJobLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Equal("Jane Doe", Assert.Single(result.Data).Name);
@@ -281,7 +281,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetStaffJobLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Null(Assert.Single(result.Data).Name);
@@ -303,7 +303,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetStaffJobLogsAsync(query, "OTHERJOB", null, null);
 
             // Assert
             Assert.Empty(result.Data);
@@ -329,7 +329,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetStaffJobLogsAsync(query, TestProject, cutoff, null);
+            var result = await repo.GetStaffJobLogsAsync(query, TestJobCode, cutoff, null);
 
             // Assert
             Assert.Single(result.Data);
@@ -358,7 +358,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetTestRequirementLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetTestRequirementLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.NotNull(result);
@@ -382,7 +382,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetTestRequirementLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetTestRequirementLogsAsync(query, "OTHERJOB", null, null);
 
             // Assert
             Assert.Empty(result.Data);
@@ -411,7 +411,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetTestRequirementLogsAsync(query, TestProject, fromDate, toDate);
+            var result = await repo.GetTestRequirementLogsAsync(query, TestJobCode, fromDate, toDate);
 
             // Assert
             Assert.Single(result.Data);
@@ -442,7 +442,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetAnimalRequestLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAnimalRequestLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.NotNull(result);
@@ -467,7 +467,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetAnimalRequestLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAnimalRequestLogsAsync(query, "OTHERJOB", null, null);
 
             // Assert
             Assert.Empty(result.Data);
@@ -492,7 +492,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "rat" };
 
             // Act
-            var result = await repo.GetAnimalRequestLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAnimalRequestLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Single(result.Data);
@@ -523,7 +523,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.NotNull(result);
@@ -548,7 +548,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, "OTHERJOB", null, null);
 
             // Assert
             Assert.Empty(result.Data);
@@ -573,7 +573,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "Lab" };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Single(result.Data);
@@ -602,7 +602,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, fromDate, toDate);
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, fromDate, toDate);
 
             // Assert
             Assert.Single(result.Data);
@@ -698,7 +698,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, cutoff);
+            var result = await repo.GetStaffJobLogsAsync(query, TestJobCode, null, cutoff);
 
             // Assert
             Assert.Single(result.Data);
@@ -722,7 +722,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "alpha" };
 
             // Act
-            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetStaffJobLogsAsync(query, "JOB_ALPHA", null, null);
 
             // Assert
             Assert.Single(result.Data);
@@ -744,7 +744,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "admin" };
 
             // Act
-            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetStaffJobLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Single(result.Data);
@@ -778,7 +778,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
 
             // Act
-            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetStaffJobLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.NotNull(result);
@@ -805,7 +805,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "alpha" };
 
             // Act
-            var result = await repo.GetTestRequirementLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetTestRequirementLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Single(result.Data);
@@ -825,7 +825,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "alpha" };
 
             // Act
-            var result = await repo.GetTestRequirementLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetTestRequirementLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Single(result.Data);
@@ -847,7 +847,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "admin" };
 
             // Act
-            var result = await repo.GetTestRequirementLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetTestRequirementLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Single(result.Data);
@@ -893,7 +893,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
 
             // Act
-            var result = await repo.GetTestRequirementLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetTestRequirementLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.NotNull(result);
@@ -925,7 +925,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetAnimalRequestLogsAsync(query, TestProject, cutoff, null);
+            var result = await repo.GetAnimalRequestLogsAsync(query, TestJobCode, cutoff, null);
 
             // Assert
             Assert.Single(result.Data);
@@ -950,7 +950,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetAnimalRequestLogsAsync(query, TestProject, null, cutoff);
+            var result = await repo.GetAnimalRequestLogsAsync(query, TestJobCode, null, cutoff);
 
             // Assert
             Assert.Single(result.Data);
@@ -974,7 +974,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "admin" };
 
             // Act
-            var result = await repo.GetAnimalRequestLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAnimalRequestLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Single(result.Data);
@@ -1012,7 +1012,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
 
             // Act
-            var result = await repo.GetAnimalRequestLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAnimalRequestLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.NotNull(result);
@@ -1041,7 +1041,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "alpha" };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Single(result.Data);
@@ -1067,7 +1067,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "alpha" };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, "JOB_ALPHA", null, null);
 
             // Assert
             Assert.Single(result.Data);
@@ -1089,7 +1089,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "admin" };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Single(result.Data);
@@ -1131,7 +1131,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.NotNull(result);
@@ -1154,7 +1154,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Equal("already.email@example.com", result.Data.Single().UserId);
@@ -1178,7 +1178,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Equal("j.bloggs@example.com", result.Data.Single().UserId);
@@ -1202,7 +1202,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Equal("j.bloggs@example.com", result.Data.Single().UserId);
@@ -1222,7 +1222,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Equal("orphanuser", result.Data.Single().UserId);
@@ -1248,7 +1248,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.All(result.Data, item =>
@@ -1339,7 +1339,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             };
 
             // Act
-            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetStaffJobLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Equal("S002", result.Data.Single().StaffId);
@@ -1369,7 +1369,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             };
 
             // Act
-            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetStaffJobLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Equal("John Smith", result.Data.Single().Name);
@@ -1394,7 +1394,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             };
 
             // Act
-            var result = await repo.GetTestRequirementLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetTestRequirementLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Equal("TC002", result.Data.Single().TestCode);
@@ -1419,7 +1419,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             };
 
             // Act
-            var result = await repo.GetAnimalRequestLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAnimalRequestLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Equal("Sheep", result.Data.Single().AnimalType);
@@ -1446,7 +1446,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Equal("ACC2", result.Data.Single().Account);
@@ -1478,7 +1478,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             };
 
             // Act
-            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
 
             // Assert
             Assert.Equal("a.smith@example.com", result.Data.Single().UserId);
