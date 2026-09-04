@@ -16,12 +16,22 @@ namespace Apha.FPSApps.Web.TagHelpers
 
         // Controllers whose grids/popups are only ever used from the Project Planning screen.
         // Their buttons should follow the same Planning(enabled)/Closed(disabled) rule as ProjectPlanning itself.
-        private static readonly string[] ProjectPlanningRelatedControllers =
+        private static readonly string[] ProjectPlanningGroupControllers =
         {
             "StaffJob",
             "AnimalJob",
             "TestPlanJob",
             "AdditionalCostJob"
+        };
+
+        // BulkRates supports FEC (Open-year), Staff and Animal (Planned-year) requests, so its buttons
+        // must remain enabled during Planning, not just when the year is Open. Kept as its own group
+        // (rather than folded into ProjectPlanningGroupControllers) since it is functionally unrelated to
+        // Project Planning; BulkRatesController.CanCreateForYear already governs per-job-type eligibility
+        // server-side, so this tag helper only needs to avoid the default Closed-only carve-out.
+        private static readonly string[] BulkRatesGroupControllers =
+        {
+            "BulkRates"
         };
 
         // ProjectTestPlanActual hosts its own "Planned Time (FPS)" grid (Index / LoadTestPlanGrid actions)
@@ -74,7 +84,7 @@ namespace Apha.FPSApps.Web.TagHelpers
             return string.Equals(controller, ProjectPlanningController, StringComparison.OrdinalIgnoreCase);
         }
 
-        private bool IsProjectPlanningRelatedController()
+        private bool IsProjectPlanningGroupController()
         {
             var controller = ViewContext?.RouteData.Values["controller"]?.ToString();
             if (controller is null)
@@ -82,7 +92,26 @@ namespace Apha.FPSApps.Web.TagHelpers
                 return false;
             }
 
-            foreach (var name in ProjectPlanningRelatedControllers)
+            foreach (var name in ProjectPlanningGroupControllers)
+            {
+                if (string.Equals(controller, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsBulkRatesGroupController()
+        {
+            var controller = ViewContext?.RouteData.Values["controller"]?.ToString();
+            if (controller is null)
+            {
+                return false;
+            }
+
+            foreach (var name in BulkRatesGroupControllers)
             {
                 if (string.Equals(controller, name, StringComparison.OrdinalIgnoreCase))
                 {
@@ -120,7 +149,8 @@ namespace Apha.FPSApps.Web.TagHelpers
                 return false;
             }
 
-            if (IsProjectPlanningPage() || IsProjectPlanningRelatedController() || IsProjectTestPlanActualPlanningAction())
+            if (IsProjectPlanningPage() || IsProjectPlanningGroupController() ||
+                IsBulkRatesGroupController() || IsProjectTestPlanActualPlanningAction())
             {
                 return string.Equals(_fy.YearStatus?.Trim(), "Closed", StringComparison.OrdinalIgnoreCase);
             }
