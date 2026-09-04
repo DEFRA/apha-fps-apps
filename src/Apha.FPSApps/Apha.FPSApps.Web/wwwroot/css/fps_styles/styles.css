@@ -3014,7 +3014,9 @@ table.custom-table th {
    the #id so it outranks `.govuk-input` in govuk-frontend, which loads first
    but would otherwise tie on the plain-class selector. */
 #projectProfitabilityTotalSummary .govuk-input,
-#projectProfitabilityTotalSummary .govuk-input__prefix {
+#projectProfitabilityTotalSummary .govuk-input__prefix,
+#projectProfitabilitySummary .govuk-input,
+#projectProfitabilitySummary .govuk-input__prefix {
     font-weight: 700;
 }
 
