@@ -2,7 +2,11 @@
     'use strict';
 
     var NUMERIC_DECIMAL_SELECTOR = '.js-numeric-decimal';
+    var NUMERIC_INTEGER_SELECTOR = '.js-numeric-integer';
     var MAX_DECIMAL_PLACES = 4;
+
+    // Matches digits only. Empty string is allowed so the user can clear the field.
+    var VALID_INTEGER_PATTERN = /^\d*$/;
 
     // Matches an optional leading minus sign, an optional integer part, an
     // optional single decimal point and up to MAX_DECIMAL_PLACES fractional
@@ -12,6 +16,49 @@
 
     function isValidNumericValue(value) {
         return VALID_PATTERN.test(value);
+    }
+
+    function isValidIntegerValue(input, value) {
+        if (!VALID_INTEGER_PATTERN.test(value)) {
+            return false;
+        }
+
+        // Honour the maxlength attribute so the value never exceeds the
+        // number of characters allowed by the database column type.
+        var maxLength = parseInt(input.getAttribute('maxlength'), 10);
+        if (maxLength > 0 && value.length > maxLength) {
+            return false;
+        }
+
+        // Honour the max attribute so the value stays within the range of the
+        // database column type (e.g. a 32-bit integer).
+        var max = parseInt(input.getAttribute('max'), 10);
+        return !(!isNaN(max) && value !== '' && parseInt(value, 10) > max);
+    }
+
+    function handleIntegerKeyPress(e) {
+        if (e.ctrlKey || e.metaKey || e.key === undefined || e.key.length > 1) {
+            return;
+        }
+
+        var input = e.target;
+        var start = input.selectionStart;
+        var end = input.selectionEnd;
+        var proposed = input.value.slice(0, start) + e.key + input.value.slice(end);
+
+        if (!isValidIntegerValue(input, proposed)) {
+            e.preventDefault();
+        }
+    }
+
+    function handleIntegerInput(e) {
+        var input = e.target;
+        if (isValidIntegerValue(input, input.value)) {
+            input.dataset.lastValidValue = input.value;
+            return;
+        }
+
+        input.value = input.dataset.lastValidValue || '';
     }
 
     // Blocks characters that could never form a valid value.
@@ -55,14 +102,24 @@
     function bindNumericDecimalInputs() {
         // Delegated listeners handle both existing and dynamically added inputs.
         document.addEventListener('keypress', function (e) {
-            if (e.target && e.target.matches && e.target.matches(NUMERIC_DECIMAL_SELECTOR)) {
+            if (!e.target || !e.target.matches) {
+                return;
+            }
+            if (e.target.matches(NUMERIC_DECIMAL_SELECTOR)) {
                 handleKeyPress(e);
+            } else if (e.target.matches(NUMERIC_INTEGER_SELECTOR)) {
+                handleIntegerKeyPress(e);
             }
         });
 
         document.addEventListener('input', function (e) {
-            if (e.target && e.target.matches && e.target.matches(NUMERIC_DECIMAL_SELECTOR)) {
+            if (!e.target || !e.target.matches) {
+                return;
+            }
+            if (e.target.matches(NUMERIC_DECIMAL_SELECTOR)) {
                 handleInput(e);
+            } else if (e.target.matches(NUMERIC_INTEGER_SELECTOR)) {
+                handleIntegerInput(e);
             }
         });
     }
@@ -73,6 +130,9 @@
         bindNumericDecimalInputs();
     }
 
-    // Expose the validator for optional reuse (e.g. form submit validation).
+    // Expose the validators for optional reuse (e.g. form submit validation).
     window.isValidNumericDecimal = isValidNumericValue;
+    window.isValidNumericInteger = function (value) {
+        return VALID_INTEGER_PATTERN.test(value);
+    };
 })();

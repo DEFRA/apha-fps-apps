@@ -29,7 +29,7 @@ namespace Apha.FPS.Core.Entities
         [Key]
         [Column("divname")]
         [Required]
-        [StringLength(255)]
+        [StringLength(10)]
         public string DivName { get; set; } = null!;
 
         /// <summary>
