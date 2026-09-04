@@ -84,24 +84,29 @@ namespace Apha.PIMS.DataAccess.Repository
         }
         public async Task<List<AccessUser>> GetByNtLoginAsync(string ntlogin)
         {
-            var normalizedNtLoginUpper = ntlogin.Trim().ToUpper();
+            var normalizedNtLogin = ntlogin.Trim();
 
-            return await _dbContext.AccessUsers
+            var users = await _dbContext.AccessUsers
                 .AsNoTracking()
-                .Where(u => u.NtLogin != null
-                    && u.NtLogin.Trim().ToUpper() == normalizedNtLoginUpper)
+                .Where(u => u.NtLogin != null)
                 .OrderBy(u => u.SystemId)
                 .ToListAsync();
+
+            return users
+                .Where(u => string.Equals(u.NtLogin!.Trim(), normalizedNtLogin, StringComparison.OrdinalIgnoreCase))
+                .ToList();
         }
         public async Task<AccessUser?> GetByIdAsync(int systemid, string ntlogin)
         {
-            var normalizedNtLoginUpper = ntlogin.Trim().ToUpper();
+            var normalizedNtLogin = ntlogin.Trim();
 
-            return await _dbContext.AccessUsers
+            var users = await _dbContext.AccessUsers
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.SystemId == systemid
-                    && u.NtLogin != null
-                    && u.NtLogin.Trim().ToUpper() == normalizedNtLoginUpper);
+                .Where(u => u.SystemId == systemid && u.NtLogin != null)
+                .ToListAsync();
+
+            return users
+                .FirstOrDefault(u => string.Equals(u.NtLogin!.Trim(), normalizedNtLogin, StringComparison.OrdinalIgnoreCase));
         }
         public async Task<AccessUser> AddAsync(AccessUser entity)
         {
@@ -125,12 +130,15 @@ namespace Apha.PIMS.DataAccess.Repository
         }
         public async Task<bool> ExistsAsync(int systemid, string ntlogin)
         {
-            var normalizedNtLoginUpper = ntlogin.Trim().ToUpper();
+            var normalizedNtLogin = ntlogin.Trim();
 
-            return await _dbContext.AccessUsers
-                .AnyAsync(u => u.SystemId == systemid
-                    && u.NtLogin != null
-                    && u.NtLogin.Trim().ToUpper() == normalizedNtLoginUpper);
+            var users = await _dbContext.AccessUsers
+                .AsNoTracking()
+                .Where(u => u.SystemId == systemid && u.NtLogin != null)
+                .ToListAsync();
+
+            return users
+                .Any(u => string.Equals(u.NtLogin!.Trim(), normalizedNtLogin, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

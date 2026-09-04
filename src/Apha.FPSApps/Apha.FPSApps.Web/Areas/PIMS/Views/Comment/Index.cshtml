@@ -28,10 +28,24 @@
             <div class="sup_margin_left_right_0 sup_padding_right_20 sup_margin_bottom_10">
                 <div class="govuk-grid-column-full govuk-!-margin-left-1">
                     <table class="govuk-table sup-filters-table govuk-!-margin-bottom-2">
+                        <thead class="govuk-visually-hidden">
+                            <tr>
+                                <th scope="col">Project and forecast spend</th>
+                                <th scope="col">Comment filters</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                         <tr>
                             <!-- Column 1: Project + Forecast (two rows in a nested table for inline label/control alignment) -->
                             <td class="sup-col-1">
                                 <table class="govuk-table sup-nested-table">
+                                    <thead class="govuk-visually-hidden">
+                                        <tr>
+                                            <th scope="col">Field</th>
+                                            <th scope="col">Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
                                     <tr>
                                         <td class="sup-cell-label"><label class="govuk-label govuk-!-font-size-16 sup_font_weight_700" for="commentProject">Project</label></td>
                                         <td class="sup-cell-control"><select class="govuk-select govuk-!-font-size-16 " id="commentProject" name="commentProject" asp-items="Model.ProjectOptions" onchange="onProjectChanged()"></select></td>
@@ -45,6 +59,7 @@
                                             </div>
                                         </td>
                                     </tr>
+                                    </tbody>
                                 </table>
                             </td>
 
@@ -53,6 +68,14 @@
                                 <div class="sup-filter-box">
                                     
                                     <table class="govuk-table sup-nested-table ">
+                                        <thead class="govuk-visually-hidden">
+                                            <tr>
+                                                <th scope="col">Section</th>
+                                                <th scope="col">Filter field</th>
+                                                <th scope="col">Filter value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
                                         <tr>
                                             <td><label class="govuk-!-padding-bottom-1 govuk-label govuk-!-font-size-16 sup_font_weight_700">Filter</label></td>
                                             <td class="sup-cell-label"><label class="govuk-label govuk-label govuk-!-font-size-16 sup_font_weight_700" for="filterTopic">Topic</label></td>
@@ -63,11 +86,13 @@
                                             <td class="sup-cell-label"><label class="govuk-label govuk-label govuk-!-font-size-16 sup_font_weight_700" for="filterYear">Year</label></td>
                                             <td class="sup-cell-control"><input class="govuk-input govuk-label govuk-!-font-size-16" id="filterYear" name="filterYear" maxlength="4" inputmode="numeric" pattern="[0-9]*" oninput="onYearFilterChanged(this)" onkeydown="if (event.key === 'Enter') { event.preventDefault(); applyCommentsFilter(); }" /></td>
                                         </tr>
+                                        </tbody>
                                     </table>
                                 </div>
                             </td>
 
                         </tr>
+                        </tbody>
                     </table>
                 </div>
             </div>

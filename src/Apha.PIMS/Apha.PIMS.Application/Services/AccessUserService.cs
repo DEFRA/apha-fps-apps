@@ -73,15 +73,17 @@ namespace Apha.PIMS.Application.Services
         {
             ArgumentNullException.ThrowIfNull(dto);
 
-            dto.NtLogin = string.IsNullOrWhiteSpace(dto.NtLogin) ? null : dto.NtLogin.Trim();
+            string? normalizedNtLogin = dto.NtLogin?.Trim();
             dto.UserName = string.IsNullOrWhiteSpace(dto.UserName) ? null : dto.UserName.Trim();
             dto.UserEmail = string.IsNullOrWhiteSpace(dto.UserEmail) ? null : dto.UserEmail.Trim();
 
-            if (string.IsNullOrWhiteSpace(dto.NtLogin))
+            if (string.IsNullOrWhiteSpace(normalizedNtLogin))
                 throw new BusinessValidationErrorException(
                 [
                     new BusinessValidationError("NT login is required.", "NTLOGIN_REQUIRED")
                 ]);
+
+            dto.NtLogin = normalizedNtLogin;
 
             var usersForSystem = await _repository.GetBySystemIdAsync(dto.SystemId);
 
@@ -121,15 +123,17 @@ namespace Apha.PIMS.Application.Services
         {
             ArgumentNullException.ThrowIfNull(dto);
 
-            dto.NtLogin = string.IsNullOrWhiteSpace(dto.NtLogin) ? null : dto.NtLogin.Trim();
+            string? normalizedNtLogin = dto.NtLogin?.Trim();
             dto.UserName = string.IsNullOrWhiteSpace(dto.UserName) ? null : dto.UserName.Trim();
             dto.UserEmail = string.IsNullOrWhiteSpace(dto.UserEmail) ? null : dto.UserEmail.Trim();
 
-            if (string.IsNullOrWhiteSpace(dto.NtLogin))
+            if (string.IsNullOrWhiteSpace(normalizedNtLogin))
                 throw new BusinessValidationErrorException(
                 [
                     new BusinessValidationError("NT login is required.", "NTLOGIN_REQUIRED")
                 ]);
+
+            dto.NtLogin = normalizedNtLogin;
 
             bool exists = await _repository.ExistsAsync(dto.SystemId, dto.NtLogin);
             if (!exists)

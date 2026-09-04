@@ -285,6 +285,39 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
         }
 
         [Fact]
+        public async Task CreateAsync_TrimmedNtLogin_UsesTrimmedValue()
+        {
+            // Arrange
+            var dto = MakeDto(1, "  dom\\newuser  ");
+            var entity = MakeEntity(1, "dom\\newuser");
+            var created = MakeEntity(1, "dom\\newuser");
+            var resultDto = MakeDto(1, "dom\\newuser");
+
+            _repository.GetBySystemIdAsync(1).Returns(new List<AccessUser>());
+            _mapper.Map<AccessUser>(Arg.Any<AccessUserDto>()).Returns(call =>
+            {
+                var source = call.Arg<AccessUserDto>();
+                return new AccessUser
+                {
+                    SystemId = source.SystemId,
+                    NtLogin = source.NtLogin,
+                    UserName = source.UserName,
+                    UserEmail = source.UserEmail
+                };
+            });
+            _repository.AddAsync(Arg.Any<AccessUser>()).Returns(created);
+            _mapper.Map<AccessUserDto>(created).Returns(resultDto);
+
+            // Act
+            var result = await _service.CreateAsync(dto);
+
+            // Assert
+            Assert.Equal("dom\\newuser", dto.NtLogin);
+            await _repository.Received(1).AddAsync(Arg.Is<AccessUser>(u => u.NtLogin == "dom\\newuser"));
+            Assert.Equal("dom\\newuser", result.NtLogin);
+        }
+
+        [Fact]
         public async Task CreateAsync_DuplicateNtLoginExists_IgnoresCaseAndSpaces_ThrowsBusinessValidationErrorException()
         {
             // Arrange
@@ -417,6 +450,38 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
             // Assert
             Assert.NotNull(result);
             await _repository.Received(1).UpdateAsync(entity);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_TrimmedNtLogin_UsesTrimmedValueForExists()
+        {
+            // Arrange
+            var dto = MakeDto(1, "  dom\\user  ");
+            var updated = MakeEntity(1, "dom\\user");
+            var resultDto = MakeDto(1, "dom\\user");
+
+            _repository.ExistsAsync(1, "dom\\user").Returns(true);
+            _repository.GetBySystemIdAsync(1).Returns(new List<AccessUser> { MakeEntity(1, "dom\\user") });
+            _mapper.Map<AccessUser>(Arg.Any<AccessUserDto>()).Returns(call =>
+            {
+                var source = call.Arg<AccessUserDto>();
+                return new AccessUser
+                {
+                    SystemId = source.SystemId,
+                    NtLogin = source.NtLogin,
+                    UserName = source.UserName,
+                    UserEmail = source.UserEmail
+                };
+            });
+            _repository.UpdateAsync(Arg.Any<AccessUser>()).Returns(updated);
+            _mapper.Map<AccessUserDto>(updated).Returns(resultDto);
+
+            // Act
+            await _service.UpdateAsync(dto);
+
+            // Assert
+            Assert.Equal("dom\\user", dto.NtLogin);
+            await _repository.Received(1).ExistsAsync(1, "dom\\user");
         }
 
         [Fact]
