@@ -70,6 +70,14 @@ namespace Apha.FPS.Application.Services
         public async Task<bool> DeleteAsync(string accShortName)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(accShortName);
+
+            var referencedTables = await _repository.GetForeignKeyReferencesAsync(accShortName);
+
+            if (referencedTables is { Count: > 0 })
+            {
+                throw new InvalidOperationException("The selected record is being used on another page and cannot be deleted.");
+            }
+
             return await _repository.DeleteAsync(accShortName);
         }
     }

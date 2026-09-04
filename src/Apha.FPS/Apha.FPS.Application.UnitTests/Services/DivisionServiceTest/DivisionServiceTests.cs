@@ -348,7 +348,7 @@ namespace Apha.FPS.Application.UnitTests.Services.DivisionServiceTest
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => 
                 _sut.DeleteDivisionAsync(divName));
             
-            exception.Message.Should().Be("Unable to delete the division name as it is already in use.");
+            exception.Message.Should().Be("The selected record is being used on another page and cannot be deleted.");
         }
 
         [Fact]

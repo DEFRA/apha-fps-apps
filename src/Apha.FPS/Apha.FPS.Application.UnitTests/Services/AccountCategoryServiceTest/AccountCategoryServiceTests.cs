@@ -344,6 +344,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AccountCategoryServiceTest
         public async Task DeleteAsync_ExistingEntity_DeletesSuccessfully()
         {
             // Arrange
+            _repository.GetForeignKeyReferencesAsync(TestAccShortName).Returns(new List<string>());
             _repository.DeleteAsync(TestAccShortName).Returns(true);
 
             // Act
@@ -358,6 +359,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AccountCategoryServiceTest
         public async Task DeleteAsync_NonExistingEntity_ReturnsFalse()
         {
             // Arrange
+            _repository.GetForeignKeyReferencesAsync("NONEXISTENT").Returns(new List<string>());
             _repository.DeleteAsync("NONEXISTENT").Returns(false);
 
             // Act
@@ -365,6 +367,20 @@ namespace Apha.FPS.Application.UnitTests.Services.AccountCategoryServiceTest
 
             // Assert
             Assert.False(result);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_WhenRecordIsReferenced_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            _repository.GetForeignKeyReferencesAsync(TestAccShortName).Returns(new List<string> { "tbladditionalcosts" });
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _service.DeleteAsync(TestAccShortName));
+
+            Assert.Contains("cannot be deleted", exception.Message);
+            await _repository.DidNotReceive().DeleteAsync(TestAccShortName);
         }
 
         [Fact]
