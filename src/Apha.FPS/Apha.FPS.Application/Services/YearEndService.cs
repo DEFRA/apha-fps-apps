@@ -458,12 +458,19 @@ namespace Apha.FPS.Application.Services
             // Same staging-only overlay reasoning as ValidateSettingConfiguration above.
             var monthConfigs = await _monthHourRepository.GetYearEndMonthHoursAsync(request);
 
-            bool hasUnplannedMonthConfigs = monthConfigs.Any(x => string.Equals(x.ExistsForPlannedYear, "No", StringComparison.OrdinalIgnoreCase));
+            // Fmonth 0 marks the 3 leading-calendar-month placeholder slots (Jan-Mar of the
+            // fiscal year's start year) in GetMonthHourKeys' 15-key calendar - they aren't real
+            // fiscal months, can never be staged via the grid (Edit/Confirm are disabled for
+            // them), and so always report ExistsForPlannedYear "No". Excluded here so Approve
+            // isn't permanently blocked by them.
+            var fiscalMonthConfigs = monthConfigs.Where(x => x.Fmonth != 0).ToList();
+
+            bool hasUnplannedMonthConfigs = fiscalMonthConfigs.Any(x => string.Equals(x.ExistsForPlannedYear, "No", StringComparison.OrdinalIgnoreCase));
 
             if (hasUnplannedMonthConfigs)
                 errors.Add(new BusinessValidationError($"Month(s) Working days, VID hours and CVL hours are missing for the planned year. Please verify and provide value for each missing month.", "Missing_Config"));
 
-            bool hasmissingMissingVal = monthConfigs.Any(x => x.Days < 0 || x.VidHours < 0 || x.CvlHours < 0);
+            bool hasmissingMissingVal = fiscalMonthConfigs.Any(x => x.Days < 0 || x.VidHours < 0 || x.CvlHours < 0);
 
             if (hasmissingMissingVal)
                 errors.Add(new BusinessValidationError($"Provided Month( Working days, VID hours and CVL hours values are not valid for the planned year. Values should be non-negative and greater than zero.  Please verify and provide valid value for each month.", "Missing_Config"));

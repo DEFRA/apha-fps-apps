@@ -108,10 +108,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditMonthHour(short year, short month, short fpsyear, short fmonth, Guid? jobExecutionId)
+        public async Task<IActionResult> EditMonthHour(short monthYear, short month, short fpsyear, short fmonth, Guid? jobExecutionId)
         {
+            // Bound query param is deliberately not named "year" - FpsYearMiddleware reads a
+            // request-wide "year" query key to resolve the ambient FPS-year read-only context,
+            // and this value is the row's calendar year (not the FPS year), so reusing "year"
+            // here made every request for this modal look like it was for a future/closed FPS
+            // year, disabling every button via FPSReadOnlyTagHelper.
             var result = await _monthHourService.GetYearEndMonthHoursAsync(jobExecutionId);
-            var record = result.Data?.FirstOrDefault(m => m.Year == year && m.Month == month && m.FpsYear == fpsyear && m.Fmonth == fmonth);
+            var record = result.Data?.FirstOrDefault(m => m.Year == monthYear && m.Month == month && m.FpsYear == fpsyear && m.Fmonth == fmonth);
             if (record == null)
                 return NotFound();
 

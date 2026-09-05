@@ -206,9 +206,11 @@
         $.ajax({
             url: cfg.editMonthHourUrl,
             type: 'GET',
+            // Sent as "monthYear", not "year" - the controller action param is named to avoid
+            // colliding with FpsYearMiddleware's request-wide "year" query key (see comment there).
             data: currentJobExecutionId
-                ? { year: year, month: month, fpsyear: fpsyear, fmonth: fmonth, jobExecutionId: currentJobExecutionId }
-                : { year: year, month: month, fpsyear: fpsyear, fmonth: fmonth },
+                ? { monthYear: year, month: month, fpsyear: fpsyear, fmonth: fmonth, jobExecutionId: currentJobExecutionId }
+                : { monthYear: year, month: month, fpsyear: fpsyear, fmonth: fmonth },
             success: function (html) {
                 openModalWithHtml(html);
             },
