@@ -1401,8 +1401,10 @@ public sealed class JobOrchestratorTests
     }
 
     /// <summary>
-    /// Configures an Initiated record with <paramref name="fpsYear"/> set (so the pre-created-record
-    /// year cross-check has something to compare against) and a job that completes successfully.
+    /// Configures an Initiated record with <paramref name="fpsYear"/> set as its TargetFpsYear (so
+    /// the pre-created-record year cross-check, which compares against target_fpsyear - the year
+    /// the request is preparing, not FpsYear's current/open year - has something to compare against)
+    /// and a job that completes successfully.
     /// </summary>
     private void SetupSuccessJobWithFpsYear(string jobName, int fpsYear)
     {
@@ -1419,7 +1421,7 @@ public sealed class JobOrchestratorTests
                 Status = JobStatus.Initiated,
                 StartedAt = DateTime.UtcNow,
                 RetryAttempts = 0,
-                FpsYear = fpsYear
+                TargetFpsYear = fpsYear
             }));
 
         var job = Substitute.For<IBatchJob>();

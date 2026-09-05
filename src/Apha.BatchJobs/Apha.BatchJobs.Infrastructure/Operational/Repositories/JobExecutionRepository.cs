@@ -197,6 +197,7 @@ public class JobExecutionRepository : IJobExecutionRepository
                 q.RequestedBy,
                 q.RequestedAtUtc,
                 q.FpsYear,
+                q.TargetFpsYear,
                 q.StartDateTime,
                 q.EndDateTime,
                 s.Status,
@@ -223,6 +224,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             Status = parsedStatus,
             RequestedAtUtc = last.RequestedAtUtc,
             FpsYear = last.FpsYear,
+            TargetFpsYear = last.TargetFpsYear,
             StartedAt = last.StartDateTime ?? DateTime.UtcNow,
             CompletedAt = last.EndDateTime,
             DurationSeconds = last.EndDateTime.HasValue && last.StartDateTime.HasValue
@@ -253,6 +255,7 @@ public class JobExecutionRepository : IJobExecutionRepository
                 q.RequestedBy,
                 q.RequestedAtUtc,
                 q.FpsYear,
+                q.TargetFpsYear,
                 q.StartDateTime,
                 q.EndDateTime,
                 s.Status,
@@ -279,6 +282,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             Status = parsedStatus,
             RequestedAtUtc = last.RequestedAtUtc,
             FpsYear = last.FpsYear,
+            TargetFpsYear = last.TargetFpsYear,
             StartedAt = last.StartDateTime ?? DateTime.UtcNow,
             CompletedAt = last.EndDateTime,
             DurationSeconds = last.EndDateTime.HasValue && last.StartDateTime.HasValue
@@ -306,6 +310,7 @@ public class JobExecutionRepository : IJobExecutionRepository
                 q.RequestedBy,
                 q.RequestedAtUtc,
                 q.FpsYear,
+                q.TargetFpsYear,
                 q.StartDateTime,
                 q.EndDateTime,
                 s.Status,
@@ -338,6 +343,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             Status = status,
             RequestedAtUtc = execution.RequestedAtUtc,
             FpsYear = execution.FpsYear,
+            TargetFpsYear = execution.TargetFpsYear,
             StartedAt = execution.StartDateTime ?? DateTime.UtcNow,
             CompletedAt = execution.EndDateTime,
             DurationSeconds = execution.EndDateTime.HasValue && execution.StartDateTime.HasValue

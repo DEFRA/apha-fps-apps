@@ -38,6 +38,12 @@ public sealed class JobExecutionRecord
     /// <summary>FPS year associated with this execution when applicable (for example RecreateSummaries).</summary>
     public int? FpsYear { get; set; }
 
+    /// <summary>
+    /// The year a Year End Data Setup/CutOver (or other approval-based) request is preparing —
+    /// distinct from <see cref="FpsYear"/>, which is the request's own current/open year.
+    /// </summary>
+    public int? TargetFpsYear { get; set; }
+
     /// <summary>Timestamp when execution completed.</summary>
     public DateTime? CompletedAt { get; set; }
 

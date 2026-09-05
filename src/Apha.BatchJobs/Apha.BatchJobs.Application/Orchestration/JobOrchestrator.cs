@@ -735,10 +735,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
             "Found existing execution record | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | Status={Status}",
             jobExecutionId, existingExecution.JobQueueId, existingExecution.Status);
 
-        if (targetFpsYear.HasValue && existingExecution.FpsYear.HasValue && existingExecution.FpsYear.Value != targetFpsYear.Value)
+        if (targetFpsYear.HasValue && existingExecution.TargetFpsYear.HasValue && existingExecution.TargetFpsYear.Value != targetFpsYear.Value)
         {
             throw new InvalidOperationException(
-                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has fpsyear '{existingExecution.FpsYear.Value}' " +
+                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has target_fpsyear '{existingExecution.TargetFpsYear.Value}' " +
                 $"but trigger requested targetFpsYear '{targetFpsYear.Value}'.");
         }
 
