@@ -106,6 +106,21 @@ namespace Apha.FPS.DataAccess.Repositories
                         });
                     }
 
+                    // we need to add the super user also to Users table as super user can give permission to everyone
+                    var superUserAlreadyExists = currentUserId == (int)SuperUser.SuperUserId
+                        || await _dbContext.UserProfitcentres
+                        .IgnoreQueryFilters()
+                        .AnyAsync(upc => upc.ProfitCentre == profitCentre.ProfitCentreId && upc.UserId == (int)SuperUser.SuperUserId);
+                    if (!superUserAlreadyExists)
+                    {
+                        _dbContext.UserProfitcentres.Add(new UserProfitcentre
+                        {
+                            ProfitCentre = profitCentre.ProfitCentreId,
+                            UserId = (int)SuperUser.SuperUserId,
+                            FpsYear = _requestContext.FpsYear
+                        });
+                    }
+
                     await _dbContext.SaveChangesAsync();
                     await transaction.CommitAsync();
                     return profitCentre;

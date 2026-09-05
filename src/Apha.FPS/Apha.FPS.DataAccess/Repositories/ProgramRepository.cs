@@ -1,4 +1,5 @@
 ﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Enums;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -113,6 +114,20 @@ namespace Apha.FPS.DataAccess.Repositories
                         {
                             ProgramNo = entity.ProgramNo,
                             UserID = requestingUser.UserId,
+                            FpsYear = _requestContext.FpsYear
+                        });
+                    }
+                    // we need to add the super user also to Users table as super user can give permission to everyone
+                    var superUserAlreadyExists = await _dbContext.UserPrograms
+                        .IgnoreQueryFilters()
+                        .AnyAsync(up => up.ProgramNo == entity.ProgramNo && up.UserID == (int)SuperUser.SuperUserId);
+
+                    if (!superUserAlreadyExists)
+                    {
+                        _dbContext.UserPrograms.Add(new UserProgram
+                        {
+                            ProgramNo = entity.ProgramNo,
+                            UserID = (int)SuperUser.SuperUserId,
                             FpsYear = _requestContext.FpsYear
                         });
                     }
