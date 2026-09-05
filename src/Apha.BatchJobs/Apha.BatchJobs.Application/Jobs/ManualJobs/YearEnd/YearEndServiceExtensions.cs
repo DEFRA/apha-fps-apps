@@ -24,7 +24,6 @@ public static class YearEndServiceExtensions
         services.AddScoped<IYearEndDataSetupStep, ProjectFinancialResetStep>();
         services.AddScoped<IYearEndDataSetupStep, ConfiguredPlanningResetStep>();
         services.AddScoped<IYearEndDataSetupStep, InactiveEmployeeCleanupStep>();
-        services.AddScoped<IYearEndDataSetupStep, ValidateTargetYearEmptyTablesStep>();
         services.AddScoped<IYearEndDataSetupStep, FinalValidationStep>();
 
         services.AddScoped<IYearEndDataSetupService, YearEndDataSetupService>();

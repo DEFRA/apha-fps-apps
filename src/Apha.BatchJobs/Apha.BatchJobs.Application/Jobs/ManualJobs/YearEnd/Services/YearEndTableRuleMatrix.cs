@@ -2,50 +2,42 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
-/// <summary>How a table relates to the FPS year for Year End purposes.</summary>
-public enum YearEndTableRole
+/// <summary>
+/// What Year End Data Setup does for a table. The only three responsibilities Data Setup has —
+/// everything else about a table (reset, cleanup, how it's implemented) is an independent, orthogonal
+/// fact about one of these three, not a fourth role.
+/// </summary>
+public enum YearEndPrimaryRole
 {
-    /// <summary>Copy to target year.</summary>
-    YearScopedBusinessParticipant,
+    /// <summary>Copy the current year's rows to the target year.</summary>
+    CopyToTargetYear,
 
-    /// <summary>
-    /// Not a business-copy table, but still year-scoped and read during schema validation
-    /// (e.g. <c>fps.tblsettings</c>/<c>fps.tlkpmonthhours</c>).
-    /// </summary>
-    YearScopedConfigurationDependency,
+    /// <summary>Populate target-year configuration from Approve-frozen staging (e.g. tblsettings/tlkpmonthhours).</summary>
+    TargetYearConfiguration,
 
-    /// <summary>Not year-scoped at all — no target-year row concept, no partition to validate.</summary>
-    GlobalReference,
-
-    /// <summary>
-    /// Year-scoped but must stay empty in the target year — validated, never populated or deleted,
-    /// by <see cref="ValidateTargetYearEmptyTablesStep"/> and re-checked by <see cref="FinalValidationStep"/>.
-    /// </summary>
-    YearScopedTargetMustBeEmpty
+    /// <summary>Create the target year's row in fps.tblyearmaster — a new row, not a copy.</summary>
+    CreateTargetYear
 }
 
 /// <summary>
-/// The Year End action approved for a table. <see cref="PendingClassification"/> and
-/// <see cref="AlreadyImplementedViaDedicatedStep"/> are placeholders — not safe to treat as a
-/// generic copy.
+/// Expected post-execution outcome for a table, checked by <see cref="FinalValidationStep"/>.
 /// </summary>
-public enum YearEndTableRuleAction
+public enum YearEndFinalValidationRule
 {
-    PendingClassification,
+    /// <summary>Target-year row count must equal source-year row count — the default for a plain copy.</summary>
+    MatchSource,
 
-    /// <summary>Has bespoke handling via its own step (e.g. <c>tblperiod</c> via <see cref="PeriodSetupStep"/>).</summary>
-    AlreadyImplementedViaDedicatedStep,
+    /// <summary>
+    /// Target-year row count must be at most the source-year row count — for tables a later step
+    /// legitimately removes rows from after the copy (<see cref="InactiveEmployeeCleanupStep"/>).
+    /// </summary>
+    AtMostSource,
 
-    CopyToTargetYear,
-    CreateTargetYearRow,
-    ResetTargetYearRows,
+    /// <summary>Target-year row count must equal <see cref="YearEndTableRuleMatrixEntry.ExpectedTargetRowCount"/> exactly.</summary>
+    ExactTargetRowCount,
 
-    ValidateExists,
-    SkipLegacyObsolete,
-    ManualReviewRequired,
-
-    /// <summary>See <see cref="YearEndTableRole.YearScopedTargetMustBeEmpty"/>.</summary>
-    TargetYearMustBeEmpty
+    /// <summary>Target-year row count must be at least one — the table exists and has been populated for the year, exact count doesn't matter.</summary>
+    AtLeastOneTargetYearRow
 }
 
 /// <summary>
@@ -60,76 +52,71 @@ public static class YearEndResetPhase
 }
 
 /// <summary>
-/// How <see cref="FinalValidationStep"/> compares a <see cref="YearEndTableRuleAction.CopyToTargetYear"/>
-/// table's final row count against its source-year count.
+/// One row of the Year End Table Rule Matrix — the single source of truth for every table Year End
+/// Data Setup has an active responsibility for, and what that responsibility is.
 /// </summary>
-public enum YearEndFinalRowCountRule
-{
-    /// <summary>Row-count comparison doesn't apply (non-<c>CopyToTargetYear</c> entries).</summary>
-    NotApplicable,
-
-    /// <summary>Target row count must equal source row count — the default for a plain copy.</summary>
-    MatchSource,
-
-    /// <summary>
-    /// Target row count must be at most the source row count — for tables a later step legitimately
-    /// removes rows from after the copy (currently only <c>tblstaffjob</c>, via
-    /// <see cref="InactiveEmployeeCleanupStep"/>).
-    /// </summary>
-    AtMostSource
-}
-
-/// <summary>
-/// One row of the Year End Table Rule Matrix — the single source of truth for which tables Year
-/// End knows about, how each relates to the FPS year, and what's approved to happen to it.
-/// </summary>
-/// <param name="PrimaryKeyColumns">
-/// Composite primary key, in column order. Year-scoped roles must end the list with
-/// <c>"fpsyear"</c>; <see cref="YearEndTableRole.GlobalReference"/> entries leave it empty.
+/// <param name="PrimaryKeyColumns">Composite primary key, in column order. Must end with <c>"fpsyear"</c>.</param>
+/// <param name="FinalValidation">Expected post-execution outcome, checked by <see cref="FinalValidationStep"/>.</param>
+/// <param name="DedicatedStep">
+/// Name of the step that implements <see cref="PrimaryRole"/> for this table, if it isn't the generic
+/// mechanism (<see cref="Steps.CopyFpsYearScopedTablesStep"/> for <see cref="YearEndPrimaryRole.CopyToTargetYear"/>).
+/// Orthogonal to <see cref="PrimaryRole"/> — e.g. <c>tblperiod</c> is still <c>CopyToTargetYear</c>
+/// semantically, it's just implemented via <see cref="PeriodSetupStep"/> instead of the generic copy loop.
+/// <c>null</c> means the generic mechanism handles it.
 /// </param>
 /// <param name="CopyOrder">
-/// Dependency order for <see cref="YearEndTableRuleAction.CopyToTargetYear"/> entries — lower
-/// numbers are copied first so referenced rows exist before referencing ones. <c>null</c> otherwise.
+/// Dependency order among the generic-mechanism <see cref="YearEndPrimaryRole.CopyToTargetYear"/>
+/// entries (<see cref="DedicatedStep"/> is <c>null</c>) — lower numbers copied first so referenced rows
+/// exist before referencing ones. <c>null</c> for every entry with a <see cref="DedicatedStep"/>.
 /// </param>
 /// <param name="ResetPhase">
 /// Which reset step applies <see cref="Overrides"/> to this table, after the copy step has run.
-/// <c>null</c> if the table has no column-level reset.
+/// <c>null</c> if the table has no column-level reset. Independent of <see cref="DedicatedStep"/>.
 /// </param>
 /// <param name="Overrides">
 /// Column name -> literal SQL value applied via <c>UPDATE ... SET</c> to target-year rows, by
 /// whichever step matches <see cref="ResetPhase"/>.
 /// </param>
-/// <param name="FinalRowCountRule">
-/// How <see cref="FinalValidationStep"/> checks this table's final row count. Only meaningful for
-/// <see cref="YearEndTableRuleAction.CopyToTargetYear"/> entries.
+/// <param name="Cleanup">
+/// Description of row-removal behaviour applied to this table's target-year rows after copy, if any
+/// (currently only <see cref="InactiveEmployeeCleanupStep"/>'s inactive-employee removal). Independent
+/// of <see cref="Overrides"/> — <c>tblstaffjob</c> has both a reset and a cleanup at once.
 /// </param>
 /// <param name="ExpectedTargetRowCount">
-/// Exact target-year row count <see cref="FinalValidationStep"/> must see for
-/// <see cref="YearEndTableRuleAction.AlreadyImplementedViaDedicatedStep"/> entries (e.g. tblperiod's
-/// fixed 12 calendar periods). <c>null</c> falls back to the looser "at least one row" check — use
-/// only when the dedicated step's output count is a genuine fixed business invariant, not an
-/// incidental default.
+/// Exact target-year row count required when <see cref="FinalValidation"/> is
+/// <see cref="YearEndFinalValidationRule.ExactTargetRowCount"/>.
 /// </param>
 public sealed record YearEndTableRuleMatrixEntry(
     string Schema,
     string TableName,
-    YearEndTableRole Role,
-    YearEndTableRuleAction Action,
+    YearEndPrimaryRole PrimaryRole,
     IReadOnlyList<string> PrimaryKeyColumns,
-    string? Notes = null,
+    YearEndFinalValidationRule FinalValidation,
+    string? DedicatedStep = null,
     int? CopyOrder = null,
     string? ResetPhase = null,
     IReadOnlyDictionary<string, string>? Overrides = null,
-    YearEndFinalRowCountRule FinalRowCountRule = YearEndFinalRowCountRule.NotApplicable,
-    int? ExpectedTargetRowCount = null);
+    string? Cleanup = null,
+    int? ExpectedTargetRowCount = null,
+    string? Notes = null);
 
 /// <summary>
-/// The Year End Table Rule Matrix — single source of truth for every table Year End's schema
-/// validation and business-data steps use. No step should keep its own second, independent list.
+/// The Year End Data Setup Table Rule Matrix — single source of truth for every table Year End Data
+/// Setup has an active responsibility for. No step should keep its own second, independent list.
 /// </summary>
 /// <remarks>
-/// 65 entries total: 39 business participants + 21 must-stay-empty tables (the 60 that Year End
-/// actually copies, resets, or checks are empty) plus 5 read-only reference/config tables.
+/// 43 entries: 40 <see cref="YearEndPrimaryRole.CopyToTargetYear"/> + 2
+/// <see cref="YearEndPrimaryRole.TargetYearConfiguration"/> + 1 <see cref="YearEndPrimaryRole.CreateTargetYear"/>.
+///
+/// Scope rule: only tables where Year End has an active Data Setup responsibility are included here.
+/// Tables Year End merely validates the existence of, tables that must stay empty, tables handled by
+/// CutOver directly (not Data Setup), and tables Year End doesn't touch at all are out of scope for
+/// this matrix — see the 2026-09-05 table audit for the full 113-table reconciliation.
+///
+/// Partitioning is deliberately not represented here: Year End does not create, alter, or manage
+/// partitions, it assumes the required schema has already been deployed. Table/column existence
+/// validation against a live schema is a separate concern from this matrix's job (declaring what Data
+/// Setup's business-data actions are).
 /// </remarks>
 public static class YearEndTableRuleMatrix
 {
@@ -137,70 +124,74 @@ public static class YearEndTableRuleMatrix
 
     public static IReadOnlyList<YearEndTableRuleMatrixEntry> Entries { get; } =
     [
-        // 39 year-scoped business participants (Table 23). CopyOrder = FK-dependency layer (0-5).
-        // FinalRowCountRule is MatchSource except tblstaffjob (AtMostSource — InactiveEmployeeCleanupStep
-        // may remove rows after copy).
-        new(Schema, "costcentre", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["costcentre", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "divisiongrade", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["divisiongrade", "fpsyear"], CopyOrder: 1, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "grade", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["gradecode", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "milestone", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["project", "milestoneref", "objectiveref", "fpsyear"], CopyOrder: 2, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "plancatwggrade", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["plancategory", "wggrade", "fpsyear"], CopyOrder: 4, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "profitcentregrade", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["pcgrade", "fpsyear"], CopyOrder: 2, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "profitcentregrade_nondefra", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["pcgrade", "fpsyear"], CopyOrder: 2, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "projectmonth2", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["project", "monthno", "fpsyear"], CopyOrder: 0,
-            Notes: "RecreateSummaries independently rebuilds this table's rows afterward — unrelated to Year End's copy.",
-            FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "projectmonth3", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["endperiod", "project", "fpsyear"], CopyOrder: 0,
-            Notes: "Same RecreateSummaries relationship as projectmonth2.",
-            FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tbladditionalcosts", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["jobcode", "account", "description", "fpsyear"],
+        // 40 CopyToTargetYear entries (Table 23 + tbluser_category). CopyOrder = FK-dependency layer
+        // (0-5), only meaningful for entries with no DedicatedStep (the generic copy mechanism uses it
+        // for ordering; dedicated-step entries order via their own pipeline position instead).
+        new(Schema, "costcentre", YearEndPrimaryRole.CopyToTargetYear, ["costcentre", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "divisiongrade", YearEndPrimaryRole.CopyToTargetYear, ["divisiongrade", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 1),
+        new(Schema, "grade", YearEndPrimaryRole.CopyToTargetYear, ["gradecode", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "milestone", YearEndPrimaryRole.CopyToTargetYear, ["project", "milestoneref", "objectiveref", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 2),
+        new(Schema, "plancatwggrade", YearEndPrimaryRole.CopyToTargetYear, ["plancategory", "wggrade", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 4),
+        new(Schema, "profitcentregrade", YearEndPrimaryRole.CopyToTargetYear, ["pcgrade", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 2),
+        new(Schema, "profitcentregrade_nondefra", YearEndPrimaryRole.CopyToTargetYear, ["pcgrade", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 2),
+        new(Schema, "projectmonth2", YearEndPrimaryRole.CopyToTargetYear, ["project", "monthno", "fpsyear"], YearEndFinalValidationRule.MatchSource,
+            CopyOrder: 0,
+            Notes: "RecreateSummaries independently rebuilds this table's rows afterward — unrelated to Year End's copy."),
+        new(Schema, "projectmonth3", YearEndPrimaryRole.CopyToTargetYear, ["endperiod", "project", "fpsyear"], YearEndFinalValidationRule.MatchSource,
+            CopyOrder: 0,
+            Notes: "Same RecreateSummaries relationship as projectmonth2."),
+        new(Schema, "tbladditionalcosts", YearEndPrimaryRole.CopyToTargetYear, ["jobcode", "account", "description", "fpsyear"], YearEndFinalValidationRule.MatchSource,
             CopyOrder: 2,
             ResetPhase: YearEndResetPhase.ConfiguredPlanningReset,
             Overrides: new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["itemcost"] = "0" },
-            FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tbladminusers", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["mnumber", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tblanimalreq", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["indcounter", "fpsyear"],
+            Notes: "Reset is CAP-conditional — ConfiguredPlanningResetStep gates the whole ConfiguredPlanningReset phase on fps.tblsettings.id='CapApprovalReceivedForReset' for the target year (YE-CAP-RESET)."),
+        new(Schema, "tbladminusers", YearEndPrimaryRole.CopyToTargetYear, ["mnumber", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tblanimalreq", YearEndPrimaryRole.CopyToTargetYear, ["indcounter", "fpsyear"], YearEndFinalValidationRule.MatchSource,
             CopyOrder: 2,
             ResetPhase: YearEndResetPhase.ConfiguredPlanningReset,
             Overrides: new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["numberofanimals"] = "0", ["numberofdays"] = "0" },
-            Notes: "indcounter is GENERATED BY DEFAULT AS IDENTITY, excluded from copy by the generic is_identity='NO' column filter.",
-            FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tblanimals", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["animaltype", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tblcontract", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["contractno", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tblemployee", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["spnumber", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tblkpaccountcategory", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["accshortname", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tblperiod", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.AlreadyImplementedViaDedicatedStep, ["periodname", "fpsyear"],
-            Notes: "Implemented via PeriodSetupStep, not the generic copy mechanism — no CopyOrder. PeriodSetupStep enforces exactly 12 source/target rows itself; FinalValidationStep re-checks the same invariant via ExpectedTargetRowCount.",
-            ExpectedTargetRowCount: 12),
-        new(Schema, "tblstaffjob", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["staffid", "jobcode", "fpsyear"],
+            Notes: "indcounter is GENERATED BY DEFAULT AS IDENTITY, excluded from copy by the generic is_identity='NO' column filter. Reset is CAP-conditional — ConfiguredPlanningResetStep gates the whole ConfiguredPlanningReset phase on fps.tblsettings.id='CapApprovalReceivedForReset' for the target year (YE-CAP-RESET)."),
+        new(Schema, "tblanimals", YearEndPrimaryRole.CopyToTargetYear, ["animaltype", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tblcontract", YearEndPrimaryRole.CopyToTargetYear, ["contractno", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tblemployee", YearEndPrimaryRole.CopyToTargetYear, ["spnumber", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tblkpaccountcategory", YearEndPrimaryRole.CopyToTargetYear, ["accshortname", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tblperiod", YearEndPrimaryRole.CopyToTargetYear, ["periodname", "fpsyear"], YearEndFinalValidationRule.ExactTargetRowCount,
+            DedicatedStep: nameof(PeriodSetupStep),
+            ResetPhase: null,
+            Overrides: null,
+            Cleanup: null,
+            ExpectedTargetRowCount: 12,
+            Notes: "Reset (FinalSummariesRun=0, PeriodLocked=0) is applied internally by PeriodSetupStep itself, not via the generic Overrides mechanism. PeriodSetupStep enforces exactly 12 source/target rows itself; FinalValidationStep re-checks the same invariant via ExpectedTargetRowCount."),
+        new(Schema, "tblstaffjob", YearEndPrimaryRole.CopyToTargetYear, ["staffid", "jobcode", "fpsyear"], YearEndFinalValidationRule.AtMostSource,
             CopyOrder: 5,
             ResetPhase: YearEndResetPhase.ConfiguredPlanningReset,
             Overrides: new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["plannedhours"] = "0" },
-            Notes: "FK-dependent on tblwgemployee (staffid) and tlkpproject (jobcode), hence CopyOrder 5. InactiveEmployeeCleanupStep removes inactive-employee rows here first, hence AtMostSource, not MatchSource.",
-            FinalRowCountRule: YearEndFinalRowCountRule.AtMostSource),
-        new(Schema, "tbltestrccost", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["testcode", "profitcentre", "fpsyear"], CopyOrder: 1, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tbltestrequirementrccost", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["testcode", "buyer", "profitcentre", "fpsyear"], CopyOrder: 2, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tbltestreqwg", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["testcode", "buyer", "workgroup", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tbltotalbusinessoverheads", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["fpsyear"], CopyOrder: 0,
-            Notes: "Plain copy of the singleton row — totalbusinessoverheads is preserved as-is (including NULL), never forced to NULL.",
-            FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tbluser_profitcentre", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["profitcentre", "user_id", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tbluser_program", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["programno", "user_id", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tbluser_projectgroup", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["projectgroup", "user_id", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tbluser_testowner", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["test_owner", "user_id", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tblwgemployee", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["pactid", "fpsyear"], CopyOrder: 4,
-            Notes: "Plain copy, no resets. InactiveEmployeeCleanupStep deletes inactive-employee rows here too (not just tblstaffjob), hence AtMostSource, matching tblstaffjob. tblstaffjob rows are removed first (FK dependency).",
-            FinalRowCountRule: YearEndFinalRowCountRule.AtMostSource),
-        new(Schema, "testorproduct", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["itemcode", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "timecodevalid", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["workgroup", "timecode", "parentproject", "fpsyear"], CopyOrder: 2, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tlkpjobcode", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["jobcode", "fpsyear"], CopyOrder: 2, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tlkpmanager", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["manager", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tlkpprogram", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["programno", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tlkpprojectgroup", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["projectgroup", "fpsyear"],
+            Cleanup: "Inactive-employee cleanup (InactiveEmployeeCleanupStep)",
+            Notes: "FK-dependent on tblwgemployee (staffid) and tlkpproject (jobcode), hence CopyOrder 5. Reset is CAP-conditional — ConfiguredPlanningResetStep gates the whole ConfiguredPlanningReset phase on fps.tblsettings.id='CapApprovalReceivedForReset' for the target year (YE-CAP-RESET)."),
+        new(Schema, "tbltestrccost", YearEndPrimaryRole.CopyToTargetYear, ["testcode", "profitcentre", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 1),
+        new(Schema, "tbltestrequirementrccost", YearEndPrimaryRole.CopyToTargetYear, ["testcode", "buyer", "profitcentre", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 2),
+        new(Schema, "tbltestreqwg", YearEndPrimaryRole.CopyToTargetYear, ["testcode", "buyer", "workgroup", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tbltotalbusinessoverheads", YearEndPrimaryRole.CopyToTargetYear, ["fpsyear"], YearEndFinalValidationRule.MatchSource,
             CopyOrder: 0,
-            FinalRowCountRule: YearEndFinalRowCountRule.MatchSource,
-            Notes: "tlkpproject.projectgroup FKs here, hence CopyOrder 0 (before tlkpproject's CopyOrder 1). Year End now owns and copies this year-scoped dependency directly instead of relying on external provisioning."),
-        new(Schema, "tlkpproject", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["parentproject", "fpsyear"],
+            Notes: "Plain copy of the singleton row — totalbusinessoverheads is preserved as-is (including NULL), never forced to NULL."),
+        new(Schema, "tbluser_category", YearEndPrimaryRole.CopyToTargetYear, ["user_id", "category", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tbluser_profitcentre", YearEndPrimaryRole.CopyToTargetYear, ["profitcentre", "user_id", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tbluser_program", YearEndPrimaryRole.CopyToTargetYear, ["programno", "user_id", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tbluser_projectgroup", YearEndPrimaryRole.CopyToTargetYear, ["projectgroup", "user_id", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tbluser_testowner", YearEndPrimaryRole.CopyToTargetYear, ["test_owner", "user_id", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tblwgemployee", YearEndPrimaryRole.CopyToTargetYear, ["pactid", "fpsyear"], YearEndFinalValidationRule.AtMostSource,
+            CopyOrder: 4,
+            Cleanup: "Inactive-employee cleanup (InactiveEmployeeCleanupStep)",
+            Notes: "No reset. InactiveEmployeeCleanupStep deletes inactive-employee rows here too (not just tblstaffjob); tblstaffjob rows are removed first (FK dependency)."),
+        new(Schema, "testorproduct", YearEndPrimaryRole.CopyToTargetYear, ["itemcode", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "timecodevalid", YearEndPrimaryRole.CopyToTargetYear, ["workgroup", "timecode", "parentproject", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 2),
+        new(Schema, "tlkpjobcode", YearEndPrimaryRole.CopyToTargetYear, ["jobcode", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 2),
+        new(Schema, "tlkpmanager", YearEndPrimaryRole.CopyToTargetYear, ["manager", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tlkpprogram", YearEndPrimaryRole.CopyToTargetYear, ["programno", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tlkpprojectgroup", YearEndPrimaryRole.CopyToTargetYear, ["projectgroup", "fpsyear"], YearEndFinalValidationRule.MatchSource,
+            CopyOrder: 0,
+            Notes: "tlkpproject.projectgroup FKs here, hence CopyOrder 0 (before tlkpproject's CopyOrder 1). Year End owns and copies this year-scoped dependency directly instead of relying on external provisioning."),
+        new(Schema, "tlkpproject", YearEndPrimaryRole.CopyToTargetYear, ["parentproject", "fpsyear"], YearEndFinalValidationRule.MatchSource,
             CopyOrder: 1,
             ResetPhase: YearEndResetPhase.ProjectFinancialReset,
             Overrides: new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -217,51 +208,28 @@ public static class YearEndTableRuleMatrix
                 ["pvsincome"] = "NULL",
                 ["plancaseworkdebit"] = "NULL"
             },
-            Notes: "FK-dependent on tblcontract and tlkpprogram (both NOT NULL columns), hence CopyOrder 1, not 0.",
-            FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tlkptestcapability", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["testcode", "workgroup", "fpsyear"], CopyOrder: 2, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "tlkptestreqmt", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["testcode", "buyer", "fpsyear"],
+            Notes: "FK-dependent on tblcontract and tlkpprogram (both NOT NULL columns), hence CopyOrder 1, not 0. Reset is unconditional, via its own step ProjectFinancialResetStep — NOT CAP-dependent, unlike the 4 ConfiguredPlanningResetStep tables."),
+        new(Schema, "tlkptestcapability", YearEndPrimaryRole.CopyToTargetYear, ["testcode", "workgroup", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 2),
+        new(Schema, "tlkptestreqmt", YearEndPrimaryRole.CopyToTargetYear, ["testcode", "buyer", "fpsyear"], YearEndFinalValidationRule.MatchSource,
             CopyOrder: 1,
             ResetPhase: YearEndResetPhase.ConfiguredPlanningReset,
             Overrides: new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["norequired"] = "0" },
-            FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "workgroup", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["workgroup", "fpsyear"], CopyOrder: 1, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "workgroupgrade", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["wggrade", "fpsyear"], CopyOrder: 3, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
-        new(Schema, "workgroupmonth", YearEndTableRole.YearScopedBusinessParticipant, YearEndTableRuleAction.CopyToTargetYear, ["workgroup", "month", "fpsyear"], CopyOrder: 0, FinalRowCountRule: YearEndFinalRowCountRule.MatchSource),
+            Notes: "Reset is CAP-conditional — ConfiguredPlanningResetStep gates the whole ConfiguredPlanningReset phase on fps.tblsettings.id='CapApprovalReceivedForReset' for the target year (YE-CAP-RESET)."),
+        new(Schema, "workgroup", YearEndPrimaryRole.CopyToTargetYear, ["workgroup", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 1),
+        new(Schema, "workgroupgrade", YearEndPrimaryRole.CopyToTargetYear, ["wggrade", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 3),
+        new(Schema, "workgroupmonth", YearEndPrimaryRole.CopyToTargetYear, ["workgroup", "month", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
 
-        // 2 year-scoped configuration dependencies — not Table 23, but still partitioned by fpsyear.
-        new(Schema, "tblsettings", YearEndTableRole.YearScopedConfigurationDependency, YearEndTableRuleAction.ValidateExists, ["id", "fpsyear"]),
-        new(Schema, "tlkpmonthhours", YearEndTableRole.YearScopedConfigurationDependency, YearEndTableRuleAction.ValidateExists, ["year", "month", "fpsyear"]),
+        // 2 TargetYearConfiguration entries — populated from Approve-frozen staging by a dedicated step,
+        // not the generic copy mechanism.
+        new(Schema, "tblsettings", YearEndPrimaryRole.TargetYearConfiguration, ["id", "fpsyear"], YearEndFinalValidationRule.AtLeastOneTargetYearRow,
+            DedicatedStep: nameof(MaterializeYearEndConfigurationStep)),
+        new(Schema, "tlkpmonthhours", YearEndPrimaryRole.TargetYearConfiguration, ["year", "month", "fpsyear"], YearEndFinalValidationRule.AtLeastOneTargetYearRow,
+            DedicatedStep: nameof(MaterializeYearEndConfigurationStep)),
 
-        // 3 global/reference participants — not year-scoped, no target-year row concept.
-        new(Schema, "tblusers", YearEndTableRole.GlobalReference, YearEndTableRuleAction.ValidateExists, []),
-        new(Schema, "tblcategory", YearEndTableRole.GlobalReference, YearEndTableRuleAction.ValidateExists, []),
-        new(Schema, "tblkpprofitcentre", YearEndTableRole.GlobalReference, YearEndTableRuleAction.ValidateExists, []),
-
-        // 21 tables that must stay empty in the target year. The old one-database-per-year
-        // architecture deleted these each Year End; the current single-database architecture never
-        // writes target-year rows for them at all, so the correct check is "assert zero rows", never
-        // a DELETE. Validated by ValidateTargetYearEmptyTablesStep, re-checked by FinalValidationStep.
-        new(Schema, "additionalcosts_log", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["sequenceno", "fpsyear"]),
-        new(Schema, "animalreq_log", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["sequenceno", "fpsyear"]),
-        new(Schema, "fpsyeartotals", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["parentproject", "fpsyear"]),
-        new(Schema, "mo_log", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["sequenceno", "fpsyear"]),
-        new(Schema, "monthlyoutput", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["testcode", "buyer", "month", "workgroup", "fpsyear"]),
-        new(Schema, "monthlytime", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["pactstaffid", "timecode", "month", "parentproject", "fpsyear"]),
-        new(Schema, "mt_log", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["sequenceno", "fpsyear"]),
-        new(Schema, "proj_invoice", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["invoicecounter", "fpsyear"]),
-        new(Schema, "proj_subcontract", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["subcontcounter", "fpsyear"]),
-        new(Schema, "project_log", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["sequenceno", "fpsyear"]),
-        new(Schema, "projectmonth", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["project", "monthno", "fpsyear"]),
-        new(Schema, "projectmonthfinal", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["project", "monthno", "fpsyear"]),
-        new(Schema, "recreatesummaries_log", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["id", "fpsyear"]),
-        new(Schema, "staffjob_log", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["sequenceno", "fpsyear"]),
-        new(Schema, "tblbid", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["workgroup", "account", "fpsyear"]),
-        new(Schema, "tblpurchase", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["workgroup", "account", "itemdescription", "fpsyear"]),
-        new(Schema, "tblsurvff_fees", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["owning_vic", "contract", "record_id", "fpsyear"]),
-        new(Schema, "tblsurvff_submissions", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["sd_pact_wg", "contract", "fpsyear"]),
-        new(Schema, "tbltestreqbaseline", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["program", "testcode", "buyer", "fpsyear"]),
-        new(Schema, "testreq_log", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["sequenceno", "fpsyear"]),
-        new(Schema, "timecostcalcs", YearEndTableRole.YearScopedTargetMustBeEmpty, YearEndTableRuleAction.TargetYearMustBeEmpty, ["workgroup", "jobcode", "project", "month", "staffid", "fpsyear"])
+        // 1 CreateTargetYear entry — a genuinely new row, not a copy from the source year.
+        new(Schema, "tblyearmaster", YearEndPrimaryRole.CreateTargetYear, ["fpsyear"], YearEndFinalValidationRule.ExactTargetRowCount,
+            DedicatedStep: nameof(CreatePlannedYearStep),
+            ExpectedTargetRowCount: 1,
+            Notes: "CreatePlannedYearStep inserts fresh computed values (fpsyearcode, yearstatus, remarks, active, createdby) — never a copy of the source year's row. Confirmed live 2026-09-05: this table is NOT partitioned (plain relkind='r'), unlike every other entry in this matrix.")
     ];
 }

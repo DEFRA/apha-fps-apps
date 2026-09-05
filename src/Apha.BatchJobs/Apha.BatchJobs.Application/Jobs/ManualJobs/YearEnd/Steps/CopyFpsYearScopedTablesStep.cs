@@ -6,10 +6,13 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
 /// <summary>
-/// Copies every matrix table marked <see cref="YearEndTableRuleAction.CopyToTargetYear"/> from the
-/// current FPS year to the target year, in ascending <see cref="YearEndTableRuleMatrixEntry.CopyOrder"/>
-/// so referenced rows exist before referencing ones. Pure copy only — column resets happen later in
-/// <see cref="ProjectFinancialResetStep"/>/<see cref="ConfiguredPlanningResetStep"/>.
+/// Copies every matrix table marked <see cref="YearEndPrimaryRole.CopyToTargetYear"/> with no
+/// <see cref="YearEndTableRuleMatrixEntry.DedicatedStep"/> from the current FPS year to the target
+/// year, in ascending <see cref="YearEndTableRuleMatrixEntry.CopyOrder"/> so referenced rows exist
+/// before referencing ones. Pure copy only — column resets happen later in
+/// <see cref="ProjectFinancialResetStep"/>/<see cref="ConfiguredPlanningResetStep"/>. Entries with a
+/// <see cref="YearEndTableRuleMatrixEntry.DedicatedStep"/> set (e.g. <c>tblperiod</c>) are handled by
+/// that step instead, not this generic mechanism.
 /// </summary>
 public sealed class CopyFpsYearScopedTablesStep : IYearEndDataSetupStep
 {
@@ -36,7 +39,7 @@ public sealed class CopyFpsYearScopedTablesStep : IYearEndDataSetupStep
         }
 
         var copyEntries = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Action == YearEndTableRuleAction.CopyToTargetYear)
+            .Where(e => e.PrimaryRole == YearEndPrimaryRole.CopyToTargetYear && e.DedicatedStep is null)
             .OrderBy(e => e.CopyOrder)
             .ToList();
 

@@ -149,10 +149,9 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
     public async Task ExecuteAsync_WhenFailureInjectedLate_BeforeFinalValidation_RollsBackEveryPriorStepsMutations()
     {
         Skip.IfNot(CanRun(), _skipReason ?? "Integration DB unavailable.");
-        // Through ValidateTargetYearEmptyTablesStep — everything except FinalValidationStep itself has
-        // run. The strongest proof: almost the entire pipeline's worth of mutations must still roll
-        // back, even though this particular step (Phase 7B) no longer mutates anything itself.
-        await RunInjectedFailureScenarioAsync("Late", stepNameToRunThrough: nameof(ValidateTargetYearEmptyTablesStep));
+        // Through InactiveEmployeeCleanupStep — everything except FinalValidationStep itself has run.
+        // The strongest proof: almost the entire pipeline's worth of mutations must still roll back.
+        await RunInjectedFailureScenarioAsync("Late", stepNameToRunThrough: nameof(InactiveEmployeeCleanupStep));
     }
 
     [SkippableFact]
@@ -306,22 +305,25 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
     /// <summary>
     /// Deletes every target-year row this pipeline could have written, driven entirely by
     /// <see cref="YearEndTableRuleMatrix"/> — the same single source of truth every production step
-    /// uses — plus the target year's own <c>fps.tblyearmaster</c> row created by
-    /// <c>CreatePlannedYearStep</c>. Never touches <c>mabarchive</c> (the matrix has no entries there)
-    /// or the source year. Only used by the full-success scenario, which has no transaction left to
-    /// roll back.
+    /// uses, including <c>fps.tblyearmaster</c> itself now that it's a matrix entry
+    /// (<see cref="YearEndPrimaryRole.CreateTargetYear"/>). Never touches <c>mabarchive</c> (the matrix
+    /// has no entries there) or the source year. Only used by the full-success scenario, which has no
+    /// transaction left to roll back.
     /// </summary>
     /// <remarks>
     /// Deletes in descending <see cref="YearEndTableRuleMatrixEntry.CopyOrder"/> — the exact reverse of
-    /// <see cref="YearEndTableRuleAction.CopyToTargetYear"/>'s own insertion order (lower CopyOrder =
-    /// referenced/parent, higher = referencing/child, per the matrix's own doc comment) — so a
-    /// higher-CopyOrder table's FK to a lower-CopyOrder table is always satisfied. Entries without a
-    /// CopyOrder (<c>tblperiod</c>, <c>tblsettings</c>, <c>tlkpmonthhours</c>) sort last, since nothing
-    /// in the matrix FKs to them and they must still precede the separate <c>tblyearmaster</c> delete
-    /// below (both <c>tblsettings</c> and <c>tlkpmonthhours</c> FK to it). Confirmed live 2026-09-03:
-    /// the previous raw-declaration-order loop hit <c>fk_workgroup_costcentre_11</c> (workgroup,
-    /// CopyOrder 1, FKs to costcentre, CopyOrder 0, declared earlier in the matrix) on its very first
-    /// delete and aborted, leaving a fully-committed 153,636-row target year completely uncleaned.
+    /// the generic-mechanism <see cref="YearEndPrimaryRole.CopyToTargetYear"/> entries' own insertion
+    /// order (lower CopyOrder = referenced/parent, higher = referencing/child, per the matrix's own doc
+    /// comment) — so a higher-CopyOrder table's FK to a lower-CopyOrder table is always satisfied.
+    /// Entries without a CopyOrder (<c>tblperiod</c>, <c>tblsettings</c>, <c>tlkpmonthhours</c>,
+    /// <c>tblyearmaster</c>) all sort into one tied group (<c>OrderByDescending</c> is a stable sort),
+    /// which lands last in descending order and preserves the matrix's own
+    /// declaration order within the tie — <c>tblyearmaster</c> is declared last in the matrix
+    /// specifically so it deletes last here too, after <c>tblsettings</c>/<c>tlkpmonthhours</c> (both FK
+    /// to it). Confirmed live 2026-09-03: the previous raw-declaration-order loop hit
+    /// <c>fk_workgroup_costcentre_11</c> (workgroup, CopyOrder 1, FKs to costcentre, CopyOrder 0,
+    /// declared earlier in the matrix) on its very first delete and aborted, leaving a
+    /// fully-committed 153,636-row target year completely uncleaned.
     /// </remarks>
     private async Task CleanupTargetYearAsync()
     {
@@ -330,7 +332,6 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
         var connection = dbContext.Database.GetDbConnection();
 
         var deletionOrder = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Role != YearEndTableRole.GlobalReference)
             .OrderByDescending(e => e.CopyOrder ?? int.MinValue);
 
         foreach (var entry in deletionOrder)
@@ -347,13 +348,6 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
             }
 
             await DeleteByYearAsync(connection, entry.Schema, entry.TableName, yearColumn, _targetFpsYear);
-        }
-
-        await using (var command = connection.CreateCommand())
-        {
-            command.CommandText = "DELETE FROM fps.tblyearmaster WHERE fpsyear = @target_year;";
-            AddParameter(command, "target_year", _targetFpsYear);
-            await command.ExecuteNonQueryAsync();
         }
     }
 
@@ -482,11 +476,6 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
 
         foreach (var entry in YearEndTableRuleMatrix.Entries)
         {
-            if (entry.Role == YearEndTableRole.GlobalReference)
-            {
-                continue;
-            }
-
             if (!await TableExistsAsync(connection, entry.Schema, entry.TableName))
             {
                 continue;

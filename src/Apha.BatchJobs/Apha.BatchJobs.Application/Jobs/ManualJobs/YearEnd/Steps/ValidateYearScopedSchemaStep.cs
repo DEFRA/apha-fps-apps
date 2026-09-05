@@ -6,11 +6,32 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
 /// <summary>
-/// Validates that fps.tblyearmaster has the current year, and every year-scoped table in the matrix
-/// has a routing destination for the target year.
+/// Validates the schema Year End Data Setup actually consumes before any step runs: fps.tblyearmaster's
+/// own columns and current-year row, every matrix entry's table and fpsyear column, the two
+/// configuration tables' materialization columns, and every reset override column declared in the
+/// matrix. Read-only.
 /// </summary>
+/// <remarks>
+/// Deliberately does not check partitioning. Year End's real contract is "read current-year rows,
+/// write target-year rows using the schema exposed to the application" — whether PostgreSQL implements
+/// that via partitions is a DBA/schema-deployment concern, not a Year End business rule. This step used
+/// to also validate every year-scoped table had partition routing for the target year; that check was
+/// removed 2026-09-05 as a deliberate scope reduction, not an oversight.
+/// </remarks>
 public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
 {
+    /// <summary>Columns CreatePlannedYearStep's INSERT writes — matches it exactly.</summary>
+    private static readonly string[] TblYearMasterRequiredColumns =
+        ["fpsyear", "fpsyearcode", "yearstatus", "remarks", "active", "createdby"];
+
+    /// <summary>Columns MaterializeStagedSettingsAsync's INSERT writes — matches it exactly.</summary>
+    private static readonly string[] TblSettingsRequiredColumns =
+        ["id", "setting", "notes", "fpsyear", "updated_by", "updated_at"];
+
+    /// <summary>Columns MaterializeStagedMonthHoursAsync's INSERT writes — matches it exactly.</summary>
+    private static readonly string[] TlkpMonthHoursRequiredColumns =
+        ["year", "month", "fmonth", "days", "cvlhours", "vidhours", "fpsyear"];
+
     private readonly IYearEndDataSetupRepository _repository;
     private readonly ILogger<ValidateYearScopedSchemaStep> _logger;
 
@@ -33,31 +54,23 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
             throw new InvalidOperationException("Year End context must include currentFpsYear and targetFpsYear before schema validation.");
         }
 
-        if (!await _repository.TableExistsAsync("fps", "tblyearmaster", cancellationToken))
-        {
-            throw new InvalidOperationException("Required table fps.tblyearmaster was not found. Year End cannot continue.");
-        }
+        await ValidateRequiredColumnsAsync("fps", "tblyearmaster", TblYearMasterRequiredColumns, cancellationToken);
 
-        var requiredColumns = new[] { "fpsyear", "fpsyearcode", "yearstatus", "active" };
-        foreach (var columnName in requiredColumns)
-        {
-            if (!await _repository.ColumnExistsAsync("fps", "tblyearmaster", columnName, cancellationToken))
-            {
-                throw new InvalidOperationException($"Required column fps.tblyearmaster.{columnName} was not found. Year End cannot continue.");
-            }
-        }
-
-        var currentYearExists = await _repository.YearRowExistsAsync(
-            context.CurrentFpsYear.Value,
-            cancellationToken);
-
+        var currentYearExists = await _repository.YearRowExistsAsync(context.CurrentFpsYear.Value, cancellationToken);
         if (!currentYearExists)
         {
             throw new InvalidOperationException(
                 $"Current year {context.CurrentFpsYear.Value} does not exist in fps.tblyearmaster. Year End cannot continue.");
         }
 
-        await ValidateTargetYearPartitionsAsync(context.TargetFpsYear.Value, cancellationToken);
+        await ValidateRequiredColumnsAsync("fps", "tblsettings", TblSettingsRequiredColumns, cancellationToken);
+        await ValidateRequiredColumnsAsync("fps", "tlkpmonthhours", TlkpMonthHoursRequiredColumns, cancellationToken);
+
+        foreach (var entry in YearEndTableRuleMatrix.Entries)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await ValidateEntrySchemaAsync(entry, cancellationToken);
+        }
 
         _logger.LogInformation(
             "YearEnd schema validation succeeded | CorrelationId={CorrelationId} | CurrentFpsYear={CurrentFpsYear} | TargetFpsYear={TargetFpsYear}",
@@ -67,62 +80,53 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
     }
 
     /// <summary>
-    /// Checks every year-scoped table has a routing destination for the target year — an explicit
-    /// partition or an attached DEFAULT partition. Read-only: Year End never creates partitions
-    /// itself, that's a DB/DBA prerequisite.
+    /// One matrix entry's schema contract, checked uniformly for all 43 entries with no exceptions:
+    /// the table and its fpsyear column must exist (needed by the generic copy mechanism, every
+    /// dedicated step, and FinalValidationStep's row-count checks alike), plus every column a declared
+    /// reset override targets.
     /// </summary>
-    private async Task ValidateTargetYearPartitionsAsync(int targetYear, CancellationToken cancellationToken)
+    private async Task ValidateEntrySchemaAsync(YearEndTableRuleMatrixEntry entry, CancellationToken cancellationToken)
     {
-        var notPartitioned = new List<string>();
-        var unroutable = new List<string>();
-
-        foreach (var entry in YearEndTableRuleMatrix.Entries)
+        if (!await _repository.TableExistsAsync(entry.Schema, entry.TableName, cancellationToken))
         {
-            if (entry.Role is not (YearEndTableRole.YearScopedBusinessParticipant
-                or YearEndTableRole.YearScopedConfigurationDependency
-                or YearEndTableRole.YearScopedTargetMustBeEmpty))
-            {
-                continue;
-            }
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var qualifiedName = $"{entry.Schema}.{entry.TableName}";
-
-            if (!await _repository.IsPartitionedTableAsync(entry.Schema, entry.TableName, cancellationToken))
-            {
-                notPartitioned.Add(qualifiedName);
-                continue;
-            }
-
-            var hasExplicitPartition = await _repository.IsPartitionAttachedForYearAsync(entry.Schema, entry.TableName, targetYear, cancellationToken);
-            var hasDefaultPartition = !hasExplicitPartition
-                && await _repository.IsDefaultPartitionAttachedAsync(entry.Schema, entry.TableName, cancellationToken);
-
-            if (!hasExplicitPartition && !hasDefaultPartition)
-            {
-                unroutable.Add(qualifiedName);
-            }
+            throw new InvalidOperationException($"Required table {entry.Schema}.{entry.TableName} was not found. Year End cannot continue.");
         }
 
-        if (notPartitioned.Count == 0 && unroutable.Count == 0)
+        if (!await _repository.ColumnExistsAsync(entry.Schema, entry.TableName, "fpsyear", cancellationToken))
+        {
+            throw new InvalidOperationException($"Required column {entry.Schema}.{entry.TableName}.fpsyear was not found. Year End cannot continue.");
+        }
+
+        if (entry.Overrides is null)
         {
             return;
         }
 
-        var sections = new List<string>();
-        if (notPartitioned.Count > 0)
+        foreach (var columnName in entry.Overrides.Keys)
         {
-            sections.Add($"Not partitioned as expected: {string.Join(", ", notPartitioned)}.");
+            if (!await _repository.ColumnExistsAsync(entry.Schema, entry.TableName, columnName, cancellationToken))
+            {
+                throw new InvalidOperationException(
+                    $"Required reset column {entry.Schema}.{entry.TableName}.{columnName} (declared in the matrix's {entry.ResetPhase} overrides) was not found. Year End cannot continue.");
+            }
+        }
+    }
+
+    private async Task ValidateRequiredColumnsAsync(string schema, string table, IReadOnlyList<string> requiredColumns, CancellationToken cancellationToken)
+    {
+        if (!await _repository.TableExistsAsync(schema, table, cancellationToken))
+        {
+            throw new InvalidOperationException($"Required table {schema}.{table} was not found. Year End cannot continue.");
         }
 
-        if (unroutable.Count > 0)
+        foreach (var columnName in requiredColumns)
         {
-            sections.Add($"No routing destination (explicit or DEFAULT partition) for target year ({targetYear}): {string.Join(", ", unroutable)}.");
-        }
+            cancellationToken.ThrowIfCancellationRequested();
 
-        throw new InvalidOperationException(
-            $"Year End target-year partition validation failed. {string.Join(" ", sections)} " +
-            "Partition creation is an external DB/DBA prerequisite; Year End performs no DDL.");
+            if (!await _repository.ColumnExistsAsync(schema, table, columnName, cancellationToken))
+            {
+                throw new InvalidOperationException($"Required column {schema}.{table}.{columnName} was not found. Year End cannot continue.");
+            }
+        }
     }
 }

@@ -8,7 +8,7 @@ namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 /// <summary>
 /// Validates final target-year setup state before Year End Data Setup completion. Matrix-driven —
 /// dispatches validation per <see cref="YearEndTableRuleMatrix"/> entry by
-/// <see cref="YearEndTableRuleMatrixEntry.Action"/>, not a second hardcoded table list.
+/// <see cref="YearEndTableRuleMatrixEntry.FinalValidation"/>, not a second hardcoded table list.
 /// </summary>
 public sealed class FinalValidationStep : IYearEndDataSetupStep
 {
@@ -51,38 +51,6 @@ public sealed class FinalValidationStep : IYearEndDataSetupStep
             targetFpsYear);
     }
 
-    private async Task ValidateEntryAsync(
-        YearEndTableRuleMatrixEntry entry,
-        int currentFpsYear,
-        int targetFpsYear,
-        CancellationToken cancellationToken)
-    {
-        switch (entry.Action)
-        {
-            case YearEndTableRuleAction.CopyToTargetYear:
-                await ValidateCopiedTableAsync(entry, currentFpsYear, targetFpsYear, cancellationToken);
-                break;
-
-            case YearEndTableRuleAction.AlreadyImplementedViaDedicatedStep:
-                // tblperiod today. Only proves the dedicated step actually produced rows.
-                await ValidateDedicatedStepTableHasTargetRowsAsync(entry, targetFpsYear, cancellationToken);
-                break;
-
-            case YearEndTableRuleAction.TargetYearMustBeEmpty:
-                await ValidateTargetYearIsEmptyAsync(entry, targetFpsYear, cancellationToken);
-                break;
-
-            case YearEndTableRuleAction.ValidateExists:
-                await ValidateExistsAsync(entry, targetFpsYear, cancellationToken);
-                break;
-
-            default:
-                // Any other action isn't expected on a live entry — fail loudly rather than skip.
-                throw new InvalidOperationException(
-                    $"Matrix entry {entry.Schema}.{entry.TableName} has action {entry.Action}, which final validation does not know how to check.");
-        }
-    }
-
     private async Task ValidateTargetYearMasterStateAsync(int targetYear, CancellationToken cancellationToken)
     {
         var state = await _repository.GetYearStateAsync(targetYear, cancellationToken);
@@ -106,7 +74,16 @@ public sealed class FinalValidationStep : IYearEndDataSetupStep
         }
     }
 
-    private async Task ValidateCopiedTableAsync(
+    /// <summary>
+    /// One entry's post-execution check: table (and its fpsyear column) must exist, then the
+    /// target-year row count is checked against <see cref="YearEndTableRuleMatrixEntry.FinalValidation"/>.
+    /// A missing table is a soft skip for <see cref="YearEndPrimaryRole.CopyToTargetYear"/> entries
+    /// (matches <see cref="Steps.CopyFpsYearScopedTablesStep"/>'s own missing-table tolerance) and a
+    /// hard failure for <see cref="YearEndPrimaryRole.TargetYearConfiguration"/>/
+    /// <see cref="YearEndPrimaryRole.CreateTargetYear"/> entries, which Data Setup cannot proceed
+    /// without.
+    /// </summary>
+    private async Task ValidateEntryAsync(
         YearEndTableRuleMatrixEntry entry,
         int currentFpsYear,
         int targetFpsYear,
@@ -114,7 +91,12 @@ public sealed class FinalValidationStep : IYearEndDataSetupStep
     {
         if (!await _repository.TableExistsAsync(entry.Schema, entry.TableName, cancellationToken))
         {
-            return;
+            if (entry.PrimaryRole == YearEndPrimaryRole.CopyToTargetYear)
+            {
+                return;
+            }
+
+            throw new InvalidOperationException($"Required table {entry.Schema}.{entry.TableName} does not exist.");
         }
 
         if (!await _repository.ColumnExistsAsync(entry.Schema, entry.TableName, "fpsyear", cancellationToken))
@@ -122,12 +104,13 @@ public sealed class FinalValidationStep : IYearEndDataSetupStep
             throw new InvalidOperationException($"Required validation table {entry.Schema}.{entry.TableName} does not contain year column fpsyear.");
         }
 
-        var sourceCount = await _repository.CountRowsByYearAsync(entry.Schema, entry.TableName, "fpsyear", currentFpsYear, cancellationToken);
         var targetCount = await _repository.CountRowsByYearAsync(entry.Schema, entry.TableName, "fpsyear", targetFpsYear, cancellationToken);
 
-        switch (entry.FinalRowCountRule)
+        switch (entry.FinalValidation)
         {
-            case YearEndFinalRowCountRule.MatchSource:
+            case YearEndFinalValidationRule.MatchSource:
+            {
+                var sourceCount = await _repository.CountRowsByYearAsync(entry.Schema, entry.TableName, "fpsyear", currentFpsYear, cancellationToken);
                 if (targetCount != sourceCount)
                 {
                     throw new InvalidOperationException(
@@ -136,8 +119,11 @@ public sealed class FinalValidationStep : IYearEndDataSetupStep
                 }
 
                 break;
+            }
 
-            case YearEndFinalRowCountRule.AtMostSource:
+            case YearEndFinalValidationRule.AtMostSource:
+            {
+                var sourceCount = await _repository.CountRowsByYearAsync(entry.Schema, entry.TableName, "fpsyear", currentFpsYear, cancellationToken);
                 if (targetCount > sourceCount)
                 {
                     throw new InvalidOperationException(
@@ -146,96 +132,35 @@ public sealed class FinalValidationStep : IYearEndDataSetupStep
                 }
 
                 break;
-
-            case YearEndFinalRowCountRule.NotApplicable:
-            default:
-                throw new InvalidOperationException(
-                    $"Table {entry.Schema}.{entry.TableName} is CopyToTargetYear but has no FinalRowCountRule — matrix authoring gap.");
-        }
-    }
-
-    private async Task ValidateDedicatedStepTableHasTargetRowsAsync(
-        YearEndTableRuleMatrixEntry entry,
-        int targetFpsYear,
-        CancellationToken cancellationToken)
-    {
-        if (!await _repository.TableExistsAsync(entry.Schema, entry.TableName, cancellationToken))
-        {
-            return;
-        }
-
-        if (!await _repository.ColumnExistsAsync(entry.Schema, entry.TableName, "fpsyear", cancellationToken))
-        {
-            throw new InvalidOperationException($"Required validation table {entry.Schema}.{entry.TableName} does not contain year column fpsyear.");
-        }
-
-        var count = await _repository.CountRowsByYearAsync(entry.Schema, entry.TableName, "fpsyear", targetFpsYear, cancellationToken);
-
-        if (entry.ExpectedTargetRowCount.HasValue)
-        {
-            if (count != entry.ExpectedTargetRowCount.Value)
-            {
-                throw new InvalidOperationException(
-                    $"Expected exactly {entry.ExpectedTargetRowCount.Value} target-year rows in {entry.Schema}.{entry.TableName} for year {targetFpsYear}, but found {count}.");
             }
 
-            return;
-        }
+            case YearEndFinalValidationRule.ExactTargetRowCount:
+                if (entry.ExpectedTargetRowCount is null)
+                {
+                    throw new InvalidOperationException(
+                        $"Table {entry.Schema}.{entry.TableName} uses ExactTargetRowCount but has no ExpectedTargetRowCount — matrix authoring gap.");
+                }
 
-        if (count <= 0)
-        {
-            throw new InvalidOperationException(
-                $"Expected target-year rows in {entry.Schema}.{entry.TableName} for year {targetFpsYear}, but found none.");
-        }
-    }
+                if (targetCount != entry.ExpectedTargetRowCount.Value)
+                {
+                    throw new InvalidOperationException(
+                        $"Expected exactly {entry.ExpectedTargetRowCount.Value} target-year rows in {entry.Schema}.{entry.TableName} for year {targetFpsYear}, but found {targetCount}.");
+                }
 
-    private async Task ValidateExistsAsync(
-        YearEndTableRuleMatrixEntry entry,
-        int targetFpsYear,
-        CancellationToken cancellationToken)
-    {
-        if (!await _repository.TableExistsAsync(entry.Schema, entry.TableName, cancellationToken))
-        {
-            throw new InvalidOperationException($"Required table {entry.Schema}.{entry.TableName} does not exist.");
-        }
+                break;
 
-        if (entry.Role == YearEndTableRole.GlobalReference)
-        {
-            // No fpsyear column, no target-year row concept — structural existence is the whole check.
-            return;
-        }
+            case YearEndFinalValidationRule.AtLeastOneTargetYearRow:
+                if (targetCount <= 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Expected target-year rows in {entry.Schema}.{entry.TableName} for year {targetFpsYear}, but found none.");
+                }
 
-        if (!await _repository.ColumnExistsAsync(entry.Schema, entry.TableName, "fpsyear", cancellationToken))
-        {
-            throw new InvalidOperationException($"Required validation table {entry.Schema}.{entry.TableName} does not contain year column fpsyear.");
-        }
+                break;
 
-        var count = await _repository.CountRowsByYearAsync(entry.Schema, entry.TableName, "fpsyear", targetFpsYear, cancellationToken);
-        if (count <= 0)
-        {
-            throw new InvalidOperationException(
-                $"Expected target-year rows in {entry.Schema}.{entry.TableName} for year {targetFpsYear} (year-scoped dependency), but found none.");
+            default:
+                throw new InvalidOperationException(
+                    $"Matrix entry {entry.Schema}.{entry.TableName} has FinalValidation {entry.FinalValidation}, which final validation does not know how to check.");
         }
-    }
-
-    private async Task ValidateTargetYearIsEmptyAsync(
-        YearEndTableRuleMatrixEntry entry,
-        int targetFpsYear,
-        CancellationToken cancellationToken)
-    {
-        // Defense-in-depth re-check — unlike ValidateTargetYearEmptyTablesStep, a missing
-        // table/column here is skipped, not a hard failure.
-        if (!await _repository.TableExistsAsync(entry.Schema, entry.TableName, cancellationToken))
-        {
-            return;
-        }
-
-        var yearColumn = await _repository.ResolveYearColumnAsync(entry.Schema, entry.TableName, cancellationToken);
-        if (yearColumn is null)
-        {
-            return;
-        }
-
-        await YearEndTargetYearEmptyPolicy.EnsureTargetYearIsEmptyAsync(_repository, entry, yearColumn, targetFpsYear, cancellationToken);
     }
 }

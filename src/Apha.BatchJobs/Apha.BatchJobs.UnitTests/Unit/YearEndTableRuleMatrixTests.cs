@@ -1,4 +1,5 @@
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
 namespace Apha.BatchJobs.UnitTests;
 
@@ -6,8 +7,9 @@ public sealed class YearEndTableRuleMatrixTests
 {
     /// <summary>
     /// Every (referencing, referenced) pair found by a read-only FK/dependency scan of
-    /// batchjob_testing where both sides are CopyToTargetYear matrix entries — i.e. the referencing
-    /// table's target-year row cannot exist until the referenced table's target-year row does.
+    /// batchjob_testing where both sides are generic-mechanism CopyToTargetYear matrix entries — i.e.
+    /// the referencing table's target-year row cannot exist until the referenced table's target-year
+    /// row does.
     /// </summary>
     private static readonly (string Referencing, string Referenced)[] KnownFkEdges =
     [
@@ -45,15 +47,14 @@ public sealed class YearEndTableRuleMatrixTests
     ];
 
     [Fact]
-    public void Entries_ShouldContainExactlyTheExpectedCountPerRole()
+    public void Entries_ShouldContainExactlyTheExpectedCountPerPrimaryRole()
     {
         var entries = YearEndTableRuleMatrix.Entries;
 
-        Assert.Equal(65, entries.Count);
-        Assert.Equal(39, entries.Count(e => e.Role == YearEndTableRole.YearScopedBusinessParticipant));
-        Assert.Equal(2, entries.Count(e => e.Role == YearEndTableRole.YearScopedConfigurationDependency));
-        Assert.Equal(3, entries.Count(e => e.Role == YearEndTableRole.GlobalReference));
-        Assert.Equal(21, entries.Count(e => e.Role == YearEndTableRole.YearScopedTargetMustBeEmpty));
+        Assert.Equal(43, entries.Count);
+        Assert.Equal(40, entries.Count(e => e.PrimaryRole == YearEndPrimaryRole.CopyToTargetYear));
+        Assert.Equal(2, entries.Count(e => e.PrimaryRole == YearEndPrimaryRole.TargetYearConfiguration));
+        Assert.Equal(1, entries.Count(e => e.PrimaryRole == YearEndPrimaryRole.CreateTargetYear));
     }
 
     [Fact]
@@ -68,96 +69,86 @@ public sealed class YearEndTableRuleMatrixTests
     }
 
     [Fact]
-    public void NoEntry_ShouldUseCreateTargetYearRow()
-    {
-        var entries = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Action == YearEndTableRuleAction.CreateTargetYearRow)
-            .ToList();
-
-        Assert.Empty(entries);
-    }
-
-    [Fact]
-    public void NoEntry_ShouldRemainPendingClassification()
-    {
-        var entries = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Action == YearEndTableRuleAction.PendingClassification)
-            .ToList();
-
-        Assert.Empty(entries);
-    }
-
-    [Fact]
     public void TblTotalBusinessOverheads_ShouldBeCopyToTargetYear()
     {
         var entry = YearEndTableRuleMatrix.Entries.Single(e => e.TableName == "tbltotalbusinessoverheads");
 
-        Assert.Equal(YearEndTableRuleAction.CopyToTargetYear, entry.Action);
-        Assert.Equal(YearEndTableRole.YearScopedBusinessParticipant, entry.Role);
+        Assert.Equal(YearEndPrimaryRole.CopyToTargetYear, entry.PrimaryRole);
         Assert.Equal(["fpsyear"], entry.PrimaryKeyColumns);
         Assert.NotNull(entry.CopyOrder);
         Assert.Null(entry.ResetPhase);
     }
 
     [Fact]
-    public void TblPeriod_ShouldBeTheOnlyAlreadyImplementedViaDedicatedStepEntry()
+    public void TblPeriod_ShouldBeTheOnlyCopyToTargetYearEntryWithADedicatedStep()
     {
         var entries = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Action == YearEndTableRuleAction.AlreadyImplementedViaDedicatedStep)
+            .Where(e => e.PrimaryRole == YearEndPrimaryRole.CopyToTargetYear && e.DedicatedStep is not null)
             .ToList();
 
         var entry = Assert.Single(entries);
         Assert.Equal("tblperiod", entry.TableName);
+        Assert.Equal(nameof(PeriodSetupStep), entry.DedicatedStep);
         Assert.Null(entry.CopyOrder);
+        Assert.Equal(YearEndFinalValidationRule.ExactTargetRowCount, entry.FinalValidation);
+        Assert.Equal(12, entry.ExpectedTargetRowCount);
     }
 
     [Fact]
-    public void GlobalAndConfigurationDependencyEntries_ShouldAllUseValidateExists()
+    public void TargetYearConfigurationAndCreateTargetYearEntries_ShouldAllHaveADedicatedStep()
     {
         var entries = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Role is YearEndTableRole.GlobalReference or YearEndTableRole.YearScopedConfigurationDependency)
+            .Where(e => e.PrimaryRole is YearEndPrimaryRole.TargetYearConfiguration or YearEndPrimaryRole.CreateTargetYear)
             .ToList();
 
-        Assert.Equal(5, entries.Count);
-        Assert.All(entries, e => Assert.Equal(YearEndTableRuleAction.ValidateExists, e.Action));
+        Assert.Equal(3, entries.Count);
+        Assert.All(entries, e => Assert.NotNull(e.DedicatedStep));
         Assert.All(entries, e => Assert.Null(e.CopyOrder));
     }
 
     [Fact]
-    public void TlkpProjectGroup_ShouldBeAYearScopedBusinessParticipant()
+    public void TlkpProjectGroup_ShouldBeCopyToTargetYearWithNoDedicatedStep()
     {
         var entry = YearEndTableRuleMatrix.Entries.Single(e => e.TableName == "tlkpprojectgroup");
 
-        Assert.Equal(YearEndTableRole.YearScopedBusinessParticipant, entry.Role);
-        Assert.Equal(YearEndTableRuleAction.CopyToTargetYear, entry.Action);
+        Assert.Equal(YearEndPrimaryRole.CopyToTargetYear, entry.PrimaryRole);
+        Assert.Null(entry.DedicatedStep);
         Assert.Equal(["projectgroup", "fpsyear"], entry.PrimaryKeyColumns);
         Assert.Equal(0, entry.CopyOrder);
-        Assert.Equal(YearEndFinalRowCountRule.MatchSource, entry.FinalRowCountRule);
+        Assert.Equal(YearEndFinalValidationRule.MatchSource, entry.FinalValidation);
     }
 
     [Fact]
-    public void GlobalReferenceEntries_ShouldBeExactlyTheThreeConfirmedTables()
+    public void TblYearMaster_ShouldBeCreateTargetYearWithExactlyOneExpectedRow()
     {
-        var globalTableNames = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Role == YearEndTableRole.GlobalReference)
-            .Select(e => e.TableName)
-            .OrderBy(name => name, StringComparer.Ordinal)
-            .ToList();
+        var entry = YearEndTableRuleMatrix.Entries.Single(e => e.TableName == "tblyearmaster");
 
-        Assert.Equal(["tblcategory", "tblkpprofitcentre", "tblusers"], globalTableNames);
+        Assert.Equal(YearEndPrimaryRole.CreateTargetYear, entry.PrimaryRole);
+        Assert.Equal(nameof(CreatePlannedYearStep), entry.DedicatedStep);
+        Assert.Equal(["fpsyear"], entry.PrimaryKeyColumns);
+        Assert.Equal(YearEndFinalValidationRule.ExactTargetRowCount, entry.FinalValidation);
+        Assert.Equal(1, entry.ExpectedTargetRowCount);
     }
 
     [Fact]
-    public void PartitionedRoles_ShouldAllHavePrimaryKeyEndingInFpsYear()
+    public void TblSettingsAndTlkpMonthHours_ShouldBeTargetYearConfigurationWithAtLeastOneRowExpected()
     {
-        var partitionedEntries = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Role is YearEndTableRole.YearScopedBusinessParticipant
-                or YearEndTableRole.YearScopedConfigurationDependency
-                or YearEndTableRole.YearScopedTargetMustBeEmpty)
+        var entries = YearEndTableRuleMatrix.Entries
+            .Where(e => e.PrimaryRole == YearEndPrimaryRole.TargetYearConfiguration)
             .ToList();
 
-        Assert.Equal(62, partitionedEntries.Count);
-        Assert.All(partitionedEntries, e =>
+        var tableNames = entries.Select(e => e.TableName).OrderBy(n => n, StringComparer.Ordinal).ToList();
+        Assert.Equal(new[] { "tblsettings", "tlkpmonthhours" }.OrderBy(n => n, StringComparer.Ordinal), tableNames);
+        Assert.All(entries, e => Assert.Equal(nameof(MaterializeYearEndConfigurationStep), e.DedicatedStep));
+        Assert.All(entries, e => Assert.Equal(YearEndFinalValidationRule.AtLeastOneTargetYearRow, e.FinalValidation));
+    }
+
+    [Fact]
+    public void AllEntries_ShouldHavePrimaryKeyEndingInFpsYear()
+    {
+        var entries = YearEndTableRuleMatrix.Entries;
+
+        Assert.All(entries, e =>
         {
             Assert.NotEmpty(e.PrimaryKeyColumns);
             Assert.Equal("fpsyear", e.PrimaryKeyColumns[^1]);
@@ -165,34 +156,24 @@ public sealed class YearEndTableRuleMatrixTests
     }
 
     [Fact]
-    public void GlobalReferenceEntries_ShouldHaveNoPrimaryKeyColumnsRecorded()
-    {
-        var entries = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Role == YearEndTableRole.GlobalReference)
-            .ToList();
-
-        Assert.All(entries, e => Assert.Empty(e.PrimaryKeyColumns));
-    }
-
-    [Fact]
-    public void CopyToTargetYearEntries_ShouldNumberThirtyEightAndAllHaveCopyOrder()
+    public void GenericCopyToTargetYearEntries_ShouldNumberThirtyNineAndAllHaveCopyOrder()
     {
         var copyEntries = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Action == YearEndTableRuleAction.CopyToTargetYear)
+            .Where(e => e.PrimaryRole == YearEndPrimaryRole.CopyToTargetYear && e.DedicatedStep is null)
             .ToList();
 
-        Assert.Equal(38, copyEntries.Count);
+        Assert.Equal(39, copyEntries.Count);
         Assert.All(copyEntries, e => Assert.NotNull(e.CopyOrder));
     }
 
     [Fact]
-    public void NonCopyToTargetYearEntries_ShouldNotHaveCopyOrder()
+    public void EntriesOutsideTheGenericCopyMechanism_ShouldNotHaveCopyOrder()
     {
-        var nonCopyEntries = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Action != YearEndTableRuleAction.CopyToTargetYear)
+        var nonGenericCopyEntries = YearEndTableRuleMatrix.Entries
+            .Where(e => e.PrimaryRole != YearEndPrimaryRole.CopyToTargetYear || e.DedicatedStep is not null)
             .ToList();
 
-        Assert.All(nonCopyEntries, e => Assert.Null(e.CopyOrder));
+        Assert.All(nonGenericCopyEntries, e => Assert.Null(e.CopyOrder));
     }
 
     [Fact]
@@ -210,7 +191,7 @@ public sealed class YearEndTableRuleMatrixTests
 
         Assert.All(resetEntries, e =>
         {
-            Assert.Equal(YearEndTableRuleAction.CopyToTargetYear, e.Action);
+            Assert.Equal(YearEndPrimaryRole.CopyToTargetYear, e.PrimaryRole);
             Assert.NotNull(e.Overrides);
             Assert.NotEmpty(e.Overrides!);
         });
@@ -249,101 +230,36 @@ public sealed class YearEndTableRuleMatrixTests
     }
 
     [Fact]
-    public void TblStaffJobAndTblWgEmployee_ShouldBeTheOnlyAtMostSourceEntries()
+    public void TblStaffJobAndTblWgEmployee_ShouldBeTheOnlyAtMostSourceEntriesAndTheOnlyCleanupEntries()
     {
         // InactiveEmployeeCleanupStep (redesigned 2026-08-14 around the legacy
         // Annual_WGEmployeeList.sql rule) deletes target-year rows from both tables: tblstaffjob
         // first (FK dependency), then tblwgemployee itself.
-        var atMostSourceTableNames = YearEndTableRuleMatrix.Entries
-            .Where(e => e.FinalRowCountRule == YearEndFinalRowCountRule.AtMostSource)
-            .Select(e => e.TableName)
-            .OrderBy(n => n, StringComparer.Ordinal)
+        var atMostSourceEntries = YearEndTableRuleMatrix.Entries
+            .Where(e => e.FinalValidation == YearEndFinalValidationRule.AtMostSource)
             .ToList();
 
+        var atMostSourceTableNames = atMostSourceEntries.Select(e => e.TableName).OrderBy(n => n, StringComparer.Ordinal).ToList();
         Assert.Equal(
             new[] { "tblstaffjob", "tblwgemployee" }.OrderBy(n => n, StringComparer.Ordinal),
             atMostSourceTableNames);
-    }
+        Assert.All(atMostSourceEntries, e => Assert.NotNull(e.Cleanup));
 
-    [Fact]
-    public void CopyToTargetYearEntries_ShouldAllHaveAFinalRowCountRule()
-    {
-        var copyEntries = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Action == YearEndTableRuleAction.CopyToTargetYear)
-            .ToList();
-
-        Assert.All(copyEntries, e => Assert.NotEqual(YearEndFinalRowCountRule.NotApplicable, e.FinalRowCountRule));
-    }
-
-    [Fact]
-    public void NonCopyToTargetYearEntries_ShouldHaveNotApplicableFinalRowCountRule()
-    {
-        var nonCopyEntries = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Action != YearEndTableRuleAction.CopyToTargetYear)
-            .ToList();
-
-        Assert.All(nonCopyEntries, e => Assert.Equal(YearEndFinalRowCountRule.NotApplicable, e.FinalRowCountRule));
-    }
-
-    [Fact]
-    public void YearScopedTargetMustBeEmptyEntries_ShouldAllUseTargetYearMustBeEmpty()
-    {
-        var entries = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Role == YearEndTableRole.YearScopedTargetMustBeEmpty)
-            .ToList();
-
-        Assert.Equal(21, entries.Count);
-        Assert.All(entries, e => Assert.Equal(YearEndTableRuleAction.TargetYearMustBeEmpty, e.Action));
-        Assert.All(entries, e => Assert.Equal("fps", e.Schema, StringComparer.OrdinalIgnoreCase));
-    }
-
-    [Fact]
-    public void YearScopedTargetMustBeEmptyEntries_ShouldBeExactlyTheTwentyOneKnownSectionNineteenTables()
-    {
-        var tableNames = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Role == YearEndTableRole.YearScopedTargetMustBeEmpty)
-            .Select(e => e.TableName)
-            .OrderBy(n => n, StringComparer.Ordinal)
-            .ToList();
-
-        var expected = new[]
-        {
-            "additionalcosts_log", "animalreq_log", "fpsyeartotals", "mo_log", "monthlyoutput",
-            "monthlytime", "mt_log", "proj_invoice", "proj_subcontract", "project_log",
-            "projectmonth", "projectmonthfinal", "recreatesummaries_log", "staffjob_log", "tblbid",
-            "tblpurchase", "tblsurvff_fees", "tblsurvff_submissions", "tbltestreqbaseline",
-            "testreq_log", "timecostcalcs"
-        }.OrderBy(n => n, StringComparer.Ordinal);
-
-        Assert.Equal(expected, tableNames);
-    }
-
-    [Fact]
-    public void TargetYearMustBeEmptyEntries_ShouldNotOverlapCopyToTargetYearEntries()
-    {
-        var copyTableNames = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Action == YearEndTableRuleAction.CopyToTargetYear)
-            .Select(e => e.TableName)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var mustBeEmptyTableNames = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Action == YearEndTableRuleAction.TargetYearMustBeEmpty)
-            .Select(e => e.TableName);
-
-        Assert.All(mustBeEmptyTableNames, name => Assert.DoesNotContain(name, copyTableNames));
+        var cleanupEntries = YearEndTableRuleMatrix.Entries.Where(e => e.Cleanup is not null).ToList();
+        Assert.Equal(2, cleanupEntries.Count);
     }
 
     [Fact]
     public void KnownFkEdges_ShouldSatisfyCopyOrderInvariant()
     {
         var copyOrderByTable = YearEndTableRuleMatrix.Entries
-            .Where(e => e.Action == YearEndTableRuleAction.CopyToTargetYear)
+            .Where(e => e.PrimaryRole == YearEndPrimaryRole.CopyToTargetYear && e.DedicatedStep is null)
             .ToDictionary(e => e.TableName, e => e.CopyOrder!.Value, StringComparer.OrdinalIgnoreCase);
 
         foreach (var (referencing, referenced) in KnownFkEdges)
         {
-            Assert.True(copyOrderByTable.ContainsKey(referencing), $"'{referencing}' is missing from the CopyToTargetYear entries.");
-            Assert.True(copyOrderByTable.ContainsKey(referenced), $"'{referenced}' is missing from the CopyToTargetYear entries.");
+            Assert.True(copyOrderByTable.ContainsKey(referencing), $"'{referencing}' is missing from the generic-mechanism CopyToTargetYear entries.");
+            Assert.True(copyOrderByTable.ContainsKey(referenced), $"'{referenced}' is missing from the generic-mechanism CopyToTargetYear entries.");
 
             Assert.True(
                 copyOrderByTable[referenced] < copyOrderByTable[referencing],

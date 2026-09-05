@@ -466,71 +466,6 @@ public sealed class YearEndDataSetupRepository : IYearEndDataSetupRepository
         return scalar?.ToString();
     }
 
-    public async Task<bool> IsPartitionedTableAsync(string schema, string table, CancellationToken cancellationToken = default)
-    {
-        var connection = await GetOpenConnectionAsync(cancellationToken);
-
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1 FROM pg_class c
-                JOIN pg_namespace n ON n.oid = c.relnamespace
-                WHERE n.nspname = @schema AND c.relname = @table AND c.relkind = 'p'
-            );";
-
-        AddParameter(command, "schema", schema);
-        AddParameter(command, "table", table);
-
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
-
-    public async Task<bool> IsPartitionAttachedForYearAsync(string schema, string table, int year, CancellationToken cancellationToken = default)
-    {
-        var connection = await GetOpenConnectionAsync(cancellationToken);
-
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM pg_inherits i
-                JOIN pg_class c ON c.oid = i.inhrelid
-                JOIN pg_class p ON p.oid = i.inhparent
-                JOIN pg_namespace n ON n.oid = p.relnamespace
-                WHERE n.nspname = @schema
-                  AND p.relname = @table
-                  AND pg_get_expr(c.relpartbound, c.oid) = format('FOR VALUES IN (%s)', @year)
-            );";
-
-        AddParameter(command, "schema", schema);
-        AddParameter(command, "table", table);
-        AddParameter(command, "year", year);
-
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
-
-    public async Task<bool> IsDefaultPartitionAttachedAsync(string schema, string table, CancellationToken cancellationToken = default)
-    {
-        var connection = await GetOpenConnectionAsync(cancellationToken);
-
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            SELECT EXISTS (
-                SELECT 1
-                FROM pg_inherits i
-                JOIN pg_class c ON c.oid = i.inhrelid
-                JOIN pg_class p ON p.oid = i.inhparent
-                JOIN pg_namespace n ON n.oid = p.relnamespace
-                WHERE n.nspname = @schema
-                  AND p.relname = @table
-                  AND pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT'
-            );";
-
-        AddParameter(command, "schema", schema);
-        AddParameter(command, "table", table);
-
-        return await ExecuteBooleanAsync(command, cancellationToken);
-    }
-
     public async Task<(Guid JobQueueId, int? TargetFpsYear)?> ResolveJobQueueByExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
     {
         var connection = await GetOpenConnectionAsync(cancellationToken);
@@ -587,6 +522,21 @@ public sealed class YearEndDataSetupRepository : IYearEndDataSetupRepository
         AddParameter(command, "target_fpsyear", targetFpsYear);
 
         return await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task<string?> GetCapApprovalReceivedForResetSettingAsync(int targetFpsYear, CancellationToken cancellationToken = default)
+    {
+        var connection = await GetOpenConnectionAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT setting
+            FROM fps.tblsettings
+            WHERE id = 'CapApprovalReceivedForReset' AND fpsyear = @target_fpsyear;";
+        AddParameter(command, "target_fpsyear", targetFpsYear);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result as string;
     }
 
     private static async Task<bool> ExecuteBooleanAsync(DbCommand command, CancellationToken cancellationToken)

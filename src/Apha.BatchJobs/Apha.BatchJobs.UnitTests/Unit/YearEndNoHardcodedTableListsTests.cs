@@ -22,7 +22,6 @@ public sealed class YearEndNoHardcodedTableListsTests
     public static IEnumerable<object[]> MatrixDrivenStepTypes =>
     [
         [typeof(CopyFpsYearScopedTablesStep)],
-        [typeof(ValidateTargetYearEmptyTablesStep)],
         [typeof(FinalValidationStep)],
         [typeof(ProjectFinancialResetStep)],
         [typeof(ConfiguredPlanningResetStep)]

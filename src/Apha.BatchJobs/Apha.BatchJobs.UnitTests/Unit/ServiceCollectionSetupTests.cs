@@ -300,7 +300,6 @@ public sealed class ServiceCollectionSetupTests
                 "ProjectFinancialResetStep",
                 "ConfiguredPlanningResetStep",
                 "InactiveEmployeeCleanupStep",
-                "ValidateTargetYearEmptyTablesStep",
                 "FinalValidationStep"
             },
             steps.Select(s => s.Name));

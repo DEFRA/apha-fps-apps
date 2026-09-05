@@ -74,31 +74,6 @@ public interface IYearEndDataSetupRepository
     Task<int> CopyFpsYearScopedTableAsync(string table, int sourceYear, int targetYear, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// True when <paramref name="table"/> is a native PostgreSQL partitioned table (<c>relkind = 'p'</c>).
-    /// Distinct from <see cref="IsPartitionAttachedForYearAsync"/> so callers can tell "not partitioned
-    /// at all" apart from "partitioned, but this year's partition is missing" — different failures with
-    /// different fixes.
-    /// </summary>
-    Task<bool> IsPartitionedTableAsync(string schema, string table, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// True when <paramref name="table"/> (already confirmed partitioned via
-    /// <see cref="IsPartitionedTableAsync"/>) has an explicit <c>LIST (fpsyear)</c> partition attached
-    /// for <paramref name="year"/>. Deliberately does not match the catch-all <c>DEFAULT</c> partition —
-    /// this answers "does this year have a dedicated partition," not "can this year's rows be inserted
-    /// at all." Combine with <see cref="IsDefaultPartitionAttachedAsync"/> to decide overall routability.
-    /// </summary>
-    Task<bool> IsPartitionAttachedForYearAsync(string schema, string table, int year, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// True when <paramref name="table"/> (already confirmed partitioned via
-    /// <see cref="IsPartitionedTableAsync"/>) has a <c>DEFAULT</c> partition attached — the catch-all
-    /// destination for rows whose year doesn't match any explicit bound. A legitimate, DDL-free
-    /// destination for a target year with no dedicated partition yet, at the cost of partition pruning.
-    /// </summary>
-    Task<bool> IsDefaultPartitionAttachedAsync(string schema, string table, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Resolves the <c>fps.job_queue</c> row for a <c>YearEnd-DataSetup</c> request by its
     /// <c>jobexecutionid</c>, scoped to that job type via a join to <c>fps.job_master</c> so a
     /// <c>JobExecutionId</c> belonging to some other job never resolves as if it were a valid Data
@@ -119,4 +94,13 @@ public interface IYearEndDataSetupRepository
     /// — <c>month_year</c> becomes <c>tlkpmonthhours.year</c>. Returns the number of rows inserted.
     /// </summary>
     Task<int> MaterializeStagedMonthHoursAsync(Guid jobQueueId, int targetFpsYear, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Reads <c>fps.tblsettings.setting</c> where <c>id = 'CapApprovalReceivedForReset'</c> for
+    /// <paramref name="targetFpsYear"/>. Returns <c>null</c> if no such row exists — FPS is expected to
+    /// guarantee the row exists with a valid <c>Yes</c>/<c>No</c> value before Year End Data Setup can be
+    /// initiated or approved (<c>YearEndService.ValidateConfiguration</c>), so callers should treat
+    /// <c>null</c> as a hard failure, not a default.
+    /// </summary>
+    Task<string?> GetCapApprovalReceivedForResetSettingAsync(int targetFpsYear, CancellationToken cancellationToken = default);
 }
