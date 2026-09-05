@@ -772,39 +772,79 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
 
         #endregion
 
+        #region GetInitiatedCutOverJobExecutionIdAsync
+
+        [Fact]
+        public async Task GetInitiatedCutOverJobExecutionIdAsync_WhenApiReturnsAnId_ReturnsIt()
+        {
+            // Arrange
+            var jobExecutionId = Guid.NewGuid();
+            var expectedResponse = ApiResponseDto<Guid?>.SuccessResponse(jobExecutionId);
+            _fpsYearEndApiClient.GetInitiatedCutOverJobExecutionIdAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetInitiatedCutOverJobExecutionIdAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(jobExecutionId, result.Data);
+            await _fpsYearEndApiClient.Received(1).GetInitiatedCutOverJobExecutionIdAsync();
+        }
+
+        [Fact]
+        public async Task GetInitiatedCutOverJobExecutionIdAsync_WhenApiReturnsNull_ReturnsNull()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<Guid?>.SuccessResponse(null);
+            _fpsYearEndApiClient.GetInitiatedCutOverJobExecutionIdAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetInitiatedCutOverJobExecutionIdAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Null(result.Data);
+        }
+
+        #endregion
+
         #region TriggerYearEndCutOverApprovalJobAsync
 
         [Fact]
         public async Task TriggerYearEndCutOverApprovalJobAsync_WhenApiReturnsSuccess_ReturnsBatchJobEventTriggerDto()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var eventTrigger = new BatchJobEventTriggerDto
             {
                 EventId = "evt-cutover-001",
                 Jobqueue = new BatchJobQueueDto { JobId = 1 }
             };
             var expectedResponse = ApiResponseDto<BatchJobEventTriggerDto>.SuccessResponse(eventTrigger);
-            _fpsYearEndApiClient.TriggerYearEndCutOverApprovalJobAsync(PlannedYear).Returns(expectedResponse);
+            _fpsYearEndApiClient.TriggerYearEndCutOverApprovalJobAsync(PlannedYear, jobExecutionId).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.TriggerYearEndCutOverApprovalJobAsync(PlannedYear);
+            var result = await _sut.TriggerYearEndCutOverApprovalJobAsync(PlannedYear, jobExecutionId);
 
             // Assert
             Assert.True(result.Success);
             Assert.Equal("evt-cutover-001", result.Data?.EventId);
-            await _fpsYearEndApiClient.Received(1).TriggerYearEndCutOverApprovalJobAsync(PlannedYear);
+            await _fpsYearEndApiClient.Received(1).TriggerYearEndCutOverApprovalJobAsync(PlannedYear, jobExecutionId);
         }
 
         [Fact]
         public async Task TriggerYearEndCutOverApprovalJobAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Approval not allowed", Code = "VALIDATION_ERROR" } };
             var expectedResponse = ApiResponseDto<BatchJobEventTriggerDto>.FailureResponse(errors, new ApiMetaDto());
-            _fpsYearEndApiClient.TriggerYearEndCutOverApprovalJobAsync(PlannedYear).Returns(expectedResponse);
+            _fpsYearEndApiClient.TriggerYearEndCutOverApprovalJobAsync(PlannedYear, jobExecutionId).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.TriggerYearEndCutOverApprovalJobAsync(PlannedYear);
+            var result = await _sut.TriggerYearEndCutOverApprovalJobAsync(PlannedYear, jobExecutionId);
 
             // Assert
             Assert.False(result.Success);
@@ -817,27 +857,29 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
         public async Task TriggerYearEndCutOverApprovalJobAsync_PassesPlannedYearToApiClient(int plannedYear)
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var expectedResponse = ApiResponseDto<BatchJobEventTriggerDto>.SuccessResponse(
                 new BatchJobEventTriggerDto { Jobqueue = new BatchJobQueueDto() });
-            _fpsYearEndApiClient.TriggerYearEndCutOverApprovalJobAsync(plannedYear).Returns(expectedResponse);
+            _fpsYearEndApiClient.TriggerYearEndCutOverApprovalJobAsync(plannedYear, jobExecutionId).Returns(expectedResponse);
 
             // Act
-            await _sut.TriggerYearEndCutOverApprovalJobAsync(plannedYear);
+            await _sut.TriggerYearEndCutOverApprovalJobAsync(plannedYear, jobExecutionId);
 
             // Assert
-            await _fpsYearEndApiClient.Received(1).TriggerYearEndCutOverApprovalJobAsync(plannedYear);
+            await _fpsYearEndApiClient.Received(1).TriggerYearEndCutOverApprovalJobAsync(plannedYear, jobExecutionId);
         }
 
         [Fact]
         public async Task TriggerYearEndCutOverApprovalJobAsync_WhenApiClientThrowsException_PropagatesException()
         {
             // Arrange
-            _fpsYearEndApiClient.TriggerYearEndCutOverApprovalJobAsync(PlannedYear)
+            var jobExecutionId = Guid.NewGuid();
+            _fpsYearEndApiClient.TriggerYearEndCutOverApprovalJobAsync(PlannedYear, jobExecutionId)
                 .ThrowsAsync(new Exception("Approval failed"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(
-                () => _sut.TriggerYearEndCutOverApprovalJobAsync(PlannedYear));
+                () => _sut.TriggerYearEndCutOverApprovalJobAsync(PlannedYear, jobExecutionId));
             Assert.Equal("Approval failed", exception.Message);
         }
 
@@ -849,28 +891,30 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
         public async Task EnqueueYearEndCutOverRejectJobAsync_WhenApiReturnsSuccess_ReturnsSuccessResponseWithTrue()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
-            _fpsYearEndApiClient.EnqueueYearEndCutOverRejectJobAsync(PlannedYear).Returns(expectedResponse);
+            _fpsYearEndApiClient.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, jobExecutionId).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear);
+            var result = await _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, jobExecutionId);
 
             // Assert
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _fpsYearEndApiClient.Received(1).EnqueueYearEndCutOverRejectJobAsync(PlannedYear);
+            await _fpsYearEndApiClient.Received(1).EnqueueYearEndCutOverRejectJobAsync(PlannedYear, jobExecutionId);
         }
 
         [Fact]
         public async Task EnqueueYearEndCutOverRejectJobAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Rejection not allowed", Code = "VALIDATION_ERROR" } };
             var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
-            _fpsYearEndApiClient.EnqueueYearEndCutOverRejectJobAsync(PlannedYear).Returns(expectedResponse);
+            _fpsYearEndApiClient.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, jobExecutionId).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear);
+            var result = await _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, jobExecutionId);
 
             // Assert
             Assert.False(result.Success);
@@ -883,26 +927,28 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearEndServiceTest
         public async Task EnqueueYearEndCutOverRejectJobAsync_PassesPlannedYearToApiClient(int plannedYear)
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
-            _fpsYearEndApiClient.EnqueueYearEndCutOverRejectJobAsync(plannedYear).Returns(expectedResponse);
+            _fpsYearEndApiClient.EnqueueYearEndCutOverRejectJobAsync(plannedYear, jobExecutionId).Returns(expectedResponse);
 
             // Act
-            await _sut.EnqueueYearEndCutOverRejectJobAsync(plannedYear);
+            await _sut.EnqueueYearEndCutOverRejectJobAsync(plannedYear, jobExecutionId);
 
             // Assert
-            await _fpsYearEndApiClient.Received(1).EnqueueYearEndCutOverRejectJobAsync(plannedYear);
+            await _fpsYearEndApiClient.Received(1).EnqueueYearEndCutOverRejectJobAsync(plannedYear, jobExecutionId);
         }
 
         [Fact]
         public async Task EnqueueYearEndCutOverRejectJobAsync_WhenApiClientThrowsException_PropagatesException()
         {
             // Arrange
-            _fpsYearEndApiClient.EnqueueYearEndCutOverRejectJobAsync(PlannedYear)
+            var jobExecutionId = Guid.NewGuid();
+            _fpsYearEndApiClient.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, jobExecutionId)
                 .ThrowsAsync(new Exception("Reject failed"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(
-                () => _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear));
+                () => _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, jobExecutionId));
             Assert.Equal("Reject failed", exception.Message);
         }
 

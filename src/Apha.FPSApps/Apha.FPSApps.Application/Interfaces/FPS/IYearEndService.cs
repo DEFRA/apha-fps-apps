@@ -17,8 +17,9 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetYearEndCutOverBatchJobHistoryAsync(QueryParameters<string> query, string jobName);
         Task<ApiResponseDto<bool>> CanInitiateCutOverRequestAsync(string jobName);
         Task<ApiResponseDto<bool>> CanApproveOrRejectCutOverRequestAsync(string jobName);
+        Task<ApiResponseDto<Guid?>> GetInitiatedCutOverJobExecutionIdAsync();
         Task<ApiResponseDto<BatchJobQueueDto>> EnqueueYearEndCutOverInitiationJobAsync(int plannedYear);
-        Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndCutOverApprovalJobAsync(int plannedYear);
-        Task<ApiResponseDto<bool>> EnqueueYearEndCutOverRejectJobAsync(int plannedYear);
+        Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndCutOverApprovalJobAsync(int plannedYear, Guid jobExecutionId);
+        Task<ApiResponseDto<bool>> EnqueueYearEndCutOverRejectJobAsync(int plannedYear, Guid jobExecutionId);
     }
 }

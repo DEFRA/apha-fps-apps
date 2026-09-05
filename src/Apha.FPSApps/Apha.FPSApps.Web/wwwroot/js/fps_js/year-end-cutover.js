@@ -4,6 +4,7 @@
     'use strict';
 
     var cfg = window.YearEndCutOverConfig || {};
+    var currentJobExecutionId = cfg.currentJobExecutionId || null;
 
     // ── Grid reload helpers ───────────────────────────────────────────────────
 
@@ -77,7 +78,8 @@
 
                         btnInitiate.disabled = true;
                         postJson(cfg.triggerInitiateUrl + '?plannedYear=' + plannedYearVal, {},
-                            function () {
+                            function (result) {
+                                currentJobExecutionId = result.jobExecutionId;
                                 showAlertMessage('Year End CutOver initiation request submitted successfully.', AlertType.SUCCESS);
                                 reloadHistoryGrid();
                                 var btnApprove = document.getElementById('btnApproveCutOverRequest');
@@ -105,31 +107,42 @@
                     return;
                 }
 
+                if (!currentJobExecutionId) {
+                    showPageError(['No active Year End CutOver request.']);
+                    return;
+                }
+
                 showGovukApproveReject('Are you sure you want to approve the CutOver Request for year ' + plannedYearVal + '?')
                     .then(function (confirmed) {
                         if (confirmed) {
                         btnApprove.disabled = true;
-                        postJson(cfg.triggerApproveUrl + '?plannedYear=' + plannedYearVal, {},
+                        postJson(cfg.triggerApproveUrl + '?plannedYear=' + plannedYearVal + '&jobExecutionId=' + currentJobExecutionId, {},
                             function () {
+                                currentJobExecutionId = null;
                                 showAlertMessage('Year End CutOver approval request submitted successfully.', AlertType.SUCCESS);
                                 reloadHistoryGrid();
                             },
                             function (msgs) {
+                                currentJobExecutionId = null;
                                 showPageError(msgs);
-                                btnApprove.disabled = false;
+                                reloadHistoryGrid();
+                                btnApprove.disabled = true;
                             }
                         );
                         } else {
                             btnApprove.disabled = true;
-                            postJson(cfg.triggerRejectUrl + '?plannedYear=' + plannedYearVal, {},
+                            postJson(cfg.triggerRejectUrl + '?plannedYear=' + plannedYearVal + '&jobExecutionId=' + currentJobExecutionId, {},
                                 function () {
+                                    currentJobExecutionId = null;
                                     showAlertMessage('Year End CutOver request rejected successfully.', AlertType.SUCCESS);
                                     reloadHistoryGrid();
                                     btnInitiate.disabled = false;
                                 },
                                 function (msgs) {
+                                    currentJobExecutionId = null;
                                     showPageError(msgs);
-                                    btnApprove.disabled = false;
+                                    reloadHistoryGrid();
+                                    btnApprove.disabled = true;
                                 }
                             );
                         }

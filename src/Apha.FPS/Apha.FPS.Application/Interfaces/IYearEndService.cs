@@ -21,8 +21,10 @@ namespace Apha.FPS.Application.Interfaces
 
         Task<bool> CanInitiateYearEndCutOverRequestAsync(string jobName);
         Task<bool> CanApproveOrRejectYearEndCutOverRequestAsync(string jobName);
+        /// <summary>The CutOver equivalent of <see cref="GetInitiatedDataSetupJobExecutionIdAsync"/>.</summary>
+        Task<Guid?> GetInitiatedCutOverJobExecutionIdAsync();
         Task<BatchJobQueueDto> EnqueueYearEndCutOverInitiationJobAsync(int plannedYear, int contextyear, string requestedBy, string correlationId);
-        Task<BatchJobEventTriggerDto> EnqueueYearEndCutOverApprovalJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId);
-        Task<bool> EnqueueYearEndCutOverRejectJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId);
+        Task<BatchJobEventTriggerDto> EnqueueYearEndCutOverApprovalJobAsync(Guid jobExecutionId, int plannedYear, int contextYear, string requestedBy, string correlationId);
+        Task<bool> EnqueueYearEndCutOverRejectJobAsync(Guid jobExecutionId, int plannedYear, int contextYear, string requestedBy, string correlationId);
     }
 }

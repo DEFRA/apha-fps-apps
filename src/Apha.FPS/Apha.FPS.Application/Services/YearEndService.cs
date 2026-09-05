@@ -272,6 +272,11 @@ namespace Apha.FPS.Application.Services
             return await _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(jobName);
         }
 
+        public async Task<Guid?> GetInitiatedCutOverJobExecutionIdAsync()
+        {
+            return await _yearEndRepository.GetInitiatedCutOverJobExecutionIdAsync();
+        }
+
         public async Task<BatchJobQueueDto> EnqueueYearEndCutOverInitiationJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
@@ -298,7 +303,7 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<BatchJobQueueDto>(queued);
         }
 
-        public async Task<BatchJobEventTriggerDto> EnqueueYearEndCutOverApprovalJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
+        public async Task<BatchJobEventTriggerDto> EnqueueYearEndCutOverApprovalJobAsync(Guid jobExecutionId, int plannedYear, int contextYear, string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
             var jobName = YearEndCutOverJobName;
@@ -310,7 +315,19 @@ namespace Apha.FPS.Application.Services
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            var queued = await _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(jobName, requestedBy, correlationId, note);
+            BatchJobQueue queued;
+            try
+            {
+                queued = await _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(jobExecutionId, requestedBy, note);
+            }
+            catch (KeyNotFoundException)
+            {
+                // Someone else already approved/rejected it since it was resolved above.
+                throw new BusinessValidationErrorException([
+                    new BusinessValidationError(
+                        "This request is no longer editable - it was modified by another request in the meantime.", "REQUEST_NOT_EDITABLE")
+                ]);
+            }
 
             // Same JobExecutionId reasoning as the DataSetup approval path above.
             var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, queued.JobExecutionId.ToString(), plannedYear);
@@ -334,7 +351,7 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<BatchJobEventTriggerDto>(result);
         }
 
-        public async Task<bool> EnqueueYearEndCutOverRejectJobAsync(int plannedYear, int contextYear, string requestedBy, string correlationId)
+        public async Task<bool> EnqueueYearEndCutOverRejectJobAsync(Guid jobExecutionId, int plannedYear, int contextYear, string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
             var jobName = YearEndCutOverJobName;
@@ -355,7 +372,19 @@ namespace Apha.FPS.Application.Services
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            var queued = await _yearEndRepository.EnqueueCutOverRejectBatchJobAsync(jobName, requestedBy, correlationId, note);
+            BatchJobQueue queued;
+            try
+            {
+                queued = await _yearEndRepository.EnqueueCutOverRejectBatchJobAsync(jobExecutionId, requestedBy, note);
+            }
+            catch (KeyNotFoundException)
+            {
+                // Same as Approve's translation above.
+                throw new BusinessValidationErrorException([
+                    new BusinessValidationError(
+                        "This request is no longer editable - it was modified by another request in the meantime.", "REQUEST_NOT_EDITABLE")
+                ]);
+            }
 
             var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
 

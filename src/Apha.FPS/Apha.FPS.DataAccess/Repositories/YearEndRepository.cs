@@ -16,6 +16,9 @@ namespace Apha.FPS.DataAccess.Repositories
         // than threaded as a parameter, so the caller can't ask it for a different job's active id.
         private const string YearEndDataSetupJobName = "YearEnd-DataSetup";
 
+        // Same reasoning as YearEndDataSetupJobName above, for CutOver's own resolve-by-JobExecutionId methods.
+        private const string YearEndCutOverJobName = "YearEnd-CutOver";
+
         private readonly IFpsRequestContext _requestContext;
 
         // Only used by the DataSetup Approve/Reject path (Workstream 6), specifically for Reject's
@@ -138,19 +141,33 @@ namespace Apha.FPS.DataAccess.Repositories
             return await GetInitiator(jobName);
         }
 
+        public async Task<Guid?> GetInitiatedCutOverJobExecutionIdAsync()
+        {
+            // Same reasoning as GetInitiatedDataSetupJobExecutionIdAsync above.
+            return await (
+                from jq in _context.BatchJobQueues.IgnoreQueryFilters().AsNoTracking()
+                join jm in _context.BatchJobs.AsNoTracking() on jq.JobId equals jm.JobId
+                join js in _context.BatchJobStatuses.AsNoTracking()
+                    on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
+                where jm.JobName.ToLower() == YearEndCutOverJobName.ToLower()
+                   && js.Status.ToLower() == "initiated"
+                select (Guid?)jq.JobExecutionId
+            ).SingleOrDefaultAsync();
+        }
+
         public async Task<BatchJobQueue> EnqueueCutOverInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
         {
             return await EnqueueInitiationRequest(jobName, requestedBy, correlationId, note);
         }
 
-        public async Task<BatchJobQueue> EnqueueCutOverApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        public async Task<BatchJobQueue> EnqueueCutOverApprovalBatchJobAsync(Guid jobExecutionId, string requestedBy, string note)
         {
-            return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, false);
+            return await EnqueueCutOverApprovalOrRejectByJobExecutionId(jobExecutionId, requestedBy, note, false);
         }
 
-        public async Task<BatchJobQueue> EnqueueCutOverRejectBatchJobAsync(string jobName, string requestedBy, string correlationId, string note)
+        public async Task<BatchJobQueue> EnqueueCutOverRejectBatchJobAsync(Guid jobExecutionId, string requestedBy, string note)
         {
-            return await EnqueueApprovalOrRejectRequest(jobName, requestedBy, correlationId, note, true);
+            return await EnqueueCutOverApprovalOrRejectByJobExecutionId(jobExecutionId, requestedBy, note, true);
         }
 
         public async Task SetTriggeredMetadataAsync(string jobExecutionId, string triggeredBy)
@@ -214,23 +231,27 @@ namespace Apha.FPS.DataAccess.Repositories
             return initiator ?? string.Empty;
         }
 
-        private async Task<BatchJobQueue> EnqueueApprovalOrRejectRequest(string jobName, string requestedBy, string correlationId, string note, bool isReject)
+        // CutOver's version of EnqueueDataSetupApprovalOrRejectByJobQueueId below, keyed by
+        // JobExecutionId instead - no staging to delete on reject.
+        private async Task<BatchJobQueue> EnqueueCutOverApprovalOrRejectByJobExecutionId(Guid jobExecutionId, string requestedBy, string note, bool isReject)
         {
             BatchJobQueue queueRow = null!;
             BatchJobStatus jobStatus;
 
             var jobqueue = await (
-                from jm in _context.BatchJobs.AsNoTracking()
-                join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
+                from jq in _context.BatchJobQueues.IgnoreQueryFilters().AsNoTracking()
+                join jm in _context.BatchJobs.AsNoTracking() on jq.JobId equals jm.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
-                where jm.JobName.ToLower() == jobName.ToLower() && (js.Status.ToLower() == "initiated")
+                where jq.JobExecutionId == jobExecutionId
+                   && jm.JobName.ToLower() == YearEndCutOverJobName.ToLower()
+                   && js.Status.ToLower() == "initiated"
                 select new { jq.JobqueueId, jq.JobId }
             ).FirstOrDefaultAsync();
 
             if (jobqueue == null)
             {
-                throw new KeyNotFoundException($"No initiated request was found for job '{jobName}'.");
+                throw new KeyNotFoundException($"No initiated CutOver request was found for JobExecutionId '{jobExecutionId}'.");
             }
 
             if (isReject)
@@ -238,16 +259,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 jobStatus = await _context.BatchJobStatuses
                 .AsNoTracking()
                 .Where(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "rejected")
-                .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'rejected' not found for job '{jobName}'.");
+                .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'rejected' not found for JobExecutionId '{jobExecutionId}'.");
             }
             else
             {
                 jobStatus = await _context.BatchJobStatuses
                 .AsNoTracking()
                 .Where(s => s.JobId == jobqueue.JobId && s.Status.ToLower() == "approved")
-                .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'approved' not found for job '{jobName}'.");
+                .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Status 'approved' not found for JobExecutionId '{jobExecutionId}'.");
             }
-
 
             var strategy = _context.Database.CreateExecutionStrategy();
 
@@ -256,9 +276,14 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    queueRow = await _context.BatchJobQueues
-                    .AsNoTracking().FirstOrDefaultAsync(j => j.JobqueueId == jobqueue.JobqueueId)
-                    ?? throw new KeyNotFoundException($"Batch job queue for job '{jobName}' was not found.");
+                    queueRow = await (
+                        from jq in _context.BatchJobQueues.IgnoreQueryFilters().AsNoTracking()
+                        join js in _context.BatchJobStatuses.AsNoTracking()
+                            on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
+                        where jq.JobqueueId == jobqueue.JobqueueId && js.Status.ToLower() == "initiated"
+                        select jq
+                    ).FirstOrDefaultAsync()
+                    ?? throw new KeyNotFoundException($"Batch job queue '{jobqueue.JobqueueId}' is no longer in Initiated status.");
 
                     //update the status of the job queue entry to "approved" or "rejected"
                     var decidedAtUtc = DateTime.UtcNow;
@@ -268,8 +293,6 @@ namespace Apha.FPS.DataAccess.Repositories
                     queueRow.StartDateTime = decidedAtUtc;
                     queueRow.ErrorMessage = note;
 
-                    // Approval/rejection audit columns - previously never written by this
-                    // repository at all.
                     if (isReject)
                     {
                         queueRow.RejectedBy = requestedBy;
@@ -301,11 +324,6 @@ namespace Apha.FPS.DataAccess.Repositories
             return queueRow;
         }
 
-        // Data Setup-only (planned-year staging design, Workstream 6). Deliberately not shared with
-        // EnqueueApprovalOrRejectRequest above (CutOver's own path) - CutOver has no staging concept and
-        // must not be affected by this method's resolve-by-jobQueueId behavior. Resolves the exact
-        // request rather than "whichever row is Initiated for this job name", and re-checks Initiated
-        // status here, at write time, rather than trusting an earlier caller read.
         private async Task<BatchJobQueue> EnqueueDataSetupApprovalOrRejectByJobQueueId(Guid jobQueueId, string requestedBy, string note, bool isReject)
         {
             BatchJobQueue queueRow = null!;
@@ -350,9 +368,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    queueRow = await _context.BatchJobQueues
-                    .IgnoreQueryFilters().AsNoTracking().FirstOrDefaultAsync(j => j.JobqueueId == jobQueueId)
-                    ?? throw new KeyNotFoundException($"Batch job queue '{jobQueueId}' was not found.");
+                    // Re-checks Initiated status, not just existence by id.
+                    queueRow = await (
+                        from jq in _context.BatchJobQueues.IgnoreQueryFilters().AsNoTracking()
+                        join js in _context.BatchJobStatuses.AsNoTracking()
+                            on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
+                        where jq.JobqueueId == jobQueueId && js.Status.ToLower() == "initiated"
+                        select jq
+                    ).FirstOrDefaultAsync()
+                    ?? throw new KeyNotFoundException($"Batch job queue '{jobQueueId}' is no longer in Initiated status.");
 
                     //update the status of the job queue entry to "approved" or "rejected"
                     var decidedAtUtc = DateTime.UtcNow;

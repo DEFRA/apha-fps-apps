@@ -69,6 +69,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
             _yearEndService.CanApproveOrRejectCutOverRequestAsync(JobName)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(canApprove));
 
+            _yearEndService.GetInitiatedCutOverJobExecutionIdAsync()
+                .Returns(ApiResponseDto<Guid?>.SuccessResponse(null));
+
             _yearEndService.GetYearEndCutOverBatchJobHistoryAsync(
                     Arg.Any<QueryParameters<string>>(), JobName)
                 .Returns(ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>
@@ -162,6 +165,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
                 .Returns(ApiResponseDto<bool>.SuccessResponse(false));
             _yearEndService.CanApproveOrRejectCutOverRequestAsync(JobName)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(false));
+            _yearEndService.GetInitiatedCutOverJobExecutionIdAsync()
+                .Returns(ApiResponseDto<Guid?>.SuccessResponse(null));
             _yearEndService.GetYearEndCutOverBatchJobHistoryAsync(
                     Arg.Any<QueryParameters<string>>(), JobName)
                 .Returns(ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>
@@ -186,6 +191,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
                 .Returns(new ApiResponseDto<bool> { Success = false });
             _yearEndService.CanApproveOrRejectCutOverRequestAsync(JobName)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(false));
+            _yearEndService.GetInitiatedCutOverJobExecutionIdAsync()
+                .Returns(ApiResponseDto<Guid?>.SuccessResponse(null));
             _yearEndService.GetYearEndCutOverBatchJobHistoryAsync(
                     Arg.Any<QueryParameters<string>>(), JobName)
                 .Returns(ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>
@@ -198,6 +205,39 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<YearEndCutOverViewModel>(viewResult.Model);
             Assert.False(model.CanInitiate);
+        }
+
+        [Fact]
+        public async Task Index_WhenNoActiveRequest_CurrentJobExecutionIdIsNull()
+        {
+            // Arrange
+            SetupIndexDefaults();
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<YearEndCutOverViewModel>(viewResult.Model);
+            Assert.Null(model.CurrentJobExecutionId);
+        }
+
+        [Fact]
+        public async Task Index_WhenActiveRequestExists_CurrentJobExecutionIdIsRestored()
+        {
+            // Arrange
+            SetupIndexDefaults();
+            var jobExecutionId = Guid.NewGuid();
+            _yearEndService.GetInitiatedCutOverJobExecutionIdAsync()
+                .Returns(ApiResponseDto<Guid?>.SuccessResponse(jobExecutionId));
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<YearEndCutOverViewModel>(viewResult.Model);
+            Assert.Equal(jobExecutionId, model.CurrentJobExecutionId);
         }
 
         #endregion
@@ -334,6 +374,25 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
         }
 
         [Fact]
+        public async Task TriggerInitiate_WhenServiceReturnsSuccess_ReturnsJobExecutionIdInResponse()
+        {
+            // Arrange
+            const int plannedYear = 2025;
+            var jobExecutionId = Guid.NewGuid();
+            var queued = new BatchJobQueueDto { JobId = 1, JobExecutionId = jobExecutionId, RequestedBy = "user@test.com" };
+            _yearEndService.EnqueueYearEndCutOverInitiationJobAsync(plannedYear)
+                .Returns(ApiResponseDto<BatchJobQueueDto>.SuccessResponse(queued));
+
+            // Act
+            var result = await _controller.TriggerInitiate(plannedYear);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var json = GetJsonElement(jsonResult);
+            Assert.Equal(jobExecutionId, json.GetProperty("jobExecutionId").GetGuid());
+        }
+
+        [Fact]
         public async Task TriggerInitiate_WhenServiceReturnsFailure_ReturnsJsonWithSuccessFalseAndErrors()
         {
             // Arrange
@@ -396,12 +455,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
         {
             // Arrange
             const int plannedYear = 2025;
+            var jobExecutionId = Guid.NewGuid();
             var triggerDto = new BatchJobEventTriggerDto { EventId = "evt-cutover-001" };
-            _yearEndService.TriggerYearEndCutOverApprovalJobAsync(plannedYear)
+            _yearEndService.TriggerYearEndCutOverApprovalJobAsync(plannedYear, jobExecutionId)
                 .Returns(ApiResponseDto<BatchJobEventTriggerDto>.SuccessResponse(triggerDto));
 
             // Act
-            var result = await _controller.TriggerApprove(plannedYear);
+            var result = await _controller.TriggerApprove(plannedYear, jobExecutionId);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -414,12 +474,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
         {
             // Arrange
             const int plannedYear = 2025;
+            var jobExecutionId = Guid.NewGuid();
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Approval not allowed", Code = "VALIDATION_ERROR" } };
-            _yearEndService.TriggerYearEndCutOverApprovalJobAsync(plannedYear)
+            _yearEndService.TriggerYearEndCutOverApprovalJobAsync(plannedYear, jobExecutionId)
                 .Returns(ApiResponseDto<BatchJobEventTriggerDto>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.TriggerApprove(plannedYear);
+            var result = await _controller.TriggerApprove(plannedYear, jobExecutionId);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -433,11 +494,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
         {
             // Arrange
             const int plannedYear = 2025;
-            _yearEndService.TriggerYearEndCutOverApprovalJobAsync(plannedYear)
+            var jobExecutionId = Guid.NewGuid();
+            _yearEndService.TriggerYearEndCutOverApprovalJobAsync(plannedYear, jobExecutionId)
                 .Returns(new ApiResponseDto<BatchJobEventTriggerDto> { Success = false, Errors = null });
 
             // Act
-            var result = await _controller.TriggerApprove(plannedYear);
+            var result = await _controller.TriggerApprove(plannedYear, jobExecutionId);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -453,14 +515,41 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
         {
             // Arrange
             const int plannedYear = 2026;
-            _yearEndService.TriggerYearEndCutOverApprovalJobAsync(plannedYear)
+            var jobExecutionId = Guid.NewGuid();
+            _yearEndService.TriggerYearEndCutOverApprovalJobAsync(plannedYear, jobExecutionId)
                 .Returns(ApiResponseDto<BatchJobEventTriggerDto>.SuccessResponse(new BatchJobEventTriggerDto()));
 
             // Act
-            await _controller.TriggerApprove(plannedYear);
+            await _controller.TriggerApprove(plannedYear, jobExecutionId);
 
             // Assert
-            await _yearEndService.Received(1).TriggerYearEndCutOverApprovalJobAsync(plannedYear);
+            await _yearEndService.Received(1).TriggerYearEndCutOverApprovalJobAsync(plannedYear, jobExecutionId);
+        }
+
+        [Fact]
+        public async Task TriggerApprove_WhenJobExecutionIdIsNull_ReturnsFailureWithoutCallingService()
+        {
+            // Act
+            var result = await _controller.TriggerApprove(2025, null);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            await _yearEndService.DidNotReceive().TriggerYearEndCutOverApprovalJobAsync(Arg.Any<int>(), Arg.Any<Guid>());
+        }
+
+        [Fact]
+        public async Task TriggerApprove_WhenJobExecutionIdIsEmpty_ReturnsFailureWithoutCallingService()
+        {
+            // Act
+            var result = await _controller.TriggerApprove(2025, Guid.Empty);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            await _yearEndService.DidNotReceive().TriggerYearEndCutOverApprovalJobAsync(Arg.Any<int>(), Arg.Any<Guid>());
         }
 
         #endregion
@@ -472,11 +561,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
         {
             // Arrange
             const int plannedYear = 2025;
-            _yearEndService.EnqueueYearEndCutOverRejectJobAsync(plannedYear)
+            var jobExecutionId = Guid.NewGuid();
+            _yearEndService.EnqueueYearEndCutOverRejectJobAsync(plannedYear, jobExecutionId)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(true));
 
             // Act
-            var result = await _controller.TriggerReject(plannedYear);
+            var result = await _controller.TriggerReject(plannedYear, jobExecutionId);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -489,12 +579,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
         {
             // Arrange
             const int plannedYear = 2025;
+            var jobExecutionId = Guid.NewGuid();
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Rejection not allowed", Code = "VALIDATION_ERROR" } };
-            _yearEndService.EnqueueYearEndCutOverRejectJobAsync(plannedYear)
+            _yearEndService.EnqueueYearEndCutOverRejectJobAsync(plannedYear, jobExecutionId)
                 .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.TriggerReject(plannedYear);
+            var result = await _controller.TriggerReject(plannedYear, jobExecutionId);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -508,11 +599,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
         {
             // Arrange
             const int plannedYear = 2025;
-            _yearEndService.EnqueueYearEndCutOverRejectJobAsync(plannedYear)
+            var jobExecutionId = Guid.NewGuid();
+            _yearEndService.EnqueueYearEndCutOverRejectJobAsync(plannedYear, jobExecutionId)
                 .Returns(new ApiResponseDto<bool> { Success = false, Errors = null });
 
             // Act
-            var result = await _controller.TriggerReject(plannedYear);
+            var result = await _controller.TriggerReject(plannedYear, jobExecutionId);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -528,14 +620,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
         {
             // Arrange
             const int plannedYear = 2026;
-            _yearEndService.EnqueueYearEndCutOverRejectJobAsync(plannedYear)
+            var jobExecutionId = Guid.NewGuid();
+            _yearEndService.EnqueueYearEndCutOverRejectJobAsync(plannedYear, jobExecutionId)
                 .Returns(ApiResponseDto<bool>.SuccessResponse(true));
 
             // Act
-            await _controller.TriggerReject(plannedYear);
+            await _controller.TriggerReject(plannedYear, jobExecutionId);
 
             // Assert
-            await _yearEndService.Received(1).EnqueueYearEndCutOverRejectJobAsync(plannedYear);
+            await _yearEndService.Received(1).EnqueueYearEndCutOverRejectJobAsync(plannedYear, jobExecutionId);
         }
 
         [Fact]
@@ -543,11 +636,38 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndCutOverControllerTes
         {
             // Arrange
             const int plannedYear = 2025;
-            _yearEndService.EnqueueYearEndCutOverRejectJobAsync(plannedYear)
+            var jobExecutionId = Guid.NewGuid();
+            _yearEndService.EnqueueYearEndCutOverRejectJobAsync(plannedYear, jobExecutionId)
                 .ThrowsAsync(new Exception("Unexpected error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.TriggerReject(plannedYear));
+            await Assert.ThrowsAsync<Exception>(() => _controller.TriggerReject(plannedYear, jobExecutionId));
+        }
+
+        [Fact]
+        public async Task TriggerReject_WhenJobExecutionIdIsNull_ReturnsFailureWithoutCallingService()
+        {
+            // Act
+            var result = await _controller.TriggerReject(2025, null);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            await _yearEndService.DidNotReceive().EnqueueYearEndCutOverRejectJobAsync(Arg.Any<int>(), Arg.Any<Guid>());
+        }
+
+        [Fact]
+        public async Task TriggerReject_WhenJobExecutionIdIsEmpty_ReturnsFailureWithoutCallingService()
+        {
+            // Act
+            var result = await _controller.TriggerReject(2025, Guid.Empty);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            await _yearEndService.DidNotReceive().EnqueueYearEndCutOverRejectJobAsync(Arg.Any<int>(), Arg.Any<Guid>());
         }
 
         #endregion

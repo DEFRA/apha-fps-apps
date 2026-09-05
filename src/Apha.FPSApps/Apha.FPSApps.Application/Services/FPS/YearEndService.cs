@@ -45,13 +45,16 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<bool>> CanApproveOrRejectCutOverRequestAsync(string jobName)
             => await _fpsClient.FpsYearEnd.CanApproveOrRejectCutOverRequestAsync(jobName);
 
+        public async Task<ApiResponseDto<Guid?>> GetInitiatedCutOverJobExecutionIdAsync()
+            => await _fpsClient.FpsYearEnd.GetInitiatedCutOverJobExecutionIdAsync();
+
         public async Task<ApiResponseDto<BatchJobQueueDto>> EnqueueYearEndCutOverInitiationJobAsync(int plannedYear)
        => await _fpsClient.FpsYearEnd.EnqueueYearEndCutOverInitiationJobAsync(plannedYear);
 
-        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndCutOverApprovalJobAsync(int plannedYear)
-            => await _fpsClient.FpsYearEnd.TriggerYearEndCutOverApprovalJobAsync(plannedYear);
+        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndCutOverApprovalJobAsync(int plannedYear, Guid jobExecutionId)
+            => await _fpsClient.FpsYearEnd.TriggerYearEndCutOverApprovalJobAsync(plannedYear, jobExecutionId);
 
-        public async Task<ApiResponseDto<bool>> EnqueueYearEndCutOverRejectJobAsync(int plannedYear)
-            => await _fpsClient.FpsYearEnd.EnqueueYearEndCutOverRejectJobAsync(plannedYear);
+        public async Task<ApiResponseDto<bool>> EnqueueYearEndCutOverRejectJobAsync(int plannedYear, Guid jobExecutionId)
+            => await _fpsClient.FpsYearEnd.EnqueueYearEndCutOverRejectJobAsync(plannedYear, jobExecutionId);
     }
 }

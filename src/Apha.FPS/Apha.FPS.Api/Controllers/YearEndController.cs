@@ -173,6 +173,17 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Resolves the <c>JobExecutionId</c> of the single Year End CutOver request currently in
+        /// <c>Initiated</c> status, if any.
+        /// </summary>
+        [HttpGet("cutover/initiated")]
+        public async Task<IActionResult> GetInitiatedCutOverJobExecutionIdAsync()
+        {
+            var jobExecutionId = await _yearEndService.GetInitiatedCutOverJobExecutionIdAsync();
+            return Ok(new YearEndInitiatedRequestRes { JobExecutionId = jobExecutionId });
+        }
+
+        /// <summary>
         /// Enqueue the YearEnd CutOver Initiation batch job for approval.
         /// Validates that <paramref name="request"/>.<c>planned year</c> is valid,
         /// verifies no instance is already running, then enqueues the job. 
@@ -195,9 +206,9 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="request">Request body containing the planned year.</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
         [HttpPost("cutover/approval")]
-        public async Task<IActionResult> EnqueueYearEndCutOverApprovalJob([FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
+        public async Task<IActionResult> EnqueueYearEndCutOverApprovalJob([FromQuery] Guid jobExecutionId, [FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
-            var result = await _yearEndService.EnqueueYearEndCutOverApprovalJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
+            var result = await _yearEndService.EnqueueYearEndCutOverApprovalJobAsync(jobExecutionId, request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
 
             return Ok(_mapper.Map<BatchJobEventTriggerRes>(result));
         }
@@ -210,9 +221,9 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="request">Request body containing the planned year.</param>
         /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
         [HttpPost("cutover/reject")]
-        public async Task<IActionResult> EnqueueYearEndCutOverRejectJobAsync([FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
+        public async Task<IActionResult> EnqueueYearEndCutOverRejectJobAsync([FromQuery] Guid jobExecutionId, [FromBody] YearEndDataSetupReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
-            var result = await _yearEndService.EnqueueYearEndCutOverRejectJobAsync(request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
+            var result = await _yearEndService.EnqueueYearEndCutOverRejectJobAsync(jobExecutionId, request.PlannedYear, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
 
             return Ok(result);
         }

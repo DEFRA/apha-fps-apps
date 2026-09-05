@@ -608,6 +608,41 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
 
         #endregion
 
+        #region GetInitiatedCutOverJobExecutionIdAsync
+
+        [Fact]
+        public async Task GetInitiatedCutOverJobExecutionIdAsync_WhenOneIsInitiated_ReturnsOkWithJobExecutionId()
+        {
+            // Arrange
+            var jobExecutionId = Guid.NewGuid();
+            _yearEndService.GetInitiatedCutOverJobExecutionIdAsync().Returns(jobExecutionId);
+
+            // Act
+            var result = await _sut.GetInitiatedCutOverJobExecutionIdAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var res = Assert.IsType<YearEndInitiatedRequestRes>(okResult.Value);
+            res.JobExecutionId.Should().Be(jobExecutionId);
+        }
+
+        [Fact]
+        public async Task GetInitiatedCutOverJobExecutionIdAsync_WhenNoneIsInitiated_ReturnsOkWithNull()
+        {
+            // Arrange
+            _yearEndService.GetInitiatedCutOverJobExecutionIdAsync().Returns((Guid?)null);
+
+            // Act
+            var result = await _sut.GetInitiatedCutOverJobExecutionIdAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var res = Assert.IsType<YearEndInitiatedRequestRes>(okResult.Value);
+            res.JobExecutionId.Should().BeNull();
+        }
+
+        #endregion
+
         #region EnqueueYearEndCutOverInitiationJob
 
         [Fact]
@@ -676,17 +711,18 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
         public async Task EnqueueYearEndCutOverApprovalJob_WhenValid_ReturnsOkWithMappedResult()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var request = new YearEndDataSetupReq { PlannedYear = PlannedYear };
             var serviceResult = new BatchJobEventTriggerDto { EventId = "evt-cutover-001" };
             var mappedRes = new BatchJobEventTriggerRes { EventId = "evt-cutover-001" };
 
             _yearEndService
-                .EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, FpsYear, UserEmail, CorrelationId)
+                .EnqueueYearEndCutOverApprovalJobAsync(jobExecutionId, PlannedYear, FpsYear, UserEmail, CorrelationId)
                 .Returns(serviceResult);
             _mapper.Map<BatchJobEventTriggerRes>(serviceResult).Returns(mappedRes);
 
             // Act
-            var result = await _sut.EnqueueYearEndCutOverApprovalJob(request, CorrelationId);
+            var result = await _sut.EnqueueYearEndCutOverApprovalJob(jobExecutionId, request, CorrelationId);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -694,26 +730,27 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
             okResult.Value.Should().BeEquivalentTo(mappedRes);
 
             await _yearEndService.Received(1).EnqueueYearEndCutOverApprovalJobAsync(
-                PlannedYear, FpsYear, UserEmail, CorrelationId);
+                jobExecutionId, PlannedYear, FpsYear, UserEmail, CorrelationId);
         }
 
         [Fact]
         public async Task EnqueueYearEndCutOverApprovalJob_PassesFpsRequestContextValuesToService()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var request = new YearEndDataSetupReq { PlannedYear = PlannedYear };
             var serviceResult = new BatchJobEventTriggerDto();
             _yearEndService
-                .EnqueueYearEndCutOverApprovalJobAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>())
+                .EnqueueYearEndCutOverApprovalJobAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(serviceResult);
             _mapper.Map<BatchJobEventTriggerRes>(serviceResult).Returns(new BatchJobEventTriggerRes());
 
             // Act
-            await _sut.EnqueueYearEndCutOverApprovalJob(request, CorrelationId);
+            await _sut.EnqueueYearEndCutOverApprovalJob(jobExecutionId, request, CorrelationId);
 
             // Assert
             await _yearEndService.Received(1).EnqueueYearEndCutOverApprovalJobAsync(
-                PlannedYear, FpsYear, UserEmail, CorrelationId);
+                jobExecutionId, PlannedYear, FpsYear, UserEmail, CorrelationId);
         }
 
         [Fact]
@@ -722,12 +759,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
             // Arrange
             var request = new YearEndDataSetupReq { PlannedYear = PlannedYear };
             _yearEndService
-                .EnqueueYearEndCutOverApprovalJobAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>())
+                .EnqueueYearEndCutOverApprovalJobAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>())
                 .Throws(new Exception("Approval failed"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(
-                () => _sut.EnqueueYearEndCutOverApprovalJob(request, CorrelationId));
+                () => _sut.EnqueueYearEndCutOverApprovalJob(Guid.NewGuid(), request, CorrelationId));
             exception.Message.Should().Be("Approval failed");
         }
 
@@ -739,13 +776,14 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
         public async Task EnqueueYearEndCutOverRejectJobAsync_WhenValid_ReturnsOkWithServiceResult()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var request = new YearEndDataSetupReq { PlannedYear = PlannedYear };
             _yearEndService
-                .EnqueueYearEndCutOverRejectJobAsync(PlannedYear, FpsYear, UserEmail, CorrelationId)
+                .EnqueueYearEndCutOverRejectJobAsync(jobExecutionId, PlannedYear, FpsYear, UserEmail, CorrelationId)
                 .Returns(true);
 
             // Act
-            var result = await _sut.EnqueueYearEndCutOverRejectJobAsync(request, CorrelationId);
+            var result = await _sut.EnqueueYearEndCutOverRejectJobAsync(jobExecutionId, request, CorrelationId);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -753,24 +791,25 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
             okResult.Value.Should().Be(true);
 
             await _yearEndService.Received(1).EnqueueYearEndCutOverRejectJobAsync(
-                PlannedYear, FpsYear, UserEmail, CorrelationId);
+                jobExecutionId, PlannedYear, FpsYear, UserEmail, CorrelationId);
         }
 
         [Fact]
         public async Task EnqueueYearEndCutOverRejectJobAsync_PassesFpsRequestContextValuesToService()
         {
             // Arrange
+            var jobExecutionId = Guid.NewGuid();
             var request = new YearEndDataSetupReq { PlannedYear = PlannedYear };
             _yearEndService
-                .EnqueueYearEndCutOverRejectJobAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>())
+                .EnqueueYearEndCutOverRejectJobAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(true);
 
             // Act
-            await _sut.EnqueueYearEndCutOverRejectJobAsync(request, CorrelationId);
+            await _sut.EnqueueYearEndCutOverRejectJobAsync(jobExecutionId, request, CorrelationId);
 
             // Assert
             await _yearEndService.Received(1).EnqueueYearEndCutOverRejectJobAsync(
-                PlannedYear, FpsYear, UserEmail, CorrelationId);
+                jobExecutionId, PlannedYear, FpsYear, UserEmail, CorrelationId);
         }
 
         [Fact]
@@ -779,12 +818,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearEndControllerTest
             // Arrange
             var request = new YearEndDataSetupReq { PlannedYear = PlannedYear };
             _yearEndService
-                .EnqueueYearEndCutOverRejectJobAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>())
+                .EnqueueYearEndCutOverRejectJobAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>())
                 .Throws(new Exception("Rejection failed"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(
-                () => _sut.EnqueueYearEndCutOverRejectJobAsync(request, CorrelationId));
+                () => _sut.EnqueueYearEndCutOverRejectJobAsync(Guid.NewGuid(), request, CorrelationId));
             exception.Message.Should().Be("Rejection failed");
         }
 

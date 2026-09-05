@@ -331,6 +331,7 @@ namespace Apha.Common.Constants
         public const string GetYearEndCutOverBatchJobHistory = "api/v1/yearend/cutover/batchjob/history";
         public const string CanInitiateCutOverRequest = "api/v1/yearend/cutover/caninitiate";
         public const string CanApproveOrRejectCutOverRequest = "api/v1/yearend/cutover/canapproveorreject";
+        public const string GetInitiatedCutOverJobExecutionId = "api/v1/yearend/cutover/initiated";
         public const string EnqueueYearEndCutOverInitiationJob = "api/v1/yearend/cutover/initiation";
         public const string EnqueueYearEndCutOverApprovalJob = "api/v1/yearend/cutover/approval";
         public const string EnqueueYearEndCutOverRejectJob = "api/v1/yearend/cutover/reject";

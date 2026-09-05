@@ -164,6 +164,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
+        public async Task<ApiResponseDto<Guid?>> GetInitiatedCutOverJobExecutionIdAsync()
+        {
+            var response = await _http.GetAsync<YearEndInitiatedRequestRes>(FpsApiEndpoints.GetInitiatedCutOverJobExecutionId);
+
+            if (response.Success)
+                return ApiResponseDto<Guid?>.SuccessResponse(response.Data?.JobExecutionId);
+
+            return ApiResponseDto<Guid?>.FailureResponse(
+                _mapper.Map<List<ApiErrorDto>>(response.Errors),
+                _mapper.Map<ApiMetaDto>(response.Meta));
+        }
+
         public async Task<ApiResponseDto<BatchJobQueueDto>> EnqueueYearEndCutOverInitiationJobAsync(int plannedYear)
         {
             var request = new YearEndDataSetupReq { PlannedYear = plannedYear };
@@ -177,11 +189,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<BatchJobQueueDto>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
-        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndCutOverApprovalJobAsync(int plannedYear)
+        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerYearEndCutOverApprovalJobAsync(int plannedYear, Guid jobExecutionId)
         {
             var request = new YearEndDataSetupReq { PlannedYear = plannedYear };
-            var response = await _http.PostAsync<YearEndDataSetupReq, BatchJobEventTriggerRes>(
-                FpsApiEndpoints.EnqueueYearEndCutOverApprovalJob, request);
+            var url = $"{FpsApiEndpoints.EnqueueYearEndCutOverApprovalJob}?jobExecutionId={jobExecutionId}";
+            var response = await _http.PostAsync<YearEndDataSetupReq, BatchJobEventTriggerRes>(url, request);
 
             if (response.Success && response.Data is not null)
                 return _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(response);
@@ -190,11 +202,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<BatchJobEventTriggerDto>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
-        public async Task<ApiResponseDto<bool>> EnqueueYearEndCutOverRejectJobAsync(int plannedYear)
+        public async Task<ApiResponseDto<bool>> EnqueueYearEndCutOverRejectJobAsync(int plannedYear, Guid jobExecutionId)
         {
             var request = new YearEndDataSetupReq { PlannedYear = plannedYear };
-            var response = await _http.PostAsync<YearEndDataSetupReq, bool?>(
-                FpsApiEndpoints.EnqueueYearEndCutOverRejectJob, request);
+            var url = $"{FpsApiEndpoints.EnqueueYearEndCutOverRejectJob}?jobExecutionId={jobExecutionId}";
+            var response = await _http.PostAsync<YearEndDataSetupReq, bool?>(url, request);
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);

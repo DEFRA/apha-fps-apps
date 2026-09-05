@@ -1447,7 +1447,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(invalidYear, ContextYear, RequestedBy, CorrelationId));
+                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(Guid.NewGuid(), invalidYear, ContextYear, RequestedBy, CorrelationId));
 
             ex.Errors.Should().Contain(e => e.Code == "INVALID_PlannedYear");
         }
@@ -1462,7 +1462,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, string.Empty, CorrelationId));
+                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(Guid.NewGuid(), PlannedYear, ContextYear, string.Empty, CorrelationId));
 
             ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_User");
         }
@@ -1477,7 +1477,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(Guid.NewGuid(), PlannedYear, ContextYear, RequestedBy, CorrelationId));
 
             ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Approval");
         }
@@ -1492,9 +1492,26 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(Guid.NewGuid(), PlannedYear, ContextYear, RequestedBy, CorrelationId));
 
             ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Approval");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverApprovalJobAsync_WhenRepositoryFindsRequestNoLongerInitiated_TranslatesToBusinessValidationError()
+        {
+            // Arrange
+            SetupValidCutOverYearMaster();
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns(string.Empty);
+            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(Arg.Any<Guid>(), RequestedBy, Arg.Any<string>())
+                .Throws(new KeyNotFoundException("gone"));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(Guid.NewGuid(), PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "REQUEST_NOT_EDITABLE");
         }
 
         #endregion
@@ -1509,8 +1526,9 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
             _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
 
+            var jobExecutionId = Guid.NewGuid();
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
-            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(jobExecutionId, RequestedBy, Arg.Any<string>())
                 .Returns(queueEntry);
 
             _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
@@ -1521,14 +1539,14 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _mapper.Map<BatchJobEventTriggerDto>(triggerDto).Returns(triggerDto);
 
             // Act
-            var result = await _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+            var result = await _sut.EnqueueYearEndCutOverApprovalJobAsync(jobExecutionId, PlannedYear, ContextYear, RequestedBy, CorrelationId);
 
             // Assert
             result.Should().NotBeNull();
             result.EventId.Should().Be("evt-cutover-123");
 
             await _yearEndRepository.Received(1).EnqueueCutOverApprovalBatchJobAsync(
-                CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>());
+                jobExecutionId, RequestedBy, Arg.Any<string>());
             await _eventPublisherService.Received(1).PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>());
         }
 
@@ -1541,8 +1559,9 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
 
             var jobExecutionId = Guid.NewGuid();
-            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), JobExecutionId = jobExecutionId, RequestedBy = RequestedBy };
-            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+            var rowJobExecutionId = Guid.NewGuid();
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), JobExecutionId = rowJobExecutionId, RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(jobExecutionId, RequestedBy, Arg.Any<string>())
                 .Returns(queueEntry);
             _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
                 .Returns("evt-cutover-jobexec");
@@ -1552,11 +1571,11 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _mapper.Map<BatchJobEventTriggerDto>(triggerDto).Returns(triggerDto);
 
             // Act
-            await _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+            await _sut.EnqueueYearEndCutOverApprovalJobAsync(jobExecutionId, PlannedYear, ContextYear, RequestedBy, CorrelationId);
 
             // Assert
             await _eventPublisherService.Received(1).PublishAsync(
-                Arg.Is<EventDetail>(e => e.JobExecutionId == jobExecutionId.ToString() && e.JobExecutionId != CorrelationId),
+                Arg.Is<EventDetail>(e => e.JobExecutionId == rowJobExecutionId.ToString() && e.JobExecutionId != CorrelationId),
                 Arg.Any<CancellationToken>());
         }
 
@@ -1569,8 +1588,9 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
 
             var jobExecutionId = Guid.NewGuid();
-            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), JobExecutionId = jobExecutionId, RequestedBy = RequestedBy };
-            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+            var rowJobExecutionId = Guid.NewGuid();
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), JobExecutionId = rowJobExecutionId, RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(jobExecutionId, RequestedBy, Arg.Any<string>())
                 .Returns(queueEntry);
             _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
                 .Returns("evt-cutover-trigger");
@@ -1580,10 +1600,10 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _mapper.Map<BatchJobEventTriggerDto>(triggerDto).Returns(triggerDto);
 
             // Act
-            await _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+            await _sut.EnqueueYearEndCutOverApprovalJobAsync(jobExecutionId, PlannedYear, ContextYear, RequestedBy, CorrelationId);
 
             // Assert
-            await _yearEndRepository.Received(1).SetTriggeredMetadataAsync(jobExecutionId.ToString(), RequestedBy);
+            await _yearEndRepository.Received(1).SetTriggeredMetadataAsync(rowJobExecutionId.ToString(), RequestedBy);
         }
 
         [Fact]
@@ -1594,15 +1614,16 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
             _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
 
+            var jobExecutionId = Guid.NewGuid();
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), JobExecutionId = Guid.NewGuid(), RequestedBy = RequestedBy };
-            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(jobExecutionId, RequestedBy, Arg.Any<string>())
                 .Returns(queueEntry);
             _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
                 .Throws(new InvalidOperationException("EventBridge unavailable"));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+                () => _sut.EnqueueYearEndCutOverApprovalJobAsync(jobExecutionId, PlannedYear, ContextYear, RequestedBy, CorrelationId));
 
             await _yearEndRepository.DidNotReceive().SetTriggeredMetadataAsync(Arg.Any<string>(), Arg.Any<string>());
         }
@@ -1615,8 +1636,9 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
             _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
 
+            var jobExecutionId = Guid.NewGuid();
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
-            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(jobExecutionId, RequestedBy, Arg.Any<string>())
                 .Returns(queueEntry);
             _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
                 .Returns("evt-cutover-456");
@@ -1626,7 +1648,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _mapper.Map<BatchJobEventTriggerDto>(triggerDto).Returns(triggerDto);
 
             // Act
-            await _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+            await _sut.EnqueueYearEndCutOverApprovalJobAsync(jobExecutionId, PlannedYear, ContextYear, RequestedBy, CorrelationId);
 
             // Assert
             await _emailService.Received(1).SendEmailAsync(
@@ -1642,8 +1664,9 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
             _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
 
+            var jobExecutionId = Guid.NewGuid();
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
-            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+            _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(jobExecutionId, RequestedBy, Arg.Any<string>())
                 .Returns(queueEntry);
             _eventPublisherService.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>())
                 .Returns("evt-cutover-789");
@@ -1656,7 +1679,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
                 .Throws(new Exception("SMTP failure"));
 
             // Act
-            var result = await _sut.EnqueueYearEndCutOverApprovalJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+            var result = await _sut.EnqueueYearEndCutOverApprovalJobAsync(jobExecutionId, PlannedYear, ContextYear, RequestedBy, CorrelationId);
 
             // Assert
             result.Should().NotBeNull();
@@ -1675,7 +1698,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, ContextYear, string.Empty, CorrelationId));
+                () => _sut.EnqueueYearEndCutOverRejectJobAsync(Guid.NewGuid(), PlannedYear, ContextYear, string.Empty, CorrelationId));
 
             ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_User");
         }
@@ -1689,7 +1712,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+                () => _sut.EnqueueYearEndCutOverRejectJobAsync(Guid.NewGuid(), PlannedYear, ContextYear, RequestedBy, CorrelationId));
 
             ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Approval");
         }
@@ -1703,9 +1726,25 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+                () => _sut.EnqueueYearEndCutOverRejectJobAsync(Guid.NewGuid(), PlannedYear, ContextYear, RequestedBy, CorrelationId));
 
             ex.Errors.Should().ContainSingle(e => e.Code == "INVALID_Approval");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndCutOverRejectJobAsync_WhenRepositoryFindsRequestNoLongerInitiated_TranslatesToBusinessValidationError()
+        {
+            // Arrange
+            _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
+            _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns(string.Empty);
+            _yearEndRepository.EnqueueCutOverRejectBatchJobAsync(Arg.Any<Guid>(), RequestedBy, Arg.Any<string>())
+                .Throws(new KeyNotFoundException("gone"));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndCutOverRejectJobAsync(Guid.NewGuid(), PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "REQUEST_NOT_EDITABLE");
         }
 
         #endregion
@@ -1719,18 +1758,19 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
             _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
 
+            var jobExecutionId = Guid.NewGuid();
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
-            _yearEndRepository.EnqueueCutOverRejectBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+            _yearEndRepository.EnqueueCutOverRejectBatchJobAsync(jobExecutionId, RequestedBy, Arg.Any<string>())
                 .Returns(queueEntry);
             _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(new BatchJobEventTriggerDto());
 
             // Act
-            var result = await _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+            var result = await _sut.EnqueueYearEndCutOverRejectJobAsync(jobExecutionId, PlannedYear, ContextYear, RequestedBy, CorrelationId);
 
             // Assert
             result.Should().BeTrue();
             await _yearEndRepository.Received(1).EnqueueCutOverRejectBatchJobAsync(
-                CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>());
+                jobExecutionId, RequestedBy, Arg.Any<string>());
         }
 
         [Fact]
@@ -1740,13 +1780,14 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
             _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
 
+            var jobExecutionId = Guid.NewGuid();
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
-            _yearEndRepository.EnqueueCutOverRejectBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+            _yearEndRepository.EnqueueCutOverRejectBatchJobAsync(jobExecutionId, RequestedBy, Arg.Any<string>())
                 .Returns(queueEntry);
             _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(new BatchJobEventTriggerDto());
 
             // Act
-            await _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+            await _sut.EnqueueYearEndCutOverRejectJobAsync(jobExecutionId, PlannedYear, ContextYear, RequestedBy, CorrelationId);
 
             // Assert
             await _emailService.Received(1).SendEmailAsync(
@@ -1761,8 +1802,9 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             _yearEndRepository.CanApproveOrRejectYearEndCutOverRequestAsync(CutOverJobName).Returns(true);
             _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(CutOverJobName).Returns("other@example.com");
 
+            var jobExecutionId = Guid.NewGuid();
             var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid() };
-            _yearEndRepository.EnqueueCutOverRejectBatchJobAsync(CutOverJobName, RequestedBy, CorrelationId, Arg.Any<string>())
+            _yearEndRepository.EnqueueCutOverRejectBatchJobAsync(jobExecutionId, RequestedBy, Arg.Any<string>())
                 .Returns(queueEntry);
             _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(new BatchJobEventTriggerDto());
 
@@ -1770,7 +1812,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
                 .Throws(new Exception("SMTP failure"));
 
             // Act
-            var result = await _sut.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+            var result = await _sut.EnqueueYearEndCutOverRejectJobAsync(jobExecutionId, PlannedYear, ContextYear, RequestedBy, CorrelationId);
 
             // Assert
             result.Should().BeTrue();

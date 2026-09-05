@@ -42,9 +42,13 @@ namespace Apha.FPS.Core.Interfaces
         Task<bool> CanInitiateYearEndCutOverRequestAsync(string jobName);
         Task<bool> CanApproveOrRejectYearEndCutOverRequestAsync(string jobName);
         Task<string> GetYearEndCutOverRequestInitiatorAsync(string jobName);
+        /// <summary>Same contract as <see cref="GetInitiatedDataSetupJobExecutionIdAsync"/>, scoped to CutOver.</summary>
+        Task<Guid?> GetInitiatedCutOverJobExecutionIdAsync();
         Task<BatchJobQueue> EnqueueCutOverInitiationBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
-        Task<BatchJobQueue> EnqueueCutOverApprovalBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
-        Task<BatchJobQueue> EnqueueCutOverRejectBatchJobAsync(string jobName, string requestedBy, string correlationId, string note);
+        /// <summary>Transitions the exact CutOver request to Approved. Row must still be Initiated at write time.</summary>
+        Task<BatchJobQueue> EnqueueCutOverApprovalBatchJobAsync(Guid jobExecutionId, string requestedBy, string note);
+        /// <summary>Transitions the exact CutOver request to Rejected. No staged data to clean up.</summary>
+        Task<BatchJobQueue> EnqueueCutOverRejectBatchJobAsync(Guid jobExecutionId, string requestedBy, string note);
 
         /// <summary>
         /// Records that the EventBridge publish for <paramref name="jobExecutionId"/> succeeded.

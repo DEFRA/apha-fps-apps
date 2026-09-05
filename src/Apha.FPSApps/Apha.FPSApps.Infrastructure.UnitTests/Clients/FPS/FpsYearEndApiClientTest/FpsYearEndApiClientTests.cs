@@ -389,6 +389,51 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
 
         #endregion
 
+        #region GetInitiatedCutOverJobExecutionIdAsync
+
+        [Fact]
+        public async Task GetInitiatedCutOverJobExecutionIdAsync_WhenApiReturnsAnId_ReturnsIt()
+        {
+            // Arrange
+            var jobExecutionId = Guid.NewGuid();
+            var apiResponse = new ApiResponse<YearEndInitiatedRequestRes>
+            {
+                Success = true,
+                Data = new YearEndInitiatedRequestRes { JobExecutionId = jobExecutionId }
+            };
+            _http.GetAsync<YearEndInitiatedRequestRes>("api/v1/yearend/cutover/initiated").Returns(apiResponse);
+
+            // Act
+            var result = await _client.GetInitiatedCutOverJobExecutionIdAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(jobExecutionId, result.Data);
+        }
+
+        [Fact]
+        public async Task GetInitiatedCutOverJobExecutionIdAsync_WhenApiReturnsNull_ReturnsNull()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<YearEndInitiatedRequestRes>
+            {
+                Success = true,
+                Data = new YearEndInitiatedRequestRes { JobExecutionId = null }
+            };
+            _http.GetAsync<YearEndInitiatedRequestRes>("api/v1/yearend/cutover/initiated").Returns(apiResponse);
+
+            // Act
+            var result = await _client.GetInitiatedCutOverJobExecutionIdAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Null(result.Data);
+        }
+
+        #endregion
+
         #region EnqueueYearEndDataSetupInitiationJobAsync
 
         [Fact]
@@ -1036,7 +1081,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.TriggerYearEndCutOverApprovalJobAsync(PlannedYear);
+            var result = await _client.TriggerYearEndCutOverApprovalJobAsync(PlannedYear, Guid.NewGuid());
 
             // Assert
             Assert.True(result.Success);
@@ -1061,7 +1106,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            var result = await _client.TriggerYearEndCutOverApprovalJobAsync(PlannedYear);
+            var result = await _client.TriggerYearEndCutOverApprovalJobAsync(PlannedYear, Guid.NewGuid());
 
             // Assert
             Assert.False(result.Success);
@@ -1087,7 +1132,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.TriggerYearEndCutOverApprovalJobAsync(plannedYear);
+            await _client.TriggerYearEndCutOverApprovalJobAsync(plannedYear, Guid.NewGuid());
 
             // Assert
             await _http.Received(1).PostAsync<YearEndDataSetupReq, BatchJobEventTriggerRes>(
@@ -1111,7 +1156,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedSuccess);
 
             // Act
-            var result = await _client.EnqueueYearEndCutOverRejectJobAsync(PlannedYear);
+            var result = await _client.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, Guid.NewGuid());
 
             // Assert
             Assert.True(result.Success);
@@ -1136,7 +1181,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            var result = await _client.EnqueueYearEndCutOverRejectJobAsync(PlannedYear);
+            var result = await _client.EnqueueYearEndCutOverRejectJobAsync(PlannedYear, Guid.NewGuid());
 
             // Assert
             Assert.False(result.Success);
@@ -1158,7 +1203,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearEndApiClientT
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedSuccess);
 
             // Act
-            await _client.EnqueueYearEndCutOverRejectJobAsync(plannedYear);
+            await _client.EnqueueYearEndCutOverRejectJobAsync(plannedYear, Guid.NewGuid());
 
             // Assert
             await _http.Received(1).PostAsync<YearEndDataSetupReq, bool?>(

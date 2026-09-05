@@ -109,6 +109,7 @@
 @section Scripts {
 <script>
     window.YearEndCutOverConfig = {
+        currentJobExecutionId: @Html.Raw(Model.CurrentJobExecutionId.HasValue ? $"'{Model.CurrentJobExecutionId.Value}'" : "null"),
         triggerInitiateUrl: '@Url.Action("TriggerInitiate", "YearEndCutOver", new { area = "FPS" })',
         triggerApproveUrl:  '@Url.Action("TriggerApprove",  "YearEndCutOver", new { area = "FPS" })',
         triggerRejectUrl:   '@Url.Action("TriggerReject", "YearEndCutOver", new { area = "FPS" })'

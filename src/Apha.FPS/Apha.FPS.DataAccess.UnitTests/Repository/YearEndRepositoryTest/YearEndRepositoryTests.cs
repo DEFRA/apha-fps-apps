@@ -15,6 +15,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         private const int    DefaultFpsYear  = 2024;
         private const string DefaultJobName  = "YearEndSetup";
         private const string DefaultUserEmail = "test@example.com";
+        private const string CutOverJobName = "YearEnd-CutOver";
 
         // -----------------------------------------------------------------------
         // Factory
@@ -1915,7 +1916,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         {
             // Arrange
             var queueId         = Guid.NewGuid();
-            var job             = BuildJob(1, DefaultJobName);
+            var job             = BuildJob(1, CutOverJobName);
             var initiatedStatus = BuildStatus(10, 1, "initiated");
             var approvedStatus  = BuildStatus(20, 1, "approved");
             var existingQueue   = BuildQueue(1, 10, queueId);
@@ -1927,7 +1928,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
             // Act
             var result = await repo.EnqueueCutOverApprovalBatchJobAsync(
-                DefaultJobName, "approver@example.com", Guid.NewGuid().ToString(), "approval note");
+                existingQueue.JobExecutionId, "approver@example.com", "approval note");
 
             // Assert
             Assert.NotNull(result);
@@ -1939,7 +1940,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         public async Task EnqueueCutOverApprovalBatchJobAsync_WhenNoInitiatedQueueRow_ThrowsKeyNotFoundException()
         {
             // Arrange — no initiated queue row
-            var job             = BuildJob(1, DefaultJobName);
+            var job             = BuildJob(1, CutOverJobName);
             var approvedStatus  = BuildStatus(20, 1, "approved");
 
             var (repo, _, _, _) = CreateRepository(jobs: [job], statuses: [approvedStatus]);
@@ -1947,7 +1948,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(
                 () => repo.EnqueueCutOverApprovalBatchJobAsync(
-                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+                    Guid.NewGuid(), DefaultUserEmail, "note"));
         }
 
         [Fact]
@@ -1955,7 +1956,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         {
             // Arrange — queue row exists but no "approved" status row
             var queueId         = Guid.NewGuid();
-            var job             = BuildJob(1, DefaultJobName);
+            var job             = BuildJob(1, CutOverJobName);
             var initiatedStatus = BuildStatus(10, 1, "initiated");
             var existingQueue   = BuildQueue(1, 10, queueId);
 
@@ -1967,7 +1968,28 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(
                 () => repo.EnqueueCutOverApprovalBatchJobAsync(
-                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+                    existingQueue.JobExecutionId, DefaultUserEmail, "note"));
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverApprovalBatchJobAsync_WhenJobExecutionIdBelongsToDifferentJob_ThrowsKeyNotFoundException()
+        {
+            // Arrange — row exists and is Initiated, but under a different job name entirely.
+            var queueId         = Guid.NewGuid();
+            var job             = BuildJob(1, "YearEnd-DataSetup");
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var approvedStatus  = BuildStatus(20, 1, "approved");
+            var existingQueue   = BuildQueue(1, 10, queueId);
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, approvedStatus]);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => repo.EnqueueCutOverApprovalBatchJobAsync(
+                    existingQueue.JobExecutionId, DefaultUserEmail, "note"));
         }
 
         [Fact]
@@ -1975,7 +1997,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         {
             // Arrange
             var queueId         = Guid.NewGuid();
-            var job             = BuildJob(1, DefaultJobName);
+            var job             = BuildJob(1, CutOverJobName);
             var initiatedStatus = BuildStatus(10, 1, "initiated");
             var approvedStatus  = BuildStatus(20, 1, "approved");
             var existingQueue   = BuildQueue(1, 10, queueId);
@@ -1987,7 +2009,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
             // Act
             await repo.EnqueueCutOverApprovalBatchJobAsync(
-                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note");
+                existingQueue.JobExecutionId, DefaultUserEmail, "note");
 
             // Assert
             logSet.Verify(x => x.Add(It.IsAny<BatchJobQueueLog>()), Times.Once);
@@ -1998,7 +2020,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         {
             // Arrange
             var queueId         = Guid.NewGuid();
-            var job             = BuildJob(1, DefaultJobName);
+            var job             = BuildJob(1, CutOverJobName);
             var initiatedStatus = BuildStatus(10, 1, "initiated");
             var approvedStatus  = BuildStatus(20, 1, "approved");
             var existingQueue   = BuildQueue(1, 10, queueId);
@@ -2010,7 +2032,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
             // Act
             await repo.EnqueueCutOverApprovalBatchJobAsync(
-                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note");
+                existingQueue.JobExecutionId, DefaultUserEmail, "note");
 
             // Assert
             RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
@@ -2025,7 +2047,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         {
             // Arrange
             var queueId         = Guid.NewGuid();
-            var job             = BuildJob(1, DefaultJobName);
+            var job             = BuildJob(1, CutOverJobName);
             var initiatedStatus = BuildStatus(10, 1, "initiated");
             var rejectedStatus  = BuildStatus(30, 1, "rejected");
             var existingQueue   = BuildQueue(1, 10, queueId);
@@ -2037,7 +2059,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
             // Act
             var result = await repo.EnqueueCutOverRejectBatchJobAsync(
-                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "reject note");
+                existingQueue.JobExecutionId, DefaultUserEmail, "reject note");
 
             // Assert
             Assert.NotNull(result);
@@ -2050,7 +2072,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         public async Task EnqueueCutOverRejectBatchJobAsync_WhenNoInitiatedQueueRow_ThrowsKeyNotFoundException()
         {
             // Arrange
-            var job            = BuildJob(1, DefaultJobName);
+            var job            = BuildJob(1, CutOverJobName);
             var rejectedStatus = BuildStatus(30, 1, "rejected");
 
             var (repo, _, _, _) = CreateRepository(jobs: [job], statuses: [rejectedStatus]);
@@ -2058,7 +2080,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(
                 () => repo.EnqueueCutOverRejectBatchJobAsync(
-                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+                    Guid.NewGuid(), DefaultUserEmail, "note"));
         }
 
         [Fact]
@@ -2066,7 +2088,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         {
             // Arrange — queue row exists but no "rejected" status
             var queueId         = Guid.NewGuid();
-            var job             = BuildJob(1, DefaultJobName);
+            var job             = BuildJob(1, CutOverJobName);
             var initiatedStatus = BuildStatus(10, 1, "initiated");
             var existingQueue   = BuildQueue(1, 10, queueId);
 
@@ -2078,7 +2100,28 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(
                 () => repo.EnqueueCutOverRejectBatchJobAsync(
-                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+                    existingQueue.JobExecutionId, DefaultUserEmail, "note"));
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverRejectBatchJobAsync_WhenAlreadyApproved_ThrowsKeyNotFoundException()
+        {
+            // Arrange — row exists but its status is already Approved, not Initiated.
+            var queueId          = Guid.NewGuid();
+            var job              = BuildJob(1, CutOverJobName);
+            var approvedStatus   = BuildStatus(20, 1, "approved");
+            var rejectedStatus   = BuildStatus(30, 1, "rejected");
+            var existingQueue    = BuildQueue(1, 20, queueId);
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [approvedStatus, rejectedStatus]);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => repo.EnqueueCutOverRejectBatchJobAsync(
+                    existingQueue.JobExecutionId, DefaultUserEmail, "note"));
         }
 
         [Fact]
@@ -2086,7 +2129,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         {
             // Arrange
             var queueId         = Guid.NewGuid();
-            var job             = BuildJob(1, DefaultJobName);
+            var job             = BuildJob(1, CutOverJobName);
             var initiatedStatus = BuildStatus(10, 1, "initiated");
             var rejectedStatus  = BuildStatus(30, 1, "rejected");
             var existingQueue   = BuildQueue(1, 10, queueId);
@@ -2098,7 +2141,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
             // Act
             await repo.EnqueueCutOverRejectBatchJobAsync(
-                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "reject note");
+                existingQueue.JobExecutionId, DefaultUserEmail, "reject note");
 
             // Assert
             logSet.Verify(x => x.Add(It.IsAny<BatchJobQueueLog>()), Times.Once);
@@ -2109,7 +2152,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         {
             // Arrange
             var queueId         = Guid.NewGuid();
-            var job             = BuildJob(1, DefaultJobName);
+            var job             = BuildJob(1, CutOverJobName);
             var initiatedStatus = BuildStatus(10, 1, "initiated");
             var rejectedStatus  = BuildStatus(30, 1, "rejected");
             var existingQueue   = BuildQueue(1, 10, queueId);
@@ -2121,7 +2164,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
             // Act
             await repo.EnqueueCutOverRejectBatchJobAsync(
-                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note");
+                existingQueue.JobExecutionId, DefaultUserEmail, "note");
 
             // Assert
             RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
@@ -2132,7 +2175,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         {
             // Arrange
             var queueId         = Guid.NewGuid();
-            var job             = BuildJob(1, DefaultJobName);
+            var job             = BuildJob(1, CutOverJobName);
             var initiatedStatus = BuildStatus(10, 1, "initiated");
             var rejectedStatus  = BuildStatus(30, 1, "rejected");
             var existingQueue   = BuildQueue(1, 10, queueId);
@@ -2163,7 +2206,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(
                 () => repo.EnqueueCutOverRejectBatchJobAsync(
-                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note"));
+                    existingQueue.JobExecutionId, DefaultUserEmail, "note"));
         }
 
         #endregion

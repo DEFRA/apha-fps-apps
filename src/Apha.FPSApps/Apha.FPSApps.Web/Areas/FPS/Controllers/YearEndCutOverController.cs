@@ -39,6 +39,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var plannedYear = await GetPlannedYearAsync();
             var canInitiate = await CanInitiateCutOverRequestAsync();
             var canApprove = await CanApproveOrRejectCutOverRequestAsync();
+            var currentJobExecutionId = await GetInitiatedCutOverJobExecutionIdAsync();
             var historyGrid = await BuildHistoryGridAsync(new PaginationFilter<string> { Filter = "{}" });
 
             return View(new YearEndCutOverViewModel
@@ -46,6 +47,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 PlannedYear = plannedYear,
                 CanInitiate = canInitiate,
                 CanApprove = canApprove,
+                CurrentJobExecutionId = currentJobExecutionId,
                 HistoryGrid = historyGrid
             });
         }
@@ -64,7 +66,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (result.Success)
             {
                 _logger.LogInformation("Year End CutOver initiation job enqueued for year {PlannedYear}.", plannedYear);
-                return Json(new { success = true });
+                return Json(new { success = true, jobExecutionId = result.Data?.JobExecutionId });
             }
 
             var errors = result?.Errors?.Select(e => new { field = string.Empty, message = e.Message }).ToArray()
@@ -73,9 +75,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> TriggerApprove(int plannedYear)
+        public async Task<IActionResult> TriggerApprove(int plannedYear, Guid? jobExecutionId)
         {
-            var result = await _yearEndService.TriggerYearEndCutOverApprovalJobAsync(plannedYear);
+            if (!jobExecutionId.HasValue || jobExecutionId.Value == Guid.Empty)
+                return Json(new { success = false, errors = new[] { new { field = "", message = "No active Year End CutOver request." } } });
+
+            var result = await _yearEndService.TriggerYearEndCutOverApprovalJobAsync(plannedYear, jobExecutionId.Value);
             if (result.Success)
             {
                 var eventId = result?.Data?.EventId;
@@ -89,9 +94,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> TriggerReject(int plannedYear)
+        public async Task<IActionResult> TriggerReject(int plannedYear, Guid? jobExecutionId)
         {
-            var result = await _yearEndService.EnqueueYearEndCutOverRejectJobAsync(plannedYear);
+            if (!jobExecutionId.HasValue || jobExecutionId.Value == Guid.Empty)
+                return Json(new { success = false, errors = new[] { new { field = "", message = "No active Year End CutOver request." } } });
+
+            var result = await _yearEndService.EnqueueYearEndCutOverRejectJobAsync(plannedYear, jobExecutionId.Value);
             if (result.Success)
             {
                 _logger.LogInformation("Year End CutOver reject job enqueued for year {PlannedYear}.", plannedYear);
@@ -118,6 +126,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var result = await _yearEndService.CanApproveOrRejectCutOverRequestAsync(YearEndCutOverJobName);
             return result.Success && result.Data;
+        }
+
+        private async Task<Guid?> GetInitiatedCutOverJobExecutionIdAsync()
+        {
+            var result = await _yearEndService.GetInitiatedCutOverJobExecutionIdAsync();
+            return result.Success ? result.Data : null;
         }
 
         private async Task<DataGridConfig<YearEndHistoryItem>> BuildHistoryGridAsync(PaginationFilter<string> request)
