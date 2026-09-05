@@ -175,12 +175,11 @@ namespace Apha.FPS.Application.Services
             // are separate requests that never share a correlation id. Persisted target year, not the
             // caller-supplied plannedYear (already verified equal above, but the persisted value is the
             // one that must drive the Worker regardless).
-            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, queued.JobExecutionId.ToString(), request.TargetFpsYear.Value);
-
-            var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
-
-            // Only reached if PublishAsync succeeded - a failed publish leaves triggered_at_utc NULL.
-            await _yearEndRepository.SetTriggeredMetadataAsync(queued.JobExecutionId.ToString(), requestedBy);
+            // TEMP: EventBridge disabled for local testing (revert before pushing).
+            // var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, queued.JobExecutionId.ToString(), request.TargetFpsYear.Value);
+            // var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
+            // await _yearEndRepository.SetTriggeredMetadataAsync(queued.JobExecutionId.ToString(), requestedBy);
+            var eventId = string.Empty;
 
             var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
             result.EventId = eventId;
