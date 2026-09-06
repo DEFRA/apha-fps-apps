@@ -226,11 +226,9 @@ namespace Apha.FPS.Application.Services
             if (!canApprove)
                 errors.Add(new BusinessValidationError($"There is no initiated request for rejection for job '{jobName}'.", "INVALID_Approval"));
 
-            // TEMP: initiator-cannot-reject-own-request check disabled for local solo testing
-            // (revert before pushing).
-            // var initiator = await _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(jobName);
-            // if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
-            //     errors.Add(new BusinessValidationError($"Initiator and rejector for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
+            var initiator = await _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(jobName);
+            if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
+                errors.Add(new BusinessValidationError($"Initiator and rejector for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
 
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
@@ -367,11 +365,9 @@ namespace Apha.FPS.Application.Services
             if (!canApprove)
                 errors.Add(new BusinessValidationError($"There is no initiated request for rejection for job '{jobName}'.", "INVALID_Approval"));
 
-            // TEMP: initiator-cannot-reject-own-request check disabled for local solo testing
-            // (revert before pushing).
-            // var initiator = await _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(jobName);
-            // if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
-            //     errors.Add(new BusinessValidationError($"Initiator and rejector for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
+            var initiator = await _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(jobName);
+            if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
+                errors.Add(new BusinessValidationError($"Initiator and rejector for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
 
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
@@ -426,13 +422,12 @@ namespace Apha.FPS.Application.Services
                 if (!canApprove)
                     errors.Add(new BusinessValidationError($"There is no initiated request for approval for job '{jobName}'.", "INVALID_Approval"));
 
-                // TEMP: initiator-cannot-approve-own-request check disabled for local solo testing
-                // (revert before pushing).
-                // var initiator = await _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(jobName);
-                // if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
-                // {
-                //     errors.Add(new BusinessValidationError($"Initiator and approver for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
-                // }
+                var initiator = await _yearEndRepository.GetYearEndDataSetupRequestInitiatorAsync(jobName);
+
+                if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
+                {
+                    errors.Add(new BusinessValidationError($"Initiator and approver for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
+                }
             }
             else
             {
@@ -535,13 +530,12 @@ namespace Apha.FPS.Application.Services
                 if (!canApprove)
                     errors.Add(new BusinessValidationError($"There is no initiated request for approval for job '{jobName}'.", "INVALID_Approval"));
 
-                // TEMP: initiator-cannot-approve-own-request check disabled for local solo testing
-                // (revert before pushing).
-                // var initiator = await _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(jobName);
-                // if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
-                // {
-                //     errors.Add(new BusinessValidationError($"Initiator and approver for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
-                // }
+                var initiator = await _yearEndRepository.GetYearEndCutOverRequestInitiatorAsync(jobName);
+
+                if (!string.IsNullOrEmpty(initiator) && initiator == requestedBy)
+                {
+                    errors.Add(new BusinessValidationError($"Initiator and approver for job '{jobName}' cannot be the same person. The request was created by '{initiator}'.", "INVALID_Approval"));
+                }
             }
             else
             {
