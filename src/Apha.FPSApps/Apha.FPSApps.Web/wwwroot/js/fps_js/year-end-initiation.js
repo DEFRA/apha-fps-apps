@@ -284,12 +284,19 @@
     };
 
     // ── Row button state enforcement ──────────────────────────────────────────
+    // ExistsForPlannedYear reflects "already has a staged row for this request" (planned-year
+    // staging design), not a data classification - it is "No" for every row on a freshly
+    // Initiated request, before anything has been staged. Edit must stay available regardless
+    // (it opens the same value the grid already shows and saves via the same upsert Confirm
+    // uses, whether or not the row is staged yet) - gating it on isPlanned blocked the review-
+    // then-edit-or-confirm workflow entirely on a fresh request. Confirm alone is hidden once
+    // already staged - accepting the default a second time is a no-op.
     function applyConfigGridButtonStates() {
         $('#tbl_yearEndConfigValuesGrid tbody tr').each(function () {
             var fpsYearType = getCellValue(this, 'ExistsForPlannedYear').toLowerCase();
             var isPlanned = (fpsYearType === 'yes');
 
-            $(this).find('.edit-row-btn').prop('disabled', !isPlanned);
+            $(this).find('.edit-row-btn').prop('disabled', false);
             $(this).find('.delete-row-btn').prop('disabled', isPlanned);
         });
     }
@@ -305,7 +312,7 @@
                 $(this).find('.delete-row-btn').prop('disabled', true);
             } else {
                 var Planned = (fpsYearType == 'yes');
-                $(this).find('.edit-row-btn').prop('disabled', !Planned);
+                $(this).find('.edit-row-btn').prop('disabled', false);
                 $(this).find('.delete-row-btn').prop('disabled', Planned);
             }
         });
