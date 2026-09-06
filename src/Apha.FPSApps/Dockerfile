@@ -48,3 +48,5 @@ USER app
 
 ENTRYPOINT ["dotnet", "Apha.FPSApps.Web.dll"]
 
+# no-op: dummy change to trigger an ECR image build, 2026-09-06
+
