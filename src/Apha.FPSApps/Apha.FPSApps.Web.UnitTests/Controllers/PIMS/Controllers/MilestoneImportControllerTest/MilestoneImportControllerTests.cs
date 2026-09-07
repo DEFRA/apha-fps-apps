@@ -36,7 +36,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneImpor
         #region Index
 
         [Fact]
-        public async Task Index_WithoutProject_ReturnsViewWithDefaultProject()
+        public async Task Index_WithoutProject_ReturnsViewWithEmptySelectedProject()
         {
             // Arrange
             var projects = new List<ProjectListMilestoneDto>
@@ -69,7 +69,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneImpor
             
             var model = viewResult.Model as MilestoneImportViewModel;
             Assert.Equal(2, model!.ProjectOptions.Count);
-            Assert.Equal("PP001", model.Parentproject);
+            Assert.Equal(string.Empty, model.Parentproject);
         }
 
         [Fact]
@@ -554,7 +554,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneImpor
             const string project = "PP001";
             var apiResult = ApiResponseDto<object>.SuccessResponse(10);
 
-            _mockMilestoneService.ClearStagingAsync(project).Returns(apiResult);
+            _mockMilestoneService.ClearStagingAsync().Returns(apiResult);
 
             // Act
             var result = await _sut.ClearImport(project);
@@ -563,7 +563,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneImpor
             Assert.IsType<JsonResult>(result);
             var jsonResult = result as JsonResult;
             Assert.NotNull(jsonResult!.Value);
-            await _mockMilestoneService.Received(1).ClearStagingAsync(project);
+            await _mockMilestoneService.Received(1).ClearStagingAsync();
         }
 
         [Fact]
@@ -579,7 +579,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneImpor
                 Meta = new ApiMetaDto()
             };
 
-            _mockMilestoneService.ClearStagingAsync(project).Returns(apiResult);
+            _mockMilestoneService.ClearStagingAsync().Returns(apiResult);
 
             // Act
             var result = await _sut.ClearImport(project);
@@ -588,7 +588,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneImpor
             Assert.IsType<JsonResult>(result);
             var jsonResult = result as JsonResult;
             Assert.NotNull(jsonResult!.Value);
-            await _mockMilestoneService.Received(1).ClearStagingAsync(project);
+            await _mockMilestoneService.Received(1).ClearStagingAsync();
         }
 
         #endregion

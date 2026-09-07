@@ -49,7 +49,7 @@ namespace Apha.Costbook.Api.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "API-CostbookAdmin")]
+        
         public async Task<IActionResult> AddAccountGroup([FromBody] AccountGroupReq req)
         {
             var dto = _mapper.Map<AccountGroupDto>(req);
@@ -58,7 +58,7 @@ namespace Apha.Costbook.Api.Controllers
         }
 
         [HttpPut("{csg7Group}")]
-        [Authorize(Roles = "API-CostbookAdmin")]
+        
         public async Task<IActionResult> UpdateAccountGroup(string csg7Group, [FromBody] AccountGroupReq req)
         {
             var dto = _mapper.Map<AccountGroupDto>(req);
@@ -67,7 +67,7 @@ namespace Apha.Costbook.Api.Controllers
         }
 
         [HttpDelete("{csg7Group}")]
-        [Authorize(Roles = "API-CostbookAdmin")]
+        
         public async Task<IActionResult> DeleteAccountGroup(string csg7Group)
         {
             if (string.IsNullOrWhiteSpace(csg7Group))
