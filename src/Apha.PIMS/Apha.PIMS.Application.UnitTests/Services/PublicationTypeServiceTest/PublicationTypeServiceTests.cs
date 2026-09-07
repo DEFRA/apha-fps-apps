@@ -32,7 +32,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.PublicationTypeServiceTest
         {
             // Arrange
             var dto = MakeDto("RPC");
-            _repository.PublicationTypeExistsAsync("RPC").Returns(true);
+            _repository.GetPublicationTypeByCodeAsync("RPC").Returns(MakeEntity("RPC"));
 
             // Act
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
@@ -41,7 +41,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.PublicationTypeServiceTest
             // Assert
             Assert.Single(exception.Errors);
             Assert.Equal("PUBLICATION_TYPE_ALREADY_EXISTS", exception.Errors[0].Code);
-            Assert.Equal("Type code 'RPC' already exists.", exception.Errors[0].Message);
+            Assert.Equal("Publication type 'RPC' already exists.", exception.Errors[0].Message);
             await _repository.DidNotReceive().AddPublicationTypeAsync(Arg.Any<PublicationType>());
         }
 
@@ -54,7 +54,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.PublicationTypeServiceTest
             var created = MakeEntity("NRT", "Narrative");
             var resultDto = MakeDto("NRT", "Narrative");
 
-            _repository.PublicationTypeExistsAsync("NRT").Returns(false);
+            _repository.GetPublicationTypeByCodeAsync("NRT").Returns((PublicationType?)null);
             _mapper.Map<PublicationType>(dto).Returns(entity);
             _repository.AddPublicationTypeAsync(entity).Returns(created);
             _mapper.Map<PublicationTypeDto>(created).Returns(resultDto);

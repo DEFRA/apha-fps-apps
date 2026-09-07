@@ -1932,11 +1932,22 @@ function deleteRisk(btn) {
 
 function savePublicationType() {
     const $form = $('#formPublicationType');
+    const $banner = $('#publicationTypeDbError');
+    const $list = $banner.find('.govuk-error-summary__list');
     const isEdit = ($form.data('is-edit') || '').toString().toLowerCase() === 'true';
 
-    displayPimsOtherClientValidationErrors($form);
+    // First, hide any previous server validation errors
+    $banner.addClass('ra-hidden');
+    $list.empty();
 
-    if (!isPimsOtherFormValid($form)) return;
+    // Clear any inline client validation errors from previous attempts
+    clearValidationErrors($form);
+
+    // Check for client validation errors (required fields) and display them
+    if (!isFormValid($form)) {
+        displayClientValidationErrors($form, $form);
+        return;
+    }
 
     const formData = $form.serializeArray();
     formData.push({ name: 'isEdit', value: isEdit });
@@ -1952,12 +1963,39 @@ function savePublicationType() {
                 return;
             }
 
-            if (data.errors) {
-                displayServerValidationErrors(data.errors, data.message, $form);
+            $list.empty();
+
+            // Handle errors array from controller
+            if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+                data.errors.forEach(function (error) {
+                    var errorMessage = error.message || error.Message || error.errorMessage || error;
+                    $list.append('<li><a href="#">' + errorMessage + '</a></li>');
+                });
+            } else if (data.message) {
+                $list.append('<li><a href="#">' + data.message + '</a></li>');
+            } else {
+                $list.append('<li><a href="#">Save failed.</a></li>');
             }
+
+            $banner.removeClass('ra-hidden').show();
+            $banner.focus();
         })
-        .fail(function () {
-            showAlertMessage('An error occurred while saving.', AlertType.ERROR);
+        .fail(function (xhr) {
+            const response = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+            let errorMessage = 'An error occurred while saving.';
+
+            if (response && response.message) {
+                errorMessage = response.message;
+            } else if (response && response.Message) {
+                errorMessage = response.Message;
+            } else if (response && response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
+                errorMessage = response.errors[0].message || response.errors[0].Message || response.errors[0];
+            }
+
+            $list.empty();
+            $list.append('<li><a href="#">' + errorMessage + '</a></li>');
+            $banner.removeClass('ra-hidden').show();
+            $banner.focus();
         });
 }
 

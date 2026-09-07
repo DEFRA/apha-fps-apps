@@ -1,5 +1,6 @@
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Services;
+using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using AutoMapper;
@@ -143,6 +144,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
             var entity  = MakeEntity(0);
             var created = MakeEntity(10);
             var result_dto = MakeDto(10);
+            _repository.GetAllReportsAsync().Returns(new List<Report>());
             _mapper.Map<Report>(dto).Returns(entity);
             _repository.AddReportAsync(entity).Returns(created);
             _mapper.Map<ReportDto>(created).Returns(result_dto);
@@ -163,23 +165,31 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
         }
 
         [Fact]
-        public async Task CreateAsync_EmptyReportname_ThrowsArgumentException()
+        public async Task CreateAsync_EmptyReportname_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = new ReportDto { ReportName = "", Type = "R" };
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateReportAsync(dto));
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CreateReportAsync(dto));
+
+            // Assert
+            Assert.Single(ex.Errors);
+            Assert.Equal("REPORT_NAME_REQUIRED", ex.Errors[0].Code);
         }
 
         [Fact]
-        public async Task CreateAsync_WhitespaceReportname_ThrowsArgumentException()
+        public async Task CreateAsync_WhitespaceReportname_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = new ReportDto { ReportName = "   ", Type = "R" };
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateReportAsync(dto));
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CreateReportAsync(dto));
+
+            // Assert
+            Assert.Single(ex.Errors);
+            Assert.Equal("REPORT_NAME_REQUIRED", ex.Errors[0].Code);
         }
 
         #endregion
@@ -197,6 +207,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
             var updated = MakeEntity(5);
             var result_dto = MakeDto(5);
             _repository.ReportExistsAsync(5).Returns(true);
+            _repository.GetAllReportsAsync().Returns(new List<Report> { new Report { Id = 5, ReportName = dto.ReportName, Type = "R" } });
             _mapper.Map<Report>(dto).Returns(entity);
             _repository.UpdateReportAsync(entity).Returns(updated);
             _mapper.Map<ReportDto>(updated).Returns(result_dto);
@@ -212,13 +223,17 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_EntityNotFound_ThrowsKeyNotFoundException()
+        public async Task UpdateAsync_EntityNotFound_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             _repository.ReportExistsAsync(99).Returns(false);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.UpdateReportAsync(MakeDto(99)));
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.UpdateReportAsync(MakeDto(99)));
+
+            // Assert
+            Assert.Single(ex.Errors);
+            Assert.Equal("REPORT_NOT_FOUND", ex.Errors[0].Code);
         }
 
         [Fact]
@@ -228,13 +243,17 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_EmptyReportname_ThrowsArgumentException()
+        public async Task UpdateAsync_EmptyReportname_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = new ReportDto { Id = 1, ReportName = "", Type = "R" };
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateReportAsync(dto));
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.UpdateReportAsync(dto));
+
+            // Assert
+            Assert.Single(ex.Errors);
+            Assert.Equal("REPORT_NAME_REQUIRED", ex.Errors[0].Code);
         }
 
         #endregion
@@ -259,13 +278,17 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
         }
 
         [Fact]
-        public async Task DeleteAsync_EntityNotFound_ThrowsKeyNotFoundException()
+        public async Task DeleteAsync_EntityNotFound_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             _repository.ReportExistsAsync(99).Returns(false);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.DeleteReportAsync(99));
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.DeleteReportAsync(99));
+
+            // Assert
+            Assert.Single(ex.Errors);
+            Assert.Equal("REPORT_NOT_FOUND", ex.Errors[0].Code);
         }
 
         [Fact]

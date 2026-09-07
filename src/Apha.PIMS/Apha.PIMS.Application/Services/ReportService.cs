@@ -1,6 +1,7 @@
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
+using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
@@ -42,9 +43,28 @@ namespace Apha.PIMS.Application.Services
        
         public async Task<ReportDto> CreateReportAsync(ReportDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.ReportName))
-                throw new ArgumentException("Report name is required.", nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
+
+            string? normalizedReportName = dto.ReportName?.Trim();
+
+            if (string.IsNullOrWhiteSpace(normalizedReportName))
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Report name is required.", "REPORT_NAME_REQUIRED")
+                ]);
+
+            dto.ReportName = normalizedReportName;
+
+            var allReports = await _repository.GetAllReportsAsync();
+
+            bool duplicateReportNameExists = allReports.Any(r =>
+                StringEqualsTrimmedIgnoreCase(r.ReportName, dto.ReportName));
+
+            if (duplicateReportNameExists)
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Report name already exists. Please enter a unique Report name.", "REPORT_DUPLICATE_NAME")
+                ]);
 
             Report entity = _mapper.Map<Report>(dto);
             Report created = await _repository.AddReportAsync(entity);
@@ -54,25 +74,51 @@ namespace Apha.PIMS.Application.Services
         
         public async Task<ReportDto> UpdateReportAsync(ReportDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.ReportName))
-                throw new ArgumentException("Report name is required.", nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
+
+            string? normalizedReportName = dto.ReportName?.Trim();
+
+            if (string.IsNullOrWhiteSpace(normalizedReportName))
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Report name is required.", "REPORT_NAME_REQUIRED")
+                ]);
+
+            dto.ReportName = normalizedReportName;
 
             bool exists = await _repository.ReportExistsAsync(dto.Id);
             if (!exists)
-                throw new KeyNotFoundException($"Report with id {dto.Id} was not found.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError($"Report with id {dto.Id} was not found.", "REPORT_NOT_FOUND")
+                ]);
+
+            var allReports = await _repository.GetAllReportsAsync();
+
+            bool duplicateReportNameExists = allReports.Any(r =>
+                StringEqualsTrimmedIgnoreCase(r.ReportName, dto.ReportName)
+                && r.Id != dto.Id);
+
+            if (duplicateReportNameExists)
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Report name already exists. Please enter a unique Report name.", "REPORT_DUPLICATE_NAME")
+                ]);
 
             Report entity = _mapper.Map<Report>(dto);
             Report updated = await _repository.UpdateReportAsync(entity);
             return _mapper.Map<ReportDto>(updated);
         }
 
-        
+
         public async Task<bool> DeleteReportAsync(int id)
         {
             bool exists = await _repository.ReportExistsAsync(id);
             if (!exists)
-                throw new KeyNotFoundException($"Report with id {id} was not found.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError($"Report with id {id} was not found.", "REPORT_NOT_FOUND")
+                ]);
 
             return await _repository.DeleteReportAsync(id);
         }
@@ -80,6 +126,16 @@ namespace Apha.PIMS.Application.Services
         public async Task<bool> ReportExistsAsync(int id)
         {
             return await _repository.ReportExistsAsync(id);
+        }
+
+        private static bool StringEqualsTrimmedIgnoreCase(string? left, string? right)
+        {
+            if (left is null || right is null)
+            {
+                return false;
+            }
+
+            return string.Equals(left.Trim(), right.Trim(), StringComparison.OrdinalIgnoreCase);
         }
     }
 }

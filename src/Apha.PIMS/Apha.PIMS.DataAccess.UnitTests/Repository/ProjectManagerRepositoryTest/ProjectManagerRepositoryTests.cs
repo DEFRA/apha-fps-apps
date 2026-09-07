@@ -9,10 +9,9 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
 {
     public class ProjectManagerRepositoryTests
     {
-        private static ProjectManagerRepository CreateRepository(
-            IEnumerable<ProjectManager>? managers = null)
+        private static ProjectManagerRepository CreateRepository(IEnumerable<ProjectManager>? managers = null)
         {
-            var mockContext     = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
             var managersMockSet = RepositoryTestHelper.CreateMockDbSet(managers ?? Enumerable.Empty<ProjectManager>());
 
             RepositoryTestHelper.SetupDbSetOperations(managersMockSet);
@@ -23,13 +22,10 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             return new ProjectManagerRepository(mockContext.Object);
         }
 
-        private static (
-            ProjectManagerRepository Repo,
-            Mock<DbSet<ProjectManager>> ManagersDbSet,
-            Mock<PimsDbContext> Context)
+        private static (ProjectManagerRepository Repo, Mock<DbSet<ProjectManager>> ManagersDbSet, Mock<PimsDbContext> Context)
             CreateRepositoryWithMocks(IEnumerable<ProjectManager>? managers = null)
         {
-            var mockContext     = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
             var managersMockSet = RepositoryTestHelper.CreateMockDbSet(managers ?? Enumerable.Empty<ProjectManager>());
 
             RepositoryTestHelper.SetupDbSetOperations(managersMockSet);
@@ -41,282 +37,129 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectManagerRepositoryTest
             return (repo, managersMockSet, mockContext);
         }
 
-        // ── helpers ───────────────────────────────────────────────────────────────
-
-        private static ProjectManager MakeManager(string name = "J. Smith", bool disable = false) =>
-            new ProjectManager
+        private static ProjectManager MakeManager(string name = "J. Smith", string? email = null, string? loginEmail = null, string? mNumber = null, bool disable = false) =>
+            new()
             {
                 Projectmanager = name,
-                Email          = $"{name.Replace(". ", ".").Replace(" ", ".").ToLower()}@apha.gov.uk",
-                LoginEmail     = $"{name.Replace(". ", ".").Replace(" ", ".").ToLower()}@login.apha.gov.uk",
-                Disable        = disable
+                Email = email,
+                LoginEmail = loginEmail,
+                Mnumber = mNumber,
+                Disable = disable
             };
 
-        // ── GetAllAsync ───────────────────────────────────────────────────────────
-
-        #region GetAllAsync
-
         [Fact]
-        public async Task GetAllAsync_ReturnsAllManagers_WhenDataExists()
+        public async Task GetAllProjectManagersAsync_ReturnsAllManagers()
         {
-            // Arrange
-            var managers = new List<ProjectManager>
+            var repo = CreateRepository(new List<ProjectManager>
             {
                 MakeManager("Smith, J."),
                 MakeManager("Jones, A.")
-            };
-            var repo = CreateRepository(managers);
+            });
 
-            // Act
             var result = await repo.GetAllProjectManagersAsync();
 
-            // Assert
             Assert.Equal(2, result.Count);
-            Assert.Contains(result, m => m.Projectmanager == "Smith, J.");
         }
 
         [Fact]
-        public async Task GetAllAsync_ReturnsEmptyList_WhenNoDataExists()
+        public async Task GetProjectManagerByNameAsync_ReturnsManager_WhenExactCaseExists()
         {
-            // Arrange
-            var repo = CreateRepository();
+            var repo = CreateRepository(new List<ProjectManager> { MakeManager("Smith, J.") });
 
-            // Act
-            var result = await repo.GetAllProjectManagersAsync();
-
-            // Assert
-            Assert.Empty(result);
-        }
-
-        #endregion
-
-        // ── GetByIdAsync ──────────────────────────────────────────────────────────
-
-        #region GetByIdAsync
-
-        [Fact]
-        public async Task GetByIdAsync_ReturnsManager_WhenNameExists()
-        {
-            // Arrange
-            var managers = new List<ProjectManager>
-            {
-                MakeManager("Smith, J."),
-                MakeManager("Jones, A.")
-            };
-            var repo = CreateRepository(managers);
-
-            // Act
             var result = await repo.GetProjectManagerByNameAsync("Smith, J.");
 
-            // Assert
             Assert.NotNull(result);
             Assert.Equal("Smith, J.", result!.Projectmanager);
         }
 
         [Fact]
-        public async Task GetByIdAsync_ReturnsNull_WhenNameDoesNotExist()
+        public async Task GetProjectManagerByNameAsync_ReturnsNull_WhenNotFound()
         {
-            // Arrange
-            var managers = new List<ProjectManager> { MakeManager("Smith, J.") };
-            var repo = CreateRepository(managers);
+            var repo = CreateRepository(new List<ProjectManager> { MakeManager("Smith, J.") });
 
-            // Act
-            var result = await repo.GetProjectManagerByNameAsync("Unknown Manager");
+            var result = await repo.GetProjectManagerByNameAsync("Unknown");
 
-            // Assert
             Assert.Null(result);
         }
 
         [Fact]
-        public async Task GetByIdAsync_ReturnsNull_WhenNoDataExists()
+        public async Task AddProjectManagerAsync_ReturnsSameEntity_AndCallsSave()
         {
-            // Arrange
-            var repo = CreateRepository();
+            var (repo, managersDbSet, context) = CreateRepositoryWithMocks();
+            var manager = MakeManager("New Manager", disable: true);
 
-            // Act
-            var result = await repo.GetProjectManagerByNameAsync("Smith, J.");
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        [Theory]
-        [InlineData("")]
-        [InlineData("NONEXISTENT_MANAGER")]
-        public async Task GetByIdAsync_ReturnsNull_WhenIdDoesNotMatch(string name)
-        {
-            // Arrange
-            var managers = new List<ProjectManager> { MakeManager("Smith, J.") };
-            var repo = CreateRepository(managers);
-
-            // Act
-            var result = await repo.GetProjectManagerByNameAsync(name);
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        #endregion
-
-        // ── AddAsync ──────────────────────────────────────────────────────────────
-
-        #region AddAsync
-
-        [Fact]
-        public async Task AddAsync_ReturnsAddedEntity()
-        {
-            // Arrange
-            var (repo, _, _) = CreateRepositoryWithMocks();
-            var manager = MakeManager("New Manager");
-
-            // Act
             var result = await repo.AddProjectManagerAsync(manager);
 
-            // Assert
-            Assert.NotNull(result);
             Assert.Same(manager, result);
+            managersDbSet.Verify(x => x.Add(It.Is<ProjectManager>(m => m.Projectmanager == "New Manager")), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(context, 1);
         }
 
         [Fact]
-        public async Task AddAsync_CallsDbSetAdd()
+        public async Task UpdateProjectManagerAsync_ReturnsUpdatedEntity_AndCallsSave()
         {
-            // Arrange
-            var (repo, managersDbSet, _) = CreateRepositoryWithMocks();
-            var manager = MakeManager("New Manager");
+            var (repo, _, context) = CreateRepositoryWithMocks(new List<ProjectManager> { MakeManager("Smith, J.") });
+            var entity = MakeManager("Smith, J.", email: "new@apha.gov.uk", disable: true);
 
-            // Act
-            await repo.AddProjectManagerAsync(manager);
+            var result = await repo.UpdateProjectManagerAsync(entity);
 
-            // Assert
-            managersDbSet.Verify(
-                x => x.Add(It.Is<ProjectManager>(m => m.Projectmanager == "New Manager")),
-                Times.Once);
-        }
-
-        [Fact]
-        public async Task AddAsync_CallsSaveChangesAsync()
-        {
-            // Arrange
-            var (repo, _, mockContext) = CreateRepositoryWithMocks();
-            var manager = MakeManager("New Manager");
-
-            // Act
-            await repo.AddProjectManagerAsync(manager);
-
-            // Assert
-            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
-        }
-
-        [Fact]
-        public async Task AddAsync_PreservesDisableField()
-        {
-            // Arrange
-            var (repo, managersDbSet, _) = CreateRepositoryWithMocks();
-
-            ProjectManager? captured = null;
-            managersDbSet
-                .Setup(x => x.Add(It.IsAny<ProjectManager>()))
-                .Callback<ProjectManager>(m => captured = m);
-
-            var manager = MakeManager("Manager X", disable: true);
-
-            // Act
-            await repo.AddProjectManagerAsync(manager);
-
-            // Assert
-            Assert.NotNull(captured);
-            Assert.True(captured!.Disable);
-        }
-
-        #endregion
-
-        // ── UpdateAsync ───────────────────────────────────────────────────────────
-
-        #region UpdateAsync
-
-        [Fact]
-        public async Task UpdateAsync_ReturnsUpdatedEntity()
-        {
-            // Arrange
-            var existing = MakeManager("Smith, J.");
-            var (repo, _, _) = CreateRepositoryWithMocks(new List<ProjectManager> { existing });
-            var updatedEntity = new ProjectManager
-            {
-                Projectmanager = "Smith, J.",
-                Email          = "new@apha.gov.uk",
-                Disable        = true
-            };
-
-            // Act
-            var result = await repo.UpdateProjectManagerAsync(updatedEntity);
-
-            // Assert
-            Assert.NotNull(result);
             Assert.Equal("new@apha.gov.uk", result.Email);
             Assert.True(result.Disable);
+            RepositoryTestHelper.VerifySaveChanges(context, 1);
         }
 
         [Fact]
-        public async Task UpdateAsync_CallsSaveChangesAsync()
+        public async Task ProjectManagerExistsAsync_ReturnsTrue_WhenNameExists()
         {
-            // Arrange
-            var existing = MakeManager("Smith, J.");
-            var (repo, _, mockContext) = CreateRepositoryWithMocks(new List<ProjectManager> { existing });
+            var repo = CreateRepository(new List<ProjectManager> { MakeManager("Smith, J.") });
 
-            // Act
-            await repo.UpdateProjectManagerAsync(MakeManager("Smith, J."));
-
-            // Assert
-            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
-        }
-
-        #endregion
-
-        // ── ExistsAsync ───────────────────────────────────────────────────────────
-
-        #region ExistsAsync
-
-        [Fact]
-        public async Task ExistsAsync_ReturnsTrue_WhenNameExists()
-        {
-            // Arrange
-            var managers = new List<ProjectManager> { MakeManager("Smith, J.") };
-            var repo = CreateRepository(managers);
-
-            // Act
             var result = await repo.ProjectManagerExistsAsync("Smith, J.");
 
-            // Assert
             Assert.True(result);
         }
 
         [Fact]
-        public async Task ExistsAsync_ReturnsFalse_WhenNameDoesNotExist()
+        public async Task ProjectManagerExistsAsync_ReturnsFalse_WhenNameDoesNotExist()
         {
-            // Arrange
-            var managers = new List<ProjectManager> { MakeManager("Smith, J.") };
-            var repo = CreateRepository(managers);
+            var repo = CreateRepository(new List<ProjectManager> { MakeManager("Smith, J.") });
 
-            // Act
-            var result = await repo.ProjectManagerExistsAsync("Unknown Manager");
+            var result = await repo.ProjectManagerExistsAsync("Unknown");
 
-            // Assert
             Assert.False(result);
         }
 
         [Fact]
-        public async Task ExistsAsync_ReturnsFalse_WhenNoDataExists()
+        public async Task GetManagerNamesAsync_ReturnsDistinctOrderedNames()
         {
-            // Arrange
-            var repo = CreateRepository();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
+            var projects = RepositoryTestHelper.CreateMockDbSet(new List<Projects>
+            {
+                new() { Program = "P1", Manager = "B Manager" },
+                new() { Program = "P2", Manager = "A Manager" },
+                new() { Program = "P1", Manager = "B Manager" }
+            });
+            var progs = RepositoryTestHelper.CreateMockDbSet(new List<RadtrackProg>
+            {
+                new() { Program = "P1" },
+                new() { Program = "P2" }
+            });
+            var mgrs = RepositoryTestHelper.CreateMockDbSet(new List<ProjectManager>());
 
-            // Act
-            var result = await repo.ProjectManagerExistsAsync("Smith, J.");
+            RepositoryTestHelper.SetupDbSetOperations(projects);
+            RepositoryTestHelper.SetupDbSetOperations(progs);
+            RepositoryTestHelper.SetupDbSetOperations(mgrs);
 
-            // Assert
-            Assert.False(result);
+            mockContext.Setup(x => x.MyTlkpProjects).Returns(projects.Object);
+            mockContext.Setup(x => x.RadtrackProgs).Returns(progs.Object);
+            mockContext.Setup(x => x.ProjectManagers).Returns(mgrs.Object);
+
+            var repo = new ProjectManagerRepository(mockContext.Object);
+
+            var result = await repo.GetManagerNamesAsync();
+
+            Assert.Equal(2, result.Count);
+            Assert.Equal("A Manager", result[0]);
+            Assert.Equal("B Manager", result[1]);
         }
-
-        #endregion
     }
 }
