@@ -984,6 +984,22 @@ button a {
     margin-bottom: 8px;
 }
 
+/* Project Planning page: the container-fluid has no gutter, so the heading and
+   grids sit flush against the viewport edges. Add a small left/right margin so
+   the content is inset like the other FPS screens. */
+.pp-page-gutter {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* govuk-grid-row applies a negative left/right margin, which would pull the
+   heading row back out past the gutter added above. Neutralise it so the
+   heading lines up with the grids below it. */
+.pp-page-gutter > .govuk-grid-row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
 .checkbox {
     font-size: 12px;
 }
