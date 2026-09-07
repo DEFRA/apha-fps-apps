@@ -5,8 +5,10 @@ using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
 using AutoMapper;
+using ClosedXML.Excel;
 using FluentAssertions;
 using NSubstitute;
+using System.IO;
 
 namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
 {
@@ -1052,6 +1054,39 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
             // Assert
             result.Should().NotBeNull();
             result.Should().NotBeEmpty();
+
+            using var stream = new MemoryStream(result);
+            using var workbook = new XLWorkbook(stream);
+
+            workbook.Worksheet("StaffPlan").Cell(2, 4).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("StaffPlan").Cell(2, 5).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("StaffPlan").Cell(3, 5).GetFormattedString().Should().StartWith("£");
+
+            workbook.Worksheet("StaffActuals").Cell(2, 7).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("StaffActuals").Cell(2, 8).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("StaffActuals").Cell(3, 8).GetFormattedString().Should().StartWith("£");
+
+            workbook.Worksheet("TestPlan").Cell(2, 3).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("TestPlan").Cell(2, 5).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("TestPlan").Cell(3, 5).GetFormattedString().Should().StartWith("£");
+
+            workbook.Worksheet("TestActuals").Cell(2, 6).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("TestActuals").Cell(2, 7).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("TestActuals").Cell(3, 7).GetFormattedString().Should().StartWith("£");
+
+            workbook.Worksheet("AnimalPlan").Cell(2, 4).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("AnimalPlan").Cell(2, 5).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("AnimalPlan").Cell(3, 5).GetFormattedString().Should().StartWith("£");
+
+            workbook.Worksheet("AnimalActuals").Cell(2, 4).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("AnimalActuals").Cell(2, 6).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("AnimalActuals").Cell(3, 6).GetFormattedString().Should().StartWith("£");
+
+            workbook.Worksheet("AdditionalPlan").Cell(2, 4).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("AdditionalPlan").Cell(3, 4).GetFormattedString().Should().StartWith("£");
+
+            workbook.Worksheet("AdditionalActuals").Cell(2, 5).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("AdditionalActuals").Cell(3, 5).GetFormattedString().Should().StartWith("£");
 
             await _mockRepository.Received(1).GetStaffPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetStaffActualsAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());

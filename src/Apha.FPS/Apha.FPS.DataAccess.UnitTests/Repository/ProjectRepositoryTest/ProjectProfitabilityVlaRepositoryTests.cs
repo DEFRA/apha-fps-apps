@@ -203,6 +203,88 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_WithProgramNoFilter_MatchesExactly()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP001", program: "P1"),
+                MakeProject("PP002", program: "P10"),
+                MakeProject("PP003", program: "P100")
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query, programNo: "P1");
+
+            Assert.Single(result.Data);
+            Assert.All(result.Data, v => Assert.Equal("P1", v.Program));
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_WithCustomerFilter_MatchesExactly()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP001", customer: "ACME"),
+                MakeProject("PP002", customer: "ACME Ltd"),
+                MakeProject("PP003", customer: "Beta Corp")
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query, customer: "ACME");
+
+            Assert.Single(result.Data);
+            Assert.All(result.Data, v => Assert.Equal("ACME", v.Customer));
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_WithProgramColumnFilter_FiltersOnProgram()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP001", program: "ADMIN"),
+                MakeProject("PP002", program: "P002"),
+                MakeProject("PP003", program: "ADMIN")
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 15,
+                Filter = "{\"Program\":\"admin\"}"
+            };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, v => Assert.Equal("ADMIN", v.Program));
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_WithCustomerColumnFilter_FiltersOnCustomer()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP001", customer: "AHTBD - Defra"),
+                MakeProject("PP002", customer: "Beta Corp"),
+                MakeProject("PP003", customer: "AHTBD - Other")
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 15,
+                Filter = "{\"Customer\":\"ahtbd\"}"
+            };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, v => Assert.StartsWith("AHTBD", v.Customer));
+        }
+
+        [Fact]
         public async Task GetProjectProfitabilityVlaAsync_PagingIsApplied()
         {
             var projects = Enumerable.Range(1, 10)

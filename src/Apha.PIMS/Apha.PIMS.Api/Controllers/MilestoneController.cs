@@ -187,11 +187,11 @@ namespace Apha.PIMS.Api.Controllers
         }
 
         /// <summary>Clear all staging rows for a project.</summary>
-        [HttpDelete("{project}/staging")]
-        public async Task<IActionResult> ClearStaging(string project)
+        [HttpDelete("staging")]
+        public async Task<IActionResult> ClearStaging()
         {
             string? createdBy = User.Identity?.Name;
-            int rows = await _service.ClearStagingAsync(project, createdBy);
+            int rows = await _service.ClearStagingAsync(createdBy);
             return Ok(new { deleted = rows });
         }
 

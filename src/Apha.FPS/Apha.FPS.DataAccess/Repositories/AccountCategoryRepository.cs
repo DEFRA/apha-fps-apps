@@ -92,6 +92,28 @@ namespace Apha.FPS.DataAccess.Repositories
             return true;
         }
 
+        public async Task<List<string>> GetForeignKeyReferencesAsync(string accShortName)
+        {
+            var referencedTables = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(accShortName))
+            {
+                return referencedTables;
+            }
+
+            var additionalCostsExists = await _context.Set<AdditionalCost>()
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .AnyAsync(ac => ac.Account == accShortName && ac.FpsYear == _requestContext.FpsYear);
+
+            if (additionalCostsExists)
+            {
+                referencedTables.Add("tbladditionalcosts");
+            }
+
+            return referencedTables;
+        }
+
         private IQueryable<AccountCategory> BuildAccountCategoryQuery(string? filterType)
         {
             var query = _context.AccountCategories
