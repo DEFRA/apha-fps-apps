@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -22,10 +23,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string AnimalType { get; set; } = null!;
 
         [Display(Name = "NumberOfDays")]
+        [NonFinancialRange]
         [GridColumn(Width = 150, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double NumberOfDays { get; set; }
 
         [Display(Name = "NumberOfAnimals")]
+        [NonFinancialRange]
         [GridColumn(Width = 160, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double NumberOfAnimals { get; set; }
 

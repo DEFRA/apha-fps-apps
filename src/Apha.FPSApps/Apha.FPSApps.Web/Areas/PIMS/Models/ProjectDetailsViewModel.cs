@@ -13,6 +13,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 
         public bool IsFPS { get; set; } = false;
         public bool IsProposedProjectUpdate { get; set; } = false;
+        public bool HasProposedProjectData { get; set; } = false;
         public ProposedProjectDto? ProposedProjectDetails { get; set; }
         public ProjectDetailDto? ProjectDetails { get; set; }
 

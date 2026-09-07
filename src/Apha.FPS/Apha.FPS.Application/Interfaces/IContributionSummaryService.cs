@@ -8,7 +8,7 @@ namespace Apha.FPS.Application.Interfaces
         /// Returns the grid rows for the Income/Contribution from Time Sales form,
         /// filtered to the given selling profit centre and current FPS year.
         /// </summary>
-        Task<List<ContributionSummaryRowDto>> GetRowsAsync(string sellingPc, CancellationToken cancellationToken = default);
+        Task<List<ContributionSummaryRowDto>> GetRowsAsync(string sellingPc, string? sortBy = null, bool descending = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Returns the footer totals for the Income/Contribution from Time Sales form.

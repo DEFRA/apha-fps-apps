@@ -73,7 +73,14 @@
 
                                                 <div class="ssr-grade-panel">
                                                     <div class="ssr-grade-header">
-                                                        <span class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0">Grades in this Work Group</span>
+                                                        <button type="button"
+                                                                id="ssrGradeSortButton"
+                                                                class="ssr-grade-sort-button govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0"
+                                                                aria-sort="ascending"
+                                                                onclick="ssrToggleGradeSort()">
+                                                            Grades in this Work Group
+                                                            <span class="ssr-grade-sort-indicator" id="ssrGradeSortIndicator" aria-hidden="true">&#9650;</span>
+                                                        </button>
                                                     </div>
                                                     <ul class="ssr-grade-list" id="ssrGradeList" role="listbox" aria-label="Select workgroup grade">
                                                         @foreach (var grade in Model.GradeList)

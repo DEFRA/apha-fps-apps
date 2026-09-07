@@ -2025,6 +2025,115 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         }
 
         [Fact]
+        public async Task GetStaffResourceUtilisationAsync_MatchesZtProgramCaseInsensitively()
+        {
+            // Arrange - the stored program value uses different casing ("ZT_Prog")
+            // than the internal "zt_prog" literal. ZT hours must still be recognised.
+            var data = BuildUtilisationDataset();
+            var ztProject = data.Projects.Single(p => p.ParentProject == "ZTJOB");
+            ztProject.Program = "ZT_Prog";
+
+            var repo = CreateRepository(
+                workgroupGrades: data.WorkgroupGrades,
+                staffViews: data.StaffViews,
+                profitCentreGrades: data.ProfitCentreGrades,
+                staffJobRmViews: data.StaffJobRmViews,
+                projects: data.Projects);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetStaffResourceUtilisationAsync(query, "IT");
+
+            // Assert - ZT hours (5) are attributed to PlannedZt (ZTW column),
+            // not left inside the Approved plan.
+            var row = Assert.Single(result.Data);
+            Assert.Equal(5, row.PlannedZt);
+            Assert.Equal(40, row.ApprovedSoct);   // 45 - 5
+            Assert.Equal(95, row.AvailSoct);      // 100 - 5
+        }
+
+        [Fact]
+        public async Task GetStaffResourceUtilisationAsync_CollapsesDuplicateStaffNames_IntoSingleRow()
+        {
+            // Arrange - fps.vtblstaff can surface the same StaffID under two different names
+            // (e.g. "D_DSG, General" and "D_IMT1, General"). This mirrors the Access query, which
+            // groups by StaffID (not Name) and projects First(Name); the web must produce ONE row
+            // per staff with the ZTW/planned hours counted once, not two duplicate double-counted rows.
+            var data = BuildUtilisationDataset();
+            data.StaffViews.Add(new StaffView
+            {
+                StaffId = "S001",
+                Name = "IMT1, General",
+                WorkgroupGrade = "WG01",
+                FpsYear = DefaultTestFpsYear,
+                UserEmail = DefaultUserEmail,
+                HrsAvail = 100
+            });
+
+            var repo = CreateRepository(
+                workgroupGrades: data.WorkgroupGrades,
+                staffViews: data.StaffViews,
+                profitCentreGrades: data.ProfitCentreGrades,
+                staffJobRmViews: data.StaffJobRmViews,
+                projects: data.Projects);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetStaffResourceUtilisationAsync(query, "IT");
+
+            // Assert - a single collapsed row; ZTW/planned hours counted once, not doubled.
+            var row = Assert.Single(result.Data);
+            Assert.Equal("S001", row.StaffId);
+            Assert.Equal(5, row.PlannedZt);
+            Assert.Equal(40, row.ApprovedSoct);
+            Assert.Equal(95, row.AvailSoct);
+            Assert.Equal(10, row.NotApprovedSoct);
+        }
+
+        [Fact]
+        public async Task GetStaffResourceUtilisationAsync_SumsMultipleZtJobs_WithIdenticalHoursAndProgram()
+        {
+            // Arrange - two DISTINCT ZT codes allocated against the same staff, each with the same
+            // hours, program and status (e.g. NCAM0003 = 10 and NCEB0004 = 10). They differ only by
+            // JobCode, so both must be counted: ZTW = 10 + 10 = 20 (not collapsed to a single 10).
+            var data = BuildUtilisationDataset();
+            data.StaffJobRmViews.Add(new StaffJobRmView
+            {
+                StaffId = "S001",
+                JobCode = "ZTJOB2",
+                PlannedHours = 5,
+                FpsYear = DefaultTestFpsYear
+            });
+            data.Projects.Add(new Project
+            {
+                ParentProject = "ZTJOB2",
+                Program = "zt_prog",
+                ProjectStatus = "Approved",
+                FpsYear = DefaultTestFpsYear
+            });
+
+            var repo = CreateRepository(
+                workgroupGrades: data.WorkgroupGrades,
+                staffViews: data.StaffViews,
+                profitCentreGrades: data.ProfitCentreGrades,
+                staffJobRmViews: data.StaffJobRmViews,
+                projects: data.Projects);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetStaffResourceUtilisationAsync(query, "IT");
+
+            // Assert - both ZT allocations are summed (5 + 5 = 10), not collapsed by Distinct.
+            var row = Assert.Single(result.Data);
+            Assert.Equal(10, row.PlannedZt);
+            Assert.Equal(40, row.ApprovedSoct);   // (40 + 5 + 5) approvedRaw - 10 plannedZt
+            Assert.Equal(90, row.AvailSoct);      // 100 - 10
+        }
+
+        [Fact]
         public async Task GetStaffResourceUtilisationAsync_ReturnsNullPercentages_WhenHrsAvailIsZero()
         {
             // Arrange
@@ -2137,15 +2246,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         [Theory]
         [InlineData("Name", false)]
         [InlineData("Name", true)]
-        [InlineData("HrsAvail", true)]
-        [InlineData("PlannedZt", false)]
-        [InlineData("AvailSoct", true)]
-        [InlineData("NotApprovedSoct", false)]
-        [InlineData("ApprovedSoct", true)]
+        [InlineData("TotalH", true)]
+        [InlineData("Ztw", false)]
+        [InlineData("Avail", true)]
+        [InlineData("NotApprovedPlan", false)]
+        [InlineData("ApprovedPlan", true)]
         [InlineData("Left", false)]
-        [InlineData("ApprovedUtilPct", true)]
-        [InlineData("NotApprovedUtilPct", false)]
-        [InlineData("TotalUtilPct", true)]
+        [InlineData("ApprovedUtil", true)]
+        [InlineData("NotApprovedUtil", false)]
+        [InlineData("TotalPlan", true)]
+        [InlineData("TotalUtil", true)]
+        [InlineData("WgGrade", false)]
         [InlineData("Unknown", true)]
         [InlineData(null, false)]
         public async Task GetStaffResourceUtilisationAsync_AppliesSorting_ForEachSortKey(string? sortBy, bool descending)
@@ -2184,6 +2295,68 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
 
             // Assert
             Assert.Equal(2, result.Data.Count());
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task GetStaffResourceUtilisationAsync_SortsByAvailNumerically_GroupsZeroValues(bool descending)
+        {
+            // Arrange - three staff, two of which produce AvailSoct == 0
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG_A", ProfitCentreGrade = "PC01", Workgroup = "IT", FpsYear = DefaultTestFpsYear },
+                new() { WgGrade = "WG_B", ProfitCentreGrade = "PC01", Workgroup = "IT", FpsYear = DefaultTestFpsYear },
+                new() { WgGrade = "WG_C", ProfitCentreGrade = "PC01", Workgroup = "IT", FpsYear = DefaultTestFpsYear }
+            };
+            var staffViews = new List<StaffView>
+            {
+                new() { StaffId = "S001", Name = "Alpha General", WorkgroupGrade = "WG_A", FpsYear = DefaultTestFpsYear, UserEmail = DefaultUserEmail, HrsAvail = 0 },
+                new() { StaffId = "S002", Name = "Bravo General", WorkgroupGrade = "WG_B", FpsYear = DefaultTestFpsYear, UserEmail = DefaultUserEmail, HrsAvail = 50 },
+                new() { StaffId = "S003", Name = "Charlie General", WorkgroupGrade = "WG_C", FpsYear = DefaultTestFpsYear, UserEmail = DefaultUserEmail, HrsAvail = 0 }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PC01", ProfitCentre = "PC-Alpha", FpsYear = DefaultTestFpsYear }
+            };
+            var staffJobRmViews = new List<StaffJobRmView>
+            {
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 0, FpsYear = DefaultTestFpsYear },
+                new() { StaffId = "S002", JobCode = "JOB001", PlannedHours = 30, FpsYear = DefaultTestFpsYear },
+                new() { StaffId = "S003", JobCode = "JOB001", PlannedHours = 0, FpsYear = DefaultTestFpsYear }
+            };
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "JOB001", Program = "prog", ProjectStatus = "Approved", FpsYear = DefaultTestFpsYear }
+            };
+
+            var repo = CreateRepository(
+                workgroupGrades: workgroupGrades,
+                staffViews: staffViews,
+                profitCentreGrades: profitCentreGrades,
+                staffJobRmViews: staffJobRmViews,
+                projects: projects);
+
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "Avail",
+                Descending = descending
+            };
+
+            // Act
+            var result = await repo.GetStaffResourceUtilisationAsync(query, "IT");
+
+            // Assert - AvailSoct values are 0, 50, 0; the two zero records must be
+            // adjacent (grouped), never interleaved with the non-zero record.
+            var availValues = result.Data.Select(x => x.AvailSoct).ToList();
+
+            var expected = descending
+                ? new List<double> { 50, 0, 0 }
+                : new List<double> { 0, 0, 50 };
+
+            Assert.Equal(expected, availValues);
         }
 
         #endregion

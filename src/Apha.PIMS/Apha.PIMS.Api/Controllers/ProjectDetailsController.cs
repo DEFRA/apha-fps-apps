@@ -29,13 +29,23 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetFpsProjectById(string parentproject)
         {
             ProjectDto? result = await _service.GetFpsProjectByIdAsync(parentproject);
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<ProjectRes>();
+            }
+
             return Ok(_mapper.Map<ProjectRes>(result));
         }
 
         [HttpGet("{parentproject}/pims")]
         public async Task<IActionResult> GetPimsDetail(string parentproject)
         {
-            ProjectDetailDto? result = await _service.GetPimsDetailAsync(parentproject);            
+            ProjectDetailDto? result = await _service.GetPimsDetailAsync(parentproject);
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<ProjectDetailRes>();
+            }
+
             return Ok(_mapper.Map<ProjectDetailRes>(result));
         }
 
@@ -53,7 +63,12 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet("{parentproject}/proposed")]
         public async Task<IActionResult> GetProposedProject(string parentproject)
         {
-            ProposedProjectDto? result = await _service.GetProposedProjectAsync(parentproject);            
+            ProposedProjectDto? result = await _service.GetProposedProjectAsync(parentproject);
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<ProposedProjectRes>();
+            }
+
             return Ok(_mapper.Map<ProposedProjectRes>(result));
         }
 
@@ -80,6 +95,20 @@ namespace Apha.PIMS.Api.Controllers
         {
             List<YearDto> result = await _service.GetAllYearAsync();
             return Ok(_mapper.Map<List<YearRes>>(result));
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

@@ -134,7 +134,7 @@ namespace Apha.FPS.Application.Services
 
             if (referencedTables.Count != 0)
             {
-                throw new InvalidOperationException("Unable to delete the division name as it is already in use.");
+                throw new InvalidOperationException("The selected record is being used on another page and cannot be deleted.");
             }
 
             return await _divisionRepository.DeleteDivisionAsync(divName);

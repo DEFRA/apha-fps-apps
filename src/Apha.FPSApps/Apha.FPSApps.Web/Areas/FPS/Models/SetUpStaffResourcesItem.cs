@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -20,20 +21,24 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? Name { get; set; }
 
         [Display(Name = "Hrs Paid")]
+        [NonFinancialRange]
         [GridColumn(Width = 90, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double HrsPaid { get; set; }
 
         [Display(Name = "Leave")]
+        [NonFinancialRange]
         [GridColumn(Width = 70, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double Leave { get; set; }
 
         [Display(Name = "Sick Sp")]
+        [NonFinancialRange]
         [GridColumn(Width = 80, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double SickSpecial { get; set; }
 
         //   Displayed as readonly in modal (ssrEditAtWork); JS recalculates on input change
         [Display(Name = "At Work")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly, IsFilterable = false)]
+        [NonFinancialRange]
+        [GridColumn(Width = 90, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double HrsAvail { get; set; }
 
         //   int type matches WorkGroupEmployeeStaffDto.MakeAvailable (0/1 from backend)

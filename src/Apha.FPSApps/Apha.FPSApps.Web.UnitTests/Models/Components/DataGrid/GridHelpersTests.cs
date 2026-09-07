@@ -90,5 +90,13 @@ namespace Apha.FPSApps.Web.UnitTests.Models.Components.DataGrid
 
             Assert.Null(GridHelpers.GetPropertyValue(row, "Missing"));
         }
+
+        [Fact]
+        public void FormatValue_GbpValueRounded_UsesMinusSign()
+        {
+            var column = new DataGridColumn { PropertyName = "Profit", ColumnType = GridColumnType.GbpValueRounded };
+
+            Assert.Equal("-£2,569", GridHelpers.FormatValue(-2569m, column));
+        }
     }
 }

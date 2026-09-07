@@ -253,11 +253,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             };
         }
 
+        /// <summary>
+        /// Builds the "Select a Portfolio" list.
+        /// Only projects whose Project Group identifies them as a portfolio are
+        /// included (the group name ends with "port", e.g. "Port", "Prod_Port"),
+        /// matching the behaviour of the legacy MS Access application.
+        /// </summary>
         private async Task<List<SelectListItem>> GetPortfolioSelectListAsync()
         {
             var response = await _projectService.GetAllProjectsAsync();
             return response.Success && response.Data != null
                 ? response.Data
+                    .Where(p => IsPortfolioProjectGroup(p.ProjectGroup))
                     .OrderBy(p => p.ParentProject)
                     .Select(p => new SelectListItem(
                         string.IsNullOrWhiteSpace(p.ProjectTitle)
@@ -266,6 +273,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                         p.ParentProject))
                     .ToList()
                 : new List<SelectListItem>();
+        }
+
+        private static bool IsPortfolioProjectGroup(string? projectGroup)
+        {
+            return !string.IsNullOrWhiteSpace(projectGroup)
+                && projectGroup.TrimEnd().EndsWith("port", StringComparison.OrdinalIgnoreCase);
         }
 
         private async Task<List<SelectListItem>> GetWorkGroupSelectListAsync()

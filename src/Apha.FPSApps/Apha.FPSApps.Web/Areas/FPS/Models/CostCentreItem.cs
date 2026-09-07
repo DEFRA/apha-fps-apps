@@ -12,10 +12,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     {
         //   fps.costcentre.costcentre double precision — composite primary key component.
         //   Visible in grid (JS column present); used as KeyProperty in DataGridConfig.
-        //   double is a value type — [Required] not applicable; implicitly required.
-        [Display(Name = "Cost Centre")]
+        //   Made nullable to enable [Required] validation for modal form input.
+        [Display(Name = "CostCentre")]
+        [Required(ErrorMessage = "CostCentre is required")]
         [GridColumn(Width = 140, Type = GridColumnType.ReadOnly, IsFilterable = true)]
-        public double CostCentreNo { get; set; }
+        public double? CostCentreNo { get; set; }
 
         //   fps.costcentre.profitcentre varchar(50) — FK to fps.tblkpprofitcentre.
         //   [Required] mirrors JS costCentreValidationFields[1]: id='modal-cc-profit',

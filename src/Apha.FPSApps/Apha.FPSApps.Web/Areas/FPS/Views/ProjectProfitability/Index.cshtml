@@ -77,27 +77,23 @@
             </div>
         </div>
 
-        <div class="govuk-grid-row sup_margin_left_right_10 govuk-!-margin-bottom-2">
-            <div class="govuk-grid-column-full sup_p_0">
-                <div class="project-code-section">
-                    <label class="govuk-label--s" for="selected-project-input">Selected project: </label>
-                    <input type="text" id="selected-project-input" value=""
-                           placeholder="Project" readonly
-                           class="govuk-input govuk-!-font-size-16"
-                           style="width:160px;">
-                    <button type="button" id="btnPlanThisProject" class="govuk-button sup_margin_0"
-                            aria-label="Plan this project"
-                            onclick="planThisProject()">
-                        <i class="fa fa-cogs" aria-hidden="true"></i> Plan
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
             <div class="govuk-grid-column-full sup_p_0">
-                <div id="gridContainer_isProjectProfitGrid">
-                    @await Html.PartialAsync("_DataGrid", Model.ProfitabilityGrid)
+                <div class="ppf-grid-with-header-controls">
+                    <div class="project-code-section ppf-header-project-controls">
+                        <label class="govuk-label--s" for="selected-project-input">Selected project: </label>
+                        <input type="text" id="selected-project-input" value=""
+                               placeholder="Project" readonly
+                               class="govuk-input govuk-!-font-size-16">
+                        <button type="button" id="btnPlanThisProject" class="govuk-button sup_margin_0"
+                                aria-label="Plan this project"
+                                onclick="planThisProject()">
+                            <i class="fa fa-cogs" aria-hidden="true"></i> Plan
+                        </button>
+                    </div>
+                    <div id="gridContainer_isProjectProfitGrid">
+                        @await Html.PartialAsync("_DataGrid", Model.ProfitabilityGrid)
+                    </div>
                 </div>
 
                 @if (!Model.IsProjectGroupMode)

@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = "PIMS : Project Details";
     string parentproject = Model.Parentproject;
+    bool showProposedData = !Model.IsFPS || Model.HasProposedProjectData;
 }
 
 <div class="govuk-grid-row sup_border-bottom" style="padding: 0">
@@ -132,16 +133,22 @@
                                 }
                                 else
                                 {
-                                    <p class="tab-font-size govuk-hint">No FPS record found for this project.</p>
+                                   
                                 }
                             </div>
 
                             <!-- Tab 2: Proposed Project Details (editable) -->
-                            <div class="govuk-tabs__panel govuk-!-padding-2 @(Model.IsFPS ? "govuk-tabs__panel--hidden" : "")"
+                            <div class="govuk-tabs__panel govuk-!-padding-2"
                                  id="nav-profile" role="tabpanel"
                                  style="min-height: 460px;"
-                                 hidden=@(Model.IsFPS)
+                                 hidden="@(Model.IsFPS)"
                                  aria-labelledby="tab_nav-profile">
+                                @if (!showProposedData)
+                                {
+                                  
+                                }
+                                else
+                                {
                                 <div class="govuk-grid-column-full p-0">
                                     <div class="govuk-form-group">
                                         <form asp-action="UpdateProposedProject"
@@ -152,6 +159,7 @@
                                               class="govuk-form-group"
                                               id="formProposedDetail">
                                             @Html.AntiForgeryToken()
+                                            <div asp-validation-summary="ModelOnly" class="govuk-error-summary"></div>
                                             <fieldset class="govuk-fieldset">
                                                 <input type="hidden" asp-for="ProposedProjectDetails.Id" />
                                                 <div class="govuk-grid-row">
@@ -217,6 +225,7 @@
                                                                    id="disease-transfer"
                                                                    aria-label="disease-transfer"
                                                                    asp-for="ProposedProjectDetails.Disease"
+                                                                   maxlength="50"
                                                                    type="text" />
                                                         </div>
                                                     </div>
@@ -232,6 +241,7 @@
                                                                    id="program-transfer"
                                                                    aria-label="program-transfer"
                                                                    asp-for="ProposedProjectDetails.Program"
+                                                                   maxlength="10"
                                                                    type="text" />
                                                         </div>
                                                     </div>
@@ -245,6 +255,7 @@
                                                                    id="customer-transfer"
                                                                    aria-label="customer-transfer"
                                                                    asp-for="ProposedProjectDetails.Customer"
+                                                                   maxlength="50"
                                                                    type="text" />
                                                         </div>
                                                     </div>
@@ -258,7 +269,7 @@
                                                            id="manager-transfer"
                                                            aria-label="manager-transfer"
                                                            asp-for="ProposedProjectDetails.Manager"
-                                                         
+                                                           maxlength="50"
                                                            type="text" />
                                                 </div>
                                             </fieldset>
@@ -271,6 +282,7 @@
                                         </form>
                                     </div>
                                 </div>
+                                }
                             </div>
 
                             <!-- Tab 3: FPS Yearly Details (read-only) -->
@@ -698,22 +710,43 @@
 
         // ── Tabs ─────────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', function () {
-            const tabs   = document.querySelectorAll('.govuk-tabs__tab');
+            const tabs = document.querySelectorAll('.govuk-tabs__tab');
             const panels = document.querySelectorAll('.govuk-tabs__panel');
+            const tabItems = document.querySelectorAll('.govuk-tabs__list-item');
+
+            function activateTab(targetId, activeTab) {
+                panels.forEach(panel => {
+                    const isTarget = panel.id === targetId;
+                    panel.classList.toggle('govuk-tabs__panel--hidden', !isTarget);
+                    panel.hidden = !isTarget;
+                });
+
+                tabItems.forEach(item => item.classList.remove('govuk-tabs__list-item--selected'));
+                tabs.forEach(tab => {
+                    const isActive = tab === activeTab;
+                    tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                    if (isActive) {
+                        tab.removeAttribute('tabindex');
+                    } else {
+                        tab.setAttribute('tabindex', '-1');
+                    }
+                });
+
+                activeTab.parentElement.classList.add('govuk-tabs__list-item--selected');
+            }
 
             tabs.forEach(tab => {
                 tab.addEventListener('click', function (e) {
                     e.preventDefault();
                     const targetId = this.getAttribute('href').substring(1);
-
-                    panels.forEach(p => p.classList.add('govuk-tabs__panel--hidden'));
-                    document.querySelectorAll('.govuk-tabs__list-item')
-                            .forEach(li => li.classList.remove('govuk-tabs__list-item--selected'));
-
-                    document.getElementById(targetId).classList.remove('govuk-tabs__panel--hidden');
-                    this.parentElement.classList.add('govuk-tabs__list-item--selected');
+                    activateTab(targetId, this);
                 });
             });
+
+            const selectedTab = document.querySelector('.govuk-tabs__list-item--selected .govuk-tabs__tab') || tabs[0];
+            if (selectedTab) {
+                activateTab(selectedTab.getAttribute('href').substring(1), selectedTab);
+            }
         });
 
         // ── PIMS Details save ────────────────────────────────────────────

@@ -413,11 +413,51 @@ namespace Apha.FPS.DataAccess.Repositories
                     StaffId       = s.StaffId,
                     Name          = s.Name,
                     HrsAvail      = s.HrsAvail,
+                    JobCode       = sj != null ? sj.JobCode      : null,
                     Program       = p  != null ? p.Program       : null,
                     ProjectStatus = p  != null ? p.ProjectStatus : null,
                     PlannedHours  = sj != null ? sj.PlannedHours : (double?)null
                 }
             ).Distinct().ToListAsync();
+
+            // A single StaffID can surface in fps.vtblstaff under more than one name
+            // (e.g. "D_DSG, General" and "D_IMT1, General"). Because the staff -> job -> project
+            // join fans out per name, that would both duplicate the display row AND double-count
+            // the planned/ZTW hours. Mirror the Access query (GROUP BY StaffID + First(Name)) by
+            // collapsing every StaffID to a single canonical name before aggregating, then removing
+            // the now-identical duplicate job rows.
+            var canonicalNames = rawData
+                .GroupBy(x => new { x.ProfitCentre, x.Workgroup, x.WgGrade, x.StaffId, x.HrsAvail })
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => x.Name)
+                          .Where(n => n != null)
+                          .OrderBy(n => n, StringComparer.Ordinal)
+                          .FirstOrDefault());
+
+            foreach (var row in rawData)
+            {
+                var key = new { row.ProfitCentre, row.Workgroup, row.WgGrade, row.StaffId, row.HrsAvail };
+                if (canonicalNames.TryGetValue(key, out var canonicalName))
+                    row.Name = canonicalName;
+            }
+
+            rawData = rawData
+                .GroupBy(x => new
+                {
+                    x.ProfitCentre,
+                    x.Workgroup,
+                    x.WgGrade,
+                    x.StaffId,
+                    x.Name,
+                    x.HrsAvail,
+                    x.JobCode,
+                    x.Program,
+                    x.ProjectStatus,
+                    x.PlannedHours
+                })
+                .Select(g => g.First())
+                .ToList();
 
             // Stage 2: aggregate in-memory — mirrors SQL GROUP BY + SUM(CASE WHEN …).
             var result = rawData
@@ -445,9 +485,9 @@ namespace Apha.FPS.DataAccess.Repositories
             var first = group.First();
 
             double hrsAvail     = first.HrsAvail ?? 0d;
-            double plannedZt    = group.Sum(x => x.Program       == "zt_prog"      ? (x.PlannedHours ?? 0d) : 0d);
-            double nApproved    = group.Sum(x => x.ProjectStatus == "Not Approved" ? (x.PlannedHours ?? 0d) : 0d);
-            double approvedRaw  = group.Sum(x => x.ProjectStatus == "Approved"     ? (x.PlannedHours ?? 0d) : 0d);
+            double plannedZt    = group.Sum(x => string.Equals(x.Program,       "zt_prog",      StringComparison.OrdinalIgnoreCase) ? (x.PlannedHours ?? 0d) : 0d);
+            double nApproved    = group.Sum(x => string.Equals(x.ProjectStatus, "Not Approved", StringComparison.OrdinalIgnoreCase) ? (x.PlannedHours ?? 0d) : 0d);
+            double approvedRaw  = group.Sum(x => string.Equals(x.ProjectStatus, "Approved",     StringComparison.OrdinalIgnoreCase) ? (x.PlannedHours ?? 0d) : 0d);
 
             double approvedSoct = Math.Round(approvedRaw - plannedZt,               2);
             double availSoct    = Math.Round(hrsAvail    - plannedZt,               2);
@@ -482,6 +522,7 @@ namespace Apha.FPS.DataAccess.Repositories
             public string? StaffId { get; set; }
             public string? Name { get; set; }
             public double? HrsAvail { get; set; }
+            public string? JobCode { get; set; }
             public string? Program { get; set; }
             public string? ProjectStatus { get; set; }
             public double? PlannedHours { get; set; }
@@ -513,25 +554,32 @@ namespace Apha.FPS.DataAccess.Repositories
         private static IQueryable<StaffResourceUtilisationView> ApplyStaffResourceUtilisationSorting(
             IQueryable<StaffResourceUtilisationView> query, string? sortBy, bool descending)
         {
+            // The grid sends the web-model column property name (see StaffResourceStaffItem),
+            // so the cases must match those names, not the underlying view property names.
             Expression<Func<StaffResourceUtilisationView, object?>> keySelector = (sortBy?.ToLower()) switch
             {
+                "wggrade" => x => x.WgGrade,
                 "name" => x => x.Name,
-                "hrsavail" => x => x.HrsAvail,
-                "plannedzt" => x => x.PlannedZt,
-                "availsoct" => x => x.AvailSoct,
-                "notapprovedsoct" => x => x.NotApprovedSoct,
-                "approvedsoct" => x => x.ApprovedSoct,
+                "totalh" => x => x.HrsAvail,
+                "ztw" => x => x.PlannedZt,
+                "avail" => x => x.AvailSoct,
                 "left" => x => x.Left,
-                "approvedutilpct" => x => x.ApprovedUtilPct,
-                "notapprovedutilpct" => x => x.NotApprovedUtilPct,
-                "totalutilpct" => x => x.TotalUtilPct,
+                "approvedplan" => x => x.ApprovedSoct,
+                "approvedutil" => x => x.ApprovedUtilPct,
+                "notapprovedplan" => x => x.NotApprovedSoct,
+                "notapprovedutil" => x => x.NotApprovedUtilPct,
+                "totalplan" => x => x.ApprovedSoct + x.NotApprovedSoct,
+                "totalutil" => x => x.TotalUtilPct,
                 _ => x => x.WgGrade
             };
 
             bool applyDescending = descending && !string.IsNullOrEmpty(sortBy);
+
+            // Always apply a stable secondary ordering by WgGrade so equal values
+            // (e.g. multiple zero-value records) group together consistently.
             return applyDescending
-                ? query.OrderByDescending(keySelector)
-                : query.OrderBy(keySelector);
+                ? query.OrderByDescending(keySelector).ThenBy(x => x.WgGrade)
+                : query.OrderBy(keySelector).ThenBy(x => x.WgGrade);
         }
 
         public async Task<double> GetZtTotalHoursByStaffIdAsync(string staffId)

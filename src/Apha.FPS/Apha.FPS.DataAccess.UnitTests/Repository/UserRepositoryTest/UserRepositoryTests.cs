@@ -484,13 +484,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
             {
                 new() { CategoryName = "Zebra" },
                 new() { CategoryName = "Alpha" },
-                new() { CategoryName = "Alpha" },
                 new() { CategoryName = "Beta" }
             };
             var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
             RepositoryTestHelper.SetupDbSetOperations(mockSet);
             dbContext.Setup(x => x.Categories).Returns(mockSet.Object);
-            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
             var repo = new UserRepository(dbContext.Object, requestCtx.Object);
@@ -512,7 +510,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
             var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<Category>());
             RepositoryTestHelper.SetupDbSetOperations(mockSet);
             dbContext.Setup(x => x.Categories).Returns(mockSet.Object);
-            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
             var repo = new UserRepository(dbContext.Object, requestCtx.Object);
@@ -848,22 +845,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
             var requestCtx = CreateRequestContextMock();
             var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
 
-            var users = new List<User> { BuildUser(userId: 1, userEmail: DefaultUserEmail) };
-            var data = new List<UserProfitcentre>
+            var data = new List<ProfitCentre>
             {
-                new() { ProfitCentre = "PC3", UserId = 1, FpsYear = DefaultFpsYear },
-                new() { ProfitCentre = "PC1", UserId = 1, FpsYear = DefaultFpsYear },
-                new() { ProfitCentre = "PC2", UserId = 1, FpsYear = DefaultFpsYear },
-                new() { ProfitCentre = "PC1", UserId = 1, FpsYear = DefaultFpsYear },
-                // Different user - must be excluded
-                new() { ProfitCentre = "PC9", UserId = 2, FpsYear = DefaultFpsYear },
-                // Different year - must be excluded
-                new() { ProfitCentre = "PC8", UserId = 1, FpsYear = DefaultFpsYear - 1 }
+                new() { ProfitCentreId = "PC3" },
+                new() { ProfitCentreId = "PC1" },
+                new() { ProfitCentreId = "PC2" }
             };
             var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
             RepositoryTestHelper.SetupDbSetOperations(mockSet);
-            dbContext.Setup(x => x.UserProfitcentres).Returns(mockSet.Object);
-            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(users).Object);
+            dbContext.Setup(x => x.ProfitCentres).Returns(mockSet.Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
             var repo = new UserRepository(dbContext.Object, requestCtx.Object);
@@ -882,11 +872,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
             var requestCtx = CreateRequestContextMock();
             var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
 
-            var users = new List<User> { BuildUser(userId: 1, userEmail: DefaultUserEmail) };
-            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<UserProfitcentre>());
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<ProfitCentre>());
             RepositoryTestHelper.SetupDbSetOperations(mockSet);
-            dbContext.Setup(x => x.UserProfitcentres).Returns(mockSet.Object);
-            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(users).Object);
+            dbContext.Setup(x => x.ProfitCentres).Returns(mockSet.Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
             var repo = new UserRepository(dbContext.Object, requestCtx.Object);
@@ -906,22 +894,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
             var requestCtx = CreateRequestContextMock();
             var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
 
-            var users = new List<User> { BuildUser(userId: 1, userEmail: DefaultUserEmail) };
-            var data = new List<UserProgram>
+            var data = new List<Program>
             {
-                new() { ProgramNo = "B01", UserID = 1, FpsYear = DefaultFpsYear },
-                new() { ProgramNo = "A01", UserID = 1, FpsYear = DefaultFpsYear },
-                new() { ProgramNo = "C01", UserID = 1, FpsYear = DefaultFpsYear },
-                new() { ProgramNo = "A01", UserID = 1, FpsYear = DefaultFpsYear },
-                // Different user - must be excluded
-                new() { ProgramNo = "Z01", UserID = 2, FpsYear = DefaultFpsYear },
-                // Different year - must be excluded
-                new() { ProgramNo = "Y01", UserID = 1, FpsYear = DefaultFpsYear - 1 }
+                new() { ProgramNo = "B01" },
+                new() { ProgramNo = "A01" },
+                new() { ProgramNo = "C01" }
             };
             var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
             RepositoryTestHelper.SetupDbSetOperations(mockSet);
-            dbContext.Setup(x => x.UserPrograms).Returns(mockSet.Object);
-            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(users).Object);
+            dbContext.Setup(x => x.Programs).Returns(mockSet.Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
             var repo = new UserRepository(dbContext.Object, requestCtx.Object);
@@ -940,11 +921,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
             var requestCtx = CreateRequestContextMock();
             var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
 
-            var users = new List<User> { BuildUser(userId: 1, userEmail: DefaultUserEmail) };
-            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<UserProgram>());
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<Program>());
             RepositoryTestHelper.SetupDbSetOperations(mockSet);
-            dbContext.Setup(x => x.UserPrograms).Returns(mockSet.Object);
-            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(users).Object);
+            dbContext.Setup(x => x.Programs).Returns(mockSet.Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
             var repo = new UserRepository(dbContext.Object, requestCtx.Object);
@@ -1018,15 +997,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
 
             var data = new List<ProjectGroup>
             {
-                new() { ProjectGroupName = "GroupC", FpsYear = DefaultFpsYear },
-                new() { ProjectGroupName = "GroupA", FpsYear = DefaultFpsYear },
-                new() { ProjectGroupName = "GroupB", FpsYear = DefaultFpsYear },
-                new() { ProjectGroupName = "GroupA", FpsYear = DefaultFpsYear }
+                new() { ProjectGroupName = "GroupC" },
+                new() { ProjectGroupName = "GroupA" },
+                new() { ProjectGroupName = "GroupB" }
             };
             var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
             RepositoryTestHelper.SetupDbSetOperations(mockSet);
             dbContext.Setup(x => x.ProjectGroups).Returns(mockSet.Object);
-            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
             var repo = new UserRepository(dbContext.Object, requestCtx.Object);
@@ -1048,7 +1025,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
             var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<ProjectGroup>());
             RepositoryTestHelper.SetupDbSetOperations(mockSet);
             dbContext.Setup(x => x.ProjectGroups).Returns(mockSet.Object);
-            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
             var repo = new UserRepository(dbContext.Object, requestCtx.Object);

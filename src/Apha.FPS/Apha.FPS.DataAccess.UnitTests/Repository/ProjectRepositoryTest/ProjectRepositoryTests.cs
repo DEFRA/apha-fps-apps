@@ -1325,6 +1325,70 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal("CC003", items[2].ParentProject);
         }
 
+        [Fact]
+        public async Task GetPagedProjectSnapshotDataAsync_SortsByCaseWorkSubAscending_PlacesBlanksFirst()
+        {
+            var repo = CreateRepository(projects: BuildCaseWorkSubProjects());
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10) { SortBy = "caseworksub", Descending = false };
+
+            var result = await repo.GetPagedProjectSnapshotDataAsync(query);
+
+            var items = result.Data.ToList();
+            Assert.Null(items[0].CaseWorkSub);
+            Assert.Null(items[1].CaseWorkSub);
+            Assert.Equal(10m, items[2].CaseWorkSub);
+            Assert.Equal(20m, items[3].CaseWorkSub);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSnapshotDataAsync_SortsByCaseWorkSubDescending_PlacesBlanksLast()
+        {
+            var repo = CreateRepository(projects: BuildCaseWorkSubProjects());
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10) { SortBy = "caseworksub", Descending = true };
+
+            var result = await repo.GetPagedProjectSnapshotDataAsync(query);
+
+            var items = result.Data.ToList();
+            Assert.Equal(20m, items[0].CaseWorkSub);
+            Assert.Equal(10m, items[1].CaseWorkSub);
+            Assert.Null(items[2].CaseWorkSub);
+            Assert.Null(items[3].CaseWorkSub);
+        }
+
+        [Theory]
+        [InlineData("Contract", "CON2", "PP002")]
+        [InlineData("ProjectStatus", "Closed", "PP002")]
+        [InlineData("Customer", "Beta Corp", "PP002")]
+        public async Task GetPagedProjectSnapshotDataAsync_FiltersByTextColumn(string key, string value, string expectedParentProject)
+        {
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P1", Customer = "Alpha Ltd", Contract = "CON1", Disease = "D1", ProjectStatus = "Active", IncomeAccountCode = "I1" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta",  Program = "P1", Customer = "Beta Corp", Contract = "CON2", Disease = "D1", ProjectStatus = "Closed", IncomeAccountCode = "I1" },
+            };
+            var repo = CreateRepository(projects: projects);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                Filter = $"{{\"{key}\":\"{value}\"}}"
+            };
+
+            var result = await repo.GetPagedProjectSnapshotDataAsync(query);
+
+            var item = Assert.Single(result.Data);
+            Assert.Equal(expectedParentProject, item.ParentProject);
+        }
+
+        private static List<Project> BuildCaseWorkSubProjects()
+        {
+            return new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P1", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", CaseWorkSub = 20m },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta",  Program = "P1", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", CaseWorkSub = null },
+                new() { ParentProject = "PP003", ProjectTitle = "Gamma", Program = "P1", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", CaseWorkSub = 10m },
+                new() { ParentProject = "PP004", ProjectTitle = "Delta", Program = "P1", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", CaseWorkSub = null },
+            };
+        }
+
         #endregion
 
         #region GetPagedProjectsByUserAsync Tests
@@ -3790,9 +3854,53 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal("DIR1", first.Directorate);
             Assert.Equal("P001", first.Programme);
             Assert.Equal("CON1", first.ContractNumber);
+            Assert.Equal("Active", first.ProjectStatus);
             Assert.Equal("ACC1", first.AccountCat);
             Assert.Equal("Travel", first.Description);
             Assert.Equal(100m, first.ItemCost);
+        }
+
+        [Fact]
+        public async Task GetProjectExceptionalCostsPagedAsync_FiltersByProjectStatus()
+        {
+            // Arrange
+            var (projects, programs, additionalCosts) = BuildExceptionalCostData();
+            projects[1].ProjectStatus = "Completed";
+            var repo = CreateRepository(projects: projects, programs: programs, additionalCosts: additionalCosts);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                Filter = "{\"ProjectStatus\":\"Completed\"}"
+            };
+
+            // Act
+            var result = await repo.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("PP002", result.Data.First().Project);
+        }
+
+        [Theory]
+        [InlineData(false, "Approved")]
+        [InlineData(true, "Completed")]
+        public async Task GetProjectExceptionalCostsPagedAsync_SortsByProjectStatus(bool descending, string expectedFirstStatus)
+        {
+            // Arrange
+            var (projects, programs, additionalCosts) = BuildExceptionalCostData();
+            projects[0].ProjectStatus = "Completed";
+            projects[1].ProjectStatus = "Approved";
+            var repo = CreateRepository(projects: projects, programs: programs, additionalCosts: additionalCosts);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                SortBy = "ProjectStatus",
+                Descending = descending
+            };
+
+            // Act
+            var result = await repo.GetProjectExceptionalCostsPagedAsync(query);
+
+            // Assert
+            Assert.Equal(expectedFirstStatus, result.Data.First().ProjectStatus);
         }
 
         [Fact]

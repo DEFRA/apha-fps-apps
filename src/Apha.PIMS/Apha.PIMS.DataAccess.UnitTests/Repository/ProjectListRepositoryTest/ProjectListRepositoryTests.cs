@@ -684,7 +684,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
         #region GetAllProjectsForDropDownAsync
 
         [Fact]
-        public async Task GetAllProjectsForDropDownAsync_ReturnsOnlyActiveProjectsOnFps()
+        public async Task GetAllProjectsForDropDownAsync_ReturnsProjectsOnFpsWithMatchingRadtrackProg()
         {
             // Arrange — PP001 Active="Y" with matching radtrackProg ? included
             //            PP002 Active="N"                            ? excluded
@@ -707,8 +707,9 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
 
             // Assert
             Assert.NotNull(result);
-            Assert.Single(result);
+            Assert.Equal(2, result.Count);
             Assert.Equal("PP001", result[0].Parentproject);
+            Assert.Equal("PP002", result[1].Parentproject);
         }
 
         [Fact]

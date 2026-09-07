@@ -26,6 +26,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 120, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? Project { get; set; }
 
+        [Display(Name = "Project Status")]
+        [GridColumn(Width = 130, Type = GridColumnType.ReadOnly, IsFilterable = true)]
+        public string? ProjectStatus { get; set; }
+
         [Display(Name = "Account")]
         [GridColumn(Width = 130, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? AccountCat { get; set; }

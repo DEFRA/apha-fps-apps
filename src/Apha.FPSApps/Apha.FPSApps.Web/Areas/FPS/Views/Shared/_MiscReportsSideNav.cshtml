@@ -6,14 +6,19 @@
         sidebar.classList.toggle('collapsed');
     }
 
-    // Append the currently selected Resource Centre to the report links so the
-    // dropdown selection is retained when switching between WG and RC grids.
+    // Append the currently selected Resource Centre and financial year to the report
+    // links so the dropdown selection and the selected year are retained when
+    // switching between the WG and RC grids.
     function miscReportsNavigate(event, baseUrl) {
         event.preventDefault();
         var pc = document.getElementById('SelectedProfitCentre')?.value ?? '';
+        var yr = '@FyContext.Year';
         var url = baseUrl;
         if (pc) {
-            url += (baseUrl.indexOf('?') >= 0 ? '&' : '?') + 'profitCentre=' + encodeURIComponent(pc);
+            url += (url.indexOf('?') >= 0 ? '&' : '?') + 'profitCentre=' + encodeURIComponent(pc);
+        }
+        if (yr) {
+            url += (url.indexOf('?') >= 0 ? '&' : '?') + 'year=' + encodeURIComponent(yr);
         }
         window.location.href = url;
     }
@@ -25,14 +30,14 @@
     <ul>
         <li>
             <a class="dropdown-item@(Model == "TestManagerWgPivot" ? " sidenav-title" : "")"
-               href="@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerWgPivot" })"
+               href="@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerWgPivot", year = FyContext.Year })"
                onclick="miscReportsNavigate(event, '@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerWgPivot" })')">
                 Test Manager WG Pivot
             </a>
         </li>
         <li>
             <a class="dropdown-item@(Model == "TestManagerRcPivot" ? " sidenav-title" : "")"
-               href="@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerRcPivot" })"
+               href="@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerRcPivot", year = FyContext.Year })"
                onclick="miscReportsNavigate(event, '@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerRcPivot" })')">
                 Test Manager RC Pivot
             </a>

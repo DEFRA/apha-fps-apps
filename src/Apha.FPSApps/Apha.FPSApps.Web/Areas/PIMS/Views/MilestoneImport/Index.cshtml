@@ -33,7 +33,7 @@
                                id="lbl-select-project">1. Select Project</p>
                             <div class="govuk-form-group sup_margin_bottom_10">
                                 <label class="govuk-visually-hidden govuk-!-font-size-16 govuk-!-margin-bottom-0" for="selectProject">
-                                    Select project
+                                    Select Project
                                 </label>
                                 <select asp-for="Parentproject"
                                         asp-items="Model.ProjectOptions"
@@ -42,6 +42,7 @@
                                         aria-labelledby="lbl-select-project"
                                         aria-required="true"
                                         onchange="onProjectChanged(this.value)">
+                                    <option value="">Select Project</option>
                                 </select>
                             </div>
                         </div>
@@ -175,7 +176,21 @@
         btnImport.setAttribute('aria-disabled', 'true');
     }
 
+    function hasImportGridData() {
+        var rows = document.querySelectorAll('#tbl_importGrid tbody tr[data-id]');
+        if (rows && rows.length > 0) {
+            return true;
+        }
+
+        return @(((Model.ImportGrid?.Data?.Count ?? 0) > 0).ToString().ToLowerInvariant());
+    }
+
     function enableImportButton() {
+        if (!hasImportGridData()) {
+            disableImportButton();
+            return;
+        }
+
         var btnImport = document.getElementById('btnImport');
         if (!btnImport) return;
         btnImport.disabled = false;
@@ -191,6 +206,20 @@
         };
     }
 
+    function getSelectedProject() {
+        return document.getElementById('selectProject')?.value?.trim() || '';
+    }
+
+    function ensureProjectSelected() {
+        var project = getSelectedProject();
+        if (!project) {
+            showAlertMessage('Please select project', AlertType.ERROR);
+            return null;
+        }
+
+        return project;
+    }
+
     function toggleYearTypeToolbar() {
         var typeLookUp = document.getElementById('hdnTypeLookUp')?.value || '';
         var toolbar = document.getElementById('yearTypeToolbar');
@@ -199,8 +228,12 @@
     }
 
     function onProjectChanged(project) {
-        currentProject = project;
+        currentProject = project || '';
         disableImportButton();
+
+        if (!currentProject) {
+            return;
+        }
 
         $.get('@Url.Action("GetFormRequired", "MilestoneImport", new { area = "PIMS" })',
             { parentproject: project },
@@ -236,14 +269,26 @@
 
     toggleYearTypeToolbar();
 
+    var selectProject = document.getElementById('selectProject');
+    if (selectProject) {
+        selectProject.value = '';
+    }
+    currentProject = '';
+
     // ── Add / Edit modal ─────────────────────────────────────────────────────
 
     function addImportRow() {
+        var project = getSelectedProject();
+        if (!project) {
+            showAlertMessage('Please select project first', AlertType.ERROR);
+            return;
+        }
+
         var typeLookUp = document.getElementById('hdnTypeLookUp')?.value || 'M';
         var typeId = document.getElementById('importType')?.value || '';
 
         $.get('@Url.Action("GetAddEditMilestoneImportPartial", "MilestoneImport", new { area = "PIMS" })',
-            { project: currentProject, typeLookUp: typeLookUp, typeId: typeId },
+            { project: project, typeLookUp: typeLookUp, typeId: typeId },
             function (html) {
                 $('#importEditModalContainer').html(html);
                 var modal = document.getElementById('importEditModal');
@@ -252,12 +297,18 @@
     }
 
     function editImportRow(btn) {
+        var project = getSelectedProject();
+        if (!project) {
+            showAlertMessage('Please select project first', AlertType.ERROR);
+            return;
+        }
+
         var id = $(btn).data('id');
         var typeLookUp = document.getElementById('hdnTypeLookUp')?.value || 'M';
         var typeId = document.getElementById('importType')?.value || '';
 
         $.get('@Url.Action("GetAddEditMilestoneImportPartial", "MilestoneImport", new { area = "PIMS" })',
-            { project: currentProject, id: id, typeLookUp: typeLookUp, typeId: typeId },
+            { project: project, id: id, typeLookUp: typeLookUp, typeId: typeId },
             function (html) {
                 $('#importEditModalContainer').html(html);
                 var modal = document.getElementById('importEditModal');
@@ -330,7 +381,16 @@
 
     // ── Workflow buttons ─────────────────────────────────────────────────────
     function validateImport() {
-        const project = document.getElementById('selectProject').value;
+        const project = ensureProjectSelected();
+        if (!project) {
+            return;
+        }
+
+        if (!hasImportGridData()) {
+            showAlertMessage('Please copy data into table', AlertType.ERROR);
+            return;
+        }
+
         const typeId = document.getElementById('importType')?.value || '';
         const typeLookUp = document.getElementById('hdnTypeLookUp')?.value || 'M';
         const isDeliverableMode = typeLookUp === 'D';
@@ -346,8 +406,17 @@
             success: function (result) {
                 if (result && result.success) {
                     var gmImport = window['gridManager_importGrid'];
-                    if (gmImport) { gmImport.reloadGrid({ page: 1 }); }
-                    enableImportButton();
+                    if (gmImport) {
+                        var onGridReloaded = function (e) {
+                            if (e?.detail?.gridId === 'importGrid') {
+                                enableImportButton();
+                            }
+                        };
+                        document.addEventListener('gridReloaded', onGridReloaded, { once: true });
+                        gmImport.reloadGrid({ page: 1 });
+                    } else {
+                        enableImportButton();
+                    }
                 } else {
                     const errorMsg = result?.errors?.map(e => e.message).join(', ') || 'Validation failed. Please check the data and try again.';
                     showAlertMessage(errorMsg, AlertType.ERROR);
@@ -360,7 +429,11 @@
     }
 
     function importRecords() {
-        const project = document.getElementById('selectProject').value;
+        const project = ensureProjectSelected();
+        if (!project) {
+            return;
+        }
+
         const overwrite = document.querySelector('input[name="overwrite"]:checked').value === 'true';
 
         $.ajax({
@@ -369,6 +442,12 @@
             data: { project: project, overwrite: overwrite },
             success: function (result) {
                 if (result && result.success) {
+                    var projectDropdown = document.getElementById('selectProject');
+                    if (projectDropdown) {
+                        projectDropdown.value = '';
+                    }
+                    currentProject = '';
+
                     showAlertMessage(result.message || 'Records imported successfully.', AlertType.SUCCESS).then(function () {
                         var gmImport = window['gridManager_importGrid'];
                         if (gmImport) { gmImport.reloadGrid({ page: 1 }); }
@@ -387,10 +466,14 @@
 
     function clearImport() {
         const project = document.getElementById('selectProject').value;
-        
+
+        if (!hasImportGridData()) {
+            return;
+        }
+
         showGovukConfirm('Are you sure you want to clear all unimported records?').then(function (result) {
             if (!result) return;
-            
+
             disableImportButton();
 
             $.ajax({

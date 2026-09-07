@@ -19,9 +19,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<List<ContributionSummaryRowDto>>> GetRowsAsync(string sellingPc)
+        public async Task<ApiResponseDto<List<ContributionSummaryRowDto>>> GetRowsAsync(string sellingPc, string? sortBy = null, bool descending = false)
         {
-            var url = string.Format(FpsApiEndpoints.GetContributionSummaryRows, sellingPc);
+            var url = string.Format(FpsApiEndpoints.GetContributionSummaryRows,
+                sellingPc,
+                Uri.EscapeDataString(sortBy ?? string.Empty),
+                descending);
             var response = await _http.GetAsync<List<ContributionSummaryRowRes>>(url);
 
             if (response.Success)

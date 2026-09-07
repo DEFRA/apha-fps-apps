@@ -25,11 +25,13 @@ namespace Apha.FPS.Application.Services
         /// <inheritdoc/>
         public async Task<List<ContributionSummaryRowDto>> GetRowsAsync(
             string sellingPc,
+            string? sortBy = null,
+            bool descending = false,
             CancellationToken cancellationToken = default)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(sellingPc);
 
-            var rows = await _repository.GetBySellingPcAsync(sellingPc);
+            var rows = await _repository.GetBySellingPcAsync(sellingPc, sortBy, descending);
 
             return rows.Select(r => new ContributionSummaryRowDto
             {

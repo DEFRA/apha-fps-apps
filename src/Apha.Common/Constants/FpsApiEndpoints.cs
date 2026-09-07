@@ -258,7 +258,7 @@ namespace Apha.Common.Constants
         public const string GetTestsRequiredByRc = "api/v1/testsrequiredbyrc?profitCentre={0}";
 
         // Income/Contribution from Time Sales (frmTimeSellerPC)
-        public const string GetContributionSummaryRows   = "api/v1/timeseller/{0}/rows";
+        public const string GetContributionSummaryRows   = "api/v1/timeseller/{0}/rows?sortBy={1}&descending={2}";
         public const string GetContributionSummaryTotals = "api/v1/timeseller/{0}/totals";
         // Project Audit Trail (frmProjectChangesLog → api/v1/projectaudittrail)
         public const string GetProjectLogs = "api/v1/projectaudittrail/projectlogs";

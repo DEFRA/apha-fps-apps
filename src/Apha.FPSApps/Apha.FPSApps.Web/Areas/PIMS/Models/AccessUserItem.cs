@@ -22,6 +22,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         public string? Dt2Login { get; set; }
 
         [Required(ErrorMessage = "UserEmail is required")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address")]
         [Display(Name = "Email")]
         [GridColumn(Order = 3, Width = 250, Type = GridColumnType.Text, IsFilterable = true)]
         public string? UserEmail { get; set; }

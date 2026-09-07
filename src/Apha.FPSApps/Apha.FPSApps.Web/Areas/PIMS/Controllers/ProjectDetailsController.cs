@@ -53,6 +53,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             await Task.WhenAll(fpsTask, proposedTask, yearlyTask, pimsTask, allProjectsTask, risksTask);
 
             ProposedProjectDto? proposed = proposedTask.Result.Data;
+            bool hasProposedProjectData = proposed is not null;
             proposed?.TransferTo = proposed.Parentproject;
             ProjectDetailDto? pimsDetail = pimsTask.Result.Data;
 
@@ -67,6 +68,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                     .OrderByDescending(y => y.Year)
                     .ToList(),
                 ProposedProjectDetails = proposed ?? new ProposedProjectDto(),
+                HasProposedProjectData = hasProposedProjectData,
                 TransferToOptions = GetTransferToOptions(allProjectsTask),
                 RiskRatingOptions = GetRiskRatingOptions(risksTask),
                 ProjectDetails = pimsDetail,
@@ -202,11 +204,44 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 return RedirectToAction(nameof(Index), new { parentproject });
             }
 
+            if (!ModelState.IsValid)
+            {
+                ProjectDetailsViewModel invalidViewModel = await BuildViewModelAsync(parentproject);
+                invalidViewModel.ProposedProjectDetails = projectDetailsViewModel.ProposedProjectDetails;
+                invalidViewModel.IsFPS = false;
+                invalidViewModel.IsProposedProjectUpdate = true;
+                return View(nameof(Index), invalidViewModel);
+            }
+
             projectDetailsViewModel.ProposedProjectDetails.Parentproject = parentproject;
 
-            await _projectDetailsService.UpdateProposedProjectAsync(parentproject, projectDetailsViewModel.ProposedProjectDetails);
+            ApiResponseDto<ProposedProjectDto> result =
+                await _projectDetailsService.UpdateProposedProjectAsync(parentproject, projectDetailsViewModel.ProposedProjectDetails);
 
-            return RedirectToAction(nameof(Index), new { parentproject });
+            if (result.Success)
+            {
+                string resolvedParentProject = result.Data?.Parentproject ?? parentproject;
+                return RedirectToAction(nameof(Index), new { parentproject = resolvedParentProject });
+            }
+
+            ProjectDetailsViewModel viewModel = await BuildViewModelAsync(parentproject);
+            viewModel.ProposedProjectDetails = projectDetailsViewModel.ProposedProjectDetails;
+            viewModel.IsFPS = false;
+            viewModel.IsProposedProjectUpdate = true;
+
+            if (result.Errors?.Any() == true)
+            {
+                foreach (ApiErrorDto error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Message);
+                }
+            }
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Failed to update proposed project.");
+            }
+
+            return View(nameof(Index), viewModel);
         }
 
 

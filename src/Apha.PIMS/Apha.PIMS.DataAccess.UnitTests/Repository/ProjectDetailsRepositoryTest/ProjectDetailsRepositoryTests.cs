@@ -59,6 +59,23 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
             RepositoryTestHelper.SetupDbSetOperations(proposedProjectsMockSet);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
+            var realOptions = new DbContextOptionsBuilder<PimsDbContext>()
+                .UseNpgsql("Host=localhost;Database=pims_test;Username=test;Password=test")
+                .Options;
+            var realContext = new PimsDbContext(realOptions);
+
+            mockContext.Setup(x => x.Entry(It.IsAny<ProposedProject>()))
+                .Returns((ProposedProject e) =>
+                {
+                    var entry = realContext.Entry(e);
+                    if (entry.State == EntityState.Detached)
+                    {
+                        realContext.Attach(e);
+                        entry = realContext.Entry(e);
+                    }
+                    return entry;
+                });
+
             mockContext.Setup(x => x.ProjectRadTrackData).Returns(radtrackDataMockSet.Object);
             mockContext.Setup(x => x.Risks).Returns(risksMockSet.Object);
             mockContext.Setup(x => x.ProposedProjects).Returns(proposedProjectsMockSet.Object);
@@ -708,19 +725,18 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
         }
 
         [Fact]
-        public async Task UpdateProposedProjectAsync_WhenTransferToDiffers_DoesNotCallDbSetUpdate()
+        public async Task UpdateProposedProjectAsync_WhenTransferToDiffers_CallsDbSetUpdateBeforeTransferBranch()
         {
-            // Arrange — ChangeProjectCodeAsync uses Database.CreateExecutionStrategy which is not
-            // easily exercised in a unit test, so we verify Update is NOT called on that path.
+            // Arrange — repository now updates/saves non-parent fields before transfer logic.
             var (repo, _, proposedProjectsDbSet, _) = CreateRepositoryWithMocks();
             var entity = new ProposedProject { Id = 1, Parentproject = "PP001" };
 
-            // Act + Assert — the code-change path throws because CreateExecutionStrategy is not
-            // set up on the mock, confirming we entered the transfer branch (not the Update branch).
+            // Act + Assert — transfer branch still throws in this unit-test setup,
+            // but initial ProposedProjects.Update should already have been called.
             await Assert.ThrowsAnyAsync<Exception>(() =>
                 repo.UpdateProposedProjectAsync(entity, "PP002"));
 
-            proposedProjectsDbSet.Verify(x => x.Update(It.IsAny<ProposedProject>()), Times.Never);
+            proposedProjectsDbSet.Verify(x => x.Update(It.IsAny<ProposedProject>()), Times.Once);
         }
 
         #endregion

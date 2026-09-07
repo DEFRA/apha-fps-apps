@@ -1245,7 +1245,11 @@ $(function () {
         clearLiveSearch();
         reloadLiveGrid();
     });
-    $('#importTypeBtn').on('click', openImportTypeModal);
+    $('#importTypeBtn').on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openImportTypeModal();
+    });
     $('#csvInput').on('change', function () {
         const file = this.files && this.files[0];
         if (file) {

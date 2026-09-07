@@ -31,7 +31,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "Freq/Month")]
         [StringLength(5, ErrorMessage = "Freq cannot exceed 5 characters")]
-        [GridColumn(Width = 90, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Width = 90, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public string? Freq { get; set; }
 
         [Display(Name = "Supplier")]
