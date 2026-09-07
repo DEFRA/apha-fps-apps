@@ -515,11 +515,23 @@
         });
     }
 
+    // Attaches the legacy "show"-class modal handling to every matching
+    // popup on the page, not just the original #modalPopup. Several pages
+    // (e.g. DepartmentIncome's #modalPopupDeptIncome / #modaPopupBodyDeptIncome)
+    // define their own uniquely-suffixed modal/body id pair following the
+    // same "modalPopup*" / "modaPopupBody*" naming convention, so they were
+    // previously never picked up here and focus stayed in the background.
+    function scanLegacyModalPopups(root) {
+        var scope = root || document;
+        if (!scope.querySelectorAll) return;
+        Array.prototype.forEach.call(scope.querySelectorAll('[id^="modalPopup"]'), function (modal) {
+            var body = modal.querySelector('[id^="modaPopupBody"]');
+            attachModal(modal, 'show', body ? '#' + body.id : null, true);
+        });
+    }
+
     function init() {
-        var modalPopup = document.getElementById('modalPopup');
-        if (modalPopup) {
-            attachModal(modalPopup, 'show', '#modaPopupBody', true);
-        }
+        scanLegacyModalPopups(document);
 
         scanEditModals(document);
 
