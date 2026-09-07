@@ -13,7 +13,7 @@ namespace Apha.Common.Utilities.GenericExcelExport
             var rows = data ?? Enumerable.Empty<T>();
             var columns = IsDictionaryRowType(typeof(T))
                 ? GetDictionaryColumns(includeProperties, columnHeaders)
-                : GetColumns(typeof(T), includeProperties);
+                : GetColumns(typeof(T), includeProperties, columnHeaders);
 
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add(SanitiseSheetName(sheetName));
@@ -81,7 +81,7 @@ namespace Apha.Common.Utilities.GenericExcelExport
             }
         }
 
-        private static IReadOnlyList<ExportColumn> GetColumns(Type type, IReadOnlyList<string>? includeProperties)
+        private static IReadOnlyList<ExportColumn> GetColumns(Type type, IReadOnlyList<string>? includeProperties, IReadOnlyDictionary<string, string>? columnHeaders = null)
         {
             var candidates = type
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -95,15 +95,29 @@ namespace Apha.Common.Utilities.GenericExcelExport
 
                 return includeProperties
                     .Where(lookup.ContainsKey)
-                    .Select((name, index) => new ExportColumn(lookup[name], index))
+                    .Select((name, index) => new ExportColumn(lookup[name], index, ResolveHeaderOverride(columnHeaders, name)))
                     .ToList();
             }
 
             return candidates
-                .Select((p, index) => new ExportColumn(p, index))
+                .Select((p, index) => new ExportColumn(p, index, ResolveHeaderOverride(columnHeaders, p.Name)))
                 .OrderBy(c => c.Order)
                 .ThenBy(c => c.DeclarationIndex)
                 .ToList();
+        }
+
+        // Returns the caller-supplied header (e.g. the grid column's DisplayName) for a property
+        // name when one is provided; otherwise null so the property's own metadata is used.
+        private static string? ResolveHeaderOverride(IReadOnlyDictionary<string, string>? columnHeaders, string propertyName)
+        {
+            if (columnHeaders != null
+                && columnHeaders.TryGetValue(propertyName, out var header)
+                && !string.IsNullOrWhiteSpace(header))
+            {
+                return header;
+            }
+
+            return null;
         }
 
         // True for row types that are string-keyed dictionaries (e.g. cross-tab grids whose
@@ -196,7 +210,7 @@ namespace Apha.Common.Utilities.GenericExcelExport
             private readonly PropertyInfo? _property;
             private readonly string? _dictionaryKey;
 
-            public ExportColumn(PropertyInfo property, int declarationIndex)
+            public ExportColumn(PropertyInfo property, int declarationIndex, string? headerOverride = null)
             {
                 _property = property;
                 DeclarationIndex = declarationIndex;
@@ -205,7 +219,7 @@ namespace Apha.Common.Utilities.GenericExcelExport
                 var display = property.GetCustomAttribute<DisplayAttribute>();
                 var displayFormat = property.GetCustomAttribute<DisplayFormatAttribute>();
 
-                Header = FirstNonEmpty(excelColumn?.Name, display?.GetName(), property.Name);
+                Header = FirstNonEmpty(headerOverride, excelColumn?.Name, display?.GetName(), property.Name);
                 Order = excelColumn?.Order ?? int.MaxValue;
                 Width = excelColumn?.Width ?? 0;
                 Format = !string.IsNullOrWhiteSpace(excelColumn?.Format)

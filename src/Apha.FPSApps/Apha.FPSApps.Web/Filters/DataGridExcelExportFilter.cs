@@ -1,9 +1,9 @@
-using System.Collections;
-using System.Reflection;
 using Apha.Common.Utilities.GenericExcelExport;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using System.Collections;
+using System.Reflection;
 
 namespace Apha.FPSApps.Web.Filters
 {
@@ -123,8 +123,19 @@ namespace Apha.FPSApps.Web.Filters
 
         private FileContentResult BuildExcelResult(IDataGridExportConfig config)
         {
-            var rowType = config.RowType;
-            var data = config.Data ?? (IEnumerable)Array.CreateInstance(rowType, 0);
+            var data = config.Data ?? (IEnumerable)Array.CreateInstance(config.RowType, 0);
+
+            // Rows may be a runtime-generated subclass of the declared grid row type (e.g. cross-tab
+            // pivots whose dynamic Y1..Yn columns are emitted on a derived type). Reflect over the
+            // actual runtime row type so those extra properties are discovered and exported; fall
+            // back to the declared type when there is no data or the row is the declared type itself.
+            var rowType = ResolveRowType(config.RowType, data);
+
+            // The strongly-typed Export<T>(IEnumerable<T>, ...) requires the argument to be an
+            // IEnumerable<rowType>. When rowType is a runtime-derived type, config.Data is still
+            // typed as IEnumerable<declaredType>, which cannot bind to IEnumerable<rowType> via
+            // reflection, so project it to the resolved row type first.
+            var typedData = CastData(rowType, data);
 
             // Invoke IGenericExcelExporter.Export<T>(IEnumerable<T>, string) for the discovered row type.
             var exportMethod = typeof(IGenericExcelExporter)
@@ -134,9 +145,10 @@ namespace Apha.FPSApps.Web.Filters
             var sheetName = string.IsNullOrWhiteSpace(config.SheetName) ? "Sheet1" : config.SheetName;
             var includeProperties = config.VisibleColumnNames;
             var columnHeaders = config.ColumnHeaders;
+
             var fileContent = (byte[])exportMethod.Invoke(
                 _excelExporter,
-                new object?[] { data, sheetName, includeProperties, columnHeaders })!;
+                new object?[] { typedData, sheetName, includeProperties, columnHeaders })!;
 
             var baseName = config.FileName;
             if (baseName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
@@ -146,6 +158,37 @@ namespace Apha.FPSApps.Web.Filters
 
             var downloadName = $"{baseName}_{DateTime.UtcNow:yyyyMMddHHmmss}.xlsx";
             return new FileContentResult(fileContent, ExcelContentType) { FileDownloadName = downloadName };
+        }
+
+        // Projects the untyped row sequence to a strongly-typed IEnumerable<rowType> so it can bind
+        // to the generic Export<T> parameter. Uses Enumerable.Cast<T> for the resolved row type.
+        private static object CastData(Type rowType, IEnumerable data)
+        {
+            var castMethod = typeof(Enumerable)
+                .GetMethod(nameof(Enumerable.Cast), BindingFlags.Public | BindingFlags.Static)!
+                .MakeGenericMethod(rowType);
+
+            return castMethod.Invoke(null, new object?[] { data })!;
+        }
+
+        // Returns the most derived common type of the rows so runtime-emitted properties (e.g. the
+        // dynamic Y1..Yn pivot columns) are exported. Uses the first non-null element's runtime type
+        // when it derives from the declared type; otherwise keeps the declared type unchanged so
+        // existing exports are completely unaffected.
+        private static Type ResolveRowType(Type declaredRowType, IEnumerable data)
+        {
+            foreach (var item in data)
+            {
+                if (item == null)
+                {
+                    continue;
+                }
+
+                var runtimeType = item.GetType();
+                return declaredRowType.IsAssignableFrom(runtimeType) ? runtimeType : declaredRowType;
+            }
+
+            return declaredRowType;
         }
 
         private interface IDataGridExportConfig
