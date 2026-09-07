@@ -16,14 +16,14 @@ namespace Apha.FPS.Core.Interfaces
         /// </summary>
         Task<YearEndRequestSummary?> ResolveRequestAsync(Guid jobExecutionId);
 
-        Task<List<YearEndSettingStaging>> GetStagedSettingsAsync(Guid jobQueueId);
-        Task<List<YearEndMonthHourStaging>> GetStagedMonthHoursAsync(Guid jobQueueId);
+        Task<List<FpsSettingStaging>> GetStagedSettingsAsync(Guid jobQueueId);
+        Task<List<MonthHourStaging>> GetStagedMonthHoursAsync(Guid jobQueueId);
 
         /// <summary>Upserts by (JobQueueId, Id) — re-Confirming the same setting updates in place.</summary>
-        Task UpsertStagedSettingAsync(YearEndSettingStaging setting);
+        Task UpsertStagedSettingAsync(FpsSettingStaging setting);
 
         /// <summary>Upserts by (JobQueueId, Month, Fmonth) — re-Confirming the same month updates in place.</summary>
-        Task UpsertStagedMonthHourAsync(YearEndMonthHourStaging monthHour);
+        Task UpsertStagedMonthHourAsync(MonthHourStaging monthHour);
 
         /// <summary>Deletes every staged setting and month-hour row for this request.</summary>
         Task DeleteStagingAsync(Guid jobQueueId);

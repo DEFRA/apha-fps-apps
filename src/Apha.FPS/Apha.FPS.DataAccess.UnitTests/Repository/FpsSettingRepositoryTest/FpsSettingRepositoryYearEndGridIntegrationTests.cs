@@ -81,7 +81,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
             {
                 await using (var del1 = conn.CreateCommand())
                 {
-                    del1.CommandText = "DELETE FROM fps.yearend_settings_staging WHERE jobqueueid = @id;";
+                    del1.CommandText = "DELETE FROM fps.tblsettings_staging WHERE jobqueueid = @id;";
                     del1.Parameters.AddWithValue("id", jobQueueId);
                     await del1.ExecuteNonQueryAsync();
                 }
@@ -164,7 +164,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
             var jobQueueId = await CreateTestJobQueueRowAsync();
 
             var stagingRepo = CreateStagingRepository(_currentYear);
-            await stagingRepo.UpsertStagedSettingAsync(new YearEndSettingStaging
+            await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging
             {
                 JobQueueId = jobQueueId,
                 Id = SettingId,
@@ -190,7 +190,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
 
             var stagingRepo = CreateStagingRepository(_currentYear);
             // Staged only against the OTHER request, never this one.
-            await stagingRepo.UpsertStagedSettingAsync(new YearEndSettingStaging
+            await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging
             {
                 JobQueueId = otherRequestJobQueueId,
                 Id = SettingId,

@@ -109,7 +109,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToList()
                 .ForEach(m => m.Fmonth = 0);
 
-            var stagedMonthHours = await _context.YearEndMonthHourStagings
+            var stagedMonthHours = await _context.MonthHourStagings
                 .AsNoTracking()
                 .Where(s => s.JobQueueId == request.JobQueueId)
                 .ToListAsync();

@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.FPS.DataAccess.Data
 {
-    public class YearEndMonthHourStagingMap : IEntityTypeConfiguration<YearEndMonthHourStaging>
+    public class MonthHourStagingMap : IEntityTypeConfiguration<MonthHourStaging>
     {
-        public void Configure(EntityTypeBuilder<YearEndMonthHourStaging> entity)
+        public void Configure(EntityTypeBuilder<MonthHourStaging> entity)
         {
-            entity.HasKey(e => new { e.JobQueueId, e.Month, e.Fmonth }).HasName("pk_yearend_monthhours_staging");
+            entity.HasKey(e => new { e.JobQueueId, e.Month, e.Fmonth }).HasName("pk_tlkpmonthhours_staging");
 
-            entity.ToTable("yearend_monthhours_staging", "fps");
+            entity.ToTable("tlkpmonthhours_staging", "fps");
 
             entity.Property(e => e.JobQueueId).HasColumnName("jobqueueid");
             entity.Property(e => e.MonthYear).HasColumnName("month_year");
@@ -30,7 +30,7 @@ namespace Apha.FPS.DataAccess.Data
             entity.HasOne<BatchJobQueue>()
                 .WithMany()
                 .HasForeignKey(e => e.JobQueueId)
-                .HasConstraintName("fk_yearend_monthhours_staging_jobqueue");
+                .HasConstraintName("fk_tlkpmonthhours_staging_jobqueue");
         }
     }
 }

@@ -446,7 +446,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
             // Act & Assert — never falls back to "whichever request is currently active".
             await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.SaveSettingAsync(jobExecutionId, dto));
 
-            await _mockYearEndStagingRepository.DidNotReceive().UpsertStagedSettingAsync(Arg.Any<YearEndSettingStaging>());
+            await _mockYearEndStagingRepository.DidNotReceive().UpsertStagedSettingAsync(Arg.Any<FpsSettingStaging>());
         }
 
         [Theory]
@@ -468,7 +468,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveSettingAsync(jobExecutionId, dto));
             ex.Errors.Should().ContainSingle(e => e.Code == "REQUEST_NOT_EDITABLE");
 
-            await _mockYearEndStagingRepository.DidNotReceive().UpsertStagedSettingAsync(Arg.Any<YearEndSettingStaging>());
+            await _mockYearEndStagingRepository.DidNotReceive().UpsertStagedSettingAsync(Arg.Any<FpsSettingStaging>());
         }
 
         [Fact]
@@ -491,7 +491,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
             result.FpsYear.Should().Be(2026); // displayed year is the request's target, not the open year
 
             await _mockYearEndStagingRepository.Received(1).UpsertStagedSettingAsync(
-                Arg.Is<YearEndSettingStaging>(s =>
+                Arg.Is<FpsSettingStaging>(s =>
                     s.JobQueueId == jobQueueId && s.Id == "HoursInDay" && s.Setting == "7.5" && s.Notes == "confirmed"));
 
             // The real table is never touched by Confirm under the staging design.

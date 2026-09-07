@@ -89,7 +89,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
             {
                 await using (var del1 = conn.CreateCommand())
                 {
-                    del1.CommandText = "DELETE FROM fps.yearend_monthhours_staging WHERE jobqueueid = @id;";
+                    del1.CommandText = "DELETE FROM fps.tlkpmonthhours_staging WHERE jobqueueid = @id;";
                     del1.Parameters.AddWithValue("id", jobQueueId);
                     await del1.ExecuteNonQueryAsync();
                 }
@@ -167,7 +167,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
             var jobQueueId = await CreateTestJobQueueRowAsync();
 
             var stagingRepo = CreateStagingRepository(_currentYear);
-            await stagingRepo.UpsertStagedMonthHourAsync(new YearEndMonthHourStaging
+            await stagingRepo.UpsertStagedMonthHourAsync(new MonthHourStaging
             {
                 JobQueueId = jobQueueId,
                 MonthYear = (short)TargetYear,
@@ -197,7 +197,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
 
             var stagingRepo = CreateStagingRepository(_currentYear);
             // Staged only against the OTHER request, never this one.
-            await stagingRepo.UpsertStagedMonthHourAsync(new YearEndMonthHourStaging
+            await stagingRepo.UpsertStagedMonthHourAsync(new MonthHourStaging
             {
                 JobQueueId = otherRequestJobQueueId,
                 MonthYear = (short)TargetYear,

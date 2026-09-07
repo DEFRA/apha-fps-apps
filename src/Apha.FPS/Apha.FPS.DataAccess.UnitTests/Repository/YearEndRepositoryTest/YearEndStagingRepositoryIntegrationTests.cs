@@ -60,13 +60,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
                 // Staging rows FK to job_queue -- delete children first.
                 await using (var del1 = conn.CreateCommand())
                 {
-                    del1.CommandText = "DELETE FROM fps.yearend_settings_staging WHERE jobqueueid = @id;";
+                    del1.CommandText = "DELETE FROM fps.tblsettings_staging WHERE jobqueueid = @id;";
                     del1.Parameters.AddWithValue("id", jobQueueId);
                     await del1.ExecuteNonQueryAsync();
                 }
                 await using (var del2 = conn.CreateCommand())
                 {
-                    del2.CommandText = "DELETE FROM fps.yearend_monthhours_staging WHERE jobqueueid = @id;";
+                    del2.CommandText = "DELETE FROM fps.tlkpmonthhours_staging WHERE jobqueueid = @id;";
                     del2.Parameters.AddWithValue("id", jobQueueId);
                     await del2.ExecuteNonQueryAsync();
                 }
@@ -177,7 +177,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var jobQueueId = await CreateTestJobQueueRowAsync(2025, 2026);
             var repo = CreateRepository(2025);
 
-            await repo.UpsertStagedSettingAsync(new YearEndSettingStaging
+            await repo.UpsertStagedSettingAsync(new FpsSettingStaging
             {
                 JobQueueId = jobQueueId,
                 Id = "HoursInDay",
@@ -190,7 +190,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.Equal("8", afterFirst[0].Setting);
 
             // Re-Confirm the same setting with a different value -- must update in place, not duplicate.
-            await repo.UpsertStagedSettingAsync(new YearEndSettingStaging
+            await repo.UpsertStagedSettingAsync(new FpsSettingStaging
             {
                 JobQueueId = jobQueueId,
                 Id = "HoursInDay",
@@ -212,7 +212,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var jobQueueId = await CreateTestJobQueueRowAsync(2025, 2026);
             var repo = CreateRepository(2025);
 
-            await repo.UpsertStagedMonthHourAsync(new YearEndMonthHourStaging
+            await repo.UpsertStagedMonthHourAsync(new MonthHourStaging
             {
                 JobQueueId = jobQueueId,
                 MonthYear = 2026,
@@ -229,7 +229,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.Equal(20.0m, afterFirst[0].Days);
 
             // Re-Confirm the same (Month, Fmonth) with different values -- must update in place.
-            await repo.UpsertStagedMonthHourAsync(new YearEndMonthHourStaging
+            await repo.UpsertStagedMonthHourAsync(new MonthHourStaging
             {
                 JobQueueId = jobQueueId,
                 MonthYear = 2026,
@@ -254,13 +254,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var jobQueueId = await CreateTestJobQueueRowAsync(2025, 2026);
             var repo = CreateRepository(2025);
 
-            await repo.UpsertStagedSettingAsync(new YearEndSettingStaging
+            await repo.UpsertStagedSettingAsync(new FpsSettingStaging
             {
                 JobQueueId = jobQueueId,
                 Id = "HoursInDay",
                 Setting = "8"
             });
-            await repo.UpsertStagedMonthHourAsync(new YearEndMonthHourStaging
+            await repo.UpsertStagedMonthHourAsync(new MonthHourStaging
             {
                 JobQueueId = jobQueueId,
                 MonthYear = 2026,

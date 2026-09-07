@@ -1,6 +1,6 @@
 namespace Apha.FPS.Core.Entities
 {
-    public partial class YearEndSettingStaging
+    public partial class FpsSettingStaging
     {
         public Guid JobQueueId { get; set; }
         public string Id { get; set; } = null!;

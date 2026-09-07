@@ -93,7 +93,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Where(s => s.FpsYear == request.FpsYear && settingIdsLower.Contains(s.Id.ToLower()))
                 .ToListAsync();
 
-            var stagedSettings = await _dbContext.YearEndSettingStagings
+            var stagedSettings = await _dbContext.FpsSettingStagings
                 .AsNoTracking()
                 .Where(s => s.JobQueueId == request.JobQueueId)
                 .ToListAsync();

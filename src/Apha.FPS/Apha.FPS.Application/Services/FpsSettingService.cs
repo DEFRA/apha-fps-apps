@@ -121,7 +121,7 @@ namespace Apha.FPS.Application.Services
                 ]);
             }
 
-            await _yearEndStagingRepository.UpsertStagedSettingAsync(new YearEndSettingStaging
+            await _yearEndStagingRepository.UpsertStagedSettingAsync(new FpsSettingStaging
             {
                 JobQueueId = request.JobQueueId,
                 Id = dto!.Id,

@@ -1,6 +1,6 @@
 namespace Apha.FPS.Core.Entities
 {
-    public partial class YearEndMonthHourStaging
+    public partial class MonthHourStaging
     {
         public Guid JobQueueId { get; set; }
 

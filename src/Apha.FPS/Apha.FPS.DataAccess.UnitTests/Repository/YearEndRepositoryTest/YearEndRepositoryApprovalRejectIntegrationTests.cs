@@ -62,13 +62,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
                 // Staging rows FK to job_queue -- delete children first.
                 await using (var del1 = conn.CreateCommand())
                 {
-                    del1.CommandText = "DELETE FROM fps.yearend_settings_staging WHERE jobqueueid = @id;";
+                    del1.CommandText = "DELETE FROM fps.tblsettings_staging WHERE jobqueueid = @id;";
                     del1.Parameters.AddWithValue("id", jobQueueId);
                     await del1.ExecuteNonQueryAsync();
                 }
                 await using (var del2 = conn.CreateCommand())
                 {
-                    del2.CommandText = "DELETE FROM fps.yearend_monthhours_staging WHERE jobqueueid = @id;";
+                    del2.CommandText = "DELETE FROM fps.tlkpmonthhours_staging WHERE jobqueueid = @id;";
                     del2.Parameters.AddWithValue("id", jobQueueId);
                     await del2.ExecuteNonQueryAsync();
                 }
@@ -143,12 +143,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var status = (string)(await statusCmd.ExecuteScalarAsync())!;
 
             await using var settingsCmd = conn.CreateCommand();
-            settingsCmd.CommandText = "SELECT COUNT(*) FROM fps.yearend_settings_staging WHERE jobqueueid = @id;";
+            settingsCmd.CommandText = "SELECT COUNT(*) FROM fps.tblsettings_staging WHERE jobqueueid = @id;";
             settingsCmd.Parameters.AddWithValue("id", jobQueueId);
             var settingsCount = Convert.ToInt32(await settingsCmd.ExecuteScalarAsync());
 
             await using var monthHoursCmd = conn.CreateCommand();
-            monthHoursCmd.CommandText = "SELECT COUNT(*) FROM fps.yearend_monthhours_staging WHERE jobqueueid = @id;";
+            monthHoursCmd.CommandText = "SELECT COUNT(*) FROM fps.tlkpmonthhours_staging WHERE jobqueueid = @id;";
             monthHoursCmd.Parameters.AddWithValue("id", jobQueueId);
             var monthHoursCount = Convert.ToInt32(await monthHoursCmd.ExecuteScalarAsync());
 
@@ -163,8 +163,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var jobQueueId = await CreateTestJobQueueRowAsync(2025, 2026);
             var (repo, stagingRepo) = CreateRepositories(2025);
 
-            await stagingRepo.UpsertStagedSettingAsync(new YearEndSettingStaging { JobQueueId = jobQueueId, Id = "HoursInDay", Setting = "8" });
-            await stagingRepo.UpsertStagedMonthHourAsync(new YearEndMonthHourStaging { JobQueueId = jobQueueId, MonthYear = 2026, Month = 1, Fmonth = 0, Days = 20m });
+            await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging { JobQueueId = jobQueueId, Id = "HoursInDay", Setting = "8" });
+            await stagingRepo.UpsertStagedMonthHourAsync(new MonthHourStaging { JobQueueId = jobQueueId, MonthYear = 2026, Month = 1, Fmonth = 0, Days = 20m });
 
             await repo.EnqueueDataSetupRejectBatchJobAsync(jobQueueId, "rejector@example.com", "rejected in integration test");
 
@@ -184,8 +184,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var jobQueueId = await CreateTestJobQueueRowAsync(2025, 2026);
             var (repo, stagingRepo) = CreateRepositories(2025);
 
-            await stagingRepo.UpsertStagedSettingAsync(new YearEndSettingStaging { JobQueueId = jobQueueId, Id = "HoursInDay", Setting = "8" });
-            await stagingRepo.UpsertStagedMonthHourAsync(new YearEndMonthHourStaging { JobQueueId = jobQueueId, MonthYear = 2026, Month = 1, Fmonth = 0, Days = 20m });
+            await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging { JobQueueId = jobQueueId, Id = "HoursInDay", Setting = "8" });
+            await stagingRepo.UpsertStagedMonthHourAsync(new MonthHourStaging { JobQueueId = jobQueueId, MonthYear = 2026, Month = 1, Fmonth = 0, Days = 20m });
 
             await repo.EnqueueDataSetupApprovalBatchJobAsync(jobQueueId, "approver@example.com", "approved in integration test");
 
@@ -207,8 +207,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var secondJobQueueId = await CreateTestJobQueueRowAsync(2025, 2026);
             var (repo, stagingRepo) = CreateRepositories(2025);
 
-            await stagingRepo.UpsertStagedSettingAsync(new YearEndSettingStaging { JobQueueId = firstJobQueueId, Id = "HoursInDay", Setting = "8" });
-            await stagingRepo.UpsertStagedSettingAsync(new YearEndSettingStaging { JobQueueId = secondJobQueueId, Id = "HoursInDay", Setting = "7.5" });
+            await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging { JobQueueId = firstJobQueueId, Id = "HoursInDay", Setting = "8" });
+            await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging { JobQueueId = secondJobQueueId, Id = "HoursInDay", Setting = "7.5" });
 
             await repo.EnqueueDataSetupRejectBatchJobAsync(firstJobQueueId, "rejector@example.com", "reject first only");
 

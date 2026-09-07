@@ -396,7 +396,7 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthHourServiceTest
             // Act & Assert — never falls back to "whichever request is currently active".
             await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.SaveMonthHourAsync(jobExecutionId, dto));
 
-            await _mockYearEndStagingRepository.DidNotReceive().UpsertStagedMonthHourAsync(Arg.Any<YearEndMonthHourStaging>());
+            await _mockYearEndStagingRepository.DidNotReceive().UpsertStagedMonthHourAsync(Arg.Any<MonthHourStaging>());
         }
 
         [Theory]
@@ -418,7 +418,7 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthHourServiceTest
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveMonthHourAsync(jobExecutionId, dto));
             ex.Errors.Should().ContainSingle(e => e.Code == "REQUEST_NOT_EDITABLE");
 
-            await _mockYearEndStagingRepository.DidNotReceive().UpsertStagedMonthHourAsync(Arg.Any<YearEndMonthHourStaging>());
+            await _mockYearEndStagingRepository.DidNotReceive().UpsertStagedMonthHourAsync(Arg.Any<MonthHourStaging>());
         }
 
         [Fact]
@@ -441,7 +441,7 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthHourServiceTest
             result.FpsYear.Should().Be(2026); // displayed year is the request's target, not the open year
 
             await _mockYearEndStagingRepository.Received(1).UpsertStagedMonthHourAsync(
-                Arg.Is<YearEndMonthHourStaging>(s =>
+                Arg.Is<MonthHourStaging>(s =>
                     s.JobQueueId == jobQueueId && s.MonthYear == 2026 && s.Month == 3 && s.Fmonth == 1 &&
                     s.Days == 20 && s.VidHours == 5 && s.CvlHours == 3));
 

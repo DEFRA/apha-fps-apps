@@ -84,7 +84,7 @@ namespace Apha.FPS.Application.Services
                 ]);
             }
 
-            await _yearEndStagingRepository.UpsertStagedMonthHourAsync(new YearEndMonthHourStaging
+            await _yearEndStagingRepository.UpsertStagedMonthHourAsync(new MonthHourStaging
             {
                 JobQueueId = request.JobQueueId,
                 MonthYear = dto.Year,

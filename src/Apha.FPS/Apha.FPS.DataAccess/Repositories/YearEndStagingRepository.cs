@@ -46,44 +46,44 @@ namespace Apha.FPS.DataAccess.Repositories
             return result;
         }
 
-        public async Task<List<YearEndSettingStaging>> GetStagedSettingsAsync(Guid jobQueueId)
+        public async Task<List<FpsSettingStaging>> GetStagedSettingsAsync(Guid jobQueueId)
         {
-            return await _context.YearEndSettingStagings
+            return await _context.FpsSettingStagings
                 .AsNoTracking()
                 .Where(s => s.JobQueueId == jobQueueId)
                 .ToListAsync();
         }
 
-        public async Task<List<YearEndMonthHourStaging>> GetStagedMonthHoursAsync(Guid jobQueueId)
+        public async Task<List<MonthHourStaging>> GetStagedMonthHoursAsync(Guid jobQueueId)
         {
-            return await _context.YearEndMonthHourStagings
+            return await _context.MonthHourStagings
                 .AsNoTracking()
                 .Where(m => m.JobQueueId == jobQueueId)
                 .ToListAsync();
         }
 
-        public async Task UpsertStagedSettingAsync(YearEndSettingStaging setting)
+        public async Task UpsertStagedSettingAsync(FpsSettingStaging setting)
         {
-            var existing = await _context.YearEndSettingStagings
+            var existing = await _context.FpsSettingStagings
                 .FirstOrDefaultAsync(s => s.JobQueueId == setting.JobQueueId && s.Id == setting.Id);
 
             if (existing is null)
             {
-                _context.YearEndSettingStagings.Add(setting);
+                _context.FpsSettingStagings.Add(setting);
             }
             else
             {
                 existing.Setting = setting.Setting;
                 existing.Notes = setting.Notes;
-                _context.YearEndSettingStagings.Update(existing);
+                _context.FpsSettingStagings.Update(existing);
             }
 
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpsertStagedMonthHourAsync(YearEndMonthHourStaging monthHour)
+        public async Task UpsertStagedMonthHourAsync(MonthHourStaging monthHour)
         {
-            var existing = await _context.YearEndMonthHourStagings
+            var existing = await _context.MonthHourStagings
                 .FirstOrDefaultAsync(m =>
                     m.JobQueueId == monthHour.JobQueueId &&
                     m.Month == monthHour.Month &&
@@ -91,7 +91,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             if (existing is null)
             {
-                _context.YearEndMonthHourStagings.Add(monthHour);
+                _context.MonthHourStagings.Add(monthHour);
             }
             else
             {
@@ -99,7 +99,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 existing.Days = monthHour.Days;
                 existing.CvlHours = monthHour.CvlHours;
                 existing.VidHours = monthHour.VidHours;
-                _context.YearEndMonthHourStagings.Update(existing);
+                _context.MonthHourStagings.Update(existing);
             }
 
             await _context.SaveChangesAsync();
@@ -107,18 +107,18 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task DeleteStagingAsync(Guid jobQueueId)
         {
-            var settings = await _context.YearEndSettingStagings
+            var settings = await _context.FpsSettingStagings
                 .Where(s => s.JobQueueId == jobQueueId)
                 .ToListAsync();
-            var monthHours = await _context.YearEndMonthHourStagings
+            var monthHours = await _context.MonthHourStagings
                 .Where(m => m.JobQueueId == jobQueueId)
                 .ToListAsync();
 
             if (settings.Count == 0 && monthHours.Count == 0)
                 return;
 
-            _context.YearEndSettingStagings.RemoveRange(settings);
-            _context.YearEndMonthHourStagings.RemoveRange(monthHours);
+            _context.FpsSettingStagings.RemoveRange(settings);
+            _context.MonthHourStagings.RemoveRange(monthHours);
             await _context.SaveChangesAsync();
         }
     }
