@@ -74,21 +74,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Data
         // ── Column mappings ───────────────────────────────────────────────────────
 
         [Theory]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Id),             "id")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.JobCode),        "jobcode")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Program),        "program")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Customer),       "customer")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Manager),        "manager")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Status),         "status")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.StaffCosts),     "staffcosts")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.TestCost),       "testcost")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.AnimalCosts),    "animalcosts")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.AdditionalCosts),"additionalcosts")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.TotalCosts),     "totalcosts")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Budget),         "budget")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Profit),         "profit")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.TargetProfit),   "targetprofit")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.OffTarget),      "offtarget")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Id), "id")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.JobCode), "jobcode")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Program), "program")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Customer), "customer")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Manager), "manager")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Status), "status")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.StaffCosts), "staffcosts")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.TestCost), "testcost")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.AnimalCosts), "animalcosts")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.AdditionalCosts), "additionalcosts")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.TotalCosts), "totalcosts")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Budget), "budget")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Profit), "profit")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.TargetProfit), "targetprofit")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.OffTarget), "offtarget")]
         public void OnModelCreating_ProjectProfitabilityVlaView_ColumnsMappedCorrectly(
             string propertyName, string expectedColumnName)
         {
@@ -135,24 +135,24 @@ namespace Apha.FPS.DataAccess.UnitTests.Data
         }
 
         [Theory]
-        [InlineData(nameof(ContributionSummaryView.ContTarget),        "conttarget")]
-        [InlineData(nameof(ContributionSummaryView.SellingPc),         "sellingpc")]
-        [InlineData(nameof(ContributionSummaryView.ChargeRate),        "chargerate")]
-        [InlineData(nameof(ContributionSummaryView.Ohr),               "ohr")]
-        [InlineData(nameof(ContributionSummaryView.SumOfGenBid),       "sumofgenbid")]
-        [InlineData(nameof(ContributionSummaryView.WorkGroup),         "workgroup")]
+        [InlineData(nameof(ContributionSummaryView.ContTarget), "conttarget")]
+        [InlineData(nameof(ContributionSummaryView.SellingPc), "sellingpc")]
+        [InlineData(nameof(ContributionSummaryView.ChargeRate), "chargerate")]
+        [InlineData(nameof(ContributionSummaryView.Ohr), "ohr")]
+        [InlineData(nameof(ContributionSummaryView.SumOfGenBid), "sumofgenbid")]
+        [InlineData(nameof(ContributionSummaryView.WorkGroup), "workgroup")]
         [InlineData(nameof(ContributionSummaryView.ProfitCentreGrade), "profitcentregrade")]
-        [InlineData(nameof(ContributionSummaryView.WgGrade),           "wggrade")]
-        [InlineData(nameof(ContributionSummaryView.AppHours),          "apphours")]
-        [InlineData(nameof(ContributionSummaryView.Hrs),               "hrs")]
-        [InlineData(nameof(ContributionSummaryView.AvHrs),             "avhrs")]
-        [InlineData(nameof(ContributionSummaryView.Fec),               "fec")]
-        [InlineData(nameof(ContributionSummaryView.AppFec),            "appfec")]
-        [InlineData(nameof(ContributionSummaryView.Contribution),      "contribution")]
-        [InlineData(nameof(ContributionSummaryView.FpsYear),           "fpsyear")]
-        [InlineData(nameof(ContributionSummaryView.UserId),            "user_id")]
-        [InlineData(nameof(ContributionSummaryView.Dt2Username),       "dt2username")]
-        [InlineData(nameof(ContributionSummaryView.UserEmail),         "useremail")]
+        [InlineData(nameof(ContributionSummaryView.WgGrade), "wggrade")]
+        [InlineData(nameof(ContributionSummaryView.AppHours), "apphours")]
+        [InlineData(nameof(ContributionSummaryView.Hrs), "hrs")]
+        [InlineData(nameof(ContributionSummaryView.AvHrs), "avhrs")]
+        [InlineData(nameof(ContributionSummaryView.Fec), "fec")]
+        [InlineData(nameof(ContributionSummaryView.AppFec), "appfec")]
+        [InlineData(nameof(ContributionSummaryView.Contribution), "contribution")]
+        [InlineData(nameof(ContributionSummaryView.FpsYear), "fpsyear")]
+        [InlineData(nameof(ContributionSummaryView.UserId), "user_id")]
+        [InlineData(nameof(ContributionSummaryView.Dt2Username), "dt2username")]
+        [InlineData(nameof(ContributionSummaryView.UserEmail), "useremail")]
         public void OnModelCreating_TimeSellerPcView_ColumnsMappedCorrectly(
             string propertyName, string expectedColumnName)
         {
@@ -194,6 +194,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Data
             var primaryKey = entityType.FindPrimaryKey();
             Assert.NotNull(primaryKey);
             Assert.Equal(nameof(Division.DivName), Assert.Single(primaryKey.Properties).Name);
+            
+        }
+
         // ── OnModelCreating — Workgroup column constraints ────────────────────────
 
         /// <summary>
