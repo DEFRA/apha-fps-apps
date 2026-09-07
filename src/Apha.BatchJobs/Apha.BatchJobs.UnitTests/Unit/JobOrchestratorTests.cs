@@ -1452,16 +1452,16 @@ public sealed class JobOrchestratorTests
     }
 
     [Fact]
-    public async Task RunAsync_WhenJobFails_DoesNotInvokePostCompletionNotifier()
+    public async Task RunAsync_WhenJobFails_InvokesPostCompletionNotifierWithFailedStatus()
     {
-        SetupInitiatedExecution("FailNoNotifyJob");
+        SetupInitiatedExecution("FailNotifyJob");
         var notifier = Substitute.For<IPostCompletionNotifier>();
         var job = Substitute.For<IBatchJob>();
-        job.Name.Returns("FailNoNotifyJob");
+        job.Name.Returns("FailNotifyJob");
         job.ExecuteAsync(Arg.Any<CancellationToken>())
            .Returns(Task.FromException(new InvalidOperationException("boom")));
-        _factory.Create("FailNoNotifyJob").Returns(job);
-        _lockRepo.TryAcquireLockAsync("FailNoNotifyJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _factory.Create("FailNotifyJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("FailNotifyJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(true);
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
                  .Returns(43);
@@ -1471,8 +1471,42 @@ public sealed class JobOrchestratorTests
         var orchestrator = CreateOrchestratorWithNotifier(notifier);
 
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => orchestrator.RunAsync("FailNoNotifyJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+            () => orchestrator.RunAsync("FailNotifyJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
 
+        // A genuine (non-cancelled) failure notifies post-completion notifiers too — e.g. the Bulk
+        // Rates approver email needs failure visibility, not just a success receipt.
+        await notifier.Received(1).NotifyAsync(
+            Arg.Is<BatchJobCompletionContext>(c =>
+                c.JobName == "FailNotifyJob" &&
+                c.Status == JobStatus.Failed &&
+                c.ErrorMessage == "boom"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenJobCancelled_DoesNotInvokePostCompletionNotifier()
+    {
+        SetupInitiatedExecution("CancelNoNotifyJob");
+        var notifier = Substitute.For<IPostCompletionNotifier>();
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("CancelNoNotifyJob");
+        job.ExecuteAsync(Arg.Any<CancellationToken>())
+           .Returns(Task.FromException(new OperationCanceledException("cancelled")));
+        _factory.Create("CancelNoNotifyJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("CancelNoNotifyJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(45);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        var orchestrator = CreateOrchestratorWithNotifier(notifier);
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => orchestrator.RunAsync("CancelNoNotifyJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        // Cancellation (e.g. ECS SIGTERM) is deliberately excluded from notification — it isn't a
+        // genuine failure worth alerting approvers about.
         await notifier.DidNotReceiveWithAnyArgs().NotifyAsync(default!, default);
     }
 

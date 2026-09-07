@@ -309,7 +309,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         if (jobException is null)
         {
-            var completionContext = new BatchJobCompletionContext(jobQueueId, jobExecutionId, jobName, fpsYear, userId);
+            var completionContext = new BatchJobCompletionContext(
+                jobQueueId, jobExecutionId, jobName, fpsYear, userId, status, ErrorMessage: null);
             await TryNotifyCompletionAsync(completionContext, cancellationToken);
             await TryNotifyExecutionOutcomeAsync(record);
         }
@@ -321,6 +322,12 @@ public sealed class JobOrchestrator : IJobOrchestrator
         {
             // Runs after the lock has already been released above — best-effort operational
             // reporting is not part of the protected batch execution and must not delay it.
+            // Post-completion notifiers (e.g. the Bulk Rates approver email) fire here too, since
+            // their recipients need failure visibility just as much as success — a cancelled run
+            // (handled above) is deliberately excluded, not a genuine failure worth alerting on.
+            var completionContext = new BatchJobCompletionContext(
+                jobQueueId, jobExecutionId, jobName, fpsYear, userId, status, jobException.Message);
+            await TryNotifyCompletionAsync(completionContext, cancellationToken);
             await TryNotifyExecutionOutcomeAsync(record);
             ThrowWithStructuredLog(jobException, jobName, jobQueueId, jobExecutionId);
         }
@@ -550,9 +557,9 @@ public sealed class JobOrchestrator : IJobOrchestrator
     }
 
     /// <summary>
-    /// Invokes all registered post-completion notifiers after a job is durably Completed and
-    /// its lock released. Failures are logged and swallowed — a notification problem must not
-    /// alter the durable Completed state.
+    /// Invokes all registered post-completion notifiers after a job durably reaches Completed or
+    /// Failed and its lock is released. Notifier failures are logged and swallowed — a
+    /// notification problem must not alter the durable job outcome.
     /// </summary>
     private async Task TryNotifyCompletionAsync(BatchJobCompletionContext context, CancellationToken cancellationToken)
     {
