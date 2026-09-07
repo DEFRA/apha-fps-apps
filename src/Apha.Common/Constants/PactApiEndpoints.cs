@@ -99,7 +99,13 @@ namespace Apha.Common.Constants
         public const string UpdateProjectInvoice = "api/v1/projectinvoice/invoice/id?id={0}";
         public const string DeleteProjectInvoice = "api/v1/projectinvoice/invoice/id?id={0}";
         public const string GetMonthlyInvoicesSummary = "api/v1/projectinvoice/monthly-summary";
-        
+        public const string GetFailedInvoiceImport = "api/v1/projectinvoice/import/failed";
+        public const string GetFailedInvoiceImportById = "api/v1/projectinvoice/import/failed/{id}";
+        public const string SaveFailedInvoiceImport = "api/v1/projectinvoice/import/failed/{id}";
+        public const string DeleteFailedInvoiceImportById = "api/v1/projectinvoice/import/failed/{id}";
+        public const string DeleteFailedInvoiceImportByUser = "api/v1/projectinvoice/import/failed/user";
+        public const string ImportInvoice = "api/v1/projectinvoice/import";
+
         // Project SubContract
         public const string GetPagedProjectSubContracts = "api/v1/projectsubcontract";
         public const string GetProjectSubContractTotalAmount = "api/v1/projectsubcontract/total";
