@@ -198,7 +198,7 @@ public sealed class YearEndOrchestratorClaimIntegrationTests : IAsyncLifetime
         var currentExecutionContext = Substitute.For<ICurrentJobExecutionContext>();
         var notificationService = Substitute.For<IEmailNotificationService>();
         var postCompletionNotifiers = Array.Empty<IPostCompletionNotifier>();
-        var alertingSettings = Options.Create(new BatchAlertingSettings { EnableEmailNotifications = false, EmailEnabledJobs = [] });
+        var alertingSettings = Options.Create(new BatchAlertingSettings { EnableEmailNotifications = false });
         var settings = Options.Create(new BatchJobSettings { JobTimeout = 3600 });
         var failureClassifier = new BatchFailureClassifier(Substitute.For<IConfiguration>());
 

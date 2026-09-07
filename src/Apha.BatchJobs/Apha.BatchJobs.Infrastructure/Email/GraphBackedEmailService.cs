@@ -1,17 +1,17 @@
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Entities.Email;
-using Apha.BatchJobs.Infrastructure.Email;
+using Apha.Common.Contracts.Email;
+using Apha.Common.Utilities.Email;
 using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Infrastructure.Email;
 
 /// <summary>
 /// Implementation of <see cref="IEmailService"/>. Thin adapter over Apha.Common's
-/// existing <see cref="IGraphEmailService"/> (plan section 10.1) rather than a second,
-/// parallel Graph integration. Converts send failures into a <see cref="EmailSendResult"/>
-/// instead of throwing, so a per-recipient loop doesn't need its own try/catch around
-/// every call (spec section 14: "one recipient failure must not stop the remaining
-/// recipients").
+/// <see cref="IGraphEmailService"/> rather than a second, parallel Graph integration.
+/// Converts send failures into a <see cref="EmailSendResult"/> instead of throwing, so
+/// a per-recipient loop doesn't need its own try/catch around every call (spec section
+/// 14: "one recipient failure must not stop the remaining recipients").
 /// </summary>
 public sealed class GraphBackedEmailService : IEmailService
 {

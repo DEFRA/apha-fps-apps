@@ -4,6 +4,7 @@ using Apha.BatchJobs.Application.Orchestration;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Application.Configuration;
 using Apha.BatchJobs.Domain.Entities;
+using Apha.BatchJobs.Domain.Entities.Email;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
@@ -29,11 +30,11 @@ public sealed class JobOrchestratorTests
     private readonly BatchFailureClassifier _failureClassifier =
         new(new ConfigurationBuilder().Build());
     private readonly IOptions<BatchJobSettings> _settings = Options.Create(new BatchJobSettings { JobTimeout = 3600 });
-    // Nothing allowlisted by default — the many generic tests below don't assert on notification
-    // behavior, so the safe-by-default (nothing opted in) gate stays invisible to them. Tests that
+    // NotifyOnFailure off by default — the many generic tests below don't assert on notification
+    // behavior, so the safe-by-default (nothing enabled) gate stays invisible to them. Tests that
     // care about notification behavior build their own JobOrchestrator with tailored settings.
     private readonly IOptions<BatchAlertingSettings> _alertingSettings =
-        Options.Create(new BatchAlertingSettings { EnableEmailNotifications = true, EmailEnabledJobs = [] });
+        Options.Create(new BatchAlertingSettings { EnableEmailNotifications = true, NotifyOnFailure = false });
     private readonly JobOrchestrator _orchestrator;
 
     public JobOrchestratorTests()
@@ -523,21 +524,26 @@ public sealed class JobOrchestratorTests
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Failure notification — sent once after retries exhaust, best-effort, and only for jobs
-    // explicitly opted into BatchAlertingSettings.EmailEnabledJobs (not a blanket rollout to
-    // every job just because JobOrchestrator's hook is generic).
+    // Execution notifications — one BatchExecutionNotification per terminal outcome (Completed or
+    // Failed), sent after the status is durably persisted and the lock released (Worker-Wide Batch
+    // Execution Notifications spec). Applies to every job automatically — no per-job allow-list.
     // ─────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Builds a JobOrchestrator whose alerting config allowlists exactly <paramref name="jobName"/>,
-    /// so each notification test only needs to state which job it cares about.
+    /// Builds a JobOrchestrator with the given execution-notification policy. Defaults to both
+    /// outcome flags off so unrelated tests using this helper stay silent by default.
     /// </summary>
-    private JobOrchestrator CreateOrchestratorWithEmailEnabledFor(string jobName)
+    private JobOrchestrator CreateOrchestrator(
+        bool enableEmailNotifications = true,
+        bool notifyOnSuccess = false,
+        bool notifyOnFailure = false,
+        IOptions<BatchJobSettings>? jobSettings = null)
     {
         var alertingSettings = Options.Create(new BatchAlertingSettings
         {
-            EnableEmailNotifications = true,
-            EmailEnabledJobs = [jobName]
+            EnableEmailNotifications = enableEmailNotifications,
+            NotifyOnSuccess = notifyOnSuccess,
+            NotifyOnFailure = notifyOnFailure
         });
 
         return new JobOrchestrator(
@@ -548,18 +554,102 @@ public sealed class JobOrchestratorTests
             _currentExecutionContext,
             _notificationService,
             [],alertingSettings,
-            _settings,
+            jobSettings ?? _settings,
             _failureClassifier,
             NullLogger<JobOrchestrator>.Instance);
     }
 
     [Fact]
-    public async Task RunAsync_WhenJobFailsAndAllowlisted_SendsFailureNotificationExactlyOnce()
+    public async Task RunAsync_WhenJobSucceeds_PersistsCompletedBeforeSendingSuccessNotification()
+    {
+        // Arrange
+        SetupInitiatedExecution("OrderedSuccessJob");
+        var orchestrator = CreateOrchestrator(notifyOnSuccess: true);
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("OrderedSuccessJob");
+
+        _factory.Create("OrderedSuccessJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("OrderedSuccessJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(60);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        // Act
+        await orchestrator.RunAsync("OrderedSuccessJob", RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        // Assert
+        Received.InOrder(() =>
+        {
+            _execRepo.UpdateExecutionRecordAsync(
+                Arg.Is<JobExecutionRecord>(r => r.Status == JobStatus.Completed), Arg.Any<CancellationToken>());
+            _notificationService.SendExecutionNotificationAsync(Arg.Any<BatchExecutionNotification>(), Arg.Any<CancellationToken>());
+        });
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenJobSucceedsAndNotifyOnSuccessEnabled_SendsSuccessNotificationExactlyOnce()
+    {
+        // Arrange
+        SetupInitiatedExecution("NotifySuccessJob");
+        var jobExecutionId = Guid.NewGuid();
+        var orchestrator = CreateOrchestrator(notifyOnSuccess: true);
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("NotifySuccessJob");
+
+        _factory.Create("NotifySuccessJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("NotifySuccessJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(51);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        // Act
+        await orchestrator.RunAsync("NotifySuccessJob", RunMode.Manual, jobExecutionId, "test-user");
+
+        // Assert
+        await _notificationService.Received(1).SendExecutionNotificationAsync(
+            Arg.Is<BatchExecutionNotification>(n =>
+                n.JobName == "NotifySuccessJob" &&
+                n.JobExecutionId == jobExecutionId &&
+                n.FinalStatus == JobStatus.Completed &&
+                n.FailureMessage == null),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenJobSucceedsButNotifyOnSuccessDisabled_DoesNotSendSuccessNotification()
+    {
+        // Arrange
+        SetupInitiatedExecution("NoSuccessNotifyJob");
+        var orchestrator = CreateOrchestrator(notifyOnSuccess: false);
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("NoSuccessNotifyJob");
+
+        _factory.Create("NoSuccessNotifyJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("NoSuccessNotifyJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(52);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        // Act
+        await orchestrator.RunAsync("NoSuccessNotifyJob", RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        // Assert
+        await _notificationService.DidNotReceiveWithAnyArgs().SendExecutionNotificationAsync(default!, default);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenJobFailsAndNotifyOnFailureEnabled_SendsFailureNotificationExactlyOnceWithConciseMessage()
     {
         // Arrange
         SetupInitiatedExecution("NotifyFailJob");
         var jobExecutionId = Guid.NewGuid();
-        var orchestrator = CreateOrchestratorWithEmailEnabledFor("NotifyFailJob");
+        var orchestrator = CreateOrchestrator(notifyOnFailure: true);
 
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("NotifyFailJob");
@@ -578,30 +668,31 @@ public sealed class JobOrchestratorTests
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => orchestrator.RunAsync("NotifyFailJob", RunMode.Scheduled, jobExecutionId, "test-user"));
 
-        // Assert — notified exactly once, with the job name and exception message.
-        await _notificationService.Received(1).SendFailureNotificationAsync(
-            jobExecutionId.ToString("D"),
-            "NotifyFailJob",
-            "Simulated failure",
-            Arg.Any<DateTime>(),
+        // Assert — notified exactly once, with the job identity and a concise (Message-only) reason.
+        await _notificationService.Received(1).SendExecutionNotificationAsync(
+            Arg.Is<BatchExecutionNotification>(n =>
+                n.JobName == "NotifyFailJob" &&
+                n.JobExecutionId == jobExecutionId &&
+                n.FinalStatus == JobStatus.Failed &&
+                n.FailureMessage == "Simulated failure"),
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task RunAsync_WhenJobFailsButNotInEmailEnabledJobs_DoesNotSendFailureNotification()
+    public async Task RunAsync_WhenJobFails_SendsFailureNotificationRegardlessOfJobName_NoAllowlistRequired()
     {
-        // Arrange — allowlist covers a different job name than the one that fails; the generic
-        // JobOrchestrator hook must not roll out notifications to jobs that never opted in.
-        SetupInitiatedExecution("NotAllowlistedJob");
-        var orchestrator = CreateOrchestratorWithEmailEnabledFor("SomeOtherJob");
+        // Arrange — an arbitrary, never-before-seen job name; proves the generic JobOrchestrator
+        // hook fires for any job once NotifyOnFailure is enabled, with no allow-list to register in.
+        SetupInitiatedExecution("BrandNewJobNeverConfiguredAnywhere");
+        var orchestrator = CreateOrchestrator(notifyOnFailure: true);
 
         var job = Substitute.For<IBatchJob>();
-        job.Name.Returns("NotAllowlistedJob");
+        job.Name.Returns("BrandNewJobNeverConfiguredAnywhere");
         job.ExecuteAsync(Arg.Any<CancellationToken>())
            .Returns(Task.FromException(new InvalidOperationException("Simulated failure")));
 
-        _factory.Create("NotAllowlistedJob").Returns(job);
-        _lockRepo.TryAcquireLockAsync("NotAllowlistedJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _factory.Create("BrandNewJobNeverConfiguredAnywhere").Returns(job);
+        _lockRepo.TryAcquireLockAsync("BrandNewJobNeverConfiguredAnywhere", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(true);
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
                  .Returns(54);
@@ -610,27 +701,22 @@ public sealed class JobOrchestratorTests
 
         // Act
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => orchestrator.RunAsync("NotAllowlistedJob", RunMode.Scheduled, Guid.NewGuid(), "test-user"));
+            () => orchestrator.RunAsync("BrandNewJobNeverConfiguredAnywhere", RunMode.Scheduled, Guid.NewGuid(), "test-user"));
 
         // Assert
-        await _notificationService.DidNotReceiveWithAnyArgs().SendFailureNotificationAsync(
-            default!, default!, default!, default, default);
+        await _notificationService.Received(1).SendExecutionNotificationAsync(
+            Arg.Is<BatchExecutionNotification>(n =>
+                n.JobName == "BrandNewJobNeverConfiguredAnywhere" && n.FinalStatus == JobStatus.Failed),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task RunAsync_WhenJobFailsAndAllowlistedButEmailNotificationsGloballyDisabled_DoesNotSendFailureNotification()
+    public async Task RunAsync_WhenNotifyOnFailureDisabled_DoesNotSendFailureNotification()
     {
-        // Arrange — EnableEmailNotifications is the master switch and wins even if the job is
-        // individually allowlisted.
+        // Arrange — EnableEmailNotifications alone is not enough; NotifyOnFailure gates the
+        // failure outcome specifically.
         SetupInitiatedExecution("DisabledNotifyJob");
-        var alertingSettings = Options.Create(new BatchAlertingSettings
-        {
-            EnableEmailNotifications = false,
-            EmailEnabledJobs = ["DisabledNotifyJob"]
-        });
-        var orchestrator = new JobOrchestrator(
-            _factory, _lockRepo, _execRepo, _correlationService, _currentExecutionContext, _notificationService,
-            [],alertingSettings, _settings, _failureClassifier, NullLogger<JobOrchestrator>.Instance);
+        var orchestrator = CreateOrchestrator(notifyOnFailure: false);
 
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("DisabledNotifyJob");
@@ -650,43 +736,54 @@ public sealed class JobOrchestratorTests
             () => orchestrator.RunAsync("DisabledNotifyJob", RunMode.Scheduled, Guid.NewGuid(), "test-user"));
 
         // Assert
-        await _notificationService.DidNotReceiveWithAnyArgs().SendFailureNotificationAsync(
-            default!, default!, default!, default, default);
+        await _notificationService.DidNotReceiveWithAnyArgs().SendExecutionNotificationAsync(default!, default);
     }
 
     [Fact]
-    public async Task RunAsync_WhenAllowlistedJobSucceeds_NeverSendsFailureNotification()
+    public async Task RunAsync_WhenEmailNotificationsGloballyDisabled_SendsNoSuccessOrFailureNotification()
     {
-        // Arrange
-        SetupInitiatedExecution("NotifySuccessJob");
-        var orchestrator = CreateOrchestratorWithEmailEnabledFor("NotifySuccessJob");
-        var job = Substitute.For<IBatchJob>();
-        job.Name.Returns("NotifySuccessJob");
+        // Arrange — the master switch wins even though both per-outcome flags are individually on.
+        var orchestrator = CreateOrchestrator(enableEmailNotifications: false, notifyOnSuccess: true, notifyOnFailure: true);
 
-        _factory.Create("NotifySuccessJob").Returns(job);
-        _lockRepo.TryAcquireLockAsync("NotifySuccessJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        SetupInitiatedExecution("GlobalOffSuccessJob");
+        var successJob = Substitute.For<IBatchJob>();
+        successJob.Name.Returns("GlobalOffSuccessJob");
+        _factory.Create("GlobalOffSuccessJob").Returns(successJob);
+        _lockRepo.TryAcquireLockAsync("GlobalOffSuccessJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(true);
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
-                 .Returns(51);
+                 .Returns(56);
         _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
                  .Returns(Task.CompletedTask);
 
         // Act
-        await orchestrator.RunAsync("NotifySuccessJob", RunMode.Manual, Guid.NewGuid(), "test-user");
+        await orchestrator.RunAsync("GlobalOffSuccessJob", RunMode.Manual, Guid.NewGuid(), "test-user");
 
-        // Assert
-        await _notificationService.DidNotReceiveWithAnyArgs().SendFailureNotificationAsync(
-            default!, default!, default!, default, default);
+        SetupInitiatedExecution("GlobalOffFailJob");
+        var failJob = Substitute.For<IBatchJob>();
+        failJob.Name.Returns("GlobalOffFailJob");
+        failJob.ExecuteAsync(Arg.Any<CancellationToken>()).Returns(Task.FromException(new InvalidOperationException("boom")));
+        _factory.Create("GlobalOffFailJob").Returns(failJob);
+        _lockRepo.TryAcquireLockAsync("GlobalOffFailJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(57);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => orchestrator.RunAsync("GlobalOffFailJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        // Assert — neither run, across either outcome, ever called the notification service.
+        await _notificationService.DidNotReceiveWithAnyArgs().SendExecutionNotificationAsync(default!, default);
     }
 
     [Fact]
-    public async Task RunAsync_WhenAllowlistedJobInterruptedByCancellationToken_NeverSendsFailureNotification()
+    public async Task RunAsync_WhenJobCancelled_NeverSendsExecutionNotification()
     {
         // Arrange — matches the removed MABArchive orchestrator's skip-on-cancellation behavior:
-        // a true worker-level cancellation is not a "job failure" worth alerting on, even for an
-        // allowlisted job.
+        // a true worker-level cancellation is not a "job failure" worth alerting on, even with
+        // failure notifications enabled.
         SetupInitiatedExecution("NotifyCancelJob");
-        var orchestrator = CreateOrchestratorWithEmailEnabledFor("NotifyCancelJob");
+        var orchestrator = CreateOrchestrator(notifyOnFailure: true);
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("NotifyCancelJob");
         job.ExecuteAsync(Arg.Any<CancellationToken>())
@@ -696,7 +793,7 @@ public sealed class JobOrchestratorTests
         _lockRepo.TryAcquireLockAsync("NotifyCancelJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(true);
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
-                 .Returns(52);
+                 .Returns(58);
         _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
                  .Returns(Task.CompletedTask);
 
@@ -705,16 +802,103 @@ public sealed class JobOrchestratorTests
             () => orchestrator.RunAsync("NotifyCancelJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
 
         // Assert
-        await _notificationService.DidNotReceiveWithAnyArgs().SendFailureNotificationAsync(
-            default!, default!, default!, default, default);
+        await _notificationService.DidNotReceiveWithAnyArgs().SendExecutionNotificationAsync(default!, default);
     }
 
     [Fact]
-    public async Task RunAsync_WhenNotificationItselfThrows_StillThrowsOriginalJobException()
+    public async Task RunAsync_WhenRetryFailsOnceThenSucceeds_SendsSuccessNotificationOnly_NoFailureNotification()
+    {
+        // Arrange
+        var retrySettings = Options.Create(new BatchJobSettings { JobTimeout = 3600, RetryAttempts = 1, RetryDelaySeconds = 0 });
+        var orchestrator = CreateOrchestrator(notifyOnSuccess: true, notifyOnFailure: true, jobSettings: retrySettings);
+
+        SetupInitiatedExecution("RetryThenSucceedNotifyJob");
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("RetryThenSucceedNotifyJob");
+        job.ExecuteAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new TimeoutException("Transient failure")), Task.CompletedTask);
+
+        _factory.Create("RetryThenSucceedNotifyJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("RetryThenSucceedNotifyJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(59);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        // Act
+        await orchestrator.RunAsync("RetryThenSucceedNotifyJob", RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        // Assert — the transient first-attempt failure never reaches the notification layer.
+        await _notificationService.Received(1).SendExecutionNotificationAsync(
+            Arg.Is<BatchExecutionNotification>(n => n.FinalStatus == JobStatus.Completed), Arg.Any<CancellationToken>());
+        await _notificationService.DidNotReceive().SendExecutionNotificationAsync(
+            Arg.Is<BatchExecutionNotification>(n => n.FinalStatus == JobStatus.Failed), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenAllRetriesFail_SendsExactlyOneFailureNotification()
+    {
+        // Arrange
+        var retrySettings = Options.Create(new BatchJobSettings { JobTimeout = 3600, RetryAttempts = 2, RetryDelaySeconds = 0 });
+        var orchestrator = CreateOrchestrator(notifyOnFailure: true, jobSettings: retrySettings);
+
+        SetupInitiatedExecution("AllRetriesFailNotifyJob");
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("AllRetriesFailNotifyJob");
+        job.ExecuteAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new TimeoutException("Still failing")));
+
+        _factory.Create("AllRetriesFailNotifyJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("AllRetriesFailNotifyJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(63);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        // Act — 3 attempts total (1 + 2 retries), all fail with the same transient exception.
+        await Assert.ThrowsAsync<TimeoutException>(
+            () => orchestrator.RunAsync("AllRetriesFailNotifyJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        // Assert — one notification for the final outcome, not one per attempt.
+        await _notificationService.Received(1).SendExecutionNotificationAsync(
+            Arg.Is<BatchExecutionNotification>(n => n.FinalStatus == JobStatus.Failed), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenSuccessNotificationServiceThrows_JobStillReturnsCompleted()
+    {
+        // Arrange — the notification service is mocked to throw directly (bypassing its own
+        // internal best-effort handling) to prove JobOrchestrator itself is resilient too.
+        SetupInitiatedExecution("SuccessNotifyThrowsJob");
+        var orchestrator = CreateOrchestrator(notifyOnSuccess: true);
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("SuccessNotifyThrowsJob");
+
+        _factory.Create("SuccessNotifyThrowsJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("SuccessNotifyThrowsJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(64);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+        _notificationService.SendExecutionNotificationAsync(Arg.Any<BatchExecutionNotification>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new InvalidOperationException("Notification transport down")));
+
+        // Act
+        var result = await orchestrator.RunAsync("SuccessNotifyThrowsJob", RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        // Assert
+        Assert.Equal(JobStatus.Completed, result.Status);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenFailureNotificationServiceThrows_OriginalJobExceptionRemainsAuthoritative()
     {
         // Arrange — notification is best-effort and must never mask the real failure.
         SetupInitiatedExecution("NotifyThrowsJob");
-        var orchestrator = CreateOrchestratorWithEmailEnabledFor("NotifyThrowsJob");
+        var orchestrator = CreateOrchestrator(notifyOnFailure: true);
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("NotifyThrowsJob");
         job.ExecuteAsync(Arg.Any<CancellationToken>())
@@ -727,8 +911,7 @@ public sealed class JobOrchestratorTests
                  .Returns(53);
         _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
                  .Returns(Task.CompletedTask);
-        _notificationService.SendFailureNotificationAsync(
-                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+        _notificationService.SendExecutionNotificationAsync(Arg.Any<BatchExecutionNotification>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromException(new InvalidOperationException("Notification transport down")));
 
         // Act / Assert — the original job exception still propagates, not the notification one.

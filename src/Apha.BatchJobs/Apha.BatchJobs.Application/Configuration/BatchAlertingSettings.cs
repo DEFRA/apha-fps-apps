@@ -1,25 +1,21 @@
 namespace Apha.BatchJobs.Application.Configuration;
 
 /// <summary>
-/// Failure-alerting settings shared across batch processes — not specific to any one job.
-/// Consumed today only by <c>EmailNotificationService</c> (currently invoked for MABArchive
-/// failures), but the service itself already takes the job name as a parameter, so this section
-/// is deliberately not nested under any single job's own settings.
+/// Global Worker execution-notification policy — applies automatically to every job run through
+/// <c>JobOrchestrator</c>, not just a per-job allow-list (Worker-Wide Batch Execution Notifications
+/// spec, section 7). A newly registered job inherits this behaviour with no configuration change.
 /// </summary>
 public sealed class BatchAlertingSettings
 {
-    /// <summary>When true, failure notification emails are sent to <see cref="AdminNotificationEmail"/>.</summary>
+    /// <summary>Master switch. When false, no operational execution email is ever sent regardless of <see cref="NotifyOnSuccess"/>/<see cref="NotifyOnFailure"/>.</summary>
     public bool EnableEmailNotifications { get; set; }
 
-    /// <summary>Email recipient for failure notifications.</summary>
-    public string? AdminNotificationEmail { get; set; }
+    /// <summary>When true (and <see cref="EnableEmailNotifications"/> is true), a job reaching <c>Completed</c> sends a success notification.</summary>
+    public bool NotifyOnSuccess { get; set; }
 
-    /// <summary>
-    /// Job names (matched case-insensitively against <c>IBatchJob.Name</c> / the requested job
-    /// name) eligible for failure-notification emails. <c>JobOrchestrator</c> checks membership
-    /// here before sending, on top of <see cref="EnableEmailNotifications"/> — this is what keeps
-    /// the generic, job-agnostic notification hook in JobOrchestrator from silently rolling out
-    /// alert emails to every batch job. Empty by default: a job must be explicitly opted in.
-    /// </summary>
-    public List<string> EmailEnabledJobs { get; set; } = [];
+    /// <summary>When true (and <see cref="EnableEmailNotifications"/> is true), a job reaching <c>Failed</c> sends a failure notification.</summary>
+    public bool NotifyOnFailure { get; set; }
+
+    /// <summary>Email recipient for operational execution notifications.</summary>
+    public string? AdminNotificationEmail { get; set; }
 }

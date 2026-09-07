@@ -1,5 +1,7 @@
 using Apha.BatchJobs.Domain.Entities.Email;
 using Apha.BatchJobs.Infrastructure.Email;
+using Apha.Common.Contracts.Email;
+using Apha.Common.Utilities.Email;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;

@@ -3,6 +3,7 @@ using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Configuration;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Entities;
+using Apha.BatchJobs.Domain.Entities.Email;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Exceptions;
 using Apha.BatchJobs.Domain.Interfaces;
@@ -310,6 +311,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         {
             var completionContext = new BatchJobCompletionContext(jobQueueId, jobExecutionId, jobName, fpsYear, userId);
             await TryNotifyCompletionAsync(completionContext, cancellationToken);
+            await TryNotifyExecutionOutcomeAsync(record);
         }
 
         if (jobException is OperationCanceledException cancelEx)
@@ -319,7 +321,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         {
             // Runs after the lock has already been released above — best-effort operational
             // reporting is not part of the protected batch execution and must not delay it.
-            await TryNotifyFailureAsync(jobName, jobExecutionId, jobException);
+            await TryNotifyExecutionOutcomeAsync(record);
             ThrowWithStructuredLog(jobException, jobName, jobQueueId, jobExecutionId);
         }
 
@@ -574,35 +576,53 @@ public sealed class JobOrchestrator : IJobOrchestrator
     }
 
     /// <summary>
-    /// Sends a best-effort failure notification once retries are exhausted. Never lets a
-    /// notification failure mask the original job exception. Gated on
-    /// <see cref="BatchAlertingSettings.EnableEmailNotifications"/> and job-name membership in
-    /// <see cref="BatchAlertingSettings.EmailEnabledJobs"/>.
+    /// Sends a best-effort execution-outcome notification (Completed or Failed) once the final
+    /// status is durably persisted and the lock released. Never lets a notification failure
+    /// change or mask the persisted outcome. Applies to every job automatically — gated only on
+    /// <see cref="BatchAlertingSettings.EnableEmailNotifications"/> and the matching
+    /// <see cref="BatchAlertingSettings.NotifyOnSuccess"/>/<see cref="BatchAlertingSettings.NotifyOnFailure"/>
+    /// flag, with no per-job allow-list. <see cref="CancellationToken.None"/> is used deliberately —
+    /// this runs after the protected execution has already finished, so it must not be tangled up
+    /// in that execution's own cancellation.
     /// </summary>
-    private async Task TryNotifyFailureAsync(string jobName, Guid jobExecutionId, Exception exception)
+    private async Task TryNotifyExecutionOutcomeAsync(JobExecutionRecord record)
     {
-        if (!_alertingSettings.EnableEmailNotifications ||
-            !_alertingSettings.EmailEnabledJobs.Contains(jobName, StringComparer.OrdinalIgnoreCase))
+        var shouldNotify = record.Status switch
+        {
+            JobStatus.Completed => _alertingSettings.NotifyOnSuccess,
+            JobStatus.Failed => _alertingSettings.NotifyOnFailure,
+            _ => false
+        };
+
+        if (!_alertingSettings.EnableEmailNotifications || !shouldNotify)
         {
             return;
         }
 
         try
         {
-            await _notificationService.SendFailureNotificationAsync(
-                jobExecutionId.ToString("D"),
-                jobName,
-                exception.Message,
-                DateTime.UtcNow,
-                CancellationToken.None);
+            var notification = new BatchExecutionNotification(
+                record.JobName,
+                record.JobExecutionId,
+                record.JobQueueId,
+                record.RunMode,
+                record.UserId,
+                record.RequestedAtUtc,
+                record.Status,
+                record.CompletedAt ?? DateTime.UtcNow,
+                record.DurationSeconds.HasValue ? TimeSpan.FromSeconds(record.DurationSeconds.Value) : null,
+                record.Status == JobStatus.Failed ? record.ErrorMessage : null);
+
+            await _notificationService.SendExecutionNotificationAsync(notification, CancellationToken.None);
         }
         catch (Exception notifyEx)
         {
             _logger.LogWarning(
                 notifyEx,
-                "Failed to send failure notification | JobName={JobName} | JobExecutionId={JobExecutionId}",
-                jobName,
-                jobExecutionId);
+                "Failed to send execution notification | JobName={JobName} | JobExecutionId={JobExecutionId} | Status={Status}",
+                record.JobName,
+                record.JobExecutionId,
+                record.Status);
         }
     }
 
