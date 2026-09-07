@@ -433,6 +433,7 @@ namespace Apha.FPS.Application.Services
                         JobName = entry.JobName,
                         FpsYear = entry.FpsYear,
                         RequestedBy = entry.RequestedBy,
+                        RejectedBy = rejectedBy,
                         Reason = reason
                     }, ct);
             }

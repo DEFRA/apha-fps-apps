@@ -690,6 +690,55 @@ public class BulkRatesRequestServiceTests
         await repo.Received(1).CancelAndClearStagingAsync(QueueId, JobName, Initiator, Arg.Any<DateTime>(), null, 42, Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task ReleaseForApproval_PopulatesRequestedByOnNotificationContext()
+    {
+        var repo = RepoReturning(Entry(status: "Initiated", uploadChecksum: "sha256abc"));
+        repo.GetTestOrProductStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "TC001", FecNewRate = 10m } } as IReadOnlyList<TestOrProductStagingRow>);
+        repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>())
+            .Returns(new[] { new TestOrProductStagingRow { TestCode = "TC001", UnitPriceVla = 10m, DefraUnitPrice = 10m } } as IReadOnlyList<TestOrProductStagingRow>);
+        var notif = Substitute.For<IBulkRatesNotificationService>();
+        var svc = CreateService(repo, notif: notif);
+
+        await svc.ReleaseForApprovalAsync(QueueId, Initiator);
+
+        await notif.Received(1).NotifyAsync(
+            BulkRatesNotificationEvent.ReleasedForApproval,
+            Arg.Is<BulkRatesNotificationContext>(c => c.RequestedBy == Initiator),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Approve_PopulatesApprovedByOnNotificationContext()
+    {
+        var repo  = RepoReturning(Entry(status: "ReleasedForApproval", uploadChecksum: "sha256abc"));
+        var notif = Substitute.For<IBulkRatesNotificationService>();
+        var svc = CreateService(repo, notif: notif);
+
+        await svc.ApproveAsync(QueueId, Approver);
+
+        await notif.Received(1).NotifyAsync(
+            BulkRatesNotificationEvent.Approved,
+            Arg.Is<BulkRatesNotificationContext>(c => c.ApprovedBy == Approver),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Reject_PopulatesRejectedByOnNotificationContext()
+    {
+        var repo  = RepoReturning(Entry(status: "ReleasedForApproval"));
+        var notif = Substitute.For<IBulkRatesNotificationService>();
+        var svc = CreateService(repo, notif: notif);
+
+        await svc.RejectAsync(QueueId, Approver, "Wrong rates");
+
+        await notif.Received(1).NotifyAsync(
+            BulkRatesNotificationEvent.Rejected,
+            Arg.Is<BulkRatesNotificationContext>(c => c.RejectedBy == Approver && c.RequestedBy == Initiator),
+            Arg.Any<CancellationToken>());
+    }
+
     // â”€â”€ GetRequestAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]

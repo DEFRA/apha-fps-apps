@@ -159,6 +159,38 @@ public class GraphEmailBulkRatesNotificationServiceTests
         await email.DidNotReceive().SendEmailAsync(Arg.Any<EmailMessageModel>(), Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task Rejected_AppliesRejectedByToken()
+    {
+        var email    = Substitute.For<IGraphEmailService>();
+        var settings = DefaultSettings();
+        settings.RejectedBody = "Reason={Reason} RejectedBy={RejectedBy}";
+        var sut = CreateSut(email, settings);
+        var ctx = Context(requestedBy: "alice@test.com", reason: "Wrong rates");
+        ctx.RejectedBy = "carol@test.com";
+
+        await sut.NotifyAsync(BulkRatesNotificationEvent.Rejected, ctx);
+
+        await email.Received(1).SendEmailAsync(
+            Arg.Is<EmailMessageModel>(m => m.Body.Contains("carol@test.com")),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Rejected_RejectedByToken_EmptyWhenNotSet()
+    {
+        var email    = Substitute.For<IGraphEmailService>();
+        var settings = DefaultSettings();
+        settings.RejectedBody = "RejectedBy=[{RejectedBy}]";
+        var sut = CreateSut(email, settings);
+
+        await sut.NotifyAsync(BulkRatesNotificationEvent.Rejected, Context());
+
+        await email.Received(1).SendEmailAsync(
+            Arg.Is<EmailMessageModel>(m => m.Body.Contains("RejectedBy=[]")),
+            Arg.Any<CancellationToken>());
+    }
+
     // ── Cancelled ────────────────────────────────────────────────────────────
 
     [Fact]
@@ -186,6 +218,29 @@ public class GraphEmailBulkRatesNotificationServiceTests
         await sut.NotifyAsync(BulkRatesNotificationEvent.Cancelled, Context());
 
         await email.DidNotReceive().SendEmailAsync(Arg.Any<EmailMessageModel>(), Arg.Any<CancellationToken>());
+    }
+
+    // ── JobDisplayName token ─────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData("BulkTestRatesUpdate", "Bulk Test Rates Update")]
+    [InlineData("BulkStaffRatesUpdate", "Bulk Staff Rates Update")]
+    [InlineData("BulkAnimalRatesUpdate", "Bulk Animal Rates Update")]
+    [InlineData("SomeFutureJobType", "SomeFutureJobType")]
+    public async Task AppliesJobDisplayNameToken_ForKnownAndUnknownJobNames(string jobName, string expectedDisplayName)
+    {
+        var email    = Substitute.For<IGraphEmailService>();
+        var settings = DefaultSettings();
+        settings.ReleasedForApprovalSubject = "Approval Required: {JobDisplayName} Released for Approval";
+        var sut = CreateSut(email, settings);
+        var ctx = Context();
+        ctx.JobName = jobName;
+
+        await sut.NotifyAsync(BulkRatesNotificationEvent.ReleasedForApproval, ctx);
+
+        await email.Received(1).SendEmailAsync(
+            Arg.Is<EmailMessageModel>(m => m.Subject == $"Approval Required: {expectedDisplayName} Released for Approval"),
+            Arg.Any<CancellationToken>());
     }
 
     // ── Worker-owned events ───────────────────────────────────────────────────

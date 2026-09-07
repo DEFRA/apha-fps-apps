@@ -9,6 +9,7 @@ namespace Apha.FPS.Application.Common.BulkRates
         public int FpsYear { get; set; }
         public string RequestedBy { get; set; } = string.Empty;
         public string? ApprovedBy { get; set; }
+        public string? RejectedBy { get; set; }
         public string? Reason { get; set; }
         public BulkRatesRowCounts? RowCounts { get; set; }
     }

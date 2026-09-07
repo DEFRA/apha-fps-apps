@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Utilities.Email;
 using Apha.FPS.Application.Common.BulkRates;
 using Apha.FPS.Application.Email;
@@ -169,11 +170,22 @@ namespace Apha.FPS.Application.Services
         /// <summary>Replaces well-known tokens in subject/body templates.</summary>
         private static string ApplyTokens(string template, BulkRatesNotificationContext ctx)
             => template
-                .Replace("{JobQueueId}",  ctx.JobQueueId.ToString())
-                .Replace("{JobName}",     ctx.JobName)
-                .Replace("{FpsYear}",     ctx.FpsYear.ToString())
-                .Replace("{RequestedBy}", ctx.RequestedBy)
-                .Replace("{ApprovedBy}",  ctx.ApprovedBy ?? string.Empty)
-                .Replace("{Reason}",      ctx.Reason ?? string.Empty);
+                .Replace("{JobQueueId}",     ctx.JobQueueId.ToString())
+                .Replace("{JobName}",        ctx.JobName)
+                .Replace("{JobDisplayName}", ResolveJobDisplayName(ctx.JobName))
+                .Replace("{FpsYear}",        ctx.FpsYear.ToString())
+                .Replace("{RequestedBy}",    ctx.RequestedBy)
+                .Replace("{ApprovedBy}",     ctx.ApprovedBy ?? string.Empty)
+                .Replace("{RejectedBy}",     ctx.RejectedBy ?? string.Empty)
+                .Replace("{Reason}",         ctx.Reason ?? string.Empty);
+
+        /// <summary>Maps a raw job name to a human-readable display name. Falls back to the raw name if unrecognised.</summary>
+        private static string ResolveJobDisplayName(string jobName) => jobName switch
+        {
+            BulkRatesJobNames.Fec => "Bulk Test Rates Update",
+            BulkRatesJobNames.Staff => "Bulk Staff Rates Update",
+            BulkRatesJobNames.Animal => "Bulk Animal Rates Update",
+            _ => jobName
+        };
     }
 }
