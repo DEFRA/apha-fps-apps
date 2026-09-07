@@ -2,6 +2,7 @@ using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Orchestration;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Entities.Email;
+using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Infrastructure.Email;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -19,13 +20,17 @@ public sealed class BulkRatesCompletionNotifierTests
         int fpsYear = 2027,
         string requestedBy = "requester@test",
         Guid? jobQueueId = null,
-        Guid? jobExecutionId = null)
+        Guid? jobExecutionId = null,
+        JobStatus status = JobStatus.Completed,
+        string? errorMessage = null)
         => new(
             jobQueueId ?? Guid.NewGuid(),
             jobExecutionId ?? Guid.NewGuid(),
             jobName,
             fpsYear,
-            requestedBy);
+            requestedBy,
+            status,
+            errorMessage);
 
     private static BulkRatesCompletionNotifier CreateNotifier(
         IEmailService? email = null,
@@ -38,11 +43,15 @@ public sealed class BulkRatesCompletionNotifierTests
     private static BulkRatesEmailSettings DefaultSettings(
         string recipients = "dl@test.com",
         string subject = "Completed",
-        string body = "Done") => new()
+        string body = "Done",
+        string failureSubject = "Failed",
+        string failureBody = "Failed body") => new()
     {
         CompletionRecipients = recipients,
         CompletionSubject = subject,
-        CompletionBody = body
+        CompletionBody = body,
+        FailureSubject = failureSubject,
+        FailureBody = failureBody
     };
 
     // ── Job recognition: Bulk Rates jobs trigger send ─────────────────────────
@@ -169,5 +178,69 @@ public sealed class BulkRatesCompletionNotifierTests
 
         // Email send was attempted; the exception was swallowed by the notifier.
         await email.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
+    }
+
+    // ── Failed jobs notify the same recipients, using the failure templates ───
+
+    [Theory]
+    [InlineData(BatchJobNames.BulkTestRatesUpdate)]
+    [InlineData(BatchJobNames.BulkStaffRatesUpdate)]
+    [InlineData(BatchJobNames.BulkAnimalRatesUpdate)]
+    public async Task NotifyAsync_WhenBulkRatesJobFailed_SendsEmail(string jobName)
+    {
+        var email = Substitute.For<IEmailService>();
+        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
+             .Returns(new EmailSendResult(true, null));
+
+        await CreateNotifier(email)
+            .NotifyAsync(MakeContext(jobName, status: JobStatus.Failed), CancellationToken.None);
+
+        await email.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task NotifyAsync_WhenFailed_RecipientsBlank_DoesNotSendEmail()
+    {
+        var email = Substitute.For<IEmailService>();
+        var settings = DefaultSettings(recipients: "");
+
+        await CreateNotifier(email, settings)
+            .NotifyAsync(
+                MakeContext(BatchJobNames.BulkStaffRatesUpdate, status: JobStatus.Failed),
+                CancellationToken.None);
+
+        await email.DidNotReceiveWithAnyArgs().SendAsync(default!, default);
+    }
+
+    [Fact]
+    public async Task NotifyAsync_WhenFailed_UsesFailureTemplatesAndErrorMessageToken()
+    {
+        var email = Substitute.For<IEmailService>();
+        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
+             .Returns(new EmailSendResult(true, null));
+
+        EmailMessage? captured = null;
+        await email.SendAsync(
+            Arg.Do<EmailMessage>(m => captured = m),
+            Arg.Any<CancellationToken>());
+
+        var settings = DefaultSettings(
+            subject: "{JobName} {FpsYear} completed",
+            body: "should not appear",
+            failureSubject: "{JobName} FAILED",
+            failureBody: "Reason: {ErrorMessage}");
+
+        await CreateNotifier(email, settings)
+            .NotifyAsync(
+                MakeContext(
+                    BatchJobNames.BulkAnimalRatesUpdate,
+                    status: JobStatus.Failed,
+                    errorMessage: "DB connection timed out"),
+                CancellationToken.None);
+
+        await email.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
+        Assert.NotNull(captured);
+        Assert.Equal("BulkAnimalRatesUpdate FAILED", captured!.Subject);
+        Assert.Contains("DB connection timed out", captured.HtmlBody);
     }
 }

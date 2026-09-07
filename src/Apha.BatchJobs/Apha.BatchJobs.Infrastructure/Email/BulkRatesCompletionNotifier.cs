@@ -2,14 +2,17 @@ using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Orchestration;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Entities.Email;
+using Apha.BatchJobs.Domain.Enums;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Apha.BatchJobs.Infrastructure.Email;
 
 /// <summary>
-/// Sends a completion email for all three Bulk Rates jobs after their durable Completed transition.
-/// A no-op for any other job name. Email failures are logged and swallowed — the job remains Completed.
+/// Sends a completion email for all three Bulk Rates jobs after they durably reach Completed or
+/// Failed. Same recipients both times — they're the approvers for the update, so they need
+/// failure visibility, not just a success receipt. A no-op for any other job name. Email failures
+/// are logged and swallowed — never alters the job's own durable outcome.
 /// </summary>
 public sealed class BulkRatesCompletionNotifier : IPostCompletionNotifier
 {
@@ -35,7 +38,8 @@ public sealed class BulkRatesCompletionNotifier : IPostCompletionNotifier
         if (string.IsNullOrWhiteSpace(_settings.CompletionRecipients))
         {
             _logger.LogInformation(
-                "Bulk Rates completion notification suppressed: CompletionRecipients not configured | JobName={JobName} | JobQueueId={JobQueueId}",
+                "Bulk Rates {Status} notification suppressed: CompletionRecipients not configured | JobName={JobName} | JobQueueId={JobQueueId}",
+                context.Status,
                 context.JobName,
                 context.JobQueueId);
             return;
@@ -44,15 +48,17 @@ public sealed class BulkRatesCompletionNotifier : IPostCompletionNotifier
         var recipients = _settings.CompletionRecipients
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-        var subject = ReplacePlaceholders(_settings.CompletionSubject, context);
-        var body = ReplacePlaceholders(_settings.CompletionBody, context);
+        var isSuccess = context.Status == JobStatus.Completed;
+        var subject = ReplacePlaceholders(isSuccess ? _settings.CompletionSubject : _settings.FailureSubject, context);
+        var body = ReplacePlaceholders(isSuccess ? _settings.CompletionBody : _settings.FailureBody, context);
 
         try
         {
             await _emailService.SendAsync(new EmailMessage(recipients, subject, body), cancellationToken);
 
             _logger.LogInformation(
-                "Bulk Rates completion notification sent | JobName={JobName} | JobQueueId={JobQueueId} | FpsYear={FpsYear}",
+                "Bulk Rates {Status} notification sent | JobName={JobName} | JobQueueId={JobQueueId} | FpsYear={FpsYear}",
+                context.Status,
                 context.JobName,
                 context.JobQueueId,
                 context.FpsYear);
@@ -61,7 +67,8 @@ public sealed class BulkRatesCompletionNotifier : IPostCompletionNotifier
         {
             _logger.LogError(
                 ex,
-                "Failed to send Bulk Rates completion notification | JobName={JobName} | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId} | FpsYear={FpsYear} | RequestedBy={RequestedBy}",
+                "Failed to send Bulk Rates {Status} notification | JobName={JobName} | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId} | FpsYear={FpsYear} | RequestedBy={RequestedBy}",
+                context.Status,
                 context.JobName,
                 context.JobQueueId,
                 context.JobExecutionId,
@@ -81,5 +88,6 @@ public sealed class BulkRatesCompletionNotifier : IPostCompletionNotifier
             .Replace("{JobName}", context.JobName, StringComparison.Ordinal)
             .Replace("{JobQueueId}", context.JobQueueId.ToString("D"), StringComparison.Ordinal)
             .Replace("{FpsYear}", context.FpsYear?.ToString() ?? string.Empty, StringComparison.Ordinal)
-            .Replace("{RequestedBy}", context.RequestedBy, StringComparison.Ordinal);
+            .Replace("{RequestedBy}", context.RequestedBy, StringComparison.Ordinal)
+            .Replace("{ErrorMessage}", context.ErrorMessage ?? string.Empty, StringComparison.Ordinal);
 }
