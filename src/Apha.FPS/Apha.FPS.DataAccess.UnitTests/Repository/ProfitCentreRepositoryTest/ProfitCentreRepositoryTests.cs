@@ -1,9 +1,11 @@
 using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Enums;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
+using Moq;
 using NSubstitute;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
@@ -53,6 +55,46 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
             return new ProfitCentreRepository(mockContext.Object, requestContext);
+        }
+
+        /// <summary>
+        /// Creates a repository alongside the list that captures every UserProfitcentre
+        /// added during the call, so super user link behaviour can be asserted.
+        /// </summary>
+        private static (ProfitCentreRepository Repo, List<UserProfitcentre> AddedLinks) CreateRepositoryCapturingLinks(
+            IEnumerable<ProfitCentre>? profitCentres = null,
+            IEnumerable<UserProfitcentre>? userProfitCentres = null,
+            IEnumerable<User>? users = null)
+        {
+            var requestContext = Substitute.For<IFpsRequestContext>();
+            requestContext.FpsYear.Returns(2024);
+            requestContext.UserEmailId.Returns("test@example.com");
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestContext);
+
+            var pcSet = RepositoryTestHelper.CreateMockDbSet(profitCentres ?? []);
+            RepositoryTestHelper.SetupDbSetOperations(pcSet);
+            mockContext.Setup(x => x.ProfitCentres).Returns(pcSet.Object);
+
+            var addedLinks = new List<UserProfitcentre>();
+            var upcSet = RepositoryTestHelper.CreateMockDbSet(userProfitCentres ?? []);
+            RepositoryTestHelper.SetupDbSetOperations(upcSet);
+            upcSet.Setup(x => x.Add(It.IsAny<UserProfitcentre>()))
+                  .Callback<UserProfitcentre>(addedLinks.Add);
+            mockContext.Setup(x => x.UserProfitcentres).Returns(upcSet.Object);
+
+            var pcgSet = RepositoryTestHelper.CreateMockDbSet(Array.Empty<ProfitCentreGrade>());
+            mockContext.Setup(x => x.ProfitCentreGrades).Returns(pcgSet.Object);
+
+            var wgSet = RepositoryTestHelper.CreateMockDbSet(Array.Empty<Workgroup>());
+            mockContext.Setup(x => x.Workgroups).Returns(wgSet.Object);
+
+            var capturingUserSet = RepositoryTestHelper.CreateMockDbSet(users ?? []);
+            mockContext.Setup(x => x.Users).Returns(capturingUserSet.Object);
+
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            return (new ProfitCentreRepository(mockContext.Object, requestContext), addedLinks);
         }
 
         private static ProfitCentreView BuildView(
@@ -812,6 +854,68 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
 
             Assert.NotNull(result);
             Assert.Equal("PC01", result.ProfitCentreId);
+        }
+
+        [Fact]
+        public async Task CreateProfitCentreAsync_AddsCurrentUserAndSuperUserLinks_WhenNeitherExists()
+        {
+            var entity = BuildEntity("PC01");
+            var user = new User { UserId = 10, UserEmail = "test@example.com" };
+            var (repo, addedLinks) = CreateRepositoryCapturingLinks(
+                profitCentres: [],
+                userProfitCentres: [],
+                users: [user]);
+
+            await repo.CreateProfitCentreAsync(entity);
+
+            Assert.Equal(2, addedLinks.Count);
+
+            var currentUserLink = Assert.Single(addedLinks, l => l.UserId == 10);
+            Assert.Equal("PC01", currentUserLink.ProfitCentre);
+            Assert.Equal(2024, currentUserLink.FpsYear);
+
+            var superUserLink = Assert.Single(addedLinks, l => l.UserId == (int)SuperUser.SuperUserId);
+            Assert.Equal("PC01", superUserLink.ProfitCentre);
+            Assert.Equal(2024, superUserLink.FpsYear);
+        }
+
+        [Fact]
+        public async Task CreateProfitCentreAsync_AddsSuperUserLinkOnce_WhenCurrentUserNotFound()
+        {
+            // No matching user means the repository falls back to the super user id,
+            // so only a single link must be created rather than a duplicate pair.
+            var entity = BuildEntity("PC01");
+            var (repo, addedLinks) = CreateRepositoryCapturingLinks(
+                profitCentres: [],
+                userProfitCentres: [],
+                users: []);
+
+            await repo.CreateProfitCentreAsync(entity);
+
+            var superUserLink = Assert.Single(addedLinks);
+            Assert.Equal((int)SuperUser.SuperUserId, superUserLink.UserId);
+        }
+
+        [Fact]
+        public async Task CreateProfitCentreAsync_SkipsSuperUserLink_WhenSuperUserLinkAlreadyExists()
+        {
+            var entity = BuildEntity("PC01");
+            var user = new User { UserId = 10, UserEmail = "test@example.com" };
+            var existingSuperUserLink = new UserProfitcentre
+            {
+                ProfitCentre = "PC01",
+                UserId = (int)SuperUser.SuperUserId,
+                FpsYear = 2024
+            };
+            var (repo, addedLinks) = CreateRepositoryCapturingLinks(
+                profitCentres: [],
+                userProfitCentres: [existingSuperUserLink],
+                users: [user]);
+
+            await repo.CreateProfitCentreAsync(entity);
+
+            var addedLink = Assert.Single(addedLinks);
+            Assert.Equal(10, addedLink.UserId);
         }
 
         #endregion
