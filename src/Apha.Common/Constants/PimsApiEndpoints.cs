@@ -106,7 +106,7 @@ namespace Apha.Common.Constants
         public const string AddStagingMilestone = "api/v1/milestone/staging/{0}";
         public const string UpdateStagingMilestone = "api/v1/milestone/staging/{0}";
         public const string DeleteStagingMilestone = "api/v1/milestone/staging/{0}";
-        public const string ClearStagingMilestones = "api/v1/milestone/{0}/staging";
+        public const string ClearStagingMilestones = "api/v1/milestone/staging";
         public const string ValidateStagingMilestones = "api/v1/milestone/{0}/staging/validate";
         public const string ImportStagingMilestones = "api/v1/milestone/{0}/staging/import";
         public const string ImportOverwriteStagingMilestones = "api/v1/milestone/{0}/staging/import-overwrite";

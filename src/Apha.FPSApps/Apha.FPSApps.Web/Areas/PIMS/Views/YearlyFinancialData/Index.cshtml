@@ -438,6 +438,30 @@
             showYfdFormError(message);
         }
 
+        function getYfdAdjustmentCommentValidationMessage(response) {
+            if (!response) {
+                return null;
+            }
+
+            var topLevelMessage = (response.message || '').toString();
+            if (/reason for adjustment figure/i.test(topLevelMessage)) {
+                return topLevelMessage;
+            }
+
+            var errors = Array.isArray(response.errors) ? response.errors : [];
+            for (var i = 0; i < errors.length; i++) {
+                var err = errors[i] || {};
+                var code = (err.code || '').toString().toUpperCase();
+                var message = (err.message || '').toString();
+
+                if (code === 'ADJUSTMENT_COMMENT_REQUIRED' || /reason for adjustment figure/i.test(message)) {
+                    return message || 'Please enter a reason for the adjustment figure, or remove the adjustment figure.';
+                }
+            }
+
+            return null;
+        }
+
         function getPactProjectSpecific(pact) {
             if (!pact) {
                 return null;
@@ -782,11 +806,26 @@
                             reloadYearlyFinancialDataGrid();
                         });
                     } else {
+                        var adjustmentValidationMessage = getYfdAdjustmentCommentValidationMessage(data);
+                        if (adjustmentValidationMessage) {
+                            showYfdAdjustmentCommentValidation(adjustmentValidationMessage);
+                            return;
+                        }
+
                         var msg = formatApiErrors(data.errors) || data.message || 'Save failed.';
                         showAlertMessage('Save failed: ' + msg, AlertType.ERROR);
                     }
                 },
-                error: function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
+                error: function (xhr) {
+                    var response = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                    var adjustmentValidationMessage = getYfdAdjustmentCommentValidationMessage(response);
+                    if (adjustmentValidationMessage) {
+                        showYfdAdjustmentCommentValidation(adjustmentValidationMessage);
+                        return;
+                    }
+
+                    showAlertMessage('An error occurred while saving.', AlertType.ERROR);
+                }
             });
         }
 
