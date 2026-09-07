@@ -23,7 +23,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? Buyer { get; set; }
 
         [Display(Name = "UnitPrice")]
-        [GridColumn(Width = 110, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 110, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? UnitPrice { get; set; }
 
         [Display(Name = "NoRequired")]
