@@ -1187,6 +1187,36 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             Assert.Equal("WG_A", result.Data.First().WorkGroupName);
         }
 
+        [Theory]
+        [InlineData("WorkGroup", false, "WG_A")]
+        [InlineData("WorkGroup", true, "WG_B")]
+        [InlineData("workgroup", false, "WG_A")]
+        public async Task GetWorkGroupsByProfitCentreForBudgetPagedAsync_SortsByWorkGroupGridColumn(
+            string sortBy, bool descending, string expectedFirstWorkGroupName)
+        {
+            // Arrange
+            const string userEmail = "user@example.com";
+            var views = new List<WorkGroupView>
+            {
+                new() { WorkGroupName = "WG_B", ProfitCentre = "PC1", UserEmail = userEmail },
+                new() { WorkGroupName = "WG_A", ProfitCentre = "PC1", UserEmail = userEmail }
+            };
+            var repo = CreateWorkGroupViewRepository(views, userEmail);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = sortBy,
+                Descending = descending
+            };
+
+            // Act
+            var result = await repo.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
+
+            // Assert
+            Assert.Equal(expectedFirstWorkGroupName, result.Data.First().WorkGroupName);
+        }
+
         #endregion
     }
 }

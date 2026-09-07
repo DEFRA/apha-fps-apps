@@ -91,6 +91,18 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ReleaseSummaryRes, ReleaseSummaryDto>();
             CreateMap<TestPriceCheckDto, TestPriceCheckRes>().ReverseMap();
             CreateMap<TestPriceCheckDto, TestPriceCheckReq>();
+
+            // Invoice Import
+            CreateMap<InvoiceImportRowDto, InvoiceImportRowReq>().ReverseMap();
+            CreateMap<InvoiceImportRowDto, InvoiceImportRowRes>().ReverseMap();
+            CreateMap<InvoiceImportReqDto, InvoiceImportReq>();
+            CreateMap<InvoiceImportRes, InvoiceImportResultDto>();
+
+            CreateMap<InvoiceImportResultDto, InvoiceImportRes>().ReverseMap();
+
+            CreateMap<InvoiceImportRowDto, InvoiceImportRowReq>();
+            CreateMap<InvoiceImportRes, InvoiceImportResultDto>();
+            CreateMap<ApiResponse<InvoiceImportRes>, ApiResponseDto<InvoiceImportResultDto>>();
             CreateMap<TimePurchaseProjectDto, TimePurchaseProjectRes>().ReverseMap();
             CreateMap<TimeSaleProfitCentreDto, TimeSaleProfitCentreRes>().ReverseMap();
             CreateMap<TimeSaleWorkGroupDto, TimeSaleWorkGroupRes>().ReverseMap();

@@ -140,7 +140,15 @@
         window.addEventListener('pageshow', function () {
             if (sessionStorage.getItem('fps_clearFiltersOnReturn') === '1') {
                 sessionStorage.removeItem('fps_clearFiltersOnReturn');
-                fpsNavigateTo('@Url.Action("Index", "ProjectGroupSelection", new { area = "FPS" })');
+                var params = new URLSearchParams(window.location.search);
+                var projectGroup = params.get('projectGroup') || (document.getElementById('projectGroupDropdown')?.value ?? '');
+                var projectSearch = params.get('projectSearch') || (document.getElementById('projectSearchInput')?.value ?? '');
+                var targetUrl = '@Url.Action("Index", "ProjectGroupSelection", new { area = "FPS" })';
+                if (projectGroup) {
+                    targetUrl += '?projectGroup=' + encodeURIComponent(projectGroup)
+                        + '&projectSearch=' + encodeURIComponent(projectSearch);
+                }
+                fpsNavigateTo(targetUrl);
             }
         });
 

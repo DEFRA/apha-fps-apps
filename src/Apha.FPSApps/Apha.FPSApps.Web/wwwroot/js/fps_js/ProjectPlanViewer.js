@@ -18,6 +18,15 @@ window.getAnimalActualExtraFilters = function () { return { projectCode: getCurr
 window.getAdditionalPlanExtraFilters   = function () { return { projectCode: getCurrentProjectCode() }; };
 window.getAdditionalActualExtraFilters = function () { return { projectCode: getCurrentProjectCode() }; };
 
+// The Programme/Group/Project selects are enhanced into type-and-search combo
+// boxes (see /js/common/searchable-select.js). Assigning select.value in code
+// does not raise 'change', so the visible text box must be refreshed explicitly.
+function refreshSearchableSelect(select) {
+    if (select && window.FpsSearchableSelect) {
+        window.FpsSearchableSelect.refresh(select);
+    }
+}
+
 (function () {
     'use strict';
 
@@ -308,6 +317,7 @@ window.getAdditionalActualExtraFilters = function () { return { projectCode: get
                     // Only update project dropdown if it was the trigger
                     if (window.gridLoadTrigger === 'project' && projectSelect) {
                         projectSelect.value = projectCode;
+                        refreshSearchableSelect(projectSelect);
                     }
                     setVal('selectedProjectDetails', projectCode);
                     loadProjectByCode(projectCode);
@@ -359,8 +369,8 @@ window.getAdditionalActualExtraFilters = function () { return { projectCode: get
                 // Programme change
                 if (programSelect) {
                     programSelect.addEventListener('change', function () {
-                        if (projectGroupSelect) projectGroupSelect.value = '';
-                        if (projectSelect) projectSelect.value = '';
+                        if (projectGroupSelect) { projectGroupSelect.value = ''; refreshSearchableSelect(projectGroupSelect); }
+                        if (projectSelect) { projectSelect.value = ''; refreshSearchableSelect(projectSelect); }
                         if (window.clearProjectState) window.clearProjectState();
 
                         if (programSelect.value) {
@@ -373,8 +383,8 @@ window.getAdditionalActualExtraFilters = function () { return { projectCode: get
                 // Project group change
                 if (projectGroupSelect) {
                     projectGroupSelect.addEventListener('change', function () {
-                        if (programSelect) programSelect.value = '';
-                        if (projectSelect) projectSelect.value = '';
+                        if (programSelect) { programSelect.value = ''; refreshSearchableSelect(programSelect); }
+                        if (projectSelect) { projectSelect.value = ''; refreshSearchableSelect(projectSelect); }
                         if (window.clearProjectState) window.clearProjectState();
 
                         if (projectGroupSelect.value) {
@@ -387,8 +397,8 @@ window.getAdditionalActualExtraFilters = function () { return { projectCode: get
                 // Project selection change
                 if (projectSelect) {
                     projectSelect.addEventListener('change', function () {
-                        if (programSelect) programSelect.value = '';
-                        if (projectGroupSelect) projectGroupSelect.value = '';
+                        if (programSelect) { programSelect.value = ''; refreshSearchableSelect(programSelect); }
+                        if (projectGroupSelect) { projectGroupSelect.value = ''; refreshSearchableSelect(projectGroupSelect); }
                         if (window.clearProjectState) window.clearProjectState();
 
                         if (projectSelect.value) {

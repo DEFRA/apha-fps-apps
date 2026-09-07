@@ -291,7 +291,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = true, message = "Division deleted successfully" });
             }
 
-            return Json(new { success = false, message = "Unable to delete the division name as it is already in use." });
+            return Json(new { success = false, message = "The selected record is being used on another page and cannot be deleted." });
         }
 
         /// <summary>

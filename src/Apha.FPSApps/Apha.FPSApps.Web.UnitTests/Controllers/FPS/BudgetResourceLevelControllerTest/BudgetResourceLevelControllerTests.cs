@@ -654,14 +654,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
             Assert.False(value.success);
         }
 
-        [Fact]
-        public async Task DeleteBudgetBid_WhenRelatedPurchasesExist_ReturnsValidationMessage()
+        [Theory]
+        [InlineData("BUSINESS_RULE_VIOLATION")]
+        [InlineData("DB_POSTGRES_ERROR")]
+        public async Task DeleteBudgetBid_WhenRelatedPurchasesExist_ReturnsValidationMessage(string errorCode)
         {
             // Arrange
-            const string validationMessage = "This record cannot be deleted as it has a related entry in the Purchase table.";
+            const string validationMessage = "The record cannot be deleted because it is being used elsewhere.";
             _budgetBidsService.DeleteBidAsync(Arg.Any<BidDto>())
                 .Returns(ApiResponseDto<bool>.FailureResponse(
-                    new List<ApiErrorDto> { new() { Message = validationMessage, Code = "BUSINESS_RULE_VIOLATION" } },
+                    new List<ApiErrorDto> { new() { Message = "A database error occurred.", Code = errorCode } },
                     new ApiMetaDto()));
 
             // Act

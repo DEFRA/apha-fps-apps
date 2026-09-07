@@ -28,9 +28,13 @@
                 </h2>
                 <div class="govuk-error-summary__body">
                     <ul class="govuk-list govuk-error-summary__list">
-                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        @foreach (var errorMessage in ViewData.ModelState.Values
+                            .SelectMany(v => v.Errors)
+                            .Select(e => e.ErrorMessage)
+                            .Where(m => !string.IsNullOrWhiteSpace(m))
+                            .Distinct())
                         {
-                            <li>@error.ErrorMessage</li>
+                            <li>@errorMessage</li>
                         }
                     </ul>
                 </div>
@@ -162,10 +166,7 @@
             {
                     <text>showAlertMessage('@Html.Raw(TempData["SuccessMessage"])', AlertType.SUCCESS);</text>
             }
-            @if (TempData["Error"] != null)
-            {
-                    <text>showAlertMessage('@Html.Raw(TempData["Error"])', AlertType.ERROR);</text>
-            }
+
         });
     </script>
 }

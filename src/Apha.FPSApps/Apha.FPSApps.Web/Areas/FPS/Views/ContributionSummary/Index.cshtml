@@ -9,18 +9,22 @@
 
     <div class="govuk-grid-column-two-thirds">
         <h1 class="govuk-heading-s sup_margin_bottom_0 govuk-!-margin-top-1 isNoWrap">
-            Income/Contribution From Time Sales For:
-            <span id="selectedResourceCentreText" class="cs-selected-resource-centre">@Model.SelectedSellingPc</span>
+            Income/Contribution From Time Sales For: <span id="selectedResourceCentreText" class="cs-selected-resource-centre">@Model.SelectedSellingPc</span>
         </h1>
     </div>
 
     @* Resource Center dropdown *@
     <div class="govuk-grid-column-one-third" style="display:flex; justify-content:flex-end;">
         <div style="display:flex; align-items:center; gap:8px;">
-            <label for="sellingPcSelect" class="govuk-label govuk-!-font-size-16 sup_margin_bottom_0 isNoWrap">Resource Center:</label>
+            <label for="sellingPcSelect" class="govuk-label govuk-!-font-size-16 sup_margin_bottom_0 isNoWrap">
+                Resource Center <span class="sup_color_red" aria-hidden="true">*</span>
+            </label>
             <select id="sellingPcSelect"
                     class="govuk-select govuk-!-font-size-16"
                     style="width:auto; min-width:260px;"
+                    aria-label="Select a resource center to view income contribution data"
+                    aria-required="true"
+                    required
                     onchange="loadContributionData(this.value)">
                 <option value="">-- Select Resource Center --</option>
                 @foreach (var pc in Model.SellingProfitCentres)
@@ -40,7 +44,7 @@
 </div>
 
 @* ── Prompt shown before any PC is selected ── *@
-<div id="contributionSummaryPrompt" style="margin-top:16px;">
+<div id="contributionSummaryPrompt" style="margin-top:16px;" role="status" aria-live="polite">
     <div class="govuk-inset-text">
         <p class="govuk-body">Select a Resource Center above to view the Income / Contribution from Time Sales data.</p>
     </div>
@@ -50,9 +54,9 @@
 <div id="contributionSummaryGridArea" style="display:none; margin-top:16px;">
     <div class="govuk-grid-row sup_margin_left_right_0">
         <div class="govuk-grid-column-full">
-            <section class="fps-dg-panel sup_border" aria-label="Income contribution summary panel">
-                <div id="gridContainer_contributionSummaryGrid"></div>
-                <div id="contributionSummaryTotalsArea"></div>
+            <section class="fps-dg-panel sup_border" aria-label="Income contribution summary panel" role="region" aria-live="polite">
+                <div id="gridContainer_contributionSummaryGrid" aria-label="Income and contribution data summary"></div>
+                <div id="contributionSummaryTotalsArea" role="complementary" aria-label="Summary totals"></div>
             </section>
         </div>
     </div>
@@ -93,6 +97,11 @@
             if (!sellingPc) {
                 $('#contributionSummaryGridArea').hide();
                 $('#contributionSummaryPrompt').show();
+                // Announce to screen readers
+                var promptText = document.querySelector('#contributionSummaryPrompt .govuk-body');
+                if (promptText) {
+                    promptText.focus();
+                }
                 return;
             }
             currentSellingPc = sellingPc;
@@ -109,11 +118,15 @@
                     $('#gridContainer_' + contributionGridId).html(html);
                     refreshTotals(sellingPc);
                     hideLoader();
+                    // Announce to screen readers
+                    var gridContainer = document.getElementById('gridContainer_' + contributionGridId);
+                    if (gridContainer) {
+                        gridContainer.focus();
+                    }
                 },
                 error: function () {
-                    $('#gridContainer_' + contributionGridId).html(
-                        '<div class="govuk-error-message" style="padding:12px;">Failed to load data. Please try again.</div>'
-                    );
+                    var errorMsg = '<div class="govuk-error-message" style="padding:12px;" role="alert">Failed to load data. Please try again.</div>';
+                    $('#gridContainer_' + contributionGridId).html(errorMsg);
                     hideLoader();
                 }
             });
@@ -122,7 +135,14 @@
         function refreshTotals(sellingPc) {
             $.get('@Url.Action("LoadTotals", "ContributionSummary", new { area = "FPS" })',
                 { sellingPc: sellingPc || currentSellingPc },
-                function (html) { $('#contributionSummaryTotalsArea').html(html); }
+                function (html) { 
+                    $('#contributionSummaryTotalsArea').html(html);
+                    // Announce totals update to screen readers
+                    var totalsArea = document.getElementById('contributionSummaryTotalsArea');
+                    if (totalsArea) {
+                        totalsArea.setAttribute('aria-live', 'polite');
+                    }
+                }
             );
         }
 

@@ -58,7 +58,7 @@ namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest
                 () => _sut.DeleteBidAsync(DefaultWorkGroup, DefaultAccount));
 
             Assert.Equal(
-                "This record cannot be deleted as it has a related entry in the Purchase table.",
+                "The record cannot be deleted because it is being used elsewhere.",
                 ex.Message);
         }
 
