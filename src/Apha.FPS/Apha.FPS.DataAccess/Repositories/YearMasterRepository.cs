@@ -46,6 +46,13 @@ namespace Apha.FPS.DataAccess.Repositories
                 .FirstOrDefaultAsync(y => y.FpsYear == fpsYear);
         }
 
+        public async Task<YearMaster?> GetOpenFpsYearAsync()
+        {
+            return await _dbContext.YearMasters
+                .AsNoTracking()
+                .FirstOrDefaultAsync(y => y.Active && y.YearStatus.ToLower() == "open");
+        }
+
         private IQueryable<YearMaster> ApplyYearMasterFilter(IQueryable<YearMaster> query, int? filter)
         {
             if (filter.HasValue && filter.Value > 0)

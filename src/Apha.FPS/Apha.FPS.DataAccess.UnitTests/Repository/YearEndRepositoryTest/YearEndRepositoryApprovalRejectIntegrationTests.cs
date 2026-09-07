@@ -91,7 +91,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var options = new DbContextOptionsBuilder<FpsDbContext>().UseNpgsql(_connectionString).Options;
             var context = new FpsDbContext(options, requestContext);
             var stagingRepo = new YearEndStagingRepository(context);
-            var repo = new YearEndRepository(context, requestContext, stagingRepo);
+            var yearMasterRepo = new YearMasterRepository(context);
+            var repo = new YearEndRepository(context, stagingRepo, yearMasterRepo);
             return (repo, stagingRepo);
         }
 

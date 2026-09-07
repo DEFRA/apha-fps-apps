@@ -174,8 +174,10 @@ namespace Apha.FPS.Application.Services
             // Row's own persisted JobExecutionId, not the raw correlationId - Initiate and Approve
             // are separate requests that never share a correlation id. Persisted target year, not the
             // caller-supplied plannedYear (already verified equal above, but the persisted value is the
-            // one that must drive the Worker regardless).
-            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, queued.JobExecutionId.ToString(), request.TargetFpsYear.Value);
+            // one that must drive the Worker regardless). queued.FpsYear is the row's own current/Open
+            // year - ValidateYearEndContextStep requires both targetFpsYear and currentFpsYear in
+            // BATCH_JOB_PARAMETERS_JSON before any Worker step runs.
+            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, queued.JobExecutionId.ToString(), request.TargetFpsYear.Value, queued.FpsYear);
 
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
 
@@ -329,8 +331,9 @@ namespace Apha.FPS.Application.Services
                 ]);
             }
 
-            // Same JobExecutionId reasoning as the DataSetup approval path above.
-            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, queued.JobExecutionId.ToString(), plannedYear);
+            // Same JobExecutionId reasoning as the DataSetup approval path above. queued.FpsYear is
+            // the row's own current/Open year - see the identical comment there.
+            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, queued.JobExecutionId.ToString(), plannedYear, queued.FpsYear);
 
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
 
@@ -547,7 +550,11 @@ namespace Apha.FPS.Application.Services
             }
         }
         
-        private static EventDetail BuildYearEndJobEvent(string jobName, string requestedBy, string correlationId, int plannedYear)
+        // Property names must match ValidateYearEndContextStep/YearEndExecutionContext.FromEnvironment
+        // on the Worker side exactly (case-sensitive): targetFpsYear, currentFpsYear. Both are
+        // mandatory - the Worker's first Data Setup step rejects the run before any data mutation if
+        // either is missing from BATCH_JOB_PARAMETERS_JSON.
+        private static EventDetail BuildYearEndJobEvent(string jobName, string requestedBy, string correlationId, int targetFpsYear, int currentFpsYear)
         {
             return new EventDetail
             {
@@ -558,7 +565,8 @@ namespace Apha.FPS.Application.Services
                 RequestedAtUtc = DateTime.UtcNow,
                 ParametersJson = JsonSerializer.Serialize(new
                 {
-                    plannedYear = $"{plannedYear:D4}"
+                    targetFpsYear,
+                    currentFpsYear
                 })
             };
         }

@@ -19,18 +19,22 @@ namespace Apha.FPS.DataAccess.Repositories
         // Same reasoning as YearEndDataSetupJobName above, for CutOver's own resolve-by-JobExecutionId methods.
         private const string YearEndCutOverJobName = "YearEnd-CutOver";
 
-        private readonly IFpsRequestContext _requestContext;
-
         // Only used by the DataSetup Approve/Reject path (Workstream 6), specifically for Reject's
         // staging deletion. Relies on both repositories resolving the same scoped FpsDbContext instance
         // (both AddScoped, both take FpsDbContext directly, not a factory) so DeleteStagingAsync's
         // SaveChangesAsync joins the transaction opened below rather than committing separately.
         private readonly IYearEndStagingRepository _yearEndStagingRepository;
 
-        public YearEndRepository(FpsDbContext context, IFpsRequestContext requestContext, IYearEndStagingRepository yearEndStagingRepository) : base(context)
+        // Resolves job_queue.fpsyear ("current/Open year") at Initiation from the authoritative
+        // tblyearmaster row, not from any ambient per-request context (X-FPS-Year reflects whichever
+        // year a UI session happens to be browsing - an administrative operation like Year End must
+        // not change meaning based on that).
+        private readonly IYearMasterRepository _yearMasterRepository;
+
+        public YearEndRepository(FpsDbContext context, IYearEndStagingRepository yearEndStagingRepository, IYearMasterRepository yearMasterRepository) : base(context)
         {
-            _requestContext = requestContext;
             _yearEndStagingRepository = yearEndStagingRepository ?? throw new ArgumentNullException(nameof(yearEndStagingRepository));
+            _yearMasterRepository = yearMasterRepository ?? throw new ArgumentNullException(nameof(yearMasterRepository));
         }
 
         public async Task<PagedData<BatchJobHistory>> GetBatchJobsHistoryAsync(PaginationParameters<string> query, string jobName)
@@ -175,8 +179,18 @@ namespace Apha.FPS.DataAccess.Repositories
             if (string.IsNullOrWhiteSpace(jobExecutionId) || !Guid.TryParse(jobExecutionId, out var parsedJobExecutionId))
                 throw new ArgumentException("A valid jobExecutionId is required.", nameof(jobExecutionId));
 
+            // Tracked (not AsNoTracking) and without an explicit Update() call: the Approve/Reject
+            // call just before this one (EnqueueDataSetupApprovalOrRejectByJobQueueId /
+            // EnqueueCutOverApprovalOrRejectByJobExecutionId) already tracked+saved this same row
+            // in this scoped FpsDbContext. A second AsNoTracking() query + Update() here would
+            // attach a distinct instance for the same key while the first is still tracked, which
+            // EF rejects ("already being tracked"). Querying tracked instead lets EF's identity
+            // resolution return that same already-tracked instance so mutating it just works.
+            // IgnoreQueryFilters for the same reason as every other unique-id lookup in this file -
+            // must not depend on the ambient X-FPS-Year header matching this row's FpsYear.
             var queueRow = await _context.BatchJobQueues
-                .AsNoTracking().FirstOrDefaultAsync(q => q.JobExecutionId == parsedJobExecutionId)
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(q => q.JobExecutionId == parsedJobExecutionId)
                 ?? throw new KeyNotFoundException($"Batch job queue row for JobExecutionId '{jobExecutionId}' was not found.");
 
             var nowUtc = DateTime.UtcNow;
@@ -184,7 +198,6 @@ namespace Apha.FPS.DataAccess.Repositories
             queueRow.TriggeredAtUtc = nowUtc;
             queueRow.UpdatedAt = nowUtc;
 
-            _context.BatchJobQueues.Update(queueRow);
             await _context.SaveChangesAsync();
         }
 
@@ -441,6 +454,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 .FirstOrDefaultAsync(s => s.JobId == job.JobId && s.Status.ToLower() == "initiated")
                 ?? throw new KeyNotFoundException($"Status 'initiated' not found for job '{jobName}'.");
 
+            var openYear = await _yearMasterRepository.GetOpenFpsYearAsync()
+                ?? throw new InvalidOperationException("No FPS year in fps.tblyearmaster is currently 'Open' - cannot determine the current year for this Year End request.");
+
             var strategy = _context.Database.CreateExecutionStrategy();
 
             await strategy.ExecuteAsync(async () =>
@@ -448,7 +464,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, _requestContext.FpsYear, targetFpsYear);
+                    jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, openYear.FpsYear, targetFpsYear);
                     _context.BatchJobQueues.Add(jobQueueEntry);
 
                     BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId);

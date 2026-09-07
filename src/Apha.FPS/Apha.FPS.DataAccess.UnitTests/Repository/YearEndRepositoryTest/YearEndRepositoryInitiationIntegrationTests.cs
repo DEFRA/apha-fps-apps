@@ -61,14 +61,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             }
         }
 
-        private YearEndRepository CreateRepository(int ambientFpsYear)
+        private (YearEndRepository Repo, FpsDbContext Context) CreateRepository(int ambientFpsYear)
         {
             var requestContext = Substitute.For<IFpsRequestContext>();
             requestContext.FpsYear.Returns(ambientFpsYear);
             var options = new DbContextOptionsBuilder<FpsDbContext>().UseNpgsql(_connectionString).Options;
             var context = new FpsDbContext(options, requestContext);
             var stagingRepository = new YearEndStagingRepository(context);
-            return new YearEndRepository(context, requestContext, stagingRepository);
+            var yearMasterRepository = new YearMasterRepository(context);
+            return (new YearEndRepository(context, stagingRepository, yearMasterRepository), context);
         }
 
         [Fact]
@@ -76,19 +77,26 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         {
             if (!_dbAvailable) return;
 
-            // Deliberately far-future years so this never collides with a genuinely in-use planned
-            // year on whichever database this runs against, and to keep clean-up unambiguous.
-            const int currentOpenYear = 9071;
+            // Deliberately far-future planned year so this never collides with a genuinely in-use
+            // planned year on whichever database this runs against, and to keep clean-up unambiguous.
             const int plannedYear = 9072;
 
-            var repo = CreateRepository(currentOpenYear);
+            // Deliberately WRONG ambient value - proves job_queue.fpsyear comes from tblyearmaster's
+            // real Open row (resolved below, live), never from IFpsRequestContext/X-FPS-Year. This is
+            // the regression coverage for the defect where Initiate populated fpsyear from whichever
+            // year the UI session happened to be browsing.
+            const int wrongAmbientFpsYear = 9071;
+
+            var (repo, context) = CreateRepository(wrongAmbientFpsYear);
+            var realOpenYear = (await new YearMasterRepository(context).GetOpenFpsYearAsync())!.FpsYear;
 
             var created = await repo.EnqueueDataSetupInitiationBatchJobAsync(
                 "YearEnd-DataSetup", "workstream3-acceptance-test", Guid.NewGuid().ToString(),
                 $"'YearEnd-DataSetup' is initiated for {plannedYear}.", plannedYear);
             _createdJobQueueIds.Add(created.JobqueueId);
 
-            Assert.Equal(currentOpenYear, created.FpsYear);
+            Assert.Equal(realOpenYear, created.FpsYear);
+            Assert.NotEqual(wrongAmbientFpsYear, created.FpsYear);
             Assert.Equal(plannedYear, created.TargetFpsYear);
 
             // Exactly one Initiated row for this JobExecutionId -- not "at least one", not "a row
@@ -106,7 +114,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
                   AND q.fpsyear = @fpsyear
                   AND q.target_fpsyear = @targetfpsyear;";
             cmd.Parameters.AddWithValue("jobqueueid", created.JobqueueId);
-            cmd.Parameters.AddWithValue("fpsyear", currentOpenYear);
+            cmd.Parameters.AddWithValue("fpsyear", realOpenYear);
             cmd.Parameters.AddWithValue("targetfpsyear", plannedYear);
             var matchingRows = (long)(await cmd.ExecuteScalarAsync())!;
 

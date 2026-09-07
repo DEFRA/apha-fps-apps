@@ -37,7 +37,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
                 IEnumerable<BatchJobStatus>?   statuses = null,
                 IEnumerable<BatchJobQueueLog>? logs     = null,
                 int fpsYear = DefaultFpsYear,
-                IYearEndStagingRepository?     stagingRepository = null)
+                IYearEndStagingRepository?     stagingRepository = null,
+            IYearMasterRepository?         yearMasterRepository = null)
         {
             var requestContext = Substitute.For<IFpsRequestContext>();
             requestContext.FpsYear.Returns(fpsYear);
@@ -46,6 +47,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             // need to assert on it (Received/DidNotReceive) pass their own substitute in; every other
             // test gets a throwaway one so CreateRepository's tuple shape doesn't need to change.
             stagingRepository ??= Substitute.For<IYearEndStagingRepository>();
+
+            // Defaults to the same year as the mocked ambient request context (above) so existing
+            // Initiation tests, which assert the created row's FpsYear against the fpsYear param,
+            // keep passing unchanged. job_queue.fpsyear is deliberately sourced only from here now,
+            // never from IFpsRequestContext - callers proving that decoupling (ambient header says
+            // one year, tblyearmaster's Open year says another) pass their own substitute.
+            if (yearMasterRepository is null)
+            {
+                yearMasterRepository = Substitute.For<IYearMasterRepository>();
+                yearMasterRepository.GetOpenFpsYearAsync().Returns(new YearMaster { FpsYear = fpsYear, YearStatus = "Open", Active = true });
+            }
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestContext);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
@@ -63,7 +75,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             mockContext.Setup(x => x.BatchJobStatuses).Returns(statusesMockSet.Object);
             mockContext.Setup(x => x.BatchJobQueueLogs).Returns(logsMockSet.Object);
 
-            var repo = new YearEndRepository(mockContext.Object, requestContext, stagingRepository);
+            var repo = new YearEndRepository(mockContext.Object, stagingRepository, yearMasterRepository);
             return (repo, mockContext, queuesMockSet, logsMockSet);
         }
 
@@ -131,17 +143,25 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenContextIsNull()
         {
-            var ctx = Substitute.For<IFpsRequestContext>();
             var stagingRepo = Substitute.For<IYearEndStagingRepository>();
-            Assert.Throws<ArgumentNullException>(() => new YearEndRepository(null!, ctx, stagingRepo));
+            var yearMasterRepo = Substitute.For<IYearMasterRepository>();
+            Assert.Throws<ArgumentNullException>(() => new YearEndRepository(null!, stagingRepo, yearMasterRepo));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenStagingRepositoryIsNull()
         {
             var (_, mockContext, _, _) = CreateRepository();
-            var ctx = Substitute.For<IFpsRequestContext>();
-            Assert.Throws<ArgumentNullException>(() => new YearEndRepository(mockContext.Object, ctx, null!));
+            var yearMasterRepo = Substitute.For<IYearMasterRepository>();
+            Assert.Throws<ArgumentNullException>(() => new YearEndRepository(mockContext.Object, null!, yearMasterRepo));
+        }
+
+        [Fact]
+        public void Constructor_ThrowsArgumentNullException_WhenYearMasterRepositoryIsNull()
+        {
+            var (_, mockContext, _, _) = CreateRepository();
+            var stagingRepo = Substitute.For<IYearEndStagingRepository>();
+            Assert.Throws<ArgumentNullException>(() => new YearEndRepository(mockContext.Object, stagingRepo, null!));
         }
 
         #region GetBatchJobsHistoryAsync
@@ -1131,7 +1151,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         }
 
         [Fact]
-        public async Task EnqueueDataSetupInitiationBatchJobAsync_UsesRequestContextFpsYear()
+        public async Task EnqueueDataSetupInitiationBatchJobAsync_UsesYearMasterOpenYear_NotTargetFpsYear()
         {
             // Arrange
             const int expectedYear = 2025;
@@ -1144,9 +1164,55 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var result = await repo.EnqueueDataSetupInitiationBatchJobAsync(
                 DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note", 2026);
 
-            // Assert — fpsyear stays the ambient current/Open year, unrelated to the
+            // Assert — fpsyear stays the resolved current/Open year, unrelated to the
             // targetFpsYear argument (planned-year staging design, 2026-09-03).
             Assert.Equal(expectedYear, result.FpsYear);
+        }
+
+        [Fact]
+        public async Task EnqueueDataSetupInitiationBatchJobAsync_UsesOpenFpsYearFromYearMaster_NotAmbientRequestContext()
+        {
+            // Arrange — ambient/X-FPS-Year and tblyearmaster's real Open year deliberately differ,
+            // proving job_queue.fpsyear comes from the authoritative Open year, never from whichever
+            // year the UI session happens to be browsing (the defect this test guards against: an
+            // operator viewing the 2026 planned-year screen when clicking Initiate got fpsyear=2026
+            // instead of the real Open year 2025, tripping the Worker's targetFpsYear-must-differ-
+            // from-currentFpsYear check).
+            const int ambientFpsYear = 2026;
+            const int openFpsYear = 2025;
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+            var yearMasterRepository = Substitute.For<IYearMasterRepository>();
+            yearMasterRepository.GetOpenFpsYearAsync().Returns(new YearMaster { FpsYear = openFpsYear, YearStatus = "Open", Active = true });
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs: [job], queues: [], statuses: [status], fpsYear: ambientFpsYear, yearMasterRepository: yearMasterRepository);
+
+            // Act
+            var result = await repo.EnqueueDataSetupInitiationBatchJobAsync(
+                DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note", 2026);
+
+            // Assert
+            Assert.Equal(openFpsYear, result.FpsYear);
+            Assert.NotEqual(ambientFpsYear, result.FpsYear);
+        }
+
+        [Fact]
+        public async Task EnqueueDataSetupInitiationBatchJobAsync_WhenNoOpenFpsYearExists_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var job    = BuildJob(1, DefaultJobName);
+            var status = BuildStatus(10, 1, "initiated");
+            var yearMasterRepository = Substitute.For<IYearMasterRepository>();
+            yearMasterRepository.GetOpenFpsYearAsync().Returns((YearMaster?)null);
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs: [job], queues: [], statuses: [status], yearMasterRepository: yearMasterRepository);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.EnqueueDataSetupInitiationBatchJobAsync(
+                    DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note", 2026));
         }
 
         [Fact]
@@ -1226,7 +1292,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             mockContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
                        .ThrowsAsync(new InvalidOperationException("DB save failed"));
 
-            var repo = new YearEndRepository(mockContext.Object, requestCtx, Substitute.For<IYearEndStagingRepository>());
+            var yearMasterRepo = Substitute.For<IYearMasterRepository>();
+            yearMasterRepo.GetOpenFpsYearAsync().Returns(new YearMaster { FpsYear = DefaultFpsYear, YearStatus = "Open", Active = true });
+
+            var repo = new YearEndRepository(mockContext.Object, Substitute.For<IYearEndStagingRepository>(), yearMasterRepo);
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(
@@ -1436,7 +1505,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             mockContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
                        .ThrowsAsync(new InvalidOperationException("DB save failed"));
 
-            var repo = new YearEndRepository(mockContext.Object, requestCtx, stagingRepo);
+            var repo = new YearEndRepository(mockContext.Object, stagingRepo, Substitute.For<IYearMasterRepository>());
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(
@@ -1647,7 +1716,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             mockContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
                        .ThrowsAsync(new InvalidOperationException("DB save failed"));
 
-            var repo = new YearEndRepository(mockContext.Object, requestCtx, stagingRepo);
+            var repo = new YearEndRepository(mockContext.Object, stagingRepo, Substitute.For<IYearMasterRepository>());
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(
@@ -2201,7 +2270,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             mockContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
                        .ThrowsAsync(new InvalidOperationException("DB save failed"));
 
-            var repo = new YearEndRepository(mockContext.Object, requestCtx, Substitute.For<IYearEndStagingRepository>());
+            var repo = new YearEndRepository(mockContext.Object, Substitute.For<IYearEndStagingRepository>(), Substitute.For<IYearMasterRepository>());
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(
@@ -2245,14 +2314,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var approvedStatus = BuildStatus(20, 1, "approved");
             var existingQueue = BuildQueue(1, 20);
 
-            var (repo, _, queueSet, _) = CreateRepository(
+            var (repo, _, _, _) = CreateRepository(
                 jobs: [job], queues: [existingQueue], statuses: [approvedStatus]);
+            var beforeCall = DateTime.UtcNow;
 
             // Act
             await repo.SetTriggeredMetadataAsync(existingQueue.JobExecutionId.ToString(), DefaultUserEmail);
 
-            // Assert
-            queueSet.Verify(x => x.Update(It.IsAny<BatchJobQueue>()), Times.Once);
+            // Assert - mutated directly on the tracked entity, no explicit Update() call: attaching a
+            // second instance for a key an approval/reject call already tracked in this same
+            // DbContext throws (EF "already being tracked"); querying tracked instead of AsNoTracking
+            // lets identity resolution hand back that same instance to mutate.
+            Assert.Equal(DefaultUserEmail, existingQueue.TriggeredBy);
+            Assert.NotNull(existingQueue.TriggeredAtUtc);
+            Assert.True(existingQueue.TriggeredAtUtc >= beforeCall);
+            Assert.True(existingQueue.UpdatedAt >= beforeCall);
         }
 
         [Fact]

@@ -78,7 +78,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var options = new DbContextOptionsBuilder<FpsDbContext>().UseNpgsql(_connectionString).Options;
             var context = new FpsDbContext(options, requestContext);
             var stagingRepository = new YearEndStagingRepository(context);
-            return new YearEndRepository(context, requestContext, stagingRepository);
+            var yearMasterRepository = new YearMasterRepository(context);
+            return new YearEndRepository(context, stagingRepository, yearMasterRepository);
         }
 
         private async Task<Guid> SeedJobQueueRowAsync(string jobName, string status, int fpsYear, int? targetFpsYear)
