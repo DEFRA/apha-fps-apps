@@ -4,15 +4,15 @@
     ViewData["Title"] = $"{Model.SelectedYear} : Project Planning";   
 }
 
-<div class="container-fluid">
-
-    <div class="govuk-grid-row">       
+<div class="container-fluid">  
+    <div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-3">
         <div class="govuk-grid-column-full govuk-!-padding-0">
-            <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
+            <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-top-3 govuk-!-margin-bottom-0 govuk-!-margin-left-0 isCustomPageHeadings isFloatLeft k-!-margin-bottom-0 govuk-!-margin-left-0 isCustomPageHeadings isFloatLeft">
                 Project Planning : <span class="projectcode_color">@Model.ProjectCode</span>
                 <input id="hdnProjectCode" type="hidden" value="@Model.ProjectCode" />
-                <a href="@(Context.Request.Query.ContainsKey("returnUrl") ? Context.Request.Query["returnUrl"].ToString() : "javascript:history.back()")" class="govuk-back-link isFloatRight">Back</a>
             </h1>
+
+            <a href="@(Context.Request.Query.ContainsKey("returnUrl") ? Context.Request.Query["returnUrl"].ToString() : "javascript:history.back()")" class="govuk-back-link isFloatRight">Back</a>
         </div>
     </div>
 

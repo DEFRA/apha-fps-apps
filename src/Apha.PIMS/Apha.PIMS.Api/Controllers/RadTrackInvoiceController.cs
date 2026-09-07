@@ -35,7 +35,12 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet("totals")]
         public async Task<IActionResult> GetTotals([FromQuery] RadTrackInvoiceFilter? filter, [FromQuery] string? search = null)
         {
-            RadTrackInvoiceTotalsDto result = await _service.GetTotalsAsync(filter, search);
+            RadTrackInvoiceTotalsDto? result = await _service.GetTotalsAsync(filter, search);
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<RadTrackInvoiceTotalsDto>();
+            }
+
             return Ok(result);
         }
 
@@ -43,10 +48,15 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             RadTrackInvoiceDto? result = await _service.GetByIdAsync(id);
-            return result is null ? NotFound() : Ok(_mapper.Map<RadTrackInvoiceRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<RadTrackInvoiceRes>();
+            }
+
+            return Ok(_mapper.Map<RadTrackInvoiceRes>(result));
         }
 
-        
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] RadTrackInvoiceReq request)
         {
@@ -57,11 +67,11 @@ namespace Apha.PIMS.Api.Controllers
                 _mapper.Map<RadTrackInvoiceRes>(result));
         }
 
-        
+
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] RadTrackInvoiceReq request)
         {
-            RadTrackInvoiceDto dto = _mapper.Map<RadTrackInvoiceDto>(request);           
+            RadTrackInvoiceDto dto = _mapper.Map<RadTrackInvoiceDto>(request);
             dto.InvoiceCounter = id;
             RadTrackInvoiceDto result = await _service.UpdateAsync(dto);
             return Ok(_mapper.Map<RadTrackInvoiceRes>(result));
@@ -79,18 +89,64 @@ namespace Apha.PIMS.Api.Controllers
 
         [HttpGet("lookups/projects")]
         public async Task<IActionResult> GetProjects()
-            => Ok(await _service.GetProjectsAsync());
+        {
+            List<string>? result = await _service.GetProjectsAsync();
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<List<string>>();
+            }
+
+            return Ok(result);
+        }
 
         [HttpGet("lookups/years")]
         public async Task<IActionResult> GetYears()
-            => Ok(await _service.GetYearsAsync());
+        {
+            List<int>? result = await _service.GetYearsAsync();
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<List<int>>();
+            }
+
+            return Ok(result);
+        }
 
         [HttpGet("lookups/contracts")]
         public async Task<IActionResult> GetContracts()
-            => Ok(await _service.GetContractsAsync());
+        {
+            List<string>? result = await _service.GetContractsAsync();
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<List<string>>();
+            }
+
+            return Ok(result);
+        }
 
         [HttpGet("lookups/programs")]
         public async Task<IActionResult> GetPrograms()
-            => Ok(await _service.GetProgramsAsync());
+        {
+            List<string>? result = await _service.GetProgramsAsync();
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<List<string>>();
+            }
+
+            return Ok(result);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
+        }
     }
 }
