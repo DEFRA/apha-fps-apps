@@ -482,5 +482,643 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
         }
 
         #endregion
+
+        #region GetPagedProjectInvoiceManualAsync Tests
+
+        [Fact]
+        public async Task GetPagedProjectInvoiceManualAsync_WithParentProject_IncludesProjectInUrl()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var parentProject = "PP001";
+            var apiResponse = new ApiResponse<List<ProjectInvoiceRes>> { Success = true, Data = new List<ProjectInvoiceRes> { new() { InvoiceCounter = 1 } } };
+            var expectedDto = ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse(
+                new List<ProjectInvoiceDto> { new() { InvoiceCounter = 1 } }, new PaginationDto());
+
+            _http.GetAsync<List<ProjectInvoiceRes>>(Arg.Is<string>(url =>
+                url.Contains(PactApiEndpoints.GetPagedProjectInvoiceManual) && url.Contains($"parentProject={Uri.EscapeDataString(parentProject)}")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectInvoiceDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetPagedProjectInvoiceManualAsync(query, parentProject);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoiceManualAsync_WithNullParentProject_DoesNotIncludeProjectInUrl()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<ProjectInvoiceRes>> { Success = true, Data = new List<ProjectInvoiceRes>() };
+            var expectedDto = ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse(new List<ProjectInvoiceDto>(), new PaginationDto());
+
+            _http.GetAsync<List<ProjectInvoiceRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectInvoiceDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetPagedProjectInvoiceManualAsync(query, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            await _http.Received(1).GetAsync<List<ProjectInvoiceRes>>(
+                Arg.Is<string>(url => !url.Contains("parentProject")));
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoiceManualAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var apiResponse = new ApiResponse<List<ProjectInvoiceRes>>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "Server error" }]
+            };
+            var mappedResponse = new ApiResponseDto<List<ProjectInvoiceDto>>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Server error" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<ProjectInvoiceRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectInvoiceDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetPagedProjectInvoiceManualAsync(query, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region GetFailedInvoiceImportAsync Tests
+
+        [Fact]
+        public async Task GetFailedInvoiceImportAsync_SuccessResponse_ReturnsMappedList()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<InvoiceImportRowRes>>
+            {
+                Success = true,
+                Data = new List<InvoiceImportRowRes> { new() { Id = 1, ProjectParent = "PP001" } }
+            };
+            var expectedDto = ApiResponseDto<List<InvoiceImportRowDto>>.SuccessResponse(
+                new List<InvoiceImportRowDto> { new() { Id = 1, ProjectParent = "PP001" } });
+
+            _http.GetAsync<List<InvoiceImportRowRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<InvoiceImportRowDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetFailedInvoiceImportAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetFailedInvoiceImportAsync_FailureResponse_ReturnsFailure()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var apiResponse = new ApiResponse<List<InvoiceImportRowRes>>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "Server error" }]
+            };
+            var mappedResponse = new ApiResponseDto<List<InvoiceImportRowDto>>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Server error" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<InvoiceImportRowRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<InvoiceImportRowDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetFailedInvoiceImportAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task GetFailedInvoiceImportAsync_FailureWithNullMeta_UsesNewApiMetaDto()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var apiResponse = new ApiResponse<List<InvoiceImportRowRes>>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "Error" }]
+            };
+            var mappedResponse = new ApiResponseDto<List<InvoiceImportRowDto>>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Error" }],
+                Meta = null!
+            };
+
+            _http.GetAsync<List<InvoiceImportRowRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<InvoiceImportRowDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetFailedInvoiceImportAsync(query);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Meta);
+        }
+
+        #endregion
+
+        #region GetFailedInvoiceImportByIdAsync Tests
+
+        [Fact]
+        public async Task GetFailedInvoiceImportByIdAsync_SuccessResponse_ReturnsMappedDto()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<InvoiceImportRowRes>
+            {
+                Success = true,
+                Data = new InvoiceImportRowRes { Id = 5, ProjectParent = "PP001" }
+            };
+            var expectedDto = ApiResponseDto<InvoiceImportRowDto>.SuccessResponse(
+                new InvoiceImportRowDto { Id = 5, ProjectParent = "PP001" });
+
+            _http.GetAsync<InvoiceImportRowRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<InvoiceImportRowDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetFailedInvoiceImportByIdAsync(5);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(5, result.Data!.Id);
+        }
+
+        [Fact]
+        public async Task GetFailedInvoiceImportByIdAsync_FailureResponse_ReturnsFailure()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<InvoiceImportRowRes>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "Not Found" }]
+            };
+            var mappedResponse = new ApiResponseDto<InvoiceImportRowDto>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Not Found" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<InvoiceImportRowRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<InvoiceImportRowDto>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetFailedInvoiceImportByIdAsync(99);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task GetFailedInvoiceImportByIdAsync_FailureWithNullMeta_UsesNewApiMetaDto()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<InvoiceImportRowRes>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "Error" }]
+            };
+            var mappedResponse = new ApiResponseDto<InvoiceImportRowDto>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Error" }],
+                Meta = null!
+            };
+
+            _http.GetAsync<InvoiceImportRowRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<InvoiceImportRowDto>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetFailedInvoiceImportByIdAsync(1);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Meta);
+        }
+
+        [Fact]
+        public async Task GetFailedInvoiceImportByIdAsync_UsesCorrectUrlWithId()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<InvoiceImportRowRes> { Success = true, Data = new InvoiceImportRowRes { Id = 42 } };
+            _http.GetAsync<InvoiceImportRowRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<InvoiceImportRowDto>>(apiResponse)
+                .Returns(new ApiResponseDto<InvoiceImportRowDto> { Success = true });
+
+            // Act
+            await _client.GetFailedInvoiceImportByIdAsync(42);
+
+            // Assert
+            await _http.Received(1).GetAsync<InvoiceImportRowRes>(
+                Arg.Is<string>(url => url.Contains("42")));
+        }
+
+        #endregion
+
+        #region SaveFailedInvoiceImportAsync Tests
+
+        [Fact]
+        public async Task SaveFailedInvoiceImportAsync_SuccessResponse_ReturnsSuccess()
+        {
+            // Arrange
+            var dto = new InvoiceImportRowDto { Id = 1, ProjectParent = "PP001" };
+            var req = new InvoiceImportRowReq { Id = 1, ProjectParent = "PP001" };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _mapper.Map<InvoiceImportRowReq>(dto).Returns(req);
+            _http.PutAsync<InvoiceImportRowReq, bool?>(Arg.Any<string>(), req).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.SaveFailedInvoiceImportAsync(1, dto);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+        }
+
+        [Fact]
+        public async Task SaveFailedInvoiceImportAsync_FailureResponse_ReturnsFailure()
+        {
+            // Arrange
+            var dto = new InvoiceImportRowDto { Id = 1 };
+            var req = new InvoiceImportRowReq { Id = 1 };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = [new ApiError { Message = "Validation error" }] };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Validation error" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _mapper.Map<InvoiceImportRowReq>(dto).Returns(req);
+            _http.PutAsync<InvoiceImportRowReq, bool?>(Arg.Any<string>(), Arg.Any<InvoiceImportRowReq>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.SaveFailedInvoiceImportAsync(1, dto);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task SaveFailedInvoiceImportAsync_FailureWithNullMeta_UsesNewApiMetaDto()
+        {
+            // Arrange
+            var dto = new InvoiceImportRowDto { Id = 1 };
+            var req = new InvoiceImportRowReq { Id = 1 };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = [new ApiError { Message = "Error" }] };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Error" }],
+                Meta = null!
+            };
+
+            _mapper.Map<InvoiceImportRowReq>(dto).Returns(req);
+            _http.PutAsync<InvoiceImportRowReq, bool?>(Arg.Any<string>(), Arg.Any<InvoiceImportRowReq>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.SaveFailedInvoiceImportAsync(1, dto);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Meta);
+        }
+
+        [Fact]
+        public async Task SaveFailedInvoiceImportAsync_UsesCorrectUrlWithId()
+        {
+            // Arrange
+            var dto = new InvoiceImportRowDto { Id = 7 };
+            var req = new InvoiceImportRowReq { Id = 7 };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+
+            _mapper.Map<InvoiceImportRowReq>(dto).Returns(req);
+            _http.PutAsync<InvoiceImportRowReq, bool?>(Arg.Any<string>(), Arg.Any<InvoiceImportRowReq>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            await _client.SaveFailedInvoiceImportAsync(7, dto);
+
+            // Assert
+            await _http.Received(1).PutAsync<InvoiceImportRowReq, bool?>(
+                Arg.Is<string>(url => url.Contains('7')), Arg.Any<InvoiceImportRowReq>());
+        }
+
+        #endregion
+
+        #region DeleteFailedInvoiceImportByIdAsync Tests
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportByIdAsync_SuccessResponse_ReturnsSuccess()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.DeleteFailedInvoiceImportByIdAsync(1);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+        }
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportByIdAsync_FailureResponse_ReturnsFailure()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = [new ApiError { Message = "Not Found" }] };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Not Found" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.DeleteFailedInvoiceImportByIdAsync(99);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportByIdAsync_FailureWithNullMeta_UsesNewApiMetaDto()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = [new ApiError { Message = "Error" }] };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Error" }],
+                Meta = null!
+            };
+
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.DeleteFailedInvoiceImportByIdAsync(1);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Meta);
+        }
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportByIdAsync_UsesCorrectUrlWithId()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            await _client.DeleteFailedInvoiceImportByIdAsync(42);
+
+            // Assert
+            await _http.Received(1).DeleteAsync<bool?>(Arg.Is<string>(url => url.Contains("42")));
+        }
+
+        #endregion
+
+        #region DeleteFailedInvoiceImportByUserAsync Tests
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportByUserAsync_SuccessWithDataTrue_ReturnsSuccessWithoutErrors()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var mappedResponse = new ApiResponseDto<bool> { Success = true, Data = true };
+
+            _http.DeleteAsync<bool?>(PactApiEndpoints.DeleteFailedInvoiceImportByUser).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.DeleteFailedInvoiceImportByUserAsync();
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+        }
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportByUserAsync_SuccessWithDataFalse_AddsNoRecordsMessage()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = false };
+            var mappedResponse = new ApiResponseDto<bool> { Success = true, Data = false };
+
+            _http.DeleteAsync<bool?>(PactApiEndpoints.DeleteFailedInvoiceImportByUser).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.DeleteFailedInvoiceImportByUserAsync();
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.False(result.Data);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("No failed imported records found to delete.", result.Errors[0].Message);
+        }
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportByUserAsync_FailureResponse_ReturnsFailure()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = [new ApiError { Message = "Server error" }] };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Server error" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.DeleteFailedInvoiceImportByUserAsync();
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task DeleteFailedInvoiceImportByUserAsync_FailureWithNullMeta_UsesNewApiMetaDto()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = [new ApiError { Message = "Error" }] };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Error" }],
+                Meta = null!
+            };
+
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.DeleteFailedInvoiceImportByUserAsync();
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Meta);
+        }
+
+        #endregion
+
+        #region ImportInvoiceAsync Tests
+
+        [Fact]
+        public async Task ImportInvoiceAsync_SuccessResponse_ReturnsMappedResult()
+        {
+            // Arrange
+            var requestDto = new InvoiceImportReqDto
+            {
+                FileName = "test.xlsx",
+                Rows = new List<InvoiceImportRowDto> { new() { ProjectParent = "PP001" } }
+            };
+            var req = new InvoiceImportReq { FileName = "test.xlsx" };
+            var resData = new InvoiceImportRes { PassedCount = 1, FailedCount = 0, Message = "OK" };
+            var apiResponse = new ApiResponse<InvoiceImportRes> { Success = true, Data = resData };
+            var mappedResult = new InvoiceImportResultDto { PassedCount = 1, FailedCount = 0, Message = "OK" };
+
+            _mapper.Map<InvoiceImportReq>(requestDto).Returns(req);
+            _http.PostAsync<InvoiceImportReq, InvoiceImportRes>(PactApiEndpoints.ImportInvoice, req).Returns(apiResponse);
+            _mapper.Map<InvoiceImportResultDto>(resData).Returns(mappedResult);
+
+            // Act
+            var result = await _client.ImportInvoiceAsync(requestDto);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal(1, result.Data!.PassedCount);
+            Assert.Equal(0, result.Data.FailedCount);
+        }
+
+        [Fact]
+        public async Task ImportInvoiceAsync_FailureResponse_ReturnsFailure()
+        {
+            // Arrange
+            var requestDto = new InvoiceImportReqDto { FileName = "test.xlsx", Rows = new List<InvoiceImportRowDto>() };
+            var req = new InvoiceImportReq { FileName = "test.xlsx" };
+            var apiResponse = new ApiResponse<InvoiceImportRes>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "Import failed" }]
+            };
+            var mappedResponse = new ApiResponseDto<InvoiceImportResultDto>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Import failed" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _mapper.Map<InvoiceImportReq>(requestDto).Returns(req);
+            _http.PostAsync<InvoiceImportReq, InvoiceImportRes>(Arg.Any<string>(), Arg.Any<InvoiceImportReq>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<InvoiceImportResultDto>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.ImportInvoiceAsync(requestDto);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task ImportInvoiceAsync_FailureWithNullMeta_UsesNewApiMetaDto()
+        {
+            // Arrange
+            var requestDto = new InvoiceImportReqDto { FileName = "test.xlsx", Rows = new List<InvoiceImportRowDto>() };
+            var req = new InvoiceImportReq { FileName = "test.xlsx" };
+            var apiResponse = new ApiResponse<InvoiceImportRes>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "Error" }]
+            };
+            var mappedResponse = new ApiResponseDto<InvoiceImportResultDto>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Error" }],
+                Meta = null!
+            };
+
+            _mapper.Map<InvoiceImportReq>(requestDto).Returns(req);
+            _http.PostAsync<InvoiceImportReq, InvoiceImportRes>(Arg.Any<string>(), Arg.Any<InvoiceImportReq>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<InvoiceImportResultDto>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.ImportInvoiceAsync(requestDto);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Meta);
+        }
+
+        [Fact]
+        public async Task ImportInvoiceAsync_UsesCorrectEndpoint()
+        {
+            // Arrange
+            var requestDto = new InvoiceImportReqDto { FileName = "test.xlsx", Rows = new List<InvoiceImportRowDto>() };
+            var req = new InvoiceImportReq();
+            var resData = new InvoiceImportRes { PassedCount = 0, FailedCount = 0, Message = "" };
+            var apiResponse = new ApiResponse<InvoiceImportRes> { Success = true, Data = resData };
+
+            _mapper.Map<InvoiceImportReq>(requestDto).Returns(req);
+            _http.PostAsync<InvoiceImportReq, InvoiceImportRes>(Arg.Any<string>(), Arg.Any<InvoiceImportReq>()).Returns(apiResponse);
+            _mapper.Map<InvoiceImportResultDto>(resData).Returns(new InvoiceImportResultDto());
+
+            // Act
+            await _client.ImportInvoiceAsync(requestDto);
+
+            // Assert
+            await _http.Received(1).PostAsync<InvoiceImportReq, InvoiceImportRes>(
+                PactApiEndpoints.ImportInvoice, Arg.Any<InvoiceImportReq>());
+        }
+
+        #endregion
     }
 }

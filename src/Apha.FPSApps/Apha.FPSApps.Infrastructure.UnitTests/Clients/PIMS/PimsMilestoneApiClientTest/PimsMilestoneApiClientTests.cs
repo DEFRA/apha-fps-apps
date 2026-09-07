@@ -1640,8 +1640,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         public async Task ClearStagingAsync_WithSuccessResponse_ReturnsMappedDto()
         {
             // Arrange
-            const string project = "PP001";
-            var url = string.Format(PimsApiEndpoints.ClearStagingMilestones, Uri.EscapeDataString(project));
+            var url = PimsApiEndpoints.ClearStagingMilestones;
             var apiResponse = new ApiResponse<object> { Success = true, Data = new object() };
             var mappedDto   = ApiResponseDto<object>.SuccessResponse(new object());
 
@@ -1649,7 +1648,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
             _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.ClearStagingAsync(project);
+            var result = await _client.ClearStagingAsync();
 
             // Assert
             Assert.True(result.Success);
@@ -1660,8 +1659,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         public async Task ClearStagingAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            const string project = "PP001";
-            var url = string.Format(PimsApiEndpoints.ClearStagingMilestones, Uri.EscapeDataString(project));
+            var url = PimsApiEndpoints.ClearStagingMilestones;
             var errors = new List<ApiError> { new() { Message = "Server error", Code = "SERVER_ERROR" } };
             var apiResponse = new ApiResponse<object> { Success = false, Errors = errors };
             var mappedDto = new ApiResponseDto<object>
@@ -1675,7 +1673,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
             _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.ClearStagingAsync(project);
+            var result = await _client.ClearStagingAsync();
 
             // Assert
             Assert.False(result.Success);

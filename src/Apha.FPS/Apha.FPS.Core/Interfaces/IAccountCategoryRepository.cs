@@ -11,5 +11,6 @@ namespace Apha.FPS.Core.Interfaces
         Task<AccountCategory> AddAsync(AccountCategory accountCategory);
         Task<AccountCategory> UpdateAsync(AccountCategory accountCategory);
         Task<bool> DeleteAsync(string accShortName);
+        Task<List<string>> GetForeignKeyReferencesAsync(string accShortName);
     }
 }

@@ -8,6 +8,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string ParentProject { get; set; } = string.Empty;
         public int? Month { get; set; }
         public DataGridConfig<InvoiceItem> InvoicesGrid { get; set; } = new DataGridConfig<InvoiceItem>();
+        public DataGridConfig<InvoiceImportFailedItem> FailedInvoicesGrid { get; set; } = new DataGridConfig<InvoiceImportFailedItem>();
         public List<SelectListItem> FilterProjects { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> FilterMonths { get; set; } = new List<SelectListItem>();
     }

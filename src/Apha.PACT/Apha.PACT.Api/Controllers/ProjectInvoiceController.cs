@@ -3,6 +3,7 @@ using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
+using Apha.PACT.Core.Interfaces;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -21,11 +22,13 @@ namespace Apha.PACT.Api.Controllers
     {
         private readonly IProjectInvoiceService _service;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserContext _currentUserContext;
 
-        public ProjectInvoiceController(IProjectInvoiceService service, IMapper mapper)
+        public ProjectInvoiceController(IProjectInvoiceService service, IMapper mapper, ICurrentUserContext currentUserContext)
         {
             _service = service;
             _mapper = mapper;
+            _currentUserContext = currentUserContext;
         }
 
         /// <summary>Retrieves a paginated list of Project Invoice records.</summary>
@@ -87,6 +90,64 @@ namespace Apha.PACT.Api.Controllers
         {
             MonthlyInvoicesPivotDto result = await _service.GetMonthlyInvoicesSummaryAsync(query);
             return Ok(_mapper.Map<MonthlyInvoicesPivotRes>(result));
+        }
+
+        /// <summary>Retrieves failed invoice import records for the current user.</summary>
+        [HttpGet("import/failed")]
+        public async Task<IActionResult> GetFailedInvoiceImport([FromQuery] QueryParameters<string> query)
+        {
+            var importedBy = _currentUserContext.UserId;
+            var result = await _service.GetFailedInvoiceImportAsync(query, importedBy);
+            return Ok(_mapper.Map<PaginationRes<InvoiceImportRowRes>>(result));
+        }
+
+        /// <summary>Retrieves a failed invoice import record by ID.</summary>
+        [HttpGet("import/failed/{id}")]
+        public async Task<IActionResult> GetFailedInvoiceImportById(int id)
+        {
+            var importedBy = _currentUserContext.UserId;
+            var result = await _service.GetFailedInvoiceImportByIdAsync(id, importedBy);
+            if (result == null)
+                throw new KeyNotFoundException($"Failed Invoice Import with ID {id} not found.");
+            return Ok(_mapper.Map<InvoiceImportRowRes>(result));
+        }
+
+        /// <summary>Updates and re-validates a failed invoice import record.</summary>
+        [HttpPut("import/failed/{id}")]
+        public async Task<IActionResult> SaveFailedInvoiceImport(int id, [FromBody] InvoiceImportRowReq request)
+        {
+            var importedBy = _currentUserContext.UserId;
+            var dto = _mapper.Map<InvoiceImportRowDto>(request);
+            var movedToInvoice = await _service.SaveFailedInvoiceImportAsync(id, dto, importedBy);
+            return Ok(movedToInvoice);
+        }
+
+        /// <summary>Deletes a failed invoice import record by ID.</summary>
+        [HttpDelete("import/failed/{id}")]
+        public async Task<IActionResult> DeleteFailedInvoiceImportById(int id)
+        {
+            var importedBy = _currentUserContext.UserId;
+            var deleted = await _service.DeleteFailedInvoiceImportByIdAsync(id, importedBy);
+            return Ok(deleted);
+        }
+
+        /// <summary>Deletes all failed invoice import records for the current user.</summary>
+        [HttpDelete("import/failed/user")]
+        public async Task<IActionResult> DeleteFailedInvoiceImportByUser()
+        {
+            var importedBy = _currentUserContext.UserId;
+            var deletedCount = await _service.DeleteFailedInvoiceImportByUserAsync(importedBy);
+            return Ok(deletedCount > 0);
+        }
+
+        /// <summary>Imports invoice data from an Excel file.</summary>
+        [HttpPost("import")]
+        public async Task<IActionResult> ImportInvoice([FromBody] InvoiceImportReq request)
+        {
+            var importedBy = _currentUserContext.UserId;
+            var dto = _mapper.Map<InvoiceImportDto>(request);
+            var result = await _service.ImportInvoiceAsync(dto, importedBy);
+            return Ok(_mapper.Map<InvoiceImportRes>(result));
         }
     }
 }

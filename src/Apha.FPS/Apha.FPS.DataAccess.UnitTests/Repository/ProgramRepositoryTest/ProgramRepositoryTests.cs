@@ -1,5 +1,6 @@
 using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Enums;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
@@ -414,7 +415,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             Assert.Equal("P001", result.ProgramNo);
             Assert.Equal(DefaultTestFpsYear, result.FpsYear);
             programsMockSet.Verify(x => x.Add(It.IsAny<Core.Entities.Program>()), Times.Once);
-            userProgramsMockSet.Verify(x => x.Add(It.IsAny<UserProgram>()), Times.Once);
+            // One link for the requesting user and one for the super user.
+            userProgramsMockSet.Verify(x => x.Add(It.IsAny<UserProgram>()), Times.Exactly(2));
             RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 
@@ -423,13 +425,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         {
             // Arrange
             var requestingUser = new User { UserId = 7, UserEmail = "test@example.com" };
-            UserProgram? capturedUserProgram = null;
+            var capturedUserPrograms = new List<UserProgram>();
             var (repo, _, userProgramsMockSet, _) =
                 CreateRepositoryWithMocks([], [], [requestingUser]);
 
             userProgramsMockSet
                 .Setup(x => x.Add(It.IsAny<UserProgram>()))
-                .Callback<UserProgram>(up => capturedUserProgram = up);
+                .Callback<UserProgram>(capturedUserPrograms.Add);
 
             var newProgram = new Core.Entities.Program { ProgramNo = "P001", ProgramName = "Program One" };
 
@@ -437,18 +439,26 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             await repo.AddProgramAsync(newProgram);
 
             // Assert
-            Assert.NotNull(capturedUserProgram);
-            Assert.Equal("P001", capturedUserProgram!.ProgramNo);
-            Assert.Equal(7, capturedUserProgram.UserID);
-            Assert.Equal(DefaultTestFpsYear, capturedUserProgram.FpsYear);
+            var requestingUserLink = Assert.Single(capturedUserPrograms, up => up.UserID == 7);
+            Assert.Equal("P001", requestingUserLink.ProgramNo);
+            Assert.Equal(DefaultTestFpsYear, requestingUserLink.FpsYear);
+
+            var superUserLink = Assert.Single(capturedUserPrograms, up => up.UserID == (int)SuperUser.SuperUserId);
+            Assert.Equal("P001", superUserLink.ProgramNo);
+            Assert.Equal(DefaultTestFpsYear, superUserLink.FpsYear);
         }
 
         [Fact]
-        public async Task AddProgramAsync_AddsProgramOnly_WhenRequestingUserNotFound()
+        public async Task AddProgramAsync_AddsSuperUserLinkOnly_WhenRequestingUserNotFound()
         {
             // Arrange — no user found by email means UserProgram should NOT be added
+            var capturedUserPrograms = new List<UserProgram>();
             var (repo, programsMockSet, userProgramsMockSet, mockContext) =
                 CreateRepositoryWithMocks([], [], []);
+
+            userProgramsMockSet
+                .Setup(x => x.Add(It.IsAny<UserProgram>()))
+                .Callback<UserProgram>(capturedUserPrograms.Add);
 
             var newProgram = new Core.Entities.Program { ProgramNo = "P001", ProgramName = "Program One" };
 
@@ -458,8 +468,40 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             // Assert
             Assert.NotNull(result);
             programsMockSet.Verify(x => x.Add(It.IsAny<Core.Entities.Program>()), Times.Once);
-            userProgramsMockSet.Verify(x => x.Add(It.IsAny<UserProgram>()), Times.Never);
+            // The requesting user is unknown, but the super user link is still created.
+            var superUserLink = Assert.Single(capturedUserPrograms);
+            Assert.Equal((int)SuperUser.SuperUserId, superUserLink.UserID);
+            Assert.Equal("P001", superUserLink.ProgramNo);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
+        }
+
+        [Fact]
+        public async Task AddProgramAsync_SkipsSuperUserLink_WhenLinkAlreadyExists()
+        {
+            // Arrange - super user link already present, so it must not be duplicated
+            var requestingUser = new User { UserId = 7, UserEmail = "test@example.com" };
+            var existingSuperUserLink = new UserProgram
+            {
+                ProgramNo = "P001",
+                UserID = (int)SuperUser.SuperUserId,
+                FpsYear = DefaultTestFpsYear
+            };
+            var capturedUserPrograms = new List<UserProgram>();
+            var (repo, _, userProgramsMockSet, _) =
+                CreateRepositoryWithMocks([], [existingSuperUserLink], [requestingUser]);
+
+            userProgramsMockSet
+                .Setup(x => x.Add(It.IsAny<UserProgram>()))
+                .Callback<UserProgram>(capturedUserPrograms.Add);
+
+            var newProgram = new Core.Entities.Program { ProgramNo = "P001", ProgramName = "Program One" };
+
+            // Act
+            await repo.AddProgramAsync(newProgram);
+
+            // Assert
+            var addedLink = Assert.Single(capturedUserPrograms);
+            Assert.Equal(7, addedLink.UserID);
         }
 
         [Fact]

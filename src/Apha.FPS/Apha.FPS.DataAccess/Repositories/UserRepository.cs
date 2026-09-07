@@ -288,13 +288,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<string>> GetAllProfitCentreOptionsAsync()
         {
-            var currentUserId = await GetCurrentUserIdAsync();
-
-            return await _dbContext.UserProfitcentres
+            return await _dbContext.ProfitCentres
                 .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(p => p.UserId == currentUserId && p.FpsYear == _requestContext.FpsYear)
-                .Select(p => p.ProfitCentre)
+                .Select(p => p.ProfitCentreId)
                 .Distinct()
                 .OrderBy(p => p)
                 .ToListAsync();
@@ -302,12 +299,9 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<string>> GetAllProgramOptionsAsync()
         {
-            var currentUserId = await GetCurrentUserIdAsync();
-
-            return await _dbContext.UserPrograms
+            return await _dbContext.Programs
                 .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(p => p.UserID == currentUserId && p.FpsYear == _requestContext.FpsYear)
                 .Select(p => p.ProgramNo)
                 .Distinct()
                 .OrderBy(p => p)
@@ -316,13 +310,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<string>> GetAllCategoryOptionsAsync()
         {
-            var currentUserId = await GetCurrentUserIdAsync();
-
-            return await _dbContext.UserCategories
+            return await _dbContext.Categories
                 .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(x => x.UserId == currentUserId && x.FpsYear == _requestContext.FpsYear)
-                .Select(x => x.Category)
+                .Select(x => x.CategoryName)
                 .Distinct()
                 .OrderBy(c => c)
                 .ToListAsync();
@@ -342,26 +333,13 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<string>> GetAllProjectGroupOptionsAsync()
         {
-            var currentUserId = await GetCurrentUserIdAsync();
-
-            return await _dbContext.UserProjectGroups
+            return await _dbContext.ProjectGroups
                 .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(x => x.UserId == currentUserId && x.FpsYear == _requestContext.FpsYear)
-                .Select(x => x.ProjectGroup)
+                .Select(x => x.ProjectGroupName)
                 .Distinct()
                 .OrderBy(pg => pg)
                 .ToListAsync();
-        }
-
-        private async Task<int> GetCurrentUserIdAsync()
-        {
-            var currentUser = await _dbContext.Users
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.UserEmail != null
-                    && EF.Functions.ILike(u.UserEmail, _requestContext.UserEmailId));
-
-            return currentUser?.UserId ?? (int)SuperUser.SuperUserId;
         }
 
         private static IQueryable<User> ApplyUserSorting(IQueryable<User> query, string? sortBy, bool descending)

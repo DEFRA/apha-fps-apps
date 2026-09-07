@@ -87,7 +87,7 @@ namespace Apha.FPS.Application.Services
             var hasRelatedPurchases = await _repository.HasRelatedPurchasesAsync(WorkGroupName, account);
             if (hasRelatedPurchases)
                 throw new InvalidOperationException(
-                    "This record cannot be deleted as it has a related entry in the Purchase table.");
+                    "The record cannot be deleted because it is being used elsewhere.");
 
             return await _repository.DeleteBidAsync(WorkGroupName, account);
         }
